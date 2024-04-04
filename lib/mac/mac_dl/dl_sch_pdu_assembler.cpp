@@ -93,35 +93,44 @@ dl_sch_pdu::mac_sdu_encoder dl_sch_pdu::get_sdu_encoder(lcid_t lcid, unsigned sd
   return mac_sdu_encoder{*this, lcid, sdu_space_estim};
 }
 
-unsigned dl_sch_pdu::add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu)
+unsigned dl_sch_pdu::add_sdu(lcid_t lcid, span<uint8_t> sdu)
 {
   srsran_assert(not sdu.empty(), "Trying to add an empty SDU");
 
-  lcid_dl_sch_t lcid    = lcid_;
-  size_t        sdu_len = sdu.length();
-
-  unsigned header_length = 2;
-  bool     F_bit         = false;
-  if (sdu_len >= MAC_SDU_SUBHEADER_LENGTH_THRES) {
-    F_bit = true;
-    header_length += 1;
-  }
-
-  if (byte_offset + sdu_len + header_length > pdu.size()) {
+  mac_sdu_encoder sdu_enc = get_sdu_encoder(lcid, sdu.size());
+  if (not sdu_enc.valid()) {
     return 0;
   }
 
-  // Encode Header.
-  encode_subheader(F_bit, lcid, header_length, sdu_len);
+  // Copy SDU payload.
+  memcpy(sdu_enc.sdu_buffer().data(), sdu.data(), sdu.size());
 
-  // Encode Payload.
-  for (const byte_buffer_slice& sl : sdu.slices()) {
-    for (const span<const uint8_t> seg : sl.segments()) {
-      std::copy(seg.begin(), seg.end(), pdu.data() + byte_offset);
-      byte_offset += seg.size();
-    }
+  // Encode subheader
+  return sdu_enc.encode_sdu(sdu.size());
+}
+
+unsigned dl_sch_pdu::add_sdu(lcid_t lcid, const byte_buffer& sdu)
+{
+  srsran_assert(not sdu.empty(), "Trying to add an empty SDU");
+
+  size_t sdu_len = sdu.length();
+
+  mac_sdu_encoder sdu_enc = get_sdu_encoder(lcid, sdu_len);
+  if (not sdu_enc.valid()) {
+    return 0;
   }
-  return sdu_len + header_length;
+
+  // Copy SDU payload.
+  span<uint8_t> sdu_buf = sdu_enc.sdu_buffer();
+  unsigned      offset  = 0;
+  for (span<const uint8_t> seg : sdu.segments()) {
+    memcpy(sdu_buf.data() + offset, seg.data(), seg.size());
+    offset += seg.size();
+  }
+  srsran_sanity_check(offset == sdu_len, "Error while copying SDU payload");
+
+  // Encode subheader
+  return sdu_enc.encode_sdu(sdu_len);
 }
 
 void dl_sch_pdu::add_ue_con_res_id(const ue_con_res_id_t& con_res_payload)

@@ -70,7 +70,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value());
+  pdu.add_sdu(lcid, payload);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -103,7 +103,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value()), payload.length() + HEADER_LEN);
+  ASSERT_EQ(pdu.add_sdu(lcid, payload), payload.length() + HEADER_LEN);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;

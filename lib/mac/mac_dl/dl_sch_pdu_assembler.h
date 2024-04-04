@@ -56,7 +56,8 @@ public:
   mac_sdu_encoder get_sdu_encoder(lcid_t lcid, unsigned sdu_payload_len_estimate);
 
   /// Adds a MAC SDU as a subPDU.
-  unsigned add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu);
+  unsigned add_sdu(lcid_t lcid_, span<uint8_t> sdu);
+  unsigned add_sdu(lcid_t lcid_, const byte_buffer& sdu);
 
   /// Adds a UE Contention Resolution CE as a subPDU.
   void add_ue_con_res_id(const ue_con_res_id_t& con_res_payload);
