@@ -636,8 +636,6 @@ def ue_reestablishment(
     msg = f"Reestablishment UE [{id(ue_stub)}] finished in {time_to_reestablish_sec} seconds"
     if time_to_reestablish_sec >= reestablishment_interval:
         logging.error(msg)
-    else:
-        logging.info(msg)
 
 
 def _get_metrics(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:

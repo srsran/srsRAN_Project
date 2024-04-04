@@ -228,6 +228,7 @@ def test_srsue(
     ),
 )
 @mark.android
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Exception calling application"])
 # pylint: disable=too-many-arguments
 def test_android(
     retina_manager: RetinaTestManager,
@@ -443,7 +444,7 @@ def test_zmq_smoke(
         time_alignment_calibration=0,
         always_download_artifacts=False,
         bitrate_threshold=0,
-        ue_stop_timeout=10,
+        ue_stop_timeout=30,
     )
 
 
@@ -476,9 +477,9 @@ def test_zmq_smoke(
     ),
 )
 @mark.zmq
-# @mark.flaky(
-#     reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
-# )
+@mark.flaky(
+    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
+)
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

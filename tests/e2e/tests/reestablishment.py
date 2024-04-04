@@ -128,8 +128,7 @@ def _ping_and_reestablishment_multi_ues(
 
     ping_count_end = 20
     # Start ping in end and wait
-    logging.info("Starting Pings in end and wait")
+    logging.info("Starting Pings after completed reestablishments")
     ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, ping_count_end))
-    logging.info("Pings running for %s UEs", len(ue_array))
 
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
