@@ -84,10 +84,8 @@ static double get_target_code_rate(cqi_value cqi, cqi_table_t cqi_table)
 // Computes PDCCH code rate for a given aggregation level.
 static double compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits            = 24U;
-  static const unsigned nof_bits_per_symbols_qpsk = 2U;
-  return ((double)nof_dci_bits + pdcch_crc_bits) /
-         (double)(pdcch_constants::NOF_REG_PER_CCE * NRE * nof_bits_per_symbols_qpsk * to_nof_cces(lvl));
+  static const unsigned pdcch_crc_bits = 24U;
+  return ((double)nof_dci_bits + pdcch_crc_bits) / (double)(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Return whether DCI fits in given aggregation level (in turn nof. CCEs).
