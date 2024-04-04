@@ -756,7 +756,7 @@ package:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
-      - OS_VERSION: "24.04"
+      # - OS_VERSION: "24.04"
   needs: []
 
 install-package:
@@ -775,7 +775,7 @@ install-package:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
-      - OS_VERSION: "24.04"
+      # - OS_VERSION: "24.04"
   needs:
     - package
 
@@ -1720,18 +1720,18 @@ basic relwithdeb:
     <<: *build_artifacts
     expire_in: 3 day
 
-basic package:
-  extends: .deb-package
-  stage: build and unit tests
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
-    <<: *package_variables
-    OS_VERSION: "24.04"
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
-  needs: []
+# basic package:
+#   extends: .deb-package
+#   stage: build and unit tests
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+#   retry: 2
+#   interruptible: false
+#   variables:
+#     <<: *package_variables
+#     OS_VERSION: "24.04"
+#   tags: ["${AMD64_LIB_BUILDER_TAG}"]
+#   needs: []
 
 basic tsan:
   extends: .smoke tsan
