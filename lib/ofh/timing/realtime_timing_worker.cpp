@@ -21,6 +21,7 @@
  */
 
 #include "realtime_timing_worker.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include <future>
 #include <thread>
@@ -217,6 +218,8 @@ void realtime_timing_worker::poll()
 
 void realtime_timing_worker::notify_slot_symbol_point(slot_symbol_point slot)
 {
+  ofh_tracer << instant_trace_event("ofh_timing_notify_symbol", instant_trace_event::cpu_scope::global);
+
   for (auto* notifier : ota_notifiers) {
     notifier->on_new_symbol(slot);
   }

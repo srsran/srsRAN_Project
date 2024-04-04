@@ -9,14 +9,14 @@ amf:
 
 ru_ofh:
   ru_bandwidth_MHz: 100                                           # RU instantaneous bandwidth.
-  t1a_max_cp_dl: 440                                              # Maximum T1a on Control-Plane for Downlink in microseconds.
-  t1a_min_cp_dl: 250                                              # Minimum T1a on Control-Plane for Downlink in microseconds.
-  t1a_max_cp_ul: 440                                              # Maximum T1a on Control-Plane for Uplink in microseconds.
-  t1a_min_cp_ul: 250                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
-  t1a_max_up: 250                                                 # Maximum T1a on User-Plane in microseconds.
-  t1a_min_up: 80                                                  # Minimum T1a on User-Plane in microseconds.
-  ta4_max: 200                                                    # Maximum Ta4 on User-Plane in microseconds.
-  ta4_min: 0                                                      # Minimum Ta4 on User-Plane in microseconds.
+  t1a_max_cp_dl: 530                                              # Maximum T1a on Control-Plane for Downlink in microseconds.
+  t1a_min_cp_dl: 360                                              # Minimum T1a on Control-Plane for Downlink in microseconds.
+  t1a_max_cp_ul: 530                                              # Maximum T1a on Control-Plane for Uplink in microseconds.
+  t1a_min_cp_ul: 360                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
+  t1a_max_up: 395                                                 # Maximum T1a on User-Plane in microseconds.
+  t1a_min_up: 50                                                  # Minimum T1a on User-Plane in microseconds.
+  ta4_max: 500                                                    # Maximum Ta4 on User-Plane in microseconds.
+  ta4_min: 25                                                      # Minimum Ta4 on User-Plane in microseconds.
   is_prach_cp_enabled: true                                       # Configures if Control-Plane messages should be used to receive PRACH messages.
   ignore_ecpri_payload_size: true                                 # Configures if eCPRI payload size field should be ignored by the eCPRI packet decoder.
   compr_method_ul: bfp                                            # Uplink compression method.
@@ -32,7 +32,8 @@ ru_ofh:
     - network_interface: enp1s0f1                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: 6c:ad:ad:00:08:c4                              # RU MAC address.
       du_mac_addr: 80:61:5f:0d:df:ab                              # DU MAC address.
-      vlan_tag: 2                                                 # VLAN tag value.
+      vlan_tag_cp: 2                                              # VLAN tag value for C-Plane.
+      vlan_tag_up: 2                                              # VLAN tag value for U-Plane.
       prach_port_id: [4, 5, 6, 7]                                 # PRACH eAxC port values.
       dl_port_id: [0]                                             # Downlink eAxC port values.
       ul_port_id: [0, 1, 2, 3]                                    # Uplink eAxC port values.

@@ -20,7 +20,7 @@
  *
  */
 
-#include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
+#include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/support/test_utils.h"
@@ -29,7 +29,7 @@
 using namespace srsran;
 using namespace srs_du;
 
-class du_high_many_ues_tester : public du_high_test_bench, public testing::Test
+class du_high_many_ues_tester : public du_high_env_simulator, public testing::Test
 {
 protected:
   du_high_many_ues_tester()

@@ -70,7 +70,7 @@ public:
 
     slot_point next_slot;
 
-    du_sim(task_executor& phy_exec) : phy(phy_exec) {}
+    du_sim(task_executor& phy_exec) : phy(1, phy_exec) {}
   };
 
   explicit du_high_cu_test_simulator(const du_high_cu_cp_test_simulator_config& cfg);

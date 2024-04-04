@@ -22,6 +22,7 @@
 
 #include "ofh_message_receiver.h"
 #include "ofh_rx_window_checker.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -97,13 +98,15 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
     return;
   }
 
+  trace_point decode_tp = ofh_tracer.now();
   if (is_a_prach_message(filter_type)) {
     data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
-
+    ofh_tracer << trace_event("ofh_receiver_decode_prach", decode_tp);
     return;
   }
 
   data_flow_uplink->decode_type1_message(eaxc, ofh_pdu);
+  ofh_tracer << trace_event("ofh_receiver_decode_data", decode_tp);
 }
 
 bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const

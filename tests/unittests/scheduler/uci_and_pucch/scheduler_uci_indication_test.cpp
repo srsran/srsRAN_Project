@@ -158,7 +158,7 @@ protected:
 TEST_F(uci_sched_tester, no_retx_after_harq_ack)
 {
   static constexpr unsigned MAX_COUNT = 16;
-  notify_dl_buffer_status(LCID_SRB0, 100);
+  notify_dl_buffer_status(LCID_SRB1, 100);
 
   bool pucch_found = false;
   for (unsigned i = 0; i != MAX_COUNT; ++i) {

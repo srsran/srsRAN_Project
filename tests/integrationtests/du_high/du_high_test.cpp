@@ -23,7 +23,7 @@
 /// \file
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
-#include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
+#include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
@@ -35,7 +35,7 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-class du_high_tester : public du_high_test_bench, public testing::Test
+class du_high_tester : public du_high_env_simulator, public testing::Test
 {};
 
 /// Test F1 setup over "local" connection to DU.
@@ -89,21 +89,21 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
   unsigned bytes_sched = 0;
-  phy.cell.last_dl_data.reset();
+  phy.cells[0].last_dl_data.reset();
   while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
-    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+    return phy.cells[0].last_dl_data.has_value() and not phy.cells[0].last_dl_data.value().ue_pdus.empty();
   })) {
-    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
-      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+    for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
       }
     }
-    phy.cell.last_dl_data.reset();
+    phy.cells[0].last_dl_data.reset();
   }
   ASSERT_GE(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
       << "Not enough PDSCH grants were scheduled to meet the enqueued PDCP PDUs";
@@ -147,7 +147,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    cu_up_sim.du_notif->on_new_sdu(f1u_pdu);
+    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
   // DU receives UE Context Release Request.
@@ -157,16 +157,16 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
 
   // Ensure the DU does not keep to schedule DRB PDUs.
   unsigned bytes_sched = 0;
-  phy.cell.last_dl_data.reset();
+  phy.cells[0].last_dl_data.reset();
   while (bytes_sched < nof_pdcp_pdus * pdcp_pdu_size and this->run_until([this]() {
-    return phy.cell.last_dl_data.has_value() and not phy.cell.last_dl_data.value().ue_pdus.empty();
+    return phy.cells[0].last_dl_data.has_value() and not phy.cells[0].last_dl_data.value().ue_pdus.empty();
   })) {
-    for (unsigned i = 0; i != phy.cell.last_dl_data.value().ue_pdus.size(); ++i) {
-      if (phy.cell.last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
-        bytes_sched += phy.cell.last_dl_data.value().ue_pdus[i].pdu.size();
+    for (unsigned i = 0; i != phy.cells[0].last_dl_data.value().ue_pdus.size(); ++i) {
+      if (phy.cells[0].last_dl_res.value().dl_res->ue_grants[i].pdsch_cfg.codewords[0].new_data) {
+        bytes_sched += phy.cells[0].last_dl_data.value().ue_pdus[i].pdu.size();
       }
     }
-    phy.cell.last_dl_data.reset();
+    phy.cells[0].last_dl_data.reset();
   }
   ASSERT_LT(bytes_sched, nof_pdcp_pdus * pdcp_pdu_size)
       << "Scheduler did not stop scheduling DRB after UE context release request reception";

@@ -136,7 +136,8 @@ protected:
     init_adjustments();
 
     // Create PDCP entity
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker});
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(
+        0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker);
     pdcp_tx->set_status_provider(&test_frame);
   }
 

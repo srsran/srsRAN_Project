@@ -105,11 +105,11 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const s
     /// run the task.
     std::lock_guard<std::mutex> guard(map_mutex);
     const auto&                 it = teid_to_tunnel.find(teid);
-    tunnel                         = it->second.tunnel;
     if (it == teid_to_tunnel.end()) {
       logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
       return;
     }
+    tunnel = it->second.tunnel;
   }
   // Forward entire PDU to the tunnel
   // As removal happens in the same thread as handling the PDU, we no longer

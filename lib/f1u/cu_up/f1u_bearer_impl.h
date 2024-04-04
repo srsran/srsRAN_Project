@@ -56,8 +56,9 @@ public:
 
   void stop() override
   {
+    dl_notif_timer.stop();
     if (not stopped) {
-      disconnector.disconnect_cu_bearer(ul_tnl_info);
+      disconnector.disconnect_cu_bearer(ul_tnl_info); // reference tx_pdu_notifier becomes invalid
     }
     stopped = true;
   }

@@ -24,7 +24,7 @@
 
 using namespace srsran;
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_rc;
+using namespace asn1::e2sm;
 
 e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request& request_,
                                                    e2_message_notifier&          notif_,
@@ -37,7 +37,7 @@ e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request&
 void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
-  e2sm_iface = e2sm_mng.get_e2sm_interface(e2_request.request->ra_nfunction_id.value);
+  e2sm_iface = e2sm_mng.get_e2sm_interface(e2_request.request->ran_function_id);
 
   if (!e2sm_iface) {
     logger.error("RAN function ID not supported");
@@ -75,19 +75,19 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(const e2_ric_cont
   e2_message msg;
   msg.pdu.set_successful_outcome();
   logger.info("Sending E2 RIC Control Acknowledge");
-  msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
-  ri_cctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ri_cctrl_ack();
-  ack->ri_crequest_id              = ctrl_request.request->ri_crequest_id;
-  ack->ra_nfunction_id             = ctrl_request.request->ra_nfunction_id;
-  ack->ri_ccall_process_id_present = false;
-  if (ctrl_request.request->ri_ccall_process_id_present) {
-    ack->ri_ccall_process_id_present = true;
-    ack->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RIC_CTRL);
+  ric_ctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ric_ctrl_ack();
+  ack->ric_request_id              = ctrl_request.request->ric_request_id;
+  ack->ran_function_id             = ctrl_request.request->ran_function_id;
+  ack->ric_call_process_id_present = false;
+  if (ctrl_request.request->ric_call_process_id_present) {
+    ack->ric_call_process_id_present = true;
+    ack->ric_call_process_id         = ctrl_request.request->ric_call_process_id;
   }
-  ack->ri_cctrl_outcome_present = false;
-  if (ctrl_response.ack->ri_cctrl_outcome_present) {
-    ack->ri_cctrl_outcome_present = true;
-    ack->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  ack->ric_ctrl_outcome_present = false;
+  if (ctrl_response.ack->ric_ctrl_outcome_present) {
+    ack->ric_ctrl_outcome_present = true;
+    ack->ric_ctrl_outcome         = ctrl_response.ack->ric_ctrl_outcome;
   }
   ric_notif.on_new_message(msg);
 }
@@ -98,19 +98,19 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_control_
   e2_message msg;
   msg.pdu.set_unsuccessful_outcome();
   logger.info("Sending E2 RIC Control Failure");
-  msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
-  ri_cctrl_fail_s& fail = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
-  fail->ri_crequest_id  = ctrl_request.request->ri_crequest_id;
-  fail->ra_nfunction_id = ctrl_request.request->ra_nfunction_id;
-  if (ctrl_request.request->ri_ccall_process_id_present) {
-    fail->ri_ccall_process_id_present = true;
-    fail->ri_ccall_process_id.value   = ctrl_request.request->ri_ccall_process_id.value;
+  msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RIC_CTRL);
+  ric_ctrl_fail_s& fail = msg.pdu.unsuccessful_outcome().value.ric_ctrl_fail();
+  fail->ric_request_id  = ctrl_request.request->ric_request_id;
+  fail->ran_function_id = ctrl_request.request->ran_function_id;
+  if (ctrl_request.request->ric_call_process_id_present) {
+    fail->ric_call_process_id_present = true;
+    fail->ric_call_process_id         = ctrl_request.request->ric_call_process_id;
   }
   fail->cause                    = ctrl_response.failure->cause;
-  fail->ri_cctrl_outcome_present = false;
-  if (ctrl_response.ack->ri_cctrl_outcome_present) {
-    fail->ri_cctrl_outcome_present = true;
-    fail->ri_cctrl_outcome         = ctrl_response.ack->ri_cctrl_outcome;
+  fail->ric_ctrl_outcome_present = false;
+  if (ctrl_response.ack->ric_ctrl_outcome_present) {
+    fail->ric_ctrl_outcome_present = true;
+    fail->ric_ctrl_outcome         = ctrl_response.ack->ric_ctrl_outcome;
   }
   ric_notif.on_new_message(msg);
 }

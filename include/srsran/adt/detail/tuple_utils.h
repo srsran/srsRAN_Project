@@ -23,25 +23,26 @@
 #pragma once
 
 #include <array>
+#include <tuple>
 
 namespace srsran {
 
 namespace detail {
 
-template <size_t N, size_t... Is>
+template <std::size_t N, std::size_t... Is>
 constexpr auto as_tuple(const std::array<unsigned, N>& arr, std::index_sequence<Is...> /*unused*/)
 {
   return std::make_tuple(arr[Is]...);
 }
 
 /// Convert an std::array<T, N> to a tuple<T, T, ...>.
-template <typename T, size_t N>
+template <typename T, std::size_t N>
 constexpr auto as_tuple(const std::array<T, N>& arr)
 {
   return as_tuple(arr, std::make_index_sequence<N>{});
 }
 
-template <typename T, typename F, size_t... Is>
+template <typename T, typename F, std::size_t... Is>
 constexpr void for_each_impl(T&& t, const F& f, std::index_sequence<Is...>)
 {
   (void)std::initializer_list<int>{(f(std::get<Is>(t)), 0)...};
@@ -59,20 +60,20 @@ constexpr bool any_of_impl(Tuple&& /*unused*/, Pred&& /*unused*/, std::index_seq
   return false;
 }
 
-template <typename Tuple, typename Pred, size_t FirstIs, size_t... Is>
+template <typename Tuple, typename Pred, std::size_t FirstIs, std::size_t... Is>
 constexpr bool any_of_impl(Tuple&& t, Pred&& pred, std::index_sequence<FirstIs, Is...>)
 {
   return pred(std::get<FirstIs>(t)) ||
          any_of_impl(std::forward<Tuple>(t), std::forward<Pred>(pred), std::index_sequence<Is...>{});
 }
 
-template <typename... Elements, typename Pred, size_t... is>
+template <typename... Elements, typename Pred, std::size_t... is>
 constexpr bool any_of(std::tuple<Elements...>& t, Pred&& pred)
 {
   return any_of_impl(t, std::forward<Pred>(pred), std::index_sequence_for<Elements...>{});
 }
 
-template <typename... Elements, typename Pred, size_t... is>
+template <typename... Elements, typename Pred, std::size_t... is>
 constexpr bool any_of(const std::tuple<Elements...>& t, Pred&& pred)
 {
   return any_of_impl(t, std::forward<Pred>(pred), std::index_sequence_for<Elements...>{});

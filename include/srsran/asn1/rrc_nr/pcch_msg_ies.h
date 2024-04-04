@@ -102,6 +102,9 @@ private:
 // PagingGroupList-r17 ::= SEQUENCE (SIZE (1..32)) OF TMGI-r17
 using paging_group_list_r17_l = dyn_array<tmgi_r17_s>;
 
+// PagingRecordList-v1700 ::= SEQUENCE (SIZE (1..32)) OF PagingRecord-v1700
+using paging_record_list_v1700_l = dyn_array<paging_record_v1700_s>;
+
 // PagingRecord ::= SEQUENCE
 struct paging_record_s {
   bool           ext                 = false;
@@ -115,8 +118,8 @@ struct paging_record_s {
   void        to_json(json_writer& j) const;
 };
 
-// PagingRecordList-v1700 ::= SEQUENCE (SIZE (1..32)) OF PagingRecord-v1700
-using paging_record_list_v1700_l = dyn_array<paging_record_v1700_s>;
+// PagingRecordList ::= SEQUENCE (SIZE (1..32)) OF PagingRecord
+using paging_record_list_l = dyn_array<paging_record_s>;
 
 // Paging-v1700-IEs ::= SEQUENCE
 struct paging_v1700_ies_s {
@@ -129,9 +132,6 @@ struct paging_v1700_ies_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
-
-// PagingRecordList ::= SEQUENCE (SIZE (1..32)) OF PagingRecord
-using paging_record_list_l = dyn_array<paging_record_s>;
 
 // Paging ::= SEQUENCE
 struct paging_s {

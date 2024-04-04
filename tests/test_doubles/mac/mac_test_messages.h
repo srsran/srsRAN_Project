@@ -32,7 +32,8 @@ struct pucch_info;
 namespace test_helpers {
 
 /// Creates a CCCH message with the given RNTI.
-mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
+mac_rx_data_indication
+create_ccch_message(slot_point sl_rx, rnti_t rnti, du_cell_index_t du_cell_index = to_du_cell_index(0));
 
 mac_rx_data_indication create_pdu_with_sdu(slot_point sl_rx, rnti_t rnti, lcid_t lcid);
 

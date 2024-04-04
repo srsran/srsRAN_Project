@@ -47,7 +47,7 @@ struct srb_pdcp_context {
   pdcp_rrc_ue_rx_adapter         rrc_rx_data_notifier;
   pdcp_rx_control_rrc_ue_adapter rrc_rx_control_notifier;
 
-  srb_pdcp_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers)
+  srb_pdcp_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor)
   {
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
@@ -62,6 +62,10 @@ struct srb_pdcp_context {
     srb_pdcp.ue_dl_timer_factory   = timers;
     srb_pdcp.ue_ul_timer_factory   = timers;
     srb_pdcp.ue_ctrl_timer_factory = timers;
+    // Uplink, Downlink, Control and Crypto run in the same executor
+    srb_pdcp.ue_dl_executor  = &executor;
+    srb_pdcp.ue_ul_executor  = &executor;
+    srb_pdcp.crypto_executor = &executor;
 
     // create PDCP entity
     entity = create_pdcp_entity(srb_pdcp);
@@ -72,8 +76,8 @@ struct srb_pdcp_context {
 class ue_srb_context
 {
 public:
-  ue_srb_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers) :
-    pdcp_context(ue_index, srb_id, timers)
+  ue_srb_context(const ue_index_t ue_index, const srb_id_t srb_id, timer_factory timers, task_executor& executor) :
+    pdcp_context(ue_index, srb_id, timers, executor)
   {
   }
 

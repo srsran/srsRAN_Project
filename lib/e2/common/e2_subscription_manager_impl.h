@@ -24,7 +24,7 @@
 
 #include "../procedures/e2_indication_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include <map>
@@ -40,36 +40,36 @@ public:
   /// \brief  Handles the subscription request message.
   /// \param[in] msg  The subscription request message.
   /// \return The subscription response message.
-  e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) override;
+  e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ric_sub_request_s& msg) override;
 
   /// \brief  Handles the subscription delete request message.
   /// \param[in] msg The subscription delete request message.
   /// \return The subscription delete response message.
   e2_subscribe_delete_response_message
-  handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
+  handle_subscription_delete(const asn1::e2ap::ric_sub_delete_request_s& msg) override;
 
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
   /// \param[in] ric_request_id  The ric request id.
   /// \param[in] ev_mng The event manager that will be used to start the subscription procedure.
-  void start_subscription(const asn1::e2ap::ri_crequest_id_s& ric_request_id,
+  void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
                           e2_event_manager&                   ev_mng,
                           uint16_t                            ran_func_id) override;
 
   /// @brief  Stops the subscription procedure associated with the given ric instance id.
   /// @param[in] ric_request_id  The ric request id.
   /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
-  void stop_subscription(const asn1::e2ap::ri_crequest_id_s&                 ric_request_id,
-                         e2_event_manager&                                   ev_mng,
-                         const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
+  void stop_subscription(const asn1::e2ap::ric_request_id_s&         ric_request_id,
+                         e2_event_manager&                           ev_mng,
+                         const asn1::e2ap::ric_sub_delete_request_s& msg) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.
   /// \param[in] ran_func_id The ran function id.
-  /// \param[in] ri_crequest_id_s associated with the subscription.
+  /// \param[in] ric_request_id_s associated with the subscription.
   /// \return true if the action is supported, false otherwise.
-  bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& action,
+  bool action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& action,
                         uint16_t                                         ran_func_id,
-                        const asn1::e2ap::ri_crequest_id_s&              ric_request_id);
+                        const asn1::e2ap::ric_request_id_s&              ric_request_id);
 
   /// \brief  Gets the subscription outcome based on the subscription.
   /// \param[in]  ran_func_id The ran function id.
@@ -79,7 +79,7 @@ public:
   void get_subscription_result(uint16_t                                          ran_func_id,
                                e2_subscribe_reponse_message&                     outcome,
                                e2_subscription_t&                                subscription,
-                               const asn1::e2ap::ri_cactions_to_be_setup_list_l& actions);
+                               const asn1::e2ap::ric_actions_to_be_setup_list_l& actions);
 
   /// \brief Adds an e2sm service to the list of services that can be used to unpack e2sm messages.
   /// \param[in] oid The oid of the e2sm service.

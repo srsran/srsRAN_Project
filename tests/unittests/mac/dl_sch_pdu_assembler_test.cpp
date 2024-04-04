@@ -189,7 +189,7 @@ protected:
   byte_buffer                  msg3_pdu;
   mac_ue_create_request        req = test_helpers::make_default_ue_creation_request();
   du_rnti_table                rnti_table;
-  mac_dl_ue_manager            ue_mng;
+  mac_dl_ue_repository         ue_mng;
   std::vector<dummy_dl_bearer> dl_bearers;
   manual_task_worker           task_worker{16};
   cell_dl_harq_buffer_pool     harqs;

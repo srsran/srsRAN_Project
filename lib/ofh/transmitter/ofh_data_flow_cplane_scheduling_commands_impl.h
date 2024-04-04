@@ -89,10 +89,8 @@ private:
   const ether::vlan_frame_params                    vlan_params;
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
-  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;
-  std::shared_ptr<ether::eth_frame_pool>            frame_pool_ptr;
-  uplink_cplane_context_repository&                 ul_cplane_context_repo;
-  ether::eth_frame_pool&                            frame_pool;
+  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
+  std::shared_ptr<ether::eth_frame_pool>            frame_pool;
   std::unique_ptr<ether::vlan_frame_builder>        eth_builder;
   std::unique_ptr<ecpri::packet_builder>            ecpri_builder;
   std::unique_ptr<cplane_message_builder>           cp_builder;

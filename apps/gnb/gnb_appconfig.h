@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "gnb_os_sched_affinity_manager.h"
+#include "../services/os_sched_affinity_manager.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
@@ -1066,8 +1066,10 @@ struct ru_ofh_cell_appconfig {
   std::string ru_mac_address = "70:b3:d5:e1:5b:06";
   /// Distributed Unit MAC address.
   std::string du_mac_address = "00:11:22:33:00:77";
-  /// V-LAN Tag control information field.
-  uint16_t vlan_tag = 1U;
+  /// V-LAN Tag control information field for C-Plane.
+  uint16_t vlan_tag_cp = 1U;
+  /// V-LAN Tag control information field for U-Plane.
+  uint16_t vlan_tag_up = 1U;
   /// RU PRACH port.
   std::vector<unsigned> ru_prach_port_id = {4, 5};
   /// RU Downlink port.
@@ -1107,23 +1109,15 @@ struct buffer_pool_appconfig {
 /// CPU affinities configuration for the cell.
 struct cpu_affinities_cell_appconfig {
   /// L1 uplink CPU affinity mask.
-  gnb_os_sched_affinity_config l1_ul_cpu_cfg = {gnb_sched_affinity_mask_types::l1_ul,
-                                                {},
-                                                gnb_sched_affinity_mask_policy::mask};
+  os_sched_affinity_config l1_ul_cpu_cfg = {sched_affinity_mask_types::l1_ul, {}, sched_affinity_mask_policy::mask};
   /// L1 downlink workers CPU affinity mask.
-  gnb_os_sched_affinity_config l1_dl_cpu_cfg = {gnb_sched_affinity_mask_types::l1_dl,
-                                                {},
-                                                gnb_sched_affinity_mask_policy::mask};
+  os_sched_affinity_config l1_dl_cpu_cfg = {sched_affinity_mask_types::l1_dl, {}, sched_affinity_mask_policy::mask};
 
   /// L2 workers CPU affinity mask.
-  gnb_os_sched_affinity_config l2_cell_cpu_cfg = {gnb_sched_affinity_mask_types::l2_cell,
-                                                  {},
-                                                  gnb_sched_affinity_mask_policy::mask};
+  os_sched_affinity_config l2_cell_cpu_cfg = {sched_affinity_mask_types::l2_cell, {}, sched_affinity_mask_policy::mask};
 
   /// Radio Unit workers CPU affinity mask.
-  gnb_os_sched_affinity_config ru_cpu_cfg = {gnb_sched_affinity_mask_types::ru,
-                                             {},
-                                             gnb_sched_affinity_mask_policy::mask};
+  os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
 };
 
 /// CPU affinities configuration for the gNB app.
@@ -1131,9 +1125,9 @@ struct cpu_affinities_appconfig {
   /// CPUs isolation.
   optional<os_sched_affinity_bitmask> isolated_cpus;
   /// Low priority workers CPU affinity mask.
-  gnb_os_sched_affinity_config low_priority_cpu_cfg = {gnb_sched_affinity_mask_types::low_priority,
-                                                       {},
-                                                       gnb_sched_affinity_mask_policy::mask};
+  os_sched_affinity_config low_priority_cpu_cfg = {sched_affinity_mask_types::low_priority,
+                                                   {},
+                                                   sched_affinity_mask_policy::mask};
 };
 
 /// Non real time thread configuration for the gNB.

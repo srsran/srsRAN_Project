@@ -82,6 +82,7 @@ public:
                         ue_exec_mapper_->dl_pdu_executor(),
                         ue_exec_mapper_->ul_pdu_executor(),
                         ue_exec_mapper_->ctrl_executor(),
+                        ue_exec_mapper_->crypto_executor(),
                         gtpu_pcap),
     ue_exec_mapper(std::move(ue_exec_mapper_)),
     ue_dl_timer_factory(ue_dl_timer_factory_),

@@ -80,16 +80,16 @@ private:
 
   /// \brief Notify about the reception of an ric subscription request message.
   /// \param[in] msg The received ric subscription request message.
-  void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
+  void handle_ric_subscription_request(const asn1::e2ap::ric_sub_request_s& msg);
 
   /// \brief Notify about the reception of an ric control request message.
   /// \param[in] msg The received ric control request message.
   /// \return The ric control response message.
-  void handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s msg);
+  void handle_ric_control_request(const asn1::e2ap::ric_ctrl_request_s msg);
 
   /// \brief Notify about the reception of an ric subscription delete request message.
   /// \param[in] msg The received ric subscription delete request message.
-  void handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg);
+  void handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_delete_request_s& msg);
 
   /// \brief handle e2 setup response message from the ric interface.
   /// @param[in] msg  The received e2 setup response message.
@@ -107,8 +107,8 @@ private:
   e2ap_configuration&                                  cfg;
   timer_factory                                        timers;
   e2_message_notifier&                                 pdu_notifier;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  candidate_ran_functions;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  allowed_ran_functions;
+  std::map<uint16_t, asn1::e2ap::ran_function_item_s>  candidate_ran_functions;
+  std::map<uint16_t, asn1::e2ap::ran_function_item_s>  allowed_ran_functions;
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
   e2_subscriber_mgmt&                                  subscription_mngr;
   e2sm_manager&                                        e2sm_mngr;

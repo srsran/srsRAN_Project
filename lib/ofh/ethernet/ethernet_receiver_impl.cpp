@@ -21,6 +21,7 @@
  */
 
 #include "ethernet_receiver_impl.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 #include "srsran/support/error_handling.h"
@@ -156,12 +157,14 @@ static bool wait_for_data(int socket, std::chrono::seconds timeout)
 
 void receiver_impl::receive()
 {
+  ofh_tracer << instant_trace_event("ofh_receiver_wait_data", instant_trace_event::cpu_scope::thread);
+
   if (!wait_for_data(socket_fd, std::chrono::seconds(1))) {
     return;
   }
 
-  static constexpr unsigned BUFFER_SIZE = 9600;
-
+  static constexpr unsigned        BUFFER_SIZE = 9600;
+  trace_point                      tp          = ofh_tracer.now();
   std::array<uint8_t, BUFFER_SIZE> buffer;
   auto                             nof_bytes = ::recvfrom(socket_fd, buffer.data(), BUFFER_SIZE, 0, nullptr, nullptr);
 
@@ -171,4 +174,5 @@ void receiver_impl::receive()
   }
 
   notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), nof_bytes));
+  ofh_tracer << trace_event("ofh_receiver", tp);
 }

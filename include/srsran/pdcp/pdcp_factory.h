@@ -47,6 +47,9 @@ struct pdcp_entity_creation_message {
   timer_factory                   ue_dl_timer_factory;
   timer_factory                   ue_ul_timer_factory;
   timer_factory                   ue_ctrl_timer_factory;
+  task_executor*                  ue_dl_executor;
+  task_executor*                  ue_ul_executor;
+  task_executor*                  crypto_executor;
 };
 
 /// Creates an instance of a PDCP entity.

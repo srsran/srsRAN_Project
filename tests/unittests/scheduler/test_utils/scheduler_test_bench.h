@@ -33,11 +33,20 @@
 
 namespace srsran {
 
+static scheduler_expert_config make_custom_scheduler_expert_config(bool enable_csi_rs_pdsch_multiplexing)
+{
+  scheduler_expert_config exp_cfg             = config_helpers::make_default_scheduler_expert_config();
+  exp_cfg.ue.enable_csi_rs_pdsch_multiplexing = enable_csi_rs_pdsch_multiplexing;
+  return exp_cfg;
+}
+
 /// Helper class to help setup a scheduler unit test.
 class scheduler_test_bench
 {
 public:
-  explicit scheduler_test_bench(unsigned tx_rx_delay_ = 4, subcarrier_spacing max_scs = subcarrier_spacing::kHz15) :
+  explicit scheduler_test_bench(unsigned           tx_rx_delay_                     = 4,
+                                subcarrier_spacing max_scs                          = subcarrier_spacing::kHz15,
+                                bool               enable_csi_rs_pdsch_multiplexing = true) :
     tx_rx_delay(tx_rx_delay_),
     logger([]() -> srslog::basic_logger& {
       srslog::init();
@@ -45,6 +54,7 @@ public:
       l.set_level(srslog::basic_levels::debug);
       return l;
     }()),
+    sched_cfg(make_custom_scheduler_expert_config(enable_csi_rs_pdsch_multiplexing)),
     sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif})),
     next_slot(test_helpers::generate_random_slot_point(max_scs))
   {
@@ -118,7 +128,7 @@ public:
 
   const unsigned                      tx_rx_delay;
   srslog::basic_logger&               logger;
-  const scheduler_expert_config       sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_expert_config       sched_cfg;
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;

@@ -37,6 +37,10 @@ namespace rrc_nr {
  *                             Constant Definitions
  ******************************************************************************/
 
+#define ASN1_RRC_NR_MAX_MEAS_FREQS_MN 32
+#define ASN1_RRC_NR_MAX_MEAS_FREQS_SN 32
+#define ASN1_RRC_NR_MAX_MEAS_IDENTITIES_MN 62
+#define ASN1_RRC_NR_MAX_CELL_PREP 32
 #define ASN1_RRC_NR_MAX_ADD_RACH_R17 256
 #define ASN1_RRC_NR_MAX_AI_DCI_PAYLOAD_SIZE_R16 128
 #define ASN1_RRC_NR_MAX_AI_DCI_PAYLOAD_SIZE_1_R16 127
@@ -396,10 +400,6 @@ namespace rrc_nr {
 #define ASN1_RRC_NR_MAX_NEIGH_CELL_MBS_R17 8
 #define ASN1_RRC_NR_MAX_NROF_PDCCH_BLIND_DETECTION_MIXED_1_R16 7
 #define ASN1_RRC_NR_MAX_NROF_PDCCH_BLIND_DETECTION_R17 16
-#define ASN1_RRC_NR_MAX_MEAS_FREQS_MN 32
-#define ASN1_RRC_NR_MAX_MEAS_FREQS_SN 32
-#define ASN1_RRC_NR_MAX_MEAS_IDENTITIES_MN 62
-#define ASN1_RRC_NR_MAX_CELL_PREP 32
 
 /*******************************************************************************
  *                              Struct Definitions
@@ -426,6 +426,105 @@ struct plmn_id_s {
   bool  mcc_present = false;
   mcc_l mcc;
   mnc_l mnc;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// SpatialRelationInfo-PDC-r17 ::= SEQUENCE
+struct spatial_relation_info_pdc_r17_s {
+  struct ref_sig_c_ {
+    struct srs_s_ {
+      uint8_t res_id = 0;
+      uint8_t ul_bwp = 0;
+    };
+    struct types_opts {
+      enum options { ssb_idx, csi_rs_idx, dl_prs_pdc, srs, /*...*/ nulltype } value;
+
+      const char* to_string() const;
+    };
+    using types = enumerated<types_opts, true>;
+
+    // choice methods
+    ref_sig_c_() = default;
+    ref_sig_c_(const ref_sig_c_& other);
+    ref_sig_c_& operator=(const ref_sig_c_& other);
+    ~ref_sig_c_() { destroy_(); }
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    uint8_t& ssb_idx()
+    {
+      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    uint8_t& csi_rs_idx()
+    {
+      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    uint8_t& dl_prs_pdc()
+    {
+      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    srs_s_& srs()
+    {
+      assert_choice_type(types::srs, type_, "referenceSignal");
+      return c.get<srs_s_>();
+    }
+    const uint8_t& ssb_idx() const
+    {
+      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    const uint8_t& csi_rs_idx() const
+    {
+      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    const uint8_t& dl_prs_pdc() const
+    {
+      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
+      return c.get<uint8_t>();
+    }
+    const srs_s_& srs() const
+    {
+      assert_choice_type(types::srs, type_, "referenceSignal");
+      return c.get<srs_s_>();
+    }
+    uint8_t& set_ssb_idx();
+    uint8_t& set_csi_rs_idx();
+    uint8_t& set_dl_prs_pdc();
+    srs_s_&  set_srs();
+
+  private:
+    types                   type_;
+    choice_buffer_t<srs_s_> c;
+
+    void destroy_();
+  };
+
+  // member variables
+  bool       ext = false;
+  ref_sig_c_ ref_sig;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// ServingCellAndBWP-Id-r17 ::= SEQUENCE
+struct serving_cell_and_bwp_id_r17_s {
+  uint8_t servingcell_r17 = 0;
+  uint8_t bwp_r17         = 0;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -729,105 +828,6 @@ struct srs_spatial_relation_info_s {
   bool       serving_cell_id_present = false;
   uint8_t    serving_cell_id         = 0;
   ref_sig_c_ ref_sig;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// ServingCellAndBWP-Id-r17 ::= SEQUENCE
-struct serving_cell_and_bwp_id_r17_s {
-  uint8_t servingcell_r17 = 0;
-  uint8_t bwp_r17         = 0;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SpatialRelationInfo-PDC-r17 ::= SEQUENCE
-struct spatial_relation_info_pdc_r17_s {
-  struct ref_sig_c_ {
-    struct srs_s_ {
-      uint8_t res_id = 0;
-      uint8_t ul_bwp = 0;
-    };
-    struct types_opts {
-      enum options { ssb_idx, csi_rs_idx, dl_prs_pdc, srs, /*...*/ nulltype } value;
-
-      const char* to_string() const;
-    };
-    using types = enumerated<types_opts, true>;
-
-    // choice methods
-    ref_sig_c_() = default;
-    ref_sig_c_(const ref_sig_c_& other);
-    ref_sig_c_& operator=(const ref_sig_c_& other);
-    ~ref_sig_c_() { destroy_(); }
-    void        set(types::options e = types::nulltype);
-    types       type() const { return type_; }
-    SRSASN_CODE pack(bit_ref& bref) const;
-    SRSASN_CODE unpack(cbit_ref& bref);
-    void        to_json(json_writer& j) const;
-    // getters
-    uint8_t& ssb_idx()
-    {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    uint8_t& csi_rs_idx()
-    {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    uint8_t& dl_prs_pdc()
-    {
-      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    srs_s_& srs()
-    {
-      assert_choice_type(types::srs, type_, "referenceSignal");
-      return c.get<srs_s_>();
-    }
-    const uint8_t& ssb_idx() const
-    {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    const uint8_t& csi_rs_idx() const
-    {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    const uint8_t& dl_prs_pdc() const
-    {
-      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
-      return c.get<uint8_t>();
-    }
-    const srs_s_& srs() const
-    {
-      assert_choice_type(types::srs, type_, "referenceSignal");
-      return c.get<srs_s_>();
-    }
-    uint8_t& set_ssb_idx();
-    uint8_t& set_csi_rs_idx();
-    uint8_t& set_dl_prs_pdc();
-    srs_s_&  set_srs();
-
-  private:
-    types                   type_;
-    choice_buffer_t<srs_s_> c;
-
-    void destroy_();
-  };
-
-  // member variables
-  bool       ext = false;
-  ref_sig_c_ ref_sig;
-  // ...
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1215,837 +1215,87 @@ struct srs_res_s {
   void        to_json(json_writer& j) const;
 };
 
-// SSB-Configuration-r16 ::= SEQUENCE
-struct ssb_cfg_r16_s {
-  struct half_frame_idx_r16_opts {
-    enum options { zero, one, nulltype } value;
-    typedef uint8_t number_type;
-
-    const char* to_string() const;
-    uint8_t     to_number() const;
-  };
-  using half_frame_idx_r16_e_ = enumerated<half_frame_idx_r16_opts>;
-  struct ssb_periodicity_r16_opts {
-    enum options { ms5, ms10, ms20, ms40, ms80, ms160, spare2, spare1, nulltype } value;
-    typedef uint8_t number_type;
-
-    const char* to_string() const;
-    uint8_t     to_number() const;
-  };
-  using ssb_periodicity_r16_e_ = enumerated<ssb_periodicity_r16_opts>;
-  struct sfn0_offset_r16_s_ {
-    bool     integer_sf_offset_r16_present = false;
-    uint16_t sfn_offset_r16                = 0;
-    uint8_t  integer_sf_offset_r16         = 0;
-  };
-
-  // member variables
-  bool                   ssb_periodicity_r16_present   = false;
-  bool                   sfn0_offset_r16_present       = false;
-  bool                   ss_pbch_block_pwr_r16_present = false;
-  uint32_t               ssb_freq_r16                  = 0;
-  half_frame_idx_r16_e_  half_frame_idx_r16;
-  subcarrier_spacing_e   ssb_subcarrier_spacing_r16;
-  ssb_periodicity_r16_e_ ssb_periodicity_r16;
-  sfn0_offset_r16_s_     sfn0_offset_r16;
-  uint8_t                sfn_ssb_offset_r16    = 0;
-  int8_t                 ss_pbch_block_pwr_r16 = -60;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// DL-PRS-Info-r16 ::= SEQUENCE
-struct dl_prs_info_r16_s {
-  bool     dl_prs_res_id_r16_present = false;
-  uint16_t dl_prs_id_r16             = 0;
-  uint8_t  dl_prs_res_set_id_r16     = 0;
-  uint8_t  dl_prs_res_id_r16         = 0;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SSB-InfoNcell-r16 ::= SEQUENCE
-struct ssb_info_ncell_r16_s {
-  bool          ssb_idx_ncell_r16_present = false;
-  bool          ssb_cfg_r16_present       = false;
-  uint16_t      phys_cell_id_r16          = 0;
-  uint8_t       ssb_idx_ncell_r16         = 0;
-  ssb_cfg_r16_s ssb_cfg_r16;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SRS-PeriodicityAndOffset-r16 ::= CHOICE
-struct srs_periodicity_and_offset_r16_c {
-  struct types_opts {
-    enum options {
-      sl1,
-      sl2,
-      sl4,
-      sl5,
-      sl8,
-      sl10,
-      sl16,
-      sl20,
-      sl32,
-      sl40,
-      sl64,
-      sl80,
-      sl160,
-      sl320,
-      sl640,
-      sl1280,
-      sl2560,
-      sl5120,
-      sl10240,
-      sl40960,
-      sl81920,
-      // ...
-      nulltype
-    } value;
-    typedef uint32_t number_type;
-
-    const char* to_string() const;
-    uint32_t    to_number() const;
-  };
-  using types = enumerated<types_opts, true>;
-
-  // choice methods
-  srs_periodicity_and_offset_r16_c() = default;
-  srs_periodicity_and_offset_r16_c(const srs_periodicity_and_offset_r16_c& other);
-  srs_periodicity_and_offset_r16_c& operator=(const srs_periodicity_and_offset_r16_c& other);
-  ~srs_periodicity_and_offset_r16_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  uint8_t& sl2()
-  {
-    assert_choice_type(types::sl2, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl4()
-  {
-    assert_choice_type(types::sl4, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl5()
-  {
-    assert_choice_type(types::sl5, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl8()
-  {
-    assert_choice_type(types::sl8, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl10()
-  {
-    assert_choice_type(types::sl10, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl16()
-  {
-    assert_choice_type(types::sl16, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl20()
-  {
-    assert_choice_type(types::sl20, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl32()
-  {
-    assert_choice_type(types::sl32, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl40()
-  {
-    assert_choice_type(types::sl40, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl64()
-  {
-    assert_choice_type(types::sl64, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl80()
-  {
-    assert_choice_type(types::sl80, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint8_t& sl160()
-  {
-    assert_choice_type(types::sl160, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  uint16_t& sl320()
-  {
-    assert_choice_type(types::sl320, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl640()
-  {
-    assert_choice_type(types::sl640, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl1280()
-  {
-    assert_choice_type(types::sl1280, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl2560()
-  {
-    assert_choice_type(types::sl2560, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl5120()
-  {
-    assert_choice_type(types::sl5120, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl10240()
-  {
-    assert_choice_type(types::sl10240, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl40960()
-  {
-    assert_choice_type(types::sl40960, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  uint32_t& sl81920()
-  {
-    assert_choice_type(types::sl81920, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint32_t>();
-  }
-  const uint8_t& sl2() const
-  {
-    assert_choice_type(types::sl2, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl4() const
-  {
-    assert_choice_type(types::sl4, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl5() const
-  {
-    assert_choice_type(types::sl5, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl8() const
-  {
-    assert_choice_type(types::sl8, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl10() const
-  {
-    assert_choice_type(types::sl10, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl16() const
-  {
-    assert_choice_type(types::sl16, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl20() const
-  {
-    assert_choice_type(types::sl20, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl32() const
-  {
-    assert_choice_type(types::sl32, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl40() const
-  {
-    assert_choice_type(types::sl40, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl64() const
-  {
-    assert_choice_type(types::sl64, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl80() const
-  {
-    assert_choice_type(types::sl80, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint8_t& sl160() const
-  {
-    assert_choice_type(types::sl160, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint8_t>();
-  }
-  const uint16_t& sl320() const
-  {
-    assert_choice_type(types::sl320, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl640() const
-  {
-    assert_choice_type(types::sl640, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl1280() const
-  {
-    assert_choice_type(types::sl1280, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl2560() const
-  {
-    assert_choice_type(types::sl2560, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl5120() const
-  {
-    assert_choice_type(types::sl5120, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl10240() const
-  {
-    assert_choice_type(types::sl10240, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl40960() const
-  {
-    assert_choice_type(types::sl40960, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint16_t>();
-  }
-  const uint32_t& sl81920() const
-  {
-    assert_choice_type(types::sl81920, type_, "SRS-PeriodicityAndOffset-r16");
-    return c.get<uint32_t>();
-  }
-  void      set_sl1();
-  uint8_t&  set_sl2();
-  uint8_t&  set_sl4();
-  uint8_t&  set_sl5();
-  uint8_t&  set_sl8();
-  uint8_t&  set_sl10();
-  uint8_t&  set_sl16();
-  uint8_t&  set_sl20();
-  uint8_t&  set_sl32();
-  uint8_t&  set_sl40();
-  uint8_t&  set_sl64();
-  uint8_t&  set_sl80();
-  uint8_t&  set_sl160();
-  uint16_t& set_sl320();
-  uint16_t& set_sl640();
-  uint16_t& set_sl1280();
-  uint16_t& set_sl2560();
-  uint16_t& set_sl5120();
-  uint16_t& set_sl10240();
-  uint16_t& set_sl40960();
-  uint32_t& set_sl81920();
-
-private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
-};
-
-// SRS-PeriodicityAndOffsetExt-r16 ::= CHOICE
-struct srs_periodicity_and_offset_ext_r16_c {
-  struct types_opts {
-    enum options { sl128, sl256, sl512, sl20480, nulltype } value;
-    typedef uint16_t number_type;
-
-    const char* to_string() const;
-    uint16_t    to_number() const;
-  };
-  using types = enumerated<types_opts>;
-
-  // choice methods
-  srs_periodicity_and_offset_ext_r16_c() = default;
-  srs_periodicity_and_offset_ext_r16_c(const srs_periodicity_and_offset_ext_r16_c& other);
-  srs_periodicity_and_offset_ext_r16_c& operator=(const srs_periodicity_and_offset_ext_r16_c& other);
-  ~srs_periodicity_and_offset_ext_r16_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  uint8_t& sl128()
-  {
-    assert_choice_type(types::sl128, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint8_t>();
-  }
-  uint16_t& sl256()
-  {
-    assert_choice_type(types::sl256, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl512()
-  {
-    assert_choice_type(types::sl512, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  uint16_t& sl20480()
-  {
-    assert_choice_type(types::sl20480, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  const uint8_t& sl128() const
-  {
-    assert_choice_type(types::sl128, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint8_t>();
-  }
-  const uint16_t& sl256() const
-  {
-    assert_choice_type(types::sl256, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl512() const
-  {
-    assert_choice_type(types::sl512, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  const uint16_t& sl20480() const
-  {
-    assert_choice_type(types::sl20480, type_, "SRS-PeriodicityAndOffsetExt-r16");
-    return c.get<uint16_t>();
-  }
-  uint8_t&  set_sl128();
-  uint16_t& set_sl256();
-  uint16_t& set_sl512();
-  uint16_t& set_sl20480();
-
-private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
-};
-
-// SRS-SpatialRelationInfoPos-r16 ::= CHOICE
-struct srs_spatial_relation_info_pos_r16_c {
-  struct serving_rs_r16_s_ {
-    struct ref_sig_r16_c_ {
-      struct srs_spatial_relation_r16_s_ {
-        struct res_sel_r16_c_ {
-          struct types_opts {
-            enum options { srs_res_id_r16, srs_pos_res_id_r16, nulltype } value;
-
-            const char* to_string() const;
-          };
-          using types = enumerated<types_opts>;
-
-          // choice methods
-          res_sel_r16_c_() = default;
-          res_sel_r16_c_(const res_sel_r16_c_& other);
-          res_sel_r16_c_& operator=(const res_sel_r16_c_& other);
-          ~res_sel_r16_c_() { destroy_(); }
-          void        set(types::options e = types::nulltype);
-          types       type() const { return type_; }
-          SRSASN_CODE pack(bit_ref& bref) const;
-          SRSASN_CODE unpack(cbit_ref& bref);
-          void        to_json(json_writer& j) const;
-          // getters
-          uint8_t& srs_res_id_r16()
-          {
-            assert_choice_type(types::srs_res_id_r16, type_, "resourceSelection-r16");
-            return c.get<uint8_t>();
-          }
-          uint8_t& srs_pos_res_id_r16()
-          {
-            assert_choice_type(types::srs_pos_res_id_r16, type_, "resourceSelection-r16");
-            return c.get<uint8_t>();
-          }
-          const uint8_t& srs_res_id_r16() const
-          {
-            assert_choice_type(types::srs_res_id_r16, type_, "resourceSelection-r16");
-            return c.get<uint8_t>();
-          }
-          const uint8_t& srs_pos_res_id_r16() const
-          {
-            assert_choice_type(types::srs_pos_res_id_r16, type_, "resourceSelection-r16");
-            return c.get<uint8_t>();
-          }
-          uint8_t& set_srs_res_id_r16();
-          uint8_t& set_srs_pos_res_id_r16();
-
-        private:
-          types               type_;
-          pod_choice_buffer_t c;
-
-          void destroy_();
-        };
-
-        // member variables
-        res_sel_r16_c_ res_sel_r16;
-        uint8_t        ul_bwp_r16 = 0;
-      };
-      struct types_opts {
-        enum options { ssb_idx_serving_r16, csi_rs_idx_serving_r16, srs_spatial_relation_r16, nulltype } value;
-
-        const char* to_string() const;
-      };
-      using types = enumerated<types_opts>;
-
-      // choice methods
-      ref_sig_r16_c_() = default;
-      ref_sig_r16_c_(const ref_sig_r16_c_& other);
-      ref_sig_r16_c_& operator=(const ref_sig_r16_c_& other);
-      ~ref_sig_r16_c_() { destroy_(); }
-      void        set(types::options e = types::nulltype);
-      types       type() const { return type_; }
-      SRSASN_CODE pack(bit_ref& bref) const;
-      SRSASN_CODE unpack(cbit_ref& bref);
-      void        to_json(json_writer& j) const;
-      // getters
-      uint8_t& ssb_idx_serving_r16()
-      {
-        assert_choice_type(types::ssb_idx_serving_r16, type_, "referenceSignal-r16");
-        return c.get<uint8_t>();
-      }
-      uint8_t& csi_rs_idx_serving_r16()
-      {
-        assert_choice_type(types::csi_rs_idx_serving_r16, type_, "referenceSignal-r16");
-        return c.get<uint8_t>();
-      }
-      srs_spatial_relation_r16_s_& srs_spatial_relation_r16()
-      {
-        assert_choice_type(types::srs_spatial_relation_r16, type_, "referenceSignal-r16");
-        return c.get<srs_spatial_relation_r16_s_>();
-      }
-      const uint8_t& ssb_idx_serving_r16() const
-      {
-        assert_choice_type(types::ssb_idx_serving_r16, type_, "referenceSignal-r16");
-        return c.get<uint8_t>();
-      }
-      const uint8_t& csi_rs_idx_serving_r16() const
-      {
-        assert_choice_type(types::csi_rs_idx_serving_r16, type_, "referenceSignal-r16");
-        return c.get<uint8_t>();
-      }
-      const srs_spatial_relation_r16_s_& srs_spatial_relation_r16() const
-      {
-        assert_choice_type(types::srs_spatial_relation_r16, type_, "referenceSignal-r16");
-        return c.get<srs_spatial_relation_r16_s_>();
-      }
-      uint8_t&                     set_ssb_idx_serving_r16();
-      uint8_t&                     set_csi_rs_idx_serving_r16();
-      srs_spatial_relation_r16_s_& set_srs_spatial_relation_r16();
-
-    private:
-      types                                        type_;
-      choice_buffer_t<srs_spatial_relation_r16_s_> c;
-
-      void destroy_();
-    };
-
-    // member variables
-    bool           serving_cell_id_present = false;
-    uint8_t        serving_cell_id         = 0;
-    ref_sig_r16_c_ ref_sig_r16;
-  };
-  struct types_opts {
-    enum options { serving_rs_r16, ssb_ncell_r16, dl_prs_r16, nulltype } value;
-
-    const char* to_string() const;
-  };
-  using types = enumerated<types_opts>;
-
-  // choice methods
-  srs_spatial_relation_info_pos_r16_c() = default;
-  srs_spatial_relation_info_pos_r16_c(const srs_spatial_relation_info_pos_r16_c& other);
-  srs_spatial_relation_info_pos_r16_c& operator=(const srs_spatial_relation_info_pos_r16_c& other);
-  ~srs_spatial_relation_info_pos_r16_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  serving_rs_r16_s_& serving_rs_r16()
-  {
-    assert_choice_type(types::serving_rs_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<serving_rs_r16_s_>();
-  }
-  ssb_info_ncell_r16_s& ssb_ncell_r16()
-  {
-    assert_choice_type(types::ssb_ncell_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<ssb_info_ncell_r16_s>();
-  }
-  dl_prs_info_r16_s& dl_prs_r16()
-  {
-    assert_choice_type(types::dl_prs_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<dl_prs_info_r16_s>();
-  }
-  const serving_rs_r16_s_& serving_rs_r16() const
-  {
-    assert_choice_type(types::serving_rs_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<serving_rs_r16_s_>();
-  }
-  const ssb_info_ncell_r16_s& ssb_ncell_r16() const
-  {
-    assert_choice_type(types::ssb_ncell_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<ssb_info_ncell_r16_s>();
-  }
-  const dl_prs_info_r16_s& dl_prs_r16() const
-  {
-    assert_choice_type(types::dl_prs_r16, type_, "SRS-SpatialRelationInfoPos-r16");
-    return c.get<dl_prs_info_r16_s>();
-  }
-  serving_rs_r16_s_&    set_serving_rs_r16();
-  ssb_info_ncell_r16_s& set_ssb_ncell_r16();
-  dl_prs_info_r16_s&    set_dl_prs_r16();
-
-private:
-  types                                                                       type_;
-  choice_buffer_t<dl_prs_info_r16_s, serving_rs_r16_s_, ssb_info_ncell_r16_s> c;
-
-  void destroy_();
-};
-
-// SRS-PosResource-r16 ::= SEQUENCE
-struct srs_pos_res_r16_s {
-  struct tx_comb_r16_c_ {
-    struct n2_r16_s_ {
-      uint8_t comb_offset_n2_r16  = 0;
-      uint8_t cyclic_shift_n2_r16 = 0;
-    };
-    struct n4_r16_s_ {
-      uint8_t comb_offset_n4_r16  = 0;
-      uint8_t cyclic_shift_n4_r16 = 0;
-    };
-    struct n8_r16_s_ {
-      uint8_t comb_offset_n8_r16  = 0;
-      uint8_t cyclic_shift_n8_r16 = 0;
-    };
-    struct types_opts {
-      enum options { n2_r16, n4_r16, n8_r16, /*...*/ nulltype } value;
-      typedef uint8_t number_type;
-
-      const char* to_string() const;
-      uint8_t     to_number() const;
-    };
-    using types = enumerated<types_opts, true>;
-
-    // choice methods
-    tx_comb_r16_c_() = default;
-    tx_comb_r16_c_(const tx_comb_r16_c_& other);
-    tx_comb_r16_c_& operator=(const tx_comb_r16_c_& other);
-    ~tx_comb_r16_c_() { destroy_(); }
-    void        set(types::options e = types::nulltype);
-    types       type() const { return type_; }
-    SRSASN_CODE pack(bit_ref& bref) const;
-    SRSASN_CODE unpack(cbit_ref& bref);
-    void        to_json(json_writer& j) const;
-    // getters
-    n2_r16_s_& n2_r16()
-    {
-      assert_choice_type(types::n2_r16, type_, "transmissionComb-r16");
-      return c.get<n2_r16_s_>();
-    }
-    n4_r16_s_& n4_r16()
-    {
-      assert_choice_type(types::n4_r16, type_, "transmissionComb-r16");
-      return c.get<n4_r16_s_>();
-    }
-    n8_r16_s_& n8_r16()
-    {
-      assert_choice_type(types::n8_r16, type_, "transmissionComb-r16");
-      return c.get<n8_r16_s_>();
-    }
-    const n2_r16_s_& n2_r16() const
-    {
-      assert_choice_type(types::n2_r16, type_, "transmissionComb-r16");
-      return c.get<n2_r16_s_>();
-    }
-    const n4_r16_s_& n4_r16() const
-    {
-      assert_choice_type(types::n4_r16, type_, "transmissionComb-r16");
-      return c.get<n4_r16_s_>();
-    }
-    const n8_r16_s_& n8_r16() const
-    {
-      assert_choice_type(types::n8_r16, type_, "transmissionComb-r16");
-      return c.get<n8_r16_s_>();
-    }
-    n2_r16_s_& set_n2_r16();
-    n4_r16_s_& set_n4_r16();
-    n8_r16_s_& set_n8_r16();
-
-  private:
-    types                                            type_;
-    choice_buffer_t<n2_r16_s_, n4_r16_s_, n8_r16_s_> c;
-
-    void destroy_();
-  };
-  struct res_map_r16_s_ {
-    struct nrof_symbols_r16_opts {
-      enum options { n1, n2, n4, n8, n12, nulltype } value;
-      typedef uint8_t number_type;
-
-      const char* to_string() const;
-      uint8_t     to_number() const;
-    };
-    using nrof_symbols_r16_e_ = enumerated<nrof_symbols_r16_opts>;
-
-    // member variables
-    uint8_t             start_position_r16 = 0;
-    nrof_symbols_r16_e_ nrof_symbols_r16;
-  };
-  struct freq_hop_r16_s_ {
-    bool    ext       = false;
-    uint8_t c_srs_r16 = 0;
-    // ...
-  };
-  struct group_or_seq_hop_r16_opts {
-    enum options { neither, group_hop, seq_hop, nulltype } value;
-
-    const char* to_string() const;
-  };
-  using group_or_seq_hop_r16_e_ = enumerated<group_or_seq_hop_r16_opts>;
-  struct res_type_r16_c_ {
-    struct aperiodic_r16_s_ {
-      bool    ext                     = false;
-      bool    slot_offset_r16_present = false;
-      uint8_t slot_offset_r16         = 1;
-      // ...
-    };
-    struct semi_persistent_r16_s_ {
-      bool                             ext = false;
-      srs_periodicity_and_offset_r16_c periodicity_and_offset_sp_r16;
-      // ...
-      // group 0
-      copy_ptr<srs_periodicity_and_offset_ext_r16_c> periodicity_and_offset_sp_ext_r16;
-
-      // sequence methods
-      SRSASN_CODE pack(bit_ref& bref) const;
-      SRSASN_CODE unpack(cbit_ref& bref);
-      void        to_json(json_writer& j) const;
-    };
-    struct periodic_r16_s_ {
-      bool                             ext = false;
-      srs_periodicity_and_offset_r16_c periodicity_and_offset_p_r16;
-      // ...
-      // group 0
-      copy_ptr<srs_periodicity_and_offset_ext_r16_c> periodicity_and_offset_p_ext_r16;
-
-      // sequence methods
-      SRSASN_CODE pack(bit_ref& bref) const;
-      SRSASN_CODE unpack(cbit_ref& bref);
-      void        to_json(json_writer& j) const;
-    };
-    struct types_opts {
-      enum options { aperiodic_r16, semi_persistent_r16, periodic_r16, nulltype } value;
-
-      const char* to_string() const;
-    };
-    using types = enumerated<types_opts>;
-
-    // choice methods
-    res_type_r16_c_() = default;
-    res_type_r16_c_(const res_type_r16_c_& other);
-    res_type_r16_c_& operator=(const res_type_r16_c_& other);
-    ~res_type_r16_c_() { destroy_(); }
-    void        set(types::options e = types::nulltype);
-    types       type() const { return type_; }
-    SRSASN_CODE pack(bit_ref& bref) const;
-    SRSASN_CODE unpack(cbit_ref& bref);
-    void        to_json(json_writer& j) const;
-    // getters
-    aperiodic_r16_s_& aperiodic_r16()
-    {
-      assert_choice_type(types::aperiodic_r16, type_, "resourceType-r16");
-      return c.get<aperiodic_r16_s_>();
-    }
-    semi_persistent_r16_s_& semi_persistent_r16()
-    {
-      assert_choice_type(types::semi_persistent_r16, type_, "resourceType-r16");
-      return c.get<semi_persistent_r16_s_>();
-    }
-    periodic_r16_s_& periodic_r16()
-    {
-      assert_choice_type(types::periodic_r16, type_, "resourceType-r16");
-      return c.get<periodic_r16_s_>();
-    }
-    const aperiodic_r16_s_& aperiodic_r16() const
-    {
-      assert_choice_type(types::aperiodic_r16, type_, "resourceType-r16");
-      return c.get<aperiodic_r16_s_>();
-    }
-    const semi_persistent_r16_s_& semi_persistent_r16() const
-    {
-      assert_choice_type(types::semi_persistent_r16, type_, "resourceType-r16");
-      return c.get<semi_persistent_r16_s_>();
-    }
-    const periodic_r16_s_& periodic_r16() const
-    {
-      assert_choice_type(types::periodic_r16, type_, "resourceType-r16");
-      return c.get<periodic_r16_s_>();
-    }
-    aperiodic_r16_s_&       set_aperiodic_r16();
-    semi_persistent_r16_s_& set_semi_persistent_r16();
-    periodic_r16_s_&        set_periodic_r16();
-
-  private:
-    types                                                                      type_;
-    choice_buffer_t<aperiodic_r16_s_, periodic_r16_s_, semi_persistent_r16_s_> c;
-
-    void destroy_();
-  };
-
-  // member variables
-  bool                                ext                                   = false;
-  bool                                spatial_relation_info_pos_r16_present = false;
-  uint8_t                             srs_pos_res_id_r16                    = 0;
-  tx_comb_r16_c_                      tx_comb_r16;
-  res_map_r16_s_                      res_map_r16;
-  uint16_t                            freq_domain_shift_r16 = 0;
-  freq_hop_r16_s_                     freq_hop_r16;
-  group_or_seq_hop_r16_e_             group_or_seq_hop_r16;
-  res_type_r16_c_                     res_type_r16;
-  uint32_t                            seq_id_r16 = 0;
-  srs_spatial_relation_info_pos_r16_c spatial_relation_info_pos_r16;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // SRS-PosResourceAP-r16 ::= SEQUENCE
 struct srs_pos_res_ap_r16_s {
-  struct max_num_ap_srs_pos_res_per_bwp_r16_opts {
+  struct max_num_ap_srs_pos_res_list_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  using max_num_ap_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_r16_opts>;
-  struct max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts {
+  using max_num_ap_srs_pos_res_list_per_bwp_r16_e_ = enumerated<max_num_ap_srs_pos_res_list_per_bwp_r16_opts>;
+  struct max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  using max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts>;
+  using max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_e_ =
+      enumerated<max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_opts>;
 
   // member variables
-  max_num_ap_srs_pos_res_per_bwp_r16_e_          max_num_ap_srs_pos_res_per_bwp_r16;
-  max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_ max_num_ap_srs_pos_res_per_bwp_per_slot_r16;
+  max_num_ap_srs_pos_res_list_per_bwp_r16_e_          max_num_ap_srs_pos_res_list_per_bwp_r16;
+  max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16_e_ max_num_ap_srs_pos_res_list_per_bwp_per_slot_r16;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// SRS-PosResources-r16 ::= SEQUENCE
+struct srs_pos_res_list_r16_s {
+  struct max_num_srs_pos_res_set_per_bwp_r16_opts {
+    enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  using max_num_srs_pos_res_set_per_bwp_r16_e_ = enumerated<max_num_srs_pos_res_set_per_bwp_r16_opts>;
+  struct max_num_srs_pos_res_list_per_bwp_r16_opts {
+    enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  using max_num_srs_pos_res_list_per_bwp_r16_e_ = enumerated<max_num_srs_pos_res_list_per_bwp_r16_opts>;
+  struct max_num_srs_res_per_bwp_per_slot_r16_opts {
+    enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  using max_num_srs_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_srs_res_per_bwp_per_slot_r16_opts>;
+  struct max_num_periodic_srs_pos_res_list_per_bwp_r16_opts {
+    enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  using max_num_periodic_srs_pos_res_list_per_bwp_r16_e_ =
+      enumerated<max_num_periodic_srs_pos_res_list_per_bwp_r16_opts>;
+  struct max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_opts {
+    enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  using max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_e_ =
+      enumerated<max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_opts>;
+
+  // member variables
+  max_num_srs_pos_res_set_per_bwp_r16_e_                    max_num_srs_pos_res_set_per_bwp_r16;
+  max_num_srs_pos_res_list_per_bwp_r16_e_                   max_num_srs_pos_res_list_per_bwp_r16;
+  max_num_srs_res_per_bwp_per_slot_r16_e_                   max_num_srs_res_per_bwp_per_slot_r16;
+  max_num_periodic_srs_pos_res_list_per_bwp_r16_e_          max_num_periodic_srs_pos_res_list_per_bwp_r16;
+  max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16_e_ max_num_periodic_srs_pos_res_list_per_bwp_per_slot_r16;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2055,26 +1305,27 @@ struct srs_pos_res_ap_r16_s {
 
 // SRS-PosResourceSP-r16 ::= SEQUENCE
 struct srs_pos_res_sp_r16_s {
-  struct max_num_sp_srs_pos_res_per_bwp_r16_opts {
+  struct max_num_sp_srs_pos_res_list_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  using max_num_sp_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_r16_opts>;
-  struct max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts {
+  using max_num_sp_srs_pos_res_list_per_bwp_r16_e_ = enumerated<max_num_sp_srs_pos_res_list_per_bwp_r16_opts>;
+  struct max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  using max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts>;
+  using max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_e_ =
+      enumerated<max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_opts>;
 
   // member variables
-  max_num_sp_srs_pos_res_per_bwp_r16_e_          max_num_sp_srs_pos_res_per_bwp_r16;
-  max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_ max_num_sp_srs_pos_res_per_bwp_per_slot_r16;
+  max_num_sp_srs_pos_res_list_per_bwp_r16_e_          max_num_sp_srs_pos_res_list_per_bwp_r16;
+  max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16_e_ max_num_sp_srs_pos_res_list_per_bwp_per_slot_r16;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -2084,11 +1335,11 @@ struct srs_pos_res_sp_r16_s {
 
 // SRS-AllPosResources-r16 ::= SEQUENCE
 struct srs_all_pos_res_r16_s {
-  bool                 srs_pos_res_ap_r16_present = false;
-  bool                 srs_pos_res_sp_r16_present = false;
-  srs_pos_res_r16_s    srs_pos_res_r16;
-  srs_pos_res_ap_r16_s srs_pos_res_ap_r16;
-  srs_pos_res_sp_r16_s srs_pos_res_sp_r16;
+  bool                   srs_pos_res_ap_r16_present = false;
+  bool                   srs_pos_res_sp_r16_present = false;
+  srs_pos_res_list_r16_s srs_pos_res_list_r16;
+  srs_pos_res_ap_r16_s   srs_pos_res_ap_r16;
+  srs_pos_res_sp_r16_s   srs_pos_res_sp_r16;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

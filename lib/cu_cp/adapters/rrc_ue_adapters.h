@@ -113,6 +113,13 @@ public:
     return timers;
   }
 
+  task_executor& get_executor() override
+  {
+    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
+    srsran_assert(ue_exec != nullptr, "UE executor must not be nullptr");
+    return *ue_exec;
+  }
+
 private:
   ue_index_t                    ue_index;
   task_executor*                ue_exec = nullptr;

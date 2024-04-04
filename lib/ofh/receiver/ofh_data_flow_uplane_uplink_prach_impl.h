@@ -48,7 +48,7 @@ struct data_flow_uplane_uplink_prach_impl_dependencies {
   /// User-Plane received symbol notifier.
   std::shared_ptr<uplane_rx_symbol_notifier> notifier;
   /// Control-Plane context repository.
-  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;
+  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> prach_context_repo;
   /// User-Plane message decoder.
@@ -73,8 +73,7 @@ private:
 private:
   srslog::basic_logger&                             logger;
   const bool                                        is_prach_cplane_enabled;
-  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;
-  uplink_cplane_context_repository&                 ul_cplane_context_repo;
+  std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   std::unique_ptr<uplane_message_decoder>           uplane_decoder;
   uplane_prach_symbol_data_flow_writer              prach_iq_writter;
   uplane_prach_data_flow_notifier                   notification_sender;

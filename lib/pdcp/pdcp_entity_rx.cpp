@@ -34,7 +34,9 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                pdcp_rx_config                  cfg_,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
-                               timer_factory                   ue_ul_timer_factory_) :
+                               timer_factory                   ue_ul_timer_factory_,
+                               task_executor&                  ue_ul_executor_,
+                               task_executor&                  crypto_executor_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
@@ -43,7 +45,9 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   rx_window(create_rx_window(cfg.sn_size)),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
-  ue_ul_timer_factory(ue_ul_timer_factory_)
+  ue_ul_timer_factory(ue_ul_timer_factory_),
+  ue_ul_executor(ue_ul_executor_),
+  crypto_executor(crypto_executor_)
 {
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::ms0 && cfg.t_reordering != pdcp_t_reordering::infinity) {
@@ -57,6 +61,10 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
     logger.log_warning("t-Reordering of infinity on DRBs is not advised. It can cause data stalls.");
   }
   logger.log_info("PDCP configured. {}", cfg);
+
+  // TODO: implement usage of crypto_executor
+  (void)ue_ul_executor;
+  (void)crypto_executor;
 }
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)

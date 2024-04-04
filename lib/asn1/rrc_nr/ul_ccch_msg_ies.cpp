@@ -28,6 +28,28 @@ using namespace asn1::rrc_nr;
  *                                Struct Methods
  ******************************************************************************/
 
+// ResumeCause ::= ENUMERATED
+const char* resume_cause_opts::to_string() const
+{
+  static const char* names[] = {"emergency",
+                                "highPriorityAccess",
+                                "mt-Access",
+                                "mo-Signalling",
+                                "mo-Data",
+                                "mo-VoiceCall",
+                                "mo-VideoCall",
+                                "mo-SMS",
+                                "rna-Update",
+                                "mps-PriorityAccess",
+                                "mcs-PriorityAccess",
+                                "spare1",
+                                "spare2",
+                                "spare3",
+                                "spare4",
+                                "spare5"};
+  return convert_enum_idx(names, 16, value, "resume_cause_e");
+}
+
 // EstablishmentCause ::= ENUMERATED
 const char* establishment_cause_opts::to_string() const
 {
@@ -189,6 +211,13 @@ int8_t init_ue_id_c::types_opts::to_number() const
   return map_enum_number(numbers, 1, value, "init_ue_id_c::types");
 }
 
+// ReestablishmentCause ::= ENUMERATED
+const char* reest_cause_opts::to_string() const
+{
+  static const char* names[] = {"reconfigurationFailure", "handoverFailure", "otherFailure", "spare1"};
+  return convert_enum_idx(names, 4, value, "reest_cause_e");
+}
+
 // ReestabUE-Identity ::= SEQUENCE
 SRSASN_CODE reestab_ue_id_s::pack(bit_ref& bref) const
 {
@@ -213,35 +242,6 @@ void reestab_ue_id_s::to_json(json_writer& j) const
   j.write_int("physCellId", pci);
   j.write_str("shortMAC-I", short_mac_i.to_string());
   j.end_obj();
-}
-
-// ReestablishmentCause ::= ENUMERATED
-const char* reest_cause_opts::to_string() const
-{
-  static const char* names[] = {"reconfigurationFailure", "handoverFailure", "otherFailure", "spare1"};
-  return convert_enum_idx(names, 4, value, "reest_cause_e");
-}
-
-// ResumeCause ::= ENUMERATED
-const char* resume_cause_opts::to_string() const
-{
-  static const char* names[] = {"emergency",
-                                "highPriorityAccess",
-                                "mt-Access",
-                                "mo-Signalling",
-                                "mo-Data",
-                                "mo-VoiceCall",
-                                "mo-VideoCall",
-                                "mo-SMS",
-                                "rna-Update",
-                                "mps-PriorityAccess",
-                                "mcs-PriorityAccess",
-                                "spare1",
-                                "spare2",
-                                "spare3",
-                                "spare4",
-                                "spare5"};
-  return convert_enum_idx(names, 16, value, "resume_cause_e");
 }
 
 // RRC-PosSystemInfoRequest-r16-IEs ::= SEQUENCE

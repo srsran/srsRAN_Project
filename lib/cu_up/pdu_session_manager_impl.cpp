@@ -50,6 +50,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    task_executor&                       ue_dl_exec_,
                                                    task_executor&                       ue_ul_exec_,
                                                    task_executor&                       ue_ctrl_exec_,
+                                                   task_executor&                       crypto_exec_,
                                                    dlt_pcap&                            gtpu_pcap_) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
@@ -67,6 +68,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_dl_exec(ue_dl_exec_),
   ue_ul_exec(ue_ul_exec_),
   ue_ctrl_exec(ue_ctrl_exec_),
+  crypto_exec(crypto_exec_),
   gtpu_pcap(gtpu_pcap_),
   f1u_gw(f1u_gw_)
 {
@@ -164,6 +166,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.ue_dl_timer_factory                  = ue_dl_timer_factory;
   pdcp_msg.ue_ul_timer_factory                  = ue_ul_timer_factory;
   pdcp_msg.ue_ctrl_timer_factory                = ue_ctrl_timer_factory;
+  pdcp_msg.ue_dl_executor                       = &ue_dl_exec;
+  pdcp_msg.ue_ul_executor                       = &ue_ul_exec;
+  pdcp_msg.crypto_executor                      = &crypto_exec;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);

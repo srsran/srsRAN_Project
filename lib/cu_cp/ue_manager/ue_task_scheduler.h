@@ -72,6 +72,8 @@ public:
 
   timer_factory get_timer_factory();
 
+  task_executor& get_executor();
+
   /// \brief Stops the UE task scheduler and discards all the pending tasks that haven't started running yet.
   void stop();
 

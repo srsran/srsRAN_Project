@@ -64,6 +64,10 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
     logger.warning("No available UE index for UE creation");
     return;
   }
+  if (stop_accepting_ues) {
+    logger.info("rnti={}: UL-CCCH indication dropped. Caused: The DU is being shut down.", msg.tc_rnti);
+    return;
+  }
 
   // Enqueue UE creation procedure
   ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(
@@ -78,6 +82,10 @@ du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& 
 {
   srsran_assert(msg.ue_index != INVALID_DU_UE_INDEX, "Invalid DU UE index");
   srsran_assert(not ue_db.contains(msg.ue_index), "Creating a ue={} but it already exists", msg.ue_index);
+  if (stop_accepting_ues) {
+    logger.info("ue={}: UE creation request ignored. Caused: The DU is being shut down.", msg.ue_index);
+    return launch_no_op_task(f1ap_ue_context_creation_response{false, rnti_t::INVALID_RNTI});
+  }
 
   // Initiate UE creation procedure and respond back to F1AP with allocated C-RNTI.
   return launch_async([this, msg](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
@@ -100,7 +108,7 @@ du_ue_manager::handle_ue_config_request(const f1ap_ue_context_update_request& ms
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
 {
   // Enqueue UE deletion procedure
-  return launch_async<ue_deletion_procedure>(msg, *this, cfg);
+  return launch_async<ue_deletion_procedure>(msg.ue_index, *this, cfg);
 }
 
 async_task<void> du_ue_manager::handle_ue_deactivation_request(du_ue_index_t ue_index)
@@ -133,6 +141,13 @@ du_ue_manager::handle_ue_config_request(const du_mac_sched_control_config& msg)
 
 async_task<void> du_ue_manager::stop()
 {
+  // Note: We cannot rely on the clean removal of UEs, as at the time the stop() is called, the lower layers may have
+  // already stopped, and no lower-layer indications are arriving.
+  if (stop_accepting_ues) {
+    return launch_no_op_task();
+  }
+  stop_accepting_ues = true;
+
   auto ue_it = ue_db.begin();
   return launch_async([this, ue_it, proc_logger = du_procedure_logger{logger, "DU UE Manager stop"}](
                           coro_context<async_task<void>>& ctx) mutable {

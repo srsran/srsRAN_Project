@@ -235,6 +235,14 @@ void sl_bwp_cfg_common_r16_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// SL-TxProfile-r17 ::= ENUMERATED
+const char* sl_tx_profile_r17_opts::to_string() const
+{
+  static const char* names[] = {
+      "drx-Compatible", "drx-Incompatible", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
+  return convert_enum_idx(names, 8, value, "sl_tx_profile_r17_e");
+}
+
 // SL-FreqConfigCommon-r16 ::= SEQUENCE
 SRSASN_CODE sl_freq_cfg_common_r16_s::pack(bit_ref& bref) const
 {
@@ -468,14 +476,6 @@ void sl_precfg_general_r16_s::to_json(json_writer& j) const
     j.write_str("reservedBits-r16", reserved_bits_r16.to_string());
   }
   j.end_obj();
-}
-
-// SL-TxProfile-r17 ::= ENUMERATED
-const char* sl_tx_profile_r17_opts::to_string() const
-{
-  static const char* names[] = {
-      "drx-Compatible", "drx-Incompatible", "spare6", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "sl_tx_profile_r17_e");
 }
 
 // SL-RoHC-Profiles-r16 ::= SEQUENCE

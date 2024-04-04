@@ -33,7 +33,7 @@ constexpr size_t MAX_K0_DELAY = 32;
 
 mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler_cell_info_handler& sched_,
-                                       mac_dl_ue_manager&               ue_mng_,
+                                       du_rnti_table&                   rnti_table,
                                        mac_cell_result_notifier&        phy_notifier_,
                                        task_executor&                   cell_exec_,
                                        task_executor&                   slot_exec_,
@@ -45,6 +45,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   slot_exec(slot_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
+  ue_mng(rnti_table),
   dl_harq_buffers(band_helper::get_n_rbs_from_bw(
                       MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz),
                       cell_cfg.scs_common,
@@ -59,10 +60,9 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payloads),
   rar_assembler(pdu_pool),
-  dlsch_assembler(ue_mng_, dl_harq_buffers),
+  dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
-  ue_mng(ue_mng_),
   pcap(pcap_)
 {
 }
@@ -74,7 +74,16 @@ async_task<void> mac_cell_processor::start()
 
 async_task<void> mac_cell_processor::stop()
 {
-  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() { state = cell_state::inactive; });
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this]() {
+    if (state == cell_state::inactive) {
+      return;
+    }
+
+    // Set cell state as inactive to stop answering to slot indications.
+    state = cell_state::inactive;
+
+    logger.info("cell={}: Cell was stopped.", cell_cfg.cell_index);
+  });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
@@ -93,6 +102,73 @@ void mac_cell_processor::handle_error_indication(slot_point sl_tx, error_event e
 {
   // Forward error indication to the scheduler to be processed asynchronously.
   sched.handle_error_indication(sl_tx, cell_cfg.cell_index, event);
+}
+
+async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request)
+{
+  // > Allocate DL HARQ resources for the new UE.
+  // Note: This may call a large allocation, and therefore, should be done out of the cell thread to avoid causing
+  // lates.
+  dl_harq_buffers.allocate_ue_buffers(request.ue_index, MAX_NOF_HARQS);
+
+  // > Create a MAC UE DL context.
+  mac_dl_ue_context ue_inst(request);
+
+  return launch_async(
+      [this, request, ue_inst = std::move(ue_inst), result = false](coro_context<async_task<bool>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        // > Change to respective DL executor
+        CORO_AWAIT(execute_on(cell_exec));
+
+        // > Insert UE and DL bearers.
+        // Note: Ensure we only do so if the cell is active.
+        result = state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
+
+        // > Change back to CTRL executor before returning
+        CORO_AWAIT(execute_on(ctrl_exec));
+
+        CORO_RETURN(result);
+      });
+}
+
+async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
+{
+  return launch_async([this, request](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Change to respective DL executor
+    CORO_AWAIT(execute_on(cell_exec));
+
+    // Remove UE associated DL channels
+    ue_mng.remove_ue(request.ue_index);
+
+    // Change back to CTRL executor before returning
+    CORO_AWAIT(execute_on(ctrl_exec));
+
+    // Deallocate DL HARQ buffers back in the CTRL executor.
+    dl_harq_buffers.deallocate_ue_buffers(request.ue_index);
+
+    CORO_RETURN();
+  });
+}
+
+async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t                                  ue_index,
+                                                    const std::vector<mac_logical_channel_config>& logical_channels)
+{
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this, ue_index, logical_channels]() {
+    // Configure logical channels.
+    return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
+  });
+}
+
+async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
+{
+  std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
+  return dispatch_and_resume_on(cell_exec, ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
+    // Remove logical channels.
+    return ue_mng.remove_bearers(ue_index, lcids);
+  });
 }
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
@@ -308,7 +384,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
           }
 
           // Fetch RLC Bearer.
-          mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
+          mac_sdu_tx_builder* bearer = ue_mng.get_lc_sdu_builder(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
           srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
           // Update DL buffer state for the allocated logical channel.

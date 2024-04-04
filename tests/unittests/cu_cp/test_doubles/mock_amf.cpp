@@ -21,8 +21,8 @@
  */
 
 #include "mock_amf.h"
-#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/ngap/ngap_message.h"
 
 using namespace srsran;

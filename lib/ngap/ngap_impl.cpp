@@ -810,7 +810,7 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
 async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping UeContextReleaseRequest. UE context does not exist", msg.ue_index);
+    logger.info("ue={}: Ignoring UEContextReleaseRequest. Cause: UE has no NGAP context", msg.ue_index);
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(false);

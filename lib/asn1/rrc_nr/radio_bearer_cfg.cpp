@@ -28,6 +28,18 @@ using namespace asn1::rrc_nr;
  *                                Struct Methods
  ******************************************************************************/
 
+// DiscardTimerExt2-r17 ::= ENUMERATED
+const char* discard_timer_ext2_r17_opts::to_string() const
+{
+  static const char* names[] = {"ms2000", "spare3", "spare2", "spare1"};
+  return convert_enum_idx(names, 4, value, "discard_timer_ext2_r17_e");
+}
+uint16_t discard_timer_ext2_r17_opts::to_number() const
+{
+  static const uint16_t numbers[] = {2000};
+  return map_enum_number(numbers, 1, value, "discard_timer_ext2_r17_e");
+}
+
 // DiscardTimerExt-r16 ::= ENUMERATED
 const char* discard_timer_ext_r16_opts::to_string() const
 {
@@ -43,18 +55,6 @@ const char* discard_timer_ext_r16_opts::to_number_string() const
 {
   static const char* number_strs[] = {"0.5", "1", "2", "4", "6", "8"};
   return convert_enum_idx(number_strs, 8, value, "discard_timer_ext_r16_e");
-}
-
-// DiscardTimerExt2-r17 ::= ENUMERATED
-const char* discard_timer_ext2_r17_opts::to_string() const
-{
-  static const char* names[] = {"ms2000", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 4, value, "discard_timer_ext2_r17_e");
-}
-uint16_t discard_timer_ext2_r17_opts::to_number() const
-{
-  static const uint16_t numbers[] = {2000};
-  return map_enum_number(numbers, 1, value, "discard_timer_ext2_r17_e");
 }
 
 // EthernetHeaderCompression-r16 ::= SEQUENCE
@@ -132,24 +132,6 @@ uint8_t ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_opts::t
 {
   static const uint8_t numbers[] = {7, 15};
   return map_enum_number(numbers, 2, value, "ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_e_");
-}
-
-// UL-DataSplitThreshold ::= ENUMERATED
-const char* ul_data_split_thres_opts::to_string() const
-{
-  static const char* names[] = {"b0",       "b100",     "b200",     "b400",     "b800",     "b1600",    "b3200",
-                                "b6400",    "b12800",   "b25600",   "b51200",   "b102400",  "b204800",  "b409600",
-                                "b819200",  "b1228800", "b1638400", "b2457600", "b3276800", "b4096000", "b4915200",
-                                "b5734400", "b6553600", "infinity", "spare8",   "spare7",   "spare6",   "spare5",
-                                "spare4",   "spare3",   "spare2",   "spare1"};
-  return convert_enum_idx(names, 32, value, "ul_data_split_thres_e");
-}
-int32_t ul_data_split_thres_opts::to_number() const
-{
-  static const int32_t numbers[] = {0,       100,     200,     400,     800,     1600,    3200,    6400,
-                                    12800,   25600,   51200,   102400,  204800,  409600,  819200,  1228800,
-                                    1638400, 2457600, 3276800, 4096000, 4915200, 5734400, 6553600, -1};
-  return map_enum_number(numbers, 24, value, "ul_data_split_thres_e");
 }
 
 // UplinkDataCompression-r17 ::= CHOICE
@@ -248,6 +230,24 @@ const char* ul_data_compress_r17_c::types_opts::to_string() const
 {
   static const char* names[] = {"newSetup", "drb-ContinueUDC"};
   return convert_enum_idx(names, 2, value, "ul_data_compress_r17_c::types");
+}
+
+// UL-DataSplitThreshold ::= ENUMERATED
+const char* ul_data_split_thres_opts::to_string() const
+{
+  static const char* names[] = {"b0",       "b100",     "b200",     "b400",     "b800",     "b1600",    "b3200",
+                                "b6400",    "b12800",   "b25600",   "b51200",   "b102400",  "b204800",  "b409600",
+                                "b819200",  "b1228800", "b1638400", "b2457600", "b3276800", "b4096000", "b4915200",
+                                "b5734400", "b6553600", "infinity", "spare8",   "spare7",   "spare6",   "spare5",
+                                "spare4",   "spare3",   "spare2",   "spare1"};
+  return convert_enum_idx(names, 32, value, "ul_data_split_thres_e");
+}
+int32_t ul_data_split_thres_opts::to_number() const
+{
+  static const int32_t numbers[] = {0,       100,     200,     400,     800,     1600,    3200,    6400,
+                                    12800,   25600,   51200,   102400,  204800,  409600,  819200,  1228800,
+                                    1638400, 2457600, 3276800, 4096000, 4915200, 5734400, 6553600, -1};
+  return map_enum_number(numbers, 24, value, "ul_data_split_thres_e");
 }
 
 // CipheringAlgorithm ::= ENUMERATED
@@ -1385,6 +1385,41 @@ void mrb_to_add_mod_r17_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// SecurityAlgorithmConfig ::= SEQUENCE
+SRSASN_CODE security_algorithm_cfg_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(integrity_prot_algorithm_present, 1));
+
+  HANDLE_CODE(ciphering_algorithm.pack(bref));
+  if (integrity_prot_algorithm_present) {
+    HANDLE_CODE(integrity_prot_algorithm.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE security_algorithm_cfg_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(integrity_prot_algorithm_present, 1));
+
+  HANDLE_CODE(ciphering_algorithm.unpack(bref));
+  if (integrity_prot_algorithm_present) {
+    HANDLE_CODE(integrity_prot_algorithm.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void security_algorithm_cfg_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("cipheringAlgorithm", ciphering_algorithm.to_string());
+  if (integrity_prot_algorithm_present) {
+    j.write_str("integrityProtAlgorithm", integrity_prot_algorithm.to_string());
+  }
+  j.end_obj();
+}
+
 // SRB-ToAddMod ::= SEQUENCE
 SRSASN_CODE srb_to_add_mod_s::pack(bit_ref& bref) const
 {
@@ -1459,41 +1494,6 @@ void srb_to_add_mod_s::to_json(json_writer& j) const
     if (srb_id_v1700_present) {
       j.write_int("srb-Identity-v1700", srb_id_v1700);
     }
-  }
-  j.end_obj();
-}
-
-// SecurityAlgorithmConfig ::= SEQUENCE
-SRSASN_CODE security_algorithm_cfg_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(integrity_prot_algorithm_present, 1));
-
-  HANDLE_CODE(ciphering_algorithm.pack(bref));
-  if (integrity_prot_algorithm_present) {
-    HANDLE_CODE(integrity_prot_algorithm.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE security_algorithm_cfg_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(integrity_prot_algorithm_present, 1));
-
-  HANDLE_CODE(ciphering_algorithm.unpack(bref));
-  if (integrity_prot_algorithm_present) {
-    HANDLE_CODE(integrity_prot_algorithm.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void security_algorithm_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("cipheringAlgorithm", ciphering_algorithm.to_string());
-  if (integrity_prot_algorithm_present) {
-    j.write_str("integrityProtAlgorithm", integrity_prot_algorithm.to_string());
   }
   j.end_obj();
 }

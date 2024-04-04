@@ -73,7 +73,7 @@ void e2_setup_procedure::send_e2_setup_request()
   msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
   msg.pdu.init_msg().value.e2setup_request() = request.request;
   auto& setup_req                            = msg.pdu.init_msg().value.e2setup_request();
-  setup_req->transaction_id.value            = transaction.id();
+  setup_req->transaction_id                  = transaction.id();
   notifier.on_new_message(msg);
 }
 
@@ -89,7 +89,7 @@ bool e2_setup_procedure::retry_required()
     return false;
   }
 
-  if (e2_setup_outcome.error().value.type() == e2_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::e2setup_fail) {
+  if (e2_setup_outcome.error().value.type() == e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::e2setup_fail) {
     // Radio network
     return false;
   }

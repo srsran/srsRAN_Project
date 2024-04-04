@@ -22,25 +22,19 @@
 
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-struct test_params {
-  unsigned nof_sib_allocated;
-  unsigned nof_rar_allocated;
-  unsigned nof_ue_allocated;
-};
-
-class mac_cell_processor_tester : public ::testing::TestWithParam<test_params>
+class base_mac_cell_processor_test
 {
-protected:
-  mac_cell_processor_tester() :
-    ue_mng(rnti_table),
+public:
+  base_mac_cell_processor_test() :
     mac_cell(test_helpers::make_default_mac_cell_config(),
              sched_adapter,
-             ue_mng,
+             rnti_table,
              phy_notifier,
              task_worker,
              task_worker,
@@ -49,22 +43,33 @@ protected:
   {
   }
 
-  test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
-  du_rnti_table                                rnti_table;
-  mac_dl_ue_manager                            ue_mng;
-  test_helpers::dummy_mac_cell_result_notifier phy_notifier;
-  manual_task_worker                           task_worker{128};
-  null_mac_pcap                                pcap;
-  mac_cell_processor                           mac_cell;
-
   bool is_pdsch_scheduled() const
   {
     const auto& dl_res = *phy_notifier.last_sched_res->dl_res;
     return not dl_res.rar_grants.empty() or not dl_res.bc.sibs.empty() or not dl_res.ue_grants.empty();
   }
 
-  void init(test_params params)
+  test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
+  du_rnti_table                                rnti_table;
+  test_helpers::dummy_mac_cell_result_notifier phy_notifier;
+  manual_task_worker                           task_worker{128};
+  null_mac_pcap                                pcap;
+  mac_cell_processor                           mac_cell;
+};
+
+struct test_params {
+  unsigned nof_sib_allocated;
+  unsigned nof_rar_allocated;
+  unsigned nof_ue_allocated;
+};
+
+class mac_cell_processor_tester : public base_mac_cell_processor_test, public ::testing::TestWithParam<test_params>
+{
+protected:
+  mac_cell_processor_tester()
   {
+    auto params = GetParam();
+
     // Creates the next sched result based on test parameters.
     sched_adapter.next_sched_result.success           = true;
     sched_adapter.next_sched_result.dl.nof_dl_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
@@ -90,9 +95,8 @@ protected:
   }
 };
 
-TEST_P(mac_cell_processor_tester, when_zero_pdsch_grants_dl_data_request_is_not_notified)
+TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_triggers_scheduling)
 {
-  init(GetParam());
   slot_point sl_tx{0, 0};
   ASSERT_FALSE(phy_notifier.is_complete);
   mac_cell.handle_slot_indication(sl_tx);
@@ -100,6 +104,34 @@ TEST_P(mac_cell_processor_tester, when_zero_pdsch_grants_dl_data_request_is_not_
   ASSERT_TRUE(phy_notifier.last_sched_res.has_value());
   ASSERT_EQ(phy_notifier.last_dl_data_res.has_value(), is_pdsch_scheduled());
   ASSERT_TRUE(phy_notifier.is_complete);
+
+  auto test_params = GetParam();
+  ASSERT_EQ(phy_notifier.last_sched_res->dl_res->bc.sibs.size(), test_params.nof_sib_allocated);
+  ASSERT_EQ(phy_notifier.last_sched_res->dl_res->rar_grants.size(), test_params.nof_rar_allocated);
+  ASSERT_EQ(phy_notifier.last_sched_res->dl_res->ue_grants.size(), test_params.nof_ue_allocated);
+}
+
+TEST_P(mac_cell_processor_tester, when_cell_is_inactive_then_slot_indication_does_not_trigger_scheduling)
+{
+  slot_point sl_tx{0, 0};
+  ASSERT_FALSE(phy_notifier.is_complete);
+
+  async_task<void>         t = mac_cell.stop();
+  lazy_task_launcher<void> launcher{t};
+  this->task_worker.run_pending_tasks();
+  ASSERT_TRUE(t.ready());
+
+  phy_notifier.is_complete = false;
+  phy_notifier.last_sched_res.reset();
+  phy_notifier.last_ul_res.reset();
+  phy_notifier.last_dl_data_res.reset();
+
+  mac_cell.handle_slot_indication(sl_tx);
+
+  ASSERT_TRUE(phy_notifier.is_complete);
+  ASSERT_FALSE(phy_notifier.last_sched_res.has_value());
+  ASSERT_FALSE(phy_notifier.last_dl_data_res.has_value());
+  ASSERT_FALSE(phy_notifier.last_ul_res.has_value());
 }
 
 INSTANTIATE_TEST_SUITE_P(

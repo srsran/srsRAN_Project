@@ -77,13 +77,17 @@ public:
                  pdcp_tx_config                  cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
-                 timer_factory                   ue_dl_timer_factory_) :
+                 timer_factory                   ue_dl_timer_factory_,
+                 task_executor&                  ue_dl_executor_,
+                 task_executor&                  crypto_executor_) :
     pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
     logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
     lower_dn(lower_dn_),
     upper_cn(upper_cn_),
     ue_dl_timer_factory(ue_dl_timer_factory_),
+    ue_dl_executor(ue_dl_executor_),
+    crypto_executor(crypto_executor_),
     tx_window(create_tx_window(cfg.sn_size))
   {
     // Validate configuration
@@ -103,6 +107,10 @@ public:
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);
+
+    // TODO: implement usage of crypto_executor
+    (void)ue_dl_executor;
+    (void)crypto_executor;
   }
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
@@ -225,6 +233,9 @@ private:
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_dl_timer_factory;
+
+  task_executor& ue_dl_executor;
+  task_executor& crypto_executor;
 
   pdcp_tx_state                st        = {};
   security::security_direction direction = security::security_direction::downlink;

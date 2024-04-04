@@ -59,6 +59,7 @@ public:
                            task_executor&                                   ue_dl_exec_,
                            task_executor&                                   ue_ul_exec_,
                            task_executor&                                   ue_ctrl_exec_,
+                           task_executor&                                   crypto_exec_,
                            dlt_pcap&                                        gtpu_pcap_);
 
   pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
@@ -98,6 +99,7 @@ private:
   task_executor&                                           ue_dl_exec;
   task_executor&                                           ue_ul_exec;
   task_executor&                                           ue_ctrl_exec;
+  task_executor&                                           crypto_exec;
   dlt_pcap&                                                gtpu_pcap;
   f1u_cu_up_gateway&                                       f1u_gw;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id

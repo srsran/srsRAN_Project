@@ -195,6 +195,21 @@ SRSASN_CODE bit_ref::align_bytes_zero()
   return SRSASN_SUCCESS;
 }
 
+cbit_ref cbit_ref::subview(uint32_t offset_bytes, uint32_t len_bytes) const
+{
+  const uint32_t buffer_rem_bytes = buffer.end() - it;
+  const uint32_t nof_bytes_needed = len_bytes + ((offset != 0) ? 1 : 0); // account for the last bits in the last byte.
+  if (offset_bytes + nof_bytes_needed > buffer_rem_bytes) {
+    log_error("subview: Buffer size limit was achieved");
+    return cbit_ref(srsran::byte_buffer_view{});
+  }
+
+  auto     start_it = it + offset_bytes;
+  cbit_ref v{srsran::byte_buffer_view(start_it, start_it + nof_bytes_needed)};
+  v.offset = offset;
+  return v;
+}
+
 int cbit_ref::distance_bytes() const
 {
   return static_cast<int>(it - buffer.begin()) + (offset != 0 ? 1 : 0);
@@ -207,7 +222,7 @@ int cbit_ref::distance() const
 
 int cbit_ref::distance(const cbit_ref& other) const
 {
-  return distance() - other.distance();
+  return static_cast<int>(it - other.it) * 8 + (static_cast<int>(offset) - static_cast<int>(other.offset));
 }
 
 template <class T>
@@ -288,6 +303,16 @@ SRSASN_CODE cbit_ref::advance_bits(uint32_t n_bits)
   }
   it += bytes_offset;
   offset = extra_bits;
+  return SRSASN_SUCCESS;
+}
+
+SRSASN_CODE cbit_ref::advance_bytes(uint32_t bytes)
+{
+  if (bytes + (offset != 0 ? 1 : 0) > buffer.end() - it) {
+    log_error("advance_bytes: Buffer size limit was achieved");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  it += bytes;
   return SRSASN_SUCCESS;
 }
 
@@ -1499,12 +1524,21 @@ varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool 
   bref0(bref),
   bref_tracker(&bref)
 {
+  bref = bref.subview(0, len);
 }
 
 varlength_field_unpack_guard::~varlength_field_unpack_guard()
 {
-  uint32_t pad;
-  bref_tracker->unpack(pad, len * 8 - bref_tracker->distance(bref0));
+  if (len * 8 < (unsigned)bref_tracker->distance(bref0)) {
+    log_error("The number of bits unpacked exceeds the variable length field size ({} > {})",
+              bref_tracker->distance(bref0),
+              len * 8);
+    return;
+  }
+
+  // Ignore padding bits, and skip to the end of the varlength field.
+  bref0.advance_bytes(len);
+  *bref_tracker = bref0;
 }
 
 /*******************

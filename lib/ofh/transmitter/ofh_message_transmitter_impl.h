@@ -41,8 +41,7 @@ class message_transmitter_impl : public ota_symbol_boundary_notifier
   /// Logger.
   srslog::basic_logger& logger;
   /// Ethernet frame pool.
-  std::shared_ptr<ether::eth_frame_pool> pool_ptr;
-  ether::eth_frame_pool&                 pool;
+  std::shared_ptr<ether::eth_frame_pool> pool;
   /// Gateway handling message transmission.
   std::unique_ptr<ether::gateway> gateway;
   /// Internal representation of timing parameters.

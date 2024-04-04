@@ -51,6 +51,7 @@ class dummy_cu_up_executor_pool final : public srs_cu_up::cu_up_executor_pool
     task_executor& ctrl_executor() override { return *exec; }
     task_executor& ul_pdu_executor() override { return *exec; }
     task_executor& dl_pdu_executor() override { return *exec; }
+    task_executor& crypto_executor() override { return *exec; }
 
     async_task<void> stop() override
     {

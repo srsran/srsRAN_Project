@@ -179,8 +179,8 @@ TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
-      ->ra_nfunctions_accepted.value[0]
-      ->ra_nfunction_id_item()
+      ->ran_functions_accepted[0]
+      ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -196,22 +196,22 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   uint32_t              nof_records      = nof_metrics;
 
   // Define E2SM_KPM action format 1.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 1;
-  e2_sm_kpm_action_definition_format1_s& action_def_f1 =
+  e2sm_kpm_action_definition_format1_s& action_def_f1 =
       action_def.action_definition_formats.set_action_definition_format1();
   action_def_f1.cell_global_id_present = false;
   action_def_f1.granul_period          = 100;
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("test"); // Dummy metric not supported.
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
   action_def_f1.meas_info_list.push_back(meas_info_item);
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpUl"); // Change to a valid metric.
@@ -247,8 +247,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -287,26 +287,26 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   get_presence_starting_with_cond_satisfied(presence, {}, cond_presence);
 
   // Define E2SM_KPM action format 2.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 2;
-  e2_sm_kpm_action_definition_format2_s& action_def_f2 =
+  e2sm_kpm_action_definition_format2_s& action_def_f2 =
       action_def.action_definition_formats.set_action_definition_format2();
 
-  ueid_c& ueid           = action_def_f2.ue_id;
-  ueid.set_gnb_du_ueid() = generate_ueid_gnb_du(ue_ids[0]);
+  ue_id_c& ueid           = action_def_f2.ue_id;
+  ueid.set_gnb_du_ue_id() = generate_ueid_gnb_du(ue_ids[0]);
 
   action_def_f2.subscript_info.cell_global_id_present = false;
   action_def_f2.subscript_info.granul_period          = 100;
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("test"); // Dummy metric not supported
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
   action_def_f2.subscript_info.meas_info_list.push_back(meas_info_item);
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f2.subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl");
@@ -344,8 +344,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -405,9 +405,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   uint32_t              nof_records      = nof_metrics * nof_reported_ues;
 
   // Define E2SM_KPM action format 3.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 3;
-  e2_sm_kpm_action_definition_format3_s& action_def_f3 =
+  e2sm_kpm_action_definition_format3_s& action_def_f3 =
       action_def.action_definition_formats.set_action_definition_format3();
 
   meas_cond_item_s meas_cond_item;
@@ -416,7 +416,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   // Report UEThpDl for all UEs with RSRP > -110 and RSRP < -50.
   // Add conditions, order is important. Labels has to be first.
   matching_cond_item_s matching_cond_item1;
-  meas_label_s         meas_label1;
+  meas_label_s         meas_label1{};
   meas_label1.five_qi_present                               = true;
   meas_label1.five_qi                                       = 1;
   matching_cond_item1.lc_or_present                         = true; // If false use OR, if true then use AND.
@@ -454,7 +454,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   action_def_f3.cell_global_id_present = false;
   action_def_f3.granul_period          = 100;
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f3.meas_cond_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
@@ -492,8 +492,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -504,10 +504,10 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
     TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record.size());
     for (unsigned j = 0; j < nof_reported_ues; ++j) {
       uint32_t ue_id = ric_ind_msg.ind_msg_formats.ind_msg_format2()
-                           .meas_cond_ueid_list[0]
-                           .matching_ueid_list[j]
-                           .ue_id.gnb_du_ueid()
-                           .gnb_cu_ue_f1_ap_id;
+                           .meas_cond_ue_id_list[0]
+                           .matching_ue_id_list[j]
+                           .ue_id.gnb_du_ue_id()
+                           .gnb_cu_ue_f1ap_id;
       std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
       uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
       if (cond_presence[i][ue_idx]) {
@@ -562,9 +562,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   uint32_t              nof_records      = nof_metrics;
 
   // Define E2SM_KPM action format 4.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 4;
-  e2_sm_kpm_action_definition_format4_s& action_def_f4 =
+  e2sm_kpm_action_definition_format4_s& action_def_f4 =
       action_def.action_definition_formats.set_action_definition_format4();
 
   // Report UEThpDl for all UEs with rsrp > -110 and rsrp < -50.
@@ -587,19 +587,19 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   matching_ue_cond_item2.test_cond_info.test_value.set_value_int() = 110;
   action_def_f4.matching_ue_cond_list.push_back(matching_ue_cond_item2);
 
-  e2_sm_kpm_action_definition_format1_s& subscription_info = action_def_f4.subscription_info;
-  subscription_info.cell_global_id_present                 = false;
-  subscription_info.granul_period                          = 100;
+  e2sm_kpm_action_definition_format1_s& subscription_info = action_def_f4.sub_info;
+  subscription_info.cell_global_id_present                = false;
+  subscription_info.granul_period                         = 100;
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
   subscription_info.meas_info_list.push_back(meas_info_item);
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   subscription_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
@@ -637,8 +637,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -647,7 +647,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
     uint32_t ue_id =
-        ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+        ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
     std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
     uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
     TESTASSERT_EQ(nof_meas_data,
@@ -701,30 +701,30 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   uint32_t              nof_reported_ues = reported_ues.size();
 
   // Define E2SM_KPM action format 5.
-  e2_sm_kpm_action_definition_s action_def;
+  e2sm_kpm_action_definition_s action_def;
   action_def.ric_style_type = 5;
-  e2_sm_kpm_action_definition_format5_s& action_def_f5 =
+  e2sm_kpm_action_definition_format5_s& action_def_f5 =
       action_def.action_definition_formats.set_action_definition_format5();
 
-  action_def_f5.matching_ueid_list.resize(nof_ues);
+  action_def_f5.matching_ue_id_list.resize(nof_ues);
   for (unsigned i = 0; i < nof_ues; i++) {
-    action_def_f5.matching_ueid_list[i].ue_id.set_gnb_du_ueid() = generate_ueid_gnb_du(ue_ids[i]);
+    action_def_f5.matching_ue_id_list[i].ue_id.set_gnb_du_ue_id() = generate_ueid_gnb_du(ue_ids[i]);
   }
 
-  e2_sm_kpm_action_definition_format1_s& subscript_info = action_def_f5.subscription_info;
-  subscript_info.cell_global_id_present                 = false;
-  subscript_info.granul_period                          = 100;
+  e2sm_kpm_action_definition_format1_s& subscript_info = action_def_f5.sub_info;
+  subscript_info.cell_global_id_present                = false;
+  subscript_info.granul_period                         = 100;
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("test"); // Dummy metric not supported.
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
 
   subscript_info.meas_info_list.push_back(meas_info_item);
 
-  asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  asn1::e2ap::ric_action_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
@@ -762,8 +762,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
 
   // Decode RIC Indication and check the content.
-  e2_sm_kpm_ind_msg_s ric_ind_msg;
-  asn1::cbit_ref      ric_ind_bref(ind_msg_bytes);
+  e2sm_kpm_ind_msg_s ric_ind_msg;
+  asn1::cbit_ref     ric_ind_bref(ind_msg_bytes);
   if (ric_ind_msg.unpack(ric_ind_bref) != asn1::SRSASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
@@ -772,7 +772,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
     uint32_t ue_id =
-        ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+        ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
     std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
     uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
     TESTASSERT_EQ(nof_meas_data,

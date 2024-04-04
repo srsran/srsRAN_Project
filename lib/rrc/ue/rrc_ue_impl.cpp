@@ -23,7 +23,8 @@
 #include "rrc_ue_impl.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
 #include "rrc_ue_helpers.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ho_prep_info.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -83,9 +84,10 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     return;
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP entity for this SRB
-    context.srbs.emplace(std::piecewise_construct,
-                         std::forward_as_tuple(msg.srb_id),
-                         std::forward_as_tuple(msg.ue_index, msg.srb_id, task_sched.get_timer_factory()));
+    context.srbs.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(msg.srb_id),
+        std::forward_as_tuple(msg.ue_index, msg.srb_id, task_sched.get_timer_factory(), task_sched.get_executor()));
     auto& srb_context = context.srbs.at(msg.srb_id);
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {

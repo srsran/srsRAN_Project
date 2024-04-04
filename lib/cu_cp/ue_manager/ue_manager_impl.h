@@ -86,6 +86,7 @@ public:
   void          schedule_async_task(async_task<void> task) override { task_sched.schedule_async_task(std::move(task)); }
   unique_timer  make_unique_timer() override { return task_sched.create_timer(); }
   timer_factory get_timer_factory() override { return task_sched.get_timer_factory(); }
+  task_executor& get_executor() override { return task_sched.get_executor(); };
 
   // du_ue
 

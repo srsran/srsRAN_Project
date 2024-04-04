@@ -80,10 +80,10 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_
     sched_impl->handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
 
     // Await Scheduler notification that UE was added.
-    CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
+    CORO_AWAIT_VALUE(bool res, sched_cfg_notif_map[msg.ue_index].ue_config_ready);
     sched_cfg_notif_map[msg.ue_index].ue_config_ready.reset();
 
-    CORO_RETURN(true);
+    CORO_RETURN(res);
   });
 }
 

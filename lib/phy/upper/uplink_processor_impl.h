@@ -22,11 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
+#include <utility>
 
 namespace srsran {
 

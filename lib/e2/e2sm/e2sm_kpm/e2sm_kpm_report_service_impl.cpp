@@ -23,13 +23,37 @@
 #include "e2sm_kpm_report_service_impl.h"
 #include "e2sm_kpm_utils.h"
 #include <algorithm>
+#include <chrono>
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_kpm;
+using namespace asn1::e2sm;
 using namespace srsran;
 
-e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_definition_s action_def_,
-                                                           e2sm_kpm_meas_provider&       meas_provider_) :
+uint64_t get_ntp_timestamp()
+{
+  // Offset between Unix and NTP epochs (1900-1970 in seconds).
+  constexpr uint64_t ntp_epoch_offset = 2208988800ULL;
+
+  auto now = std::chrono::system_clock::now();
+
+  // Get the duration since the Unix epoch.
+  auto duration_since_epoch = now.time_since_epoch();
+
+  // Convert the duration to seconds and microseconds.
+  uint64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(duration_since_epoch).count();
+  uint64_t microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count() % 1000000;
+
+  // Calculate the fractional part of the NTP timestamp.
+  uint64_t fractional_part = static_cast<uint64_t>((microseconds * ((1ULL << 32) / 1000000ULL)));
+
+  // Calculate the NTP timestamp.
+  uint64_t ntp_timestamp = ((seconds_since_epoch + ntp_epoch_offset) << 32) | fractional_part;
+
+  return ntp_timestamp;
+}
+
+e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2sm_kpm_action_definition_s action_def_,
+                                                           e2sm_kpm_meas_provider&      meas_provider_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")),
   action_def_generic(action_def_),
   meas_provider(meas_provider_),
@@ -40,13 +64,13 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_defi
   ric_ind_header.sender_name_present        = false;
   ric_ind_header.sender_type_present        = false;
   ric_ind_header.file_formatversion_present = false;
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   is_ind_msg_ready_ = false;
 }
 
-bool e2sm_kpm_report_service_base::initialize_ric_ind_msg_format_1(meas_info_list_l&            action_meas_info_list,
-                                                                   e2_sm_kpm_ind_msg_format1_s& ric_ind_msg)
+bool e2sm_kpm_report_service_base::initialize_ric_ind_msg_format_1(meas_info_list_l&           action_meas_info_list,
+                                                                   e2sm_kpm_ind_msg_format1_s& ric_ind_msg)
 {
   if (granul_period) {
     ric_ind_msg.granul_period_present = true;
@@ -93,8 +117,8 @@ srsran::byte_buffer e2sm_kpm_report_service_base::get_indication_header()
   return ind_hdr_bytes;
 }
 
-e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2sm_kpm_action_definition_s action_def_,
+                                                               e2sm_kpm_meas_provider&      meas_provider_) :
   e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format1()),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format1())
@@ -112,16 +136,16 @@ void e2sm_kpm_report_service_style1::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style1::collect_measurements()
 {
-  // Set the granularity period (TODO: disable as currently not supported in flexric).
-  ric_ind_message.granul_period_present = false;
-  // ric_ind_message.granul_period         = granul_period;
+  // Set the granularity period.
+  ric_ind_message.granul_period_present = true;
+  ric_ind_message.granul_period         = granul_period;
 
   // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
@@ -143,8 +167,8 @@ bool e2sm_kpm_report_service_style1::collect_measurements()
   return true;
 }
 
-e2sm_kpm_report_service_style2::e2sm_kpm_report_service_style2(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+e2sm_kpm_report_service_style2::e2sm_kpm_report_service_style2(e2sm_kpm_action_definition_s action_def_,
+                                                               e2sm_kpm_meas_provider&      meas_provider_) :
   e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format2()),
   ue_id(action_def_generic.action_definition_formats.action_definition_format2().ue_id),
@@ -165,7 +189,7 @@ void e2sm_kpm_report_service_style2::clear_collect_measurements()
   ric_ind_message.meas_data.clear();
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
@@ -196,8 +220,8 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
   return true;
 }
 
-e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2sm_kpm_action_definition_s action_def_,
+                                                               e2sm_kpm_meas_provider&      meas_provider_) :
   e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format3()),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format2())
@@ -216,11 +240,11 @@ e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_
   }
 
   meas_cond_list_l& meas_cond_list = action_def.meas_cond_list;
-  ric_ind_message.meas_cond_ueid_list.resize(meas_cond_list.size());
+  ric_ind_message.meas_cond_ue_id_list.resize(meas_cond_list.size());
   for (uint32_t i = 0; i < meas_cond_list.size(); ++i) {
-    ric_ind_message.meas_cond_ueid_list[i].meas_type = meas_cond_list[i].meas_type;
+    ric_ind_message.meas_cond_ue_id_list[i].meas_type = meas_cond_list[i].meas_type;
     if (meas_cond_list[i].matching_cond.size()) {
-      ric_ind_message.meas_cond_ueid_list[i].matching_cond = meas_cond_list[i].matching_cond;
+      ric_ind_message.meas_cond_ue_id_list[i].matching_cond = meas_cond_list[i].matching_cond;
     } else {
       // Need to have at least one condition to pack the ASN1 msg.
       // Add no_label as placeholder.
@@ -229,7 +253,7 @@ e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_
       match_cond_item.matching_cond_choice.set_meas_label();
       match_cond_item.matching_cond_choice.meas_label().no_label_present = true;
       match_cond_item.matching_cond_choice.meas_label().no_label         = meas_label_s::no_label_opts::true_value;
-      ric_ind_message.meas_cond_ueid_list[i].matching_cond.push_back(match_cond_item);
+      ric_ind_message.meas_cond_ue_id_list[i].matching_cond.push_back(match_cond_item);
     }
   }
 }
@@ -237,12 +261,12 @@ e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_
 void e2sm_kpm_report_service_style3::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
-  for (uint32_t i = 0; i < ric_ind_message.meas_cond_ueid_list.size(); ++i) {
-    ric_ind_message.meas_cond_ueid_list[i].matching_ueid_list.clear();
+  for (uint32_t i = 0; i < ric_ind_message.meas_cond_ue_id_list.size(); ++i) {
+    ric_ind_message.meas_cond_ue_id_list[i].matching_ue_id_list.clear();
   }
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset indication msg ready flag.
   is_ind_msg_ready_ = false;
@@ -250,48 +274,48 @@ void e2sm_kpm_report_service_style3::clear_collect_measurements()
 
 bool e2sm_kpm_report_service_style3::collect_measurements()
 {
-  std::vector<asn1::e2sm_kpm::ueid_c> all_matching_ues;
-  std::vector<asn1::e2sm_kpm::ueid_c> cur_matching_ues;
-  std::vector<meas_record_item_c>     meas_records_items;
-  meas_data_item_s                    meas_data_item;
+  std::vector<asn1::e2sm::ue_id_c> all_matching_ues;
+  std::vector<asn1::e2sm::ue_id_c> cur_matching_ues;
+  std::vector<meas_record_item_c>  meas_records_items;
+  meas_data_item_s                 meas_data_item;
 
   // Copy condition list info from action.
-  for (auto& meas_cond_ueid : ric_ind_message.meas_cond_ueid_list) {
+  for (auto& meas_cond_ueid : ric_ind_message.meas_cond_ue_id_list) {
     // Get UEs matching the required conditions.
     all_matching_ues.clear();
     cur_matching_ues.clear();
     meas_provider.get_ues_matching_test_conditions(meas_cond_ueid.matching_cond, cur_matching_ues);
 
-    if (meas_cond_ueid.matching_ueid_list.size() == 0 and cur_matching_ues.size() > 0) {
+    if (meas_cond_ueid.matching_ue_id_list.size() == 0 and cur_matching_ues.size() > 0) {
       // First measurement collection is will be now.
       for (auto& ue : cur_matching_ues) {
-        matching_ueid_item_s matching_ueid_item;
+        matching_ue_id_item_s matching_ueid_item;
         matching_ueid_item.ue_id = ue;
-        meas_cond_ueid.matching_ueid_list.push_back(matching_ueid_item);
+        meas_cond_ueid.matching_ue_id_list.push_back(matching_ueid_item);
       }
-    } else if (meas_cond_ueid.matching_ueid_list.size() > 0 and cur_matching_ues.size() > 0) {
+    } else if (meas_cond_ueid.matching_ue_id_list.size() > 0 and cur_matching_ues.size() > 0) {
       // Check if some new UEs satisfy conditions and add them at the end.
       for (auto& ue : cur_matching_ues) {
-        auto it = std::find_if(meas_cond_ueid.matching_ueid_list.begin(),
-                               meas_cond_ueid.matching_ueid_list.end(),
-                               [&ue](const matching_ueid_item_s& x) { return x.ue_id == ue; });
-        if (it == meas_cond_ueid.matching_ueid_list.end()) {
-          matching_ueid_item_s matching_ueid_item;
+        auto it = std::find_if(meas_cond_ueid.matching_ue_id_list.begin(),
+                               meas_cond_ueid.matching_ue_id_list.end(),
+                               [&ue](const matching_ue_id_item_s& x) { return x.ue_id == ue; });
+        if (it == meas_cond_ueid.matching_ue_id_list.end()) {
+          matching_ue_id_item_s matching_ueid_item;
           matching_ueid_item.ue_id = ue;
 
           // For the new UEs, fill the previous records with NO_VALUE.
-          // New UE is at the end of the matching_ueid_list, so just add NO_VALUE at the end of each meas_record.
+          // New UE is at the end of the matching_ue_id_list, so just add NO_VALUE at the end of each meas_record.
           meas_record_item_c meas_record_item;
           meas_record_item.set_no_value();
           for (auto& meas_data : ric_ind_message.meas_data) {
             meas_data.meas_record.push_back(meas_record_item);
           }
-          meas_cond_ueid.matching_ueid_list.push_back(matching_ueid_item);
+          meas_cond_ueid.matching_ue_id_list.push_back(matching_ueid_item);
         }
       }
     }
 
-    if (meas_cond_ueid.matching_ueid_list.size() == 0) {
+    if (meas_cond_ueid.matching_ue_id_list.size() == 0) {
       // Skip metric collection as no UE satisfies measurements condition.
       continue;
     }
@@ -299,14 +323,14 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
     is_ind_msg_ready_ = true;
 
     // Translate to std::vector<ueid_c> for we can put it to get_meas_data() func.
-    all_matching_ues.resize(meas_cond_ueid.matching_ueid_list.size());
-    std::transform(meas_cond_ueid.matching_ueid_list.begin(),
-                   meas_cond_ueid.matching_ueid_list.end(),
+    all_matching_ues.resize(meas_cond_ueid.matching_ue_id_list.size());
+    std::transform(meas_cond_ueid.matching_ue_id_list.begin(),
+                   meas_cond_ueid.matching_ue_id_list.end(),
                    all_matching_ues.begin(),
-                   [](matching_ueid_item_s& x) { return x.ue_id; });
+                   [](matching_ue_id_item_s& x) { return x.ue_id; });
 
     // Get labels from conditions list.
-    asn1::e2sm_kpm::label_info_list_l label_info_list;
+    asn1::e2sm::label_info_list_l label_info_list;
     for (auto& cond : meas_cond_ueid.matching_cond) {
       if (cond.matching_cond_choice.type() == matching_cond_item_choice_c::types_opts::meas_label) {
         label_info_item_s label_info_item;
@@ -330,11 +354,11 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
   return true;
 }
 
-e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2sm_kpm_action_definition_s action_def_,
+                                                               e2sm_kpm_meas_provider&      meas_provider_) :
   e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format4()),
-  subscription_info(action_def.subscription_info),
+  subscription_info(action_def.sub_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
 {
   granul_period = subscription_info.granul_period;
@@ -351,7 +375,7 @@ void e2sm_kpm_report_service_style4::clear_collect_measurements()
   ric_ind_message.ue_meas_report_list.clear();
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
@@ -362,9 +386,9 @@ void e2sm_kpm_report_service_style4::clear_collect_measurements()
 
 bool e2sm_kpm_report_service_style4::collect_measurements()
 {
-  std::vector<asn1::e2sm_kpm::ueid_c> all_matching_ues;
-  std::vector<asn1::e2sm_kpm::ueid_c> cur_matching_ues;
-  std::vector<meas_record_item_c>     meas_records_items;
+  std::vector<asn1::e2sm::ue_id_c> all_matching_ues;
+  std::vector<asn1::e2sm::ue_id_c> cur_matching_ues;
+  std::vector<meas_record_item_c>  meas_records_items;
 
   // Get UEs matching the required conditions.
   all_matching_ues.clear();
@@ -392,7 +416,7 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
         initialize_ric_ind_msg_format_1(subscription_info.meas_info_list, ue_meas_report_item.meas_report);
 
         // For the new UEs, fill the previous records with NO_VALUE.
-        uint32_t nof_metrics = action_def.subscription_info.meas_info_list.size();
+        uint32_t nof_metrics = action_def.sub_info.meas_info_list.size();
         ue_meas_report_item.meas_report.meas_data.resize(nof_collected_meas_data);
         meas_record_item_c meas_record_item;
         meas_record_item.set_no_value();
@@ -420,7 +444,7 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
                  all_matching_ues.begin(),
                  [](ue_meas_report_item_s& x) { return x.ue_id; });
 
-  auto& meas_info_list = action_def.subscription_info.meas_info_list;
+  auto& meas_info_list = action_def.sub_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
     // Get measurements.
     meas_records_items.clear();
@@ -444,11 +468,11 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
   return true;
 }
 
-e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2sm_kpm_action_definition_s action_def_,
+                                                               e2sm_kpm_meas_provider&      meas_provider_) :
   e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format5()),
-  subscription_info(action_def.subscription_info),
+  subscription_info(action_def.sub_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
 {
   granul_period = subscription_info.granul_period;
@@ -458,12 +482,12 @@ e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_
 
   // Initialize RIC indication metadata (Indication format 1 for each UE).
   meas_info_list_l action_meas_info_list = subscription_info.meas_info_list;
-  for (uint32_t i = 0; i < action_def.matching_ueid_list.size(); ++i) {
+  for (uint32_t i = 0; i < action_def.matching_ue_id_list.size(); ++i) {
     ue_meas_report_item_s ue_meas_report_item;
-    ue_meas_report_item.ue_id = action_def.matching_ueid_list[i].ue_id;
+    ue_meas_report_item.ue_id = action_def.matching_ue_id_list[i].ue_id;
     initialize_ric_ind_msg_format_1(action_meas_info_list, ue_meas_report_item.meas_report);
     ric_ind_message.ue_meas_report_list.push_back(ue_meas_report_item);
-    ue_ids.push_back(action_def.matching_ueid_list[i].ue_id);
+    ue_ids.push_back(action_def.matching_ue_id_list[i].ue_id);
   }
   nof_collected_meas_data = 0;
 }
@@ -476,7 +500,7 @@ void e2sm_kpm_report_service_style5::clear_collect_measurements()
   }
 
   // Save timestamp of measurement collection start.
-  ric_ind_header.collet_start_time.from_number(std::time(0));
+  ric_ind_header.collet_start_time.from_number(get_ntp_timestamp());
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
@@ -487,10 +511,10 @@ void e2sm_kpm_report_service_style5::clear_collect_measurements()
 
 bool e2sm_kpm_report_service_style5::collect_measurements()
 {
-  std::vector<meas_record_item_c>     meas_records_items;
-  std::vector<asn1::e2sm_kpm::ueid_c> reported_ues;
+  std::vector<meas_record_item_c>  meas_records_items;
+  std::vector<asn1::e2sm::ue_id_c> reported_ues;
 
-  auto& meas_info_list = action_def.subscription_info.meas_info_list;
+  auto& meas_info_list = action_def.sub_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
     // Get measurements.
     meas_records_items.clear();
@@ -528,8 +552,8 @@ srsran::byte_buffer e2sm_kpm_report_service_style5::get_indication_message()
 {
   // UEs that report only no_values should not be reported.
   // Make a new indication msg and copy UEs that do not contain only no_values.
-  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s          ric_ind_message_copy;
-  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format3_s& ric_ind_message_f3_copy =
+  asn1::e2sm::e2sm_kpm_ind_msg_s          ric_ind_message_copy;
+  asn1::e2sm::e2sm_kpm_ind_msg_format3_s& ric_ind_message_f3_copy =
       ric_ind_message_copy.ind_msg_formats.set_ind_msg_format3();
 
   std::vector<uint32_t> ue_idxs;

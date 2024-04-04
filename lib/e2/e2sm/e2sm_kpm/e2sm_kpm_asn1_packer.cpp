@@ -23,7 +23,7 @@
 #include "e2sm_kpm_asn1_packer.h"
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_kpm;
+using namespace asn1::e2sm;
 using namespace srsran;
 
 const std::string e2sm_kpm_asn1_packer::short_name       = "ORAN-E2SM-KPM";
@@ -40,7 +40,7 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
   e2sm_action_definition action_def;
   asn1::cbit_ref         bref(action_definition);
   action_def.service_model = e2sm_service_model_t::KPM;
-  if (variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
+  if (variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM KPM Action Definition\n");
     action_def.service_model = e2sm_service_model_t::UNKNOWN_SM;
   }
@@ -48,7 +48,7 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
 }
 
 e2sm_ric_control_request
-e2sm_kpm_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req)
+e2sm_kpm_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ric_ctrl_request_s& req)
 {
   printf("Failure - RIC control not available in e2sm_kpm.\n");
   e2sm_ric_control_request control_request = {};
@@ -65,9 +65,9 @@ e2_ric_control_response e2sm_kpm_asn1_packer::pack_ric_control_response(const e2
 e2sm_event_trigger_definition
 e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
-  e2sm_event_trigger_definition        e2sm_event_trigger_def;
-  e2_sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
-  asn1::cbit_ref                       bref(event_trigger_definition);
+  e2sm_event_trigger_definition       e2sm_event_trigger_def;
+  e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
+  asn1::cbit_ref                      bref(event_trigger_definition);
   if (e2sm_kpm_event_trigger_def.unpack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM KPM Event Trigger Definition\n");
   }
@@ -81,14 +81,14 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_
 
 asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_description()
 {
-  e2_sm_kpm_ra_nfunction_description_s ran_function_desc;
+  e2sm_kpm_ran_function_description_s ran_function_desc;
   // Add ran_function_name item.
   ran_function_desc.ran_function_name.ran_function_short_name.resize(short_name.size());
-  ran_function_desc.ran_function_name.ran_function_e2_sm_oid.resize(oid.size());
+  ran_function_desc.ran_function_name.ran_function_e2sm_o_id.resize(oid.size());
   ran_function_desc.ran_function_name.ran_function_description.resize(func_description.size());
 
   ran_function_desc.ran_function_name.ran_function_short_name.from_string(short_name);
-  ran_function_desc.ran_function_name.ran_function_e2_sm_oid.from_string(oid);
+  ran_function_desc.ran_function_name.ran_function_e2sm_o_id.from_string(oid);
   ran_function_desc.ran_function_name.ran_function_description.from_string(func_description);
   ran_function_desc.ext = false;
   // Add ric_event_trigger_style item.

@@ -172,12 +172,16 @@ struct cbit_ref {
   cbit_ref(srsran::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
   cbit_ref(const bit_ref& bref) : buffer(bref.data()), it(bref.data().begin()) {}
 
+  /// Construct a cbit_ref with an offset and max size, starting from the current cbit_ref position.
+  cbit_ref subview(uint32_t offset_bytes, uint32_t len_bytes) const;
+
   srsran::byte_buffer_view data() const { return buffer; }
 
   int         distance_bytes() const;
   int         distance() const;
   int         distance(const cbit_ref& other) const;
   SRSASN_CODE advance_bits(uint32_t n_bits);
+  SRSASN_CODE advance_bytes(uint32_t bytes);
 
   template <class T>
   SRSASN_CODE unpack(T& val, uint32_t n_bits);

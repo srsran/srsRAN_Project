@@ -23,7 +23,8 @@
 #pragma once
 
 #include "../ran_resource_management/cell_group_config.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
+#include "srsran/asn1/rrc_nr/ho_prep_info.h"
 
 namespace srsran {
 namespace srs_du {

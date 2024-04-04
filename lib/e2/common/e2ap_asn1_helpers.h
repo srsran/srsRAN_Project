@@ -43,18 +43,18 @@ fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& 
 {
   using namespace asn1::e2ap;
   srslog::basic_logger&                                         logger = srslog::fetch_basic_logger("E2");
-  asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
-  ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
-  auto& ran_function_item = ran_func_item->ra_nfunction_item();
+  asn1::protocol_ie_single_container_s<ran_function_item_ies_o> ran_func_item;
+  ran_func_item.load_info_obj(ASN1_E2AP_ID_RAN_FUNCTION_ITEM);
+  auto& ran_function_item = ran_func_item->ran_function_item();
 
-  ran_func_item.value().ra_nfunction_item().ran_function_id =
+  ran_func_item.value().ran_function_item().ran_function_id =
       (ran_oid == e2sm_kpm_asn1_packer::oid) ? e2sm_kpm_asn1_packer::ran_func_id : e2sm_rc_asn1_packer::ran_func_id;
-  ran_func_item.value().ra_nfunction_item().ran_function_revision = 0;
-  ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(ran_oid);
+  ran_func_item.value().ran_function_item().ran_function_revision = 0;
+  ran_func_item.value().ran_function_item().ran_function_o_id.from_string(ran_oid);
 
   ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
   if (ran_function_item.ran_function_definition.size()) {
-    setup->ra_nfunctions_added.value.push_back(ran_func_item);
+    setup->ran_functions_added.push_back(ran_func_item);
   } else {
     logger.error("Failed to pack RAN function description");
   }
@@ -72,20 +72,16 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   setup = initmsg.value.e2setup_request();
 
   //  Transaction ID
-  setup->transaction_id.crit        = asn1::crit_opts::reject;
-  setup->transaction_id.value.value = 1;
+  setup->transaction_id = 1;
 
   // Global e2 node ID
-  setup->global_e2node_id.crit = asn1::crit_opts::reject;
-  auto& gnb_id                 = setup->global_e2node_id.value.set_gnb();
-  gnb_id.global_g_nb_id.gnb_id.gnb_id().from_number(e2ap_config.gnb_id.id, e2ap_config.gnb_id.bit_length);
+  auto& gnb_id = setup->global_e2node_id.set_gnb();
+  gnb_id.global_gnb_id.gnb_id.gnb_id().from_number(e2ap_config.gnb_id.id, e2ap_config.gnb_id.bit_length);
   // convert PLMN to BCD
   uint32_t plmn_bcd = plmn_string_to_bcd(e2ap_config.plmn);
-  gnb_id.global_g_nb_id.plmn_id.from_number(plmn_bcd);
+  gnb_id.global_gnb_id.plmn_id.from_number(plmn_bcd);
 
   // RAN functions added
-  setup->ra_nfunctions_added.crit = asn1::crit_opts::reject;
-  setup->ra_nfunctions_added.id   = ASN1_E2AP_ID_RA_NFUNCTIONS_ADDED;
   if (e2ap_config.e2sm_kpm_enabled) {
     std::string ran_oid = e2sm_kpm_asn1_packer::oid;
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
@@ -108,8 +104,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   }
 
   // E2 node component config
-  setup->e2node_component_cfg_addition.crit = asn1::crit_opts::reject;
-  auto& list                                = setup->e2node_component_cfg_addition.value;
+  auto& list = setup->e2node_component_cfg_addition;
   list.resize(1);
   list[0].load_info_obj(ASN1_E2AP_ID_E2NODE_COMPONENT_CFG_ADDITION_ITEM);
   e2node_component_cfg_addition_item_s& e2node_cfg_item = list[0].value().e2node_component_cfg_addition_item();

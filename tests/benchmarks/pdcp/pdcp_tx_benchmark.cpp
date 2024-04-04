@@ -140,8 +140,8 @@ void benchmark_pdcp_tx(bench_params                  params,
   pdcp_tx_gen_frame frame = {};
 
   // Create PDCP entities
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx =
-      std::make_unique<pdcp_entity_tx>(0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker});
+  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
   pdcp_tx->configure_security(sec_cfg);
   pdcp_tx->set_integrity_protection(int_enabled);
   pdcp_tx->set_ciphering(ciph_enabled);

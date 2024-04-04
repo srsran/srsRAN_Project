@@ -63,7 +63,7 @@ struct downlink_handler_impl_dependencies {
   /// Data flow for User-Plane.
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
   /// Ethernet frame pool.
-  std::shared_ptr<ether::eth_frame_pool> frame_pool_ptr;
+  std::shared_ptr<ether::eth_frame_pool> frame_pool;
 };
 
 /// Open Fronthaul downlink handler implementation.
@@ -90,8 +90,7 @@ private:
   tx_window_checker                                     window_checker;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
-  std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;
-  ether::eth_frame_pool&                                frame_pool;
+  std::shared_ptr<ether::eth_frame_pool>                frame_pool;
   std::reference_wrapper<error_notifier>                err_notifier;
 };
 

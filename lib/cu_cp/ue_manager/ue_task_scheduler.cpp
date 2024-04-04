@@ -40,6 +40,11 @@ timer_factory ue_task_scheduler::get_timer_factory()
   return timer_factory{parent->timers, parent->exec};
 }
 
+task_executor& ue_task_scheduler::get_executor()
+{
+  return parent->exec;
+}
+
 void ue_task_scheduler::stop()
 {
   if (parent != nullptr) {

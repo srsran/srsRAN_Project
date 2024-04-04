@@ -34,6 +34,7 @@
 #include "lower_phy_example_factory.h"
 #include "rx_symbol_handler_example.h"
 #include "upper_phy_ssb_example.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"

@@ -44,9 +44,7 @@ protected:
 
   void start_procedure()
   {
-    f1ap_ue_delete_request msg;
-    msg.ue_index = test_ue->ue_index;
-    proc         = launch_async<ue_deletion_procedure>(msg, ue_mng, params);
+    proc = launch_async<ue_deletion_procedure>(test_ue->ue_index, ue_mng, params);
     proc_launcher.emplace(proc);
   }
 

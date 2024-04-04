@@ -46,10 +46,14 @@ unique_function<void()> general_task_worker<QueuePolicy, WaitPolicy>::make_block
   return [this]() {
     auto& logger = srslog::fetch_basic_logger("ALL");
     logger.info("Task worker \"{}\" started...", this_thread_name());
-    while (true) {
-      if (not pending_tasks.call_on_pop_blocking([](const unique_task& task) { task(); })) {
-        break;
-      }
+
+    unique_task t;
+    while (pending_tasks.pop_blocking(t)) {
+      // Call task.
+      t();
+
+      // Note: Important to delete the task before the next pop attempt, in case the capture has RAII objects.
+      t = {};
     }
     logger.info("Task worker \"{}\" finished.", this_thread_name());
   };

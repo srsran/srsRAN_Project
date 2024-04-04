@@ -37,62 +37,6 @@ namespace rrc_nr {
  *                              Struct Definitions
  ******************************************************************************/
 
-// CLI-RSSI-TriggeredList-r16 ::= SEQUENCE (SIZE (1..64)) OF INTEGER (0..63)
-using cli_rssi_triggered_list_r16_l = dyn_array<uint8_t>;
-
-// SRS-RSRP-TriggeredList-r16 ::= SEQUENCE (SIZE (1..32)) OF INTEGER (0..63)
-using srs_rsrp_triggered_list_r16_l = bounded_array<uint8_t, 32>;
-
-// CLI-TriggeredList-r16 ::= CHOICE
-struct cli_triggered_list_r16_c {
-  struct types_opts {
-    enum options { srs_rsrp_triggered_list_r16, cli_rssi_triggered_list_r16, nulltype } value;
-
-    const char* to_string() const;
-  };
-  using types = enumerated<types_opts>;
-
-  // choice methods
-  cli_triggered_list_r16_c() = default;
-  cli_triggered_list_r16_c(const cli_triggered_list_r16_c& other);
-  cli_triggered_list_r16_c& operator=(const cli_triggered_list_r16_c& other);
-  ~cli_triggered_list_r16_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16()
-  {
-    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
-    return c.get<srs_rsrp_triggered_list_r16_l>();
-  }
-  cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16()
-  {
-    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
-    return c.get<cli_rssi_triggered_list_r16_l>();
-  }
-  const srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16() const
-  {
-    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
-    return c.get<srs_rsrp_triggered_list_r16_l>();
-  }
-  const cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16() const
-  {
-    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
-    return c.get<cli_rssi_triggered_list_r16_l>();
-  }
-  srs_rsrp_triggered_list_r16_l& set_srs_rsrp_triggered_list_r16();
-  cli_rssi_triggered_list_r16_l& set_cli_rssi_triggered_list_r16();
-
-private:
-  types                                                                         type_;
-  choice_buffer_t<cli_rssi_triggered_list_r16_l, srs_rsrp_triggered_list_r16_l> c;
-
-  void destroy_();
-};
-
 struct cells_triggered_list_item_c_ {
   struct types_opts {
     enum options { pci, pci_eutra, pci_utra_fdd_r16, nulltype } value;
@@ -153,18 +97,75 @@ private:
   void destroy_();
 };
 
+// CLI-RSSI-TriggeredList-r16 ::= SEQUENCE (SIZE (1..64)) OF INTEGER (0..63)
+using cli_rssi_triggered_list_r16_l = dyn_array<uint8_t>;
+
+// SRS-RSRP-TriggeredList-r16 ::= SEQUENCE (SIZE (1..32)) OF INTEGER (0..63)
+using srs_rsrp_triggered_list_r16_l = bounded_array<uint8_t, 32>;
+
 // CellsTriggeredList ::= SEQUENCE (SIZE (1..32)) OF CellsTriggeredList-item
 using cells_triggered_list_l = dyn_array<cells_triggered_list_item_c_>;
 
-// PLMN-IdentityList-r16 ::= SEQUENCE (SIZE (1..12)) OF PLMN-Identity
-using plmn_id_list_r16_l = dyn_array<plmn_id_s>;
+// CLI-TriggeredList-r16 ::= CHOICE
+struct cli_triggered_list_r16_c {
+  struct types_opts {
+    enum options { srs_rsrp_triggered_list_r16, cli_rssi_triggered_list_r16, nulltype } value;
+
+    const char* to_string() const;
+  };
+  using types = enumerated<types_opts>;
+
+  // choice methods
+  cli_triggered_list_r16_c() = default;
+  cli_triggered_list_r16_c(const cli_triggered_list_r16_c& other);
+  cli_triggered_list_r16_c& operator=(const cli_triggered_list_r16_c& other);
+  ~cli_triggered_list_r16_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16()
+  {
+    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    return c.get<srs_rsrp_triggered_list_r16_l>();
+  }
+  cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16()
+  {
+    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    return c.get<cli_rssi_triggered_list_r16_l>();
+  }
+  const srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16() const
+  {
+    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    return c.get<srs_rsrp_triggered_list_r16_l>();
+  }
+  const cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16() const
+  {
+    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    return c.get<cli_rssi_triggered_list_r16_l>();
+  }
+  srs_rsrp_triggered_list_r16_l& set_srs_rsrp_triggered_list_r16();
+  cli_rssi_triggered_list_r16_l& set_cli_rssi_triggered_list_r16();
+
+private:
+  types                                                                         type_;
+  choice_buffer_t<cli_rssi_triggered_list_r16_l, srs_rsrp_triggered_list_r16_l> c;
+
+  void destroy_();
+};
 
 // RelaysTriggeredList-r17 ::= SEQUENCE (SIZE (1..32)) OF BIT STRING (SIZE (24))
 using relays_triggered_list_r17_l = bounded_array<fixed_bitstring<24>, 32>;
 
-// VarConditionalReconfig ::= SEQUENCE
-struct var_conditional_recfg_s {
-  cond_recfg_to_add_mod_list_r16_l cond_recfg_list;
+// PLMN-IdentityList-r16 ::= SEQUENCE (SIZE (1..12)) OF PLMN-Identity
+using plmn_id_list_r16_l = dyn_array<plmn_id_s>;
+
+// VarConnEstFailReport-r16 ::= SEQUENCE
+struct var_conn_est_fail_report_r16_s {
+  conn_est_fail_report_r16_s conn_est_fail_report_r16;
+  plmn_id_s                  plmn_id_r16;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -172,10 +173,40 @@ struct var_conditional_recfg_s {
   void        to_json(json_writer& j) const;
 };
 
-// VarConnEstFailReport-r16 ::= SEQUENCE
-struct var_conn_est_fail_report_r16_s {
-  conn_est_fail_report_r16_s conn_est_fail_report_r16;
-  plmn_id_s                  plmn_id_r16;
+// VarMeasReport ::= SEQUENCE
+struct var_meas_report_s {
+  bool                        cli_triggered_list_r16_present = false;
+  uint8_t                     meas_id                        = 1;
+  cells_triggered_list_l      cells_triggered_list;
+  int64_t                     nof_reports_sent = 0;
+  cli_triggered_list_r16_c    cli_triggered_list_r16;
+  tx_pool_meas_list_r16_l     tx_pool_meas_to_add_mod_list_nr_r16;
+  relays_triggered_list_r17_l relays_triggered_list_r17;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// VarMeasReportSL-r16 ::= SEQUENCE
+struct var_meas_report_sl_r16_s {
+  using sl_freq_triggered_list_r16_l_ = bounded_array<uint32_t, 8>;
+
+  // member variables
+  uint8_t                       sl_meas_id_r16 = 1;
+  sl_freq_triggered_list_r16_l_ sl_freq_triggered_list_r16;
+  int64_t                       sl_nof_reports_sent_r16 = 0;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// VarConditionalReconfig ::= SEQUENCE
+struct var_conditional_recfg_s {
+  cond_recfg_to_add_mod_list_r16_l cond_recfg_list;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -399,39 +430,8 @@ struct var_meas_idle_report_r16_s {
   void        to_json(json_writer& j) const;
 };
 
-// VarMeasReport ::= SEQUENCE
-struct var_meas_report_s {
-  bool                        cli_triggered_list_r16_present = false;
-  uint8_t                     meas_id                        = 1;
-  cells_triggered_list_l      cells_triggered_list;
-  int64_t                     nof_reports_sent = 0;
-  cli_triggered_list_r16_c    cli_triggered_list_r16;
-  tx_pool_meas_list_r16_l     tx_pool_meas_to_add_mod_list_nr_r16;
-  relays_triggered_list_r17_l relays_triggered_list_r17;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // VarMeasReportList ::= SEQUENCE (SIZE (1..64)) OF VarMeasReport
 using var_meas_report_list_l = dyn_array<var_meas_report_s>;
-
-// VarMeasReportSL-r16 ::= SEQUENCE
-struct var_meas_report_sl_r16_s {
-  using sl_freq_triggered_list_r16_l_ = bounded_array<uint32_t, 8>;
-
-  // member variables
-  uint8_t                       sl_meas_id_r16 = 1;
-  sl_freq_triggered_list_r16_l_ sl_freq_triggered_list_r16;
-  int64_t                       sl_nof_reports_sent_r16 = 0;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
 
 // VarMeasReportListSL-r16 ::= SEQUENCE (SIZE (1..64)) OF VarMeasReportSL-r16
 using var_meas_report_list_sl_r16_l = dyn_array<var_meas_report_sl_r16_s>;
@@ -458,10 +458,11 @@ struct var_ra_report_r16_s {
   void        to_json(json_writer& j) const;
 };
 
-// VarRLF-Report-r16 ::= SEQUENCE
-struct var_rlf_report_r16_s {
-  rlf_report_r16_c    rlf_report_r16;
-  plmn_id_list2_r16_l plmn_id_list_r16;
+// VarResumeMAC-Input ::= SEQUENCE
+struct var_resume_mac_input_s {
+  uint16_t            source_pci = 0;
+  fixed_bitstring<36> target_cell_id;
+  uint32_t            source_c_rnti = 0;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -469,11 +470,10 @@ struct var_rlf_report_r16_s {
   void        to_json(json_writer& j) const;
 };
 
-// VarResumeMAC-Input ::= SEQUENCE
-struct var_resume_mac_input_s {
-  uint16_t            source_pci = 0;
-  fixed_bitstring<36> target_cell_id;
-  uint32_t            source_c_rnti = 0;
+// VarRLF-Report-r16 ::= SEQUENCE
+struct var_rlf_report_r16_s {
+  rlf_report_r16_c    rlf_report_r16;
+  plmn_id_list2_r16_l plmn_id_list_r16;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

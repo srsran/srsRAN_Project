@@ -23,7 +23,7 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {

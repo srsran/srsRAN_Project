@@ -22,9 +22,8 @@
 
 #pragma once
 
+#include "detail/priority_task_queue.h"
 #include "unique_thread.h"
-#include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/detail/tuple_utils.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
@@ -38,10 +37,6 @@ using task_priority = enqueue_priority;
 /// \c concurrent_queue_policy. The task worker will pop tasks starting from the highest priority queue and will
 /// continue to the next priority level if the current queue is empty. If there are no tasks in any of the queues, the
 /// task worker will wait for \c wait_interval before checking for new tasks.
-///
-/// \tparam QueuePolicies Queue policies for each priority level. The number of policies must match the number of
-/// supported priority levels.
-template <concurrent_queue_policy... QueuePolicies>
 class priority_task_worker
 {
 public:
@@ -51,37 +46,18 @@ public:
   /// \param wait_interval The amount of time to suspend the thread, when no tasks are pending.
   /// \param prio task worker OS thread priority level.
   /// \param mask thread OS affinity bitmask.
-  priority_task_worker(std::string                                           thread_name,
-                       const std::array<unsigned, sizeof...(QueuePolicies)>& task_queue_sizes,
-                       std::chrono::microseconds                             wait_interval,
-                       os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
-                       const os_sched_affinity_bitmask& mask = {}) :
-    task_queue(task_queue_sizes, wait_interval), t_handle(thread_name, prio, mask, [this]() { run_pop_task_loop(); })
-  {
-  }
+  priority_task_worker(std::string                         thread_name,
+                       span<const concurrent_queue_params> task_queue_params,
+                       std::chrono::microseconds           wait_interval,
+                       os_thread_realtime_priority         prio = os_thread_realtime_priority::no_realtime(),
+                       const os_sched_affinity_bitmask&    mask = {});
+
   ~priority_task_worker() { stop(); }
 
-  /// Stop task worker, if running.
-  void stop()
+  /// \brief Push task to task queue with priority level \c priority (lower integer represents a higher priority).
+  SRSRAN_NODISCARD bool push_task(task_priority prio, unique_task task)
   {
-    if (t_handle.running()) {
-      task_queue.request_stop();
-      t_handle.join();
-    }
-  }
-
-  /// \brief Push task to task queue with priority level \c Priority (lower integer represents a higher priority).
-  template <task_priority Priority>
-  SRSRAN_NODISCARD bool push_task(unique_task task)
-  {
-    return task_queue.template try_push<Priority>(std::move(task));
-  }
-
-  /// \brief Get specified priority task queue capacity.
-  template <task_priority Priority>
-  SRSRAN_NODISCARD size_t queue_capacity() const
-  {
-    return task_queue.template capacity<Priority>();
+    return task_queue.try_push(prio, std::move(task));
   }
 
   /// Get worker thread id.
@@ -90,47 +66,34 @@ public:
   /// Get worker thread name.
   const char* worker_name() const { return t_handle.get_name(); }
 
-  /// Number of priority levels supported by this worker.
-  static constexpr size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
+  /// \brief Get specified priority task queue capacity.
+  SRSRAN_NODISCARD size_t queue_capacity(task_priority prio) const { return task_queue.queue_capacity(prio); }
 
-  /// \brief Get enqueuer object for a given Priority.
-  template <task_priority Priority>
-  auto get_enqueuer()
-  {
-    return task_queue.template get_enqueuer<Priority>();
-  }
+  /// Number of priority levels supported by this worker.
+  size_t nof_priority_levels() const { return task_queue.nof_priority_levels(); }
+
+  /// Stop task worker, if running.
+  void stop();
 
 private:
-  void run_pop_task_loop()
-  {
-    while (task_queue.call_on_pop_blocking([](unique_task& task) { task(); })) {
-    }
-    srslog::fetch_basic_logger("ALL").info("Task worker \"{}\" finished.", this_thread_name());
-  }
+  /// \brief Task run in instantiated thread. It will keep popping tasks until the worker is stopped.
+  ///
+  /// The prioritization is achieved via multiple queues. The pop functions will always start with the highest priority
+  /// queue until it is depleted, and then move to the second highest priority queue, and so on.
+  void run_pop_task_loop();
 
   // Task queues with different priorities. The first queue is the highest priority queue.
-  concurrent_priority_queue<unique_task, QueuePolicies...> task_queue;
+  detail::priority_task_queue task_queue;
 
   // Worker thread
   unique_thread t_handle;
 };
 
-/// \brief Task executor with \c Priority (lower is higher) for \c priority_task_worker.
-///
-/// This executor does not depend on the priorty_task_worker<QueuePolicies...> to avoid increases in template
-/// instantiations being proportional to all possible QueuePolicies... permutations.
-/// \tparam QueuePolicy Enqueueing policy for the given priority level.
-template <concurrent_queue_policy QueuePolicy>
+/// \brief Task executor with a predefined priority (lower is higher) for \c priority_task_worker.
 class priority_task_worker_executor : public task_executor
 {
 public:
-  priority_task_worker_executor(priority_enqueuer<unique_task, QueuePolicy> enqueuer_,
-                                task_priority                               prio_,
-                                std::thread::id                             tid_,
-                                const char*                                 worker_name_) :
-    enqueuer(std::move(enqueuer_)), prio(prio_), worker_tid(tid_), worker_name(worker_name_)
-  {
-  }
+  priority_task_worker_executor(task_priority prio_, priority_task_worker& worker_) : prio(prio_), worker(worker_) {}
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
@@ -139,77 +102,34 @@ public:
       task();
       return true;
     }
-    return defer(std::move(task));
+    return worker.push_task(prio, std::move(task));
   }
 
-  SRSRAN_NODISCARD bool defer(unique_task task) override { return enqueuer.try_push(std::move(task)); }
+  SRSRAN_NODISCARD bool defer(unique_task task) override { return worker.push_task(prio, std::move(task)); }
 
   // Check whether task can be run inline or it needs to be dispatched to a queue.
-  bool can_run_task_inline() const { return prio == task_priority::max and worker_tid == std::this_thread::get_id(); }
+  bool can_run_task_inline() const
+  {
+    return prio == task_priority::max and worker.get_id() == std::this_thread::get_id();
+  }
 
 private:
   /// Enqueuer interface with the provided Priority.
-  priority_enqueuer<unique_task, QueuePolicy> enqueuer;
-  task_priority                               prio;
-  std::thread::id                             worker_tid;
-  const char*                                 worker_name;
+  task_priority         prio;
+  priority_task_worker& worker;
 };
 
-/// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
-template <task_priority Priority, concurrent_queue_policy... QueuePolicies>
-auto make_priority_task_worker_executor(priority_task_worker<QueuePolicies...>& worker)
+/// \brief Create task executor with \c priority for \c priority_task_worker.
+inline priority_task_worker_executor make_priority_task_worker_executor(task_priority         prio,
+                                                                        priority_task_worker& worker)
 {
-  return priority_task_worker_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>(
-      worker.template get_enqueuer<Priority>(), Priority, worker.get_id(), worker.worker_name());
+  return {prio, worker};
 }
 
-/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
-template <task_priority Priority, concurrent_queue_policy... QueuePolicies>
-std::unique_ptr<task_executor> make_priority_task_executor_ptr(priority_task_worker<QueuePolicies...>& worker)
+/// \brief Create general task executor pointer with \c priority for \c priority_task_worker.
+inline std::unique_ptr<task_executor> make_priority_task_executor_ptr(task_priority prio, priority_task_worker& worker)
 {
-  return std::make_unique<priority_task_worker_executor<get_priority_queue_policy<QueuePolicies...>(Priority)>>(
-      worker.template get_enqueuer<Priority>(), Priority, worker.get_id(), worker.worker_name());
-}
-
-namespace detail {
-
-template <typename Func, concurrent_queue_policy... QueuePolicies, size_t... Is>
-void visit_executor(priority_task_worker<QueuePolicies...>& w,
-                    task_priority                           priority,
-                    const Func&                             func,
-                    std::index_sequence<Is...> /*unused*/)
-{
-  const size_t idx = detail::enqueue_priority_to_queue_index(priority, sizeof...(QueuePolicies));
-  (void)std::initializer_list<int>{[idx, &w, &func]() {
-    if (idx == Is) {
-      func(
-          make_priority_task_worker_executor<detail::queue_index_to_enqueue_priority(Is, sizeof...(QueuePolicies))>(w));
-    }
-    return 0;
-  }()...};
-}
-
-} // namespace detail
-
-/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
-template <typename Func, concurrent_queue_policy... QueuePolicies>
-void visit_executor(priority_task_worker<QueuePolicies...>& worker, task_priority priority, const Func& func)
-{
-  detail::visit_executor(worker, priority, func, std::make_index_sequence<sizeof...(QueuePolicies)>{});
-}
-
-/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
-template <concurrent_queue_policy... QueuePolicies>
-std::unique_ptr<task_executor> make_priority_task_executor_ptr(priority_task_worker<QueuePolicies...>& worker,
-                                                               task_priority                           priority)
-{
-  std::unique_ptr<task_executor> exec;
-  detail::visit_executor(
-      worker,
-      priority,
-      [&exec](const auto& e) { exec = std::make_unique<decltype(e)>(e); },
-      std::make_index_sequence<sizeof...(QueuePolicies)>{});
-  return exec;
+  return std::make_unique<priority_task_worker_executor>(prio, worker);
 }
 
 } // namespace srsran

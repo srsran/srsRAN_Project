@@ -23,13 +23,13 @@
 
 #include "../common/e2ap_asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_event_manager.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/subscription/e2_subscription.h"
 
-using namespace asn1::e2sm_kpm;
+using namespace asn1::e2sm;
 
 namespace srsran {
 /// @brief  E2 INDICATION procedure will be used to send the measurement data to the RIC
@@ -54,10 +54,10 @@ private:
   e2_subscription_info_t&            subscription;
   srslog::basic_logger&              logger;
   std::vector<e2_indication_message> e2_ind_vec = {};
-  e2_sm_kpm_ind_hdr_s                ric_ind_header;
-  e2_sm_kpm_ind_msg_s                ric_ind_message;
+  e2sm_kpm_ind_hdr_s                 ric_ind_header;
+  e2sm_kpm_ind_msg_s                 ric_ind_message;
 
-  protocol_transaction_outcome_observer<asn1::e2ap::ricsubscription_delete_request_s> transaction_sink;
+  protocol_transaction_outcome_observer<asn1::e2ap::ric_sub_delete_request_s> transaction_sink;
 
   std::chrono::seconds time_to_wait{1};
   bool                 running = true;

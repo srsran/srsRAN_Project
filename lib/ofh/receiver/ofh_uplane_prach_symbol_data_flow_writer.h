@@ -40,10 +40,9 @@ public:
                                        std::shared_ptr<prach_context_repository> prach_context_repo_) :
     prach_eaxc(prach_eaxc_.begin(), prach_eaxc_.end()),
     logger(logger_),
-    prach_context_repo_ptr(prach_context_repo_),
-    prach_context_repo(*prach_context_repo_ptr)
+    prach_context_repo(std::move(prach_context_repo_))
   {
-    srsran_assert(prach_context_repo_ptr, "Invalid PRACH context repository");
+    srsran_assert(prach_context_repo, "Invalid PRACH context repository");
   }
 
   /// Writes the given decoder results in the corresponding PRACH buffer.
@@ -52,8 +51,7 @@ public:
 private:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   srslog::basic_logger&                                 logger;
-  std::shared_ptr<prach_context_repository>             prach_context_repo_ptr;
-  prach_context_repository&                             prach_context_repo;
+  std::shared_ptr<prach_context_repository>             prach_context_repo;
 };
 
 } // namespace ofh

@@ -21,6 +21,10 @@
  */
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
+#include "srsran/adt/mutexed_mpmc_queue.h"
+#include "srsran/adt/mutexed_mpsc_queue.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

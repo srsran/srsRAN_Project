@@ -23,4 +23,4 @@ set(SOURCES
         realtime_timing_worker.cpp)
 
 add_library(srsran_ofh_timing STATIC ${SOURCES})
-target_link_libraries(srsran_ofh_timing srslog)
+target_link_libraries(srsran_ofh_timing srslog srsran_instrumentation)

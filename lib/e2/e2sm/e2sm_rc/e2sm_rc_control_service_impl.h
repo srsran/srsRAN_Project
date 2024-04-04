@@ -72,7 +72,7 @@ public:
   e2sm_rc_control_service_base(uint32_t style_id_);
   virtual ~e2sm_rc_control_service_base() = default;
 
-  bool fill_ran_function_description(asn1::e2sm_rc::ran_function_definition_ctrl_item_s& ctrl_item);
+  bool fill_ran_function_description(asn1::e2sm::ran_function_definition_ctrl_item_s& ctrl_item);
 
   /// e2sm_control_service functions.
   uint32_t get_style_type() override;
@@ -113,9 +113,9 @@ public:
 private:
   // Helper functions.
   e2sm_ric_control_request
-  create_req_f1_from_req_f2(const asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_format2_s&                 ctrl_hdr_f2,
-                            const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_style_item_s       style,
-                            const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_ctrl_action_item_s action);
+  create_req_f1_from_req_f2(const asn1::e2sm::e2sm_rc_ctrl_hdr_format2_s&                 ctrl_hdr_f2,
+                            const asn1::e2sm::e2sm_rc_ctrl_msg_format2_style_item_s       style,
+                            const asn1::e2sm::e2sm_rc_ctrl_msg_format2_ctrl_action_item_s action);
 
   std::map<uint64_t, e2sm_control_service*> e2sm_rc_control_services;
 };

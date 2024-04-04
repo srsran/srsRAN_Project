@@ -32,9 +32,13 @@ class cu_up_executor_pool_impl final : public cu_up_executor_pool
     task_executor& ctrl_exec;
     task_executor& ul_exec;
     task_executor& dl_exec;
+    task_executor& crypto_exec;
 
-    ue_executor_context(task_executor& ctrl_exec_, task_executor& ul_exec_, task_executor& dl_exec_) :
-      ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_)
+    ue_executor_context(task_executor& ctrl_exec_,
+                        task_executor& ul_exec_,
+                        task_executor& dl_exec_,
+                        task_executor& crypto_exec_) :
+      ctrl_exec(ctrl_exec_), ul_exec(ul_exec_), dl_exec(dl_exec_), crypto_exec(crypto_exec_)
     {
     }
   };
@@ -93,6 +97,11 @@ public:
       srsran_assert(ctxt != nullptr, "UE executor mapper already stopped");
       return ctxt->dl_exec;
     }
+    task_executor& crypto_executor() override
+    {
+      srsran_assert(ctxt != nullptr, "UE executor mapper already stopped");
+      return ctxt->crypto_exec;
+    }
 
   private:
     cu_up_executor_pool_impl& parent;
@@ -102,7 +111,8 @@ public:
   cu_up_executor_pool_impl(task_executor&       cu_up_main_exec,
                            span<task_executor*> dl_executors,
                            span<task_executor*> ul_executors,
-                           span<task_executor*> ctrl_executors) :
+                           span<task_executor*> ctrl_executors,
+                           task_executor&       crypto_exec) :
     main_exec(cu_up_main_exec)
   {
     srsran_assert(ctrl_executors.size() > 0, "At least one DL executor must be specified");
@@ -120,7 +130,7 @@ public:
     }
 
     for (unsigned i = 0; i != ctrl_executors.size(); ++i) {
-      execs.emplace_back(*ctrl_executors[i], *ul_executors[i], *dl_executors[i]);
+      execs.emplace_back(*ctrl_executors[i], *ul_executors[i], *dl_executors[i], crypto_exec);
     }
   }
 
@@ -148,8 +158,9 @@ private:
 std::unique_ptr<cu_up_executor_pool> srsran::srs_cu_up::make_cu_up_executor_pool(task_executor& cu_up_main_executor,
                                                                                  span<task_executor*> dl_pdu_executors,
                                                                                  span<task_executor*> ul_pdu_executors,
-                                                                                 span<task_executor*> ctrl_executors)
+                                                                                 span<task_executor*> ctrl_executors,
+                                                                                 task_executor&       crypto_executor)
 {
   return std::make_unique<cu_up_executor_pool_impl>(
-      cu_up_main_executor, dl_pdu_executors, ul_pdu_executors, ctrl_executors);
+      cu_up_main_executor, dl_pdu_executors, ul_pdu_executors, ctrl_executors, crypto_executor);
 }

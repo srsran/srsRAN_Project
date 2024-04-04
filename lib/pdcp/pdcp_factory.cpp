@@ -38,5 +38,8 @@ std::unique_ptr<pdcp_entity> srsran::create_pdcp_entity(pdcp_entity_creation_mes
                                             *msg.rx_upper_cn,
                                             msg.ue_dl_timer_factory,
                                             msg.ue_ul_timer_factory,
-                                            msg.ue_ctrl_timer_factory);
+                                            msg.ue_ctrl_timer_factory,
+                                            *msg.ue_dl_executor,
+                                            *msg.ue_ul_executor,
+                                            *msg.crypto_executor);
 }

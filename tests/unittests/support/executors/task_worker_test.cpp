@@ -20,8 +20,8 @@
  *
  */
 
+#include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/priority_task_worker.h"
-#include "srsran/support/executors/task_executor_utils.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <future>
@@ -87,7 +87,7 @@ class task_worker_pool_test : public ::testing::Test
 protected:
   using pool_type = TaskWorkerPool;
 
-  task_worker_pool_test() : pool{4, 128, "POOL", std::chrono::microseconds{100}} {}
+  task_worker_pool_test() : pool{"POOL", 4, 128, std::chrono::microseconds{100}} {}
 
   pool_type pool;
 };
@@ -149,43 +149,51 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
   this->pool.stop();
 }
 
-template <typename TaskWorkerPool>
-class prio_task_worker_pool_test : public ::testing::Test
+class prio_task_worker_pool_test : public ::testing::TestWithParam<std::vector<concurrent_queue_policy>>
 {
 protected:
-  using pool_type = TaskWorkerPool;
+  using pool_type = priority_task_worker_pool;
 
-  prio_task_worker_pool_test() : pool{4, std::array<unsigned, 2>{128, 256}, "POOL", std::chrono::microseconds{100}} {}
+  prio_task_worker_pool_test() :
+    pool{"POOL",
+         4,
+         std::vector<concurrent_queue_params>{{GetParam()[0], 128}, {GetParam()[1], 256}},
+         std::chrono::microseconds{100}}
+  {
+  }
 
   pool_type pool;
 };
-using prio_worker_pool_types =
-    ::testing::Types<task_worker_pool<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc>,
-                     task_worker_pool<concurrent_queue_policy::locking_mpmc, concurrent_queue_policy::locking_mpmc>>;
-TYPED_TEST_SUITE(prio_task_worker_pool_test, prio_worker_pool_types);
 
-TYPED_TEST(prio_task_worker_pool_test, correct_initialization)
+INSTANTIATE_TEST_SUITE_P(priority_task_worker_different_policies,
+                         prio_task_worker_pool_test,
+                         testing::Values(std::vector<concurrent_queue_policy>{concurrent_queue_policy::lockfree_mpmc,
+                                                                              concurrent_queue_policy::lockfree_mpmc},
+                                         std::vector<concurrent_queue_policy>{concurrent_queue_policy::locking_mpmc,
+                                                                              concurrent_queue_policy::locking_mpmc}));
+
+TEST_P(prio_task_worker_pool_test, correct_initialization)
 {
   ASSERT_EQ(this->pool.nof_workers(), 4);
   ASSERT_EQ(this->pool.nof_pending_tasks(), 0);
 }
 
-TYPED_TEST(prio_task_worker_pool_test, prio_worker_pool_runs_single_task)
+TEST_P(prio_task_worker_pool_test, prio_worker_pool_runs_single_task)
 {
   std::promise<void> p;
   std::future<void>  f = p.get_future();
-  ASSERT_TRUE(this->pool.template push_task<enqueue_priority::max>([&p]() {
+  ASSERT_TRUE(this->pool.push_task(enqueue_priority::max, [&p]() {
     p.set_value();
     fmt::print("Finished in {}\n", this_thread_name());
   }));
   f.get();
 }
 
-TYPED_TEST(prio_task_worker_pool_test, prio_worker_pool_executor_can_run_inline)
+TEST_P(prio_task_worker_pool_test, prio_worker_pool_executor_can_run_inline)
 {
   std::promise<bool> p;
   std::future<bool>  f    = p.get_future();
-  auto               exec = make_priority_task_worker_pool_executor<enqueue_priority::max>(this->pool);
+  auto               exec = make_priority_task_worker_pool_executor(enqueue_priority::max, this->pool);
   ASSERT_TRUE(exec.execute([&exec, &p]() {
     bool run_inline = false;
     fmt::print("Started in {}\n", this_thread_name());
@@ -223,18 +231,19 @@ TEST(spsc_task_worker_test, single_pushed_task_is_run)
 
 TEST(priority_task_worker_test, priorities_respected_on_queue)
 {
-  priority_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc> worker{
-      "WORKER", {16, 16}, std::chrono::microseconds{100}};
-  std::atomic<uint32_t> result{0};
+  std::vector<concurrent_queue_params> qparams{{concurrent_queue_policy::lockfree_mpmc, 16},
+                                               {concurrent_queue_policy::lockfree_mpmc, 16}};
+  priority_task_worker                 worker{"WORKER", qparams, std::chrono::microseconds{100}};
+  std::atomic<uint32_t>                result{0};
 
-  ASSERT_TRUE(worker.push_task<enqueue_priority::min>([&]() mutable {
+  ASSERT_TRUE(worker.push_task(task_priority::min, [&]() mutable {
     // This task should be executed last.
     for (unsigned i = 0; i != 16; ++i) {
-      ASSERT_TRUE(worker.push_task<enqueue_priority::max - 1>([&, i]() mutable { ASSERT_EQ(result++, 16 + i); }));
+      ASSERT_TRUE(worker.push_task(enqueue_priority::max - 1, [&, i]() mutable { ASSERT_EQ(result++, 16 + i); }));
     }
     // This task should be executed first.
     for (unsigned i = 0; i != 16; ++i) {
-      ASSERT_TRUE(worker.push_task<enqueue_priority::max>([&, i]() mutable { ASSERT_EQ(result++, i); }));
+      ASSERT_TRUE(worker.push_task(enqueue_priority::max, [&, i]() mutable { ASSERT_EQ(result++, i); }));
     }
   }));
 

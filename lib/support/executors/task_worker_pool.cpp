@@ -60,19 +60,30 @@ bool detail::base_worker_pool::is_in_thread_pool() const
 
 // //////////////////////////
 
-template <concurrent_queue_policy... QueuePolicies>
-task_worker_pool<QueuePolicies...>::~task_worker_pool()
+priority_task_worker_pool::priority_task_worker_pool(std::string                           worker_pool_name,
+                                                     unsigned                              nof_workers_,
+                                                     span<const concurrent_queue_params>   queue_params,
+                                                     std::chrono::microseconds             wait_sleep_time,
+                                                     os_thread_realtime_priority           prio,
+                                                     span<const os_sched_affinity_bitmask> cpu_masks) :
+  detail::base_priority_task_queue(queue_params, wait_sleep_time),
+  detail::base_worker_pool(nof_workers_, std::move(worker_pool_name), create_pop_loop_task(), prio, cpu_masks)
+{
+  report_fatal_error_if_not(nof_workers_ > 0, "Number of workers of a thread pool must be greater than 0");
+  srsran_assert(queue_params.size() >= 2, "Number of queues in a prioritized thread pool must be greater than 1");
+}
+
+priority_task_worker_pool::~priority_task_worker_pool()
 {
   stop();
 }
 
-template <concurrent_queue_policy... QueuePolicies>
-void task_worker_pool<QueuePolicies...>::stop()
+void priority_task_worker_pool::stop()
 {
   unsigned count = 0;
   for (unique_thread& w : worker_threads) {
     if (w.running()) {
-      this->pending_tasks.request_stop();
+      this->queue.request_stop();
       w.join();
       this->logger.info("Task worker \"{}\" finished.", worker_threads[count].get_name());
     }
@@ -80,20 +91,7 @@ void task_worker_pool<QueuePolicies...>::stop()
   }
 }
 
-// Helper function to push a blocking task to a concurrent queue.
-template <concurrent_queue_policy... QueuePolicies>
-bool push_blocking_prio_queue_helper(concurrent_priority_queue<unique_task, QueuePolicies...>& q, unique_task t)
-{
-  return q.template push_blocking<enqueue_priority::max>(std::move(t));
-}
-template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-bool push_blocking_prio_queue_helper(concurrent_queue<unique_task, QueuePolicy, WaitPolicy>& q, unique_task t)
-{
-  return q.push_blocking(std::move(t));
-}
-
-template <concurrent_queue_policy... QueuePolicies>
-void task_worker_pool<QueuePolicies...>::wait_pending_tasks()
+void priority_task_worker_pool::wait_pending_tasks()
 {
   std::mutex              mutex;
   std::condition_variable cvar_all_sync, cvar_caller_return;
@@ -114,23 +112,28 @@ void task_worker_pool<QueuePolicies...>::wait_pending_tasks()
   unsigned count_workers_not_sync = workers_running;
   unsigned counter_caller         = workers_running;
   for (unsigned i = 0; i != workers_running; ++i) {
-    push_blocking_prio_queue_helper(
-        this->pending_tasks, [&mutex, &cvar_all_sync, &cvar_caller_return, &count_workers_not_sync, &counter_caller]() {
-          std::unique_lock<std::mutex> lock(mutex);
+    if (not this->queue.push_blocking(
+            enqueue_priority::min,
+            [&mutex, &cvar_all_sync, &cvar_caller_return, &count_workers_not_sync, &counter_caller]() {
+              std::unique_lock<std::mutex> lock(mutex);
 
-          // Sync all workers. Only when all workers are in sync, we can carry on.
-          count_workers_not_sync--;
-          if (count_workers_not_sync > 0) {
-            cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
-          } else {
-            cvar_all_sync.notify_all();
-          }
+              // Sync all workers. Only when all workers are in sync, we can carry on.
+              count_workers_not_sync--;
+              if (count_workers_not_sync > 0) {
+                cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
+              } else {
+                cvar_all_sync.notify_all();
+              }
 
-          // When all workers passed the condition variable, we can notify the caller.
-          if (--counter_caller == 0) {
-            cvar_caller_return.notify_one();
-          }
-        });
+              // When all workers passed the condition variable, we can notify the caller.
+              if (--counter_caller == 0) {
+                cvar_caller_return.notify_one();
+              }
+            })) {
+      // Queue was deactivated.
+      std::unique_lock<std::mutex> lock(mutex);
+      count_workers_not_sync--;
+    }
   }
 
   // Caller blocks waiting for all workers to sync.
@@ -138,13 +141,12 @@ void task_worker_pool<QueuePolicies...>::wait_pending_tasks()
   cvar_caller_return.wait(lock, [&counter_caller]() { return counter_caller == 0; });
 }
 
-template <concurrent_queue_policy... QueuePolicies>
-std::function<void()> task_worker_pool<QueuePolicies...>::create_pop_loop_task()
+std::function<void()> priority_task_worker_pool::create_pop_loop_task()
 {
   return [this]() {
     unique_task job;
     while (true) {
-      if (not this->pending_tasks.pop_blocking(job)) {
+      if (not this->queue.pop_blocking(job)) {
         break;
       }
       job();
@@ -152,10 +154,92 @@ std::function<void()> task_worker_pool<QueuePolicies...>::create_pop_loop_task()
   };
 }
 
+// ---- non-prioritized task worker pool
+
+template <concurrent_queue_policy QueuePolicy>
+task_worker_pool<QueuePolicy>::~task_worker_pool()
+{
+  stop();
+}
+
+template <concurrent_queue_policy QueuePolicy>
+void task_worker_pool<QueuePolicy>::stop()
+{
+  unsigned count = 0;
+  for (unique_thread& w : worker_threads) {
+    if (w.running()) {
+      this->queue.request_stop();
+      w.join();
+      this->logger.info("Task worker \"{}\" finished.", worker_threads[count].get_name());
+    }
+    count++;
+  }
+}
+
+template <concurrent_queue_policy QueuePolicy>
+std::function<void()> task_worker_pool<QueuePolicy>::create_pop_loop_task()
+{
+  return [this]() {
+    unique_task job;
+    while (true) {
+      if (not this->queue.pop_blocking(job)) {
+        break;
+      }
+      job();
+    }
+  };
+}
+
+template <concurrent_queue_policy QueuePolicy>
+void task_worker_pool<QueuePolicy>::wait_pending_tasks()
+{
+  std::mutex              mutex;
+  std::condition_variable cvar_all_sync, cvar_caller_return;
+
+  // Check if there are workers still running.
+  unsigned workers_running = 0;
+  for (unsigned i = 0; i != nof_workers(); ++i) {
+    if (worker_threads[i].running()) {
+      workers_running++;
+    }
+  }
+  if (workers_running == 0) {
+    // If no worker is running, return immediately.
+    return;
+  }
+
+  // This will block all workers until all of them are running the enqueued task.
+  unsigned count_workers_not_sync = workers_running;
+  unsigned counter_caller         = workers_running;
+  for (unsigned i = 0; i != workers_running; ++i) {
+    if (not this->queue.push_blocking(
+            [&mutex, &cvar_all_sync, &cvar_caller_return, &count_workers_not_sync, &counter_caller]() {
+              std::unique_lock<std::mutex> lock(mutex);
+
+              // Sync all workers. Only when all workers are in sync, we can carry on.
+              count_workers_not_sync--;
+              if (count_workers_not_sync > 0) {
+                cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
+              } else {
+                cvar_all_sync.notify_all();
+              }
+
+              // When all workers passed the condition variable, we can notify the caller.
+              if (--counter_caller == 0) {
+                cvar_caller_return.notify_one();
+              }
+            })) {
+      // Queue was deactivated.
+      std::unique_lock<std::mutex> lock(mutex);
+      count_workers_not_sync--;
+    }
+  }
+
+  // Caller blocks waiting for all workers to sync.
+  std::unique_lock<std::mutex> lock(mutex);
+  cvar_caller_return.wait(lock, [&counter_caller]() { return counter_caller == 0; });
+}
+
 // Explicit specializations of the task_worker_pool.
 template class srsran::task_worker_pool<concurrent_queue_policy::lockfree_mpmc>;
 template class srsran::task_worker_pool<concurrent_queue_policy::locking_mpmc>;
-template class srsran::task_worker_pool<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc>;
-template class srsran::task_worker_pool<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::locking_mpmc>;
-template class srsran::task_worker_pool<concurrent_queue_policy::locking_mpmc, concurrent_queue_policy::lockfree_mpmc>;
-template class srsran::task_worker_pool<concurrent_queue_policy::locking_mpmc, concurrent_queue_policy::locking_mpmc>;

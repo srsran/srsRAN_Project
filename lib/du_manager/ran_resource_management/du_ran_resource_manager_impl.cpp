@@ -237,17 +237,19 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
 {
   cell_group_config& ue_res = ue_res_pool[ue_index].cg_cfg;
 
+  const du_cell_config& cell_cfg_cmn = cell_cfg_list[cell_index];
+
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
     // It is a PCell.
-    srsran_assert(not ue_res.cells.contains(0), "Reallocation of PCell detected");
-    ue_res.cells.emplace(to_du_cell_index(0));
+    srsran_assert(not ue_res.cells.contains(SERVING_CELL_PCELL_IDX), "Reallocation of PCell detected");
+    ue_res.cells.emplace(SERVING_CELL_PCELL_IDX);
     ue_res.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
-    ue_res.cells[0].serv_cell_cfg            = cell_cfg_list[0].ue_ded_serv_cell_cfg;
+    ue_res.cells[0].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
     ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
-    ue_res.mcg_cfg = config_helpers::make_initial_mac_cell_group_config(cell_cfg_list[0].mcg_params);
+    ue_res.mcg_cfg = config_helpers::make_initial_mac_cell_group_config(cell_cfg_cmn.mcg_params);
     // TODO: Move to helper.
-    if (cell_cfg_list[0].pcg_params.p_nr_fr1.has_value()) {
-      ue_res.pcg_cfg.p_nr_fr1 = cell_cfg_list[0].pcg_params.p_nr_fr1->to_int();
+    if (cell_cfg_cmn.pcg_params.p_nr_fr1.has_value()) {
+      ue_res.pcg_cfg.p_nr_fr1 = cell_cfg_cmn.pcg_params.p_nr_fr1->to_int();
     }
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
@@ -259,7 +261,7 @@ error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du
     srsran_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cells.emplace(serv_cell_index);
     ue_res.cells[serv_cell_index].serv_cell_idx            = serv_cell_index;
-    ue_res.cells[serv_cell_index].serv_cell_cfg            = cell_cfg_list[serv_cell_index].ue_ded_serv_cell_cfg;
+    ue_res.cells[serv_cell_index].serv_cell_cfg            = cell_cfg_cmn.ue_ded_serv_cell_cfg;
     ue_res.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
     // TODO: Allocate SCell params.
   }

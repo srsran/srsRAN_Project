@@ -50,13 +50,13 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
-#include "gnb_worker_manager.h"
+#include "apps/services/worker_manager.h"
 
-#include "helpers/gnb_console_helper.h"
-#include "helpers/metrics_hub.h"
-#include "helpers/rlc_metrics_plotter_json.h"
+#include "apps/services/console_helper.h"
+#include "apps/services/metrics_hub.h"
+#include "apps/services/rlc_metrics_plotter_json.h"
 
-#include "gnb_du_factory.h"
+#include "apps/modules/flexible_du/split_ru_dynamic/dynamic_du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -66,10 +66,17 @@
 #include "srsran/ru/ru_ofh_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "gnb_e2_metric_connector_manager.h"
+#include "apps/services/e2_metric_connector_manager.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
+
+#include "../modules/cu_cp/logger_registrator.h"
+#include "../modules/cu_cp/pcap_factory.h"
+#include "../modules/cu_up/logger_registrator.h"
+#include "../modules/cu_up/pcap_factory.h"
+#include "../modules/flexible_du/du_high/pcap_factory.h"
+#include "../modules/flexible_du/split_ru_dynamic/logger_registrator.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -112,10 +119,7 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
                                                          ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                          ru_timing_notifier&                 timing_notifier)
 {
-  srslog::basic_logger& rf_logger = srslog::fetch_basic_logger("RF", false);
-  rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
-
-  config.rf_logger                   = &rf_logger;
+  config.rf_logger                   = &srslog::fetch_basic_logger("RF");
   config.radio_exec                  = workers.radio_exec;
   config.statistics_printer_executor = workers.ru_printer_exec;
   config.timing_notifier             = &timing_notifier;
@@ -143,10 +147,7 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
                                                      ru_timing_notifier&                 timing_notifier,
                                                      ru_error_notifier&                  error_notifier)
 {
-  srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
-  ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
-
-  dependencies.logger             = &ofh_logger;
+  dependencies.logger             = &srslog::fetch_basic_logger("OFH");
   dependencies.rt_timing_executor = workers.ru_timing_exec;
   dependencies.timing_notifier    = &timing_notifier;
   dependencies.rx_symbol_notifier = &symbol_notifier;
@@ -171,13 +172,39 @@ static void configure_ru_dummy_executors_and_notifiers(ru_dummy_configuration&  
                                                        ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                        ru_timing_notifier&                 timing_notifier)
 {
-  srslog::basic_logger& ru_logger = srslog::fetch_basic_logger("RU", true);
-  ru_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
-
-  dependencies.logger          = &ru_logger;
+  dependencies.logger          = &srslog::fetch_basic_logger("RU");
   dependencies.executor        = workers.radio_exec;
   dependencies.timing_notifier = &timing_notifier;
   dependencies.symbol_notifier = &symbol_notifier;
+}
+
+static void initialize_log(const std::string& filename)
+{
+  srslog::sink* log_sink = (filename == "stdout") ? srslog::create_stdout_sink() : srslog::create_file_sink(filename);
+  if (log_sink == nullptr) {
+    report_error("Could not create application main log sink.\n");
+  }
+  srslog::set_default_sink(*log_sink);
+  srslog::init();
+}
+
+static void register_app_logs(const log_appconfig& log_cfg)
+{
+  // Set log-level of app and all non-layer specific components to app level.
+  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+    auto& logger = srslog::fetch_basic_logger(id, false);
+    logger.set_level(srslog::str_to_basic_level(log_cfg.lib_level));
+    logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  }
+
+  auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
+  e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
+  e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  // Register the loggers of the modules.
+  modules::cu_cp::register_logs(log_cfg);
+  modules::cu_up::register_logs(log_cfg);
+  modules::flexible_du::split_ru_dynamic::register_logs(log_cfg);
 }
 
 int main(int argc, char** argv)
@@ -213,100 +240,10 @@ int main(int argc, char** argv)
   }
 
   // Set up logging.
-  srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
-                                                                  : srslog::create_file_sink(gnb_cfg.log_cfg.filename);
-  if (log_sink == nullptr) {
-    report_error("Could not create application main log sink.\n");
-  }
-  srslog::set_default_sink(*log_sink);
-  srslog::init();
+  initialize_log(gnb_cfg.log_cfg.filename);
+  register_app_logs(gnb_cfg.log_cfg);
 
-  // Set log-level of app and all non-layer specific components to app level.
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
-  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
-    auto& logger = srslog::fetch_basic_logger(id, false);
-    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.lib_level));
-    logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  // Set component-specific logging options.
-  for (const auto& id : {"DU", "DU-MNG", "UE-MNG"}) {
-    auto& du_logger = srslog::fetch_basic_logger(id, false);
-    du_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.du_level));
-    du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  for (const auto& id : {"CU-CP", "CU-UEMNG", "CU-CP-E1"}) {
-    auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);
-    cu_cp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
-    cu_cp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  for (const auto& id : {"CU-UP", "CU-UP-E1"}) {
-    auto& cu_up_logger = srslog::fetch_basic_logger(id, false);
-    cu_up_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
-    cu_up_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  // Set layer-specific logging options.
-  auto& phy_logger = srslog::fetch_basic_logger("PHY", true);
-  phy_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.phy_level));
-  phy_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  for (const auto& id : {"MAC", "SCHED"}) {
-    auto& mac_logger = srslog::fetch_basic_logger(id, true);
-    mac_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.mac_level));
-    mac_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  auto& rlc_logger = srslog::fetch_basic_logger("RLC", false);
-  rlc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rlc_level));
-  rlc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& du_f1ap_logger = srslog::fetch_basic_logger("DU-F1", false);
-  auto& cu_f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1", false);
-  du_f1ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1ap_level));
-  du_f1ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  cu_f1ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1ap_level));
-  cu_f1ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  for (const auto& id : {"CU-F1-U", "DU-F1-U"}) {
-    auto& f1u_logger = srslog::fetch_basic_logger(id, false);
-    f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
-    f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-  }
-
-  auto& sec_logger = srslog::fetch_basic_logger("SEC", false);
-  sec_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sec_level));
-  sec_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
-  pdcp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.pdcp_level));
-  pdcp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
-  rrc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rrc_level));
-  rrc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& ngap_logger = srslog::fetch_basic_logger("NGAP", false);
-  ngap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.ngap_level));
-  ngap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& sdap_logger = srslog::fetch_basic_logger("SDAP", false);
-  sdap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sdap_level));
-  sdap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& gtpu_logger = srslog::fetch_basic_logger("GTPU", false);
-  gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
-  gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
-  fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
-
-  auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
-  e2ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.e2ap_level));
-  e2ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
     gnb_logger.info("Opening event tracer...");
     open_trace_file(gnb_cfg.log_cfg.tracing_filename);
@@ -357,44 +294,17 @@ int main(int argc, char** argv)
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
-  std::unique_ptr<dlt_pcap> ngap_p = gnb_cfg.pcap_cfg.ngap.enabled ? create_ngap_pcap(gnb_cfg.pcap_cfg.ngap.filename,
-                                                                                      workers.get_executor("pcap_exec"))
-                                                                   : create_null_dlt_pcap();
-  std::unique_ptr<dlt_pcap> e1ap_p = gnb_cfg.pcap_cfg.e1ap.enabled ? create_e1ap_pcap(gnb_cfg.pcap_cfg.e1ap.filename,
-                                                                                      workers.get_executor("pcap_exec"))
-                                                                   : create_null_dlt_pcap();
-  std::unique_ptr<dlt_pcap> f1ap_p = gnb_cfg.pcap_cfg.f1ap.enabled ? create_f1ap_pcap(gnb_cfg.pcap_cfg.f1ap.filename,
-                                                                                      workers.get_executor("pcap_exec"))
-                                                                   : create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
+  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
+  std::unique_ptr<dlt_pcap>              f1ap_p      = modules::flexible_du::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
+  std::unique_ptr<mac_pcap>              mac_p       = modules::flexible_du::create_mac_pcap(gnb_cfg.pcap_cfg, workers);
+  std::unique_ptr<rlc_pcap>              rlc_p       = modules::flexible_du::create_rlc_pcap(gnb_cfg.pcap_cfg, workers);
   std::unique_ptr<dlt_pcap> e2ap_p = gnb_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(gnb_cfg.pcap_cfg.e2ap.filename,
                                                                                       workers.get_executor("pcap_exec"))
                                                                    : create_null_dlt_pcap();
-  std::unique_ptr<dlt_pcap> gtpu_p =
-      gnb_cfg.pcap_cfg.gtpu.enabled
-          ? create_gtpu_pcap(gnb_cfg.pcap_cfg.gtpu.filename, workers.get_executor("gtpu_pcap_exec"))
-          : create_null_dlt_pcap();
-  if (gnb_cfg.pcap_cfg.mac.type != "dlt" and gnb_cfg.pcap_cfg.mac.type != "udp") {
-    report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
-  }
-  std::unique_ptr<mac_pcap> mac_p =
-      gnb_cfg.pcap_cfg.mac.enabled
-          ? create_mac_pcap(gnb_cfg.pcap_cfg.mac.filename,
-                            gnb_cfg.pcap_cfg.mac.type == "dlt" ? mac_pcap_type::dlt : mac_pcap_type::udp,
-                            workers.get_executor("mac_pcap_exec"))
-          : create_null_mac_pcap();
-  if (gnb_cfg.pcap_cfg.rlc.rb_type != "all" and gnb_cfg.pcap_cfg.rlc.rb_type != "srb" and
-      gnb_cfg.pcap_cfg.rlc.rb_type != "drb") {
-    report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
-  }
-  std::unique_ptr<rlc_pcap> rlc_p = gnb_cfg.pcap_cfg.rlc.enabled
-                                        ? create_rlc_pcap(gnb_cfg.pcap_cfg.rlc.filename,
-                                                          workers.get_executor("rlc_pcap_exec"),
-                                                          gnb_cfg.pcap_cfg.rlc.rb_type != "drb",
-                                                          gnb_cfg.pcap_cfg.rlc.rb_type != "srb")
-                                        : create_null_rlc_pcap();
 
   f1c_gateway_local_connector  f1c_gw{*f1ap_p};
-  e1ap_gateway_local_connector e1ap_gw{*e1ap_p};
+  e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]};
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -425,7 +335,7 @@ int main(int argc, char** argv)
   rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 
   // Create console helper object for commands and metrics printing.
-  gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
@@ -487,7 +397,7 @@ int main(int argc, char** argv)
   cu_up_cfg.io_ul_executor        = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
   cu_up_cfg.e1ap.e1ap_conn_client = &e1ap_gw;
   cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.gtpu_pcap             = gtpu_p.get();
+  cu_up_cfg.gtpu_pcap             = cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get();
   cu_up_cfg.timers                = cu_timers;
   cu_up_cfg.qos                   = generate_cu_up_qos_config(gnb_cfg);
 
@@ -586,6 +496,12 @@ int main(int argc, char** argv)
     du->start();
   }
 
+  // Move all the DLT PCAPs to a container.
+  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
+  dlt_pcaps.push_back(std::move(f1ap_p));
+  dlt_pcaps.push_back(std::move(ngap_p));
+  dlt_pcaps.push_back(std::move(e2ap_p));
+
   // Start processing.
   gnb_logger.info("Starting Radio Unit...");
   ru_object->get_controller().start();
@@ -625,13 +541,11 @@ int main(int argc, char** argv)
   }
 
   gnb_logger.info("Closing PCAP files...");
-  ngap_p->close();
-  gtpu_p->close();
-  e1ap_p->close();
-  f1ap_p->close();
-  e2ap_p->close();
   mac_p->close();
   rlc_p->close();
+  for (auto& pcap : dlt_pcaps) {
+    pcap->close();
+  }
   gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");

@@ -25,8 +25,8 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
-#include "srsran/asn1/e2ap/e2sm_rc.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
+#include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2_messages.h"
 #include "srsran/support/async/async_task.h"
 
@@ -41,28 +41,28 @@ struct e2sm_event_trigger_definition {
 };
 
 struct e2sm_action_definition {
-  e2sm_service_model_t                                                                                service_model;
-  variant<asn1::e2sm_kpm::e2_sm_kpm_action_definition_s, asn1::e2sm_rc::e2_sm_rc_action_definition_s> action_definition;
+  e2sm_service_model_t                                                                       service_model;
+  variant<asn1::e2sm::e2sm_kpm_action_definition_s, asn1::e2sm::e2sm_rc_action_definition_s> action_definition;
 };
 
 struct e2sm_ric_control_request {
-  e2sm_service_model_t                        service_model;
-  bool                                        ric_call_process_id_present  = false;
-  bool                                        ric_ctrl_ack_request_present = false;
-  uint64_t                                    ric_call_process_id;
-  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s> request_ctrl_hdr;
-  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s> request_ctrl_msg;
-  bool                                        ric_ctrl_ack_request;
+  e2sm_service_model_t                    service_model;
+  bool                                    ric_call_process_id_present  = false;
+  bool                                    ric_ctrl_ack_request_present = false;
+  uint64_t                                ric_call_process_id;
+  variant<asn1::e2sm::e2sm_rc_ctrl_hdr_s> request_ctrl_hdr;
+  variant<asn1::e2sm::e2sm_rc_ctrl_msg_s> request_ctrl_msg;
+  bool                                    ric_ctrl_ack_request;
 };
 
 struct e2sm_ric_control_response {
-  e2sm_service_model_t                            service_model;
-  bool                                            success;
-  bool                                            ric_call_process_id_present = false;
-  bool                                            ric_ctrl_outcome_present    = false;
-  uint64_t                                        ric_call_process_id;
-  variant<asn1::e2sm_rc::e2_sm_rc_ctrl_outcome_s> ric_ctrl_outcome;
-  asn1::e2ap::cause_c                             cause;
+  e2sm_service_model_t                        service_model;
+  bool                                        success;
+  bool                                        ric_call_process_id_present = false;
+  bool                                        ric_ctrl_outcome_present    = false;
+  uint64_t                                    ric_call_process_id;
+  variant<asn1::e2sm::e2sm_rc_ctrl_outcome_s> ric_ctrl_outcome;
+  asn1::e2ap::cause_c                         cause;
 };
 
 /// RIC control action executor maps an control action request to the proper stack functions.
@@ -137,7 +137,7 @@ public:
   /// \brief Handle the packed E2 RIC Control Request.
   /// \param[in] req E2 RIC Control Request.
   /// \return Returns the unpacked E2SM RIC Control Request.
-  virtual e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) = 0;
+  virtual e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ric_ctrl_request_s& req) = 0;
   /// \brief Pack the E2SM RIC Control Response.
   /// \param[in] response E2SM RIC Control Response.
   /// \return Returns the packed E2 RIC Control Response.
@@ -156,7 +156,7 @@ public:
   /// \brief Check if the requested RIC action is supported.
   /// \param[in] ric_action is a RIC action to be setup.
   /// \return Returns true if action supported by E2SM.
-  virtual bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) = 0;
+  virtual bool action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& ric_action) = 0;
   /// \brief gets a unique_ptr to the e2sm report service for an action.
   /// \param[in] action is a RIC action to be setup (in binary form).
   /// \return Returns a unique_ptr to the e2sm report service.

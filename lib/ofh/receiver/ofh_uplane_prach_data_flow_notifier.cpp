@@ -29,17 +29,17 @@ using namespace ofh;
 void uplane_prach_data_flow_notifier::notify_prach(slot_point slot)
 {
   expected<prach_context::prach_context_information> context =
-      prach_context_repo.get(slot).try_getting_complete_prach_buffer();
+      prach_context_repo->get(slot).try_getting_complete_prach_buffer();
 
   if (context.is_error()) {
     return;
   }
 
   // Clear the repository entry.
-  prach_context_repo.clear(slot);
+  prach_context_repo->clear(slot);
 
   const auto ctx_value = context.value();
-  notifier.on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
+  notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 
   logger.debug("Notifying PRACH in slot '{}' for sector#{}", ctx_value.context.slot, ctx_value.context.sector);
 }

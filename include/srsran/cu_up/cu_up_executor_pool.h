@@ -52,6 +52,11 @@ public:
   ///
   /// The returned executor should be of low priority, but optimized for high computational loads.
   virtual task_executor& dl_pdu_executor() = 0;
+
+  /// \brief Returns the task executor to accelerate cryptography of PDUs in the user plane.
+  ///
+  /// The returned executor should run tasks on the next free worker without synchronizing with previous or next tasks.
+  virtual task_executor& crypto_executor() = 0;
 };
 
 /// \brief Interface used to access different executors used in the CU-UP.
@@ -70,7 +75,8 @@ public:
 std::unique_ptr<cu_up_executor_pool> make_cu_up_executor_pool(task_executor&       cu_up_main_executor,
                                                               span<task_executor*> dl_pdu_executors,
                                                               span<task_executor*> ul_pdu_executors,
-                                                              span<task_executor*> ctrl_executors);
+                                                              span<task_executor*> ctrl_executors,
+                                                              task_executor&       crypto_executor);
 
 } // namespace srs_cu_up
 } // namespace srsran

@@ -142,10 +142,12 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, current_slot, *bench->sched_res);
   }
 
-  static scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index)
+  static scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index,
+                                                      bool          enable_csi_rs_pdsch_multiplexing = true)
   {
-    auto cfg            = config_helpers::make_default_scheduler_expert_config();
-    cfg.ue.max_msg4_mcs = max_msg4_mcs_index;
+    auto cfg                                = config_helpers::make_default_scheduler_expert_config();
+    cfg.ue.enable_csi_rs_pdsch_multiplexing = enable_csi_rs_pdsch_multiplexing;
+    cfg.ue.max_msg4_mcs                     = max_msg4_mcs_index;
     return cfg;
   }
 
@@ -215,15 +217,20 @@ protected:
     return cell_cfg;
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode)
+  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode, bool is_fallback = false)
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(mode);
-    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params);
+    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params, is_fallback);
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, const cell_config_builder_params& params)
+  void add_ue(du_ue_index_t                     ue_index,
+              lcid_t                            lcid_,
+              lcg_id_t                          lcgid_,
+              const cell_config_builder_params& params,
+              bool                              is_fallback = false)
   {
-    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(params);
+    auto ue_creation_req               = test_helpers::create_default_sched_ue_creation_request(params);
+    ue_creation_req.starts_in_fallback = is_fallback;
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
@@ -786,7 +793,9 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
   builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
 
   config_helpers::cell_config_builder_params_extended extended_params{builder_params};
-  setup_sched(create_expert_config(10), test_helpers::make_default_sched_cell_configuration_request(extended_params));
+  const bool                                          enable_csi_rs_pdsch_multiplexing = true;
+  setup_sched(create_expert_config(10, enable_csi_rs_pdsch_multiplexing),
+              test_helpers::make_default_sched_cell_configuration_request(extended_params));
 
   // NOTE: The buffer size must be high enough for the scheduler to keep allocating resources to the UE. In order to
   // avoid failing of test we ignore the min_buffer_size_in_bytes and max_buffer_size_in_bytes set in params.
@@ -868,18 +877,18 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
       notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size + test_ue.ul_bsr_list.at(lcgid).nof_bytes, lcgid);
     }
 
-    // Ensure there is atleast one PDSCH scheduled in each DL slot and one PUSCH scheduled in each UL slot.
+    // Ensure there is at least one PDSCH scheduled in each DL slot and one PUSCH scheduled in each UL slot.
     if (first_pusch_scheduled and first_pdsch_scheduled and nof_cqi_reported >= params.nof_ues) {
       if (bench->cell_cfg.tdd_cfg_common.has_value()) {
         if (has_active_tdd_dl_symbols(bench->cell_cfg.tdd_cfg_common.value(), current_slot.slot_index())) {
-          ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1);
+          ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1) << fmt::format("Failed at slot: {}", current_slot);
         } else if (is_tdd_full_ul_slot(bench->cell_cfg.tdd_cfg_common.value(), current_slot.slot_index())) {
-          ASSERT_GE(bench->sched_res->ul.puschs.size(), 1);
+          ASSERT_GE(bench->sched_res->ul.puschs.size(), 1) << fmt::format("Failed at slot: {}", current_slot);
         }
       } else {
         // FDD.
-        ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1);
-        ASSERT_GE(bench->sched_res->ul.puschs.size(), 1);
+        ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1) << fmt::format("Failed at slot: {}", current_slot);
+        ASSERT_GE(bench->sched_res->ul.puschs.size(), 1) << fmt::format("Failed at slot: {}", current_slot);
       }
     }
   }
@@ -1183,7 +1192,8 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 
   // Add UE(s) and notify UL BSR + DL Buffer status with 110 value.
   // Assumption: LCID is SRB0.
-  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD);
+  const bool is_fallback = true;
+  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD, is_fallback);
 
   // Enqueue ConRes CE.
   bench->sch.handle_dl_mac_ce_indication(dl_mac_ce_indication{to_du_ue_index(0), lcid_dl_sch_t::UE_CON_RES_ID});
@@ -1297,6 +1307,7 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
+
                                          multiple_ue_test_params{.nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 2000,
                                                                  .max_buffer_size_in_bytes = 3000,

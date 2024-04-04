@@ -23,12 +23,40 @@
 #include "f1ap_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
+using namespace asn1::f1ap;
+
+f1ap_message srsran::test_helpers::create_f1_setup_response(const f1ap_message& f1_setup_request)
+{
+  srsran_assert(f1_setup_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 setup request");
+  srsran_assert(f1_setup_request.pdu.init_msg().value.type().value ==
+                    f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request,
+                "Expected F1 setup request");
+  auto& req = f1_setup_request.pdu.init_msg().value.f1_setup_request();
+
+  f1ap_message resp;
+  resp.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  f1_setup_resp_s& f1_setup_resp = resp.pdu.successful_outcome().value.f1_setup_resp();
+
+  f1_setup_resp->cells_to_be_activ_list_present = true;
+  f1_setup_resp->cells_to_be_activ_list.resize(req->gnb_du_served_cells_list.size());
+  for (unsigned i = 0; i != req->gnb_du_served_cells_list.size(); ++i) {
+    auto& req_cell = req->gnb_du_served_cells_list[i]->gnb_du_served_cells_item();
+    f1_setup_resp->cells_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+    auto& cell          = f1_setup_resp->cells_to_be_activ_list[i].value().cells_to_be_activ_list_item();
+    cell.nr_cgi         = req_cell.served_cell_info.nr_cgi;
+    cell.nr_pci_present = true;
+    cell.nr_pci         = req_cell.served_cell_info.nr_pci;
+  }
+
+  return resp;
+}
 
 static asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 {

@@ -21,6 +21,7 @@
  */
 
 #include "dpdk_ethernet_receiver.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
 #include <future>
@@ -45,15 +46,11 @@ class dummy_frame_notifier : public frame_notifier
 static dummy_frame_notifier dummy_notifier;
 
 dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
-                                       std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                                       std::shared_ptr<dpdk_port_context> port_ctx_,
                                        srslog::basic_logger&              logger_) :
-  logger(logger_),
-  executor(executor_),
-  notifier(dummy_notifier),
-  port_ctx_ptr(std::move(port_ctx_ptr_)),
-  port_ctx(*port_ctx_ptr)
+  logger(logger_), executor(executor_), notifier(dummy_notifier), port_ctx(std::move(port_ctx_))
 {
-  srsran_assert(port_ctx_ptr, "Invalid port context");
+  srsran_assert(port_ctx, "Invalid port context");
 }
 
 void dpdk_receiver_impl::start(frame_notifier& notifier_)
@@ -109,22 +106,33 @@ void dpdk_receiver_impl::receive_loop()
 void dpdk_receiver_impl::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-  unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
+
+  trace_point dpdk_rx_tp = ofh_tracer.now();
+  unsigned    num_frames = ::rte_eth_rx_burst(port_ctx->get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
+    ofh_tracer << instant_trace_event("ofh_receiver_wait_data", instant_trace_event::cpu_scope::thread);
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
   }
+  ofh_tracer << trace_event("ofh_dpdk_rx", dpdk_rx_tp);
 
-  for (auto mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
+  for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
     std::array<uint8_t, MAX_BUFFER_SIZE> buffer;
 
+    trace_point tp             = ofh_tracer.now();
+    trace_point dpdk_memcpy_tp = ofh_tracer.now();
     ::rte_vlan_strip(mbuf);
     ::rte_ether_hdr* eth    = rte_pktmbuf_mtod(mbuf, ::rte_ether_hdr*);
     unsigned         length = mbuf->pkt_len;
 
     std::memcpy(buffer.data(), eth, length);
+    ofh_tracer << trace_event("ofh_dpdk_memcpy", dpdk_memcpy_tp);
+
+    trace_point dpdk_free_tp = ofh_tracer.now();
     ::rte_pktmbuf_free(mbuf);
+    ofh_tracer << trace_event("ofh_dpdk_free_mbufs", dpdk_free_tp);
 
     notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), length));
+    ofh_tracer << trace_event("ofh_receiver", tp);
   }
 }

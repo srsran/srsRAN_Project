@@ -26,7 +26,7 @@
 #include "e2sm_kpm_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
@@ -51,34 +51,34 @@ public:
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
 
-  bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override;
+  bool cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override;
 
-  bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override;
+  bool ue_supported(const asn1::e2sm::ue_id_c& ueid) override;
 
-  bool test_cond_supported(const asn1::e2sm_kpm::test_cond_type_c& test_cond_type) override;
+  bool test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override;
 
-  bool metric_supported(const asn1::e2sm_kpm::meas_type_c&  meas_type,
-                        const asn1::e2sm_kpm::meas_label_s& label,
-                        const e2sm_kpm_metric_level_enum    level,
-                        const bool&                         cell_scope) override;
+  bool metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
+                        const asn1::e2sm::meas_label_s&  label,
+                        const e2sm_kpm_metric_level_enum level,
+                        const bool&                      cell_scope) override;
 
-  bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
-                                        std::vector<asn1::e2sm_kpm::ueid_c>&        ues) override;
+  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& matching_cond_list,
+                                        std::vector<asn1::e2sm::ue_id_c>&       ues) override;
 
-  bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
-                                        std::vector<asn1::e2sm_kpm::ueid_c>&                   ues) override;
+  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
+                                        std::vector<asn1::e2sm::ue_id_c>&                  ues) override;
 
-  bool get_meas_data(const asn1::e2sm_kpm::meas_type_c&               meas_type,
-                     const asn1::e2sm_kpm::label_info_list_l          label_info_list,
-                     const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
-                     const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
-                     std::vector<asn1::e2sm_kpm::meas_record_item_c>& items) override;
+  bool get_meas_data(const asn1::e2sm::meas_type_c&               meas_type,
+                     const asn1::e2sm::label_info_list_l          label_info_list,
+                     const std::vector<asn1::e2sm::ue_id_c>&      ues,
+                     const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                     std::vector<asn1::e2sm::meas_record_item_c>& items) override;
 
 private:
-  typedef bool(metric_meas_getter_func_t)(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
-                                          const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
-                                          const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
-                                          std::vector<asn1::e2sm_kpm::meas_record_item_c>& items);
+  typedef bool(metric_meas_getter_func_t)(const asn1::e2sm::label_info_list_l          label_info_list,
+                                          const std::vector<asn1::e2sm::ue_id_c>&      ues,
+                                          const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                          std::vector<asn1::e2sm::meas_record_item_c>& items);
 
   typedef metric_meas_getter_func_t(e2sm_kpm_du_meas_provider_impl::*metric_meas_getter_func_ptr);
 

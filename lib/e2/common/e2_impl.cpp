@@ -51,14 +51,14 @@ e2_impl::e2_impl(e2ap_configuration&      cfg_,
 
 async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_request_message& request)
 {
-  for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
-    auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
+  for (unsigned i = 0; i < request.request->ran_functions_added.size(); i++) {
+    auto&    ran_function_item = request.request->ran_functions_added[i].value().ran_function_item();
     uint16_t id                = ran_function_item.ran_function_id;
 
     logger.info("Added RAN function OID {} to candidate list under RAN function ID {}",
-                ran_function_item.ran_function_oid.to_string().c_str(),
+                ran_function_item.ran_function_o_id.to_string().c_str(),
                 id);
-    std::string     ran_oid  = ran_function_item.ran_function_oid.to_string();
+    std::string     ran_oid  = ran_function_item.ran_function_o_id.to_string();
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface == nullptr) {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
@@ -79,11 +79,11 @@ async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
   e2_setup_request_message request;
   fill_asn1_e2ap_setup_request(request.request, cfg, e2sm_mngr);
 
-  for (const auto& ran_function : request.request->ra_nfunctions_added.value) {
-    auto&    ran_function_item = ran_function.value().ra_nfunction_item();
+  for (const auto& ran_function : request.request->ran_functions_added) {
+    auto&    ran_function_item = ran_function.value().ran_function_item();
     uint16_t id                = ran_function_item.ran_function_id;
     logger.info("Added RAN function OID {} to candidate list under RAN Function ID {}",
-                ran_function_item.ran_function_oid.to_string().c_str(),
+                ran_function_item.ran_function_o_id.to_string().c_str(),
                 id);
     candidate_ran_functions[id] = ran_function_item;
   }
@@ -102,22 +102,22 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
     logger.error("E2 Setup Failure message received");
     return;
   }
-  if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted_present) {
-    for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted.value.size();
+  if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ran_functions_accepted_present) {
+    for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ran_functions_accepted.size();
          i != e;
          ++i) {
       auto& ran_function_item = e2_msg.pdu.successful_outcome()
                                     .value.e2setup_resp()
-                                    ->ra_nfunctions_accepted.value[i]
+                                    ->ran_functions_accepted[i]
                                     .value()
-                                    .ra_nfunction_id_item();
+                                    .ran_function_id_item();
       uint16_t id = ran_function_item.ran_function_id;
       set_allowed_ran_functions(id);
     }
   }
 }
 
-void e2_impl::handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s msg)
+void e2_impl::handle_ric_control_request(const asn1::e2ap::ric_ctrl_request_s msg)
 {
   logger.info("Received RIC Control Request");
   e2_ric_control_request request;
@@ -138,13 +138,13 @@ void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)
   }
 }
 
-void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg)
+void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ric_sub_request_s& msg)
 {
   logger.info("Received RIC Subscription Request");
   subscribe_proc.run_subscription_procedure(msg, *events);
 }
 
-void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg)
+void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_delete_request_s& msg)
 {
   logger.info("Received RIC Subscription Delete Request");
   subscribe_delete_proc.run_subscription_delete_procedure(msg, *events);
@@ -166,13 +166,13 @@ void e2_impl::handle_message(const e2_message& msg)
   }
 
   switch (msg.pdu.type().value) {
-    case asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg:
+    case asn1::e2ap::e2ap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
-    case asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome:
+    case asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
       break;
-    case asn1::e2ap::e2_ap_pdu_c::types_opts::unsuccessful_outcome:
+    case asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
@@ -184,14 +184,14 @@ void e2_impl::handle_message(const e2_message& msg)
 void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_request:
-      handle_ric_subscription_request(msg.value.ricsubscription_request());
+    case asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::options::ric_sub_request:
+      handle_ric_subscription_request(msg.value.ric_sub_request());
       break;
-    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_delete_request:
-      handle_ric_subscription_delete_request(msg.value.ricsubscription_delete_request());
+    case asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::options::ric_sub_delete_request:
+      handle_ric_subscription_delete_request(msg.value.ric_sub_delete_request());
       break;
-    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ri_cctrl_request:
-      handle_ric_control_request(msg.value.ri_cctrl_request());
+    case asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::options::ric_ctrl_request:
+      handle_ric_control_request(msg.value.ric_ctrl_request());
       break;
     default:
       logger.error("Invalid E2AP initiating message type");
@@ -202,7 +202,7 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
 void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e2ap::e2_ap_elem_procs_o::successful_outcome_c::types_opts::options::e2setup_resp: {
+    case asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::options::e2setup_resp: {
       // Handle successful outcomes with transaction id
       expected<uint8_t> transaction_id = get_transaction_id(outcome);
       if (transaction_id.is_error()) {
@@ -224,7 +224,7 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
 void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
-    case asn1::e2ap::e2_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2setup_fail: {
+    case asn1::e2ap::e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::e2setup_fail: {
       // Handle successful outcomes with transaction id
       expected<uint8_t> transaction_id = get_transaction_id(outcome);
       if (transaction_id.is_error()) {
@@ -247,7 +247,7 @@ void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
 {
   if (candidate_ran_functions.count(ran_function_id)) {
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
-    std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
+    std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_o_id.to_string();
     e2sm_mngr.add_supported_ran_function(ran_function_id, ran_func_oid);
     logger.info("Added supported RAN function with id {} and OID {}", ran_function_id, ran_func_oid);
   } else {

@@ -37,6 +37,32 @@ namespace rrc_nr {
  *                              Struct Definitions
  ******************************************************************************/
 
+// ResumeCause ::= ENUMERATED
+struct resume_cause_opts {
+  enum options {
+    emergency,
+    high_prio_access,
+    mt_access,
+    mo_sig,
+    mo_data,
+    mo_voice_call,
+    mo_video_call,
+    mo_sms,
+    rna_upd,
+    mps_prio_access,
+    mcs_prio_access,
+    spare1,
+    spare2,
+    spare3,
+    spare4,
+    spare5,
+    nulltype
+  } value;
+
+  const char* to_string() const;
+};
+using resume_cause_e = enumerated<resume_cause_opts>;
+
 // EstablishmentCause ::= ENUMERATED
 struct establishment_cause_opts {
   enum options {
@@ -115,6 +141,14 @@ private:
   void destroy_();
 };
 
+// ReestablishmentCause ::= ENUMERATED
+struct reest_cause_opts {
+  enum options { recfg_fail, ho_fail, other_fail, spare1, nulltype } value;
+
+  const char* to_string() const;
+};
+using reest_cause_e = enumerated<reest_cause_opts>;
+
 // ReestabUE-Identity ::= SEQUENCE
 struct reestab_ue_id_s {
   uint32_t            c_rnti = 0;
@@ -126,40 +160,6 @@ struct reestab_ue_id_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
-
-// ReestablishmentCause ::= ENUMERATED
-struct reest_cause_opts {
-  enum options { recfg_fail, ho_fail, other_fail, spare1, nulltype } value;
-
-  const char* to_string() const;
-};
-using reest_cause_e = enumerated<reest_cause_opts>;
-
-// ResumeCause ::= ENUMERATED
-struct resume_cause_opts {
-  enum options {
-    emergency,
-    high_prio_access,
-    mt_access,
-    mo_sig,
-    mo_data,
-    mo_voice_call,
-    mo_video_call,
-    mo_sms,
-    rna_upd,
-    mps_prio_access,
-    mcs_prio_access,
-    spare1,
-    spare2,
-    spare3,
-    spare4,
-    spare5,
-    nulltype
-  } value;
-
-  const char* to_string() const;
-};
-using resume_cause_e = enumerated<resume_cause_opts>;
 
 // RRC-PosSystemInfoRequest-r16-IEs ::= SEQUENCE
 struct rrc_pos_sys_info_request_r16_ies_s {

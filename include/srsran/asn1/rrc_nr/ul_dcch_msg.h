@@ -33,6 +33,10 @@
 namespace asn1 {
 namespace rrc_nr {
 
+/*******************************************************************************
+ *                             Forward Declarations
+ ******************************************************************************/
+
 struct meas_report_s;
 struct rrc_recfg_complete_s;
 struct rrc_setup_complete_s;

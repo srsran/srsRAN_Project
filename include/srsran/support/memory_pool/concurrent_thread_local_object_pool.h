@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/support/error_handling.h"
 #include <vector>
 

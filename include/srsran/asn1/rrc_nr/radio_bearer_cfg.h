@@ -37,6 +37,16 @@ namespace rrc_nr {
  *                              Struct Definitions
  ******************************************************************************/
 
+// DiscardTimerExt2-r17 ::= ENUMERATED
+struct discard_timer_ext2_r17_opts {
+  enum options { ms2000, spare3, spare2, spare1, nulltype } value;
+  typedef uint16_t number_type;
+
+  const char* to_string() const;
+  uint16_t    to_number() const;
+};
+using discard_timer_ext2_r17_e = enumerated<discard_timer_ext2_r17_opts>;
+
 // DiscardTimerExt-r16 ::= ENUMERATED
 struct discard_timer_ext_r16_opts {
   enum options { ms0dot5, ms1, ms2, ms4, ms6, ms8, spare2, spare1, nulltype } value;
@@ -47,16 +57,6 @@ struct discard_timer_ext_r16_opts {
   const char* to_number_string() const;
 };
 using discard_timer_ext_r16_e = enumerated<discard_timer_ext_r16_opts>;
-
-// DiscardTimerExt2-r17 ::= ENUMERATED
-struct discard_timer_ext2_r17_opts {
-  enum options { ms2000, spare3, spare2, spare1, nulltype } value;
-  typedef uint16_t number_type;
-
-  const char* to_string() const;
-  uint16_t    to_number() const;
-};
-using discard_timer_ext2_r17_e = enumerated<discard_timer_ext2_r17_opts>;
 
 // EthernetHeaderCompression-r16 ::= SEQUENCE
 struct ethernet_hdr_compress_r16_s {
@@ -99,50 +99,6 @@ struct ethernet_hdr_compress_r16_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
-
-// UL-DataSplitThreshold ::= ENUMERATED
-struct ul_data_split_thres_opts {
-  enum options {
-    b0,
-    b100,
-    b200,
-    b400,
-    b800,
-    b1600,
-    b3200,
-    b6400,
-    b12800,
-    b25600,
-    b51200,
-    b102400,
-    b204800,
-    b409600,
-    b819200,
-    b1228800,
-    b1638400,
-    b2457600,
-    b3276800,
-    b4096000,
-    b4915200,
-    b5734400,
-    b6553600,
-    infinity,
-    spare8,
-    spare7,
-    spare6,
-    spare5,
-    spare4,
-    spare3,
-    spare2,
-    spare1,
-    nulltype
-  } value;
-  typedef int32_t number_type;
-
-  const char* to_string() const;
-  int32_t     to_number() const;
-};
-using ul_data_split_thres_e = enumerated<ul_data_split_thres_opts>;
 
 // UplinkDataCompression-r17 ::= CHOICE
 struct ul_data_compress_r17_c {
@@ -199,6 +155,50 @@ private:
   types        type_;
   new_setup_s_ c;
 };
+
+// UL-DataSplitThreshold ::= ENUMERATED
+struct ul_data_split_thres_opts {
+  enum options {
+    b0,
+    b100,
+    b200,
+    b400,
+    b800,
+    b1600,
+    b3200,
+    b6400,
+    b12800,
+    b25600,
+    b51200,
+    b102400,
+    b204800,
+    b409600,
+    b819200,
+    b1228800,
+    b1638400,
+    b2457600,
+    b3276800,
+    b4096000,
+    b4915200,
+    b5734400,
+    b6553600,
+    infinity,
+    spare8,
+    spare7,
+    spare6,
+    spare5,
+    spare4,
+    spare3,
+    spare2,
+    spare1,
+    nulltype
+  } value;
+  typedef int32_t number_type;
+
+  const char* to_string() const;
+  int32_t     to_number() const;
+};
+using ul_data_split_thres_e = enumerated<ul_data_split_thres_opts>;
 
 // CipheringAlgorithm ::= ENUMERATED
 struct ciphering_algorithm_opts {
@@ -668,6 +668,20 @@ struct mrb_to_add_mod_r17_s {
   void        to_json(json_writer& j) const;
 };
 
+// SecurityAlgorithmConfig ::= SEQUENCE
+struct security_algorithm_cfg_s {
+  bool                       ext                              = false;
+  bool                       integrity_prot_algorithm_present = false;
+  ciphering_algorithm_e      ciphering_algorithm;
+  integrity_prot_algorithm_e integrity_prot_algorithm;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // SRB-ToAddMod ::= SEQUENCE
 struct srb_to_add_mod_s {
   bool       ext                      = false;
@@ -687,20 +701,6 @@ struct srb_to_add_mod_s {
   void        to_json(json_writer& j) const;
 };
 
-// SecurityAlgorithmConfig ::= SEQUENCE
-struct security_algorithm_cfg_s {
-  bool                       ext                              = false;
-  bool                       integrity_prot_algorithm_present = false;
-  ciphering_algorithm_e      ciphering_algorithm;
-  integrity_prot_algorithm_e integrity_prot_algorithm;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // DRB-ToAddModList ::= SEQUENCE (SIZE (1..29)) OF DRB-ToAddMod
 using drb_to_add_mod_list_l = dyn_array<drb_to_add_mod_s>;
 
@@ -712,9 +712,6 @@ using mrb_to_add_mod_list_r17_l = dyn_array<mrb_to_add_mod_r17_s>;
 
 // MRB-ToReleaseList-r17 ::= SEQUENCE (SIZE (1..32)) OF INTEGER (1..512)
 using mrb_to_release_list_r17_l = bounded_array<uint16_t, 32>;
-
-// SRB-ToAddModList ::= SEQUENCE (SIZE (1..2)) OF SRB-ToAddMod
-using srb_to_add_mod_list_l = dyn_array<srb_to_add_mod_s>;
 
 // SecurityConfig ::= SEQUENCE
 struct security_cfg_s {
@@ -738,6 +735,9 @@ struct security_cfg_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
+
+// SRB-ToAddModList ::= SEQUENCE (SIZE (1..2)) OF SRB-ToAddMod
+using srb_to_add_mod_list_l = dyn_array<srb_to_add_mod_s>;
 
 // RadioBearerConfig ::= SEQUENCE
 struct radio_bearer_cfg_s {

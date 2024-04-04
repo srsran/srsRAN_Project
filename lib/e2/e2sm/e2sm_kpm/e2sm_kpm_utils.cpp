@@ -102,7 +102,7 @@ std::string e2sm_kpm_scope_2_str(e2sm_kpm_metric_level_enum level)
   }
 }
 
-e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm_kpm::meas_label_s& meas_label)
+e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm::meas_label_s& meas_label)
 {
   if (meas_label.no_label_present) {
     return NO_LABEL;
@@ -134,16 +134,16 @@ e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm_kpm::meas_label_s& meas_l
   if (meas_label.qci_present) {
     return QCI_LABEL;
   }
-  if (meas_label.qcimax_present) {
+  if (meas_label.qc_imax_present) {
     return QCI_MAX_LABEL;
   }
-  if (meas_label.qcimin_present) {
+  if (meas_label.qc_imin_present) {
     return QCI_MIN_LABEL;
   }
-  if (meas_label.arpmax_present) {
+  if (meas_label.ar_pmax_present) {
     return ARP_MAX_LABEL;
   }
-  if (meas_label.arpmin_present) {
+  if (meas_label.ar_pmin_present) {
     return ARP_MIN_LABEL;
   }
   if (meas_label.bitrate_range_present) {
@@ -170,7 +170,7 @@ e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm_kpm::meas_label_s& meas_l
   if (meas_label.ssb_idx_present) {
     return SSB_IDX_LABEL;
   }
-  if (meas_label.non_go_b_bfmode_idx_present) {
+  if (meas_label.non_go_b_b_fmode_idx_present) {
     return NON_GO_B_BFMODE_IDX_LABEL;
   }
   if (meas_label.mimo_mode_idx_present) {
@@ -179,7 +179,7 @@ e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm_kpm::meas_label_s& meas_l
   return UNKNOWN_LABEL;
 }
 
-bool operator==(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+bool operator==(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   if (lhs.type() != rhs.type()) {
     return false;
@@ -187,8 +187,8 @@ bool operator==(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const&
 
   // TODO: add support for all types
   switch (lhs.type()) {
-    case asn1::e2sm_kpm::ueid_c::types_opts::gnb_du_ueid:
-      if (lhs.gnb_du_ueid() == rhs.gnb_du_ueid()) {
+    case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+      if (lhs.gnb_du_ue_id() == rhs.gnb_du_ue_id()) {
         return true;
       }
     default:
@@ -196,17 +196,17 @@ bool operator==(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const&
   }
 }
 
-bool operator!=(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+bool operator!=(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   return !(lhs == rhs);
 }
 
-bool operator<(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+bool operator<(asn1::e2sm::ue_id_c const& lhs, asn1::e2sm::ue_id_c const& rhs)
 {
   srsran_assert(lhs.type() != rhs.type(), "Cannot compare UEIDs of different types.");
   switch (lhs.type()) {
-    case asn1::e2sm_kpm::ueid_c::types_opts::gnb_du_ueid:
-      if (lhs.gnb_du_ueid() < rhs.gnb_du_ueid()) {
+    case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+      if (lhs.gnb_du_ue_id() < rhs.gnb_du_ue_id()) {
         return true;
       }
     default:
@@ -214,14 +214,14 @@ bool operator<(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& 
   }
 }
 
-bool operator==(asn1::e2sm_kpm::ueid_gnb_du_s const& lhs, asn1::e2sm_kpm::ueid_gnb_du_s const& rhs)
+bool operator==(asn1::e2sm::ue_id_gnb_du_s const& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
 {
-  return lhs.gnb_cu_ue_f1_ap_id == rhs.gnb_cu_ue_f1_ap_id;
+  return lhs.gnb_cu_ue_f1ap_id == rhs.gnb_cu_ue_f1ap_id;
 }
 
-bool operator<(asn1::e2sm_kpm::ueid_gnb_du_s const& lhs, asn1::e2sm_kpm::ueid_gnb_du_s const& rhs)
+bool operator<(asn1::e2sm::ue_id_gnb_du_s const& lhs, asn1::e2sm::ue_id_gnb_du_s const& rhs)
 {
-  return lhs.gnb_cu_ue_f1_ap_id < rhs.gnb_cu_ue_f1_ap_id;
+  return lhs.gnb_cu_ue_f1ap_id < rhs.gnb_cu_ue_f1ap_id;
 }
 
 } // namespace srsran

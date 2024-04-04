@@ -24,7 +24,7 @@
 
 #include "e2sm_kpm_utils.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
@@ -39,7 +39,7 @@ public:
 
   e2sm_handler& get_e2sm_packer() override;
 
-  bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) override;
+  bool action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& ric_action) override;
 
   std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
   e2sm_control_service*                get_e2sm_control_service(const e2sm_ric_control_request& request) override;
@@ -48,18 +48,18 @@ public:
 
 private:
   /// Helper functions to check whether subscription actions are supported.
-  bool process_action_def_meas_info_list(const asn1::e2sm_kpm::meas_info_list_l& meas_info_list,
-                                         const e2sm_kpm_metric_level_enum&       level,
-                                         const bool&                             cell_scope);
+  bool process_action_def_meas_info_list(const asn1::e2sm::meas_info_list_l& meas_info_list,
+                                         const e2sm_kpm_metric_level_enum&   level,
+                                         const bool&                         cell_scope);
 
-  bool process_action_definition_format1(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& action_definition,
-                                         const e2sm_kpm_metric_level_enum                             level);
+  bool process_action_definition_format1(const asn1::e2sm::e2sm_kpm_action_definition_format1_s& action_definition,
+                                         const e2sm_kpm_metric_level_enum                        level);
 
-  bool process_action_definition_format1(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
-  bool process_action_definition_format2(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
-  bool process_action_definition_format3(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
-  bool process_action_definition_format4(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
-  bool process_action_definition_format5(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
+  bool process_action_definition_format1(const asn1::e2sm::e2sm_kpm_action_definition_s& action_def_generic);
+  bool process_action_definition_format2(const asn1::e2sm::e2sm_kpm_action_definition_s& action_def_generic);
+  bool process_action_definition_format3(const asn1::e2sm::e2sm_kpm_action_definition_s& action_def_generic);
+  bool process_action_definition_format4(const asn1::e2sm::e2sm_kpm_action_definition_s& action_def_generic);
+  bool process_action_definition_format5(const asn1::e2sm::e2sm_kpm_action_definition_s& action_def_generic);
 
   srslog::basic_logger&   logger;
   e2sm_handler&           e2sm_packer;

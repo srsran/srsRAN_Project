@@ -22,7 +22,7 @@
 
 #include "lib/rrc/ue/rrc_measurement_types_asn1_converters.h"
 #include "rrc_ue_test_helpers.h"
-#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
 

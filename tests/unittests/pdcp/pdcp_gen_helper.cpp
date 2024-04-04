@@ -149,8 +149,8 @@ int main(int argc, char** argv)
 
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities
-  std::unique_ptr<pdcp_entity_tx> pdcp_tx =
-      std::make_unique<pdcp_entity_tx>(0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker});
+  std::unique_ptr<pdcp_entity_tx> pdcp_tx = std::make_unique<pdcp_entity_tx>(
+      0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
   pdcp_tx_state st = {args.count, args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg);

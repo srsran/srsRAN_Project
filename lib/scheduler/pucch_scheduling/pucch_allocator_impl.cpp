@@ -131,6 +131,18 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
     return nullopt;
   }
 
+  if (std::find_if(pucch_slot_alloc.result.ul.pucchs.begin(),
+                   pucch_slot_alloc.result.ul.pucchs.end(),
+                   [tcrnti](const pucch_info& pucch) { return tcrnti == pucch.crnti; }) !=
+      pucch_slot_alloc.result.ul.pucchs.end()) {
+    logger.debug(
+        "tc-rnti={}: PUCCH common not allocated for slot={}. Cause: a PUCCH grant for this UE already exists in the "
+        "same slot",
+        tcrnti,
+        pucch_slot_alloc.slot);
+    return nullopt;
+  }
+
   // Get the PUCCH resources, either from default tables.
   optional<pucch_res_alloc_cfg> pucch_res = alloc_pucch_common_res_harq(pucch_slot_alloc, dci_info.ctx);
 

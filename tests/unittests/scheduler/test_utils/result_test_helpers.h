@@ -22,31 +22,20 @@
 
 #pragma once
 
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 
 inline const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti, const sched_result& res)
 {
-  auto* it = std::find_if(res.dl.dl_pdcchs.begin(), res.dl.dl_pdcchs.end(), [rnti](const pdcch_dl_information& pdcch) {
-    return pdcch.ctx.rnti == rnti;
-  });
-  return it != res.dl.dl_pdcchs.end() ? &*it : nullptr;
+  return find_ue_dl_pdcch(rnti, res.dl);
 }
 
 inline const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti, const sched_result& res)
 {
-  auto* it = std::find_if(res.dl.ul_pdcchs.begin(), res.dl.ul_pdcchs.end(), [rnti](const pdcch_ul_information& pdcch) {
-    return pdcch.ctx.rnti == rnti;
-  });
-  return it != res.dl.ul_pdcchs.end() ? &*it : nullptr;
-}
-
-inline const ul_sched_info* find_ue_pusch(rnti_t rnti, span<const ul_sched_info> ulgrants)
-{
-  auto it = std::find_if(
-      ulgrants.begin(), ulgrants.end(), [rnti](const auto& pusch) { return pusch.pusch_cfg.rnti == rnti; });
-  return it != ulgrants.end() ? &*it : nullptr;
+  return find_ue_ul_pdcch(rnti, res.dl);
 }
 
 inline const ul_sched_info* find_ue_pusch(rnti_t rnti, const sched_result& res)
@@ -79,23 +68,12 @@ inline const dl_msg_alloc* find_ue_pdsch(rnti_t rnti, const sched_result& res)
 
 inline const pucch_info* find_ue_pucch(rnti_t rnti, const sched_result& res)
 {
-  auto it = std::find_if(
-      res.ul.pucchs.begin(), res.ul.pucchs.end(), [rnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
-  return it != res.ul.pucchs.end() ? &*it : nullptr;
+  return find_ue_pucch(rnti, res.ul.pucchs);
 }
 
 inline const pucch_info* find_ue_pucch_with_harq_ack(rnti_t rnti, const sched_result& res)
 {
-  const pucch_info* pucch = find_ue_pucch(rnti, res);
-  if (pucch != nullptr) {
-    if (pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0) {
-      return pucch;
-    }
-    if (pucch->format == pucch_format::FORMAT_2 and pucch->format_2.harq_ack_nof_bits > 0) {
-      return pucch;
-    }
-  }
-  return nullptr;
+  return find_ue_pucch_with_harq_ack(rnti, res.ul.pucchs);
 }
 
 inline uci_indication::uci_pdu create_uci_pdu_with_harq_ack(du_ue_index_t ue_index, const pucch_info& pucch_pdu)

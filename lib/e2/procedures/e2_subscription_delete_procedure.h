@@ -40,8 +40,8 @@ public:
                                    timer_factory         timers_,
                                    srslog::basic_logger& logger_);
 
-  void run_subscription_delete_procedure(const asn1::e2ap::ricsubscription_delete_request_s request_,
-                                         e2_event_manager&                                  event_manager);
+  void run_subscription_delete_procedure(const asn1::e2ap::ric_sub_delete_request_s request_,
+                                         e2_event_manager&                          event_manager);
 
 private:
   // results senders

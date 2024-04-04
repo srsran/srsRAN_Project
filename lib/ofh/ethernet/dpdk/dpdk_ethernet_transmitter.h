@@ -35,10 +35,10 @@ struct gw_config;
 class dpdk_transmitter_impl : public gateway
 {
 public:
-  dpdk_transmitter_impl(std::shared_ptr<dpdk_port_context> port_ctx_ptr_, srslog::basic_logger& logger_) :
-    logger(logger_), port_ctx_ptr(std::move(port_ctx_ptr_)), port_ctx(*port_ctx_ptr)
+  dpdk_transmitter_impl(std::shared_ptr<dpdk_port_context> port_ctx_, srslog::basic_logger& logger_) :
+    logger(logger_), port_ctx(std::move(port_ctx_))
   {
-    srsran_assert(port_ctx_ptr, "Invalid port context");
+    srsran_assert(port_ctx, "Invalid port context");
   }
 
   // See interface for documentation.
@@ -46,8 +46,7 @@ public:
 
 private:
   srslog::basic_logger&              logger;
-  std::shared_ptr<dpdk_port_context> port_ctx_ptr;
-  dpdk_port_context&                 port_ctx;
+  std::shared_ptr<dpdk_port_context> port_ctx;
 };
 
 } // namespace ether

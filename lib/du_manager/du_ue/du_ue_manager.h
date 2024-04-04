@@ -99,6 +99,9 @@ private:
 
   // task event loops indexed by ue_index
   slotted_array<fifo_async_task_scheduler, MAX_NOF_DU_UES> ue_ctrl_loop;
+
+  // Whether new UEs should be created.
+  bool stop_accepting_ues = false;
 };
 
 } // namespace srs_du

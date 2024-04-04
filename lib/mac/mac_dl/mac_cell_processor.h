@@ -25,7 +25,7 @@
 #include "../mac_ctrl/mac_config.h"
 #include "cell_dl_harq_buffer_pool.h"
 #include "dl_sch_pdu_assembler.h"
-#include "mac_dl_ue_manager.h"
+#include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "paging_pdu_assembler.h"
 #include "rar_pdu_assembler.h"
@@ -43,7 +43,7 @@ class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_c
 public:
   mac_cell_processor(const mac_cell_creation_request& cell_cfg_req,
                      mac_scheduler_cell_info_handler& sched,
-                     mac_dl_ue_manager&               ue_mng,
+                     du_rnti_table&                   rnti_table,
                      mac_cell_result_notifier&        phy_notifier,
                      task_executor&                   cell_exec,
                      task_executor&                   slot_exec,
@@ -59,8 +59,18 @@ public:
   void handle_slot_indication(slot_point sl_tx) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
 
-  /// Gets DL HARQ buffer pool that is specific to this cell.
-  cell_dl_harq_buffer_pool& get_dl_harq_pool() { return dl_harq_buffers; }
+  /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
+  async_task<bool> add_ue(const mac_ue_create_request& request);
+
+  /// Deletes UE context in MAC MUX.
+  async_task<void> remove_ue(const mac_ue_delete_request& request);
+
+  /// Add/Modify UE bearers in the MUX.
+  async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
+                                  const std::vector<mac_logical_channel_config>& logical_channels);
+
+  /// Remove UE bearers in the MUX.
+  async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem);
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
@@ -91,6 +101,9 @@ private:
   task_executor&                  ctrl_exec;
   mac_cell_result_notifier&       phy_cell;
 
+  // Mapper of upper-layer bearers to MAC logical channels in the DL direction.
+  mac_dl_ue_repository ue_mng;
+
   // Pool of DL HARQ buffers used for UE PDSCH.
   cell_dl_harq_buffer_pool dl_harq_buffers;
 
@@ -106,7 +119,6 @@ private:
   paging_pdu_assembler paging_assembler;
 
   mac_scheduler_cell_info_handler& sched;
-  mac_dl_ue_manager&               ue_mng;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

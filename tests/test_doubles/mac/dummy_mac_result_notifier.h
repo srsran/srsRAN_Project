@@ -35,6 +35,7 @@ public:
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
   void on_cell_results_completion(slot_point slot) override;
 
+  slot_point                    last_slot_res;
   optional<mac_dl_sched_result> last_dl_res;
   optional<mac_dl_data_result>  last_dl_data;
   optional<mac_ul_sched_result> last_ul_res;
@@ -53,10 +54,11 @@ private:
 /// specify through which task executor the results are transferred and stored.
 struct phy_test_dummy : public mac_result_notifier {
 public:
-  phy_test_dummy(task_executor& exec_) : cell(exec_) {}
+  phy_test_dummy(unsigned nof_cells, task_executor& exec_) : cells(nof_cells, phy_cell_test_dummy(exec_)) {}
 
-  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
-  phy_cell_test_dummy       cell;
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cells[cell_index]; }
+
+  std::vector<phy_cell_test_dummy> cells;
 };
 
 } // namespace srsran

@@ -68,21 +68,21 @@ public:
 
     auto& setup                           = e2_setup_response.pdu.successful_outcome().value.e2setup_resp();
     setup->transaction_id                 = last_e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id;
-    setup->ra_nfunctions_accepted_present = true;
-    asn1::protocol_ie_single_container_s<asn1::e2ap::ra_nfunction_id_item_ies_o> ran_func_item;
-    ran_func_item.value().ra_nfunction_id_item().ran_function_id       = e2sm_kpm_asn1_packer::ran_func_id;
-    ran_func_item.value().ra_nfunction_id_item().ran_function_revision = 0;
-    setup->ra_nfunctions_accepted.value.push_back(ran_func_item);
-    setup->global_ric_id.value.plmn_id.from_number(1);
-    setup->global_ric_id.value.ric_id.from_number(1);
+    setup->ran_functions_accepted_present = true;
+    asn1::protocol_ie_single_container_s<asn1::e2ap::ran_function_id_item_ies_o> ran_func_item;
+    ran_func_item.value().ran_function_id_item().ran_function_id       = e2sm_kpm_asn1_packer::ran_func_id;
+    ran_func_item.value().ran_function_id_item().ran_function_revision = 0;
+    setup->ran_functions_accepted.push_back(ran_func_item);
+    setup->global_ric_id.plmn_id.from_number(1);
+    setup->global_ric_id.ric_id.from_number(1);
 
     // fill the required part with dummy data
-    setup->e2node_component_cfg_addition_ack.value.resize(1);
+    setup->e2node_component_cfg_addition_ack.resize(1);
     asn1::e2ap::e2node_component_cfg_addition_ack_item_s& e2node_component_cfg_addition_ack_item =
-        setup->e2node_component_cfg_addition_ack.value[0].value().e2node_component_cfg_addition_ack_item();
+        setup->e2node_component_cfg_addition_ack[0].value().e2node_component_cfg_addition_ack_item();
     e2node_component_cfg_addition_ack_item.e2node_component_interface_type =
         asn1::e2ap::e2node_component_interface_type_e::e2node_component_interface_type_opts::e1;
-    e2node_component_cfg_addition_ack_item.e2node_component_id.set_e2node_component_interface_type_e1().gnb_cu_cp_id =
+    e2node_component_cfg_addition_ack_item.e2node_component_id.set_e2node_component_interface_type_e1().gnb_cu_up_id =
         123;
     e2node_component_cfg_addition_ack_item.e2node_component_cfg_ack.upd_outcome =
         asn1::e2ap::e2node_component_cfg_ack_s::upd_outcome_opts::success;
@@ -230,9 +230,9 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // Status: RIC received E2 Setup Request.
-  ASSERT_EQ(ric_e2_iface->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(ric_e2_iface->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(ric_e2_iface->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Action 2: RIC sends E2 Setup Request Response.
   test_logger.info("Injecting E2SetupResponse");
@@ -242,9 +242,9 @@ TEST_F(e2ap_network_adapter_test, when_e2_setup_response_received_then_ric_conne
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   // Status: E2 Agent received E2 Setup Request Response.
-  ASSERT_EQ(e2ap_rx_probe->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(e2ap_rx_probe->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(e2ap_rx_probe->last_e2_msg.pdu.successful_outcome().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
+            asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
 
   tick();
   test_logger.info("Test finished.");

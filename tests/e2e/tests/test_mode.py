@@ -165,7 +165,7 @@ def test_ru_not_crash(
     Run gnb with sanitizers in test mode ru dummy.
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
-    _test_ru(retina_manager, retina_data, gnb, warning_as_errors=False, fail_if_kos=True)
+    _test_ru(retina_manager, retina_data, gnb, warning_as_errors=False, fail_if_kos=False)
 
 
 # pylint: disable=too-many-arguments

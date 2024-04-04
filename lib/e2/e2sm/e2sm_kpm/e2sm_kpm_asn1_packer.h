@@ -25,7 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 
@@ -44,7 +44,7 @@ public:
 
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   e2sm_action_definition   handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition) override;
-  e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ri_cctrl_request_s& req) override;
+  e2sm_ric_control_request handle_packed_ric_control_request(const asn1::e2ap::ric_ctrl_request_s& req) override;
   e2_ric_control_response  pack_ric_control_response(const e2sm_ric_control_response& e2sm_response) override;
 
   e2sm_event_trigger_definition

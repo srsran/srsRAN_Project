@@ -89,6 +89,14 @@ struct sl_bwp_cfg_common_r16_s {
   void        to_json(json_writer& j) const;
 };
 
+// SL-TxProfile-r17 ::= ENUMERATED
+struct sl_tx_profile_r17_opts {
+  enum options { drx_compatible, drx_incompatible, spare6, spare5, spare4, spare3, spare2, spare1, nulltype } value;
+
+  const char* to_string() const;
+};
+using sl_tx_profile_r17_e = enumerated<sl_tx_profile_r17_opts>;
+
 // SL-EUTRA-AnchorCarrierFreqList-r16 ::= SEQUENCE (SIZE (1..8)) OF INTEGER (0..262143)
 using sl_eutra_anchor_carrier_freq_list_r16_l = bounded_array<uint32_t, 8>;
 
@@ -158,14 +166,6 @@ struct sl_precfg_general_r16_s {
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
 };
-
-// SL-TxProfile-r17 ::= ENUMERATED
-struct sl_tx_profile_r17_opts {
-  enum options { drx_compatible, drx_incompatible, spare6, spare5, spare4, spare3, spare2, spare1, nulltype } value;
-
-  const char* to_string() const;
-};
-using sl_tx_profile_r17_e = enumerated<sl_tx_profile_r17_opts>;
 
 // SL-RoHC-Profiles-r16 ::= SEQUENCE
 struct sl_ro_hc_profiles_r16_s {

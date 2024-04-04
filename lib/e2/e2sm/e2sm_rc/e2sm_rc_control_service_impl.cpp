@@ -25,7 +25,7 @@
 #include <algorithm>
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_rc;
+using namespace asn1::e2sm;
 using namespace srsran;
 
 e2sm_rc_control_service_base::e2sm_rc_control_service_base(uint32_t style_id_) :
@@ -37,7 +37,7 @@ e2sm_rc_control_service_base::e2sm_rc_control_service_base(uint32_t style_id_) :
 }
 
 bool e2sm_rc_control_service_base::fill_ran_function_description(
-    asn1::e2sm_rc::ran_function_definition_ctrl_item_s& ctrl_item)
+    asn1::e2sm::ran_function_definition_ctrl_item_s& ctrl_item)
 {
   ctrl_item.ric_call_process_id_format_type_present = false;
   ctrl_item.ric_ctrl_style_type                     = style_id;
@@ -90,21 +90,21 @@ e2sm_rc_control_service::e2sm_rc_control_service(uint32_t style_id_) : e2sm_rc_c
 
 bool e2sm_rc_control_service::control_request_supported(const e2sm_ric_control_request& req)
 {
-  const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
 
   // All styles 1 - 10 use hdr and msg format 1
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
-      e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format1) {
+      e2sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format1) {
     return false;
   }
 
   if (ctrl_msg.ric_ctrl_msg_formats.type().value !=
-      e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format1) {
+      e2sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format1) {
     return false;
   }
 
-  const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr_f1 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1();
+  const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr_f1 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1();
 
   if (ctrl_hdr_f1.ric_style_type != style_id) {
     return false;
@@ -136,15 +136,15 @@ bool e2sm_rc_control_service::control_request_supported(const e2sm_ric_control_r
 async_task<e2sm_ric_control_response>
 e2sm_rc_control_service::execute_control_request(const e2sm_ric_control_request& req)
 {
-  const e2_sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
-      variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+  const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
+      variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
 
   if (config_req_executors.find(ctrl_hdr.ric_ctrl_action_id) == config_req_executors.end()) {
     return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
       CORO_BEGIN(ctx);
       e2sm_ric_control_response ctrl_response;
       ctrl_response.success                 = false;
-      ctrl_response.cause.set_ric_request() = cause_ri_crequest_e::options::action_not_supported;
+      ctrl_response.cause.set_ric_request() = cause_ric_request_e::options::action_not_supported;
       CORO_RETURN(ctrl_response);
     });
   }
@@ -155,20 +155,20 @@ e2sm_rc_control_service::execute_control_request(const e2sm_ric_control_request&
 e2sm_rc_control_service_style_255::e2sm_rc_control_service_style_255() : e2sm_rc_control_service_base(255) {}
 
 e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_req_f2(
-    const e2_sm_rc_ctrl_hdr_format2_s&                                ctrl_hdr_f2,
-    const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_style_item_s       style,
-    const asn1::e2sm_rc::e2_sm_rc_ctrl_msg_format2_ctrl_action_item_s action)
+    const e2sm_rc_ctrl_hdr_format2_s&                             ctrl_hdr_f2,
+    const asn1::e2sm::e2sm_rc_ctrl_msg_format2_style_item_s       style,
+    const asn1::e2sm::e2sm_rc_ctrl_msg_format2_ctrl_action_item_s action)
 {
   e2sm_ric_control_request req_f1;
   req_f1.ric_call_process_id_present  = false;
   req_f1.ric_ctrl_ack_request_present = false;
   req_f1.ric_ctrl_ack_request         = false;
 
-  e2_sm_rc_ctrl_hdr_format1_s& hdr_f1 = variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s>(req_f1.request_ctrl_hdr)
-                                            .ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+  e2sm_rc_ctrl_hdr_format1_s& hdr_f1 =
+      variant_get<asn1::e2sm::e2sm_rc_ctrl_hdr_s>(req_f1.request_ctrl_hdr).ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
 
-  e2_sm_rc_ctrl_msg_format1_s& msg_f1 = variant_get<asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s>(req_f1.request_ctrl_msg)
-                                            .ric_ctrl_msg_formats.set_ctrl_msg_format1();
+  e2sm_rc_ctrl_msg_format1_s& msg_f1 =
+      variant_get<asn1::e2sm::e2sm_rc_ctrl_msg_s>(req_f1.request_ctrl_msg).ric_ctrl_msg_formats.set_ctrl_msg_format1();
 
   hdr_f1.ric_style_type     = style.indicated_ctrl_style_type;
   hdr_f1.ric_ctrl_action_id = action.ric_ctrl_action_id;
@@ -182,10 +182,10 @@ e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_r
 
   if (ctrl_hdr_f2.ric_ctrl_decision_present) {
     hdr_f1.ric_ctrl_decision_present = true;
-    if (ctrl_hdr_f2.ric_ctrl_decision == e2_sm_rc_ctrl_hdr_format2_s::ric_ctrl_decision_e_::accept) {
-      hdr_f1.ric_ctrl_decision = e2_sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::accept;
+    if (ctrl_hdr_f2.ric_ctrl_decision == e2sm_rc_ctrl_hdr_format2_s::ric_ctrl_decision_e_::accept) {
+      hdr_f1.ric_ctrl_decision = e2sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::accept;
     } else {
-      hdr_f1.ric_ctrl_decision = e2_sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::reject;
+      hdr_f1.ric_ctrl_decision = e2sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_e_::reject;
     }
   }
   msg_f1.ran_p_list = action.ran_p_list.ran_p_list;
@@ -195,21 +195,21 @@ e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_r
 
 bool e2sm_rc_control_service_style_255::control_request_supported(const e2sm_ric_control_request& req)
 {
-  const e2_sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const e2_sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
 
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
-      e2_sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format2) {
+      e2sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format2) {
     return false;
   }
 
   if (ctrl_msg.ric_ctrl_msg_formats.type().value !=
-      e2_sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format2) {
+      e2sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format2) {
     return false;
   }
 
-  const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2();
-  const e2_sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2();
+  const e2sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2();
+  const e2sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2();
 
   if (ctrl_hdr_f2.ue_id_present) {
     // TODO: check if UE supported
@@ -248,10 +248,10 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2sm_ric_contro
   e2sm_ric_control_response                          aggregated_response;
   aggregated_response.success = false;
 
-  const e2_sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
-      variant_get<e2_sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format2();
-  const e2_sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 =
-      variant_get<e2_sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format2();
+  const e2sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
+      variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format2();
+  const e2sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 =
+      variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format2();
 
   for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
     for (auto& action : style.ric_ctrl_action_list) {
@@ -272,7 +272,7 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2sm_ric_contro
       CORO_BEGIN(ctx);
       e2sm_ric_control_response ctrl_response;
       ctrl_response.success                 = false;
-      ctrl_response.cause.set_ric_request() = cause_ri_crequest_e::options::action_not_supported;
+      ctrl_response.cause.set_ric_request() = cause_ric_request_e::options::action_not_supported;
       CORO_RETURN(ctrl_response);
     });
   }

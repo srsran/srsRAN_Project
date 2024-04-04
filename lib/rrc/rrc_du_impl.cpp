@@ -23,7 +23,7 @@
 #include "rrc_du_impl.h"
 #include "../ran/gnb_format.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 

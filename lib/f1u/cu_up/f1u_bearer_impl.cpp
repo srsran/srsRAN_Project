@@ -102,6 +102,11 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
 
 void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 {
+  if (stopped) {
+    logger.log_info("Dropped SDU. Bearer is stopped. pdcp_sn={} size={}", sdu.pdcp_sn, sdu.buf.length());
+    return;
+  }
+
   logger.log_debug("F1-U bearer received SDU with pdcp_sn={}, size={}", sdu.pdcp_sn, sdu.buf.length());
   nru_dl_message msg = {};
 
@@ -120,6 +125,11 @@ void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 
 void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
 {
+  if (stopped) {
+    logger.log_info("Dropped discard command. Bearer is stopped. pdcp_sn={}", pdcp_sn);
+    return;
+  }
+
   // start backoff timer
   if (!dl_notif_timer.is_running()) {
     dl_notif_timer.run();

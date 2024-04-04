@@ -42,7 +42,7 @@ class dpdk_receiver_impl : public receiver
 
 public:
   dpdk_receiver_impl(task_executor&                     executor_,
-                     std::shared_ptr<dpdk_port_context> port_ctx_ptr_,
+                     std::shared_ptr<dpdk_port_context> port_ctx_,
                      srslog::basic_logger&              logger_);
 
   // See interface for documentation.
@@ -62,8 +62,7 @@ private:
   srslog::basic_logger&                  logger;
   task_executor&                         executor;
   std::reference_wrapper<frame_notifier> notifier;
-  std::shared_ptr<dpdk_port_context>     port_ctx_ptr;
-  dpdk_port_context&                     port_ctx;
+  std::shared_ptr<dpdk_port_context>     port_ctx;
   std::atomic<receiver_status>           rx_status{receiver_status::idle};
 };
 

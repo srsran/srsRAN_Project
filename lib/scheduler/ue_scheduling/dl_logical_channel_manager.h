@@ -96,7 +96,7 @@ public:
     return bytes;
   }
 
-  /// \brief Checks whether UE has pending CEs to be scheduled.
+  /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const
   {
     unsigned bytes = pending_ue_con_res_id_ce_bytes();

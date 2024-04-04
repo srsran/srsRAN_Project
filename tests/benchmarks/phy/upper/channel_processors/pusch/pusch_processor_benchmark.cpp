@@ -602,7 +602,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   // Note that currently hardware-acceleration is limited to "generic" processor types.
   if (nof_pusch_decoder_threads != 0 && ldpc_decoder_type != "acc100" && rate_dematcher_type != "acc100") {
     worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-        nof_pusch_decoder_threads, 1024, "decoder");
+        "decoder", nof_pusch_decoder_threads, 1024);
     executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
   }
 

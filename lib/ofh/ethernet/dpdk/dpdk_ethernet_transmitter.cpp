@@ -37,7 +37,7 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
   }
 
   static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frames.size());
-  if (::rte_pktmbuf_alloc_bulk(port_ctx.get_mempool(), mbufs.data(), frames.size()) < 0) {
+  if (::rte_pktmbuf_alloc_bulk(port_ctx->get_mempool(), mbufs.data(), frames.size()) < 0) {
     logger.warning("Not enough entries in the mempool to send '{}' frames in the DPDK Ethernet transmitter",
                    frames.size());
     return;
@@ -61,7 +61,7 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
     std::memcpy(data, frame.data(), frame.size());
   }
 
-  unsigned nof_sent_packets = ::rte_eth_tx_burst(port_ctx.get_port_id(), 0, mbufs.data(), mbufs.size());
+  unsigned nof_sent_packets = ::rte_eth_tx_burst(port_ctx->get_port_id(), 0, mbufs.data(), mbufs.size());
 
   if (SRSRAN_UNLIKELY(nof_sent_packets < mbufs.size())) {
     logger.warning("DPDK dropped '{}' packets out of a total of '{}' in the tx burst",

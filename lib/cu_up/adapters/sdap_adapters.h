@@ -59,8 +59,11 @@ public:
 
   void on_new_pdu(byte_buffer pdu) override
   {
-    srsran_assert(pdcp_handler != nullptr, "PDCP handler must not be nullptr");
-    pdcp_handler->handle_sdu(std::move(pdu));
+    if (pdcp_handler == nullptr) {
+      srslog::fetch_basic_logger("SDAP").warning("Unconnected PDCP handler. Dropping SDAP PDU");
+    } else {
+      pdcp_handler->handle_sdu(std::move(pdu));
+    }
   }
 
 private:

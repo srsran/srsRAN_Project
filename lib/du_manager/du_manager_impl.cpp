@@ -96,7 +96,7 @@ void du_manager_impl::stop()
       // First call. Initiate shutdown operations.
 
       // Start DU disconnect procedure.
-      schedule_async_task(launch_async<du_stop_procedure>(ue_mng));
+      schedule_async_task(launch_async<du_stop_procedure>(ue_mng, cell_mng));
 
       // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
       // thread.

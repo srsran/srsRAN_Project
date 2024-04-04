@@ -22,6 +22,7 @@
 
 #include "ofh_downlink_handler_broadcast_impl.h"
 #include "helpers.h"
+#include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
@@ -58,20 +59,21 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
       calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
       get_nsymb_per_slot(config.cp),
       to_numerology_value(config.scs)),
-  frame_pool_ptr(dependencies.frame_pool_ptr),
-  frame_pool(*frame_pool_ptr),
+  frame_pool(std::move(dependencies.frame_pool)),
   err_notifier(dummy_err_notifier)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
-  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(frame_pool, "Invalid frame pool");
 }
 
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
                                                      const resource_grid_reader&  grid)
 {
+  trace_point tp = ofh_tracer.now();
+
   // Clear any stale buffers associated with the context slot.
-  frame_pool.clear_downlink_slot(context.slot, logger);
+  frame_pool->clear_downlink_slot(context.slot, logger);
 
   if (window_checker.is_late(context.slot)) {
     err_notifier.get().on_late_downlink_message({context.slot, sector_id});
@@ -79,6 +81,7 @@ void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context
         "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",
         context.slot,
         context.sector);
+    ofh_tracer << trace_event("ofh_handle_dl_late", tp);
 
     return;
   }
@@ -106,4 +109,5 @@ void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context
     uplane_context.eaxc = eaxc;
     data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
+  ofh_tracer << trace_event("ofh_handle_downlink", tp);
 }

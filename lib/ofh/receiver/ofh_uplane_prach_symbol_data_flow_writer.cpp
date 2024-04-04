@@ -31,7 +31,7 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
 {
   slot_point slot = results.params.slot;
 
-  prach_context prach_context = prach_context_repo.get(slot);
+  prach_context prach_context = prach_context_repo->get(slot);
   if (prach_context.empty()) {
     logger.info(
         "Dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}' and eAxC '{}'",
@@ -104,7 +104,7 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     span<const cf_t> prach_in_data = span<const cf_t>(section.iq_samples).subspan(iq_start_re, iq_size_re);
 
     // Copy the data in the buffer.
-    prach_context_repo.write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
+    prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
 
     logger.debug("Handling PRACH in slot '{}', symbol '{}' and port '{}'", slot, results.params.symbol_id, port);
   }

@@ -179,9 +179,10 @@ public:
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
 public:
   dummy_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
-  void          schedule_async_task(async_task<void> task) override { ctrl_loop.schedule(std::move(task)); }
-  unique_timer  make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-  timer_factory get_timer_factory() override { return timer_factory{timer_db, exec}; }
+  void           schedule_async_task(async_task<void> task) override { ctrl_loop.schedule(std::move(task)); }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+  timer_factory  get_timer_factory() override { return timer_factory{timer_db, exec}; }
+  task_executor& get_executor() override { return exec; }
 
   void tick_timer() { timer_db.tick(); }
 

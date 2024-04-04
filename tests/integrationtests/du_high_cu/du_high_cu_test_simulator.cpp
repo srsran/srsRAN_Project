@@ -197,7 +197,7 @@ void du_high_cu_test_simulator::run_slot()
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).
     const unsigned                       MAX_COUNT = 1000;
-    const optional<mac_dl_sched_result>& dl_result = dus[i]->phy.cell.last_dl_res;
+    const optional<mac_dl_sched_result>& dl_result = dus[i]->phy.cells[0].last_dl_res;
     for (unsigned count = 0; count < MAX_COUNT and (not dl_result.has_value() or dl_result->slot != dus[i]->next_slot);
          ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)

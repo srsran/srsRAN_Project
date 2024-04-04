@@ -21,12 +21,11 @@
  */
 
 #include "e2sm_kpm_impl.h"
-#include "e2sm_kpm_du_meas_provider_impl.h"
 #include "e2sm_kpm_report_service_impl.h"
 #include "srsran/asn1/asn1_utils.h"
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_kpm;
+using namespace asn1::e2sm;
 using namespace srsran;
 
 e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&   logger_,
@@ -36,7 +35,7 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&   logger_,
 {
 }
 
-bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
+bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& ric_action)
 {
   e2sm_action_definition action_def =
       e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
@@ -48,8 +47,8 @@ bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_it
     return false;
   }
   logger.info("Admitting action {} (type {})", ric_action.ric_action_id, ric_action.ric_action_type);
-  e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
-      variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
+  e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
+      variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition);
 
   switch (e2sm_kpm_action_def.ric_style_type) {
     case 1:
@@ -101,8 +100,8 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&   
 }
 
 bool e2sm_kpm_impl::process_action_definition_format1(
-    const asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& action_definition,
-    const e2sm_kpm_metric_level_enum                             level)
+    const asn1::e2sm::e2sm_kpm_action_definition_format1_s& action_definition,
+    const e2sm_kpm_metric_level_enum                        level)
 {
   bool             cell_scope     = action_definition.cell_global_id_present;
   uint64_t         granul_period  = action_definition.granul_period;
@@ -123,23 +122,23 @@ bool e2sm_kpm_impl::process_action_definition_format1(
   return process_action_def_meas_info_list(meas_info_list, level, cell_scope);
 }
 
-bool e2sm_kpm_impl::process_action_definition_format1(const e2_sm_kpm_action_definition_s& action_def_generic)
+bool e2sm_kpm_impl::process_action_definition_format1(const e2sm_kpm_action_definition_s& action_def_generic)
 {
-  const e2_sm_kpm_action_definition_format1_s& action_definition =
+  const e2sm_kpm_action_definition_format1_s& action_definition =
       action_def_generic.action_definition_formats.action_definition_format1();
   e2sm_kpm_metric_level_enum level = E2_NODE_LEVEL;
 
   return process_action_definition_format1(action_definition, std::move(level));
 }
 
-bool e2sm_kpm_impl::process_action_definition_format2(const e2_sm_kpm_action_definition_s& action_def_generic)
+bool e2sm_kpm_impl::process_action_definition_format2(const e2sm_kpm_action_definition_s& action_def_generic)
 {
-  const e2_sm_kpm_action_definition_format2_s& action_definition =
+  const e2sm_kpm_action_definition_format2_s& action_definition =
       action_def_generic.action_definition_formats.action_definition_format2();
 
-  e2sm_kpm_metric_level_enum                   level          = UE_LEVEL;
-  const ueid_c&                                ueid           = action_definition.ue_id;
-  const e2_sm_kpm_action_definition_format1_s& subscript_info = action_definition.subscript_info;
+  e2sm_kpm_metric_level_enum                  level          = UE_LEVEL;
+  const ue_id_c&                              ueid           = action_definition.ue_id;
+  const e2sm_kpm_action_definition_format1_s& subscript_info = action_definition.subscript_info;
 
   if (not du_meas_provider.ue_supported(ueid)) {
     return false;
@@ -148,9 +147,9 @@ bool e2sm_kpm_impl::process_action_definition_format2(const e2_sm_kpm_action_def
   return process_action_definition_format1(subscript_info, std::move(level));
 }
 
-bool e2sm_kpm_impl::process_action_definition_format3(const e2_sm_kpm_action_definition_s& action_def_generic)
+bool e2sm_kpm_impl::process_action_definition_format3(const e2sm_kpm_action_definition_s& action_def_generic)
 {
-  const e2_sm_kpm_action_definition_format3_s& action_definition =
+  const e2sm_kpm_action_definition_format3_s& action_definition =
       action_def_generic.action_definition_formats.action_definition_format3();
 
   bool     cell_scope    = action_definition.cell_global_id_present;
@@ -192,9 +191,9 @@ bool e2sm_kpm_impl::process_action_definition_format3(const e2_sm_kpm_action_def
   return true;
 }
 
-bool e2sm_kpm_impl::process_action_definition_format4(const e2_sm_kpm_action_definition_s& action_def_generic)
+bool e2sm_kpm_impl::process_action_definition_format4(const e2sm_kpm_action_definition_s& action_def_generic)
 {
-  const e2_sm_kpm_action_definition_format4_s& action_definition =
+  const e2sm_kpm_action_definition_format4_s& action_definition =
       action_def_generic.action_definition_formats.action_definition_format4();
 
   for (uint32_t i = 0; i < action_definition.matching_ue_cond_list.size(); ++i) {
@@ -206,26 +205,26 @@ bool e2sm_kpm_impl::process_action_definition_format4(const e2_sm_kpm_action_def
     }
   }
 
-  e2sm_kpm_metric_level_enum                   level             = UE_LEVEL;
-  const e2_sm_kpm_action_definition_format1_s& subscription_info = action_definition.subscription_info;
+  e2sm_kpm_metric_level_enum                  level             = UE_LEVEL;
+  const e2sm_kpm_action_definition_format1_s& subscription_info = action_definition.sub_info;
   return process_action_definition_format1(subscription_info, level);
 }
 
-bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_definition_s& action_def_generic)
+bool e2sm_kpm_impl::process_action_definition_format5(const e2sm_kpm_action_definition_s& action_def_generic)
 {
-  const e2_sm_kpm_action_definition_format5_s& action_definition =
+  const e2sm_kpm_action_definition_format5_s& action_definition =
       action_def_generic.action_definition_formats.action_definition_format5();
 
   e2sm_kpm_metric_level_enum level = UE_LEVEL;
-  for (uint32_t i = 0; i < action_definition.matching_ueid_list.size(); ++i) {
-    const ueid_c& ueid = action_definition.matching_ueid_list[i].ue_id;
+  for (uint32_t i = 0; i < action_definition.matching_ue_id_list.size(); ++i) {
+    const ue_id_c& ueid = action_definition.matching_ue_id_list[i].ue_id;
     // if at least one UE not present -> do not admit
     if (not du_meas_provider.ue_supported(ueid)) {
       return false;
     }
   }
 
-  const e2_sm_kpm_action_definition_format1_s& subscript_info = action_definition.subscription_info;
+  const e2sm_kpm_action_definition_format1_s& subscript_info = action_definition.sub_info;
   return process_action_definition_format1(subscript_info, level);
 }
 
@@ -237,8 +236,8 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
     logger.info("Unknown service model {}", action_def.service_model);
     return nullptr;
   }
-  e2_sm_kpm_action_definition_s& e2sm_kpm_action_def =
-      variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition);
+  e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
+      variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;
   switch (ric_style_type) {
     case 1:

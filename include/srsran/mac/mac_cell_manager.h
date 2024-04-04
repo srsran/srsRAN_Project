@@ -23,9 +23,13 @@ struct mac_slice_configuration {
 class mac_cell_controller
 {
 public:
-  virtual ~mac_cell_controller()   = default;
+  virtual ~mac_cell_controller() = default;
+
+  /// Start the cell.
   virtual async_task<void> start() = 0;
-  virtual async_task<void> stop()  = 0;
+
+  /// Stop the cell.
+  virtual async_task<void> stop() = 0;
 };
 
 /// Class used to setup the MAC cells and slices.

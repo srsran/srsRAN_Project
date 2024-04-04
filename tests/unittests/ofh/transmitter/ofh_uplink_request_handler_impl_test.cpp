@@ -190,13 +190,13 @@ protected:
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_disabled()
   {
     uplink_request_handler_impl_dependencies dependencies;
-    dependencies.logger         = &srslog::fetch_basic_logger("TEST");
-    dependencies.ul_slot_repo   = ul_slot_repo;
-    dependencies.ul_prach_repo  = ul_prach_repo;
-    dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
-    auto temp                   = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow                   = temp.get();
-    dependencies.data_flow      = std::move(temp);
+    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
+    dependencies.ul_slot_repo  = ul_slot_repo;
+    dependencies.ul_prach_repo = ul_prach_repo;
+    dependencies.frame_pool    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow                  = temp.get();
+    dependencies.data_flow     = std::move(temp);
 
     return dependencies;
   }
@@ -204,13 +204,13 @@ protected:
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_enabled()
   {
     uplink_request_handler_impl_dependencies dependencies;
-    dependencies.logger         = &srslog::fetch_basic_logger("TEST");
-    dependencies.ul_slot_repo   = ul_slot_repo;
-    dependencies.ul_prach_repo  = ul_prach_repo;
-    dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
-    auto temp                   = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow_prach             = temp.get();
-    dependencies.data_flow      = std::move(temp);
+    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
+    dependencies.ul_slot_repo  = ul_slot_repo;
+    dependencies.ul_prach_repo = ul_prach_repo;
+    dependencies.frame_pool    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow_prach            = temp.get();
+    dependencies.data_flow     = std::move(temp);
 
     return dependencies;
   }

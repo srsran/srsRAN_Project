@@ -76,25 +76,28 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   ru_nof_prbs(config.ru_nof_prbs),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
-  frame_pool_ptr(dependencies.frame_pool),
-  frame_pool(*frame_pool_ptr),
+  frame_pool(std::move(dependencies.frame_pool)),
   compressor_sel(std::move(dependencies.compressor_sel)),
   eth_builder(std::move(dependencies.eth_builder)),
   ecpri_builder(std::move(dependencies.ecpri_builder)),
-  up_builder(std::move(dependencies.up_builder))
+  up_builder(std::move(dependencies.up_builder)),
+  formatted_trace_names(config.dl_eaxc)
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(compressor_sel, "Invalid compressor selector");
   srsran_assert(up_builder, "Invalid User-Plane message builder");
-  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(frame_pool, "Invalid frame pool");
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
     const data_flow_uplane_resource_grid_context& context,
     const resource_grid_reader&                   grid)
 {
+  trace_point tp = ofh_tracer.now();
   enqueue_section_type_1_message_symbol_burst(context, grid);
+
+  ofh_tracer << trace_event(formatted_trace_names[context.eaxc].c_str(), tp);
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
@@ -116,8 +119,9 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
   for (unsigned symbol_id = context.symbol_range.start(), symbol_end = context.symbol_range.length();
        symbol_id != symbol_end;
        ++symbol_id) {
+    trace_point         pool_access_tp = ofh_tracer.now();
     slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
-    scoped_frame_buffer scoped_buffer(frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
+    scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
     if (scoped_buffer.empty()) {
       logger.warning("Not enough space in the buffer pool to create a downlink User-Plane message for slot '{}' and "
                      "eAxC '{}', symbol_id '{}'",
@@ -126,6 +130,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
                      symbol_id);
       return;
     }
+    ofh_tracer << trace_event("ofh_uplane_pool_access", pool_access_tp);
 
     span<const cf_t> iq_data;
     if (SRSRAN_LIKELY(ru_nof_prbs == grid.get_nof_subc())) {
@@ -156,6 +161,8 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
         continue;
       }
+
+      ofh_tracer << instant_trace_event{"ofh_uplane_symbol", instant_trace_event::cpu_scope::thread};
 
       const uplane_message_params& up_params =
           generate_dl_ofh_user_parameters(context.slot, symbol_id, fragment_start_prb, fragment_nof_prbs, compr_params);

@@ -21,6 +21,7 @@
  */
 
 #include "mock_cu_up.h"
+#include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 

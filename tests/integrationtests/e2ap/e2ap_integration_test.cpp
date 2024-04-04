@@ -159,15 +159,15 @@ TEST_F(e2ap_integration_test, when_e2_setup_response_received_then_ric_connected
   ASSERT_FALSE(t.ready());
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(adapter->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(adapter->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(adapter->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  ASSERT_EQ(adapter->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(adapter->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(adapter->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
+            asn1::e2ap::e2ap_elem_procs_o::successful_outcome_c::types_opts::e2setup_resp);
 }
 
 class e2ap_gw_connector_integration_test : public ::testing::Test

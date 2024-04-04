@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/e2ap/e2sm_rc.h"
+#include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_rc.h"
@@ -37,7 +37,7 @@ public:
 
   e2sm_handler& get_e2sm_packer() override;
 
-  bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) override;
+  bool action_supported(const asn1::e2ap::ric_action_to_be_setup_item_s& ric_action) override;
 
   std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
   e2sm_control_service*                get_e2sm_control_service(const e2sm_ric_control_request& request) override;

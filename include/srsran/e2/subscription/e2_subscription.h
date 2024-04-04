@@ -24,7 +24,7 @@
 
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 
@@ -34,13 +34,13 @@ namespace srsran {
 struct ric_action_t {
   byte_buffer                          action_definition;
   uint16_t                             ric_action_id;
-  asn1::e2ap::ri_caction_type_e        ric_action_type;
+  asn1::e2ap::ric_action_type_e        ric_action_type;
   std::unique_ptr<e2sm_report_service> report_service;
 };
 
 /// Here we define a subscription struct.
 struct e2_subscription_info_t {
-  asn1::e2ap::ri_crequest_id_s request_id;
+  asn1::e2ap::ric_request_id_s request_id;
   uint16_t                     ran_function_id;
   std::vector<ric_action_t>    action_list;
   uint64_t                     report_period;
@@ -56,18 +56,18 @@ class e2_subscription_proc
 public:
   virtual ~e2_subscription_proc() = default;
   /// \brief Handle the incoming subscription message.
-  virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
+  virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ric_sub_request_s& msg) = 0;
   /// \brief Handle the incoming subscription delete message.
   virtual e2_subscribe_delete_response_message
-  handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) = 0;
+  handle_subscription_delete(const asn1::e2ap::ric_sub_delete_request_s& msg) = 0;
   /// \brief start the subscription request
-  virtual void start_subscription(const asn1::e2ap::ri_crequest_id_s& ric_request_id,
+  virtual void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
                                   e2_event_manager&                   ev_mng,
                                   uint16_t                            ran_func_id) = 0;
   /// \brief void stop the subscription request
-  virtual void stop_subscription(const asn1::e2ap::ri_crequest_id_s&                 ric_request_id,
-                                 e2_event_manager&                                   ev_mng,
-                                 const asn1::e2ap::ricsubscription_delete_request_s& msg) = 0;
+  virtual void stop_subscription(const asn1::e2ap::ric_request_id_s&         ric_request_id,
+                                 e2_event_manager&                           ev_mng,
+                                 const asn1::e2ap::ric_sub_delete_request_s& msg) = 0;
 };
 
 class e2_subscriber_mgmt

@@ -24,7 +24,6 @@
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -36,9 +35,9 @@ TEST_F(e2_external_test, on_start_send_e2ap_setup_request)
   e2->start();
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Action 2: E2 setup response received.
   unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
@@ -55,17 +54,17 @@ TEST_F(e2_entity_test, on_start_send_e2ap_setup_request)
   e2->start();
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(dummy_msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(dummy_msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(dummy_msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Action 2: E2 setup response received.
   unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
   e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
   e2_setup_response.pdu.successful_outcome()
       .value.e2setup_resp()
-      ->ra_nfunctions_accepted.value[0]
-      ->ra_nfunction_id_item()
+      ->ran_functions_accepted[0]
+      ->ran_function_id_item()
       .ran_function_id = e2sm_kpm_asn1_packer::ran_func_id;
   test_logger.info("Injecting E2SetupResponse");
   e2->handle_message(e2_setup_response);
@@ -83,9 +82,9 @@ TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
@@ -110,9 +109,9 @@ TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
@@ -128,7 +127,7 @@ TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
 
 TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
 {
-  using namespace asn1::e2sm_kpm;
+  using namespace asn1::e2sm;
   using namespace asn1::e2ap;
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.2.2.2");
   test_logger.info("Launch e2 setup request procedure...");
@@ -138,17 +137,17 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
-  ra_nfunction_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
+  ran_function_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
                                              .value.e2setup_request()
-                                             ->ra_nfunctions_added.value[0]
+                                             ->ran_functions_added[0]
                                              .value()
-                                             .ra_nfunction_item();
-  asn1::cbit_ref                                       bref1(ran_func_added1.ran_function_definition);
-  asn1::e2sm_kpm::e2_sm_kpm_ra_nfunction_description_s ran_func_def = {};
+                                             .ran_function_item();
+  asn1::cbit_ref                                  bref1(ran_func_added1.ran_function_definition);
+  asn1::e2sm::e2sm_kpm_ran_function_description_s ran_func_def = {};
   if (ran_func_def.unpack(bref1) != asn1::SRSASN_SUCCESS) {
     printf("Couldn't unpack E2 PDU");
   }
@@ -173,7 +172,7 @@ TEST_F(e2_test_setup, e2_sends_correct_kpm_ran_function_definition)
 
 TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
 {
-  using namespace asn1::e2sm_kpm;
+  using namespace asn1::e2sm;
   using namespace asn1::e2ap;
   e2_message request_msg = generate_e2_setup_request_message("1.3.6.1.4.1.53148.1.1.2.3");
   test_logger.info("Launch e2 setup request procedure...");
@@ -183,18 +182,18 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
   lazy_task_launcher<e2_setup_response_message> t_launcher(t);
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
-  ra_nfunction_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
+  ran_function_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
                                              .value.e2setup_request()
-                                             ->ra_nfunctions_added.value[0]
+                                             ->ran_functions_added[0]
                                              .value()
-                                             .ra_nfunction_item();
+                                             .ran_function_item();
   asn1::cbit_ref bref1(ran_func_added1.ran_function_definition);
 
-  asn1::e2sm_rc::e2_sm_rc_ran_function_definition_s ran_func_def = {};
+  asn1::e2sm::e2sm_rc_ran_function_definition_s ran_func_def = {};
   if (ran_func_def.unpack(bref1) != asn1::SRSASN_SUCCESS) {
     printf("Couldn't unpack E2 PDU");
   }
@@ -239,9 +238,9 @@ TEST_F(e2_external_test, correctly_unpack_e2_response)
   e2->start();
 
   // Status: received E2 Setup Request.
-  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
-            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+            asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
 
   uint8_t     e2_resp[]   = {0x20, 0x01, 0x00, 0x38, 0x00, 0x00, 0x04, 0x00, 0x31, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04,
                              0x00, 0x07, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x01, 0x90, 0x00, 0x09, 0x00, 0x0a, 0x00, 0x00,

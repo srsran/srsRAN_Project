@@ -32,7 +32,7 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
                   std::move(dependencies.eth_gateway),
-                  dependencies.frame_pool),
+                  std::move(dependencies.frame_pool)),
   ota_dispatcher(*dependencies.executor, dl_manager->get_ota_symbol_boundary_notifier(), msg_transmitter)
 {
   srsran_assert(dl_manager, "Invalid downlink manager");

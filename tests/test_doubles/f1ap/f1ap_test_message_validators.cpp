@@ -21,20 +21,32 @@
  */
 
 #include "f1ap_test_message_validators.h"
+#include "../lib/f1ap/common/asn1_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
 
-bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti)
+bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&           msg,
+                                                             rnti_t                        rnti,
+                                                             optional<nr_cell_global_id_t> nci)
 {
-  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-          msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER)) {
+  if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types_opts::init_msg or
+      msg.pdu.init_msg().proc_code != ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER) {
     return false;
   }
   const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return rrcmsg->c_rnti == to_value(rnti);
+
+  if (rrcmsg->c_rnti != to_value(rnti)) {
+    return false;
+  }
+
+  if (nci.has_value() and cgi_from_asn1(rrcmsg->nr_cgi) != nci) {
+    return false;
+  }
+
+  return true;
 }
 
 bool srsran::test_helpers::is_ul_rrc_msg_transfer_valid(const f1ap_message& msg, srb_id_t srb_id)

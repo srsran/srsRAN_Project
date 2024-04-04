@@ -134,6 +134,8 @@ struct test_bench {
       return false;
     }
     ue_db.add_ue(std::move(u));
+    auto& ue = ue_db[create_req.ue_index];
+    ue.get_pcell().set_fallback_state(true);
     return true;
   }
 };
@@ -285,15 +287,21 @@ protected:
     return bench->add_ue(ue_create_req);
   }
 
-  void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size, bool is_srb0 = true)
+  void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx,
+                                  slot_point    sl,
+                                  unsigned      buffer_size,
+                                  bool          is_srb0   = true,
+                                  bool          tx_conres = true)
   {
     // Notification from upper layers of DL buffer state.
     const dl_buffer_state_indication_message msg{ue_idx, is_srb0 ? LCID_SRB0 : LCID_SRB1, buffer_size};
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
-    bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
+    if (tx_conres) {
+      bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
+    }
 
     // Notify scheduler of DL buffer state.
-    bench->fallback_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0);
+    bench->fallback_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0, sl, buffer_size);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -332,7 +340,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   add_ue(to_rnti(0x4601), ue_idx);
   // Notify about SRB0 message in DL of size 101 bytes.
   const unsigned mac_srb0_sdu_size = 101;
-  push_buffer_state_to_dl_ue(ue_idx, mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(ue_idx, current_slot, mac_srb0_sdu_size, true);
 
   const unsigned exp_size = get_pending_bytes(ue_idx);
 
@@ -366,13 +374,13 @@ TEST_P(fallback_scheduler_tester, failed_allocating_resources)
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
   unsigned ue1_mac_srb0_sdu_size = 101;
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), ue1_mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
 
   // Add UE 2.
   add_ue(to_rnti(0x4602), to_du_ue_index(1));
   // Notify about SRB0 message in DL of size 350 bytes. i.e. big enough to not get allocated with the max. mcs chosen.
   unsigned ue2_mac_srb0_sdu_size = 350;
-  push_buffer_state_to_dl_ue(to_du_ue_index(1), ue2_mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(to_du_ue_index(1), current_slot, ue2_mac_srb0_sdu_size, true);
 
   run_slot();
 
@@ -393,7 +401,7 @@ TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
   add_ue(to_rnti(0x4601), ue_idx);
   // Notify about SRB0 message in DL of size 458 bytes.
   const unsigned mac_srb0_sdu_size = 458;
-  push_buffer_state_to_dl_ue(ue_idx, mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(ue_idx, current_slot, mac_srb0_sdu_size, true);
 
   const unsigned exp_size = get_pending_bytes(ue_idx);
 
@@ -423,7 +431,7 @@ TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_i
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
   const unsigned mac_srb0_sdu_size = 360;
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, mac_srb0_sdu_size, true);
 
   // Allocation for UE should fail.
   const auto& test_ue = get_ue(to_du_ue_index(0));
@@ -443,7 +451,7 @@ TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_s
   add_ue(to_rnti(0x4601), ue_idx);
   // Random payload size.
   const unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
+  push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, mac_srb0_sdu_size, true);
 
   srslog::basic_logger& logger(srslog::fetch_basic_logger("TEST"));
   logger.info("SRB0 scheduler sanity test params PDU size ({}), max msg4 mcs ({}).", mac_srb0_sdu_size, max_msg4_mcs);
@@ -472,7 +480,7 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_td
   for (unsigned idx = 0; idx < MAX_UES; idx++) {
     add_ue(to_rnti(0x4601 + idx), to_du_ue_index(idx));
     // Notify about SRB0 message in DL.
-    push_buffer_state_to_dl_ue(to_du_ue_index(idx), MAC_SRB0_SDU_SIZE);
+    push_buffer_state_to_dl_ue(to_du_ue_index(idx), current_slot, MAC_SRB0_SDU_SIZE, true);
   }
 
   for (unsigned idx = 0; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
@@ -530,7 +538,7 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
     // (partial) slot.
     if (bench->cell_cfg.is_dl_enabled(current_slot + 1) and
         (not bench->cell_cfg.is_fully_dl_enabled(current_slot + 1))) {
-      push_buffer_state_to_dl_ue(to_du_ue_index(0), MAC_SRB0_SDU_SIZE);
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB0_SDU_SIZE, true);
     }
     // Check SRB0 allocation in partial slot.
     if (bench->cell_cfg.is_dl_enabled(current_slot) and (not bench->cell_cfg.is_fully_dl_enabled(current_slot))) {
@@ -648,7 +656,7 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
 
     // Allocate buffer and occupy the grid to test the scheduler in advance scheduling.
     if (current_slot == slot_update_srb_traffic) {
-      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
+      push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), current_slot, MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
 
       auto fill_bw_grant = grant_info{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                                       ofdm_symbol_range{0, 14},
@@ -720,7 +728,7 @@ protected:
         case ue_state::idle: {
           if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
             // Notify about SRB0 message in DL.
-            parent->push_buffer_state_to_dl_ue(test_ue.ue_index, parent->MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
+            parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, parent->MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
             state = ue_state::waiting_for_tx;
           }
           break;
@@ -899,19 +907,78 @@ protected:
       }
     }
 
-    void slot_indication(slot_point sl)
+    void rlc_buffer_state_emulator(slot_point sl)
     {
-      // Wait until the slot to update the SRB1 traffic.
+      // Generate new traffic when at the proper slot.
       if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
         // Notify about SRB1 message in DL.
-        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, generate_srb1_buffer_size(), GetParam().is_srb0);
+        pending_srb1_bytes = generate_srb1_buffer_size();
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        latest_rlc_update_slot.emplace(sl);
         --nof_packet_to_tx;
-        slot_update_srb_traffic = sl.to_uint() + generate_srb1_next_update_delay();
-        test_logger.debug("rnti={}, slot={}: pushing SRB1 traffic", test_ue.crnti, sl);
+        test_logger.debug("rnti={}, slot={}: pushing SRB1 traffic of {} bytes", test_ue.crnti, sl, pending_srb1_bytes);
       }
 
+      // When all pending bytes have been transmitted, generate the slot for the next traffic generation.
+      if (sl > slot_update_srb_traffic and pending_srb1_bytes == 0 and nof_packet_to_tx > 0) {
+        slot_update_srb_traffic = sl.to_uint() + generate_srb1_next_update_delay();
+      }
+
+      // Generate an RLC buffer update every time a HARQ process gets transmitted for the first time.
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
         harq_id_t h_id = to_harq_id(h_id_idx);
+
+        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
+          const unsigned tb_idx   = 0U;
+          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
+                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
+                                        : 0U;
+          pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
+          test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
+                            test_ue.crnti,
+                            sl,
+                            to_harq_id(h_dl.id),
+                            pending_srb1_bytes);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+          latest_rlc_update_slot.emplace(sl);
+        }
+      }
+
+      // Resend a new RLC buffer update if more than max_rlc_update_delay have passed since the latest RLC update. This
+      // is because the RLC buffer emulator computes an estimate and might not be keeping correct track of the bytes
+      // sent; it can happen that the scheduler completes the scheduling for SRB1, but the RLC buffer emulator still
+      // thinks there are remaining bytes to be transmitted, and makes the test fail.
+      // Sending a new RLC buffer update ensures that the RLC buffer emulator reaches the 0 byte count.
+      if (latest_rlc_update_slot.has_value() and sl - latest_rlc_update_slot.value() > max_rlc_update_delay) {
+        test_logger.debug("rnti={}, slot={}: refreshing RLC buffer state update with {} bytes",
+                          test_ue.crnti,
+                          sl,
+                          pending_srb1_bytes);
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        latest_rlc_update_slot.emplace(sl);
+      }
+    }
+
+    void slot_indication(slot_point sl)
+    {
+      for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
+        harq_id_t h_id = to_harq_id(h_id_idx);
+
+        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
+          const unsigned tb_idx   = 0U;
+          const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
+                                        ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
+                                        : 0U;
+          pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
+          test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
+                            test_ue.crnti,
+                            sl,
+                            to_harq_id(h_dl.id),
+                            pending_srb1_bytes);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        }
 
         // Check if any HARQ process with pending transmissions is re-set by the scheduler.
         if (latest_harq_states[h_id_idx] == h_state::pending_retx and test_ue.get_pcell().harqs.dl_harq(h_id).empty()) {
@@ -963,8 +1030,11 @@ protected:
     slot_point                            slot_update_srb_traffic;
     unsigned                              nof_packet_to_tx;
     fallback_scheduler_srb1_segmentation* parent;
-    srslog::basic_logger&                 test_logger  = srslog::fetch_basic_logger("TEST");
-    unsigned                              missing_retx = 0;
+    srslog::basic_logger&                 test_logger        = srslog::fetch_basic_logger("TEST");
+    unsigned                              missing_retx       = 0;
+    unsigned                              pending_srb1_bytes = 0;
+    optional<slot_point>                  latest_rlc_update_slot;
+    const int                             max_rlc_update_delay = 40;
 
     using h_state = srsran::dl_harq_process::harq_process::transport_block::state_t;
     std::vector<h_state> latest_harq_states;
@@ -972,7 +1042,7 @@ protected:
 
   const unsigned SRB_PACKETS_TOT_TX    = 10;
   const unsigned MAX_UES               = 10;
-  const unsigned MAX_TEST_RUN_SLOTS    = 500;
+  const unsigned MAX_TEST_RUN_SLOTS    = 100;
   const unsigned MAX_MAC_SRB0_SDU_SIZE = 1600;
 
   std::vector<ue_retx_tester> ues_testers;
@@ -994,13 +1064,15 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
     run_slot();
 
     for (auto& tester : ues_testers) {
+      tester.rlc_buffer_state_emulator(current_slot);
       tester.slot_indication(current_slot);
     }
   }
 
   for (auto& tester : ues_testers) {
     ASSERT_EQ(0, tester.missing_retx);
-    ASSERT_FALSE(tester.test_ue.has_pending_dl_newtx_bytes(LCID_SRB1));
+    ASSERT_FALSE(tester.test_ue.has_pending_dl_newtx_bytes())
+        << fmt::format("UE {} has still pending DL bytes", tester.test_ue.ue_index);
   }
 }
 

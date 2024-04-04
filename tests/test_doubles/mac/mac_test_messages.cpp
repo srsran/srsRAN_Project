@@ -25,11 +25,12 @@
 
 using namespace srsran;
 
-mac_rx_data_indication srsran::test_helpers::create_ccch_message(slot_point sl_rx, rnti_t rnti)
+mac_rx_data_indication
+srsran::test_helpers::create_ccch_message(slot_point sl_rx, rnti_t rnti, du_cell_index_t du_cell_index)
 {
   return mac_rx_data_indication{
       sl_rx,
-      to_du_cell_index(0),
+      du_cell_index,
       {mac_rx_pdu{rnti,
                   0,
                   0,

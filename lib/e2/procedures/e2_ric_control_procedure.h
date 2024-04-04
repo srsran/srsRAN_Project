@@ -23,7 +23,7 @@
 
 #include "../common/e2ap_asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/asn1/e2ap/e2sm_rc.h"
+#include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_event_manager.h"
 #include "srsran/e2/e2_messages.h"

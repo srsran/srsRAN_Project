@@ -56,7 +56,7 @@ struct uplink_request_handler_impl_dependencies {
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> ul_prach_repo;
   /// Ethernet frame pool.
-  std::shared_ptr<ether::eth_frame_pool> frame_pool_ptr;
+  std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// Data flow for Control-Plane scheduling commands.
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
 };
@@ -76,18 +76,15 @@ public:
 
 private:
   srslog::basic_logger&                                 logger;
-  bool                                                  is_prach_cp_enabled;
+  const bool                                            is_prach_cp_enabled;
   const cyclic_prefix                                   cp;
   const optional<tdd_ul_dl_config_common>               tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  std::shared_ptr<uplink_context_repository>            ul_slot_repo_ptr;
-  std::shared_ptr<prach_context_repository>             ul_prach_repo_ptr;
-  uplink_context_repository&                            ul_slot_repo;
-  prach_context_repository&                             ul_prach_repo;
+  std::shared_ptr<uplink_context_repository>            ul_slot_repo;
+  std::shared_ptr<prach_context_repository>             ul_prach_repo;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
-  std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;
-  ether::eth_frame_pool&                                frame_pool;
+  std::shared_ptr<ether::eth_frame_pool>                frame_pool;
 };
 
 } // namespace ofh

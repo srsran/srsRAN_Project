@@ -183,6 +183,9 @@ public:
 
   /// \brief Get UE timer factory.
   virtual timer_factory get_timer_factory() = 0;
+
+  /// \brief Get executor.
+  virtual task_executor& get_executor() = 0;
 };
 
 /// Interface to notify about NAS messages.

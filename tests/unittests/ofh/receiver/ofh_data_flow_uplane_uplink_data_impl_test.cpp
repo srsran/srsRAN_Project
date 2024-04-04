@@ -95,9 +95,9 @@ public:
   {
     data_flow_uplane_uplink_data_impl_dependencies dependencies;
 
-    dependencies.logger                     = &srslog::fetch_basic_logger("TEST");
-    dependencies.ul_cplane_context_repo_ptr = ul_cplane_context_repo_ptr;
-    dependencies.ul_context_repo            = ul_context_repo;
+    dependencies.logger                 = &srslog::fetch_basic_logger("TEST");
+    dependencies.ul_cplane_context_repo = ul_cplane_context_repo_ptr;
+    dependencies.ul_context_repo        = ul_context_repo;
 
     {
       auto temp             = std::make_shared<uplane_rx_symbol_notifier_spy>();
