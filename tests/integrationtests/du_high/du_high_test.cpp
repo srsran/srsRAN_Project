@@ -143,6 +143,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   cu_notifier.last_f1ap_msgs.clear();
   f1ap_message msg = generate_ue_context_release_command();
   this->du_hi->get_f1ap_message_handler().handle_message(msg);
+  this->test_logger.info("STATUS: UEContextReleaseCommand received by DU. Waiting for rrcRelease being transmitted...");
 
   // Ensure that once SRB1 (RRC Release) is scheduled.
   EXPECT_TRUE(this->run_until([this, rnti]() {
@@ -152,8 +153,11 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   // Ensure that DRBs stop being scheduled at this point, even if it takes a while for the UE release to complete.
   while (cu_notifier.last_f1ap_msgs.empty()) {
     run_slot();
-    ASSERT_EQ(find_ue_pdsch_with_lcid(rnti, lcid_t::LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants),
-              nullptr);
+    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+    if (pdsch != nullptr) {
+      // PDSCH scheduled. Ensure it was for SRB1 (DRB1 might fill the rest of the TB though).
+      ASSERT_NE(find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants), nullptr);
+    }
   }
 }
 
