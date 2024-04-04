@@ -34,6 +34,7 @@ def configure_test_parameters(
     common_search_space_enable: bool = False,
     prach_config_index: int = -1,
     log_ip_level="",
+    enable_channel_noise: bool = False,
 ):
     """
     Configure test parameters
@@ -49,6 +50,7 @@ def configure_test_parameters(
                 "bandwidth": bandwidth,
                 "global_timing_advance": global_timing_advance,
                 "log_ip_level": log_ip_level,
+                "enable_channel_noise": enable_channel_noise,
             },
         },
         "gnb": {
