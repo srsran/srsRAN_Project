@@ -94,15 +94,17 @@ int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
   const double sq_sum  = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
   const double std_dev = std::sqrt(sq_sum / static_cast<double>(n_ta_diff_meas.size()));
 
-  int64_t avg_n_ta_difference = 0;
+  int64_t  sum_n_ta_difference = 0;
+  unsigned count               = 0;
   for (const auto& meas : n_ta_diff_meas) {
     // Filter out outliers.
     if (std::abs((double)meas - mean) <= num_std_deviations * std_dev) {
-      avg_n_ta_difference += meas;
+      sum_n_ta_difference += meas;
+      ++count;
     }
   }
 
-  return avg_n_ta_difference / static_cast<int64_t>(n_ta_diff_meas.size());
+  return sum_n_ta_difference / static_cast<int64_t>(count);
 }
 
 unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
