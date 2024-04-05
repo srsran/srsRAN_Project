@@ -11,15 +11,12 @@
 #pragma once
 
 #include <arpa/inet.h>
-#include <functional> // for std::function/std::bind
 #include <gtest/gtest.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <queue>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <thread>
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gateways/sctp_network_gateway.h"
@@ -99,16 +96,41 @@ public:
   dummy_network_gateway_data_notifier() = default;
   void on_new_pdu(byte_buffer pdu) override
   {
-    // printf("Received PDU\n");
+    std::lock_guard<std::mutex> lock(rx_mutex);
     rx_bytes += pdu.length();
     pdu_queue.push(std::move(pdu));
+    rx_cvar.notify_one();
   }
 
-  unsigned get_rx_bytes() { return rx_bytes; }
+  unsigned get_rx_bytes()
+  {
+    std::lock_guard<std::mutex> lock(rx_mutex);
+    return rx_bytes;
+  }
 
-  std::queue<byte_buffer> pdu_queue;
+  expected<byte_buffer> get_rx_pdu_blocking(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(1000))
+  {
+    // wait until at least one PDU is received
+    std::unique_lock<std::mutex> lock(rx_mutex);
+    if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return pdu_queue.size() > 0; })) {
+      return default_error_t{};
+    }
+    byte_buffer pdu = std::move(pdu_queue.front());
+    pdu_queue.pop();
+    return pdu;
+  }
+
+  bool empty()
+  {
+    std::lock_guard<std::mutex> lock(rx_mutex);
+    return pdu_queue.empty();
+  }
 
 private:
+  std::queue<byte_buffer> pdu_queue;
+  std::mutex              rx_mutex;
+  std::condition_variable rx_cvar;
+
   unsigned rx_bytes = 0;
 };
 
@@ -118,16 +140,41 @@ public:
   dummy_network_gateway_data_notifier_with_src_addr() = default;
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
   {
-    // printf("Received PDU\n");
+    std::lock_guard<std::mutex> lock(rx_mutex);
     rx_bytes += pdu.length();
     pdu_queue.push(std::move(pdu));
+    rx_cvar.notify_one();
   }
 
-  unsigned get_rx_bytes() { return rx_bytes; }
+  unsigned get_rx_bytes()
+  {
+    std::lock_guard<std::mutex> lock(rx_mutex);
+    return rx_bytes;
+  }
 
-  std::queue<byte_buffer> pdu_queue;
+  expected<byte_buffer> get_rx_pdu_blocking(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(1000))
+  {
+    // wait until at least one PDU is received
+    std::unique_lock<std::mutex> lock(rx_mutex);
+    if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return pdu_queue.size() > 0; })) {
+      return default_error_t{};
+    }
+    byte_buffer pdu = std::move(pdu_queue.front());
+    pdu_queue.pop();
+    return pdu;
+  }
+
+  bool empty()
+  {
+    std::lock_guard<std::mutex> lock(rx_mutex);
+    return pdu_queue.empty();
+  }
 
 private:
+  std::queue<byte_buffer> pdu_queue;
+  std::mutex              rx_mutex;
+  std::condition_variable rx_cvar;
+
   unsigned rx_bytes = 0;
 };
 
