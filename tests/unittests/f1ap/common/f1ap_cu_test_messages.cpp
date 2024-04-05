@@ -18,64 +18,6 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
-asn1::f1ap::gnb_du_served_cells_item_s
-srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, pci_t nrpci, unsigned tac)
-{
-  asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
-  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
-  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
-  served_cells_item.served_cell_info.nr_pci              = nrpci;
-  served_cells_item.served_cell_info.five_gs_tac_present = true;
-  served_cells_item.served_cell_info.five_gs_tac.from_number(tac);
-
-  asn1::f1ap::served_plmns_item_s served_plmn;
-  served_plmn.plmn_id.from_string("00f110");
-  asn1::f1ap::slice_support_item_s slice_support_item;
-  slice_support_item.snssai.sst.from_number(1);
-  served_plmn.ie_exts.tai_slice_support_list_present = true;
-  served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
-  served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
-
-  served_cells_item.served_cell_info.nr_mode_info.set_tdd();
-  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = 626748;
-  asn1::f1ap::freq_band_nr_item_s freq_band_nr_item;
-  freq_band_nr_item.freq_band_ind_nr = 78;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = asn1::f1ap::nr_scs_opts::scs30;
-  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nr_nrb_opts::nrb51;
-  served_cells_item.served_cell_info.meas_timing_cfg.from_string("101105af4084");
-
-  served_cells_item.gnb_du_sys_info_present = true;
-  served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
-  served_cells_item.gnb_du_sys_info.sib1_msg.from_string(
-      "92002808241099000001000000000a4213407800008c98d6d8d7f616e0804000020107e28180008000088a0dc7008000088a0007141a22"
-      "81c874cc00020000232d5c6b6c65462001ec4cc5fc9c0493946a98d4d1e99355c00a1aba010580ec024646f62180");
-
-  return served_cells_item;
-}
-
-f1ap_message
-srsran::srs_cu_cp::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci, unsigned tac)
-{
-  f1ap_message msg;
-  msg.pdu.set_init_msg();
-  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-
-  auto& setup_req                = msg.pdu.init_msg().value.f1_setup_request();
-  setup_req->transaction_id      = 99;
-  setup_req->gnb_du_id           = (uint64_t)gnb_du_id;
-  setup_req->gnb_du_name_present = true;
-  setup_req->gnb_du_name.from_string("srsDU");
-  setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(1);
-  setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.resize(1);
-  setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() =
-      generate_served_cells_item(nrcell_id, pci, tac);
-
-  return msg;
-}
-
 f1ap_message
 srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer_without_du_to_cu_container(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                                     rnti_t              crnti)
@@ -553,20 +495,4 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   paging_msg.assist_data_for_paging = assist_data_for_paging;
 
   return paging_msg;
-}
-
-f1ap_message srsran::srs_cu_cp::generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                    gnb_du_ue_f1ap_id_t du_ue_id)
-{
-  f1ap_message msg;
-  msg.pdu.set_init_msg();
-  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
-
-  auto& release_req              = msg.pdu.init_msg().value.ue_context_release_request();
-  release_req->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
-  release_req->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
-  release_req->cause.set_radio_network();
-  release_req->cause.radio_network().value = asn1::f1ap::cause_radio_network_e::rl_fail_others;
-
-  return msg;
 }

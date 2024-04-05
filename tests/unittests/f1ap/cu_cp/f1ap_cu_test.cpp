@@ -118,7 +118,7 @@ TEST_F(f1ap_cu_test, when_unsupported_unsuccessful_outcome_received_then_message
 TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 {
   // Create F1SetupRequest.
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
 
   // Prepare the DU processor response.
   du_processor_notifier.next_du_setup_resp = create_du_setup_result_accept(f1setup_msg);
@@ -140,7 +140,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 {
   // Generate Invalid F1SetupRequest
-  f1ap_message f1setup_msg                    = generate_f1_setup_request();
+  f1ap_message f1setup_msg                    = test_helpers::generate_f1_setup_request();
   auto&        setup_req                      = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = false;
   setup_req->gnb_du_served_cells_list.clear();

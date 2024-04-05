@@ -20,6 +20,64 @@
 using namespace srsran;
 using namespace asn1::f1ap;
 
+gnb_du_served_cells_item_s
+srsran::test_helpers::generate_served_cells_item(unsigned nrcell_id, pci_t nrpci, unsigned tac)
+{
+  gnb_du_served_cells_item_s served_cells_item;
+  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
+  served_cells_item.served_cell_info.nr_pci              = nrpci;
+  served_cells_item.served_cell_info.five_gs_tac_present = true;
+  served_cells_item.served_cell_info.five_gs_tac.from_number(tac);
+
+  served_plmns_item_s served_plmn;
+  served_plmn.plmn_id.from_string("00f110");
+  slice_support_item_s slice_support_item;
+  slice_support_item.snssai.sst.from_number(1);
+  served_plmn.ie_exts.tai_slice_support_list_present = true;
+  served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
+  served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
+
+  served_cells_item.served_cell_info.nr_mode_info.set_tdd();
+  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = 626748;
+  freq_band_nr_item_s freq_band_nr_item;
+  freq_band_nr_item.freq_band_ind_nr = 78;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = nr_scs_opts::scs30;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = nr_nrb_opts::nrb51;
+  served_cells_item.served_cell_info.meas_timing_cfg.from_string("101105af4084");
+
+  served_cells_item.gnb_du_sys_info_present = true;
+  served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
+  served_cells_item.gnb_du_sys_info.sib1_msg.from_string(
+      "92002808241099000001000000000a4213407800008c98d6d8d7f616e0804000020107e28180008000088a0dc7008000088a0007141a22"
+      "81c874cc00020000232d5c6b6c65462001ec4cc5fc9c0493946a98d4d1e99355c00a1aba010580ec024646f62180");
+
+  return served_cells_item;
+}
+
+f1ap_message
+srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci, unsigned tac)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+
+  auto& setup_req                = msg.pdu.init_msg().value.f1_setup_request();
+  setup_req->transaction_id      = 99;
+  setup_req->gnb_du_id           = (uint64_t)gnb_du_id;
+  setup_req->gnb_du_name_present = true;
+  setup_req->gnb_du_name.from_string("srsDU");
+  setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(1);
+  setup_req->gnb_du_served_cells_list_present = true;
+  setup_req->gnb_du_served_cells_list.resize(1);
+  setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() =
+      generate_served_cells_item(nrcell_id, pci, tac);
+
+  return msg;
+}
+
 f1ap_message srsran::test_helpers::create_f1_setup_response(const f1ap_message& f1_setup_request)
 {
   srsran_assert(f1_setup_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 setup request");
@@ -46,7 +104,7 @@ f1ap_message srsran::test_helpers::create_f1_setup_response(const f1ap_message& 
   return resp;
 }
 
-static asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
+static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 {
   using namespace asn1::f1ap;
 
@@ -134,7 +192,7 @@ f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue
   init_ul_rrc->c_rnti = to_value(crnti);
 
   init_ul_rrc->sul_access_ind_present = true;
-  init_ul_rrc->sul_access_ind.value   = asn1::f1ap::sul_access_ind_opts::options::true_value;
+  init_ul_rrc->sul_access_ind.value   = sul_access_ind_opts::options::true_value;
 
   if (rrc_container.empty()) {
     init_ul_rrc->rrc_container.from_string("1dec89d05766");
@@ -173,8 +231,37 @@ f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap
   return msg;
 }
 
-f1ap_message srsran::test_helpers::create_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                      gnb_du_ue_f1ap_id_t du_ue_id)
+f1ap_message srsran::test_helpers::generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                       gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+
+  auto& release_req              = msg.pdu.init_msg().value.ue_context_release_request();
+  release_req->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  release_req->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  release_req->cause.set_radio_network();
+  release_req->cause.radio_network().value = cause_radio_network_e::rl_fail_others;
+
+  return msg;
+}
+
+f1ap_message srsran::test_helpers::generate_ue_context_release_complete(const f1ap_message& ue_ctxt_release_cmd)
+{
+  srsran_assert(ue_ctxt_release_cmd.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Invalid argument message");
+  srsran_assert(ue_ctxt_release_cmd.pdu.init_msg().value.type().value ==
+                    f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd,
+                "Invalid argument message");
+
+  const ue_context_release_cmd_s& cmd = ue_ctxt_release_cmd.pdu.init_msg().value.ue_context_release_cmd();
+
+  return generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(cmd->gnb_cu_ue_f1ap_id),
+                                              int_to_gnb_du_ue_f1ap_id(cmd->gnb_du_ue_f1ap_id));
+}
+
+f1ap_message srsran::test_helpers::generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                        gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message ue_ctxt_rel_complete_msg = {};
   ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();

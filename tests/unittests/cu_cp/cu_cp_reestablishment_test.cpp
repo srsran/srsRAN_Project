@@ -130,8 +130,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_drb1_or_srb2_then_reestabl
   f1ap_message ue_ctxt_rem_msg;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, ue_ctxt_rem_msg))
       << "F1AP UEContextReleaseCommand should have been sent for old UE";
-  this->get_du(du_idx).push_tx_pdu(
-      test_helpers::create_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0)));
+  this->get_du(du_idx).push_tx_pdu(test_helpers::generate_ue_context_release_complete(ue_ctxt_rem_msg));
 
   // Verify old UE is removed.
   ASSERT_TRUE(this->tick_until(std::chrono::milliseconds{10}, [this, &report]() {

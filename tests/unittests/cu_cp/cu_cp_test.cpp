@@ -45,7 +45,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -64,7 +64,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -73,7 +73,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg2 = generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 8);
+  f1ap_message f1setup_msg2 = test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 8);
 
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(1)).get_f1ap_message_handler().handle_message(f1setup_msg2);
@@ -93,7 +93,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -102,7 +102,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg2 = generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 7);
+  f1ap_message f1setup_msg2 = test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 7);
 
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(1)).get_f1ap_message_handler().handle_message(f1setup_msg2);
@@ -122,7 +122,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -141,7 +141,7 @@ TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -161,7 +161,7 @@ TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -181,7 +181,7 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_handler().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -396,7 +396,7 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
-      .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
+      .handle_message(test_helpers::generate_ue_context_release_request(cu_ue_id, du_ue_id));
 
   // Check that the UE Context Release Request was sent to the AMF
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
@@ -429,7 +429,7 @@ TEST_F(
   cu_cp_obj->get_f1c_handler()
       .get_du(uint_to_du_index(0))
       .get_f1ap_message_handler()
-      .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
+      .handle_message(test_helpers::generate_ue_context_release_request(cu_ue_id, du_ue_id));
 
   // Check that the UE Context Release Request was not sent to the AMF
   ASSERT_NE(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,

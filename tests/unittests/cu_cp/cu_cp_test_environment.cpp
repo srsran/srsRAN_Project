@@ -182,7 +182,7 @@ bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
 
 bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
 {
-  get_du(du_idx).push_tx_pdu(generate_f1_setup_request());
+  get_du(du_idx).push_tx_pdu(test_helpers::generate_f1_setup_request());
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
   return result;

@@ -175,23 +175,24 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   if (old_ue_index == ue_index_t::invalid || old_ue_index == ue_index) {
     return reest_context;
   }
-  reest_context.ue_index = old_ue_index;
 
   // check if a DRB and SRB2 were setup
   if (ue_mng.find_du_ue(old_ue_index)->get_up_resource_manager().get_drbs().empty()) {
     logger.debug("ue={}: No DRB setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+    reest_context.ue_index = old_ue_index;
     return reest_context;
   }
   auto srbs = ue_mng.find_du_ue(old_ue_index)->get_rrc_ue_srb_notifier().get_srbs();
   if (std::find(srbs.begin(), srbs.end(), srb_id_t::srb2) == srbs.end()) {
     logger.debug("ue={}: SRB2 not setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+    reest_context.ue_index = old_ue_index;
     return reest_context;
   }
 
-  reest_context.old_ue_fully_attached = true;
-
   // Get RRC Reestablishment UE Context from old UE
-  reest_context = ue_mng.get_cu_cp_rrc_ue_adapter(old_ue_index).on_rrc_ue_context_transfer();
+  reest_context                       = ue_mng.get_cu_cp_rrc_ue_adapter(old_ue_index).on_rrc_ue_context_transfer();
+  reest_context.old_ue_fully_attached = true;
+  reest_context.ue_index              = old_ue_index;
 
   return reest_context;
 }

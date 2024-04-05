@@ -276,7 +276,7 @@ void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsi
   ASSERT_EQ(f1c_gw.nof_connections(), expected_nof_dus);
 
   // Pass F1SetupRequest to the CU-CP
-  f1ap_message f1setup_msg = generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
+  f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
   cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
 }
 
