@@ -295,14 +295,13 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
-    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UlRrcMessageTransfer. UE context does not exist",
+    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping ULRRCMessageTransfer. UE context does not exist",
                    msg->gnb_cu_ue_f1ap_id,
                    msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
-  ue_ctxt.logger.log_debug("Received UlRrcMessageTransfer");
 
   // Notify upper layers about reception
   ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());

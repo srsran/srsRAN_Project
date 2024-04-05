@@ -129,7 +129,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
 async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallback()
 {
-  return launch_async([this](coro_context<async_task<void>>& ctx) {
+  return launch_async([this, result = false](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Reject RRC Reestablishment Request by sending RRC Setup
@@ -148,7 +148,15 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
                        old_ue_reest_context.ue_index);
       ue_context_release_request.ue_index = old_ue_reest_context.ue_index;
       ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
-      CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
+      CORO_AWAIT_VALUE(result, ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
+      if (!result) {
+        // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
+        CORO_AWAIT(du_processor_notifier.on_ue_context_release_command(
+            {old_ue_reest_context.ue_index, ngap_cause_radio_network_t::unspecified}));
+      }
+      if (not result) {
+        // The old UE did not have an NGAP UE context.
+      }
     }
 
     CORO_RETURN();

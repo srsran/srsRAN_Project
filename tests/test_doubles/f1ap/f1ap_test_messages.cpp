@@ -154,3 +154,36 @@ f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue
 
   return init_ul_rrc_msg;
 }
+
+f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                  gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                  srb_id_t            srb_id,
+                                                                  byte_buffer         rrc_container)
+{
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
+  ul_rrc_msg_transfer_s& ulmsg = msg.pdu.init_msg().value.ul_rrc_msg_transfer();
+
+  ulmsg->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  ulmsg->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  ulmsg->srb_id            = (uint8_t)srb_id;
+  ulmsg->rrc_container     = std::move(rrc_container);
+
+  return msg;
+}
+
+f1ap_message srsran::test_helpers::create_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                      gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  f1ap_message ue_ctxt_rel_complete_msg = {};
+  ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();
+  ue_ctxt_rel_complete_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+  ue_context_release_complete_s& rel_complete_msg =
+      ue_ctxt_rel_complete_msg.pdu.successful_outcome().value.ue_context_release_complete();
+
+  rel_complete_msg->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  rel_complete_msg->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+
+  return ue_ctxt_rel_complete_msg;
+}
