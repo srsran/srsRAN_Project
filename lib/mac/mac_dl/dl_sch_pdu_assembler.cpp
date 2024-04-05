@@ -62,7 +62,8 @@ unsigned dl_sch_pdu::mac_sdu_encoder::encode_sdu(unsigned sdu_bytes_written)
 
     // Shift bytes to the left by 1 position.
     uint8_t* new_start = pdu->pdu.data() + pdu->byte_offset + MIN_MAC_SDU_SUBHEADER_SIZE;
-    memcpy(new_start, new_start + 1, sdu_bytes_written);
+    uint8_t* old_start = new_start + 1;
+    std::copy(old_start, old_start + sdu_bytes_written, new_start);
 
     // Update the subheader size.
     subhr_len = MIN_MAC_SDU_SUBHEADER_SIZE;
@@ -108,7 +109,7 @@ unsigned dl_sch_pdu::add_sdu(lcid_t lcid, span<uint8_t> sdu)
   }
 
   // Copy SDU payload.
-  memcpy(sdu_enc.sdu_buffer().data(), sdu.data(), sdu.size());
+  std::copy(sdu.begin(), sdu.end(), sdu_enc.sdu_buffer().begin());
 
   // Encode subheader
   return sdu_enc.encode_sdu(sdu.size());
