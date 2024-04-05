@@ -120,7 +120,7 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 ///               PDCP SDUs have been transmitted (RLC UM/AM) or delivered (RLC AM). Small values increase the number of
 ///               F1-U messages. Large values may trigger unnecessary discard notifications due to expiration of the
 ///               PDCP discard timer.
-inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rlc_metrics_report)
+inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool warn_on_drop, int rlc_metrics_report)
 {
   std::map<five_qi_t, du_qos_config> qos_list = {};
   {
@@ -135,7 +135,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify     = 10;
-    cfg.f1u.warn_on_drop = true;
+    cfg.f1u.warn_on_drop = warn_on_drop;
     // MAC
     cfg.mac          = make_default_drb_mac_lc_config();
     cfg.mac.priority = 4;
@@ -162,7 +162,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify     = 10;
-    cfg.f1u.warn_on_drop = true;
+    cfg.f1u.warn_on_drop = warn_on_drop;
     // MAC
     cfg.mac = make_default_drb_mac_lc_config();
 

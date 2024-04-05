@@ -550,7 +550,7 @@ public:
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
     cfg.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
-    cfg.qos                        = config_helpers::make_default_du_qos_config_list(1000);
+    cfg.qos                        = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
     cfg.mac_p                      = &mac_pcap;
     cfg.rlc_p                      = &rlc_pcap;
     cfg.sched_ue_metrics_notifier  = &metrics_handler;

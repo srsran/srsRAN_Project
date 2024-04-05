@@ -115,5 +115,5 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
 
   srslog::init();
 
-  params.ran.qos = config_helpers::make_default_du_qos_config_list(1000);
+  params.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
 }

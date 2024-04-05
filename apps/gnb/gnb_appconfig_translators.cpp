@@ -1106,7 +1106,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc.report_period);
+    out_cfg = config_helpers::make_default_du_qos_config_list(config.du_cfg.warn_on_drop,
+                                                              config.metrics_cfg.rlc.report_period);
     return out_cfg;
   }
 

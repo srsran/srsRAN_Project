@@ -26,7 +26,7 @@ protected:
     params(params_),
     du_cfg_param(du_cfg_param_),
     cell_cfg_list({du_cfg_param_}),
-    qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
+    qos_cfg_list(config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000)),
     default_ue_cell_cfg(du_cfg_param.ue_ded_serv_cell_cfg),
     res_mng(std::make_unique<du_ran_resource_manager_impl>(
         cell_cfg_list,

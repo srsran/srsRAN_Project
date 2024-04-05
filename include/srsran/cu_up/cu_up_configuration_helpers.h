@@ -29,7 +29,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
 
-    cfg.f1u_cfg.warn_on_drop = true;
+    cfg.f1u_cfg.warn_on_drop = warn_on_drop;
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
@@ -40,7 +40,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
 
-    cfg.f1u_cfg.warn_on_drop = true;
+    cfg.f1u_cfg.warn_on_drop = warn_on_drop;
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }
