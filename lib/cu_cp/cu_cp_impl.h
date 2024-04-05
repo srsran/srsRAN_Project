@@ -56,7 +56,7 @@ public:
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // RRC UE handler
-  rrc_reestablishment_ue_context_t
+  rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;

@@ -108,13 +108,13 @@ private:
 class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public rrc_ue_measurement_notifier
 {
 public:
-  void add_ue_context(rrc_reestablishment_ue_context_t context) { reest_context = context; }
+  void add_ue_context(rrc_ue_reestablishment_context_response context) { reest_context = context; }
 
   bool next_ue_setup_response = true;
 
   bool on_ue_setup_request() override { return next_ue_setup_response; }
 
-  rrc_reestablishment_ue_context_t
+  rrc_ue_reestablishment_context_response
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
     logger.info("ue={} old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
@@ -151,8 +151,8 @@ public:
   void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
 
 private:
-  rrc_reestablishment_ue_context_t reest_context = {};
-  srslog::basic_logger&            logger        = srslog::fetch_basic_logger("TEST");
+  rrc_ue_reestablishment_context_response reest_context = {};
+  srslog::basic_logger&                   logger        = srslog::fetch_basic_logger("TEST");
 };
 
 class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier

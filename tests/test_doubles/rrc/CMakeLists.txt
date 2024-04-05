@@ -6,6 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(f1ap)
-add_subdirectory(rrc)
+add_library(rrc_test_doubles rrc_test_messages.cpp)
+target_link_libraries(rrc_test_doubles rrc_nr_asn1 srsran_support srslog)

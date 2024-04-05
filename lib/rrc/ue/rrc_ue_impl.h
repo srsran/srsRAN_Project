@@ -79,7 +79,7 @@ public:
   bool        handle_rrc_handover_command(byte_buffer cmd) override;
 
   // rrc_ue_context_handler
-  rrc_reestablishment_ue_context_t get_context() override;
+  rrc_ue_reestablishment_context_response get_context() override;
 
 private:
   // message handlers

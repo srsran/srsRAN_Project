@@ -183,7 +183,7 @@ public:
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_reestablishment_ue_context_t
+  virtual rrc_ue_reestablishment_context_response
   handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 
   /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
@@ -216,7 +216,7 @@ public:
   virtual ~cu_cp_rrc_ue_context_transfer_notifier() = default;
 
   /// \brief Notifies the RRC UE to return the RRC Reestablishment UE context.
-  virtual rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() = 0;
+  virtual rrc_ue_reestablishment_context_response on_rrc_ue_context_transfer() = 0;
 };
 
 /// Interface to handle measurement requests

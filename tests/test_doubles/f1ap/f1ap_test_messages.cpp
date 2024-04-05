@@ -115,3 +115,42 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
 
   return msg;
 }
+
+f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                       rnti_t              crnti,
+                                                                       byte_buffer         cell_group_cfg,
+                                                                       byte_buffer         rrc_container)
+{
+  f1ap_message init_ul_rrc_msg;
+
+  init_ul_rrc_msg.pdu.set_init_msg();
+  init_ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
+
+  init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+  init_ul_rrc->gnb_du_ue_f1ap_id          = (unsigned)du_ue_id;
+
+  init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000000000000001100110110000"); // 6576 in decimal
+  init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
+  init_ul_rrc->c_rnti = to_value(crnti);
+
+  init_ul_rrc->sul_access_ind_present = true;
+  init_ul_rrc->sul_access_ind.value   = asn1::f1ap::sul_access_ind_opts::options::true_value;
+
+  if (rrc_container.empty()) {
+    init_ul_rrc->rrc_container.from_string("1dec89d05766");
+  } else {
+    init_ul_rrc->rrc_container = std::move(rrc_container);
+  }
+
+  init_ul_rrc->du_to_cu_rrc_container_present = true;
+  if (cell_group_cfg.empty()) {
+    init_ul_rrc->du_to_cu_rrc_container.from_string(
+        "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
+        "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
+        "c400");
+  } else {
+    init_ul_rrc->du_to_cu_rrc_container = std::move(cell_group_cfg);
+  }
+
+  return init_ul_rrc_msg;
+}

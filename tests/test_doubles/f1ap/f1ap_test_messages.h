@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
 
@@ -26,6 +28,12 @@ f1ap_message create_f1_setup_response(const f1ap_message& f1_setup_request);
 f1ap_message create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t           cu_ue_id,
                                              optional<gnb_du_ue_f1ap_id_t> du_ue_id,
                                              const std::vector<drb_id_t>&  drbs_to_setup);
+
+/// \brief Generates F1AP Initial UL RRC TRANSFER message.
+f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                 rnti_t              crnti,
+                                                 byte_buffer         cell_group_cfg = {},
+                                                 byte_buffer         rrc_container  = {});
 
 } // namespace test_helpers
 } // namespace srsran

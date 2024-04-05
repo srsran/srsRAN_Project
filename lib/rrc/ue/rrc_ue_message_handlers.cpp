@@ -380,9 +380,9 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   return transfer_context;
 }
 
-rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
+rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
 {
-  rrc_reestablishment_ue_context_t rrc_reest_context;
+  rrc_ue_reestablishment_context_response rrc_reest_context;
   rrc_reest_context.sec_context = context.sec_context;
 
   if (context.capabilities.has_value()) {

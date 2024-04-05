@@ -223,8 +223,10 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
 {
   // Inject Initial UL RRC message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
-  test_logger.info("Injecting Initial UL RRC message");
+  test_logger.info("c-rnti={} du_ue_id={}: Injecting Initial UL RRC message", crnti, du_ue_id);
   get_du(du_idx).push_tx_pdu(init_ul_rrc_msg);
+
+  // Wait for DL RRC message transfer
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
   if (not result) {
@@ -240,7 +242,6 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
       int_to_srb_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id) != srb_id_t::srb0) {
     return false;
   }
-
   {
     asn1::cbit_ref              bref{f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container};
     asn1::rrc_nr::dl_ccch_msg_s ccch;

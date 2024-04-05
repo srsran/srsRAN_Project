@@ -267,7 +267,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
   unsigned cu_up_idx = ret.value();
-  ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
+  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
 
   // Check no UEs.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
@@ -386,7 +386,7 @@ TEST_F(cu_cp_connectivity_test, when_initial_ul_rrc_message_has_no_rrc_container
   ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
   unsigned cu_up_idx = ret.value();
-  ASSERT_TRUE(this->run_f1_setup(cu_up_idx));
+  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
 
   // Event: DU sends Initial UL RRC Message without DU-to-CU-RRC container.
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
