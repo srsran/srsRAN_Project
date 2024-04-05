@@ -15,12 +15,16 @@
 
 namespace srsran {
 
-struct du_mac_sched_control_config {
-  uint64_t           ue_id;
+struct control_config_params {
   optional<unsigned> num_harq_processes;
   optional<unsigned> num_harq_retransmissions;
   optional<unsigned> min_prb_alloc;
   optional<unsigned> max_prb_alloc;
+};
+
+struct du_mac_sched_control_config {
+  uint64_t                           ue_id;
+  std::vector<control_config_params> param_list;
 };
 
 struct du_mac_sched_control_config_response {
