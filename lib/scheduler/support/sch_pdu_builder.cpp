@@ -161,7 +161,8 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   return pusch;
 }
 
-pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
+pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuration&                    cell_cfg,
+                                                         const ue_cell_configuration*                 ue_cell_cfg,
                                                          const bwp_uplink_common&                     ul_bwp,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                          const unsigned                               nof_harq_ack_bits,
@@ -177,8 +178,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
 
   pusch_config_params pusch;
 
-  pusch.dmrs =
-      make_dmrs_info_common(pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
+  pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   pusch.symbols = pusch_td_cfg.symbols;
 
@@ -190,20 +190,20 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pusch.nof_oh_prb =
-      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
-              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
-          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
+      ue_cell_cfg != nullptr and ue_cell_cfg->cfg_dedicated().ul_config.has_value() and
+              ue_cell_cfg->cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
+          ? static_cast<unsigned>(ue_cell_cfg->cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
           : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
-  if (is_csi_report_slot) {
+  if (is_csi_report_slot and ue_cell_cfg != nullptr) {
     csi_report_configuration csi_rep_cfg =
-        create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+        create_csi_report_configuration(ue_cell_cfg->cfg_dedicated().csi_meas_cfg.value());
     // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
     // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
     // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
-    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+    if (is_pusch_configured(ue_cell_cfg->cfg_dedicated().csi_meas_cfg.value())) {
       csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
       pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
       pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();

@@ -35,6 +35,10 @@ public:
   void
   handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
 
+  /// Handles UL BSR indication reported by UE.
+  /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
+  void handle_ul_bsr_indication(du_ue_index_t ue_index, unsigned srb_buffer_bytes);
+
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
   void run_slot(cell_resource_allocator& res_alloc);
@@ -62,6 +66,9 @@ private:
                              dl_harq_process*               h_dl_retx,
                              optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
+  /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
+  bool schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
+
   struct sched_srb_results {
     dl_harq_process* h_dl = nullptr;
     // This is only meaningful for SRB1, and represents the number of LCID-1 bytes (excluding any overhead) that have
@@ -70,37 +77,56 @@ private:
   };
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
-  sched_srb_results schedule_srb0(ue&                      u,
-                                  cell_resource_allocator& res_alloc,
-                                  unsigned                 pdsch_time_res,
-                                  unsigned                 slot_offset,
-                                  slot_point               most_recent_ack_slot,
-                                  dl_harq_process*         h_dl_retx);
+  sched_srb_results schedule_dl_srb0(ue&                      u,
+                                     cell_resource_allocator& res_alloc,
+                                     unsigned                 pdsch_time_res,
+                                     unsigned                 slot_offset,
+                                     slot_point               most_recent_ack_slot,
+                                     dl_harq_process*         h_dl_retx);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
-  sched_srb_results schedule_srb1(ue&                      u,
-                                  slot_point               sched_ref_slot,
-                                  cell_resource_allocator& res_alloc,
-                                  unsigned                 pdsch_time_res,
-                                  unsigned                 slot_offset,
-                                  slot_point               most_recent_ack_slot,
-                                  dl_harq_process*         h_dl_retx = nullptr);
+  sched_srb_results schedule_dl_srb1(ue&                      u,
+                                     slot_point               sched_ref_slot,
+                                     cell_resource_allocator& res_alloc,
+                                     unsigned                 pdsch_time_res,
+                                     unsigned                 slot_offset,
+                                     slot_point               most_recent_ack_slot,
+                                     dl_harq_process*         h_dl_retx = nullptr);
 
-  unsigned fill_srb_grant(ue&                        u,
-                          slot_point                 pdsch_slot,
-                          dl_harq_process&           h_dl,
-                          pdcch_dl_information&      pdcch,
-                          dci_dl_rnti_config_type    dci_type,
-                          dl_msg_alloc&              msg,
-                          unsigned                   pucch_res_indicator,
-                          unsigned                   pdsch_time_res,
-                          unsigned                   k1,
-                          sch_mcs_index              mcs_idx,
-                          const crb_interval&        ue_grant_crbs,
-                          const pdsch_config_params& pdsch_params,
-                          unsigned                   tbs_bytes,
-                          bool                       is_retx,
-                          bool                       is_srb0);
+  /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
+  bool schedule_ul_srb(ue&                                          u,
+                       cell_resource_allocator&                     res_alloc,
+                       unsigned                                     pusch_time_res,
+                       const pusch_time_domain_resource_allocation& pusch_td,
+                       ul_harq_process*                             h_ul_retx);
+
+  unsigned fill_dl_srb_grant(ue&                        u,
+                             slot_point                 pdsch_slot,
+                             dl_harq_process&           h_dl,
+                             pdcch_dl_information&      pdcch,
+                             dci_dl_rnti_config_type    dci_type,
+                             dl_msg_alloc&              msg,
+                             unsigned                   pucch_res_indicator,
+                             unsigned                   pdsch_time_res,
+                             unsigned                   k1,
+                             sch_mcs_index              mcs_idx,
+                             const crb_interval&        ue_grant_crbs,
+                             const pdsch_config_params& pdsch_params,
+                             unsigned                   tbs_bytes,
+                             bool                       is_retx,
+                             bool                       is_srb0);
+
+  void fill_ul_srb_grant(ue&                        u,
+                         slot_point                 pdcch_slot,
+                         ul_harq_process&           h_ul,
+                         pdcch_ul_information&      pdcch,
+                         ul_sched_info&             msg,
+                         unsigned                   pusch_time_res,
+                         unsigned                   k2_offset,
+                         sch_mcs_index              mcs_idx,
+                         const crb_interval&        ue_grant_crbs,
+                         const pusch_config_params& pusch_params,
+                         unsigned                   tbs_bytes);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
@@ -118,7 +144,10 @@ private:
   };
 
   /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
-  std::vector<srb_ue> pending_ues;
+  std::vector<srb_ue> pending_dl_ues_new_tx;
+
+  /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
+  std::vector<du_ue_index_t> pending_ul_ues;
 
   /// Class that keeps track of the UEs' that are waiting for the SRB HARQ processes to be ACKed or retransmitted.
   class ack_and_retx_tracker

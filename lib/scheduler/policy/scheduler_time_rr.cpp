@@ -9,6 +9,7 @@
 
 #include "scheduler_time_rr.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
+#include "../support/pusch/pusch_td_resource_indices.h"
 #include "../ue_scheduling/ue_pdsch_param_candidate_searcher.h"
 
 using namespace srsran;
@@ -110,61 +111,6 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&        
   }
 
   return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);
-}
-
-/// \brief Fetches a list of PUSCH Time Domain resource indexes based on cell, UE configuration and nof. symbols in
-/// PUSCH slot.
-/// \param[in] res_grid View of the current resource grid state to the PDSCH and PUSCH allocators.
-/// \param[in] ues map of ues.
-/// \return List of PUSCH Time Domain resource indexes.
-static static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-get_pusch_td_resource_indexes(const ue_resource_grid_view& res_grid, const ue_repository& ues)
-{
-  // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
-  static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
-
-  // NOTE: All UEs use the same PUSCH Time Domain Resource configuration.
-  const ue&                    ref_u  = **ues.begin();
-  const ue_cell_configuration& ue_cfg = ref_u.get_pcell().cfg();
-  const search_space_info*     ss_info =
-      ue_cfg.find_search_space(ue_cfg.cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
-  if (ss_info != nullptr) {
-    optional<unsigned> nof_full_ul_slots = nullopt;
-    optional<unsigned> nof_full_dl_slots = nullopt;
-    if (ue_cfg.cell_cfg_common.is_tdd()) {
-      nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(ue_cfg.cell_cfg_common.tdd_cfg_common.value());
-      nof_full_dl_slots = nof_full_dl_slots_per_tdd_period(ue_cfg.cell_cfg_common.tdd_cfg_common.value());
-    }
-    const unsigned min_k1 = *std::min(ss_info->get_k1_candidates().begin(), ss_info->get_k1_candidates().end());
-    // [Implementation-defined] It is assumed that UE is not configured pusch-TimeDomainAllocationList in
-    // pusch-Config and configured only in pusch-ConfigCommon (SIB1).
-    for (const pusch_time_domain_resource_allocation& pusch_td_res : ss_info->pusch_time_domain_list) {
-      if (not ue_cfg.cell_cfg_common.is_tdd() or
-          pusch_td_res.symbols.length() ==
-              get_active_tdd_ul_symbols(
-                  ue_cfg.cell_cfg_common.tdd_cfg_common.value(),
-                  res_grid.get_pusch_slot(ref_u.get_pcell().cell_index, pusch_td_res.k2).slot_index(),
-                  cyclic_prefix::NORMAL)
-                  .length()) {
-        if ((not ue_cfg.cell_cfg_common.is_tdd() or (*nof_full_dl_slots >= *nof_full_ul_slots)) and
-            pusch_td_res.k2 <= min_k1) {
-          // NOTE: Generated PUSCH time domain resources are sorted based on ascending order of k2 values and
-          // descending order of nof. UL symbols for PUSCH.
-          // [Implementation-defined] For DL heavy TDD configuration, only one entry in the PUSCH time domain
-          // resources list with k2 value less than or equal to minimum value of k1(s) and, which matches nof. active
-          // UL symbols in a slot is used.
-          pusch_td_res_index_list.push_back(std::distance(ss_info->pusch_time_domain_list.begin(), &pusch_td_res));
-          break;
-        }
-        if (ue_cfg.cell_cfg_common.is_tdd() and (*nof_full_ul_slots > *nof_full_dl_slots)) {
-          // [Implementation-defined] For UL heavy TDD configuration multiple k2 values are considered for scheduling
-          // since it allows multiple UL PDCCH allocations in the same slot for same UE but with different k2 values.
-          pusch_td_res_index_list.push_back(std::distance(ss_info->pusch_time_domain_list.begin(), &pusch_td_res));
-        }
-      }
-    }
-  }
-  return pusch_td_res_index_list;
 }
 
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
@@ -345,7 +291,12 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
+    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+    if (ue_cc.is_in_fallback_mode()) {
+      // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
+      return alloc_outcome::skip_ue;
+    }
+
     const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
 
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
@@ -398,7 +349,7 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
       // the first transmission.
       const bool sym_length_match_prev_grant_for_retx =
-          is_retx ? pusch_td.symbols.length() != h->last_tx_params().nof_symbols : true;
+          is_retx ? pusch_td.symbols.length() == h->last_tx_params().nof_symbols : true;
       if (pusch_td.symbols.start() < start_ul_symbols or
           pusch_td.symbols.stop() > (start_ul_symbols + cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot)) or
           !sym_length_match_prev_grant_for_retx) {
@@ -547,7 +498,7 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // Fetch applicable PUSCH Time Domain resource index list.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
-      get_pusch_td_resource_indexes(res_grid, ues);
+      get_pusch_td_resource_indices(res_grid, ues);
 
   // First schedule UL data re-transmissions.
   for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {

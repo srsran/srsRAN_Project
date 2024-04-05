@@ -627,8 +627,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg =
-          get_pusch_config_f0_0_c_rnti(ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(
+          cell_cfg, &ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg,
@@ -648,7 +648,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     bool contains_dc =
         dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, grant.crbs);
 
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length(), contains_dc);
+    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, grant.mcs, grant.crbs.length(), contains_dc);
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {
@@ -731,8 +731,14 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                              h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      build_dci_f0_0_c_rnti(
-          pdcch->dci, ue_cell_cfg, grant.ss_id, grant.crbs, grant.time_res_index, mcs_tbs_info.value().mcs, rv, h_ul);
+      build_dci_f0_0_c_rnti(pdcch->dci,
+                            ue_cell_cfg.search_space(grant.ss_id),
+                            cell_cfg.ul_cfg_common.init_ul_bwp,
+                            grant.crbs,
+                            grant.time_res_index,
+                            mcs_tbs_info.value().mcs,
+                            rv,
+                            h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       build_dci_f0_1_c_rnti(pdcch->dci,

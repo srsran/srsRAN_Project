@@ -101,6 +101,8 @@ public:
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
 
+  sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
+
   /// \brief Get recommended aggregation level for PDCCH given reported CQI.
   aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
 

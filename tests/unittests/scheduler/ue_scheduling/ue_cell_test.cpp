@@ -54,7 +54,8 @@ protected:
 
     switch (dci_type) {
       case dci_ul_rnti_config_type::c_rnti_f0_0:
-        return get_pusch_config_f0_0_c_rnti(ue_cc.cfg(),
+        return get_pusch_config_f0_0_c_rnti(cell_cfg,
+                                            &ue_cc.cfg(),
                                             *ue_cc.cfg().bwp(ue_cc.active_bwp_id()).ul_common,
                                             pusch_td_cfg,
                                             uci_bits_overallocation,
