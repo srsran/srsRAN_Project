@@ -44,7 +44,7 @@
 #include "apps/services/metrics_hub.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
-#include "apps/modules/flexible_du/split_ru_dynamic/dynamic_du_factory.h"
+#include "apps/units/flexible_du/split_ru_dynamic/dynamic_du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -59,12 +59,12 @@
 
 #include <atomic>
 
-#include "../modules/cu_cp/logger_registrator.h"
-#include "../modules/cu_cp/pcap_factory.h"
-#include "../modules/cu_up/logger_registrator.h"
-#include "../modules/cu_up/pcap_factory.h"
-#include "../modules/flexible_du/du_high/pcap_factory.h"
-#include "../modules/flexible_du/split_ru_dynamic/logger_registrator.h"
+#include "../units/cu_cp/logger_registrator.h"
+#include "../units/cu_cp/pcap_factory.h"
+#include "../units/cu_up/logger_registrator.h"
+#include "../units/cu_up/pcap_factory.h"
+#include "../units/flexible_du/du_high/pcap_factory.h"
+#include "../units/flexible_du/split_ru_dynamic/logger_registrator.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"

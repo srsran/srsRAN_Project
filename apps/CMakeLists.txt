@@ -8,5 +8,5 @@
 
 add_subdirectory(examples)
 add_subdirectory(gnb)
-add_subdirectory(modules)
+add_subdirectory(units)
 add_subdirectory(services)
