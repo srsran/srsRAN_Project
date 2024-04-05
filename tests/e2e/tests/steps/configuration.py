@@ -62,6 +62,7 @@ def configure_test_parameters(
                 "time_alignment_calibration": time_alignment_calibration,
                 "common_search_space_enable": common_search_space_enable,
                 "prach_config_index": prach_config_index,
+                "enable_channel_noise": enable_channel_noise,
             },
         },
     }
