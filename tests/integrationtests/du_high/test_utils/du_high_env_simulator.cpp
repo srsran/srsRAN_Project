@@ -335,8 +335,9 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
     run_slot();
 
     // Sum all the bytes scheduled for SRB1.
+    du_cell_index_t     cell_idx = it->second.pcell_index;
     const dl_msg_alloc* pdsch =
-        find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+        find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[cell_idx].last_dl_res.value().dl_res->ue_grants);
     if (pdsch != nullptr) {
       for (const dl_msg_lc_info& lc_grant : pdsch->tb_list[0].lc_chs_to_sched) {
         if (lc_grant.lcid == LCID_SRB1) {
@@ -348,14 +349,19 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
 
   if (cu_notifier.last_f1ap_msgs.size() != 1) {
     // Response not sent back to CU-CP or too many responses were sent.
+    test_logger.info("STATUS: No UE Context Setup Response was sent back to the CU-CP");
     return false;
   }
   if (not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
     // Bad response.
+    test_logger.error("STATUS: UE Context Setup Response sent back to the CU-CP is not valid");
     return false;
   }
   if (srb1_bytes_sched < srb1_pdu_size) {
     // Not enough SRB1 bytes were scheduled for the RRC container.
+    test_logger.error("STATUS: Not enough SRB1 bytes were scheduled for the RRC container ({} < {})",
+                      srb1_bytes_sched,
+                      srb1_pdu_size);
     return false;
   }
 
