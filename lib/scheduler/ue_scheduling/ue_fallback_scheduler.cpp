@@ -71,7 +71,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     if (h_dl->has_pending_retx()) {
       optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      sched_outcome outcome = schedule_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
+      sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
       if (outcome == sched_outcome::exit_scheduler) {
         return;
@@ -120,7 +120,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
       continue;
     }
 
-    sched_outcome outcome = schedule_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
+    sched_outcome outcome = schedule_dl_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
     if (outcome == sched_outcome::success) {
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
     } else if (outcome == sched_outcome::next_ue) {
@@ -154,7 +154,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
       continue;
     }
 
-    sched_outcome outcome = schedule_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
+    sched_outcome outcome = schedule_dl_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
     if (outcome == sched_outcome::success) {
       // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same UE,
       // if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try again with
@@ -213,9 +213,9 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, uns
 
   auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
 
-  // For UL UEs we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager.
-  // Thus, compared to the DL case, the only operation is needed for the UL is to add a new UE to the pending UL UEs
-  // list.
+  // For UL UEs we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
+  // that purpose. Thus, compared to the DL case, the only operation is needed for the UL is to add a new UE to the
+  // pending UL UEs list.
   if (ue_it == pending_ul_ues.end() and srb_buffer_bytes != 0) {
     pending_ul_ues.emplace_back(ue_index);
   }
@@ -238,11 +238,11 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
 }
 
 ue_fallback_scheduler::sched_outcome
-ue_fallback_scheduler::schedule_srb(cell_resource_allocator&       res_alloc,
-                                    ue&                            u,
-                                    bool                           is_srb0,
-                                    dl_harq_process*               h_dl_retx,
-                                    optional<most_recent_tx_slots> most_recent_tx_ack_slots)
+ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
+                                       ue&                            u,
+                                       bool                           is_srb0,
+                                       dl_harq_process*               h_dl_retx,
+                                       optional<most_recent_tx_slots> most_recent_tx_ack_slots)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -836,10 +836,6 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
 
 bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
 {
-  // \ref sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
-  // slot_indication().
-  // NOTE: we guarantee that \ref sched_ref_slot is a DL slot in the caller.
-  // TODO: Make this compatible with k0 > 0.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   slot_point                          pdcch_slot  = pdcch_alloc.slot;
 
@@ -930,11 +926,13 @@ bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
         continue;
       }
 
+      // If the function return true, the PUSCH allocation was successful. We then move the next UE.
       if (schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx)) {
         return true;
       }
     }
   }
+  // Move to the next UE if the allocation was unsuccessful.
   return true;
 }
 
@@ -1388,6 +1386,9 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       }
     }
     remove_ue = remove_ue and ue.pending_ul_newtx_bytes(true) == 0;
-    ue_it     = remove_ue ? pending_ul_ues.erase(ue_it) : ++ue_it;
+    if (remove_ue) {
+      logger.debug("Removing ue_idx={} rnti={} from fallback sched UL UE list", ue.ue_index, ue.crnti);
+    }
+    ue_it = remove_ue ? pending_ul_ues.erase(ue_it) : ++ue_it;
   }
 }

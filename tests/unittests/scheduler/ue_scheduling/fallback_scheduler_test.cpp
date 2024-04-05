@@ -292,6 +292,23 @@ protected:
     bench->fallback_sched.handle_dl_buffer_state_indication_srb(ue_idx, is_srb0, sl, buffer_size);
   }
 
+  void push_buffer_state_to_ul_ue(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_size)
+  {
+    // Notification from upper layers of DL buffer state.
+
+    ul_bsr_indication_message msg{.cell_index = to_du_cell_index(0U),
+                                  .ue_index   = ue_idx,
+                                  .crnti      = to_rnti(0x4601 + static_cast<uint16_t>(ue_idx)),
+                                  .type       = srsran::bsr_format::SHORT_BSR};
+
+    msg.reported_lcgs.emplace_back(ul_bsr_lcg_report{.lcg_id = uint_to_lcg_id(0U), .nof_bytes = buffer_size});
+
+    bench->ue_db[ue_idx].handle_bsr_indication(msg);
+
+    // Notify scheduler of DL buffer state.
+    bench->fallback_sched.handle_ul_bsr_indication(ue_idx, buffer_size);
+  }
+
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
   {
     return bench->ue_db[ue_idx].pending_dl_srb0_or_srb1_newtx_bytes(true);
@@ -1068,6 +1085,48 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
                          fallback_scheduler_srb1_segmentation,
                          testing::Values(fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
+
+/////// UL Scheduling tests ///////
+
+// Parameters to be passed to test.
+struct ul_fallback_sched_test_params {
+  duplex_mode duplx_mode;
+};
+
+class ul_fallback_scheduler_tester : public base_fallback_tester,
+                                     public ::testing::TestWithParam<ul_fallback_sched_test_params>
+{
+protected:
+  ul_fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode)
+  {
+    setup_sched(config_helpers::make_default_scheduler_expert_config(),
+                test_helpers::make_default_sched_cell_configuration_request(builder_params));
+  }
+
+  ul_fallback_sched_test_params params;
+  const unsigned                SRB_PACKETS_TOT_TX    = 10;
+  const unsigned                MAX_UES               = 10;
+  const unsigned                MAX_TEST_RUN_SLOTS    = 100;
+  const unsigned                MAX_MAC_SRB0_SDU_SIZE = 1600;
+};
+
+TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
+{
+  du_ue_index_t ue_idx = to_du_ue_index(0);
+  slot_point    sl{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 10};
+  add_ue(to_rnti(0x4601), ue_idx);
+
+  push_buffer_state_to_ul_ue(ue_idx, sl, 5000U);
+
+  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS; idx++) {
+    run_slot();
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(test1,
+                         ul_fallback_scheduler_tester,
+                         testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
+                                         ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
 
 int main(int argc, char** argv)
 {

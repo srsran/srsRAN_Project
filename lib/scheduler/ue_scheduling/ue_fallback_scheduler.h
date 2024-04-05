@@ -36,7 +36,7 @@ public:
   handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
 
   /// Handles UL BSR indication reported by UE.
-  /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
+  /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
   void handle_ul_bsr_indication(du_ue_index_t ue_index, unsigned srb_buffer_bytes);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
@@ -60,11 +60,11 @@ private:
   enum class sched_outcome { success, next_ue, exit_scheduler };
 
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  sched_outcome schedule_srb(cell_resource_allocator&       res_alloc,
-                             ue&                            u,
-                             bool                           is_srb0,
-                             dl_harq_process*               h_dl_retx,
-                             optional<most_recent_tx_slots> most_recent_tx_ack_slots);
+  sched_outcome schedule_dl_srb(cell_resource_allocator&       res_alloc,
+                                ue&                            u,
+                                bool                           is_srb0,
+                                dl_harq_process*               h_dl_retx,
+                                optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
   bool schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
@@ -93,7 +93,7 @@ private:
                                      slot_point               most_recent_ack_slot,
                                      dl_harq_process*         h_dl_retx = nullptr);
 
-  /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
+  /// \brief Tries to schedule SRB1 message for a UE.
   bool schedule_ul_srb(ue&                                          u,
                        cell_resource_allocator&                     res_alloc,
                        unsigned                                     pusch_time_res,
@@ -146,7 +146,7 @@ private:
   /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
   std::vector<srb_ue> pending_dl_ues_new_tx;
 
-  /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
+  /// List of UE's DU Indexes that are pending for new TX or RE-TX.
   std::vector<du_ue_index_t> pending_ul_ues;
 
   /// Class that keeps track of the UEs' that are waiting for the SRB HARQ processes to be ACKed or retransmitted.

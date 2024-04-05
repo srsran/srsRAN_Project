@@ -28,6 +28,11 @@ class cell_configuration;
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
 get_pusch_td_resource_indices(const ue_resource_grid_view& res_grid, const ue_repository& ues);
 
+/// \brief Fetches a list of PUSCH Time Domain resource indexes based on cell, UE configuration and nof. symbols in
+/// PUSCH slot.
+/// \param[in] cell_cfg Cell configuration.
+/// \param[in] pdcch_slot Slot at which the PDCCH is supposed to be scheduled.
+/// \return List of PUSCH Time Domain resource indexes.
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
 get_pusch_td_res_indices_common(const cell_configuration& cell_cfg, slot_point pdcch_slot);
 

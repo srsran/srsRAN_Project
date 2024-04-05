@@ -442,7 +442,7 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
 {
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, cell_res_grid[0].result.dl);
   for (const test_grant_info& test_grant : dl_grants) {
-    if (test_grant.type != srsran::test_grant_info::DL_PDCCH) {
+    if (test_grant.type != srsran::test_grant_info::DL_PDCCH and test_grant.type != srsran::test_grant_info::UL_PDCCH) {
       TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
                  "The allocation with rnti={}, type={}, crbs={} was not registered in the cell resource grid",
                  test_grant.rnti,
