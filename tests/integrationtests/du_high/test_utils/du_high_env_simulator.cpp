@@ -326,10 +326,36 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
       asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
   this->du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // Wait until DU sends UE Context Setup Response.
-  bool ret = this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  if (not ret or cu_notifier.last_f1ap_msgs.size() != 1 or
-      not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
+  // Wait until DU sends UE Context Setup Response and the whole RRC container is scheduled.
+  const unsigned MAX_SLOT_COUNT   = 1000;
+  const unsigned srb1_pdu_size    = cmd->rrc_container.size();
+  unsigned       srb1_bytes_sched = 0;
+  for (unsigned i = 0; i != MAX_SLOT_COUNT and (srb1_bytes_sched < srb1_pdu_size or cu_notifier.last_f1ap_msgs.empty());
+       ++i) {
+    run_slot();
+
+    // Sum all the bytes scheduled for SRB1.
+    const dl_msg_alloc* pdsch =
+        find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+    if (pdsch != nullptr) {
+      for (const dl_msg_lc_info& lc_grant : pdsch->tb_list[0].lc_chs_to_sched) {
+        if (lc_grant.lcid == LCID_SRB1) {
+          srb1_bytes_sched += lc_grant.sched_bytes;
+        }
+      }
+    }
+  }
+
+  if (cu_notifier.last_f1ap_msgs.size() != 1) {
+    // Response not sent back to CU-CP or too many responses were sent.
+    return false;
+  }
+  if (not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
+    // Bad response.
+    return false;
+  }
+  if (srb1_bytes_sched < srb1_pdu_size) {
+    // Not enough SRB1 bytes were scheduled for the RRC container.
     return false;
   }
 

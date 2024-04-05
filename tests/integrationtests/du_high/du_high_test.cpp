@@ -146,9 +146,11 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   this->test_logger.info("STATUS: UEContextReleaseCommand received by DU. Waiting for rrcRelease being transmitted...");
 
   // Ensure that once SRB1 (RRC Release) is scheduled.
+  run_slot();
   EXPECT_TRUE(this->run_until([this, rnti]() {
     return find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants) != nullptr;
   }));
+  this->test_logger.info("STATUS: RRC Release started being scheduled...");
 
   // Ensure that DRBs stop being scheduled at this point, even if it takes a while for the UE release to complete.
   while (cu_notifier.last_f1ap_msgs.empty()) {
