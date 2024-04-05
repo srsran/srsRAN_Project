@@ -262,7 +262,8 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
 
   // MAC schedules one TB with one LCID.
   dl_msg_tb_info tb_info;
-  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size);
+  // Note: +1 added for the case tb_size=258 (impossible MAC SDU+subh size).
+  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size) + 1;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
   // Encode MAC PDU with multiple SDUs.
@@ -271,7 +272,7 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   ASSERT_EQ(this->dl_bearers[1].last_sdus.size(), nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
     ASSERT_EQ(this->dl_bearers[1].last_sdus[i].length(), sdu_payload_sizes[i])
-        << fmt::format("SDU size mismatch for SDU {}/{}. First SDU len={}", i + 1, nof_sdus, sdu_payload_sizes[0]);
+        << fmt::format("SDU size mismatch for SDU {}/{}. First SDU len={}", i + 1, nof_sdus, sdu_payload_sizes[i]);
   }
 
   // Check if MAC PDU contains the MAC SDUs composed by a MAC subheader and the data passed by the upper layer.
