@@ -179,9 +179,10 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "127.0.0.1";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -194,6 +195,7 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();
@@ -225,9 +227,10 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "::1";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "::1";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -240,6 +243,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();
@@ -271,9 +275,10 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "localhost";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "localhost";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -286,6 +291,7 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();

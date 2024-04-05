@@ -469,7 +469,9 @@ void sctp_network_gateway_impl::receive()
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from SCTP socket: {}", strerror(errno));
   } else if (rx_bytes == -1 && errno == EAGAIN) {
-    logger.debug("Socket timeout reached");
+    if (!config.non_blocking_mode) {
+      logger.debug("Socket timeout reached");
+    }
   } else {
     logger.debug("Received {} bytes on SCTP socket", rx_bytes);
     span<socket_buffer_type> payload(tmp_mem.data(), rx_bytes);
