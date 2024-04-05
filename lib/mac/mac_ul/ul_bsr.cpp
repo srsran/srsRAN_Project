@@ -76,6 +76,21 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
 {
   long_bsr_report lbsr = {};
 
+  // Represents a Long BSR report with buffer size set to 0 for all LCGs.
+  static const long_bsr_report empty_lbsr_report = {.list =
+                                                        {
+                                                            {uint_to_lcg_id(0), 0},
+                                                            {uint_to_lcg_id(1), 0},
+                                                            {uint_to_lcg_id(2), 0},
+                                                            {uint_to_lcg_id(3), 0},
+                                                            {uint_to_lcg_id(4), 0},
+                                                            {uint_to_lcg_id(5), 0},
+                                                            {uint_to_lcg_id(6), 0},
+                                                            {uint_to_lcg_id(7), 0},
+                                                        }
+
+  };
+
   byte_buffer_reader reader = payload;
 
   // read LCG bitmap
@@ -84,7 +99,17 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
 
   // early stop if LBSR is empty
   if (bitmap == 0) {
-    return lbsr;
+    // See TS 38.321, clause 5.4.5. Padding BSR: "UL resources are allocated and number of padding bits is equal to or
+    // larger than the size of the Buffer Status Report MAC CE plus its subheader".
+    // For Padding BSR, "if the number of padding bits is equal to or larger than the size of the Long BSR plus its
+    // subheader, report Long BSR for all LCGs which have data available for transmission".
+
+    // NOTE: This is a loophole in specification where UL resources allocated are big enough that the number of padding
+    // bits is larger than size of Long BSR plus its subheader and there is no data available for transmission.
+
+    // [Implementation-defined] If all LCG(i) bits are zero, we assume buffer status to be zero since some basebands
+    // send LBSR with all zero to indicate buffer status of zero.
+    return empty_lbsr_report;
   }
 
   for (uint8_t i = 0; i != MAX_NOF_LCGS; i++) {
@@ -111,6 +136,15 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
         return {default_error_t{}};
       }
       lbsr.list.push_back(bsr);
+    } else if (format == bsr_format::LONG_TRUNC_BSR) {
+      // As per TS 38.321, clause 6.1.3, "For the Long BSR format, this field indicates the presence of the Buffer Size
+      // field for the logical channel group i. The LCGi field set to "1" indicates that the Buffer Size field for the
+      // logical channel group i is reported. The LCGi field set to "0" indicates that the Buffer Size field for the
+      // logical channel group i is not reported.
+      // For the Long Truncated BSR format, this field indicates whether logical channel group i has data available.The
+      // LCGi field set to "1" indicates that logical channel group i has data available. The LCGi field set to "0"
+      // indicates that logical channel group i does not have data available".
+      lbsr.list.push_back({uint_to_lcg_id(i), 0});
     }
   }
 
