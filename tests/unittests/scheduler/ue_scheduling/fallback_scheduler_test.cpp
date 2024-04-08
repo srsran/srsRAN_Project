@@ -1103,23 +1103,89 @@ protected:
                 test_helpers::make_default_sched_cell_configuration_request(builder_params));
   }
 
+  class ue_ul_tester
+  {
+  public:
+    ue_ul_tester(const cell_configuration& cell_cfg_, ue& test_ue_, ul_fallback_scheduler_tester* parent_) :
+      cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
+    {
+      slot_generate_srb_traffic = slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
+                                             test_rgen::uniform_int(20U, 40U)};
+    }
+
+    void slot_indication(slot_point sl)
+    {
+      if (sl == slot_generate_srb_traffic) {
+        const unsigned srb_buffer = test_rgen::uniform_int(128U, parent->MAX_MAC_UL_SRB1_SDU_SIZE);
+        parent->push_buffer_state_to_ul_ue(test_ue.ue_index, sl, srb_buffer);
+        buffer_bytes = srb_buffer;
+        test_logger.info("rnti={}, slot={}: pushing traffic", test_ue.crnti, sl);
+      }
+
+      for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
+        harq_id_t h_id = to_harq_id(h_id_idx);
+
+        auto& h_ul = test_ue.get_pcell().harqs.ul_harq(h_id);
+        if (h_ul.is_waiting_ack() and h_ul.slot_ack() == sl) {
+          test_ue.pending_ul_newtx_bytes(true);
+          bool           ack             = ack_harq_process(sl, h_ul);
+          const unsigned delivered_bytes = ack ? h_ul.last_tx_params().tbs_bytes - 10U : 0U;
+          buffer_bytes > delivered_bytes ? buffer_bytes -= delivered_bytes : buffer_bytes = 0U;
+          test_logger.info(
+              "rnti={}, slot={}: generating BSR indication with {} bytes", test_ue.crnti, sl, buffer_bytes);
+          parent->push_buffer_state_to_ul_ue(test_ue.ue_index, sl, buffer_bytes);
+        }
+      }
+    }
+
+    bool ack_harq_process(slot_point sl, ul_harq_process& h_ul)
+    {
+      static constexpr double ack_probability = 0.5f;
+
+      // NOTE: to simply the generation of SRB1 buffer, we only allow max 3 NACKs.
+      const bool ack = h_ul.tb().nof_retxs <= 3U ? test_rgen::bernoulli(ack_probability) : true;
+      h_ul.crc_info(ack);
+      test_logger.info("Slot={}, rnti={}: ACKing process h_id={} with {}",
+                       sl,
+                       test_ue.crnti,
+                       to_harq_id(h_ul.id),
+                       ack ? "ACK" : "NACK");
+      return ack;
+    }
+
+    const cell_configuration&     cell_cfg;
+    ue&                           test_ue;
+    ul_fallback_scheduler_tester* parent;
+    unsigned                      buffer_bytes = 0;
+    srslog::basic_logger&         test_logger  = srslog::fetch_basic_logger("TEST");
+    slot_point                    slot_generate_srb_traffic;
+  };
+
   ul_fallback_sched_test_params params;
-  const unsigned                SRB_PACKETS_TOT_TX    = 10;
-  const unsigned                MAX_UES               = 10;
-  const unsigned                MAX_TEST_RUN_SLOTS    = 100;
-  const unsigned                MAX_MAC_SRB0_SDU_SIZE = 1600;
+  const unsigned                MAX_UES                  = 10;
+  const unsigned                MAX_TEST_RUN_SLOTS       = 100;
+  const unsigned                MAX_MAC_UL_SRB1_SDU_SIZE = 3000;
+
+  std::vector<ue_ul_tester> ues_testers;
 };
 
 TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
 {
-  du_ue_index_t ue_idx = to_du_ue_index(0);
-  slot_point    sl{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 10};
-  add_ue(to_rnti(0x4601), ue_idx);
+  for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
+    add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
+    ues_testers.emplace_back(ue_ul_tester(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this));
+  }
 
-  push_buffer_state_to_ul_ue(ue_idx, sl, 5000U);
-
-  for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS; idx++) {
+  for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
+
+    for (auto& tester : ues_testers) {
+      tester.slot_indication(current_slot);
+    }
+  }
+
+  for (auto& tester : ues_testers) {
+    ASSERT_FALSE(tester.buffer_bytes > 0) << fmt::format("UE {} has still pending UL bytes", tester.test_ue.ue_index);
   }
 }
 

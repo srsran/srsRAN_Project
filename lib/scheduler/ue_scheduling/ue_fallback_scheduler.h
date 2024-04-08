@@ -126,7 +126,8 @@ private:
                          sch_mcs_index              mcs_idx,
                          const crb_interval&        ue_grant_crbs,
                          const pusch_config_params& pusch_params,
-                         unsigned                   tbs_bytes);
+                         unsigned                   tbs_bytes,
+                         bool                       is_retx);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 

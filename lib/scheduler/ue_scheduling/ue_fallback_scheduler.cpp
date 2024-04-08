@@ -1068,7 +1068,8 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
                     final_mcs_tbs.mcs,
                     ue_grant_crbs,
                     pusch_cfg,
-                    final_mcs_tbs.tbs);
+                    final_mcs_tbs.tbs,
+                    is_retx);
 
   return true;
 }
@@ -1083,15 +1084,15 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
                                               sch_mcs_index              mcs_idx,
                                               const crb_interval&        ue_grant_crbs,
                                               const pusch_config_params& pusch_params,
-                                              unsigned                   tbs_bytes)
+                                              unsigned                   tbs_bytes,
+                                              bool                       is_retx)
 {
-  const bool is_retx = h_ul.tb().nof_retxs == 0;
   if (is_retx) {
-    // It is a new tx.
-    h_ul.new_tx(pdcch_slot + k2 + cell_cfg.ntn_cs_koffset, expert_cfg.max_nof_harq_retxs);
-  } else {
     // It is a retx.
     h_ul.new_retx(pdcch_slot + k2 + cell_cfg.ntn_cs_koffset);
+  } else {
+    // It is a new tx.
+    h_ul.new_tx(pdcch_slot + k2 + cell_cfg.ntn_cs_koffset, expert_cfg.max_nof_harq_retxs);
   }
 
   uint8_t rv = u.get_pcell().get_pusch_rv(h_ul);
@@ -1369,26 +1370,23 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     remove_ue ? ue_it = pending_dl_ues_new_tx.erase(ue_it) : ++ue_it;
   }
 
-  // Remove UL UE if the UE has no data to transmit and all HARQ processes are empty.
+  // Remove UL UE if the UE has left fallback of if the UE has been deleted from the scheduler.
   for (auto ue_it = pending_ul_ues.begin(); ue_it != pending_ul_ues.end();) {
     if (not ues.contains(*ue_it)) {
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }
 
+    // Remove UE when it leaves the fallback.
     auto& ue = ues[*ue_it];
-    ue.get_pcell().harqs.nof_ul_harqs();
-    bool remove_ue = true;
-    for (uint32_t h_id = 0; h_id != ue.get_pcell().harqs.nof_ul_harqs(); ++h_id) {
-      if (not ue.get_pcell().harqs.ul_harq(h_id).empty()) {
-        remove_ue = false;
-        break;
+    if (not ue.get_pcell().is_in_fallback_mode()) {
+      for (uint32_t h_id = 0; h_id != ue.get_pcell().harqs.nof_ul_harqs(); ++h_id) {
+        ue.get_pcell().harqs.ul_harq(h_id).cancel_harq_retxs();
       }
-    }
-    remove_ue = remove_ue and ue.pending_ul_newtx_bytes(true) == 0;
-    if (remove_ue) {
       logger.debug("Removing ue_idx={} rnti={} from fallback sched UL UE list", ue.ue_index, ue.crnti);
+      ue_it = pending_ul_ues.erase(ue_it);
+      continue;
     }
-    ue_it = remove_ue ? pending_ul_ues.erase(ue_it) : ++ue_it;
+    ++ue_it;
   }
 }
