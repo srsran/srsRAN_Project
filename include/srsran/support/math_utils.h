@@ -26,11 +26,16 @@ static constexpr float near_zero = 1e-9;
 
 /// \brief Performs an integer division rounding up.
 ///
-/// \param[in]  num Numerator.
-/// \param[out] den Denominator.
+/// \tparam     NumType Division numerator integer type.
+/// \tparam     DenType Division denominator integer type.
+/// \param[in]  num     Numerator.
+/// \param[out] den     Denominator.
 /// \return The result of the operation.
-inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
+template <typename NumType, typename DenType>
+inline constexpr auto divide_ceil(NumType num, DenType den)
 {
+  static_assert(std::is_integral<NumType>::value, "The numerator must be an integer.");
+  static_assert(std::is_integral<DenType>::value, "The denominator must be an integer.");
   srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return (num + (den - 1)) / den;
 }
