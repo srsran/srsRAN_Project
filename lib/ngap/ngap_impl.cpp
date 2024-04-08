@@ -102,7 +102,7 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_n
 void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 {
   if (ue_ctxt_list.contains(msg.ue_index)) {
-    logger.warning("ue={}: Dropping InitialUeMessage. UE context already exist", msg.ue_index);
+    logger.warning("ue={}: Dropping InitialUEMessage. UE context already exist", msg.ue_index);
     return;
   }
 
@@ -144,7 +144,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   });
   ue_ctxt.pdu_session_setup_timer.run();
 
-  ue_ctxt.logger.log_debug("Sending InitialUeMessage (PDU session timeout={}ms)",
+  ue_ctxt.logger.log_debug("Sending InitialUEMessage (PDU session timeout={}ms)",
                            ue_ctxt.pdu_session_setup_timer.duration().count());
 
   // Forward message to AMF

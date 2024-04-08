@@ -330,6 +330,7 @@ protected:
     rrc_ue_reestablishment_context_response reest_context = {};
     reest_context.ue_index                                = ue_index;
     reest_context.sec_context                             = generate_security_context();
+    reest_context.old_ue_fully_attached                   = true;
 
     logger.debug("Adding reestablishment context for ue={}", ue_index);
 

@@ -223,12 +223,6 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialULRRCMessageTransfer",
-               du_ue_id,
-               cgi.nci,
-               crnti,
-               cgi.plmn);
-
   if (msg->sul_access_ind_present) {
     logger.debug("du_ue_f1ap_id={}: Ignoring SUL access indicator", du_ue_id);
   }

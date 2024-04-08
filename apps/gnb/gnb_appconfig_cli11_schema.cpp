@@ -447,7 +447,7 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   app.add_option("--pdu_session_setup_timeout",
                  cu_cp_params.pdu_session_setup_timeout,
-                 "Timeout for the setup of a PDU session after an InitialUeMessage was sent to the core, in "
+                 "Timeout for the setup of a PDU session after an InitialUEMessage was sent to the core, in "
                  "seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
 

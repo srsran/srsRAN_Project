@@ -66,7 +66,7 @@ byte_buffer srsran::pack_ul_ccch_msg(const ul_ccch_msg_s& msg)
   return byte_buffer{};
 }
 
-byte_buffer srsran::pack_ul_dcch_msg(const asn1::rrc_nr::ul_dcch_msg_s& msg)
+byte_buffer srsran::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
