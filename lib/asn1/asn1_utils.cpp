@@ -1745,6 +1745,9 @@ SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned)
   }
   uint32_t len;
   HANDLE_CODE(unpack_length(len, bref, aligned));
+  if (len < 2) {
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
 
   uint8_t buf[buf_len];
   for (uint32_t i = 0; i < len; i++) {
