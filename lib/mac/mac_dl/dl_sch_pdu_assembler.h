@@ -68,11 +68,14 @@ public:
   /// Adds a padding CE as a subPDU.
   void add_padding(unsigned len);
 
-  /// Number of bytes of the MAC PDU.
+  /// Number of bytes encoded into the MAC PDU.
   unsigned nof_bytes() const { return byte_offset; }
 
   /// Remaining space in number of bytes in the PDU.
   unsigned nof_empty_bytes() const { return pdu.size() - byte_offset; }
+
+  /// Space available in number of bytes in the PDU.
+  unsigned capacity() const { return pdu.size(); }
 
   /// Gets the held MAC PDU bytes.
   span<uint8_t> get() { return pdu.first(byte_offset); }

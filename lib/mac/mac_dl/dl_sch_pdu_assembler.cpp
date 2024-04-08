@@ -400,10 +400,13 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
     // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
     if (rem_bytes < MIN_MAC_SDU_SIZE) {
-      logger.warning("ue={} rnti={} lcid={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
+      logger.warning("ue={} rnti={} lcid={}: Skipping MAC SDU encoding into PDU of {} bytes ({} available). Cause: "
+                     "Allocated SDU size={} is too small.",
                      ue_mng.get_ue_index(rnti),
                      rnti,
                      lc_grant_info.lcid.to_lcid(),
+                     ue_pdu.capacity(),
+                     ue_pdu.nof_empty_bytes(),
                      lc_grant_info.sched_bytes);
     } else {
       logger.info("ue={} rnti={} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",

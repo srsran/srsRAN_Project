@@ -63,6 +63,8 @@ struct bench_params {
   unsigned ul_bsr_bytes = 0;
   /// \brief Maximum number of RBs per UE DL grant per slot.
   unsigned max_dl_rb_grant = MAX_NOF_PRBS;
+  /// \brief Size of the F1-U PDU used in bytes.
+  units::bytes pdu_size{1500};
   /// \brief Logical cores used by the "du_cell" thread.
   std::vector<unsigned> du_cell_cores = {};
 };
@@ -70,7 +72,7 @@ struct bench_params {
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL bytes per slot] [-u UL BSR] [-r Max RBs "
-             "per UE DL grant] [-a CPU affinity]\n",
+             "per UE DL grant] [-a CPU affinity] [-p F1-U PDU size]\n",
              prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-U Nof. DU UEs for each simulation (e.g. \"1,5,10\" would run three benchmarks with 1, 5 and 10 UEs) "
@@ -85,6 +87,7 @@ static void usage(const char* prog, const bench_params& params)
              params.ul_bsr_bytes);
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
   fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
+  fmt::print("\t-p F1-U PDU size used [Default {}]", params.pdu_size);
   fmt::print("\t-h Show this message\n");
 }
 
@@ -103,7 +106,7 @@ static std::vector<Ret> tokenize(const std::string& s, Func&& func)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:p:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -145,12 +148,37 @@ static void parse_args(int argc, char** argv, bench_params& params)
           params.du_cell_cores = {(unsigned)std::strtol(optstr.c_str(), nullptr, 10)};
         }
       } break;
+      case 'p':
+        params.pdu_size = units::bytes{(unsigned)std::strtol(optarg, nullptr, 10)};
+        break;
       case 'h':
       default:
         usage(argv[0], params);
         exit(0);
     }
   }
+}
+
+static void print_args(const bench_params& params)
+{
+  unsigned nof_tests = params.nof_ues.size();
+
+  fmt::print("Arguments ({} tests):\n", nof_tests);
+  fmt::print("- Number of repetitions: {}\n", params.nof_repetitions);
+  fmt::print("- Duplex Mode: {}\n", params.dplx_mode == srsran::duplex_mode::FDD ? "FDD" : "TDD");
+  if (nof_tests == 1) {
+    fmt::print("- Number of UEs: {}\n", params.nof_ues[0]);
+  } else {
+    for (unsigned i = 0; i != nof_tests; ++i) {
+      fmt::print("- Test {}:\n", i);
+      fmt::print("  - Number of UEs: {}\n", params.nof_ues[i]);
+    }
+  }
+  const double slot_dur_sec = params.dplx_mode == srsran::duplex_mode::FDD ? 0.001 : 0.0005;
+  fmt::print("- F1-U DL Bitrate [Mbps]: {}\n", params.dl_bytes_per_slot * 1e6 * slot_dur_sec);
+  fmt::print("- F1-U DL PDU size [bytes]: {}\n", params.pdu_size);
+  fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
+  fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
 }
 
 class dummy_metrics_handler : public scheduler_ue_metrics_notifier
@@ -511,16 +539,18 @@ private:
 /// \brief TestBench for the DU-high.
 class du_high_bench
 {
-  static const unsigned MAX_DL_PDU_SIZE = 1500;
+  static const unsigned DEFAULT_DL_PDU_SIZE = 1500;
 
 public:
   du_high_bench(unsigned                          dl_buffer_state_bytes_,
                 unsigned                          ul_bsr_bytes_,
                 unsigned                          max_nof_rbs_per_dl_grant,
+                units::bytes                      f1u_pdu_size_,
                 span<unsigned>                    du_cell_cores,
                 const cell_config_builder_params& builder_params = {}) :
     params(builder_params),
     dl_buffer_state_bytes(dl_buffer_state_bytes_),
+    f1u_pdu_size(f1u_pdu_size_),
     workers(du_cell_cores),
     ul_bsr_bytes(ul_bsr_bytes_)
   {
@@ -570,7 +600,7 @@ public:
     du_hi = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
-    report_fatal_error_if_not(pdcp_pdu.append(test_rgen::random_vector<uint8_t>(MAX_DL_PDU_SIZE)),
+    report_fatal_error_if_not(pdcp_pdu.append(test_rgen::random_vector<uint8_t>(f1u_pdu_size.value())),
                               "Unable to allocate PDU");
     // Create MAC PDU.
     report_fatal_error_if_not(mac_pdu.append(test_rgen::random_vector<uint8_t>(
@@ -721,8 +751,8 @@ public:
     }
     while (not workers.dl_exec.defer([this]() {
       static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
-      const unsigned nof_dl_pdus_per_slot = divide_ceil(dl_buffer_state_bytes, MAX_DL_PDU_SIZE);
-      const unsigned last_dl_pdu_size     = dl_buffer_state_bytes % MAX_DL_PDU_SIZE;
+      const unsigned nof_dl_pdus_per_slot = divide_ceil(dl_buffer_state_bytes, this->f1u_pdu_size.value());
+      const unsigned last_dl_pdu_size     = dl_buffer_state_bytes % this->f1u_pdu_size.value();
 
       // Forward DL buffer occupancy updates to all bearers.
       for (unsigned bearer_idx = 0; bearer_idx != sim_cu_up.du_notif_list.size(); ++bearer_idx) {
@@ -959,7 +989,8 @@ public:
   cell_config_builder_params params;
   du_high_configuration      cfg{};
   /// Size of the DL buffer status to push for DL Tx.
-  unsigned dl_buffer_state_bytes;
+  unsigned     dl_buffer_state_bytes;
+  units::bytes f1u_pdu_size{DEFAULT_DL_PDU_SIZE};
 
   srslog::basic_logger&              test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler              metrics_handler;
@@ -1046,6 +1077,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
                                  unsigned       dl_buffer_state_bytes,
                                  unsigned       ul_bsr_bytes,
                                  unsigned       max_nof_rbs_per_dl_grant,
+                                 units::bytes   dl_pdu_size,
                                  span<unsigned> du_cell_cores)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
@@ -1057,6 +1089,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
   du_high_bench       bench{dl_buffer_state_bytes,
                       ul_bsr_bytes,
                       max_nof_rbs_per_dl_grant,
+                      dl_pdu_size,
                       du_cell_cores,
                       generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
@@ -1154,6 +1187,7 @@ int main(int argc, char** argv)
   // Parses benchmark parameters.
   bench_params params{};
   parse_args(argc, argv, params);
+  print_args(params);
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(byte_buffer_nof_segments, byte_buffer_segment_size);
@@ -1174,6 +1208,7 @@ int main(int argc, char** argv)
                                 params.dl_bytes_per_slot,
                                 params.ul_bsr_bytes,
                                 params.max_dl_rb_grant,
+                                params.pdu_size,
                                 params.du_cell_cores);
   }
 
