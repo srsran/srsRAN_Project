@@ -231,6 +231,23 @@ f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap
   return msg;
 }
 
+f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                  gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                  srb_id_t            srb_id,
+                                                                  uint32_t            pdcp_sn,
+                                                                  byte_buffer         ul_dcch_msg)
+{
+  // > Prepend PDCP header and append MAC.
+  std::array<uint8_t, 2> pdcp_header{static_cast<uint8_t>((pdcp_sn >> 8U) & 0x0F),
+                                     static_cast<uint8_t>(pdcp_sn & 0xFF)};
+  report_fatal_error_if_not(ul_dcch_msg.prepend(pdcp_header), "bad alloc");
+
+  // > Append MAC
+  report_fatal_error_if_not(ul_dcch_msg.append(std::array<uint8_t, 4>{}), "bad alloc");
+
+  return create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id, std::move(ul_dcch_msg));
+}
+
 f1ap_message srsran::test_helpers::generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                        gnb_du_ue_f1ap_id_t du_ue_id)
 {

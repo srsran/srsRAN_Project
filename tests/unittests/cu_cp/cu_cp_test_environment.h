@@ -60,7 +60,7 @@ public:
   bool run_e1_setup(unsigned cu_up_idx);
 
   /// Connect a new UE to CU-CP through a provided DU.
-  bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  bool attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -84,7 +84,6 @@ public:
 
 private:
   class worker_manager;
-  class gateway_manager;
 
   cu_cp_test_env_params params;
 

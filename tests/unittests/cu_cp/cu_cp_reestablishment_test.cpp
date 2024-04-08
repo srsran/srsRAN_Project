@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include <gtest/gtest.h>
@@ -37,7 +38,7 @@ public:
     EXPECT_TRUE(this->run_e1_setup(cu_up_idx));
 
     // Connect UE.
-    EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
+    EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti));
   }
 
   /// Run RRC Reestablishment.
@@ -50,7 +51,7 @@ public:
     // Send Initial UL RRC Message to CU-CP.
     f1ap_message f1ap_init_ul_rrc_msg =
         test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_rnti, {}, std::move(rrc_container));
-    get_du(du_idx).push_tx_pdu(f1ap_init_ul_rrc_msg);
+    get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
     // Wait for DL RRC message transfer
     f1ap_message f1ap_pdu;
@@ -58,25 +59,13 @@ public:
     EXPECT_TRUE(result);
 
     // Check that the received message is a DL RRC Message Transfer with RRC Reestablishment.
-    EXPECT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
-    EXPECT_EQ(f1ap_pdu.pdu.init_msg().value.type().value,
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
+    EXPECT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu));
 
     auto& dl_rrc_msg = *f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
-    EXPECT_FALSE(dl_rrc_msg.rrc_container.empty());
     EXPECT_EQ(int_to_gnb_du_ue_f1ap_id(dl_rrc_msg.gnb_du_ue_f1ap_id), new_du_ue_id);
-    EXPECT_LE(dl_rrc_msg.srb_id, 1);
 
-    if (dl_rrc_msg.srb_id == 0) {
-      // It is RRC Setup
-      return false;
-    }
-
-    // It is RRC Reestablishment.
-    EXPECT_TRUE(dl_rrc_msg.old_gnb_du_ue_f1ap_id_present);
-    EXPECT_NE(dl_rrc_msg.old_gnb_du_ue_f1ap_id, dl_rrc_msg.old_gnb_du_ue_f1ap_id);
-
-    return true;
+    // It's either RRC setup or Reestablishment.
+    return dl_rrc_msg.srb_id == 1;
   }
 
   void ue_sends_rrc_setup_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
@@ -91,7 +80,7 @@ public:
     // Send UL RRC Message to CU-CP.
     f1ap_message f1ap_ul_rrc_msg =
         test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
-    get_du(du_idx).push_tx_pdu(f1ap_ul_rrc_msg);
+    get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
   }
 
   unsigned du_idx    = 0;
@@ -130,7 +119,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_drb1_or_srb2_then_reestabl
   f1ap_message ue_ctxt_rem_msg;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, ue_ctxt_rem_msg))
       << "F1AP UEContextReleaseCommand should have been sent for old UE";
-  this->get_du(du_idx).push_tx_pdu(test_helpers::generate_ue_context_release_complete(ue_ctxt_rem_msg));
+  this->get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(ue_ctxt_rem_msg));
 
   // Verify old UE is removed.
   ASSERT_TRUE(this->tick_until(std::chrono::milliseconds{10}, [this, &report]() {

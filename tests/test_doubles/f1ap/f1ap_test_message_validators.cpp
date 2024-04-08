@@ -10,28 +10,58 @@
 
 #include "f1ap_test_message_validators.h"
 #include "../lib/f1ap/common/asn1_helpers.h"
+#include "../tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
+
+#define TRUE_OR_RETURN(cond)                                                                                           \
+  if (not(cond))                                                                                                       \
+    return false;
 
 bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&           msg,
                                                              rnti_t                        rnti,
                                                              optional<nr_cell_global_id_t> nci)
 {
-  if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types_opts::init_msg or
-      msg.pdu.init_msg().proc_code != ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER) {
-    return false;
-  }
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
   const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
 
-  if (rrcmsg->c_rnti != to_value(rnti)) {
-    return false;
-  }
+  TRUE_OR_RETURN(to_rnti(rrcmsg->c_rnti) == rnti);
 
   if (nci.has_value() and cgi_from_asn1(rrcmsg->nr_cgi) != nci) {
     return false;
+  }
+
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+
+  const asn1::f1ap::dl_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+
+  TRUE_OR_RETURN(rrcmsg->srb_id <= srb_id_to_uint(srb_id_t::srb1));
+
+  if (int_to_srb_id(rrcmsg->srb_id) == srb_id_t::srb0) {
+    // RRC Setup.
+    TRUE_OR_RETURN(not rrcmsg->old_gnb_du_ue_f1ap_id_present);
+    TRUE_OR_RETURN(test_helpers::is_valid_rrc_setup(rrcmsg->rrc_container));
+
+  } else if (int_to_srb_id(rrcmsg->srb_id) == srb_id_t::srb1) {
+    // RRC Reestablishment.
+    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id_present);
+    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id != rrcmsg->old_gnb_du_ue_f1ap_id);
+
+    // Remove PDCP header
+    byte_buffer dl_dcch = rrcmsg->rrc_container.deep_copy().value();
+    dl_dcch.trim_head(2);
+    TRUE_OR_RETURN(test_helpers::is_valid_rrc_reestablishment(dl_dcch));
   }
 
   return true;

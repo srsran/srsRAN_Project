@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
@@ -142,7 +143,7 @@ bool cu_cp_test_environment::wait_for_f1ap_tx_pdu(unsigned du_idx, f1ap_message&
     if (du_idx >= dus.size() or dus[du_idx] == nullptr) {
       return false;
     }
-    return dus[du_idx]->try_pop_rx_pdu(pdu);
+    return dus[du_idx]->try_pop_dl_pdu(pdu);
   });
 }
 
@@ -183,7 +184,7 @@ bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
 
 bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
 {
-  get_du(du_idx).push_tx_pdu(test_helpers::generate_f1_setup_request());
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request());
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
   return result;
@@ -220,12 +221,12 @@ bool cu_cp_test_environment::run_e1_setup(unsigned cu_up_idx)
   return result;
 }
 
-bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+bool cu_cp_test_environment::attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
 {
   // Inject Initial UL RRC message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
   test_logger.info("c-rnti={} du_ue_id={}: Injecting Initial UL RRC message", crnti, du_ue_id);
-  get_du(du_idx).push_tx_pdu(init_ul_rrc_msg);
+  get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (containing RRC Setup)
   f1ap_message f1ap_pdu;
@@ -233,40 +234,24 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
   if (not result) {
     return false;
   }
-  if (f1ap_pdu.pdu.type().value != asn1::f1ap::f1ap_pdu_c::types_opts::init_msg or
-      f1ap_pdu.pdu.init_msg().value.type().value !=
-          asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer) {
-    // CU-CP must send DL RRC message transfer.
+
+  // Check if the DL RRC Message with Msg4 is valid.
+  if (not test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu)) {
     return false;
   }
+
+  // Check if the UE Id matches.
   auto& dl_rrc_msg = *f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
   if (int_to_gnb_du_ue_f1ap_id(dl_rrc_msg.gnb_du_ue_f1ap_id) != du_ue_id or
       int_to_srb_id(dl_rrc_msg.srb_id) != srb_id_t::srb0) {
     return false;
   }
-  {
-    asn1::cbit_ref              bref{f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container};
-    asn1::rrc_nr::dl_ccch_msg_s ccch;
-    if (ccch.unpack(bref) != asn1::SRSASN_SUCCESS) {
-      return false;
-    }
-    if (ccch.msg.c1().type().value != asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_setup) {
-      return false;
-    }
-  }
 
   // Send RRC Setup Complete.
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(dl_rrc_msg.gnb_cu_ue_f1ap_id);
-  // > Generate RRC Setup Complete.
+  // > Generate UL DCCH message (containing RRC Setup Complete).
   byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
-  // > Prepend PDCP header and append MAC.
-  report_fatal_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}), "bad alloc");
-  report_fatal_error_if_not(pdu.append(std::array<uint8_t, 4>{}), "bad alloc");
-  // > Generate UL RRC Message (containing RRC Setup Complete).
-  f1ap_message f1ap_rrc_setup_complete =
-      test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
-  // > Send message to CU-CP
-  get_du(du_idx).push_tx_pdu(f1ap_rrc_setup_complete);
+  // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
+  get_du(du_idx).push_rrc_ul_dcch_message(du_ue_id, srb_id_t::srb1, std::move(pdu));
 
   return true;
 }

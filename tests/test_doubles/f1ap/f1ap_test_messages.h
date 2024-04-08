@@ -51,11 +51,18 @@ f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                  byte_buffer         cell_group_cfg = {},
                                                  byte_buffer         rrc_container  = {});
 
-/// \brief Generates F1AP UL RRC TRANSFER message.
+/// \brief Generates F1AP UL RRC TRANSFER message with provided RRC container.
 f1ap_message create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                             gnb_cu_ue_f1ap_id_t cu_ue_id,
                                             srb_id_t            srb_id,
                                             byte_buffer         rrc_container);
+
+/// \brief Generates F1AP UL RRC TRANSFER message with provided RRC UL DCCH message and PDCP header with provided SN.
+f1ap_message create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                            srb_id_t            srb_id,
+                                            uint32_t            pdcp_sn,
+                                            byte_buffer         ul_dcch_msg);
 
 /// \brief Generates dummy F1AP UE CONTEXT RELEASE REQUEST message.
 f1ap_message generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
