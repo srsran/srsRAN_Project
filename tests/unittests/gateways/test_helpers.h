@@ -11,6 +11,7 @@
 #pragma once
 
 #include <arpa/inet.h>
+#include <condition_variable>
 #include <gtest/gtest.h>
 #include <netdb.h>
 #include <netinet/in.h>
