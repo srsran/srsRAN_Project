@@ -79,9 +79,9 @@ void ta_manager::slot_indication(slot_point current_sl)
 int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
 {
   // Adjust this threshold as needed.
-  static const double num_std_deviations = 2.0;
+  static const double num_std_deviations = 1.95;
 
-  const auto n_ta_diff_meas = tag_n_ta_diff_measurements[tag_id];
+  const span<int64_t> n_ta_diff_meas = tag_n_ta_diff_measurements[tag_id];
 
   // Compute mean.
   const double sum  = std::accumulate(n_ta_diff_meas.begin(), n_ta_diff_meas.end(), 0.0);
@@ -96,7 +96,7 @@ int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
 
   int64_t  sum_n_ta_difference = 0;
   unsigned count               = 0;
-  for (const auto& meas : n_ta_diff_meas) {
+  for (const int64_t meas : n_ta_diff_meas) {
     // Filter out outliers.
     if (std::abs((double)meas - mean) <= num_std_deviations * std_dev) {
       sum_n_ta_difference += meas;
