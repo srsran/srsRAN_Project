@@ -238,8 +238,8 @@ f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap
                                                                   byte_buffer         ul_dcch_msg)
 {
   // > Prepend PDCP header and append MAC.
-  std::array<uint8_t, 2> pdcp_header{static_cast<uint8_t>((pdcp_sn >> 8U) & 0x0F),
-                                     static_cast<uint8_t>(pdcp_sn & 0xFF)};
+  std::array<uint8_t, 2> pdcp_header{static_cast<uint8_t>((pdcp_sn >> 8U) & 0x0fU),
+                                     static_cast<uint8_t>(pdcp_sn & 0xffU)};
   report_fatal_error_if_not(ul_dcch_msg.prepend(pdcp_header), "bad alloc");
 
   // > Append MAC
