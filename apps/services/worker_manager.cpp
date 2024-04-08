@@ -274,7 +274,7 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
   non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
   // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
   non_rt_pool.executors.push_back({"cu_up_strand",
-                                   task_priority::max,
+                                   task_priority::max - 1,
                                    {}, // define CU-UP strands below.
                                    task_worker_queue_size});
 
@@ -294,7 +294,7 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
   // Setup strands for the data plane of all the instantiated DUs.
   // One strand per DU, each with multiple priority levels.
   for (unsigned i = 0; i != nof_cells; ++i) {
-    high_prio_strands.push_back(strand{
+    low_prio_strands.push_back(strand{
         {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
          {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size},
          {fmt::format("du_rb_dl_exec#{}", i),
