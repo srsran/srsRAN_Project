@@ -37,27 +37,25 @@
 
 using namespace srsran;
 
-// Describes the benchmark configuration.
-static std::string              results_filename        = "";
-static double                   step_time_s             = 1;
-static std::string              log_level               = "info";
-static std::string              driver_name             = "uhd";
-static std::string              device_arguments        = "type=b200";
-static std::vector<std::string> tx_channel_arguments    = {};
-static std::vector<std::string> rx_channel_arguments    = {};
-static double                   sampling_rate_hz        = 61.44e6;
-static unsigned                 nof_tx_streams          = 1;
-static unsigned                 nof_rx_streams          = 1;
-static unsigned                 nof_channels_per_stream = 1;
-static double                   tx_gain                 = 20.0;
-static double                   tx_rx_freq              = 3.5e9;
-static double                   rx_gain_min             = 10.0;
-static double                   rx_gain_max             = 75.0;
-static double                   tx_rx_delay_s           = 0.002;
-static bool                     tx_active               = false;
-float                           avg_tx_power_dBFS       = -12.0F;
+// Describes the analysis configuration.
+static std::string              results_filename     = "";
+static double                   step_time_s          = 1;
+static std::string              log_level            = "info";
+static std::string              driver_name          = "uhd";
+static std::string              device_arguments     = "type=b200";
+static std::vector<std::string> tx_channel_arguments = {};
+static std::vector<std::string> rx_channel_arguments = {};
+static double                   sampling_rate_hz     = 61.44e6;
+static unsigned                 nof_channels         = 1;
+static double                   tx_gain              = 20.0;
+static double                   tx_rx_freq           = 3.5e9;
+static double                   rx_gain_min          = 10.0;
+static double                   rx_gain_max          = 75.0;
+static double                   tx_rx_delay_s        = 0.002;
+static bool                     tx_active            = false;
+static float                    avg_tx_power_dBFS    = -12.0F;
 
-static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC12;
+static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 
 // Measurement point information, containing the Rx gain, RF port number and the mean square value of the samples
 // relative to full scale (in dBFS).
@@ -81,7 +79,8 @@ static void usage(std::string prog)
 {
   fmt::print("Usage: {} [-D time] [-v level] [-o file name]\n", prog);
   fmt::print("\t-d Driver name. [Default {}]\n", driver_name);
-  fmt::print("\t-p Number of radio ports per stream. [Default {}]\n", nof_channels_per_stream);
+  fmt::print("\t-a Device arguments. [Default {}]\n", device_arguments);
+  fmt::print("\t-p Number of radio ports. [Default {}]\n", nof_channels);
   fmt::print("\t-s Sampling rate. [Default {}]\n", sampling_rate_hz);
   fmt::print("\t-f Tx/Rx frequency. [Default {}]\n", tx_rx_freq);
   fmt::print("\t-t Step time in seconds. [Default {}]\n", step_time_s);
@@ -100,14 +99,17 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "d:p:s:f:r:t:m:M:g:v:Th")) != -1) {
+  while ((opt = getopt(argc, argv, "d:a:p:s:f:r:t:m:M:g:v:Th")) != -1) {
     switch (opt) {
       case 'd':
         driver_name = std::string(optarg);
         break;
+      case 'a':
+        device_arguments = std::string(optarg);
+        break;
       case 'p':
         if (optarg != nullptr) {
-          nof_channels_per_stream = std::strtol(optarg, nullptr, 10);
+          nof_channels = std::strtol(optarg, nullptr, 10);
         }
         break;
       case 's':
@@ -184,33 +186,28 @@ static void write_results_csv(const std::vector<result_type>& results)
   }
 }
 
-using baseband_buffer_list = std::vector<baseband_gateway_buffer_dynamic>;
-
-static void resize_buffers(baseband_buffer_list& tx_baseband_buffers,
-                           baseband_buffer_list& rx_baseband_buffers,
-                           baseband_buffer_list& rx_measurement_buffers,
-                           unsigned              block_size,
-                           unsigned              total_nof_samples)
+// Resizes the TX and RX buffers. It also fills the TX buffer with random data samples.
+static void resize_buffers(baseband_gateway_buffer_dynamic& tx_baseband_buffer,
+                           baseband_gateway_buffer_dynamic& rx_baseband_buffer,
+                           baseband_gateway_buffer_dynamic& rx_measurement_buffer,
+                           unsigned                         block_size,
+                           unsigned                         total_nof_samples)
 {
   // Create a normal distribution for complex numbers with some power back-off.
   std::mt19937                      rgen(0);
   complex_normal_distribution<cf_t> dist(0.0, convert_dB_to_amplitude(avg_tx_power_dBFS));
 
-  for (unsigned stream_idx = 0; stream_idx != nof_tx_streams; ++stream_idx) {
-    tx_baseband_buffers[stream_idx].resize(block_size);
+  tx_baseband_buffer.resize(block_size);
 
-    // Generate random data in Tx buffer.
-    for (unsigned channel_idx = 0; channel_idx != nof_channels_per_stream; ++channel_idx) {
-      span<cf_t> data = tx_baseband_buffers[stream_idx][channel_idx];
-      for (cf_t& iq : data) {
-        iq = dist(rgen);
-      }
+  // Generate random data in Tx buffer.
+  for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
+    span<cf_t> data = tx_baseband_buffer[channel_idx];
+    for (cf_t& iq : data) {
+      iq = dist(rgen);
     }
   }
-  for (unsigned stream_idx = 0; stream_idx != nof_rx_streams; ++stream_idx) {
-    rx_baseband_buffers[stream_idx].resize(block_size);
-    rx_measurement_buffers[stream_idx].resize(total_nof_samples + block_size);
-  }
+  rx_baseband_buffer.resize(block_size);
+  rx_measurement_buffer.resize(total_nof_samples + block_size);
 }
 
 int main(int argc, char** argv)
@@ -238,51 +235,45 @@ int main(int argc, char** argv)
   config.power_ramping_us = 0;
   config.args             = device_arguments;
   config.log_level        = log_level;
-  radio_configuration::stream rx_stream_config;
 
-  // Create Tx stream and channels.
-  std::vector<baseband_gateway_buffer_dynamic> tx_baseband_buffers;
-  for (unsigned stream_idx = 0; stream_idx != nof_tx_streams; ++stream_idx) {
-    tx_baseband_buffers.emplace_back(nof_channels_per_stream, 0);
+  // Create transmit buffer for the stream.
+  baseband_gateway_buffer_dynamic tx_baseband_buffer(nof_channels, 0);
 
-    // For each channel in the stream...
-    radio_configuration::stream stream_config;
-    for (unsigned channel_idx = 0; channel_idx != nof_channels_per_stream; ++channel_idx) {
-      // Create channel configuration and append it to the previous ones.
-      radio_configuration::channel ch_config;
-      ch_config.freq.center_frequency_hz = tx_rx_freq;
-      ch_config.gain_dB                  = tx_gain;
-      if (!tx_channel_arguments.empty()) {
-        ch_config.args = tx_channel_arguments[stream_idx * nof_channels_per_stream + channel_idx];
-      }
-      stream_config.channels.emplace_back(ch_config);
+  // For each channel in the stream...
+  radio_configuration::stream tx_stream_config;
+  for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
+    // Create channel configuration and append it to the previous ones.
+    radio_configuration::channel ch_config;
+    ch_config.freq.center_frequency_hz = tx_rx_freq;
+    ch_config.gain_dB                  = tx_gain;
+    if (!tx_channel_arguments.empty()) {
+      ch_config.args = tx_channel_arguments[channel_idx];
     }
-    config.tx_streams.emplace_back(stream_config);
+    tx_stream_config.channels.emplace_back(ch_config);
   }
+  config.tx_streams.emplace_back(tx_stream_config);
 
+  // Compute the total number of samples to receive for each sweep point.
   uint64_t total_nof_samples = static_cast<uint64_t>(step_time_s * sampling_rate_hz);
 
-  // Create Rx stream and channels.
-  std::vector<baseband_gateway_buffer_dynamic> rx_baseband_buffers;
-  std::vector<baseband_gateway_buffer_dynamic> rx_measurement_buffers;
-  for (unsigned stream_idx = 0; stream_idx != nof_rx_streams; ++stream_idx) {
-    // Create receive baseband buffer for the stream.
-    rx_baseband_buffers.emplace_back(nof_channels_per_stream, 0);
-    rx_measurement_buffers.emplace_back(nof_channels_per_stream, total_nof_samples + 0);
+  // Create receive baseband buffer for the stream.
+  baseband_gateway_buffer_dynamic rx_baseband_buffer(nof_channels, 0);
 
-    // For each channel in the stream...
-    radio_configuration::stream stream_config;
-    for (unsigned channel_idx = 0; channel_idx != nof_channels_per_stream; ++channel_idx) {
-      radio_configuration::channel ch_config;
-      ch_config.freq.center_frequency_hz = tx_rx_freq;
-      ch_config.gain_dB                  = rx_gain_min;
-      if (!rx_channel_arguments.empty()) {
-        ch_config.args = rx_channel_arguments[stream_idx * nof_channels_per_stream + channel_idx];
-      }
-      stream_config.channels.emplace_back(ch_config);
+  // Create a measurement buffer that holds all received samples for a sweep point.
+  baseband_gateway_buffer_dynamic rx_measurement_buffer(nof_channels, total_nof_samples);
+
+  // For each channel in the stream...
+  radio_configuration::stream rx_stream_config;
+  for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
+    radio_configuration::channel ch_config;
+    ch_config.freq.center_frequency_hz = tx_rx_freq;
+    ch_config.gain_dB                  = rx_gain_min;
+    if (!rx_channel_arguments.empty()) {
+      ch_config.args = rx_channel_arguments[channel_idx];
     }
-    config.rx_streams.emplace_back(stream_config);
+    rx_stream_config.channels.emplace_back(ch_config);
   }
+  config.rx_streams.emplace_back(rx_stream_config);
 
   // Create notification handler.
   radio_notifier_spy notification_handler(log_level);
@@ -300,24 +291,21 @@ int main(int argc, char** argv)
     uint64_t sample_count = 0;
 
     // Set RX gain.
-    for (unsigned stream_idx = 0; stream_idx != nof_rx_streams; ++stream_idx) {
-      for (unsigned channel_idx = 0; channel_idx != nof_channels_per_stream; ++channel_idx) {
-        config.rx_streams[stream_idx].channels[channel_idx].gain_dB = rx_gain;
-      }
+    for (unsigned channel_idx = 0; channel_idx != nof_channels; ++channel_idx) {
+      config.rx_streams.front().channels[channel_idx].gain_dB = rx_gain;
     }
 
     // Create radio.
     radio = factory->create(config, *async_task_executor, notification_handler);
+    report_fatal_error_if_not(radio, "Failed to create radio.");
 
     // Determine the optimal block size.
     unsigned block_size = radio->get_baseband_gateway(0).get_receiver_optimal_buffer_size();
 
     // Resize the baseband buffers if necessary.
-    if (block_size != rx_baseband_buffers.front().get_nof_samples()) {
-      resize_buffers(tx_baseband_buffers, rx_baseband_buffers, rx_measurement_buffers, block_size, total_nof_samples);
+    if (block_size != rx_baseband_buffer.get_nof_samples()) {
+      resize_buffers(tx_baseband_buffer, rx_baseband_buffer, rx_measurement_buffer, block_size, total_nof_samples);
     }
-
-    report_fatal_error_if_not(radio, "Failed to create radio.");
 
     // Calculate starting time.
     double                     delay_s      = 0.1;
@@ -329,32 +317,28 @@ int main(int argc, char** argv)
 
     // Receive and transmit per block basis.
     while (!stop && sample_count < total_nof_samples) {
-      // For each stream...
-      for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
-        // Get transmitter data plane.
-        baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway(stream_id).get_transmitter();
+      // Get transmitter data plane.
+      baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway(0).get_transmitter();
 
-        // Get receiver data plane.
-        baseband_gateway_receiver& receiver = radio->get_baseband_gateway(stream_id).get_receiver();
+      // Get receiver data plane.
+      baseband_gateway_receiver& receiver = radio->get_baseband_gateway(0).get_receiver();
 
-        // Receive baseband.
-        static_vector<baseband_gateway_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);
-        rx_metadata[stream_id] = receiver.receive(rx_baseband_buffers[stream_id].get_writer());
+      // Receive baseband.
+      baseband_gateway_receiver::metadata rx_metadata = receiver.receive(rx_baseband_buffer.get_writer());
 
-        // Copy the received samples into the measurement buffer.
-        for (unsigned i_channel = 0; i_channel != nof_channels_per_stream; ++i_channel) {
-          span<cf_t> dest = rx_measurement_buffers[stream_id].get_writer()[i_channel].subspan(sample_count, block_size);
-          srsvec::copy(dest, rx_baseband_buffers[stream_id].get_reader()[i_channel]);
-        }
+      // Copy the received samples into the measurement buffer.
+      for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+        span<cf_t> dest = rx_measurement_buffer.get_writer()[i_channel].subspan(sample_count, block_size);
+        srsvec::copy(dest, rx_baseband_buffer.get_reader()[i_channel]);
+      }
 
-        if (tx_active) {
-          // Prepare transmit metadata.
-          baseband_gateway_transmitter_metadata tx_metadata;
-          tx_metadata.ts = rx_metadata.front().ts + tx_rx_delay_samples;
+      if (tx_active) {
+        // Prepare transmit metadata.
+        baseband_gateway_transmitter_metadata tx_metadata;
+        tx_metadata.ts = rx_metadata.ts + tx_rx_delay_samples;
 
-          // Transmit baseband.
-          transmitter.transmit(tx_baseband_buffers[stream_id].get_reader(), tx_metadata);
-        }
+        // Transmit baseband.
+        transmitter.transmit(tx_baseband_buffer.get_reader(), tx_metadata);
       }
 
       // Increment sample counter.
@@ -366,16 +350,14 @@ int main(int argc, char** argv)
       radio->stop();
     }
 
-    for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
-      for (unsigned i_channel = 0; i_channel != nof_channels_per_stream; ++i_channel) {
-        unsigned         i_port     = stream_id * nof_channels_per_stream + i_channel;
-        span<const cf_t> rx_samples = rx_measurement_buffers[stream_id].get_reader()[i_channel].first(sample_count);
+    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+      span<const cf_t> rx_samples = rx_measurement_buffer.get_reader()[i_channel].first(sample_count);
 
-        // Compute average power relative to the full scale value.
-        float avg_power_dBFS = convert_power_to_dB(srsvec::average_power(rx_samples));
+      // Compute average power relative to the full scale value.
+      float avg_power_dBFS = convert_power_to_dB(srsvec::average_power(rx_samples));
 
-        measurement_results.emplace_back(result_type(rx_gain, i_port, avg_power_dBFS));
-      }
+      // Store the measurement results for the current sweep point.
+      measurement_results.emplace_back(result_type(rx_gain, i_channel, avg_power_dBFS));
     }
   }
 
