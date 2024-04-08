@@ -256,17 +256,17 @@ amari 1UE 4x4 mimo:
     - *txrx-lib
     - *retina-needs
 
-# amari 4UE deb:
-#   extends: .zmq
-#   variables:
-#     TESTBED: "zmq_deb"
-#     MARKERS: "smoke"
-#     E2E_LOG_LEVEL: "info"
-#   needs:
-#     - job: "basic package"
-#       artifacts: true
-#     - *txrx-lib
-#     - *retina-needs
+amari 4UE deb:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_deb"
+    MARKERS: "smoke"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "basic package"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
 
 amari 32UE:
   extends: .zmq
