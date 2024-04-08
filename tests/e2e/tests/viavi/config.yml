@@ -23,14 +23,12 @@ cell_cfg:
   pdsch:
     mcs_table: qam256
     max_alloc_attempts: 8
-    max_pdschs_per_slot: 8
   ul_common:
     max_ul_grants_per_slot: 16
     max_pucchs_per_slot: 14
   pusch:
     mcs_table: qam256
     min_k2: 2
-    max_puschs_per_slot: 8
   tdd_ul_dl_cfg:
     nof_dl_symbols: 7
     nof_dl_slots: 7
