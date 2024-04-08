@@ -6,4 +6,5 @@
 # the distribution.
 #
 
+add_subdirectory(cu_cp)
 add_subdirectory(flexible_du)
