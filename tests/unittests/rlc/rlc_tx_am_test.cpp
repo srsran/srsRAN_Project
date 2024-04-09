@@ -12,7 +12,6 @@
 #include "rlc_test_helpers.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
-#include <queue>
 
 using namespace srsran;
 
