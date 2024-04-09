@@ -134,6 +134,12 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   for (srb_id_t srb_id : upd_req.srbs_to_setup) {
     // >> New or Modified SRB.
     lcid_t lcid = srb_id_to_lcid(srb_id);
+    if (std::any_of(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [lcid](const auto& item) {
+          return item.lcid == lcid;
+        })) {
+      // The SRB is already setup (e.g. SRB1 gets setup automatically).
+      continue;
+    }
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid = lcid;
 
