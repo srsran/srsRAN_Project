@@ -33,6 +33,8 @@ protected:
     }())
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
+    // Initialize resource grid.
+    res_grid.slot_indication({cfg_builder_params.scs_common, 0});
   }
 
   ue& add_ue(du_ue_index_t ue_index, const std::initializer_list<lcid_t>& lcids_to_activate)
