@@ -124,29 +124,12 @@ unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const
   return pending_bytes;
 }
 
-unsigned ue::pending_ul_newtx_bytes(bool srb_data_only) const
+unsigned ue::pending_ul_newtx_bytes() const
 {
   constexpr static unsigned SR_GRANT_BYTES = 512;
 
-  unsigned pending_bytes = 0;
-  if (srb_data_only) {
-    if (ue_ded_cfg == nullptr) {
-      return 0U;
-    }
-    auto lcid1_it = std::find_if(ue_ded_cfg->logical_channels().begin(),
-                                 ue_ded_cfg->logical_channels().end(),
-                                 [](const auto& lc) { return lc.lcid == LCID_SRB1; });
-    if (lcid1_it != ue_ded_cfg->logical_channels().end()) {
-      pending_bytes = ul_lc_ch_mgr.pending_bytes(lcid1_it->lc_group);
-    }
-    // NOTE: this includes also the case of lcid1_it == ue_ded_cfg->logical_channels().end().
-    if (pending_bytes == 0) {
-      return 0U;
-    }
-  } else {
-    // Sum the last BSRs.
-    pending_bytes = ul_lc_ch_mgr.pending_bytes();
-  }
+  // Sum the last BSRs.
+  unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes();
 
   // Subtract the bytes already allocated in UL HARQs.
   for (const ue_cell* ue_cc : ue_cells) {

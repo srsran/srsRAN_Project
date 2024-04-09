@@ -51,7 +51,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                         "No UCI bits should be present for fallback UEs.");
   }
 
-  // For fallback UEs, \ref ue_cell_cfg is not give; in that case, we set this to a default value of
+  // For fallback UEs, \ref ue_cell_cfg is not given; in that case, we set this to a default value of
   // alpha_scaling_opt::f1, as this is not used.
   ulsch_info.alpha_scaling = alpha_scaling_to_float(
       ue_cell_cfg != nullptr

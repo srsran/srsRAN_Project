@@ -306,7 +306,7 @@ protected:
     bench->ue_db[ue_idx].handle_bsr_indication(msg);
 
     // Notify scheduler of DL buffer state.
-    bench->fallback_sched.handle_ul_bsr_indication(ue_idx, buffer_size);
+    bench->fallback_sched.handle_ul_bsr_indication(ue_idx, msg);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -719,7 +719,7 @@ protected:
   public:
     enum class ue_state { idle, waiting_for_tx, waiting_for_ack, waiting_for_retx, reset_harq };
 
-    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_retx* parent_) :
+    explicit ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_retx* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
       slot_update_srb_traffic = generate_srb1_next_update_delay();
@@ -813,7 +813,7 @@ protected:
       }
     }
 
-    slot_point generate_srb1_next_update_delay()
+    slot_point generate_srb1_next_update_delay() const
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
       return slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
@@ -857,7 +857,7 @@ TEST_P(fallback_scheduler_retx, test_scheduling_for_srb_retransmissions_multi_ue
 
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
-    ues_testers.emplace_back(ue_retx_tester(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this));
+    ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
   }
 
   for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
@@ -899,7 +899,9 @@ protected:
   class ue_retx_tester
   {
   public:
-    ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_srb1_segmentation* parent_) :
+    explicit ue_retx_tester(const cell_configuration&             cell_cfg_,
+                            ue&                                   test_ue_,
+                            fallback_scheduler_srb1_segmentation* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
       slot_update_srb_traffic = generate_srb1_next_update_delay();
@@ -1023,7 +1025,7 @@ protected:
     }
 
     unsigned   generate_srb1_buffer_size() { return test_rgen::uniform_int(128U, parent->MAX_MAC_SRB0_SDU_SIZE); }
-    slot_point generate_srb1_next_update_delay()
+    slot_point generate_srb1_next_update_delay() const
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
       return slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
@@ -1062,7 +1064,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
-    ues_testers.emplace_back(ue_retx_tester(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this));
+    ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
   }
 
   for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
@@ -1106,7 +1108,7 @@ protected:
   class ue_ul_tester
   {
   public:
-    ue_ul_tester(const cell_configuration& cell_cfg_, ue& test_ue_, ul_fallback_scheduler_tester* parent_) :
+    explicit ue_ul_tester(const cell_configuration& cell_cfg_, ue& test_ue_, ul_fallback_scheduler_tester* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
       slot_generate_srb_traffic = slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
@@ -1127,7 +1129,7 @@ protected:
 
         auto& h_ul = test_ue.get_pcell().harqs.ul_harq(h_id);
         if (h_ul.is_waiting_ack() and h_ul.slot_ack() == sl) {
-          test_ue.pending_ul_newtx_bytes(true);
+          test_ue.pending_ul_newtx_bytes();
           bool           ack             = ack_harq_process(sl, h_ul);
           const unsigned delivered_bytes = ack ? h_ul.last_tx_params().tbs_bytes - 10U : 0U;
           buffer_bytes > delivered_bytes ? buffer_bytes -= delivered_bytes : buffer_bytes = 0U;
@@ -1173,7 +1175,7 @@ TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
 {
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
-    ues_testers.emplace_back(ue_ul_tester(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this));
+    ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
   }
 
   for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {

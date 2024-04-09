@@ -145,7 +145,7 @@ public:
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
-  unsigned pending_ul_newtx_bytes(bool srb_data_only = false) const;
+  unsigned pending_ul_newtx_bytes() const;
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;

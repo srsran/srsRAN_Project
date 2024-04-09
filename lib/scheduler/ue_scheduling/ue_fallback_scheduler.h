@@ -37,7 +37,7 @@ public:
 
   /// Handles UL BSR indication reported by UE.
   /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
-  void handle_ul_bsr_indication(du_ue_index_t ue_index, unsigned srb_buffer_bytes);
+  void handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.

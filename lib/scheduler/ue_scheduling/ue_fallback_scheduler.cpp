@@ -89,7 +89,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     auto&            u         = ues[*next_ue];
     ul_harq_process* h_ul_retx = u.get_pcell().harqs.find_pending_ul_retx();
-    if (h_ul_retx == nullptr and not u.pending_ul_newtx_bytes(true)) {
+    if (h_ul_retx == nullptr and not u.pending_ul_newtx_bytes()) {
       ++next_ue;
       continue;
     }
@@ -204,19 +204,27 @@ void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t 
   }
 }
 
-void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, unsigned srb_buffer_bytes)
+void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind)
 {
   if (not ues.contains(ue_index)) {
     logger.error("ue_index={} not found in the scheduler", ue_index);
     return;
   }
 
+  const auto* srb_lcg_report =
+      std::find_if(bsr_ind.reported_lcgs.begin(), bsr_ind.reported_lcgs.end(), [](const auto& lcg_report) {
+        // We assume this the SRB LCG ID is 0.
+        const lcg_id_t srb_lcg_id = uint_to_lcg_id(0U);
+        return lcg_report.lcg_id == srb_lcg_id;
+      });
+  const unsigned bsr_bytes = srb_lcg_report != bsr_ind.reported_lcgs.end() ? srb_lcg_report->nof_bytes : 0U;
+
   auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
 
   // For UL UEs we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
   // that purpose. Thus, compared to the DL case, the only operation is needed for the UL is to add a new UE to the
   // pending UL UEs list.
-  if (ue_it == pending_ul_ues.end() and srb_buffer_bytes != 0) {
+  if (ue_it == pending_ul_ues.end() and bsr_bytes != 0) {
     pending_ul_ues.emplace_back(ue_index);
   }
 }
@@ -992,7 +1000,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
     sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table);
     sch_mcs_description ul_mcs_cfg         = pusch_mcs_get_config(fallback_mcs_table, mcs, false);
 
-    unsigned pending_bytes = u.pending_ul_newtx_bytes(true);
+    unsigned pending_bytes = u.pending_ul_newtx_bytes();
 
     sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                     pusch_td.symbols.length(),
@@ -1121,7 +1129,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
                           cell_cfg.ul_cfg_common.init_ul_bwp,
                           pdcch.dci.c_rnti_f0_0,
                           ue_grant_crbs,
-                          is_retx);
+                          not is_retx);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul.save_alloc_params(pdcch.dci.type, msg.pusch_cfg);

@@ -59,8 +59,6 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
 srsran::get_pusch_td_resource_indices(const ue_resource_grid_view& res_grid, const ue_repository& ues)
 {
-  // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
-
   // NOTE: All UEs use the same PUSCH Time Domain Resource configuration.
   const ue&                    ref_u    = **ues.begin();
   const ue_cell_configuration& ue_cfg   = ref_u.get_pcell().cfg();
