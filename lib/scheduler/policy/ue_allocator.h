@@ -37,7 +37,6 @@ struct ue_pusch_grant {
   du_cell_index_t   cell_index;
   harq_id_t         h_id;
   crb_interval      crbs;
-  ofdm_symbol_range symbols;
   unsigned          time_res_index;
   search_space_id   ss_id    = to_search_space_id(1);
   aggregation_level aggr_lvl = aggregation_level::n4;

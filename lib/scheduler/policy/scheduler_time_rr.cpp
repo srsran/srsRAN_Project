@@ -431,15 +431,8 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
       if (are_crbs_valid) {
         const aggregation_level aggr_lvl =
             ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *ss, false);
-        const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h->id,
-                                                                                  ue_grant_crbs,
-                                                                                  pusch_td.symbols,
-                                                                                  pusch_td_res_idx,
-                                                                                  ss->cfg->get_id(),
-                                                                                  aggr_lvl,
-                                                                                  mcs_prbs.mcs});
+        const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
+            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_td_res_idx, ss->cfg->get_id(), aggr_lvl, mcs_prbs.mcs});
         // If the allocation failed due to invalid parameters, we continue the iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;
