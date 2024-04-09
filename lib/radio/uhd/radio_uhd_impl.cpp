@@ -267,13 +267,13 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set GPS time if GPSDO is selected.
   if (radio_config.clock.sync == radio_configuration::clock_sources::source::GPSDO) {
-    set_time_to_gps_time();
-
     if (!wait_sensor_locked("gps_locked", true, CLOCK_TIMEOUT_MS)) {
       // It blocks until sync source is locked.
       fmt::print("Could not lock reference GPS time source.\n");
       return;
     }
+
+    set_time_to_gps_time();
   }
 
   // Wait until external reference / GPS is locked.
