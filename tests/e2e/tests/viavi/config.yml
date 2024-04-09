@@ -33,3 +33,8 @@ cell_cfg:
     nof_dl_symbols: 7
     nof_dl_slots: 7
     nof_ul_slots: 2
+
+cu_up: 
+  gtpu_queue_size: 32768
+  warn_on_drop: true
+  gtpu_reordering_timer: 20

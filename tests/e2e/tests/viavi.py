@@ -99,14 +99,25 @@ def test_viavi_manual(
         log_search=log_search,
         max_puschs_per_slot=max_puschs_per_slot,
         max_pdschs_per_slot=max_pdschs_per_slot,
+        enable_qos=False,
+        warning_as_errors=True,
     )
 
 
 @mark.parametrize(
-    "campaign_filename, test_name, test_timeout, max_pdschs_per_slot, max_puschs_per_slot, post_commands",
+    "campaign_filename, test_name, test_timeout, max_pdschs_per_slot, max_puschs_per_slot, enable_qos, \
+warning_as_errors, post_commands",
     (
         param(
-            "C:\\ci\\CI 4x4 ORAN-FH.xml", "1UE static DL + UL UDP - Dell", 45 * 60, 8, 8, "", id="1UE Bidirectional UDP"
+            "C:\\ci\\CI 4x4 ORAN-FH.xml",
+            "1UE static DL + UL UDP - Dell",
+            45 * 60,
+            8,
+            8,
+            False,
+            True,
+            "",
+            id="1UE Bidirectional UDP",
         ),
         param(
             "C:\\ci\\CI 4x4 ORAN-FH.xml",
@@ -114,6 +125,19 @@ def test_viavi_manual(
             45 * 60,
             8,
             8,
+            False,
+            True,
+            "",
+            id="32UE Bidirectional UDP",
+        ),
+        param(
+            "C:\\ci\\CI 4x4 ORAN-FH.xml",
+            "1UE static DL TCP low segment - Dell",
+            45 * 60,
+            8,
+            8,
+            True,
+            False,
             "",
             id="32UE Bidirectional UDP",
         ),
@@ -137,6 +161,8 @@ def test_viavi(
     max_pdschs_per_slot: int,
     max_puschs_per_slot: int,
     post_commands: str,
+    warning_as_errors: bool,
+    enable_qos: bool,
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -167,6 +193,8 @@ def test_viavi(
         post_commands=post_commands,
         max_pdschs_per_slot=max_pdschs_per_slot,
         max_puschs_per_slot=max_puschs_per_slot,
+        warning_as_errors=warning_as_errors,
+        enable_qos=enable_qos,
     )
 
 
@@ -187,11 +215,12 @@ def _test_viavi(
     max_puschs_per_slot: int,
     max_pdschs_per_slot: int,
     # Test extra params
+    warning_as_errors: bool,
+    enable_qos: bool,
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = False,
     post_commands: str = "",
 ):
     """
@@ -215,6 +244,7 @@ def _test_viavi(
                 "prach_config_index": 159,
                 "max_puschs_per_slot": max_puschs_per_slot,
                 "max_pdschs_per_slot": max_pdschs_per_slot,
+                "enable_qos": enable_qos,
             },
             "templates": {"extra": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
