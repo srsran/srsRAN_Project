@@ -81,7 +81,9 @@ srsran::get_pusch_td_res_indices_common(const cell_configuration& cell_cfg, slot
 {
   // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
-  const unsigned                                                        min_k1 = 4U;
   return compute_pusch_td_resource_indices(
-      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list, cell_cfg, pdcch_slot, min_k1);
+      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
+      cell_cfg,
+      pdcch_slot,
+      cell_cfg.expert_cfg.ue.min_k1);
 }

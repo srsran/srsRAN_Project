@@ -1779,6 +1779,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;
   out_cfg.ue.max_pucchs_per_slot    = cell.ul_common_cfg.max_pucchs_per_slot;
+  out_cfg.ue.min_k1                 = cell.pucch_cfg.min_k1;
 
   // RA parameters.
   const prach_appconfig& prach = cell.prach_cfg;

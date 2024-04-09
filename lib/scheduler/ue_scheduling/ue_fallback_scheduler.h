@@ -44,6 +44,18 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
+  // Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should exit, true otherwise.
+  bool schedule_dl_retx(cell_resource_allocator& res_alloc);
+
+  // Helper that schedules new UL SRB1 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  void schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc);
+
+  // Helper that schedules new DL SRB0 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  bool schedule_dl_new_tx_srb0(cell_resource_allocator& res_alloc);
+
+  // Helper that schedules new DL SRB1 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  void schedule_dl_new_tx_srb1(cell_resource_allocator& res_alloc);
+
   /// Size of the ring buffer used to store the slots where the scheduler has found no PDCCH/PDSCH resources.
   static const size_t FALLBACK_SCHED_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1 + NTN_CELL_SPECIFIC_KOFFSET_MAX);
@@ -67,7 +79,7 @@ private:
                                 optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
   /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
-  bool schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
+  void schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
 
   struct sched_srb_results {
     dl_harq_process* h_dl = nullptr;

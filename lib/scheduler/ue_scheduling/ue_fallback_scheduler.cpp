@@ -41,7 +41,11 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   // value of k1, passed through the expert config.
   // NOTE 2: Although the TS 38.213, Section 9.2.3 specifies that the k1 possible values are {1, ..., 8}, some UEs do
   // not handle well the value k1=8, which can result in collision between PRACH and PUCCH.
-  dci_1_0_k1_values = {4, 5, 6, 7};
+  const unsigned max_k1 = 7U;
+  srsran_sanity_check(expert_cfg.min_k1 <= max_k1, "Invalid min_k1 value");
+  for (unsigned k1_value = expert_cfg.min_k1; k1_value <= max_k1; ++k1_value) {
+    dci_1_0_k1_values.push_back(k1_value);
+  }
   slots_with_no_pdxch_space.fill(false);
 }
 
@@ -60,115 +64,28 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Although the scheduler can schedule on future slots, we run the scheduler only in DL enabled slots.
+  // Although the scheduler can schedule on future slots (for DL), we run the scheduler only in DL enabled slots.
   if (not cell_cfg.is_dl_enabled(sched_ref_slot)) {
     return;
   }
 
-  for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
-    auto& u    = *ues.find(next_ue_harq_retx.ue_index);
-    auto* h_dl = next_ue_harq_retx.h_dl;
+  // Schedule DL retransmissions before new any other DL or UL transmissions.
+  bool stop_dl_scheduling = not schedule_dl_retx(res_alloc);
 
-    if (h_dl->has_pending_retx()) {
-      optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
-      // This is the case of the scheduler reaching the maximum number of sched attempts.
-      if (outcome == sched_outcome::exit_scheduler) {
-        return;
-      }
-    }
-  }
+  // Schedule UL (retx and new TX) before DL new TX, as the DL can take advantage from scheduling on next slots.
+  schedule_ul_new_tx_and_retx(res_alloc);
 
-  // Schedule UL before DL, as the DL can take advantage from scheduling on next slots.
-  for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(*next_ue)) {
-      next_ue = pending_ul_ues.erase(next_ue);
-      continue;
-    }
-
-    auto&            u         = ues[*next_ue];
-    ul_harq_process* h_ul_retx = u.get_pcell().harqs.find_pending_ul_retx();
-    if (h_ul_retx == nullptr and not u.pending_ul_newtx_bytes()) {
-      ++next_ue;
-      continue;
-    }
-    if (not schedule_ul_ue(res_alloc, u, h_ul_retx)) {
-      // Continue with DL UE if this is not the right slot for UL scheduling.
-      break;
-    }
-    ++next_ue;
+  if (stop_dl_scheduling) {
+    return;
   }
 
   // Schedule SRB0 messages before SRB1, as we prioritize SRB0 over SRB1.
-  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
-    if (not next_ue->is_srb0) {
-      ++next_ue;
-      continue;
-    }
-
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(next_ue->ue_index)) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      continue;
-    }
-
-    auto&                          u                  = ues[next_ue->ue_index];
-    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    if (not u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
-      ++next_ue;
-      continue;
-    }
-
-    sched_outcome outcome = schedule_dl_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
-    if (outcome == sched_outcome::success) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-    } else if (outcome == sched_outcome::next_ue) {
-      ++next_ue;
-    } else {
-      return;
-    }
+  if (not schedule_dl_new_tx_srb0(res_alloc)) {
+    return;
   }
 
   // Keep SRB1 with lower priority than SRB0.
-  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
-    if (next_ue->is_srb0) {
-      ++next_ue;
-      continue;
-    }
-
-    // The UE might have been deleted in the meantime, check if still exists.
-    if (not ues.contains(next_ue->ue_index)) {
-      next_ue = pending_dl_ues_new_tx.erase(next_ue);
-      continue;
-    }
-
-    auto&                          u                  = ues[next_ue->ue_index];
-    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-    // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
-    // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
-    // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
-    // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
-    if (not has_pending_bytes_for_srb1(u.ue_index)) {
-      ++next_ue;
-      continue;
-    }
-
-    sched_outcome outcome = schedule_dl_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
-    if (outcome == sched_outcome::success) {
-      // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same UE,
-      // if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try again with
-      // the same scheduler, but starting from the next available slot.
-      if (not has_pending_bytes_for_srb1(u.ue_index)) {
-        ++next_ue;
-      }
-
-    } else if (outcome == sched_outcome::next_ue) {
-      ++next_ue;
-    } else {
-      return;
-    }
-  }
+  schedule_dl_new_tx_srb1(res_alloc);
 }
 
 void ue_fallback_scheduler::handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index,
@@ -226,6 +143,119 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
   // pending UL UEs list.
   if (ue_it == pending_ul_ues.end() and bsr_bytes != 0) {
     pending_ul_ues.emplace_back(ue_index);
+  }
+}
+
+bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
+{
+  for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
+    auto& u    = *ues.find(next_ue_harq_retx.ue_index);
+    auto* h_dl = next_ue_harq_retx.h_dl;
+
+    if (h_dl->has_pending_retx()) {
+      optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+      sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
+      // This is the case of the scheduler reaching the maximum number of sched attempts.
+      if (outcome == sched_outcome::exit_scheduler) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc)
+{
+  // Processes all the UL UE at once, including UE with new transmissions and UE with retransmissions.
+  for (auto next_ue = pending_ul_ues.begin(); next_ue != pending_ul_ues.end();) {
+    // next_ue must be in the ues list, else it would have been removed by the \ref slot_indication() function.
+    auto&            u         = ues[*next_ue];
+    ul_harq_process* h_ul_retx = u.get_pcell().harqs.find_pending_ul_retx();
+    if (h_ul_retx == nullptr and not u.pending_ul_newtx_bytes()) {
+      ++next_ue;
+      continue;
+    }
+    schedule_ul_ue(res_alloc, u, h_ul_retx);
+    ++next_ue;
+  }
+}
+
+bool ue_fallback_scheduler::schedule_dl_new_tx_srb0(cell_resource_allocator& res_alloc)
+{
+  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
+    if (not next_ue->is_srb0) {
+      ++next_ue;
+      continue;
+    }
+
+    // The UE might have been deleted in the meantime, check if still exists.
+    if (not ues.contains(next_ue->ue_index)) {
+      next_ue = pending_dl_ues_new_tx.erase(next_ue);
+      continue;
+    }
+
+    auto&                          u                  = ues[next_ue->ue_index];
+    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    if (not u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
+      ++next_ue;
+      continue;
+    }
+
+    sched_outcome outcome = schedule_dl_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
+    if (outcome == sched_outcome::success) {
+      next_ue = pending_dl_ues_new_tx.erase(next_ue);
+    } else if (outcome == sched_outcome::next_ue) {
+      ++next_ue;
+    } else {
+      // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
+      // returns \ref exit_scheduler.
+      return false;
+    }
+  }
+  return true;
+}
+
+void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res_alloc)
+{
+  for (auto next_ue = pending_dl_ues_new_tx.begin(); next_ue != pending_dl_ues_new_tx.end();) {
+    if (next_ue->is_srb0) {
+      ++next_ue;
+      continue;
+    }
+
+    // The UE might have been deleted in the meantime, check if still exists.
+    if (not ues.contains(next_ue->ue_index)) {
+      next_ue = pending_dl_ues_new_tx.erase(next_ue);
+      continue;
+    }
+
+    auto&                          u                  = ues[next_ue->ue_index];
+    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
+    // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
+    // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
+    // re-configuration). Only after the SRB1 buffer of that UE is emptied, we move on to the next UE.
+    if (not has_pending_bytes_for_srb1(u.ue_index)) {
+      ++next_ue;
+      continue;
+    }
+
+    sched_outcome outcome = schedule_dl_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
+    if (outcome == sched_outcome::success) {
+      // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same UE,
+      // if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try again with
+      // the same scheduler, but starting from the next available slot.
+      if (not has_pending_bytes_for_srb1(u.ue_index)) {
+        ++next_ue;
+      }
+
+    } else if (outcome == sched_outcome::next_ue) {
+      ++next_ue;
+    } else {
+      // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
+      // returns \ref exit_scheduler.
+      return;
+    }
   }
 }
 
@@ -842,14 +872,11 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
   return srb1_bytes_allocated;
 }
 
-bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
+void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
 {
+  // The caller ensures the slot is Ul enabled.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   slot_point                          pdcch_slot  = pdcch_alloc.slot;
-
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_alloc.slot)) {
-    return false;
-  }
 
   // Fetch applicable PUSCH Time Domain resource index list.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
@@ -936,12 +963,12 @@ bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
 
       // If the function return true, the PUSCH allocation was successful. We then move the next UE.
       if (schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx)) {
-        return true;
+        return;
       }
     }
   }
   // Move to the next UE if the allocation was unsuccessful.
-  return true;
+  return;
 }
 
 bool ue_fallback_scheduler::schedule_ul_srb(ue&                                          u,
