@@ -44,7 +44,8 @@ public:
   bool run_rrc_reestablishment(gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_rnti, rnti_t old_rnti_, pci_t old_pci_)
   {
     // Generate RRC Reestablishment Request.
-    byte_buffer rrc_container = pack_ul_ccch_msg(create_rrc_reestablishment_request(old_rnti_, old_pci_));
+    byte_buffer rrc_container =
+        pack_ul_ccch_msg(create_rrc_reestablishment_request(old_rnti_, old_pci_, "0011000101110000"));
 
     // Send Initial UL RRC Message to CU-CP.
     f1ap_message f1ap_init_ul_rrc_msg =
@@ -54,7 +55,7 @@ public:
     // Wait for DL RRC message transfer
     f1ap_message f1ap_pdu;
     bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    EXPECT_TRUE(result);
+    report_fatal_error_if_not(result, "F1AP DL RRC Message Transfer with Msg4 not sent to DU");
 
     // Check that the received message is a DL RRC Message Transfer with RRC Reestablishment.
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu), "Invalid Msg4");
@@ -81,11 +82,27 @@ public:
     get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
   }
 
+  void ue_sends_rrc_reest_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
+  {
+    // Generate RRC Reestablishment Complete.
+    byte_buffer pdu = pack_ul_dcch_msg(create_rrc_reestablishment_complete());
+
+    // Prepend PDCP header and append MAC.
+    EXPECT_TRUE(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x00U}));
+    EXPECT_TRUE(pdu.append(std::array<uint8_t, 4>{0x01, 0x1d, 0x37, 0x38}));
+
+    // Send UL RRC Message to CU-CP.
+    f1ap_message f1ap_ul_rrc_msg =
+        test_helpers::create_ul_rrc_message_transfer(du_ue_id, cu_ue_id, srb_id_t::srb1, std::move(pdu));
+    get_du(du_idx).push_ul_pdu(f1ap_ul_rrc_msg);
+  }
+
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
   gnb_du_ue_f1ap_id_t old_du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              old_crnti    = to_rnti(0x4601);
+  pci_t               old_pci      = 0;
 };
 
 TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishment_fails)
@@ -94,7 +111,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishme
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
 
   // Reestablishment Request to RNTI that does not exist.
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4603), 0))
+  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4603), old_pci))
       << "RRC setup should have been sent";
 
   // UE sends RRC Setup Complete
@@ -110,7 +127,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_ngap_context_then_reestabl
   // Connect UE 0x4601.
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
 
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4601), 0))
+  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
       << "RRC setup should have been sent";
 
   // old UE should not be removed at this stage.
@@ -137,13 +154,13 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_ngap_context_then_reestabl
 TEST_F(cu_cp_reestablishment_test,
        when_old_ue_has_no_drb_then_reestablishment_fails_and_release_request_is_sent_for_old_ue)
 {
-  // Attach UE 0x4601.
+  // Connect UE 0x4601.
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
   EXPECT_TRUE(authenticate_ue(du_idx, old_du_ue_id, uint_to_amf_ue_id(0)));
   EXPECT_TRUE(setup_ue_security(du_idx, old_du_ue_id));
 
   // Run Reestablishment.
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4601), 0))
+  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
       << "RRC setup should have been sent";
 
   // old UE should not be removed at this stage.
@@ -166,5 +183,21 @@ TEST_F(cu_cp_reestablishment_test,
 
   // STATUS: old UE should not be removed at this stage (Still waiting for AMF UE CONTEXT RELEASE COMMAND).
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
+}
+
+TEST_F(cu_cp_reestablishment_test,
+       when_old_ue_has_drb_then_reestablishment_succeeds_and_no_ngap_release_request_is_sent_for_old_ue)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+
+  // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_TRUE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+
+  // old UE should not be removed at this stage.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
 }

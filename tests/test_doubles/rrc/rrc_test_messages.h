@@ -21,10 +21,18 @@ namespace srsran {
 asn1::rrc_nr::ul_ccch_msg_s create_rrc_setup_request();
 
 /// \brief Generates a dummy RRC Reestablishment Request message.
-asn1::rrc_nr::ul_ccch_msg_s create_rrc_reestablishment_request(rnti_t old_crnti, pci_t old_pci);
+asn1::rrc_nr::ul_ccch_msg_s create_rrc_reestablishment_request(rnti_t             old_crnti,
+                                                               pci_t              old_pci,
+                                                               const std::string& short_mac_i = "1100011101010100");
 
 /// \brief Generates a dummy RRC Setup Complete message.
 asn1::rrc_nr::ul_dcch_msg_s create_rrc_setup_complete();
+
+/// \brief Generates a dummy RRC Reestablishment Complete message.
+asn1::rrc_nr::ul_dcch_msg_s create_rrc_reestablishment_complete();
+
+/// \brief Generates a dummy RRC Reconfiguration Complete message.
+asn1::rrc_nr::ul_dcch_msg_s create_rrc_reconfiguration_complete();
 
 /// \brief Packs an RRC UL-CCCH message into a byte buffer.
 byte_buffer pack_ul_ccch_msg(const asn1::rrc_nr::ul_ccch_msg_s& msg);

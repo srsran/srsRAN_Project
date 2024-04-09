@@ -22,6 +22,13 @@ using namespace srsran;
   if (not(cond))                                                                                                       \
     return false;
 
+static bool is_packable(const f1ap_message& msg)
+{
+  byte_buffer   temp_pdu;
+  asn1::bit_ref bref{temp_pdu};
+  return msg.pdu.pack(bref) == asn1::SRSASN_SUCCESS;
+}
+
 bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&           msg,
                                                              rnti_t                        rnti,
                                                              optional<nr_cell_global_id_t> nci)
@@ -43,13 +50,7 @@ bool srsran::test_helpers::is_valid_dl_rrc_message_transfer(const f1ap_message& 
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-
-  // It is packable.
-  {
-    byte_buffer   temp_pdu;
-    asn1::bit_ref bref{temp_pdu};
-    TRUE_OR_RETURN(msg.pdu.pack(bref) == asn1::SRSASN_SUCCESS);
-  }
+  TRUE_OR_RETURN(is_packable(msg));
 
   return true;
 }
@@ -79,7 +80,7 @@ bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap
 
     // RRC Reestablishment.
     TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id_present);
-    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id != rrcmsg->old_gnb_du_ue_f1ap_id);
+    TRUE_OR_RETURN(rrcmsg->gnb_du_ue_f1ap_id != rrcmsg->old_gnb_du_ue_f1ap_id);
   }
 
   return true;
@@ -108,5 +109,14 @@ bool srsran::test_helpers::is_ue_context_setup_response_valid(const f1ap_message
   if (not resp->drbs_setup_list_present) {
     return false;
   }
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_ue_context_modification_request(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  TRUE_OR_RETURN(is_packable(msg));
+
   return true;
 }

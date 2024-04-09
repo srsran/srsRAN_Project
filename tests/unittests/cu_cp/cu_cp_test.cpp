@@ -506,57 +506,6 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
 }
 
-TEST_F(cu_cp_test, when_old_ue_not_fully_attached_then_reestablishment_rejected)
-{
-  // Test preamble
-  du_index_t          du_index  = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti     = to_rnti(0x4601);
-  pci_t               pci       = 1;
-  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  // Connect AMF, DU, CU-UP
-  test_preamble_all_connected(du_index, pci);
-  // Attach UE
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
-
-  // Attach second UE with RRC Reestablishment Request
-  {
-    gnb_cu_ue_f1ap_id_t cu_ue_id_2 = int_to_gnb_cu_ue_f1ap_id(1);
-    gnb_du_ue_f1ap_id_t du_ue_id_2 = int_to_gnb_du_ue_f1ap_id(1);
-    rnti_t              crnti_2    = to_rnti(0x4602);
-
-    // Create Initial UL RRC message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id_2, crnti_2);
-
-    init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container =
-        generate_valid_rrc_reestablishment_request_pdu(pci, crnti, "1100011101010100");
-
-    // Inject Initial UL RRC message
-    test_logger.info("Injecting Initial UL RRC message (RRC Reestablishment Request)");
-    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
-
-    // Inject UL RRC message containing RRC Setup Complete
-    f1ap_message ul_rrc_msg =
-        generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, generate_rrc_setup_complete());
-    test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
-    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
-
-    // check that the UE Context Release Request was sent to the AMF
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
-              asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
-              asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
-              asn1::ngap::cause_c::types_opts::options::radio_network);
-  }
-
-  // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
-  ASSERT_EQ(cu_cp_obj->get_metrics_handler().request_metrics_report().ues.size(), 2);
-}
-
 TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
 {
   // Test preamble

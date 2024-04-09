@@ -292,6 +292,29 @@ f1ap_message srsran::test_helpers::generate_ue_context_release_complete(gnb_cu_u
   return ue_ctxt_rel_complete_msg;
 }
 
+f1ap_message srsran::test_helpers::generate_ue_context_modification_response(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                             gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                             rnti_t              crnti)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_successful_outcome();
+  pdu.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+
+  auto& ue_context_mod_resp                        = pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp->gnb_cu_ue_f1ap_id           = (unsigned)cu_ue_id;
+  ue_context_mod_resp->gnb_du_ue_f1ap_id           = (unsigned)du_ue_id;
+  ue_context_mod_resp->c_rnti_present              = true;
+  ue_context_mod_resp->c_rnti                      = (unsigned)crnti;
+  ue_context_mod_resp->drbs_setup_mod_list_present = true;
+
+  ue_context_mod_resp->drbs_setup_mod_list.push_back({});
+  ue_context_mod_resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+  ue_context_mod_resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item().drb_id = 1;
+
+  return pdu;
+}
+
 byte_buffer srsran::test_helpers::extract_dl_dcch_msg(const byte_buffer& rrc_container)
 {
   byte_buffer pdu = rrc_container.deep_copy().value();

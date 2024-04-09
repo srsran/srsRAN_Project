@@ -67,10 +67,17 @@ public:
   /// Run E1 setup procedure to completion
   bool run_e1_setup(unsigned cu_up_idx);
 
-  /// Connect a new UE to CU-CP through a provided DU.
+  /// Connect a new UE to CU-CP through a provided DU. It runs the full RRC setup procedure.
   bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  /// Runs the NAS Authentication for a given UE.
   bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
+  /// Runs the Security Mode procedure for a given UE.
   bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  /// Runs RRC setup, authentication, security, RRC Reconfiguration for a given UE.
+  bool attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti, amf_ue_id_t amf_ue_id);
+
+  bool
+  reestablish_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_crnti, rnti_t old_crnti, pci_t old_pci);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -90,6 +97,8 @@ public:
                             std::chrono::milliseconds timeout = std::chrono::milliseconds{500});
 
   const cu_cp_test_env_params& get_test_env_params() const { return params; }
+
+  const ue_context* find_ue_context(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id) const;
 
 private:
   class worker_manager;
