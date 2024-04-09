@@ -39,6 +39,9 @@ constexpr uint32_t sec_key_len = 32;
 /// Security Key length in bytes (for 128 bit algorithms)
 constexpr uint32_t sec_128_key_len = 16;
 
+/// Maximum PDU length. This should not be smaller than maximum PDCP SDU size (9000).
+constexpr uint32_t sec_max_pdu_size = 9100;
+
 enum class ciphering_algorithm {
   nea0 = 0,
   nea1,
