@@ -20,7 +20,8 @@
 
 namespace srsran {
 
-/// Defines SRB0 scheduler that is used to allocate grants for UE's SRB0 DL messages in a given slot.
+/// Defines the scheduler that is used to allocate grants for DL SRB0 and SRB1 messages and UL SRB1 messages for UE in
+/// fallback state.
 class ue_fallback_scheduler
 {
 public:
@@ -32,11 +33,15 @@ public:
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
+  /// \param[in] is_srb0 Defines whether the DL Buffer State Indication is for SRB0/SRB1.
+  /// \param[in] sl Slot at which the DL Buffer State Indication was received.
+  /// \param[in] srb_buffer_bytes Number of SRB bytes reported by Buffer State Indication.
   void
   handle_dl_buffer_state_indication_srb(du_ue_index_t ue_index, bool is_srb0, slot_point sl, unsigned srb_buffer_bytes);
 
-  /// Handles UL BSR indication reported by UE.
+  /// Handles UL Buffer State Report indication reported by UE.
   /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
+  /// \param[in] bsr_ind Buffer State Report indication message.
   void handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
@@ -71,14 +76,15 @@ private:
 
   enum class sched_outcome { success, next_ue, exit_scheduler };
 
-  /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
+  /// \brief Tries to schedule DL SRB0/SRB1 message for a UE, iterating over several PDSCH slots ahead of the current
+  /// reference slot.
   sched_outcome schedule_dl_srb(cell_resource_allocator&       res_alloc,
                                 ue&                            u,
                                 bool                           is_srb0,
                                 dl_harq_process*               h_dl_retx,
                                 optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
-  /// \brief Tries to schedule SRB0 message for a UE. Returns true if successful, false otherwise.
+  /// \brief Tries to schedule UL SRB1 message for a UE iterating over the possible k2 values.
   void schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
 
   struct sched_srb_results {
@@ -88,7 +94,7 @@ private:
     unsigned nof_srb1_scheduled_bytes = 0;
   };
 
-  /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
+  /// \brief Tries to schedule DL SRB0 message for a UE and for a specific PDSCH slot.
   sched_srb_results schedule_dl_srb0(ue&                      u,
                                      cell_resource_allocator& res_alloc,
                                      unsigned                 pdsch_time_res,
@@ -96,7 +102,7 @@ private:
                                      slot_point               most_recent_ack_slot,
                                      dl_harq_process*         h_dl_retx);
 
-  /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
+  /// \brief Tries to schedule DL SRB1 message for a UE and for a specific PDSCH slot.
   sched_srb_results schedule_dl_srb1(ue&                      u,
                                      slot_point               sched_ref_slot,
                                      cell_resource_allocator& res_alloc,
@@ -105,7 +111,7 @@ private:
                                      slot_point               most_recent_ack_slot,
                                      dl_harq_process*         h_dl_retx = nullptr);
 
-  /// \brief Tries to schedule SRB1 message for a UE.
+  /// \brief Tries to schedule SRB1 message for a specific PUSCH time domain resource.
   bool schedule_ul_srb(ue&                                          u,
                        cell_resource_allocator&                     res_alloc,
                        unsigned                                     pusch_time_res,
@@ -141,12 +147,15 @@ private:
                          unsigned                   tbs_bytes,
                          bool                       is_retx);
 
+  // Returns the PDSCH time domain resource allocation for a given PDSCH time resource index.
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
+  // Returns the PDSCH time resource index that is suitable for a given PDSCH configuration.
   optional<unsigned> get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
                                             slot_point                 sl_tx,
                                             const dl_harq_process*     h_dl_retx) const;
 
+  /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1 TX.
   struct srb_ue {
     du_ue_index_t ue_index;
     bool          is_srb0;
@@ -215,6 +224,7 @@ private:
   // that was received.
   //
   // \param[in] ue_idx UE's DU Index for which SRB1 buffer state needs to be updated.
+  // \param[in] sl Slot at which the Buffer State Update was received.
   // \param[in] buffer_status_report Number of pending LCID 1 bytes reported by the RLC buffer state update (only LCID 1
   // bytes, without any overhead).
   void update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_status_report);
@@ -227,9 +237,9 @@ private:
   const unsigned max_dl_slots_ahead_sched = 10U;
   // Set the max number of attempts the scheduler can do while running through the nested loops over the PDSCH time
   // allocation indices and the ahead slots for all UEs. This is to avoid excessive long iterations in case many UEs.
-  // NOTE: max_sched_attempts = (max_dl_slots_ahead_sched + 1) * max_pdsch_time_res guarantees that at 1 UE will be
+  // NOTE: max_dl_sched_attempts = (max_dl_slots_ahead_sched + 1) * max_pdsch_time_res guarantees that at 1 UE will be
   // allocated in a TDD period of 10 slots.
-  const unsigned max_sched_attempts = 22U;
+  const unsigned max_dl_sched_attempts = 22U;
   // Counter for the scheduling attempts per function call.
   unsigned                  sched_attempts_cnt = 0;
   pdcch_resource_allocator& pdcch_sch;
@@ -244,7 +254,7 @@ private:
   search_space_configuration ss_cfg;
   coreset_configuration      cs_cfg;
 
-  /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
+  /// Cache the DL UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
   std::vector<ack_and_retx_tracker> ongoing_ues_ack_retxs;
 
   // Ring buffer of booleans that indicate whether PDSCH over a slot should be skipped due to lack of PDCCH/PDSCH

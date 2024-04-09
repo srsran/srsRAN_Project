@@ -314,7 +314,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
 
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
-    if (sched_attempts_cnt >= max_sched_attempts) {
+    if (sched_attempts_cnt >= max_dl_sched_attempts) {
       return sched_outcome::exit_scheduler;
     }
 
