@@ -42,8 +42,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  std::string           layer_name;
-  std::string           path;
   backend_pcap_writer   writer;
 };
 

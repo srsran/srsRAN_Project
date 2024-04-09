@@ -38,7 +38,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  std::string           filename;
   bool                  srb_enabled = true;
   bool                  drb_enabled = true;
   backend_pcap_writer   writer;

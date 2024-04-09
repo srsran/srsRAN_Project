@@ -48,7 +48,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  std::string           filename;
   mac_pcap_type         type;
   backend_pcap_writer   writer;
 };

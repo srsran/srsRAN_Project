@@ -33,17 +33,15 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
                              bool               capture_drb,
                              task_executor&     backend_exec) :
   logger(srslog::fetch_basic_logger("ALL")),
-  filename(filename_),
   srb_enabled(capture_srb),
   drb_enabled(capture_drb),
-  writer(UDP_DLT, "RLC", filename, backend_exec)
+  writer(UDP_DLT, "RLC", filename_, backend_exec)
 {
 }
 
 rlc_pcap_impl::~rlc_pcap_impl()
 {
   close();
-  fmt::print("RLC PCAP stored in {}\n", filename);
 }
 
 void rlc_pcap_impl::close()
