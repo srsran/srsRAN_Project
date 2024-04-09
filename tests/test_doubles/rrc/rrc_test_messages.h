@@ -32,7 +32,7 @@ asn1::rrc_nr::ul_dcch_msg_s create_rrc_setup_complete();
 asn1::rrc_nr::ul_dcch_msg_s create_rrc_reestablishment_complete();
 
 /// \brief Generates a dummy RRC Reconfiguration Complete message.
-asn1::rrc_nr::ul_dcch_msg_s create_rrc_reconfiguration_complete();
+asn1::rrc_nr::ul_dcch_msg_s create_rrc_reconfiguration_complete(uint8_t transaction_id = 0);
 
 /// \brief Packs an RRC UL-CCCH message into a byte buffer.
 byte_buffer pack_ul_ccch_msg(const asn1::rrc_nr::ul_ccch_msg_s& msg);

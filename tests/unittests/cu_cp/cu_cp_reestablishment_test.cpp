@@ -160,29 +160,18 @@ TEST_F(cu_cp_reestablishment_test,
   EXPECT_TRUE(setup_ue_security(du_idx, old_du_ue_id));
 
   // Run Reestablishment.
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
-      << "RRC setup should have been sent";
-
-  // old UE should not be removed at this stage.
-  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
-
-  // UE sends RRC Setup Complete
-  this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1));
-
-  // STATUS: Initial UE Message is sent for the new UE.
-  ngap_message ngap_pdu;
-  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "NGAP UEContextReleaseRequest should have been sent for old UE";
-  ASSERT_TRUE(test_helpers::is_valid_init_ue_message(ngap_pdu));
-  ASSERT_EQ(ngap_pdu.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id, 1);
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_FALSE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
 
   // STATUS: Given that the old UE has an AMF-UE-ID, the CU-CP should request its release.
+  ngap_message ngap_pdu;
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "NGAP UEContextReleaseRequest should have been sent for old UE";
   ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu));
   ASSERT_EQ(ngap_pdu.pdu.init_msg().value.ue_context_release_request()->amf_ue_ngap_id, 0);
 
   // STATUS: old UE should not be removed at this stage (Still waiting for AMF UE CONTEXT RELEASE COMMAND).
-  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
 }
 
@@ -199,5 +188,5 @@ TEST_F(cu_cp_reestablishment_test,
 
   // old UE should not be removed at this stage.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
-  ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
 }

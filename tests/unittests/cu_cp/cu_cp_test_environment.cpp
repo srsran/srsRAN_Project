@@ -610,10 +610,10 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
                             "Invalid DL RRC Message Transfer");
 
   // EVENT: DU sends F1AP UL RRC Message Transfer (containing RRC Reconfiguration Complete).
-  pdu = pack_ul_dcch_msg(create_rrc_reconfiguration_complete());
+  pdu = pack_ul_dcch_msg(create_rrc_reconfiguration_complete(1U));
   // > Prepend PDCP header and append MAC.
   report_error_if_not(pdu.prepend(std::array<uint8_t, 2>{0x00U, 0x01U}), "bad alloc");
-  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0x59, 0x99, 0x12, 0x2a}), "bad alloc");
+  report_error_if_not(pdu.append(std::array<uint8_t, 4>{0xd3, 0x69, 0xb8, 0xf7}), "bad alloc");
   get_du(du_idx).push_ul_pdu(
       test_helpers::create_ul_rrc_message_transfer(new_du_ue_id, *old_ue.cu_ue_id, srb_id_t::srb1, std::move(pdu)));
 

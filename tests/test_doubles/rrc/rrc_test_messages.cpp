@@ -68,12 +68,12 @@ asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reestablishment_complete()
   return msg;
 }
 
-asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reconfiguration_complete()
+asn1::rrc_nr::ul_dcch_msg_s srsran::create_rrc_reconfiguration_complete(uint8_t transaction_id)
 {
   ul_dcch_msg_s msg;
 
   rrc_recfg_complete_s& req = msg.msg.set_c1().set_rrc_recfg_complete();
-  req.rrc_transaction_id    = 0;
+  req.rrc_transaction_id    = transaction_id;
   req.crit_exts.set_rrc_recfg_complete();
 
   return msg;

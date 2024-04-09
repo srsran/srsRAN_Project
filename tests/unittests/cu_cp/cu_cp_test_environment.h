@@ -75,7 +75,8 @@ public:
   bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
   /// Runs RRC setup, authentication, security, RRC Reconfiguration for a given UE.
   bool attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti, amf_ue_id_t amf_ue_id);
-
+  /// Reestablishes a UE connection, including RRC Reestablishment and RRC Reconfiguration procedures.
+  /// \return True if the reestablishment was successful, false if RRC Setup/Reject was performed instead.
   bool
   reestablish_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_crnti, rnti_t old_crnti, pci_t old_pci);
 
