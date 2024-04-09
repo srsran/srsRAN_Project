@@ -247,7 +247,8 @@ private:
   /// Cache the UEs that are waiting for SRB HARQ processes to be ACKed or retransmitted.
   std::vector<ack_and_retx_tracker> ongoing_ues_ack_retxs;
 
-  // Ring buffer of booleans that indicate whether a slot should be skipped due to lack of PDCCH/PDSCH resources.
+  // Ring buffer of booleans that indicate whether PDSCH over a slot should be skipped due to lack of PDCCH/PDSCH
+  // resources.
   std::array<bool, FALLBACK_SCHED_RING_BUFFER_SIZE> slots_with_no_pdxch_space;
   // Keeps track of the last slot_point used by \ref slots_with_no_pdxch_space.
   slot_point last_sl_ind;

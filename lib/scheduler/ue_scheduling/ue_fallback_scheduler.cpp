@@ -957,7 +957,7 @@ void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
                        [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
       if (existing_pucch) {
-        // Only one PUSCH per UE per slot.
+        // No PUSCH in slots with PUCCH.
         continue;
       }
 
@@ -967,8 +967,6 @@ void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
       }
     }
   }
-  // Move to the next UE if the allocation was unsuccessful.
-  return;
 }
 
 bool ue_fallback_scheduler::schedule_ul_srb(ue&                                          u,

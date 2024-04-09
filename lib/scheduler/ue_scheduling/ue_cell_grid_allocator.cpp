@@ -11,8 +11,6 @@
 #include "../support/csi_report_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
-#include "../support/mcs_tbs_calculator.h"
-#include "../support/sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"
@@ -535,21 +533,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       std::count_if(pusch_alloc.result.ul.pucchs.begin(),
                     pusch_alloc.result.ul.pucchs.end(),
                     [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
-
-  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled over the same slot
-  // and the UE is in fallback mode.
-  // NOTE: This is due to the lack of clarity of the TS when it comes to define what \c betaOffsets to use for PUSCH
-  // when the UE does not have a dedicated configuration.
-  if (ue_cc->is_in_fallback_mode()) {
-    if (nof_pucch_grants != 0) {
-      logger.debug("ue={} rnti={}: Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
-                   "PUCCH grants scheduled",
-                   u.ue_index,
-                   u.crnti,
-                   pusch_alloc.slot);
-      return alloc_outcome::skip_ue;
-    }
-  }
 
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common PUCCH
   // resources.
