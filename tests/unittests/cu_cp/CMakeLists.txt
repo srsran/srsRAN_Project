@@ -44,6 +44,7 @@ target_link_libraries(cu_cp_test
         ngap_asn1
         rrc_test_doubles
         f1ap_test_doubles
+        ngap_test_doubles
         gtest
         gtest_main)
 target_include_directories(cu_cp_test PRIVATE ${CMAKE_SOURCE_DIR})

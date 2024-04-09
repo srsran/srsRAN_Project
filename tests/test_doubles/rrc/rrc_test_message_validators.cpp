@@ -50,3 +50,20 @@ bool srsran::test_helpers::is_valid_rrc_reestablishment(const byte_buffer& dl_dc
   TRUE_OR_RETURN(dcch.unpack(bref) == asn1::SRSASN_SUCCESS);
   return is_valid_rrc_reestablishment(dcch);
 }
+
+bool srsran::test_helpers::is_valid_rrc_security_mode_command(const asn1::rrc_nr::dl_dcch_msg_s& msg)
+{
+  TRUE_OR_RETURN(msg.msg.type().value == asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1);
+  TRUE_OR_RETURN(msg.msg.c1().type().value == asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::security_mode_cmd);
+  TRUE_OR_RETURN(msg.msg.c1().security_mode_cmd().crit_exts.type().value ==
+                 asn1::rrc_nr::security_mode_cmd_s::crit_exts_c_::types_opts::security_mode_cmd);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_rrc_security_mode_command(const byte_buffer& dl_dcch_msg)
+{
+  asn1::cbit_ref              bref{dl_dcch_msg};
+  asn1::rrc_nr::dl_dcch_msg_s dcch;
+  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::SRSASN_SUCCESS);
+  return is_valid_rrc_security_mode_command(dcch);
+}

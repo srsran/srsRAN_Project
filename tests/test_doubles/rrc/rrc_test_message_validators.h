@@ -24,5 +24,9 @@ bool is_valid_rrc_setup(const byte_buffer& dl_ccch_msg);
 bool is_valid_rrc_reestablishment(const asn1::rrc_nr::dl_dcch_msg_s& msg);
 bool is_valid_rrc_reestablishment(const byte_buffer& dl_dcch_msg);
 
+/// \brief Check if DL-DCCH message is a valid RRC Security Mode Command message.
+bool is_valid_rrc_security_mode_command(const asn1::rrc_nr::dl_dcch_msg_s& msg);
+bool is_valid_rrc_security_mode_command(const byte_buffer& dl_dcch_msg);
+
 } // namespace test_helpers
 } // namespace srsran

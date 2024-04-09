@@ -291,3 +291,17 @@ f1ap_message srsran::test_helpers::generate_ue_context_release_complete(gnb_cu_u
 
   return ue_ctxt_rel_complete_msg;
 }
+
+byte_buffer srsran::test_helpers::extract_dl_dcch_msg(const byte_buffer& rrc_container)
+{
+  byte_buffer pdu = rrc_container.deep_copy().value();
+  report_fatal_error_if_not(pdu.length() >= 7, "Invalid RRC container");
+
+  // Remove PDCP header.
+  pdu.trim_head(2);
+
+  // Remove MAC.
+  pdu.trim_tail(4);
+
+  return pdu;
+}

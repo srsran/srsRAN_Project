@@ -6,7 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(rrc)
-add_subdirectory(f1ap)
-add_subdirectory(ngap)
+add_library(ngap_test_doubles ngap_test_message_validators.cpp)
+target_link_libraries(ngap_test_doubles srsran_support srslog ngap_asn1)

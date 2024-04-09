@@ -10,12 +10,15 @@
 
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/ngap/ngap_test_message_validators.h"
+#include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_cu_up.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
@@ -53,10 +56,10 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("NGAP").set_hex_dump_max_size(32);
   srslog::fetch_basic_logger("RRC").set_hex_dump_max_size(32);
   srslog::fetch_basic_logger("SEC").set_hex_dump_max_size(32);
-  srslog::fetch_basic_logger("PDCP").set_hex_dump_max_size(32);
   srslog::init();
 
   // create CU-CP config
@@ -68,6 +71,17 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cfg.max_nof_dus                     = params.max_nof_dus;
   cfg.max_nof_cu_ups                  = params.max_nof_cu_ups;
   cfg.ue_config.max_nof_supported_ues = params.max_nof_dus * MAX_NOF_UES_PER_DU;
+  // > RRC config.
+  cfg.rrc_config.gnb_id             = cfg.ngap_config.gnb_id;
+  cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
+  cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
+                                       security::integrity_algorithm::nia1,
+                                       security::integrity_algorithm::nia3,
+                                       security::integrity_algorithm::nia0};
+  cfg.rrc_config.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                       security::ciphering_algorithm::nea2,
+                                       security::ciphering_algorithm::nea1,
+                                       security::ciphering_algorithm::nea3};
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cfg);
@@ -186,7 +200,7 @@ bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
 {
   get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request());
   f1ap_message f1ap_pdu;
-  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
+  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   return result;
 }
 
@@ -221,24 +235,26 @@ bool cu_cp_test_environment::run_e1_setup(unsigned cu_up_idx)
   return result;
 }
 
-bool cu_cp_test_environment::attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
 {
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
   // Inject Initial UL RRC message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
   test_logger.info("c-rnti={} du_ue_id={}: Injecting Initial UL RRC message", crnti, du_ue_id);
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (containing RRC Setup)
-  f1ap_message f1ap_pdu;
-  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
   if (not result) {
     return false;
   }
 
   // Check if the DL RRC Message with Msg4 is valid.
-  if (not test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu)) {
-    return false;
-  }
+  report_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu), "invalid DL RRC message");
 
   // Check if the UE Id matches.
   auto& dl_rrc_msg = *f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
@@ -252,6 +268,134 @@ bool cu_cp_test_environment::attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_u
   byte_buffer pdu = pack_ul_dcch_msg(create_rrc_setup_complete());
   // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
   get_du(du_idx).push_rrc_ul_dcch_message(du_ue_id, srb_id_t::srb1, std::move(pdu));
+
+  // CU-CP should send an NGAP Initial UE Message.
+  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  if (not result) {
+    return false;
+  }
+  report_fatal_error_if_not(test_helpers::is_valid_init_ue_message(ngap_pdu), "Invalid init UE message");
+
+  ue_context ue_ctx{};
+  ue_ctx.crnti     = crnti;
+  ue_ctx.du_ue_id  = du_ue_id;
+  ue_ctx.cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(dl_rrc_msg.gnb_cu_ue_f1ap_id);
+  ue_ctx.ran_ue_id = uint_to_ran_ue_id(ngap_pdu.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
+
+  report_fatal_error_if_not(attached_ues.insert(std::make_pair(ue_ctx.ran_ue_id.value(), ue_ctx)).second,
+                            "UE already exists");
+  report_fatal_error_if_not(
+      du_ue_id_to_ran_ue_id_map[du_idx].insert(std::make_pair(du_ue_id, ue_ctx.ran_ue_id.value())).second,
+      "DU UE ID already exists");
+
+  return true;
+}
+
+bool cu_cp_test_environment::authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id)
+{
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx     = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+  ue_ctx.amf_ue_id = amf_ue_id;
+
+  // Inject NGAP DL message (authentication request)
+  ngap_message dl_nas_transport =
+      srs_cu_cp::generate_downlink_nas_transport_message(*ue_ctx.amf_ue_id, *ue_ctx.ran_ue_id);
+  get_amf().push_tx_pdu(dl_nas_transport);
+
+  // Wait for DL RRC message transfer (containing NAS message)
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  if (not result) {
+    return false;
+  }
+  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                            "Invalid DL RRC message transfer");
+
+  // Inject UL RRC msg transfer (authentication response)
+  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      *ue_ctx.cu_ue_id,
+      du_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000"));
+  get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+
+  // Wait for UL NAS Message (containing authentication response)
+  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  if (not result) {
+    return false;
+  }
+
+  // Inject DL NAS Transport message (ue security mode command)
+  dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, *ue_ctx.ran_ue_id);
+  get_amf().push_tx_pdu(dl_nas_transport);
+
+  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  if (not result) {
+    return false;
+  }
+  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                            "Invalid DL RRC message transfer");
+
+  // Inject UL RRC msg transfer (ue security mode complete)
+  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      *ue_ctx.cu_ue_id,
+      du_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00023a1cbf0243241cb5003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
+                       "c080080170170700c0080a980808000000000"));
+  get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+
+  // Wait for UL NAS Message (containing ue security mode complete)
+  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  if (not result) {
+    return false;
+  }
+
+  return true;
+}
+
+bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
+  // Inject NGAP Initial Context Setup Request
+  ngap_message init_ctxt_setup_req =
+      generate_valid_initial_context_setup_request_message(ue_ctx.amf_ue_id.value(), ue_ctx.ran_ue_id.value());
+  get_amf().push_tx_pdu(init_ctxt_setup_req);
+
+  // Wait for F1AP DL RRC Message Transfer (containing Security Mode Command).
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to received Security Mode Command");
+  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                            "Invalid DL RRC Message Transfer");
+  const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+  report_fatal_error_if_not(
+      test_helpers::is_valid_rrc_security_mode_command(test_helpers::extract_dl_dcch_msg(rrc_container)),
+      "Invalid Security Mode command");
+
+  // Inject RRC Security Mode Complete
+  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      ue_ctx.cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff"));
+  get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+
+  // Wait for Initial Context Setup Response.
+  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive Initial Context Setup Response");
+  report_fatal_error_if_not(test_helpers::is_valid_initial_context_setup_response(ngap_pdu), "Invalid init ctxt setup");
+
+  // Wait for DL RRC Message Transfer (containing NAS Registration Accept)
+  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive DL RRC Message, containing NAS Registration Accept");
+  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                            "Invalid DL RRC Message Transfer");
 
   return true;
 }

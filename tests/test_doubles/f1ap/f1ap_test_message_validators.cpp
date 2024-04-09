@@ -39,13 +39,31 @@ bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&
   return true;
 }
 
-bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg)
+bool srsran::test_helpers::is_valid_dl_rrc_message_transfer(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
 
-  const asn1::f1ap::dl_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+  // It is packable.
+  {
+    byte_buffer   temp_pdu;
+    asn1::bit_ref bref{temp_pdu};
+    TRUE_OR_RETURN(msg.pdu.pack(bref) == asn1::SRSASN_SUCCESS);
+  }
 
+  return true;
+}
+
+const byte_buffer& srsran::test_helpers::get_rrc_container(const f1ap_message& dl_rrc_msg_transfer)
+{
+  return dl_rrc_msg_transfer.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container;
+}
+
+bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(is_valid_dl_rrc_message_transfer(msg));
+
+  const asn1::f1ap::dl_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
   TRUE_OR_RETURN(rrcmsg->srb_id <= srb_id_to_uint(srb_id_t::srb1));
 
   if (int_to_srb_id(rrcmsg->srb_id) == srb_id_t::srb0) {
@@ -54,14 +72,14 @@ bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap
     TRUE_OR_RETURN(test_helpers::is_valid_rrc_setup(rrcmsg->rrc_container));
 
   } else if (int_to_srb_id(rrcmsg->srb_id) == srb_id_t::srb1) {
-    // RRC Reestablishment.
-    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id_present);
-    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id != rrcmsg->old_gnb_du_ue_f1ap_id);
-
     // Remove PDCP header
     byte_buffer dl_dcch = rrcmsg->rrc_container.deep_copy().value();
     dl_dcch.trim_head(2);
     TRUE_OR_RETURN(test_helpers::is_valid_rrc_reestablishment(dl_dcch));
+
+    // RRC Reestablishment.
+    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id_present);
+    TRUE_OR_RETURN(rrcmsg->old_gnb_du_ue_f1ap_id != rrcmsg->old_gnb_du_ue_f1ap_id);
   }
 
   return true;
