@@ -40,6 +40,7 @@ public:
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
   void handle_sdu(byte_buffer_chain sdu) override {}
+  void stop() override {}
 } null_f1u_bearer;
 
 class null_sink_rlc_bearer : public rlc_tx_upper_layer_data_interface, public rlc_rx_lower_layer_interface

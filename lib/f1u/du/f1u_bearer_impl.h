@@ -46,9 +46,11 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_pdu(nru_dl_message msg) override;
 
-  void on_expired_ul_notif_timer();
+  void stop() override;
 
 private:
+  void on_expired_ul_notif_timer();
+
   f1u_bearer_logger logger;
 
   /// Config storage

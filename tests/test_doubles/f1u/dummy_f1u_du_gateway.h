@@ -25,6 +25,7 @@ public:
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
+  void                     stop() override {}
 
   void handle_pdu(nru_dl_message msg) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}

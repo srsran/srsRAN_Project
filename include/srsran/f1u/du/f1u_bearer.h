@@ -26,6 +26,8 @@ public:
   virtual f1u_rx_pdu_handler&      get_rx_pdu_handler()      = 0;
   virtual f1u_tx_delivery_handler& get_tx_delivery_handler() = 0;
   virtual f1u_tx_sdu_handler&      get_tx_sdu_handler()      = 0;
+
+  virtual void stop() = 0;
 };
 
 } // namespace srs_du
