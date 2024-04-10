@@ -53,8 +53,8 @@ public:
     unsigned nof_symbols;
     /// Group hopping scheme.
     pucch_group_hopping group_hopping;
-    /// Antenna port the PUCCH is received at.
-    unsigned port;
+    /// Port indexes used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> ports;
     /// Amplitude scaling factor.
     float beta_pucch;
     /// \brief Time-domain orthogonal cover code index {0, ..., 6}.

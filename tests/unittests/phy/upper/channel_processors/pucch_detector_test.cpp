@@ -27,13 +27,15 @@ namespace srsran {
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   std::string hops = (tc.cfg.second_hop_prb.has_value() ? "intraslot frequency hopping" : "no frequency hopping");
-  return os << fmt::format("Numerology {}, {}, symbol allocation [{}, {}], {} HARQ-ACK bit(s), {} SR bit(s).",
-                           tc.cfg.slot.numerology(),
-                           hops,
-                           tc.cfg.start_symbol_index,
-                           tc.cfg.nof_symbols,
-                           tc.cfg.nof_harq_ack,
-                           tc.sr_bit.size());
+  return os << fmt::format(
+             "Numerology {}, {} port(s), {}, symbol allocation [{}, {}], {} HARQ-ACK bit(s), {} SR bit(s).",
+             tc.cfg.slot.numerology(),
+             tc.cfg.ports.size(),
+             hops,
+             tc.cfg.start_symbol_index,
+             tc.cfg.nof_symbols,
+             tc.cfg.nof_harq_ack,
+             tc.sr_bit.size());
 }
 
 } // namespace srsran
@@ -67,7 +69,7 @@ protected:
 
     channel_estimate::channel_estimate_dimensions ch_dims;
     ch_dims.nof_tx_layers = 1;
-    ch_dims.nof_rx_ports  = 1;
+    ch_dims.nof_rx_ports  = MAX_PORTS;
     ch_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
     ch_dims.nof_prb       = MAX_RB;
     csi.resize(ch_dims);
@@ -94,20 +96,24 @@ TEST_P(PUCCHDetectFixture, Format1Test)
   pucch_detector::format1_configuration config = test_data.cfg;
 
   unsigned                                                nof_res      = config.nof_symbols / 2 * NRE;
+  unsigned                                                nof_ports    = config.ports.size();
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_data.received_symbols.read();
-  ASSERT_EQ(grid_entries.size(), nof_res) << "The number of grid entries and the number of PUCCH REs do not match";
+  ASSERT_EQ(grid_entries.size(), nof_res * nof_ports)
+      << "The number of grid entries and the number of PUCCH REs do not match";
 
   resource_grid_reader_spy grid(0, 0, 0);
 
   grid.write(grid_entries);
 
   std::vector<resource_grid_reader_spy::expected_entry_t> channel_entries = test_data.ch_estimates.read();
-  ASSERT_EQ(channel_entries.size(), nof_res)
+  ASSERT_EQ(channel_entries.size(), nof_res * nof_ports)
       << "The number of channel estimates and the number of PUCCH REs do not match";
 
   fill_ch_estimate(csi, channel_entries);
 
-  csi.set_noise_variance(test_data.noise_var, 0);
+  for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+    csi.set_noise_variance(test_data.noise_var, i_port);
+  }
 
   pucch_detector::pucch_detection_result res = detector_test->detect(grid, csi, test_data.cfg);
 
@@ -143,20 +149,24 @@ TEST_P(PUCCHDetectFixture, Format1Variance0Test)
   pucch_detector::format1_configuration config = test_data.cfg;
 
   unsigned                                                nof_res      = config.nof_symbols / 2 * NRE;
+  unsigned                                                nof_ports    = config.ports.size();
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_data.received_symbols.read();
-  ASSERT_EQ(grid_entries.size(), nof_res) << "The number of grid entries and the number of PUCCH REs do not match";
+  ASSERT_EQ(grid_entries.size(), nof_res * nof_ports)
+      << "The number of grid entries and the number of PUCCH REs do not match";
 
   resource_grid_reader_spy grid(0, 0, 0);
 
   grid.write(grid_entries);
 
   std::vector<resource_grid_reader_spy::expected_entry_t> channel_entries = test_data.ch_estimates.read();
-  ASSERT_EQ(channel_entries.size(), nof_res)
+  ASSERT_EQ(channel_entries.size(), nof_res * nof_ports)
       << "The number of channel estimates and the number of PUCCH REs do not match";
 
   fill_ch_estimate(csi, channel_entries);
 
-  csi.set_noise_variance(0, 0);
+  for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+    csi.set_noise_variance(0, i_port);
+  }
 
   pucch_detector::pucch_detection_result res = detector_test->detect(grid, csi, test_data.cfg);
   pucch_uci_message&                     msg = res.uci_message;

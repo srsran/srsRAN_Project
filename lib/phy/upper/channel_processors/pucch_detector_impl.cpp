@@ -202,9 +202,10 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   validate_config(config);
 
   // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
-  unsigned nof_res = (config.nof_symbols / 2) * NRE;
-  time_spread_sequence.resize({nof_res, 1});
-  ch_estimates.resize({nof_res, 1, 1});
+  unsigned nof_res   = (config.nof_symbols / 2) * NRE;
+  unsigned nof_ports = config.ports.size();
+  time_spread_sequence.resize({nof_res, nof_ports});
+  ch_estimates.resize({nof_res, nof_ports, 1});
   eq_time_spread_sequence.resize({nof_res, 1});
   eq_time_spread_noise_var.resize({nof_res, 1});
 
@@ -218,14 +219,17 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   alpha_indices = span<unsigned>(alpha_buffer).first(nof_data_symbols);
 
   extract_data_and_estimates(
-      grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.port);
+      grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.ports);
 
-  float port_noise_var = estimates.get_noise_variance(config.port);
+  span<float> noise_var_all_ports = span<float>(noise_var_buffer).first(nof_ports);
+  for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+    noise_var_all_ports[i_port] = estimates.get_noise_variance(config.ports[i_port]);
+  }
   equalizer->equalize(eq_time_spread_sequence,
                       eq_time_spread_noise_var,
                       time_spread_sequence,
                       ch_estimates,
-                      span<float>(&port_noise_var, 1),
+                      noise_var_all_ports,
                       config.beta_pucch);
 
   marginalize_w_and_r_out(config);
@@ -284,36 +288,40 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   return output;
 }
 
-void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader& grid,
-                                                     const channel_estimate&     estimates,
-                                                     unsigned                    first_symbol,
-                                                     unsigned                    first_prb,
-                                                     optional<unsigned>          second_prb,
-                                                     unsigned                    port)
+void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&              grid,
+                                                     const channel_estimate&                  estimates,
+                                                     unsigned                                 first_symbol,
+                                                     unsigned                                 first_prb,
+                                                     optional<unsigned>                       second_prb,
+                                                     const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
 {
-  unsigned i_symbol     = 0;
-  unsigned skip         = 0;
-  unsigned symbol_index = first_symbol + 1;
-  for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
-    // Index of the first subcarrier assigned to PUCCH, before hopping.
-    unsigned   k_init         = NRE * first_prb;
-    span<cf_t> sequence_chunk = time_spread_sequence.get_data().subspan(skip, NRE);
-    grid.get(sequence_chunk, port, symbol_index, k_init);
+  for (uint8_t port : antenna_ports) {
+    unsigned   i_symbol       = 0;
+    unsigned   skip           = 0;
+    unsigned   symbol_index   = first_symbol + 1;
+    span<cf_t> sequence_slice = time_spread_sequence.get_view({port});
+    span<cf_t> estimate_slice = ch_estimates.get_view({port});
+    for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
+      // Index of the first subcarrier assigned to PUCCH, before hopping.
+      unsigned   k_init         = NRE * first_prb;
+      span<cf_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
+      grid.get(sequence_chunk, port, symbol_index, k_init);
 
-    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
-    srsvec::copy(ch_estimates.get_data().subspan(skip, NRE), tmp.subspan(k_init, NRE));
-  }
+      span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
+      srsvec::copy(estimate_slice.subspan(skip, NRE), tmp.subspan(k_init, NRE));
+    }
 
-  for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
-    // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
-    // second_prb.has_value().
-    unsigned   k_init         = NRE * second_prb.value();
-    span<cf_t> sequence_chunk = time_spread_sequence.get_data().subspan(skip, NRE);
-    grid.get(sequence_chunk, port, symbol_index, k_init);
+    for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
+      // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
+      // second_prb.has_value().
+      unsigned   k_init         = NRE * second_prb.value();
+      span<cf_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
+      grid.get(sequence_chunk, port, symbol_index, k_init);
 
-    span<const cf_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
-    span<cf_t>       tmp_out = ch_estimates.get_data().subspan(skip, NRE);
-    srsvec::copy(tmp_out, tmp_in);
+      span<const cf_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
+      span<cf_t>       tmp_out = estimate_slice.subspan(skip, NRE);
+      srsvec::copy(tmp_out, tmp_in);
+    }
   }
 }
 
