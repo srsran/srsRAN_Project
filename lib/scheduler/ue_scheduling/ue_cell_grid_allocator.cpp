@@ -422,6 +422,11 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::skip_ue;
   }
 
+  if (ue_cc->is_in_fallback_mode()) {
+    // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
+    return alloc_outcome::skip_ue;
+  }
+
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);

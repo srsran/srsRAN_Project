@@ -497,8 +497,12 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   // Fetch applicable PUSCH Time Domain resource index list.
+  // NOTE: All UEs use the same PUSCH Time Domain Resource configuration.
+  const ue&                    ref_u  = **ues.begin();
+  const ue_cell_configuration& ue_cfg = ref_u.get_pcell().cfg();
+
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
-      get_pusch_td_resource_indices(res_grid, ues);
+      get_pusch_td_resource_indices(ue_cfg, res_grid.get_pdcch_slot(ref_u.get_pcell().cell_index));
 
   // First schedule UL data re-transmissions.
   for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {

@@ -57,30 +57,22 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 }
 
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-srsran::get_pusch_td_resource_indices(const ue_resource_grid_view& res_grid, const ue_repository& ues)
+srsran::get_pusch_td_resource_indices(const ue_cell_configuration& ue_cfg, slot_point pdcch_slot)
 {
-  // NOTE: All UEs use the same PUSCH Time Domain Resource configuration.
-  const ue&                    ref_u    = **ues.begin();
-  const ue_cell_configuration& ue_cfg   = ref_u.get_pcell().cfg();
-  const cell_configuration&    cell_cfg = ue_cfg.cell_cfg_common;
-  const search_space_info*     ss_info =
+  const cell_configuration& cell_cfg = ue_cfg.cell_cfg_common;
+  const search_space_info*  ss_info =
       ue_cfg.find_search_space(ue_cfg.cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
   if (ss_info == nullptr) {
     return {};
   }
   const unsigned min_k1 = *std::min(ss_info->get_k1_candidates().begin(), ss_info->get_k1_candidates().end());
   return compute_pusch_td_resource_indices(
-      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-      cell_cfg,
-      res_grid.get_pdcch_slot(ref_u.get_pcell().cell_index),
-      min_k1);
+      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list, cell_cfg, pdcch_slot, min_k1);
 }
 
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
 srsran::get_pusch_td_res_indices_common(const cell_configuration& cell_cfg, slot_point pdcch_slot)
 {
-  // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
-  static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
   return compute_pusch_td_resource_indices(
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
       cell_cfg,

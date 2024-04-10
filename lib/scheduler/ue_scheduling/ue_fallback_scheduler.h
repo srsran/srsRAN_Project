@@ -49,16 +49,17 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
-  // Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should exit, true otherwise.
+  /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should exit, true
+  /// otherwise.
   bool schedule_dl_retx(cell_resource_allocator& res_alloc);
 
-  // Helper that schedules new UL SRB1 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  /// Helper that schedules new UL SRB1 tx.
   void schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc);
 
-  // Helper that schedules new DL SRB0 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  /// Helper that schedules new DL SRB0 tx. Returns false if the DL fallback schedule should exit, true otherwise.
   bool schedule_dl_new_tx_srb0(cell_resource_allocator& res_alloc);
 
-  // Helper that schedules new DL SRB1 tx. Returns false if the DL fallback schedule should exit, true otherwise.
+  /// Helper that schedules new DL SRB1 tx.
   void schedule_dl_new_tx_srb1(cell_resource_allocator& res_alloc);
 
   /// Size of the ring buffer used to store the slots where the scheduler has found no PDCCH/PDSCH resources.
@@ -147,7 +148,7 @@ private:
                          unsigned                   tbs_bytes,
                          bool                       is_retx);
 
-  // Returns the PDSCH time domain resource allocation for a given PDSCH time resource index.
+  /// Returns the PDSCH time domain resource allocation for a given PDSCH time resource index.
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
   // Returns the PDSCH time resource index that is suitable for a given PDSCH configuration.

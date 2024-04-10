@@ -309,6 +309,8 @@ struct pucch_appconfig {
   /// Max code rate.
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
   /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 7}.
+  /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
+  /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.
   unsigned min_k1 = 4;
 
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.

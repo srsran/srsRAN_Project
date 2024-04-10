@@ -130,7 +130,7 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
 
   const auto* srb_lcg_report =
       std::find_if(bsr_ind.reported_lcgs.begin(), bsr_ind.reported_lcgs.end(), [](const auto& lcg_report) {
-        // We assume this the SRB LCG ID is 0.
+        // We assume the LCG ID for SRB is 0.
         const lcg_id_t srb_lcg_id = uint_to_lcg_id(0U);
         return lcg_report.lcg_id == srb_lcg_id;
       });
@@ -138,9 +138,9 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
 
   auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
 
-  // For UL UEs we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
-  // that purpose. Thus, compared to the DL case, the only operation is needed for the UL is to add a new UE to the
-  // pending UL UEs list.
+  // For UL UEs, we don't keep an internal estimate of the UL traffic, but we rely on the UL logical channel manager for
+  // that task. Thus, compared to the DL case, the only operation that is needed for the UL is the addition of a new UE
+  // to the pending UL UEs list.
   if (ue_it == pending_ul_ues.end() and bsr_bytes != 0) {
     pending_ul_ues.emplace_back(ue_index);
   }
@@ -1403,7 +1403,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     remove_ue ? ue_it = pending_dl_ues_new_tx.erase(ue_it) : ++ue_it;
   }
 
-  // Remove UL UE if the UE has left fallback of if the UE has been deleted from the scheduler.
+  // Remove UL UE if the UE has left fallback or if the UE has been deleted from the scheduler.
   for (auto ue_it = pending_ul_ues.begin(); ue_it != pending_ul_ues.end();) {
     if (not ues.contains(*ue_it)) {
       ue_it = pending_ul_ues.erase(ue_it);
