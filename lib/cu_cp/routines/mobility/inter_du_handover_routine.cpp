@@ -168,7 +168,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                   {} /* No NAS PDUs required */,
                                   target_ue->get_rrc_ue_notifier().generate_meas_config(source_rrc_context.meas_cfg),
                                   true, /* Reestablish SRBs */
-                                  false /* do not reestablish DRBs */,
+                                  true /* Reestablish DRBs */,
                                   true, /* Update keys */
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", command.source_ue_index, name());
