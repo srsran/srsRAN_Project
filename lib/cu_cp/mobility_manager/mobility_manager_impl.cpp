@@ -67,11 +67,8 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
   }
 
   du_index_t source_du = ue_mng.find_du_ue(ue_index)->get_du_index();
-  if (target_du == source_du) {
-    logger.info("Trigger intra DU handover");
-    // TODO: Prepare request and call notifier.
-    return;
-  }
+
+  // TODO: Trigger intra DU HO when target_du == source_du. For now we perform inter DU HO to itself.
 
   logger.info("ue={}: Trigger inter DU handover from source_du={} to target_du={}", ue_index, source_du, target_du);
   handle_inter_du_handover(ue_index, neighbor_pci, source_du, target_du);
