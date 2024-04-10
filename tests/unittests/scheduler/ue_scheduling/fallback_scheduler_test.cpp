@@ -1120,8 +1120,9 @@ protected:
       if (sl == slot_generate_srb_traffic) {
         const unsigned srb_buffer = test_rgen::uniform_int(128U, parent->MAX_MAC_UL_SRB1_SDU_SIZE);
         parent->push_buffer_state_to_ul_ue(test_ue.ue_index, sl, srb_buffer);
-        buffer_bytes = srb_buffer;
-        test_logger.info("rnti={}, slot={}: pushing traffic", test_ue.crnti, sl);
+        buffer_bytes            = srb_buffer;
+        initied_with_ul_traffic = true;
+        test_logger.info("rnti={}, slot={}: generating initial BSR indication", test_ue.crnti, sl);
       }
 
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
@@ -1161,6 +1162,7 @@ protected:
     unsigned                      buffer_bytes = 0;
     srslog::basic_logger&         test_logger  = srslog::fetch_basic_logger("TEST");
     slot_point                    slot_generate_srb_traffic;
+    bool                          initied_with_ul_traffic = false;
   };
 
   ul_fallback_sched_test_params params;
@@ -1171,8 +1173,11 @@ protected:
   std::vector<ue_ul_tester> ues_testers;
 };
 
-TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
+TEST_P(ul_fallback_scheduler_tester, all_ul_ue_are_served_and_buffer_gets_emptied)
 {
+  // This test verifies that all UEs get a BSR for UL SRB traffic, and by the end of the test, all UEs will get served
+  // and their buffer will be left with 0 bytes.
+
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
     ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
@@ -1187,6 +1192,8 @@ TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
   }
 
   for (auto& tester : ues_testers) {
+    ASSERT_TRUE(tester.initied_with_ul_traffic)
+        << fmt::format("No UL traffic generated for UE {}", tester.test_ue.ue_index);
     ASSERT_FALSE(tester.buffer_bytes > 0) << fmt::format("UE {} has still pending UL bytes", tester.test_ue.ue_index);
   }
 }
