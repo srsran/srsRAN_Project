@@ -37,15 +37,18 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
     return;
   }
   cu_cp_ue_context& ue_ctxt = u->get_ue_context();
-  if (ue_ctxt.is_handover_triggered) {
-    logger.debug("ue={}: MeasurementReport ignored. Cause: UE already started Handover", ue_index);
+  if (ue_ctxt.reconfiguration_disabled) {
+    logger.debug("ue={}: MeasurementReport ignored. Cause: UE cannot be reconfigured", ue_index);
     return;
   }
 
   // Handover is going ahead.
-  ue_ctxt.is_handover_triggered = true;
 
-  // Try to find target DU.
+  // Disable new reconfigurations from now on (except for the Handover Command).
+  ue_ctxt.reconfiguration_disabled = true;
+
+  // Try to find target DU. If it is not found, it means that the target cell is not managed by this CU-CP and
+  // a NG Handover is required.
   du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == du_index_t::invalid) {
     logger.debug("ue={}: Requesting inter CU handover. No local DU/cell with pci={} found", ue_index, neighbor_pci);

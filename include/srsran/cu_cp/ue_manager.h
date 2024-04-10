@@ -23,12 +23,15 @@ namespace srs_cu_cp {
 class du_processor_rrc_ue_control_message_notifier;
 class du_processor_rrc_ue_srb_control_notifier;
 
+/// \brief Context of a CU-CP UE.
 struct cu_cp_ue_context {
-  du_index_t  du_idx                = du_index_t::invalid;
-  gnb_du_id_t du_id                 = gnb_du_id_t::invalid;
-  ue_index_t  ue_index              = ue_index_t::invalid;
-  rnti_t      crnti                 = rnti_t::INVALID_RNTI;
-  bool        is_handover_triggered = false;
+  du_index_t  du_idx   = du_index_t::invalid;
+  gnb_du_id_t du_id    = gnb_du_id_t::invalid;
+  ue_index_t  ue_index = ue_index_t::invalid;
+  rnti_t      crnti    = rnti_t::INVALID_RNTI;
+  /// \brief Flag to disable new UE reconfigurations. This can be used, for instance, to reconfigure UE contexts
+  /// that are in the process of handover.
+  bool reconfiguration_disabled = false;
 };
 
 /// Common UE interface.
