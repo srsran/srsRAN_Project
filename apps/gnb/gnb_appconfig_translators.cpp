@@ -1656,7 +1656,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
       ++dl_pipeline_depth;
     }
-    unsigned ul_pipeline_depth = dl_pipeline_depth;
+    unsigned ul_pipeline_depth = std::max(dl_pipeline_depth, 8U);
 
     static constexpr unsigned prach_pipeline_depth = 1;
 
