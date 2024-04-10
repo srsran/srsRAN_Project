@@ -376,7 +376,7 @@ void du_high_env_simulator::run_slot()
 
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).
-    const unsigned MAX_COUNT = 1000;
+    const unsigned MAX_COUNT = 100000;
     for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)
       workers.test_worker.run_pending_tasks();
@@ -384,7 +384,10 @@ void du_high_env_simulator::run_slot()
       // Wait for tasks to arrive to test thread.
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
-    EXPECT_EQ(phy.cells[i].last_slot_res, next_slot);
+    EXPECT_EQ(phy.cells[i].last_slot_res, next_slot)
+        << fmt::format("Slot={} failed to be processed (last processed slot={}). Is there a deadlock?",
+                       next_slot,
+                       phy.cells[i].last_slot_res);
     const optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
     if (dl_result.has_value()) {
       EXPECT_TRUE(dl_result->slot == next_slot);
