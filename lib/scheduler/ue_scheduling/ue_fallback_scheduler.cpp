@@ -523,8 +523,11 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
       continue;
     }
-    pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
+    pucch_res_indicator =
+        is_retx ? pucch_alloc.alloc_common_and_ded_harq_res(
+                      res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
+                : pucch_alloc.alloc_common_pucch_harq_ack_ue(
+                      res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;
@@ -694,13 +697,18 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
   optional<unsigned> pucch_res_indicator;
+  const bool         allocate_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
   for (const auto k1_candidate : dci_1_0_k1_values) {
     // Skip the k1 values that would result in a PUCCH allocation that would overlap with the most recent ACK slot.
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
       continue;
     }
-    pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
+    pucch_res_indicator =
+        allocate_common_and_ded_pucch
+            ? pucch_alloc.alloc_common_and_ded_harq_res(
+                  res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
+            : pucch_alloc.alloc_common_pucch_harq_ack_ue(
+                  res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;

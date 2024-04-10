@@ -37,6 +37,13 @@ public:
                                                     unsigned                    k1,
                                                     const pdcch_dl_information& dci_info) override;
 
+  optional<unsigned> alloc_common_and_ded_harq_res(cell_resource_allocator&     res_alloc,
+                                                   rnti_t                       rnti,
+                                                   const ue_cell_configuration& ue_cell_cfg,
+                                                   unsigned                     k0,
+                                                   unsigned                     k1,
+                                                   const pdcch_dl_information&  dci_info) override;
+
   optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                  rnti_t                       crnti,
                                                  const ue_cell_configuration& ue_cell_cfg,
@@ -83,6 +90,13 @@ private:
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
                                                             const dci_context_information& dci_info);
+
+  optional<unsigned> exec_common_and_ded_res_alloc(cell_slot_resource_allocator& pucch_alloc,
+                                                   pucch_info*                   existing_grant,
+                                                   rnti_t                        rnti,
+                                                   const ue_cell_configuration&  ue_cell_cfg,
+                                                   pucch_res_alloc_cfg           common_res_cfg,
+                                                   const pucch_resource&         ded_res_cfg);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
   optional<unsigned> allocate_new_format1_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -132,6 +146,17 @@ private:
                                                     rnti_t                       crnti,
                                                     const ue_cell_configuration& ue_cell_cfg,
                                                     unsigned                     harq_ack_bits_increment);
+
+  struct pucch_com_ded_res {
+    pucch_res_alloc_cfg   pucch_common_info;
+    const pucch_resource& pucch_ded_cfg;
+  };
+
+  optional<pucch_com_ded_res> find_common_and_ded_harq_res_available(cell_slot_resource_allocator&  pucch_alloc,
+                                                                     pucch_info*                    existing_grant,
+                                                                     rnti_t                         rnti,
+                                                                     const ue_cell_configuration&   ue_cell_cfg,
+                                                                     const dci_context_information& dci_info);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
