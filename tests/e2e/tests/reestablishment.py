@@ -7,7 +7,7 @@
 #
 
 """
-Ping / Reestablishment Tests
+Ping + Reestablishment Tests
 """
 import logging
 import time
@@ -40,7 +40,7 @@ from .steps.stub import ping_start, ping_wait_until_finish, start_network, stop,
 def test_zmq_reestablishment(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_8: UEStub,  # pylint: disable=invalid-name
+    ue_8: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -50,7 +50,7 @@ def test_zmq_reestablishment(
     always_download_artifacts: bool,
 ):
     """
-    ZMQ Attach / reestablishment
+    ZMQ Ping + Reestablishment
     """
 
     test_duration_per_ue_sec = 50
