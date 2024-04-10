@@ -680,7 +680,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_ap
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
           !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
         fmt::print(
-            "For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
+            "For external cells, the gnb_id_bit_length, pci, band, ssb_arfcn, ssb_scs, ssb_period, ssb_offset and "
             "ssb_duration must be configured in the mobility config\n");
         return false;
       }
