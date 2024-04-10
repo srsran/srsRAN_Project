@@ -153,6 +153,7 @@ std::vector<ssb_frequency_t> srsran::srs_cu_cp::generate_measurement_object_list
   }
   // Add neighbor cells if report is configured
   for (const auto& ncell : serving_cell.ncells) {
+    srsran_assert(cfg.cells.find(ncell.nci) != cfg.cells.end(), "No cell config for nci={:#x}", ncell.nci);
     auto& cell_cfg = cfg.cells.at(ncell.nci);
     if (!ncell.report_cfg_ids.empty() && is_complete(cell_cfg.serving_cell_cfg)) {
       if (std::find(ssb_freqs.begin(), ssb_freqs.end(), cell_cfg.serving_cell_cfg.ssb_arfcn.value()) ==
