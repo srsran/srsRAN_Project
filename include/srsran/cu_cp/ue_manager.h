@@ -23,6 +23,14 @@ namespace srs_cu_cp {
 class du_processor_rrc_ue_control_message_notifier;
 class du_processor_rrc_ue_srb_control_notifier;
 
+struct cu_cp_ue_context {
+  du_index_t  du_idx                = du_index_t::invalid;
+  gnb_du_id_t du_id                 = gnb_du_id_t::invalid;
+  ue_index_t  ue_index              = ue_index_t::invalid;
+  rnti_t      crnti                 = rnti_t::INVALID_RNTI;
+  bool        is_handover_triggered = false;
+};
+
 /// Common UE interface.
 class ue_base
 {
@@ -83,6 +91,10 @@ public:
   /// \brief Set the RRC UE SRB notifier of the UE.
   /// \param[in] rrc_ue_srb_notifier_ RRC UE SRB control notifier of the UE.
   virtual void set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier& rrc_ue_srb_notifier_) = 0;
+
+  /// \brief Retrieves the UE context.
+  virtual cu_cp_ue_context&       get_ue_context()       = 0;
+  virtual const cu_cp_ue_context& get_ue_context() const = 0;
 };
 
 /// UE configuration passed to CU-CP

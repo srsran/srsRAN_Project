@@ -30,6 +30,21 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
     return;
   }
 
+  // Find the UE context.
+  du_ue* u = ue_mng.find_du_ue(ue_index);
+  if (u == nullptr) {
+    logger.error("ue={}: Couldn't find UE", ue_index);
+    return;
+  }
+  cu_cp_ue_context& ue_ctxt = u->get_ue_context();
+  if (ue_ctxt.is_handover_triggered) {
+    logger.debug("ue={}: MeasurementReport ignored. Cause: UE already started Handover", ue_index);
+    return;
+  }
+
+  // Handover is going ahead.
+  ue_ctxt.is_handover_triggered = true;
+
   // Try to find target DU.
   du_index_t target_du = du_db.find_du(neighbor_pci);
   if (target_du == du_index_t::invalid) {
