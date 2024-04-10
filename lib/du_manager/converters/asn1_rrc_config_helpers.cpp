@@ -3046,6 +3046,12 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
   // > downlinkConfigCommon DownlinkConfigCommon OPTIONAL, -- Cond HOAndServCellAdd
   out.sp_cell_cfg_common.dl_cfg_common_present = true;
   out.sp_cell_cfg_common.dl_cfg_common         = make_asn1_rrc_dl_cfg_common(du_cell_cfg);
+  // >> In case of HO, the coresetZero and searchSpaceZero need to be set.
+  pdcch_cfg_common_s& pdcch_cfg_common  = out.sp_cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup();
+  pdcch_cfg_common.coreset_zero_present = true;
+  pdcch_cfg_common.coreset_zero         = du_cell_cfg.coreset0_idx;
+  pdcch_cfg_common.search_space_zero_present = true;
+  pdcch_cfg_common.search_space_zero         = du_cell_cfg.searchspace0_idx;
 
   // > uplinkConfigCommon UplinkConfigCommon OPTIONAL, -- Need M
   out.sp_cell_cfg_common.ul_cfg_common_present = true;
