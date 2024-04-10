@@ -433,17 +433,17 @@ TEST_F(test_pucch_resource_manager, test_allocation_specific_f2)
   const unsigned res_indicator = 3;
 
   // Attempt to allocate PUCCH resource Format 2 with given resource indicator.
-  ASSERT_TRUE(nullptr != res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4601), res_indicator, pucch_cfg));
+  ASSERT_TRUE(nullptr != res_manager.reserve_f2_res_by_res_indicator(sl_tx, to_rnti(0x4601), res_indicator, pucch_cfg));
 
   // Verify the resource can be retrieved.
   ASSERT_EQ(static_cast<int>(res_indicator), res_manager.fetch_f2_pucch_res_indic(sl_tx, to_rnti(0x4601), pucch_cfg));
 
   // Attempt to allocate another UE to the same resource and verify it gets returned nullptr.
-  ASSERT_TRUE(nullptr == res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4602), res_indicator, pucch_cfg));
+  ASSERT_TRUE(nullptr == res_manager.reserve_f2_res_by_res_indicator(sl_tx, to_rnti(0x4602), res_indicator, pucch_cfg));
 
   // Attempt to allocate a third UE with wrong resource indicator and verify it gets returned nullptr.
   ASSERT_TRUE(nullptr ==
-              res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4602), /* res_indicator=*/8, pucch_cfg));
+              res_manager.reserve_f2_res_by_res_indicator(sl_tx, to_rnti(0x4602), /* res_indicator=*/8, pucch_cfg));
 }
 
 ////////////    Test the PUCCH resource manager: UEs with different configs     ////////////
@@ -737,14 +737,14 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_specific_f2)
   // UE 0 and 1 will get assigned the same pucch_res_indicator, as they use different PUCCH configs.
   const unsigned        ue_0_idx = 0;
   const pucch_resource* res_ue_0 =
-      res_manager.reserve_specific_format2_res(sl_tx, ues[ue_0_idx]->cnrti, 5, ues[ue_0_idx]->get_pucch_cfg());
+      res_manager.reserve_f2_res_by_res_indicator(sl_tx, ues[ue_0_idx]->cnrti, 5, ues[ue_0_idx]->get_pucch_cfg());
 
   ASSERT_EQ(&ues[ue_0_idx]->get_pucch_cfg().pucch_res_list[14], res_ue_0);
   ASSERT_EQ(23, res_ue_0->res_id.cell_res_id);
 
   const unsigned        ue_1_idx = 1;
   const pucch_resource* res_ue_1 =
-      res_manager.reserve_specific_format2_res(sl_tx, ues[ue_1_idx]->cnrti, 5, ues[ue_1_idx]->get_pucch_cfg());
+      res_manager.reserve_f2_res_by_res_indicator(sl_tx, ues[ue_1_idx]->cnrti, 5, ues[ue_1_idx]->get_pucch_cfg());
 
   ASSERT_EQ(&ues[ue_1_idx]->get_pucch_cfg().pucch_res_list[14], res_ue_1);
   ASSERT_EQ(32, res_ue_1->res_id.cell_res_id);
@@ -752,12 +752,12 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_2_ues_2_cfgs_alloc_specific_f2)
   // Try to allocate the same PUCCH resource (already reserved to UE 0 and 1) and check that the allocation fails.
   const unsigned        ue_2_idx = 2;
   const pucch_resource* res_ue_2 =
-      res_manager.reserve_specific_format2_res(sl_tx, ues[ue_2_idx]->cnrti, 5, ues[ue_2_idx]->get_pucch_cfg());
+      res_manager.reserve_f2_res_by_res_indicator(sl_tx, ues[ue_2_idx]->cnrti, 5, ues[ue_2_idx]->get_pucch_cfg());
   ASSERT_EQ(nullptr, res_ue_2);
 
   const unsigned        ue_3_idx = 3;
   const pucch_resource* res_ue_3 =
-      res_manager.reserve_specific_format2_res(sl_tx, ues[ue_3_idx]->cnrti, 5, ues[ue_3_idx]->get_pucch_cfg());
+      res_manager.reserve_f2_res_by_res_indicator(sl_tx, ues[ue_3_idx]->cnrti, 5, ues[ue_3_idx]->get_pucch_cfg());
   ASSERT_EQ(nullptr, res_ue_3);
 }
 
