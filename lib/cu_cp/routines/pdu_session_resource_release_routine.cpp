@@ -124,6 +124,7 @@ void pdu_session_resource_release_routine::operator()(
                                   false,
                                   false,
                                   false,
+                                  {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", release_cmd.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));

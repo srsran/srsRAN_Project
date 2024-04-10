@@ -568,10 +568,11 @@ struct cu_cp_inactivity_notification {
 };
 
 struct cu_cp_inter_du_handover_request {
-  ue_index_t          source_ue_index = ue_index_t::invalid;
-  du_index_t          target_du_index = du_index_t::invalid;
-  nr_cell_global_id_t cgi;
-  pci_t               target_pci = INVALID_PCI;
+  ue_index_t            source_ue_index = ue_index_t::invalid;
+  du_index_t            target_du_index = du_index_t::invalid;
+  nr_cell_global_id_t   cgi;
+  pci_t                 target_pci = INVALID_PCI;
+  optional<byte_buffer> target_sib1;
 };
 
 struct cu_cp_inter_du_handover_response {

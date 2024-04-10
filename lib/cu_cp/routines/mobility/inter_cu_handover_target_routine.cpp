@@ -162,6 +162,7 @@ void inter_cu_handover_target_routine::operator()(
                                 false,
                                 false,
                                 false,
+                                {},
                                 logger)) {
       logger.warning("ue={}: \"{}\" failed to fill RRC Reconfiguration", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));

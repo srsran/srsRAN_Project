@@ -111,6 +111,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.target_pci                      = neighbor_pci;
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
+  request.target_sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
   // Lookup F1AP notifier of source DU.
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_notifier =

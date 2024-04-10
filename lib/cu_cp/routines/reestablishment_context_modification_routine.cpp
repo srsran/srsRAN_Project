@@ -119,6 +119,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                                   true /* Reestablish SRBs */,
                                   true /* Reestablish DRBs */,
                                   false /* don't update keys */,
+                                  {},
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", ue_index, name());
         CORO_EARLY_RETURN(false);
