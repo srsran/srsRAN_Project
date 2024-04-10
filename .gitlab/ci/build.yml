@@ -31,7 +31,7 @@ variables:
       - "on-prem-arm64"
       - "aws-spot-amd64"
       - "aws-spot-arm64"
-    value: "aws-spot-amd64"
+    value: "amd64-avx2"
   OS:
     description: Operating system
     options:
