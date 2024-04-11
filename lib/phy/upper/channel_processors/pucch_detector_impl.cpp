@@ -186,13 +186,13 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
   if ((nof_bits > 1) && (detection_metric2 > detection_metric)) {
     out_bits[0] = (bits2 & 1U);
     out_bits[1] = ((bits2 >> 1U) & 1U);
-    return (detection_metric2 / std::sqrt(eq_noise_var));
+    return (std::norm(detected_symbol) / eq_noise_var);
   }
   out_bits[0] = (bits & 1U);
   if (nof_bits > 1) {
     out_bits[1] = ((bits >> 1U) & 1U);
   }
-  return detection_metric / std::sqrt(eq_noise_var);
+  return (std::norm(detected_symbol) / eq_noise_var);
 }
 
 pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resource_grid_reader&  grid,
@@ -263,7 +263,7 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // either 0 (when there is no PUCCH) or larger than 0 (when there is a PUCCH). Therefore, one can target a constant
   // probability of false alarm of 1% by setting the detection threshold T such that Q(T) = 0.01, where the Q-function
   // is the tail distribution function of the standard normal distribution.
-  constexpr float THRESHOLD = 3.3F;
+  constexpr float THRESHOLD = 4.0F;
   bool            is_msg_ok = (detection_metric > THRESHOLD);
   output.detection_metric   = detection_metric / THRESHOLD;
 
