@@ -85,9 +85,11 @@ private:
                                    dl_harq_process*               h_dl_retx,
                                    optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
+  enum class ul_srb_sched_outcome { next_ue, next_slot, stop_ul_scheduling };
+
   /// \brief Tries to schedule UL SRB1 message for a UE iterating over the possible k2 values. Returns true if the
   /// scheduler should keep allocating the next UL UE, false if it should stop the UL allocation.
-  bool schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
+  ul_srb_sched_outcome schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx);
 
   struct sched_srb_results {
     dl_harq_process* h_dl = nullptr;
@@ -112,8 +114,6 @@ private:
                                      unsigned                 slot_offset,
                                      slot_point               most_recent_ack_slot,
                                      dl_harq_process*         h_dl_retx = nullptr);
-
-  enum class ul_srb_sched_outcome { success_or_next_ue, next_slot, stop_scheduler };
 
   /// \brief Tries to schedule SRB1 message for a specific PUSCH time domain resource.
   ul_srb_sched_outcome schedule_ul_srb(ue&                                          u,

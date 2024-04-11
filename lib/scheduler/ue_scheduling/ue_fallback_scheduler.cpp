@@ -175,7 +175,8 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
       ++next_ue;
       continue;
     }
-    if (not schedule_ul_ue(res_alloc, u, h_ul_retx)) {
+    ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u, h_ul_retx);
+    if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
       // If there is no PDCCH space, then stop the scheduling for all UL UEs.
       return;
     }
@@ -875,7 +876,8 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
   return srb1_bytes_allocated;
 }
 
-bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
+ue_fallback_scheduler::ul_srb_sched_outcome
+ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
 {
   // The caller ensures the slot is Ul enabled.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
@@ -895,11 +897,10 @@ bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
       u.get_pcell().get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
 
   for (const auto* ss : search_spaces) {
+    if (ss->cfg->is_search_space0()) {
+      continue;
+    }
     for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {
-      if (ss->cfg->is_search_space0()) {
-        continue;
-      }
-
       const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
       const cell_slot_resource_allocator&          pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
       const slot_point                             pusch_slot  = pusch_alloc.slot;
@@ -965,16 +966,12 @@ bool ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
       }
 
       ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx);
-      if (outcome == ul_srb_sched_outcome::success_or_next_ue) {
-        return true;
-      }
-      // This is the case in which there is no PDCCH space, which would affect all UEs; stop the UL scheduling.
-      else if (outcome == ul_srb_sched_outcome::stop_scheduler) {
-        return false;
+      if (outcome != ul_srb_sched_outcome::next_slot) {
+        return outcome;
       }
     }
   }
-  return true;
+  return ul_srb_sched_outcome::next_ue;
 }
 
 ue_fallback_scheduler::ul_srb_sched_outcome
@@ -999,7 +996,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
   ul_harq_process* h_ul = is_retx ? h_ul_retx : ue_pcell.harqs.find_empty_ul_harq();
   if (h_ul == nullptr) {
     logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: no HARQ available", u.ue_index, u.crnti);
-    return ul_srb_sched_outcome::success_or_next_ue;
+    return ul_srb_sched_outcome::next_ue;
   }
 
   if (used_crbs.all()) {
@@ -1093,7 +1090,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
-    return ul_srb_sched_outcome::stop_scheduler;
+    return ul_srb_sched_outcome::stop_ul_scheduling;
   }
 
   // Mark resources as occupied in the ResourceGrid.
@@ -1113,7 +1110,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
                     final_mcs_tbs.tbs,
                     is_retx);
 
-  return ul_srb_sched_outcome::success_or_next_ue;
+  return ul_srb_sched_outcome::next_ue;
 }
 
 void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
