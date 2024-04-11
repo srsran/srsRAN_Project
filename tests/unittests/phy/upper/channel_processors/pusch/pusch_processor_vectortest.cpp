@@ -360,7 +360,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   ASSERT_EQ(expected_data, data);
 
   // Make sure SINR is normal.
-  ASSERT_TRUE(std::isnormal(results_notifier.get_sch_entries().front().csi.get_sinr_dB()));
+  optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
+  ASSERT_TRUE(sinr_dB.has_value());
+  ASSERT_TRUE(std::isnormal(sinr_dB.value()));
 
   // Skip the rest of the assertions if UCI is not present.
   if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && config.uci.csi_part2_size.entries.empty()) {
@@ -373,7 +375,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   const auto& uci_entry = uci_entries.front();
 
   // Make sure SINR reported in UCI is normal.
-  ASSERT_TRUE(std::isnormal(uci_entry.csi.get_sinr_dB()));
+  sinr_dB = uci_entry.csi.get_sinr_dB();
+  ASSERT_TRUE(sinr_dB.has_value());
+  ASSERT_TRUE(std::isnormal(sinr_dB.value()));
 
   // Verify HARQ-ACK result.
   if (config.uci.nof_harq_ack > 0) {
@@ -439,7 +443,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
   ASSERT_FALSE(sch_entry.data.tb_crc_ok);
 
   // Make sure SINR is infinity.
-  ASSERT_TRUE(std::isinf(results_notifier.get_sch_entries().front().csi.get_sinr_dB()));
+  optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
+  ASSERT_TRUE(sinr_dB.has_value());
+  ASSERT_TRUE(std::isinf(sinr_dB.value()));
 
   // Skip the rest of the assertions if UCI is not present.
   if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && config.uci.csi_part2_size.entries.empty()) {
@@ -452,7 +458,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
   const auto& uci_entry = uci_entries.front();
 
   // Make sure SINR reported in UCI is normal.
-  ASSERT_TRUE(std::isinf(uci_entry.csi.get_sinr_dB()));
+  sinr_dB = uci_entry.csi.get_sinr_dB();
+  ASSERT_TRUE(std::isinf(sinr_dB.value()));
 
   // Verify HARQ-ACK result is invalid.
   if (config.uci.nof_harq_ack > 0) {
