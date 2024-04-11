@@ -37,8 +37,6 @@ struct downlink_processor_baseband_configuration {
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
-  /// Logger.
-  srslog::basic_logger* logger;
 };
 
 namespace detail {
@@ -196,8 +194,6 @@ private:
   /// \return \c true if the symbol has been processed, \c false otherwise.
   bool process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
 
-  /// Logger for printing amplitude control.
-  srslog::basic_logger& amplitude_control_logger;
   /// PDxCH baseband processor.
   pdxch_processor_baseband& pdxch_proc_baseband;
   /// Amplitude control.
@@ -220,12 +216,6 @@ private:
   std::vector<unsigned> symbol_sizes;
   /// Reference to the downlink notifier.
   downlink_processor_notifier* notifier = nullptr;
-  /// Average symbol power statistics.
-  sample_statistics<float> avg_symbol_power;
-  /// Peak symbol power statistics.
-  sample_statistics<float> peak_symbol_power;
-  /// Symbol PAPR statistics.
-  sample_statistics<float> symbol_papr;
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.

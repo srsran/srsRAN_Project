@@ -16,9 +16,13 @@
 using namespace srsran;
 
 ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*> low_phy_crtl_,
+                                                       std::vector<phy_metrics_adapter*>  low_phy_metrics_,
                                                        radio_session&                     radio_,
                                                        double                             srate_MHz_) :
-  low_phy_crtl(std::move(low_phy_crtl_)), radio(radio_), srate_MHz(srate_MHz_)
+  low_phy_crtl(std::move(low_phy_crtl_)),
+  low_phy_metrics(std::move(low_phy_metrics_)),
+  radio(radio_),
+  srate_MHz(srate_MHz_)
 {
 }
 
@@ -57,4 +61,12 @@ bool ru_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
 bool ru_controller_generic_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
   return radio.get_management_plane().set_rx_gain(port_id, gain_dB);
+}
+
+void ru_controller_generic_impl::print_metrics()
+{
+  phy_metrics_adapter::print_header();
+  for (auto metrics : low_phy_metrics) {
+    metrics->print_metrics();
+  }
 }

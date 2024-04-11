@@ -24,6 +24,7 @@
 #include "upper_phy_ssb_example.h"
 #include "srsran/adt/spsc_queue.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
+#include "srsran/phy/adapters/phy_metrics_adapter.h"
 #include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
@@ -418,6 +419,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        task_executor*                dl_task_executor,
                                                        task_executor*                prach_task_executor,
                                                        lower_phy_error_notifier*     error_notifier,
+                                                       lower_phy_metrics_notifier*   metrics_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                        lower_phy_timing_notifier*    timing_notifier,
                                                        srslog::basic_logger*         logger)
@@ -435,6 +437,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.rx_symbol_notifier             = rx_symbol_notifier;
   phy_config.timing_notifier                = timing_notifier;
   phy_config.error_notifier                 = error_notifier;
+  phy_config.metric_notifier                = metrics_notifier;
   phy_config.rx_task_executor               = rx_task_executor;
   phy_config.tx_task_executor               = tx_task_executor;
   phy_config.ul_task_executor               = ul_task_executor;
@@ -580,6 +583,7 @@ int main(int argc, char** argv)
 
   // Create adapters.
   phy_error_adapter             error_adapter(logger);
+  phy_metrics_adapter           metrics_adapter;
   phy_rx_symbol_adapter         rx_symbol_adapter;
   phy_rg_gateway_adapter        rg_gateway_adapter;
   phy_timing_adapter            timing_adapter;
@@ -594,6 +598,7 @@ int main(int argc, char** argv)
                                                                         dl_task_executor.get(),
                                                                         prach_task_executor.get(),
                                                                         &error_adapter,
+                                                                        &metrics_adapter,
                                                                         &rx_symbol_adapter,
                                                                         &timing_adapter,
                                                                         &logger);

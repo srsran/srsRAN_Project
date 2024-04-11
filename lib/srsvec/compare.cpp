@@ -195,3 +195,54 @@ std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
 
   return {max_index, max_x};
 }
+
+unsigned srsran::srsvec::count_if_part_abs_greater_than(span<const srsran::cf_t> x, float threshold)
+{
+  unsigned count = 0;
+
+#ifdef __AVX2__
+  __m256i avx_count     = _mm256_setzero_si256();
+  __m256  avx_threshold = _mm256_set1_ps(threshold);
+
+  for (unsigned i = 0, simd_end = 8 * (x.size() / 8); i != simd_end; i += 8) {
+    // Load input.
+    __m256 in0 = _mm256_loadu_ps(reinterpret_cast<const float*>(x.data()));
+    __m256 in1 = _mm256_loadu_ps(reinterpret_cast<const float*>(x.data() + 4));
+
+    // Reorder values.
+    in0 = _mm256_permute_ps(in0, 0b11011000);
+    in1 = _mm256_permute_ps(in1, 0b11011000);
+
+    // Split real and imaginary.
+    __m256 re = _mm256_unpacklo_ps(in0, in1);
+    __m256 im = _mm256_unpackhi_ps(in0, in1);
+
+    // Absolute.
+    re = _mm256_and_ps(re, _mm256_castsi256_ps(_mm256_set1_epi32(2147483647)));
+    im = _mm256_and_ps(im, _mm256_castsi256_ps(_mm256_set1_epi32(2147483647)));
+
+    // Check if any part exceeds the threshold.
+    __m256i mask_re = _mm256_castps_si256(_mm256_cmp_ps(re, avx_threshold, _CMP_GT_OS));
+    __m256i mask_im = _mm256_castps_si256(_mm256_cmp_ps(im, avx_threshold, _CMP_GT_OS));
+    __m256i mask    = _mm256_or_si256(mask_re, mask_im);
+
+    // Increment count.
+    __m256i avx_count_inc = _mm256_add_epi32(_mm256_set1_epi32(1), avx_count);
+    avx_count             = _mm256_blendv_epi8(avx_count, avx_count_inc, mask);
+
+    // Advance input.
+    x = x.last(x.size() - 8);
+  }
+
+  // Store the resultant count in a vector.
+  std::array<int, 8> count_vector;
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(count_vector.data()), avx_count);
+
+  // Sum vales in the vector.
+  count = std::accumulate(count_vector.begin(), count_vector.end(), count);
+#endif // __AVX2__
+
+  return count + std::count_if(x.begin(), x.end(), [threshold](cf_t sample) {
+           return (std::abs(sample.real()) > threshold) || (std::abs(sample.imag()) > threshold);
+         });
+}

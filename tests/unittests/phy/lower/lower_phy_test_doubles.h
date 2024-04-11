@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_metrics_notifier.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
@@ -253,6 +254,17 @@ public:
     ul_half_slot_events.clear();
     ul_full_slot_events.clear();
   }
+};
+
+/// Lower PHY metrics notify spy class.
+class lower_phy_metrics_notifier_spy : public lower_phy_metrics_notifier
+{
+public:
+  // See interface for documentation.
+  void on_new_transmit_metrics(const lower_phy_baseband_metrics& metrics) override {}
+
+  // See interface for documentation.
+  void on_new_receive_metrics(const lower_phy_baseband_metrics& metrics) override {}
 };
 
 } // namespace srsran
