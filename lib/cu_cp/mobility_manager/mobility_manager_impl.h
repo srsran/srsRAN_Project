@@ -47,6 +47,7 @@ public:
                                           pci_t        neighbor_pci) override;
 
 private:
+  void handle_handover(ue_index_t ue_index, gnb_id_t neighbor_gnb_id, nr_cell_id_t neighbor_nci, pci_t neighbor_pci);
   void handle_inter_cu_handover(ue_index_t source_ue_index, gnb_id_t target_gnb_id, nr_cell_id_t target_nci);
   void handle_inter_du_handover(ue_index_t source_ue_index,
                                 pci_t      neighbor_pci,

@@ -27,7 +27,7 @@ void mobility_manager::trigger_handover(pci_t source_pci, rnti_t rnti, pci_t tar
     logger.warning("Could not trigger handover, UE is invalid. rnti={} pci={}", rnti, source_pci);
     return;
   }
-  handle_neighbor_better_than_spcell(ue_index, gnb_id_t{}, nr_cell_id_t{}, target_pci); // TODO: define gNB-ID and NCI
+  handle_handover(ue_index, gnb_id_t{}, nr_cell_id_t{}, target_pci); // TODO: define gNB-ID and NCI
 }
 
 void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
@@ -39,7 +39,14 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
     logger.debug("ue={}: Ignoring better neighbor pci={}", ue_index, neighbor_pci);
     return;
   }
+  handle_handover(ue_index, neighbor_gnb_id, neighbor_nci, neighbor_pci);
+}
 
+void mobility_manager::handle_handover(ue_index_t   ue_index,
+                                       gnb_id_t     neighbor_gnb_id,
+                                       nr_cell_id_t neighbor_nci,
+                                       pci_t        neighbor_pci)
+{
   // Find the UE context.
   du_ue* u = ue_mng.find_du_ue(ue_index);
   if (u == nullptr) {
