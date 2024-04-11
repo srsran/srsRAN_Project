@@ -696,7 +696,7 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_config pdsch_cfg;
   pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
   dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
-  dmrs_type_a.additional_positions  = dmrs_additional_positions::pos1;
+  dmrs_type_a.additional_positions  = dmrs_additional_positions::pos2;
   pdsch_cfg.tci_states.push_back(tci_state{
       .state_id  = static_cast<tci_state_id_t>(0),
       .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,

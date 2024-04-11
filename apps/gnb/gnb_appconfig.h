@@ -200,7 +200,7 @@ struct pdsch_appconfig {
   /// retransmission is cancelled.
   uint8_t harq_la_ri_drop_threshold{1};
   /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211.
-  uint8_t dmrs_add_pos{1};
+  unsigned dmrs_add_pos{2};
 };
 
 /// PUSCH application configuration.
@@ -258,7 +258,7 @@ struct pusch_appconfig {
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_snr_offset{5.0};
   /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3).
-  uint8_t dmrs_add_pos{2};
+  unsigned dmrs_add_pos{2};
 };
 
 struct pucch_appconfig {
