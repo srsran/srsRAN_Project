@@ -219,14 +219,14 @@ void console_helper::handle_rx_gain_command(const std::list<std::string>& gain_a
 void console_helper::handle_handover_command(const std::list<std::string>& ho_args)
 {
   if (ho_args.size() != 3) {
-    fmt::print("Invalid handover command structure. Usage: ho <ue_id> <pci>\n");
+    fmt::print("Invalid handover command structure. Usage: ho <serving pci> <rnti> <target pci>\n");
     return;
   }
 
-  auto                            arg     = ho_args.begin();
-  expected<unsigned, std::string> src_pci = parse_int<unsigned>(*arg);
-  if (src_pci.is_error()) {
-    fmt::print("Invalid source PCI.\n");
+  auto                            arg         = ho_args.begin();
+  expected<unsigned, std::string> serving_pci = parse_int<unsigned>(*arg);
+  if (serving_pci.is_error()) {
+    fmt::print("Invalid serving PCI.\n");
     return;
   }
   arg++;
@@ -238,14 +238,15 @@ void console_helper::handle_handover_command(const std::list<std::string>& ho_ar
   arg++;
   expected<unsigned, std::string> target_pci = parse_int<unsigned>(*arg);
   if (target_pci.is_error()) {
-    fmt::print("Invalid PCI value.\n");
+    fmt::print("Invalid target PCI.\n");
     return;
   }
 
-  mob.trigger_handover(
-      static_cast<pci_t>(src_pci.value()), static_cast<rnti_t>(rnti.value()), static_cast<pci_t>(target_pci.value()));
+  mob.trigger_handover(static_cast<pci_t>(serving_pci.value()),
+                       static_cast<rnti_t>(rnti.value()),
+                       static_cast<pci_t>(target_pci.value()));
   fmt::print("Handover triggered for UE with pci={} rnti={:#04x} to pci={}.\n",
-             src_pci.value(),
+             serving_pci.value(),
              rnti.value(),
              target_pci.value());
 }
