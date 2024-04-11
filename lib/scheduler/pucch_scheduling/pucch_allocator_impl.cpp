@@ -234,6 +234,11 @@ optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell_reso
                                          harq_res_cfgs.value().pucch_ded_cfg);
   }
 
+  logger.debug(
+      "rnti={}: PUCCH HARQ-ACK for slot={} not allocated. Cause: no res_indicator available for both common and "
+      "ded. PUCCH resources",
+      rnti,
+      pucch_slot_alloc.slot);
   return nullopt;
 }
 
@@ -576,8 +581,8 @@ optional<unsigned> pucch_allocator_impl::exec_common_and_ded_res_alloc(cell_slot
   const unsigned pucch_res_indicator          = common_res_cfg.pucch_res_indicator;
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
 
-  // Allocate the dedicated PUCCH HARQ-ACK resource first; this is because the allocation can fail and, in that case, we
-  // quit the allocation with the need to remove the PUCCH common grant.
+  // Allocate the dedicated PUCCH HARQ-ACK resource first; this is because the allocation can may and, in that case, we
+  // can quit the allocation without the need to remove the PUCCH common grant.
   if (existing_grant == nullptr) {
     pucch_info& pucch_pdu = pucch_alloc.result.ul.pucchs.emplace_back();
     fill_pucch_ded_format1_grant(pucch_pdu, rnti, ded_res_cfg, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
@@ -585,10 +590,11 @@ optional<unsigned> pucch_allocator_impl::exec_common_and_ded_res_alloc(cell_slot
     // Update the HARQ-ACK bits in the PUCCH resource for SR.
     ++existing_grant->format_1.harq_ack_nof_bits;
 
-    // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
+    // Allocate the new grant on ded. PUCCH F1 resource for HARQ-ACK.
     pucch_info& pucch_pdu = pucch_alloc.result.ul.pucchs.emplace_back();
     fill_pucch_ded_format1_grant(pucch_pdu, rnti, ded_res_cfg, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
   } else {
+    // Change the existing PUCCH F2 grant for CSI into one for HARQ-ACK bits, if available.
     optional<unsigned> result = change_format2_resource(
         pucch_alloc,
         *existing_grant,
@@ -601,19 +607,19 @@ optional<unsigned> pucch_allocator_impl::exec_common_and_ded_res_alloc(cell_slot
     }
   }
 
-  // Allocate common HARQ-ACK resource.
-  // Fill Slot grid.
-  pucch_alloc.ul_res_grid.fill(common_res_cfg.first_hop_res);
-  pucch_alloc.ul_res_grid.fill(common_res_cfg.second_hop_res);
-
   // Fill scheduler output.
   pucch_info& pucch_info = pucch_alloc.result.ul.pucchs.emplace_back();
   fill_pucch_harq_common_grant(pucch_info, rnti, common_res_cfg);
 
+  // Allocate common HARQ-ACK resource.
+  pucch_alloc.ul_res_grid.fill(common_res_cfg.first_hop_res);
+  pucch_alloc.ul_res_grid.fill(common_res_cfg.second_hop_res);
+
   pucch_common_alloc_grid[pucch_alloc.slot.to_uint()].emplace_back(rnti);
 
-  logger.debug("rnti={}: PUCCH on common and ded.res with res_ind={} allocated for slot={}",
+  logger.debug("rnti={}: PUCCH on common {}resource with res_ind={} allocated for slot={}",
                rnti,
+               existing_grant != nullptr and existing_grant->format == pucch_format::FORMAT_2 ? "" : "and ded. ",
                pucch_res_indicator,
                pucch_alloc.slot);
 
@@ -772,12 +778,13 @@ optional<unsigned> pucch_allocator_impl::allocate_new_format1_harq_grant(cell_sl
     return nullopt;
   }
 
+  // Update the number of HARQ-ACK bits in the SR grant, if present.
   if (existing_sr_grant != nullptr) {
     srsran_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR");
     existing_sr_grant->format_1.harq_ack_nof_bits++;
   }
 
-  // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
+  // Allocate the new grant on PUCCH F1 resources for HARQ-ACK bits (without SR).
   pucch_info&    pucch_pdu                    = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
   fill_pucch_ded_format1_grant(
@@ -852,7 +859,6 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
     return;
   }
 
-  // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info&    pucch_pdu          = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned harq_bits_only_csi = 0U;
   fill_pucch_format2_grant(pucch_pdu,
@@ -933,7 +939,6 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
     return nullopt;
   }
 
-  // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info&    pucch_pdu               = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned csi1_nof_bits_only_harq = 0U;
   fill_pucch_format2_grant(pucch_pdu,
