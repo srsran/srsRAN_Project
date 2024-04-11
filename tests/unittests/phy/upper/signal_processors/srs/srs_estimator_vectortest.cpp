@@ -43,7 +43,7 @@ bool operator==(const srs_channel_matrix& left, const srs_channel_matrix& right)
 
 using namespace srsran;
 
-class SrsEstimatorFixture : public ::testing::TestWithParam<test_case_t>
+class srsEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   void SetUp() override
@@ -58,12 +58,16 @@ protected:
 
     estimator = srs_est_factory->create();
     ASSERT_NE(estimator, nullptr);
+
+    validator = srs_est_factory->create_validator();
+    ASSERT_NE(validator, nullptr);
   }
 
-  std::unique_ptr<srs_estimator> estimator = nullptr;
+  std::unique_ptr<srs_estimator>                         estimator = nullptr;
+  std::unique_ptr<srs_estimator_configuration_validator> validator = nullptr;
 };
 
-TEST_P(SrsEstimatorFixture, FromVector)
+TEST_P(srsEstimatorFixture, FromVector)
 {
   const test_case_t&                 test_case = GetParam();
   const srs_estimator_configuration& config    = test_case.context.config;
@@ -71,9 +75,11 @@ TEST_P(SrsEstimatorFixture, FromVector)
   resource_grid_reader_spy grid;
   grid.write(GetParam().rx_grid.read());
 
+  ASSERT_TRUE(validator->is_valid(config));
+
   srs_estimator_result result = estimator->estimate(grid, config);
 
   ASSERT_EQ(test_case.context.result.channel_matrix, result.channel_matrix);
 }
 
-INSTANTIATE_TEST_SUITE_P(SrsEstimatorFixture, SrsEstimatorFixture, ::testing::ValuesIn(srs_estimator_test_data));
+INSTANTIATE_TEST_SUITE_P(srsEstimatorFixture, srsEstimatorFixture, ::testing::ValuesIn(srs_estimator_test_data));

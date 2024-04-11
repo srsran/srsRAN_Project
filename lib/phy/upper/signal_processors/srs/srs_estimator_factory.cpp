@@ -9,7 +9,9 @@
  */
 
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
+#include "logging_srs_estimator_decorator.h"
 #include "srs_estimator_generic_impl.h"
+#include "srs_validator_generic_impl.h"
 
 using namespace srsran;
 
@@ -32,6 +34,11 @@ public:
     return std::make_unique<srs_estimator_generic_impl>(std::move(deps));
   }
 
+  std::unique_ptr<srs_estimator_configuration_validator> create_validator() override
+  {
+    return std::make_unique<srs_validator_generic_impl>();
+  }
+
 private:
   std::shared_ptr<low_papr_sequence_generator_factory> sequence_generator_factory;
 };
@@ -42,4 +49,9 @@ std::shared_ptr<srs_estimator_factory> srsran::create_srs_estimator_generic_fact
     std::shared_ptr<low_papr_sequence_generator_factory> sequence_generator_factory)
 {
   return std::make_shared<srs_estimator_factory_generic>(std::move(sequence_generator_factory));
+}
+
+std::unique_ptr<srs_estimator> srs_estimator_factory::create(srslog::basic_logger& logger)
+{
+  return std::make_unique<logging_srs_estimator_decorator>(logger, create());
 }

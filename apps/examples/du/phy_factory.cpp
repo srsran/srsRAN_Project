@@ -89,6 +89,7 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.pusch_executor             = ul_executor;
   upper_config.pusch_decoder_executor     = nullptr;
   upper_config.prach_executor             = ul_executor;
+  upper_config.srs_executor               = ul_executor;
   upper_config.rx_symbol_request_notifier = rx_symbol_request_notifier;
   upper_config.crc_calculator_type        = "auto";
   upper_config.ldpc_rate_dematcher_type   = "auto";

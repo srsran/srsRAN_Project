@@ -38,7 +38,7 @@ srsran::get_srs_information(const srs_resource_configuration& resource, unsigned
   // Assert configuration parameters.
   srsran_assert(resource.hopping == srs_resource_configuration::group_or_sequence_hopping_enum::neither,
                 "No sequence nor group hopping supported");
-  srsran_assert(resource.freq_hopping >= resource.bandwidth_index, "Frequency hopping is not supported.");
+  srsran_assert(!resource.has_frequency_hopping(), "Frequency hopping is not supported.");
 
   // Calculate sequence length.
   unsigned sequence_length = get_sequence_length(srs_bw_config->m_srs, resource.comb_size);

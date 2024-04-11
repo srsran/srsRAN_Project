@@ -30,11 +30,13 @@ public:
   uplink_processor_task_dispatcher(std::unique_ptr<uplink_processor> processor_,
                                    task_executor&                    pucch_executor_,
                                    task_executor&                    pusch_executor_,
-                                   task_executor&                    prach_executor_) :
+                                   task_executor&                    prach_executor_,
+                                   task_executor&                    srs_executor_) :
     processor(std::move(processor_)),
     pucch_executor(pucch_executor_),
     pusch_executor(pusch_executor_),
-    prach_executor(prach_executor_)
+    prach_executor(prach_executor_),
+    srs_executor(srs_executor_)
   {
     srsran_assert(processor, "A valid uplink processor must be provided");
   }
@@ -82,6 +84,17 @@ public:
     }
   }
 
+  void
+  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) override
+  {
+    bool success =
+        srs_executor.execute([&notifier, &grid, pdu, this]() { processor->process_srs(notifier, grid, pdu); });
+    if (!success) {
+      logger.warning(
+          pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute SRS. Ignoring processing.");
+    }
+  }
+
 private:
   /// Default logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
@@ -93,6 +106,8 @@ private:
   task_executor& pusch_executor;
   /// Executor for the PRACH tasks generated within this uplink processor.
   task_executor& prach_executor;
+  /// Executor for the SRS tasks generated within this uplink processor.
+  task_executor& srs_executor;
 };
 
 } // namespace srsran

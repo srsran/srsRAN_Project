@@ -26,6 +26,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
                                                  task_executor*                        pusch_executor,
                                                  task_executor*                        pusch_decoder_executor,
                                                  task_executor*                        prach_executor,
+                                                 task_executor*                        srs_executor,
                                                  task_executor*                        pdsch_codeblock_executor,
                                                  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
@@ -66,6 +67,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   cfg.pusch_executor             = pusch_executor;
   cfg.pusch_decoder_executor     = pusch_decoder_executor;
   cfg.prach_executor             = prach_executor;
+  cfg.srs_executor               = srs_executor;
   cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
   cfg.crc_calculator_type        = "auto";
   cfg.ldpc_rate_dematcher_type   = "auto";
@@ -138,6 +140,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                         workers.upper_pusch_exec[i],
                                         workers.upper_pusch_decoder_exec[i],
                                         workers.upper_prach_exec[i],
+                                        workers.upper_srs_exec[i],
                                         workers.upper_pdsch_exec[i],
                                         &rx_symbol_request_notifier);
     // DU-high configuration.

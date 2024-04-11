@@ -36,16 +36,19 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
 
 uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  prach_,
                                              std::unique_ptr<pusch_processor> pusch_proc_,
-                                             std::unique_ptr<pucch_processor> pucch_proc_) :
+                                             std::unique_ptr<pucch_processor> pucch_proc_,
+                                             std::unique_ptr<srs_estimator>   srs_) :
   free_pusch_adaptors(max_nof_pusch_notifier_adaptors),
   prach(std::move(prach_)),
   pusch_proc(std::move(pusch_proc_)),
   pucch_proc(std::move(pucch_proc_)),
+  srs(std::move(srs_)),
   logger(srslog::fetch_basic_logger("PHY", true))
 {
   srsran_assert(prach, "A valid PRACH detector must be provided");
   srsran_assert(pusch_proc, "A valid PUSCH processor must be provided");
   srsran_assert(pucch_proc, "A valid PUCCH processor must be provided");
+  srsran_assert(srs, "A valid SRS channel estimator must be provided");
 
   for (unsigned i = 0; i != max_nof_pusch_notifier_adaptors; ++i) {
     pusch_adaptors.emplace_back(detail::pusch_processor_result_notifier_adaptor(free_pusch_adaptors));
@@ -136,4 +139,19 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
   notifier.on_new_pucch_results(result);
 
   l1_tracer << trace_event("process_pucch", tp);
+}
+
+void uplink_processor_impl::process_srs(upper_phy_rx_results_notifier&   notifier,
+                                        const resource_grid_reader&      grid,
+                                        const uplink_processor::srs_pdu& pdu)
+{
+  trace_point tp = l1_tracer.now();
+
+  ul_srs_results result;
+  result.context          = pdu.context;
+  result.processor_result = srs->estimate(grid, pdu.config);
+
+  l1_tracer << trace_event("process_srs", tp);
+
+  notifier.on_new_srs_results(result);
 }

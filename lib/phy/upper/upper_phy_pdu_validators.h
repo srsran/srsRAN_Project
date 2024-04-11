@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration_validator.h"
 #include "srsran/phy/upper/uplink_processor.h"
 
 namespace srsran {
@@ -20,14 +21,16 @@ class uplink_processor_validator_impl : public uplink_pdu_validator
 {
 public:
   /// Constructs an uplink PDU validator containing the validators for each channel.
-  uplink_processor_validator_impl(std::unique_ptr<prach_detector_validator> prach_,
-                                  std::unique_ptr<pucch_pdu_validator>      pucch_,
-                                  std::unique_ptr<pusch_pdu_validator>      pusch_) :
-    prach(std::move(prach_)), pucch(std::move(pucch_)), pusch(std::move(pusch_))
+  uplink_processor_validator_impl(std::unique_ptr<prach_detector_validator>              prach_,
+                                  std::unique_ptr<pucch_pdu_validator>                   pucch_,
+                                  std::unique_ptr<pusch_pdu_validator>                   pusch_,
+                                  std::unique_ptr<srs_estimator_configuration_validator> srs_) :
+    prach(std::move(prach_)), pucch(std::move(pucch_)), pusch(std::move(pusch_)), srs(std::move(srs_))
   {
     srsran_assert(prach, "Invalid PRACH detector validator.");
     srsran_assert(pucch, "Invalid PUCCH processor validator.");
     srsran_assert(pusch, "Invalid PUSCH processor validator.");
+    srsran_assert(srs, "Invalid SRS estimator configuration validator.");
   }
 
   // See interface for documentation.
@@ -37,12 +40,14 @@ public:
   bool is_valid(const pucch_processor::format2_configuration& config) const override { return pucch->is_valid(config); }
   bool is_valid(const pucch_processor::format3_configuration& config) const override { return pucch->is_valid(config); }
   bool is_valid(const pucch_processor::format4_configuration& config) const override { return pucch->is_valid(config); }
-  bool is_valid(const pusch_processor::pdu_t& pdu) const override { return pusch->is_valid(pdu); }
+  bool is_valid(const pusch_processor::pdu_t& config) const override { return pusch->is_valid(config); }
+  bool is_valid(const srs_estimator_configuration& config) override { return srs->is_valid(config); }
 
 private:
-  std::unique_ptr<prach_detector_validator> prach;
-  std::unique_ptr<pucch_pdu_validator>      pucch;
-  std::unique_ptr<pusch_pdu_validator>      pusch;
+  std::unique_ptr<prach_detector_validator>              prach;
+  std::unique_ptr<pucch_pdu_validator>                   pucch;
+  std::unique_ptr<pusch_pdu_validator>                   pusch;
+  std::unique_ptr<srs_estimator_configuration_validator> srs;
 };
 
 /// Implements the downlink PDU validator for \ref downlink_processor_single_executor_impl.

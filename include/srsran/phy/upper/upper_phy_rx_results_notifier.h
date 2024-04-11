@@ -19,6 +19,7 @@
 #include "srsran/phy/upper/channel_processors/prach_detection_result.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
+#include "srsran/phy/upper/signal_processors/srs/srs_estimator_result.h"
 #include "srsran/phy/upper/uplink_processor_context.h"
 
 namespace srsran {
@@ -74,6 +75,14 @@ struct ul_pucch_results {
   pucch_processor_result processor_result;
 };
 
+/// Sounding Reference Signal results structure.
+struct ul_srs_results {
+  /// SRS context.
+  ul_srs_context context;
+  /// SRS channel estimation result.
+  srs_estimator_result processor_result;
+};
+
 /// \brief Interface of the upper-PHY notifier in charge of messages carrying the result of uplink detection and
 /// decoding.
 class upper_phy_rx_results_notifier
@@ -93,6 +102,9 @@ public:
 
   /// \brief Notifies the results of a PUCCH decodification.
   virtual void on_new_pucch_results(const ul_pucch_results& result) = 0;
+
+  /// \brief Notifies the results of a Sounding Reference Signals channel estimation.
+  virtual void on_new_srs_results(const ul_srs_results& result) = 0;
 };
 
 } // namespace srsran
