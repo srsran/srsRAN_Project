@@ -556,8 +556,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::l
     float              success_rate    = 0;
     uint32_t           total_lost_pdus = 0;
     uint32_t           total_pdus      = 0;
-    for (unsigned idx = 0; ue_aggr_rlc_metrics.size(); idx++) {
-      rlc_metrics& rlc_metric = ue_aggr_rlc_metrics[idx];
+    for (auto& ue_metric : ue_aggr_rlc_metrics) {
+      rlc_metrics& rlc_metric = ue_metric.second;
       total_lost_pdus += rlc_metric.rx.num_lost_pdus;
       total_pdus += rlc_metric.rx.num_pdus;
     }

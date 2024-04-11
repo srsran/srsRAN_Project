@@ -44,6 +44,7 @@ void fill_metrics_single_ue()
   ue.dl_nof_ok     = 900;
   ue.dl_nof_nok    = 100;
   ue.pusch_snr_db  = 25.0;
+  ue.pusch_rsrp_db = -10.0;
   ue.pucch_snr_db  = 23.0;
   ue.ul_mcs        = 15;
   ue.ul_brate_kbps = 1;

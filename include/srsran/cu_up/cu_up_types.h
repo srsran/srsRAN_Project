@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/f1u/cu_up/f1u_config.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -58,9 +59,10 @@ struct e1ap_bearer_context_inactivity_notification {
   std::vector<pdu_session_id_t> inactive_pdu_sessions;
 };
 
-/// QoS Configuration, i.e. 5QI and the associated PDCP and SDAP configuration for DRBs
+/// QoS Configuration, i.e. 5QI and the associated SDAP, PDCP and F1-U configuration for DRBs
 struct cu_up_qos_config {
-  pdcp_custom_config pdcp_custom;
+  pdcp_custom_config pdcp_custom_cfg; ///< Implementation-specific parameters for PDCP
+  f1u_config         f1u_cfg;         ///< Implementation-specific parameters for F1-U
 };
 
 } // namespace srs_cu_up

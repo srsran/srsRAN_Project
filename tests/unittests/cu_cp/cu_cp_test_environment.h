@@ -43,6 +43,14 @@ struct cu_cp_test_env_params {
 class cu_cp_test_environment
 {
 public:
+  struct ue_context {
+    rnti_t                        crnti = rnti_t::INVALID_RNTI;
+    optional<gnb_du_ue_f1ap_id_t> du_ue_id;
+    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    optional<ran_ue_id_t>         ran_ue_id;
+    optional<amf_ue_id_t>         amf_ue_id;
+  };
+
   explicit cu_cp_test_environment(cu_cp_test_env_params params = {});
   ~cu_cp_test_environment();
 
@@ -71,8 +79,18 @@ public:
   /// Run E1 setup procedure to completion
   bool run_e1_setup(unsigned cu_up_idx);
 
-  /// Connect a new UE to CU-CP through a provided DU.
+  /// Connect a new UE to CU-CP through a provided DU. It runs the full RRC setup procedure.
   bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  /// Runs the NAS Authentication for a given UE.
+  bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
+  /// Runs the Security Mode procedure for a given UE.
+  bool setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id);
+  /// Runs RRC setup, authentication, security, RRC Reconfiguration for a given UE.
+  bool attach_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti, amf_ue_id_t amf_ue_id);
+  /// Reestablishes a UE connection, including RRC Reestablishment and RRC Reconfiguration procedures.
+  /// \return True if the reestablishment was successful, false if RRC Setup/Reject was performed instead.
+  bool
+  reestablish_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_crnti, rnti_t old_crnti, pci_t old_pci);
 
   /// Tick the CU-CP clock.
   void tick();
@@ -81,22 +99,22 @@ public:
   bool tick_until(std::chrono::milliseconds timeout, const std::function<bool()>& stop_condition);
 
   /// Tick CU-CP timer until a NGAP PDU is sent.
-  bool wait_for_ngap_tx_pdu(ngap_message&             ngap_pdu,
-                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+  bool wait_for_ngap_tx_pdu(ngap_message& ngap_pdu, std::chrono::milliseconds timeout = std::chrono::milliseconds{500});
 
   bool wait_for_e1ap_tx_pdu(unsigned                  cu_up_idx,
                             e1ap_message&             e1ap_pdu,
-                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{500});
 
   bool wait_for_f1ap_tx_pdu(unsigned                  du_idx,
                             f1ap_message&             f1ap_pdu,
-                            std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds{500});
 
   const cu_cp_test_env_params& get_test_env_params() const { return params; }
 
+  const ue_context* find_ue_context(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id) const;
+
 private:
   class worker_manager;
-  class gateway_manager;
 
   cu_cp_test_env_params params;
 
@@ -116,6 +134,10 @@ private:
   // Emulated DU nodes.
   std::unordered_map<unsigned, std::unique_ptr<mock_du>> dus;
   unsigned                                               next_du_idx = 0;
+
+  // Attached UEs.
+  std::unordered_map<ran_ue_id_t, ue_context>                              attached_ues;
+  std::map<unsigned, std::unordered_map<gnb_du_ue_f1ap_id_t, ran_ue_id_t>> du_ue_id_to_ran_ue_id_map;
 
   /// CU-CP instance.
   std::unique_ptr<cu_cp> cu_cp_inst;

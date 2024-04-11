@@ -132,7 +132,7 @@ void lower_phy_uplink_processor_impl::process_symbol_boundary(const baseband_gat
                                                               baseband_gateway_timestamp            timestamp)
 {
   // Calculate the subframe index.
-  unsigned i_sf = timestamp / nof_samples_per_subframe;
+  unsigned i_sf = static_cast<uint64_t>((timestamp / nof_samples_per_subframe) % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
 
   // Calculate the sample index within the subframe.
   unsigned i_sample_sf = timestamp % nof_samples_per_subframe;

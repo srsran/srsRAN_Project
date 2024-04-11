@@ -674,7 +674,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
     // the first transmission.
     const bool sym_length_match_prev_grant_for_retx =
-        pusch_td_cfg.symbols.length() != msg3_ctx.harq.last_tx_params().nof_symbols;
+        pusch_td_cfg.symbols.length() == msg3_ctx.harq.last_tx_params().nof_symbols;
     if (not cell_cfg.is_ul_enabled(pusch_alloc.slot) or pusch_td_cfg.symbols.start() < start_ul_symbols or
         !sym_length_match_prev_grant_for_retx) {
       // Not possible to schedule Msg3s in this TDD slot.

@@ -41,9 +41,11 @@ static void configure_cli11_log_args(CLI::App& app, ru_emulator_log_appconfig& l
   app.add_option("--level", log_params.level, "Log level")->capture_default_str()->check(level_check);
 }
 
-static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, ru_emulator_dpdk_appconfig& config)
+static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, optional<ru_emulator_dpdk_appconfig>& config)
 {
-  app.add_option("--eal_args", config.eal_args, "EAL configuration parameters used to initialize DPDK");
+  config.emplace();
+
+  app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 static void configure_cli11_ru_emu_args(CLI::App& app, ru_emulator_ofh_appconfig& config)
@@ -113,4 +115,21 @@ void srsran::configure_cli11_with_ru_emulator_appconfig_schema(CLI::App& app, ru
 
   CLI::App* dpdk_subcmd = app.add_subcommand("dpdk", "DPDK configuration")->configurable();
   configure_cli11_ru_emu_dpdk_args(*dpdk_subcmd, ru_emu_parsed_cfg.dpdk_config);
+
+  app.callback([&]() {
+    // Clean the DPDK optional.
+    if (app.get_subcommand("dpdk")->count_all() == 0) {
+      ru_emu_parsed_cfg.dpdk_config.reset();
+    }
+#ifdef DPDK_FOUND
+    bool uses_dpdk = ru_emu_parsed_cfg.dpdk_config.has_value();
+    if (uses_dpdk && ru_emu_parsed_cfg.dpdk_config->eal_args.empty()) {
+      report_error("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly");
+    }
+#else
+    if (ru_emu_parsed_cfg.dpdk_config.has_value()) {
+      report_error("Unable to use DPDK as the application was not compiled with DPDK support");
+    }
+#endif
+  });
 }

@@ -82,7 +82,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value());
+  pdu.add_sdu(lcid, payload);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -115,7 +115,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
     ASSERT_TRUE(payload.append(test_rgen::uniform_int<uint8_t>()));
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain::create(payload.copy()).value()), payload.length() + HEADER_LEN);
+  ASSERT_EQ(pdu.add_sdu(lcid, payload), payload.length() + HEADER_LEN);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -186,6 +186,21 @@ public:
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }
 
 protected:
+  std::string fmt_range_difference(const byte_buffer& expected, const byte_buffer& actual)
+  {
+    std::string fmt_diff;
+    if (expected.length() != actual.length()) {
+      return fmt::format("Expected length: {}, Actual length: {}\n", expected.length(), actual.length());
+    } else {
+      for (unsigned i = 0; i != expected.length(); ++i) {
+        if (expected[i] != actual[i]) {
+          return fmt::format("Expected: 0x{:02x}, Actual: 0x{:02x} at index {}\n", expected[i], actual[i], i);
+        }
+      }
+    }
+    return "ERROR";
+  }
+
   byte_buffer                  msg3_pdu;
   mac_ue_create_request        req = test_helpers::make_default_ue_creation_request();
   du_rnti_table                rnti_table;
@@ -240,47 +255,47 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   const unsigned nof_sdus                = test_rgen::uniform_int<unsigned>(2, 6);
   const unsigned MIN_LC_SCHED_BYTES_SIZE = 3; // Need to account MAC subheader.
 
-  unsigned              tb_size = 0;
-  std::vector<unsigned> sdu_payload_sizes(nof_sdus), sdu_req_sizes(nof_sdus);
+  std::vector<unsigned> sdu_payload_sizes(nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
     // Generate SDU size.
     sdu_payload_sizes[i] = test_rgen::uniform_int<unsigned>(MIN_LC_SCHED_BYTES_SIZE, 1000);
-    // Slighlty oversize the TB size.
-    sdu_req_sizes[i] = MAX_MAC_SDU_SUBHEADER_SIZE + sdu_payload_sizes[i];
-    if (i == nof_sdus - 1 and tb_size + sdu_req_sizes[i] == 258) {
-      // avoid special case with impossible subheader + SDU size.
-      sdu_payload_sizes[i]++;
-      sdu_req_sizes[i] = MAX_MAC_SDU_SUBHEADER_SIZE + sdu_payload_sizes[i];
-    }
+  }
+
+  // Derive TB size.
+  unsigned              tb_size = 0;
+  std::vector<unsigned> sdu_req_sizes(nof_sdus);
+  for (unsigned i = 0; i != nof_sdus; ++i) {
+    sdu_req_sizes[i] = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
     tb_size += sdu_req_sizes[i];
 
     // Add pending SDU in MAC Tx SDU dummy notifier.
     this->dl_bearers[1].next_rlc_pdu_sizes.push_back(sdu_payload_sizes[i]);
   }
 
-  // MAC schedules one TB with one LCID, and size to fill with upper layer data.
-  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size);
+  // MAC schedules one TB with one LCID.
   dl_msg_tb_info tb_info;
+  // Note: +1 added for the case tb_size=258 (impossible MAC SDU+subh size).
+  const unsigned lcid_sched_bytes = get_mac_sdu_payload_size(tb_size) + 1;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
+  // Encode MAC PDU with multiple SDUs.
   span<const uint8_t> result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
   ASSERT_EQ(result.size(), tb_size);
   ASSERT_EQ(this->dl_bearers[1].last_sdus.size(), nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
     ASSERT_EQ(this->dl_bearers[1].last_sdus[i].length(), sdu_payload_sizes[i])
-        << fmt::format("SDU size mismatch for SDU {}/{}. First SDU len={}", i + 1, nof_sdus, sdu_payload_sizes[0]);
+        << fmt::format("SDU size mismatch for SDU {}/{}. First SDU len={}", i + 1, nof_sdus, sdu_payload_sizes[i]);
   }
 
   // Check if MAC PDU contains the MAC SDUs composed by a MAC subheader and the data passed by the upper layer.
   byte_buffer expected_result;
   bit_encoder enc(expected_result);
   for (unsigned i = 0; i != nof_sdus; ++i) {
-    unsigned mac_expected_sdu_size = get_mac_sdu_payload_size(tb_size - expected_result.length());
-    enc.pack(0b0, 1);                                                                            // R
-    enc.pack(mac_expected_sdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
-    enc.pack(LCID_SRB1, 6);                                                                      // LCID
-    enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(mac_expected_sdu_size) - 1)); // L
-    enc.pack_bytes(dl_bearers[1].last_sdus[i]);                                                  // SDU payload.
+    enc.pack(0b0, 1);                                                                           // R
+    enc.pack(sdu_payload_sizes[i] >= MAC_SDU_SUBHEADER_LENGTH_THRES, 1);                        // F
+    enc.pack(LCID_SRB1, 6);                                                                     // LCID
+    enc.pack(sdu_payload_sizes[i], 8 * (get_mac_sdu_subheader_size(sdu_payload_sizes[i]) - 1)); // L
+    enc.pack_bytes(dl_bearers[1].last_sdus[i]);                                                 // SDU payload.
   }
   if (expected_result.length() < tb_size) {
     // Padding.
@@ -289,5 +304,7 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
     std::vector<uint8_t> padding_bits(result.begin() + expected_result.length(), result.end());
     enc.pack_bytes(padding_bits);
   }
-  ASSERT_EQ(expected_result, result);
+
+  byte_buffer result_pdu = byte_buffer::create(result).value();
+  ASSERT_EQ(expected_result, result_pdu) << fmt_range_difference(expected_result, result_pdu);
 }

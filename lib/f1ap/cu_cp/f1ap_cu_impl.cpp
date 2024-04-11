@@ -235,12 +235,6 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialULRRCMessageTransfer",
-               du_ue_id,
-               cgi.nci,
-               crnti,
-               cgi.plmn);
-
   if (msg->sul_access_ind_present) {
     logger.debug("du_ue_f1ap_id={}: Ignoring SUL access indicator", du_ue_id);
   }
@@ -307,14 +301,13 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
-    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UlRrcMessageTransfer. UE context does not exist",
+    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping ULRRCMessageTransfer. UE context does not exist",
                    msg->gnb_cu_ue_f1ap_id,
                    msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
-  ue_ctxt.logger.log_debug("Received UlRrcMessageTransfer");
 
   // Notify upper layers about reception
   ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());
@@ -416,16 +409,16 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
       make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
         fmt::format_to(ctx.out(), "{} PDU", is_rx ? "Rx" : "Tx");
         if (du_id != srsran::gnb_du_id_t::invalid) {
-          fmt::format_to(ctx.out(), " GNB-DU-ID={}", du_id);
+          fmt::format_to(ctx.out(), " du_id={}", du_id);
         }
         if (ue_idx != ue_index_t::invalid) {
           fmt::format_to(ctx.out(), " ue={}", ue_idx);
         }
         if (du_ue_id.has_value()) {
-          fmt::format_to(ctx.out(), " GNB-DU-UE-F1AP-ID={}", du_ue_id.value());
+          fmt::format_to(ctx.out(), " du_ue_id={}", du_ue_id.value());
         }
         if (cu_ue_id.has_value()) {
-          fmt::format_to(ctx.out(), " GNB-CU-UE-F1AP-ID={}", cu_ue_id.value());
+          fmt::format_to(ctx.out(), " cu_ue_id={}", cu_ue_id.value());
         }
         return fmt::format_to(ctx.out(), ": {}", msg_name);
       });

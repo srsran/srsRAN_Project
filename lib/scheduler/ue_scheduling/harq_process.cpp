@@ -359,6 +359,7 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
   prev_tx_params.dci_cfg_type = dci_cfg_type;
   prev_tx_params.rbs          = pusch.rbs;
+  prev_tx_params.nof_symbols  = pusch.symbols.length();
 }
 
 void ul_harq_process::cancel_harq_retxs()

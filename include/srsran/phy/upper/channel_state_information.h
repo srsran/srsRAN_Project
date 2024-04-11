@@ -73,22 +73,19 @@ public:
     return sinr_type::channel_estimator;
   }
 
-  /// Gets the SINR value that is used to select the modulation and coding scheme.
-  float get_sinr_dB() const
+  /// \brief Gets the SINR value that is used to select the modulation and coding scheme.
+  ///
+  /// \return The selected SINR in decibels if it is available, otherwise \c nullopt.
+  optional<float> get_sinr_dB() const
   {
     switch (sinr_report_type) {
       case sinr_type::channel_estimator:
-        srsran_assert(sinr_ch_estimator_dB.has_value(),
-                      "Selected CSI SINR type, i.e., channel estimator, is not available.");
-        return sinr_ch_estimator_dB.value();
+        return sinr_ch_estimator_dB;
       case sinr_type::post_equalization:
-        srsran_assert(sinr_post_eq_dB.has_value(),
-                      "Selected CSI SINR type, i.e., post equalization, is not available.");
-        return sinr_post_eq_dB.value();
+        return sinr_post_eq_dB;
       case sinr_type::evm:
       default:
-        srsran_assert(sinr_evm_dB.has_value(), "Selected CSI SINR type, i.e., from EVM, is not available.");
-        return sinr_evm_dB.value();
+        return sinr_evm_dB;
     }
   }
 

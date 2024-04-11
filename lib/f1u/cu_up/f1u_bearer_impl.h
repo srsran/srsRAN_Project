@@ -24,6 +24,7 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer.h"
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
+#include "srsran/f1u/cu_up/f1u_config.h"
 #include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
@@ -39,6 +40,7 @@ public:
   f1u_bearer_impl(uint32_t                       ue_index,
                   drb_id_t                       drb_id_,
                   const up_transport_layer_info& ul_tnl_info_,
+                  const f1u_config&              config,
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
@@ -79,8 +81,12 @@ public:
   void on_expired_dl_notif_timer();
 
 private:
+  f1u_bearer_logger logger;
+
+  /// Config storage
+  const f1u_config cfg;
+
   bool                      stopped = false;
-  f1u_bearer_logger         logger;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;

@@ -90,6 +90,8 @@ public:
 
   slot_point next_slot;
 
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
 private:
   struct ue_sim_context {
     rnti_t                        rnti = rnti_t::INVALID_RNTI;

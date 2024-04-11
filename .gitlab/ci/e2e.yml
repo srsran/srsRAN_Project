@@ -289,21 +289,8 @@ amari 32UE:
             "iperf and udp and not band:3",
             "iperf and tcp and band:3",
             "iperf and tcp and not band:3",
+            "reestablishment",
           ]
-
-amari 32UE [reestablishment]:
-  extends: .zmq
-  variables:
-    MARKERS: "zmq and not smoke"
-    E2E_LOG_LEVEL: "info"
-    KEYWORDS: reestablishment
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=False"
-  allow_failure: true
-  needs:
-    - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
 
 amari 32UE asan:
   extends: .zmq

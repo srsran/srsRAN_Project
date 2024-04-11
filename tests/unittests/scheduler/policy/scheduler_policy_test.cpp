@@ -434,8 +434,8 @@ TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twic
   // Action: Run for at least 256 slots or more so that there are some HARQs with pending reTx.
   // Status: Policy scheduler should not allocate reTx and new Tx for the same UE at the same time.
   for (unsigned i = 0; i != 512; ++i) {
-    ASSERT_LE(get_pdsch_grant_count_for_ue(u1.crnti), 1);
-    ASSERT_LE(get_pusch_grant_count_for_ue(u1.crnti), 1);
+    ASSERT_LE(get_pdsch_grant_count_for_ue(u1.crnti), 1) << fmt::format("At slot={}", next_slot);
+    ASSERT_LE(get_pusch_grant_count_for_ue(u1.crnti), 1) << fmt::format("At slot={}", next_slot);
     run_slot();
   }
 }

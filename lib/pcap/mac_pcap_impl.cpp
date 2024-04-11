@@ -30,10 +30,10 @@ static constexpr uint16_t MAC_DLT = 157;
 
 static int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, span<uint8_t> buffer);
 
-mac_pcap_impl::mac_pcap_impl(const std::string& filename, mac_pcap_type type_, task_executor& backend_exec_) :
-  type(type_),
+mac_pcap_impl::mac_pcap_impl(const std::string& filename_, mac_pcap_type type_, task_executor& backend_exec_) :
   logger(srslog::fetch_basic_logger("ALL")),
-  writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT, "MAC", filename, backend_exec_)
+  type(type_),
+  writer(type == mac_pcap_type::dlt ? MAC_DLT : UDP_DLT, "MAC", filename_, backend_exec_)
 {
 }
 

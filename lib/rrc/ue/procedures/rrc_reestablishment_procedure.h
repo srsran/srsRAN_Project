@@ -54,11 +54,8 @@ public:
   static const char* name() { return "RRC Reestablishment Procedure"; }
 
 private:
-  /// \brief Get and verify the reestablishment context of the reestablishing UE.
-  bool get_and_verify_reestablishment_context();
-
   /// \brief Determined whether the Reestablishment Request is accepted or rejected.
-  bool is_reestablishment_rejected();
+  bool is_reestablishment_accepted();
 
   /// \brief Get and verify the ShortMAC-I and update the keys.
   bool verify_security_context();
@@ -74,6 +71,8 @@ private:
 
   async_task<void> handle_rrc_reestablishment_fallback();
 
+  void log_rejected_reestablishment(const char* cause_str);
+
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
   rrc_ue_context_t&                        context;
   const byte_buffer&                       du_to_cu_container;
@@ -88,13 +87,13 @@ private:
   rrc_ue_event_manager&                    event_mng;             // event manager for the RRC UE entity
   rrc_ue_logger&                           logger;
 
-  const asn1::rrc_nr::pdcp_cfg_s   srb1_pdcp_cfg;
-  rrc_transaction                  transaction;
-  eager_async_task<rrc_outcome>    task;
-  rrc_reestablishment_ue_context_t reestablishment_context;
-  bool                             context_transfer_success     = false;
-  bool                             context_modification_success = false;
-  cu_cp_ue_context_release_request ue_context_release_request;
+  const asn1::rrc_nr::pdcp_cfg_s          srb1_pdcp_cfg;
+  rrc_transaction                         transaction;
+  eager_async_task<rrc_outcome>           task;
+  rrc_ue_reestablishment_context_response old_ue_reest_context;
+  bool                                    context_transfer_success     = false;
+  bool                                    context_modification_success = false;
+  cu_cp_ue_context_release_request        ue_context_release_request;
 };
 
 } // namespace srs_cu_cp

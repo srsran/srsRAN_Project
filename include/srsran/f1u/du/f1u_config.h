@@ -30,7 +30,8 @@ namespace srs_du {
 
 /// \brief Configurable parameters of the F1-U bearer in the DU
 struct f1u_config {
-  uint32_t t_notify; ///< Timer used for periodic transmission of uplink notifications
+  uint32_t t_notify;            ///< Timer used for periodic transmission of uplink notifications
+  bool     warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
 };
 
 } // namespace srs_du
@@ -50,7 +51,7 @@ struct formatter<srsran::srs_du::f1u_config> {
   template <typename FormatContext>
   auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "t_notif={}", cfg.t_notify);
+    return format_to(ctx.out(), "t_notif={} warn_on_drop={}", cfg.t_notify, cfg.warn_on_drop);
   }
 };
 

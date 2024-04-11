@@ -186,7 +186,14 @@ public:
     mac      = &mac_;
   }
 
-  void disconnect() { lcid = INVALID_LCID; }
+  void disconnect()
+  {
+    lcid_t prev_lcid = lcid.exchange(INVALID_LCID);
+    if (prev_lcid != INVALID_LCID) {
+      // Push an empty buffer state update to MAC, so the scheduler doesn't keep allocating grants for this bearer.
+      mac->handle_dl_buffer_state_update(mac_dl_buffer_state_indication_message{ue_index, prev_lcid, 0});
+    }
+  }
 
   void on_buffer_state_update(unsigned bsr) override
   {

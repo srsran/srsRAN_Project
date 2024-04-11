@@ -192,7 +192,7 @@ public:
     return controller->request_ue_setup();
   }
 
-  rrc_reestablishment_ue_context_t
+  rrc_ue_reestablishment_context_response
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");

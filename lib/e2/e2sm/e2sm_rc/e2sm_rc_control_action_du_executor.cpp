@@ -64,6 +64,49 @@ e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_cont
     CORO_RETURN(e2sm_response);
   });
 }
+
+void e2sm_rc_control_action_du_executor_base::parse_ran_parameter_value_false(
+    const ran_param_value_type_choice_elem_false_s& ran_p,
+    uint64_t                                        ran_param_id,
+    uint64_t                                        ue_id,
+    du_mac_sched_control_config&                    ctrl_cfg)
+{
+  control_config_params cfg;
+  if (ran_param_id == 11) {
+    cfg.min_prb_alloc = ran_p.ran_param_value.value_int();
+  } else if (ran_param_id == 12) {
+    cfg.max_prb_alloc = ran_p.ran_param_value.value_int();
+  } else {
+    logger.error("Unknown RAN parameter ID %d", ran_param_id);
+    return;
+  }
+  ctrl_cfg.param_list.push_back(cfg);
+}
+
+void e2sm_rc_control_action_du_executor_base::parse_ran_parameter_value(const ran_param_value_type_c& ran_param,
+                                                                        uint64_t                      ran_param_id,
+                                                                        uint64_t                      ue_id,
+                                                                        du_mac_sched_control_config&  ctrl_cfg)
+{
+  if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_list) {
+    for (auto& ran_p_list : ran_param.ran_p_choice_list().ran_param_list.list_of_ran_param) {
+      for (auto& ran_p : ran_p_list.seq_of_ran_params) {
+        if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
+          parse_ran_parameter_value(ran_p.ran_param_value_type, ran_p.ran_param_id, ue_id, ctrl_cfg);
+        }
+      }
+    }
+  } else if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_structure) {
+    for (auto& ran_seq : ran_param.ran_p_choice_structure().ran_param_structure.seq_of_ran_params) {
+      if (action_params.find(ran_seq.ran_param_id) != action_params.end()) {
+        parse_ran_parameter_value(ran_seq.ran_param_value_type, ran_seq.ran_param_id, ue_id, ctrl_cfg);
+      }
+    }
+  } else if (ran_param.type() == ran_param_value_type_c::types_opts::ran_p_choice_elem_false) {
+    parse_ran_parameter_value_false(ran_param.ran_p_choice_elem_false(), ran_param_id, ue_id, ctrl_cfg);
+  }
+}
+
 e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(du_configurator& du_configurator_) :
   e2sm_rc_control_action_du_executor_base(du_configurator_, 6)
 {
@@ -102,7 +145,7 @@ async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
   du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req);
-  if (!ctrl_config.ue_id) {
+  if (ctrl_config.param_list.empty()) {
     return return_ctrl_failure(req);
   }
   return launch_async(
@@ -123,23 +166,14 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
       variant_get<e2sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
       variant_get<e2sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
-
+  ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_ue_id().amf_ue_ngap_id;
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
-      if (ran_p.ran_param_id == 11) {
-        if (ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present) {
-          ctrl_config.min_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.value_int();
-          ctrl_config.ue_id         = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
-        }
-      } else if (ran_p.ran_param_id == 12) {
-        if (ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present) {
-          ctrl_config.max_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.value_int();
-          ctrl_config.ue_id         = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
-        }
-      }
-    } else {
-      logger.error("Parameter not supported");
-      return ctrl_config;
+      parse_ran_parameter_value(
+          ran_p.ran_param_value_type, ran_p.ran_param_id, ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id, ctrl_config);
+    }
+    if (ctrl_config.param_list.empty()) {
+      return {};
     }
   }
   return ctrl_config;
@@ -163,18 +197,18 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
   test_outcome.ran_param_id                    = 1;
   test_outcome.ran_param_value.set_value_int() = 100;
   ctrl_outcome.ran_p_list.push_back(test_outcome);
-
-  if (du_config_req_.min_prb_alloc.has_value()) {
+  control_config_params req = du_config_req_.param_list[0];
+  if (req.min_prb_alloc.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
     min_prb_outcome.ran_param_id                    = 11;
-    min_prb_outcome.ran_param_value.set_value_int() = du_config_req_.min_prb_alloc.value();
+    min_prb_outcome.ran_param_value.set_value_int() = req.min_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
   }
 
-  if (du_config_req_.max_prb_alloc.has_value()) {
+  if (req.max_prb_alloc.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
     max_prb_outcome.ran_param_id                    = 12;
-    max_prb_outcome.ran_param_value.set_value_int() = du_config_req_.max_prb_alloc.value();
+    max_prb_outcome.ran_param_value.set_value_int() = req.max_prb_alloc.value();
     ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
   }
 

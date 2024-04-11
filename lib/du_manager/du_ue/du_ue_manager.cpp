@@ -168,10 +168,7 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor(ue_it->ue_index)));
-      if (not res) {
-        CORO_EARLY_RETURN();
-      }
+      CORO_AWAIT(execute_on_blocking(cfg.services.ue_execs.ctrl_executor(ue_it->ue_index)));
 
       for (auto& srb : ue_it->bearers.srbs()) {
         srb.stop();
@@ -186,10 +183,7 @@ async_task<void> du_ue_manager::stop()
 
     proc_logger.log_progress("All UEs are disconnected");
 
-    CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.du_mng_exec));
-    if (not res) {
-      CORO_EARLY_RETURN();
-    }
+    CORO_AWAIT(execute_on_blocking(cfg.services.du_mng_exec));
 
     // Cancel all pending procedures.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {

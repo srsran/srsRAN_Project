@@ -175,6 +175,7 @@ def _attach_and_detach_multi_ues(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     reattach_count: int = 1,
+    ue_stop_timeout=30,
 ):
     logging.info("Attach / Detach Test")
 
@@ -219,7 +220,7 @@ def _attach_and_detach_multi_ues(
 
     # Stop and attach half of the UEs while the others are connecting and doing iperf
     for _ in range(reattach_count):
-        ue_stop(ue_array_to_attach, retina_data)
+        ue_stop(ue_array_to_attach, retina_data, ue_stop_timeout=ue_stop_timeout)
         ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, fivegc)
     # final stop will be triggered by teardown
 
@@ -227,4 +228,4 @@ def _attach_and_detach_multi_ues(
     for ue_attached_info, task, iperf_request in iperf_array:
         iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
 
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)

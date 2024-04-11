@@ -313,6 +313,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
     pdu.ul_sinr_metric             = mac_pdu.ul_sinr_metric;
+    pdu.ul_rsrp_metric             = mac_pdu.ul_rsrp_metric;
     pdu.time_advance_offset        = mac_pdu.time_advance_offset;
   }
 

@@ -40,7 +40,6 @@ public:
                                             ngap_rrc_ue_pdu_notifier&                          rrc_ue_pdu_notifier_,
                                             ngap_du_processor_control_notifier& du_processor_ctrl_notifier_,
                                             ngap_message_notifier&              amf_notif_,
-                                            ngap_control_message_handler&       ngap_ctrl_handler_,
                                             ngap_ue_logger&                     logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -62,7 +61,6 @@ private:
   cu_cp_pdu_session_resource_setup_response         response;
   ngap_du_processor_control_notifier&               du_processor_ctrl_notifier;
   ngap_message_notifier&                            amf_notifier;
-  ngap_control_message_handler&                     ngap_ctrl_handler;
   ngap_ue_logger&                                   logger;
 
   cu_cp_ue_context_release_request ue_context_release_request;

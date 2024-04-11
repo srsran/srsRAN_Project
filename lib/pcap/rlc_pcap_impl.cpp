@@ -40,14 +40,14 @@ constexpr uint16_t UDP_DLT = 149;
 
 int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length);
 
-rlc_pcap_impl::rlc_pcap_impl(const std::string& filename,
+rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
                              bool               capture_srb,
                              bool               capture_drb,
                              task_executor&     backend_exec) :
+  logger(srslog::fetch_basic_logger("ALL")),
   srb_enabled(capture_srb),
   drb_enabled(capture_drb),
-  logger(srslog::fetch_basic_logger("ALL")),
-  writer(UDP_DLT, "RLC", filename, backend_exec)
+  writer(UDP_DLT, "RLC", filename_, backend_exec)
 {
 }
 

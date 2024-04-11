@@ -36,11 +36,14 @@ ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_con
 
 void ru_controller_generic_impl::start()
 {
-  // Calculate starting time from the radio current time plus one hundred milliseconds and rounded to the next subframe.
+  // Calculate starting time from the radio current time plus one hundred milliseconds.
   double                     delay_s      = 0.1;
   baseband_gateway_timestamp current_time = radio.read_current_time();
   baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * srate_MHz * 1e6);
-  start_time = divide_ceil(start_time, static_cast<uint64_t>(srate_MHz * 1e3)) * static_cast<uint64_t>(srate_MHz * 1e3);
+
+  // Round start time to the next subframe.
+  uint64_t sf_duration = static_cast<uint64_t>(srate_MHz * 1e3);
+  start_time           = divide_ceil(start_time, sf_duration) * sf_duration;
 
   radio.start(start_time);
 

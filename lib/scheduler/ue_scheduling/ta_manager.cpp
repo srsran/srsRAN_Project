@@ -91,9 +91,9 @@ void ta_manager::slot_indication(slot_point current_sl)
 int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
 {
   // Adjust this threshold as needed.
-  static const double num_std_deviations = 2.0;
+  static const double num_std_deviations = 1.95;
 
-  const auto n_ta_diff_meas = tag_n_ta_diff_measurements[tag_id];
+  const span<int64_t> n_ta_diff_meas = tag_n_ta_diff_measurements[tag_id];
 
   // Compute mean.
   const double sum  = std::accumulate(n_ta_diff_meas.begin(), n_ta_diff_meas.end(), 0.0);
@@ -106,15 +106,17 @@ int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
   const double sq_sum  = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
   const double std_dev = std::sqrt(sq_sum / static_cast<double>(n_ta_diff_meas.size()));
 
-  int64_t avg_n_ta_difference = 0;
-  for (const auto& meas : n_ta_diff_meas) {
+  int64_t  sum_n_ta_difference = 0;
+  unsigned count               = 0;
+  for (const int64_t meas : n_ta_diff_meas) {
     // Filter out outliers.
     if (std::abs((double)meas - mean) <= num_std_deviations * std_dev) {
-      avg_n_ta_difference += meas;
+      sum_n_ta_difference += meas;
+      ++count;
     }
   }
 
-  return avg_n_ta_difference / static_cast<int64_t>(n_ta_diff_meas.size());
+  return sum_n_ta_difference / static_cast<int64_t>(count);
 }
 
 unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)

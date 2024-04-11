@@ -58,7 +58,6 @@ python_files = [
   "tests/*.py",
 ]
 render_collapsed = true
-reruns_delay = 60
 
 [tool.black]
 line-length = 120

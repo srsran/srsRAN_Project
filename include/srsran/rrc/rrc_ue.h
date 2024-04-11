@@ -308,7 +308,7 @@ public:
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
-struct rrc_reestablishment_ue_context_t {
+struct rrc_ue_reestablishment_context_response {
   ue_index_t                          ue_index = ue_index_t::invalid;
   security::security_context          sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
@@ -331,7 +331,7 @@ public:
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_reestablishment_ue_context_t
+  virtual rrc_ue_reestablishment_context_response
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 
   /// \brief Notify the CU-CP to transfer and remove ue contexts.
@@ -369,7 +369,7 @@ public:
 
   /// \brief Get the RRC Reestablishment UE context to transfer it to new UE.
   /// \returns The RRC Reestablishment UE Context.
-  virtual rrc_reestablishment_ue_context_t get_context() = 0;
+  virtual rrc_ue_reestablishment_context_response get_context() = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

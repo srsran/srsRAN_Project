@@ -246,6 +246,11 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
     // Handle event.
     u.handle_bsr_indication(bsr_ind);
 
+    if (u.get_pcell().is_in_fallback_mode()) {
+      // Signal SRB fallback scheduler with the new SRB0/SRB1 buffer state.
+      du_cells[u.get_pcell().cell_index].fallback_sched->handle_ul_bsr_indication(bsr_ind.ue_index, bsr_ind);
+    }
+
     // Log event.
     if (ev_logger.enabled()) {
       scheduler_event_logger::bsr_event event{};

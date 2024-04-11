@@ -28,6 +28,7 @@ target_link_libraries(du_processor_test_helpers
         f1ap_test_helpers
         ngap_test_helpers
         rrc_ue_test_helpers
+        f1ap_test_doubles
         srsran_support
         f1ap_asn1
         srslog)

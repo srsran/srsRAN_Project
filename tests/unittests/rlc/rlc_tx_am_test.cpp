@@ -24,7 +24,6 @@
 #include "rlc_test_helpers.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
-#include <queue>
 
 using namespace srsran;
 
@@ -153,7 +152,7 @@ protected:
     uint32_t n_bsr = tester->bsr_count;
 
     // Push "n_pdus" SDUs into RLC
-    byte_buffer sdu_bufs[n_pdus];
+    auto sdu_bufs = std::vector<byte_buffer>(n_pdus);
     for (uint32_t i = 0; i < n_pdus; i++) {
       sdu_bufs[i] = create_sdu(sdu_size, i);
 
@@ -220,7 +219,7 @@ protected:
     ASSERT_LT(pdu_size, sdu_size + header_min_size) << "PDU size fits whole SDU; PDUs won't be segmented";
 
     // Push "n_sdus" SDUs into RLC
-    byte_buffer sdu_bufs[n_sdus];
+    auto sdu_bufs = std::vector<byte_buffer>(n_sdus);
     for (uint32_t i = 0; i < n_sdus; i++) {
       sdu_bufs[i] = create_sdu(sdu_size, i);
 

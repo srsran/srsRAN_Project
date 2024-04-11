@@ -61,6 +61,10 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
       u.data.nof_pusch_snr_reports++;
       u.data.sum_pusch_snrs += crc_pdu.ul_sinr_metric.value();
     }
+    if (crc_pdu.ul_rsrp_metric.has_value()) {
+      u.data.nof_pusch_rsrp_reports++;
+      u.data.sum_pusch_rsrp += crc_pdu.ul_rsrp_metric.value();
+    }
     if (crc_pdu.tb_crc_success) {
       u.data.sum_ul_tb_bytes += tbs.value();
     }
@@ -272,6 +276,7 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs        = sch_mcs_index{mcs};
+  ret.nof_prbs      = nof_prbs;
   ret.dl_prbs_used  = data.nof_dl_cws > 0 ? static_cast<double>(data.dl_prbs_used / data.nof_dl_cws) : 0;
   ret.ul_prbs_used  = data.nof_puschs > 0 ? static_cast<double>(data.ul_prbs_used / data.nof_puschs) : 0;
   ret.dl_brate_kbps = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
@@ -281,6 +286,8 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.ul_nof_ok     = data.count_crc_acks;
   ret.ul_nof_nok    = data.count_crc_pdus - data.count_crc_acks;
   ret.pusch_snr_db  = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
+  ret.pusch_rsrp_db = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
+                                                      : -std::numeric_limits<float>::infinity();
   ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.bsr           = last_bsr;
   ret.dl_bs         = 0;

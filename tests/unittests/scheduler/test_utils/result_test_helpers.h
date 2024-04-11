@@ -54,13 +54,6 @@ inline const ul_sched_info* find_ue_pusch_with_harq_ack(rnti_t rnti, const sched
   return nullptr;
 }
 
-inline const dl_msg_alloc* find_ue_pdsch(rnti_t rnti, span<const dl_msg_alloc> dlgrants)
-{
-  auto it = std::find_if(
-      dlgrants.begin(), dlgrants.end(), [rnti](const auto& pusch) { return pusch.pdsch_cfg.rnti == rnti; });
-  return it != dlgrants.end() ? &*it : nullptr;
-}
-
 inline const dl_msg_alloc* find_ue_pdsch(rnti_t rnti, const sched_result& res)
 {
   return find_ue_pdsch(rnti, res.dl.ue_grants);

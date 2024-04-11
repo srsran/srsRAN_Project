@@ -60,13 +60,14 @@ public:
     task_executor& ul_exec = cfg.ue_exec_mapper.ctrl_executor(request.ue_index);
 
     // Dispatch UE creation task to new UL executor.
-    return dispatch_and_resume_on(ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
+    return execute_and_continue_on_blocking(
+        ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
   }
 
   virtual async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
                                           const std::vector<mac_logical_channel_config>& ul_logical_channels) override
   {
-    return dispatch_and_resume_on(
+    return execute_and_continue_on_blocking(
         cfg.ue_exec_mapper.ctrl_executor(ue_index), cfg.ctrl_exec, [this, ue_index, ul_logical_channels]() {
           return ue_manager.addmod_bearers(ue_index, ul_logical_channels);
         });
@@ -75,7 +76,7 @@ public:
   async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem) override
   {
     std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
-    return dispatch_and_resume_on(
+    return execute_and_continue_on_blocking(
         cfg.ue_exec_mapper.ctrl_executor(ue_index), cfg.ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
           return ue_manager.remove_bearers(ue_index, lcids);
         });
@@ -83,9 +84,9 @@ public:
 
   async_task<void> remove_ue(const mac_ue_delete_request& msg) override
   {
-    return dispatch_and_resume_on(cfg.ue_exec_mapper.ctrl_executor(msg.ue_index),
-                                  cfg.ctrl_exec,
-                                  [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
+    return execute_and_continue_on_blocking(cfg.ue_exec_mapper.ctrl_executor(msg.ue_index),
+                                            cfg.ctrl_exec,
+                                            [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
   }
 
   bool flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override

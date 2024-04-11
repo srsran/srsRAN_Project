@@ -86,7 +86,8 @@ pusch_config_params get_pusch_config_f0_0_tc_rnti(const cell_configuration&     
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by C-RNTI.
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
-pusch_config_params get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
+pusch_config_params get_pusch_config_f0_0_c_rnti(const cell_configuration&                    cell_cfg,
+                                                 const ue_cell_configuration*                 ue_cell_cfg,
                                                  const bwp_uplink_common&                     ul_bwp,
                                                  const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                  const unsigned                               nof_harq_ack_bits,

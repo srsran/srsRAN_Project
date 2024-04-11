@@ -111,6 +111,8 @@ public:
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
   void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
+
+  void stop() override {}
 };
 
 class f1ap_test_dummy : public f1ap_connection_manager,
@@ -210,6 +212,8 @@ public:
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
   void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
+
+  void stop() override {}
 };
 
 class f1u_gateway_dummy : public f1u_du_gateway

@@ -187,7 +187,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
       cfg.cells.back().nr_cgi.nci = i;
     }
 
-    cfg.qos       = config_helpers::make_default_du_qos_config_list(0);
+    cfg.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
     cfg.sched_cfg = config_helpers::make_default_scheduler_expert_config();
     cfg.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.mac_p     = &mac_pcap;
@@ -338,10 +338,42 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
       asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
   this->du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // Wait until DU sends UE Context Setup Response.
-  bool ret = this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  if (not ret or cu_notifier.last_f1ap_msgs.size() != 1 or
-      not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
+  // Wait until DU sends UE Context Setup Response and the whole RRC container is scheduled.
+  const unsigned MAX_SLOT_COUNT   = 1000;
+  const unsigned srb1_pdu_size    = cmd->rrc_container.size();
+  unsigned       srb1_bytes_sched = 0;
+  for (unsigned i = 0; i != MAX_SLOT_COUNT and (srb1_bytes_sched < srb1_pdu_size or cu_notifier.last_f1ap_msgs.empty());
+       ++i) {
+    run_slot();
+
+    // Sum all the bytes scheduled for SRB1.
+    du_cell_index_t     cell_idx = it->second.pcell_index;
+    const dl_msg_alloc* pdsch =
+        find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[cell_idx].last_dl_res.value().dl_res->ue_grants);
+    if (pdsch != nullptr) {
+      for (const dl_msg_lc_info& lc_grant : pdsch->tb_list[0].lc_chs_to_sched) {
+        if (lc_grant.lcid == LCID_SRB1) {
+          srb1_bytes_sched += lc_grant.sched_bytes;
+        }
+      }
+    }
+  }
+
+  if (cu_notifier.last_f1ap_msgs.size() != 1) {
+    // Response not sent back to CU-CP or too many responses were sent.
+    test_logger.info("STATUS: No UE Context Setup Response was sent back to the CU-CP");
+    return false;
+  }
+  if (not test_helpers::is_ue_context_setup_response_valid(cu_notifier.last_f1ap_msgs.back())) {
+    // Bad response.
+    test_logger.error("STATUS: UE Context Setup Response sent back to the CU-CP is not valid");
+    return false;
+  }
+  if (srb1_bytes_sched < srb1_pdu_size) {
+    // Not enough SRB1 bytes were scheduled for the RRC container.
+    test_logger.error("STATUS: Not enough SRB1 bytes were scheduled for the RRC container ({} < {})",
+                      srb1_bytes_sched,
+                      srb1_pdu_size);
     return false;
   }
 
@@ -356,7 +388,7 @@ void du_high_env_simulator::run_slot()
 
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).
-    const unsigned MAX_COUNT = 1000;
+    const unsigned MAX_COUNT = 100000;
     for (unsigned count = 0; count < MAX_COUNT and phy.cells[i].last_slot_res != next_slot; ++count) {
       // Process tasks dispatched to the test main thread (e.g. L2 slot result)
       workers.test_worker.run_pending_tasks();
@@ -364,7 +396,10 @@ void du_high_env_simulator::run_slot()
       // Wait for tasks to arrive to test thread.
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
-    EXPECT_EQ(phy.cells[i].last_slot_res, next_slot);
+    EXPECT_EQ(phy.cells[i].last_slot_res, next_slot)
+        << fmt::format("Slot={} failed to be processed (last processed slot={}). Is there a deadlock?",
+                       next_slot,
+                       phy.cells[i].last_slot_res);
     const optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
     if (dl_result.has_value()) {
       EXPECT_TRUE(dl_result->slot == next_slot);
@@ -376,10 +411,6 @@ void du_high_env_simulator::run_slot()
 
   // Advance to next slot.
   ++next_slot;
-
-  // Don't allow the test thread + du_cell threads to starve other threads.
-  // Note: This will emulate the behavior of the real application, where there is always a TTI between slot indications.
-  std::this_thread::yield();
 }
 
 void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)

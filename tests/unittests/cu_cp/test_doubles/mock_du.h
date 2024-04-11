@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
+#include "srsran/ran/lcid.h"
 #include <memory>
 
 namespace srsran {
@@ -38,14 +41,17 @@ class mock_du
 public:
   virtual ~mock_du() = default;
 
-  /// Push new Tx PDU from DU to CU-CP.
-  virtual void push_tx_pdu(const f1ap_message& msg) = 0;
+  /// Push F1AP UL PDU from DU to CU-CP.
+  virtual void push_ul_pdu(const f1ap_message& msg) = 0;
 
-  /// \brief Pop Rx PDU sent by CU-CP and received by DU.
+  /// Push RRC UL DCCH message from DU to CU-CP.
+  virtual void push_rrc_ul_dcch_message(gnb_du_ue_f1ap_id_t du_ue_id, srb_id_t srb_id, byte_buffer ul_dcch_msg) = 0;
+
+  /// \brief Pop F1AP DL PDU received by this DU and sent by CU-CP.
   ///
-  /// \param[out] msg Rx PDU popped.
+  /// \param[out] msg DL PDU popped.
   /// \return return true if a PDU was popped, false otherwise.
-  virtual bool try_pop_rx_pdu(f1ap_message& msg) = 0;
+  virtual bool try_pop_dl_pdu(f1ap_message& msg) = 0;
 };
 
 /// Parameters passed to mock DU.

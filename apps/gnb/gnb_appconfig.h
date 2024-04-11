@@ -320,7 +320,9 @@ struct pucch_appconfig {
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
-  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 15}.
+  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 7}.
+  /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
+  /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.
   unsigned min_k1 = 4;
 
   /// Maximum number of consecutive undecoded PUCCH Format 2 for CSI before an RLF is reported.
@@ -740,8 +742,8 @@ struct f1ap_cu_appconfig {
 struct cu_cp_appconfig {
   uint16_t           max_nof_dus               = 6;
   uint16_t           max_nof_cu_ups            = 6;
-  int                inactivity_timer          = 5; // in seconds
-  unsigned           pdu_session_setup_timeout = 3; // in seconds (must be larger than T310)
+  int                inactivity_timer          = 120; // in seconds
+  unsigned           pdu_session_setup_timeout = 3;   // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;
@@ -752,6 +754,10 @@ struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;
+};
+
+struct du_appconfig {
+  bool warn_on_drop = false;
 };
 
 /// Configuration of logging functionalities.
@@ -1254,8 +1260,10 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
-  /// CU-CP configuration.
+  /// CU-UP configuration.
   cu_up_appconfig cu_up_cfg;
+  /// DU configuration.
+  du_appconfig du_cfg;
   /// F1AP configuration.
   f1ap_cu_appconfig f1ap_cfg;
   /// \brief E2 configuration.

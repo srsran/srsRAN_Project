@@ -26,6 +26,7 @@ add_executable(f1ap_asn1_packer_test f1ap_asn1_packer_test.cpp f1ap_asn1_helpers
 target_link_libraries(f1ap_asn1_packer_test
         f1ap_test_helpers
         srsran_f1ap_common
+        f1ap_test_doubles
         srsran_support
         srslog
         f1ap_asn1

@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              "nof_tx_layers={} rx_ports={}",
              test_case.context.config.rnti,
              test_case.context.config.rb_mask,
-             test_case.context.config.modulation,
+             to_string(test_case.context.config.modulation),
              test_case.context.config.start_symbol_index,
              test_case.context.config.nof_symbols,
              test_case.context.config.dmrs_symb_pos,

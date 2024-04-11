@@ -114,6 +114,7 @@ void du_ue_drb::stop()
 {
   connector.disconnect();
   rlc_bearer->stop();
+  drb_f1u->stop();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                        ue_index,

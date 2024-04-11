@@ -66,10 +66,10 @@ struct formatter<srsran::f1ap_common_log_prefix> {
     bool first_id = true;
     auto get_sep  = [&first_id]() { return std::exchange(first_id, false) ? "" : " "; };
     if (prefix.du_ue_id != srsran::gnb_du_ue_f1ap_id_t::invalid) {
-      format_to(ctx.out(), "{}GNB-DU-UE-F1AP-ID={}", get_sep(), prefix.du_ue_id);
+      format_to(ctx.out(), "{}du_ue_id={}", get_sep(), prefix.du_ue_id);
     }
     if (prefix.cu_ue_id != srsran::gnb_cu_ue_f1ap_id_t::invalid) {
-      format_to(ctx.out(), "{}GNB-CU-UE-F1AP-ID={}", get_sep(), prefix.cu_ue_id);
+      format_to(ctx.out(), "{}cu_ue_id={}", get_sep(), prefix.cu_ue_id);
     }
     if (prefix.proc_name != nullptr) {
       format_to(ctx.out(), "{}proc=\"{}\"", get_sep(), prefix.proc_name);

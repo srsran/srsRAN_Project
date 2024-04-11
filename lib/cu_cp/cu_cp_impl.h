@@ -68,7 +68,7 @@ public:
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // RRC UE handler
-  rrc_reestablishment_ue_context_t
+  rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
@@ -88,15 +88,16 @@ public:
   metrics_handler& get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp interface
-  cu_cp_f1c_handler&                     get_f1c_handler() override { return du_db; }
-  cu_cp_e1_handler&                      get_e1_handler() override { return cu_up_db; }
-  cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
-  cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
-  cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
-  cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }
-  cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
-  cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
+  cu_cp_f1c_handler&                         get_f1c_handler() override { return du_db; }
+  cu_cp_e1_handler&                          get_e1_handler() override { return cu_up_db; }
+  cu_cp_e1ap_handler&                        get_cu_cp_e1ap_handler() override { return *this; }
+  cu_cp_ng_handler&                          get_ng_handler() override { return *this; }
+  cu_cp_mobility_manager_ho_trigger_handler& get_mobility_manager_ho_trigger_handler() override { return mobility_mng; }
+  cu_cp_rrc_ue_interface&                    get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_measurement_handler&                 get_cu_cp_measurement_handler() override { return *this; }
+  cu_cp_measurement_config_handler&          get_cu_cp_measurement_config_handler() override { return *this; }
+  cu_cp_ue_removal_handler&                  get_cu_cp_ue_removal_handler() override { return *this; }
+  cu_cp_ue_context_manipulation_handler&     get_cu_cp_ue_context_handler() override { return *this; }
 
 private:
   // Handling of DU events.

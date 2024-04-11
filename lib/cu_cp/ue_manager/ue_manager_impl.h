@@ -65,10 +65,10 @@ public:
     }
 
     if (c_rnti_ != rnti_t::INVALID_RNTI) {
-      c_rnti = c_rnti_;
+      ue_ctxt.crnti = c_rnti_;
     }
 
-    du_index = get_du_index_from_ue_index(ue_index);
+    ue_ctxt.du_idx = get_du_index_from_ue_index(ue_index);
   }
 
   /// \brief Cancel all pending UE tasks.
@@ -116,15 +116,18 @@ public:
   pci_t get_pci() const override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() const override { return c_rnti; }
+  rnti_t get_c_rnti() const override { return ue_ctxt.crnti; }
 
-  gnb_du_id_t get_du_id() const { return du_id; }
+  gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  du_index_t get_du_index() override { return du_index; }
+  du_index_t get_du_index() override { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() override { return pcell_index; }
+
+  cu_cp_ue_context&       get_ue_context() override { return ue_ctxt; }
+  const cu_cp_ue_context& get_ue_context() const override { return ue_ctxt; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
   void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
@@ -132,7 +135,7 @@ public:
                     rnti_t      c_rnti_ = rnti_t::INVALID_RNTI) override
   {
     if (du_id_ != gnb_du_id_t::invalid) {
-      du_id = du_id_;
+      ue_ctxt.du_id = du_id_;
     }
 
     if (pci_ != INVALID_PCI) {
@@ -140,7 +143,7 @@ public:
     }
 
     if (c_rnti_ != rnti_t::INVALID_RNTI) {
-      c_rnti = c_rnti_;
+      ue_ctxt.crnti = c_rnti_;
     }
   }
 
@@ -221,11 +224,9 @@ private:
   std::unique_ptr<up_resource_manager> up_mng;
 
   // du ue context
-  du_index_t      du_index    = du_index_t::invalid;
-  gnb_du_id_t     du_id       = gnb_du_id_t::invalid;
-  du_cell_index_t pcell_index = du_cell_index_t::invalid;
-  pci_t           pci         = INVALID_PCI;
-  rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
+  cu_cp_ue_context ue_ctxt;
+  du_cell_index_t  pcell_index = du_cell_index_t::invalid;
+  pci_t            pci         = INVALID_PCI;
 
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;

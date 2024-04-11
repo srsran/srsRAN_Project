@@ -102,7 +102,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                     .cqi_table           = cqi_table_t::table1,
                                                                     .pdcch_candidates    = {0, 0, 1, 1, 1},
                                                                     .dci_size_in_bits    = 41,
-                                                                    .expected_aggr_level = aggregation_level::n4},
+                                                                    .expected_aggr_level = aggregation_level::n8},
                     pdcch_aggregation_level_calculation_test_params{.cqi                 = 8,
                                                                     .cqi_table           = cqi_table_t::table2,
                                                                     .pdcch_candidates    = {0, 1, 1, 1, 1},

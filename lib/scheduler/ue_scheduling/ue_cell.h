@@ -24,6 +24,7 @@
 
 #include "../config/ue_configuration.h"
 #include "../support/bwp_helpers.h"
+#include "../support/sch_pdu_builder.h"
 #include "harq_process.h"
 #include "ue_channel_state_manager.h"
 #include "ue_link_adaptation_controller.h"
@@ -112,6 +113,8 @@ public:
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
 
+  sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
+
   /// \brief Get recommended aggregation level for PDCCH given reported CQI.
   aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
 
@@ -139,6 +142,11 @@ public:
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
 
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
+
+  /// \brief Returns an estimated DL bitrate in kbps (kilo bits per second) based on the given input parameters.
+  double get_estimated_dl_brate_kbps(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
+  /// \brief Returns an estimated UL bitrate in kbps (kilo bits per second) based on the given input parameters.
+  double get_estimated_ul_brate_kbps(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
 private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.

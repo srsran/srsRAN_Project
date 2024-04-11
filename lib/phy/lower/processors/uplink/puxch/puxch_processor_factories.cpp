@@ -43,6 +43,8 @@ public:
         static_cast<unsigned>(static_cast<float>(config.cp.get_length(1, config.scs).to_samples(config.srate.to_Hz())) *
                               config.dft_window_offset);
 
+    static constexpr unsigned nof_subcarriers_rb = 12;
+
     // Prepare OFDM demodulator configuration.
     ofdm_demodulator_configuration demodulator_config;
     demodulator_config.numerology                = to_numerology_value(config.scs);
@@ -50,8 +52,10 @@ public:
     demodulator_config.dft_size                  = config.srate.get_dft_size(config.scs);
     demodulator_config.cp                        = config.cp;
     demodulator_config.nof_samples_window_offset = nof_samples_window_offset;
-    demodulator_config.scale                     = 1.0F;
     demodulator_config.center_freq_hz            = config.center_freq_Hz;
+
+    // Scale the DFT results to normalize the DFT output power.
+    demodulator_config.scale = 1.0F / std::sqrt(config.bandwidth_rb * nof_subcarriers_rb);
 
     // Prepare PUxCH processor configuration.
     puxch_processor_impl::configuration proc_config;

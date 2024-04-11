@@ -163,7 +163,7 @@ public:
 
   void connect_rrc_ue(rrc_ue_context_handler& rrc_context_handler_) { rrc_context_handler = &rrc_context_handler_; }
 
-  rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() override
+  rrc_ue_reestablishment_context_response on_rrc_ue_context_transfer() override
   {
     srsran_assert(rrc_context_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_context_handler->get_context();

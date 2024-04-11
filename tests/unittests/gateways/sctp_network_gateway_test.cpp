@@ -24,6 +24,7 @@
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include <linux/sctp.h>
 #include <netinet/sctp.h>
+#include <thread>
 
 using namespace srsran;
 
@@ -190,9 +191,10 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "127.0.0.1";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -205,6 +207,7 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();
@@ -217,27 +220,29 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // let the Rx thread pick up the message
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
   // check reception of small PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_small);
+  }
   // check reception of large PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_large);
+  }
   // oversized PDU not expected to be received
-  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
+  ASSERT_TRUE(server_data_notifier.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "::1";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "::1";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -250,6 +255,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();
@@ -262,27 +268,29 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // let the Rx thread pick up the message
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
   // check reception of small PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_small);
+  }
   // check reception of large PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_large);
+  }
   // oversized PDU not expected to be received
-  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
+  ASSERT_TRUE(server_data_notifier.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   sctp_network_gateway_config server_config;
-  server_config.bind_address = "localhost";
-  server_config.bind_port    = 0;
-  server_config.reuse_addr   = true;
+  server_config.bind_address      = "localhost";
+  server_config.bind_port         = 0;
+  server_config.non_blocking_mode = true;
+  server_config.reuse_addr        = true;
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
@@ -295,6 +303,7 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
+  client_config.nodelay           = true;
 
   create_client(client_config);
   start_receive_thread();
@@ -307,19 +316,20 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
   send_to_server(pdu_oversized);
 
-  // let the Rx thread pick up the message
-  std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
   // check reception of small PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_small);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_small);
+  }
   // check reception of large PDU
-  ASSERT_FALSE(server_data_notifier.pdu_queue.empty());
-  ASSERT_EQ(server_data_notifier.pdu_queue.front(), pdu_large);
-  server_data_notifier.pdu_queue.pop();
+  {
+    expected<byte_buffer> rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+    ASSERT_TRUE(rx_pdu.has_value());
+    ASSERT_EQ(rx_pdu.value(), pdu_large);
+  }
   // oversized PDU not expected to be received
-  ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
+  ASSERT_TRUE(server_data_notifier.empty());
 }
 
 TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)

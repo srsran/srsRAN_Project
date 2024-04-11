@@ -62,18 +62,18 @@ public:
         CORO_BEGIN(ctx);
 
         // Switch to the UE execution context.
-        CORO_AWAIT(defer_to(ctxt->ctrl_exec));
+        CORO_AWAIT(defer_to_blocking(ctxt->ctrl_exec));
 
         // Make executors inaccessible via the ue_executor_mapper_impl public interface.
         // Any public access after this point should assert.
         ctxt_tmp = std::exchange(ctxt, nullptr);
 
         // Synchronize with remaining executors to ensure there are no more pending tasks for this UE.
-        CORO_AWAIT(defer_to(ctxt_tmp->ul_exec));
-        CORO_AWAIT(defer_to(ctxt_tmp->dl_exec));
+        CORO_AWAIT(defer_to_blocking(ctxt_tmp->ul_exec));
+        CORO_AWAIT(defer_to_blocking(ctxt_tmp->dl_exec));
 
         // Return back to main control execution context.
-        CORO_AWAIT(execute_on(parent.main_exec));
+        CORO_AWAIT(defer_to_blocking(parent.main_exec));
 
         // Finally, deregister UE executors.
         parent.release_ue_executors(*ctxt_tmp);

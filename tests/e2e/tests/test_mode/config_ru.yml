@@ -60,8 +60,9 @@ expert_execution:
     - l1_dl_cpus: 2-10,14-22
       l1_ul_cpus: 2-10,14-22
       l2_cell_cpus: 1,13
-      ru_cpus: 2-10,14-22
+      ru_cpus: 2,14
 
 expert_phy:
   max_request_headroom_slots: 3
   max_proc_delay: 6
+  pusch_dec_max_iterations: 2

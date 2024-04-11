@@ -99,6 +99,42 @@ void ngap_pdu_session_resource_modify_procedure::combine_pdu_session_resource_mo
   }
 }
 
+/// \brief Convert common type PDU Session Resource Modify Response message to NGAP PDU Session Resource Modify
+/// Response message.
+/// \param[out] resp The ASN1 NGAP PDU Session Resource Modify Response message.
+/// \param[in]  cu_cp_resp The CU-CP PDU Session Resource Modify Response message.
+/// \return True on success, otherwise false.
+static bool fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_res_modify_resp_s&        resp,
+                                                      const cu_cp_pdu_session_resource_modify_response& cu_cp_resp)
+{
+  // Fill PDU Session Resource Modify Response List
+  if (!cu_cp_resp.pdu_session_res_modify_list.empty()) {
+    resp->pdu_session_res_modify_list_mod_res_present = true;
+
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_modify_list) {
+      asn1::ngap::pdu_session_res_modify_item_mod_res_s resp_item;
+      if (!pdu_session_res_modify_response_item_to_asn1(resp_item, cu_cp_resp_item)) {
+        return false;
+      }
+      resp->pdu_session_res_modify_list_mod_res.push_back(resp_item);
+    }
+  }
+
+  // Fill PDU Session Resource failed to modify list
+  if (!cu_cp_resp.pdu_session_res_failed_to_modify_list.empty()) {
+    resp->pdu_session_res_failed_to_modify_list_mod_res_present = true;
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_failed_to_modify_list) {
+      asn1::ngap::pdu_session_res_failed_to_modify_item_mod_res_s resp_item;
+      if (!pdu_session_res_failed_to_modify_item_to_asn1(resp_item, cu_cp_resp_item)) {
+        return false;
+      }
+      resp->pdu_session_res_failed_to_modify_list_mod_res.push_back(resp_item);
+    }
+  }
+
+  return true;
+}
+
 void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modify_response()
 {
   ngap_message ngap_msg = {};
@@ -111,7 +147,7 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   pdu_session_res_modify_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
   // TODO: needs more handling in the coro above?
-  if (!fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {
+  if (not fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {
     logger.log_warning("Unable to fill ASN1 contents of PDUSessionResourceModifyResponse", name());
     return;
   }

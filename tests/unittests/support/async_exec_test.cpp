@@ -46,13 +46,13 @@ void test_move_exec_context()
         CORO_BEGIN(ctx);
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, this_thread_name());
-        CORO_AWAIT(execute_on(exec1));
+        CORO_AWAIT(try_execute_on(exec1));
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, this_thread_name());
-        CORO_AWAIT(execute_on(exec2));
+        CORO_AWAIT(try_execute_on(exec2));
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, this_thread_name());
-        CORO_AWAIT(defer_to(exec0));
+        CORO_AWAIT(try_defer_to(exec0));
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, this_thread_name());
         worker0.request_stop(); // as we are in worker0, the cancel command is only processed after the return

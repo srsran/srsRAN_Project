@@ -24,75 +24,96 @@
 
 #include "async_task.h"
 #include "detail/function_signature.h"
+#include <thread>
 
 namespace srsran {
 
-/// Awaiter that switches to execution context provided by given executor.
-template <typename TaskExecutor>
-auto execute_on(TaskExecutor& exec)
-{
-  struct task_executor_awaiter {
-    task_executor_awaiter(TaskExecutor& exec_) : exec(exec_) {}
+namespace detail {
 
-    bool await_ready() noexcept { return false; }
+template <typename TaskExecutor, bool UseExecute>
+struct try_execute_on_awaiter {
+  try_execute_on_awaiter(TaskExecutor& exec_) : exec(exec_) {}
 
-    void await_suspend(coro_handle<> suspending_awaitable)
-    {
-      bool res = exec.execute([this, suspending_awaitable]() mutable {
-        success = true;
-        suspending_awaitable.resume();
-      });
-      if (not res) {
-        // Failed to dispatch task. Resume it from current thread, but with "success == false".
-        success = false;
-        suspending_awaitable.resume();
-      }
+  bool await_ready() noexcept { return false; }
+
+  void await_suspend(coro_handle<> suspending_awaitable)
+  {
+    auto task = [this, suspending_awaitable]() mutable {
+      success = true;
+      suspending_awaitable.resume();
+    };
+    bool res = UseExecute ? exec.execute(task) : exec.defer(task);
+    if (not res) {
+      // Failed to dispatch task. Resume it from current thread, but with "success == false".
+      success = false;
+      suspending_awaitable.resume();
     }
+  }
 
-    bool await_resume() { return success; }
+  SRSRAN_NODISCARD bool await_resume() { return success; }
 
-    task_executor_awaiter& get_awaiter() { return *this; }
+  try_execute_on_awaiter& get_awaiter() { return *this; }
 
-  private:
-    TaskExecutor& exec;
-    bool          success = false;
-  };
+private:
+  TaskExecutor& exec;
+  bool          success = false;
+};
 
-  return task_executor_awaiter{exec};
+template <typename TaskExecutor, bool UseExecute>
+struct blocking_execute_on_awaiter {
+  blocking_execute_on_awaiter(TaskExecutor& exec_) : exec(exec_) {}
+
+  bool await_ready() noexcept { return false; }
+
+  void await_suspend(coro_handle<> suspending_awaitable)
+  {
+    auto task = [suspending_awaitable]() mutable { suspending_awaitable.resume(); };
+    while (not(UseExecute ? exec.execute(task) : exec.defer(task))) {
+      // keep trying until it succeeds.
+      std::this_thread::yield();
+    }
+  }
+
+  void await_resume() {}
+
+  blocking_execute_on_awaiter& get_awaiter() { return *this; }
+
+private:
+  TaskExecutor& exec;
+};
+
+} // namespace detail
+
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to execute fails, the awaitable will return false.
+template <typename TaskExecutor>
+auto try_execute_on(TaskExecutor& exec)
+{
+  return detail::try_execute_on_awaiter<TaskExecutor, true>{exec};
 }
 
-/// Awaiter that defers continuation to execution context provided by given executor.
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to defer fails, the awaitable will return false.
 template <typename TaskExecutor>
-auto defer_to(TaskExecutor& exec)
+auto try_defer_to(TaskExecutor& exec)
 {
-  struct task_executor_awaiter {
-    task_executor_awaiter(TaskExecutor& exec_) : exec(exec_) {}
+  return detail::try_execute_on_awaiter<TaskExecutor, false>{exec};
+}
 
-    bool await_ready() noexcept { return false; }
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to execute fails, the awaitable will retry it until it succeeds.
+template <typename TaskExecutor>
+auto execute_on_blocking(TaskExecutor& exec)
+{
+  return detail::blocking_execute_on_awaiter<TaskExecutor, true>(exec);
+}
 
-    void await_suspend(coro_handle<> suspending_awaitable)
-    {
-      bool res = exec.defer([this, suspending_awaitable]() mutable {
-        success = true;
-        suspending_awaitable.resume();
-      });
-      if (not res) {
-        // Failed to dispatch task. Resume it from current thread, but with "success == false".
-        success = false;
-        suspending_awaitable.resume();
-      }
-    }
-
-    bool await_resume() { return success; }
-
-    task_executor_awaiter& get_awaiter() { return *this; }
-
-  private:
-    TaskExecutor& exec;
-    bool          success = false;
-  };
-
-  return task_executor_awaiter{exec};
+/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
+/// to defer fails, the awaitable will retry it until it succeeds.
+template <typename TaskExecutor>
+auto defer_to_blocking(TaskExecutor& exec)
+{
+  return detail::blocking_execute_on_awaiter<TaskExecutor, false>(exec);
 }
 
 /// Returns an awaitable that performs a task in a "dispatch_exec" executor, and resumes in "resume_exec" executor.
@@ -183,37 +204,59 @@ auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, ResumeTaskExecutor
   return task_executor_offloader{dispatch_exec, resume_exec, std::forward<Callable>(callable)};
 }
 
+/// \brief Returns an async_task<void> that runs a given invocable task in a \c dispatch_exec executor, and once the
+/// task is complete, it resumes the suspended coroutine in a \c return_exec executor.
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
 std::enable_if_t<std::is_same<ReturnType, void>::value, async_task<void>>
-dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
+execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                 CurrentTaskExecutor&  return_exec,
+                                 Callable&&            callable)
 {
-  return launch_async(
-      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT(execute_on(dispatch_exec));
-        task();
-        CORO_AWAIT(execute_on(return_exec));
-        CORO_RETURN();
-      });
+  return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](
+                          coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Dispatch execution context switch.
+    CORO_AWAIT(execute_on_blocking(dispatch_exec));
+
+    // Run task.
+    task();
+
+    // Continuation in the original executor.
+    CORO_AWAIT(execute_on_blocking(return_exec));
+
+    CORO_RETURN();
+  });
 }
 
+/// \brief Returns an async_task<ReturnType> that runs a given invocable task in a \c dispatch_exec executor, and once
+/// the task is complete, it resumes the suspended coroutine in a \c return_exec executor.
 template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename ReturnType = detail::function_return_t<decltype(&Callable::operator())>>
 std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType>>
-dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
+execute_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
+                                 CurrentTaskExecutor&  return_exec,
+                                 Callable&&            callable)
 {
   ReturnType ret{};
   return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), ret](
                           coro_context<async_task<ReturnType>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_AWAIT(execute_on(dispatch_exec));
+
+    // Dispatch execution context switch.
+    CORO_AWAIT(execute_on_blocking(dispatch_exec));
+
+    // Run task.
     ret = task();
-    CORO_AWAIT(execute_on(return_exec));
+
+    // Continuation in the original executor.
+    CORO_AWAIT(execute_on_blocking(return_exec));
+
     CORO_RETURN(ret);
   });
 }

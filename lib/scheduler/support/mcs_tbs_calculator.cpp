@@ -36,7 +36,7 @@ constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
 // Helper that generates the ulsch_configuration object necessary to compute the Effective Code Rate.
 static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_cfg,
-                                            const ue_cell_configuration& ue_cell_cfg,
+                                            const ue_cell_configuration* ue_cell_cfg,
                                             unsigned                     tbs_bytes,
                                             sch_mcs_description          mcs_info,
                                             unsigned                     nof_prbs,
@@ -57,8 +57,18 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                  .nof_layers  = pusch_cfg.nof_layers,
                                  .contains_dc = contains_dc};
 
+  if (ue_cell_cfg == nullptr) {
+    srsran_sanity_check(pusch_cfg.nof_harq_ack_bits == 0 and pusch_cfg.nof_csi_part1_bits == 0 and
+                            pusch_cfg.max_nof_csi_part2_bits == 0,
+                        "No UCI bits should be present for fallback UEs.");
+  }
+
+  // For fallback UEs, \ref ue_cell_cfg is not given; in that case, we set this to a default value of
+  // alpha_scaling_opt::f1, as this is not used.
   ulsch_info.alpha_scaling = alpha_scaling_to_float(
-      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling);
+      ue_cell_cfg != nullptr
+          ? ue_cell_cfg->cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling
+          : srsran::alpha_scaling_opt::f1);
 
   // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS38.213,
   // Section 9.3 and TS38.331, \c BetaOffsets.
@@ -69,7 +79,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetACK-Index1 for up to 2 bits HARQ-ACK reporting.
   else if (pusch_cfg.nof_harq_ack_bits < 3) {
     ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                        .ul_config.value()
                                                                                        .init_ul_bwp.pusch_cfg.value()
                                                                                        .uci_cfg.value()
@@ -79,7 +89,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetACK-Index1 for up to 11 bits HARQ-ACK reporting.
   else if (pusch_cfg.nof_harq_ack_bits < 12) {
     ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                        .ul_config.value()
                                                                                        .init_ul_bwp.pusch_cfg.value()
                                                                                        .uci_cfg.value()
@@ -89,7 +99,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetACK-Index1 for more than 11 bits HARQ-ACK reporting.
   else {
     ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_harq_ack_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                        .ul_config.value()
                                                                                        .init_ul_bwp.pusch_cfg.value()
                                                                                        .uci_cfg.value()
@@ -106,7 +116,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetCSI-Part1-Index1 for up to 11 bits CSI Part 1 reporting.
   else if (pusch_cfg.nof_csi_part1_bits < 12) {
     ulsch_info.beta_offset_csi_part1 =
-        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                   .ul_config.value()
                                                                                   .init_ul_bwp.pusch_cfg.value()
                                                                                   .uci_cfg.value()
@@ -116,7 +126,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetCSI-Part1-Index2 for more than 11 bits CSI Part 1 reporting.
   else {
     ulsch_info.beta_offset_csi_part1 =
-        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                   .ul_config.value()
                                                                                   .init_ul_bwp.pusch_cfg.value()
                                                                                   .uci_cfg.value()
@@ -133,7 +143,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI Part 2 reporting.
   else if (pusch_cfg.max_nof_csi_part2_bits < 12) {
     ulsch_info.beta_offset_csi_part2 =
-        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                   .ul_config.value()
                                                                                   .init_ul_bwp.pusch_cfg.value()
                                                                                   .uci_cfg.value()
@@ -143,7 +153,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // Use \c betaOffsetCSI-Part2-Index2 for more than 11 bits CSI Part 2 reporting.
   else {
     ulsch_info.beta_offset_csi_part2 =
-        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
+        beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg->cfg_dedicated()
                                                                                   .ul_config.value()
                                                                                   .init_ul_bwp.pusch_cfg.value()
                                                                                   .uci_cfg.value()
@@ -226,7 +236,7 @@ optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params& pdsc
 }
 
 optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
-                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 const ue_cell_configuration* ue_cell_cfg,
                                                  sch_mcs_index                max_mcs,
                                                  unsigned                     nof_prbs,
                                                  bool                         contains_dc)

@@ -45,9 +45,12 @@ inline unsigned get_mac_sdu_required_bytes(unsigned payload)
   return payload + get_mac_sdu_subheader_size(payload);
 }
 
+/// \brief Derive MAC SDU payload size in bytes (without subheader) from the MAC SDU+subheader size.
 inline unsigned get_mac_sdu_payload_size(unsigned mac_sdu_size)
 {
-  if (mac_sdu_size <= MAC_SDU_SUBHEADER_LENGTH_THRES - 1 + MIN_MAC_SDU_SUBHEADER_SIZE) {
+  // Note: len(sdu)+len(subheader)==258 is impossible. If mac_sdu_size==258, we err on the side of lower payload and
+  // return 255.
+  if (mac_sdu_size <= MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE - 1) {
     return mac_sdu_size - MIN_MAC_SDU_SUBHEADER_SIZE;
   }
   return mac_sdu_size - MAX_MAC_SDU_SUBHEADER_SIZE;

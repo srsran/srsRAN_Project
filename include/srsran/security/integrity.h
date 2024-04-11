@@ -27,6 +27,7 @@
 #include "ssl.h"
 #include "zuc.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/span.h"
 
 namespace srsran {
 namespace security {
@@ -133,7 +134,6 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
 {
   uint32_t    len             = msg.length();
   uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
-  uint8_t     M[msg_len_block_8 + 8 + 16];
   aes_context ctx;
   uint32_t    i;
   uint32_t    j;
@@ -145,6 +145,16 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
   uint8_t     K2[16];
   uint8_t     T[16];
   uint8_t     tmp[16];
+
+  const uint32_t msg_len_block_8_with_padding = msg_len_block_8 + 8 + 16;
+  srsran_assert(msg_len_block_8_with_padding <= sec_max_pdu_size,
+                "{}: Maximum PDU length exceeded. len={} max_len={}",
+                __FUNCTION__,
+                msg_len_block_8_with_padding,
+                sec_max_pdu_size);
+
+  std::array<uint8_t, sec_max_pdu_size> M_buf;
+  span<uint8_t>                         M(M_buf.data(), msg_len_block_8_with_padding);
 
   if (msg_len_block_8 <= len) {
     // Subkey L generation
@@ -170,7 +180,7 @@ inline void security_nia2_non_cmac(sec_mac&           mac,
     }
 
     // Construct M
-    memset(M, 0, msg_len_block_8 + 8 + 16);
+    std::fill(M.begin(), M.end(), 0);
     M[0] = (count >> 24) & 0xff;
     M[1] = (count >> 16) & 0xff;
     M[2] = (count >> 8) & 0xff;

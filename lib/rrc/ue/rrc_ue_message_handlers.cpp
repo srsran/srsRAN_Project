@@ -150,9 +150,11 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
   }
 
   // Log Rx message
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "{} DCCH UL", srb_id);
-  log_rrc_message(logger, Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf));
+  if (logger.get_basic_logger().debug.enabled()) {
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(fmtbuf, "{} DCCH UL", srb_id);
+    log_rrc_message(logger, Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf));
+  }
 
   switch (ul_dcch_msg.msg.c1().type().value) {
     case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer:
@@ -392,9 +394,9 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   return transfer_context;
 }
 
-rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
+rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
 {
-  rrc_reestablishment_ue_context_t rrc_reest_context;
+  rrc_ue_reestablishment_context_response rrc_reest_context;
   rrc_reest_context.sec_context = context.sec_context;
 
   if (context.capabilities.has_value()) {

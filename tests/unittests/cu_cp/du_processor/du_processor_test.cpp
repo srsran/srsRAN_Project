@@ -37,7 +37,7 @@ using namespace asn1::f1ap;
 TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sent)
 {
   // Pass F1 Setup Request to DU processor
-  f1ap_message f1_setup_req = generate_f1_setup_request();
+  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Check response is F1SetupResponse
@@ -49,7 +49,7 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
 TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing du served cells list
-  f1ap_message f1_setup_req                                                              = generate_f1_setup_request();
+  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
   f1_setup_req.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1_setup_req.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
 
@@ -65,7 +65,7 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
 TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing gnb du sys info
-  f1ap_message f1_setup_req = generate_f1_setup_request();
+  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
   f1_setup_req.pdu.init_msg()
       .value.f1_setup_request()
       ->gnb_du_served_cells_list[0]
@@ -104,7 +104,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Pass message to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
   ue_index_t ue_index                 = du_processor_obj->get_du_processor_f1ap_interface().allocate_new_ue_index();
@@ -121,7 +121,7 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
   ue_index_t ue_index                 = du_processor_obj->get_du_processor_f1ap_interface().allocate_new_ue_index();
@@ -140,7 +140,7 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
 
   // Pass message to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
   ue_index_t ue_index                 = du_processor_obj->get_du_processor_f1ap_interface().allocate_new_ue_index();
@@ -163,7 +163,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
@@ -203,7 +203,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 {
   // Generate valid F1SetupRequest and pass it to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
   ue_index_t ue_index                 = du_processor_obj->get_du_processor_f1ap_interface().allocate_new_ue_index();
@@ -233,7 +233,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 {
   // Generate valid F1SetupRequest and pass it to DU processor
   du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler().handle_message(
-      generate_f1_setup_request());
+      test_helpers::generate_f1_setup_request());
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);

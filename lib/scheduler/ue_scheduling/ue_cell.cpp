@@ -26,6 +26,7 @@
 #include "../support/pdcch_aggregation_level_calculator.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
 using namespace srsran;
@@ -102,7 +103,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());
       break;
     default:
-      report_fatal_error("Unsupported PDCCH DCI UL format");
+      report_fatal_error("Unsupported PDCCH DCI DL format");
   }
 
   optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg.mcs_table);
@@ -153,8 +154,8 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg =
-          get_pusch_config_f0_0_c_rnti(*ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(
+          cell_cfg, ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       pusch_cfg = get_pusch_config_f0_1_c_rnti(
@@ -462,4 +463,50 @@ void ue_cell::apply_link_adaptation_procedures(const csi_report_data& csi_report
       h_dl.cancel_harq_retxs(tb_index);
     }
   }
+}
+
+double
+ue_cell::get_estimated_dl_brate_kbps(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const
+{
+  static const double slot_duration_ms =
+      SUBFRAME_DURATION_MSEC / get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
+
+  const unsigned      dmrs_prbs   = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs);
+  sch_mcs_description mcs_info    = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
+  unsigned            nof_symbols = pdsch_cfg.symbols.length();
+
+  unsigned tbs_bits =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pdsch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pdsch_cfg.nof_layers,
+                                                            .tb_scaling_field = pdsch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs});
+
+  // Return the estimated throughput, considering that the number of bits is for a slot.
+  return tbs_bits / slot_duration_ms;
+}
+
+double
+ue_cell::get_estimated_ul_brate_kbps(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const
+{
+  static const double slot_duration_ms =
+      SUBFRAME_DURATION_MSEC / get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
+
+  const unsigned      dmrs_prbs   = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  sch_mcs_description mcs_info    = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.tp_pi2bpsk_present);
+  unsigned            nof_symbols = pusch_cfg.symbols.length();
+
+  unsigned tbs_bits =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs});
+
+  // Return the estimated throughput, considering that the number of bits is for a slot.
+  return tbs_bits / slot_duration_ms;
 }

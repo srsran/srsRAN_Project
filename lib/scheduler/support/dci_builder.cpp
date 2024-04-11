@@ -344,18 +344,16 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   f0_0.redundancy_version = rv;
 }
 
-void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   search_space_id              ss_id,
-                                   const crb_interval&          crbs,
-                                   unsigned                     time_resource,
-                                   sch_mcs_index                mcs_index,
-                                   uint8_t                      rv,
-                                   const ul_harq_process&       h_ul)
+void srsran::build_dci_f0_0_c_rnti(dci_ul_info&             dci,
+                                   const search_space_info& ss_info,
+                                   const bwp_uplink_common& init_ul_bwp,
+                                   const crb_interval&      crbs,
+                                   unsigned                 time_resource,
+                                   sch_mcs_index            mcs_index,
+                                   uint8_t                  rv,
+                                   const ul_harq_process&   h_ul)
 {
-  const search_space_info& ss_info       = ue_cell_cfg.search_space(ss_id);
   const bwp_configuration& active_ul_bwp = ss_info.bwp->ul_common->generic_params;
-  const bwp_uplink_common& init_ul_bwp   = *ue_cell_cfg.bwp(to_bwp_id(0)).ul_common;
 
   dci.type                           = dci_ul_rnti_config_type::c_rnti_f0_0;
   dci.c_rnti_f0_0                    = {};

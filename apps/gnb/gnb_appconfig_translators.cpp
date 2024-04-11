@@ -1049,7 +1049,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
       report_error("Cannot create CU-UP config: No entry for {} in DU QoS config\n", qos.five_qi);
     }
     // Convert PDCP custom config
-    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom;
+    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
     out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
     out_pdcp_custom.metrics_period      = timer_duration(config.metrics_cfg.pdcp.report_period);
 
@@ -1066,6 +1066,10 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
                    du_five_qi.rlc.mode,
                    qos.five_qi);
     }
+
+    // Convert F1-U config
+    srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
+    f1u_cfg.warn_on_drop           = config.cu_up_cfg.warn_on_drop;
   }
   return out_cfg;
 }
@@ -1114,7 +1118,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc.report_period);
+    out_cfg = config_helpers::make_default_du_qos_config_list(config.du_cfg.warn_on_drop,
+                                                              config.metrics_cfg.rlc.report_period);
     return out_cfg;
   }
 
@@ -1150,7 +1155,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify
-    out_f1u.t_notify = qos.f1u_du.t_notify;
+    out_f1u.t_notify     = qos.f1u_du.t_notify;
+    out_f1u.warn_on_drop = config.du_cfg.warn_on_drop;
 
     // Convert MAC config
     out_cfg[qos.five_qi].mac = generate_mac_lc_config(qos.mac);
@@ -1662,7 +1668,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
       ++dl_pipeline_depth;
     }
-    unsigned ul_pipeline_depth = dl_pipeline_depth;
+    unsigned ul_pipeline_depth = std::max(dl_pipeline_depth, 8U);
 
     static constexpr unsigned prach_pipeline_depth = 1;
 
@@ -1785,6 +1791,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;
   out_cfg.ue.max_pucchs_per_slot    = cell.ul_common_cfg.max_pucchs_per_slot;
+  out_cfg.ue.min_k1                 = cell.pucch_cfg.min_k1;
 
   // RA parameters.
   const prach_appconfig& prach = cell.prach_cfg;

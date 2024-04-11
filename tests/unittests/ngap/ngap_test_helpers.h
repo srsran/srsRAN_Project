@@ -54,7 +54,7 @@ protected:
   ngap_test();
   ~ngap_test() override;
 
-  /// \brief Helper method to successfully create UE instance in NGAP and inject an InitialUeMessage.
+  /// \brief Helper method to successfully create UE instance in NGAP and inject an InitialUEMessage.
   ue_index_t create_ue(rnti_t rnti = rnti_t::MIN_CRNTI);
 
   /// \brief Helper method to successfully create UE instance in NGAP.

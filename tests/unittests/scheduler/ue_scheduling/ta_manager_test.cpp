@@ -45,7 +45,8 @@ protected:
   /// (new_ta_cmd) being computed by the TA manager.
   int64_t compute_n_ta_diff_leading_to_new_ta_cmd(uint8_t new_ta_cmd)
   {
-    return static_cast<int64_t>(std::round(((new_ta_cmd - 31) * 16 * 64) / pow2(to_numerology_value(ul_scs))));
+    return static_cast<int64_t>(std::round(static_cast<double>(((static_cast<int64_t>(new_ta_cmd) - 31) * 16 * 64)) /
+                                           static_cast<double>(pow2(to_numerology_value(ul_scs)))));
   }
 
   void run_slot()
@@ -112,6 +113,34 @@ TEST_P(ta_manager_tester, ta_cmd_is_successfully_triggered)
       << "TA command CE payload is absent";
   auto ta_cmd_ce = variant_get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
   ASSERT_EQ(ta_cmd_ce.ta_cmd, new_ta_cmd) << "New TA command does not match the expected TA command value";
+}
+
+TEST_P(ta_manager_tester, verify_computed_new_ta_cmd_based_on_multiple_n_ta_diff_reported)
+{
+  // Expected value. Average of ta_values_reported excluding the outlier 45.
+  const uint8_t expected_new_ta_cmd = 34;
+
+  // TA values used to compute N_TA diff to be reported.
+  const std::vector<uint8_t> ta_values_reported = {34, 35, 45, 34, 33};
+  const float                ul_sinr            = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold + 10;
+  for (const auto ta : ta_values_reported) {
+    ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(ta), ul_sinr);
+  }
+
+  optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
+  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 4; ++count) {
+    run_slot();
+    ta_cmd_mac_ce_alloc = fetch_ta_cmd_mac_ce_allocation();
+    if (ta_cmd_mac_ce_alloc.has_value()) {
+      break;
+    }
+  }
+  ASSERT_TRUE(ta_cmd_mac_ce_alloc.has_value()) << "Missing TA command CE allocation";
+  ASSERT_TRUE(ta_cmd_mac_ce_alloc->lcid == lcid_dl_sch_t::TA_CMD) << "TA command is not be triggered";
+  ASSERT_TRUE(variant_holds_alternative<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload))
+      << "TA command CE payload is absent";
+  auto ta_cmd_ce = variant_get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
+  ASSERT_EQ(ta_cmd_ce.ta_cmd, expected_new_ta_cmd) << "New TA command does not match the expected TA command value";
 }
 
 INSTANTIATE_TEST_SUITE_P(ue_scheduler_test, ta_manager_tester, testing::Values(duplex_mode::TDD, duplex_mode::FDD));

@@ -67,18 +67,10 @@ public:
     unsigned nof_tx_layers = 0;
   };
 
-  /// Default constructor: reserves internal memory.
-  channel_estimate() : max_dims(), nof_subcarriers(0), nof_symbols(0), nof_rx_ports(0), nof_tx_layers(0)
-  {
-    ce.reserve({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_RX_PORTS, MAX_TX_LAYERS});
-    noise_variance.reserve(MAX_TX_RX_PATHS);
-    epre.reserve(MAX_TX_RX_PATHS);
-    rsrp.reserve(MAX_TX_RX_PATHS);
-    snr.reserve(MAX_TX_RX_PATHS);
-    time_alignment.reserve(MAX_TX_RX_PATHS);
-  }
+  /// Default constructor: creates a max-size channel estimate object.
+  channel_estimate() : channel_estimate({MAX_RB, MAX_NSYMB_PER_SLOT, MAX_RX_PORTS, MAX_TX_LAYERS}) {}
 
-  /// Constructor: sets the size of the internal buffers.
+  /// Constructor: creates a channel estimate object with the given dimensions.
   explicit channel_estimate(const channel_estimate_dimensions& dims) :
     max_dims(dims),
     nof_subcarriers(dims.nof_prb * NRE),
@@ -103,10 +95,10 @@ public:
 
     unsigned nof_paths = dims.nof_tx_layers * dims.nof_rx_ports;
 
-    // Reserve memory for channel estimates and initialize with 1.0.
+    // Exposes the memory reserved for channel estimates.
     ce.resize({dims.nof_prb * NRE, dims.nof_symbols, dims.nof_rx_ports, dims.nof_tx_layers});
 
-    // Set all reserved data to one.
+    // Set all reserved memory to one.
     span<cf_t> data = ce.get_view<4>({});
     std::fill(data.begin(), data.end(), 1.0F);
 

@@ -19,4 +19,6 @@
 #
 
 add_subdirectory(mac)
+add_subdirectory(rrc)
 add_subdirectory(f1ap)
+add_subdirectory(ngap)

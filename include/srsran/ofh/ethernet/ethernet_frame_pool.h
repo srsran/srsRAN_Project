@@ -183,7 +183,8 @@ public:
   void reset_buffers()
   {
     for (auto& buffer : buffers_array) {
-      if (buffer.status != frame_buffer::frame_buffer_status::marked_to_send) {
+      if (buffer.status != frame_buffer::frame_buffer_status::marked_to_send &&
+          buffer.status != frame_buffer::frame_buffer_status::reserved) {
         buffer.status = frame_buffer::frame_buffer_status::free;
       }
     }

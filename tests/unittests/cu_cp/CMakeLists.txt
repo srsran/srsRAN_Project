@@ -42,7 +42,8 @@ target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(cu_cp_test_helpers srsran_cu_cp srsran_support srslog f1ap_test_helpers e1ap_test_helpers f1ap_asn1 ngap_asn1 e1ap_asn1)
 
 
-add_executable(cu_cp_test cu_cp_test.cpp cu_cp_connectivity_test.cpp)
+add_executable(cu_cp_test cu_cp_test.cpp cu_cp_connectivity_test.cpp cu_cp_reestablishment_test.cpp)
+set_target_properties(cu_cp_test PROPERTIES UNITY_BUILD ON)
 target_link_libraries(cu_cp_test
         cu_cp_test_helpers
         f1ap_cu_test_helpers
@@ -53,6 +54,9 @@ target_link_libraries(cu_cp_test
         srslog
         f1ap_asn1
         ngap_asn1
+        rrc_test_doubles
+        f1ap_test_doubles
+        ngap_test_doubles
         gtest
         gtest_main)
 target_include_directories(cu_cp_test PRIVATE ${CMAKE_SOURCE_DIR})

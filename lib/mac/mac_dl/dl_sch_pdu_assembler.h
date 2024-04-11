@@ -43,15 +43,16 @@ public:
   {
   public:
     mac_sdu_encoder() = default;
-    mac_sdu_encoder(dl_sch_pdu& pdu_, lcid_t lcid_, unsigned subhdr_len_, unsigned max_sdu_size_);
+    mac_sdu_encoder(dl_sch_pdu& pdu_, lcid_t lcid_, unsigned max_sdu_size_);
 
     bool valid() const { return pdu != nullptr; }
 
-    /// \brief Returns the space that is reserved for this MAC SDU payload.
-    span<uint8_t> sdu_space() const;
+    /// \brief Returns a buffer where the MAC SDU (payload) can be written in-place to avoid memcpys.
+    span<uint8_t> sdu_buffer() const;
 
-    /// \brief Updates the DL-SCH PDU with the encoded MAC SDU subheader and payload.
-    /// \return Number of bytes written to the DL-SCH PDU (MAC SDU subheader + payload).
+    /// \brief Updates the DL-SCH PDU with the encoded MAC SDU subheader and SDU.
+    /// \param[in] sdu_bytes_written Number of bytes written to the SDU buffer (returned by sdu_buffer()).
+    /// \return Number of bytes written to the DL-SCH PDU (MAC SDU subheader + SDU).
     unsigned encode_sdu(unsigned sdu_bytes_written);
 
   private:
@@ -67,7 +68,8 @@ public:
   mac_sdu_encoder get_sdu_encoder(lcid_t lcid, unsigned sdu_payload_len_estimate);
 
   /// Adds a MAC SDU as a subPDU.
-  unsigned add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu);
+  unsigned add_sdu(lcid_t lcid_, span<uint8_t> sdu);
+  unsigned add_sdu(lcid_t lcid_, const byte_buffer& sdu);
 
   /// Adds a UE Contention Resolution CE as a subPDU.
   void add_ue_con_res_id(const ue_con_res_id_t& con_res_payload);
@@ -78,11 +80,14 @@ public:
   /// Adds a padding CE as a subPDU.
   void add_padding(unsigned len);
 
-  /// Number of bytes of the MAC PDU.
+  /// Number of bytes encoded into the MAC PDU.
   unsigned nof_bytes() const { return byte_offset; }
 
   /// Remaining space in number of bytes in the PDU.
   unsigned nof_empty_bytes() const { return pdu.size() - byte_offset; }
+
+  /// Space available in number of bytes in the PDU.
+  unsigned capacity() const { return pdu.size(); }
 
   /// Gets the held MAC PDU bytes.
   span<uint8_t> get() { return pdu.first(byte_offset); }

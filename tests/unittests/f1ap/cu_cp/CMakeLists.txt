@@ -33,5 +33,5 @@ set(SOURCES
 
 add_executable(f1ap_cu_test ${SOURCES})
 target_include_directories(f1ap_cu_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(f1ap_cu_test f1ap_cu_test_helpers gtest gtest_main)
+target_link_libraries(f1ap_cu_test f1ap_cu_test_helpers f1ap_test_doubles gtest gtest_main)
 gtest_discover_tests(f1ap_cu_test PROPERTIES "LABELS;f1ap_cu")

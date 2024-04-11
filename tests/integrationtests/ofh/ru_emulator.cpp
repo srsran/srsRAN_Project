@@ -20,20 +20,14 @@
  *
  */
 
-#include "../../../lib/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "helpers.h"
 #include "ru_emulator_appconfig.h"
 #include "ru_emulator_cli11_schema.h"
+#include "ru_emulator_transceiver.h"
 #include "srsran/adt/circular_map.h"
-#include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
 #include "srsran/ofh/ecpri/ecpri_packet_properties.h"
-#include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_mac_address.h"
-#include "srsran/ofh/ethernet/ethernet_properties.h"
-#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/resource_block.h"
@@ -45,9 +39,11 @@
 #include "srsran/support/format_utils.h"
 #include "srsran/support/signal_handler.h"
 #include "fmt/chrono.h"
-#include <future>
+#include <arpa/inet.h>
 #include <random>
-#include <rte_ethdev.h>
+#ifdef DPDK_FOUND
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#endif
 
 using namespace srsran;
 using namespace ofh;
@@ -204,147 +200,6 @@ struct uplink_request {
   slot_point slot;
 };
 
-/// Encapsulates DPDK Ethernet transmitter and receiver functionalities.
-class dpdk_transceiver : public gateway, public receiver
-{
-  enum class status { idle, running, stop_requested, stopped };
-
-public:
-  dpdk_transceiver(srslog::basic_logger&              logger_,
-                   task_executor&                     executor_,
-                   std::shared_ptr<dpdk_port_context> port_ctx_ptr_) :
-    logger(logger_), executor(executor_), port_ctx_ptr(port_ctx_ptr_), port_ctx(*port_ctx_ptr)
-  {
-    srsran_assert(port_ctx_ptr, "Invalid port context");
-  }
-
-  // See interface for documentation.
-  void start(frame_notifier& notifier_) override
-  {
-    notifier = &notifier_;
-
-    std::promise<void> p;
-    std::future<void>  fut = p.get_future();
-
-    if (!executor.defer([this, &p]() {
-          trx_status.store(status::running, std::memory_order_relaxed);
-          // Signal start() caller thread that the operation is complete.
-          p.set_value();
-          receive_loop();
-        })) {
-      report_error("Unable to start the DPDK ethernet frame receiver");
-    }
-
-    // Block waiting for timing executor to start.
-    fut.wait();
-
-    logger.info("Started the DPDK ethernet frame receiver");
-  }
-
-  // See interface for documentation.
-  void stop() override
-  {
-    logger.info("Requesting stop of the DPDK ethernet frame receiver");
-    trx_status.store(status::stop_requested, std::memory_order_relaxed);
-
-    // Wait for the receiver thread to stop.
-    while (trx_status.load(std::memory_order_acquire) != status::stopped) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    logger.info("Stopped the DPDK ethernet frame receiver");
-  }
-
-  // See interface for documentation.
-  void send(span<span<const uint8_t>> frames) override
-  {
-    if (frames.size() >= MAX_BURST_SIZE) {
-      logger.warning("Unable to send a transmission burst size of '{}' frames in the DPDK Ethernet transmitter",
-                     frames.size());
-      return;
-    }
-
-    static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frames.size());
-    if (::rte_pktmbuf_alloc_bulk(port_ctx.get_mempool(), mbufs.data(), frames.size()) < 0) {
-      logger.warning("Not enough entries in the mempool to send '{}' frames in the DPDK Ethernet transmitter",
-                     frames.size());
-      return;
-    }
-
-    for (unsigned idx = 0, end = frames.size(); idx != end; ++idx) {
-      const auto  frame = frames[idx];
-      ::rte_mbuf* mbuf  = mbufs[idx];
-
-      if (::rte_pktmbuf_append(mbuf, frame.size()) == nullptr) {
-        ::rte_pktmbuf_free(mbuf);
-        logger.warning("Unable to append '{}' bytes to the allocated mbuf in the DPDK Ethernet transmitter",
-                       frame.size());
-        ::rte_pktmbuf_free_bulk(mbufs.data(), mbufs.size());
-        return;
-      }
-      mbuf->data_len = frame.size();
-      mbuf->pkt_len  = frame.size();
-
-      uint8_t* data = rte_pktmbuf_mtod(mbuf, uint8_t*);
-      std::memcpy(data, frame.data(), frame.size());
-    }
-
-    unsigned nof_sent_packets = ::rte_eth_tx_burst(port_ctx.get_port_id(), 0, mbufs.data(), mbufs.size());
-
-    if (SRSRAN_UNLIKELY(nof_sent_packets < mbufs.size())) {
-      logger.warning("DPDK dropped '{}' packets out of a total of '{}' in the tx burst",
-                     mbufs.size() - nof_sent_packets,
-                     mbufs.size());
-      for (unsigned buf_idx = nof_sent_packets, last_idx = mbufs.size(); buf_idx != last_idx; ++buf_idx) {
-        ::rte_pktmbuf_free(mbufs[buf_idx]);
-      }
-    }
-  }
-
-private:
-  void receive_loop()
-  {
-    if (trx_status.load(std::memory_order_relaxed) == status::stop_requested) {
-      trx_status.store(status::stopped, std::memory_order_release);
-      return;
-    }
-
-    receive();
-
-    // Retry the task deferring when it fails.
-    while (!executor.defer([this]() { receive_loop(); })) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-    }
-  }
-
-  void receive()
-  {
-    std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
-    unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
-    if (num_frames == 0) {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
-      return;
-    }
-
-    for (auto mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
-      ::rte_vlan_strip(mbuf);
-
-      uint8_t* data   = rte_pktmbuf_mtod(mbuf, uint8_t*);
-      unsigned length = mbuf->pkt_len;
-      notifier->on_new_frame(span<const uint8_t>(data, length));
-
-      ::rte_pktmbuf_free(mbuf);
-    }
-  }
-
-  srslog::basic_logger&              logger;
-  task_executor&                     executor;
-  std::shared_ptr<dpdk_port_context> port_ctx_ptr;
-  dpdk_port_context&                 port_ctx;
-  frame_notifier*                    notifier;
-  std::atomic<status>                trx_status{status::idle};
-};
-
 /// Analyzes content of received OFH packets.
 class packet_inspector
 {
@@ -409,9 +264,9 @@ public:
 /// RU emulator receives OFH traffic and replies with UL packets to a DU.
 class ru_emulator : public frame_notifier
 {
-  srslog::basic_logger& logger;
-  task_executor&        executor;
-  dpdk_transceiver&     transceiver;
+  srslog::basic_logger&    logger;
+  task_executor&           executor;
+  ru_emulator_transceiver& transceiver;
 
   // RU emulator configuration.
   const ru_emulator_config cfg;
@@ -425,11 +280,11 @@ class ru_emulator : public frame_notifier
   std::atomic<unsigned> nof_rx_cplane_packets;
 
 public:
-  ru_emulator(srslog::basic_logger& logger_,
-              task_executor&        executor_,
-              dpdk_transceiver&     transceiver_,
-              ru_emulator_config    cfg_,
-              std::vector<unsigned> ul_eaxc_) :
+  ru_emulator(srslog::basic_logger&    logger_,
+              task_executor&           executor_,
+              ru_emulator_transceiver& transceiver_,
+              ru_emulator_config       cfg_,
+              std::vector<unsigned>    ul_eaxc_) :
     logger(logger_), executor(executor_), transceiver(transceiver_), cfg(cfg_), nof_rx_cplane_packets(0)
   {
     ul_eaxc.assign(ul_eaxc_.begin(), ul_eaxc_.end());
@@ -611,30 +466,49 @@ int main(int argc, char** argv)
   srslog::basic_logger& logger = srslog::fetch_basic_logger("RU_EMU", false);
   logger.set_level(srslog::str_to_basic_level(ru_emulator_parsed_cfg.log_cfg.level));
 
+#ifdef DPDK_FOUND
+  bool uses_dpdk = ru_emulator_parsed_cfg.dpdk_config.has_value();
+
   // Initialize DPDK EAL.
   std::unique_ptr<dpdk::dpdk_eal> eal;
-  // Prepend the application name in argv[0] as it is expected by EAL.
-  eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + ru_emulator_parsed_cfg.dpdk_config.eal_args,
-                              srslog::fetch_basic_logger("EAL", false));
-  if (!eal) {
-    report_error("Failed to initialize DPDK EAL\n");
+  if (uses_dpdk) {
+    // Prepend the application name in argv[0] as it is expected by EAL.
+    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + ru_emulator_parsed_cfg.dpdk_config->eal_args,
+                                srslog::fetch_basic_logger("EAL", false));
+    if (!eal) {
+      report_error("Failed to initialize DPDK EAL\n");
+    }
   }
-
+#endif
   // Create workers and executors.
   worker_manager workers(ru_emulator_parsed_cfg.ru_cfg.size());
 
   // Set up DPDK transceivers and create RU emulators.
-  std::vector<std::unique_ptr<dpdk_transceiver>> transceivers;
-  std::vector<std::unique_ptr<ru_emulator>>      ru_emulators;
+  std::vector<std::unique_ptr<ru_emulator_transceiver>> transceivers;
+  std::vector<std::unique_ptr<ru_emulator>>             ru_emulators;
 
   for (unsigned i = 0, e = ru_emulator_parsed_cfg.ru_cfg.size(); i != e; ++i) {
     ru_emulator_ofh_appconfig ru_cfg = ru_emulator_parsed_cfg.ru_cfg[i];
-    dpdk_port_config          port_cfg;
-    port_cfg.pcie_id                     = ru_cfg.network_interface;
-    port_cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
-    port_cfg.is_promiscuous_mode_enabled = false;
-    auto ctx                             = dpdk_port_context::create(port_cfg);
-    transceivers.push_back(std::make_unique<dpdk_transceiver>(logger, *workers.ru_rx_exec, ctx));
+#ifdef DPDK_FOUND
+    if (uses_dpdk) {
+      dpdk_port_config port_cfg;
+      port_cfg.pcie_id                     = ru_cfg.network_interface;
+      port_cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
+      port_cfg.is_promiscuous_mode_enabled = false;
+      auto ctx                             = dpdk_port_context::create(port_cfg);
+      transceivers.push_back(std::make_unique<dpdk_transceiver>(logger, *workers.ru_rx_exec, ctx));
+    } else
+#endif
+    {
+      gw_config cfg;
+      cfg.interface                   = ru_cfg.network_interface;
+      cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
+      cfg.is_promiscuous_mode_enabled = true;
+      if (!parse_mac_address(ru_cfg.du_mac_address, cfg.mac_dst_address)) {
+        report_error("Invalid MAC address provided: '{}'", ru_cfg.du_mac_address);
+      }
+      transceivers.push_back(std::make_unique<socket_transceiver>(logger, *workers.ru_rx_exec, cfg));
+    }
 
     ru_emulator_config emu_cfg;
     emu_cfg.nof_prb =
