@@ -645,6 +645,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--start_rb", pdsch_params.start_rb, "Starting RB for UE PDSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
   app.add_option("--max_pdschs_per_slot",
                  pdsch_params.max_pdschs_per_slot,
                  "Maximum number of PDSCH grants per slot, including SIB, RAR, Paging and UE data grants.")
@@ -836,6 +839,15 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
   app.add_option("--dmrs_additional_position", pusch_params.dmrs_add_pos, "PUSCH DMRS additional position")
       ->capture_default_str()
       ->check(CLI::Range(0, 3));
+  app.add_option("--min_rb_size", pusch_params.min_rb_size, "Minimum RB size for UE PUSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--max_rb_size", pusch_params.max_rb_size, "Maximum RB size for UE PUSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--start_rb", pusch_params.start_rb, "Starting RB for UE PUSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)

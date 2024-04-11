@@ -173,10 +173,12 @@ struct pdsch_appconfig {
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  /// Minimum number of RBs for Resource Allocation of UE PDSCHs.
+  /// Minimum number of RBs for resource allocation of UE PDSCHs.
   unsigned min_rb_size = 1;
-  /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
+  /// Maximum number of RBs for resource allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
+  /// Starting RB for resource allocation of UE PDSCHs.
+  unsigned start_rb = 0;
   /// Maximum number of PDSCH grants per slot.
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of DL or UL PDCCH allocation attempts per slot.
@@ -259,6 +261,12 @@ struct pusch_appconfig {
   float olla_max_snr_offset{5.0};
   /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3).
   unsigned dmrs_add_pos{2};
+  /// Minimum number of RBs for resource allocation of UE PUSCHs.
+  unsigned min_rb_size = 1;
+  /// Maximum number of RBs for resource allocation of UE PUSCHs.
+  unsigned max_rb_size = MAX_NOF_PRBS;
+  /// Starting RB for resource allocation of UE PUSCHs.
+  unsigned start_rb = 0;
 };
 
 struct pucch_appconfig {

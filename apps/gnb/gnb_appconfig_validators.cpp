@@ -232,7 +232,7 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
+static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsigned cell_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -252,11 +252,16 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
     return false;
   }
 
+  if (config.start_rb >= cell_crbs) {
+    fmt::print("Invalid UE PDSCH start RB {}. The start_rb must be less than the cell BW", config.start_rb);
+    return false;
+  }
+
   return true;
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
+static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsigned cell_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -266,6 +271,18 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
   }
 
   if (not validate_rv_sequence(config.rv_sequence)) {
+    return false;
+  }
+
+  if (config.max_rb_size < config.min_rb_size) {
+    fmt::print("Invalid UE PUSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+               config.min_rb_size,
+               config.max_rb_size);
+    return false;
+  }
+
+  if (config.start_rb >= cell_crbs) {
+    fmt::print("Invalid UE PUSCH start RB {}. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
 
@@ -571,7 +588,12 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
+  const nr_band band =
+      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+  const unsigned nof_crbs =
+      band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
+
+  if (!validate_pdsch_cell_app_config(config.pdsch_cfg, nof_crbs)) {
     return false;
   }
 
@@ -583,11 +605,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pusch_cell_app_config(config.pusch_cfg)) {
+  if (!validate_pusch_cell_app_config(config.pusch_cfg, nof_crbs)) {
     return false;
   }
 
-  nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
   if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
     return false;
   }
