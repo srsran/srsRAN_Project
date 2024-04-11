@@ -69,7 +69,7 @@ public:
   }
 
   // See resource_grid_reader for documentation.
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride) const override
   {
     srsvec::copy(symbols, rg_buffer.get_data().first(symbols.size()));
   }

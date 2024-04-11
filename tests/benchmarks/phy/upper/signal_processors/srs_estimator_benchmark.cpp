@@ -38,9 +38,8 @@ static std::vector<channel_topology> channel_topology_list{{1, 1}, {2, 2}, {3, 3
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-P precoder type] [-n number of RB] [-R repetitions] [-s silent]\n", prog);
+  fmt::print("Usage: {} [-n number of RB] [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-n Number of resource blocks [Default {}]\n", nof_rb);
-  fmt::print("\t-D Use dummy resource grid mapper\n");
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");

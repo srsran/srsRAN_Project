@@ -70,13 +70,12 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned                        
 
 void resource_grid_writer_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  srsran_assert(
-      k_init + symbols.size() <= get_nof_subc(),
-      "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
-      "subcarriers (i.e., {})",
-      k_init,
-      symbols.size(),
-      get_nof_subc());
+  srsran_assert(k_init + symbols.size() <= get_nof_subc(),
+                "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum "
+                "number of subcarriers (i.e., {})",
+                k_init,
+                symbols.size(),
+                get_nof_subc());
   srsran_assert(l < get_nof_symbols(),
                 "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})",
                 l,

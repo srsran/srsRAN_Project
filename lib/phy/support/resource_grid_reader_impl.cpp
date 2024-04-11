@@ -93,15 +93,20 @@ span<cf_t> resource_grid_reader_impl::get(span<cf_t>                          sy
   return symbols;
 }
 
-void resource_grid_reader_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const
+void resource_grid_reader_impl::get(span<cf_t> symbols,
+                                    unsigned   port,
+                                    unsigned   l,
+                                    unsigned   k_init,
+                                    unsigned   stride) const
 {
-  srsran_assert(
-      k_init + symbols.size() <= get_nof_subc(),
-      "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
-      "subcarriers (i.e., {})",
-      k_init,
-      symbols.size(),
-      get_nof_subc());
+  srsran_assert(stride != 0, "The stride must not be zero.");
+  srsran_assert(k_init + stride * symbols.size() <= get_nof_subc(),
+                "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) times the stride (i.e. "
+                "{}) exceeds the maximum number of subcarriers (i.e., {})",
+                k_init,
+                symbols.size(),
+                stride,
+                get_nof_subc());
   srsran_assert(l < get_nof_symbols(),
                 "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})",
                 l,
@@ -115,7 +120,15 @@ void resource_grid_reader_impl::get(span<cf_t> symbols, unsigned port, unsigned 
   span<const cf_t> rg_symbol = data.get_view({l, port});
 
   // Copy resource elements.
-  srsvec::copy(symbols, rg_symbol.subspan(k_init, symbols.size()));
+  if (stride == 1) {
+    srsvec::copy(symbols, rg_symbol.subspan(k_init, symbols.size()));
+  } else {
+    std::generate(symbols.begin(), symbols.end(), [&rg_symbol, stride, n = k_init]() mutable {
+      cf_t temp = rg_symbol[n];
+      n += stride;
+      return temp;
+    });
+  }
 }
 
 span<const cf_t> resource_grid_reader_impl::get_view(unsigned port, unsigned l) const

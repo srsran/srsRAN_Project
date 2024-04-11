@@ -51,7 +51,10 @@ public:
   }
 
   // See interface for documentation.
-  void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
+  void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/, unsigned /**/) const override
+  {
+    srsvec::zero(symbols);
+  }
 
   // See interface for documentation.
   span<const cf_t> get_view(unsigned /**/, unsigned /**/) const override { return {}; }

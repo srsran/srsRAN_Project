@@ -63,15 +63,17 @@ public:
                          unsigned                            k_init,
                          const bounded_bitset<MAX_RB * NRE>& mask) const = 0;
 
-  /// \brief Gets a consecutive number of resource elements for a given port and symbol \c l starting at \c k_init.
+  /// \brief Gets a number of resource elements for a given port and symbol \c l starting at \c k_init and picks the
+  /// first element every \c stride.
   ///
   /// \param[out] symbols Destination symbol buffer.
   /// \param[in]  port    Port index.
   /// \param[in]  l       Symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
+  /// \param[in]  stride  Distance between the elements to get.
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
-  virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const = 0;
+  virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride = 1) const = 0;
 
   /// \brief Gets a view of all resource elements for a given port and symbol \c l.
   ///
