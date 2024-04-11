@@ -126,7 +126,8 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsran::srs_du::generate_drb_am_mod_item
 }
 
 f1ap_message
-srsran::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
+srsran::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add,
+                                                         const std::initializer_list<drb_id_t>& drbs_to_rem)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -142,6 +143,15 @@ srsran::srs_du::generate_ue_context_modification_request(const std::initializer_
   for (drb_id_t drbid : drbs_to_add) {
     dl_msg->drbs_to_be_setup_mod_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
     dl_msg->drbs_to_be_setup_mod_list[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
+    ++count;
+  }
+
+  dl_msg->drbs_to_be_released_list_present = drbs_to_rem.size() > 0;
+  dl_msg->drbs_to_be_released_list.resize(drbs_to_rem.size());
+  count = 0;
+  for (drb_id_t drbid : drbs_to_rem) {
+    dl_msg->drbs_to_be_released_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_RELEASED_ITEM);
+    dl_msg->drbs_to_be_released_list[count]->drbs_to_be_released_item().drb_id = drb_id_to_uint(drbid);
     ++count;
   }
 
