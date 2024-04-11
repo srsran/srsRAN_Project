@@ -134,11 +134,12 @@ private:
 
   // Helper that changes the current PUCCH Format 2 grant (specifically used for CSI reporting) into a PUCCH Format 2
   // resource for the HARQ-ACK + CSI.
-  optional<unsigned> change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
-                                             pucch_info&                   existing_grant,
-                                             rnti_t                        rnti,
-                                             const ue_cell_configuration&  ue_cell_cfg,
-                                             unsigned                      harq_ack_bits_increment);
+  optional<unsigned> change_format2_resource(cell_slot_resource_allocator&              pucch_slot_alloc,
+                                             pucch_info&                                existing_grant,
+                                             rnti_t                                     rnti,
+                                             const ue_cell_configuration&               ue_cell_cfg,
+                                             unsigned                                   harq_ack_bits_increment,
+                                             optional<pucch_harq_resource_alloc_record> harq_f2_res);
 
   // Helper that adds HARQ-ACK bits to a PUCCH Format 2 grant for HARQ-ACK.
   optional<unsigned> add_harq_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
