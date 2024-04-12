@@ -221,8 +221,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   if (h_dl.empty() and ((ul_alloc.result.ul.pucchs.size() > (expert_cfg.max_pucchs_per_slot - 1)) or
                         ((ul_alloc.result.ul.pucchs.size() + ul_alloc.result.ul.puschs.size()) >
                          (expert_cfg.max_ul_grants_per_slot - 1)))) {
-    const crb_bitmap used_crbs =
-        pdsch_alloc.dl_res_grid.used_crbs(bwp_dl_cmn.generic_params.scs, ss_info->dl_crb_lims, pdsch_td_cfg.symbols);
+    const crb_interval dl_crb_lims = {std::max(expert_cfg.pdsch_crb_limits.start(), ss_info->dl_crb_lims.start()),
+                                      std::min(expert_cfg.pdsch_crb_limits.stop(), ss_info->dl_crb_lims.stop())};
+    const crb_bitmap   used_crbs =
+        pdsch_alloc.dl_res_grid.used_crbs(bwp_dl_cmn.generic_params.scs, dl_crb_lims, pdsch_td_cfg.symbols);
     adjusted_crbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0);
   }
 
@@ -587,8 +589,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   if (h_ul.empty() and (pusch_alloc.result.ul.puschs.size() >=
                         expert_cfg.max_ul_grants_per_slot -
                             (static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size()) - nof_pucch_grants) - 1)) {
-    const crb_bitmap used_crbs =
-        pusch_alloc.ul_res_grid.used_crbs(bwp_ul_cmn.generic_params.scs, ss_info->ul_crb_lims, pusch_td_cfg.symbols);
+    const crb_interval ul_crb_lims = {std::max(expert_cfg.pusch_crb_limits.start(), ss_info->ul_crb_lims.start()),
+                                      std::min(expert_cfg.pusch_crb_limits.stop(), ss_info->ul_crb_lims.stop())};
+    const crb_bitmap   used_crbs =
+        pusch_alloc.ul_res_grid.used_crbs(bwp_ul_cmn.generic_params.scs, ul_crb_lims, pusch_td_cfg.symbols);
     adjusted_crbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0);
   }
 
