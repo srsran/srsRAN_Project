@@ -9,7 +9,7 @@
  */
 
 #include "e1ap_cu_up_impl.h"
-#include "../../ran/gnb_format.h"
+#include "../common/log_helpers.h"
 #include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
@@ -48,6 +48,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_connection_client& e1ap_client_handler_,
   timers(timers_),
   cu_up_exec(cu_up_exec_),
   connection_handler(e1ap_client_handler_, *this),
+  pdu_notifier(*this, connection_handler),
   ue_ctxt_list(logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec}))
 {
@@ -65,7 +66,7 @@ async_task<cu_up_e1_setup_response>
 e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request)
 {
   return launch_async<e1ap_cu_up_setup_procedure>(
-      request, connection_handler, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
+      request, pdu_notifier, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
@@ -99,37 +100,15 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
 
   // Send inactivity notification.
   ue_ctxt.logger.log_debug("Sending BearerContextInactivityNotification");
-  connection_handler.on_new_message(e1ap_msg);
+  pdu_notifier.on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
   if (not cu_up_exec.execute([this, msg]() {
-        logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
-
-        // Log message.
-        optional<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
-        optional<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
-        if (transaction_id.has_value()) {
-          logger.debug("SDU \"{}.{}\" transaction id={}",
-                       msg.pdu.type().to_string(),
-                       get_message_type_str(msg.pdu),
-                       transaction_id.value());
-        } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
-          logger.debug("SDU \"{}.{}\" GNB-CU-UP-UE-E1AP-ID={}",
-                       msg.pdu.type().to_string(),
-                       get_message_type_str(msg.pdu),
-                       gnb_cu_up_ue_e1ap_id.value());
-        } else {
-          logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-        }
-
-        if (logger.debug.enabled()) {
-          asn1::json_writer js;
-          msg.pdu.to_json(js);
-          logger.debug("Rx E1AP SDU: {}", js.to_string());
-        }
+        // Log PDU.
+        log_pdu(true, msg);
 
         switch (msg.pdu.type().value) {
           case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
@@ -180,7 +159,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Do basic syntax/semantic checks on the validity of the received message.
   if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
     logger.debug("Sending BearerContextSetupFailure. Cause: Received invalid BearerContextSetupRequest");
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
 
@@ -191,7 +170,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     logger.error("Sending BearerContextSetupFailure. Cause: No CU-UP-UE-E1AP-ID available");
 
     // send response
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
 
@@ -210,7 +189,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     logger.error("Sending BearerContextSetupFailure. Cause: Invalid UE index");
 
     // send response
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
 
@@ -237,14 +216,14 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextSetupResponse");
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1(bearer_context_setup_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextSetupFailure");
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
   }
 }
 
@@ -262,7 +241,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     logger.warning("Sending BearerContextModificationFailure. UE context not available");
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
 
@@ -278,7 +257,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
       ue_ctxt.logger.log_error("Sending BearerContextModificationFailure. Cause: Not handling E-UTRAN Bearers");
 
       // send response
-      connection_handler.on_new_message(e1ap_msg);
+      pdu_notifier.on_new_message(e1ap_msg);
       return;
     }
 
@@ -293,7 +272,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure: Cause: Invalid UE index");
 
     // send response
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
 
@@ -308,14 +287,14 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
         bearer_context_mod_response_msg);
     ue_ctxt.logger.log_debug("Sending BearerContextModificationResponse");
     // send response
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
         cause_to_asn1(bearer_context_mod_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");
-    connection_handler.on_new_message(e1ap_msg);
+    pdu_notifier.on_new_message(e1ap_msg);
   }
 }
 
@@ -352,7 +331,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
                bearer_context_release_cmd.ue_index,
                msg->gnb_cu_up_ue_e1ap_id,
                msg->gnb_cu_cp_ue_e1ap_id);
-  connection_handler.on_new_message(e1ap_msg);
+  pdu_notifier.on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
@@ -381,4 +360,42 @@ void e1ap_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
   if (not ev_mng->transactions.set_response(transaction_id.value(), outcome)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
+}
+
+void e1ap_cu_up_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
+{
+  if (not logger.info.enabled()) {
+    return;
+  }
+
+  // Fetch UE index.
+  auto                 up_ue_id = get_gnb_cu_up_ue_e1ap_id(e1ap_pdu.pdu);
+  optional<ue_index_t> ue_idx;
+  if (up_ue_id.has_value()) {
+    auto* ue_ptr = ue_ctxt_list.find_ue(up_ue_id.value());
+    if (ue_ptr != nullptr and ue_ptr->ue_ids.ue_index != INVALID_UE_INDEX) {
+      ue_idx = ue_ptr->ue_ids.ue_index;
+    }
+  }
+
+  // Log PDU.
+  log_e1ap_pdu(logger, is_rx, ue_idx, e1ap_pdu, logger.debug.enabled());
+}
+
+// ---- e1ap_message_notifier_with_logging
+
+e1ap_cu_up_impl::e1ap_message_notifier_with_logging::e1ap_message_notifier_with_logging(
+    e1ap_cu_up_impl&               parent_,
+    e1ap_cu_up_connection_handler& notifier_) :
+  parent(parent_), notifier(notifier_)
+{
+}
+
+void e1ap_cu_up_impl::e1ap_message_notifier_with_logging::on_new_message(const e1ap_message& msg)
+{
+  // Log message.
+  parent.log_pdu(false, msg);
+
+  // Forward message to notifier.
+  notifier.on_new_message(msg);
 }

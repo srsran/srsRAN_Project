@@ -190,14 +190,15 @@ void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
 
 void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
+  using init_types = asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts;
   switch (msg.value.type().value) {
-    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
+    case init_types::gnb_cu_up_e1_setup_request: {
       current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id;
       cu_up_e1_setup_request req = {};
       fill_e1ap_cu_up_e1_setup_request(req, msg.value.gnb_cu_up_e1_setup_request());
       cu_up_processor_notifier.on_cu_up_e1_setup_request_received(req);
     } break;
-    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_inactivity_notif: {
+    case init_types::bearer_context_inactivity_notif: {
       handle_bearer_context_inactivity_notification(msg.value.bearer_context_inactivity_notif());
     } break;
     default:
@@ -271,18 +272,18 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
 
 void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
+  using successful_types                    = asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts;
+  optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
   switch (outcome.value.type().value) {
-    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id)]
-          .bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
+    case successful_types::bearer_context_setup_resp: {
+      ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
     } break;
-    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id)]
-          .bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_resp());
+    case successful_types::bearer_context_mod_resp: {
+      ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_resp());
     } break;
-    case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_release_complete: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id)]
-          .bearer_ev_mng.context_release_complete.set(outcome.value.bearer_context_release_complete());
+    case successful_types::bearer_context_release_complete: {
+      ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_release_complete.set(
+          outcome.value.bearer_context_release_complete());
     } break;
     default:
       // Handle successful outcomes with transaction id
@@ -301,14 +302,14 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 
 void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
+  using unsuccessful_types                  = asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts;
+  optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
   switch (outcome.value.type().value) {
-    case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id)]
-          .bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
+    case unsuccessful_types::bearer_context_setup_fail: {
+      ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
     } break;
-    case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_fail()->gnb_cu_cp_ue_e1ap_id)]
-          .bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
+    case unsuccessful_types::bearer_context_mod_fail: {
+      ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
     } break;
     default:
       // Handle unsuccessful outcomes with transaction id
