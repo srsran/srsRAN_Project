@@ -66,6 +66,15 @@ public:
     return true;
   }
 
+  const e1ap_ue_context* find_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
+  {
+    auto it = ues.find(cu_cp_ue_e1ap_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
     srsran_assert(

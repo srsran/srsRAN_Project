@@ -46,12 +46,6 @@ void bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bea
 
 void bearer_context_setup_procedure::send_bearer_context_setup_request()
 {
-  if (logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    request.pdu.to_json(js);
-    logger.log_debug("Containerized BearerContextSetupRequest: {}", js.to_string());
-  }
-
   // send Bearer context setup request message
   e1ap_notifier.on_new_message(request);
 }
@@ -62,13 +56,6 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::create_bearer
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_setup_resp_s& resp = transaction_sink.response();
-    logger.log_debug("Received BearerContextSetupResponse");
-
-    if (logger.get_basic_logger().debug.enabled()) {
-      asn1::json_writer js;
-      resp.to_json(js);
-      logger.log_debug("Containerized BearerContextSetupResponse: {}", js.to_string());
-    }
 
     // Add CU-UP UE E1AP ID to UE context
     if (ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(resp->gnb_cu_cp_ue_e1ap_id))) {

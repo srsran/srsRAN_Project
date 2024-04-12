@@ -61,6 +61,19 @@ public:
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
 private:
+  /// \brief Decorator of e1ap_message_notifier that logs the transmitted E1AP messages.
+  class e1ap_message_notifier_with_logging final : public e1ap_message_notifier
+  {
+  public:
+    e1ap_message_notifier_with_logging(e1ap_cu_cp_impl& parent_, e1ap_message_notifier& notifier_);
+
+    void on_new_message(const e1ap_message& msg) override;
+
+  private:
+    e1ap_cu_cp_impl&       parent;
+    e1ap_message_notifier& notifier;
+  };
+
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
@@ -77,13 +90,16 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
+  /// \brief Log an E1AP Tx/Rx PDU.
+  void log_pdu(bool is_rx, const e1ap_message& e1ap_pdu);
+
   srslog::basic_logger& logger;
 
   // nofifiers and handles
-  e1ap_message_notifier&         pdu_notifier;
-  e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
-  e1ap_cu_cp_notifier&           cu_cp_notifier;
-  task_executor&                 ctrl_exec;
+  e1ap_message_notifier_with_logging pdu_notifier;
+  e1ap_cu_up_processor_notifier&     cu_up_processor_notifier;
+  e1ap_cu_cp_notifier&               cu_cp_notifier;
+  task_executor&                     ctrl_exec;
 
   timer_factory timers;
 

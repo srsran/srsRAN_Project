@@ -47,12 +47,6 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
 
 void bearer_context_release_procedure::send_bearer_context_release_command()
 {
-  if (logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    command.pdu.to_json(js);
-    logger.log_debug("Containerized BearerContextReleaseCommand: {}", js.to_string());
-  }
-
   // send DL RRC message
   e1ap_notifier.on_new_message(command);
 }
@@ -60,14 +54,6 @@ void bearer_context_release_procedure::send_bearer_context_release_command()
 void bearer_context_release_procedure::handle_bearer_context_release_complete()
 {
   if (transaction_sink.successful()) {
-    const asn1::e1ap::bearer_context_release_complete_s& resp = transaction_sink.response();
-    logger.log_debug("Received BearerContextReleaseComplete");
-    if (logger.get_basic_logger().debug.enabled()) {
-      asn1::json_writer js;
-      resp.to_json(js);
-      logger.log_debug("Containerized BearerContextReleaseComplete: {}", js.to_string());
-    }
-
     logger.log_debug("\"{}\" finalized", name());
 
   } else {

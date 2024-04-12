@@ -9,6 +9,7 @@
 
 set(SOURCES
         common/e1ap_asn1_packer.cpp
+        common/log_helpers.cpp
         cu_cp/e1ap_cu_cp_factory.cpp
         cu_cp/e1ap_cu_cp_impl.cpp
         cu_cp/procedures/bearer_context_setup_procedure.cpp

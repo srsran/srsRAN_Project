@@ -109,8 +109,8 @@ void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
         logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
 
         // Log message.
-        expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
-        expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
+        optional<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
+        optional<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
         if (transaction_id.has_value()) {
           logger.debug("SDU \"{}.{}\" transaction id={}",
                        msg.pdu.type().to_string(),
@@ -357,8 +357,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
-  expected<uint8_t> transaction_id = get_transaction_id(outcome);
-  if (transaction_id.is_error()) {
+  optional<uint8_t> transaction_id = get_transaction_id(outcome);
+  if (not transaction_id.has_value()) {
     logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
@@ -371,8 +371,8 @@ void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 
 void e1ap_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
-  expected<uint8_t> transaction_id = get_transaction_id(outcome);
-  if (transaction_id.is_error()) {
+  optional<uint8_t> transaction_id = get_transaction_id(outcome);
+  if (not transaction_id.has_value()) {
     logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
