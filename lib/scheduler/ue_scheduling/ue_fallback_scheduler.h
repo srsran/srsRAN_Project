@@ -75,7 +75,7 @@ private:
     slot_point most_recent_ack_slot;
   };
 
-  enum class dl_sched_outcome { success, next_ue, exit_scheduler };
+  enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling };
 
   /// \brief Tries to schedule DL SRB0/SRB1 message for a UE, iterating over several PDSCH slots ahead of the current
   /// reference slot.

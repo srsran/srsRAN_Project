@@ -156,7 +156,7 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
       optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
       dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
-      if (outcome == dl_sched_outcome::exit_scheduler) {
+      if (outcome == dl_sched_outcome::stop_dl_scheduling) {
         return false;
       }
     }
@@ -212,7 +212,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx_srb0(cell_resource_allocator& res
       ++next_ue;
     } else {
       // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref exit_scheduler.
+      // returns \ref stop_dl_scheduling.
       return false;
     }
   }
@@ -257,7 +257,7 @@ void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res
       ++next_ue;
     } else {
       // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref exit_scheduler.
+      // returns \ref stop_dl_scheduling.
       return;
     }
   }
@@ -319,7 +319,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
     if (sched_attempts_cnt >= max_dl_sched_attempts) {
-      return dl_sched_outcome::exit_scheduler;
+      return dl_sched_outcome::stop_dl_scheduling;
     }
 
     if (slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE]) {
@@ -897,9 +897,6 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u,
       u.get_pcell().get_active_ul_search_spaces(pdcch_slot, dci_ul_rnti_config_type::c_rnti_f0_0);
 
   for (const auto* ss : search_spaces) {
-    if (ss->cfg->is_search_space0()) {
-      continue;
-    }
     for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {
       const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
       const cell_slot_resource_allocator&          pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
