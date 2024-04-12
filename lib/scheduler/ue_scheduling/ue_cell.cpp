@@ -168,6 +168,8 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
   unsigned nof_prbs = std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length());
 
   // Apply grant size limits specified in the config.
+  nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pusch_nof_rbs.stop()),
+                      cell_cfg.expert_cfg.ue.pusch_nof_rbs.start());
   nof_prbs = std::max(std::min(nof_prbs, ue_cfg->rrm_cfg().pusch_grant_size_limits.stop()),
                       ue_cfg->rrm_cfg().pusch_grant_size_limits.start());
 
