@@ -95,9 +95,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_cp_ue_e1ap_id];
 
   e1ap_message e1ap_msg;
-  e1ap_msg.pdu.set_init_msg();
-  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
-
+  e1ap_msg.pdu.set_init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   auto& bearer_context_setup_request = e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
 
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
@@ -367,7 +365,7 @@ void e1ap_cu_cp_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
     }
   }
 
-  log_e1_pdu(logger, is_rx, ue_idx, e1ap_pdu, logger.debug.enabled());
+  log_e1ap_pdu(logger, is_rx, ue_idx, e1ap_pdu, logger.debug.enabled());
 }
 
 // ---- e1ap_message_notifier_with_logging

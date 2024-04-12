@@ -41,7 +41,7 @@ void bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bea
   CORO_AWAIT(transaction_sink);
 
   // Handle response from CU-UP and return bearer index
-  CORO_RETURN(create_bearer_context_setup_result());
+  CORO_RETURN(handle_bearer_context_setup_response());
 }
 
 void bearer_context_setup_procedure::send_bearer_context_setup_request()
@@ -50,32 +50,39 @@ void bearer_context_setup_procedure::send_bearer_context_setup_request()
   e1ap_notifier.on_new_message(request);
 }
 
-e1ap_bearer_context_setup_response bearer_context_setup_procedure::create_bearer_context_setup_result()
+e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer_context_setup_response()
 {
   e1ap_bearer_context_setup_response res{};
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_setup_resp_s& resp = transaction_sink.response();
 
-    // Add CU-UP UE E1AP ID to UE context
-    if (ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(resp->gnb_cu_cp_ue_e1ap_id))) {
-      ue_ctxt_list.add_cu_up_ue_e1ap_id(int_to_gnb_cu_cp_ue_e1ap_id(resp->gnb_cu_cp_ue_e1ap_id),
-                                        int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id));
-    }
+    // Add CU-UP-UE-E1AP-ID to UE context.
+    srsran_sanity_check(ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(resp->gnb_cu_cp_ue_e1ap_id)),
+                        "Cannot find UE with cu-cp-ue-e1ap-id={} while running its own procedure",
+                        resp->gnb_cu_cp_ue_e1ap_id);
+    auto& u = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(resp->gnb_cu_cp_ue_e1ap_id)];
+    u.update_cu_up_ue_e1ap_id(int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id));
 
+    // Fill response.
     fill_e1ap_bearer_context_setup_response(res, resp);
 
     logger.log_debug("\"{}\" finalized", name());
+
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
     logger.log_debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause));
 
     // Add CU-UP UE E1AP ID to UE context
-    if (ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(fail->gnb_cu_cp_ue_e1ap_id))) {
-      ue_ctxt_list.add_cu_up_ue_e1ap_id(int_to_gnb_cu_cp_ue_e1ap_id(fail->gnb_cu_cp_ue_e1ap_id),
-                                        int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id));
-    }
+    srsran_sanity_check(ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(fail->gnb_cu_cp_ue_e1ap_id)),
+                        "Cannot find UE with cu-cp-ue-e1ap-id={} while running its own procedure",
+                        fail->gnb_cu_cp_ue_e1ap_id);
+    auto& u = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(fail->gnb_cu_cp_ue_e1ap_id)];
+    u.update_cu_up_ue_e1ap_id(int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id));
+
+    // Fill response with failure.
     fill_e1ap_bearer_context_setup_response(res, fail);
+
   } else {
     logger.log_warning("BearerContextSetupResponse timeout");
     res.success = false;

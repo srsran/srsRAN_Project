@@ -15,26 +15,27 @@
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 
 /// \brief Helper for logging Rx/Tx E1AP PDUs for the CU-CP and CU-UP
 template <typename UeIndex>
-void log_e1_pdu(srslog::basic_logger&    logger,
-                bool                     is_rx,
-                const optional<UeIndex>& ue_id,
-                const e1ap_message&      e1ap_msg,
-                bool                     json_enabled);
+void log_e1ap_pdu(srslog::basic_logger&    logger,
+                  bool                     is_rx,
+                  const optional<UeIndex>& ue_id,
+                  const e1ap_message&      e1ap_msg,
+                  bool                     json_enabled);
 
-extern template void log_e1_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
-                                                       bool                                   is_rx,
-                                                       const optional<srs_cu_cp::ue_index_t>& ue_id,
-                                                       const e1ap_message&                    e1ap_msg,
-                                                       bool                                   json_enabled);
-extern template void log_e1_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                  logger,
-                                                       bool                                   is_rx,
-                                                       const optional<srs_cu_up::ue_index_t>& ue_id,
-                                                       const e1ap_message&                    e1ap_msg,
-                                                       bool                                   json_enabled);
+extern template void log_e1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
+                                                         bool                                   is_rx,
+                                                         const optional<srs_cu_cp::ue_index_t>& ue_id,
+                                                         const e1ap_message&                    e1ap_msg,
+                                                         bool                                   json_enabled);
+extern template void log_e1ap_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                  logger,
+                                                         bool                                   is_rx,
+                                                         const optional<srs_cu_up::ue_index_t>& ue_id,
+                                                         const e1ap_message&                    e1ap_msg,
+                                                         bool                                   json_enabled);
 
 } // namespace srsran

@@ -46,11 +46,11 @@ static void log_common_message(srslog::basic_logger& logger,
 }
 
 template <typename UeIndex>
-void srsran::log_e1_pdu(srslog::basic_logger&    logger,
-                        bool                     is_rx,
-                        const optional<UeIndex>& ue_id,
-                        const e1ap_message&      e1ap_msg,
-                        bool                     json_enabled)
+void srsran::log_e1ap_pdu(srslog::basic_logger&    logger,
+                          bool                     is_rx,
+                          const optional<UeIndex>& ue_id,
+                          const e1ap_message&      e1ap_msg,
+                          bool                     json_enabled)
 {
   if (not logger.info.enabled()) {
     return;
@@ -68,34 +68,30 @@ void srsran::log_e1_pdu(srslog::basic_logger&    logger,
   const char*                      msg_name = get_message_type_str(e1ap_msg.pdu);
 
   // Create PDU formatter that runs in log backend.
-  auto pdu_log_entry = make_formattable([is_rx, cp_ue_id, up_ue_id, ue_id, msg_name = msg_name](auto& ctx) {
-    fmt::format_to(ctx.out(), "{} PDU", is_rx ? "Rx" : "Tx");
-    if (ue_id.has_value()) {
-      fmt::format_to(ctx.out(), " ue={}", ue_id.value());
-    }
-    if (cp_ue_id.has_value()) {
-      fmt::format_to(ctx.out(), " cu_cp_ue={}", cp_ue_id.value());
-    }
-    if (up_ue_id.has_value()) {
-      fmt::format_to(ctx.out(), " cu_up_ue={}", cp_ue_id.value());
-    }
-    return fmt::format_to(ctx.out(), ": {}", msg_name);
+  auto pdu_description = make_formattable([is_rx, cp_ue_id, up_ue_id, ue_id, msg_name = msg_name](auto& ctx) {
+    return fmt::format_to(ctx.out(),
+                          "{} PDU{}{}{}: {}",
+                          is_rx ? "Rx" : "Tx",
+                          add_prefix_if_set(" ue=", ue_id),
+                          add_prefix_if_set(" cu_cp_ue=", cp_ue_id),
+                          add_prefix_if_set(" cu_up_ue=", up_ue_id),
+                          msg_name);
   });
 
   if (json_enabled) {
-    logger.info("{}\n{}", pdu_log_entry, e1ap_msg.pdu);
+    logger.info("{}\n{}", pdu_description, e1ap_msg.pdu);
   } else {
-    logger.info("{}", pdu_log_entry);
+    logger.info("{}", pdu_description);
   }
 }
 
-template void srsran::log_e1_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
-                                                        bool                                   is_rx,
-                                                        const optional<srs_cu_cp::ue_index_t>& ue_id,
-                                                        const e1ap_message&                    e1ap_msg,
-                                                        bool                                   json_enabled);
-template void srsran::log_e1_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                  logger,
-                                                        bool                                   is_rx,
-                                                        const optional<srs_cu_up::ue_index_t>& ue_id,
-                                                        const e1ap_message&                    e1ap_msg,
-                                                        bool                                   json_enabled);
+template void srsran::log_e1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
+                                                          bool                                   is_rx,
+                                                          const optional<srs_cu_cp::ue_index_t>& ue_id,
+                                                          const e1ap_message&                    e1ap_msg,
+                                                          bool                                   json_enabled);
+template void srsran::log_e1ap_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                  logger,
+                                                          bool                                   is_rx,
+                                                          const optional<srs_cu_up::ue_index_t>& ue_id,
+                                                          const e1ap_message&                    e1ap_msg,
+                                                          bool                                   json_enabled);

@@ -207,7 +207,10 @@ public:
   }
 
   /// Get central cache current size in number of memory blocks.
-  size_t get_central_cache_approx_size() const { return central_mem_cache.size_approx() * block_batch_size; }
+  size_t get_central_cache_approx_size() const
+  {
+    return central_mem_cache.size_approx() * block_batch_size;
+  }
   /// Get thread local cache current size in number of memory blocks.
   size_t get_local_cache_size()
   {
@@ -287,7 +290,10 @@ private:
   }
 
   /// Number of batches of memory blocks stored in the pool.
-  size_t nof_total_batches() const { return (nof_blocks + block_batch_size - 1) / block_batch_size; }
+  size_t nof_total_batches() const
+  {
+    return (nof_blocks + block_batch_size - 1) / block_batch_size;
+  }
 
   void validate_node_address(void* node)
   {

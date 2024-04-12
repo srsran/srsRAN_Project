@@ -20,6 +20,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// \brief This class handles the E1AP Bearer Context Setup Procedure, as per TS 38.461 8.3.1.
 class bearer_context_setup_procedure
 {
 public:
@@ -37,8 +38,8 @@ private:
   /// Send Bearer Context Setup Request to DU.
   void send_bearer_context_setup_request();
 
-  /// Creates procedure result to send back to procedure caller.
-  e1ap_bearer_context_setup_response create_bearer_context_setup_result();
+  /// Handles the E1AP procedure response and forwards the result to the procedure caller.
+  e1ap_bearer_context_setup_response handle_bearer_context_setup_response();
 
   const e1ap_message               request;
   e1ap_bearer_transaction_manager& ev_mng;
