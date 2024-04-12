@@ -177,8 +177,10 @@ struct pdsch_appconfig {
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for resource allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
-  /// Starting RB for resource allocation of UE PDSCHs.
+  /// Start RB for resource allocation of UE PDSCHs.
   unsigned start_rb = 0;
+  /// End RB for resource allocation of UE PDSCHs.
+  unsigned end_rb = MAX_NOF_PRBS;
   /// Maximum number of PDSCH grants per slot.
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of DL or UL PDCCH allocation attempts per slot.
@@ -265,8 +267,10 @@ struct pusch_appconfig {
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for resource allocation of UE PUSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
-  /// Starting RB for resource allocation of UE PUSCHs.
+  /// Start RB for resource allocation of UE PUSCHs.
   unsigned start_rb = 0;
+  /// End RB for resource allocation of UE PUSCHs.
+  unsigned end_rb = MAX_NOF_PRBS;
 };
 
 struct pucch_appconfig {

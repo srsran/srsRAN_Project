@@ -252,8 +252,15 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsign
     return false;
   }
 
+  if (config.end_rb < config.start_rb) {
+    fmt::print("Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb",
+               config.start_rb,
+               config.end_rb);
+    return false;
+  }
+
   if (config.start_rb >= cell_crbs) {
-    fmt::print("Invalid UE PDSCH start RB {}. The start_rb must be less than the cell BW", config.start_rb);
+    fmt::print("Invalid start RB {} for UE PDSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
 
@@ -281,8 +288,15 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsign
     return false;
   }
 
+  if (config.end_rb < config.start_rb) {
+    fmt::print("Invalid RB allocation range [{}, {}) for UE PUSCHs. The start_rb must be less or equal to the end_rb",
+               config.start_rb,
+               config.end_rb);
+    return false;
+  }
+
   if (config.start_rb >= cell_crbs) {
-    fmt::print("Invalid UE PUSCH start RB {}. The start_rb must be less than the cell BW", config.start_rb);
+    fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
 
