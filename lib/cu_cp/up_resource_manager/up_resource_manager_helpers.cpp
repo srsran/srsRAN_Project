@@ -375,13 +375,6 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     update.pdu_sessions_to_remove_list.push_back(release_item.pdu_session_id);
   }
 
-  // Request context release if all active PDU session are going to be released.
-  if (update.pdu_sessions_to_remove_list.size() == context.pdu_sessions.size()) {
-    // TODO: Add fallback mechanism (e.g. timer) to avoid dangling UEs without PDU sessions.
-    // logger.debug("UE context removal required as all PDU sessions get released");
-    // update.context_removal_required = true;
-  }
-
   return update;
 }
 

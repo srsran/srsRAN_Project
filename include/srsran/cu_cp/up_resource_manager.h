@@ -75,8 +75,6 @@ struct up_pdu_session_context_update {
 // resource manager. For removal of PDU sessions or DRBs only the respective identifiers are included.
 struct up_config_update {
   bool initial_context_creation = true; // True if this is the first PDU session to be created.
-  bool context_removal_required =
-      false; // Set to true if all UP resources will be removed and the context can be deleted.
   std::map<pdu_session_id_t, up_pdu_session_context_update>
       pdu_sessions_to_setup_list; // List of PDU sessions to be added.
   std::map<pdu_session_id_t, up_pdu_session_context_update>

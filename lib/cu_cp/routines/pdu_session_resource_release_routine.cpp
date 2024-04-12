@@ -68,20 +68,7 @@ void pdu_session_resource_release_routine::operator()(
   }
 
   // Inform CU-UP about the release of a bearer
-  // Note: The Bearers must be released at CU-UP before the DRBs are released at DU.
-  if (next_config.context_removal_required) {
-    // Remove bearer context.
-    bearer_context_release_command.ue_index = release_cmd.ue_index;
-    bearer_context_release_command.cause    = e1ap_cause_radio_network_t::unspecified;
-
-    CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_release_command(bearer_context_release_command));
-
-    // Request UE context removal.
-    logger.info("ue={}: \"{}\" Requesting UE context release", release_cmd.ue_index, name());
-    ue_context_release_request.ue_index = release_cmd.ue_index;
-    ue_context_release_request.cause    = ngap_cause_radio_network_t::unknown_pdu_session_id;
-    CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request));
-  } else {
+  {
     // prepare BearerContextModificationRequest and call e1 notifier
     bearer_context_modification_request.ue_index = release_cmd.ue_index;
 
