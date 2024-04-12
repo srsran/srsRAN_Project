@@ -48,7 +48,6 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_connection_client& e1ap_client_handler_,
   timers(timers_),
   cu_up_exec(cu_up_exec_),
   connection_handler(e1ap_client_handler_, *this),
-  pdu_notifier(*this, connection_handler),
   ue_ctxt_list(logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec}))
 {
@@ -59,14 +58,20 @@ e1ap_cu_up_impl::~e1ap_cu_up_impl() {}
 
 bool e1ap_cu_up_impl::connect_to_cu_cp()
 {
-  return connection_handler.connect_to_cu_cp();
+  e1ap_message_notifier* notif = connection_handler.connect_to_cu_cp();
+  if (notif == nullptr) {
+    logger.warning("Failed to connect to CU-CP");
+    return false;
+  }
+  pdu_notifier = std::make_unique<e1ap_message_notifier_with_logging>(*this, *notif);
+  return true;
 }
 
 async_task<cu_up_e1_setup_response>
 e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request)
 {
   return launch_async<e1ap_cu_up_setup_procedure>(
-      request, pdu_notifier, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
+      request, *pdu_notifier, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
@@ -100,7 +105,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
 
   // Send inactivity notification.
   ue_ctxt.logger.log_debug("Sending BearerContextInactivityNotification");
-  pdu_notifier.on_new_message(e1ap_msg);
+  pdu_notifier->on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
@@ -159,7 +164,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Do basic syntax/semantic checks on the validity of the received message.
   if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
     logger.debug("Sending BearerContextSetupFailure. Cause: Received invalid BearerContextSetupRequest");
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
@@ -170,7 +175,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     logger.error("Sending BearerContextSetupFailure. Cause: No CU-UP-UE-E1AP-ID available");
 
     // send response
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
@@ -189,7 +194,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     logger.error("Sending BearerContextSetupFailure. Cause: Invalid UE index");
 
     // send response
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
@@ -215,15 +220,13 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
         bearer_context_setup_response_msg);
 
     // send response
-    ue_ctxt.logger.log_debug("Sending BearerContextSetupResponse");
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1(bearer_context_setup_response_msg.cause.value());
 
     // send response
-    ue_ctxt.logger.log_debug("Sending BearerContextSetupFailure");
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
   }
 }
 
@@ -241,7 +244,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     logger.warning("Sending BearerContextModificationFailure. UE context not available");
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
@@ -257,7 +260,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
       ue_ctxt.logger.log_error("Sending BearerContextModificationFailure. Cause: Not handling E-UTRAN Bearers");
 
       // send response
-      pdu_notifier.on_new_message(e1ap_msg);
+      pdu_notifier->on_new_message(e1ap_msg);
       return;
     }
 
@@ -272,7 +275,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure: Cause: Invalid UE index");
 
     // send response
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
@@ -287,14 +290,14 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
         bearer_context_mod_response_msg);
     ue_ctxt.logger.log_debug("Sending BearerContextModificationResponse");
     // send response
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
         cause_to_asn1(bearer_context_mod_response_msg.cause.value());
 
     // send response
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");
-    pdu_notifier.on_new_message(e1ap_msg);
+    pdu_notifier->on_new_message(e1ap_msg);
   }
 }
 
@@ -331,7 +334,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
                bearer_context_release_cmd.ue_index,
                msg->gnb_cu_up_ue_e1ap_id,
                msg->gnb_cu_cp_ue_e1ap_id);
-  pdu_notifier.on_new_message(e1ap_msg);
+  pdu_notifier->on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
@@ -385,8 +388,8 @@ void e1ap_cu_up_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
 // ---- e1ap_message_notifier_with_logging
 
 e1ap_cu_up_impl::e1ap_message_notifier_with_logging::e1ap_message_notifier_with_logging(
-    e1ap_cu_up_impl&               parent_,
-    e1ap_cu_up_connection_handler& notifier_) :
+    e1ap_cu_up_impl&       parent_,
+    e1ap_message_notifier& notifier_) :
   parent(parent_), notifier(notifier_)
 {
 }
