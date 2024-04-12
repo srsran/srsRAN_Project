@@ -164,6 +164,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
       if (!fill_rrc_reconfig_args(rrc_reconfig_args,
                                   target_ue_context_setup_request.srbs_to_be_setup_list,
                                   next_config.pdu_sessions_to_setup_list,
+                                  {} /* No DRB to be removed */,
                                   target_ue_context_setup_response.du_to_cu_rrc_info,
                                   {} /* No NAS PDUs required */,
                                   target_ue->get_rrc_ue_notifier().generate_meas_config(source_rrc_context.meas_cfg),

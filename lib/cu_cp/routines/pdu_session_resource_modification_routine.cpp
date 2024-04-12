@@ -139,16 +139,17 @@ void pdu_session_resource_modification_routine::operator()(
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
       // get NAS PDUs as received by AMF
-      std::map<pdu_session_id_t, byte_buffer> nas_pdus;
+      std::vector<byte_buffer> nas_pdus;
       for (const auto& pdu_session : modify_request.pdu_session_res_modify_items) {
         if (!pdu_session.nas_pdu.empty()) {
-          nas_pdus.emplace(pdu_session.pdu_session_id, pdu_session.nas_pdu);
+          nas_pdus.push_back(pdu_session.nas_pdu);
         }
       }
 
       if (!fill_rrc_reconfig_args(rrc_reconfig_args,
                                   {},
                                   next_config.pdu_sessions_to_modify_list,
+                                  {} /* No extra DRB to be removed */,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
                                   rrc_ue_notifier.generate_meas_config(),

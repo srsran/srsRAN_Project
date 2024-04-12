@@ -542,20 +542,6 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
 
   ue_ctxt.logger.log_info("Received PduSessionResourceReleaseCommand");
 
-  // Handle optional NAS PDU
-  if (command->nas_pdu_present) {
-    byte_buffer nas_pdu;
-    if (!nas_pdu.resize(command->nas_pdu.size())) {
-      ue_ctxt.logger.log_warning("Unable to resize the storage for the PduSessionResourceReleaseCommand PDU");
-      schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
-      return;
-    }
-    std::copy(command->nas_pdu.begin(), command->nas_pdu.end(), nas_pdu.begin());
-    ue_ctxt.logger.log_debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
-
-    ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
-  }
-
   // Convert to common type
   cu_cp_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;

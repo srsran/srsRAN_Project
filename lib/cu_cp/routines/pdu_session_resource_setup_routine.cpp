@@ -199,16 +199,17 @@ void pdu_session_resource_setup_routine::operator()(
     // if default DRB is being setup, SRB2 needs to be setup as well
     {
       // get NAS PDUs as received by AMF
-      std::map<pdu_session_id_t, byte_buffer> nas_pdus;
+      std::vector<byte_buffer> nas_pdus;
       for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
         if (!pdu_session.pdu_session_nas_pdu.empty()) {
-          nas_pdus.emplace(pdu_session.pdu_session_id, pdu_session.pdu_session_nas_pdu);
+          nas_pdus.push_back(pdu_session.pdu_session_nas_pdu);
         }
       }
 
       if (!fill_rrc_reconfig_args(rrc_reconfig_args,
                                   ue_context_mod_request.srbs_to_be_setup_mod_list,
                                   next_config.pdu_sessions_to_setup_list,
+                                  {} /* No extra DRB to be removed */,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
                                   next_config.initial_context_creation ? rrc_ue_notifier.generate_meas_config()

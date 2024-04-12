@@ -9,6 +9,7 @@
  */
 
 #include "pdu_session_resource_release_routine.h"
+#include "pdu_session_routine_helpers.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -19,6 +20,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     du_processor_e1ap_control_notifier&               e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&            f1ap_ue_ctxt_notif_,
     du_processor_ngap_control_notifier&               ngap_ctrl_notifier_,
+    du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
     du_processor_ue_task_scheduler&                   task_sched_,
     up_resource_manager&                              rrc_ue_up_resource_manager_,
     srslog::basic_logger&                             logger_) :
@@ -26,10 +28,25 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notifier_),
+  rrc_ue_notifier(rrc_ue_notifier_),
   task_sched(task_sched_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
+}
+
+// Handle RRC reconfiguration result.
+bool handle_procedure_response(cu_cp_pdu_session_resource_release_response&      response_msg,
+                               const cu_cp_pdu_session_resource_release_command& release_cmd,
+                               bool                                              rrc_reconfig_result,
+                               const srslog::basic_logger&                       logger)
+{
+  // Let all PDU sessions fail if response is negative.
+  if (!rrc_reconfig_result) {
+    // TODO: decide how to manage negative RRC reconfig result
+  }
+
+  return rrc_reconfig_result;
 }
 
 void pdu_session_resource_release_routine::operator()(
@@ -42,7 +59,7 @@ void pdu_session_resource_release_routine::operator()(
   // Perform initial sanity checks on incoming message.
   if (!rrc_ue_up_resource_manager.validate_request(release_cmd)) {
     logger.warning("ue={}: \"{}\" Invalid PduSessionResourceReleaseCommand", release_cmd.ue_index, name());
-    CORO_EARLY_RETURN(generate_pdu_session_resource_release_response(false));
+    CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
   }
 
   {
@@ -101,13 +118,48 @@ void pdu_session_resource_release_routine::operator()(
     }
   }
 
-  CORO_RETURN(generate_pdu_session_resource_release_response(true));
+  {
+    // prepare RRC Reconfiguration and call RRC UE notifier
+    {
+      // get NAS PDUs as received by AMF
+      std::vector<byte_buffer> nas_pdus;
+      if (!release_cmd.nas_pdu.empty()) {
+        nas_pdus.push_back(release_cmd.nas_pdu);
+      }
+
+      if (!fill_rrc_reconfig_args(rrc_reconfig_args,
+                                  {},
+                                  next_config.pdu_sessions_to_modify_list,
+                                  next_config.drb_to_remove_list,
+                                  ue_context_modification_response.du_to_cu_rrc_info,
+                                  nas_pdus,
+                                  rrc_ue_notifier.generate_meas_config(),
+                                  false,
+                                  false,
+                                  false,
+                                  logger)) {
+        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", release_cmd.ue_index, name());
+        CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
+      }
+    }
+
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
+
+    // Handle RRC Reconfiguration result.
+    if (handle_procedure_response(response_msg, release_cmd, rrc_reconfig_result, logger) == false) {
+      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", release_cmd.ue_index, name());
+      CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
+    }
+  }
+
+  CORO_RETURN(handle_pdu_session_resource_release_response(true));
 }
 
 cu_cp_pdu_session_resource_release_response
-pdu_session_resource_release_routine::generate_pdu_session_resource_release_response(bool success)
+pdu_session_resource_release_routine::handle_pdu_session_resource_release_response(bool success)
 {
   if (success) {
+    logger.debug("ue={}: \"{}\" finalized", release_cmd.ue_index, name());
     for (const auto& setup_item : release_cmd.pdu_session_res_to_release_list_rel_cmd) {
       cu_cp_pdu_session_res_released_item_rel_res item;
       item.pdu_session_id = setup_item.pdu_session_id;
@@ -124,6 +176,10 @@ pdu_session_resource_release_routine::generate_pdu_session_resource_release_resp
     }
 
     rrc_ue_up_resource_manager.apply_config_update(result);
+  } else {
+    logger.info("ue={}: \"{}\" failed", release_cmd.ue_index, name());
+
+    // Trigger UE context release request?
   }
 
   return response_msg;
