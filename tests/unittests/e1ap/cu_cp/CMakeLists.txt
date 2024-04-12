@@ -19,6 +19,15 @@ set(SOURCES
         e1ap_cu_cp_test.cpp)
 
 add_executable(e1ap_cu_cp_test ${SOURCES})
+set_target_properties(e1ap_cu_cp_test PROPERTIES UNITY_BUILD ON)
 target_include_directories(e1ap_cu_cp_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(e1ap_cu_cp_test e1ap_cu_cp_test_helpers srsran_e1ap srsran_pcap srsran_support srslog e1ap_asn1 gtest gtest_main)
-gtest_discover_tests(e1ap_cu_cp_test PROPERTIES "LABELS;e1ap_cu_cp")
+target_link_libraries(e1ap_cu_cp_test
+        e1ap_cu_cp_test_helpers
+        srsran_e1ap
+        srsran_pcap
+        srsran_support
+        srslog
+        e1ap_asn1
+        gtest
+        gtest_main)
+gtest_discover_tests(e1ap_cu_cp_test PROPERTIES "LABELS;e1ap;e1ap_cu_cp")
