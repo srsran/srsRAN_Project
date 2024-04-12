@@ -58,7 +58,7 @@ You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.6`
 
 Then run the docker container with:
 
-`docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 3000:3000 open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml`
+`docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 9999:9999 open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml`
 
 To use this container with srsgnb, the `addr` option under `amf` section in gnb configuration must be set OPEN5GS_IP (here: 10.53.1.2).
 It could also be required to modify `bind_addr` option under `amf` section in gnb configuration to the local ethernet/wifi IP address for the host or container where gnb is running, not a localhost IP.
@@ -69,4 +69,4 @@ To ping a connected UE setup the necessary route to the UE_IP_BASE + ".0/24" (he
 
 ## Note
 
-The Open5GS WebUI to manually add/change UEs to the mongodb can be accessed at [localhost:3000](localhost:3000).
+The Open5GS WebUI to manually add/change UEs to the mongodb can be accessed at [localhost:9999](localhost:9999).
