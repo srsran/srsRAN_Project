@@ -36,5 +36,4 @@ cell_cfg:
 
 cu_up: 
   gtpu_queue_size: 32768
-  warn_on_drop: true
   gtpu_reordering_timer: 20

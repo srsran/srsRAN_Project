@@ -110,6 +110,7 @@ def _ping_and_reestablishment_multi_ues(
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
         enable_channel_noise=enable_channel_noise,
+        enable_qos_reestablishment=True,
     )
 
     configure_artifacts(
