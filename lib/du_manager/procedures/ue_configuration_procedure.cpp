@@ -298,6 +298,12 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     // TODO: Set non-hardcoded servingCellMo.
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo_present = true;
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo         = 1;
+
+    // Fill fields with -- Cond SyncAndCellAdd
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present        = true;
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id                = 0;
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.first_active_ul_bwp_id_present = true;
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.first_active_ul_bwp_id         = 0;
   }
 
   // Pack cellGroupConfig.
