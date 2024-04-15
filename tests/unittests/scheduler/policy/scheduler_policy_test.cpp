@@ -63,10 +63,12 @@ public:
 class base_scheduler_policy_test
 {
 protected:
-  base_scheduler_policy_test(policy_type                                     policy,
-                             const sched_cell_configuration_request_message& msg =
-                                 test_helpers::make_default_sched_cell_configuration_request()) :
-    logger(srslog::fetch_basic_logger("SCHED", true)), cell_cfg(*[this, &msg]() {
+  base_scheduler_policy_test(
+      policy_type             policy,
+      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
+      const sched_cell_configuration_request_message& msg =
+          test_helpers::make_default_sched_cell_configuration_request()) :
+    logger(srslog::fetch_basic_logger("SCHED", true)), sched_cfg(sched_cfg_), cell_cfg(*[this, &msg]() {
       return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
     }())
   {
@@ -77,7 +79,7 @@ protected:
 
     switch (policy) {
       case policy_type::time_rr:
-        sched = std::make_unique<scheduler_time_rr>(expert_cfg);
+        sched = std::make_unique<scheduler_time_rr>(sched_cfg.ue);
         break;
       default:
         report_fatal_error("Invalid policy");
@@ -161,8 +163,7 @@ protected:
   }
 
   srslog::basic_logger&                          logger;
-  scheduler_expert_config                        sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const scheduler_ue_expert_config&              expert_cfg{sched_cfg.ue};
+  scheduler_expert_config                        sched_cfg;
   cell_common_configuration_list                 cell_cfg_list;
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cell_cfg_list;
 
@@ -305,7 +306,7 @@ class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test
 {
 protected:
   scheduler_policy_partial_slot_tdd_test() :
-    base_scheduler_policy_test(GetParam(), []() {
+    base_scheduler_policy_test(GetParam(), config_helpers::make_default_scheduler_expert_config(), []() {
       cell_config_builder_params builder_params{};
       // Band 40.
       builder_params.dl_arfcn       = 465000;
@@ -428,7 +429,62 @@ TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twic
   }
 }
 
+class scheduler_policy_alloc_bounds_test : public base_scheduler_policy_test,
+                                           public ::testing::TestWithParam<policy_type>
+{
+protected:
+  scheduler_policy_alloc_bounds_test() :
+    base_scheduler_policy_test(GetParam(), []() {
+      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config();
+
+      // Modify boundaries within which PDSCH and PUSCH needs to be allocated to UEs.
+      sched_cfg_.ue.pdsch_crb_limits = {10, 15};
+      sched_cfg_.ue.pusch_crb_limits = {10, 15};
+
+      return sched_cfg_;
+    }())
+  {
+  }
+};
+
+TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pdsch_within_configured_boundaries)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+
+  // Buffer has to be large enough so that the allocation does not stop.
+  push_dl_bs(u1.ue_index, uint_to_lcid(5), 100000);
+
+  // Run for partial slot.
+  run_slot();
+
+  // Expected CRBs is based on the expert configuration passed to scheduler during class initialization.
+  crb_interval expected_crb_allocation{10, 15};
+
+  ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
+  ASSERT_TRUE(pdsch_alloc.last_grants.back().crbs == expected_crb_allocation);
+}
+
+TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pusch_within_configured_boundaries)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+
+  // Buffer has to be large enough so that the allocation does not stop.
+  notify_ul_bsr(u1.ue_index, lcg_id, 2000000);
+
+  // Run for partial slot.
+  run_slot();
+
+  // Expected CRBs is based on the expert configuration passed to scheduler during class initialization.
+  crb_interval expected_crb_allocation{10, 15};
+
+  ASSERT_EQ(pusch_alloc.last_grants.size(), 1);
+  ASSERT_TRUE(pusch_alloc.last_grants.back().crbs == expected_crb_allocation);
+}
+
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_partial_slot_tdd_test,
                          testing::Values(policy_type::time_rr));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_alloc_bounds_test, testing::Values(policy_type::time_rr));
