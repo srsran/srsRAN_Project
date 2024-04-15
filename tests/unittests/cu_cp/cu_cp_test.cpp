@@ -260,7 +260,9 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 /* AMF initiated PDU Session Release                                                */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_release_command_is_sent_to_cu_up_first)
+// Bearer Context Release is not sent even if last PDU session is removed. Only NGAP UE context release triggers Bearer
+// Context Release.
+TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_modification_request_is_sent)
 {
   // Test preamble
   du_index_t          du_index  = uint_to_du_index(0);
@@ -284,10 +286,10 @@ TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_relea
   cu_cp_obj->get_ngap_message_handler().handle_message(
       generate_valid_pdu_session_resource_release_command(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
 
-  // Check that the Bearer Context Release Command was sent to the CU-UP first
+  // Check that the Bearer Context Modification was sent to the CU-UP
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
-            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_release_cmd);
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
