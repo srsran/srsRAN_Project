@@ -65,12 +65,13 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch
                                                  is_tb_crc_second_tb_required);
 }
 
-static void
-fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder, unsigned nid_pdsch, fapi::pdsch_ref_point_type ref_point)
+static void fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder,
+                                      unsigned                    nid_pdsch,
+                                      fapi::pdsch_ref_point_type  ref_point,
+                                      unsigned                    nof_layers)
 {
   static const unsigned transmision_scheme = 0;
-  static const unsigned num_layers         = 1;
-  builder.set_codeword_information_parameters(nid_pdsch, num_layers, transmision_scheme, ref_point);
+  builder.set_codeword_information_parameters(nid_pdsch, nof_layers, transmision_scheme, ref_point);
 }
 
 static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_information& dmrs)
@@ -245,7 +246,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                             mac_pdu.pdsch_cfg.n_id,
                             (mac_pdu.si_indicator == sib_information::other_si)
                                 ? fapi::pdsch_ref_point_type::point_a
-                                : fapi::pdsch_ref_point_type::subcarrier_0);
+                                : fapi::pdsch_ref_point_type::subcarrier_0,
+                            mac_pdu.pdsch_cfg.nof_layers);
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
   builder.set_bwp_parameters(
@@ -302,7 +304,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
-  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+  fill_codeword_information(
+      builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a, mac_pdu.pdsch_cfg.nof_layers);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
@@ -361,7 +364,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       builder, mac_pdu.pdsch_cfg.precoding, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
-  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+  fill_codeword_information(
+      builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a, mac_pdu.pdsch_cfg.nof_layers);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
@@ -411,7 +415,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
-  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+  fill_codeword_information(
+      builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a, mac_pdu.pdsch_cfg.nof_layers);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
