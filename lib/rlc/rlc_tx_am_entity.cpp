@@ -908,7 +908,8 @@ uint32_t rlc_tx_am_entity::get_buffer_state()
 uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
 {
   // minimum bytes needed to tx all queued SDUs + each header
-  uint32_t queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_min_size;
+  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
+  uint32_t                        queue_bytes = queue_state.n_bytes + queue_state.n_sdus * head_min_size;
 
   // minimum bytes needed to tx SDU under segmentation + header (if applicable)
   uint32_t segment_bytes = 0;

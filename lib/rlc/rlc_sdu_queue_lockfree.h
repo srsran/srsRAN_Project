@@ -93,8 +93,7 @@ public:
     }
 
     // update totals
-    n_sdus.fetch_add(1, std::memory_order_relaxed);
-    n_bytes.fetch_add(sdu_size, std::memory_order_relaxed);
+    state_add(sdu_size);
     return true;
   }
 
@@ -139,8 +138,7 @@ public:
     }
 
     // update totals
-    n_sdus.fetch_sub(1, std::memory_order_relaxed);
-    n_bytes.fetch_sub(sdu_size, std::memory_order_relaxed);
+    state_sub(sdu_size);
     return true;
   }
 
@@ -177,30 +175,15 @@ public:
         sdu_is_valid = true;
 
         // update totals
-        n_sdus.fetch_sub(1, std::memory_order_relaxed);
-        n_bytes.fetch_sub(sdu.buf.length(), std::memory_order_relaxed);
+        state_sub(sdu.buf.length());
       }
       // try again if SDU is not valid
     } while (not sdu_is_valid);
     return true;
   }
 
-  /// \brief Reads the number of buffered SDUs that are not marked as discarded.
-  ///
-  /// This function may be called by any thread.
-  ///
-  /// \return The number of buffered SDUs that are not marked as discarded.
-  uint32_t size_sdus() const { return n_sdus.load(std::memory_order_relaxed); }
-
-  /// \brief Reads the number of buffered SDU bytes that are not marked as discarded.
-  ///
-  /// This function may be called by any thread.
-  ///
-  /// \return The number of buffered SDU bytes that are not marked as discarded.
-  uint32_t size_bytes() const { return n_bytes.load(std::memory_order_relaxed); }
-
   /// \brief Container for return value of \c get_state function.
-  struct state {
+  struct state_t {
     uint32_t n_sdus;  ///< Number of buffered SDUs that are not marked as discarded.
     uint32_t n_bytes; ///< Number of buffered bytes that are not marked as discarded.
   };
@@ -210,7 +193,14 @@ public:
   /// This function may be called by any thread.
   ///
   /// \return Current state of the queue.
-  state get_state() const { return {size_sdus(), size_bytes()}; }
+  state_t get_state() const
+  {
+    uint64_t packed = state.load(std::memory_order_relaxed);
+    state_t  result;
+    result.n_bytes = packed & 0xffffffff;
+    result.n_sdus  = packed >> 32;
+    return result;
+  }
 
   /// \brief Checks if the internal queue is empty.
   ///
@@ -268,8 +258,7 @@ private:
     }
 
     // update totals
-    n_sdus.fetch_sub(1, std::memory_order_relaxed);
-    n_bytes.fetch_sub(sdu_size, std::memory_order_relaxed);
+    state_sub(sdu_size);
     return sdu_is_valid;
   }
 
@@ -278,9 +267,11 @@ private:
 
   rlc_bearer_logger& logger;
 
-  uint16_t              capacity;
-  std::atomic<uint32_t> n_bytes = {0};
-  std::atomic<uint32_t> n_sdus  = {0};
+  uint16_t capacity;
+
+  /// Combined atomic state of the queue reflecting the number of SDUs and the number of bytes.
+  /// Upper 32 bit: n_sdus; Lower 32 bit: n_bytes
+  std::atomic<uint64_t> state = {0};
 
   std::unique_ptr<
       concurrent_queue<rlc_sdu, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>>
@@ -288,13 +279,29 @@ private:
 
   std::unique_ptr<std::atomic<uint32_t>[]> sdu_states;
   std::unique_ptr<std::atomic<size_t>[]>   sdu_sizes;
+
+  /// \brief Adds one SDU of given size to the atomic queue state.
+  /// \param sdu_size The size of the SDU.
+  void state_add(uint32_t sdu_size)
+  {
+    uint64_t state_change = static_cast<uint64_t>(1U) << 32U | sdu_size;
+    state.fetch_add(state_change, std::memory_order_relaxed);
+  }
+
+  /// \brief Subtracts one SDU of given size from the atomic queue state.
+  /// \param sdu_size The size of the SDU.
+  void state_sub(uint32_t sdu_size)
+  {
+    uint64_t state_change = static_cast<uint64_t>(1U) << 32U | sdu_size;
+    state.fetch_sub(state_change, std::memory_order_relaxed);
+  }
 };
 
 } // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsran::rlc_sdu_queue_lockfree::state> {
+struct formatter<srsran::rlc_sdu_queue_lockfree::state_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -302,7 +309,7 @@ struct formatter<srsran::rlc_sdu_queue_lockfree::state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_sdu_queue_lockfree::state& state, FormatContext& ctx)
+  auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", state.n_sdus, state.n_bytes);
