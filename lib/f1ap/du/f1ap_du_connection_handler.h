@@ -16,22 +16,23 @@
 namespace srsran {
 namespace srs_du {
 
-class f1ap_du_connection_handler : public f1ap_message_notifier
+/// \brief Handler of TNL connection between DU and CU-CP.
+class f1ap_du_connection_handler
 {
 public:
   f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_, f1ap_message_handler& f1ap_pdu_handler_);
 
-  SRSRAN_NODISCARD bool connect_to_cu_cp();
-  SRSRAN_NODISCARD bool is_connected() const { return f1ap_notifier != nullptr; }
+  SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> connect_to_cu_cp();
 
-  void on_new_message(const srsran::f1ap_message& msg) override;
+  /// \brief Check if the connection is active.
+  SRSRAN_NODISCARD bool is_connected() const { return connected; }
 
 private:
   f1c_connection_client& f1c_client_handler;
   f1ap_message_handler&  f1ap_pdu_handler;
   srslog::basic_logger&  logger;
 
-  std::unique_ptr<f1ap_message_notifier> f1ap_notifier;
+  bool connected = false;
 };
 
 } // namespace srs_du

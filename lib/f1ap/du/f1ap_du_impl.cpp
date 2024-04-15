@@ -9,7 +9,8 @@
  */
 
 #include "f1ap_du_impl.h"
-#include "common/asn1_helpers.h"
+#include "../common/asn1_helpers.h"
+#include "../common/log_helpers.h"
 #include "f1ap_du_connection_handler.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
@@ -43,6 +44,28 @@ private:
 
 } // namespace
 
+class f1ap_du_impl::tx_pdu_notifier_with_logging final : public f1ap_message_notifier
+{
+public:
+  tx_pdu_notifier_with_logging(f1ap_du_impl& parent_, std::unique_ptr<f1ap_message_notifier> decorated_) :
+    parent(parent_), decorated(std::move(decorated_))
+  {
+  }
+
+  void on_new_message(const f1ap_message& msg) override
+  {
+    // Log message.
+    parent.log_pdu(false, msg);
+
+    // Forward message to DU.
+    decorated->on_new_message(msg);
+  }
+
+private:
+  f1ap_du_impl&                          parent;
+  std::unique_ptr<f1ap_message_notifier> decorated;
+};
+
 f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
@@ -50,11 +73,11 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
   ctrl_exec(ctrl_exec_),
-  connection_handler(f1c_client_handler_, *this),
   du_mng(du_mng_),
-  ues(du_mng_, connection_handler, ctrl_exec, ue_exec_mapper_),
-  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
-  paging_notifier(paging_notifier_)
+  paging_notifier(paging_notifier_),
+  connection_handler(f1c_client_handler_, *this),
+  ues(du_mng, ctrl_exec, ue_exec_mapper_),
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
 {
 }
 
@@ -63,12 +86,27 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 bool f1ap_du_impl::connect_to_cu_cp()
 {
-  return connection_handler.connect_to_cu_cp();
+  std::unique_ptr<f1ap_message_notifier> pdu_notifier = connection_handler.connect_to_cu_cp();
+  if (pdu_notifier == nullptr) {
+    return false;
+  }
+
+  if (logger.info.enabled()) {
+    // Decorate notifier with logging, if the logger is enabled.
+    tx_pdu_notifier.reset(new tx_pdu_notifier_with_logging(*this, std::move(pdu_notifier)));
+  } else {
+    tx_pdu_notifier = std::move(pdu_notifier);
+  }
+
+  // Update other components Tx PDU notifier.
+  ues.update_tx_pdu_notifier(*tx_pdu_notifier);
+
+  return true;
 }
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, connection_handler, *events, du_mng.get_timer_factory(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, *tx_pdu_notifier, *events, du_mng.get_timer_factory(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -97,7 +135,7 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, connection_handler));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
@@ -173,9 +211,8 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   if (ue == nullptr) {
     // [TS38.473, 8.4.2.2.] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established at reception of the DL RRC MESSAGE TRANSFER message.
-    logger.warning(
-        "du_ue_id={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
-        gnb_du_ue_f1ap_id);
+    logger.warning("du_ue={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
+                   gnb_du_ue_f1ap_id);
     // TODO.
     return;
   }
@@ -279,29 +316,11 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 
 void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
-  // Log message.
-  optional<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
-  optional<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
-  if (transaction_id.has_value()) {
-    logger.debug("Rx PDU \"{}::{}\" transaction_id={}",
-                 msg.pdu.type().to_string(),
-                 get_message_type_str(msg.pdu),
-                 transaction_id.value());
-  } else if (gnb_du_ue_f1ap_id.has_value()) {
-    logger.debug("Rx PDU \"{}::{}\" du_ue_id={}",
-                 msg.pdu.type().to_string(),
-                 get_message_type_str(msg.pdu),
-                 gnb_du_ue_f1ap_id.value());
-  }
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    msg.pdu.to_json(js);
-    logger.debug("Containerized PDU: {}", js.to_string());
-  }
-
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
+        // Log message.
+        log_pdu(true, msg);
+
         switch (msg.pdu.type().value) {
           case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
             handle_initiating_message(msg.pdu.init_msg());
@@ -529,4 +548,26 @@ du_ue_index_t f1ap_du_impl::get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1
     du_ue_index = ue->context.ue_index;
   }
   return du_ue_index;
+}
+
+void f1ap_du_impl::log_pdu(bool is_rx, const f1ap_message& msg)
+{
+  using namespace asn1::f1ap;
+
+  if (not logger.info.enabled()) {
+    return;
+  }
+
+  // Fetch UE index.
+  auto                    cu_ue_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
+  optional<du_ue_index_t> ue_idx;
+  if (cu_ue_id.has_value()) {
+    auto* ue_ptr = ues.find(cu_ue_id.value());
+    if (ue_ptr != nullptr and ue_ptr->context.ue_index != INVALID_DU_UE_INDEX) {
+      ue_idx = ue_ptr->context.ue_index;
+    }
+  }
+
+  // Log PDU.
+  log_f1ap_pdu(logger, is_rx, ctxt.du_id, ue_idx, msg, logger.debug.enabled());
 }

@@ -49,10 +49,10 @@ struct formatter<srsran::srs_du::f1ap_ue_context> {
   auto format(const srsran::srs_du::f1ap_ue_context& ue, FormatContext& ctx)
   {
     if (ue.gnb_cu_ue_f1ap_id == srsran::gnb_cu_ue_f1ap_id_t::invalid) {
-      return format_to(ctx.out(), "ue={} c-rnti={} du_ue_id={}", ue.ue_index, ue.rnti, ue.gnb_du_ue_f1ap_id);
+      return format_to(ctx.out(), "ue={} c-rnti={} du_ue={}", ue.ue_index, ue.rnti, ue.gnb_du_ue_f1ap_id);
     }
     return format_to(ctx.out(),
-                     "ue={} c-rnti={} du_ue_id={} cu_ue_id={}",
+                     "ue={} c-rnti={} du_ue={} cu_ue={}",
                      ue.ue_index,
                      ue.rnti,
                      ue.gnb_du_ue_f1ap_id,
