@@ -191,10 +191,6 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
                                                      .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
 
   // TODO: fill outcome properly
-  e2sm_rc_ctrl_outcome_format1_item_s test_outcome;
-  test_outcome.ran_param_id                    = 1;
-  test_outcome.ran_param_value.set_value_int() = 100;
-  ctrl_outcome.ran_p_list.push_back(test_outcome);
   control_config_params req = du_config_req_.param_list[0];
   if (req.min_prb_alloc.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
