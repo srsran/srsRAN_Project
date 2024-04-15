@@ -65,7 +65,7 @@ using result_type = std::tuple<float, unsigned, float>;
 static std::vector<result_type> measurement_results;
 
 /// Set to true to stop.
-static std::atomic<bool>       stop  = {false};
+static std::atomic<bool>       stop  = {true};
 std::unique_ptr<radio_session> radio = nullptr;
 
 static void signal_handler(int sig)
@@ -314,6 +314,10 @@ int main(int argc, char** argv)
     baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_hz);
 
     // Start processing.
+    {
+      bool is_stopped = stop.exchange(false);
+      srsran_assert(is_stopped, "Radio must be stopped before starting to receive samples");
+    }
     radio->start(start_time);
 
     // Receive and transmit per block basis.
@@ -346,9 +350,29 @@ int main(int argc, char** argv)
       sample_count += block_size;
     }
 
-    if (!stop) {
-      // Stop radio operation prior destruction.
-      radio->stop();
+    if (!stop.load()) {
+      // Request stop streaming asynchronously. As TX and RX operations run in the main thread, it avoids deadlock.
+      std::thread stop_thread([&radio_ = radio]() {
+        radio_->stop();
+        bool is_stopped = stop.exchange(true);
+        srsran_assert(!is_stopped, "Radio must be running before attempting to stop.");
+      });
+
+      // Keep transmitting and receiving until the radio stops.
+      while (!stop.load()) {
+        baseband_gateway_transmitter&       transmitter = radio->get_baseband_gateway(0).get_transmitter();
+        baseband_gateway_receiver&          receiver    = radio->get_baseband_gateway(0).get_receiver();
+        baseband_gateway_receiver::metadata rx_metadata = receiver.receive(rx_baseband_buffer.get_writer());
+
+        if (tx_active) {
+          baseband_gateway_transmitter_metadata tx_metadata;
+          tx_metadata.ts = rx_metadata.ts + tx_rx_delay_samples;
+
+          transmitter.transmit(tx_baseband_buffer.get_reader(), tx_metadata);
+        }
+      }
+
+      stop_thread.join();
     }
 
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
