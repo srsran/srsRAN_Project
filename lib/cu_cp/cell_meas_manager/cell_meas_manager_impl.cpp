@@ -107,8 +107,11 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
     return lhs.report_cfg_id < rhs.report_cfg_id;
   };
   std::sort(new_cfg.report_cfg_to_add_mod_list.begin(), new_cfg.report_cfg_to_add_mod_list.end(), cmp_id);
+  auto eq_id = [](const rrc_report_cfg_to_add_mod& lhs, const rrc_report_cfg_to_add_mod& rhs) {
+    return lhs.report_cfg_id == rhs.report_cfg_id;
+  };
   auto end_it =
-      std::unique(new_cfg.report_cfg_to_add_mod_list.begin(), new_cfg.report_cfg_to_add_mod_list.end(), cmp_id);
+      std::unique(new_cfg.report_cfg_to_add_mod_list.begin(), new_cfg.report_cfg_to_add_mod_list.end(), eq_id);
   new_cfg.report_cfg_to_add_mod_list.erase(end_it, new_cfg.report_cfg_to_add_mod_list.end());
   std::sort(new_cfg.report_cfg_to_add_mod_list.begin(), new_cfg.report_cfg_to_add_mod_list.end(), cmp_id);
 
