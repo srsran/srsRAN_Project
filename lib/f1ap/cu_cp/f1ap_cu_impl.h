@@ -122,8 +122,8 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
-  /// \brief Log F1AP RX PDU.
-  void log_rx_pdu(const f1ap_message& pdu);
+  /// \brief Log F1AP PDU.
+  void log_pdu(bool is_rx, const f1ap_message& pdu);
 
   const f1ap_configuration cfg;
   srslog::basic_logger&    logger;

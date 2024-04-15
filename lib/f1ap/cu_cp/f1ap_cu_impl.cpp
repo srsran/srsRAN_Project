@@ -11,6 +11,7 @@
 #include "f1ap_cu_impl.h"
 #include "../common/asn1_helpers.h"
 #include "../common/f1ap_asn1_utils.h"
+#include "../common/log_helpers.h"
 #include "f1ap_asn1_helpers.h"
 #include "procedures/f1_setup_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
@@ -146,7 +147,8 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
 {
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
-        log_rx_pdu(msg);
+        // Log received message.
+        log_pdu(true, msg);
 
         switch (msg.pdu.type().value) {
           case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
@@ -303,8 +305,6 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 
 void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
 {
-  logger.debug("Received F1 Removal Request");
-
   du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
 }
@@ -384,63 +384,31 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 }
 
-static auto log_pdu_helper(srslog::basic_logger&         logger,
-                           bool                          json_log,
-                           bool                          is_rx,
-                           gnb_du_id_t                   du_id,
-                           const f1ap_ue_context_list&   ue_ctxt_list,
-                           const asn1::f1ap::f1ap_pdu_c& pdu)
+void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& msg)
 {
   if (not logger.info.enabled()) {
     return;
   }
 
-  optional<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(pdu);
-  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(pdu);
-  ue_index_t                    ue_idx   = ue_index_t::invalid;
+  // Fetch UE index.
+  auto                 cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
+  optional<ue_index_t> ue_idx;
   if (cu_ue_id.has_value()) {
-    auto* ue = ue_ctxt_list.find(cu_ue_id.value());
-    if (ue != nullptr) {
-      ue_idx = ue->ue_ids.ue_index;
+    auto* ue_ptr = ue_ctxt_list.find(cu_ue_id.value());
+    if (ue_ptr != nullptr and ue_ptr->ue_ids.ue_index != ue_index_t::invalid) {
+      ue_idx = ue_ptr->ue_ids.ue_index;
     }
   }
 
-  // Custom formattable object whose formatting function will run in the log backend.
-  auto rx_pdu_log_entry =
-      make_formattable([is_rx, du_id, du_ue_id, cu_ue_id, ue_idx, msg_name = get_message_type_str(pdu)](auto& ctx) {
-        fmt::format_to(ctx.out(), "{} PDU", is_rx ? "Rx" : "Tx");
-        if (du_id != srsran::gnb_du_id_t::invalid) {
-          fmt::format_to(ctx.out(), " du_id={}", du_id);
-        }
-        if (ue_idx != ue_index_t::invalid) {
-          fmt::format_to(ctx.out(), " ue={}", ue_idx);
-        }
-        if (du_ue_id.has_value()) {
-          fmt::format_to(ctx.out(), " du_ue_id={}", du_ue_id.value());
-        }
-        if (cu_ue_id.has_value()) {
-          fmt::format_to(ctx.out(), " cu_ue_id={}", cu_ue_id.value());
-        }
-        return fmt::format_to(ctx.out(), ": {}", msg_name);
-      });
-
-  if (json_log) {
-    asn1::json_writer js;
-    pdu.to_json(js);
-    logger.info("{}. Content:\n{}", rx_pdu_log_entry, js.to_string());
-  } else {
-    logger.info("{}", rx_pdu_log_entry);
-  }
-}
-
-void f1ap_cu_impl::log_rx_pdu(const f1ap_message& msg)
-{
-  log_pdu_helper(logger, cfg.json_log_enabled, true, du_ctxt.du_id, ue_ctxt_list, msg.pdu);
+  // Log PDU.
+  log_f1ap_pdu(logger, is_rx, du_ctxt.du_id, ue_idx, msg, cfg.json_log_enabled);
 }
 
 void f1ap_cu_impl::tx_pdu_notifier_with_logging::on_new_message(const f1ap_message& msg)
 {
-  log_pdu_helper(parent.logger, parent.cfg.json_log_enabled, false, parent.du_ctxt.du_id, parent.ue_ctxt_list, msg.pdu);
+  // Log message.
+  parent.log_pdu(false, msg);
 
+  // Forward message to DU.
   decorated.on_new_message(msg);
 }

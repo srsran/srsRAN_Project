@@ -67,8 +67,13 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
       return out.value.gnb_cu_cfg_upd()->transaction_id;
     case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_du_cfg_upd:
       return out.value.gnb_du_cfg_upd()->transaction_id;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request:
-      return (*out.value.f1_removal_request())[0]->transaction_id();
+    case f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
+      const auto& list = *out.value.f1_removal_request();
+      if (list.size() == 0) {
+        return nullopt;
+      }
+      return list[0]->transaction_id();
+    }
     case f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer:
       return (*out.value.init_ul_rrc_msg_transfer()).transaction_id;
       // TODO: Remaining cases.
