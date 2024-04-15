@@ -3039,16 +3039,24 @@ static ssb_mtc_s make_ssb_mtc(const du_cell_config& du_cell_cfg)
   switch (du_cell_cfg.ssb_cfg.ssb_period) {
     case ssb_periodicity::ms5:
       ret.periodicity_and_offset.set_sf5() = 0;
+      break;
     case ssb_periodicity::ms10:
       ret.periodicity_and_offset.set_sf10() = 0;
+      break;
     case ssb_periodicity::ms20:
       ret.periodicity_and_offset.set_sf20() = 0;
+      break;
     case ssb_periodicity::ms40:
       ret.periodicity_and_offset.set_sf40() = 0;
+      break;
     case ssb_periodicity::ms80:
       ret.periodicity_and_offset.set_sf80() = 0;
+      break;
     case ssb_periodicity::ms160:
       ret.periodicity_and_offset.set_sf160() = 0;
+      break;
+    default:
+      report_fatal_error("Invalud SSB period={}", du_cell_cfg.ssb_cfg.ssb_period);
   }
   ret.dur.value = ssb_mtc_s::dur_opts::sf5;
 
