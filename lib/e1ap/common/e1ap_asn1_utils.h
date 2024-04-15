@@ -38,7 +38,7 @@ inline const char* get_cause_str(const asn1::e1ap::cause_c& cause)
   return "unknown";
 }
 
-/// Extracts message type.
+/// Extracts string literal with the message type name.
 inline const char* get_message_type_str(const asn1::e1ap::e1ap_pdu_c& pdu)
 {
   switch (pdu.type().value) {

@@ -68,6 +68,7 @@ void srsran::log_e1ap_pdu(srslog::basic_logger&    logger,
   const char*                      msg_name = get_message_type_str(e1ap_msg.pdu);
 
   // Create PDU formatter that runs in log backend.
+  // Note: msg_name is a string literal and therefore it is ok to pass by pointer.
   auto pdu_description = make_formattable([is_rx, cp_ue_id, up_ue_id, ue_id, msg_name = msg_name](auto& ctx) {
     return fmt::format_to(ctx.out(),
                           "{} PDU{}{}{}: {}",
