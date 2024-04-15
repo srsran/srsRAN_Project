@@ -386,8 +386,19 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
 
 void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& msg)
 {
+  using namespace asn1::f1ap;
+
   if (not logger.info.enabled()) {
     return;
+  }
+
+  // In case of F1 Setup, the gNB-DU-Id might not be set yet.
+  gnb_du_id_t du_id = du_ctxt.du_id;
+  if (du_id == gnb_du_id_t::invalid) {
+    if (msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg and
+        msg.pdu.init_msg().value.type().value == f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
+      du_id = int_to_gnb_du_id(msg.pdu.init_msg().value.f1_setup_request()->gnb_du_id);
+    }
   }
 
   // Fetch UE index.
@@ -401,7 +412,7 @@ void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& msg)
   }
 
   // Log PDU.
-  log_f1ap_pdu(logger, is_rx, du_ctxt.du_id, ue_idx, msg, cfg.json_log_enabled);
+  log_f1ap_pdu(logger, is_rx, du_id, ue_idx, msg, cfg.json_log_enabled);
 }
 
 void f1ap_cu_impl::tx_pdu_notifier_with_logging::on_new_message(const f1ap_message& msg)

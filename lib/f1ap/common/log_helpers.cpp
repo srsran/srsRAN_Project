@@ -29,23 +29,6 @@ struct formatter<asn1::f1ap::f1ap_pdu_c> : public basic_fmt_parser {
 
 } // namespace fmt
 
-static void log_common_message(srslog::basic_logger& logger,
-                               bool                  is_rx,
-                               gnb_du_id_t           du_id,
-                               uint8_t               transaction_id,
-                               const f1ap_message&   msg,
-                               bool                  json_enabled)
-{
-  const char* msg_name = get_message_type_str(msg.pdu);
-  const char* rx_str   = is_rx ? "Rx" : "Tx";
-
-  if (json_enabled) {
-    logger.info("{} PDU du={} tid={}: {}\n{}", rx_str, du_id, transaction_id, msg_name, msg.pdu);
-  } else {
-    logger.info("{} PDU du={} tid={}: {}", rx_str, du_id, transaction_id, msg_name);
-  }
-}
-
 template <typename UeIndex>
 void srsran::log_f1ap_pdu(srslog::basic_logger&    logger,
                           bool                     is_rx,
@@ -59,28 +42,25 @@ void srsran::log_f1ap_pdu(srslog::basic_logger&    logger,
   }
 
   // Determine if it is a UE-dedicated message or common message.
-  optional<uint8_t> transaction_id = get_transaction_id(msg.pdu);
-  if (transaction_id.has_value()) {
-    log_common_message(logger, is_rx, du_id, transaction_id.value(), msg, json_enabled);
-    return;
-  }
-
-  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
-  optional<gnb_du_ue_f1ap_id_t> du_ue_id = get_gnb_du_ue_f1ap_id(msg.pdu);
-  const char*                   msg_name = get_message_type_str(msg.pdu);
+  optional<uint8_t>             transaction_id = get_transaction_id(msg.pdu);
+  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id       = get_gnb_cu_ue_f1ap_id(msg.pdu);
+  optional<gnb_du_ue_f1ap_id_t> du_ue_id       = get_gnb_du_ue_f1ap_id(msg.pdu);
+  const char*                   msg_name       = get_message_type_str(msg.pdu);
 
   // Create PDU formatter that runs in log backend.
   // Note: msg_name is a string literal and therefore it is ok to pass by pointer.
-  auto pdu_description = make_formattable([is_rx, du_id, cu_ue_id, du_ue_id, ue_id, msg_name = msg_name](auto& ctx) {
-    return fmt::format_to(ctx.out(),
-                          "{} PDU du={}{}{}{}: {}",
-                          is_rx ? "Rx" : "Tx",
-                          du_id,
-                          add_prefix_if_set(" ue=", ue_id),
-                          add_prefix_if_set(" cu_ue=", cu_ue_id),
-                          add_prefix_if_set(" du_ue=", du_ue_id),
-                          msg_name);
-  });
+  auto pdu_description =
+      make_formattable([is_rx, du_id, cu_ue_id, du_ue_id, ue_id, transaction_id, msg_name = msg_name](auto& ctx) {
+        return fmt::format_to(ctx.out(),
+                              "{} PDU du={}{}{}{}{}: {}",
+                              is_rx ? "Rx" : "Tx",
+                              du_id,
+                              add_prefix_if_set(" tid=", transaction_id),
+                              add_prefix_if_set(" ue=", ue_id),
+                              add_prefix_if_set(" cu_ue=", cu_ue_id),
+                              add_prefix_if_set(" du_ue=", du_ue_id),
+                              msg_name);
+      });
 
   if (json_enabled) {
     logger.info("{}\n{}", pdu_description, msg.pdu);
