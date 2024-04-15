@@ -294,6 +294,10 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       b.mac_lc_ch_cfg_present   = false;
       b.reestablish_rlc_present = true;
     }
+
+    // TODO: Set non-hardcoded servingCellMo.
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo_present = true;
+    asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.serving_cell_mo         = 1;
   }
 
   // Pack cellGroupConfig.
