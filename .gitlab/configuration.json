@@ -12,6 +12,9 @@
             "protected_branches": [],
             "rule_type": "any_approver",
             "users": []
+        },
+        {
+            "name": "release freeze"
         }
     ],
     "approvals": {
