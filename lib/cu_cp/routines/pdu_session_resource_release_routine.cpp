@@ -145,28 +145,36 @@ void pdu_session_resource_release_routine::operator()(
 cu_cp_pdu_session_resource_release_response
 pdu_session_resource_release_routine::handle_pdu_session_resource_release_response(bool success)
 {
+  // Fill PDUSessionResponse with the released PDU sessions even in case of failure.
+  for (const auto& setup_item : release_cmd.pdu_session_res_to_release_list_rel_cmd) {
+    cu_cp_pdu_session_res_released_item_rel_res item;
+    item.pdu_session_id = setup_item.pdu_session_id;
+
+    response_msg.released_pdu_sessions.emplace(setup_item.pdu_session_id, item);
+  }
+
+  // Prepare update for UP resource manager.
+  up_config_update_result result;
+  for (const auto& pdu_session_to_remove : next_config.pdu_sessions_to_remove_list) {
+    result.pdu_sessions_removed_list.push_back(pdu_session_to_remove);
+  }
+  rrc_ue_up_resource_manager.apply_config_update(result);
+
   if (success) {
     logger.debug("ue={}: \"{}\" finalized", release_cmd.ue_index, name());
-    for (const auto& setup_item : release_cmd.pdu_session_res_to_release_list_rel_cmd) {
-      cu_cp_pdu_session_res_released_item_rel_res item;
-      item.pdu_session_id = setup_item.pdu_session_id;
-
-      // TODO: Add pdu_session_res_release_resp_transfer
-
-      response_msg.released_pdu_sessions.emplace(setup_item.pdu_session_id, item);
-    }
-
-    // Prepare update for UP resource manager.
-    up_config_update_result result;
-    for (const auto& pdu_session_to_remove : next_config.pdu_sessions_to_remove_list) {
-      result.pdu_sessions_removed_list.push_back(pdu_session_to_remove);
-    }
-
-    rrc_ue_up_resource_manager.apply_config_update(result);
   } else {
     logger.info("ue={}: \"{}\" failed", release_cmd.ue_index, name());
 
-    // Trigger UE context release request?
+    // Trigger UE context release request.
+    cu_cp_ue_context_release_request req{release_cmd.ue_index};
+    req.cause = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
+    task_sched.schedule_async_task(
+        release_cmd.ue_index,
+        launch_async([ngap_notif = &ngap_ctrl_notifier, req](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(ngap_notif->on_ue_context_release_request(req));
+          CORO_RETURN();
+        }));
   }
 
   return response_msg;
