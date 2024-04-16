@@ -40,7 +40,7 @@ public:
 
   /// \brief Constructs a channel matrix with the desired number of transmit and receive ports.
   /// \param[in] nof_rx_ports Number of receive ports.
-  /// \param[in] nof_tx_ports  Number of transmit ports.
+  /// \param[in] nof_tx_ports Number of transmit ports.
   /// \remark An assertion is triggered if the number of receive ports exceeds \ref srs_constants::max_nof_rx_ports.
   /// \remark An assertion is triggered if the number of transmit ports exceeds \ref srs_constants::max_nof_tx_ports.
   srs_channel_matrix(unsigned nof_rx_ports, unsigned nof_tx_ports) : data({nof_rx_ports, nof_tx_ports})
@@ -61,7 +61,7 @@ public:
   ///
   /// \param[in] coefficients Channel coefficient list, arranged by i) receive port and ii) transmit port.
   /// \param[in] nof_rx_ports Number of receive ports.
-  /// \param[in] nof_tx_ports  Number of transmit ports.
+  /// \param[in] nof_tx_ports Number of transmit ports.
   /// \remark An assertion is triggered if the number of receive ports exceeds \ref srs_constants::max_nof_rx_ports.
   /// \remark An assertion is triggered if the number of transmit ports exceeds \ref srs_constants::max_nof_tx_ports.
   srs_channel_matrix(const std::initializer_list<cf_t>& coefficients, unsigned nof_rx_ports, unsigned nof_tx_ports) :
@@ -76,7 +76,7 @@ public:
   ///
   /// \param[in] coefficients Channel coefficient list, arranged by i) receive port and ii) transmit port.
   /// \param[in] nof_rx_ports Number of receive ports.
-  /// \param[in] nof_tx_ports  Number of transmit ports.
+  /// \param[in] nof_tx_ports Number of transmit ports.
   /// \remark An assertion is triggered if the number of receive ports exceeds \ref srs_constants::max_nof_rx_ports.
   /// \remark An assertion is triggered if the number of transmit ports exceeds \ref srs_constants::max_nof_tx_ports.
   srs_channel_matrix(span<const cf_t> coefficients, unsigned nof_rx_ports, unsigned nof_tx_ports) :
@@ -99,15 +99,14 @@ public:
                   srs_constants::max_nof_tx_ports);
 
     // Copy the weights into the tensor.
-    srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}), coefficients);
+    srsvec::copy(data.get_data(), coefficients);
   }
 
   /// Copy constructor.
   srs_channel_matrix(const srs_channel_matrix& other) : data({other.get_nof_rx_ports(), other.get_nof_tx_ports()})
   {
     // Copy the weights into the tensor.
-    srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}),
-                 other.data.get_view<static_cast<unsigned>(dims::all)>({}));
+    srsvec::copy(data.get_data(), other.data.get_data());
   }
 
   /// \brief Overload assignment operator.
@@ -121,8 +120,7 @@ public:
     // Resize the tensor.
     resize(other.get_nof_rx_ports(), other.get_nof_tx_ports());
     // Copy the weights into the tensor.
-    srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}),
-                 other.data.get_view<static_cast<unsigned>(dims::all)>({}));
+    srsvec::copy(data.get_data(), other.data.get_data());
     return *this;
   }
 

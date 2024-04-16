@@ -74,7 +74,11 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 
   // Prepare results.
   srs_estimator_result result;
-  result.channel_matrix = srs_channel_matrix(nof_rx_ports, nof_antenna_ports);
+  result.time_alignment.time_alignment = 0;
+  result.time_alignment.resolution     = 0;
+  result.time_alignment.min            = std::numeric_limits<double>::min();
+  result.time_alignment.max            = std::numeric_limits<double>::max();
+  result.channel_matrix                = srs_channel_matrix(nof_rx_ports, nof_antenna_ports);
 
   // Temporary LSE.
   static_tensor<3, cf_t, max_seq_length * srs_constants::max_nof_rx_ports * srs_constants::max_nof_tx_ports> temp_lse(
@@ -136,7 +140,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       // Combine time alignment measurement.
       result.time_alignment.time_alignment += ta_meas.time_alignment;
       result.time_alignment.min        = std::max(result.time_alignment.min, ta_meas.min);
-      result.time_alignment.max        = std::max(result.time_alignment.max, ta_meas.max);
+      result.time_alignment.max        = std::min(result.time_alignment.max, ta_meas.max);
       result.time_alignment.resolution = std::max(result.time_alignment.resolution, ta_meas.resolution);
     }
   }
@@ -144,7 +148,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
   // Average time alignment across all paths.
   result.time_alignment.time_alignment /= nof_antenna_ports * nof_rx_ports;
 
-  // Compensate time alignment.
+  // Compensate time alignment and estimate channel coefficients.
   for (unsigned i_antenna_port = 0; i_antenna_port != nof_antenna_ports; ++i_antenna_port) {
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // View to the mean LSE for a port combination.
