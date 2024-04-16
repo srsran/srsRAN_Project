@@ -288,6 +288,10 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
         if (transaction.has_response()) {
           logger.log_debug("Received RRC Reconfiguration Complete after HO");
           procedure_result = true;
+
+          // The UE in the target cell is in connected state on RRC Reconfiguration Complete reception.
+          context.state = rrc_state::connected;
+
         } else {
           logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: timeout");
         }
