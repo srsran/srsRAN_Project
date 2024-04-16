@@ -803,8 +803,9 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
     });
   }
 
-  if (ue_ctxt.release_requested) {
-    ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Request already pending");
+  if (ue_ctxt.release_requested or ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Cause: Release {} already pending",
+                             ue_ctxt.release_scheduled ? "command" : "request");
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
