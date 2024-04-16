@@ -417,6 +417,7 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig
   } else {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
   }
+  out_cfg.net_cfg.n3_ext_addr       = config.amf_cfg.n3_ext_addr;
   out_cfg.net_cfg.n3_bind_interface = config.amf_cfg.n3_bind_interface;
   out_cfg.net_cfg.n3_rx_max_mmsg    = config.amf_cfg.udp_rx_max_msgs;
   out_cfg.net_cfg.f1u_bind_addr = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case

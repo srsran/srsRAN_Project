@@ -649,6 +649,7 @@ struct amf_appconfig {
   std::string n2_bind_interface      = "auto";
   std::string n3_bind_addr           = "auto";
   std::string n3_bind_interface      = "auto";
+  std::string n3_ext_addr            = "auto";
   int         sctp_rto_initial       = 120;
   int         sctp_rto_min           = 120;
   int         sctp_rto_max           = 500;
