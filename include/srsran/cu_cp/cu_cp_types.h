@@ -467,6 +467,7 @@ struct cu_cp_pdu_session_resource_modify_response {
 struct cu_cp_ue_context_release_command {
   ue_index_t   ue_index = ue_index_t::invalid;
   ngap_cause_t cause;
+  bool         requires_rrc_release = true;
 };
 
 struct cu_cp_ue_context_release_request {
