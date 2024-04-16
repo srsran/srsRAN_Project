@@ -400,14 +400,13 @@ struct cu_cp_pdu_session_res_release_resp_transfer {
 
 struct cu_cp_pdu_session_res_released_item_rel_res {
   pdu_session_id_t                            pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_pdu_session_res_release_resp_transfer pdu_session_res_release_resp_transfer;
+  cu_cp_pdu_session_res_release_resp_transfer resp_transfer;
 };
 
 struct cu_cp_pdu_session_resource_release_response {
-  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_released_item_rel_res>
-                                        pdu_session_res_released_list_rel_res;
-  optional<cu_cp_user_location_info_nr> user_location_info;
-  optional<crit_diagnostics_t>          crit_diagnostics;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_released_item_rel_res> released_pdu_sessions;
+  optional<cu_cp_user_location_info_nr>                                            user_location_info;
+  optional<crit_diagnostics_t>                                                     crit_diagnostics;
 };
 
 using cu_cp_qos_flow_add_or_mod_item = qos_flow_setup_request_item;

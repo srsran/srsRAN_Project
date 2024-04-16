@@ -58,27 +58,26 @@ static bool
 fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_release_resp_s&        resp,
                                                 const cu_cp_pdu_session_resource_release_response& cu_cp_resp)
 {
-  for (const auto& cu_cp_pdu_session_res_released_item : cu_cp_resp.pdu_session_res_released_list_rel_res) {
+  for (const auto& cu_cp_pdu_session_res_released_item : cu_cp_resp.released_pdu_sessions) {
     asn1::ngap::pdu_session_res_released_item_rel_res_s asn1_pdu_session_res_released_item;
     asn1_pdu_session_res_released_item.pdu_session_id =
         pdu_session_id_to_uint(cu_cp_pdu_session_res_released_item.pdu_session_id);
 
     asn1::ngap::pdu_session_res_release_resp_transfer_s res_release_resp_transfer;
 
-    if (cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info
-            .has_value()) {
+    if (cu_cp_pdu_session_res_released_item.resp_transfer.secondary_rat_usage_info.has_value()) {
       res_release_resp_transfer.ext = true;
 
       asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_release_resp_transfer_ext_ies_o>
             res_release_resp_transfer_ext;
       auto& asn1_secondary_rat_usage_info = res_release_resp_transfer_ext.value().secondary_rat_usage_info();
 
-      if (cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+      if (cu_cp_pdu_session_res_released_item.resp_transfer.secondary_rat_usage_info.value()
               .pdu_session_usage_report.has_value()) {
         asn1_secondary_rat_usage_info.pdu_session_usage_report_present = true;
 
         const auto& pdu_session_usage_report =
-            cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+            cu_cp_pdu_session_res_released_item.resp_transfer.secondary_rat_usage_info.value()
                 .pdu_session_usage_report.value();
 
         asn1::string_to_enum(asn1_secondary_rat_usage_info.pdu_session_usage_report.rat_type,
@@ -98,7 +97,7 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
       }
 
       for (const auto& qos_flows_usage_report_item :
-           cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+           cu_cp_pdu_session_res_released_item.resp_transfer.secondary_rat_usage_info.value()
                .qos_flows_usage_report_list) {
         asn1::ngap::qos_flows_usage_report_item_s asn1_qos_flows_usage_report_item;
         asn1_qos_flows_usage_report_item.qos_flow_id = qos_flow_id_to_uint(qos_flows_usage_report_item.qos_flow_id);

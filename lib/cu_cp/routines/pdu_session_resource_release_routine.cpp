@@ -133,7 +133,7 @@ void pdu_session_resource_release_routine::operator()(
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
 
     // Handle RRC Reconfiguration result.
-    if (handle_procedure_response(response_msg, release_cmd, rrc_reconfig_result, logger) == false) {
+    if (not handle_procedure_response(response_msg, release_cmd, rrc_reconfig_result, logger)) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", release_cmd.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
     }
@@ -153,7 +153,7 @@ pdu_session_resource_release_routine::handle_pdu_session_resource_release_respon
 
       // TODO: Add pdu_session_res_release_resp_transfer
 
-      response_msg.pdu_session_res_released_list_rel_res.emplace(setup_item.pdu_session_id, item);
+      response_msg.released_pdu_sessions.emplace(setup_item.pdu_session_id, item);
     }
 
     // Prepare update for UP resource manager.

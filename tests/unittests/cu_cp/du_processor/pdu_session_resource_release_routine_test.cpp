@@ -39,7 +39,7 @@ protected:
       return false;
     }
 
-    if (t.get().pdu_session_res_released_list_rel_res.size() == 0) {
+    if (t.get().released_pdu_sessions.size() == 0) {
       return false;
     }
 
