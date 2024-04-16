@@ -146,6 +146,20 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
   }
 }
 
+void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
+{
+  if (not ues.contains(ue_index)) {
+    logger.error("ue_index={} not found in the scheduler", ue_index);
+    return;
+  }
+
+  auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
+
+  if (ue_it == pending_ul_ues.end()) {
+    pending_ul_ues.emplace_back(ue_index);
+  }
+}
+
 bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 {
   for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
@@ -1170,8 +1184,8 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul.save_alloc_params(pdcch.dci.type, msg.pusch_cfg);
 
-  // NOTE: there is no need to reset SRs, as in fallback the UL grants are triggered by the BSRs. Any SR should instead
-  // be used to remove the UE from the fallback UE.
+  // In case there is a SR pending, reset it.
+  u.reset_sr_indication();
 }
 
 unsigned ue_fallback_scheduler::has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const

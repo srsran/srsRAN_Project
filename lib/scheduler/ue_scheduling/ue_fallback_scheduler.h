@@ -44,6 +44,8 @@ public:
   /// \param[in] bsr_ind Buffer State Report indication message.
   void handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind);
 
+  void handle_sr_indication(du_ue_index_t ue_index);
+
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.
   /// \param[in] res_alloc Resource Grid of the cell where the DL grant is going to be allocated.
   void run_slot(cell_resource_allocator& res_alloc);

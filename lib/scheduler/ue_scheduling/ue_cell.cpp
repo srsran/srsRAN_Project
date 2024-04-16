@@ -180,6 +180,16 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 {
   // Update UL HARQ state.
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
+  if (fallback_mode == fallback_state::sr_csi_received and crc_pdu.tb_crc_success) {
+    ++fallback_crc_cnt;
+    logger.debug("ue={} rnti={}: Received CRC=OK, counter is now {}", ue_index, rnti(), fallback_crc_cnt);
+    const unsigned min_crc_ok_for_leaving_fallback = 2U;
+    if (fallback_crc_cnt >= min_crc_ok_for_leaving_fallback) {
+      set_fallback_state(fallback_state::normal);
+      logger.debug("ue={} rnti={}: Switching to normal mode", ue_index, rnti());
+      fallback_crc_cnt = 0;
+    }
+  }
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
@@ -202,7 +212,10 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
 void ue_cell::handle_csi_report(const csi_report_data& csi_report)
 {
-  set_fallback_state(false);
+  if (fallback_mode == fallback_state::fallback) {
+    set_fallback_state(fallback_state::sr_csi_received);
+    logger.warning("ue={} rnti={}: Received CSI, switching to sr_csi_received", ue_index, rnti());
+  }
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {
     logger.warning("ue={} rnti={}: Invalid CSI report received", ue_index, rnti());
@@ -250,7 +263,7 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
   }
 
   // In fallback mode state, only use search spaces configured in CellConfigCommon.
-  if (is_fallback_mode) {
+  if (is_in_fallback_mode()) {
     srsran_assert(not required_dci_rnti_type.has_value() or
                       required_dci_rnti_type == dci_dl_rnti_config_type::c_rnti_f1_0,
                   "Invalid required dci-rnti parameter");
@@ -320,7 +333,7 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
                                      optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
 {
   // In fallback mode state, only use search spaces configured in CellConfigCommon.
-  if (is_fallback_mode) {
+  if (is_in_fallback_mode()) {
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
     srsran_assert(not required_dci_rnti_type.has_value() or
                       required_dci_rnti_type == dci_ul_rnti_config_type::c_rnti_f0_0,
