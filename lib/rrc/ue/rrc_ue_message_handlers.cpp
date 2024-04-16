@@ -198,8 +198,10 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
     return;
   }
 
-  byte_buffer rrc_pdu = pdcp_unpacking_result.get_pdu();
-  handle_pdu(srb_id, std::move(rrc_pdu));
+  std::vector<byte_buffer> rrc_pdus = pdcp_unpacking_result.pop_pdus();
+  for (byte_buffer& pdu : rrc_pdus) {
+    handle_pdu(srb_id, std::move(pdu));
+  }
 }
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
@@ -350,7 +352,11 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
         return release_context;
       }
 
-      release_context.rrc_release_pdu = pdcp_packing_result.get_pdu();
+      std::vector<byte_buffer> pdus = pdcp_packing_result.pop_pdus();
+      if (pdus.size() > 1) {
+        logger.log_warning("Unexpected multiple PDUs after PDCP packing");
+      }
+      release_context.rrc_release_pdu = std::move(pdus[0]);
       release_context.srb_id          = srb_id_t::srb1;
 
       // Log Tx message

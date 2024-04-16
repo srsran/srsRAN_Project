@@ -17,14 +17,14 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct pdcp_result {
-  variant<byte_buffer, ngap_cause_t> result;
+  variant<std::vector<byte_buffer>, ngap_cause_t> result;
 
   /// Whether the packing/unpacking was successful.
-  bool is_successful() const { return variant_holds_alternative<byte_buffer>(result); }
+  bool is_successful() const { return variant_holds_alternative<std::vector<byte_buffer>>(result); }
 
   ngap_cause_t get_failure_cause() const { return variant_get<ngap_cause_t>(result); }
 
-  byte_buffer get_pdu() const { return byte_buffer{variant_get<byte_buffer>(result)}; }
+  std::vector<byte_buffer> pop_pdus() { return std::move(variant_get<std::vector<byte_buffer>>(result)); }
 };
 
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
@@ -120,7 +120,7 @@ public:
       return pdcp_result{pdcp_context.rrc_tx_control_notifier.get_failure_cause()};
     }
 
-    return pdcp_result{std::move(packed_pdu)};
+    return pdcp_result{std::vector<byte_buffer>{std::move(packed_pdu)}};
   }
 
   // Decipher and verify integrity of an PDCP PDU.
@@ -128,19 +128,24 @@ public:
   {
     auto buffer_chain = byte_buffer_chain::create(std::move(pdcp_pdu));
     if (buffer_chain.is_error()) {
-      return pdcp_result{pdcp_context.rrc_rx_control_notifier.get_failure_cause()};
+      return pdcp_result{ngap_cause_misc_t::not_enough_user_plane_processing_res};
     }
 
     pdcp_context.entity->get_rx_lower_interface().handle_pdu(std::move(buffer_chain.value()));
 
-    byte_buffer unpacked_pdu = pdcp_context.rrc_rx_data_notifier.get_rrc_pdu();
+    std::vector<byte_buffer> unpacked_pdus = pdcp_context.rrc_rx_data_notifier.pop_rrc_pdus();
 
     // If the PDCP layer failed to unpack the PDU, return the failure cause.
-    if (unpacked_pdu.empty()) {
-      return pdcp_result{pdcp_context.rrc_rx_control_notifier.get_failure_cause()};
+    if (unpacked_pdus.empty()) {
+      optional<ngap_cause_t> cause = pdcp_context.rrc_rx_control_notifier.pop_failure_cause();
+      if (cause.has_value()) {
+        // There was an error in the PDCP unpacking.
+        return pdcp_result{cause.value()};
+      }
+      // The PDCP PDU was buffered because it was out of order.
     }
 
-    return pdcp_result{std::move(unpacked_pdu)};
+    return pdcp_result{std::move(unpacked_pdus)};
   }
 
 private:

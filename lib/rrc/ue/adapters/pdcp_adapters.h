@@ -23,12 +23,12 @@ class pdcp_rrc_ue_rx_adapter : public pdcp_rx_upper_data_notifier
 public:
   pdcp_rrc_ue_rx_adapter() = default;
 
-  void on_new_sdu(byte_buffer sdu) override { rrc_pdu = std::move(sdu); }
+  void on_new_sdu(byte_buffer sdu) override { rrc_pdus.push_back(std::move(sdu)); }
 
-  byte_buffer get_rrc_pdu() { return std::move(rrc_pdu); }
+  std::vector<byte_buffer> pop_rrc_pdus() { return std::move(rrc_pdus); }
 
 private:
-  byte_buffer rrc_pdu;
+  std::vector<byte_buffer> rrc_pdus;
 };
 
 /// Adapter between PDCP Rx control and RRC in UL direction (Rx)
@@ -55,10 +55,15 @@ public:
     cause = cause_protocol_t::unspecified;
   }
 
-  ngap_cause_t get_failure_cause() { return cause; }
+  optional<ngap_cause_t> pop_failure_cause()
+  {
+    auto ret = cause;
+    cause.reset();
+    return ret;
+  }
 
 private:
-  ngap_cause_t cause;
+  optional<ngap_cause_t> cause;
 };
 
 /// Adapter between PDCP and RRC UE for DL PDUs
