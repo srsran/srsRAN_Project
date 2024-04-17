@@ -40,6 +40,12 @@ mac_rx_data_indication srsran::test_helpers::create_pdu_with_sdu(slot_point sl_r
               .value()}}};
 }
 
+mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_point sl_rx, rnti_t rnti)
+{
+  return mac_crc_indication_message{
+      .sl_rx = sl_rx, .crcs = {mac_crc_pdu{.rnti = rnti, .harq_id = to_harq_id(0), .tb_crc_success = true}}};
+}
+
 mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
 {
   mac_uci_pdu pdu{};

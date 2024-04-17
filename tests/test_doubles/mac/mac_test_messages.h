@@ -31,5 +31,7 @@ mac_uci_pdu create_uci_pdu(const pucch_info& pucch);
 
 mac_uci_indication_message create_uci_indication(slot_point sl_rx, span<const pucch_info> pucchs);
 
+mac_crc_indication_message create_crc_indication(slot_point sl_rx, rnti_t rnti);
+
 } // namespace test_helpers
 } // namespace srsran

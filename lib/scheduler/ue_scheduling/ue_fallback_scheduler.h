@@ -44,6 +44,8 @@ public:
   /// \param[in] bsr_ind Buffer State Report indication message.
   void handle_ul_bsr_indication(du_ue_index_t ue_index, const ul_bsr_indication_message& bsr_ind);
 
+  /// Handles SR indication reported by UE.
+  /// \param[in] ue_index UE's DU Index for which UL SRB1 message needs to be scheduled.
   void handle_sr_indication(du_ue_index_t ue_index);
 
   /// Schedule UE's SRB0 DL grants for a given slot and one or more cells.

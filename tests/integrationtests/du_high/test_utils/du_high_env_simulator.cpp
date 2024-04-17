@@ -365,6 +365,13 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
     return false;
   }
 
+  // Force 2 CRC indications to trigger the UE to exit fallback state.
+  for (unsigned n_crc = 0; n_crc != 2; ++n_crc) {
+    // Send CRC for the RRC container.
+    du_hi->get_control_info_handler(it->second.pcell_index)
+        .handle_crc(test_helpers::create_crc_indication(next_slot + n_crc, rnti));
+  }
+
   return true;
 }
 

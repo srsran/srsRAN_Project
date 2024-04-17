@@ -180,16 +180,18 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 {
   // Update UL HARQ state.
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
-  if (fallback_mode == fallback_state::sr_csi_received and crc_pdu.tb_crc_success) {
+
+  // Implements the condition for the UE to exit fallback mode: the GNB must receive 2 CRC=OK after receiving either a
+  // SR or CSI.
+  if (fallback_mode_current == fallback_state::sr_csi_received and crc_pdu.tb_crc_success) {
     ++fallback_crc_cnt;
-    logger.debug("ue={} rnti={}: Received CRC=OK, counter is now {}", ue_index, rnti(), fallback_crc_cnt);
     const unsigned min_crc_ok_for_leaving_fallback = 2U;
     if (fallback_crc_cnt >= min_crc_ok_for_leaving_fallback) {
       set_fallback_state(fallback_state::normal);
-      logger.debug("ue={} rnti={}: Switching to normal mode", ue_index, rnti());
       fallback_crc_cnt = 0;
     }
   }
+
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
@@ -212,9 +214,8 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
 void ue_cell::handle_csi_report(const csi_report_data& csi_report)
 {
-  if (fallback_mode == fallback_state::fallback) {
+  if (fallback_mode_current == fallback_state::fallback) {
     set_fallback_state(fallback_state::sr_csi_received);
-    logger.warning("ue={} rnti={}: Received CSI, switching to sr_csi_received", ue_index, rnti());
   }
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {

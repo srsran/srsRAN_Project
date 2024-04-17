@@ -294,8 +294,7 @@ protected:
 
   void push_buffer_state_to_ul_ue(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_size)
   {
-    // Notification from upper layers of DL buffer state.
-
+    // Notification from upper layers of UL buffer status report.
     ul_bsr_indication_message msg{.cell_index = to_du_cell_index(0U),
                                   .ue_index   = ue_idx,
                                   .crnti      = to_rnti(0x4601 + static_cast<uint16_t>(ue_idx)),
@@ -305,8 +304,17 @@ protected:
 
     bench->ue_db[ue_idx].handle_bsr_indication(msg);
 
-    // Notify scheduler of DL buffer state.
+    // Notify scheduler of UL buffer status report.
     bench->fallback_sched.handle_ul_bsr_indication(ue_idx, msg);
+  }
+
+  void generate_sr_for_ue(du_ue_index_t ue_idx, slot_point sl)
+  {
+    // Notification from upper layers of UL .
+    bench->ue_db[ue_idx].handle_sr_indication();
+
+    // Notify scheduler of SR.
+    bench->fallback_sched.handle_sr_indication(ue_idx);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -1198,8 +1206,58 @@ TEST_P(ul_fallback_scheduler_tester, all_ul_ue_are_served_and_buffer_gets_emptie
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(test1,
+INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
                          ul_fallback_scheduler_tester,
+                         testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
+                                         ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
+
+class ul_fallback_sched_tester_sr_indication : public base_fallback_tester,
+                                               public ::testing::TestWithParam<ul_fallback_sched_test_params>
+{
+protected:
+  ul_fallback_sched_tester_sr_indication() : base_fallback_tester(GetParam().duplx_mode)
+  {
+    setup_sched(config_helpers::make_default_scheduler_expert_config(),
+                test_helpers::make_default_sched_cell_configuration_request(builder_params));
+    slot_generate_srb_traffic =
+        slot_point{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
+                   test_rgen::uniform_int(20U, 40U)};
+  }
+
+  ul_fallback_sched_test_params params;
+  const unsigned                MAX_TEST_RUN_SLOTS = 100;
+  slot_point                    slot_generate_srb_traffic;
+};
+
+TEST_P(ul_fallback_sched_tester_sr_indication, when_gnb_receives_sr_ind_ue_gets_scheduled)
+{
+  unsigned du_idx = 0;
+  add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
+
+  auto& ue = bench->ue_db[to_du_ue_index(du_idx)];
+
+  // Generate SR for this UE.
+  generate_sr_for_ue(to_du_ue_index(du_idx), slot_generate_srb_traffic);
+
+  bool pusch_allocated = false;
+  for (unsigned sl = 1; sl < MAX_TEST_RUN_SLOTS; ++sl) {
+    run_slot();
+
+    auto& puschs   = bench->res_grid[0].result.ul.puschs;
+    auto  pusch_it = std::find_if(puschs.begin(), puschs.end(), [rnti = ue.crnti](const ul_sched_info& pusch) {
+      return pusch.pusch_cfg.rnti == rnti;
+    });
+    if (pusch_it != puschs.end()) {
+      pusch_allocated = true;
+      break;
+    }
+  }
+
+  ASSERT_TRUE(pusch_allocated);
+}
+
+INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
+                         ul_fallback_sched_tester_sr_indication,
                          testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
                                          ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
 
