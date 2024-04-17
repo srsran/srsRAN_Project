@@ -55,11 +55,13 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
+#include "apps/units/cu_cp/cu_cp_logger_registrator.h"
+#include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
+#include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
 
-#include "../units/cu_cp/logger_registrator.h"
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/logger_registrator.h"
 #include "../units/cu_up/pcap_factory.h"
@@ -190,7 +192,6 @@ static void register_app_logs(const log_appconfig& log_cfg)
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Register the loggers of the modules.
-  modules::cu_cp::register_logs(log_cfg);
   modules::cu_up::register_logs(log_cfg);
   modules::flexible_du::split_ru_dynamic::register_logs(log_cfg);
 }
@@ -214,6 +215,9 @@ int main(int argc, char** argv)
   // Configure CLI11 with the gNB application configuration schema.
   configure_cli11_with_gnb_appconfig_schema(app, gnb_parsed_cfg);
 
+  cu_cp_unit_config cu_cp_config;
+  configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
+
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
@@ -223,13 +227,14 @@ int main(int argc, char** argv)
   derive_auto_params(gnb_cfg);
 
   // Check the modified configuration.
-  if (!validate_appconfig(gnb_cfg)) {
+  if (!validate_appconfig(gnb_cfg) || !validate_cu_cp_unit_config(cu_cp_config)) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
   register_app_logs(gnb_cfg.log_cfg);
+  register_loggers(cu_cp_config.loggers);
 
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
@@ -345,7 +350,7 @@ int main(int argc, char** argv)
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
 
   // Create CU-CP config.
-  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
+  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg, cu_cp_config);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec;
   cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();

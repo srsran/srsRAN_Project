@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "cu_cp_log_unit_config.h"
+#include "cu_cp_unit_logger_config.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
 
 /// Registers the CU-CP loggers in the logger service.
-inline void register_logs(const cu_cp_log_unit_config& log_cfg)
+inline void register_loggers(const cu_cp_unit_logger_config& log_cfg)
 {
   for (const auto& id : {"CU-CP", "CU-UEMNG", "CU-CP-E1"}) {
     auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);

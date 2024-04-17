@@ -36,6 +36,7 @@ target_link_libraries(gnb
         srsran_version
         srsran_build_info
         srsran_flexible_du_ru_dynamic
+        srsran_cu_cp_app_unit
         )
 
 if (DPDK_FOUND)

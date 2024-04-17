@@ -702,95 +702,6 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
-static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_appconfig& config)
-{
-  // check that report config ids are unique
-  std::map<unsigned, std::string> report_cfg_ids_to_report_type;
-  for (const auto& report_cfg : config.report_configs) {
-    if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
-      fmt::print("Report config ids must be unique\n");
-      return false;
-    }
-    report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
-  }
-
-  // check cu_cp_cell_config
-  std::set<nr_cell_id_t> ncis;
-  for (const auto& cell : config.cells) {
-    if (ncis.emplace(cell.nr_cell_id).second == false) {
-      fmt::print("Cells must be unique ({:#x} already present)\n");
-      return false;
-    }
-
-    if (cell.ssb_period.has_value() && cell.ssb_offset.has_value() &&
-        cell.ssb_offset.value() >= cell.ssb_period.value()) {
-      fmt::print("ssb_offset must be smaller than ssb_period\n");
-      return false;
-    }
-
-    // check that for the serving cell only periodic reports are configured
-    if (cell.periodic_report_cfg_id.has_value()) {
-      if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
-        fmt::print("For the serving cell only periodic reports are allowed\n");
-        return false;
-      }
-    }
-
-    // Check if cell is an external managed cell
-    if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
-      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
-          !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
-          !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
-        fmt::print(
-            "For external cells, the gnb_id_bit_length, pci, band, ssb_arfcn, ssb_scs, ssb_period, ssb_offset and "
-            "ssb_duration must be configured in the mobility config\n");
-        return false;
-      }
-    } else {
-      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
-          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
-        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
-                   "ssb_offset and "
-                   "ssb_duration must not be configured in the mobility config\n");
-        return false;
-      }
-    }
-  }
-
-  // verify that each configured neighbor cell is present
-  for (const auto& cell : config.cells) {
-    for (const auto& ncell : cell.ncells) {
-      if (ncis.find(ncell.nr_cell_id) == ncis.end()) {
-        fmt::print("Neighbor cell config for nci={:#x} incomplete. No valid configuration for cell nci={:#x} found.\n",
-                   cell.nr_cell_id,
-                   ncell.nr_cell_id);
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
-static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
-{
-  // check if the pdu_session_setup_timout is larger than T310
-  if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
-    fmt::print("pdu_session_setup_timeout ({}ms) must be larger than T310 ({}ms)\n",
-               config.pdu_session_setup_timeout * 1000,
-               sib_cfg.ue_timers_and_constants.t310);
-    return false;
-  }
-
-  // validate mobility config
-  if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
-    return false;
-  }
-
-  return true;
-}
-
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
 static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& config)
 {
@@ -1026,66 +937,6 @@ static bool validate_srb_appconfig(const std::map<srb_id_t, srb_appconfig>& conf
   return true;
 }
 
-/// Validates the given security configuration. Returns true on success, otherwise false.
-static bool validate_security_appconfig(const security_appconfig& config)
-{
-  // String splitter helper
-  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
-    std::vector<std::string> result;
-    std::stringstream        ss(s);
-    std::string              item;
-
-    while (getline(ss, item, delim)) {
-      result.push_back(item);
-    }
-
-    return result;
-  };
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nea_preference_list = config.nea_preference_list;
-  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
-                            nea_preference_list.end());
-  std::transform(nea_preference_list.begin(),
-                 nea_preference_list.end(),
-                 nea_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nea_v = split(nea_preference_list, ',');
-
-  // > Check valid ciphering algos
-  for (const std::string& algo : nea_v) {
-    if (algo != "nea0" and algo != "nea1" and algo != "nea2" and algo != "nea3") {
-      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\". algo={}\n",
-                 algo);
-      return false;
-    }
-  }
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nia_preference_list = config.nia_preference_list;
-  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
-                            nia_preference_list.end());
-  std::transform(nia_preference_list.begin(),
-                 nia_preference_list.end(),
-                 nia_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nia_v = split(nia_preference_list, ',');
-
-  // > Check valid integrity algos
-  for (const std::string& algo : nia_v) {
-    if (algo == "nia0") {
-      fmt::print("NIA0 cannot be selected in the algorithm preferences.\n");
-      return false;
-    }
-    if (algo != "nia1" and algo != "nia2" and algo != "nia3") {
-      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\". algo={}\n", algo);
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /// Validates the given logging configuration. Returns true on success, otherwise false.
 static bool validate_log_appconfig(const log_appconfig& config)
 {
@@ -1106,10 +957,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
     return false;
   }
 
-  if (srslog::str_to_basic_level(config.cu_level) == srslog::basic_levels::none) {
-    return false;
-  }
-
   if (srslog::str_to_basic_level(config.phy_level) == srslog::basic_levels::none) {
     return false;
   }
@@ -1123,10 +970,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
   }
 
   if (srslog::str_to_basic_level(config.pdcp_level) == srslog::basic_levels::none) {
-    return false;
-  }
-
-  if (srslog::str_to_basic_level(config.rrc_level) == srslog::basic_levels::none) {
     return false;
   }
 
@@ -1418,10 +1261,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.gnb_id, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
-    return false;
-  }
-
   if (!validate_cells_appconfig(config.cells_cfg)) {
     return false;
   }
@@ -1443,10 +1282,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_srb_appconfig(config.srb_cfg)) {
-    return false;
-  }
-
-  if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
     return false;
   }
 

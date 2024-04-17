@@ -15,18 +15,23 @@
 
 namespace srsran {
 
+using cli11_cell = std::vector<std::string>;
+
 /// \brief Adds a subcommand to the given application using the given subcommand name and description.
 ///
 /// If the subcommand already exists in the application, returns a pointer to it.
 ///
-/// \param app Application where the subcommand will be created.
+/// \param app Application where the subcommand will be added.
 /// \param name Subcommand name.
 /// \param desc Human readable description of the subcommand.
 /// \return A pointer to the subcommand added to the application.
-CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::string& desc)
+inline CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::string& desc)
 {
-  if (CLI::App* subcommand = app.get_subcommand(name)) {
-    return subcommand;
+  try {
+    if (CLI::App* subcommand = app.get_subcommand(name)) {
+      return subcommand;
+    }
+  } catch (CLI::OptionNotFound& e) {
   }
 
   return app.add_subcommand(name, desc)->configurable();
@@ -35,12 +40,12 @@ CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::stri
 /// \brief Adds an option to the given application.
 ///
 /// This function adds an option to the given application using the given parameters. If the option is already present
-/// in the application, it is removed and a new option is added that will call the callback of the deleted callback and
-/// the conversion of the result for the given parameter. By doing this, it allows to add multiple parameters for one
-/// option, so one option will be present in the configuration but the result will be written in all the parameters
-/// registered for that option.
+/// in the application, it is removed and a new option is added that will call the callback of the deleted callback
+/// and the conversion of the result for the given parameter. By doing this, it allows to add multiple parameters for
+/// one option, so one option will be present in the configuration but the result will be written in all the
+/// parameters registered for that option.
 ///
-/// \param app Application where the option will be created.
+/// \param app Application where the option will be added.
 /// \param option_name Option name.
 /// \param param Parameter where the option value will be stored after parsing.
 /// \param desc Human readable description of the option.
@@ -48,7 +53,7 @@ CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::stri
 template <typename T>
 CLI::Option* add_option(CLI::App& app, const std::string& option_name, T& param, const std::string& desc)
 {
-  auto opt = app.get_option_no_throw(option_name);
+  auto* opt = app.get_option_no_throw(option_name);
   if (!opt) {
     return app.add_option(option_name, param, desc);
   }
@@ -70,12 +75,12 @@ CLI::Option* add_option(CLI::App& app, const std::string& option_name, T& param,
 
 /// \brief Adds an option function to the given application.
 ///
-/// This function adds an option function to the given application using the given parameters. If the option is already
-/// present in the application, it is removed and a new option is added that will contain the given function and deleted
-/// callback as function. By doing this, it allows to add multiple parameters for one option, so one option will be
-/// present in the configuration and the all the functions registered for that option will be called.
+/// This function adds an option function to the given application using the given parameters. If the option is
+/// already present in the application, it is removed and a new option is added that will contain the given function
+/// and deleted callback as function. By doing this, it allows to add multiple parameters for one option, so one
+/// option will be present in the configuration and the all the functions registered for that option will be called.
 ///
-/// \param app Application where the option will be created.
+/// \param app Application where the option will be added.
 /// \param option_name Option name.
 /// \param func Function to execute during parsing.
 /// \param desc Human readable description of the option.
@@ -86,7 +91,7 @@ CLI::Option* add_option_function(CLI::App&                            app,
                                  const std::function<void(const T&)>& func,
                                  const std::string&                   desc)
 {
-  auto opt = app.get_option_no_throw(option_name);
+  auto* opt = app.get_option_no_throw(option_name);
   if (!opt) {
     return app.add_option_function<T>(option_name, func, desc);
   }
@@ -101,6 +106,38 @@ CLI::Option* add_option_function(CLI::App&                            app,
           [func, callback = std::move(callbck)](const std::string& value) {
             func(value);
             callback({value});
+          },
+          desc)
+      ->run_callback_for_default();
+}
+
+/// \brief Adds an option of type cell to the given application.
+///
+/// \param app Application where the option will be added.
+/// \param option_name Option name.
+/// \param func Function to execute during parsing.
+/// \param desc Human readable description of the option.
+/// \return A pointer to the option added to the application.
+inline CLI::Option* add_option_cell(CLI::App&                                     app,
+                                    const std::string&                            option_name,
+                                    const std::function<void(const cli11_cell&)>& func,
+                                    const std::string&                            desc)
+{
+  auto* opt = app.get_option_no_throw(option_name);
+  if (!opt) {
+    return app.add_option_function<std::vector<std::string>>(option_name, func, desc);
+  }
+
+  // Option was found. Get the callback and create new option.
+  auto callbck = opt->get_callback();
+  app.remove_option(opt);
+
+  return app
+      .add_option_function<cli11_cell>(
+          option_name,
+          [func, callback = std::move(callbck)](const cli11_cell& value) {
+            func(value);
+            callback(value);
           },
           desc)
       ->run_callback_for_default();

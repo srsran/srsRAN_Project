@@ -25,6 +25,7 @@
 
 namespace srsran {
 
+struct cu_cp_unit_config;
 struct gnb_appconfig;
 struct rlc_am_appconfig;
 struct mac_lc_appconfig;
@@ -42,7 +43,7 @@ subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 srsran::sctp_network_gateway_config generate_ngap_nw_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a CU-CP configuration.
-srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config);
+srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config, const cu_cp_unit_config& cu_cfg);
 
 /// Converts and returns the given gnb application configuration to a CU-UP configuration.
 srs_cu_up::cu_up_configuration generate_cu_up_config(const gnb_appconfig& config);
@@ -50,21 +51,8 @@ srs_cu_up::cu_up_configuration generate_cu_up_config(const gnb_appconfig& config
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application QoS configuration to a CU-CP configuration.
-std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const gnb_appconfig& config);
-
 /// Converts and returns the given gnb application QoS configuration to a CU-UP configuration.
 std::map<five_qi_t, srs_cu_up::cu_up_qos_config> generate_cu_up_qos_config(const gnb_appconfig& config);
-
-/// Converts and returns the given gnb application integrity protection algorithm preferences configuration to a
-/// CU-CP configuration.
-srsran::security::preferred_integrity_algorithms
-generate_preferred_integrity_algorithms_list(const gnb_appconfig& config);
-
-/// Converts and returns the given gnb application ciphering protection algorithm preferences configuration to a CU-CP
-/// configuration.
-srsran::security::preferred_ciphering_algorithms
-generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb RLC AM configuration to a RLC configuration.
 srsran::rlc_am_config generate_rlc_am_config(const rlc_am_appconfig& in_cfg);

@@ -27,5 +27,5 @@ bool cu_cp_application_unit_impl::on_configuration_validation() const
 
 void cu_cp_application_unit_impl::on_loggers_registration()
 {
-  register_logs(unit_cfg.loggers);
+  register_loggers(unit_cfg.loggers);
 }

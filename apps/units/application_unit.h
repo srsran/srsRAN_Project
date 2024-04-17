@@ -19,8 +19,8 @@ namespace srsran {
 /// \brief Application unit interface.
 ///
 /// An application unit object is the most basic building block used by an application. Possible implementations of this
-/// object can be a CU or DU. The application must register the unit capabilities in its services, so it can use them.
-/// An application is composed of 1 or more units.
+/// object can be a CU or DU. The application must register the unit capabilities in the given services, so it can use
+/// them. An application is composed of one or more units.
 class application_unit
 {
 public:

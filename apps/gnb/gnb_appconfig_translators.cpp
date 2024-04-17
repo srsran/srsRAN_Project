@@ -9,6 +9,7 @@
  */
 
 #include "gnb_appconfig_translators.h"
+#include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
@@ -34,6 +35,155 @@ using namespace std::chrono_literals;
 
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
+
+static std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const cu_cp_unit_config& config)
+{
+  std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
+  if (config.qos_cfg.empty()) {
+    out_cfg = config_helpers::make_default_cu_cp_qos_config_list();
+    return out_cfg;
+  }
+
+  for (const auto& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
+    }
+    // Convert PDCP config
+    pdcp_config& out_pdcp = out_cfg[qos.five_qi].pdcp;
+
+    // RB type
+    out_pdcp.rb_type = pdcp_rb_type::drb;
+
+    // RLC mode
+    rlc_mode mode = {};
+    if (!from_string(mode, qos.rlc.mode)) {
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
+    }
+    if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_dl) {
+      out_pdcp.rlc_mode = pdcp_rlc_mode::um;
+    } else if (mode == rlc_mode::am) {
+      out_pdcp.rlc_mode = pdcp_rlc_mode::am;
+    } else {
+      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
+    }
+
+    // Integrity Protection required
+    out_pdcp.integrity_protection_required = qos.pdcp.integrity_protection_required;
+
+    // Ciphering required
+    out_pdcp.ciphering_required = true;
+
+    // > Tx
+    // >> SN size
+    if (!pdcp_sn_size_from_uint(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {
+      report_error("Invalid PDCP TX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
+    }
+
+    // >> discard timer
+    out_pdcp.tx.discard_timer = pdcp_discard_timer{};
+    if (!pdcp_discard_timer_from_int(out_pdcp.tx.discard_timer.value(), qos.pdcp.tx.discard_timer)) {
+      report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+    }
+
+    // >> status report required
+    out_pdcp.tx.status_report_required = qos.pdcp.tx.status_report_required;
+
+    // > Rx
+    // >> SN size
+    if (!pdcp_sn_size_from_uint(out_pdcp.rx.sn_size, qos.pdcp.rx.sn_field_length)) {
+      report_error("Invalid PDCP RX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
+    }
+
+    // >> out of order delivery
+    out_pdcp.rx.out_of_order_delivery = qos.pdcp.rx.out_of_order_delivery;
+
+    // >> t-Reordering
+    if (!pdcp_t_reordering_from_int(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
+      report_error("Invalid PDCP t-Reordering. {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+    }
+  }
+  return out_cfg;
+}
+
+static security::preferred_integrity_algorithms
+generate_preferred_integrity_algorithms_list(const cu_cp_unit_config& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nia_preference_list = config.security_config.nia_preference_list;
+  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
+                            nia_preference_list.end());
+  std::transform(nia_preference_list.begin(),
+                 nia_preference_list.end(),
+                 nia_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nia_preference_list, ',');
+
+  security::preferred_integrity_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nia0") {
+      algo_list[idx] = security::integrity_algorithm::nia0;
+    } else if (nea == "nia1") {
+      algo_list[idx] = security::integrity_algorithm::nia1;
+    } else if (nea == "nia2") {
+      algo_list[idx] = security::integrity_algorithm::nia2;
+    } else if (nea == "nia3") {
+      algo_list[idx] = security::integrity_algorithm::nia3;
+    }
+    idx++;
+  }
+  return algo_list;
+}
+
+static security::preferred_ciphering_algorithms
+generate_preferred_ciphering_algorithms_list(const cu_cp_unit_config& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nea_preference_list = config.security_config.nea_preference_list;
+  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
+                            nea_preference_list.end());
+  std::transform(nea_preference_list.begin(),
+                 nea_preference_list.end(),
+                 nea_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nea_preference_list, ',');
+
+  security::preferred_ciphering_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nea0") {
+      algo_list[idx] = security::ciphering_algorithm::nea0;
+    } else if (nea == "nea1") {
+      algo_list[idx] = security::ciphering_algorithm::nea1;
+    } else if (nea == "nea2") {
+      algo_list[idx] = security::ciphering_algorithm::nea2;
+    } else if (nea == "nea3") {
+      algo_list[idx] = security::ciphering_algorithm::nea3;
+    }
+    idx++;
+  }
+  return algo_list;
+}
 
 srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
 {
@@ -79,52 +229,53 @@ srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_ap
   return out_cfg;
 }
 
-srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
+srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig&     config,
+                                                             const cu_cp_unit_config& cu_cfg)
 {
-  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
-
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
-  out_cfg.max_nof_dus                    = config.cu_cp_cfg.max_nof_dus;
-  out_cfg.max_nof_cu_ups                 = config.cu_cp_cfg.max_nof_cu_ups;
+  out_cfg.max_nof_dus                    = cu_cfg.max_nof_dus;
+  out_cfg.max_nof_cu_ups                 = cu_cfg.max_nof_cu_ups;
 
-  out_cfg.ngap_config.gnb_id               = config.gnb_id;
-  out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
-  out_cfg.ngap_config.plmn                 = cell.plmn;
-  out_cfg.ngap_config.tac                  = cell.tac;
-  out_cfg.ngap_config.slice_configurations = config.slice_cfg;
+  out_cfg.ngap_config.gnb_id               = cu_cfg.gnb_id;
+  out_cfg.ngap_config.ran_node_name        = cu_cfg.ran_node_name;
+  out_cfg.ngap_config.slice_configurations = cu_cfg.slice_cfg;
 
-  out_cfg.rrc_config.gnb_id                         = config.gnb_id;
-  out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
-  out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
-  out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(config);
-  out_cfg.rrc_config.enc_algo_pref_list             = generate_preferred_ciphering_algorithms_list(config);
-  out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
+  // :TODO: What happens when there are multiple cells?
+  const base_cell_appconfig& cell = config.cells_cfg.front().cell;
+  out_cfg.ngap_config.plmn        = cell.plmn;
+  out_cfg.ngap_config.tac         = cell.tac;
+
+  out_cfg.rrc_config.gnb_id                         = cu_cfg.gnb_id;
+  out_cfg.rrc_config.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
+  out_cfg.rrc_config.rrc_procedure_timeout_ms       = cu_cfg.rrc_config.rrc_procedure_timeout_ms;
+  out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(cu_cfg);
+  out_cfg.rrc_config.enc_algo_pref_list             = generate_preferred_ciphering_algorithms_list(cu_cfg);
+  out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(cu_cfg);
 
   if (!from_string(out_cfg.default_security_indication.integrity_protection_ind,
-                   config.cu_cp_cfg.security_config.integrity_protection)) {
-    report_error("Invalid value for integrity_protection={}\n", config.cu_cp_cfg.security_config.integrity_protection);
+                   cu_cfg.security_config.integrity_protection)) {
+    report_error("Invalid value for integrity_protection={}\n", cu_cfg.security_config.integrity_protection);
   }
   if (!from_string(out_cfg.default_security_indication.confidentiality_protection_ind,
-                   config.cu_cp_cfg.security_config.confidentiality_protection)) {
+                   cu_cfg.security_config.confidentiality_protection)) {
     report_error("Invalid value for confidentiality_protection={}\n",
-                 config.cu_cp_cfg.security_config.confidentiality_protection);
+                 cu_cfg.security_config.confidentiality_protection);
   }
 
-  out_cfg.ue_config.inactivity_timer            = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
-  out_cfg.ue_config.max_nof_supported_ues       = config.cu_cp_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
-  out_cfg.ngap_config.pdu_session_setup_timeout = std::chrono::seconds{config.cu_cp_cfg.pdu_session_setup_timeout};
-  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
+  out_cfg.ue_config.inactivity_timer            = std::chrono::seconds{cu_cfg.inactivity_timer};
+  out_cfg.ue_config.max_nof_supported_ues       = cu_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
+  out_cfg.ngap_config.pdu_session_setup_timeout = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
+  out_cfg.statistics_report_period              = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
-      config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;
+      cu_cfg.mobility_config.trigger_handover_from_measurements;
 
   // F1AP-CU config.
-  out_cfg.f1ap_config.ue_context_setup_timeout =
-      std::chrono::milliseconds{config.cu_cp_cfg.f1ap_config.ue_context_setup_timeout};
-  out_cfg.f1ap_config.json_log_enabled = config.log_cfg.f1ap_json_enabled;
+  out_cfg.f1ap_config.ue_context_setup_timeout = std::chrono::milliseconds{cu_cfg.f1ap_config.ue_context_setup_timeout};
+  out_cfg.f1ap_config.json_log_enabled         = cu_cfg.loggers.f1ap_json_enabled;
 
   // Convert appconfig's cell list into cell manager type.
-  for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
+  for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
     srs_cu_cp::cell_meas_config meas_cfg_item;
     meas_cfg_item.serving_cell_cfg.nci = app_cfg_item.nr_cell_id;
     if (app_cfg_item.periodic_report_cfg_id.has_value()) {
@@ -165,7 +316,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   }
 
   // Convert report config.
-  for (const auto& report_cfg_item : config.cu_cp_cfg.mobility_config.report_configs) {
+  for (const auto& report_cfg_item : cu_cfg.mobility_config.report_configs) {
     srs_cu_cp::rrc_report_cfg_nr report_cfg;
 
     if (report_cfg_item.report_type == "periodical") {
@@ -865,155 +1016,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     ++cell_id;
   }
 
-  return out_cfg;
-}
-
-srsran::security::preferred_integrity_algorithms
-srsran::generate_preferred_integrity_algorithms_list(const gnb_appconfig& config)
-{
-  // String splitter helper
-  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
-    std::vector<std::string> result;
-    std::stringstream        ss(s);
-    for (std::string item; getline(ss, item, delim);) {
-      result.push_back(item);
-    }
-    return result;
-  };
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nia_preference_list = config.cu_cp_cfg.security_config.nia_preference_list;
-  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
-                            nia_preference_list.end());
-  std::transform(nia_preference_list.begin(),
-                 nia_preference_list.end(),
-                 nia_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nea_v = split(nia_preference_list, ',');
-
-  security::preferred_integrity_algorithms algo_list = {};
-  int                                      idx       = 0;
-  for (const std::string& nea : nea_v) {
-    if (nea == "nia0") {
-      algo_list[idx] = security::integrity_algorithm::nia0;
-    } else if (nea == "nia1") {
-      algo_list[idx] = security::integrity_algorithm::nia1;
-    } else if (nea == "nia2") {
-      algo_list[idx] = security::integrity_algorithm::nia2;
-    } else if (nea == "nia3") {
-      algo_list[idx] = security::integrity_algorithm::nia3;
-    }
-    idx++;
-  }
-  return algo_list;
-}
-
-srsran::security::preferred_ciphering_algorithms
-srsran::generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config)
-{
-  // String splitter helper
-  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
-    std::vector<std::string> result;
-    std::stringstream        ss(s);
-    for (std::string item; getline(ss, item, delim);) {
-      result.push_back(item);
-    }
-    return result;
-  };
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nea_preference_list = config.cu_cp_cfg.security_config.nea_preference_list;
-  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
-                            nea_preference_list.end());
-  std::transform(nea_preference_list.begin(),
-                 nea_preference_list.end(),
-                 nea_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nea_v = split(nea_preference_list, ',');
-
-  security::preferred_ciphering_algorithms algo_list = {};
-  int                                      idx       = 0;
-  for (const std::string& nea : nea_v) {
-    if (nea == "nea0") {
-      algo_list[idx] = security::ciphering_algorithm::nea0;
-    } else if (nea == "nea1") {
-      algo_list[idx] = security::ciphering_algorithm::nea1;
-    } else if (nea == "nea2") {
-      algo_list[idx] = security::ciphering_algorithm::nea2;
-    } else if (nea == "nea3") {
-      algo_list[idx] = security::ciphering_algorithm::nea3;
-    }
-    idx++;
-  }
-  return algo_list;
-}
-
-std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
-{
-  std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
-  if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_cp_qos_config_list();
-    return out_cfg;
-  }
-
-  for (const qos_appconfig& qos : config.qos_cfg) {
-    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
-    }
-    // Convert PDCP config
-    pdcp_config& out_pdcp = out_cfg[qos.five_qi].pdcp;
-
-    // RB type
-    out_pdcp.rb_type = pdcp_rb_type::drb;
-
-    // RLC mode
-    rlc_mode mode = {};
-    if (!from_string(mode, qos.rlc.mode)) {
-      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
-    }
-    if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_dl) {
-      out_pdcp.rlc_mode = pdcp_rlc_mode::um;
-    } else if (mode == rlc_mode::am) {
-      out_pdcp.rlc_mode = pdcp_rlc_mode::am;
-    } else {
-      report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
-    }
-
-    // Integrity Protection required
-    out_pdcp.integrity_protection_required = qos.pdcp.integrity_protection_required;
-
-    // Ciphering required
-    out_pdcp.ciphering_required = true;
-
-    // > Tx
-    // >> SN size
-    if (!pdcp_sn_size_from_uint(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {
-      report_error("Invalid PDCP TX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
-    }
-
-    // >> discard timer
-    out_pdcp.tx.discard_timer = pdcp_discard_timer{};
-    if (!pdcp_discard_timer_from_int(out_pdcp.tx.discard_timer.value(), qos.pdcp.tx.discard_timer)) {
-      report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
-    }
-
-    // >> status report required
-    out_pdcp.tx.status_report_required = qos.pdcp.tx.status_report_required;
-
-    // > Rx
-    // >> SN size
-    if (!pdcp_sn_size_from_uint(out_pdcp.rx.sn_size, qos.pdcp.rx.sn_field_length)) {
-      report_error("Invalid PDCP RX SN: {}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
-    }
-
-    // >> out of order delivery
-    out_pdcp.rx.out_of_order_delivery = qos.pdcp.rx.out_of_order_delivery;
-
-    // >> t-Reordering
-    if (!pdcp_t_reordering_from_int(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
-      report_error("Invalid PDCP t-Reordering. {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
-    }
-  }
   return out_cfg;
 }
 

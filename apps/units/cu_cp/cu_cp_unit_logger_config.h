@@ -15,7 +15,7 @@
 namespace srsran {
 
 /// Configuration of logging functionalities.
-struct cu_cp_log_unit_config {
+struct cu_cp_unit_logger_config {
   std::string cu_level   = "warning";
   std::string f1ap_level = "warning";
   std::string pdcp_level = "warning";
