@@ -308,7 +308,7 @@ async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rr
   return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
-rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
+rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc_message)
 {
   // prepare location info to return
   rrc_ue_release_context release_context;
@@ -316,55 +316,57 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
   release_context.user_location_info.tai.tac     = context.cell.tac;
 
-  if (context.srbs.empty()) {
-    // SRB1 was not created, so we need to reject the UE
-    // Create and RrcReject container, see section 5.3.15 in TS 38.331
-    dl_ccch_msg_s dl_ccch_msg;
-    // SRB1 was not created, so we create a RRC Container with RrcReject
-    rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+  if (requires_rrc_message) {
+    if (context.srbs.empty()) {
+      // SRB1 was not created, so we need to reject the UE
+      // Create and RrcReject container, see section 5.3.15 in TS 38.331
+      dl_ccch_msg_s dl_ccch_msg;
+      // SRB1 was not created, so we create a RRC Container with RrcReject
+      rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
 
-    // See TS 38.331, RejectWaitTime
-    reject.wait_time_present = true;
-    reject.wait_time         = rrc_reject_max_wait_time_s;
-
-    // pack DL CCCH msg
-    release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg, "RRCReject");
-    release_context.srb_id          = srb_id_t::srb0;
-
-    // Log Tx message
-    log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_ccch_msg, "CCCH DL");
-  } else {
-    // prepare SRB1 RRC Release PDU to return
-    if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
-      logger.log_error("Can't create RrcRelease PDU. RX {} is not set up", srb_id_t::srb1);
-      return release_context;
-    } else {
-      dl_dcch_msg_s dl_dcch_msg;
-      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+      // See TS 38.331, RejectWaitTime
+      reject.wait_time_present = true;
+      reject.wait_time         = rrc_reject_max_wait_time_s;
 
       // pack DL CCCH msg
-      pdcp_tx_result pdcp_packing_result =
-          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
-      if (!pdcp_packing_result.is_successful()) {
-        logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
-                        pdcp_packing_result.get_failure_cause());
-        on_ue_release_required(pdcp_packing_result.get_failure_cause());
-        return release_context;
-      }
-
-      release_context.rrc_release_pdu = std::move(pdcp_packing_result.pop_pdu());
-      release_context.srb_id          = srb_id_t::srb1;
+      release_context.rrc_release_pdu = pack_into_pdu(dl_ccch_msg, "RRCReject");
+      release_context.srb_id          = srb_id_t::srb0;
 
       // Log Tx message
-      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
-    }
-  }
+      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_ccch_msg, "CCCH DL");
+    } else {
+      // prepare SRB1 RRC Release PDU to return
+      if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+        logger.log_error("Can't create RrcRelease PDU. RX {} is not set up", srb_id_t::srb1);
+        return release_context;
+      } else {
+        dl_dcch_msg_s dl_dcch_msg;
+        dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
-  // Log Tx message
-  logger.log_debug(release_context.rrc_release_pdu.begin(),
-                   release_context.rrc_release_pdu.end(),
-                   "TX {} PDU",
-                   release_context.srb_id);
+        // pack DL CCCH msg
+        pdcp_tx_result pdcp_packing_result =
+            context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+        if (!pdcp_packing_result.is_successful()) {
+          logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                          pdcp_packing_result.get_failure_cause());
+          on_ue_release_required(pdcp_packing_result.get_failure_cause());
+          return release_context;
+        }
+
+        release_context.rrc_release_pdu = std::move(pdcp_packing_result.pop_pdu());
+        release_context.srb_id          = srb_id_t::srb1;
+
+        // Log Tx message
+        log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
+      }
+    }
+
+    // Log Tx message
+    logger.log_debug(release_context.rrc_release_pdu.begin(),
+                     release_context.rrc_release_pdu.end(),
+                     "TX {} PDU",
+                     release_context.srb_id);
+  }
 
   return release_context;
 }

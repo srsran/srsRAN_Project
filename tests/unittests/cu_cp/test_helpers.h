@@ -511,7 +511,7 @@ public:
     });
   }
 
-  rrc_ue_release_context get_rrc_ue_release_context() override
+  rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_msg) override
   {
     logger.info("Received a new request to get RRC UE release context");
     rrc_ue_release_context release_context;

@@ -244,7 +244,7 @@ public:
   /// \returns The release context of the UE.  If SRB1 is not created yet, a RrcReject message is contained in the
   /// release context, see section 5.3.15 in TS 38.331. Otherwise, a RrcRelease message is contained in the release
   /// context.
-  virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
+  virtual rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_msg) = 0;
 
   /// \brief Retrieve RRC context of a UE to perform mobility (handover, reestablishment).
   /// \return Transfer context including UP context, security, SRBs, HO preparation, etc.
