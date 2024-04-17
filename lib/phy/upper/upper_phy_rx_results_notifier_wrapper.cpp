@@ -49,6 +49,12 @@ void upper_phy_rx_results_notifier_wrapper::on_new_pucch_results(const ul_pucch_
   rx_results_notifier->on_new_pucch_results(result);
 }
 
+void upper_phy_rx_results_notifier_wrapper::on_new_srs_results(const ul_srs_results& result)
+{
+  report_fatal_error_if_not(rx_results_notifier, "Results notifier already configured.");
+  rx_results_notifier->on_new_srs_results(result);
+}
+
 void upper_phy_rx_results_notifier_wrapper::connect(upper_phy_rx_results_notifier& n)
 {
   report_fatal_error_if_not(!rx_results_notifier, "Results notifier already configured.");

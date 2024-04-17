@@ -386,6 +386,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
       upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_pucch_exec.push_back(exec_mng.executors().at("phy_exec"));
+      upper_srs_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_prach_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_pdsch_exec.push_back(exec_mng.executors().at("phy_exec"));
       du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("phy_exec"));
@@ -409,14 +410,16 @@ void worker_manager::create_du_low_executors(bool                       is_block
       }
 
       // Instantiate PHY UL workers.
-      create_worker_pool(name_ul,
-                         nof_ul_workers,
-                         task_worker_queue_size,
-                         {{"upper_pusch_exec#" + cell_id_str}, {"upper_pucch_exec#" + cell_id_str}},
-                         prio,
-                         ul_cpu_masks);
+      create_worker_pool(
+          name_ul,
+          nof_ul_workers,
+          task_worker_queue_size,
+          {{"upper_pusch_exec#" + cell_id_str}, {"upper_pucch_exec#" + cell_id_str}, {"upper_srs_exec#" + cell_id_str}},
+          prio,
+          ul_cpu_masks);
       upper_pusch_exec.push_back(exec_mng.executors().at("upper_pusch_exec#" + cell_id_str));
       upper_pucch_exec.push_back(exec_mng.executors().at("upper_pucch_exec#" + cell_id_str));
+      upper_srs_exec.push_back(exec_mng.executors().at("upper_srs_exec#" + cell_id_str));
 
       // Instantiate dedicated PRACH worker.
       const std::string name_prach = "phy_prach#" + cell_id_str;

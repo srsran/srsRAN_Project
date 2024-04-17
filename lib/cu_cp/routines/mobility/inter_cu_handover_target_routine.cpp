@@ -167,6 +167,7 @@ void inter_cu_handover_target_routine::operator()(
     if (!fill_rrc_reconfig_args(rrc_reconfig_args,
                                 ue_context_setup_request.srbs_to_be_setup_list,
                                 next_config.pdu_sessions_to_setup_list,
+                                {} /* No DRB to be removed */,
                                 ue_context_setup_response.du_to_cu_rrc_info,
                                 {} /* No NAS PDUs required */,
                                 ue->get_rrc_ue_notifier().generate_meas_config(),

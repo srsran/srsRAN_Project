@@ -79,7 +79,7 @@ public:
   uint8_t          handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context  get_rrc_ue_release_context() override;
+  rrc_ue_release_context  get_rrc_ue_release_context(bool requires_rrc_msg) override;
   rrc_ue_transfer_context get_transfer_context() override;
   optional<rrc_meas_cfg>  generate_meas_config(optional<rrc_meas_cfg> current_meas_config) override;
   bool                    handle_new_security_context(const security::security_context& sec_context) override;

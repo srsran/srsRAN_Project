@@ -40,11 +40,13 @@ lower_phy_impl::lower_phy_impl(configuration& config) :
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid Rx symbol notifier.");
   srsran_assert(config.error_notifier != nullptr, "Invalid error notifier.");
+  srsran_assert(config.metrics_notifier != nullptr, "Invalid metrics notifier.");
 
   // Connect external interfaces.
   notification_adaptor.connect_timing_notifier(*config.timing_notifier);
   notification_adaptor.connect_rx_symbol_notifier(*config.rx_symbol_notifier);
   notification_adaptor.connect_error_notifier(*config.error_notifier);
+  notification_adaptor.connect_metrics_notifier(*config.metrics_notifier);
 
   // Connect internal adaptors.
   downlink_proc->connect(notification_adaptor.get_downlink_notifier(), notification_adaptor.get_pdxch_notifier());

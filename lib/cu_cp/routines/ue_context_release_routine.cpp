@@ -57,7 +57,9 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
 
     // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
     // complete message
-    release_context = ue_manager.find_du_ue(command.ue_index)->get_rrc_ue_notifier().get_rrc_ue_release_context();
+    release_context = ue_manager.find_du_ue(command.ue_index)
+                          ->get_rrc_ue_notifier()
+                          .get_rrc_ue_release_context(command.requires_rrc_release);
     release_complete.user_location_info = release_context.user_location_info;
   }
 
@@ -72,10 +74,12 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
 
   {
     // prepare F1AP UE Context Release Command and call F1AP notifier
-    f1ap_ue_context_release_cmd.ue_index        = command.ue_index;
-    f1ap_ue_context_release_cmd.cause           = ngap_to_f1ap_cause(command.cause);
-    f1ap_ue_context_release_cmd.rrc_release_pdu = release_context.rrc_release_pdu.copy();
-    f1ap_ue_context_release_cmd.srb_id          = release_context.srb_id;
+    f1ap_ue_context_release_cmd.ue_index = command.ue_index;
+    f1ap_ue_context_release_cmd.cause    = ngap_to_f1ap_cause(command.cause);
+    if (command.requires_rrc_release) {
+      f1ap_ue_context_release_cmd.rrc_release_pdu = release_context.rrc_release_pdu.copy();
+      f1ap_ue_context_release_cmd.srb_id          = release_context.srb_id;
+    }
 
     CORO_AWAIT_VALUE(f1ap_ue_context_release_result,
                      f1ap_ue_ctxt_notifier.on_ue_context_release_command(f1ap_ue_context_release_cmd));

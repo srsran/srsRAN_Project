@@ -55,6 +55,9 @@ public:
   /// \param[in] gain_dB Receive gain in dB.
   /// \return \c true if the operation is successful, \c false otherwise.
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
+
+  /// Prints RU specific metrics once.
+  virtual void print_metrics() = 0;
 };
 
 } // namespace srsran

@@ -314,6 +314,8 @@ struct upper_phy_config {
   task_executor* pusch_decoder_executor;
   /// PRACH task executor.
   task_executor* prach_executor;
+  /// SRS task executor.
+  task_executor* srs_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
 };

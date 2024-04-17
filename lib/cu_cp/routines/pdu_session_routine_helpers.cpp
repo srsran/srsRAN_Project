@@ -88,8 +88,9 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
+    const std::vector<drb_id_t>&                                       drb_to_remove,
     const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
-    const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
+    const std::vector<byte_buffer>&                                    nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               reestablish_srbs,
     bool                                                               reestablish_drbs,
@@ -142,18 +143,27 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
     }
 
-    for (const auto& drb_to_remove : pdu_session_to_add_mod.second.drb_to_remove) {
-      radio_bearer_config.drb_to_release_list.push_back(drb_to_remove);
+    // Remove DRB from a PDU session (PDU session itself still exists with out DRBs).
+    for (const auto& drb_id : pdu_session_to_add_mod.second.drb_to_remove) {
+      radio_bearer_config.drb_to_release_list.push_back(drb_id);
+    }
+  }
+
+  // Remove DRB (if not already) that are not associated with any PDU session anymore.
+  for (const auto& drb_id : drb_to_remove) {
+    if (std::any_of(radio_bearer_config.drb_to_release_list.begin(),
+                    radio_bearer_config.drb_to_release_list.end(),
+                    [drb_id](const auto& item) { return item == drb_id; })) {
+      // The DRB is already set to be removed.
+      continue;
     }
 
-    // append NAS PDUs as received by AMF
-    if (!nas_pdus.empty()) {
-      if (nas_pdus.find(pdu_session_to_add_mod.first) != nas_pdus.end()) {
-        if (!nas_pdus.at(pdu_session_to_add_mod.first).empty()) {
-          rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdus.at(pdu_session_to_add_mod.first).copy());
-        }
-      }
-    }
+    radio_bearer_config.drb_to_release_list.push_back(drb_id);
+  }
+
+  // append NAS PDUs as received by AMF
+  for (const auto& nas_pdu : nas_pdus) {
+    rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdu.copy());
   }
 
   if (update_keys) {

@@ -25,6 +25,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
+#include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 #include <utility>
@@ -151,7 +152,8 @@ class uplink_processor_impl : public uplink_processor
 public:
   uplink_processor_impl(std::unique_ptr<prach_detector>  prach_,
                         std::unique_ptr<pusch_processor> pusch_proc_,
-                        std::unique_ptr<pucch_processor> pucch_proc_);
+                        std::unique_ptr<pucch_processor> pucch_proc_,
+                        std::unique_ptr<srs_estimator>   srs_);
 
   // See interface for documentation.
   void process_prach(upper_phy_rx_results_notifier& notifier,
@@ -170,6 +172,10 @@ public:
                      const resource_grid_reader&    grid,
                      const pucch_pdu&               pdu) override;
 
+  // See interface for documentation.
+  void
+  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) override;
+
 private:
   /// Maximum number of PUSCH notifier adaptors.
   static constexpr unsigned max_nof_pusch_notifier_adaptors = 1024;
@@ -183,6 +189,8 @@ private:
   std::unique_ptr<pusch_processor> pusch_proc;
   /// PUCCH processor.
   std::unique_ptr<pucch_processor> pucch_proc;
+  /// SRS channel estimator.
+  std::unique_ptr<srs_estimator> srs;
   /// General PHY logger, used to notify pool failures.
   srslog::basic_logger& logger;
 };

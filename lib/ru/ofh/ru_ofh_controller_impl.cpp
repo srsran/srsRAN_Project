@@ -52,3 +52,8 @@ void ru_ofh_controller_impl::stop()
   }
   logger.info("Stopped the operation of the Open Fronthaul interface");
 }
+
+void ru_ofh_controller_impl::print_metrics()
+{
+  fmt::print("No statistics implemented.");
+}

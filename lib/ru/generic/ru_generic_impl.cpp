@@ -26,6 +26,7 @@ using namespace srsran;
 
 ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
   phy_err_printer(std::move(config.phy_err_printer)),
+  phy_metric_printer(std::move(config.phy_metrics_printer)),
   ru_rx_adapter(std::move(config.ru_rx_adapter)),
   ru_time_adapter(std::move(config.ru_time_adapter)),
   radio(std::move(config.radio)),
@@ -39,6 +40,14 @@ ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
         }
         return out;
       }(low_phy),
+      [](span<std::unique_ptr<phy_metrics_adapter>> metric_printers) {
+        std::vector<phy_metrics_adapter*> out;
+        for (auto& metric_printer : metric_printers) {
+          out.push_back(metric_printer.get());
+          srsran_assert(out.back(), "Invalid lower PHY metric printer");
+        }
+        return out;
+      }(phy_metric_printer),
       *radio,
       config.srate_MHz),
   ru_downlink_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {

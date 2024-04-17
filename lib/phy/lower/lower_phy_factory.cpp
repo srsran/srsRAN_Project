@@ -142,7 +142,6 @@ public:
     dl_proc_config.center_frequency_Hz     = sector.dl_freq_hz;
     dl_proc_config.nof_tx_ports            = sector.nof_tx_ports;
     dl_proc_config.nof_slot_tti_in_advance = config.max_processing_delay_slots;
-    dl_proc_config.logger                  = config.logger;
 
     // Create downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> dl_proc = downlink_proc_factory->create(dl_proc_config);
@@ -196,6 +195,7 @@ public:
     lower_phy_config.rx_symbol_notifier = config.rx_symbol_notifier;
     lower_phy_config.timing_notifier    = config.timing_notifier;
     lower_phy_config.error_notifier     = config.error_notifier;
+    lower_phy_config.metrics_notifier   = config.metric_notifier;
 
     return std::make_unique<lower_phy_impl>(lower_phy_config);
   }

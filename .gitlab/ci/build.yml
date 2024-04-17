@@ -1777,6 +1777,8 @@ basic avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 2 hours
   retry: 2
   interruptible: false
   variables:

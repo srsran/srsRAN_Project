@@ -30,6 +30,7 @@
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -214,4 +215,42 @@ TEST_F(du_high_tester, when_ue_context_setup_received_for_inexistent_ue_then_ue_
   ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, (unsigned)cu_ue_id);
   ASSERT_TRUE(resp->c_rnti_present);
   ASSERT_TRUE(is_crnti(to_rnti(resp->c_rnti)));
+}
+
+TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_then_drbs_are_removed)
+{
+  // Create UE.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  // CU-UP forwards many DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
+  pdcp_tx_pdu    f1u_pdu{byte_buffer::create(test_rgen::random_vector<uint8_t>(pdcp_pdu_size)).value(), nullopt};
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
+  }
+
+  // DU receives F1AP UE Context Modification Command.
+  cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message msg = generate_ue_context_modification_request({}, {drb_id_t::drb1});
+  this->du_hi->get_f1ap_message_handler().handle_message(msg);
+
+  // Wait for DU to send F1AP UE Context Modification Response.
+  this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+
+  const f1ap_message& f1ap_pdu = cu_notifier.last_f1ap_msgs.back();
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, f1ap_pdu_c::types::options::successful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.successful_outcome().proc_code, ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  const ue_context_mod_resp_s& resp = f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_TRUE(resp->du_to_cu_rrc_info_present);
+  ASSERT_FALSE(resp->du_to_cu_rrc_info.cell_group_cfg.empty());
+  {
+    asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
+    asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
+    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::SRSASN_SUCCESS);
+    ASSERT_EQ(cell_grp_cfg.rlc_bearer_to_release_list.size(), 1);
+    ASSERT_EQ(cell_grp_cfg.rlc_bearer_to_release_list[0], 4) << "DRB1 with LCID=4 should have been removed";
+  }
 }

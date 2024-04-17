@@ -296,10 +296,10 @@ public:
     return rrc_ue_handler->handle_handover_reconfiguration_complete_expected(transaction_id);
   }
 
-  rrc_ue_release_context get_rrc_ue_release_context() override
+  rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->get_rrc_ue_release_context();
+    return rrc_ue_handler->get_rrc_ue_release_context(requires_rrc_msg);
   }
 
   rrc_ue_transfer_context get_transfer_context() override

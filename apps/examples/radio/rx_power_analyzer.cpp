@@ -45,6 +45,7 @@
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/file_sink.h"
 #include <csignal>
+#include <getopt.h>
 #include <random>
 
 using namespace srsran;

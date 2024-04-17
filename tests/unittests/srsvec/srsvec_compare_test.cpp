@@ -83,8 +83,6 @@ static void test_max_f(std::size_t N)
 
 static void test_max_f_same(std::size_t N)
 {
-  std::uniform_real_distribution<float> dist(-1.0, 1.0);
-
   srsvec::aligned_vec<float> x(N);
   std::fill(x.begin(), x.end(), 0);
 
@@ -94,14 +92,32 @@ static void test_max_f_same(std::size_t N)
   TESTASSERT_EQ(0.0, result.second);
 }
 
+static void test_count_if_part_abs_greater_than(std::size_t N)
+{
+  float                                 threshold = 0.5;
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  srsvec::aligned_vec<cf_t> x(N);
+  std::generate(x.begin(), x.end(), [&dist]() { return cf_t{dist(rgen), dist(rgen)}; });
+
+  unsigned result = srsvec::count_if_part_abs_greater_than(x, threshold);
+
+  unsigned expected = std::count_if(x.begin(), x.end(), [threshold](cf_t sample) {
+    return (std::abs(sample.real()) > threshold) || (std::abs(sample.imag()) > threshold);
+  });
+
+  TESTASSERT_EQ(expected, result);
+}
+
 int main()
 {
-  std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 65, 130, 257};
+  std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 65, 130, 257, 1234};
 
   for (std::size_t N : sizes) {
     test_max_abs_ccc(N);
     test_max_abs_ccc_same(N);
     test_max_f(N);
     test_max_f_same(N);
+    test_count_if_part_abs_greater_than(N);
   }
 }

@@ -21,11 +21,13 @@
 
 set(SOURCES
         common/e1ap_asn1_packer.cpp
+        common/log_helpers.cpp
         cu_cp/e1ap_cu_cp_factory.cpp
         cu_cp/e1ap_cu_cp_impl.cpp
         cu_cp/procedures/bearer_context_setup_procedure.cpp
         cu_cp/procedures/bearer_context_release_procedure.cpp
         cu_cp/procedures/bearer_context_modification_procedure.cpp
+        cu_cp/ue_context/e1ap_cu_cp_ue_context.cpp
         cu_up/e1ap_cu_up_factory.cpp
         cu_up/e1ap_cu_up_impl.cpp
         cu_up/e1ap_cu_up_connection_handler.cpp

@@ -166,11 +166,21 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
       variant_get<e2sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
       variant_get<e2sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
-  ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_ue_id().amf_ue_ngap_id;
+  switch (ctrl_hdr.ue_id.type()) {
+    case ue_id_c::types_opts::gnb_ue_id:
+      ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_ue_id().amf_ue_ngap_id;
+      break;
+    case ue_id_c::types_opts::gnb_du_ue_id:
+      ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id;
+      break;
+    default:
+      ctrl_config.ue_id = 0;
+      break;
+  }
+
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
-      parse_ran_parameter_value(
-          ran_p.ran_param_value_type, ran_p.ran_param_id, ctrl_hdr.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id, ctrl_config);
+      parse_ran_parameter_value(ran_p.ran_param_value_type, ran_p.ran_param_id, ctrl_config.ue_id, ctrl_config);
     }
     if (ctrl_config.param_list.empty()) {
       return {};
@@ -193,10 +203,6 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
                                                      .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
 
   // TODO: fill outcome properly
-  e2sm_rc_ctrl_outcome_format1_item_s test_outcome;
-  test_outcome.ran_param_id                    = 1;
-  test_outcome.ran_param_value.set_value_int() = 100;
-  ctrl_outcome.ran_p_list.push_back(test_outcome);
   control_config_params req = du_config_req_.param_list[0];
   if (req.min_prb_alloc.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;

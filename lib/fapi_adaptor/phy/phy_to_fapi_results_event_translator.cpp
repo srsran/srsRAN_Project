@@ -516,3 +516,8 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
 
   data_notifier.get().on_uci_indication(msg);
 }
+
+void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_results& result)
+{
+  // TBD.
+}

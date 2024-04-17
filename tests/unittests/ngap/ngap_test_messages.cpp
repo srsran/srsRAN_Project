@@ -533,8 +533,7 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_release_response(pdu_sess
 
   pdu_session_res_released_item_rel_res.pdu_session_id = pdu_session_id;
 
-  pdu_session_res_release_resp.pdu_session_res_released_list_rel_res.emplace(pdu_session_id,
-                                                                             pdu_session_res_released_item_rel_res);
+  pdu_session_res_release_resp.released_pdu_sessions.emplace(pdu_session_id, pdu_session_res_released_item_rel_res);
 
   return pdu_session_res_release_resp;
 }

@@ -158,7 +158,6 @@ protected:
     config.bandwidth_prb       = dist_bandwidth_prb(rgen);
     config.center_frequency_Hz = dist_center_freq_Hz(rgen);
     config.nof_tx_ports        = nof_tx_ports;
-    config.logger              = &srslog::fetch_basic_logger("PHY");
 
     // Create processor.
     dl_processor = dl_proc_factory->create(config);
@@ -226,7 +225,6 @@ protected:
     config.bandwidth_prb       = MAX_RB;
     config.center_frequency_Hz = 3.5e6;
     config.nof_tx_ports        = nof_tx_ports;
-    config.logger              = &srslog::fetch_basic_logger("PHY");
 
     // Create processor.
     dl_processor = dl_proc_factory->create(config);

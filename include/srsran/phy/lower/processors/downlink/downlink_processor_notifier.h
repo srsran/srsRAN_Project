@@ -21,10 +21,12 @@
  */
 
 #pragma once
+
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
+struct lower_phy_baseband_metrics;
 struct lower_phy_timing_context;
 struct resource_grid_context;
 
@@ -42,6 +44,9 @@ public:
   /// See \ref lower_phy_timing_notifier::on_tti_boundary for more information.
   /// \param[in] context Notification context.
   virtual void on_tti_boundary(const lower_phy_timing_context& context) = 0;
+
+  /// \brief Notifies a new measurement of downlink baseband metrics.
+  virtual void on_new_metrics(const lower_phy_baseband_metrics& metrics) = 0;
 };
 
 } // namespace srsran

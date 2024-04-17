@@ -25,6 +25,7 @@
 #include "channel_processors/prach_detector_test_doubles.h"
 #include "channel_processors/pucch_processor_test_doubles.h"
 #include "channel_processors/pusch/pusch_processor_test_doubles.h"
+#include "signal_processors/srs/srs_estimator_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include <gtest/gtest.h>
@@ -38,8 +39,9 @@ TEST(UplinkProcessor, calling_process_prach_enqueue_task)
   const prach_detector_spy&         prach_spy  = *prach;
   auto                              pusch_proc = std::make_unique<pusch_processor_dummy>();
   auto                              pucch_proc = std::make_unique<pucch_processor_dummy>();
+  auto                              srs        = std::make_unique<srs_estimator_dummy>();
   upper_phy_rx_results_notifier_spy results_notifier;
-  uplink_processor_impl             ul_processor(std::move(prach), std::move(pusch_proc), std::move(pucch_proc));
+  uplink_processor_impl ul_processor(std::move(prach), std::move(pusch_proc), std::move(pucch_proc), std::move(srs));
 
   prach_buffer_spy buffer;
   ul_processor.process_prach(results_notifier, buffer, {});
@@ -53,8 +55,10 @@ TEST(UplinkProcessor, after_detect_prach_is_executed_results_notifier_is_called)
   upper_phy_rx_results_notifier_spy results_notifier;
   auto                              pusch_proc = std::make_unique<pusch_processor_dummy>();
   auto                              pucch_proc = std::make_unique<pucch_processor_dummy>();
+  auto                              srs        = std::make_unique<srs_estimator_dummy>();
 
-  uplink_processor_impl ul_processor(std::move(prach_spy), std::move(pusch_proc), std::move(pucch_proc));
+  uplink_processor_impl ul_processor(
+      std::move(prach_spy), std::move(pusch_proc), std::move(pucch_proc), std::move(srs));
 
   prach_buffer_spy buffer;
   ul_processor.process_prach(results_notifier, buffer, {});

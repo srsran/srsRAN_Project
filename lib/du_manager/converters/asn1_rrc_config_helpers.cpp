@@ -3043,6 +3043,38 @@ void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
           : asn1::rrc_nr::phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::semi_static;
 }
 
+static ssb_mtc_s make_ssb_mtc(const du_cell_config& du_cell_cfg)
+{
+  ssb_mtc_s ret;
+
+  // TODO: Derive the correct duration.
+  switch (du_cell_cfg.ssb_cfg.ssb_period) {
+    case ssb_periodicity::ms5:
+      ret.periodicity_and_offset.set_sf5() = 0;
+      break;
+    case ssb_periodicity::ms10:
+      ret.periodicity_and_offset.set_sf10() = 0;
+      break;
+    case ssb_periodicity::ms20:
+      ret.periodicity_and_offset.set_sf20() = 0;
+      break;
+    case ssb_periodicity::ms40:
+      ret.periodicity_and_offset.set_sf40() = 0;
+      break;
+    case ssb_periodicity::ms80:
+      ret.periodicity_and_offset.set_sf80() = 0;
+      break;
+    case ssb_periodicity::ms160:
+      ret.periodicity_and_offset.set_sf160() = 0;
+      break;
+    default:
+      report_fatal_error("Invalud SSB period={}", du_cell_cfg.ssb_cfg.ssb_period);
+  }
+  ret.dur.value = ssb_mtc_s::dur_opts::sf5;
+
+  return ret;
+}
+
 bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
                                                        const du_cell_config&               du_cell_cfg,
                                                        const cell_group_config&            dest,
@@ -3111,6 +3143,10 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
   out.new_ue_id = to_value(rnti);
 
   out.t304.value = recfg_with_sync_s::t304_opts::ms2000;
+
+  out.ext = true;
+  out.smtc.set_present();
+  *out.smtc = make_ssb_mtc(du_cell_cfg);
 
   // TODO
 

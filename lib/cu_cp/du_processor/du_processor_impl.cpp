@@ -395,7 +395,7 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   return routine_mng->start_pdu_session_resource_release_routine(
-      msg, ngap_ctrl_notifier, task_sched, ue->get_up_resource_manager());
+      msg, ngap_ctrl_notifier, ue->get_rrc_ue_notifier(), task_sched, ue->get_up_resource_manager());
 }
 
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)

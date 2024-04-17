@@ -89,7 +89,7 @@ inline std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
 
   // Create amplitude control factory.
   std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
-  if (config.logger->debug.enabled() || config.amplitude_config.enable_clipping) {
+  if (config.amplitude_config.enable_clipping) {
     amplitude_control_factory = create_amplitude_controller_clipping_factory(config.amplitude_config);
   } else {
     amplitude_control_factory = create_amplitude_controller_scaling_factory(config.amplitude_config.input_gain_dB);

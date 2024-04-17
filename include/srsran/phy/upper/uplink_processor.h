@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
+#include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/uplink_processor_context.h"
 
@@ -37,6 +38,7 @@ class prach_buffer;
 struct prach_buffer_context;
 class slot_point;
 class upper_phy_rx_results_notifier;
+struct srs_estimator_configuration;
 
 /// \brief Uplink processor interface.
 ///
@@ -60,7 +62,7 @@ public:
 
   /// PUCCH PDU configuration.
   struct pucch_pdu {
-    /// PUCCH context;
+    /// PUCCH context.
     ul_pucch_context context;
     // :TODO: the formats will use a variant when available.
     /// PUCCH format 0.
@@ -73,6 +75,14 @@ public:
     pucch_processor::format3_configuration format3;
     /// PUCCH format 4.
     pucch_processor::format4_configuration format4;
+  };
+
+  /// Sounding Reference Signals PDU configuration.
+  struct srs_pdu {
+    /// SRS context.
+    ul_srs_context context;
+    /// Actual SRS channel estimator configuration.
+    srs_estimator_configuration config;
   };
 
   virtual ~uplink_processor() = default;
@@ -117,6 +127,17 @@ public:
   /// \param[in] pdu      PUCCH transmission parameters.
   virtual void
   process_pucch(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const pucch_pdu& pdu) = 0;
+
+  /// \brief Processes Sounding Reference Signals.
+  ///
+  /// The Sounding Reference Signal channel estimation results will be notified by the upper_phy_rx_results_notifier
+  /// with event \ref upper_phy_rx_results_notifier::on_new_srs_results
+  ///
+  /// \param[in] notifier Receive results notifier.
+  /// \param[in] grid     UL resource grid containing the SRS RE.
+  /// \param[in] pdu      SRS configuration parameters.
+  virtual void
+  process_srs(upper_phy_rx_results_notifier& notifier, const resource_grid_reader& grid, const srs_pdu& pdu) = 0;
 };
 
 /// Uplink processor validation interface.
@@ -152,7 +173,11 @@ public:
 
   /// \brief Validates PUSCH configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const pusch_processor::pdu_t& pdu) const = 0;
+  virtual bool is_valid(const pusch_processor::pdu_t& config) const = 0;
+
+  /// \brief Validates Sounding Reference Signals channel estimator configuration.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const srs_estimator_configuration& config) = 0;
 };
 
 /// \brief Pool of uplink processors.

@@ -41,8 +41,6 @@ public:
 
   std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config) override
   {
-    srsran_assert(config.logger, "Invalid logger.");
-
     pdxch_processor_configuration pdxch_proc_config;
     pdxch_proc_config.cp             = config.cp;
     pdxch_proc_config.scs            = config.scs;
@@ -58,7 +56,6 @@ public:
     baseband_config.rate                    = config.rate;
     baseband_config.nof_tx_ports            = config.nof_tx_ports;
     baseband_config.nof_slot_tti_in_advance = config.nof_slot_tti_in_advance;
-    baseband_config.logger                  = config.logger;
 
     return std::make_unique<downlink_processor_impl>(
         pdxch_proc_factory->create(pdxch_proc_config), amplitude_control_factory->create(), baseband_config);

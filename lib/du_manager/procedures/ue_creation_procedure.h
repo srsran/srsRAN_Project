@@ -36,8 +36,11 @@ namespace srs_du {
 struct du_ue_creation_request {
   du_ue_index_t   ue_index;
   du_cell_index_t pcell_index;
-  rnti_t          tc_rnti;
-  byte_buffer     ul_ccch_msg;
+  /// \brief Currently allocated TC-RNTI for the UE in the MAC. In case the UE does not have a TC-RNTI (e.g. UE created
+  /// by upper layers during Handover), the value should be INVALID_RNTI.
+  rnti_t tc_rnti;
+  /// \brief UL-CCCH message received from the UE in Msg3. Empty if the UE is created by upper layers.
+  byte_buffer ul_ccch_msg;
 };
 
 /// \brief Handles the creation of a UE and respective bearers in the DU UE manager, MAC, F1.

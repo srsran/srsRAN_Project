@@ -33,6 +33,7 @@
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_metrics_notifier.h"
 #include "srsran/phy/lower/lower_phy_request_handler.h"
 #include "srsran/phy/lower/lower_phy_rg_handler.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
@@ -63,6 +64,8 @@ public:
     lower_phy_timing_notifier* timing_notifier;
     /// Error handler to notify runtime errors.
     lower_phy_error_notifier* error_notifier;
+    /// Metrics handler to notify metrics.
+    lower_phy_metrics_notifier* metrics_notifier;
   };
 
   /// Constructs a generic lower physical layer.

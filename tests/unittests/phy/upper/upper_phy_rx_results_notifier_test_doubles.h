@@ -40,6 +40,8 @@ public:
   void on_new_pucch_results(const ul_pucch_results& result) override {}
 
   bool has_prach_result_been_notified() const { return prach_results_notified; }
+
+  void on_new_srs_results(const ul_srs_results& result) override {}
 };
 
 } // namespace srsran

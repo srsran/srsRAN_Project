@@ -23,24 +23,18 @@
 #pragma once
 
 #include "e1ap_bearer_transaction_manager.h"
+#include "e1ap_ue_ids.h"
 #include "e1ap_ue_logger.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/e1ap/common/e1ap_types.h"
-#include "srsran/srslog/srslog.h"
-#include "srsran/support/srsran_assert.h"
 #include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
 
-struct e1ap_ue_ids {
-  ue_index_t                   ue_index         = ue_index_t::invalid;
-  const gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
-  gnb_cu_up_ue_e1ap_id_t       cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid;
-};
-
-struct e1ap_ue_context {
+/// \brief E1AP UE context.
+class e1ap_ue_context
+{
+public:
   e1ap_ue_ids ue_ids;
 
   e1ap_bearer_transaction_manager bearer_ev_mng;
@@ -51,8 +45,21 @@ struct e1ap_ue_context {
     ue_ids({ue_index_, cu_cp_ue_e1ap_id_}), bearer_ev_mng(timers_), logger("CU-CP-E1", {ue_index_, cu_cp_ue_e1ap_id_})
   {
   }
+
+  const e1ap_ue_ids& get_ue_ids() const { return ue_ids; }
+
+  void update_cu_up_ue_e1ap_id(gnb_cu_up_ue_e1ap_id_t up_ue_id)
+  {
+    srsran_assert(up_ue_id != gnb_cu_up_ue_e1ap_id_t::invalid, "Invalid cu_up_ue_e1ap_id={}", up_ue_id);
+    ue_ids.cu_up_ue_e1ap_id = up_ue_id;
+
+    // Update prefix logger.
+    logger.set_prefix({ue_ids.ue_index, ue_ids.cu_cp_ue_e1ap_id, ue_ids.cu_up_ue_e1ap_id});
+    logger.log_debug("Updated CU-UP-E1AP-ID");
+  }
 };
 
+/// \brief List of E1AP UE Contexts in the CU-CP for a given CU-UP.
 class e1ap_ue_context_list
 {
 public:
@@ -61,6 +68,7 @@ public:
   {
   }
 
+  /// \brief Checks whether a UE with the given CU-CP-UE-E1AP-ID exists.
   bool contains(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const { return ues.find(cu_cp_ue_e1ap_id) != ues.end(); }
 
   /// \brief Checks whether a UE with the given UE Index exists.
@@ -76,6 +84,24 @@ public:
       return false;
     }
     return true;
+  }
+
+  /// \brief Search for a UE based on its CU-CP-UE-E1AP-ID.
+  const e1ap_ue_context* find_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
+  {
+    auto it = ues.find(cu_cp_ue_e1ap_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+  e1ap_ue_context* find_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
+  {
+    auto it = ues.find(cu_cp_ue_e1ap_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
   }
 
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
@@ -95,148 +121,28 @@ public:
     return ues.at(ue_index_to_ue_e1ap_id.at(ue_index));
   }
 
-  e1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
-  {
-    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-    srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid, "Invalid cu_cp_ue_e1ap_id={}", cu_cp_ue_e1ap_id);
+  /// \brief Create new UE E1AP Context.
+  e1ap_ue_context* add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id);
 
-    logger.debug("ue={} cu_cp_ue_e1ap_id={}: Adding E1AP UE context", ue_index, cu_cp_ue_e1ap_id);
-    ues.emplace(std::piecewise_construct,
-                std::forward_as_tuple(cu_cp_ue_e1ap_id),
-                std::forward_as_tuple(ue_index, cu_cp_ue_e1ap_id, timers));
-    ue_index_to_ue_e1ap_id.emplace(ue_index, cu_cp_ue_e1ap_id);
-    return ues.at(cu_cp_ue_e1ap_id);
-  }
-
-  void add_cu_up_ue_e1ap_id(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id, gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
-  {
-    srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid, "Invalid ={}", cu_cp_ue_e1ap_id);
-    srsran_assert(cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid, "Invalid cu_up_ue_e1ap_id={}", cu_up_ue_e1ap_id);
-    srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: E1AP UE context not found", cu_cp_ue_e1ap_id);
-
-    auto& ue = ues.at(cu_cp_ue_e1ap_id);
-    ue.logger.log_debug("Adding cu_up_ue_e1ap_id={}", cu_up_ue_e1ap_id);
-    ue.ue_ids.cu_up_ue_e1ap_id = cu_up_ue_e1ap_id;
-
-    ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_cp_ue_e1ap_id, ue.ue_ids.cu_up_ue_e1ap_id});
-  }
-
-  void remove_ue(ue_index_t ue_index)
-  {
-    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-
-    if (ue_index_to_ue_e1ap_id.find(ue_index) == ue_index_to_ue_e1ap_id.end()) {
-      logger.warning("ue={}: GNB-CU-CP-UE-E1AP-ID not found", ue_index);
-      return;
-    }
-
-    // Remove UE from lookup
-    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
-    ue_index_to_ue_e1ap_id.erase(ue_index);
-
-    if (ues.find(cu_cp_ue_e1ap_id) == ues.end()) {
-      logger.warning("cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
-      return;
-    }
-
-    ues.at(cu_cp_ue_e1ap_id).logger.log_debug("Removing UE context");
-    ues.erase(cu_cp_ue_e1ap_id);
-  }
+  /// Remove existing E1AP UE Context.
+  void remove_ue(ue_index_t ue_index);
 
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available GNB-CU-CP-E1AP-UE-ID.
-  gnb_cu_cp_ue_e1ap_id_t allocate_gnb_cu_cp_ue_e1ap_id()
-  {
-    if (ue_index_to_ue_e1ap_id.size() == max_nof_supported_ues) {
-      return gnb_cu_cp_ue_e1ap_id_t::invalid;
-    }
+  gnb_cu_cp_ue_e1ap_id_t allocate_gnb_cu_cp_ue_e1ap_id();
 
-    // Check if the next_cu_cp_ue_e1ap_id is available
-    if (ues.find(next_cu_cp_ue_e1ap_id) == ues.end()) {
-      gnb_cu_cp_ue_e1ap_id_t ret = next_cu_cp_ue_e1ap_id;
-      // increase the next cu-cp ue e1ap id
-      increase_next_cu_cp_ue_e1ap_id();
-      return ret;
-    }
-
-    // Find holes in the allocated IDs by iterating over all ids starting with the next_cu_cp_ue_e1ap_id to find the
-    // available id
-    while (true) {
-      // Only iterate over ue_index_to_ue_e1ap_id (size=MAX NOF CU UEs)
-      // to avoid iterating over all possible values of gnb_cu_cp_ue_e1ap_id_t (size=2^32-1)
-      auto it = std::find_if(ue_index_to_ue_e1ap_id.begin(), ue_index_to_ue_e1ap_id.end(), [this](auto& u) {
-        return u.second == next_cu_cp_ue_e1ap_id;
-      });
-
-      // return the id if it is not already used
-      if (it == ue_index_to_ue_e1ap_id.end()) {
-        gnb_cu_cp_ue_e1ap_id_t ret = next_cu_cp_ue_e1ap_id;
-        // increase the next cu-cp ue e1ap id
-        increase_next_cu_cp_ue_e1ap_id();
-        return ret;
-      }
-
-      // increase the next cu-cp ue e1ap id and try again
-      increase_next_cu_cp_ue_e1ap_id();
-    }
-
-    return gnb_cu_cp_ue_e1ap_id_t::invalid;
-  }
-
-  void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
-  {
-    srsran_assert(new_ue_index != ue_index_t::invalid, "Invalid new_ue_index={}", new_ue_index);
-    srsran_assert(old_ue_index != ue_index_t::invalid, "Invalid old_ue_index={}", old_ue_index);
-    srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "ue={}: GNB-CU-CP-UE-E1AP-ID not found",
-                  old_ue_index);
-
-    // no need to update if the ue indexes are equal
-    if (new_ue_index == old_ue_index) {
-      return;
-    }
-
-    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(old_ue_index);
-
-    srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
-
-    // Update UE context
-    ues.at(cu_cp_ue_e1ap_id).ue_ids.ue_index = new_ue_index;
-
-    // Update lookup
-    ue_index_to_ue_e1ap_id.emplace(new_ue_index, cu_cp_ue_e1ap_id);
-    ue_index_to_ue_e1ap_id.erase(old_ue_index);
-
-    // Update logger
-    ues.at(cu_cp_ue_e1ap_id)
-        .logger.set_prefix({ues.at(cu_cp_ue_e1ap_id).ue_ids.ue_index,
-                            ues.at(cu_cp_ue_e1ap_id).ue_ids.cu_cp_ue_e1ap_id,
-                            ues.at(cu_cp_ue_e1ap_id).ue_ids.cu_up_ue_e1ap_id});
-
-    ues.at(cu_cp_ue_e1ap_id).logger.log_debug("Updated UE index from ue_index={}", old_ue_index);
-  }
-
-protected:
-  gnb_cu_cp_ue_e1ap_id_t next_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::min;
+  /// \brief Transfer E1AP UE context to new CU-CP specific UE index.
+  void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index);
 
 private:
+  gnb_cu_cp_ue_e1ap_id_t next_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::min;
+
   timer_factory         timers;
   unsigned              max_nof_supported_ues = MAX_NOF_CU_UES;
   srslog::basic_logger& logger;
 
-  inline void increase_next_cu_cp_ue_e1ap_id()
-  {
-    if (next_cu_cp_ue_e1ap_id == gnb_cu_cp_ue_e1ap_id_t::max) {
-      // reset cu-cp ue e1ap id counter
-      next_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::min;
-    } else {
-      // increase cu-cp ue e1ap id counter
-      next_cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(gnb_cu_cp_ue_e1ap_id_to_uint(next_cu_cp_ue_e1ap_id) + 1);
-    }
-  }
+  void increase_next_cu_cp_ue_e1ap_id();
 
   std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context> ues;                    // indexed by gnb_cu_cp_ue_e1ap_id
   std::unordered_map<ue_index_t, gnb_cu_cp_ue_e1ap_id_t>      ue_index_to_ue_e1ap_id; // indexed by ue_index

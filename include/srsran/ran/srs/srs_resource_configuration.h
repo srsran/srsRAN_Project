@@ -132,6 +132,27 @@ struct srs_resource_configuration {
   ///
   /// The periodicity and offset are given by the higher layer parameter \e resourceType.
   optional<periodicity_and_offset> periodicity;
+
+  /// \brief Determines if frequency hopping is enabled.
+  ///
+  /// Frequency hopping is enabled if \f$b_{hop}<B_{SRS}\f$. Otherwise, it is disabled.
+  bool has_frequency_hopping() const { return freq_hopping < bandwidth_index; }
+
+  /// \brief Checks the resource parameter combination is valid.
+  bool is_valid() const
+  {
+    // Make sure the comb offset is according to the comb size.
+    if (comb_offset >= static_cast<uint8_t>(comb_size)) {
+      return false;
+    }
+
+    // The cyclic shift must not exceed 7 when the comb size is 2.
+    if ((comb_size == comb_size_enum::two) && (cyclic_shift > 7)) {
+      return false;
+    }
+
+    return true;
+  }
 };
 
 } // namespace srsran

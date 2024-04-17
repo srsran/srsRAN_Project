@@ -40,7 +40,8 @@ public:
   ///
   /// \param[in] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.
-  virtual void process_symbol(const baseband_gateway_buffer_reader& samples,
+  /// \return \c true if the signal is processed, \c false otherwise.
+  virtual bool process_symbol(const baseband_gateway_buffer_reader& samples,
                               const lower_phy_rx_symbol_context&    context) = 0;
 };
 

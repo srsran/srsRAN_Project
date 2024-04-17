@@ -67,7 +67,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_added_then_ue_exists)
   ue_index_t             ue_index         = generate_random_ue_index();
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
 
-  ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id);
+  ASSERT_NE(ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id), nullptr);
 
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
   ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
@@ -85,9 +85,10 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_not_added_then_ue_doesnt_exist)
 
   ASSERT_FALSE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
   ASSERT_FALSE(ue_ctxt_list.contains(ue_index));
+  ASSERT_EQ(ue_ctxt_list.find_ue(cu_cp_ue_e1ap_id), nullptr);
 }
 
-TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_ue_not_added)
+TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_added_then_ue_not_added)
 {
   // Add maximum number of supported UEs
   e1ap_logger.set_level(srslog::basic_levels::error);
@@ -96,8 +97,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_addeded_then_u
     ASSERT_NE(cu_cp_ue_e1ap_id, gnb_cu_cp_ue_e1ap_id_t::invalid);
     ue_index_t ue_index = uint_to_ue_index(it);
 
-    ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id);
-
+    ASSERT_NE(ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id), nullptr);
     ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
     ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
   }
@@ -112,7 +112,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_removal_succeeds)
   ue_index_t             ue_index         = generate_random_ue_index();
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
 
-  ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id);
+  ASSERT_NE(ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id), nullptr);
 
   ue_ctxt_list.remove_ue(ue_index);
 
@@ -125,7 +125,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_index_is_old_ue_index_then_ue_index_n
   ue_index_t             old_ue_index     = generate_random_ue_index();
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
 
-  ue_ctxt_list.add_ue(old_ue_index, cu_cp_ue_e1ap_id);
+  ASSERT_NE(ue_ctxt_list.add_ue(old_ue_index, cu_cp_ue_e1ap_id), nullptr);
 
   // new ue index to update
   ue_index_t ue_index = old_ue_index;
@@ -135,11 +135,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_index_is_old_ue_index_then_ue_index_n
 
   ASSERT_TRUE(ue_ctxt_list.contains(old_ue_index));
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
-
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, old_ue_index);
-  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_ids.ue_index, old_ue_index);
+  ASSERT_EQ(&ue_ctxt_list[old_ue_index], &ue_ctxt_list[cu_cp_ue_e1ap_id]);
 }
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
@@ -147,7 +143,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
   ue_index_t             old_ue_index     = generate_random_ue_index();
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
 
-  ue_ctxt_list.add_ue(old_ue_index, cu_cp_ue_e1ap_id);
+  ASSERT_NE(ue_ctxt_list.add_ue(old_ue_index, cu_cp_ue_e1ap_id), nullptr);
 
   // new ue index to update
   ue_index_t ue_index = generate_random_ue_index();
@@ -163,9 +159,7 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
   ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
   ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
   ASSERT_FALSE(ue_ctxt_list.contains(old_ue_index));
-
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
-  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, ue_index);
+  ASSERT_EQ(&ue_ctxt_list[ue_index], &ue_ctxt_list[cu_cp_ue_e1ap_id]);
   ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
   ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.ue_index, ue_index);
 }

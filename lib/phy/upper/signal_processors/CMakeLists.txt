@@ -23,6 +23,7 @@ set(SOURCES
         pucch/dmrs_pucch_processor_format2_impl.cpp
         srs/srs_estimator_factory.cpp
         srs/srs_estimator_generic_impl.cpp
+        srs/srs_validator_generic_impl.cpp
         dmrs_pbch_processor_impl.cpp
         dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
@@ -32,10 +33,10 @@ set(SOURCES
         signal_processor_factories.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
-        )
+)
 
 add_library(srsran_signal_processors STATIC ${SOURCES})
-target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_generic_funcs )
+target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_generic_funcs)
 
 install(TARGETS srsran_signal_processors
         EXPORT srsran_export)

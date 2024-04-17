@@ -76,7 +76,7 @@ struct mac_ue_create_request {
   std::vector<mac_logical_channel_config> bearers;
   mac_cell_group_config                   mac_cell_group_cfg;
   physical_cell_group_config              phy_cell_group_cfg;
-  const byte_buffer*                      ul_ccch_msg;
+  const byte_buffer*                      ul_ccch_msg = nullptr;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

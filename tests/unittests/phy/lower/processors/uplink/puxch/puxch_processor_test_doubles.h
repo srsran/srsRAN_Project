@@ -42,13 +42,14 @@ public:
     lower_phy_rx_symbol_context       context;
   };
 
-  void process_symbol(const baseband_gateway_buffer_reader& samples,
+  bool process_symbol(const baseband_gateway_buffer_reader& samples,
                       const lower_phy_rx_symbol_context&    context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
     entry.samples  = samples;
     entry.context  = context;
+    return true;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

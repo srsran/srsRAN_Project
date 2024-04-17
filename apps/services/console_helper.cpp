@@ -357,6 +357,10 @@ void console_helper::handle_command(const std::string& command)
   } else if (arg_list.front() == "log") {
     arg_list.pop_front();
     handle_log_command(arg_list);
+  } else if (arg_list.front() == "ru_metrics") {
+    if (radio_controller.has_value()) {
+      radio_controller.value()->print_metrics();
+    }
   } else if (arg_list.front() == "sleep") {
     arg_list.pop_front();
     handle_sleep_command(arg_list);
@@ -379,6 +383,7 @@ void console_helper::print_help()
   fmt::print("\t                       Allowed channels are: {}\n", span<const std::string>(dynamic_log_channels));
   fmt::print("\t                       Note: Certain log messages might not be available if they depend on\n");
   fmt::print("\t                       logging decorators that are not instanced with the initial log level.\n");
+  fmt::print("\tru_metrics:            Prints RU metrics once.\n");
   fmt::print("\tsleep <seconds>:       stops the execution of console sequential commands for the specified time\n");
   fmt::print("\tho <serving pci> <rnti> <target pci>: force UE handover\n");
   fmt::print("\n");

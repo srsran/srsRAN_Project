@@ -51,6 +51,10 @@ void srs_estimator_generic_impl::extract_sequence(span<cf_t>                  se
 srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_reader&        grid,
                                                           const srs_estimator_configuration& config)
 {
+  srsran_assert(!config.resource.has_frequency_hopping(), "Frequency hopping is not supported.");
+  srsran_assert(config.resource.is_valid(), "Invalid SRS resource.");
+  srsran_assert(!config.ports.empty(), "Receive port list is empty.");
+
   unsigned nof_symbols          = static_cast<unsigned>(config.resource.nof_symbols);
   unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   srsran_assert(config.resource.start_symbol.value() + nof_symbols <= nof_symbols_per_slot,

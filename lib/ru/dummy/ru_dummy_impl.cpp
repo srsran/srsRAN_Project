@@ -92,6 +92,11 @@ void ru_dummy_impl::stop()
   }
 }
 
+void ru_dummy_impl::print_metrics()
+{
+  fmt::print("No statistics implemented.");
+}
+
 void ru_dummy_impl::loop()
 {
   // Check stop condition.

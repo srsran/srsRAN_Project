@@ -554,20 +554,6 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
 
   ue_ctxt.logger.log_info("Received PduSessionResourceReleaseCommand");
 
-  // Handle optional NAS PDU
-  if (command->nas_pdu_present) {
-    byte_buffer nas_pdu;
-    if (!nas_pdu.resize(command->nas_pdu.size())) {
-      ue_ctxt.logger.log_warning("Unable to resize the storage for the PduSessionResourceReleaseCommand PDU");
-      schedule_error_indication(ue_ctxt.ue_ids.ue_index, ngap_cause_radio_network_t::unspecified);
-      return;
-    }
-    std::copy(command->nas_pdu.begin(), command->nas_pdu.end(), nas_pdu.begin());
-    ue_ctxt.logger.log_debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
-
-    ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
-  }
-
   // Convert to common type
   cu_cp_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
@@ -829,8 +815,9 @@ async_task<bool> ngap_impl::handle_ue_context_release_request(const cu_cp_ue_con
     });
   }
 
-  if (ue_ctxt.release_requested) {
-    ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Request already pending");
+  if (ue_ctxt.release_requested or ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Cause: Release {} already pending",
+                             ue_ctxt.release_scheduled ? "command" : "request");
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);

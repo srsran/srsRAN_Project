@@ -62,6 +62,7 @@ struct worker_manager {
   std::vector<task_executor*> upper_pusch_decoder_exec;
   std::vector<task_executor*> upper_pucch_exec;
   std::vector<task_executor*> upper_prach_exec;
+  std::vector<task_executor*> upper_srs_exec;
   std::vector<task_executor*> upper_pdsch_exec;
   task_executor*              radio_exec      = nullptr;
   task_executor*              ru_printer_exec = nullptr;

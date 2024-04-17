@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_metrics_notifier.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_notifier.h"
@@ -45,6 +46,13 @@ public:
     pdxch.connect_error_notifier(notifier);
     prach.connect_error_notifier(notifier);
     puxch.connect_error_notifier(notifier);
+  }
+
+  /// Connects the adaptor with a lower physical layer metrics notifier.
+  void connect_metrics_notifier(lower_phy_metrics_notifier& notifier)
+  {
+    downlink.connect_metrics_notifier(notifier);
+    uplink.connect_metrics_notifier(notifier);
   }
 
   /// Connects the adaptor with a lower physical layer reception notifier.
@@ -81,13 +89,21 @@ private:
   class downlink_adaptor : public downlink_processor_notifier
   {
   public:
+    /// Connects the adaptor with a lower physical layer metrics notifier.
+    void connect_metrics_notifier(lower_phy_metrics_notifier& notifier) { metric_notifier = &notifier; }
+
     /// Connects the adaptor with a lower physical layer timing notifier.
     void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
 
     // See interface for documentation.
     void on_tti_boundary(const lower_phy_timing_context& context) override;
 
+    // See interface for documentation.
+    void on_new_metrics(const lower_phy_baseband_metrics& metrics) override;
+
   private:
+    /// Metrics notifier.
+    lower_phy_metrics_notifier* metric_notifier = nullptr;
     /// Timing notifier.
     lower_phy_timing_notifier* timing_notifier = nullptr;
   };
@@ -96,6 +112,9 @@ private:
   class uplink_adaptor : public uplink_processor_notifier
   {
   public:
+    /// Connects the adaptor with a lower physical layer metrics notifier.
+    void connect_metrics_notifier(lower_phy_metrics_notifier& notifier) { metric_notifier = &notifier; }
+
     /// Connects the adaptor with a lower physical layer timing notifier.
     void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
 
@@ -105,7 +124,12 @@ private:
     // See interface for documentation.
     void on_full_slot(const lower_phy_timing_context& context) override;
 
+    // See interface for documentation.
+    void on_new_metrics(const lower_phy_baseband_metrics& metrics) override;
+
   private:
+    /// Metrics notifier.
+    lower_phy_metrics_notifier* metric_notifier = nullptr;
     /// Timing notifier.
     lower_phy_timing_notifier* timing_notifier = nullptr;
   };

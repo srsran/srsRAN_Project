@@ -41,7 +41,7 @@ protected:
     e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
 
     t = routine_mng->start_pdu_session_resource_release_routine(
-        msg, ngap_control_notifier, *ue_task_sched, *rrc_ue_up_resource_manager);
+        msg, ngap_control_notifier, rrc_ue_ctrl_notifier, *ue_task_sched, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 
@@ -51,7 +51,7 @@ protected:
       return false;
     }
 
-    if (t.get().pdu_session_res_released_list_rel_res.size() == 0) {
+    if (t.get().released_pdu_sessions.size() == 0) {
       return false;
     }
 

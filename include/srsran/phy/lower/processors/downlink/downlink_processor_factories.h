@@ -48,8 +48,6 @@ struct downlink_processor_configuration {
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
-  /// Logger.
-  srslog::basic_logger* logger;
 };
 
 /// Lower physical layer downlink processor - Factory interface.

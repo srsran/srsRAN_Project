@@ -96,5 +96,21 @@ std::pair<unsigned, float> max_abs_element(span<const cf_t> x);
 /// \return A pair comprising the index and the value of the maximum element.
 std::pair<unsigned, float> max_element(span<const float> x);
 
+/// \brief Counts the number of samples that have a part that exceeds the given threshold.
+///
+/// The implementation is equivalent to:
+/// \code
+///  unsigned count_if_part_abs_greater_than(span<const cf_t> x, float threshold) {
+///   return std::count_if(channel_buffer.begin(), channel_buffer.end(), [threshold](cf_t sample) {
+///     return (std::abs(sample.real()) > threshold) || (std::abs(sample.imag()) > threshold);
+///   });
+/// }
+/// \endcode
+///
+/// \param[in] x         Samples.
+/// \param[in] threshold Detection threshold.
+/// \return The number of samples that have a part that exceeds the threshold.
+unsigned count_if_part_abs_greater_than(span<const cf_t> x, float threshold);
+
 } // namespace srsvec
 } // namespace srsran

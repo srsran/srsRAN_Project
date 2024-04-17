@@ -40,6 +40,8 @@ public:
 
   void on_full_slot(const lower_phy_timing_context& context) override { full_slots.emplace_back(context); }
 
+  void on_new_metrics(const lower_phy_baseband_metrics& metrics) override {}
+
   const std::vector<lower_phy_timing_context>& get_half_slots() const { return half_slots; }
 
   const std::vector<lower_phy_timing_context>& get_full_slots() const { return full_slots; }

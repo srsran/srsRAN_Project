@@ -136,6 +136,68 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(bool w
 {
   std::map<five_qi_t, du_qos_config> qos_list = {};
   {
+    // 5QI=1
+    du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                  = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly    = 50;
+    cfg.rlc.um.tx.queue_size      = 4096;
+    cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac          = make_default_drb_mac_lc_config();
+    cfg.mac.priority = 4;
+    cfg.mac.lcg_id   = uint_to_lcg_id(1);
+
+    qos_list[uint_to_five_qi(1)] = cfg;
+  }
+  {
+    // 5QI=2
+    du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                  = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly    = 50;
+    cfg.rlc.um.tx.queue_size      = 4096;
+    cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac          = make_default_drb_mac_lc_config();
+    cfg.mac.priority = 4;
+    cfg.mac.lcg_id   = uint_to_lcg_id(1);
+
+    qos_list[uint_to_five_qi(2)] = cfg;
+  }
+  {
+    // 5QI=5
+    du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                    = rlc_mode::am;
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cfg.rlc.am.tx.t_poll_retx       = 80;
+    cfg.rlc.am.tx.poll_pdu          = 64;
+    cfg.rlc.am.tx.poll_byte         = 125;
+    cfg.rlc.am.tx.max_retx_thresh   = 4;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = 4096;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cfg.rlc.am.rx.t_reassembly      = 80;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
+    cfg.rlc.am.rx.max_sn_per_status = {};
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac = make_default_drb_mac_lc_config();
+
+    qos_list[uint_to_five_qi(5)] = cfg;
+  }
+  {
     // 5QI=7
     du_qos_config cfg{};
     // RLC

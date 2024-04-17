@@ -49,6 +49,7 @@ public:
   async_task<cu_cp_pdu_session_resource_release_response>
   start_pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd,
                                              du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
+                                             du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
                                              du_processor_ue_task_scheduler&                   task_sched,
                                              up_resource_manager& rrc_ue_up_resource_manager);
 

@@ -22,12 +22,16 @@
 
 #include "uplink_processor_impl.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
+#include "srsran/phy/lower/lower_phy_baseband_metrics.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/lower_phy_timing_context.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
+#include "srsran/support/stats.h"
 
 using namespace srsran;
 
@@ -222,7 +226,31 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   puxch_context.slot        = current_slot;
   puxch_context.sector      = sector_id;
   puxch_context.nof_symbols = current_symbol_index;
-  puxch_proc->get_baseband().process_symbol(temp_buffer.get_reader(), puxch_context);
+  bool processed            = puxch_proc->get_baseband().process_symbol(temp_buffer.get_reader(), puxch_context);
+
+  if (processed) {
+    sample_statistics<float>   avg_power;
+    sample_statistics<float>   peak_power;
+    lower_phy_baseband_metrics metrics;
+    unsigned                   nof_channels = temp_buffer.get_nof_channels();
+
+    uint64_t total_processed_samples = 0;
+    uint64_t nof_clipped_samples     = 0;
+
+    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+      span<const cf_t> channel_buffer = temp_buffer.get_reader().get_channel_buffer(i_channel);
+      avg_power.update(srsvec::average_power(channel_buffer));
+      peak_power.update(srsvec::max_abs_element(channel_buffer).second);
+      nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
+      total_processed_samples += channel_buffer.size();
+    }
+
+    metrics.avg_power  = avg_power.get_mean();
+    metrics.peak_power = peak_power.get_max();
+    metrics.clipping   = std::pair<uint64_t, uint64_t>{nof_clipped_samples, total_processed_samples};
+
+    notifier->on_new_metrics(metrics);
+  }
 
   // Detect half-slot boundary.
   if (current_symbol_index == (nof_symbols_per_slot / 2) - 1) {

@@ -204,7 +204,7 @@ public:
 
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.
-  virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
+  virtual rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_message) = 0;
 
   /// \brief Get all mobility related information of an UE required for reestablishment, handover, etc.
   /// \returns The mobility context of the UE.

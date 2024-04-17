@@ -58,12 +58,6 @@ void bearer_context_modification_procedure::operator()(
 
 void bearer_context_modification_procedure::send_bearer_context_modification_request()
 {
-  if (logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    request.pdu.to_json(js);
-    logger.log_debug("Containerized BearerContextModificationRequest: {}", js.to_string());
-  }
-
   // send UE context modification request message
   e1ap_notifier.on_new_message(request);
 }
@@ -75,23 +69,11 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_mod_resp_s& resp = transaction_sink.response();
-    logger.log_debug("Received BearerContextModificationResponse");
-    if (logger.get_basic_logger().debug.enabled()) {
-      asn1::json_writer js;
-      resp.to_json(js);
-      logger.log_debug("Containerized BearerContextModificationResponse: {}", js.to_string());
-    }
     fill_e1ap_bearer_context_modification_response(res, resp);
 
     logger.log_debug("\"{}\" finalized", name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
-    logger.log_debug("Received BearerContextModificationFailure cause={}", get_cause_str(fail->cause));
-    if (logger.get_basic_logger().debug.enabled()) {
-      asn1::json_writer js;
-      fail.to_json(js);
-      logger.log_debug("Containerized BearerContextModificationFailure: {}", js.to_string());
-    }
     fill_e1ap_bearer_context_modification_response(res, fail);
 
     logger.log_error("\"{}\" failed", name());

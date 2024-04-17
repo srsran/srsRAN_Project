@@ -25,6 +25,7 @@
 #include "srsran/gateways/baseband/baseband_gateway.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_metrics_notifier.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
@@ -121,6 +122,8 @@ struct lower_phy_configuration {
   lower_phy_timing_notifier* timing_notifier;
   /// Provides the error handler to notify runtime errors.
   lower_phy_error_notifier* error_notifier;
+  /// Provides the metrics handler to notify runtime measurements.
+  lower_phy_metrics_notifier* metric_notifier;
   /// Receive task executor.
   task_executor* rx_task_executor;
   /// Transmit task executor.

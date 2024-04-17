@@ -28,6 +28,7 @@
 #include "ru_uplink_request_handler_generic_impl.h"
 #include "rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
+#include "srsran/phy/adapters/phy_metrics_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/ru/ru.h"
@@ -41,6 +42,8 @@ struct ru_generic_impl_config {
   double srate_MHz;
   /// PHY error printer.
   std::vector<std::unique_ptr<phy_error_adapter>> phy_err_printer;
+  /// PHY metrics printer.
+  std::vector<std::unique_ptr<phy_metrics_adapter>> phy_metrics_printer;
   /// Radio Unit received symbol adapter.
   std::unique_ptr<ru_rx_symbol_adapter> ru_rx_adapter;
   /// Radio Unit timing adapter.
@@ -68,6 +71,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<phy_error_adapter>>         phy_err_printer;
+  std::vector<std::unique_ptr<phy_metrics_adapter>>       phy_metric_printer;
   std::unique_ptr<ru_rx_symbol_adapter>                   ru_rx_adapter;
   std::vector<std::unique_ptr<lower_phy_timing_notifier>> ru_time_adapter;
   std::unique_ptr<radio_session>                          radio;

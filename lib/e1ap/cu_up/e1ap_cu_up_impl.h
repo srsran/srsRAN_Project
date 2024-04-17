@@ -64,6 +64,22 @@ public:
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
 private:
+  /// \brief Decorator of e1ap_message_notifier that logs the transmitted E1AP messages.
+  class e1ap_message_notifier_with_logging final : public e1ap_message_notifier
+  {
+  public:
+    e1ap_message_notifier_with_logging(e1ap_cu_up_impl& parent_, e1ap_message_notifier& notifier_);
+
+    void on_new_message(const e1ap_message& msg) override;
+
+  private:
+    e1ap_cu_up_impl&       parent;
+    e1ap_message_notifier& notifier;
+  };
+
+  /// \brief Log an E1AP Tx/Rx PDU.
+  void log_pdu(bool is_rx, const e1ap_message& e1ap_pdu);
+
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
@@ -99,7 +115,8 @@ private:
   timer_manager& timers;
   task_executor& cu_up_exec;
 
-  e1ap_cu_up_connection_handler connection_handler;
+  e1ap_cu_up_connection_handler                       connection_handler;
+  std::unique_ptr<e1ap_message_notifier_with_logging> pdu_notifier;
 
   /// Repository of UE Contexts.
   e1ap_ue_context_list ue_ctxt_list;

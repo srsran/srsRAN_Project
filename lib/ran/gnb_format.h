@@ -130,66 +130,6 @@ void log_proc_failure(srslog::basic_logger& logger,
   logger.warning("{}: \"{}\" failed. {}", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name, to_c_str(fmtbuf));
 }
 
-template <typename... Args>
-void log_proc_event(srslog::basic_logger& logger,
-                    du_ue_index_t         ue_index,
-                    const char*           proc_name,
-                    const char*           cause_fmt,
-                    Args&&... args)
-{
-  if (not logger.debug.enabled()) {
-    return;
-  }
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.debug("{}: {}", ue_event_prefix{"CTRL", ue_index}, to_c_str(fmtbuf));
-}
-
-template <typename... Args>
-void log_ue_event(srslog::basic_logger& logger, const ue_event_prefix& ue_prefix, const char* cause_fmt, Args&&... args)
-{
-  if (not logger.debug.enabled()) {
-    return;
-  }
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.debug("{}: {}", ue_prefix, to_c_str(fmtbuf));
-}
-
-template <typename... Args>
-void log_ue_proc_event(srslog::log_channel&   log_ch,
-                       const ue_event_prefix& ue_prefix,
-                       const char*            proc_name,
-                       const char*            cause_fmt,
-                       Args&&... args)
-{
-  if (not log_ch.enabled()) {
-    return;
-  }
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "\"{}\" ", proc_name);
-  fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  log_ch("{}: {}", ue_prefix, to_c_str(fmtbuf));
-}
-
-template <typename... Args>
-void log_ul_pdu(srslog::basic_logger& logger,
-                du_ue_index_t         ue_index,
-                rnti_t                rnti,
-                du_cell_index_t       cell_index,
-                const char*           ch,
-                const char*           cause_fmt,
-                Args&&... args)
-{
-  log_ue_event(logger, ue_event_prefix{"UL", ue_index, rnti, cell_index, ch}, cause_fmt, std::forward<Args>(args)...);
-}
-
-template <typename... Args>
-void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, const char* cause_fmt, Args&&... args)
-{
-  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_DU_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
-}
-
 } // namespace srsran
 
 namespace fmt {

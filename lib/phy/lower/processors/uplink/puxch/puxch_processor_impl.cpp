@@ -27,7 +27,7 @@
 
 using namespace srsran;
 
-void puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& samples,
+bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& samples,
                                           const lower_phy_rx_symbol_context&    context)
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
@@ -59,7 +59,7 @@ void puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
 
   // Skip symbol processing if the context slot does not match with the current slot or no resource grid is available.
   if (current_grid == nullptr) {
-    return;
+    return false;
   }
 
   // Symbol index within the subframe.
@@ -76,6 +76,8 @@ void puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
   rx_symbol_context.slot        = current_slot;
   rx_symbol_context.nof_symbols = context.nof_symbols;
   notifier->on_rx_symbol(current_grid->get_reader(), context);
+
+  return true;
 }
 
 void puxch_processor_impl::handle_request(resource_grid& grid, const resource_grid_context& context)

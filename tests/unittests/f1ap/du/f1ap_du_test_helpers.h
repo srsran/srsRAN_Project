@@ -149,7 +149,8 @@ f1ap_message generate_ue_context_setup_request(const std::initializer_list<drb_i
 asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
-f1ap_message generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
+f1ap_message generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add,
+                                                      const std::initializer_list<drb_id_t>& drbs_to_rem = {});
 
 /// \brief Generate an F1AP UE Context Release Command message.
 f1ap_message generate_ue_context_release_command();

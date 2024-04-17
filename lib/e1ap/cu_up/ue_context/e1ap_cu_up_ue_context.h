@@ -75,6 +75,16 @@ public:
     return true;
   }
 
+  /// \brief Search for a UE based on its CU-UP-UE-E1AP-ID.
+  const e1ap_ue_context* find_ue(gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id) const
+  {
+    auto it = ues.find(cu_up_ue_e1ap_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+
   e1ap_ue_context& operator[](gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
   {
     srsran_assert(

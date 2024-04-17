@@ -63,7 +63,7 @@ public:
 
 private:
   // See interface for documentation.
-  void process_symbol(const baseband_gateway_buffer_reader& samples,
+  bool process_symbol(const baseband_gateway_buffer_reader& samples,
                       const lower_phy_rx_symbol_context&    context) override;
 
   // See interface for documentation.

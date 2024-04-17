@@ -22,7 +22,10 @@
 
 #include "downlink_processor_baseband_impl.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
+#include "srsran/phy/lower/lower_phy_baseband_metrics.h"
 #include "srsran/phy/lower/lower_phy_timing_context.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/zero.h"
 
 using namespace srsran;
@@ -31,7 +34,6 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
     pdxch_processor_baseband&                        pdxch_proc_baseband_,
     amplitude_controller&                            amplitude_control_,
     const downlink_processor_baseband_configuration& config) :
-  amplitude_control_logger(*config.logger),
   pdxch_proc_baseband(pdxch_proc_baseband_),
   amplitude_control(amplitude_control_),
   nof_slot_tti_in_advance(config.nof_slot_tti_in_advance),
@@ -237,63 +239,32 @@ bool downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_buffe
 
   // Process amplitude control.
   for (unsigned i_port = 0, i_port_end = buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
-    // Control amplitude.
-    amplitude_controller_metrics amplitude_control_metrics = amplitude_control.process(buffer[i_port], buffer[i_port]);
+    amplitude_control.process(buffer[i_port], buffer[i_port]);
+  }
 
-    // Add entries to long term power statistics when the signal carries power.
-    if (amplitude_control_metrics.avg_power_fs > 0.0F) {
-      avg_symbol_power.update(amplitude_control_metrics.avg_power_fs);
-      peak_symbol_power.update(amplitude_control_metrics.peak_power_fs);
-      symbol_papr.update(amplitude_control_metrics.papr_lin);
+  // Perform signal measurements.
+  {
+    sample_statistics<float>   avg_power;
+    sample_statistics<float>   peak_power;
+    lower_phy_baseband_metrics metrics;
+    unsigned                   nof_channels = buffer.get_nof_channels();
+
+    uint64_t total_processed_samples = 0;
+    uint64_t nof_clipped_samples     = 0;
+
+    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+      span<const cf_t> channel_buffer = buffer.get_channel_buffer(i_channel);
+      avg_power.update(srsvec::average_power(channel_buffer));
+      peak_power.update(srsvec::max_abs_element(channel_buffer).second);
+      nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
+      total_processed_samples += channel_buffer.size();
     }
 
-    // Log amplitude controller metrics every 100 subframes (every 100 milliseconds).
-    unsigned i_sf      = slot.subframe_index();
-    unsigned i_slot_sf = slot.subframe_slot_index();
-    if ((avg_symbol_power.get_nof_observations() > 0) && (i_sf % 100 == 0) && (i_slot_sf == 0) && (i_symbol == 0)) {
-      // Long term average signal power can be computed as the mean of the average power of each OFDM symbol.
-      float avg_power = avg_symbol_power.get_mean();
+    metrics.avg_power  = avg_power.get_mean();
+    metrics.peak_power = peak_power.get_max();
+    metrics.clipping   = std::pair<uint64_t, uint64_t>{nof_clipped_samples, total_processed_samples};
 
-      // Long term peak power is the maximum registered symbol peak power.
-      float peak_pwr = peak_symbol_power.get_max();
-
-      float papr = 1.0F;
-      if (std::isnormal(avg_power)) {
-        // Long term PAPR is the ratio between the maximum observed instantaneous power and the average power. This
-        // indicates the dynamic range of the signal in the entire analysis window.
-        papr = peak_pwr / avg_power;
-      }
-
-      // Mean symbol PAPR. This indicates the mean dynamic range of the signal for an analysis window of 1 OFDM
-      // symbol.
-      float mean_symb_papr = symbol_papr.get_mean();
-
-      if (amplitude_control_metrics.clipping_enabled) {
-        amplitude_control_logger.debug(
-            "Tx: gain={:+.2f}dB avg_pwr={:+.2f}dBFS peak_pwr={:+.2f}dBFS papr={:+.2f}dB mean_symb_papr={:+.2f}dB "
-            "clip_sps={} clip_prob={:.2e}",
-            amplitude_control_metrics.gain_dB,
-            convert_power_to_dB(avg_power),
-            convert_power_to_dB(peak_pwr),
-            convert_power_to_dB(papr),
-            convert_power_to_dB(mean_symb_papr),
-            amplitude_control_metrics.nof_clipped_samples,
-            amplitude_control_metrics.clipping_probability);
-      } else {
-        amplitude_control_logger.debug(
-            "Tx: gain={:+.2f}dB avg_pwr={:+.2f}dBFS peak_pwr={:+.2f}dBFS papr={:+.2f}dB mean_symb_papr={:+.2f}dB",
-            amplitude_control_metrics.gain_dB,
-            convert_power_to_dB(avg_power),
-            convert_power_to_dB(peak_pwr),
-            convert_power_to_dB(papr),
-            convert_power_to_dB(mean_symb_papr));
-      }
-
-      // Reset long term analysis window.
-      avg_symbol_power.reset();
-      peak_symbol_power.reset();
-      symbol_papr.reset();
-    }
+    notifier->on_new_metrics(metrics);
   }
 
   return true;

@@ -47,6 +47,9 @@ public:
   // See interface for documentation.
   void on_new_pucch_results(const ul_pucch_results& result) override;
 
+  // See interface for documentation.
+  void on_new_srs_results(const ul_srs_results& result) override;
+
   /// Connects this wrapper to the notifier the notifications of new upper PHY receive results are forwarded to.
   ///
   /// \param[in] n RX results notifier to which the notifications will be forwarded.

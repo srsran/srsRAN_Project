@@ -43,10 +43,8 @@ public:
         buffer,
         "ue={}{}{}: ",
         ue_index,
-        cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid ? fmt::format(" cu_cp_ue_e1ap_id={}", cu_cp_ue_e1ap_id)
-                                                            : "",
-        cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid ? fmt::format(" cu_up_ue_e1ap_id={}", cu_up_ue_e1ap_id)
-                                                            : "");
+        cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid ? fmt::format(" cu_cp_ue={}", cu_cp_ue_e1ap_id) : "",
+        cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid ? fmt::format(" cu_up_ue={}", cu_up_ue_e1ap_id) : "");
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
