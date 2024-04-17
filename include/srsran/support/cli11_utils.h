@@ -25,8 +25,7 @@ namespace srsran {
 /// \return A pointer to the subcommand added to the application.
 CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::string& desc)
 {
-  CLI::App* subcommand = app.get_subcommand(name);
-  if (subcommand) {
+  if (CLI::App* subcommand = app.get_subcommand(name)) {
     return subcommand;
   }
 
