@@ -337,18 +337,24 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
 {
+  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
+  if (cu_ue_id.has_value()) {
+    if (not ue_ctxt_list.contains(*cu_ue_id)) {
+      logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     *cu_ue_id,
+                     outcome.value.type().to_string());
+    }
+  }
+
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
-      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_release_complete()->gnb_cu_ue_f1ap_id)]
-          .ev_mng.context_release_complete.set(outcome.value.ue_context_release_complete());
+      ue_ctxt_list[*cu_ue_id].ev_mng.context_release_complete.set(outcome.value.ue_context_release_complete());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_resp()->gnb_cu_ue_f1ap_id)]
-          .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_resp());
+      ue_ctxt_list[*cu_ue_id].ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_resp()->gnb_cu_ue_f1ap_id)]
-          .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
+      ue_ctxt_list[*cu_ue_id].ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
     } break;
     default:
       logger.warning("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -357,14 +363,21 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 
 void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
+  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
+  if (cu_ue_id.has_value()) {
+    if (not ue_ctxt_list.contains(*cu_ue_id)) {
+      logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     *cu_ue_id,
+                     outcome.value.type().to_string());
+    }
+  }
+
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
-      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_fail()->gnb_cu_ue_f1ap_id)]
-          .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_fail());
+      ue_ctxt_list[*cu_ue_id].ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
-      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_fail()->gnb_cu_ue_f1ap_id)]
-          .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
+      ue_ctxt_list[*cu_ue_id].ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
     } break;
     default:
       logger.warning("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
