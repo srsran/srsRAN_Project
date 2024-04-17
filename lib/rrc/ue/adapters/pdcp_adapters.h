@@ -18,24 +18,12 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between PDCP Rx data and RRC in UL direction (Rx)
-class pdcp_rrc_ue_rx_adapter : public pdcp_rx_upper_data_notifier
+class pdcp_rrc_ue_rx_adapter : public pdcp_rx_upper_data_notifier, public pdcp_rx_upper_control_notifier
 {
 public:
   pdcp_rrc_ue_rx_adapter() = default;
 
   void on_new_sdu(byte_buffer sdu) override { rrc_pdus.push_back(std::move(sdu)); }
-
-  std::vector<byte_buffer> pop_rrc_pdus() { return std::move(rrc_pdus); }
-
-private:
-  std::vector<byte_buffer> rrc_pdus;
-};
-
-/// Adapter between PDCP Rx control and RRC in UL direction (Rx)
-class pdcp_rx_control_rrc_ue_adapter : public pdcp_rx_upper_control_notifier
-{
-public:
-  pdcp_rx_control_rrc_ue_adapter() = default;
 
   void on_protocol_failure() override
   {
@@ -55,15 +43,19 @@ public:
     cause = cause_protocol_t::unspecified;
   }
 
-  optional<ngap_cause_t> pop_failure_cause()
+  variant<std::vector<byte_buffer>, ngap_cause_t> pop_result()
   {
-    auto ret = cause;
-    cause.reset();
-    return ret;
+    if (cause.has_value()) {
+      auto ret = *cause;
+      cause.reset();
+      return ret;
+    }
+    return std::move(rrc_pdus);
   }
 
 private:
-  optional<ngap_cause_t> cause;
+  std::vector<byte_buffer> rrc_pdus;
+  optional<ngap_cause_t>   cause;
 };
 
 /// Adapter between PDCP and RRC UE for DL PDUs

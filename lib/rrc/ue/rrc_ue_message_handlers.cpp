@@ -190,7 +190,7 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   }
 
   // Unpack PDCP PDU
-  pdcp_result pdcp_unpacking_result = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
+  pdcp_rx_result pdcp_unpacking_result = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
   if (!pdcp_unpacking_result.is_successful()) {
     logger.log_info("Requesting UE release. Cause: PDCP unpacking failed with {}",
                     pdcp_unpacking_result.get_failure_cause());
@@ -343,7 +343,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
       dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
       // pack DL CCCH msg
-      pdcp_result pdcp_packing_result =
+      pdcp_tx_result pdcp_packing_result =
           context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
       if (!pdcp_packing_result.is_successful()) {
         logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
@@ -352,11 +352,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
         return release_context;
       }
 
-      std::vector<byte_buffer> pdus = pdcp_packing_result.pop_pdus();
-      if (pdus.size() > 1) {
-        logger.log_warning("Unexpected multiple PDUs after PDCP packing");
-      }
-      release_context.rrc_release_pdu = std::move(pdus[0]);
+      release_context.rrc_release_pdu = std::move(pdcp_packing_result.pop_pdu());
       release_context.srb_id          = srb_id_t::srb1;
 
       // Log Tx message

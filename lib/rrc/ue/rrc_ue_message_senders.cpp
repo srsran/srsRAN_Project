@@ -52,11 +52,7 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
     return;
   }
 
-  std::vector<byte_buffer> pdcp_pdus = pdcp_packing_result.pop_pdus();
-  if (pdcp_pdus.size() > 1) {
-    logger.log_warning("Unexpected multiple PDUs after PDCP packing. Dropping all but one PDU");
-  }
-  byte_buffer& pdcp_pdu = pdcp_pdus.front();
+  byte_buffer pdcp_pdu = pdcp_packing_result.pop_pdu();
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "TX {} PDU", context.ue_index, context.c_rnti, srb_id);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }
