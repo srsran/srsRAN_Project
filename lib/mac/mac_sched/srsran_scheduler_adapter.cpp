@@ -18,11 +18,9 @@ using namespace srsran;
 static sched_ue_creation_request_message make_scheduler_ue_creation_request(const mac_ue_create_request& request)
 {
   sched_ue_creation_request_message ret{};
-  ret.ue_index = request.ue_index;
-  ret.crnti    = request.crnti;
-  // Note: If the UE is created via a UL CCCH message (RRC Setup/Reestablishment Request), it does not yet have a
-  // configuration provided by upper layers.
-  ret.starts_in_fallback = request.ul_ccch_msg != nullptr;
+  ret.ue_index           = request.ue_index;
+  ret.crnti              = request.crnti;
+  ret.starts_in_fallback = true;
   ret.cfg                = request.sched_cfg;
   ret.tag_config         = request.mac_cell_group_cfg.tag_config;
   return ret;
