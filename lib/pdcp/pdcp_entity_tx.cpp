@@ -467,7 +467,7 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count < st.tx_trans) {
-    logger.log_error(
+    logger.log_info(
         "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
