@@ -353,7 +353,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
           return release_context;
         }
 
-        release_context.rrc_release_pdu = std::move(pdcp_packing_result.pop_pdu());
+        release_context.rrc_release_pdu = pdcp_packing_result.pop_pdu();
         release_context.srb_id          = srb_id_t::srb1;
 
         // Log Tx message
