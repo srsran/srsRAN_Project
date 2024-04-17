@@ -585,7 +585,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
     logger.log_error("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
-    if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
+    if (not ue_executor.defer([this]() { upper_cn.on_protocol_failure(); })) {
       logger.log_error("Could not trigger protocol failure on invalid ACK_SN");
     }
     return;
