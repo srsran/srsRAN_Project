@@ -1,6 +1,12 @@
 Change Log for Releases
 =======================
 
+## 24.04
+ * Allow multiple cells per gNB
+ * Added Intra-gNB handover
+ * Added NTN support for GEO
+ * Other bug-fixes and improved stability and performance in all parts
+
 ## 23.10.1
  * Hotfix that updated the number of downlink threads based on the processing delay for default FDD configurations
  
