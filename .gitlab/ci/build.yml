@@ -1755,6 +1755,7 @@ basic asan:
   variables:
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
+    BUILD_ARGS: -DEXIT_TIMEOUT=15
   tags: ["${AMD64_AVX2_TAG}"]
   artifacts:
     <<: *build_artifacts
