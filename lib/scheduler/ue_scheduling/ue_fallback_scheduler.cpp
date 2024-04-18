@@ -1379,6 +1379,14 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }
+
+    // If the HARQ process has the "fallback" flag set to false, it means that the HARQ process got reset by its
+    // timeout, and in the meantime got reused by the non-fallback scheduler. In this case, it cannot be processed by
+    // the fallback scheduler. NOTE: this very unlikely to happen, but not impossible under certain extreme conditions.
+    if (not h_dl.last_alloc_params().is_fallback) {
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      continue;
+    }
     ++it_ue_harq;
   }
 
