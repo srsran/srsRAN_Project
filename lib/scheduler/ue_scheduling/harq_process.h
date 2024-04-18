@@ -457,7 +457,8 @@ public:
   /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
-  /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKEd.
+  /// \brief The UCI scheduling associated with a given slot was cancelled. The associated DL HARQs will be NACKed, and
+  /// won't expect further UCIs.
   ///
   /// This function can be called for instance when there is an error indication coming from lower layers.
   void dl_ack_info_cancelled(slot_point uci_slot);

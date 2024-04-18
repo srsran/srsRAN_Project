@@ -470,6 +470,8 @@ static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot
     // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
     ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
     if (not h_ul.empty()) {
+      // Note: We don't use this cancellation to update the UL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       if (h_ul.tb().nof_retxs == 0) {
         // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
         // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
@@ -486,6 +488,8 @@ static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot
     if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
       // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
       // DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
     }
   }
@@ -513,8 +517,10 @@ static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot
 
     // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
     if (has_harq_ack) {
-      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK in
-      // the DL HARQ processes with UCI falling in this slot.
+      // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
+      // in the DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
     }
   }
