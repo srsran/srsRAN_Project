@@ -24,6 +24,7 @@ public:
   handover_reconfiguration_routine(const rrc_reconfiguration_procedure_request& request_,
                                    du_ue&                                       source_ue_,
                                    du_ue&                                       target_ue_,
+                                   du_processor_f1ap_ue_context_notifier&       source_f1ap_ue_ctxt_notifier_,
                                    srslog::basic_logger&                        logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -31,21 +32,22 @@ public:
   static const char* name() { return "Handover reconfiguration routine"; }
 
 private:
-  /// \remark Send RRC Reconfiguration, see section 5.3.5 in TS 38.331
-  /// \returns The transaction ID of the RRC Reconfiguration.
-  uint8_t send_rrc_reconfiguration();
+  void generate_ue_context_modification_request();
 
   // (sub-)routine requests
   const rrc_reconfiguration_procedure_request request;
+  f1ap_ue_context_modification_request        ue_context_mod_request;
 
-  du_ue& source_ue; // UE in the source DU
-  du_ue& target_ue; // UE in target DU
+  du_ue&                                 source_ue;                    // UE in the source DU
+  du_ue&                                 target_ue;                    // UE in target DU
+  du_processor_f1ap_ue_context_notifier& source_f1ap_ue_ctxt_notifier; // to send UE context modification to source UE
 
   srslog::basic_logger& logger;
 
   // (sub-)routine results
-  uint8_t transaction_id;
-  bool    procedure_result = false;
+  rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
+  f1ap_ue_context_modification_response   ue_context_mod_response;
+  bool                                    procedure_result = false;
 };
 
 } // namespace srs_cu_cp

@@ -71,6 +71,7 @@ protected:
             .get_mobility_handler()
             .handle_inter_du_handover_request(
                 msg,
+                cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_ue_context_notifier(),
                 cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_f1ap_ue_context_notifier(),
                 cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_du_processor_ue_context_notifier());
     t_launcher.emplace(t);
@@ -90,7 +91,7 @@ protected:
   /// \brief Inject UE Context Setup Response.
   void inject_ue_context_setup_response()
   {
-    f1ap_message ue_context_setup_fail = generate_ue_context_setup_response(
+    f1ap_message ue_context_setup_resp = generate_ue_context_setup_response(
         int_to_gnb_cu_ue_f1ap_id(0),
         int_to_gnb_du_ue_f1ap_id(0),
         to_rnti(0x4601),
@@ -106,7 +107,7 @@ protected:
     cu_cp_obj->get_f1c_handler()
         .get_du(target_du_index)
         .get_f1ap_message_handler()
-        .handle_message(ue_context_setup_fail);
+        .handle_message(ue_context_setup_resp);
   }
 
   /// \brief Inject Bearer Context Modification Failure.
@@ -142,8 +143,16 @@ protected:
         .handle_message(bearer_context_release_complete);
   }
 
+  /// \brief Inject UE Context Modification Response.
+  void inject_ue_context_modification_response()
+  {
+    f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(
+        int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601));
+    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
+  }
+
   /// \brief Inject RRC Reconfiguration Complete.
-  void inject_rrc_reconfig_complete()
+  void inject_rrc_reconfig_complete(optional<unsigned> transaction_id = {})
   {
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));
@@ -271,6 +280,9 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
 
   // Inject Bearer Context Modification Response
   inject_bearer_context_modification_response();
+
+  // Inject UE Context Modification Response
+  inject_ue_context_modification_response();
 
   // Inject RRC Reconfiguration Complete
   inject_rrc_reconfig_complete();

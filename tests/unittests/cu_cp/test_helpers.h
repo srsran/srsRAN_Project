@@ -504,11 +504,12 @@ public:
     });
   }
 
-  uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  rrc_ue_handover_reconfiguration_context
+  get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override
   {
     logger.info("Received a new handover reconfiguration request (transaction_id={})", transaction_id);
-    last_radio_bearer_cfg = msg.radio_bearer_cfg;
-    return transaction_id;
+    last_radio_bearer_cfg = request.radio_bearer_cfg;
+    return {transaction_id, byte_buffer{}};
   }
 
   async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id_) override

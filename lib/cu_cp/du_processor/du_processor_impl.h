@@ -79,6 +79,7 @@ public:
   optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
   async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notif_,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
                                    du_processor_ue_context_notifier&      target_du_processor_notifier_) override;
   async_task<cu_cp_inter_ngran_node_n2_handover_response>

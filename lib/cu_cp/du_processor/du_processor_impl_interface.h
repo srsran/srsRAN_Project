@@ -176,10 +176,10 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
-  /// \brief Notify the source RRC UE about an RRC Reconfiguration Request for a handover.
-  /// \param[in] msg The new RRC Reconfiguration Request.
-  /// \returns The transaction ID of the RRC Reconfiguration request.
-  virtual uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
+  /// \brief Request the RRC Handover Reconfiguration Context.
+  /// \returns The RRC Handover Reconfiguration Context.
+  virtual rrc_ue_handover_reconfiguration_context
+  get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) = 0;
 
   /// \brief Notify the target RRC UE to await a RRC Reconfiguration Complete for a handover.
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
@@ -236,6 +236,7 @@ public:
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
                                    du_processor_ue_context_notifier&      target_du_processor_notifier) = 0;
 

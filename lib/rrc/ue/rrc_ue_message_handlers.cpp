@@ -253,19 +253,36 @@ async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_recon
       context, msg, *this, cu_cp_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
-uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
+rrc_ue_handover_reconfiguration_context
+rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request)
 {
+  rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
+
   // Create transaction to get transaction ID
-  rrc_transaction transaction    = event_mng->transactions.create_transaction();
-  unsigned        transaction_id = transaction.id();
+  rrc_transaction transaction   = event_mng->transactions.create_transaction();
+  ho_reconf_ctxt.transaction_id = transaction.id();
 
+  // pack RRC Reconfig
   dl_dcch_msg_s dl_dcch_msg;
-  dl_dcch_msg.msg.set_c1().set_rrc_recfg();
-  rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
-  fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, msg);
-  on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  dl_dcch_msg.msg.set_c1().set_rrc_recfg().crit_exts.set_rrc_recfg();
+  fill_asn1_rrc_reconfiguration_msg(dl_dcch_msg.msg.c1().rrc_recfg(), ho_reconf_ctxt.transaction_id, request);
 
-  return transaction_id;
+  // pack DL CCCH msg
+  pdcp_tx_result pdcp_packing_result =
+      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RrcReconfiguration"));
+  if (!pdcp_packing_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                    pdcp_packing_result.get_failure_cause());
+    on_ue_release_required(pdcp_packing_result.get_failure_cause());
+    return ho_reconf_ctxt;
+  }
+
+  ho_reconf_ctxt.rrc_ue_handover_reconfiguration_pdu = pdcp_packing_result.pop_pdu();
+
+  // Log Tx message
+  log_rrc_message(logger, Tx, ho_reconf_ctxt.rrc_ue_handover_reconfiguration_pdu, dl_dcch_msg, "DCCH DL");
+
+  return ho_reconf_ctxt;
 }
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)

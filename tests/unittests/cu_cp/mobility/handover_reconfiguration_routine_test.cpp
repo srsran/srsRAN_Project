@@ -42,8 +42,14 @@ protected:
   {
     rrc_reconfiguration_procedure_request request;
 
-    t = launch_async<handover_reconfiguration_routine>(request, *source_ue, *target_ue, test_logger);
+    t = launch_async<handover_reconfiguration_routine>(
+        request, *source_ue, *target_ue, source_f1ap_ue_ctxt_notifier, test_logger);
     t_launcher.emplace(t);
+  }
+
+  void set_sub_procedure_outcome(bool outcome)
+  {
+    source_f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_outcome_t{outcome, {}, {}, {}});
   }
 
   bool procedure_ready() const { return t.ready(); }
@@ -61,6 +67,7 @@ private:
   unsigned                                           source_pci      = 1;
   rnti_t                                             source_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier source_rrc_ue_notifier;
+  dummy_du_processor_f1ap_ue_context_notifier        source_f1ap_ue_ctxt_notifier;
   du_ue*                                             source_ue = nullptr;
 
   // target UE parameters.
@@ -81,6 +88,8 @@ TEST_F(handover_reconfiguration_routine_test, when_reconfiguration_successful_th
   // Test Preamble.
   create_ues(true, transaction_id);
 
+  set_sub_procedure_outcome(true);
+
   // it should be ready immediately
   start_procedure();
 
@@ -92,12 +101,34 @@ TEST_F(handover_reconfiguration_routine_test, when_reconfiguration_successful_th
   ASSERT_TRUE(check_transaction_id(transaction_id));
 }
 
+TEST_F(handover_reconfiguration_routine_test, when_ue_context_mod_unsuccessful_then_return_false)
+{
+  unsigned transaction_id = 35;
+
+  // Test Preamble.
+  create_ues(false, transaction_id);
+
+  set_sub_procedure_outcome(false);
+
+  // it should be ready immediately
+  start_procedure();
+
+  ASSERT_TRUE(procedure_ready());
+
+  // Reconfiguration complete was received.
+  ASSERT_FALSE(get_result());
+
+  ASSERT_FALSE(check_transaction_id(transaction_id));
+}
+
 TEST_F(handover_reconfiguration_routine_test, when_reconfiguration_unsuccessful_then_return_false)
 {
   unsigned transaction_id = 17;
 
   // Test Preamble.
   create_ues(false, transaction_id);
+
+  set_sub_procedure_outcome(true);
 
   // it should be ready immediately
   start_procedure();
