@@ -628,8 +628,8 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
   }
 
   // Checks parameter collisions between cells that can lead to problems.
-  for (auto it = config.begin(); it != config.end(); ++it) {
-    for (auto it2 = it + 1; it2 != config.end(); ++it2) {
+  for (const auto* it = config.begin(); it != config.end(); ++it) {
+    for (const auto* it2 = it + 1; it2 != config.end(); ++it2) {
       const auto& cell1 = *it;
       const auto& cell2 = *it2;
 
@@ -637,19 +637,18 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
       if (cell1.cell.dl_arfcn == cell2.cell.dl_arfcn) {
         // Two cells on the same frequency should not have the same physical cell identifier.
         if (cell1.cell.pci == cell2.cell.pci) {
-          fmt::print("Two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).",
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).",
                      cell1.cell.dl_arfcn,
                      cell1.cell.pci);
-          return false;
         }
 
         // Two cells on the same frequency should not share the same PRACH root sequence index.
         if ((cell1.cell.prach_cfg.prach_frequency_start == cell2.cell.prach_cfg.prach_frequency_start) &&
             (cell1.cell.prach_cfg.prach_root_sequence_index == cell2.cell.prach_cfg.prach_root_sequence_index)) {
-          fmt::print("Two cells with the same DL ARFCN (i.e., {}) have the same PRACH root sequence (i.e., {}).",
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PRACH root sequence index "
+                     "(i.e., {}).",
                      cell1.cell.dl_arfcn,
                      cell1.cell.prach_cfg.prach_root_sequence_index);
-          return false;
         }
       }
     }
