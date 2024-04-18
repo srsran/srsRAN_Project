@@ -44,7 +44,7 @@ void ue_task_scheduler::stop()
 ue_task_scheduler_manager::ue_task_scheduler_manager(timer_manager&        timers_,
                                                      task_executor&        exec_,
                                                      srslog::basic_logger& logger_) :
-  timers(timers_), exec(exec_), logger(logger_), ues_to_rem(16)
+  timers(timers_), exec(exec_), logger(logger_), ues_to_rem(1024)
 {
 }
 
@@ -106,14 +106,16 @@ void ue_task_scheduler_manager::rem_ue_task_loop(ue_index_t ue_idx)
   // Given that it might be a UE coroutine that calls the removal of the UE object, we defer the destruction of the UE
   // task scheduler to a separate task loop.
   //  eager_async_task<void> ue_task_loop = it->second.request_stop();
-  ues_to_rem.schedule(launch_async([ue_sched = std::move(it->second)](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+  bool ret =
+      ues_to_rem.schedule(launch_async([ue_sched = std::move(it->second)](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-    // Cancel pending UE tasks and stop the task loop.
-    CORO_AWAIT(ue_sched->request_stop());
+        // Cancel pending UE tasks and stop the task loop.
+        CORO_AWAIT(ue_sched->request_stop());
 
-    CORO_RETURN();
-  }));
+        CORO_RETURN();
+      }));
+  srsran_assert(ret, "Failed to schedule UE task loop removal");
 
   // Remove UE and free its index.
   ue_ctrl_loop.erase(it);
