@@ -276,20 +276,23 @@ void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx, const 
   unsigned tb_idx = empty(0) ? 1 : 0;
   for (const pdsch_codeword& cw : pdsch.codewords) {
     srsran_assert(not empty(tb_idx), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
-    srsran_assert(tb(tb_idx).nof_retxs == 0 or ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
-                  "DCI format and RNTI type cannot change during DL HARQ retxs");
-    srsran_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
-                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
-                  prev_tx_params.tb[tb_idx]->tbs_bytes,
-                  cw.tb_size_bytes,
-                  prev_tx_params.tb[tb_idx]->mcs,
-                  prev_tx_params.rbs,
-                  cw.mcs_index,
-                  pdsch.rbs);
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
-    prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
-    prev_tx_params.tb[tb_idx]->olla_mcs  = ctx.olla_mcs;
+    if (tb(tb_idx).nof_retxs == 0) {
+      prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
+      prev_tx_params.tb[tb_idx]->olla_mcs  = ctx.olla_mcs;
+    } else {
+      srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
+                    "DCI format and RNTI type cannot change during DL HARQ retxs");
+      srsran_assert(prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
+                    "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
+                    prev_tx_params.tb[tb_idx]->tbs_bytes,
+                    cw.tb_size_bytes,
+                    prev_tx_params.tb[tb_idx]->mcs,
+                    prev_tx_params.rbs,
+                    cw.mcs_index,
+                    pdsch.rbs);
+    }
     ++tb_idx;
   }
   prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
@@ -335,20 +338,23 @@ int ul_harq_process::crc_info(bool ack)
   return -1;
 }
 
-void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch)
+void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const pusch_information& pusch)
 {
   srsran_assert(not empty(), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
-  srsran_assert(tb().nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
-                "DCI format and RNTI type cannot change during DL HARQ retxs");
-  srsran_assert(tb().nof_retxs == 0 or prev_tx_params.tbs_bytes == pusch.tb_size_bytes,
-                "TBS cannot change during DL HARQ retxs");
 
-  prev_tx_params.mcs_table    = pusch.mcs_table;
-  prev_tx_params.mcs          = pusch.mcs_index;
-  prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
-  prev_tx_params.dci_cfg_type = dci_cfg_type;
-  prev_tx_params.rbs          = pusch.rbs;
-  prev_tx_params.nof_symbols  = pusch.symbols.length();
+  prev_tx_params.mcs_table   = pusch.mcs_table;
+  prev_tx_params.mcs         = pusch.mcs_index;
+  prev_tx_params.rbs         = pusch.rbs;
+  prev_tx_params.nof_symbols = pusch.symbols.length();
+  if (tb().nof_retxs == 0) {
+    prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
+    prev_tx_params.olla_mcs     = ctx.olla_mcs;
+    prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
+  } else {
+    srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
+                  "DCI format and RNTI type cannot change during HARQ retxs");
+    srsran_assert(prev_tx_params.tbs_bytes == pusch.tb_size_bytes, "TBS cannot change during HARQ retxs");
+  }
 }
 
 void ul_harq_process::cancel_harq_retxs()

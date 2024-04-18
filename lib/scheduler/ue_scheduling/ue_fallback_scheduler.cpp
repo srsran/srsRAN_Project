@@ -1182,7 +1182,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
                           not is_retx);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
-  h_ul.save_alloc_params(pdcch.dci.type, msg.pusch_cfg);
+  h_ul.save_alloc_params(ul_harq_sched_context{pdcch.dci.type}, msg.pusch_cfg);
 
   // In case there is a SR pending, reset it.
   u.reset_sr_indication();

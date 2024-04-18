@@ -354,6 +354,14 @@ private:
   optional<float> last_pucch_snr;
 };
 
+/// \brief Context of the scheduler during the current PUSCH allocation.
+struct ul_harq_sched_context {
+  /// DCI format used to signal the PUSCH allocation.
+  dci_ul_rnti_config_type dci_cfg_type;
+  /// MCS suggested by the OLLA.
+  optional<sch_mcs_index> olla_mcs;
+};
+
 class ul_harq_process : private detail::harq_process<false>
 {
   using base_type = detail::harq_process<false>;
@@ -367,6 +375,7 @@ public:
     sch_mcs_index           mcs;
     unsigned                tbs_bytes;
     unsigned                nof_symbols;
+    optional<sch_mcs_index> olla_mcs;
   };
 
   using base_type::transport_block;
@@ -409,7 +418,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch);
+  void save_alloc_params(const ul_harq_sched_context& ctx, const pusch_information& pusch);
 
   /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
   void cancel_harq_retxs();

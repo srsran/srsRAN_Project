@@ -631,7 +631,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.new_data = true;
 
     // Store parameters used in HARQ.
-    pending_msg3.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, pusch.pusch_cfg);
+    pending_msg3.harq.save_alloc_params(ul_harq_sched_context{dci_ul_rnti_config_type::tc_rnti_f0_0}, pusch.pusch_cfg);
   }
 }
 
@@ -738,7 +738,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     ul_info.pusch_cfg.new_data = false;
 
     // Store parameters used in HARQ.
-    msg3_ctx.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, ul_info.pusch_cfg);
+    msg3_ctx.harq.save_alloc_params(ul_harq_sched_context{dci_ul_rnti_config_type::tc_rnti_f0_0}, ul_info.pusch_cfg);
 
     // successful allocation. Exit loop.
     break;

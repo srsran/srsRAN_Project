@@ -28,7 +28,8 @@ public:
   handle_dl_ack_info(bool ack, sch_mcs_index used_mcs, pdsch_mcs_table mcs_table, optional<sch_mcs_index> olla_mcs);
 
   /// \brief Update UL link quality with the latest UL CRC feedback.
-  void handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table);
+  void
+  handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table, optional<sch_mcs_index> olla_mcs);
 
   /// \brief Derives an adequate MCS given the reported CQI and experienced BLER.
   optional<sch_mcs_index> calculate_dl_mcs(pdsch_mcs_table mcs_table) const;

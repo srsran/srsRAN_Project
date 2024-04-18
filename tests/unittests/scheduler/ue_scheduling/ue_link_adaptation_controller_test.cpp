@@ -63,7 +63,7 @@ TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
   controller.handle_dl_ack_info(true, sch_mcs_index{5}, dl_mcs_table, sch_mcs_index{5});
   ASSERT_GT(controller.dl_cqi_offset(), 0);
 
-  controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64);
+  controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5});
   ASSERT_GT(controller.ul_snr_offset_db(), 0);
 }
 
@@ -72,7 +72,7 @@ TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
   controller.handle_dl_ack_info(false, sch_mcs_index{5}, dl_mcs_table, sch_mcs_index{5});
   ASSERT_LT(controller.dl_cqi_offset(), 0);
 
-  controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64);
+  controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64, sch_mcs_index{5});
   ASSERT_LT(controller.ul_snr_offset_db(), 0);
 }
 

@@ -45,27 +45,37 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool                    a
     return;
   }
 
-  // Update the MCS boundaries based on the chosen MCS table.
-  update_dl_mcs_lims(mcs_table);
-
   // Only run OLLA if the chosen MCS actually matches the MCS suggested by the OLLA.
   if (not olla_mcs.has_value() or olla_mcs.value() != used_mcs) {
     return;
   }
 
+  // Update the MCS boundaries based on the chosen MCS table.
+  update_dl_mcs_lims(mcs_table);
+
+  // Finally, run OLLA algorithm.
   dl_olla->update(ack_value, used_mcs, dl_mcs_lims);
 }
 
-void ue_link_adaptation_controller::handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table)
+void ue_link_adaptation_controller::handle_ul_crc_info(bool                    crc,
+                                                       sch_mcs_index           used_mcs,
+                                                       pusch_mcs_table         mcs_table,
+                                                       optional<sch_mcs_index> olla_mcs)
 {
   if (not ul_olla.has_value()) {
     // UL OLLA is disabled.
     return;
   }
 
+  // Only run OLLA if the chosen MCS actually matches the MCS suggested by the OLLA.
+  if (not olla_mcs.has_value() or olla_mcs.value() != used_mcs) {
+    return;
+  }
+
   // Update the MCS boundaries based on the chosen MCS table.
   update_ul_mcs_lims(mcs_table);
 
+  // Finally, run OLLA algorithm.
   ul_olla->update(crc, used_mcs, ul_mcs_lims);
 }
 

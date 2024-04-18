@@ -200,8 +200,10 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
     // Update link adaptation controller.
     const ul_harq_process& h_ul = harqs.ul_harq(crc_pdu.harq_id);
-    ue_mcs_calculator.handle_ul_crc_info(
-        crc_pdu.tb_crc_success, h_ul.last_tx_params().mcs, h_ul.last_tx_params().mcs_table);
+    ue_mcs_calculator.handle_ul_crc_info(crc_pdu.tb_crc_success,
+                                         h_ul.last_tx_params().mcs,
+                                         h_ul.last_tx_params().mcs_table,
+                                         h_ul.last_tx_params().olla_mcs);
 
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;

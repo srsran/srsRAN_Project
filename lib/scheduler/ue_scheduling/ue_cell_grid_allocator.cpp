@@ -320,7 +320,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   pdsch_alloc.dl_res_grid.fill(grant_info{bwp_dl_cmn.generic_params.scs, pdsch_td_cfg.symbols, adjusted_crbs});
 
   // Allocate UE DL HARQ.
-  if (h_dl.empty()) {
+  bool is_new_data = h_dl.empty();
+  if (is_new_data) {
     // It is a new tx.
     h_dl.new_tx(pdsch_alloc.slot,
                 k1,
@@ -378,7 +379,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   msg.context.k1        = k1;
   msg.context.ss_id     = ss_cfg.get_id();
   msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
-  if (msg.context.nof_retxs == 0 and ue_cc->link_adaptation_controller().is_dl_olla_enabled()) {
+  if (is_new_data and ue_cc->link_adaptation_controller().is_dl_olla_enabled()) {
     msg.context.olla_offset = ue_cc->link_adaptation_controller().dl_cqi_offset();
   }
   switch (pdcch->dci.type) {
@@ -391,7 +392,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                               ue_cell_cfg.search_space(grant.ss_id),
                               pdcch->dci.c_rnti_f1_0,
                               adjusted_crbs,
-                              h_dl.tb(0).nof_retxs == 0);
+                              is_new_data);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
       build_pdsch_f1_1_c_rnti(msg.pdsch_cfg,
@@ -412,10 +413,13 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   // Save set PDCCH and PDSCH PDU parameters in HARQ process.
   dl_harq_sched_context pdsch_sched_ctx;
   pdsch_sched_ctx.dci_cfg_type = pdcch->dci.type;
-  pdsch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
+  if (is_new_data) {
+    pdsch_sched_ctx.olla_mcs =
+        ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
+  }
   h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
-  if (h_dl.tb(0).nof_retxs == 0) {
+  if (is_new_data) {
     // Set MAC logical channels to schedule in this PDU if it is a newtx.
     u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
   }
@@ -709,7 +713,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   // Remove NTN offset when adding slot to HARQ process.
   slot_point harq_slot = pusch_alloc.slot - ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
   // Allocate UE UL HARQ.
-  if (h_ul.empty()) {
+  bool is_new_data = h_ul.empty();
+  if (is_new_data) {
     // It is a new tx.
     h_ul.new_tx(harq_slot, expert_cfg.max_nof_harq_retxs);
   } else {
@@ -780,7 +785,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   msg.context.ss_id     = ss_cfg.get_id();
   msg.context.k2        = pusch_td_cfg.k2;
   msg.context.nof_retxs = h_ul.tb().nof_retxs;
-  if (msg.context.nof_retxs == 0 and ue_cc->link_adaptation_controller().is_ul_olla_enabled()) {
+  if (is_new_data and ue_cc->link_adaptation_controller().is_ul_olla_enabled()) {
     msg.context.olla_offset = ue_cc->link_adaptation_controller().ul_snr_offset_db();
   }
   switch (pdcch->dci.type) {
@@ -792,7 +797,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                                cell_cfg,
                                pdcch->dci.tc_rnti_f0_0,
                                adjusted_crbs,
-                               h_ul.tb().nof_retxs == 0);
+                               is_new_data);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_pusch_f0_0_c_rnti(msg.pusch_cfg,
@@ -803,7 +808,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                               bwp_ul_cmn,
                               pdcch->dci.c_rnti_f0_0,
                               adjusted_crbs,
-                              h_ul.tb().nof_retxs == 0);
+                              is_new_data);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       build_pusch_f0_1_c_rnti(msg.pusch_cfg,
@@ -824,7 +829,12 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   get_uci_alloc(grant.cell_index).multiplex_uci_on_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
-  h_ul.save_alloc_params(pdcch->dci.type, msg.pusch_cfg);
+  ul_harq_sched_context pusch_sched_ctx;
+  pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
+  if (is_new_data) {
+    pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
+  }
+  h_ul.save_alloc_params(pusch_sched_ctx, msg.pusch_cfg);
 
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
