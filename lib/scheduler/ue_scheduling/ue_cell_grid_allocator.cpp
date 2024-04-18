@@ -410,7 +410,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
 
   // Save set PDCCH and PDSCH PDU parameters in HARQ process.
-  h_dl.save_alloc_params(pdcch->dci.type, msg.pdsch_cfg);
+  dl_harq_sched_context pdsch_sched_ctx;
+  pdsch_sched_ctx.dci_cfg_type = pdcch->dci.type;
+  pdsch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
+  h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
   if (h_dl.tb(0).nof_retxs == 0) {
     // Set MAC logical channels to schedule in this PDU if it is a newtx.

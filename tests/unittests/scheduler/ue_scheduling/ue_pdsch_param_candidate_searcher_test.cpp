@@ -66,7 +66,7 @@ protected:
                             nullopt};
 
     ue_cc->harqs.dl_harq(harq_id).new_tx(next_slot, k1, 4, 0, 15, 1);
-    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_1, pdsch);
+    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(dl_harq_sched_context{dci_dl_rnti_config_type::c_rnti_f1_1}, pdsch);
   }
 
   const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();

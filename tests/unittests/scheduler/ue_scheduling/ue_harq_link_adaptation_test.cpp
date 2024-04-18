@@ -57,12 +57,15 @@ protected:
   {
     const search_space_info& ss = ue_cc->cfg().search_space(to_search_space_id(2));
 
+    // Create dummy PDSCH grant.
+    const pdsch_codeword cw{
+        sch_mcs_description{modulation_scheme::QAM256, 0.9}, sch_mcs_index{5}, pdsch_mcs_table::qam64, 0, 128};
     const pdsch_information pdsch{ue_ptr->crnti,
                                   &ss.bwp->dl_common->generic_params,
                                   ss.coreset,
                                   vrb_alloc{vrb_interval{0, 5}},
                                   ss.pdsch_time_domain_list[0].symbols,
-                                  {},
+                                  {cw},
                                   {},
                                   ue_cc->cfg().cell_cfg_common.pci,
                                   2,
@@ -73,7 +76,8 @@ protected:
                                   nullopt};
 
     ue_cc->harqs.dl_harq(harq_id).new_tx(next_slot, k1, 4, 0, 15, 2);
-    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(dci_dl_rnti_config_type::c_rnti_f1_1, pdsch);
+    dl_harq_sched_context ctxt{dci_dl_rnti_config_type::c_rnti_f1_1, pdsch.codewords[0].mcs_index};
+    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(ctxt, pdsch);
   }
 
   const scheduler_expert_config        sched_cfg = config_helpers::make_default_scheduler_expert_config();

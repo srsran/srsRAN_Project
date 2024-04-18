@@ -22,6 +22,7 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
                     cell_cfg.expert_cfg.ue.olla_cqi_inc,
                     cell_cfg.expert_cfg.ue.olla_max_cqi_offset);
 
+    last_dl_mcs_table = pdsch_mcs_table::qam64LowSe; // Set a different value to force update.
     update_dl_mcs_lims(pdsch_mcs_table::qam64);
   }
   if (cell_cfg.expert_cfg.ue.olla_ul_snr_inc > 0) {
@@ -29,13 +30,15 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
                     cell_cfg.expert_cfg.ue.olla_ul_snr_inc,
                     cell_cfg.expert_cfg.ue.olla_max_ul_snr_offset);
 
+    last_ul_mcs_table = pusch_mcs_table::qam64LowSe_tp; // Set a different value to force update.
     update_ul_mcs_lims(pusch_mcs_table::qam64);
   }
 }
 
-void ue_link_adaptation_controller::handle_dl_ack_info(bool            ack_value,
-                                                       sch_mcs_index   used_mcs,
-                                                       pdsch_mcs_table mcs_table)
+void ue_link_adaptation_controller::handle_dl_ack_info(bool                    ack_value,
+                                                       sch_mcs_index           used_mcs,
+                                                       pdsch_mcs_table         mcs_table,
+                                                       optional<sch_mcs_index> olla_mcs)
 {
   if (not dl_olla.has_value()) {
     // DL OLLA is disabled.
@@ -44,6 +47,11 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool            ack_value
 
   // Update the MCS boundaries based on the chosen MCS table.
   update_dl_mcs_lims(mcs_table);
+
+  // Only run OLLA if the chosen MCS actually matches the MCS suggested by the OLLA.
+  if (not olla_mcs.has_value() or olla_mcs.value() != used_mcs) {
+    return;
+  }
 
   dl_olla->update(ack_value, used_mcs, dl_mcs_lims);
 }

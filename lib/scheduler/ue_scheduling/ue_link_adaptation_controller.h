@@ -24,7 +24,8 @@ public:
   ue_link_adaptation_controller(const cell_configuration& cell_cfg_, const ue_channel_state_manager& ue_channel_state);
 
   /// \brief Update DL link quality with the latest DL HARQ feedback.
-  void handle_dl_ack_info(bool ack, sch_mcs_index used_mcs, pdsch_mcs_table mcs_table);
+  void
+  handle_dl_ack_info(bool ack, sch_mcs_index used_mcs, pdsch_mcs_table mcs_table, optional<sch_mcs_index> olla_mcs);
 
   /// \brief Update UL link quality with the latest UL CRC feedback.
   void handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table);

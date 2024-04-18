@@ -65,10 +65,10 @@ public:
 
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
 
-  dl_harq_process::dl_ack_info_result handle_dl_ack_info(slot_point                 uci_slot,
-                                                         mac_harq_ack_report_status ack_value,
-                                                         unsigned                   harq_bit_idx,
-                                                         optional<float>            pucch_snr);
+  optional<dl_harq_process::dl_ack_info_result> handle_dl_ack_info(slot_point                 uci_slot,
+                                                                   mac_harq_ack_report_status ack_value,
+                                                                   unsigned                   harq_bit_idx,
+                                                                   optional<float>            pucch_snr);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,

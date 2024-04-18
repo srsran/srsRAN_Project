@@ -248,6 +248,14 @@ protected:
 
 } // namespace detail
 
+/// \brief Context of the scheduler during the current PDSCH allocation.
+struct dl_harq_sched_context {
+  /// DCI format used to signal the PDSCH allocation.
+  dci_dl_rnti_config_type dci_cfg_type;
+  /// MCS suggested by the OLLA.
+  optional<sch_mcs_index> olla_mcs;
+};
+
 class dl_harq_process : public detail::harq_process<true>
 {
   using base_type = detail::harq_process<true>;
@@ -262,6 +270,8 @@ public:
       pdsch_mcs_table mcs_table;
       sch_mcs_index   mcs;
       unsigned        tbs_bytes;
+      /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
+      optional<sch_mcs_index> olla_mcs;
     };
 
     dci_dl_rnti_config_type                                 dci_cfg_type;
@@ -276,13 +286,9 @@ public:
   struct dl_ack_info_result {
     /// \brief HARQ process ID.
     harq_id_t h_id;
-    /// \brief mcs_table used for the last PDSCH transmission.
-    pdsch_mcs_table mcs_table;
-    /// \brief MCS used for the last PDSCH transmission.
-    sch_mcs_index mcs;
-    /// \brief Number of bytes of the last PDSCH transmission.
-    unsigned tbs_bytes;
-    /// \brief HARQ process status update.
+    /// \brief TB parameters of the last PDSCH transmission.
+    dl_harq_process::alloc_params::tb_params tb;
+    /// \brief HARQ process TB status update.
     dl_harq_process::status_update update;
   };
 
@@ -333,7 +339,7 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
+  void save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
 
   void increment_pucch_counter();
 
@@ -450,7 +456,7 @@ public:
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return struct containing the HARQ process ID, MCS, TBS and status update.
   /// ACK/NACK was directed was found.
-  dl_harq_process::dl_ack_info_result
+  optional<dl_harq_process::dl_ack_info_result>
   dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.
@@ -594,12 +600,12 @@ private:
         return;
       }
       if (harq.get_slot_ack_timeout() <= _slot_tx) {
-        int idx                         = (harq.slot_ack().to_uint() + ntn_cs_koffset) % slot_ack_info.size();
-        slot_ack_info.at(idx).tbs_bytes = harq.last_alloc_params().tb[0]->tbs_bytes;
-        slot_ack_info.at(idx).h_id      = harq.id;
-        slot_ack_info.at(idx).mcs       = harq.last_alloc_params().tb[0]->mcs;
-        slot_ack_info.at(idx).mcs_table = harq.last_alloc_params().tb[0]->mcs_table;
-        slot_ack_info.at(idx).update    = dl_harq_process::status_update::acked;
+        int idx                            = (harq.slot_ack().to_uint() + ntn_cs_koffset) % slot_ack_info.size();
+        slot_ack_info.at(idx).tb.tbs_bytes = harq.last_alloc_params().tb[0]->tbs_bytes;
+        slot_ack_info.at(idx).h_id         = harq.id;
+        slot_ack_info.at(idx).tb.mcs       = harq.last_alloc_params().tb[0]->mcs;
+        slot_ack_info.at(idx).tb.mcs_table = harq.last_alloc_params().tb[0]->mcs_table;
+        slot_ack_info.at(idx).update       = dl_harq_process::status_update::acked;
       }
     }
 
@@ -619,7 +625,7 @@ private:
     dl_harq_process::dl_ack_info_result pop_ack_info(const slot_point& _slot_tx, mac_harq_ack_report_status ack)
     {
       auto ret = slot_ack_info.at(_slot_tx.to_uint() % slot_ack_info.size());
-      if (ret.tbs_bytes) {
+      if (ret.tb.tbs_bytes) {
         slot_ack_info.at(_slot_tx.to_uint() % slot_ack_info.size()) = {};
       } else {
         return {};

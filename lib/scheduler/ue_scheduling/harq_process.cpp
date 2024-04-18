@@ -271,12 +271,12 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optio
   return status_update::no_update;
 }
 
-void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch)
+void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
 {
   unsigned tb_idx = empty(0) ? 1 : 0;
   for (const pdsch_codeword& cw : pdsch.codewords) {
     srsran_assert(not empty(tb_idx), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
-    srsran_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
+    srsran_assert(tb(tb_idx).nof_retxs == 0 or ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
     srsran_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
                   "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
@@ -289,9 +289,10 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
+    prev_tx_params.tb[tb_idx]->olla_mcs  = ctx.olla_mcs;
     ++tb_idx;
   }
-  prev_tx_params.dci_cfg_type = dci_cfg_type;
+  prev_tx_params.dci_cfg_type = ctx.dci_cfg_type;
   prev_tx_params.rbs          = pdsch.rbs;
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
@@ -407,10 +408,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point                 uci_slot,
-                                                             mac_harq_ack_report_status ack,
-                                                             uint8_t                    harq_bit_idx,
-                                                             optional<float>            pucch_snr)
+optional<dl_harq_process::dl_ack_info_result> harq_entity::dl_ack_info(slot_point                 uci_slot,
+                                                                       mac_harq_ack_report_status ack,
+                                                                       uint8_t                    harq_bit_idx,
+                                                                       optional<float>            pucch_snr)
 {
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
@@ -420,17 +421,13 @@ dl_harq_process::dl_ack_info_result harq_entity::dl_ack_info(slot_point         
         h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
       // Update HARQ state.
       dl_harq_process::status_update status_upd = h_dl.ack_info(tb_index, ack, pucch_snr);
-      return {h_dl.id,
-              h_dl.last_alloc_params().tb[0]->mcs_table,
-              h_dl.last_alloc_params().tb[0]->mcs,
-              h_dl.last_alloc_params().tb[0]->tbs_bytes,
-              status_upd};
+      return dl_harq_process::dl_ack_info_result{h_dl.id, *h_dl.last_alloc_params().tb[0], status_upd};
     } else if (ntn_harq.active()) {
       return ntn_harq.pop_ack_info(uci_slot, ack);
     }
   }
   logger.warning("DL HARQ for rnti={}, uci slot={} not found.", rnti, uci_slot);
-  return {INVALID_HARQ_ID, pdsch_mcs_table::qam64, sch_mcs_index{0}, 0, dl_harq_process::status_update::error};
+  return nullopt;
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
