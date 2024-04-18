@@ -54,8 +54,20 @@ private:
   /// \brief Get the value of UL SNR after applying the link adaptation SNR offset.
   float get_effective_snr() const;
 
+  /// \brief Update the DL MCS boundaries based on the chosen MCS table.
+  void update_dl_mcs_lims(pdsch_mcs_table mcs_table);
+
+  /// \brief Update the UL MCS boundaries based on the chosen MCS table.
+  void update_ul_mcs_lims(pusch_mcs_table mcs_table);
+
   const cell_configuration&       cell_cfg;
   const ue_channel_state_manager& ue_ch_st;
+
+  // Limits for the MCS selection.
+  pdsch_mcs_table               last_dl_mcs_table;
+  interval<sch_mcs_index, true> dl_mcs_lims;
+  pusch_mcs_table               last_ul_mcs_table;
+  interval<sch_mcs_index, true> ul_mcs_lims;
 
   optional<olla_algorithm> dl_olla;
   optional<olla_algorithm> ul_olla;

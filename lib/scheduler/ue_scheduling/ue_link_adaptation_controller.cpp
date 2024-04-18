@@ -21,11 +21,15 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
     dl_olla.emplace(cell_cfg.expert_cfg.ue.olla_dl_target_bler,
                     cell_cfg.expert_cfg.ue.olla_cqi_inc,
                     cell_cfg.expert_cfg.ue.olla_max_cqi_offset);
+
+    update_dl_mcs_lims(pdsch_mcs_table::qam64);
   }
   if (cell_cfg.expert_cfg.ue.olla_ul_snr_inc > 0) {
     ul_olla.emplace(cell_cfg.expert_cfg.ue.olla_ul_target_bler,
                     cell_cfg.expert_cfg.ue.olla_ul_snr_inc,
                     cell_cfg.expert_cfg.ue.olla_max_ul_snr_offset);
+
+    update_ul_mcs_lims(pusch_mcs_table::qam64);
   }
 }
 
@@ -34,25 +38,27 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool            ack_value
                                                        pdsch_mcs_table mcs_table)
 {
   if (not dl_olla.has_value()) {
+    // DL OLLA is disabled.
     return;
   }
 
-  const sch_mcs_index                 max_mcs = map_cqi_to_mcs(cqi_value::max(), mcs_table).value();
-  const interval<sch_mcs_index, true> mcs_bounds{cell_cfg.expert_cfg.ue.dl_mcs.start(),
-                                                 std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
+  // Update the MCS boundaries based on the chosen MCS table.
+  update_dl_mcs_lims(mcs_table);
 
-  dl_olla->update(ack_value, used_mcs, mcs_bounds);
+  dl_olla->update(ack_value, used_mcs, dl_mcs_lims);
 }
 
 void ue_link_adaptation_controller::handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table)
 {
   if (not ul_olla.has_value()) {
+    // UL OLLA is disabled.
     return;
   }
 
-  const interval<sch_mcs_index, true> mcs_bounds{
-      cell_cfg.expert_cfg.ue.ul_mcs.start(), std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table))};
-  ul_olla->update(crc, used_mcs, mcs_bounds);
+  // Update the MCS boundaries based on the chosen MCS table.
+  update_ul_mcs_lims(mcs_table);
+
+  ul_olla->update(crc, used_mcs, ul_mcs_lims);
 }
 
 float ue_link_adaptation_controller::get_effective_cqi() const
@@ -115,4 +121,27 @@ sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mc
   mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.ul_mcs.start()), cell_cfg.expert_cfg.ue.ul_mcs.stop());
 
   return mcs;
+}
+
+void ue_link_adaptation_controller::update_dl_mcs_lims(pdsch_mcs_table mcs_table)
+{
+  if (last_dl_mcs_table == mcs_table) {
+    return;
+  }
+
+  last_dl_mcs_table           = mcs_table;
+  const sch_mcs_index max_mcs = map_cqi_to_mcs(cqi_value::max(), mcs_table).value();
+  dl_mcs_lims                 = interval<sch_mcs_index, true>{cell_cfg.expert_cfg.ue.dl_mcs.start(),
+                                                              std::min(cell_cfg.expert_cfg.ue.dl_mcs.stop(), max_mcs)};
+}
+
+void ue_link_adaptation_controller::update_ul_mcs_lims(pusch_mcs_table mcs_table)
+{
+  if (last_ul_mcs_table == mcs_table) {
+    return;
+  }
+
+  last_ul_mcs_table = mcs_table;
+  ul_mcs_lims       = interval<sch_mcs_index, true>{
+            cell_cfg.expert_cfg.ue.ul_mcs.start(), std::min(cell_cfg.expert_cfg.ue.ul_mcs.stop(), get_max_mcs_ul(mcs_table))};
 }
