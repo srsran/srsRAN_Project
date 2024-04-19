@@ -87,6 +87,11 @@ byte_buffer::byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other)
   (void)var;
 }
 
+byte_buffer::byte_buffer(fallback_allocation_tag tag, const std::initializer_list<uint8_t>& other) noexcept :
+  byte_buffer(tag, span<const uint8_t>(other.begin(), other.end()))
+{
+}
+
 byte_buffer::byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept
 {
   // Append new head segment to linked list with fallback allocator mode.
@@ -98,6 +103,26 @@ byte_buffer::byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) 
     srsran_sanity_check(var, "Should never fail to append segment if fallback is enabled");
     (void)var;
   }
+}
+
+expected<byte_buffer> byte_buffer::deep_copy() const
+{
+  if (ctrl_blk_ptr == nullptr) {
+    return byte_buffer{};
+  }
+
+  byte_buffer buf;
+  for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
+    if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
+      return default_error_t{};
+    }
+  }
+  return buf;
+}
+
+expected<byte_buffer> byte_buffer::deep_copy(fallback_allocation_tag tag) const
+{
+  return byte_buffer{tag, *this};
 }
 
 bool byte_buffer::append(span<const uint8_t> bytes)
@@ -123,6 +148,11 @@ bool byte_buffer::append(span<const uint8_t> bytes)
     ctrl_blk_ptr->pkt_len += to_write;
   }
   return true;
+}
+
+SRSRAN_NODISCARD bool byte_buffer::append(const std::initializer_list<uint8_t>& bytes)
+{
+  return append(span<const uint8_t>(bytes.begin(), bytes.size()));
 }
 
 bool byte_buffer::append(const byte_buffer& other)
@@ -189,6 +219,18 @@ bool byte_buffer::append(byte_buffer&& other)
   other.ctrl_blk_ptr->segments.tail       = other.ctrl_blk_ptr->segment_in_cb_memory_block;
   other.ctrl_blk_ptr->segments.head->next = nullptr;
   other.ctrl_blk_ptr.reset();
+  return true;
+}
+
+SRSRAN_NODISCARD bool byte_buffer::append(const byte_buffer_view& view)
+{
+  // Append segment by segment.
+  auto view_segs = view.segments();
+  for (span<const uint8_t> seg : view_segs) {
+    if (not append(seg)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -287,6 +329,23 @@ bool byte_buffer::prepend_segment(size_t headroom_suggestion)
   // Prepend new segment to linked list.
   ctrl_blk_ptr->segments.push_front(*segment);
   return true;
+}
+
+void byte_buffer::pop_last_segment()
+{
+  node_t* tail = ctrl_blk_ptr->segments.tail;
+  if (tail == nullptr) {
+    return;
+  }
+
+  // Decrement bytes stored in the tail.
+  ctrl_blk_ptr->pkt_len -= tail->length();
+
+  // Remove tail from linked list.
+  ctrl_blk_ptr->segments.pop_back();
+
+  // Deallocate tail segment.
+  ctrl_blk_ptr->destroy_node(tail);
 }
 
 bool byte_buffer::prepend(span<const uint8_t> bytes)
@@ -507,4 +566,54 @@ void byte_buffer::warn_alloc_failure()
 {
   static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
   logger.warning("POOL: Failure to allocate byte buffer segment");
+}
+
+byte_buffer srsran::make_byte_buffer(const std::string& hex_str)
+{
+  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+
+  byte_buffer ret{byte_buffer::fallback_allocation_tag{}};
+  for (size_t i = 0, e = hex_str.size(); i != e; i += 2) {
+    uint8_t val;
+    std::sscanf(hex_str.data() + i, "%02hhX", &val);
+    bool success = not ret.append(val);
+    srsran_sanity_check(success, "Failed to append byte to byte_buffer with fallback allocator");
+    (void)success;
+  }
+  return ret;
+}
+
+span<const uint8_t> srsran::to_span(const byte_buffer& src, span<uint8_t> tmp_mem)
+{
+  // Empty buffer.
+  if (src.empty()) {
+    return {};
+  }
+
+  // Is contiguous: shortcut without copy.
+  if (src.is_contiguous()) {
+    return *src.segments().begin();
+  }
+
+  // Non-contiguous: copy required.
+  srsran_assert(src.length() <= tmp_mem.size(),
+                "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
+                src.length(),
+                tmp_mem.size());
+  span<uint8_t> result = {tmp_mem.data(), src.length()};
+  copy_segments(src, result);
+  return result;
+}
+
+// ---- byte_buffer_writer
+
+SRSRAN_NODISCARD bool byte_buffer_writer::append_zeros(size_t nof_zeros)
+{
+  // TODO: optimize.
+  for (size_t i = 0; i != nof_zeros; ++i) {
+    if (not buffer->append(0)) {
+      return false;
+    }
+  }
+  return true;
 }
