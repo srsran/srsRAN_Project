@@ -235,7 +235,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
   rnti_t              new_crnti    = to_rnti(0x4602);
   ASSERT_FALSE(send_rrc_reest_request_and_wait_response(new_du_ue_id, new_crnti, old_crnti, old_pci));
 
-  // new UE sends RRC Setup Complete and completes fallback procedure.
+  // EVENT: new UE sends RRC Setup Complete and completes fallback procedure.
   gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(1);
   this->ue_sends_rrc_setup_complete(new_du_ue_id, cu_ue_id);
 
@@ -248,12 +248,13 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
   f1ap_message f1ap_pdu;
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu)) << "UE Context Release Command sent to soon";
 
-  // Send RRC Setup Complete for old UE.
-  gnb_cu_ue_f1ap_id_t old_cu_ue_id =
-      int_to_gnb_cu_ue_f1ap_id(msg->pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id);
-  this->ue_sends_rrc_setup_complete(old_du_ue_id, old_cu_ue_id);
+  // RRC Setup timeout for old UE.
+  std::chrono::milliseconds timeout{this->get_cu_cp_cfg().rrc_config.rrc_procedure_timeout_ms};
+  for (unsigned i = 0; i != timeout.count(); ++i) {
+    this->tick();
+  }
 
-  // STATUS: CU-CP sends UE Context Release Command after the previous procedure times out.
+  // STATUS: CU-CP sends F1AP UE Context Release Command for old UE after the previous procedure times out.
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
