@@ -191,6 +191,10 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
       ->capture_default_str();
   app.add_option("--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
+  app.add_option("--n3_ext_addr",
+                 amf_params.n3_ext_addr,
+                 "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
+      ->check(CLI::ValidIPV4);
   app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
   app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
   app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
