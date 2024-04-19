@@ -188,7 +188,7 @@ optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell_reso
   srsran_assert(not(existing_grants.format1_sr_grant != nullptr and existing_grants.format2_grant != nullptr),
                 "It is expected that there are either no grants, or at most 1 PUCCH grant (F1 SR and F2 for CSI)");
 
-  // If a F2 PUCCH grant with HARQ-ACK bits exits, then there must be as well a common PUCCH F1 grant (with 1 HARQ-ACK
+  // If a F2 PUCCH grant with HARQ-ACK bits exists, then there must be as well a common PUCCH F1 grant (with 1 HARQ-ACK
   // bit); in that case, the function should have returned already in the previous "if" check.
   srsran_assert(existing_grants.format2_grant == nullptr or
                     existing_grants.format2_grant->format_2.harq_ack_nof_bits == 0,
