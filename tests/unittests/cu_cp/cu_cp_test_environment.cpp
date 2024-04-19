@@ -517,6 +517,8 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
                                             rnti_t              old_crnti,
                                             pci_t               old_pci)
 {
+  f1ap_message f1ap_pdu;
+
   // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
   byte_buffer rrc_container =
       pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "0011000101110000"));
@@ -525,8 +527,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (with RRC Reestablishment / RRC Setup / RRC Reject).
-  f1ap_message f1ap_pdu;
-  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(result, "F1AP DL RRC Message Transfer with Msg4 not sent to DU");
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu), "Invalid Msg4");
 
