@@ -564,12 +564,8 @@ void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> paylo
 {
   logger.debug("Received data of {} bytes", payload.size_bytes());
 
-  auto payload_buffer = byte_buffer::create(payload.begin(), payload.end());
-  if (payload_buffer.is_error()) {
-    logger.warning("Unable to allocate byte_buffer");
-    return;
-  }
-  data_notifier.on_new_pdu(std::move(payload_buffer.value()));
+  // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
+  data_notifier.on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
 ///< Process outgoing PDU and send over SCTP socket to peer.
