@@ -119,22 +119,11 @@ public:
   /// \brief Defines the fallback state of the ue_cell.
   /// Transitions can be fallback => sr_csi_received => normal => fallback. The fallback => sr_csi_received transition
   /// is triggered by the reception of SR or CSI, the sr_csi_received => normal is triggered by the reception of 2
-  /// consecutive CRC=OK after the first SR or CSI is received.
+  /// CRC=OK after the first SR or CSI is received.
   enum class fallback_state { fallback, sr_csi_received, normal };
 
   /// \brief Set UE fallback state.
-  void set_fallback_state(fallback_state fallback_mode_new)
-  {
-    if (fallback_mode_new == fallback_state::normal) {
-      fallback_crc_cnt = 0;
-      if (fallback_mode_current == fallback_state::sr_csi_received) {
-        logger.debug("ue={} rnti={}: Leaving fallback mode", ue_index, rnti());
-      }
-    } else if (fallback_mode_new == fallback_state::fallback and fallback_mode_current == fallback_state::normal) {
-      logger.debug("ue={} rnti={}: Entering fallback mode", ue_index, rnti());
-    }
-    fallback_mode_current = fallback_mode_new;
-  }
+  void set_fallback_state(fallback_state fallback_mode_new);
 
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
@@ -160,9 +149,8 @@ private:
   /// \brief Whether cell is currently active.
   bool active = true;
 
-  /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
-  /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must
-  /// already have applied a dedicated config.
+  /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
+  /// cellConfigCommon are used.
   fallback_state fallback_mode_current = fallback_state::normal;
   /// Counter of received CRC=OK after the first SR or CSI has been received.
   unsigned fallback_crc_cnt = 0;

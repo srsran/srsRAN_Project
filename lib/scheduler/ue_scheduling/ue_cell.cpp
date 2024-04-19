@@ -181,19 +181,19 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   // Update UL HARQ state.
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
 
-  // Implements the condition for the UE to exit fallback mode: the GNB must receive 2 CRC=OK after receiving either a
-  // SR or CSI.
-  if (fallback_mode_current == fallback_state::sr_csi_received and crc_pdu.tb_crc_success) {
-    ++fallback_crc_cnt;
-    const unsigned min_crc_ok_for_leaving_fallback = 2U;
-    if (fallback_crc_cnt >= min_crc_ok_for_leaving_fallback) {
-      set_fallback_state(fallback_state::normal);
-      fallback_crc_cnt = 0;
-    }
-  }
-
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
+
+    // Implements the condition for the UE to exit fallback mode: the GNB must receive 2 CRC=OK after receiving either a
+    // SR or CSI.
+    if (fallback_mode_current == fallback_state::sr_csi_received and crc_pdu.tb_crc_success) {
+      ++fallback_crc_cnt;
+      const unsigned min_crc_ok_for_leaving_fallback = 2U;
+      if (fallback_crc_cnt >= min_crc_ok_for_leaving_fallback) {
+        set_fallback_state(fallback_state::normal);
+        fallback_crc_cnt = 0;
+      }
+    }
 
     // Update link adaptation controller.
     const ul_harq_process& h_ul = harqs.ul_harq(crc_pdu.harq_id);
@@ -428,6 +428,35 @@ aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_spa
   }
 
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
+}
+
+void ue_cell::set_fallback_state(fallback_state fallback_mode_new)
+{
+  // Allowed state-transition:
+  // - fallback => sr_csi_received.
+  // - sr_csi_received => normal.
+  // - normal => fallback.
+  // - transitions to same state.
+  if (fallback_mode_new == fallback_state::normal) {
+    fallback_crc_cnt = 0;
+    if (fallback_mode_current == fallback_state::sr_csi_received) {
+      logger.debug("ue={} rnti={}: Leaving fallback mode", ue_index, rnti());
+    } else if (fallback_mode_current == fallback_state::fallback) {
+      logger.error("ue={} rnti={}: Detected wrong transition from fallback to normal mode", ue_index, rnti());
+    }
+  } else if (fallback_mode_new == fallback_state::fallback) {
+    if (fallback_mode_current == fallback_state::normal) {
+      logger.debug("ue={} rnti={}: Entering fallback mode", ue_index, rnti());
+    } else if (fallback_mode_current == fallback_state::sr_csi_received) {
+      logger.error("ue={} rnti={}: Detected wrong transition from sr_csi_received to fallback mode", ue_index, rnti());
+    }
+  } else {
+    if (fallback_mode_current == fallback_state::normal) {
+      logger.error("ue={} rnti={}: Detected wrong transition from normal to sr_csi_received", ue_index, rnti());
+    }
+  }
+
+  fallback_mode_current = fallback_mode_new;
 }
 
 void ue_cell::apply_link_adaptation_procedures(const csi_report_data& csi_report)
