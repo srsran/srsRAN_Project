@@ -40,6 +40,7 @@ markers = [
   "test_mode_not_crash",
   "viavi",
   "viavi_manual",
+  "viavi_debug",
 ]
 minversion = "6.0"
 python_files = [

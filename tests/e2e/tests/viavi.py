@@ -198,6 +198,79 @@ def test_viavi(
     )
 
 
+@mark.parametrize(
+    "campaign_filename, test_name, test_timeout, max_pdschs_per_slot, max_puschs_per_slot, enable_qos_viavi, \
+warning_as_errors, post_commands",
+    (
+        param(
+            "C:\\ci\\CI 4x4 ORAN-FH.xml",
+            "32UE static DL + UL UDP - Dell",
+            45 * 60,
+            1,
+            1,
+            False,
+            False,
+            "",
+            id="Debug: 32UE Bidirectional UDP",
+        ),
+    ),
+)
+@mark.viavi_debug
+# pylint: disable=too-many-arguments, too-many-locals
+def test_viavi_debug(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    test_log_folder: str,
+    # Clients
+    gnb: GNBStub,
+    viavi: Viavi,
+    metrics_server: MetricServerInfo,
+    # Test info
+    campaign_filename: str,
+    test_name: str,
+    test_timeout: int,
+    max_pdschs_per_slot: int,
+    max_puschs_per_slot: int,
+    post_commands: str,
+    warning_as_errors: bool,
+    enable_qos_viavi: bool,
+    # Test extra params
+    always_download_artifacts: bool = True,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    gnb_stop_timeout: int = 0,
+    log_search: bool = True,
+):
+    """
+    Runs a test using Viavi
+    """
+    _test_viavi(
+        # Retina
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        test_log_folder=test_log_folder,
+        # Clients
+        gnb=gnb,
+        viavi=viavi,
+        metrics_server=metrics_server,
+        # Test info
+        campaign_filename=campaign_filename,
+        test_name=test_name,
+        test_timeout=test_timeout,
+        # Test extra params
+        always_download_artifacts=always_download_artifacts,
+        gnb_startup_timeout=gnb_startup_timeout,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        post_commands=post_commands,
+        max_pdschs_per_slot=max_pdschs_per_slot,
+        max_puschs_per_slot=max_puschs_per_slot,
+        warning_as_errors=warning_as_errors,
+        enable_qos_viavi=enable_qos_viavi,
+        fail_if_kos=False,
+    )
+
+
 # pylint: disable=too-many-arguments, too-many-locals
 def _test_viavi(
     # Retina
@@ -222,6 +295,7 @@ def _test_viavi(
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
     post_commands: str = "",
+    fail_if_kos: bool = True,
 ):
     """
     Runs a test using Viavi
@@ -299,7 +373,7 @@ def _test_viavi(
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,
             warning_as_errors=warning_as_errors,
-            fail_if_kos=True,
+            fail_if_kos=fail_if_kos,
         )
 
     # This except and the finally should be inside the request, but the campaign_name makes it complicated
