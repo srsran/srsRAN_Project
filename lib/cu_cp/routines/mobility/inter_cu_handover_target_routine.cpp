@@ -174,7 +174,8 @@ void inter_cu_handover_target_routine::operator()(
     unsigned transaction_id = 0;
 
     // Get RRC Handover Command container
-    rrc_reconfiguration = ue->get_rrc_ue_notifier().on_rrc_handover_command_required(rrc_reconfig_args, transaction_id);
+    handover_command_pdu =
+        ue->get_rrc_ue_notifier().on_rrc_handover_command_required(rrc_reconfig_args, transaction_id);
   }
 
   CORO_RETURN(generate_handover_resource_allocation_response(true));
@@ -368,7 +369,7 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
       response.pdu_session_res_failed_to_setup_list_ho_ack.emplace(failed_item.pdu_session_id, failed_item);
     }
     // target to source transparent container
-    response.target_to_source_transparent_container.rrc_container = rrc_reconfiguration.copy();
+    response.target_to_source_transparent_container.rrc_container = handover_command_pdu.copy();
   } else {
     response.success  = false;
     response.ue_index = request.ue_index;

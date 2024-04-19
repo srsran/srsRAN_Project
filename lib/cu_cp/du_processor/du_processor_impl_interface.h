@@ -205,6 +205,12 @@ public:
   /// \return True if the security context was applied successfully, false otherwise
   virtual bool on_new_security_context(const security::security_context& sec_context) = 0;
 
+  /// \brief Notify about the reception of a new Handover Command PDU.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns The RRC Handover Reconfiguration PDU. If the Handover Command PDU is invalid, an empty buffer is
+  /// returned.
+  virtual byte_buffer on_new_rrc_handover_command(byte_buffer cmd) = 0;
+
   /// \brief Request the RRC Handover Command PDU.
   /// \returns The RRC Handover Command PDU.
   virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
@@ -271,6 +277,9 @@ public:
   /// \brief Handle the reception of a new PDU Session Resource Release Command.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) = 0;
+
+  /// \brief Handle the reception of a new Handover Command.
+  virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.

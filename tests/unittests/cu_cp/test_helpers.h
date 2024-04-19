@@ -546,6 +546,8 @@ public:
     return true;
   }
 
+  byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }
+
   byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                unsigned                                     transaction_id_) override
   {

@@ -134,12 +134,6 @@ public:
     return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
   }
 
-  bool on_new_rrc_handover_command(byte_buffer cmd) override
-  {
-    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
-    return rrc_ue_ho_prep_handler->handle_rrc_handover_command(std::move(cmd));
-  }
-
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
@@ -183,6 +177,12 @@ public:
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
     return du_processor_ngap_handler->handle_ue_context_release_command(command);
+  }
+
+  async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
+  {
+    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
+    return du_processor_ngap_handler->handle_new_handover_command(ue_index, std::move(command));
   }
 
 private:

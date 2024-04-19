@@ -165,11 +165,6 @@ public:
 
   /// \brief Get the status of the security context.
   virtual bool on_security_enabled() = 0;
-
-  /// \brief Notify about the reception of a new Handover Command pdu.
-  /// \param[in] cmd The handover command RRC PDU.
-  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
-  virtual bool on_new_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.
@@ -195,6 +190,12 @@ public:
   /// \returns The UE Context Release Complete.
   virtual async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
+
+  /// \brief Notify about the reception of a new Handover Command.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] command The Handover Command.
+  /// \returns True if the Handover command is valid and was successfully handled by the DU.
+  virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to control the NGAP.

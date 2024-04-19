@@ -150,12 +150,6 @@ public:
 
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
-  bool on_new_rrc_handover_command(byte_buffer cmd) override
-  {
-    last_handover_command = std::move(cmd);
-    return true;
-  }
-
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
   {
     ho_preparation_message = std::move(ho_preparation_message_);
@@ -258,10 +252,23 @@ public:
     });
   }
 
+  async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
+  {
+    logger.info("Received a new Handover Command");
+
+    last_handover_command = std::move(command);
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
   cu_cp_ue_context_release_command           last_command;
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
+  byte_buffer                                last_handover_command;
 
   ue_index_t allocate_ue_index()
   {

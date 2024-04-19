@@ -63,7 +63,7 @@ private:
   e1ap_bearer_context_setup_response         bearer_context_setup_response;
   f1ap_ue_context_setup_response             ue_context_setup_response;
   e1ap_bearer_context_modification_response  bearer_context_modification_response;
-  byte_buffer                                rrc_reconfiguration;
+  byte_buffer                                handover_command_pdu;
 };
 
 } // namespace srs_cu_cp

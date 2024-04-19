@@ -321,6 +321,12 @@ public:
     return rrc_ue_handler->handle_new_security_context(sec_context);
   }
 
+  byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_rrc_handover_command(std::move(cmd));
+  }
+
   byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                unsigned                                     transaction_id) override
   {

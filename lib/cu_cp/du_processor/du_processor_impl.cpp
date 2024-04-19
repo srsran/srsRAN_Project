@@ -15,6 +15,7 @@
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_du_factory.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -371,6 +372,41 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
 
   return routine_mng->start_pdu_session_resource_release_routine(
       msg, ngap_ctrl_notifier, ue->get_rrc_ue_notifier(), task_sched, ue->get_up_resource_manager());
+}
+
+async_task<bool> du_processor_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
+{
+  return launch_async(
+      [this,
+       ue_index,
+       command,
+       ho_reconfig_pdu         = byte_buffer{},
+       ue_context_mod_response = f1ap_ue_context_modification_response{},
+       ue_context_mod_request  = f1ap_ue_context_modification_request{}](coro_context<async_task<bool>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        if (ue_manager.find_du_ue(ue_index) == nullptr) {
+          CORO_EARLY_RETURN(false);
+        }
+
+        // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU
+        ho_reconfig_pdu =
+            ue_manager.find_du_ue(ue_index)->get_rrc_ue_notifier().on_new_rrc_handover_command(std::move(command));
+        if (ho_reconfig_pdu.empty()) {
+          logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
+          CORO_EARLY_RETURN(false);
+        }
+
+        ue_context_mod_request.ue_index = ue_index;
+        ue_context_mod_request.drbs_to_be_released_list =
+            ue_manager.find_du_ue(ue_index)->get_up_resource_manager().get_drbs();
+        ue_context_mod_request.rrc_container = ho_reconfig_pdu.copy();
+
+        CORO_AWAIT_VALUE(ue_context_mod_response,
+                         f1ap_ue_context_notifier.on_ue_context_modification_request(ue_context_mod_request));
+
+        CORO_RETURN(ue_context_mod_response.success);
+      });
 }
 
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)

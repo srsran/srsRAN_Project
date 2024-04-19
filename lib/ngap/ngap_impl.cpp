@@ -850,6 +850,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            ue_ctxt.ue_ids,
                                                            tx_pdu_notifier,
                                                            ue->get_rrc_ue_control_notifier(),
+                                                           ue->get_du_processor_control_notifier(),
                                                            ue->get_up_resource_manager(),
                                                            ev_mng,
                                                            timer_factory{task_sched.get_timer_manager(), ctrl_exec},
