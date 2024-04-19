@@ -122,9 +122,13 @@ def _ping_and_reestablishment_multi_ues(
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
+    # Reestablishment while pings
     for index, ue_stub in enumerate(ue_array):
-        # Start pings and reestablishment
-        logging.info("Starting Pings and reestablishment in background")
+        logging.info(
+            "Starting Reestablishment for UE [%s] (%s) + Pings running in background for all UEs",
+            id(ue_stub),
+            ue_attach_info_dict[ue_stub].ipv4,
+        )
         ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count)
 
         for _ in range(reestablishment_count):
@@ -133,9 +137,8 @@ def _ping_and_reestablishment_multi_ues(
 
         ping_wait_until_finish(ping_task_array, index)
 
-    ping_count_end = 20
-    # Start ping in end and wait
-    logging.info("Starting Pings after completed reestablishments")
-    ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, ping_count_end))
+    # Pings after reest
+    logging.info("Starting Pings after all reestablishments have been completed")
+    ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, ping_count=20))
 
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)

@@ -289,7 +289,17 @@ amari 32UE:
             "iperf and udp and not band:3",
             "iperf and tcp and band:3",
             "iperf and tcp and not band:3",
+          ]
+
+amari 32UE beta:
+  extends: amari 32UE
+  allow_failure: true
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
             "reestablishment",
+            "handover",
           ]
 
 amari 32UE asan:

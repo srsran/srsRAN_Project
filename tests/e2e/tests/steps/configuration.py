@@ -13,7 +13,7 @@ Configuration related steps
 import logging
 from collections import defaultdict
 from pprint import pformat
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -34,9 +34,11 @@ def configure_test_parameters(
     gtpu_enable: Optional[bool] = None,
     common_search_space_enable: bool = False,
     prach_config_index: int = -1,
-    log_ip_level="",
+    log_ip_level: str = "",
     enable_channel_noise: bool = False,
     enable_qos_reestablishment: bool = False,
+    num_cells: int = 1,
+    cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
 ):
     """
     Configure test parameters
@@ -53,6 +55,8 @@ def configure_test_parameters(
                 "global_timing_advance": global_timing_advance,
                 "log_ip_level": log_ip_level,
                 "enable_channel_noise": enable_channel_noise,
+                "num_cells": num_cells,
+                "cell_position_offset": cell_position_offset,
             },
         },
         "gnb": {
@@ -66,6 +70,7 @@ def configure_test_parameters(
                 "prach_config_index": prach_config_index,
                 "enable_channel_noise": enable_channel_noise,
                 "enable_qos_reestablishment": enable_qos_reestablishment,
+                "num_cells": num_cells,
             },
         },
     }
