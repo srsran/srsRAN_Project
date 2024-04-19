@@ -277,19 +277,6 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
     run_slot();
   }
 
-  // Wait for CSI for UE to leave fallback mode.
-  // TODO. For now we just bypass by sending the RRC Setup Complete.
-  if (not run_until([&]() {
-        if (phy_cell.last_ul_res.has_value() and phy_cell.last_ul_res.value().ul_res != nullptr) {
-          if (find_ue_pucch_with_csi(rnti, phy_cell.last_ul_res.value().ul_res->pucchs) != nullptr) {
-            return true;
-          }
-        }
-        return false;
-      })) {
-    return false;
-  }
-
   // UE sends RRC Setup Complete. Wait until F1AP forwards UL RRC Message to CU-CP.
   cu_notifier.last_f1ap_msgs.clear();
   du_hi->get_pdu_handler().handle_rx_data_indication(
@@ -365,14 +352,65 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
     return false;
   }
 
-  // Force 2 CRC indications to trigger the UE to exit fallback state.
-  for (unsigned n_crc = 0; n_crc != 2; ++n_crc) {
-    // Send CRC for the RRC container.
-    du_hi->get_control_info_handler(it->second.pcell_index)
-        .handle_crc(test_helpers::create_crc_indication(next_slot + n_crc, rnti));
-  }
-
   return true;
+}
+
+bool du_high_env_simulator::force_ue_fallback(rnti_t rnti)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+  const ue_sim_context& u        = it->second;
+  const auto&           phy_cell = phy.cells[u.pcell_index];
+
+  // For the UE to transition to non-fallback mode, the GNB needs to receive either an SR or CSI pkus then 2 CRC = OK.
+  // In the following, we force 2 SRs, which in turn will 2 PUSCH. We also need to force 2 CRC=OK corresponding to each
+  // of the PUSCH.
+  for (unsigned crc_cnt = 0; crc_cnt != 2; ++crc_cnt) {
+    const unsigned max_slot_count = 100;
+    // Run until the slot the SR PUCCH is scheduled for.
+    optional<slot_point> slot_sr = nullopt;
+    for (unsigned count = 0; count != max_slot_count; ++count) {
+      const bool found_sr = phy_cell.last_ul_res.has_value() and phy_cell.last_ul_res.value().ul_res != nullptr and
+                            find_ue_pucch_with_sr(rnti, phy_cell.last_ul_res.value().ul_res->pucchs) != nullptr;
+      if (found_sr) {
+        slot_sr = next_slot;
+        break;
+      }
+      run_slot();
+    }
+
+    // Enforce an UCI indication for the SR; this will trigger the SRB1 fallback scheduler to allocate a PUSCH grant.
+    if (slot_sr.has_value()) {
+      static_vector<pucch_info, 1> pucchs{
+          pucch_info{.crnti    = rnti,
+                     .format   = pucch_format::FORMAT_1,
+                     .format_1 = {.sr_bits = sr_nof_bits::one, .harq_ack_nof_bits = 0}}};
+      mac_uci_indication_message uci_ind = test_helpers::create_uci_indication(*slot_sr, pucchs);
+    } else {
+      return false;
+    }
+
+    // Search for the PUSCH grant and force a CRC indication with OK.
+    for (unsigned count = 0; count != max_slot_count; ++count) {
+      const ul_sched_info* pusch = nullptr;
+      if (phy_cell.last_ul_res.has_value() and phy_cell.last_ul_res.value().ul_res != nullptr) {
+        pusch = find_ue_pusch(rnti, phy_cell.last_ul_res.value().ul_res->puschs);
+        if (pusch != nullptr) {
+          du_hi->get_control_info_handler(it->second.pcell_index)
+              .handle_crc(test_helpers::create_crc_indication(
+                  phy_cell.last_ul_res->slot, rnti, to_harq_id(pusch->pusch_cfg.harq_id)));
+          if (crc_cnt == 1) {
+            return true;
+          }
+          break;
+        }
+      }
+      run_slot();
+    }
+  }
+  return false;
 }
 
 void du_high_env_simulator::run_slot()
