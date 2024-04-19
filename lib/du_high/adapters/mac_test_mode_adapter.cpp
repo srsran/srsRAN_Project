@@ -603,6 +603,7 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
   if (ue_info_mgr.is_test_ue(cfg.crnti)) {
     // It is the test UE.
     mac_ue_create_request cfg_copy = cfg;
+    cfg_copy.initial_fallback      = false;
 
     // Save UE index and configuration of test mode UE.
     ue_info_mgr.add_ue(cfg.crnti, cfg_copy.ue_index, cfg_copy.sched_cfg);
