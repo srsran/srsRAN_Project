@@ -68,6 +68,20 @@ public:
 
     if (!success) {
       logger.warning(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index(), "Failed to execute PUSCH. Ignoring processing.");
+
+      // Report data-related discarded result if shared channel data is present.
+      if (pdu.pdu.codeword.has_value()) {
+        ul_pusch_results_data discarded_results =
+            ul_pusch_results_data::create_discarded(to_rnti(pdu.pdu.rnti), pdu.pdu.slot, pdu.harq_id);
+        notifier.on_new_pusch_results_data(discarded_results);
+      }
+
+      // Report control-related discarded result if HARQ-ACK feedback is present.
+      if (pdu.pdu.uci.nof_harq_ack > 0) {
+        ul_pusch_results_control discarded_results =
+            ul_pusch_results_control::create_discarded(to_rnti(pdu.pdu.rnti), pdu.pdu.slot, pdu.pdu.uci.nof_harq_ack);
+        notifier.on_new_pusch_results_control(discarded_results);
+      }
     }
   }
 
@@ -81,6 +95,29 @@ public:
     if (!success) {
       logger.warning(
           pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
+
+      // Select the number of HARQ-ACK feedback number of bits.
+      unsigned nof_harq_ack = 0;
+      switch (pdu.context.format) {
+        case pucch_format::FORMAT_1:
+          nof_harq_ack = pdu.format1.nof_harq_ack;
+          break;
+        case pucch_format::FORMAT_2:
+          nof_harq_ack = pdu.format2.nof_harq_ack;
+          break;
+        case pucch_format::FORMAT_0:
+        case pucch_format::FORMAT_3:
+        case pucch_format::FORMAT_4:
+        case pucch_format::NOF_FORMATS:
+          // These cases are not currently supported.
+          break;
+      }
+
+      // Report control-related discarded result if HARQ-ACK feedback is present.
+      if (nof_harq_ack > 0) {
+        ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, nof_harq_ack);
+        notifier.on_new_pucch_results(discarded_results);
+      }
     }
   }
 
