@@ -186,7 +186,13 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  builder_pdu.set_metrics_parameters(sinr_dB, {}, result.csi.get_time_alignment().to_seconds() * 1e9, {}, {});
+  optional<int>           timing_advance_offset_ns;
+  optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
+  if (timing_advance.has_value()) {
+    timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
+  }
+
+  builder_pdu.set_metrics_parameters(sinr_dB, {}, timing_advance_offset_ns, {}, {});
 
   unsigned uci_length = get_uci_payload_length(result);
 
@@ -257,6 +263,19 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
+  // Extract time in advance.
+  optional<int>           timing_advance_offset_ns;
+  optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
+  if (timing_advance.has_value()) {
+    timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
+  }
+
+  // Extract the RSRP which is optional and clamp it if available.
+  optional<float> rsrp = result.csi.get_rsrp_dB();
+  if (rsrp.has_value()) {
+    rsrp = clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);
+  }
+
   builder.add_pdu(handle,
                   result.rnti,
                   optional<uint8_t>(),
@@ -266,9 +285,9 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   {},
                   sinr_dB,
                   {},
-                  result.csi.get_time_alignment().to_seconds() * 1e9,
+                  timing_advance_offset_ns,
                   {},
-                  clamp(result.csi.get_rsrp_dB(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS),
+                  rsrp,
                   false);
 
   error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
@@ -363,8 +382,14 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  builder_format01.set_metrics_parameters(
-      sinr_dB, {}, result.processor_result.csi.get_time_alignment().to_seconds() * 1e9, {}, {});
+  // Extract time in advance.
+  optional<int>           timing_advance_offset_ns;
+  optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
+  if (timing_advance.has_value()) {
+    timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
+  }
+
+  builder_format01.set_metrics_parameters(sinr_dB, {}, timing_advance_offset_ns, {}, {});
 
   // Fill SR parameters.
   fill_format_0_1_sr(builder_format01, result);
@@ -463,8 +488,14 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  builder_format234.set_metrics_parameters(
-      sinr_dB, {}, optional<int>(result.processor_result.csi.get_time_alignment().to_seconds() * 1e9), {}, {});
+  // Extract time in advance.
+  optional<int>           timing_advance_offset_ns;
+  optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
+  if (timing_advance.has_value()) {
+    timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
+  }
+
+  builder_format234.set_metrics_parameters(sinr_dB, {}, timing_advance_offset_ns, {}, {});
 
   // Fill SR parameters.
   fill_format_2_3_4_sr(builder_format234, result.processor_result.message);

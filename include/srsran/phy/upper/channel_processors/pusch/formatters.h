@@ -231,9 +231,33 @@ struct formatter<srsran::channel_state_information> {
         helper.format_if_verbose(ctx, "evm={:.2f}", csi.evm.value());
       }
 
-      helper.format_if_verbose(ctx, "epre={:+.1f}dB", csi.get_epre_dB());
-      helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", csi.get_rsrp_dB());
-      helper.format_if_verbose(ctx, "t_align={:.1f}us", csi.get_time_alignment().to_seconds() * 1e6);
+      // Extract CSI measurements. It could be some of them are not available.
+      srsran::optional<float>                 epre_dB       = csi.get_epre_dB();
+      srsran::optional<float>                 rsrp_dB       = csi.get_rsrp_dB();
+      srsran::optional<float>                 sinr_dB       = csi.get_sinr_dB();
+      srsran::optional<srsran::phy_time_unit> time_aligment = csi.get_time_alignment();
+
+      // Print the measurements that are present.
+      if (epre_dB.has_value()) {
+        helper.format_if_verbose(ctx, "epre={:+.1f}dB", epre_dB.value());
+      } else {
+        helper.format_if_verbose(ctx, "epre=na");
+      }
+      if (rsrp_dB.has_value()) {
+        helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", rsrp_dB.value());
+      } else {
+        helper.format_if_verbose(ctx, "rsrp=na");
+      }
+      if (sinr_dB.has_value()) {
+        helper.format_if_verbose(ctx, "sinr={:+.1f}dB", sinr_dB.value());
+      } else {
+        helper.format_if_verbose(ctx, "sinr=na");
+      }
+      if (time_aligment.has_value()) {
+        helper.format_if_verbose(ctx, "t_align={:.2f}us", time_aligment.value().to_seconds() * 1e6);
+      } else {
+        helper.format_if_verbose(ctx, "t_align=na");
+      }
     } else {
       // Short representation only prints the SINR selected for CSI reporting to higher layers.
       srsran::optional<float> sinr_dB = csi.get_sinr_dB();

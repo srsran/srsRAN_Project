@@ -15,7 +15,11 @@
 
 namespace srsran {
 
-/// Channel State Information parameters.
+/// \brief Channel State Information measurements.
+///
+/// All measurements are optional and they are initialized with \c nullopt.
+///
+/// The measurements shall not store NaN in their values.
 class channel_state_information
 {
 public:
@@ -29,15 +33,14 @@ public:
     evm
   };
 
-  /// Default constructor. Reported SINR is obtained from the channel estimator.
-  channel_state_information() : sinr_report_type(sinr_type::channel_estimator), epre_dB(NAN), rsrp_dB(NAN)
+  /// Default constructor - Reported SINR is obtained from the channel estimator.
+  channel_state_information() : sinr_report_type(sinr_type::channel_estimator)
   {
     // Do nothing.
   }
 
   /// Constructor that allows selection of the reported SINR type.
-  explicit channel_state_information(sinr_type sinr_report_type_) :
-    sinr_report_type(sinr_report_type_), epre_dB(NAN), rsrp_dB(NAN)
+  explicit channel_state_information(sinr_type sinr_report_type_) : sinr_report_type(sinr_report_type_)
   {
     // Do nothing.
   }
@@ -77,12 +80,19 @@ public:
     }
   }
 
-  /// \brief Sets SINR values.
+  /// \brief Sets a SINR estimation in dB units.
   ///
-  /// \param[in] type SINR type to set.
+  /// The SINR value is ignored if it is NaN.
+  ///
+  /// \param[in] type SINR measurement type to set.
   /// \param[in] sinr_dB The SINR value in dB.
   void set_sinr_dB(sinr_type type, float sinr_dB)
   {
+    // Ignore measurement if it is NaN.
+    if (std::isnan(sinr_dB)) {
+      return;
+    }
+
     switch (type) {
       case sinr_type::channel_estimator:
         sinr_ch_estimator_dB.emplace(sinr_dB);
@@ -96,23 +106,57 @@ public:
     }
   }
 
-  /// Sets the Error Vector Magnitude (EVM).
-  void set_evm(float evm_) { evm.emplace(evm_); }
+  /// \brief Sets the Error Vector Magnitude (EVM).
+  ///
+  /// The EVM value is ignored if it is NaN.
+  void set_evm(float evm_)
+  {
+    // Ignore measurement if it is NaN.
+    if (std::isnan(evm_)) {
+      return;
+    }
 
-  /// Sets the time alignment.
-  void set_time_alignment(const phy_time_unit& time_alignment_) { time_alignment = time_alignment_; }
-  /// Gets the time alignment.
-  phy_time_unit get_time_alignment() const { return time_alignment; }
+    evm.emplace(evm_);
+  }
 
-  /// Sets the Energy Per Resource Element (EPRE) in normalized dB units.
-  void set_epre(float epre_dB_) { epre_dB = epre_dB_; }
-  /// Gets the Energy Per Resource Element (EPRE) in normalized dB units.
-  float get_epre_dB() const { return epre_dB; }
+  /// \brief Sets the time alignment measurement in PHY time units.
+  void set_time_alignment(const phy_time_unit& time_alignment_) { time_alignment.emplace(time_alignment_); }
 
-  /// Sets the Reference Signal Received Power (RSRP) in normalized dB units.
-  void set_rsrp(float rsrp_dB_) { rsrp_dB = rsrp_dB_; }
-  /// Gets the Reference Signal Received Power (RSRP) in normalized dB units.
-  float get_rsrp_dB() const { return rsrp_dB; }
+  /// \brief Gets the time alignment.
+  ///
+  /// \return The time aligment measurement if present, otherise \c nullopt.
+  optional<phy_time_unit> get_time_alignment() const { return time_alignment; }
+
+  /// \brief Sets the Energy Per Resource Element (EPRE) in normalized dB units.
+  ///
+  /// The EPRE value is ignored if it is NaN.
+  void set_epre(float epre_dB_)
+  {
+    if (std::isnan(epre_dB_)) {
+      return;
+    }
+    epre_dB.emplace(epre_dB_);
+  }
+
+  /// \brief Gets the Energy Per Resource Element (EPRE) in normalized dB units.
+  /// \return The measured EPRE if present, otherwise \c nullopt.
+  optional<float> get_epre_dB() const { return epre_dB; }
+
+  /// \brief Sets the Reference Signal Received Power (RSRP) in normalized dB units.
+  ///
+  /// The RSRP value is ignored if it is NaN.
+  void set_rsrp(float rsrp_dB_)
+  {
+    if (std::isnan(rsrp_dB_)) {
+      return;
+    }
+
+    rsrp_dB.emplace(rsrp_dB_);
+  }
+
+  /// \brief Gets the Reference Signal Received Power (RSRP) in normalized dB units.
+  /// \return The measured RSRP if present, otherwise \c nullopt.
+  optional<float> get_rsrp_dB() const { return rsrp_dB; }
 
 private:
   friend struct fmt::formatter<channel_state_information>;
@@ -122,7 +166,7 @@ private:
   /// coding scheme.
   sinr_type sinr_report_type;
   /// Time alignment measurement.
-  phy_time_unit time_alignment;
+  optional<phy_time_unit> time_alignment;
   /// Average post-equalization SINR.
   optional<float> sinr_post_eq_dB;
   /// Error Vector Magnitude, obtained after QAM demodulation.
@@ -132,9 +176,9 @@ private:
   /// Average SINR in decibels, computed by the channel estimator.
   optional<float> sinr_ch_estimator_dB;
   /// Average EPRE in decibels.
-  float epre_dB;
+  optional<float> epre_dB;
   /// Average RSRP in decibels.
-  float rsrp_dB;
+  optional<float> rsrp_dB;
 };
 
 } // namespace srsran
