@@ -11,15 +11,15 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 
 struct control_config_params {
-  optional<unsigned> num_harq_processes;
-  optional<unsigned> num_harq_retransmissions;
-  optional<unsigned> min_prb_alloc;
-  optional<unsigned> max_prb_alloc;
+  optional<unsigned>               num_harq_processes;
+  optional<unsigned>               num_harq_retransmissions;
+  optional<RRM_policy_ratio_group> rrm_policy_ratio_group;
 };
 
 struct du_mac_sched_control_config {

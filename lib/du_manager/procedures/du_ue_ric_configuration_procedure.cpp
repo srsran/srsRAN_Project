@@ -76,8 +76,9 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
   auto& res_alloc_cfg = mac_request.sched_cfg.res_alloc_cfg.value();
   // for now take first parameter set, in future we will have to support multiple parameter sets for different slices.
   control_config_params req             = request.param_list[0];
-  res_alloc_cfg.pdsch_grant_size_limits = {req.min_prb_alloc.has_value() ? req.min_prb_alloc.value() : 0,
-                                           req.max_prb_alloc.has_value() ? req.max_prb_alloc.value() : MAX_NOF_PRBS};
+  RRM_policy_ratio_group dummy           = {};
+  res_alloc_cfg.rrm_policy_ratio_group =
+      req.rrm_policy_ratio_group.has_value() ? req.rrm_policy_ratio_group.value() : dummy;
   res_alloc_cfg.max_pdsch_harq_retxs = req.num_harq_retransmissions.has_value()
                                            ? req.num_harq_retransmissions.value()
                                            : du_params.mac.sched_cfg.ue.max_nof_harq_retxs;
