@@ -576,7 +576,7 @@ byte_buffer srsran::make_byte_buffer(const std::string& hex_str)
   for (size_t i = 0, e = hex_str.size(); i != e; i += 2) {
     uint8_t val;
     std::sscanf(hex_str.data() + i, "%02hhX", &val);
-    bool success = not ret.append(val);
+    bool success = ret.append(val);
     srsran_sanity_check(success, "Failed to append byte to byte_buffer with fallback allocator");
     (void)success;
   }
