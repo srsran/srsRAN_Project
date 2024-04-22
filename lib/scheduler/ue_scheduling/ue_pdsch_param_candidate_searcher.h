@@ -249,9 +249,10 @@ private:
       for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
         // NOTE: At this point UE is no longer in fallback mode.
         if ((*current.ss_it)
-                ->get_pdcch_candidates(ue_cc.get_aggregation_level(
-                                           ue_cc.channel_state_manager().get_wideband_cqi(), **current.ss_it, true),
-                                       pdcch_slot)
+                ->get_pdcch_candidates(
+                    ue_cc.get_aggregation_level(
+                        ue_cc.link_adaptation_controller().get_effective_cqi(), **current.ss_it, true),
+                    pdcch_slot)
                 .empty()) {
           // Skip SearchSpaces without PDCCH candidates to be monitored in this slot.
           continue;

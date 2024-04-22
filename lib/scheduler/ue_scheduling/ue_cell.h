@@ -103,8 +103,8 @@ public:
 
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
-  /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-  aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
+  /// \brief Get recommended aggregation level for PDCCH at a given CQI.
+  aggregation_level get_aggregation_level(float cqi, const search_space_info& ss_info, bool is_dl) const;
 
   /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
   /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.

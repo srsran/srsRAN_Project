@@ -24,8 +24,8 @@ TEST_F(
   // PDCCH candidates configured only for aggregation level 1.
   const std::array<uint8_t, 5> pdcch_candidates = {4, 0, 0, 0, 0};
   // Force computed aggregation level to be 2 by considering DCI size in bits large enough to not fit in 1 CCE.
-  const unsigned  dci_size_in_bits = 115;
-  const cqi_value cqi              = 6;
+  const unsigned dci_size_in_bits = 115;
+  const float    cqi              = 6.0F;
 
   const auto aggr_lvl = map_cqi_to_aggregation_level(cqi, cqi_table_t::table1, pdcch_candidates, dci_size_in_bits);
   ASSERT_TRUE(aggr_lvl == srsran::aggregation_level::n1) << fmt::format("Aggregation level returned must be 1");
@@ -38,15 +38,15 @@ TEST_F(pdcch_aggregation_level_calculation_corner_cases_tester,
   const std::array<uint8_t, 5> pdcch_candidates = {0, 4, 2, 0, 0};
   // Consider DCI size in bits so that code rate computed over aggregation level 2 exceeds allowed effective code
   // rate at given CQI (i.e. 4).
-  const unsigned  dci_size_in_bits = 115;
-  const cqi_value cqi              = 4;
+  const unsigned dci_size_in_bits = 115;
+  const float    cqi              = 4.0F;
 
   const auto aggr_lvl = map_cqi_to_aggregation_level(cqi, cqi_table_t::table1, pdcch_candidates, dci_size_in_bits);
   ASSERT_TRUE(aggr_lvl == srsran::aggregation_level::n4) << fmt::format("Computed Aggregation level must be 4");
 }
 
 struct pdcch_aggregation_level_calculation_test_params {
-  cqi_value              cqi;
+  float                  cqi;
   cqi_table_t            cqi_table;
   std::array<uint8_t, 5> pdcch_candidates;
   unsigned               dci_size_in_bits;
@@ -86,18 +86,23 @@ TEST_P(pdcch_aggregation_level_calculation_params_tester, successful_computation
 INSTANTIATE_TEST_SUITE_P(
     pdcch_aggregation_level_calculation_params_tester,
     pdcch_aggregation_level_calculation_params_tester,
-    testing::Values(pdcch_aggregation_level_calculation_test_params{.cqi                 = 2,
+    testing::Values(pdcch_aggregation_level_calculation_test_params{.cqi                 = 15.0F,
+                                                                    .cqi_table           = cqi_table_t::table1,
+                                                                    .pdcch_candidates    = {1, 1, 1, 1, 1},
+                                                                    .dci_size_in_bits    = 41,
+                                                                    .expected_aggr_level = aggregation_level::n1},
+                    pdcch_aggregation_level_calculation_test_params{.cqi                 = 2.0F,
                                                                     .cqi_table           = cqi_table_t::table1,
                                                                     .pdcch_candidates    = {0, 0, 1, 1, 1},
                                                                     .dci_size_in_bits    = 41,
                                                                     .expected_aggr_level = aggregation_level::n8},
-                    pdcch_aggregation_level_calculation_test_params{.cqi                 = 8,
+                    pdcch_aggregation_level_calculation_test_params{.cqi                 = 8.0F,
                                                                     .cqi_table           = cqi_table_t::table2,
                                                                     .pdcch_candidates    = {0, 1, 1, 1, 1},
-                                                                    .dci_size_in_bits    = 100,
+                                                                    .dci_size_in_bits    = 78,
                                                                     .expected_aggr_level = aggregation_level::n2},
-                    pdcch_aggregation_level_calculation_test_params{.cqi                 = 10,
+                    pdcch_aggregation_level_calculation_test_params{.cqi                 = 4.0F,
                                                                     .cqi_table           = cqi_table_t::table3,
                                                                     .pdcch_candidates    = {0, 1, 1, 1, 1},
-                                                                    .dci_size_in_bits    = 100,
-                                                                    .expected_aggr_level = aggregation_level::n2}));
+                                                                    .dci_size_in_bits    = 78,
+                                                                    .expected_aggr_level = aggregation_level::n16}));

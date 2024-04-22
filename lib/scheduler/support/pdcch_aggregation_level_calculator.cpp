@@ -16,69 +16,71 @@
 
 using namespace srsran;
 
-// Returns target code rate corresponding to CQI reported by UE.
-// [Implementation-defined] If the reported CQI is greater than size of the mcs_index_to_normalized_code_rate_table1 or
-// mcs_index_to_normalized_code_rate_table2 or mcs_index_to_normalized_code_rate_table3, then target code rate
-// corresponding to last element in the respective array is returned.
-static double get_target_code_rate(cqi_value cqi, cqi_table_t cqi_table)
+// [Implementation-defined] Fetch minimum modulation scheme in order to use a PDCCH candidate at a particular
+// aggregation level.
+// For example: Aggregation level 2 and MCS table 1, minimum modulation scheme is QAM16 i.e. PDCCH candidates of
+// aggregation level 2 can only be used if MCS is 10 or above.
+static modulation_scheme get_min_modulation_scheme_per_aggr_lvl(aggregation_level lvl, pdsch_mcs_table mcs_table)
 {
-  // Mapping between MCS index and corresponding target code rate for MCS table 1 where modulation is QPSK. See
-  // TS 38.214, Table 5.1.3.1-1.
-  // NOTE: Other MCS indexes are ignored since PDCCH uses only QPSK modulation.
-  static const std::array<double, 10> mcs_index_to_normalized_code_rate_table1 = {
-      // clang-format off
-      /* MCS 0       1        2        3        4       5        6        7       8   */
-           0.117,  0.153,   0.188,   0.245,   0.301,  0.370,   0.438,   0.514,  0.588,
-      /* MCS 9   */
-           0.663,
-      // clang-format on
-  };
-
-  // Mapping between MCS index and corresponding target code rate for MCS table 2 where modulation is QPSK. See
-  // TS 38.214, Table 5.1.3.1-2.
-  // NOTE: Other MCS indexes are ignored since PDCCH uses only QPSK modulation.
-  static const std::array<double, 5> mcs_index_to_normalized_code_rate_table2 = {
-      // clang-format off
-      /* MCS 0       1        2        3        4    */
-           0.117,  0.188,   0.301,   0.438,   0.588,
-      // clang-format on
-  };
-
-  // Mapping between MCS index and corresponding target code rate for MCS table 3 where modulation is QPSK. See
-  // TS 38.214, Table 5.1.3.1-3.
-  // NOTE: Other MCS indexes are ignored since PDCCH uses only QPSK modulation.
-  static const std::array<double, 15> mcs_index_to_normalized_code_rate_table3 = {
-      // clang-format off
-      /* MCS 0       1        2        3        4       5        6        7       8   */
-           0.029,  0.039,   0.049,   0.063,   0.076,  0.097,   0.117,   0.153,  0.188,
-      /* MCS 9       10       11       12       13      14  */
-           0.245,  0.301,   0.370,   0.438,   0.514,  0.588,
-      // clang-format on
-  };
-
-  sch_mcs_index mcs_idx = 0;
-  switch (cqi_table) {
-    case cqi_table_t::table1: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64);
-      mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_index_to_normalized_code_rate_table1[std::min(static_cast<size_t>(mcs_idx.to_uint()),
-                                                               mcs_index_to_normalized_code_rate_table1.size() - 1)];
+  switch (mcs_table) {
+    case pdsch_mcs_table::qam64: {
+      switch (lvl) {
+        case aggregation_level::n1:
+          return modulation_scheme::QAM64;
+        case aggregation_level::n2:
+          return modulation_scheme::QAM16;
+        case aggregation_level::n4:
+        case aggregation_level::n8:
+        case aggregation_level::n16:
+          return modulation_scheme::QPSK;
+        default:
+          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
+      }
     }
-    case cqi_table_t::table2: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam256);
-      mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_index_to_normalized_code_rate_table2[std::min(static_cast<size_t>(mcs_idx.to_uint()),
-                                                               mcs_index_to_normalized_code_rate_table2.size() - 1)];
+    case pdsch_mcs_table::qam256: {
+      switch (lvl) {
+        case aggregation_level::n1:
+          return modulation_scheme::QAM256;
+        case aggregation_level::n2:
+          return modulation_scheme::QAM64;
+        case aggregation_level::n4:
+          return modulation_scheme::QAM16;
+        case aggregation_level::n8:
+        case aggregation_level::n16:
+          return modulation_scheme::QPSK;
+        default:
+          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
+      }
     }
-    case cqi_table_t::table3: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64LowSe);
-      mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_index_to_normalized_code_rate_table3[std::min(static_cast<size_t>(mcs_idx.to_uint()),
-                                                               mcs_index_to_normalized_code_rate_table3.size() - 1)];
+    case pdsch_mcs_table::qam64LowSe: {
+      switch (lvl) {
+        case aggregation_level::n1:
+        case aggregation_level::n2:
+          return modulation_scheme::QAM16;
+        case aggregation_level::n4:
+        case aggregation_level::n8:
+        case aggregation_level::n16:
+          return modulation_scheme::QPSK;
+        default:
+          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
+      }
     }
-    default:
-      report_fatal_error("Unsupported CQI table={}", cqi_table);
   }
+  report_fatal_error("Invalid MCS table={}", mcs_table);
+}
+
+// Returns Modulation and Coding scheme corresponding to effective CQI.
+static sch_mcs_description get_mcs_config(float cqi, pdsch_mcs_table mcs_table)
+{
+  // There are fewer CQIs than MCS values, so we perform a linear interpolation.
+  const float   cqi_lb = std::floor(cqi);
+  const float   cqi_ub = std::ceil(cqi);
+  const float   coeff  = cqi - cqi_lb;
+  const float   mcs_lb = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_lb), mcs_table).value().value());
+  const float   mcs_ub = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_ub), mcs_table).value().value());
+  sch_mcs_index mcs{static_cast<uint8_t>(std::floor(mcs_lb * (1 - coeff) + mcs_ub * coeff))};
+
+  return pdsch_mcs_get_config(mcs_table, mcs.value());
 }
 
 // Computes PDCCH code rate for a given aggregation level.
@@ -95,24 +97,47 @@ static bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level l
   return (nof_dci_bits + pdcch_crc_bits) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
-aggregation_level srsran::map_cqi_to_aggregation_level(cqi_value           cqi,
+// Fetch MCS table to use corresponding to the CQI table provided as input.
+static pdsch_mcs_table fetch_mcs_table(cqi_table_t cqi_table)
+{
+  switch (cqi_table) {
+    case cqi_table_t::table1:
+      return pdsch_mcs_table::qam64;
+    case cqi_table_t::table2:
+      return pdsch_mcs_table::qam256;
+    case cqi_table_t::table3:
+      return pdsch_mcs_table::qam64LowSe;
+    default:
+      report_fatal_error("Unsupported CQI table={}", cqi_table);
+  }
+}
+
+aggregation_level srsran::map_cqi_to_aggregation_level(float               cqi,
                                                        cqi_table_t         cqi_table,
                                                        span<const uint8_t> pdcch_candidates,
                                                        unsigned            nof_dci_bits)
 {
-  for (unsigned aggr_lvl_index = 0; aggr_lvl_index < pdcch_candidates.size(); ++aggr_lvl_index) {
-    // Check whether PDCCH candidates are configured for aggregation level.
-    if (pdcch_candidates[aggr_lvl_index] == 0) {
-      continue;
-    }
-    const aggregation_level aggr_lvl = aggregation_index_to_level(aggr_lvl_index);
-    // Check whether DCI fits in nof. CCEs of an aggregation level.
-    if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
-      continue;
-    }
-    // Check whether code rate is less than code rate at CQI reported by UE.
-    if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) < get_target_code_rate(cqi, cqi_table)) {
-      return aggr_lvl;
+  if (cqi > 0.0F) {
+    const pdsch_mcs_table     mcs_table = fetch_mcs_table(cqi_table);
+    const sch_mcs_description mcs_cfg   = get_mcs_config(cqi, mcs_table);
+    for (unsigned aggr_lvl_index = 0; aggr_lvl_index < pdcch_candidates.size(); ++aggr_lvl_index) {
+      // Check whether PDCCH candidates are configured for aggregation level.
+      if (pdcch_candidates[aggr_lvl_index] == 0) {
+        continue;
+      }
+      const aggregation_level aggr_lvl = aggregation_index_to_level(aggr_lvl_index);
+      // Check whether DCI fits in nof. CCEs of an aggregation level.
+      if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
+        continue;
+      }
+      // Check whether code rate is not exceeding the target code rate at effective CQI.
+      if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) > mcs_cfg.get_normalised_target_code_rate()) {
+        continue;
+      }
+      // Check whether aggregation level can be at derived MCS.
+      if (mcs_cfg.modulation >= get_min_modulation_scheme_per_aggr_lvl(aggr_lvl, mcs_table)) {
+        return aggr_lvl;
+      }
     }
   }
 

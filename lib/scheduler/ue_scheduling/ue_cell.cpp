@@ -247,7 +247,7 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bo
     // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
     // filtering. Filtering is already done in previous step.
     const unsigned aggr_lvl_idx = to_aggregation_level_index(
-        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *lhs, is_dl));
+        ue_cc.get_aggregation_level(ue_cc.link_adaptation_controller().get_effective_cqi(), *lhs, is_dl));
     return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
   };
   std::sort(active_search_spaces.begin(), active_search_spaces.end(), sort_ss);
@@ -321,7 +321,8 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
       return false;
     }
 
-    if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, true), pdcch_slot)
+    if (ss.get_pdcch_candidates(get_aggregation_level(link_adaptation_controller().get_effective_cqi(), ss, true),
+                                pdcch_slot)
             .empty()) {
       return false;
     }
@@ -392,7 +393,7 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
       return false;
     }
 
-    if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, false),
+    if (ss.get_pdcch_candidates(get_aggregation_level(link_adaptation_controller().get_effective_cqi(), ss, false),
                                 pdcch_slot)
             .empty()) {
       return false;
@@ -405,8 +406,7 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
   return get_prioritized_search_spaces(*this, filter_ss, false);
 }
 
-/// \brief Get recommended aggregation level for PDCCH given reported CQI.
-aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const
+aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_info& ss_info, bool is_dl) const
 {
   cqi_table_t cqi_table = cqi_table_t::table1;
   unsigned    dci_size;
