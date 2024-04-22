@@ -105,6 +105,23 @@ public:
     return ues.at(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
   }
 
+  ngap_ue_context* find(ran_ue_id_t ran_ue_id)
+  {
+    auto it = ues.find(ran_ue_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+  const ngap_ue_context* find(ran_ue_id_t ran_ue_id) const
+  {
+    auto it = ues.find(ran_ue_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+
   ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id, timer_manager& timers, task_executor& task_exec)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);

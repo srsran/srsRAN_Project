@@ -12,6 +12,7 @@
 #include "lib/ngap/ngap_asn1_converters.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
