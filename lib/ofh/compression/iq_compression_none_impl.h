@@ -35,6 +35,11 @@ public:
   decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
 
 protected:
+  /// \brief Prints to the log the root mean square (RMS) value of the given samples.
+  ///
+  /// \param[in] samples - Quantized samples.
+  void log_post_quantization_rms(span<const int16_t> samples);
+
   srslog::basic_logger& logger;
   /// Scaling factor applied to IQ data prior to quantization.
   const float iq_scaling;

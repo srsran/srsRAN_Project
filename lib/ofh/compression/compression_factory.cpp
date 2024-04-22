@@ -26,6 +26,7 @@
 
 #ifdef HAVE_NEON
 #include "iq_compression_bfp_neon.h"
+#include "iq_compression_none_neon.h"
 #endif // HAVE_NEON
 
 using namespace srsran;
@@ -51,6 +52,11 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
       }
     }
 #endif
+#ifdef HAVE_NEON
+      if ((impl_type == "neon") || (impl_type == "auto")) {
+        return std::make_unique<iq_compression_none_neon>(logger, iq_scaling);
+      }
+#endif // HAVE_NEON
       return std::make_unique<iq_compression_none_impl>(logger, iq_scaling);
     case compression_type::BFP:
 #ifdef __x86_64__
@@ -107,6 +113,11 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
       }
     }
 #endif
+#ifdef HAVE_NEON
+      if ((impl_type == "neon") || (impl_type == "auto")) {
+        return std::make_unique<iq_compression_none_neon>(logger);
+      }
+#endif // HAVE_NEON
       return std::make_unique<iq_compression_none_impl>(logger);
     case compression_type::BFP:
 #ifdef __x86_64__

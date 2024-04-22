@@ -13,7 +13,6 @@
 #include "compressed_prb_packer.h"
 #include "packing_utils_avx2.h"
 #include "quantizer.h"
-#include "srsran/srsvec/dot_prod.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -40,17 +39,10 @@ void iq_compression_none_avx2::compress(span<srsran::ofh::compressed_prb>       
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
   span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
+  span<int16_t>     input_quantized_span(input_quantized.data(), float_samples_span.size());
   q.to_fixed_point(input_quantized_span, float_samples_span, iq_scaling);
 
-  if (SRSRAN_UNLIKELY(logger.debug.enabled() && !input_quantized_span.empty())) {
-    // Calculate and print RMS of quantized samples.
-    float sum_squares = srsvec::dot_prod(input_quantized_span, input_quantized_span, 0);
-    float rms         = std::sqrt(sum_squares / input_quantized_span.size());
-    if (std::isnormal(rms)) {
-      logger.debug("Quantized IQ samples RMS value of '{}'", rms);
-    }
-  }
+  log_post_quantization_rms(input_quantized_span);
 
   unsigned sample_idx = 0;
   unsigned rb         = 0;
@@ -107,7 +99,7 @@ void iq_compression_none_avx2::decompress(span<srsran::cf_t>                    
     span<const int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
 
     // Convert to complex samples.
-    q.to_float(output_span, unpacked_span, 1u);
+    q.to_float(output_span, unpacked_span, 1);
     out_idx += NOF_SUBCARRIERS_PER_RB;
   }
 }

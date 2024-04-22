@@ -32,6 +32,7 @@ endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 if (HAVE_NEON)
     list(APPEND SOURCES iq_compression_bfp_neon.cpp)
+    list(APPEND SOURCES iq_compression_none_neon.cpp)
 endif (HAVE_NEON)
 
 add_library(srsran_ofh_compression STATIC ${SOURCES})
