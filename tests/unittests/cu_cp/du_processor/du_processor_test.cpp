@@ -207,7 +207,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
 
   // Pass message to DU processor
-  t = du_processor_obj->get_du_processor_rrc_ue_interface().handle_ue_context_release_command(
+  t = du_processor_obj->get_du_processor_ue_context_notifier().handle_ue_context_release_command(
       ue_context_release_command);
   t_launcher.emplace(t);
 
@@ -262,7 +262,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index_t::min);
 
   // Pass message to DU processor
-  t = du_processor_obj->get_du_processor_rrc_ue_interface().handle_ue_context_release_command(
+  t = du_processor_obj->get_du_processor_ue_context_notifier().handle_ue_context_release_command(
       ue_context_release_command);
   t_launcher.emplace(t);
 

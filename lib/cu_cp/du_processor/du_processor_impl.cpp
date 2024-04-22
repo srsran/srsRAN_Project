@@ -301,26 +301,13 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 
   logger.debug("ue={}: Handling DU initiated UE context release request", request.ue_index);
 
-  bool ngap_release_successful = false;
-
   // Schedule on UE task scheduler
   task_sched.schedule_async_task(
-      request.ue_index,
-      launch_async([this, request, ue, ngap_release_successful](coro_context<async_task<void>>& ctx) mutable {
+      request.ue_index, launch_async([this, request, ue](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
-        // Notify NGAP to request a release from the AMF
-        CORO_AWAIT_VALUE(ngap_release_successful,
-                         ngap_ctrl_notifier.on_ue_context_release_request(
-                             cu_cp_ue_context_release_request{request.ue_index,
-                                                              ue->get_up_resource_manager().get_pdu_sessions(),
-                                                              f1ap_to_ngap_cause(request.cause)}));
-        if (!ngap_release_successful) {
-          // Release UE from DU, if it doesn't exist in the NGAP
-          logger.debug("ue={}: Releasing UE from DU. ReleaseRequest not sent to AMF", request.ue_index);
-          CORO_AWAIT(handle_ue_context_release_command(
-              cu_cp_ue_context_release_command{request.ue_index, ngap_cause_radio_network_t::user_inactivity}));
-        }
+        CORO_AWAIT(cu_cp_notifier.on_ue_release_required(
+            {request.ue_index, ue->get_up_resource_manager().get_pdu_sessions(), f1ap_to_ngap_cause(request.cause)}));
         CORO_RETURN();
       }));
 }

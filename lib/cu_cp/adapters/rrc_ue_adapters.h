@@ -53,13 +53,6 @@ public:
     du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
   }
 
-  async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
-  {
-    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
-    return du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
-  }
-
   async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
@@ -138,13 +131,6 @@ public:
     ngap_nas_msg_handler->handle_ul_nas_transport_message(msg);
   }
 
-  async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
-  {
-    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
-
-    return ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
-  }
-
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
@@ -187,6 +173,18 @@ public:
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
   }
 
+  async_task<void> on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_failure(request);
+  }
+
+  async_task<void> on_rrc_reestablishment_complete(ue_index_t ue_index) override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(ue_index);
+  }
+
   async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
@@ -197,6 +195,12 @@ public:
   {
     srsran_assert(ue_removal_handler != nullptr, "CU-CP UE removal handler must not be nullptr");
     return ue_removal_handler->handle_ue_removal_request(ue_index);
+  }
+
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
   }
 
   optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,

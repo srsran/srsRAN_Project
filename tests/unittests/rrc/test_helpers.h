@@ -36,19 +36,6 @@ public:
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
-  async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
-  {
-    logger.info("Received UE Context Release Command");
-    last_cu_cp_ue_context_release_command.ue_index = msg.ue_index;
-    last_cu_cp_ue_context_release_command.cause    = msg.cause;
-
-    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(cu_cp_ue_context_release_complete{});
-    });
-  }
-
   async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
     logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
@@ -82,15 +69,6 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
-  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
-  {
-    logger.info("Received a UE Context Release Request");
-    return launch_async([this](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(ue_context_release_outcome);
-    });
-  }
-
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
@@ -122,6 +100,26 @@ public:
     return reest_context;
   }
 
+  async_task<void> on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Received RRC Reestablishment failure notification", request.ue_index);
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  async_task<void> on_rrc_reestablishment_complete(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Received RRC Reestablishment complete notification", ue_index);
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     logger.info("Requested a UE context transfer from ue={} with old_ue={}.", ue_index, old_ue_index);
@@ -140,6 +138,17 @@ public:
     });
   }
 
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Requested a UE release", request.ue_index);
+    last_cu_cp_ue_context_release_request = request;
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
                                                        nr_cell_id_t           nci,
                                                        optional<rrc_meas_cfg> current_meas_config = {}) override
@@ -149,6 +158,8 @@ public:
   }
 
   void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
+
+  cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 
 private:
   rrc_ue_reestablishment_context_response reest_context = {};

@@ -118,7 +118,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              get_rrc_ue_srb_handler(),
                                                                              du_processor_notifier,
                                                                              cu_cp_notifier,
-                                                                             ngap_ctrl_notifier,
                                                                              nas_notifier,
                                                                              *event_mng,
                                                                              logger));
@@ -253,7 +252,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(
-      context, msg, *this, ngap_ctrl_notifier, du_processor_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
+      context, msg, *this, cu_cp_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
 uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
