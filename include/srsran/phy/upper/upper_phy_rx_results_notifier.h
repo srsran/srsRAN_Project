@@ -61,6 +61,23 @@ struct ul_pusch_results_data {
   /// \note The span is empty if the PDU does not contain PUSCH data or if the PDU could not be decoded successfully
   /// (i.e., CRC is KO).
   span<const uint8_t> payload;
+
+  /// \brief Creates a data-related decoding result produced from a discarded transmission.
+  /// \param rnti_   Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
+  /// \param slot_   Slot description (also specifies the numerology).
+  /// \param harq_id HARQ process ID.
+  /// \return The data-related PUSCH processing results without CSI measurements and marked as failed transmission.
+  static ul_pusch_results_data create_discarded(rnti_t rnti_, slot_point slot_, unsigned harq_id_)
+  {
+    ul_pusch_results_data ret;
+    ret.rnti           = rnti_;
+    ret.slot           = slot_;
+    ret.csi            = channel_state_information();
+    ret.harq_id        = harq_id_;
+    ret.decoder_result = pusch_decoder_result();
+    ret.payload        = span<const uint8_t>();
+    return ret;
+  }
 };
 
 /// Control-related PUSCH decoding output.
@@ -77,6 +94,24 @@ struct ul_pusch_results_control {
   optional<pusch_uci_field> csi1;
   /// CSI Part 2 results.
   optional<pusch_uci_field> csi2;
+
+  /// \brief Creates a control-related result produced from a discarded transmission.
+  /// \param rnti_        Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
+  /// \param slot_        Slot description (also specifies the numerology).
+  /// \param nof_harq_ack Number of HARQ-ACK feedback bits.
+  /// \return The control-related PUSCH processing results without CSI measurements, and the HARQ-ACK feedback payload
+  /// status is unknown.
+  static ul_pusch_results_control create_discarded(rnti_t rnti_, slot_point slot_, unsigned nof_harq_ack)
+  {
+    ul_pusch_results_control ret;
+    ret.rnti = rnti_;
+    ret.slot = slot_;
+    ret.csi  = channel_state_information();
+    ret.harq_ack.emplace(pusch_uci_field{uci_payload_type(nof_harq_ack), uci_status::unknown});
+    ret.csi1 = nullopt;
+    ret.csi2 = nullopt;
+    return ret;
+  }
 };
 
 /// PUCCH results structure.
@@ -85,6 +120,22 @@ struct ul_pucch_results {
   ul_pucch_context context;
   /// PUCCH processor result.
   pucch_processor_result processor_result;
+
+  /// \brief Creates a PUCCH result structure result produced from a discarded transmission.
+  /// \param context_     Discarded PUCCH context.
+  /// \param nof_harq_ack Number of HARQ-ACK feedback bits.
+  /// \return The PUCCH processing results without CSI measurements, and the HARQ-ACK feedback payload status is
+  /// unknown.
+  static ul_pucch_results create_discarded(const ul_pucch_context& context_, unsigned nof_harq_ack)
+  {
+    ul_pucch_results ret;
+    ret.context                  = context_;
+    ret.processor_result.csi     = channel_state_information();
+    ret.processor_result.message = pucch_uci_message({0, nof_harq_ack, 0, 0});
+    ret.processor_result.message.set_status(uci_status::unknown);
+    ret.processor_result.detection_metric = nullopt;
+    return ret;
+  }
 };
 
 /// Sounding Reference Signal results structure.

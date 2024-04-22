@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
+#include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
@@ -487,20 +488,7 @@ struct formatter<srsran::pucch_processor_result> {
       helper.format_if_verbose(ctx, "detection_metric={:.1f}", result.detection_metric.value());
     }
 
-    // Extract SINR. It could be it is not available.
-    srsran::optional<float> sinr_dB = result.csi.get_sinr_dB();
-
-    // Channel State Information.
-    helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.get_epre_dB());
-    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.get_rsrp_dB());
-    if (sinr_dB.has_value()) {
-      helper.format_if_verbose(ctx, "sinr={:+.1f}dB", sinr_dB.value());
-    } else {
-      // SINR is not available.
-      helper.format_if_verbose(ctx, "sinr=na");
-    }
-    helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.get_time_alignment().to_seconds() * 1e6);
-
+    helper.format_if_verbose(ctx, result.csi);
     return ctx.out();
   }
 };

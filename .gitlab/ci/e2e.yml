@@ -508,6 +508,21 @@ viavi:
       artifacts: true
     - *retina-needs
 
+viavi-debug:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    GROUP: "viavi"
+    TESTBED: "viavi"
+    MARKERS: "viavi_debug"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    RETINA_ARGS: "gnb.all.metrics_enable=True gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
+  needs:
+    - job: "basic avx512 dpdk withassert"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # Garbage collector
 ################################################################################

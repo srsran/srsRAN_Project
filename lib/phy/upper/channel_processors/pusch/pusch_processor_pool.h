@@ -134,17 +134,25 @@ public:
 
     // If no worker is available.
     if (!index.has_value()) {
-      // Prepare dummy results.
-      pusch_processor_result_data results;
-      results.data.tb_crc_ok            = false;
-      results.data.nof_codeblocks_total = 0;
-      results.data.ldpc_decoder_stats.reset();
-      results.csi = channel_state_information();
+      srslog::fetch_basic_logger("PHY").warning("PUSCH processing queue is full. Dropping PUSCH {:s}.", pdu);
 
-      // Report SCH results.
-      notifier.on_sch(results);
+      // Report data-related discarded result if shared channel data is present.
+      if (pdu.codeword.has_value()) {
+        pusch_processor_result_data discarded_results;
+        discarded_results.data.tb_crc_ok            = false;
+        discarded_results.data.nof_codeblocks_total = 0;
+        discarded_results.data.ldpc_decoder_stats.reset();
+        discarded_results.csi = channel_state_information();
+        notifier.on_sch(discarded_results);
+      }
 
-      srslog::fetch_basic_logger("PHY").warning("Insufficient number of PUSCH processors. Dropping PUSCH {:s}.", pdu);
+      // Report control-related discarded result if HARQ-ACK feedback is present.
+      if (pdu.uci.nof_harq_ack > 0) {
+        pusch_processor_result_control discarded_results;
+        discarded_results.harq_ack = pusch_uci_field{uci_payload_type(pdu.uci.nof_harq_ack), uci_status::unknown};
+        discarded_results.csi      = channel_state_information();
+        notifier.on_uci(discarded_results);
+      }
       return;
     }
 

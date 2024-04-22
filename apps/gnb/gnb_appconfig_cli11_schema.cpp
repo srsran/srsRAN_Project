@@ -1908,7 +1908,7 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
       ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 10.0));
+      ->check(CLI::Range(0.0, 20.0));
 
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {

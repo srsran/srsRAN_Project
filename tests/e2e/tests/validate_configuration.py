@@ -26,11 +26,12 @@ import tempfile
 from pathlib import Path
 from pprint import pformat
 
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import Empty, FiveGCDefinition, GNBDefinition, PLMN, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import FiveGCDefinition, GNBDefinition, PLMN, StartInfo, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo

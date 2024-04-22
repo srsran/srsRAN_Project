@@ -1755,6 +1755,7 @@ basic asan:
   variables:
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
+    BUILD_ARGS: -DEXIT_TIMEOUT=15
   tags: ["${AMD64_AVX2_TAG}"]
   artifacts:
     <<: *build_artifacts
@@ -1793,6 +1794,36 @@ basic avx512 dpdk:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
     ASSERT_LEVEL: MINIMAL
+    SAVE_ARTIFACTS: "True"
+    KUBERNETES_CPU_REQUEST: 14
+    KUBERNETES_CPU_LIMIT: 14
+    KUBERNETES_MEMORY_REQUEST: 20Gi
+    KUBERNETES_MEMORY_LIMIT: 20Gi
+  tags: ["${AMD64_VIAVI_BUILDER_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 day
+
+basic avx512 dpdk withassert:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 2 hours
+  retry: 2
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11"
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+    ASSERT_LEVEL: NORMAL
     SAVE_ARTIFACTS: "True"
     KUBERNETES_CPU_REQUEST: 14
     KUBERNETES_CPU_LIMIT: 14
