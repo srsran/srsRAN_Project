@@ -10,7 +10,6 @@
 
 #include "e2sm_rc_control_action_du_executor.h"
 #include <future>
-#define USING_FLEXRIC
 using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 using namespace srsran;
@@ -83,7 +82,6 @@ e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(d
   // Control Action description:
   // To control the radio resource management policy for slice-specific PRB quota allocation
   action_name = "Slice-level PRB quota";
-#ifdef USING_FLEXRIC
   action_params.insert({1, "RRM Policy Ratio List"});
   action_params.insert({2, "RRM Policy Ratio Group"});
   action_params.insert({3, "RRM Policy"});
@@ -96,21 +94,6 @@ e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(d
   action_params.insert({10, "Min PRB Policy Ratio"});
   action_params.insert({11, "Max PRB Policy Ratio"});
   action_params.insert({12, "Dedicated PRB Policy Ratio"});
-#else
-  action_params.insert({1, "RRM Policy Ratio List"});
-  action_params.insert({2, "RRM Policy Ratio Group"});
-  action_params.insert({3, "RRM Policy"});
-  // Note: 4 missing in TS
-  action_params.insert({5, "RRM Policy Member List"});
-  action_params.insert({6, "RRM Policy Member"});
-  action_params.insert({7, "PLMN Identity"});
-  action_params.insert({8, "S-NSSAI"});
-  action_params.insert({9, "SST"});
-  action_params.insert({10, "SD"});
-  action_params.insert({11, "Min PRB Policy Ratio"});
-  action_params.insert({12, "Max PRB Policy Ratio"});
-  action_params.insert({13, "Dedicated PRB Policy Ratio"});
-#endif
 };
 
 void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(const ran_param_value_type_c& ran_param,
@@ -266,15 +249,15 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
   control_config_params req = du_config_req_.param_list[0];
   if (req.rrm_policy_ratio_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
-    min_prb_outcome.ran_param_id                    = 11;
+    min_prb_outcome.ran_param_id                    = 10;
     min_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_ratio_group.value().min_PRB_policy_ratio;
     ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
   }
 
   if (req.rrm_policy_ratio_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
-    max_prb_outcome.ran_param_id                    = 12;
-    max_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_ratio_group.value().min_PRB_policy_ratio;
+    max_prb_outcome.ran_param_id                    = 11;
+    max_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_ratio_group.value().max_PRB_policy_ratio;
     ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
   }
 
