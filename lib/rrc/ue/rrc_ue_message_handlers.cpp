@@ -220,7 +220,7 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
   // convert asn1 to common type
   rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
   // send measurement results to cell measurement manager
-  measurement_notifier.on_measurement_report(context.ue_index, meas_results);
+  measurement_notifier.on_measurement_report(meas_results);
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
@@ -373,8 +373,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
 optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(optional<rrc_meas_cfg> current_meas_config)
 {
   // (Re-)generate measurement config and return result.
-  context.meas_cfg =
-      measurement_notifier.on_measurement_config_request(context.ue_index, context.cell.cgi.nci, current_meas_config);
+  context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);
   return context.meas_cfg;
 }
 

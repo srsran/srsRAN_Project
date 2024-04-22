@@ -63,8 +63,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   }
 
   // Transfer old UE context to new UE context. If it fails, resort to fallback.
-  CORO_AWAIT_VALUE(context_transfer_success,
-                   cu_cp_notifier.on_ue_transfer_required(context.ue_index, old_ue_reest_context.ue_index));
+  CORO_AWAIT_VALUE(context_transfer_success, cu_cp_notifier.on_ue_transfer_required(old_ue_reest_context.ue_index));
   if (not context_transfer_success) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
     logger.log_debug("\"{}\" for old_ue={} finalized", name(), old_ue_reest_context.ue_index);
@@ -118,7 +117,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   }
 
   // Notify CU-CP to remove the old UE
-  CORO_AWAIT(cu_cp_notifier.on_rrc_reestablishment_complete(old_ue_reest_context.ue_index));
+  cu_cp_notifier.on_rrc_reestablishment_complete(old_ue_reest_context.ue_index);
 
   // Note: From this point the UE is removed and only the stored context can be accessed.
 
@@ -146,7 +145,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
                        old_ue_reest_context.ue_index);
       ue_context_release_request.ue_index = old_ue_reest_context.ue_index;
       ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
-      CORO_AWAIT(cu_cp_notifier.on_rrc_reestablishment_failure(ue_context_release_request));
+      cu_cp_notifier.on_rrc_reestablishment_failure(ue_context_release_request);
     }
 
     CORO_RETURN();
@@ -168,8 +167,7 @@ bool rrc_reestablishment_procedure::is_reestablishment_accepted()
   // Request from the CU-CP the old RRC UE context.
   old_ue_reest_context =
       cu_cp_notifier.on_rrc_reestablishment_request(reestablishment_request.rrc_reest_request.ue_id.pci,
-                                                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
-                                                    context.ue_index);
+                                                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
 
   // check if an old UE context with matching C-RNTI, PCI exists.
   if (old_ue_reest_context.ue_index == ue_index_t::invalid) {

@@ -188,11 +188,11 @@ public:
 
   /// \brief Handle reestablishment failure by releasing the old UE.
   /// \param[in] request The release request.
-  virtual async_task<void> handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) = 0;
+  virtual void handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) = 0;
 
   /// \brief Handle an successful reestablishment by removing the old UE.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual async_task<void> handle_rrc_reestablishment_complete(ue_index_t ue_index) = 0;
+  /// \param[in] ue_index The index of the old UE to remove.
+  virtual void handle_rrc_reestablishment_complete(ue_index_t old_ue_index) = 0;
 
   /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.

@@ -198,47 +198,20 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   return reest_context;
 }
 
-async_task<void> cu_cp_impl::handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request)
+void cu_cp_impl::handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request)
 {
   auto* ue = ue_mng.find_ue(request.ue_index);
   if (ue != nullptr) {
     ue->get_task_sched().schedule_async_task(handle_ue_context_release(request));
   };
-
-  return launch_async([](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_RETURN();
-  });
 }
 
-async_task<void> cu_cp_impl::handle_rrc_reestablishment_complete(ue_index_t ue_index)
+void cu_cp_impl::handle_rrc_reestablishment_complete(ue_index_t old_ue_index)
 {
-  auto* ue = ue_mng.find_ue(ue_index);
+  auto* ue = ue_mng.find_ue(old_ue_index);
   if (ue != nullptr) {
-    ue->get_task_sched().schedule_async_task(handle_ue_removal_request(ue_index));
+    ue->get_task_sched().schedule_async_task(handle_ue_removal_request(old_ue_index));
   };
-
-  // du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
-  // cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
-  // auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
-
-  // // Run removal routine on task scheduler of the old UE
-  // auto* ue = ue_mng.find_ue(ue_index);
-  // if (ue != nullptr) {
-  //   ue->get_task_sched().schedule_async_task(
-  //       launch_async<ue_removal_routine>(ue_index,
-  //                                        rrc_du_adapters.at(du_index),
-  //                                        e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
-  //                                        f1ap_adapters.at(du_index),
-  //                                        ngap_adapter,
-  //                                        ue_mng,
-  //                                        logger));
-  // }
-
-  return launch_async([](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_RETURN();
-  });
 }
 
 async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)

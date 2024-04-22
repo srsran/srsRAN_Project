@@ -41,12 +41,15 @@ struct ngap_ue_t {
 class cu_cp_ue final : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
 {
 public:
-  cu_cp_ue(const ue_index_t              ue_index_,
-           const up_resource_manager_cfg up_cfg,
-           ue_task_scheduler             task_sched_,
-           const pci_t                   pci_    = INVALID_PCI,
-           const rnti_t                  c_rnti_ = rnti_t::INVALID_RNTI) :
-    ue_index(ue_index_), task_sched(std::move(task_sched_)), up_mng(create_up_resource_manager(up_cfg))
+  cu_cp_ue(const ue_index_t               ue_index_,
+           const up_resource_manager_cfg& up_cfg,
+           ue_task_scheduler              task_sched_,
+           const pci_t                    pci_    = INVALID_PCI,
+           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI) :
+    ue_index(ue_index_),
+    task_sched(std::move(task_sched_)),
+    up_mng(create_up_resource_manager(up_cfg)),
+    rrc_ue_cu_cp_ev_notifier(ue_index)
   {
     if (pci_ != INVALID_PCI) {
       pci = pci_;

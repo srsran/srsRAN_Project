@@ -92,46 +92,35 @@ public:
 
   bool on_ue_setup_request() override { return next_ue_setup_response; }
 
-  rrc_ue_reestablishment_context_response
-  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override
   {
-    logger.info("ue={} old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
+    logger.info("old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", old_pci, old_c_rnti);
 
     return reest_context;
   }
 
-  async_task<void> on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override
+  void on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override
   {
     logger.info("ue={}: Received RRC Reestablishment failure notification", request.ue_index);
-
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
   }
 
-  async_task<void> on_rrc_reestablishment_complete(ue_index_t ue_index) override
+  void on_rrc_reestablishment_complete(ue_index_t old_ue_index) override
   {
-    logger.info("ue={}: Received RRC Reestablishment complete notification", ue_index);
-
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
+    logger.info("ue={}: Received RRC Reestablishment complete notification", old_ue_index);
   }
 
-  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) override
   {
-    logger.info("Requested a UE context transfer from ue={} with old_ue={}.", ue_index, old_ue_index);
+    logger.info("Requested a UE context transfer from old_ue={}.", old_ue_index);
     return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
     });
   }
 
-  async_task<void> on_ue_removal_required(ue_index_t ue_index) override
+  async_task<void> on_ue_removal_required() override
   {
-    logger.info("ue={}: Requested a UE removal", ue_index);
+    logger.info("UE removal requested");
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -149,15 +138,14 @@ public:
     });
   }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
-                                                       nr_cell_id_t           nci,
+  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
                                                        optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;
   }
 
-  void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
+  void on_measurement_report(const rrc_meas_results& meas_results) override {}
 
   cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 
