@@ -311,6 +311,7 @@ void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
   prev_tx_params = {};
+  harq_cancelled = false;
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
@@ -327,10 +328,10 @@ int ul_harq_process::crc_info(bool ack)
       return (int)prev_tx_params.tbs_bytes;
     }
     if (empty()) {
-      logger.info(id,
-                  "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                  prev_tx_params.tbs_bytes,
-                  max_nof_harq_retxs());
+      fmt::memory_buffer cause_msg;
+      harq_cancelled ? fmt::format_to(cause_msg, "HARQ process was cancelled")
+                     : fmt::format_to(cause_msg, "Maximum number of reTxs {} exceeded", max_nof_harq_retxs());
+      logger.info(id, "Discarding HARQ with tbs={}. Cause: {}", prev_tx_params.tbs_bytes, to_c_str(cause_msg));
     }
     return 0;
   }
@@ -359,6 +360,7 @@ void ul_harq_process::save_alloc_params(const ul_harq_sched_context& ctx, const 
 
 void ul_harq_process::cancel_harq_retxs()
 {
+  harq_cancelled = true;
   base_type::cancel_harq_retxs(0);
 }
 

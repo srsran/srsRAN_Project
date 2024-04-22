@@ -429,6 +429,7 @@ public:
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
+  bool         harq_cancelled = false;
 };
 
 /// \brief Helper function to fill HARQ allocation grant parameters.
