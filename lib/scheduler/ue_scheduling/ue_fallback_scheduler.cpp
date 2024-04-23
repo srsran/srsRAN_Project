@@ -1305,8 +1305,11 @@ void ue_fallback_scheduler::update_srb1_buffer_state_after_alloc(du_ue_index_t u
     return;
   }
 
-  ue_it->pending_srb1_buffer_bytes > allocated_bytes ? ue_it->pending_srb1_buffer_bytes -= allocated_bytes
-                                                     : ue_it->pending_srb1_buffer_bytes = 0U;
+  if (ue_it->pending_srb1_buffer_bytes > allocated_bytes) {
+    ue_it->pending_srb1_buffer_bytes -= allocated_bytes;
+  } else {
+    ue_it->pending_srb1_buffer_bytes = 0U;
+  }
 }
 
 void ue_fallback_scheduler::update_srb1_buffer_after_rlc_bsu(du_ue_index_t ue_idx,
@@ -1433,7 +1436,11 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
                                                      tracker.h_dl->slot_tx() >= sl;
                                             });
 
-    remove_ue ? ue_it = pending_dl_ues_new_tx.erase(ue_it) : ++ue_it;
+    if (remove_ue) {
+      ue_it = pending_dl_ues_new_tx.erase(ue_it);
+    } else {
+      ++ue_it;
+    }
   }
 
   // Remove UL UE if the UE has left fallback or if the UE has been deleted from the scheduler.
