@@ -38,6 +38,7 @@ const char* get_cause_str(const asn1::ngap::cause_c& cause);
 /// Extracts message type.
 const char* get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu);
 
+/// Extracts RAN-UE-NGAP-ID from NGAP PDU
 optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg);
 optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome);
 optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome);

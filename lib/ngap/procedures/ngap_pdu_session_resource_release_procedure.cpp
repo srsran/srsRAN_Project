@@ -157,6 +157,5 @@ void ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_rele
     return;
   }
 
-  logger.log_info("Sending PduSessionResourceReleaseResponse");
   amf_notifier.on_new_message(ngap_msg);
 }

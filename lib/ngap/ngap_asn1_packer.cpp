@@ -44,12 +44,6 @@ void ngap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 // Receive populated ASN1 struct that needs to be packed and forwarded.
 void ngap_asn1_packer::handle_message(const srs_cu_cp::ngap_message& msg)
 {
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    msg.pdu.to_json(js);
-    logger.debug("Tx NGAP PDU: {}", js.to_string());
-  }
-
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu{byte_buffer::fallback_allocation_tag{}};
   asn1::bit_ref bref(tx_pdu);

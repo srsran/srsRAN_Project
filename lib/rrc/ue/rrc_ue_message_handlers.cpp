@@ -225,8 +225,6 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
 {
-  logger.log_debug("Received DlNasTransportMessage ({} B)", nas_pdu.length());
-
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();

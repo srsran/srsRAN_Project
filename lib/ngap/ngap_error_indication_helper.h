@@ -65,8 +65,8 @@ inline void send_error_indication(ngap_message_notifier& ngap_notifier,
 
   // Forward message to AMF
   logger.info("{}{}{}Sending ErrorIndication",
-              error_ind->ran_ue_ngap_id_present ? fmt::format(" ran_ue_id={}", error_ind->ran_ue_ngap_id) : "",
-              error_ind->amf_ue_ngap_id_present ? fmt::format(" amf_ue_id={}", error_ind->amf_ue_ngap_id) : "",
+              error_ind->ran_ue_ngap_id_present ? fmt::format(" ran_ue={}", error_ind->ran_ue_ngap_id) : "",
+              error_ind->amf_ue_ngap_id_present ? fmt::format(" amf_ue={}", error_ind->amf_ue_ngap_id) : "",
               error_ind->ran_ue_ngap_id_present || error_ind->amf_ue_ngap_id_present ? ": " : "");
   ngap_notifier.on_new_message(ngap_msg);
 }

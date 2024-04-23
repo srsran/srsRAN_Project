@@ -101,6 +101,5 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
   pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
-  logger.log_info("Sending PduSessionResourceSetupResponse");
   amf_notifier.on_new_message(ngap_msg);
 }

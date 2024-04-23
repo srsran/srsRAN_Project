@@ -63,6 +63,16 @@ optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::init_ms
       return uint_to_ran_ue_id(init_msg.value.ho_cancel()->ran_ue_ngap_id);
     case init_types::ho_required:
       return uint_to_ran_ue_id(init_msg.value.ho_required()->ran_ue_ngap_id);
+    case init_types::init_context_setup_request:
+      return uint_to_ran_ue_id(init_msg.value.init_context_setup_request()->ran_ue_ngap_id);
+    case init_types::pdu_session_res_modify_request:
+      return uint_to_ran_ue_id(init_msg.value.pdu_session_res_modify_request()->ran_ue_ngap_id);
+    case init_types::pdu_session_res_modify_ind:
+      return uint_to_ran_ue_id(init_msg.value.pdu_session_res_modify_ind()->ran_ue_ngap_id);
+    case init_types::pdu_session_res_release_cmd:
+      return uint_to_ran_ue_id(init_msg.value.pdu_session_res_release_cmd()->ran_ue_ngap_id);
+    case init_types::pdu_session_res_setup_request:
+      return uint_to_ran_ue_id(init_msg.value.pdu_session_res_setup_request()->ran_ue_ngap_id);
     case init_types::ue_context_mod_request:
       return uint_to_ran_ue_id(init_msg.value.ue_context_mod_request()->ran_ue_ngap_id);
     case init_types::ue_context_release_cmd:
@@ -71,8 +81,21 @@ optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::init_ms
         return uint_to_ran_ue_id(init_msg.value.ue_context_release_cmd()->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
       }
       return nullopt;
+    case init_types::ue_context_resume_request:
+      return uint_to_ran_ue_id(init_msg.value.ue_context_resume_request()->ran_ue_ngap_id);
+    case init_types::ue_context_suspend_request:
+      return uint_to_ran_ue_id(init_msg.value.ue_context_suspend_request()->ran_ue_ngap_id);
+    case init_types::dl_nas_transport:
+      return uint_to_ran_ue_id(init_msg.value.dl_nas_transport()->ran_ue_ngap_id);
+    case init_types::error_ind:
+      if (init_msg.value.error_ind()->ran_ue_ngap_id_present) {
+        return uint_to_ran_ue_id(init_msg.value.error_ind()->ran_ue_ngap_id);
+      }
+      break;
     case init_types::init_ue_msg:
       return uint_to_ran_ue_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id);
+    case init_types::ul_nas_transport:
+      return uint_to_ran_ue_id(init_msg.value.ul_nas_transport()->ran_ue_ngap_id);
     default:
       break;
   }
@@ -81,11 +104,59 @@ optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::init_ms
 
 optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
 {
+  using namespace asn1::ngap;
+  using success_types = ngap_elem_procs_o::successful_outcome_c::types_opts;
+
+  switch (success_outcome.value.type().value) {
+    case success_types::ho_cancel_ack:
+      return uint_to_ran_ue_id(success_outcome.value.ho_cancel_ack()->ran_ue_ngap_id);
+    case success_types::ho_cmd:
+      return uint_to_ran_ue_id(success_outcome.value.ho_cmd()->ran_ue_ngap_id);
+    case success_types::ho_request_ack:
+      return uint_to_ran_ue_id(success_outcome.value.ho_request_ack()->ran_ue_ngap_id);
+    case success_types::init_context_setup_resp:
+      return uint_to_ran_ue_id(success_outcome.value.init_context_setup_resp()->ran_ue_ngap_id);
+    case success_types::pdu_session_res_modify_resp:
+      return uint_to_ran_ue_id(success_outcome.value.pdu_session_res_modify_resp()->ran_ue_ngap_id);
+    case success_types::pdu_session_res_modify_confirm:
+      return uint_to_ran_ue_id(success_outcome.value.pdu_session_res_modify_confirm()->ran_ue_ngap_id);
+    case success_types::pdu_session_res_release_resp:
+      return uint_to_ran_ue_id(success_outcome.value.pdu_session_res_release_resp()->ran_ue_ngap_id);
+    case success_types::pdu_session_res_setup_resp:
+      return uint_to_ran_ue_id(success_outcome.value.pdu_session_res_setup_resp()->ran_ue_ngap_id);
+    case success_types::ue_context_mod_resp:
+      return uint_to_ran_ue_id(success_outcome.value.ue_context_mod_resp()->ran_ue_ngap_id);
+    case success_types::ue_context_release_complete:
+      return uint_to_ran_ue_id(success_outcome.value.ue_context_release_complete()->ran_ue_ngap_id);
+    case success_types::ue_context_resume_resp:
+      return uint_to_ran_ue_id(success_outcome.value.ue_context_resume_resp()->ran_ue_ngap_id);
+    case success_types::ue_context_suspend_resp:
+      return uint_to_ran_ue_id(success_outcome.value.ue_context_suspend_resp()->ran_ue_ngap_id);
+    default:
+      break;
+  }
+
   return nullopt;
 }
 
 optional<ran_ue_id_t> srsran::srs_cu_cp::get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
 {
+  using namespace asn1::ngap;
+  using unsuccess_types = ngap_elem_procs_o::unsuccessful_outcome_c::types_opts;
+
+  switch (unsuccessful_outcome.value.type().value) {
+    case unsuccess_types::ho_prep_fail:
+      return uint_to_ran_ue_id(unsuccessful_outcome.value.ho_prep_fail()->ran_ue_ngap_id);
+    case unsuccess_types::ue_context_mod_fail:
+      return uint_to_ran_ue_id(unsuccessful_outcome.value.ue_context_mod_fail()->ran_ue_ngap_id);
+    case unsuccess_types::ue_context_resume_fail:
+      return uint_to_ran_ue_id(unsuccessful_outcome.value.ue_context_resume_fail()->ran_ue_ngap_id);
+    case unsuccess_types::ue_context_suspend_fail:
+      return uint_to_ran_ue_id(unsuccessful_outcome.value.ue_context_suspend_fail()->ran_ue_ngap_id);
+    default:
+      break;
+  }
+
   return nullopt;
 }
 
@@ -115,6 +186,18 @@ optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::init_ms
       return uint_to_amf_ue_id(init_msg.value.ho_cancel()->amf_ue_ngap_id);
     case init_types::ho_required:
       return uint_to_amf_ue_id(init_msg.value.ho_required()->amf_ue_ngap_id);
+    case init_types::ho_request:
+      return uint_to_amf_ue_id(init_msg.value.ho_request()->amf_ue_ngap_id);
+    case init_types::init_context_setup_request:
+      return uint_to_amf_ue_id(init_msg.value.init_context_setup_request()->amf_ue_ngap_id);
+    case init_types::pdu_session_res_modify_request:
+      return uint_to_amf_ue_id(init_msg.value.pdu_session_res_modify_request()->amf_ue_ngap_id);
+    case init_types::pdu_session_res_modify_ind:
+      return uint_to_amf_ue_id(init_msg.value.pdu_session_res_modify_ind()->amf_ue_ngap_id);
+    case init_types::pdu_session_res_release_cmd:
+      return uint_to_amf_ue_id(init_msg.value.pdu_session_res_release_cmd()->amf_ue_ngap_id);
+    case init_types::pdu_session_res_setup_request:
+      return uint_to_amf_ue_id(init_msg.value.pdu_session_res_setup_request()->amf_ue_ngap_id);
     case init_types::ue_context_mod_request:
       return uint_to_amf_ue_id(init_msg.value.ue_context_mod_request()->amf_ue_ngap_id);
     case init_types::ue_context_release_cmd:
@@ -128,8 +211,17 @@ optional<amf_ue_id_t> srsran::srs_cu_cp::get_amf_ue_id(const asn1::ngap::init_ms
           break;
       }
       return nullopt;
+    case init_types::dl_nas_transport:
+      return uint_to_amf_ue_id(init_msg.value.dl_nas_transport()->amf_ue_ngap_id);
+    case init_types::error_ind:
+      if (init_msg.value.error_ind()->amf_ue_ngap_id_present) {
+        return uint_to_amf_ue_id(init_msg.value.error_ind()->amf_ue_ngap_id);
+      }
+      break;
     case init_types::init_ue_msg:
       return nullopt;
+    case init_types::ul_nas_transport:
+      return uint_to_amf_ue_id(init_msg.value.ul_nas_transport()->amf_ue_ngap_id);
     default:
       break;
   }

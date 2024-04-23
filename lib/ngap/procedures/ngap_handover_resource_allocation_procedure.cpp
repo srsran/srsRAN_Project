@@ -110,7 +110,6 @@ void ngap_handover_resource_allocation_procedure::send_handover_request_ack(ue_i
   ho_request_ack->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ho_request_ack->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending HoRequestAck", ue_index, ran_ue_id, amf_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }
 
@@ -125,6 +124,6 @@ void ngap_handover_resource_allocation_procedure::send_handover_failure()
   auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
   ho_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
 
-  logger.info("ue={} amf_ue_id={}: Sending HoFailure", request.ue_index, amf_ue_id);
+  logger.info("ue={} amf_ue={}: Sending HoFailure", request.ue_index, amf_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }

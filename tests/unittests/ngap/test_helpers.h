@@ -60,11 +60,6 @@ public:
     asn1::bit_ref bref(pack_buffer);
     ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
 
-    if (logger.debug.enabled()) {
-      asn1::json_writer js;
-      msg.pdu.to_json(js);
-      logger.debug("Tx NGAP PDU: {}", js.to_string());
-    }
     last_ngap_msgs.push_back(msg);
 
     if (handler != nullptr) {

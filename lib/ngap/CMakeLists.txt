@@ -6,10 +6,10 @@
 # the distribution.
 #
 
-add_library(ngap_asn1_helpers ngap_asn1_packer.cpp ngap_asn1_utils.cpp)
-set_target_properties(ngap_asn1_helpers PROPERTIES UNITY_BUILD ON)
-
 set(SOURCES
+        ngap_asn1_packer.cpp
+        ngap_asn1_utils.cpp
+        log_helpers.cpp
         ngap_factory.cpp
         ngap_impl.cpp
         ngap_validators/ngap_validators.cpp
@@ -25,6 +25,6 @@ set(SOURCES
     )
 
 add_library(srsran_ngap STATIC ${SOURCES})
-target_link_libraries(srsran_ngap ngap_asn1 ngap_asn1_helpers srsran_cu_cp srsran_support)
+target_link_libraries(srsran_ngap ngap_asn1 srsran_cu_cp srsran_support)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
