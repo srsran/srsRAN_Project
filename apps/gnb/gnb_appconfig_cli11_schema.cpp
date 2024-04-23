@@ -152,11 +152,6 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
       ->capture_default_str();
 
-  app.add_option("--cu_up_statistics_report_period",
-                 metrics_params.cu_up_statistics_report_period,
-                 "CU-UP statistics report period in seconds. Set this value to 0 to disable this feature")
-      ->capture_default_str();
-
   app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 
@@ -221,19 +216,6 @@ static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
   app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
   app.add_option("--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
   app.add_option("--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
-}
-
-static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
-{
-  app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
-  app.add_option("--gtpu_reordering_timer",
-                 cu_up_params.gtpu_reordering_timer_ms,
-                 "GTP-U RX reordering timer (in milliseconds)")
-      ->capture_default_str();
-  app.add_option("--warn_on_drop",
-                 cu_up_params.warn_on_drop,
-                 "Log a warning for dropped packets in GTP-U, SDAP, PDCP and F1-U due to full queues")
-      ->capture_default_str();
 }
 
 static void configure_cli11_du_args(CLI::App& app, du_appconfig& du_params)
@@ -2251,10 +2233,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed
   // E2 section.
   CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, gnb_cfg.e2_cfg);
-
-  // CU-UP section.
-  CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
-  configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
 
   // DU section.
   CLI::App* du_subcmd = app.add_subcommand("du", "DU parameters")->configurable();

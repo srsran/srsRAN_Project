@@ -10,14 +10,13 @@
 
 #pragma once
 
-#include "../../gnb/gnb_appconfig.h"
+#include "cu_up_unit_logger_config.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
-namespace modules {
-namespace cu_up {
 
 /// Registers the CU-UP loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+inline void register_cu_up_loggers(const cu_up_unit_logger_config& log_cfg)
 {
   for (const auto& id : {"CU-UP", "CU-UP-E1"}) {
     auto& cu_up_logger = srslog::fetch_basic_logger(id, false);
@@ -42,6 +41,4 @@ inline void register_logs(const log_appconfig& log_cfg)
   sdap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 }
 
-} // namespace cu_up
-} // namespace modules
 } // namespace srsran

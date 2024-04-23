@@ -369,37 +369,37 @@ static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
       ->check(CLI::Range(0, 0xffffff));
 }
 
-void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& parsed_cfg)
+void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)
 {
-  add_option(app, "--gnb_id", parsed_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
-  add_option(app, "--gnb_id_bit_length", parsed_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
+  add_option(app, "--gnb_id", unit_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  add_option(app, "--gnb_id_bit_length", unit_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
-  add_option(app, "--ran_node_name", parsed_cfg.ran_node_name, "RAN node name")->capture_default_str();
+  add_option(app, "--ran_node_name", unit_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
   // CU-CP section
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();
-  configure_cli11_cu_cp_args(*cu_cp_subcmd, parsed_cfg);
+  configure_cli11_cu_cp_args(*cu_cp_subcmd, unit_cfg);
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
-  configure_cli11_log_args(*log_subcmd, parsed_cfg.loggers);
+  configure_cli11_log_args(*log_subcmd, unit_cfg.loggers);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
-  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics);
+  configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
 
   // QoS section.
-  auto qos_lambda = [&parsed_cfg](const std::vector<std::string>& values) {
+  auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
-    parsed_cfg.qos_cfg.resize(values.size());
+    unit_cfg.qos_cfg.resize(values.size());
 
     // Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("QoS parameters", "QoS config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());
       subapp.allow_config_extras(CLI::config_extras_mode::capture);
-      configure_cli11_qos_args(subapp, parsed_cfg.qos_cfg[i]);
+      configure_cli11_qos_args(subapp, unit_cfg.qos_cfg[i]);
       std::istringstream ss(values[i]);
       subapp.parse_from_stream(ss);
     }
@@ -407,16 +407,16 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 
   // Slicing section.
-  auto slicing_lambda = [&parsed_cfg](const std::vector<std::string>& values) {
+  auto slicing_lambda = [&unit_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
-    parsed_cfg.slice_cfg.resize(values.size());
+    unit_cfg.slice_cfg.resize(values.size());
 
     // Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());
       subapp.allow_config_extras(CLI::config_extras_mode::capture);
-      configure_cli11_slicing_args(subapp, parsed_cfg.slice_cfg[i]);
+      configure_cli11_slicing_args(subapp, unit_cfg.slice_cfg[i]);
       std::istringstream ss(values[i]);
       subapp.parse_from_stream(ss);
     }

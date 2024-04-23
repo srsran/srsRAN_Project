@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
+#include "apps/units/cu_up/cu_up_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
@@ -405,12 +406,12 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig& config)
+srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_config& config)
 {
   srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.warn_on_drop          = config.cu_up_cfg.warn_on_drop;
+  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
+  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
+  out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
 
   if (config.amf_cfg.n3_bind_addr == "auto") {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
@@ -1020,11 +1021,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   return out_cfg;
 }
 
-std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig& config)
+std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig&     config,
+                                                                                   const cu_up_unit_config& cu_up_cfg)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop,
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(cu_up_cfg.warn_on_drop,
                                                                  timer_duration(config.metrics_cfg.pdcp.report_period));
     return out_cfg;
   }
@@ -1032,7 +1034,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
   // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
   std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(config);
 
-  for (const qos_appconfig& qos : config.qos_cfg) {
+  for (const auto& qos : cu_up_cfg.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
@@ -1041,7 +1043,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
     }
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
+    out_pdcp_custom.tx.warn_on_drop     = cu_up_cfg.warn_on_drop;
     out_pdcp_custom.metrics_period      = timer_duration(config.metrics_cfg.pdcp.report_period);
 
     // Obtain RLC config parameters from the respective RLC mode
@@ -1060,7 +1062,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 
     // Convert F1-U config
     srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
-    f1u_cfg.warn_on_drop           = config.cu_up_cfg.warn_on_drop;
+    f1u_cfg.warn_on_drop           = cu_up_cfg.warn_on_drop;
   }
   return out_cfg;
 }

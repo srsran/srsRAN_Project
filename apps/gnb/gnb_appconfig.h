@@ -766,7 +766,6 @@ struct metrics_appconfig {
   struct pdcp_metrics {
     unsigned report_period = 0; // PDCP report period in ms
   } pdcp;
-  unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.
   bool        enable_json_metrics      = false;
   std::string addr                     = "127.0.0.1";
@@ -1181,8 +1180,6 @@ struct gnb_appconfig {
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.
   amf_appconfig amf_cfg;
-  /// CU-UP configuration.
-  cu_up_appconfig cu_up_cfg;
   /// DU configuration.
   du_appconfig du_cfg;
   /// \brief E2 configuration.

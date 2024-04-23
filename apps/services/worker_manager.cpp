@@ -29,14 +29,14 @@ build_affinity_manager_dependencies(const cpu_affinities_cell_appconfig& affinit
   return out;
 }
 
-worker_manager::worker_manager(const gnb_appconfig& appcfg) :
+worker_manager::worker_manager(const gnb_appconfig& appcfg, unsigned gtpu_queue_size) :
   low_prio_affinity_mng({appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg})
 {
   for (const auto& cell : appcfg.expert_execution_cfg.cell_affinities) {
     affinity_mng.emplace_back(build_affinity_manager_dependencies(cell));
   }
 
-  create_low_prio_executors(appcfg);
+  create_low_prio_executors(appcfg, gtpu_queue_size);
   associate_low_prio_executors();
 
   create_du_executors(appcfg);
@@ -258,7 +258,7 @@ execution_config_helper::worker_pool worker_manager::create_low_prio_workers(con
   return non_rt_pool;
 }
 
-void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
+void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg, unsigned gtpu_queue_size)
 {
   using namespace execution_config_helper;
   span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
@@ -294,12 +294,10 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
   // Setup strands for the data plane of all the instantiated DUs.
   // One strand per DU, each with multiple priority levels.
   for (unsigned i = 0; i != nof_cells; ++i) {
-    low_prio_strands.push_back(strand{
-        {{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-         {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, appcfg.cu_up_cfg.gtpu_queue_size},
-         {fmt::format("du_rb_dl_exec#{}", i),
-          concurrent_queue_policy::lockfree_mpmc,
-          appcfg.cu_up_cfg.gtpu_queue_size}}});
+    low_prio_strands.push_back(
+        strand{{{fmt::format("du_rb_prio_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                {fmt::format("du_rb_ul_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size},
+                {fmt::format("du_rb_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size}}});
   }
 
   // Configuration of strands for user plane handling (CU-UP and DU-low user plane). Given that the CU-UP doesn't
@@ -314,10 +312,8 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig& appcfg)
         strand{{{fmt::format("ue_up_ctrl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                 {fmt::format("ue_up_ul_exec#{}", i),
                  concurrent_queue_policy::lockfree_mpmc,
-                 appcfg.cu_up_cfg.gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
-                {fmt::format("ue_up_dl_exec#{}", i),
-                 concurrent_queue_policy::lockfree_mpmc,
-                 appcfg.cu_up_cfg.gtpu_queue_size}}});
+                 gtpu_queue_size}, // TODO: Consider separate param for size of UL queue if needed.
+                {fmt::format("ue_up_dl_exec#{}", i), concurrent_queue_policy::lockfree_mpmc, gtpu_queue_size}}});
   }
 
   // Create non-RT worker pool.
