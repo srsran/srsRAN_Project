@@ -57,40 +57,42 @@ struct modulator_table_s {
   inline constexpr void
   modulate(span<Type> symbols, const bit_buffer& input, const std::array<Type, pow2(QM)>& table) const
   {
-    unsigned i_symbol = 0;
+    unsigned       i_symbol    = 0;
+    Type*          symbols_ptr = symbols.data();
+    const uint8_t* input_ptr   = input.get_buffer().data();
 
     // Optimized version for QPSK.
     if (QM == 2) {
       for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 4) * 4; i_symbol != i_symbol_end;) {
-        uint8_t byte        = input.get_byte(i_byte++);
-        uint8_t index0      = (byte >> 6U) & 0b11;
-        uint8_t index1      = (byte >> 4U) & 0b11;
-        uint8_t index2      = (byte >> 2U) & 0b11;
-        uint8_t index3      = byte & 0b11;
-        symbols[i_symbol++] = table[index0];
-        symbols[i_symbol++] = table[index1];
-        symbols[i_symbol++] = table[index2];
-        symbols[i_symbol++] = table[index3];
+        uint8_t byte            = input_ptr[i_byte++];
+        uint8_t index0          = (byte >> 6U) & 0b11;
+        uint8_t index1          = (byte >> 4U) & 0b11;
+        uint8_t index2          = (byte >> 2U) & 0b11;
+        uint8_t index3          = byte & 0b11;
+        symbols_ptr[i_symbol++] = table[index0];
+        symbols_ptr[i_symbol++] = table[index1];
+        symbols_ptr[i_symbol++] = table[index2];
+        symbols_ptr[i_symbol++] = table[index3];
       }
     }
 
     // Optimized version for 16-QAM.
     if (QM == 4) {
       for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 2) * 2; i_symbol != i_symbol_end;) {
-        uint8_t byte        = input.get_byte(i_byte++);
-        uint8_t index0      = byte >> 4U;
-        uint8_t index1      = byte & 0b1111;
-        symbols[i_symbol++] = table[index0];
-        symbols[i_symbol++] = table[index1];
+        uint8_t byte            = input_ptr[i_byte++];
+        uint8_t index0          = byte >> 4U;
+        uint8_t index1          = byte & 0b1111;
+        symbols_ptr[i_symbol++] = table[index0];
+        symbols_ptr[i_symbol++] = table[index1];
       }
     }
 
     // Optimized version for 64-QAM.
     if (QM == 6) {
       for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 4) * 4; i_symbol != i_symbol_end;) {
-        uint8_t byte0 = input.get_byte(i_byte++);
-        uint8_t byte1 = input.get_byte(i_byte++);
-        uint8_t byte2 = input.get_byte(i_byte++);
+        uint8_t byte0 = input_ptr[i_byte++];
+        uint8_t byte1 = input_ptr[i_byte++];
+        uint8_t byte2 = input_ptr[i_byte++];
 
         uint8_t index0 = byte0 >> 2U;
         uint8_t index1 = ((byte0 & 0b11U) << 4U) | (byte1 >> 4U);
@@ -98,18 +100,18 @@ struct modulator_table_s {
         uint8_t index3 = byte2 & 0b111111U;
 
         // Get the symbol from the table.
-        symbols[i_symbol++] = table[index0];
-        symbols[i_symbol++] = table[index1];
-        symbols[i_symbol++] = table[index2];
-        symbols[i_symbol++] = table[index3];
+        symbols_ptr[i_symbol++] = table[index0];
+        symbols_ptr[i_symbol++] = table[index1];
+        symbols_ptr[i_symbol++] = table[index2];
+        symbols_ptr[i_symbol++] = table[index3];
       }
     }
 
     // Optimized version for 256-QAM.
     if (QM == 8) {
       for (unsigned i_byte = 0, i_symbol_end = symbols.size(); i_symbol != i_symbol_end;) {
-        uint8_t byte        = input.get_byte(i_byte++);
-        symbols[i_symbol++] = table[byte];
+        uint8_t byte            = input_ptr[i_byte++];
+        symbols_ptr[i_symbol++] = table[byte];
       }
     }
 
@@ -119,7 +121,7 @@ struct modulator_table_s {
       unsigned index = input.extract(QM * i_symbol, QM);
 
       // Get the symbol from the table.
-      symbols[i_symbol] = table[index];
+      symbols_ptr[i_symbol] = table[index];
     }
   }
 
@@ -143,18 +145,20 @@ struct modulator_table_bpsk {
   // Modulates the input bits.
   void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
+    cf_t* symbols_ptr = symbols.data();
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
-      unsigned index = input.extract<unsigned>(i_bit, 1);
-      symbols[i_bit] = cf_table[index];
+      unsigned index     = input.extract<unsigned>(i_bit, 1);
+      symbols_ptr[i_bit] = cf_table[index];
     }
   }
 
   // Modulates the input bits.
   float modulate(span<ci8_t> symbols, const bit_buffer& input) const
   {
+    ci8_t* symbols_ptr = symbols.data();
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
-      unsigned index = input.extract<unsigned>(i_bit, 1);
-      symbols[i_bit] = ci8_table[index];
+      unsigned index     = input.extract<unsigned>(i_bit, 1);
+      symbols_ptr[i_bit] = ci8_table[index];
     }
     return M_SQRT1_2;
   }
@@ -171,18 +175,20 @@ struct modulator_table_pi_2_bpsk {
   // Modulates the input bits.
   void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
+    cf_t* symbols_ptr = symbols.data();
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
-      uint8_t index  = input.extract(i_bit, 1);
-      symbols[i_bit] = (i_bit & 1U) ? cf_table_odd[index] : cf_table_even[index];
+      uint8_t index      = input.extract(i_bit, 1);
+      symbols_ptr[i_bit] = (i_bit & 1U) ? cf_table_odd[index] : cf_table_even[index];
     }
   }
 
   // Modulates the input bits.
   float modulate(span<ci8_t> symbols, const bit_buffer& input) const
   {
+    ci8_t* symbols_ptr = symbols.data();
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
-      uint8_t index  = input.extract(i_bit, 1);
-      symbols[i_bit] = (i_bit & 1U) ? ci8_table_odd[index] : ci8_table_even[index];
+      uint8_t index      = input.extract(i_bit, 1);
+      symbols_ptr[i_bit] = (i_bit & 1U) ? ci8_table_odd[index] : ci8_table_even[index];
     }
     return M_SQRT1_2;
   }

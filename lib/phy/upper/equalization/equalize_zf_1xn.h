@@ -60,8 +60,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficients.
-      simd_cf_t re_in  = srsran_simd_cfi_loadu(&(port_symbols[i_port][i_re]));
-      simd_cf_t ch_est = srsran_simd_cfi_loadu(&(port_ests[i_port][i_re]));
+      simd_cf_t re_in  = srsran_simd_cfi_loadu(port_symbols[i_port].data() + i_re);
+      simd_cf_t ch_est = srsran_simd_cfi_loadu(port_ests[i_port].data() + i_re);
 
       // Compute the channel square norm, by accumulating the channel square absolute values.
       ch_mod_sq = srsran_simd_f_add(ch_mod_sq, srsran_simd_cf_norm_sq(ch_est));
@@ -92,13 +92,13 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
     isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, vars_out));
 
     // If abnormal calculation parameters are detected, the noise variances are set to infinity.
-    srsran_simd_f_storeu(&nvars_out[i_re], srsran_simd_f_select(infinity, vars_out, isnormal_mask));
+    srsran_simd_f_storeu(nvars_out.data() + i_re, srsran_simd_f_select(infinity, vars_out, isnormal_mask));
 
     // Normalize the gain of the channel combined with the equalization to unity.
     re_out = srsran_simd_cf_mul(re_out, d_pinv_rcp);
 
     // If abnormal calculation parameters are detected, the equalized symbols are set to zero.
-    srsran_simd_cfi_storeu(&symbols_out[i_re],
+    srsran_simd_cfi_storeu(symbols_out.data() + i_re,
                            srsran_simd_cf_select(srsran_simd_cf_set1({0, 0}), re_out, isnormal_mask));
   }
 #endif // __AVX2__ || HAVE_NEON

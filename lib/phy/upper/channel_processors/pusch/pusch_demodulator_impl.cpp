@@ -55,7 +55,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x0102040810204080, 0x0102040810204080));
 
     // Load input.
-    __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&in[i]));
+    __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(in.data() + i));
 
     // Negate.
     v = _mm_xor_si128(mask, v);
@@ -64,7 +64,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     mask = _mm_and_si128(mask, _mm_set1_epi8(1));
     v    = _mm_add_epi8(v, mask);
 
-    _mm_storeu_si128(reinterpret_cast<__m128i*>(&out[i]), v);
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + i), v);
   }
 #endif // __SSE3__
 
@@ -94,7 +94,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
 
     // Load input.
-    int8x16_t v = vld1q_s8(reinterpret_cast<const int8_t*>(&in[i]));
+    int8x16_t v = vld1q_s8(reinterpret_cast<const int8_t*>(in.data() + i));
 
     // Negate.
     v = veorq_s8(vreinterpretq_s8_u8(mask_u8), v);
@@ -104,7 +104,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
     v                = vaddq_s8(v, one_s8);
 
     // Store the result.
-    vst1q_s8(reinterpret_cast<int8_t*>(&out[i]), v);
+    vst1q_s8(reinterpret_cast<int8_t*>(out.data() + i), v);
   }
 #endif // __aarch64__
 
