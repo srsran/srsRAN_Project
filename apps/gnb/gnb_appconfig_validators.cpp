@@ -232,7 +232,7 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsigned cell_crbs)
+static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsigned cell_bw_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -259,7 +259,7 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsign
     return false;
   }
 
-  if (config.start_rb >= cell_crbs) {
+  if (config.start_rb >= cell_bw_crbs) {
     fmt::print("Invalid start RB {} for UE PDSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
@@ -268,7 +268,7 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsign
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsigned cell_crbs)
+static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsigned cell_bw_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -295,7 +295,7 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsign
     return false;
   }
 
-  if (config.start_rb >= cell_crbs) {
+  if (config.start_rb >= cell_bw_crbs) {
     fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
