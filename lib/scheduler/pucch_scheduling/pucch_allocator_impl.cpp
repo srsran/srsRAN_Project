@@ -148,11 +148,6 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
 
   pucch_common_alloc_grid[slot_alloc[k0 + k1 + slot_alloc.cfg.ntn_cs_koffset].slot.to_uint()].emplace_back(tcrnti);
 
-  logger.debug("tc-rnti={}: PUCCH HARQ-ACK common with res_ind={} allocated for slot={}",
-               tcrnti,
-               pucch_res_indicator,
-               pucch_slot_alloc.slot);
-
   return pucch_res_indicator;
 }
 
@@ -789,12 +784,8 @@ optional<unsigned> pucch_allocator_impl::allocate_new_format1_harq_grant(cell_sl
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
   fill_pucch_ded_format1_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
-  auto pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
+  const auto pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
 
-  logger.debug("rnti={}: PUCCH HARQ-ACK allocation on F1 with res_ind={} for slot={} completed",
-               crnti,
-               pucch_res_indicator,
-               pucch_slot_alloc.slot);
   return pucch_res_indicator;
 }
 
@@ -950,17 +941,6 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
                            sr_bits,
                            csi1_nof_bits_only_harq);
 
-  logger.debug("rnti={}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits with res_ind={} for "
-               "slot={} completed",
-               rnti,
-               curr_harq_bits + harq_ack_bits_increment,
-               sr_nof_bits_to_uint(sr_bits),
-               csi1_nof_bits_only_harq,
-               format2_res.pucch_res_indicator,
-               pucch_slot_alloc.slot
-
-  );
-
   return format2_res.pucch_res_indicator;
 }
 
@@ -1046,12 +1026,6 @@ optional<unsigned> pucch_allocator_impl::change_format2_resource(cell_slot_resou
                            harq_ack_bits_increment,
                            sr_bits_to_report,
                            csi_bits_to_report);
-  logger.debug("rnti={}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for slot={} completed",
-               rnti,
-               harq_ack_bits_increment,
-               sr_nof_bits_to_uint(sr_bits_to_report),
-               csi_bits_to_report,
-               pucch_slot_alloc.slot);
 
   return static_cast<unsigned>(format2_res.pucch_res_indicator);
 }
@@ -1075,10 +1049,8 @@ optional<unsigned> pucch_allocator_impl::add_harq_ack_bit_to_format1_grant(pucch
   }
   // Update the HARQ, if present.
   existing_harq_grant.format_1.harq_ack_nof_bits++;
-  auto pucch_res_indicator = static_cast<unsigned>(pucch_res_idx);
+  const auto pucch_res_indicator = static_cast<unsigned>(pucch_res_idx);
 
-  logger.debug(
-      "rnti={}: HARQ-ACK mltplxd on existing PUCCH F1 with res_ind={} for slot={}", rnti, pucch_res_indicator, sl_tx);
   return pucch_res_indicator;
 }
 
@@ -1259,10 +1231,6 @@ optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(pucch_in
   }
 
   existing_f2_grant.format_2.harq_ack_nof_bits += harq_ack_bits_increment;
-  logger.debug("rnti={}: HARQ-ACK multiplexed on existing PUCCH F2 with res_ind={} for slot={}",
-               existing_f2_grant.crnti,
-               pucch_f2_harq_cfg.pucch_res_indicator,
-               sl_tx);
 
   return pucch_f2_harq_cfg.pucch_res_indicator;
 }
