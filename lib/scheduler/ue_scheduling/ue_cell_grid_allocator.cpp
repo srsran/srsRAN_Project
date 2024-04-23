@@ -11,6 +11,7 @@
 #include "../support/csi_report_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
+#include "../support/sched_result_helpers.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"
@@ -529,21 +530,33 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
         pusch_td_cfg.k2);
     return alloc_outcome::invalid_params;
   }
-  if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of PUSCHs per slot {} was reached.",
-                u.ue_index,
-                u.crnti,
-                expert_cfg.max_puschs_per_slot);
+
+  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
+  // removed when multiplexing the UCI on PUSCH.
+  unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
+  if (pusch_pdu_rem_space == 0) {
+    if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
+      logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of PUSCHs per slot {} was reached.",
+                  u.ue_index,
+                  u.crnti,
+                  expert_cfg.max_puschs_per_slot);
+    } else {
+      logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
+                  u.ue_index,
+                  u.crnti,
+                  expert_cfg.max_puschs_per_slot);
+    }
     return alloc_outcome::skip_slot;
   }
 
-  // Verify there is space in PUSCH and PDCCH result lists for new allocations.
-  if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
+  // Verify there is space in PDCCH result lists for new allocations.
+  if (pdcch_alloc.result.dl.ul_pdcchs.full()) {
     logger.warning(
-        "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
+        "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Maximum number of PDCCH grants per slot {} reached",
         u.ue_index,
         u.crnti,
-        pusch_alloc.slot);
+        pusch_alloc.slot,
+        pdcch_alloc.result.dl.ul_pdcchs.capacity());
     return alloc_outcome::skip_slot;
   }
 
@@ -553,11 +566,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       return alloc_outcome::skip_ue;
     }
   }
-
-  const unsigned nof_pucch_grants =
-      std::count_if(pusch_alloc.result.ul.pucchs.begin(),
-                    pusch_alloc.result.ul.pucchs.end(),
-                    [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
 
   // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common PUCCH
   // resources.
@@ -570,25 +578,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::skip_ue;
   }
 
-  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
-  // removed when multiplexing the UCI on PUSCH.
-  if (pusch_alloc.result.ul.puschs.size() >=
-      expert_cfg.max_ul_grants_per_slot -
-          (static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size()) - nof_pucch_grants)) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
-                u.ue_index,
-                u.crnti,
-                expert_cfg.max_puschs_per_slot);
-    return alloc_outcome::skip_slot;
-  }
-
   // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If so,
   // allocate remaining RBs to the current UE only if it's a new Tx.
-  // NOTE: At this point PUSCH is not yet allocated hence '>=' should be used rather than '>'.
   crb_interval adjusted_crbs{grant.crbs};
-  if (h_ul.empty() and (pusch_alloc.result.ul.puschs.size() >=
-                        expert_cfg.max_ul_grants_per_slot -
-                            (static_cast<unsigned>(pusch_alloc.result.ul.pucchs.size()) - nof_pucch_grants) - 1)) {
+  if (h_ul.empty() and pusch_pdu_rem_space == 1) {
     const crb_interval ul_crb_lims = {std::max(expert_cfg.pusch_crb_limits.start(), ss_info->ul_crb_lims.start()),
                                       std::min(expert_cfg.pusch_crb_limits.stop(), ss_info->ul_crb_lims.stop())};
     const crb_bitmap   used_crbs =
