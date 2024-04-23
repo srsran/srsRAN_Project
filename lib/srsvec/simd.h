@@ -560,6 +560,48 @@ inline simd_f_t srsran_simd_f_abs(simd_f_t a)
 #endif /* HAVE_AVX512 */
 }
 
+inline simd_f_t srsran_simd_f_interleave_low(simd_f_t a, simd_f_t b)
+{
+#ifdef HAVE_AVX512
+  return _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x00, 0x10, 0x01, 0x11, 0x02, 0x12, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15, 0x06, 0x16, 0x07, 0x17),
+      b);
+#else  /* HAVE_AVX512 */
+  float reg_a[8], reg_b[8], reg_ret[8];
+  srsran_simd_f_storeu(reg_a, a);
+  srsran_simd_f_storeu(reg_b, b);
+
+  for (unsigned i = 0, j = 0; i != 4; ++i) {
+    reg_ret[j++] = reg_a[i];
+    reg_ret[j++] = reg_b[i];
+  }
+
+  return srsran_simd_f_loadu(reg_ret);
+#endif /* HAVE_AVX512 */
+}
+
+inline simd_f_t srsran_simd_f_interleave_high(simd_f_t a, simd_f_t b)
+{
+#ifdef HAVE_AVX512
+  return _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
+      b);
+#else  /* HAVE_AVX512 */
+  float reg_a[8], reg_b[8], reg_ret[8];
+  srsran_simd_f_storeu(reg_a, a);
+  srsran_simd_f_storeu(reg_b, b);
+
+  for (unsigned i = 0, j = 0; i != 4; ++i) {
+    reg_ret[j++] = reg_a[i + 4];
+    reg_ret[j++] = reg_b[i + 4];
+  }
+
+  return srsran_simd_f_loadu(reg_ret);
+#endif /* HAVE_AVX512 */
+}
+
 inline void srsran_simd_f_fprintf(std::FILE* stream, simd_f_t a)
 {
   float x[SRSRAN_SIMD_F_SIZE];
@@ -1141,6 +1183,120 @@ inline simd_cf_t srsran_simd_cf_zero()
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */
+#endif /* HAVE_AVX512 */
+  return ret;
+}
+
+inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
+{
+  simd_cf_t ret;
+#ifdef HAVE_AVX512
+  ret.re = _mm512_permutex2var_ps(
+      a.re,
+      _mm512_setr_epi32(0x00, 0x10, 0x01, 0x11, 0x02, 0x12, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15, 0x06, 0x16, 0x07, 0x17),
+      b.re);
+  ret.im = _mm512_permutex2var_ps(
+      a.im,
+      _mm512_setr_epi32(0x00, 0x10, 0x01, 0x11, 0x02, 0x12, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15, 0x06, 0x16, 0x07, 0x17),
+      b.im);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_SSE
+  // Interleave real and imaginary parts of a.
+  __m256 temp_a0 = _mm256_permute_ps(a.re, 0b11011000);
+  __m256 temp_a1 = _mm256_permute_ps(a.im, 0b11011000);
+  __m256 temp_a  = _mm256_unpacklo_ps(temp_a0, temp_a1);
+
+  // Interleave real and imaginary parts of b.
+  __m256 temp_b0 = _mm256_permute_ps(b.re, 0b11011000);
+  __m256 temp_b1 = _mm256_permute_ps(b.im, 0b11011000);
+  __m256 temp_b  = _mm256_unpacklo_ps(temp_b0, temp_b1);
+
+  // Extract SSE registers in words of 64 bits.
+  __m128d sse_a = _mm256_extractf128_pd(_mm256_castps_pd(temp_a), 0);
+  __m128d sse_b = _mm256_extractf128_pd(_mm256_castps_pd(temp_b), 0);
+  __m128d sse_c = _mm256_extractf128_pd(_mm256_castps_pd(temp_a), 1);
+  __m128d sse_d = _mm256_extractf128_pd(_mm256_castps_pd(temp_b), 1);
+
+  // Interleave words of 64 bits.
+  temp_a = _mm256_setr_m128(_mm_castpd_ps(_mm_unpacklo_pd(sse_a, sse_b)), _mm_castpd_ps(_mm_unpackhi_pd(sse_a, sse_b)));
+  temp_b = _mm256_setr_m128(_mm_castpd_ps(_mm_unpacklo_pd(sse_c, sse_d)), _mm_castpd_ps(_mm_unpackhi_pd(sse_c, sse_d)));
+
+  // Deinterleave real and imaginary parts.
+  __m256 in1 = _mm256_permute_ps(temp_a, 0b11011000);
+  __m256 in2 = _mm256_permute_ps(temp_b, 0b11011000);
+  ret.re     = _mm256_unpacklo_ps(in1, in2);
+  ret.im     = _mm256_unpackhi_ps(in1, in2);
+#else /* HAVE_SSE */
+#ifdef HAVE_NEON
+  cf_t reg_a[8], reg_b[8], reg_ret[8];
+  srsran_simd_cfi_storeu(reg_a, a);
+  srsran_simd_cfi_storeu(reg_b, b);
+
+  for (unsigned i = 0, j = 0; i != 4; ++i) {
+    reg_ret[j++] = reg_a[i];
+    reg_ret[j++] = reg_b[i];
+  }
+
+  ret = srsran_simd_cfi_loadu(reg_ret);
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
+#endif /* HAVE_AVX512 */
+  return ret;
+}
+
+inline simd_cf_t srsran_simd_cf_interleave_high(simd_cf_t a, simd_cf_t b)
+{
+  simd_cf_t ret;
+#ifdef HAVE_AVX512
+  ret.re = _mm512_permutex2var_ps(
+      a.re,
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
+      b.re);
+  ret.im = _mm512_permutex2var_ps(
+      a.im,
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
+      b.im);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_SSE
+  // Interleave real and imaginary parts of a.
+  __m256 temp_a0 = _mm256_permute_ps(a.re, 0b11011000);
+  __m256 temp_a1 = _mm256_permute_ps(a.im, 0b11011000);
+  __m256 temp_a  = _mm256_unpackhi_ps(temp_a0, temp_a1);
+
+  // Interleave real and imaginary parts of b.
+  __m256 temp_b0 = _mm256_permute_ps(b.re, 0b11011000);
+  __m256 temp_b1 = _mm256_permute_ps(b.im, 0b11011000);
+  __m256 temp_b  = _mm256_unpackhi_ps(temp_b0, temp_b1);
+
+  // Extract SSE registers in words of 64 bits.
+  __m128d sse_a = _mm256_extractf128_pd(_mm256_castps_pd(temp_a), 0);
+  __m128d sse_b = _mm256_extractf128_pd(_mm256_castps_pd(temp_b), 0);
+  __m128d sse_c = _mm256_extractf128_pd(_mm256_castps_pd(temp_a), 1);
+  __m128d sse_d = _mm256_extractf128_pd(_mm256_castps_pd(temp_b), 1);
+
+  // Interleave words of 64 bits.
+  temp_a = _mm256_setr_m128(_mm_castpd_ps(_mm_unpacklo_pd(sse_a, sse_b)), _mm_castpd_ps(_mm_unpackhi_pd(sse_a, sse_b)));
+  temp_b = _mm256_setr_m128(_mm_castpd_ps(_mm_unpacklo_pd(sse_c, sse_d)), _mm_castpd_ps(_mm_unpackhi_pd(sse_c, sse_d)));
+
+  // Deinterleave real and imaginary parts.
+  __m256 in1 = _mm256_permute_ps(temp_a, 0b11011000);
+  __m256 in2 = _mm256_permute_ps(temp_b, 0b11011000);
+  ret.re     = _mm256_unpacklo_ps(in1, in2);
+  ret.im     = _mm256_unpackhi_ps(in1, in2);
+#else /* HAVE_SSE */
+#ifdef HAVE_NEON
+  cf_t reg_a[8], reg_b[8], reg_ret[8];
+  srsran_simd_cfi_storeu(reg_a, a);
+  srsran_simd_cfi_storeu(reg_b, b);
+
+  for (unsigned i = 0, j = 0; i != 4; ++i) {
+    reg_ret[j++] = reg_a[i];
+    reg_ret[j++] = reg_b[i];
+  }
+
+  ret = srsran_simd_cfi_loadu(reg_ret);
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
 #endif /* HAVE_AVX512 */
   return ret;
 }

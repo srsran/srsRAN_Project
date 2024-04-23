@@ -88,19 +88,11 @@ private:
 
   /// \brief Buffer used to store channel modulation resource elements at the equalizer output.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cf_t,
-                pucch_constants::MAX_NOF_RE,
-                channel_equalizer::re_list::dims>
-      eq_re;
+  static_vector<cf_t, pucch_constants::MAX_NOF_RE> eq_re;
 
   /// \brief Buffer used to transfer symbol noise variances at the equalizer output.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                float,
-                pucch_constants::MAX_NOF_RE,
-                channel_equalizer::re_list::dims>
-      eq_noise_vars;
+  static_vector<float, pucch_constants::MAX_NOF_RE> eq_noise_vars;
 
   /// \brief Buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
   /// \remark The channel estimation coefficients are arranged in three dimensions, i.e., resource element, receive port

@@ -13,11 +13,8 @@
 
 #pragma once
 
-#include "channel_equalizer_zf_impl.h"
-
-#if defined(__AVX2__) || defined(HAVE_NEON)
 #include "../../../srsvec/simd.h"
-#endif // __AVX2__ || HAVE_NEON
+#include "channel_equalizer_zf_impl.h"
 
 namespace srsran {
 
@@ -30,8 +27,8 @@ namespace srsran {
 /// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
 /// \param[in]  tx_scaling   Transmission gain scaling factor.
 template <unsigned RX_PORTS>
-void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
-                     channel_equalizer::noise_var_list&    noise_vars,
+void equalize_zf_1xn(span<cf_t>                            symbols_out,
+                     span<float>                           nvars_out,
                      const channel_equalizer::re_list&     ch_symbols,
                      const channel_equalizer::ch_est_list& ch_estimates,
                      float                                 noise_var_est,
@@ -39,10 +36,6 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
 {
   // Number of RE to process.
   unsigned nof_re = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
-
-  // Views over the output data.
-  span<float> nvars_out   = noise_vars.get_view({});
-  span<cf_t>  symbols_out = eq_symbols.get_view({});
 
   unsigned i_re = 0;
 

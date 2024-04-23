@@ -13,13 +13,14 @@
 
 #include "channel_equalizer_zf_impl.h"
 #include "equalize_zf_1xn.h"
-#include "equalize_zf_2x2.h"
+#include "equalize_zf_2xn.h"
+#include "srsran/adt/interval.h"
 
 using namespace srsran;
 
 /// Assert that the dimensions of the equalizer input and output data structures match.
-static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols,
-                                channel_equalizer::noise_var_list&    eq_noise_vars,
+static inline void assert_sizes(span<const cf_t>                      eq_symbols,
+                                span<const float>                     eq_noise_vars,
                                 const channel_equalizer::re_list&     ch_symbols,
                                 const channel_equalizer::ch_est_list& ch_estimates,
                                 span<const float>                     noise_var_estimates)
@@ -29,33 +30,37 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
   unsigned ch_symb_nof_rx_ports = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::slice);
 
   // Output symbols dimensions.
-  unsigned eq_symb_nof_re        = eq_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
-  unsigned eq_symb_nof_tx_layers = eq_symbols.get_dimension_size(channel_equalizer::re_list::dims::slice);
+  unsigned eq_symb_nof_re = eq_symbols.size();
 
   // Noise var estimates dimensions.
   unsigned nvar_ests_nof_rx_ports = noise_var_estimates.size();
 
   // Output noise vars dimensions.
-  unsigned eq_nvars_nof_re        = eq_noise_vars.get_dimension_size(channel_equalizer::re_list::dims::re);
-  unsigned eq_nvars_nof_tx_layers = eq_noise_vars.get_dimension_size(channel_equalizer::re_list::dims::slice);
+  unsigned eq_nvars_nof_re = eq_noise_vars.size();
 
   // Channel estimates dimensions.
   unsigned ch_ests_nof_re        = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::re);
   unsigned ch_ests_nof_rx_ports  = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::rx_port);
   unsigned ch_ests_nof_tx_layers = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::tx_layer);
 
-  // Assert that the number of Resource Elements per port matches for all inputs and outputs.
-  srsran_assert((ch_symb_nof_re == ch_ests_nof_re) && (ch_symb_nof_re == eq_symb_nof_re) &&
-                    (ch_symb_nof_re == eq_nvars_nof_re),
-                "Number of single port Resource Elements does not match: \n"
-                "Received symbols RE:\t {}\n"
-                "Output symbols RE:\t {}\n"
-                "Output noise variance RE: \t {}\n"
-                "Channel estimates RE:\t {}",
+  // Assert that the number of Resource Elements is the same for both inputs.
+  srsran_assert(ch_symb_nof_re == ch_ests_nof_re,
+                "The number of channel estimates (i.e., {}) is not equal to the number of input RE (i.e., {}).",
                 ch_symb_nof_re,
-                eq_symb_nof_re,
-                eq_nvars_nof_re,
                 ch_ests_nof_re);
+
+  // Assert that the number of Resource Elements is the same for both outputs.
+  srsran_assert(eq_symb_nof_re == eq_nvars_nof_re,
+                "The number of equalized RE (i.e., {}) is not equal to the number of noise variances (i.e., {}).",
+                eq_symb_nof_re,
+                eq_nvars_nof_re);
+
+  // Assert that the number of receive ports is within the valid range.
+  static constexpr interval<unsigned, true> nof_rx_ports_range(1, MAX_PORTS);
+  srsran_assert(nof_rx_ports_range.contains(ch_ests_nof_rx_ports),
+                "The number of receive ports (i.e., {}) must be in the range {}.",
+                ch_ests_nof_rx_ports,
+                nof_rx_ports_range);
 
   // Assert that the number of receive ports matches.
   srsran_assert((ch_ests_nof_rx_ports == ch_symb_nof_rx_ports) && (ch_ests_nof_rx_ports == nvar_ests_nof_rx_ports),
@@ -68,21 +73,19 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
                 ch_ests_nof_rx_ports);
 
   // Assert that the number of transmit layers matches.
-  srsran_assert((ch_ests_nof_tx_layers == eq_symb_nof_tx_layers) && (ch_ests_nof_tx_layers == eq_nvars_nof_tx_layers),
-                "Number of Tx layers does not match: \n"
-                "Output symbols Tx layers:\t {}\n"
-                "Output noise variances Tx layers: \t {}\n"
-                "Channel estimates Tx layers:\t {}",
-                eq_symb_nof_tx_layers,
-                eq_nvars_nof_tx_layers,
-                ch_ests_nof_tx_layers);
+  srsran_assert(ch_ests_nof_re * ch_ests_nof_tx_layers == eq_symb_nof_re,
+                "The number of channel estimates (i.e., {}) and number of layers (i.e., {}) is not consistent with the "
+                "number of equalized RE (i.e., {}).",
+                ch_ests_nof_re,
+                ch_ests_nof_tx_layers,
+                eq_symb_nof_re);
 }
 
 /// Calls the equalizer function for receive spatial diversity with the appropriate number of receive ports.
 template <unsigned NOF_PORTS>
 void equalize_zf_single_tx_layer(unsigned                              nof_ports,
-                                 channel_equalizer::re_list&           eq_symbols,
-                                 channel_equalizer::noise_var_list&    eq_noise_vars,
+                                 span<cf_t>                            eq_symbols,
+                                 span<float>                           eq_noise_vars,
                                  const channel_equalizer::re_list&     ch_symbols,
                                  const channel_equalizer::ch_est_list& ch_estimates,
                                  float                                 noise_var,
@@ -101,8 +104,8 @@ void equalize_zf_single_tx_layer(unsigned                              nof_ports
 /// Specialization for a single receive port.
 template <>
 void equalize_zf_single_tx_layer<1>(unsigned /**/,
-                                    channel_equalizer::re_list&           eq_symbols,
-                                    channel_equalizer::noise_var_list&    eq_noise_vars,
+                                    span<cf_t>                            eq_symbols,
+                                    span<float>                           eq_noise_vars,
                                     const channel_equalizer::re_list&     ch_symbols,
                                     const channel_equalizer::ch_est_list& ch_estimates,
                                     float                                 noise_var,
@@ -112,8 +115,8 @@ void equalize_zf_single_tx_layer<1>(unsigned /**/,
   equalize_zf_1xn<1>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
-void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
-                                         noise_var_list&    eq_noise_vars,
+void channel_equalizer_zf_impl::equalize(span<cf_t>         eq_symbols,
+                                         span<float>        eq_noise_vars,
                                          const re_list&     ch_symbols,
                                          const ch_est_list& ch_estimates,
                                          span<const float>  noise_var_estimates,
@@ -142,9 +145,15 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
     return;
   }
 
-  // Simplified case of two transmit layers and two receive ports.
+  // Two transmit layers and two receive ports.
   if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
-    equalize_zf_2x2(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+    equalize_zf_2xn<2>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+    return;
+  }
+
+  // Two transmit layers and four receive ports.
+  if ((nof_rx_ports == 4) && (nof_tx_layers == 2)) {
+    equalize_zf_2xn<4>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
     return;
   }
 

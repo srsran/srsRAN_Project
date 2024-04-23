@@ -18,7 +18,10 @@
 
 namespace srsran {
 
-/// Channel equalizer interface.
+/// \brief Channel equalizer interface.
+///
+/// The channel equalizer mitigates the radio propagation channel effects. Also, it reverts the layer mapping described
+/// by TS38.211 Section 6.3.1.3.
 class channel_equalizer
 {
 private:
@@ -49,10 +52,6 @@ public:
   /// \remark Dimension indexing given by \ref channel_equalizer::re_dims.
   using re_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims>;
 
-  /// \brief Container for the post-equalization noise variances.
-  /// \remark Dimension indexing given by \ref channel_equalizer::re_dims.
-  using noise_var_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), float, re_dims>;
-
   /// \brief Container for the channel estimates.
   /// \remark Dimension indexing given by \ref channel_equalizer::ch_dims.
   using ch_est_list = tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims>;
@@ -66,8 +65,10 @@ public:
   /// estimated channel coefficients. The variance of the point-to-point equivalent noise perturbing each modulated
   /// symbol is also estimated.
   ///
-  /// \param[out] eq_symbols          Equalized modulation symbols, organized by transmission layer.
-  /// \param[out] eq_noise_vars       Post-equalization noise variances, organized by transmission layer.
+  /// Also, it reverts the layer mapping described by TS38.211 Section 6.3.1.3.
+  ///
+  /// \param[out] eq_symbols          Equalized modulation symbols.
+  /// \param[out] eq_noise_vars       Post-equalization noise variances.
   /// \param[in]  ch_symbols          Channel symbols, i.e., complex samples organized by receive port.
   /// \param[in]  ch_estimates        Channel estimation coefficients, indexed by receive port and transmission layer.
   /// \param[in]  noise_var_estimates Noise variance estimation for each receive port.
@@ -80,8 +81,8 @@ public:
   /// \warning If the \c noise_var_estimates noise variances have ill-formed values (zero, negative, infinity or NaN),
   /// the corresponding equalized modulation REs and equalized noise variances will be set to zero and infinity,
   /// respectively.
-  virtual void equalize(re_list&           eq_symbols,
-                        noise_var_list&    eq_noise_vars,
+  virtual void equalize(span<cf_t>         eq_symbols,
+                        span<float>        eq_noise_vars,
                         const re_list&     ch_symbols,
                         const ch_est_list& ch_estimates,
                         span<const float>  noise_var_estimates,
