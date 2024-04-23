@@ -84,14 +84,14 @@ static void string_parse_list(const std::string& input, char delimiter, Insertab
   }
 }
 
-console_helper::console_helper(io_broker&                                            io_broker_,
-                               srslog::log_channel&                                  log_chan_,
-                               srs_cu_cp::cu_cp_mobility_manager_ho_trigger_handler& mob_,
-                               bool                                                  autostart_stdout_metrics_) :
+console_helper::console_helper(io_broker&                        io_broker_,
+                               srslog::log_channel&              log_chan_,
+                               srs_cu_cp::cu_cp_command_handler& cu_cp_,
+                               bool                              autostart_stdout_metrics_) :
   logger(srslog::fetch_basic_logger("GNB")),
   io_broker_handle(io_broker_),
   metrics_json(log_chan_),
-  mob(mob_),
+  cu_cp(cu_cp_),
   autostart_stdout_metrics(autostart_stdout_metrics_)
 {
   // set STDIN file descripter into non-blocking mode
@@ -242,9 +242,9 @@ void console_helper::handle_handover_command(const std::list<std::string>& ho_ar
     return;
   }
 
-  mob.trigger_handover(static_cast<pci_t>(serving_pci.value()),
-                       static_cast<rnti_t>(rnti.value()),
-                       static_cast<pci_t>(target_pci.value()));
+  cu_cp.get_mobility_command_handler().trigger_handover(static_cast<pci_t>(serving_pci.value()),
+                                                        static_cast<rnti_t>(rnti.value()),
+                                                        static_cast<pci_t>(target_pci.value()));
   fmt::print("Handover triggered for UE with pci={} rnti={:#04x} to pci={}.\n",
              serving_pci.value(),
              rnti.value(),

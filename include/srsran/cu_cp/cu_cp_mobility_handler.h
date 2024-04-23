@@ -13,20 +13,28 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
-/// Handler for measurement related events.
-class cu_cp_mobility_manager_ho_trigger_handler
+class cu_cp_mobility_command_handler
 {
 public:
-  virtual ~cu_cp_mobility_manager_ho_trigger_handler() = default;
+  virtual ~cu_cp_mobility_command_handler() = default;
 
-  /// \brief Trigger handover to a target cell.
+  /// \brief Trigger handover of a given UE to a target cell.
   ///
   /// The UE is uniquely identified in the CU-CP through the serving Cell PCI
   /// and RNTI. The target is identified through the Target PCI.
   virtual void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) = 0;
+};
+
+/// Handler for external commands to the CU-CP.
+class cu_cp_command_handler
+{
+public:
+  virtual ~cu_cp_command_handler() = default;
+
+  /// Get handler for mobility commands.
+  virtual cu_cp_mobility_command_handler& get_mobility_command_handler() = 0;
 };
 
 } // namespace srs_cu_cp

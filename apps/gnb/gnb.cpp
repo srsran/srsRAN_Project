@@ -360,10 +360,8 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = create_cu_cp(cu_cp_cfg);
 
   // Create console helper object for commands and metrics printing.
-  console_helper console(*epoll_broker,
-                         json_channel,
-                         cu_cp_obj->get_mobility_manager_ho_trigger_handler(),
-                         gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  console_helper console(
+      *epoll_broker, json_channel, cu_cp_obj->get_command_handler(), gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
