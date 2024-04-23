@@ -6,8 +6,6 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(rrc)
-add_subdirectory(f1ap)
-add_subdirectory(ngap)
-add_subdirectory(scheduler)
+add_library(sched_test_doubles pucch_res_test_builder_helper.cpp)
+set_target_properties(sched_test_doubles PROPERTIES UNITY_BUILD ON)
+target_link_libraries(sched_test_doubles srsran_sched srslog)

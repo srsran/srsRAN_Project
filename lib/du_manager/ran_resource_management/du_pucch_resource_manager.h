@@ -25,7 +25,7 @@ class du_pucch_resource_manager
 public:
   explicit du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_, unsigned max_pucch_grants_per_slot_);
   du_pucch_resource_manager(const du_pucch_resource_manager&)            = delete;
-  du_pucch_resource_manager(du_pucch_resource_manager&&)                 = delete;
+  du_pucch_resource_manager(du_pucch_resource_manager&&)                 = default;
   du_pucch_resource_manager& operator=(const du_pucch_resource_manager&) = delete;
   du_pucch_resource_manager& operator=(du_pucch_resource_manager&&)      = delete;
 
