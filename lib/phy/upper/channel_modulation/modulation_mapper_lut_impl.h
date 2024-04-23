@@ -15,8 +15,9 @@
 #include <map>
 
 namespace srsran {
+
 /// Modulation mapper based on look-up tables.
-class modulation_mapper_impl : public modulation_mapper
+class modulation_mapper_lut_impl : public modulation_mapper
 {
 public:
   // See interface for the documentation.

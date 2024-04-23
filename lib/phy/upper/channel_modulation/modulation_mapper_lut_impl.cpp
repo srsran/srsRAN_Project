@@ -8,10 +8,11 @@
  *
  */
 
-#include "modulation_mapper_impl.h"
+#include "modulation_mapper_lut_impl.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/sc_prod.h"
+#include <immintrin.h>
 
 using namespace srsran;
 
@@ -202,7 +203,7 @@ static const modulator_table_s<4>      qam16_modulator;
 static const modulator_table_s<6>      qam64_modulator;
 static const modulator_table_s<8>      qam256_modulator;
 
-void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme)
+void modulation_mapper_lut_impl::modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
   srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
@@ -253,7 +254,7 @@ float srsran::modulation_mapper::get_modulation_scaling(modulation_scheme modula
   }
 }
 
-float modulation_mapper_impl::modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme)
+float modulation_mapper_lut_impl::modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
   srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
