@@ -22,9 +22,10 @@ class handover_reconfiguration_routine
 {
 public:
   handover_reconfiguration_routine(const rrc_reconfiguration_procedure_request& request_,
+                                   const ue_index_t&                            target_ue_index_,
                                    du_ue&                                       source_ue_,
-                                   du_ue&                                       target_ue_,
                                    du_processor_f1ap_ue_context_notifier&       source_f1ap_ue_ctxt_notifier_,
+                                   du_processor_cu_cp_notifier&                 cu_cp_notifier_,
                                    srslog::basic_logger&                        logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -38,9 +39,10 @@ private:
   const rrc_reconfiguration_procedure_request request;
   f1ap_ue_context_modification_request        ue_context_mod_request;
 
+  const ue_index_t                       target_ue_index;              // Index of the target UE
   du_ue&                                 source_ue;                    // UE in the source DU
-  du_ue&                                 target_ue;                    // UE in target DU
   du_processor_f1ap_ue_context_notifier& source_f1ap_ue_ctxt_notifier; // to send UE context modification to source UE
+  du_processor_cu_cp_notifier&           cu_cp_notifier; // To receive the reconfigurationComplete from target UE
 
   srslog::basic_logger& logger;
 

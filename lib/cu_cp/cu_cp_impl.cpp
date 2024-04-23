@@ -273,6 +273,27 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
+async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id)
+{
+  // Note that this is running a task for the target UE on the source UE task scheduler. This should be fine, as the
+  // source UE controls the target UE in this handover scenario.
+  return launch_async([this, target_ue_index, transaction_id](coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    if (ue_mng.find_ue(target_ue_index) == nullptr) {
+      logger.warning("Target UE={} got removed", target_ue_index);
+      CORO_EARLY_RETURN(false);
+    }
+    // Notify RRC UE to await ReconfigurationComplete.
+    CORO_AWAIT_VALUE(bool result,
+                     ue_mng.find_ue(target_ue_index)
+                         ->get_rrc_ue_notifier()
+                         .on_handover_reconfiguration_complete_expected(transaction_id));
+
+    CORO_RETURN(result);
+  });
+}
+
 void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
 {
   // Transfer NGAP UE Context to new UE and remove the old context

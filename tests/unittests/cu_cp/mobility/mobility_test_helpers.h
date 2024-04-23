@@ -34,11 +34,13 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  manual_task_worker      ctrl_worker{128};
-  timer_manager           timers;
-  ue_configuration        ue_config;
-  up_resource_manager_cfg up_config;
-  ue_manager              ue_mng{ue_config, up_config, timers, ctrl_worker};
+  manual_task_worker                                 ctrl_worker{128};
+  timer_manager                                      timers;
+  ue_configuration                                   ue_config;
+  up_resource_manager_cfg                            up_config;
+  ue_manager                                         ue_mng{ue_config, up_config, timers, ctrl_worker};
+  dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;
+  std::unique_ptr<dummy_du_processor_cu_cp_notifier> cu_cp_notifier;
 };
 
 } // namespace srs_cu_cp

@@ -379,6 +379,11 @@ public:
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 
+  /// \brief Notify the CU-CP to that the handover reconfiguration was sent to the target UE.
+  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
+  virtual async_task<bool> on_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) = 0;
+
   /// \brief Notify the CU-CP to push a UE context to a UE during handover.
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.
   /// \param[in] target_ue_index The index of the UE that is the target of the handover.

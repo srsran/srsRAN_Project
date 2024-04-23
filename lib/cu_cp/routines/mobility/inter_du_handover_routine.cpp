@@ -182,8 +182,12 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
     // Trigger RRC Reconfiguration
     CORO_AWAIT_VALUE(reconf_result,
-                     launch_async<handover_reconfiguration_routine>(
-                         rrc_reconfig_args, *source_ue, *target_ue, source_du_f1ap_ue_ctxt_notifier, logger));
+                     launch_async<handover_reconfiguration_routine>(rrc_reconfig_args,
+                                                                    target_ue_context_setup_response.ue_index,
+                                                                    *source_ue,
+                                                                    source_du_f1ap_ue_ctxt_notifier,
+                                                                    cu_cp_notifier,
+                                                                    logger));
 
     if (!reconf_result) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", command.source_ue_index, name());

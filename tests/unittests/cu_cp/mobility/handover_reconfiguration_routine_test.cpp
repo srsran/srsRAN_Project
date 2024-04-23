@@ -21,7 +21,10 @@ using namespace srs_cu_cp;
 class handover_reconfiguration_routine_test : public mobility_test
 {
 protected:
-  handover_reconfiguration_routine_test() {}
+  handover_reconfiguration_routine_test()
+  {
+    cu_cp_notifier = std::make_unique<dummy_du_processor_cu_cp_notifier>(ngap_ue_removal_handler, &ue_mng);
+  }
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
@@ -34,7 +37,7 @@ protected:
     ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index);
     target_ue = get_ue_manager()->set_ue_du_context(target_ue_index, int_to_gnb_du_id(0), target_pci, target_rnti);
     ASSERT_NE(target_ue, nullptr);
-    target_rrc_ue_notifier.set_rrc_reconfiguration_outcome(procedure_outcome);
+    cu_cp_notifier->set_rrc_reconfiguration_outcome(procedure_outcome);
     target_ue->set_rrc_ue_notifier(target_rrc_ue_notifier);
   }
 
@@ -43,7 +46,7 @@ protected:
     rrc_reconfiguration_procedure_request request;
 
     t = launch_async<handover_reconfiguration_routine>(
-        request, *source_ue, *target_ue, source_f1ap_ue_ctxt_notifier, test_logger);
+        request, target_ue->get_ue_index(), *source_ue, source_f1ap_ue_ctxt_notifier, *cu_cp_notifier, test_logger);
     t_launcher.emplace(t);
   }
 
@@ -56,10 +59,7 @@ protected:
 
   const bool get_result() { return t.get(); }
 
-  bool check_transaction_id(unsigned transaction_id)
-  {
-    return target_rrc_ue_notifier.last_transaction_id == transaction_id;
-  }
+  bool check_transaction_id(unsigned transaction_id) { return cu_cp_notifier->last_transaction_id == transaction_id; }
 
 private:
   // source UE parameters.

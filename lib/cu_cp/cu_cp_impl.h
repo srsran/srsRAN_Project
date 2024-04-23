@@ -59,6 +59,7 @@ public:
   void             handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override;
   void             handle_rrc_reestablishment_complete(ue_index_t old_ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 

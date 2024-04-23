@@ -73,6 +73,8 @@ public:
     ue_removal_handler = ue_removal_handler_;
   }
 
+  void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
+
   void on_du_processor_created(du_index_t                       du_index,
                                f1ap_ue_context_removal_handler& f1ap_handler,
                                f1ap_statistics_handler&         f1ap_statistic_handler,
@@ -140,19 +142,32 @@ public:
     });
   }
 
+  async_task<bool> on_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id_) override
+  {
+    logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})", target_ue_index, transaction_id_);
+    last_transaction_id = transaction_id_;
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(rrc_reconfiguration_outcome);
+    });
+  }
+
   void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
   {
     logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
   }
 
+  unsigned last_transaction_id = 99999;
+
 private:
   srslog::basic_logger&                             logger = srslog::fetch_basic_logger("TEST");
   std::unique_ptr<dummy_ngap_du_processor_notifier> ngap_notifier;
-  ue_manager*                                       ue_mng              = nullptr;
-  cu_cp_du_event_handler*                           cu_cp_handler       = nullptr;
-  cu_cp_ue_removal_handler*                         ue_removal_handler  = nullptr;
-  rrc_ue_removal_handler*                           rrc_removal_handler = nullptr;
-  bool                                              ue_transfer_outcome = true;
+  ue_manager*                                       ue_mng                      = nullptr;
+  cu_cp_du_event_handler*                           cu_cp_handler               = nullptr;
+  cu_cp_ue_removal_handler*                         ue_removal_handler          = nullptr;
+  rrc_ue_removal_handler*                           rrc_removal_handler         = nullptr;
+  bool                                              ue_transfer_outcome         = true;
+  bool                                              rrc_reconfiguration_outcome = true;
 };
 
 class dummy_du_connection_notifier : public du_connection_notifier

@@ -108,6 +108,12 @@ public:
     return ue_context_handler->handle_ue_context_transfer(ue_index, old_ue_index);
   }
 
+  async_task<bool> on_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override
+  {
+    srsran_assert(ue_context_handler != nullptr, "UE context handler must not be nullptr");
+    return ue_context_handler->handle_handover_reconfiguration_sent(target_ue_index, transaction_id);
+  }
+
   void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
   {
     srsran_assert(ue_context_handler != nullptr, "UE context handler must not be nullptr");
