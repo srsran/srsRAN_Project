@@ -13,6 +13,7 @@ target_include_directories(rrc_ue_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_ue_test_helpers srsran_support srslog)
 
 set(SOURCES
+        rrc_asn1_helpers_test.cpp
         rrc_ue_setup_proc_test.cpp
         rrc_ue_dl_info_transfer_proc_test.cpp
         rrc_ue_smc_proc_test.cpp
