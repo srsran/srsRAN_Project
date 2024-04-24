@@ -225,7 +225,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
 
     // Notify old F1AP UE context to F1AP.
     if (get_du_index_from_ue_index(old_ue_index) == get_du_index_from_ue_index(ue_index)) {
-      const bool result = du_db.get_du(get_du_index_from_ue_index(old_ue_index))
+      const bool result = du_db.get_du_processor(get_du_index_from_ue_index(old_ue_index))
                               .get_f1ap_ue_context_notifier()
                               .on_intra_du_reestablishment(ue_index, old_ue_index);
       if (not result) {
@@ -312,8 +312,8 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
                      ngap_entity->get_ngap_control_message_handler().handle_ue_context_release_request(request));
     if (!result) {
       // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
-      CORO_AWAIT(du_db.get_du(get_du_index_from_ue_index(request.ue_index))
-                     .get_du_processor_ue_context_notifier()
+      CORO_AWAIT(du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
+                     .get_ue_context_notifier()
                      .handle_ue_context_release_command({request.ue_index, request.cause}));
     }
     CORO_RETURN();

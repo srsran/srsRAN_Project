@@ -25,24 +25,24 @@ protected:
   void create_dus_and_attach_ue()
   {
     // Test preamble to create CU-CP, attach to 5GC, attach CU-UP, create and attach DU and attach UE.
-    du_index_t          du_index  = source_du_index;
-    gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
-    gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
-    rnti_t              crnti     = to_rnti(0x4601);
-    pci_t               pci       = 1;
-    amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+    du_index_t          du_index = source_du_index;
+    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+    source_rnti                  = to_rnti(0x4601);
+    source_pci                   = 1;
+    amf_ue_id_t amf_ue_id        = uint_to_amf_ue_id(
         test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
     ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
     // Connect AMF, DU, CU-UP.
-    test_preamble_all_connected(du_index, pci);
+    test_preamble_all_connected(du_index, source_pci);
     // Attach target DU.
     test_du_attach(target_du_index, target_du_id, target_nrcell_id, target_pci);
     // Attach UE.
     test_preamble_ue_full_attach(
-        du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+        du_index, du_ue_id, cu_ue_id, source_rnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
     // Assert single UE attached to source DU.
     ASSERT_EQ(get_nof_ues_in_source_du(), 1);
@@ -59,22 +59,14 @@ protected:
                                          srb_id_t::srb1,
                                          make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699"));
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
-    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_message_handler().handle_message(ul_rrc_msg);
   }
 
   /// \brief Start the inter-DU handover procedure.
-  void start_procedure(const cu_cp_inter_du_handover_request& msg)
+  void start_procedure(pci_t source_pci_, rnti_t crnti, pci_t target_pci_)
   {
     // Not needed anymore
-    t = cu_cp_obj->get_f1c_handler()
-            .get_du(source_du_index)
-            .get_mobility_handler()
-            .handle_inter_du_handover_request(
-                msg,
-                cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_ue_context_notifier(),
-                cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_f1ap_ue_context_notifier(),
-                cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_du_processor_ue_context_notifier());
-    t_launcher.emplace(t);
+    cu_cp_obj->get_command_handler().get_mobility_command_handler().trigger_handover(source_pci_, crnti, target_pci_);
   }
 
   /// \brief Inject UE Context Setup Failure.
@@ -82,10 +74,7 @@ protected:
   {
     f1ap_message ue_context_setup_fail =
         generate_ue_context_setup_failure(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_f1c_handler()
-        .get_du(target_du_index)
-        .get_f1ap_message_handler()
-        .handle_message(ue_context_setup_fail);
+    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(ue_context_setup_fail);
   }
 
   /// \brief Inject UE Context Setup Response.
@@ -104,10 +93,7 @@ protected:
             "38ffd294a5294f28160000219760000000000005000001456aa28023800c00041000710804e20070101084000e21009c200e040220"
             "8001c420138401c0c042100038840270c038200882000710804e18004000000410c04080c100e0d0000e388000000400800100c001"
             "0120044014c00004620090e3800c"));
-    cu_cp_obj->get_f1c_handler()
-        .get_du(target_du_index)
-        .get_f1ap_message_handler()
-        .handle_message(ue_context_setup_resp);
+    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(ue_context_setup_resp);
   }
 
   /// \brief Inject Bearer Context Modification Failure.
@@ -148,7 +134,7 @@ protected:
   {
     f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601));
-    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
+    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_message_handler().handle_message(ue_context_mod_resp);
   }
 
   /// \brief Inject RRC Reconfiguration Complete.
@@ -156,7 +142,7 @@ protected:
   {
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));
-    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_f1ap_message_handler().handle_message(rrc_recfg_complete);
+    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(rrc_recfg_complete);
   }
 
   /// \brief Inject UE Context Release Complete.
@@ -164,13 +150,8 @@ protected:
   {
     f1ap_message ue_context_release_complete =
         generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(
-        ue_context_release_complete);
+    cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ue_context_release_complete);
   }
-
-  bool procedure_ready() const { return t.ready(); }
-
-  const cu_cp_inter_du_handover_response& get_result() { return t.get(); }
 
   du_index_t get_source_du_index() { return source_du_index; }
 
@@ -195,6 +176,8 @@ private:
 
   // source DU parameters.
   du_index_t source_du_index = uint_to_du_index(0);
+  pci_t      source_pci;
+  rnti_t     source_rnti;
 
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
@@ -204,9 +187,6 @@ private:
   unsigned            target_pci       = 2;
 
   ue_index_t source_ue_index = uint_to_ue_index(0);
-
-  async_task<cu_cp_inter_du_handover_response>                   t;
-  optional<lazy_task_launcher<cu_cp_inter_du_handover_response>> t_launcher;
 };
 
 TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_then_ho_fails)
@@ -214,19 +194,8 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_then_ho_fails)
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  cu_cp_inter_du_handover_request request = {};
-  request.target_pci                      = INVALID_PCI;
-  request.source_ue_index                 = get_source_ue();
-  request.target_du_index                 = get_target_du_index();
-  request.cgi                             = get_target_cgi();
-
   // it should be ready immediately
-  start_procedure(request);
-
-  ASSERT_TRUE(procedure_ready());
-
-  // HO failed.
-  ASSERT_FALSE(get_result().success);
+  start_procedure(1, to_rnti(0x4601), INVALID_PCI);
 }
 
 TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_then_ho_fails)

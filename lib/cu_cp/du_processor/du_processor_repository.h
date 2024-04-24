@@ -58,8 +58,13 @@ public:
        handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
   void handle_du_remove_request(du_index_t du_index) override;
 
-  du_handler& get_du(du_index_t du_index) override;
-  du_index_t  find_du(pci_t pci) override;
+  du_f1c_handler& get_du(du_index_t du_index) override;
+
+  /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
+  /// \param[out] The index of the DU serving the given PCI.
+  du_index_t find_du(pci_t pci);
+
+  du_processor_impl_interface& get_du_processor(du_index_t du_index);
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
@@ -72,7 +77,7 @@ public:
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
 private:
-  struct du_context final : public du_handler {
+  struct du_context final : public du_f1c_handler {
     // CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
 
@@ -84,11 +89,7 @@ private:
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
 
-    f1ap_message_handler&                  get_f1ap_message_handler() override;
-    du_processor_mobility_handler&         get_mobility_handler() override;
-    du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override;
-    du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override;
-    du_processor_ue_context_notifier&      get_du_processor_ue_context_notifier() override;
+    f1ap_message_handler& get_message_handler() override;
   };
 
   /// \brief Find a DU object.

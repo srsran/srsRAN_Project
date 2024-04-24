@@ -187,13 +187,13 @@ void cu_cp_test::attach_ue(gnb_du_ue_f1ap_id_t du_ue_id,
   // Inject Initial UL RRC message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
   test_logger.info("Injecting Initial UL RRC message");
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(init_ul_rrc_msg);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(init_ul_rrc_msg);
 
   // Inject UL RRC message containing RRC Setup Complete
   f1ap_message ul_rrc_msg =
       generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
   test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg);
 }
 
 void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
@@ -212,7 +212,7 @@ void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
       du_ue_id,
       srb_id_t::srb1,
       make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // Inject DL NAS Transport message (ue security mode command)
   dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
@@ -225,7 +225,7 @@ void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
       srb_id_t::srb1,
       make_byte_buffer("00023a1cbf0243241cb5003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
                        "c080080170170700c0080a980808000000000"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 }
 
 void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
@@ -241,7 +241,7 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
   // Inject Security Mode Complete
   f1ap_message ul_rrc_msg_transfer =
       generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 }
 
 void cu_cp_test::test_amf_connection()
@@ -277,7 +277,7 @@ void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsi
 
   // Pass F1SetupRequest to the CU-CP
   f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(f1setup_msg);
 }
 
 void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
@@ -320,7 +320,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   // Inject Registration Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
       cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00043a053f015362c51680bf00218003fe6db7"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // Inject PDU Session Establishment Request
   ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
@@ -329,7 +329,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       srb_id_t::srb1,
       make_byte_buffer("00053a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
                        "00000800001800005000006000006800008800900c092838339b939b0b837002c98dcab"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // Inject Configuration Update Command
   ngap_message dl_nas_transport_msg = generate_downlink_nas_transport_message(
@@ -356,7 +356,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       make_byte_buffer("00064c821930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
                        "a071e439f0000240400e0300000000100186c0000700809df0000000000000103a0002000012cb2800281c50f000700"
                        "0f00000004008010240a00126cc3c6"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // check that the Bearer Context Setup was sent to the CU-UP
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -377,7 +377,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
 
   // Inject UE Context Modification Response
   f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(cu_ue_id, du_ue_id);
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ue_context_mod_resp);
 
   // check that the Bearer Context Modification was sent to the CU-UP
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -400,7 +400,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   // Inject RRC Reconfiguration Complete
   ul_rrc_msg_transfer =
       generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5"));
-  cu_cp_obj->get_f1c_handler().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
+  cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // check that the PDU Session Resource Setup Response was sent to the AMF
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),

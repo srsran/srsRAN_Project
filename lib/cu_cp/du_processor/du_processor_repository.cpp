@@ -24,7 +24,7 @@ class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
   f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_) :
-    parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_f1ap_message_handler())
+    parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_message_handler())
   {
   }
 
@@ -180,36 +180,23 @@ du_index_t du_processor_repository::find_du(pci_t pci)
   return index;
 }
 
-du_handler& du_processor_repository::get_du(du_index_t du_index)
+du_processor_impl_interface& du_processor_repository::get_du_processor(du_index_t du_index)
+{
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
+  return *du_db.at(du_index).du_processor;
+}
+
+du_f1c_handler& du_processor_repository::get_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return du_db.at(du_index);
 }
 
-f1ap_message_handler& du_processor_repository::du_context::get_f1ap_message_handler()
+f1ap_message_handler& du_processor_repository::du_context::get_message_handler()
 {
   return du_processor->get_f1ap_message_handler();
-}
-
-du_processor_mobility_handler& du_processor_repository::du_context::get_mobility_handler()
-{
-  return du_processor->get_mobility_handler();
-}
-
-du_processor_ue_task_handler& du_processor_repository::du_context::get_du_processor_ue_task_handler()
-{
-  return du_processor->get_ue_task_handler();
-}
-
-du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_f1ap_ue_context_notifier()
-{
-  return du_processor->get_f1ap_ue_context_notifier();
-}
-
-du_processor_ue_context_notifier& du_processor_repository::du_context::get_du_processor_ue_context_notifier()
-{
-  return du_processor->get_ue_context_notifier();
 }
 
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
@@ -236,7 +223,7 @@ du_processor_repository::handle_ngap_handover_request(const ngap_handover_reques
 {
   auto& du = du_db.at(get_du_index_from_ue_index(request.ue_index));
 
-  du_processor_mobility_handler& mob = du.get_mobility_handler();
+  du_processor_mobility_handler& mob = du.du_processor->get_mobility_handler();
 
   return mob.handle_ngap_handover_request(request);
 }

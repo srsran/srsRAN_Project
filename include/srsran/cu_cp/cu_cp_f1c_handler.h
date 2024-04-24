@@ -15,33 +15,15 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Forward declared classes.
-class du_processor_mobility_handler;
-class du_processor_f1ap_ue_context_notifier;
-class du_processor_ue_task_handler;
-class du_processor_ue_context_notifier;
-
 /// Handler of a single DU connected to the CU-CP.
-class du_handler
+class du_f1c_handler
 {
 public:
-  virtual ~du_handler() = default;
+  virtual ~du_f1c_handler() = default;
 
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
-
-  /// \brief Get the mobility handler.
-  virtual du_processor_mobility_handler& get_mobility_handler() = 0;
-
-  /// \brief Get the UE task handler
-  virtual du_processor_ue_task_handler& get_du_processor_ue_task_handler() = 0;
-
-  /// \brief Retrieve the F1AP UE notifier of the DU processor.
-  virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
-
-  /// \brief Retrieve the UE Context notifier of the DU processor.
-  virtual du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() = 0;
+  /// \brief Get the Rx F1AP PDU handler for a given DU F1-C interface.
+  /// \return The Rx F1AP PDU handler interface.
+  virtual f1ap_message_handler& get_message_handler() = 0;
 };
 
 /// \brief Handler of the F1-C interface of the CU-CP.
@@ -66,11 +48,7 @@ public:
   virtual void handle_du_remove_request(du_index_t du_index) = 0;
 
   /// \brief Get handler to a DU connected to the CU-CP.
-  virtual du_handler& get_du(du_index_t du_index) = 0;
-
-  /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
-  /// \param[out] The index of the DU serving the given PCI.
-  virtual du_index_t find_du(pci_t pci) = 0;
+  virtual du_f1c_handler& get_du(du_index_t du_index) = 0;
 };
 
 } // namespace srs_cu_cp
