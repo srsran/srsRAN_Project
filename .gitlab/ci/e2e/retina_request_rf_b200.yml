@@ -9,16 +9,16 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=sdr4"]
+  labels: ["kubernetes.io/hostname=hp-oran"]
   nof_ports: 4
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 14
+      limits: 14
     memory:
-      requests: "16G"
-      limits: "16G"
+      requests: "48G"
+      limits: "48G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
