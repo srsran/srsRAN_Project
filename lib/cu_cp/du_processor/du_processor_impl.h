@@ -108,23 +108,17 @@ public:
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
-  du_processor_f1ap_interface&      get_du_processor_f1ap_interface() override { return *this; }
-  du_processor_rrc_ue_interface&    get_du_processor_rrc_ue_interface() override { return *this; }
-  du_processor_ngap_interface&      get_du_processor_ngap_interface() override { return *this; }
-  du_processor_ue_task_handler&     get_du_processor_ue_task_handler() override { return *this; }
-  du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() override
-  {
-    return get_du_processor_ngap_interface();
-  }
-  du_processor_paging_handler&           get_du_processor_paging_handler() override { return *this; }
-  du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
-  du_processor_statistics_handler&       get_du_processor_statistics_handler() override { return *this; }
-  du_processor_mobility_handler&         get_du_processor_mobility_handler() override { return *this; }
-  du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() override
-  {
-    return f1ap_ue_context_notifier;
-  }
-  du_metrics_handler& get_metrics_handler() override { return *this; }
+  du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
+  du_processor_rrc_ue_interface&         get_rrc_ue_interface() override { return *this; }
+  du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
+  du_processor_ue_task_handler&          get_ue_task_handler() override { return *this; }
+  du_processor_ue_context_notifier&      get_ue_context_notifier() override { return get_ngap_interface(); }
+  du_processor_paging_handler&           get_paging_handler() override { return *this; }
+  du_processor_inactivity_handler&       get_inactivity_handler() override { return *this; }
+  du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
+  du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
+  du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
+  du_metrics_handler&                    get_metrics_handler() override { return *this; }
 
 private:
   /// \brief Create RRC UE object for given UE.

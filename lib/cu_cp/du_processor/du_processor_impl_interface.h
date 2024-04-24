@@ -457,17 +457,17 @@ class du_processor_impl_interface : public du_processor_f1ap_interface,
 public:
   virtual ~du_processor_impl_interface() = default;
 
-  virtual du_processor_f1ap_interface&           get_du_processor_f1ap_interface()           = 0;
-  virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;
-  virtual du_processor_ngap_interface&           get_du_processor_ngap_interface()           = 0;
-  virtual du_processor_ue_task_handler&          get_du_processor_ue_task_handler()          = 0;
-  virtual du_processor_ue_context_notifier&      get_du_processor_ue_context_notifier()      = 0;
-  virtual du_processor_paging_handler&           get_du_processor_paging_handler()           = 0;
-  virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
-  virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
-  virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
-  virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
-  virtual du_metrics_handler&                    get_metrics_handler()                       = 0;
+  virtual du_processor_f1ap_interface&           get_f1ap_interface()           = 0;
+  virtual du_processor_rrc_ue_interface&         get_rrc_ue_interface()         = 0;
+  virtual du_processor_ngap_interface&           get_ngap_interface()           = 0;
+  virtual du_processor_ue_task_handler&          get_ue_task_handler()          = 0;
+  virtual du_processor_ue_context_notifier&      get_ue_context_notifier()      = 0;
+  virtual du_processor_paging_handler&           get_paging_handler()           = 0;
+  virtual du_processor_inactivity_handler&       get_inactivity_handler()       = 0;
+  virtual du_processor_statistics_handler&       get_statistics_handler()       = 0;
+  virtual du_processor_mobility_handler&         get_mobility_handler()         = 0;
+  virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
+  virtual du_metrics_handler&                    get_metrics_handler()          = 0;
 };
 
 } // namespace srs_cu_cp

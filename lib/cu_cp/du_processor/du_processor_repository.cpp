@@ -194,29 +194,29 @@ f1ap_message_handler& du_processor_repository::du_context::get_f1ap_message_hand
 
 du_processor_mobility_handler& du_processor_repository::du_context::get_mobility_handler()
 {
-  return du_processor->get_du_processor_mobility_handler();
+  return du_processor->get_mobility_handler();
 }
 
 du_processor_ue_task_handler& du_processor_repository::du_context::get_du_processor_ue_task_handler()
 {
-  return du_processor->get_du_processor_ue_task_handler();
+  return du_processor->get_ue_task_handler();
 }
 
 du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_f1ap_ue_context_notifier()
 {
-  return du_processor->get_du_processor_f1ap_ue_context_notifier();
+  return du_processor->get_f1ap_ue_context_notifier();
 }
 
 du_processor_ue_context_notifier& du_processor_repository::du_context::get_du_processor_ue_context_notifier()
 {
-  return du_processor->get_du_processor_ue_context_notifier();
+  return du_processor->get_ue_context_notifier();
 }
 
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Forward paging message to all DU processors
   for (auto& du : du_db) {
-    du.second.du_processor->get_du_processor_paging_handler().handle_paging_message(msg);
+    du.second.du_processor->get_paging_handler().handle_paging_message(msg);
   }
 }
 
@@ -224,7 +224,7 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
 {
   for (auto& du : du_db) {
     if (du.second.du_processor->has_cell(cgi)) {
-      return du.second.du_processor->get_du_processor_ngap_interface().allocate_new_ue_index();
+      return du.second.du_processor->get_ngap_interface().allocate_new_ue_index();
     }
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);

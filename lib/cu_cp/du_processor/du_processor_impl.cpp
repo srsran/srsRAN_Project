@@ -50,7 +50,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   f1ap = create_f1ap(
       cfg.f1ap_cfg, f1ap_notifier, f1ap_ev_notifier, f1ap_du_mgmt_notifier, task_sched.get_timer_manager(), ctrl_exec_);
 
-  f1ap_ev_notifier.connect_du_processor(get_du_processor_f1ap_interface());
+  f1ap_ev_notifier.connect_du_processor(get_f1ap_interface());
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
@@ -59,7 +59,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 
-  rrc_ue_ev_notifier.connect_du_processor(get_du_processor_rrc_ue_interface());
+  rrc_ue_ev_notifier.connect_du_processor(get_rrc_ue_interface());
 
   routine_mng = std::make_unique<du_processor_routine_manager>(
       e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, cfg.default_security_indication, logger);
@@ -568,7 +568,7 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
                                                       cu_cp_notifier,
                                                       source_du_f1ap_ue_ctxt_notif_,
                                                       target_du_f1ap_ue_ctxt_notif_,
-                                                      get_du_processor_ue_context_notifier(),
+                                                      get_ue_context_notifier(),
                                                       target_du_processor_notifier_);
 }
 
