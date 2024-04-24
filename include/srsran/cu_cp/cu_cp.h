@@ -10,12 +10,11 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_metrics_handler.h"
-#include "srsran/cu_cp/cu_cp_mobility_handler.h"
 #include "srsran/cu_cp/cu_cp_ng_handler.h"
-#include "srsran/cu_cp/cu_cp_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {

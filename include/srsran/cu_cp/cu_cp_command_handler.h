@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
 namespace srs_cu_cp {

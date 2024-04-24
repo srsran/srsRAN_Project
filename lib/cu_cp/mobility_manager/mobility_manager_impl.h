@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../ue_manager/ue_manager_impl.h"
+#include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
-#include "srsran/cu_cp/cu_cp_mobility_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 
