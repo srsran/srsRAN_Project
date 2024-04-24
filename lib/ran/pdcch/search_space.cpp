@@ -35,9 +35,9 @@ search_space_configuration::search_space_configuration(nr_band            band,
   // for CSS sets configured by searchSpace-SIB1.
   const unsigned cset0_nof_cces =
       cset0_desc.nof_rb_coreset * cset0_desc.nof_symb_coreset / pdcch_constants::NOF_REG_PER_CCE;
-  nof_candidates = {0, 0, 4, 2, 1};
-  for (unsigned lidx = 0; lidx != NOF_AGGREGATION_LEVELS; ++lidx) {
-    nof_candidates[lidx] = to_nof_cces(aggregation_index_to_level(lidx)) > cset0_nof_cces ? 0U : nof_candidates[lidx];
+  nof_candidates = {0, 0, 0, 0, 0};
+  for (unsigned lidx = 2; lidx != NOF_AGGREGATION_LEVELS; ++lidx) {
+    nof_candidates[lidx] = cset0_nof_cces / to_nof_cces(aggregation_index_to_level(lidx));
   }
 
   // NOTE: Currently, we support only SS/PBCH and CORESET multiplexing pattern 1 where the periodicity of
