@@ -589,13 +589,13 @@ inline simd_f_t srsran_simd_f_interleave_high(simd_f_t a, simd_f_t b)
       _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
       b);
 #else  /* HAVE_AVX512 */
-  float reg_a[8], reg_b[8], reg_ret[8];
+  float reg_a[SRSRAN_SIMD_F_SIZE], reg_b[SRSRAN_SIMD_F_SIZE], reg_ret[SRSRAN_SIMD_F_SIZE];
   srsran_simd_f_storeu(reg_a, a);
   srsran_simd_f_storeu(reg_b, b);
 
-  for (unsigned i = 0, j = 0; i != 4; ++i) {
-    reg_ret[j++] = reg_a[i + 4];
-    reg_ret[j++] = reg_b[i + 4];
+  for (unsigned i = 0, j = 0; i != SRSRAN_SIMD_F_SIZE / 2; ++i) {
+    reg_ret[j++] = reg_a[i + SRSRAN_SIMD_F_SIZE / 2];
+    reg_ret[j++] = reg_b[i + SRSRAN_SIMD_F_SIZE / 2];
   }
 
   return srsran_simd_f_loadu(reg_ret);
@@ -1228,11 +1228,11 @@ inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
   ret.im     = _mm256_unpackhi_ps(in1, in2);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-  cf_t reg_a[8], reg_b[8], reg_ret[8];
+  cf_t reg_a[SRSRAN_SIMD_CF_SIZE], reg_b[SRSRAN_SIMD_CF_SIZE], reg_ret[SRSRAN_SIMD_CF_SIZE];
   srsran_simd_cfi_storeu(reg_a, a);
   srsran_simd_cfi_storeu(reg_b, b);
 
-  for (unsigned i = 0, j = 0; i != 4; ++i) {
+  for (unsigned i = 0, j = 0; i != SRSRAN_SIMD_CF_SIZE / 2; ++i) {
     reg_ret[j++] = reg_a[i];
     reg_ret[j++] = reg_b[i];
   }
@@ -1285,13 +1285,13 @@ inline simd_cf_t srsran_simd_cf_interleave_high(simd_cf_t a, simd_cf_t b)
   ret.im     = _mm256_unpackhi_ps(in1, in2);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-  cf_t reg_a[8], reg_b[8], reg_ret[8];
+  cf_t reg_a[SRSRAN_SIMD_CF_SIZE], reg_b[SRSRAN_SIMD_CF_SIZE], reg_ret[SRSRAN_SIMD_CF_SIZE];
   srsran_simd_cfi_storeu(reg_a, a);
   srsran_simd_cfi_storeu(reg_b, b);
 
-  for (unsigned i = 0, j = 0; i != 4; ++i) {
-    reg_ret[j++] = reg_a[i];
-    reg_ret[j++] = reg_b[i];
+  for (unsigned i = 0, j = 0; i != SRSRAN_SIMD_CF_SIZE / 2; ++i) {
+    reg_ret[j++] = reg_a[i + SRSRAN_SIMD_CF_SIZE / 2];
+    reg_ret[j++] = reg_b[i + SRSRAN_SIMD_CF_SIZE / 2];
   }
 
   ret = srsran_simd_cfi_loadu(reg_ret);
