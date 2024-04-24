@@ -144,6 +144,20 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
 
   // Skip processing if the buffer is not valid. The pool shall log the context and the reason of the failure.
   if (!buffer.is_valid()) {
+    // Report data-related discarded result if shared channel data is present.
+    if (pdu.pdu.codeword.has_value()) {
+      ul_pusch_results_data discarded_results =
+          ul_pusch_results_data::create_discarded(to_rnti(pdu.pdu.rnti), pdu.pdu.slot, pdu.harq_id);
+      rx_results_notifier.on_new_pusch_results_data(discarded_results);
+    }
+
+    // Report control-related discarded result if HARQ-ACK feedback is present.
+    if (pdu.pdu.uci.nof_harq_ack > 0) {
+      ul_pusch_results_control discarded_results =
+          ul_pusch_results_control::create_discarded(to_rnti(pdu.pdu.rnti), pdu.pdu.slot, pdu.pdu.uci.nof_harq_ack);
+      rx_results_notifier.on_new_pusch_results_control(discarded_results);
+    }
+
     return;
   }
 
