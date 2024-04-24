@@ -36,7 +36,7 @@ struct mac_crc_pdu {
   /// PUSCH RSRP, in dBFS.
   optional<float> ul_rsrp_metric;
   /// Time alignment.
-  phy_time_unit time_advance_offset;
+  optional<phy_time_unit> time_advance_offset;
 };
 
 /// \brief List of Uplink CRC indications for a given slot.
