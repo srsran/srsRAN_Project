@@ -103,7 +103,7 @@ protected:
         generate_bearer_context_modification_failure(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
     cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
-        .get_e1ap_message_handler()
+        .get_message_handler()
         .handle_message(bearer_context_modification_fail);
   }
 
@@ -114,7 +114,7 @@ protected:
         generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
     cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
-        .get_e1ap_message_handler()
+        .get_message_handler()
         .handle_message(bearer_context_modification_resp);
   }
 
@@ -125,7 +125,7 @@ protected:
         generate_bearer_context_release_complete(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
     cu_cp_obj->get_e1_handler()
         .get_cu_up(uint_to_cu_up_index(0))
-        .get_e1ap_message_handler()
+        .get_message_handler()
         .handle_message(bearer_context_release_complete);
   }
 

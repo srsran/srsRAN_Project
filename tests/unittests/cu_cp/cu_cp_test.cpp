@@ -481,7 +481,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
       generate_bearer_context_setup_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
   cu_cp_obj->get_e1_handler()
       .get_cu_up(uint_to_cu_up_index(0))
-      .get_e1ap_message_handler()
+      .get_message_handler()
       .handle_message(bearer_ctxt_setup_resp);
 
   // Check that the UE Context Setup Request Message was sent to the DU
@@ -506,7 +506,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
       generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
   cu_cp_obj->get_e1_handler()
       .get_cu_up(uint_to_cu_up_index(0))
-      .get_e1ap_message_handler()
+      .get_message_handler()
       .handle_message(bearer_ctxt_mod_resp);
 
   // Check that the Handover Request Ack was sent to the AMF

@@ -261,7 +261,7 @@ void cu_cp_test::test_e1ap_attach()
 
   // Pass E1SetupRequest to the CU-CP
   e1ap_message e1setup_msg = generate_valid_cu_up_e1_setup_request();
-  cu_cp_obj->get_e1_handler().get_cu_up(uint_to_cu_up_index(0)).get_e1ap_message_handler().handle_message(e1setup_msg);
+  cu_cp_obj->get_e1_handler().get_cu_up(uint_to_cu_up_index(0)).get_message_handler().handle_message(e1setup_msg);
 }
 
 void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci)
@@ -367,7 +367,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   e1ap_message bearer_context_setup_resp = generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
   cu_cp_obj->get_e1_handler()
       .get_cu_up(uint_to_cu_up_index(0))
-      .get_e1ap_message_handler()
+      .get_message_handler()
       .handle_message(bearer_context_setup_resp);
 
   // check that the UE Context Modification Request was sent to the DU
@@ -389,7 +389,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
   cu_cp_obj->get_e1_handler()
       .get_cu_up(uint_to_cu_up_index(0))
-      .get_e1ap_message_handler()
+      .get_message_handler()
       .handle_message(bearer_context_mod_resp);
 
   // check that the RRC Reconfiguration was sent to the DU
