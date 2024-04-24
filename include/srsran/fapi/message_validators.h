@@ -32,6 +32,10 @@ error_type<validator_report> validate_error_indication(const error_indication_me
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.11.
 error_type<validator_report> validate_rach_indication(const rach_indication_message& msg);
 
+/// Validates the given SRS.indication message and returns a report for the result of the validation. The validation
+/// checks every property of the message, as per SCF-222 v4.0 Section 3.4.10.
+error_type<validator_report> validate_srs_indication(const srs_indication_message& msg);
+
 /// Validates the given Rx_Data.indication message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.7.
 error_type<validator_report> validate_rx_data_indication(const rx_data_indication_message& msg);

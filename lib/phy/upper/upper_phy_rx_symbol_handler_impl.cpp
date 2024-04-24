@@ -58,6 +58,9 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
     } else if (variant_holds_alternative<uplink_processor::pucch_pdu>(pdu)) {
       const auto& pucch_pdu = variant_get<uplink_processor::pucch_pdu>(pdu);
       ul_processor.process_pucch(rx_results_notifier, grid, pucch_pdu);
+    } else if (variant_holds_alternative<uplink_processor::srs_pdu>(pdu)) {
+      const auto& srs_pdu = variant_get<uplink_processor::srs_pdu>(pdu);
+      ul_processor.process_srs(rx_results_notifier, grid, srs_pdu);
     }
   }
 }

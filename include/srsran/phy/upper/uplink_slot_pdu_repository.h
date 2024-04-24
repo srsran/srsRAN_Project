@@ -18,7 +18,8 @@
 namespace srsran {
 
 /// Defines an entry of the uplink slot PDU repository.
-using uplink_slot_pdu_entry = variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu>;
+using uplink_slot_pdu_entry =
+    variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu, uplink_processor::srs_pdu>;
 
 /// \brief Uplink slot PDU repository.
 ///
@@ -68,6 +69,16 @@ public:
     };
 
     unsigned end_symbol_index = fetch_end_symbol_index(pdu);
+    get_entry(slot, end_symbol_index).push_back(pdu);
+  }
+
+  /// Adds the given SRS PDU to the repository at the given slot.
+  void add_srs_pdu(slot_point slot, const uplink_processor::srs_pdu& pdu)
+  {
+    assert_slot(slot);
+
+    unsigned end_symbol_index =
+        pdu.config.resource.start_symbol.to_uint() + static_cast<unsigned>(pdu.config.resource.nof_symbols) - 1;
     get_entry(slot, end_symbol_index).push_back(pdu);
   }
 

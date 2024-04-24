@@ -1589,6 +1589,80 @@ public:
   }
 };
 
+/// SRS indication PDU builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.10.
+class srs_indication_pdu_builder
+{
+  srs_indication_pdu& pdu;
+
+public:
+  explicit srs_indication_pdu_builder(srs_indication_pdu& pdu_) : pdu(pdu_) {}
+
+  /// \brief Sets the SRS indication PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10.
+  srs_indication_pdu_builder& set_basic_parameters(uint32_t handle, rnti_t rnti)
+  {
+    pdu.handle = handle;
+    pdu.rnti   = rnti;
+
+    return *this;
+  }
+
+  /// \brief Sets the SRS indication PDU metrics parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10.
+  srs_indication_pdu_builder& set_metrics_parameters(optional<unsigned> timing_advance_offset,
+                                                     optional<int>      timing_advance_offset_ns)
+  {
+    pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
+                                                           : std::numeric_limits<uint16_t>::max();
+    pdu.timing_advance_offset_ns = (timing_advance_offset_ns) ? static_cast<int16_t>(timing_advance_offset_ns.value())
+                                                              : std::numeric_limits<int16_t>::min();
+
+    return *this;
+  }
+
+  /// \brief Sets the SRS indication PDU normalized channel I/Q matrix and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10 Table 3-132.
+  srs_indication_pdu_builder& set_codebook_report_matrix(const srs_channel_matrix& matrix)
+  {
+    pdu.srs_usage   = srs_usage_mode::codebook;
+    pdu.report_type = 1;
+    pdu.matrix      = matrix;
+
+    return *this;
+  }
+};
+
+/// SRS.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 Section 3.4.10.
+class srs_indication_message_builder
+{
+  srs_indication_message& msg;
+
+public:
+  explicit srs_indication_message_builder(srs_indication_message& msg_) : msg(msg_) {}
+
+  /// \brief Sets the \e SRS.indication basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10 in table SRS.indication message body.
+  srs_indication_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot)
+  {
+    msg.sfn            = sfn;
+    msg.slot           = slot;
+    msg.control_length = 0;
+
+    return *this;
+  }
+
+  /// Adds a SRS PDU to the \e SRS.indication message and returns a SRS PDU builder.
+  srs_indication_pdu_builder add_srs_pdu(uint32_t handle, rnti_t rnti)
+  {
+    auto& pdu = msg.pdus.emplace_back();
+
+    srs_indication_pdu_builder builder(pdu);
+    builder.set_basic_parameters(handle, rnti);
+
+    return builder;
+  }
+};
+
 /// UCI.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 Section 3.4.9.
 class uci_indication_message_builder
 {

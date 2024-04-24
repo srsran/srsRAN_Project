@@ -263,7 +263,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -382,7 +382,7 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -488,7 +488,7 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -538,5 +538,25 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
 
 void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_results& result)
 {
-  // TBD.
+  fapi::srs_indication_message         msg;
+  fapi::srs_indication_message_builder builder(msg);
+
+  const ul_srs_context& context = result.context;
+  builder.set_basic_parameters(context.slot.sfn(), context.slot.slot_index());
+
+  // Do not use the handle for now.
+  static const unsigned            handle          = 0;
+  fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
+
+  srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
+
+  srs_pdu_builder.set_codebook_report_matrix(result.processor_result.channel_matrix);
+
+  error_type<fapi::validator_report> validation_result = validate_srs_indication(msg);
+  if (!validation_result) {
+    log_validator_report(validation_result.error(), logger);
+    return;
+  }
+
+  data_notifier.get().on_srs_indication(msg);
 }

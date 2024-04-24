@@ -13,6 +13,7 @@ set(SOURCES
         prach.cpp
         pucch.cpp
         pusch.cpp
+        srs.cpp
         ssb.cpp)
 
 add_library(srsran_fapi_phy_message_adaptors STATIC ${SOURCES})
