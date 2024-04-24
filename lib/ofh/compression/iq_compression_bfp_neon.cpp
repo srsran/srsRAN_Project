@@ -105,11 +105,17 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3_2 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB * 2]);
     int16x8x3_t vec_s16x3_3 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB * 3]);
 
+    uint8_t exponent_0 = 0;
+    uint8_t exponent_1 = 0;
+    uint8_t exponent_2 = 0;
+    uint8_t exponent_3 = 0;
     // Determine exponents.
-    const uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
-    const uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
-    const uint8_t exponent_2 = neon::determine_bfp_exponent(vec_s16x3_2, params.data_width);
-    const uint8_t exponent_3 = neon::determine_bfp_exponent(vec_s16x3_3, params.data_width);
+    if (SRSRAN_LIKELY(params.data_width != MAX_IQ_WIDTH)) {
+      exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
+      exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
+      exponent_2 = neon::determine_bfp_exponent(vec_s16x3_2, params.data_width);
+      exponent_3 = neon::determine_bfp_exponent(vec_s16x3_3, params.data_width);
+    }
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data_0, shifted_data_1, shifted_data_2, shifted_data_3;
@@ -138,8 +144,12 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3_1 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB]);
 
     // Determine exponents.
-    const uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
-    const uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
+    uint8_t exponent_0 = 0;
+    uint8_t exponent_1 = 0;
+    if (SRSRAN_LIKELY(params.data_width != MAX_IQ_WIDTH)) {
+      exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
+      exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
+    }
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data_0, shifted_data_1;
@@ -163,7 +173,10 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3 = vld1q_s16_x3(&input_quantized[sample_idx]);
 
     // Determine exponent.
-    const uint8_t exponent = neon::determine_bfp_exponent(vec_s16x3, params.data_width);
+    uint8_t exponent = 0;
+    if (SRSRAN_LIKELY(params.data_width != MAX_IQ_WIDTH)) {
+      exponent = neon::determine_bfp_exponent(vec_s16x3, params.data_width);
+    }
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data;

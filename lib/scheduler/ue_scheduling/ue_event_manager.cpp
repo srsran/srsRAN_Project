@@ -381,6 +381,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             if (pdu.sr_detected) {
               // Handle SR indication.
               ue_db[ue_cc.ue_index].handle_sr_indication();
+              du_cells[ue_cc.cell_index].fallback_sched->handle_sr_indication(ue_cc.ue_index);
 
               // Log SR event.
               ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});

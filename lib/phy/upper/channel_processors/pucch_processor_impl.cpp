@@ -78,7 +78,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   detector_config.start_symbol_index   = config.start_symbol_index;
   detector_config.nof_symbols          = config.nof_symbols;
   detector_config.group_hopping        = pucch_group_hopping::NEITHER;
-  detector_config.port                 = config.ports.front();
+  detector_config.ports                = config.ports;
   detector_config.beta_pucch           = 1.0F;
   detector_config.time_domain_occ      = config.time_domain_occ;
   detector_config.initial_cyclic_shift = config.initial_cyclic_shift;

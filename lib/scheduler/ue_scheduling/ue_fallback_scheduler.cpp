@@ -158,6 +158,20 @@ void ue_fallback_scheduler::handle_ul_bsr_indication(du_ue_index_t ue_index, con
   }
 }
 
+void ue_fallback_scheduler::handle_sr_indication(du_ue_index_t ue_index)
+{
+  if (not ues.contains(ue_index)) {
+    logger.error("ue_index={} not found in the scheduler", ue_index);
+    return;
+  }
+
+  auto ue_it = std::find(pending_ul_ues.begin(), pending_ul_ues.end(), ue_index);
+
+  if (ue_it == pending_ul_ues.end()) {
+    pending_ul_ues.emplace_back(ue_index);
+  }
+}
+
 bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 {
   for (auto& next_ue_harq_retx : ongoing_ues_ack_retxs) {
@@ -166,9 +180,9 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
 
     if (h_dl->has_pending_retx()) {
       optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
-      sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
+      dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
-      if (outcome == sched_outcome::exit_scheduler) {
+      if (outcome == dl_sched_outcome::stop_dl_scheduling) {
         return false;
       }
     }
@@ -187,7 +201,11 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
       ++next_ue;
       continue;
     }
-    schedule_ul_ue(res_alloc, u, h_ul_retx);
+    ul_srb_sched_outcome outcome = schedule_ul_ue(res_alloc, u, h_ul_retx);
+    if (outcome == ul_srb_sched_outcome::stop_ul_scheduling) {
+      // If there is no PDCCH space, then stop the scheduling for all UL UEs.
+      return;
+    }
     ++next_ue;
   }
 }
@@ -213,14 +231,14 @@ bool ue_fallback_scheduler::schedule_dl_new_tx_srb0(cell_resource_allocator& res
       continue;
     }
 
-    sched_outcome outcome = schedule_dl_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
-    if (outcome == sched_outcome::success) {
+    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, true, nullptr, most_recent_tx_ack);
+    if (outcome == dl_sched_outcome::success) {
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
-    } else if (outcome == sched_outcome::next_ue) {
+    } else if (outcome == dl_sched_outcome::next_ue) {
       ++next_ue;
     } else {
       // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref exit_scheduler.
+      // returns \ref stop_dl_scheduling.
       return false;
     }
   }
@@ -252,8 +270,8 @@ void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res
       continue;
     }
 
-    sched_outcome outcome = schedule_dl_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
-    if (outcome == sched_outcome::success) {
+    dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, false, nullptr, most_recent_tx_ack);
+    if (outcome == dl_sched_outcome::success) {
       // Move to the next UE ONLY IF the UE has no more pending bytes for SRB1. This is to give priority to the same UE,
       // if there are still some SRB1 bytes left in the buffer. At the next iteration, the scheduler will try again with
       // the same scheduler, but starting from the next available slot.
@@ -261,11 +279,11 @@ void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res
         ++next_ue;
       }
 
-    } else if (outcome == sched_outcome::next_ue) {
+    } else if (outcome == dl_sched_outcome::next_ue) {
       ++next_ue;
     } else {
       // This is the case the DL fallback scheduler has reached the maximum number of scheduling attempts and the fnc
-      // returns \ref exit_scheduler.
+      // returns \ref stop_dl_scheduling.
       return;
     }
   }
@@ -287,7 +305,7 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
   return next_candidate_slot;
 }
 
-ue_fallback_scheduler::sched_outcome
+ue_fallback_scheduler::dl_sched_outcome
 ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
                                        ue&                            u,
                                        bool                           is_srb0,
@@ -311,7 +329,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
   // scheduler attempt to allocate a new TX on the same slot.
   if (most_recent_tx_ack_slots.has_value() and
       sched_ref_slot + max_dl_slots_ahead_sched <= most_recent_tx_ack_slots.value().most_recent_tx_slot) {
-    return sched_outcome::next_ue;
+    return dl_sched_outcome::next_ue;
   }
 
   // \ref starting_slot is the slot from which the SRB0 starts scheduling this given UE. Assuming the UE was assigned
@@ -327,7 +345,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
        next_slot            = get_next_srb_slot(cell_cfg, next_slot)) {
     if (sched_attempts_cnt >= max_dl_sched_attempts) {
-      return sched_outcome::exit_scheduler;
+      return dl_sched_outcome::stop_dl_scheduling;
     }
 
     if (slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE]) {
@@ -397,7 +415,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
         // The srb1_payload_bytes is meaningful only for SRB1.
         store_harq_tx(u.ue_index, sched_res.h_dl, is_srb0, sched_res.nof_srb1_scheduled_bytes);
       }
-      return sched_outcome::success;
+      return dl_sched_outcome::success;
     }
 
     ++sched_attempts_cnt;
@@ -410,7 +428,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
                is_srb0 ? "SRB0" : "SRB1",
                pdcch_slot,
                pdcch_slot + max_dl_slots_ahead_sched + 1);
-  return sched_outcome::next_ue;
+  return dl_sched_outcome::next_ue;
 }
 
 ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0(ue&                      u,
@@ -531,8 +549,11 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
       continue;
     }
-    pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
+    pucch_res_indicator =
+        is_retx ? pucch_alloc.alloc_common_and_ded_harq_res(
+                      res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
+                : pucch_alloc.alloc_common_pucch_harq_ack_ue(
+                      res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;
@@ -702,13 +723,18 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
   optional<unsigned> pucch_res_indicator;
+  const bool         allocate_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
   for (const auto k1_candidate : dci_1_0_k1_values) {
     // Skip the k1 values that would result in a PUCCH allocation that would overlap with the most recent ACK slot.
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
       continue;
     }
-    pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
+    pucch_res_indicator =
+        allocate_common_and_ded_pucch
+            ? pucch_alloc.alloc_common_and_ded_harq_res(
+                  res_alloc, u.crnti, u.get_pcell().cfg(), slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch)
+            : pucch_alloc.alloc_common_pucch_harq_ack_ue(
+                  res_alloc, u.crnti, slot_offset + pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;
@@ -884,7 +910,8 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
   return srb1_bytes_allocated;
 }
 
-void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
+ue_fallback_scheduler::ul_srb_sched_outcome
+ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u, ul_harq_process* h_ul_retx)
 {
   // The caller ensures the slot is Ul enabled.
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
@@ -905,10 +932,6 @@ void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
 
   for (const auto* ss : search_spaces) {
     for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {
-      if (ss->cfg->is_search_space0()) {
-        continue;
-      }
-
       const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
       const cell_slot_resource_allocator&          pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
       const slot_point                             pusch_slot  = pusch_alloc.slot;
@@ -973,19 +996,21 @@ void ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, u
         continue;
       }
 
-      // If the function return true, the PUSCH allocation was successful. We then move the next UE.
-      if (schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx)) {
-        return;
+      ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx);
+      if (outcome != ul_srb_sched_outcome::next_slot) {
+        return outcome;
       }
     }
   }
+  return ul_srb_sched_outcome::next_ue;
 }
 
-bool ue_fallback_scheduler::schedule_ul_srb(ue&                                          u,
-                                            cell_resource_allocator&                     res_alloc,
-                                            unsigned                                     pusch_time_res,
-                                            const pusch_time_domain_resource_allocation& pusch_td,
-                                            ul_harq_process*                             h_ul_retx)
+ue_fallback_scheduler::ul_srb_sched_outcome
+ue_fallback_scheduler::schedule_ul_srb(ue&                                          u,
+                                       cell_resource_allocator&                     res_alloc,
+                                       unsigned                                     pusch_time_res,
+                                       const pusch_time_domain_resource_allocation& pusch_td,
+                                       ul_harq_process*                             h_ul_retx)
 {
   ue_cell&                      ue_pcell    = u.get_pcell();
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
@@ -1002,12 +1027,12 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
   ul_harq_process* h_ul = is_retx ? h_ul_retx : ue_pcell.harqs.find_empty_ul_harq();
   if (h_ul == nullptr) {
     logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: no HARQ available", u.ue_index, u.crnti);
-    return false;
+    return ul_srb_sched_outcome::next_ue;
   }
 
   if (used_crbs.all()) {
     logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No more RBs available", u.ue_index, u.crnti);
-    return false;
+    return ul_srb_sched_outcome::next_slot;
   }
 
   // In fallback, we do not multiplex any HARQ-ACK or CSI within the PUSCH.
@@ -1030,7 +1055,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
                    u.crnti,
                    ue_grant_crbs.length(),
                    final_nof_prbs);
-      return false;
+      return ul_srb_sched_outcome::next_slot;
     }
   } else {
     pusch_mcs_table     fallback_mcs_table = pusch_mcs_table::qam64;
@@ -1062,7 +1087,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
 
     if (ue_grant_crbs.empty()) {
       logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available", u.ue_index, u.crnti);
-      return false;
+      return ul_srb_sched_outcome::next_slot;
     }
 
     if (ue_grant_crbs.length() <= min_allocable_prbs and mcs < min_mcs_for_1_prb) {
@@ -1072,7 +1097,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
                    u.crnti,
                    prbs_tbs.nof_prbs,
                    mcs.to_uint());
-      return false;
+      return ul_srb_sched_outcome::next_slot;
     }
 
     bool contains_dc = dc_offset_helper::is_contained(
@@ -1086,7 +1111,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
       logger.warning("ue={} rnti={}: Failed to allocate PUSCH for SRB1. Cause: no MCS such that code rate <= 0.95",
                      u.ue_index,
                      u.crnti);
-      return false;
+      return ul_srb_sched_outcome::next_slot;
     }
     final_mcs_tbs = mcs_tbs_info.value();
   }
@@ -1096,7 +1121,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
       pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
-    return false;
+    return ul_srb_sched_outcome::stop_ul_scheduling;
   }
 
   // Mark resources as occupied in the ResourceGrid.
@@ -1116,7 +1141,7 @@ bool ue_fallback_scheduler::schedule_ul_srb(ue&                                 
                     final_mcs_tbs.tbs,
                     is_retx);
 
-  return true;
+  return ul_srb_sched_outcome::next_ue;
 }
 
 void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
@@ -1171,8 +1196,8 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                        u,
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul.save_alloc_params(pdcch.dci.type, msg.pusch_cfg);
 
-  // NOTE: there is no need to reset SRs, as in fallback the UL grants are triggered by the BSRs. Any SR should instead
-  // be used to remove the UE from the fallback UE.
+  // In case there is a SR pending, reset it.
+  u.reset_sr_indication();
 }
 
 unsigned ue_fallback_scheduler::has_pending_bytes_for_srb1(du_ue_index_t ue_idx) const
@@ -1388,6 +1413,14 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
       continue;
     }
+
+    // If the HARQ process has the "fallback" flag set to false, it means that the HARQ process got reset by its
+    // timeout, and in the meantime got reused by the non-fallback scheduler. In this case, it cannot be processed by
+    // the fallback scheduler. NOTE: this very unlikely to happen, but not impossible under certain extreme conditions.
+    if (not h_dl.last_alloc_params().is_fallback) {
+      it_ue_harq = ongoing_ues_ack_retxs.erase(it_ue_harq);
+      continue;
+    }
     ++it_ue_harq;
   }
 
@@ -1428,7 +1461,6 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       for (uint32_t h_id = 0; h_id != ue.get_pcell().harqs.nof_ul_harqs(); ++h_id) {
         ue.get_pcell().harqs.ul_harq(h_id).cancel_harq_retxs();
       }
-      logger.debug("Removing ue_idx={} rnti={} from fallback sched UL UE list", ue.ue_index, ue.crnti);
       ue_it = pending_ul_ues.erase(ue_it);
       continue;
     }

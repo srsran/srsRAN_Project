@@ -116,47 +116,20 @@ pucch_resource_manager::reserve_next_f2_harq_res_available(slot_point          s
   return reserve_next_harq_res_available(slot_harq, crnti, pucch_cfg, pucch_format::FORMAT_2);
 };
 
-const pucch_resource* pucch_resource_manager::reserve_specific_format2_res(slot_point          slot_harq,
-                                                                           rnti_t              crnti,
-                                                                           unsigned            res_indicator,
-                                                                           const pucch_config& pucch_cfg)
+const pucch_resource* pucch_resource_manager::reserve_f1_res_by_res_indicator(slot_point          slot_harq,
+                                                                              rnti_t              crnti,
+                                                                              unsigned            res_indicator,
+                                                                              const pucch_config& pucch_cfg)
 {
-  srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
-                      "PUCCH being allocated to far into the future");
+  return reserve_harq_res_by_res_indicator(slot_harq, crnti, res_indicator, pucch_cfg, pucch_format::FORMAT_1);
+}
 
-  // Get resource list of wanted slot.
-  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
-  // Retrieve the PUCCH resource set.
-  const auto& ue_res_id_set_for_harq_f2 = pucch_cfg.pucch_res_set[PUCCH_HARQ_F2_RES_SET_ID].pucch_res_id_list;
-
-  // Make sure the resource indicator points to a valid resource.
-  if (res_indicator >= ue_res_id_set_for_harq_f2.size()) {
-    return nullptr;
-  }
-
-  // Get PUCCH resource ID from the PUCCH resource set.
-  const unsigned pucch_res_id = ue_res_id_set_for_harq_f2[res_indicator].cell_res_id;
-  // Get the PUCCH resource tracker in the PUCCH resource manager.
-  auto&       pucch_res_tracker = res_counter.ues_using_pucch_res[pucch_res_id];
-  const auto& pucch_res_list    = pucch_cfg.pucch_res_list;
-
-  // Check first if the wanted PUCCH resource is available.
-  if (pucch_res_tracker.rnti == rnti_t::INVALID_RNTI) {
-    // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
-    const auto* res_cfg =
-        std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
-          return res.res_id.cell_res_id == pucch_res_id;
-        });
-
-    // If the PUCCH res with correct ID is found, then allocate it to the user.
-    if (res_cfg != pucch_res_list.end()) {
-      pucch_res_tracker.rnti           = crnti;
-      pucch_res_tracker.resource_usage = pucch_resource_usage::HARQ_F2;
-      return &(*res_cfg);
-    }
-  }
-
-  return nullptr;
+const pucch_resource* pucch_resource_manager::reserve_f2_res_by_res_indicator(slot_point          slot_harq,
+                                                                              rnti_t              crnti,
+                                                                              unsigned            res_indicator,
+                                                                              const pucch_config& pucch_cfg)
+{
+  return reserve_harq_res_by_res_indicator(slot_harq, crnti, res_indicator, pucch_cfg, pucch_format::FORMAT_2);
 }
 
 const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point                   slot_csi,
@@ -432,6 +405,55 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
+
+const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(slot_point          slot_harq,
+                                                                                rnti_t              crnti,
+                                                                                unsigned            res_indicator,
+                                                                                const pucch_config& pucch_cfg,
+                                                                                pucch_format        format)
+{
+  srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PUCCH being allocated to far into the future");
+  srsran_assert(format == pucch_format::FORMAT_1 or format == pucch_format::FORMAT_2,
+                "Only PUCCH Format 1 and Format 2 are currently supported");
+
+  const unsigned res_set_idx = format == pucch_format::FORMAT_1 ? PUCCH_HARQ_F1_RES_SET_ID : PUCCH_HARQ_F2_RES_SET_ID;
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+  // Retrieve the PUCCH resource set.
+  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
+
+  // Make sure the resource indicator points to a valid resource.
+  if (res_indicator >= ue_res_id_set_for_harq.size()) {
+    return nullptr;
+  }
+
+  // Get PUCCH resource ID from the PUCCH resource set.
+  const unsigned pucch_res_id = ue_res_id_set_for_harq[res_indicator].cell_res_id;
+  // Get the PUCCH resource tracker in the PUCCH resource manager.
+  auto&       pucch_res_tracker = res_counter.ues_using_pucch_res[pucch_res_id];
+  const auto& pucch_res_list    = pucch_cfg.pucch_res_list;
+
+  // Check first if the wanted PUCCH resource is available.
+  if (pucch_res_tracker.rnti == rnti_t::INVALID_RNTI) {
+    // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
+    const auto* res_cfg =
+        std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [pucch_res_id](const pucch_resource& res) {
+          return res.res_id.cell_res_id == pucch_res_id;
+        });
+
+    // If the PUCCH res with correct ID is found, then allocate it to the user.
+    if (res_cfg != pucch_res_list.end()) {
+      pucch_res_tracker.rnti = crnti;
+      pucch_res_tracker.resource_usage =
+          format == pucch_format::FORMAT_1 ? pucch_resource_usage::HARQ_F1 : pucch_resource_usage::HARQ_F2;
+      return &(*res_cfg);
+    }
+  }
+
+  return nullptr;
+}
 
 bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq,
                                                    rnti_t              crnti,

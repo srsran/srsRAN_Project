@@ -229,10 +229,7 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
 /// \return True in case packing/unpacking with the requested bit width is supported.
 inline bool iq_width_packing_supported(unsigned iq_width)
 {
-  if ((iq_width == 9) || (iq_width == 16)) {
-    return true;
-  }
-  return false;
+  return ((iq_width == 9) || (iq_width == 16));
 }
 
 } // namespace mm512

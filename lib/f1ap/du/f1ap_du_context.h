@@ -25,6 +25,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/ran/gnb_du_id.h"
 
 namespace srsran {
 namespace srs_du {
@@ -35,7 +36,7 @@ struct f1ap_du_cell_context {
 
 /// DU Context stored in the F1AP-DU. It includes information about the DU serving cells.
 struct f1ap_du_context {
-  uint64_t                          gnb_du_id;
+  gnb_du_id_t                       du_id = gnb_du_id_t::invalid;
   std::string                       gnb_du_name;
   std::vector<f1ap_du_cell_context> served_cells;
 };

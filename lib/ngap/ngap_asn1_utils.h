@@ -23,89 +23,43 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/ngap/ngap.h"
-#include "srsran/asn1/ngap/ngap_pdu_contents.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/security/security.h"
 #include "srsran/support/error_handling.h"
+
+namespace asn1 {
+namespace ngap {
+
+struct cause_c;
+struct init_msg_s;
+struct successful_outcome_s;
+struct unsuccessful_outcome_s;
+struct ngap_pdu_c;
+
+} // namespace ngap
+} // namespace asn1
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Get string with NGAP error cause.
-inline const char* get_cause_str(const asn1::ngap::cause_c& cause)
-{
-  using namespace asn1::ngap;
-  switch (cause.type()) {
-    case cause_c::types_opts::radio_network:
-      return cause.radio_network().to_string();
-    case cause_c::types_opts::transport:
-      return cause.transport().to_string();
-    case cause_c::types_opts::nas:
-      return cause.nas().to_string();
-    case cause_c::types_opts::protocol:
-      return cause.protocol().to_string();
-    case cause_c::types_opts::misc:
-      return cause.misc().to_string();
-    default:
-      break;
-  }
-  return "unknown";
-}
+const char* get_cause_str(const asn1::ngap::cause_c& cause);
 
 /// Extracts message type.
-inline const char* get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu)
-{
-  using namespace asn1::ngap;
-  switch (pdu.type().value) {
-    case ngap_pdu_c::types_opts::init_msg:
-      return pdu.init_msg().value.type().to_string();
-    case ngap_pdu_c::types_opts::successful_outcome:
-      return pdu.successful_outcome().value.type().to_string();
-    case ngap_pdu_c::types_opts::unsuccessful_outcome:
-      return pdu.unsuccessful_outcome().value.type().to_string();
-    default:
-      break;
-  }
-  report_fatal_error("Invalid NGAP PDU type \"{}\"", pdu.type().to_string());
-}
+const char* get_message_type_str(const asn1::ngap::ngap_pdu_c& pdu);
 
-inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg)
-{
-  switch (init_msg.value.type()) {
-    case asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg:
-      return uint_to_ran_ue_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id);
-    default:
-      break;
-  }
-  return {default_error_t{}};
-}
+/// Extracts RAN-UE-NGAP-ID from NGAP PDU
+optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::init_msg_s& init_msg);
+optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome);
+optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome);
+optional<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu);
 
-inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::successful_outcome_s& success_outcome)
-{
-  return {default_error_t{}};
-}
-
-inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome)
-{
-  return {default_error_t{}};
-}
-
-inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
-{
-  using namespace asn1::ngap;
-  switch (pdu.type().value) {
-    case ngap_pdu_c::types_opts::init_msg:
-      return get_ran_ue_id(pdu.init_msg());
-    case ngap_pdu_c::types_opts::successful_outcome:
-      return get_ran_ue_id(pdu.successful_outcome());
-    case ngap_pdu_c::types_opts::unsuccessful_outcome:
-      return get_ran_ue_id(pdu.unsuccessful_outcome());
-    default:
-      break;
-  }
-  return {default_error_t{}};
-}
+optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::init_msg_s& init_msg);
+optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::successful_outcome_s& success_outcome);
+optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::unsuccessful_outcome_s& unsuccessful_outcome);
+optional<amf_ue_id_t> get_amf_ue_id(const asn1::ngap::ngap_pdu_c& pdu);
 
 inline void copy_asn1_key(security::sec_key& key_out, const asn1::fixed_bitstring<256, false, true>& key_in)
 {

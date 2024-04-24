@@ -26,6 +26,7 @@
 #include "test_doubles/mock_cu_up.h"
 #include "test_doubles/mock_du.h"
 #include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 #include <unordered_map>
@@ -113,10 +114,14 @@ public:
 
   const ue_context* find_ue_context(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id) const;
 
+  /// Get CU-CP configuration used to instantiate CU-CP.
+  const cu_cp_configuration& get_cu_cp_cfg() const { return cu_cp_cfg; }
+
 private:
   class worker_manager;
 
   cu_cp_test_env_params params;
+  cu_cp_configuration   cu_cp_cfg{};
 
   /// Workers for CU-CP.
   std::unique_ptr<worker_manager> cu_cp_workers;

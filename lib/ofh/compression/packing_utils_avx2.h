@@ -83,7 +83,7 @@ inline __m256i pack_avx2_register_9b_be(__m256i cmp_data_epi16)
 /// \brief Packs 16bit IQ values of the two input RBs using 9bit big-endian format.
 ///
 /// The following diagram shows the input format. Here RBx stands for one unique RE (pair of IQ samples, 32 bits long)
-/// pertaining to a respective RB):
+/// pertaining to a respective RB:
 /// |       |         |         |         |         |
 /// | ----- | ------- | ------- | ------- | ------- |
 /// | \c r0: | RB0 RB0 | RB0 RB0 | RB0 RB0 | RB0 RB0 |
@@ -162,6 +162,50 @@ inline void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0
   c_prbs[1].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
+/// \brief Packs 16bit IQ values of the two input RBs using 16bit big-endian format.
+///
+/// The following diagram shows the input format. Here RBx stands for one unique RE (pair of IQ samples, 32 bits long)
+/// pertaining to a respective RB:
+/// |       |         |         |         |         |
+/// | ----- | ------- | ------- | ------- | ------- |
+/// | \c r0: | RB0 RB0 | RB0 RB0 | RB0 RB0 | RB0 RB0 |
+/// | \c r1: | RB0 RB0 | RB0 RB0 | RB1 RB1 | RB1 RB1 |
+/// | \c r2: | RB1 RB1 | RB1 RB1 | RB1 RB1 | RB1 RB1 |
+///
+/// \param[out] c_prbs Span of two compressed PRBs.
+/// \param[in] r0      AVX2 register storing 16bit IQ samples of the first RB.
+/// \param[in] r1      AVX2 register storing 16bit IQ samples of the first and second RB.
+/// \param[in] r2      AVX2 register storing 16bit IQ samples of the second RB.
+inline void avx2_pack_prbs_16b_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2)
+{
+  srsran_assert(c_prbs.size() == 2, "Output span must contain 2 resource blocks");
+
+  static constexpr unsigned BYTES_PER_PRB_NO_COMPRESSION = 48;
+
+  // Swap bytes to convert from big-endian format and write them directly to the output memory.
+  const __m256i shuffle_mask_epi8 =
+      _mm256_setr_epi64x(0x0607040502030001, 0x0e0f0c0d0a0b0809, 0x0607040502030001, 0x0e0f0c0d0a0b0809);
+
+  __m256i reg0_swp_epi16 = _mm256_shuffle_epi8(r0, shuffle_mask_epi8);
+  __m256i reg1_swp_epi16 = _mm256_shuffle_epi8(r1, shuffle_mask_epi8);
+  __m256i reg2_swp_epi16 = _mm256_shuffle_epi8(r2, shuffle_mask_epi8);
+
+  uint8_t* data = c_prbs[0].get_byte_buffer().data();
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(data), reg0_swp_epi16);
+  _mm256_maskstore_epi32(reinterpret_cast<int*>(data + 32),
+                         _mm256_setr_epi32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0, 0, 0, 0),
+                         reg1_swp_epi16);
+
+  data = c_prbs[1].get_byte_buffer().data();
+  _mm_maskstore_epi32(reinterpret_cast<int*>(data),
+                      _mm_set_epi32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff),
+                      _mm256_extracti128_si256(reg1_swp_epi16, 0x1));
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(data + 16), reg2_swp_epi16);
+
+  c_prbs[0].set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
+  c_prbs[1].set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
+}
+
 /// \brief Packs 16bit IQ values of the two RBs using the specified width and big-endian format.
 ///
 /// The following diagram shows the input format. Here RBx stands for one unique RE (pair of IQ samples, 32 bits long)
@@ -182,8 +226,9 @@ pack_prbs_big_endian(span<ofh::compressed_prb> c_prbs, __m256i r0, __m256i r1, _
 {
   switch (iq_width) {
     case 9:
-      avx2_pack_prbs_9b_big_endian(c_prbs, r0, r1, r2);
-      break;
+      return avx2_pack_prbs_9b_big_endian(c_prbs, r0, r1, r2);
+    case 16:
+      return avx2_pack_prbs_16b_big_endian(c_prbs, r0, r1, r2);
     default:
       report_fatal_error("Unsupported bit width");
   }
@@ -196,7 +241,7 @@ pack_prbs_big_endian(span<ofh::compressed_prb> c_prbs, __m256i r0, __m256i r1, _
 ///
 /// \note The \c unpacked_iq_data parameter should be sized to store 32 output IQ samples: it is 24 IQ samples of one RB
 /// rounded up to 32-byte boundary required by AVX2 intrinsics.
-inline void unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+inline void avx2_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
 {
   constexpr size_t avx2_size_short_words = 16;
   srsran_assert(unpacked_iq_data.size() >= avx2_size_short_words * 2, "Wrong unpacked data span size");
@@ -244,6 +289,31 @@ inline void unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t>
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(unpacked_iq_data.subspan(16, 8).data()), unpacked_data_1_epi16);
 }
 
+/// \brief Unpacks packed 16bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
+///
+/// \param[out] unpacked_iq_data A span of 16bit integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
+/// \param[in]  packed_data      A span of 48 packed bytes.
+inline void avx2_unpack_prb_16b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+{
+  // Load input, 48 bytes (need two AVX2 registers).
+  const __m256i rd_mask_last_bytes = _mm256_setr_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0, 0, 0, 0);
+
+  __m256i reg0_epi16 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(packed_data.data()));
+  __m256i reg1_epi16 = _mm256_maskload_epi32(reinterpret_cast<const int*>(packed_data.data() + 32), rd_mask_last_bytes);
+
+  // Swap bytes for Little-endian representation.
+  const __m256i shuffle_mask_epi8 =
+      _mm256_setr_epi64x(0x0607040502030001, 0x0e0f0c0d0a0b0809, 0x0607040502030001, 0x0e0f0c0d0a0b0809);
+
+  __m256i reg0_unpacked_data_epi16 = _mm256_shuffle_epi8(reg0_epi16, shuffle_mask_epi8);
+  __m256i reg1_unpacked_data_epi16 = _mm256_shuffle_epi8(reg1_epi16, shuffle_mask_epi8);
+
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(unpacked_iq_data.data()), reg0_unpacked_data_epi16);
+  _mm256_maskstore_epi32(reinterpret_cast<int*>(unpacked_iq_data.data() + 16),
+                         _mm256_setr_epi32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0, 0, 0, 0),
+                         reg1_unpacked_data_epi16);
+}
+
 /// \brief Unpacks packed IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
 ///
 /// \param[out] unpacked_iq_data A span of 32 16bit integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
@@ -252,12 +322,13 @@ inline void unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t>
 ///
 /// \note The \c unpacked_iq_data parameter should be sized to store 32 output IQ samples: it is 24 IQ samples of one RB
 /// rounded up to 32-byte boundary required by AVX2 intrinsics.
-void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
+inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
 {
   switch (iq_width) {
     case 9:
-      unpack_prb_9b_be(unpacked_iq_data, packed_data);
-      break;
+      return avx2_unpack_prb_9b_be(unpacked_iq_data, packed_data);
+    case 16:
+      return avx2_unpack_prb_16b_be(unpacked_iq_data, packed_data);
     default:
       report_fatal_error("Unsupported bit width");
   }
@@ -269,7 +340,7 @@ void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> p
 /// \return True in case packing/unpacking with the requested bit width is supported
 inline bool iq_width_packing_supported(unsigned iq_width)
 {
-  return iq_width == 9;
+  return ((iq_width == 9) || (iq_width == 16));
 }
 
 } // namespace mm256

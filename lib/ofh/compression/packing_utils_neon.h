@@ -103,15 +103,40 @@ inline void pack_prb_9b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
   c_prb.set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
+/// \brief Packs 16bit IQ values of the PRB using given bit width and big-endian format.
+///
+/// \param[out] c_prb Compressed PRB object storing packed bytes.
+/// \param[in]  regs  NEON registers storing 16bit IQ samples of the PRB.
+///
+/// \note Each of the input registers stores four unique REs.
+inline void pack_prb_16b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
+{
+  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 9 bits.
+  static constexpr unsigned BYTES_PER_PRB_16BIT_COMPRESSION = 48;
+  static const uint8x16_t shuffle_mask_u8 = vcombine_u8(vcreate_u8(0x0607040502030001), vcreate_u8(0x0e0f0c0d0a0b0809));
+
+  int8x16x3_t regs_shuffled_s16;
+  regs_shuffled_s16.val[0] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[0]), shuffle_mask_u8);
+  regs_shuffled_s16.val[1] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[1]), shuffle_mask_u8);
+  regs_shuffled_s16.val[2] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[2]), shuffle_mask_u8);
+
+  int8_t* data = reinterpret_cast<int8_t*>(c_prb.get_byte_buffer().data());
+  vst1q_s8_x3(data, regs_shuffled_s16);
+  c_prb.set_stored_size(BYTES_PER_PRB_16BIT_COMPRESSION);
+}
+
 /// \brief Packs 16bit IQ values of a resource block using the specified width and big-endian format.
 ///
 /// \param[out] c_prb   Output PRB storing compressed packed bytes.
 /// \param[in]  reg     Vector of three NEON registers storing 16bit IQ pairs of the PRB.
 /// \param[in] iq_width Bit width of the resulting packed IQ samples.
-void pack_prb_big_endian(ofh::compressed_prb& c_prb, int16x8x3_t regs, unsigned iq_width)
+inline void pack_prb_big_endian(ofh::compressed_prb& c_prb, int16x8x3_t regs, unsigned iq_width)
 {
   if (iq_width == 9) {
     return pack_prb_9b_big_endian(c_prb, regs);
+  }
+  if (iq_width == 16) {
+    return pack_prb_16b_big_endian(c_prb, regs);
   }
   report_fatal_error("Unsupported bit width");
 }
@@ -153,6 +178,28 @@ inline void unpack_prb_9b_big_endian(span<int16_t> unpacked_iq_data, span<const 
   vst1q_s16(unpacked_iq_data.data() + 16, unpacked_data_2_s16);
 }
 
+/// \brief Unpacks packed 16bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
+///
+/// \param[out] unpacked_iq_data A sequence of 24 integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
+/// \param[in]  packed_data      A sequence of 48 packed bytes.
+inline void unpack_prb_16b_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+{
+  static const uint8x16_t shuffle_mask_u8 = vcombine_u8(vcreate_u8(0x0607040502030001), vcreate_u8(0x0e0f0c0d0a0b0809));
+
+  // Load input (we need three NEON register to load 48 bytes).
+  uint8x16x3_t packed_vec_u8x3 = vld1q_u8_x3(packed_data.data());
+
+  uint8x16x3_t packed_shuffled_s16;
+  packed_shuffled_s16.val[0] = vqtbl1q_u8(packed_vec_u8x3.val[0], shuffle_mask_u8);
+  packed_shuffled_s16.val[1] = vqtbl1q_u8(packed_vec_u8x3.val[1], shuffle_mask_u8);
+  packed_shuffled_s16.val[2] = vqtbl1q_u8(packed_vec_u8x3.val[2], shuffle_mask_u8);
+
+  // Write results to the output buffer.
+  vst1q_s16(unpacked_iq_data.data(), vreinterpretq_s16_u8(packed_shuffled_s16.val[0]));
+  vst1q_s16(unpacked_iq_data.data() + 8, vreinterpretq_s16_u8(packed_shuffled_s16.val[1]));
+  vst1q_s16(unpacked_iq_data.data() + 16, vreinterpretq_s16_u8(packed_shuffled_s16.val[2]));
+}
+
 /// \brief Unpacks packed IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
 ///
 /// \param[out] unpacked_iq_data A sequence of 24 integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
@@ -163,6 +210,9 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
   if (iq_width == 9) {
     return unpack_prb_9b_big_endian(unpacked_iq_data, packed_data);
   }
+  if (iq_width == 16) {
+    return unpack_prb_16b_big_endian(unpacked_iq_data, packed_data);
+  }
   report_fatal_error("Unsupported bit width");
 }
 
@@ -172,7 +222,7 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
 /// \return True in case packing/unpacking with the requested bit width is supported.
 inline bool iq_width_packing_supported(unsigned iq_width)
 {
-  return iq_width == 9;
+  return ((iq_width == 9) || (iq_width == 16));
 }
 
 } // namespace neon

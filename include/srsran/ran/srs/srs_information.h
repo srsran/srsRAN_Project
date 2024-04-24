@@ -52,12 +52,13 @@ struct srs_information {
 };
 
 /// \brief Get Sounding Reference Signal information.
+///
+/// Simplified SRS information. It does not implement sequence, group or frequency hopping.
+///
 /// \param resource       SRS resource configuration.
 /// \param i_antenna_port Transmit antenna 0-based port index.
-/// \param i_symbol       OFDM symbol index within the slot.
 /// \return The SRS information.
 /// \remark An assertion is triggered if one or more resource parameters are invalid or not supported.
-srs_information
-get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port, unsigned i_symbol);
+srs_information get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port);
 
 } // namespace srsran

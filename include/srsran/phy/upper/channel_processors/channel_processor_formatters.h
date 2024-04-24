@@ -216,7 +216,7 @@ struct formatter<srsran::prach_detector::configuration> {
   auto format(const srsran::prach_detector::configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    helper.format_if_verbose(ctx, "rsi={}", config.root_sequence_index);
+    helper.format_always(ctx, "rsi={}", config.root_sequence_index);
     helper.format_if_verbose(ctx,
                              "preambles=[{}, {})",
                              config.start_preamble_index,

@@ -32,17 +32,28 @@ using namespace asn1::f1ap;
 f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_procedure(
     const asn1::f1ap::ue_context_mod_request_s& msg,
     f1ap_du_ue&                                 ue_) :
-  ue(ue_), logger(srslog::fetch_basic_logger("DU-F1"))
+  req(msg), ue(ue_), logger(srslog::fetch_basic_logger("DU-F1"))
 {
-  create_du_request(msg);
 }
 
 void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  // Setup new UE configuration in DU.
+  // Modify UE configuration in DU.
+  create_du_request(req);
   CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_context_update(du_request));
+
+  // "If the UE CONTEXT MODIFICATION REQUEST message contains the RRC-Container IE, the gNB-DU shall send the
+  // corresponding RRC message to the UE."
+  if (du_response.result and req->rrc_container_present) {
+    auto* srb = ue.bearers.find_srb(srb_id_t::srb1);
+    if (srb != nullptr) {
+      srb->handle_pdu(req->rrc_container.copy());
+    } else {
+      du_response.result = false;
+    }
+  }
 
   if (du_response.result) {
     send_ue_context_modification_response();

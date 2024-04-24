@@ -33,6 +33,7 @@ set(SOURCES f1ap_du_setup_procedure_test.cpp
 
 add_executable(f1ap_du_test ${SOURCES})
 target_include_directories(f1ap_du_test PRIVATE ${CMAKE_SOURCE_DIR})
+set_target_properties(f1ap_du_test PROPERTIES UNITY_BUILD ON)
 target_link_libraries(f1ap_du_test
         srsran_f1ap_du
         srsran_support
@@ -42,4 +43,4 @@ target_link_libraries(f1ap_du_test
         f1ap_du_test_helpers
         gtest
         gtest_main)
-gtest_discover_tests(f1ap_du_test PROPERTIES "LABELS;f1ap_du")
+gtest_discover_tests(f1ap_du_test PROPERTIES "LABELS;f1ap;f1ap_du")

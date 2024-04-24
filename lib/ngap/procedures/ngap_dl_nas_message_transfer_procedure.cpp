@@ -50,6 +50,5 @@ void ngap_dl_nas_message_transfer_procedure::operator()(coro_context<async_task<
 
 void ngap_dl_nas_message_transfer_procedure::send_pdu_to_rrc_ue()
 {
-  logger.log_debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
   rrc_ue_pdu_notifier.on_new_pdu(std::move(nas_pdu));
 }

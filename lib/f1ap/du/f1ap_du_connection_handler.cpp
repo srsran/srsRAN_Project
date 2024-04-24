@@ -49,19 +49,14 @@ f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1
 {
 }
 
-SRSRAN_NODISCARD bool f1ap_du_connection_handler::connect_to_cu_cp()
+SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
 {
-  f1ap_notifier =
+  std::unique_ptr<f1ap_message_notifier> f1ap_notifier =
       f1c_client_handler.handle_du_connection_request(std::make_unique<f1ap_rx_pdu_adapter>(f1ap_pdu_handler));
 
-  return f1ap_notifier != nullptr;
-}
-
-void f1ap_du_connection_handler::on_new_message(const f1ap_message& msg)
-{
-  if (is_connected()) {
-    f1ap_notifier->on_new_message(msg);
-  } else {
-    logger.error("Discarding F1AP DU message. Cause: Connection to CU-CP is dropped");
+  if (f1ap_notifier != nullptr) {
+    connected = true;
   }
+
+  return f1ap_notifier;
 }

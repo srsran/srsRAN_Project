@@ -269,7 +269,8 @@ uint32_t rlc_tx_um_entity::get_buffer_state()
   std::lock_guard<std::mutex> lock(mutex);
 
   // minimum bytes needed to tx all queued SDUs + each header
-  uint32_t queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_len_full;
+  rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
+  uint32_t                        queue_bytes = queue_state.n_bytes + queue_state.n_sdus * head_len_full;
 
   // minimum bytes needed to tx SDU under segmentation + header (if applicable)
   uint32_t segment_bytes = 0;

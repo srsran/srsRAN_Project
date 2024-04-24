@@ -132,9 +132,19 @@ public:
     });
   }
 
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Received UE release request", request.ue_index);
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
-    logger.info("Received UE transfer required");
+    logger.info("ue={} old_ue={}: Received UE transfer required", ue_index, old_ue_index);
 
     return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -144,7 +154,7 @@ public:
 
   void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
   {
-    logger.info("Received handover ue context push");
+    logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
   }
 
 private:

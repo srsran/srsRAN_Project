@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "rrc_cell_context.h"
 #include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/static_vector.h"
@@ -159,11 +158,6 @@ class rrc_ue_du_processor_notifier
 public:
   virtual ~rrc_ue_du_processor_notifier() = default;
 
-  /// \brief Notify about a UE Context Release Command.
-  /// \param[in] cmd The UE Context Release Command.
-  virtual async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
-
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
   virtual async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
@@ -213,8 +207,6 @@ class rrc_ue_control_notifier
 {
 public:
   virtual ~rrc_ue_control_notifier() = default;
-
-  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
@@ -331,17 +323,26 @@ public:
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_ue_reestablishment_context_response
-  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
+  virtual rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) = 0;
+
+  /// \brief Notify the CU-CP to release the old UE after a reestablishment failure.
+  /// \param[in] request The release request.
+  virtual void on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) = 0;
+
+  /// \brief Notify the CU-CP to remove the old UE from the CU-CP after an successful reestablishment.
+  /// \param[in] old_ue_index The index of the old UE to remove.
+  virtual void on_rrc_reestablishment_complete(ue_index_t old_ue_index) = 0;
 
   /// \brief Notify the CU-CP to transfer and remove ue contexts.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
-  virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+  virtual async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) = 0;
 
-  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual async_task<void> on_ue_removal_required(ue_index_t ue_index) = 0;
+  /// \brief Notify the CU-CP to remove a UE from the CU-CP.
+  virtual async_task<void> on_ue_removal_required() = 0;
+
+  /// \brief Notify the CU-CP to release a UE.
+  /// \param[in] request The release request.
+  virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
 };
 
 /// Interface to notify about measurements
@@ -351,15 +352,13 @@ public:
   virtual ~rrc_ue_measurement_notifier() = default;
 
   /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
-  /// \param[in] ue_index The index of the UE to retrieve the measurement config for.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
-  virtual optional<rrc_meas_cfg> on_measurement_config_request(ue_index_t             ue_index,
-                                                               nr_cell_id_t           nci,
+  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
                                                                optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
-  virtual void on_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
+  virtual void on_measurement_report(const rrc_meas_results& meas_results) = 0;
 };
 
 class rrc_ue_context_handler

@@ -53,7 +53,10 @@ public:
 
   /// Run RRC Reestablishment.
   /// \return Returns true if Reestablishment is successful, and false if the gNB fallbacked to RRC Setup.
-  bool run_rrc_reestablishment(gnb_du_ue_f1ap_id_t new_du_ue_id, rnti_t new_rnti, rnti_t old_rnti_, pci_t old_pci_)
+  bool send_rrc_reest_request_and_wait_response(gnb_du_ue_f1ap_id_t new_du_ue_id,
+                                                rnti_t              new_rnti,
+                                                rnti_t              old_rnti_,
+                                                pci_t               old_pci_)
   {
     // Generate RRC Reestablishment Request.
     byte_buffer rrc_container =
@@ -77,6 +80,34 @@ public:
 
     // It's either RRC setup or Reestablishment.
     return dl_rrc_msg.srb_id == 1;
+  }
+
+  optional<f1ap_message> ue_sends_rrc_setup_request_and_waits_rrc_setup(gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+  {
+    ngap_message ngap_pdu;
+    srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+    f1ap_message f1ap_pdu;
+    srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+    // Inject Initial UL RRC message
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    test_logger.info("c-rnti={} du_ue_id={}: Injecting Initial UL RRC message", crnti, du_ue_id);
+    get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
+
+    // Wait for DL RRC message transfer (containing RRC Setup)
+    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
+    if (not result) {
+      return nullopt;
+    }
+
+    // Check if the DL RRC Message with Msg4 is valid.
+    report_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu), "invalid DL RRC message");
+    dl_rrc_msg_transfer_s& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
+    report_error_if_not(int_to_gnb_du_ue_f1ap_id(dl_rrc_msg->gnb_du_ue_f1ap_id) == du_ue_id,
+                        "invalid gNB-DU-UE-F1AP-ID");
+    report_error_if_not(int_to_srb_id(dl_rrc_msg->srb_id) == srb_id_t::srb0, "invalid SRB-Id");
+
+    return f1ap_pdu;
   }
 
   void ue_sends_rrc_setup_complete(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id)
@@ -123,7 +154,8 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishme
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
 
   // Reestablishment Request to RNTI that does not exist.
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4603), old_pci))
+  ASSERT_FALSE(
+      send_rrc_reest_request_and_wait_response(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4603), old_pci))
       << "RRC setup should have been sent";
 
   // UE sends RRC Setup Complete
@@ -139,7 +171,8 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_ngap_context_then_reestabl
   // Connect UE 0x4601.
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
 
-  ASSERT_FALSE(run_rrc_reestablishment(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
+  ASSERT_FALSE(
+      send_rrc_reest_request_and_wait_response(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
       << "RRC setup should have been sent";
 
   // old UE should not be removed at this stage.
@@ -201,4 +234,46 @@ TEST_F(cu_cp_reestablishment_test,
   // old UE should not be removed at this stage.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
+}
+
+TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_reestablishment_fallback_still_completes)
+{
+  // UE 0x4601 sends RRC Setup Request, the gNB responds with RRC Setup and waits for RRC Setup Complete.
+  auto msg = this->ue_sends_rrc_setup_request_and_waits_rrc_setup(old_du_ue_id, old_crnti);
+  ASSERT_TRUE(msg.has_value());
+
+  // Send RRC Reestablishment Request and DU receives RRC Setup (Fallback).
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_FALSE(send_rrc_reest_request_and_wait_response(new_du_ue_id, new_crnti, old_crnti, old_pci));
+
+  // EVENT: new UE sends RRC Setup Complete and completes fallback procedure.
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(1);
+  this->ue_sends_rrc_setup_complete(new_du_ue_id, cu_ue_id);
+
+  // STATUS: NGAP Initial UE Message should be sent for the new UE.
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_init_ue_message(ngap_pdu));
+
+  // STATUS: UE Context Released Command for old UE not yet sent because the old UE is busy with an RRC Setup procedure.
+  f1ap_message f1ap_pdu;
+  ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu)) << "UE Context Release Command sent to soon";
+
+  // RRC Setup timeout for old UE.
+  std::chrono::milliseconds timeout{this->get_cu_cp_cfg().rrc_config.rrc_procedure_timeout_ms};
+  for (unsigned i = 0; i != timeout.count(); ++i) {
+    this->tick();
+  }
+
+  // STATUS: CU-CP sends F1AP UE Context Release Command for old UE after the previous procedure times out.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet as its RRC Setup procedure is not completed";
+
+  // STATUS: UE Context Release Complete for old UE and it should be finally removed.
+  this->get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE was not removed";
 }

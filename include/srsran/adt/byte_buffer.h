@@ -231,7 +231,9 @@ public:
   /// Move constructor.
   byte_buffer(byte_buffer&& other) noexcept = default;
 
+  /// Creates a byte_buffer that in case it fails to allocate from the default pool, it resorts to malloc as fallback.
   byte_buffer(fallback_allocation_tag tag, span<const uint8_t> other = {}) noexcept;
+  byte_buffer(fallback_allocation_tag tag, const std::initializer_list<uint8_t>& other) noexcept;
   byte_buffer(fallback_allocation_tag tag, const byte_buffer& other) noexcept;
 
   /// Copy assignment operator is disabled. Use std::move, .copy() or .deep_copy() instead.
@@ -241,20 +243,8 @@ public:
   byte_buffer& operator=(byte_buffer&& other) noexcept = default;
 
   /// Performs a deep copy (byte by bytes) of this byte_buffer.
-  expected<byte_buffer> deep_copy() const
-  {
-    if (ctrl_blk_ptr == nullptr) {
-      return byte_buffer{};
-    }
-
-    byte_buffer buf;
-    for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
-      if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
-        return default_error_t{};
-      }
-    }
-    return buf;
-  }
+  expected<byte_buffer> deep_copy() const;
+  expected<byte_buffer> deep_copy(fallback_allocation_tag tag) const;
 
   /// Performs a shallow copy. Head segment reference counter is incremented.
   byte_buffer copy() const { return byte_buffer{*this}; }
@@ -266,7 +256,12 @@ public:
     static_assert(std::is_same<std::decay_t<decltype(*begin)>, uint8_t>::value or
                       std::is_same<std::decay_t<decltype(*begin)>, const uint8_t>::value,
                   "Iterator value type is not uint8_t");
-    // TODO: use segment-wise copy if it is a span.
+    using iter_category = typename std::iterator_traits<Iterator>::iterator_category;
+
+    if (std::is_same<iter_category, std::random_access_iterator_tag>::value) {
+      return append(span<const uint8_t>(&*begin, &*end));
+    }
+    // TODO: use segment-wise copy if it is a byte buffer-like type.
     for (auto it = begin; it != end; ++it) {
       if (not append(*it)) {
         return false;
@@ -279,10 +274,7 @@ public:
   SRSRAN_NODISCARD bool append(span<const uint8_t> bytes);
 
   /// Appends an initializer list of bytes.
-  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes)
-  {
-    return append(span<const uint8_t>(bytes.begin(), bytes.size()));
-  }
+  SRSRAN_NODISCARD bool append(const std::initializer_list<uint8_t>& bytes);
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
   SRSRAN_NODISCARD bool append(const byte_buffer& other);
@@ -304,17 +296,7 @@ public:
   }
 
   /// Appends a view of bytes into current byte buffer.
-  SRSRAN_NODISCARD bool append(const byte_buffer_view& view)
-  {
-    // Append segment by segment.
-    auto view_segs = view.segments();
-    for (span<const uint8_t> seg : view_segs) {
-      if (not append(seg)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  SRSRAN_NODISCARD bool append(const byte_buffer_view& view);
 
   /// Appends an owning view of bytes into current byte buffer.
   SRSRAN_NODISCARD bool append(const byte_buffer_slice& view);
@@ -424,22 +406,7 @@ private:
 
   /// \brief Removes last segment of the byte_buffer.
   /// Note: This operation is O(N), as it requires recomputing the tail.
-  void pop_last_segment()
-  {
-    node_t* tail = ctrl_blk_ptr->segments.tail;
-    if (tail == nullptr) {
-      return;
-    }
-
-    // Decrement bytes stored in the tail.
-    ctrl_blk_ptr->pkt_len -= tail->length();
-
-    // Remove tail from linked list.
-    ctrl_blk_ptr->segments.pop_back();
-
-    // Deallocate tail segment.
-    ctrl_blk_ptr->destroy_node(tail);
-  }
+  void pop_last_segment();
 
   static void warn_alloc_failure();
 
@@ -652,16 +619,7 @@ public:
   SRSRAN_NODISCARD bool append(uint8_t byte) { return buffer->append(byte); }
 
   /// Appends the specified amount of zeros.
-  SRSRAN_NODISCARD bool append_zeros(size_t nof_zeros)
-  {
-    // TODO: optimize.
-    for (size_t i = 0; i != nof_zeros; ++i) {
-      if (not buffer->append(0)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  SRSRAN_NODISCARD bool append_zeros(size_t nof_zeros);
 
   /// Checks last appended byte.
   uint8_t& back() { return buffer->back(); }
@@ -676,22 +634,8 @@ private:
   byte_buffer* buffer;
 };
 
-/// Converts a hex string (e.g. 01FA02) to a byte buffer.
-inline byte_buffer make_byte_buffer(const std::string& hex_str)
-{
-  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
-
-  byte_buffer ret;
-  for (size_t i = 0, e = hex_str.size(); i != e; i += 2) {
-    uint8_t val;
-    std::sscanf(hex_str.data() + i, "%02hhX", &val);
-    if (not ret.append(val)) {
-      ret.clear();
-      break;
-    }
-  }
-  return ret;
-}
+/// Converts a string of hexadecimal digits (e.g. "01FA02") to a byte buffer.
+byte_buffer make_byte_buffer(const std::string& hex_str);
 
 /// Performs a segment-wise copy of the byte_buffer into a span<uint8_t> object.
 /// The length is limited by the length of src and dst, whichever is smaller.
@@ -728,27 +672,7 @@ inline size_t copy_segments(const ByteBufferType& src, span<uint8_t> dst)
 /// \param src Source byte_buffer.
 /// \param tmp_mem Temporary memory for a possible copy. Must be at least as large as \p src.
 /// \return A contiguous view of the byte_buffer
-inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem)
-{
-  // Empty buffer.
-  if (src.empty()) {
-    return {};
-  }
-
-  // Is contiguous: shortcut without copy.
-  if (src.is_contiguous()) {
-    return *src.segments().begin();
-  }
-
-  // Non-contiguous: copy required.
-  srsran_assert(src.length() <= tmp_mem.size(),
-                "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
-                src.length(),
-                tmp_mem.size());
-  span<uint8_t> result = {tmp_mem.data(), src.length()};
-  copy_segments(src, result);
-  return result;
-}
+span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem);
 
 } // namespace srsran
 

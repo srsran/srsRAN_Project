@@ -36,8 +36,7 @@ static constexpr unsigned get_sequence_length(unsigned m_srs_b, srs_resource_con
   return (m_srs_b * N_RB_SC) / static_cast<unsigned>(comb_size);
 }
 
-srs_information
-srsran::get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port, unsigned i_symbol)
+srs_information srsran::get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port)
 {
   // Select BW configuration.
   optional<srs_configuration> srs_bw_config =
@@ -94,6 +93,7 @@ srsran::get_srs_information(const srs_resource_configuration& resource, unsigned
 
   // Fill derived parameters.
   srs_information info;
+  info.n_cs_max                   = n_cs_max;
   info.sequence_length            = sequence_length;
   info.sequence_group             = u;
   info.sequence_number            = v;

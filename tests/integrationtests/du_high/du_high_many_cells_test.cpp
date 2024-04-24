@@ -104,6 +104,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
     rnti_t rnti = to_rnti(0x4601 + i);
     ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
     ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(force_ue_fallback(rnti));
     ASSERT_TRUE(run_ue_context_setup(rnti));
 
     // Ensure DU<->CU-UP tunnel was created.
@@ -126,6 +127,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
     phy.cells[i].last_dl_data.reset();
   }
+
   while (bytes_sched < expected_bytes_sched and this->run_until([this]() {
     for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
       if (phy.cells[i].last_dl_data.has_value() and not phy.cells[i].last_dl_data.value().ue_pdus.empty()) {
@@ -153,11 +155,15 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
       phy.cells[c].last_dl_data.reset();
     }
   }
+
   ASSERT_GE(bytes_sched, expected_bytes_sched)
-      << "Not enough PDSCH grants were scheduled to meet the enqueued PDCP PDUs";
+      << fmt::format("Not enough PDSCH grants (bytes={}) were scheduled to meet the enqueued PDCP PDUs (bytes={})",
+                     bytes_sched,
+                     expected_bytes_sched);
 
   for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
-    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size);
+    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size) << fmt::format(
+        "In cell={} scheduled bytes {} < expected bytes {}", c, bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size);
   }
 }
 

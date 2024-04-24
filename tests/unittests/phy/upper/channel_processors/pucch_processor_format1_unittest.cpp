@@ -209,7 +209,7 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
   ASSERT_EQ(detector_entry.config.start_symbol_index, config.start_symbol_index);
   ASSERT_EQ(detector_entry.config.nof_symbols, config.nof_symbols);
   ASSERT_EQ(detector_entry.config.group_hopping, pucch_group_hopping::NEITHER);
-  ASSERT_EQ(detector_entry.config.port, config.ports.front());
+  ASSERT_EQ(detector_entry.config.ports, config.ports);
   ASSERT_EQ(detector_entry.config.beta_pucch, 1.0F);
   ASSERT_EQ(detector_entry.config.time_domain_occ, config.time_domain_occ);
   ASSERT_EQ(detector_entry.config.initial_cyclic_shift, config.initial_cyclic_shift);

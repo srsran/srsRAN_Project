@@ -32,8 +32,10 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND SOURCES
             iq_compression_bfp_avx2.cpp
             iq_compression_bfp_avx512.cpp
-            iq_compression_none_avx512.cpp)
+            iq_compression_none_avx512.cpp
+            iq_compression_none_avx2.cpp)
     set_source_files_properties(iq_compression_bfp_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
+    set_source_files_properties(iq_compression_none_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
     set_source_files_properties(iq_compression_bfp_avx512.cpp PROPERTIES
             COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512cd;-mavx512dq;")
     set_source_files_properties(iq_compression_none_avx512.cpp PROPERTIES
@@ -42,6 +44,7 @@ endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 if (HAVE_NEON)
     list(APPEND SOURCES iq_compression_bfp_neon.cpp)
+    list(APPEND SOURCES iq_compression_none_neon.cpp)
 endif (HAVE_NEON)
 
 add_library(srsran_ofh_compression STATIC ${SOURCES})

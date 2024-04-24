@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include <memory>
@@ -37,11 +38,14 @@ public:
   struct dependencies {
     /// Sequence generator.
     std::unique_ptr<low_papr_sequence_generator> sequence_generator;
+    /// Time alignment estimator.
+    std::unique_ptr<time_alignment_estimator> ta_estimator;
   };
 
   srs_estimator_generic_impl(dependencies deps_) : deps(std::move(deps_))
   {
     srsran_assert(deps.sequence_generator, "Invalid sequence generator.");
+    srsran_assert(deps.ta_estimator, "Invalid TA estimator.");
   }
 
   srs_estimator_result estimate(const resource_grid_reader& grid, const srs_estimator_configuration& config) override;
@@ -52,23 +56,16 @@ private:
   /// It is given by the maximum value of \f$m_{SRS,0}\f$ in TS38.211 Table 6.4.1.4.3-1 and a comb size of 2.
   static constexpr unsigned max_seq_length = 272 * NRE / 2;
 
-  /// \brief Extract the received Sounding Reference Signals sequence from a resource grid.
+  static constexpr unsigned max_symbol_size = MAX_RB * NRE;
+
+  /// \brief Generates the SRS sequence allocation mask.
   ///
-  /// The sequence mapping is given in TS38.211 Section 6.4.1.4.3.
+  /// The mask starts at the first subcarrier used for mapping the SRS sequence.
   ///
-  /// \param[out] sequence           Extracted sequence.
-  /// \param[in]  grid               Received resource grid.
-  /// \param[in]  i_rx_port          Receive port index.
-  /// \param[in]  i_symbol           OFDM symbol index within the slot to extract.
-  /// \param[in]  initial_subcarrier Initial subcarrier index relative to Point A. Parameter \f$k_0^{(p_i)}\f$.
-  /// \param[in]  comb_size          Subcarrier stride. Parameter \f$K_{TC}\f$.
-  /// \return A vector containing the sequence.
-  void extract_sequence(span<cf_t>                  sequence,
-                        const resource_grid_reader& grid,
-                        unsigned                    i_rx_port,
-                        unsigned                    i_symbol,
-                        unsigned                    initial_subcarrier,
-                        unsigned                    comb_size);
+  /// \param comb_size          Comb size, parameter \f$K_{TC}\f$.
+  /// \param sequence_length    Sequence length, parameter \f$M_{sc,b}^{SRS}\f$.
+  /// \return The SRS sequence allocation mask.
+  static bounded_bitset<max_symbol_size> generate_mask(unsigned comb_size, unsigned sequence_length);
 
   /// Dependencies collection.
   dependencies deps;

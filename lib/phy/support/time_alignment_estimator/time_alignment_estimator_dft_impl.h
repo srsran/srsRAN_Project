@@ -47,8 +47,10 @@ public:
   }
 
   // See interface for documentation.
-  time_alignment_measurement
-  estimate(span<const cf_t> symbols, bounded_bitset<max_nof_symbols> mask, subcarrier_spacing scs) override;
+  time_alignment_measurement estimate(span<const cf_t>                symbols,
+                                      bounded_bitset<max_nof_symbols> mask,
+                                      subcarrier_spacing              scs,
+                                      double                          max_ta) override;
 
 private:
   /// DFT processor for converting frequency domain to time domain.

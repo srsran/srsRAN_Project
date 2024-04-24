@@ -138,7 +138,6 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
     return;
   }
 
-  logger.log_info("Sending InitialContextSetupResponse");
   amf_notifier.on_new_message(ngap_msg);
 }
 

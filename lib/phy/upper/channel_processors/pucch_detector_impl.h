@@ -74,18 +74,19 @@ private:
   /// \brief Extracts PUCCH data and channel coefficients.
   ///
   /// This method extracts the PUCCH data REs from the resource grid as well as the corresponding channel estimates.
-  void extract_data_and_estimates(const resource_grid_reader& grid,
-                                  const channel_estimate&     estimates,
-                                  unsigned                    first_symbol,
-                                  unsigned                    first_prb,
-                                  optional<unsigned>          second_prb,
-                                  unsigned                    port);
+  void extract_data_and_estimates(const resource_grid_reader&              grid,
+                                  const channel_estimate&                  estimates,
+                                  unsigned                                 first_symbol,
+                                  unsigned                                 first_prb,
+                                  optional<unsigned>                       second_prb,
+                                  const static_vector<uint8_t, MAX_PORTS>& antenna_ports);
 
   /// \brief Marginalizes the spreading sequences out.
   ///
-  /// A PUCCH Format 1 consists of a single modulation symbol spread over all time and frequency allocated resources.
-  /// This method combines all the replicas into a single estimate of the modulation symbol and it computes the
-  /// equivalent noise variance. The PUCCH configuration is needed to build the proper spreading sequences.
+  /// A PUCCH Format 1 consists of a single modulation symbol spread over all time and frequency allocated
+  /// resources. This method combines all the replicas into a single estimate of the modulation symbol and it
+  /// computes the equivalent noise variance. The PUCCH configuration is needed to build the proper spreading
+  /// sequences.
   void marginalize_w_and_r_out(const format1_configuration& config);
 
   /// Collection of low-PAPR sequences.
@@ -98,7 +99,7 @@ private:
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
                 cf_t,
-                MAX_ALLOCATED_RE_F1 / 2,
+                MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::re_list::dims>
       time_spread_sequence;
   /// \brief Tensor for storing the channel estimates corresponding to the spread data sequence.
@@ -106,7 +107,7 @@ private:
   static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
                     channel_equalizer::ch_est_list::dims::nof_dims),
                 cf_t,
-                MAX_ALLOCATED_RE_F1 / 2,
+                MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::ch_est_list::dims>
       ch_estimates;
   /// \brief Buffer for storing the spread data sequence after equalization.
@@ -124,6 +125,8 @@ private:
                 MAX_ALLOCATED_RE_F1 / 2,
                 channel_equalizer::re_list::dims>
       eq_time_spread_noise_var;
+  /// Buffer for noise variances.
+  std::array<float, MAX_PORTS> noise_var_buffer;
   /// Buffer for storing alpha indices.
   std::array<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_buffer;
   /// View of the alpha indices buffer.

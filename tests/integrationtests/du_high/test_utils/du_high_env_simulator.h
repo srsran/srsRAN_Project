@@ -71,6 +71,8 @@ public:
 
   bool run_ue_context_setup(rnti_t rnti);
 
+  bool force_ue_fallback(rnti_t rnti);
+
   void run_slot();
 
   bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);

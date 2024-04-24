@@ -135,7 +135,7 @@ struct test_bench {
     }
     ue_db.add_ue(std::move(u));
     auto& ue = ue_db[create_req.ue_index];
-    ue.get_pcell().set_fallback_state(true);
+    ue.get_pcell().set_fallback_state(srsran::ue_cell::fallback_state::fallback);
     return true;
   }
 };
@@ -306,8 +306,7 @@ protected:
 
   void push_buffer_state_to_ul_ue(du_ue_index_t ue_idx, slot_point sl, unsigned buffer_size)
   {
-    // Notification from upper layers of DL buffer state.
-
+    // Notification from upper layers of UL buffer status report.
     ul_bsr_indication_message msg{.cell_index = to_du_cell_index(0U),
                                   .ue_index   = ue_idx,
                                   .crnti      = to_rnti(0x4601 + static_cast<uint16_t>(ue_idx)),
@@ -317,8 +316,17 @@ protected:
 
     bench->ue_db[ue_idx].handle_bsr_indication(msg);
 
-    // Notify scheduler of DL buffer state.
+    // Notify scheduler of UL buffer status report.
     bench->fallback_sched.handle_ul_bsr_indication(ue_idx, msg);
+  }
+
+  void generate_sr_for_ue(du_ue_index_t ue_idx, slot_point sl)
+  {
+    // Notification from upper layers of UL .
+    bench->ue_db[ue_idx].handle_sr_indication();
+
+    // Notify scheduler of SR.
+    bench->fallback_sched.handle_sr_indication(ue_idx);
   }
 
   unsigned get_pending_bytes(du_ue_index_t ue_idx)
@@ -1132,8 +1140,9 @@ protected:
       if (sl == slot_generate_srb_traffic) {
         const unsigned srb_buffer = test_rgen::uniform_int(128U, parent->MAX_MAC_UL_SRB1_SDU_SIZE);
         parent->push_buffer_state_to_ul_ue(test_ue.ue_index, sl, srb_buffer);
-        buffer_bytes = srb_buffer;
-        test_logger.info("rnti={}, slot={}: pushing traffic", test_ue.crnti, sl);
+        buffer_bytes            = srb_buffer;
+        initied_with_ul_traffic = true;
+        test_logger.info("rnti={}, slot={}: generating initial BSR indication", test_ue.crnti, sl);
       }
 
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
@@ -1173,6 +1182,7 @@ protected:
     unsigned                      buffer_bytes = 0;
     srslog::basic_logger&         test_logger  = srslog::fetch_basic_logger("TEST");
     slot_point                    slot_generate_srb_traffic;
+    bool                          initied_with_ul_traffic = false;
   };
 
   ul_fallback_sched_test_params params;
@@ -1183,8 +1193,11 @@ protected:
   std::vector<ue_ul_tester> ues_testers;
 };
 
-TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
+TEST_P(ul_fallback_scheduler_tester, all_ul_ue_are_served_and_buffer_gets_emptied)
 {
+  // This test verifies that all UEs get a BSR for UL SRB traffic, and by the end of the test, all UEs will get served
+  // and their buffer will be left with 0 bytes.
+
   for (unsigned du_idx = 0; du_idx < MAX_UES; du_idx++) {
     add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
     ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
@@ -1199,12 +1212,64 @@ TEST_P(ul_fallback_scheduler_tester, test_scheduling_srb1_ul_1_ue)
   }
 
   for (auto& tester : ues_testers) {
+    ASSERT_TRUE(tester.initied_with_ul_traffic)
+        << fmt::format("No UL traffic generated for UE {}", tester.test_ue.ue_index);
     ASSERT_FALSE(tester.buffer_bytes > 0) << fmt::format("UE {} has still pending UL bytes", tester.test_ue.ue_index);
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(test1,
+INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
                          ul_fallback_scheduler_tester,
+                         testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
+                                         ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
+
+class ul_fallback_sched_tester_sr_indication : public base_fallback_tester,
+                                               public ::testing::TestWithParam<ul_fallback_sched_test_params>
+{
+protected:
+  ul_fallback_sched_tester_sr_indication() : base_fallback_tester(GetParam().duplx_mode)
+  {
+    setup_sched(config_helpers::make_default_scheduler_expert_config(),
+                test_helpers::make_default_sched_cell_configuration_request(builder_params));
+    slot_generate_srb_traffic =
+        slot_point{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
+                   test_rgen::uniform_int(20U, 40U)};
+  }
+
+  ul_fallback_sched_test_params params;
+  const unsigned                MAX_TEST_RUN_SLOTS = 100;
+  slot_point                    slot_generate_srb_traffic;
+};
+
+TEST_P(ul_fallback_sched_tester_sr_indication, when_gnb_receives_sr_ind_ue_gets_scheduled)
+{
+  unsigned du_idx = 0;
+  add_ue(to_rnti(0x4601 + du_idx), to_du_ue_index(du_idx));
+
+  auto& ue = bench->ue_db[to_du_ue_index(du_idx)];
+
+  // Generate SR for this UE.
+  generate_sr_for_ue(to_du_ue_index(du_idx), slot_generate_srb_traffic);
+
+  bool pusch_allocated = false;
+  for (unsigned sl = 1; sl < MAX_TEST_RUN_SLOTS; ++sl) {
+    run_slot();
+
+    auto& puschs   = bench->res_grid[0].result.ul.puschs;
+    auto  pusch_it = std::find_if(puschs.begin(), puschs.end(), [rnti = ue.crnti](const ul_sched_info& pusch) {
+      return pusch.pusch_cfg.rnti == rnti;
+    });
+    if (pusch_it != puschs.end()) {
+      pusch_allocated = true;
+      break;
+    }
+  }
+
+  ASSERT_TRUE(pusch_allocated);
+}
+
+INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
+                         ul_fallback_sched_tester_sr_indication,
                          testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
                                          ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
 

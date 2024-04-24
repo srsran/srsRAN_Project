@@ -78,13 +78,6 @@ void ue_context_release_procedure::send_ue_context_release_command()
   f1ap_ue_ctxt_rel_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   f1ap_ue_ctxt_rel_msg.pdu.init_msg().value.ue_context_release_cmd() = command;
 
-  if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
-    asn1::json_writer js;
-    f1ap_ue_ctxt_rel_msg.pdu.to_json(js);
-    logger.debug(
-        "{}: Containerized UEContextReleaseCommand: {}", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()}, js.to_string());
-  }
-
   // send UE Context Release Command
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_rel_msg);
 }

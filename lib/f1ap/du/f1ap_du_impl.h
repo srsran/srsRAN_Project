@@ -79,6 +79,8 @@ public:
   du_ue_index_t       get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
 
 private:
+  class tx_pdu_notifier_with_logging;
+
   /// \brief Notify the DU about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
@@ -113,12 +115,15 @@ private:
   /// \brief Handle Paging as per TS38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
-  srslog::basic_logger& logger;
-  task_executor&        ctrl_exec;
+  /// \brief Log F1AP PDU.
+  void log_pdu(bool is_rx, const f1ap_message& pdu);
+
+  srslog::basic_logger&    logger;
+  task_executor&           ctrl_exec;
+  f1ap_du_configurator&    du_mng;
+  f1ap_du_paging_notifier& paging_notifier;
 
   f1ap_du_connection_handler connection_handler;
-
-  f1ap_du_configurator& du_mng;
 
   f1ap_du_ue_manager ues;
 
@@ -126,7 +131,7 @@ private:
 
   std::unique_ptr<f1ap_event_manager> events;
 
-  f1ap_du_paging_notifier& paging_notifier;
+  std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
 };
 
 } // namespace srs_du

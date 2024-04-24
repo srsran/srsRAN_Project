@@ -191,7 +191,8 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
     return false;
   }));
 
-  // Enqueue SRB1 data.
+  // Enqueue SRB1 data; with the UE in fallback mode, and after the MSG4 has been delivered, both common and dedicated
+  // resources should be used.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});
 
   // Ensure common resources for PDCCH and PDSCH are used rather than UE-dedicated.
@@ -203,15 +204,58 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]);
   ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
 
-  // Ensure common PUCCH resources are used.
-  const pucch_info* pucch_ptr = nullptr;
-  ASSERT_TRUE(this->run_slot_until([this, &pucch_ptr]() {
-    for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
-        pucch_ptr = &pucch;
-        return true;
+  // Ensure both common and PUCCH resources are used.
+  struct pucch_ptrs {
+    const pucch_info* f1_common_ptr = nullptr;
+    const pucch_info* f1_ded_ptr    = nullptr;
+    const pucch_info* f1_ded_sr_ptr = nullptr;
+    const pucch_info* f2_ptr        = nullptr;
+  } pucch_res_ptrs;
+
+  ASSERT_TRUE(this->run_slot_until([this, &pucch_res_ptrs]() {
+    // Depending on the SR and CSI slots, we can have different combinations of PUCCH grants. There must be at least one
+    // PUCCH F1 grant using common resources, plus:
+    // - 1 PUCCH F1 ded. with 1 HARQ-ACK bit and NO SR.
+    // - 1 PUCCH F1 ded. with 1 HARQ-ACK bit and NO SR and 1 PUCCH F1 ded. with 1 HARQ-ACK bit and SR.
+    // - 1 PUCCH F2 ded. with 1 HARQ-ACK bit and CSI, with optional SR.
+
+    // Case of 2 PUCCH grants.
+    if (this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.size() == 2) {
+      for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
+        if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and
+            pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0) {
+          pucch.resources.second_hop_prbs.empty() ? pucch_res_ptrs.f1_ded_ptr    = &pucch
+                                                  : pucch_res_ptrs.f1_common_ptr = &pucch;
+        } else if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_2 and
+                   pucch.format_2.harq_ack_nof_bits > 0) {
+          pucch_res_ptrs.f2_ptr = &pucch;
+        }
+        if (pucch_res_ptrs.f1_common_ptr != nullptr and
+            (pucch_res_ptrs.f1_ded_ptr != nullptr or pucch_res_ptrs.f2_ptr != nullptr)) {
+          return true;
+        }
       }
     }
+    // Case of 3 PUCCH grants.
+    else if (this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.size() == 3) {
+      for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
+        if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1) {
+          if (pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
+            if (pucch.format_1.harq_ack_nof_bits > 0) {
+              pucch.resources.second_hop_prbs.empty() ? pucch_res_ptrs.f1_ded_ptr    = &pucch
+                                                      : pucch_res_ptrs.f1_common_ptr = &pucch;
+            }
+          } else {
+            pucch_res_ptrs.f1_ded_sr_ptr = &pucch;
+          }
+        }
+        if (pucch_res_ptrs.f1_common_ptr != nullptr and pucch_res_ptrs.f1_ded_ptr != nullptr and
+            pucch_res_ptrs.f1_ded_sr_ptr != nullptr) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }));
   // TODO: Once PUCCH scheduler avoids multiplexing SR and HARQ-ACK for common PUCCH resources, uncomment the following.
@@ -220,10 +264,12 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   //                          [this](const pucch_info& pucch) { return pucch.crnti == rnti; }),
   //            1)
   //      << "In case of common PUCCH scheduling, multiplexing with SR or CSI should be avoided";
-  ASSERT_NE(pucch_ptr, nullptr);
-  ASSERT_EQ(pucch_ptr->format, pucch_format::FORMAT_1);
-  ASSERT_EQ(pucch_ptr->format_1.sr_bits, sr_nof_bits::no_sr);
-  ASSERT_FALSE(pucch_ptr->resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";
+
+  const bool two_pucch_grants = pucch_res_ptrs.f1_common_ptr != nullptr and
+                                (pucch_res_ptrs.f1_ded_ptr != nullptr or pucch_res_ptrs.f2_ptr != nullptr);
+  const bool three_pucch_grants = pucch_res_ptrs.f1_common_ptr != nullptr and pucch_res_ptrs.f1_ded_ptr != nullptr and
+                                  pucch_res_ptrs.f1_ded_sr_ptr != nullptr;
+  ASSERT_TRUE(two_pucch_grants or three_pucch_grants) << "Invalid PUCCH grants combination";
 }
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_ss_is_used)

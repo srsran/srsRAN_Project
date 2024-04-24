@@ -136,5 +136,5 @@ void rlc_tx_tm_entity::update_mac_buffer_state()
 
 uint32_t rlc_tx_tm_entity::get_buffer_state()
 {
-  return sdu_queue.size_bytes() + sdu.buf.length();
+  return sdu_queue.get_state().n_bytes + sdu.buf.length();
 }

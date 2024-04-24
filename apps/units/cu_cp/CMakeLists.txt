@@ -18,4 +18,10 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(flexible_du)
+set(SOURCES
+        cu_cp_application_unit_impl.cpp
+        cu_cp_unit_config_validator.cpp
+        cu_cp_unit_config_cli11_schema.cpp)
+
+add_library(srsran_cu_cp_app_unit STATIC ${SOURCES})
+target_include_directories(srsran_cu_cp_app_unit PRIVATE ${CMAKE_SOURCE_DIR})

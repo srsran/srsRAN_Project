@@ -54,7 +54,7 @@ struct formatter<srsran::srs_channel_matrix> {
         if (i_tx_port != 0) {
           format_to(ctx.out(), ",");
         }
-        format_to(ctx.out(), "{:+.2f}", matrix.get_coefficient(i_rx_port, i_tx_port));
+        format_to(ctx.out(), "{:+.3f}", matrix.get_coefficient(i_rx_port, i_tx_port));
       }
     }
     format_to(ctx.out(), "]");

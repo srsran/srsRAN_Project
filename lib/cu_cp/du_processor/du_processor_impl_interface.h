@@ -26,13 +26,9 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/rnti.h"
-#include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_du.h"
 #include <string>
 
@@ -167,7 +163,7 @@ public:
 };
 
 /// Interface for an RRC UE entity to communicate with the DU processor.
-class du_processor_rrc_ue_interface : public du_processor_ue_context_notifier
+class du_processor_rrc_ue_interface
 {
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
@@ -389,6 +385,10 @@ public:
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.
   /// \param[in] target_ue_index The index of the UE that is the target of the handover.
   virtual void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
+
+  /// \brief Notify the CU-CP to release a UE.
+  /// \param[in] request The release request.
+  virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
 };
 
 /// DU processor Paging handler.

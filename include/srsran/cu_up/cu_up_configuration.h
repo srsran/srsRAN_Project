@@ -47,6 +47,10 @@ struct network_interface_config {
   /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   std::string n3_bind_addr = "127.0.1.1";
 
+  /// External IP address that is advertised to receive GTP-U packets from UPF via N3 interface.
+  /// It defaults to \c n3_bind_addr but may differ in case the CU-UP is behind a NAT.
+  std::string n3_ext_addr = "auto";
+
   /// Interface name to bind the N3. `auto` does not force a specific interface and uses a normal `bind()`.
   std::string n3_bind_interface = "auto";
 

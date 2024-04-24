@@ -92,7 +92,7 @@ public:
 
   ngap_ue_context& operator[](ran_ue_id_t ran_ue_id)
   {
-    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue={}: NGAP UE context not found", ran_ue_id);
     return ues.at(ran_ue_id);
   }
 
@@ -101,7 +101,7 @@ public:
     srsran_assert(
         ue_index_to_ran_ue_id.find(ue_index) != ue_index_to_ran_ue_id.end(), "ue={}: RAN-UE-ID not found", ue_index);
     srsran_assert(ues.find(ue_index_to_ran_ue_id.at(ue_index)) != ues.end(),
-                  "ran_ue_id={}: NGAP UE context not found",
+                  "ran_ue={}: NGAP UE context not found",
                   ue_index_to_ran_ue_id.at(ue_index));
     return ues.at(ue_index_to_ran_ue_id.at(ue_index));
   }
@@ -109,20 +109,37 @@ public:
   ngap_ue_context& operator[](amf_ue_id_t amf_ue_id)
   {
     srsran_assert(amf_ue_id_to_ran_ue_id.find(amf_ue_id) != amf_ue_id_to_ran_ue_id.end(),
-                  "amf_ue_id={}: RAN-UE-ID not found",
+                  "amf_ue={}: RAN-UE-ID not found",
                   amf_ue_id);
     srsran_assert(ues.find(amf_ue_id_to_ran_ue_id.at(amf_ue_id)) != ues.end(),
-                  "ran_ue_id={}: NGAP UE context not found",
+                  "ran_ue={}: NGAP UE context not found",
                   amf_ue_id_to_ran_ue_id.at(amf_ue_id));
     return ues.at(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
+  }
+
+  ngap_ue_context* find(ran_ue_id_t ran_ue_id)
+  {
+    auto it = ues.find(ran_ue_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+  const ngap_ue_context* find(ran_ue_id_t ran_ue_id) const
+  {
+    auto it = ues.find(ran_ue_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
   }
 
   ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id, timer_manager& timers, task_executor& task_exec)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
+    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue={}", ran_ue_id);
 
-    logger.debug("ue={} ran_ue_id={}: Adding NGAP UE context", ue_index, ran_ue_id);
+    logger.debug("ue={} ran_ue={}: NGAP UE context created", ue_index, ran_ue_id);
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ran_ue_id),
                 std::forward_as_tuple(ue_index, ran_ue_id, timers, task_exec));
@@ -132,9 +149,9 @@ public:
 
   void update_amf_ue_id(ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
   {
-    srsran_assert(amf_ue_id != amf_ue_id_t::invalid, "Invalid amf_ue_id={}", amf_ue_id);
-    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
-    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+    srsran_assert(amf_ue_id != amf_ue_id_t::invalid, "Invalid amf_ue={}", amf_ue_id);
+    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue={}", ran_ue_id);
+    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue={}: NGAP UE context not found", ran_ue_id);
 
     auto& ue = ues.at(ran_ue_id);
 
@@ -143,13 +160,13 @@ public:
       return;
     } else if (ue.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
       // If it was not set before, we add it
-      ue.logger.log_debug("Adding amf_ue_id={}", amf_ue_id);
+      ue.logger.log_debug("Setting AMF-UE-NGAP-ID={}", amf_ue_id);
       ue.ue_ids.amf_ue_id = amf_ue_id;
       amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
     } else if (ue.ue_ids.amf_ue_id != amf_ue_id) {
       // If it was set before, we update it
       amf_ue_id_t old_amf_ue_id = ue.ue_ids.amf_ue_id;
-      ue.logger.log_info("Updating AMF-UE-ID. New amf_ue_id={}", amf_ue_id);
+      ue.logger.log_info("Updating AMF-UE-NGAP-ID={}", amf_ue_id);
       ue.ue_ids.amf_ue_id = amf_ue_id;
       amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
       amf_ue_id_to_ran_ue_id.erase(old_amf_ue_id);
@@ -168,7 +185,7 @@ public:
 
     ran_ue_id_t ran_ue_id = ue_index_to_ran_ue_id.at(old_ue_index);
 
-    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue={}: NGAP UE context not found", ran_ue_id);
 
     // Update UE context
     ues.at(ran_ue_id).ue_ids.ue_index = new_ue_index;
@@ -197,7 +214,7 @@ public:
     ue_index_to_ran_ue_id.erase(ue_index);
 
     if (ues.find(ran_ue_id) == ues.end()) {
-      logger.warning("ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+      logger.warning("ran_ue={}: NGAP UE context not found", ran_ue_id);
       return;
     }
 

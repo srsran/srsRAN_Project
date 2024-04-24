@@ -198,10 +198,22 @@ public:
   virtual rrc_ue_reestablishment_context_response
   handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 
+  /// \brief Handle reestablishment failure by releasing the old UE.
+  /// \param[in] request The release request.
+  virtual void handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) = 0;
+
+  /// \brief Handle an successful reestablishment by removing the old UE.
+  /// \param[in] ue_index The index of the old UE to remove.
+  virtual void handle_rrc_reestablishment_complete(ue_index_t old_ue_index) = 0;
+
   /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// \brief Handle a UE release request.
+  /// \param[in] request The release request.
+  virtual async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) = 0;
 };
 
 /// Interface for entities (e.g. DU processor) that wish to manipulate the context of a UE.
@@ -209,6 +221,10 @@ class cu_cp_ue_context_manipulation_handler
 {
 public:
   virtual ~cu_cp_ue_context_manipulation_handler() = default;
+
+  /// \brief Handle a UE release request.
+  /// \param[in] request The release request.
+  virtual async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) = 0;
 
   /// \brief Transfer and remove UE contexts for an ongoing Reestablishment/Handover.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request or is the target UE.

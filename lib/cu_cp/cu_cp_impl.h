@@ -26,7 +26,6 @@
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
-#include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_du_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
@@ -36,7 +35,6 @@
 #include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "ue_manager/ue_manager_impl.h"
-#include "ue_manager/ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -70,8 +68,11 @@ public:
   // RRC UE handler
   rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+  void             handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override;
+  void             handle_rrc_reestablishment_complete(ue_index_t old_ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
+  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
   // cu_cp_measurement_handler
   optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,

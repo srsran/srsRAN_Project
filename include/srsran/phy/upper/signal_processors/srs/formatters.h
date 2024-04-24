@@ -77,7 +77,7 @@ struct formatter<srsran::srs_estimator_result> {
   auto format(const srsran::srs_estimator_result& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    helper.format_always(ctx, "t_align={}", config.time_align.to_seconds());
+    helper.format_always(ctx, "t_align={:.1}us", config.time_alignment.time_alignment * 1e6);
     helper.format_always(ctx, "noise_var={}", config.noise_variance);
     helper.format_if_verbose(ctx, "H={}", config.channel_matrix);
 

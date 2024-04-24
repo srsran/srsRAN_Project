@@ -244,7 +244,7 @@ static bool validate_rv_sequence(span<const unsigned> rv_sequence)
 }
 
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
+static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config, unsigned cell_bw_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -264,11 +264,23 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
     return false;
   }
 
+  if (config.end_rb <= config.start_rb) {
+    fmt::print("Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb",
+               config.start_rb,
+               config.end_rb);
+    return false;
+  }
+
+  if (config.start_rb >= cell_bw_crbs) {
+    fmt::print("Invalid start RB {} for UE PDSCHs. The start_rb must be less than the cell BW", config.start_rb);
+    return false;
+  }
+
   return true;
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
+static bool validate_pusch_cell_app_config(const pusch_appconfig& config, unsigned cell_bw_crbs)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -278,6 +290,25 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
   }
 
   if (not validate_rv_sequence(config.rv_sequence)) {
+    return false;
+  }
+
+  if (config.max_rb_size < config.min_rb_size) {
+    fmt::print("Invalid UE PUSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+               config.min_rb_size,
+               config.max_rb_size);
+    return false;
+  }
+
+  if (config.end_rb <= config.start_rb) {
+    fmt::print("Invalid RB allocation range [{}, {}) for UE PUSCHs. The start_rb must be less or equal to the end_rb",
+               config.start_rb,
+               config.end_rb);
+    return false;
+  }
+
+  if (config.start_rb >= cell_bw_crbs) {
+    fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW", config.start_rb);
     return false;
   }
 
@@ -583,7 +614,12 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
+  const nr_band band =
+      config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+  const unsigned nof_crbs =
+      band_helper::get_n_rbs_from_bw(config.channel_bw_mhz, config.common_scs, band_helper::get_freq_range(band));
+
+  if (!validate_pdsch_cell_app_config(config.pdsch_cfg, nof_crbs)) {
     return false;
   }
 
@@ -595,11 +631,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pusch_cell_app_config(config.pusch_cfg)) {
+  if (!validate_pusch_cell_app_config(config.pusch_cfg, nof_crbs)) {
     return false;
   }
 
-  nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
   if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
     return false;
   }
@@ -639,6 +674,33 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
     }
   }
 
+  // Checks parameter collisions between cells that can lead to problems.
+  for (const auto* it = config.begin(); it != config.end(); ++it) {
+    for (const auto* it2 = it + 1; it2 != config.end(); ++it2) {
+      const auto& cell1 = *it;
+      const auto& cell2 = *it2;
+
+      // Check if both cells are on the same frequency.
+      if (cell1.cell.dl_arfcn == cell2.cell.dl_arfcn) {
+        // Two cells on the same frequency should not have the same physical cell identifier.
+        if (cell1.cell.pci == cell2.cell.pci) {
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).",
+                     cell1.cell.dl_arfcn,
+                     cell1.cell.pci);
+        }
+
+        // Two cells on the same frequency should not share the same PRACH root sequence index.
+        if ((cell1.cell.prach_cfg.prach_frequency_start == cell2.cell.prach_cfg.prach_frequency_start) &&
+            (cell1.cell.prach_cfg.prach_root_sequence_index == cell2.cell.prach_cfg.prach_root_sequence_index)) {
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PRACH root sequence index "
+                     "(i.e., {}).",
+                     cell1.cell.dl_arfcn,
+                     cell1.cell.prach_cfg.prach_root_sequence_index);
+        }
+      }
+    }
+  }
+
   return true;
 }
 
@@ -649,95 +711,6 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   if (config.ip_addr.empty() or config.port != 38412) {
     return false;
   }
-  return true;
-}
-
-static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_appconfig& config)
-{
-  // check that report config ids are unique
-  std::map<unsigned, std::string> report_cfg_ids_to_report_type;
-  for (const auto& report_cfg : config.report_configs) {
-    if (report_cfg_ids_to_report_type.find(report_cfg.report_cfg_id) != report_cfg_ids_to_report_type.end()) {
-      fmt::print("Report config ids must be unique\n");
-      return false;
-    }
-    report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
-  }
-
-  // check cu_cp_cell_config
-  std::set<nr_cell_id_t> ncis;
-  for (const auto& cell : config.cells) {
-    if (ncis.emplace(cell.nr_cell_id).second == false) {
-      fmt::print("Cells must be unique ({:#x} already present)\n");
-      return false;
-    }
-
-    if (cell.ssb_period.has_value() && cell.ssb_offset.has_value() &&
-        cell.ssb_offset.value() >= cell.ssb_period.value()) {
-      fmt::print("ssb_offset must be smaller than ssb_period\n");
-      return false;
-    }
-
-    // check that for the serving cell only periodic reports are configured
-    if (cell.periodic_report_cfg_id.has_value()) {
-      if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
-        fmt::print("For the serving cell only periodic reports are allowed\n");
-        return false;
-      }
-    }
-
-    // Check if cell is an external managed cell
-    if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
-      if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
-          !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
-          !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
-        fmt::print(
-            "For external cells, the gnb_id_bit_length, pci, band, ssb_arfcn, ssb_scs, ssb_period, ssb_offset and "
-            "ssb_duration must be configured in the mobility config\n");
-        return false;
-      }
-    } else {
-      if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
-          cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
-        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
-                   "ssb_offset and "
-                   "ssb_duration must not be configured in the mobility config\n");
-        return false;
-      }
-    }
-  }
-
-  // verify that each configured neighbor cell is present
-  for (const auto& cell : config.cells) {
-    for (const auto& ncell : cell.ncells) {
-      if (ncis.find(ncell.nr_cell_id) == ncis.end()) {
-        fmt::print("Neighbor cell config for nci={:#x} incomplete. No valid configuration for cell nci={:#x} found.\n",
-                   cell.nr_cell_id,
-                   ncell.nr_cell_id);
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
-static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
-{
-  // check if the pdu_session_setup_timout is larger than T310
-  if (config.pdu_session_setup_timeout * 1000 < sib_cfg.ue_timers_and_constants.t310) {
-    fmt::print("pdu_session_setup_timeout ({}ms) must be larger than T310 ({}ms)\n",
-               config.pdu_session_setup_timeout * 1000,
-               sib_cfg.ue_timers_and_constants.t310);
-    return false;
-  }
-
-  // validate mobility config
-  if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
-    return false;
-  }
-
   return true;
 }
 
@@ -976,66 +949,6 @@ static bool validate_srb_appconfig(const std::map<srb_id_t, srb_appconfig>& conf
   return true;
 }
 
-/// Validates the given security configuration. Returns true on success, otherwise false.
-static bool validate_security_appconfig(const security_appconfig& config)
-{
-  // String splitter helper
-  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
-    std::vector<std::string> result;
-    std::stringstream        ss(s);
-    std::string              item;
-
-    while (getline(ss, item, delim)) {
-      result.push_back(item);
-    }
-
-    return result;
-  };
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nea_preference_list = config.nea_preference_list;
-  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
-                            nea_preference_list.end());
-  std::transform(nea_preference_list.begin(),
-                 nea_preference_list.end(),
-                 nea_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nea_v = split(nea_preference_list, ',');
-
-  // > Check valid ciphering algos
-  for (const std::string& algo : nea_v) {
-    if (algo != "nea0" and algo != "nea1" and algo != "nea2" and algo != "nea3") {
-      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\". algo={}\n",
-                 algo);
-      return false;
-    }
-  }
-
-  // > Remove spaces, convert to lower case and split on comma
-  std::string nia_preference_list = config.nia_preference_list;
-  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
-                            nia_preference_list.end());
-  std::transform(nia_preference_list.begin(),
-                 nia_preference_list.end(),
-                 nia_preference_list.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nia_v = split(nia_preference_list, ',');
-
-  // > Check valid integrity algos
-  for (const std::string& algo : nia_v) {
-    if (algo == "nia0") {
-      fmt::print("NIA0 cannot be selected in the algorithm preferences.\n");
-      return false;
-    }
-    if (algo != "nia1" and algo != "nia2" and algo != "nia3") {
-      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\". algo={}\n", algo);
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /// Validates the given logging configuration. Returns true on success, otherwise false.
 static bool validate_log_appconfig(const log_appconfig& config)
 {
@@ -1056,10 +969,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
     return false;
   }
 
-  if (srslog::str_to_basic_level(config.cu_level) == srslog::basic_levels::none) {
-    return false;
-  }
-
   if (srslog::str_to_basic_level(config.phy_level) == srslog::basic_levels::none) {
     return false;
   }
@@ -1073,10 +982,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
   }
 
   if (srslog::str_to_basic_level(config.pdcp_level) == srslog::basic_levels::none) {
-    return false;
-  }
-
-  if (srslog::str_to_basic_level(config.rrc_level) == srslog::basic_levels::none) {
     return false;
   }
 
@@ -1368,10 +1273,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_cu_cp_appconfig(config.gnb_id, config.cu_cp_cfg, config.cells_cfg.front().cell.sib_cfg)) {
-    return false;
-  }
-
   if (!validate_cells_appconfig(config.cells_cfg)) {
     return false;
   }
@@ -1393,10 +1294,6 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_srb_appconfig(config.srb_cfg)) {
-    return false;
-  }
-
-  if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
     return false;
   }
 

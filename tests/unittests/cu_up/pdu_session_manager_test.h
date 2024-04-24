@@ -30,11 +30,16 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-/// Fixture class for UE manager tests
-class pdu_session_manager_test : public ::testing::Test
+const network_interface_config net_config_default = {};
+
+/// Fixture base class for PDU session manager tests
+class pdu_session_manager_test_base
 {
 protected:
-  void SetUp() override
+  virtual ~pdu_session_manager_test_base()          = default;
+  virtual network_interface_config get_net_config() = 0;
+
+  void init()
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -54,6 +59,7 @@ protected:
 
     manual_task_worker teid_worker{128};
 
+    net_config      = get_net_config();
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  qos,
                                                                  security_info,
@@ -75,7 +81,7 @@ protected:
                                                                  gtpu_pcap);
   }
 
-  void TearDown() override
+  void finish()
   {
     // flush logger after each test
     srslog::flush();
@@ -96,6 +102,30 @@ protected:
   network_interface_config                             net_config;
   n3_interface_config                                  n3_config = {};
   cu_up_ue_logger                                      logger{"CU-UP", {MIN_UE_INDEX}};
+};
+
+/// Fixture class for PDU session manager tests with default network interface config
+class pdu_session_manager_test : public pdu_session_manager_test_base, public ::testing::Test
+{
+protected:
+  network_interface_config get_net_config() override { return net_config_default; }
+  void                     SetUp() override { init(); }
+  void                     TearDown() override { finish(); }
+};
+
+/// Fixture class for PDU session manager tests with configurable N3 ext addr
+class pdu_session_manager_test_set_n3_ext_addr : public pdu_session_manager_test_base,
+                                                 public ::testing::TestWithParam<const char*>
+{
+protected:
+  network_interface_config get_net_config() override
+  {
+    network_interface_config cfg = net_config_default;
+    cfg.n3_ext_addr              = GetParam();
+    return cfg;
+  }
+  void SetUp() override { init(); }
+  void TearDown() override { finish(); }
 };
 
 inline e1ap_pdu_session_res_to_setup_item

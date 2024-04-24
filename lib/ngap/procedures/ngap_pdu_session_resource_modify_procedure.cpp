@@ -152,6 +152,5 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
     return;
   }
 
-  logger.log_info("Sending PduSessionResourceModifyResponse");
   amf_notifier.on_new_message(ngap_msg);
 }

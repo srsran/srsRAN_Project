@@ -77,14 +77,22 @@ public:
   pucch_harq_resource_alloc_record
   reserve_next_f2_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
+  /// \brief Returns a specific PUCCH format 1 resource (identified by the res. indicator) to be used for HARQ-ACK.
+  /// \return If the specific PUCCH resource is available, it returns the pointer to the configuration. Else, it returns
+  /// \c nullptr.
+  const pucch_resource* reserve_f1_res_by_res_indicator(slot_point          slot_harq,
+                                                        rnti_t              crnti,
+                                                        unsigned            res_indicator,
+                                                        const pucch_config& pucch_cfg);
+
   /// \brief Returns a specific PUCCH format 2 resource (identified by the res. indicator) to be used for HARQ-ACK.
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
   /// \return If the specific PUCCH resource is available, it returns the pointer to the configuration. Else, it returns
   /// \c nullptr.
-  const pucch_resource* reserve_specific_format2_res(slot_point          slot_harq,
-                                                     rnti_t              crnti,
-                                                     unsigned            res_indicator,
-                                                     const pucch_config& pucch_cfg);
+  const pucch_resource* reserve_f2_res_by_res_indicator(slot_point          slot_harq,
+                                                        rnti_t              crnti,
+                                                        unsigned            res_indicator,
+                                                        const pucch_config& pucch_cfg);
 
   /// \brief Returns the specific PUCCH format 2 resource config to be used for CSI, if available.
   /// \remark If SR multiplexing is enabled, this resource can be used for CSI + SR.
@@ -189,6 +197,12 @@ private:
                                                                    rnti_t              crnti,
                                                                    const pucch_config& pucch_cfg,
                                                                    pucch_format        format);
+
+  const pucch_resource* reserve_harq_res_by_res_indicator(slot_point          slot_harq,
+                                                          rnti_t              crnti,
+                                                          unsigned            res_indicator,
+                                                          const pucch_config& pucch_cfg,
+                                                          pucch_format        format);
 
   bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
 

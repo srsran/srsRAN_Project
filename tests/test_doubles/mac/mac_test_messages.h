@@ -24,6 +24,7 @@
 
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/mac/mac_pdu_handler.h"
+#include "srsran/scheduler/harq_id.h"
 
 namespace srsran {
 
@@ -42,6 +43,8 @@ mac_rx_data_indication create_pdu_with_sdu(slot_point sl_rx, rnti_t rnti, lcid_t
 mac_uci_pdu create_uci_pdu(const pucch_info& pucch);
 
 mac_uci_indication_message create_uci_indication(slot_point sl_rx, span<const pucch_info> pucchs);
+
+mac_crc_indication_message create_crc_indication(slot_point sl_rx, rnti_t rnti, harq_id_t h_id);
 
 } // namespace test_helpers
 } // namespace srsran

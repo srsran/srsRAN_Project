@@ -72,17 +72,34 @@ inline const char* get_message_type_str(const asn1::f1ap::f1ap_pdu_c& pdu)
 inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
 {
   using namespace asn1::f1ap;
+  using init_types = f1ap_elem_procs_o::init_msg_c::types_opts;
   switch (out.value.type().value) {
-    case f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request:
+    case init_types::reset:
+      return out.value.reset()->transaction_id;
+    case init_types::f1_setup_request:
       return out.value.f1_setup_request()->transaction_id;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
-      return out.value.gnb_cu_cfg_upd()->transaction_id;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_du_cfg_upd:
+    case init_types::gnb_du_cfg_upd:
       return out.value.gnb_du_cfg_upd()->transaction_id;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request:
-      return (*out.value.f1_removal_request())[0]->transaction_id();
-    case f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer:
-      return (*out.value.init_ul_rrc_msg_transfer()).transaction_id;
+    case init_types::gnb_cu_cfg_upd:
+      return out.value.gnb_cu_cfg_upd()->transaction_id;
+    case init_types::write_replace_warning_request:
+      return out.value.write_replace_warning_request()->transaction_id;
+    case init_types::pws_cancel_request:
+      return out.value.pws_cancel_request()->transaction_id;
+    case init_types::gnb_du_res_coordination_request:
+      return out.value.gnb_du_res_coordination_request()->transaction_id;
+    case init_types::f1_removal_request: {
+      const auto& list = *out.value.f1_removal_request();
+      if (list.size() == 0) {
+        return nullopt;
+      }
+      return list[0]->transaction_id();
+    }
+      // TODO: Remaining cases.
+    case init_types::error_ind:
+      return out.value.error_ind()->transaction_id;
+    case init_types::init_ul_rrc_msg_transfer:
+      return out.value.init_ul_rrc_msg_transfer()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -94,14 +111,23 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
 inline optional<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome_s& out)
 {
   using namespace asn1::f1ap;
+  using success_types = f1ap_elem_procs_o::successful_outcome_c::types_opts;
   switch (out.value.type().value) {
-    case f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp:
+    case success_types::reset_ack:
+      return out.value.reset_ack()->transaction_id;
+    case success_types::f1_setup_resp:
       return out.value.f1_setup_resp()->transaction_id;
-    case f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cfg_upd_ack:
-      return out.value.gnb_cu_cfg_upd_ack()->transaction_id;
-    case f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_du_cfg_upd_ack:
+    case success_types::gnb_du_cfg_upd_ack:
       return out.value.gnb_du_cfg_upd_ack()->transaction_id;
-    case f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_removal_resp:
+    case success_types::gnb_cu_cfg_upd_ack:
+      return out.value.gnb_cu_cfg_upd_ack()->transaction_id;
+    case success_types::write_replace_warning_resp:
+      return out.value.write_replace_warning_resp()->transaction_id;
+    case success_types::pws_cancel_resp:
+      return out.value.pws_cancel_resp()->transaction_id;
+    case success_types::gnb_du_res_coordination_resp:
+      return out.value.gnb_du_res_coordination_resp()->transaction_id;
+    case success_types::f1_removal_resp:
       return out.value.f1_removal_resp()->transaction_id;
       // TODO: Remaining cases.
     default:

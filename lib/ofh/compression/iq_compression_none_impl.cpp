@@ -24,6 +24,7 @@
 #include "compressed_prb_packer.h"
 #include "compressed_prb_unpacker.h"
 #include "quantizer.h"
+#include "srsran/srsvec/dot_prod.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -67,6 +68,18 @@ void iq_compression_none_impl::decompress(span<cf_t>                   output,
       int16_t im = q.sign_extend(unpacker.unpack(read_pos + params.data_width, params.data_width));
       read_pos += (params.data_width * 2);
       output[out_idx++] = {q.to_float(re), q.to_float(im)};
+    }
+  }
+}
+
+void iq_compression_none_impl::log_post_quantization_rms(span<const int16_t> samples)
+{
+  if (SRSRAN_UNLIKELY(logger.debug.enabled() && !samples.empty())) {
+    // Calculate and print RMS of quantized samples.
+    float sum_squares = srsvec::dot_prod(samples, samples, 0);
+    float rms         = std::sqrt(sum_squares / samples.size());
+    if (std::isnormal(rms)) {
+      logger.debug("Quantized IQ samples RMS value of '{}'", rms);
     }
   }
 }

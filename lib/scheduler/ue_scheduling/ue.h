@@ -96,8 +96,11 @@ public:
   /// \brief Handle received SR indication.
   void handle_sr_indication()
   {
-    // Reception of SR means that the UE has applied its dedicated configuration.
-    ue_cells[0]->set_fallback_state(false);
+    // Reception of the SR means that the UE has applied its dedicated configuration; this triggers the new state
+    // transition to \ref fallback_state::sr_csi_received.
+    if (ue_cells[0]->is_in_fallback_mode()) {
+      ue_cells[0]->set_fallback_state(ue_cell::fallback_state::sr_csi_received);
+    }
     ul_lc_ch_mgr.handle_sr_indication();
   }
 

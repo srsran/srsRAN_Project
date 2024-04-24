@@ -272,8 +272,12 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
-  pdu_session_result.gtp_tunnel = up_transport_layer_info(
-      transport_layer_address::create_from_string(net_config.n3_bind_addr), new_session->local_teid);
+  // Advertise either local or external IP address of N3 interface
+  const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
+                                   ? net_config.n3_bind_addr
+                                   : net_config.n3_ext_addr;
+  pdu_session_result.gtp_tunnel =
+      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};

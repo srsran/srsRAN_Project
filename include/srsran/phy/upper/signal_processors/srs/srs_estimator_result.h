@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/time_alignment_estimator/time_alignment_measurement.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
 
@@ -34,7 +35,7 @@ struct srs_estimator_result {
   /// Wideband measured noise variance.
   float noise_variance;
   /// Measured time alignment.
-  phy_time_unit time_align;
+  time_alignment_measurement time_alignment;
 };
 
 } // namespace srsran

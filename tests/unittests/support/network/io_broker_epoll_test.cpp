@@ -22,10 +22,9 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker_factory.h"
-#include <functional> // for std::function/std::bind
+#include <condition_variable>
 #include <gtest/gtest.h>
 #include <netinet/in.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/timerfd.h>
 #include <sys/types.h>
@@ -51,6 +50,7 @@ protected:
 
   void data_receive_callback(int fd)
   {
+    std::lock_guard<std::mutex> lock(rx_mutex);
     // receive data on provided fd
     char rx_buf[1024];
     int  bytes = read(fd, rx_buf, sizeof(rx_buf));
@@ -60,6 +60,7 @@ protected:
     if (socket_type == SOCK_DGRAM) {
       ASSERT_EQ(bytes, tx_buf.length());
     }
+    rx_cvar.notify_one();
   }
 
   void create_unix_sockets()
@@ -175,22 +176,26 @@ protected:
     ASSERT_TRUE(epoll_broker->register_fd(socket_fd, [this](int fd) { data_receive_callback(fd); }));
   }
 
-  void send_on_socket()
+  void send_on_socket() const
   {
     // send text
     int ret = send(socket_fd, tx_buf.c_str(), tx_buf.length(), 0);
     ASSERT_EQ(ret, tx_buf.length());
   }
 
-  void run_tx_rx_test()
+  void run_tx_rx_test(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(1000))
   {
     const int count = 5;
     int       run   = count;
     while (run-- > 0) {
       send_on_socket();
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+    // wait until all bytes are received
+    std::unique_lock<std::mutex> lock(rx_mutex);
+    if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return total_rx_bytes >= tx_buf.length() * count; })) {
+      FAIL() << "Timeout: received only " << total_rx_bytes << " of " << tx_buf.length() * count << " Bytes.";
+    }
     ASSERT_EQ(total_rx_bytes, tx_buf.length() * count);
   }
 
@@ -207,7 +212,10 @@ private:
   struct sockaddr_in server_addr_in = {};
   struct sockaddr_in client_addr_in = {};
 
-  int total_rx_bytes = 0;
+  std::mutex              rx_mutex;
+  std::condition_variable rx_cvar;
+
+  size_t total_rx_bytes = 0;
 };
 
 TEST_F(io_broker_epoll, unix_socket_trx_test)

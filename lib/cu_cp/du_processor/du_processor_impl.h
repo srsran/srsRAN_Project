@@ -124,7 +124,7 @@ public:
   du_processor_ue_task_handler&     get_du_processor_ue_task_handler() override { return *this; }
   du_processor_ue_context_notifier& get_du_processor_ue_context_notifier() override
   {
-    return get_du_processor_rrc_ue_interface();
+    return get_du_processor_ngap_interface();
   }
   du_processor_paging_handler&           get_du_processor_paging_handler() override { return *this; }
   du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
