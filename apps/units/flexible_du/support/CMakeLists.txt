@@ -6,10 +6,8 @@
 # the distribution.
 #
 
-add_subdirectory(du_high)
-add_subdirectory(du_low)
-add_subdirectory(fapi)
-add_subdirectory(split_7_2)
-add_subdirectory(split_8)
-add_subdirectory(split_dynamic)
-add_subdirectory(support)
+set(SOURCES
+        cli11_cpu_affinities_parser_helper.cpp)
+
+add_library(srsran_flexible_du_helpers STATIC ${SOURCES})
+target_include_directories(srsran_flexible_du_helpers PRIVATE ${CMAKE_SOURCE_DIR})

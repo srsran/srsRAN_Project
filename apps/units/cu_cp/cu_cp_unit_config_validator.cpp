@@ -35,10 +35,10 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
   std::map<nr_cell_id_t, std::set<unsigned>> cell_to_report_cfg_id;
 
   // check cu_cp_cell_config
+  std::set<nr_cell_id_t> ncis;
   for (const auto& cell : config.cells) {
-    std::set<nr_cell_id_t> ncis;
     if (!ncis.emplace(cell.nr_cell_id).second) {
-      fmt::print("Cells must be unique ({:#x} already present)\n");
+      fmt::print("Cells must be unique ({:#x} already present)\n", cell.nr_cell_id);
       return false;
     }
 
@@ -70,7 +70,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
       if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
           !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
-        fmt::print("cell={:#x}: For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+        fmt::print("cell={:#x}: For external cells, the gnb_id_bit_length, pci, band, ssb_arfcn, ssb_scs, ssb_period, "
                    "ssb_offset and "
                    "ssb_duration must be configured in the mobility config\n",
                    cell.nr_cell_id);
@@ -79,7 +79,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
     } else {
       if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
           cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
-        fmt::print("cell={:#x}: For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, "
+        fmt::print("cell={:#x}: For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_arfcn, ssb_scs, "
                    "ssb_period, "
                    "ssb_offset and "
                    "ssb_duration must not be configured in the mobility config\n",
@@ -97,6 +97,18 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
           fmt::print("cell={}: report_config_id={} already configured for this cell\n", ncell.nr_cell_id, id);
           return false;
         }
+      }
+    }
+  }
+
+  // verify that each configured neighbor cell is present
+  for (const auto& cell : config.cells) {
+    for (const auto& ncell : cell.ncells) {
+      if (ncis.find(ncell.nr_cell_id) == ncis.end()) {
+        fmt::print("Neighbor cell config for nci={:#x} incomplete. No valid configuration for cell nci={:#x} found.\n",
+                   cell.nr_cell_id,
+                   ncell.nr_cell_id);
+        return false;
       }
     }
   }

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "../../../gnb/gnb_appconfig.h"
-#include "../../../services/metrics_hub.h"
-#include "../../../services/worker_manager.h"
+#include "apps/gnb/gnb_appconfig.h"
+#include "apps/services/metrics_hub.h"
+#include "apps/services/worker_manager.h"
 #include "srsran/du/du.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/pcap/rlc_pcap.h"
@@ -35,6 +35,7 @@ class f1u_du_gateway;
 
 /// \brief Instantiates a list of Distributed Unit (DU) given a gNB application configuration.
 std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                                              const dynamic_du_unit_config&         dyn_du_cfg,
                                               span<du_cell_config>                  du_cells,
                                               worker_manager&                       workers,
                                               upper_phy_rg_gateway&                 rg_gateway,

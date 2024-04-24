@@ -10,21 +10,15 @@
 
 #pragma once
 
-#include "../../../gnb/gnb_appconfig.h"
+#include "fapi_config.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
-namespace fapi {
 
 /// Registers the fapi loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+inline void register_fapi_loggers(const fapi_unit_config& log_cfg)
 {
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
   fapi_logger.set_level(srslog::str_to_basic_level(log_cfg.fapi_level));
 }
 
-} // namespace fapi
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

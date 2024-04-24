@@ -10,15 +10,12 @@
 
 #pragma once
 
-#include "../../../gnb/gnb_appconfig.h"
+#include "du_low_config.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
-namespace du_low {
 
-/// Registers the DU high loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+/// Registers the DU low loggers in the logger service.
+inline void register_du_low_loggers(const du_low_unit_logger_config& log_cfg)
 {
   // Set layer-specific logging options.
   auto& phy_logger = srslog::fetch_basic_logger("PHY", true);
@@ -26,7 +23,4 @@ inline void register_logs(const log_appconfig& log_cfg)
   phy_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 }
 
-} // namespace du_low
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

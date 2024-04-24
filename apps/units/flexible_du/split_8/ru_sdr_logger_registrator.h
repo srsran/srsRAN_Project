@@ -10,22 +10,13 @@
 
 #pragma once
 
-#include "../du_high/logger_registrator.h"
-#include "../du_low//logger_registrator.h"
-#include "../fapi//logger_registrator.h"
+#include "ru_sdr_config.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
-namespace split_8 {
 
-/// Registers the DU split 8 loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+/// Registers the SDR Radio Unit loggers in the logger service.
+inline void register_ru_sdr_logs(const ru_sdr_unit_logger_config& log_cfg)
 {
-  du_high::register_logs(log_cfg);
-  du_low::register_logs(log_cfg);
-  fapi::register_logs(log_cfg);
-
   srslog::basic_logger& rf_logger = srslog::fetch_basic_logger("RF", false);
   rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
 
@@ -33,7 +24,4 @@ inline void register_logs(const log_appconfig& log_cfg)
   ru_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
 }
 
-} // namespace split_8
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

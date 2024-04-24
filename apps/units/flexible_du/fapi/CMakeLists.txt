@@ -6,10 +6,8 @@
 # the distribution.
 #
 
-add_subdirectory(du_high)
-add_subdirectory(du_low)
-add_subdirectory(fapi)
-add_subdirectory(split_7_2)
-add_subdirectory(split_8)
-add_subdirectory(split_dynamic)
-add_subdirectory(support)
+set(SOURCES
+            fapi_config_cli11_schema.cpp)
+
+add_library(srsran_fapi_app_unit STATIC ${SOURCES})
+target_include_directories(srsran_fapi_app_unit PRIVATE ${CMAKE_SOURCE_DIR})

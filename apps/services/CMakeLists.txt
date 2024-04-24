@@ -16,3 +16,4 @@ set(SOURCES
         worker_manager.cpp)
 
 add_library(srsran_app_services STATIC ${SOURCES})
+target_include_directories(srsran_app_services PRIVATE ${CMAKE_SOURCE_DIR})

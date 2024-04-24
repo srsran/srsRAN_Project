@@ -10,15 +10,12 @@
 
 #pragma once
 
-#include "../../../gnb/gnb_appconfig.h"
+#include "du_high_config.h"
 
 namespace srsran {
-namespace modules {
-namespace flexible_du {
-namespace du_high {
 
 /// Registers the DU high loggers in the logger service.
-inline void register_logs(const log_appconfig& log_cfg)
+inline void register_du_high_loggers(const du_high_unit_logger_config& log_cfg)
 {
   for (const auto& id : {"DU", "DU-MNG", "UE-MNG"}) {
     auto& du_logger = srslog::fetch_basic_logger(id, false);
@@ -45,7 +42,4 @@ inline void register_logs(const log_appconfig& log_cfg)
   f1u_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 }
 
-} // namespace du_high
-} // namespace flexible_du
-} // namespace modules
 } // namespace srsran

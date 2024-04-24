@@ -19,7 +19,7 @@ namespace srsran {
 class e2_metric_connector_manager
 {
 public:
-  e2_metric_connector_manager(const gnb_appconfig& appcfg);
+  explicit e2_metric_connector_manager(unsigned nof_cells);
 
   std::vector<std::unique_ptr<e2_du_metrics_connector>> e2_du_metric_connectors;
   e2_du_metrics_notifier&                               get_e2_du_metric_notifier(unsigned du_index);
