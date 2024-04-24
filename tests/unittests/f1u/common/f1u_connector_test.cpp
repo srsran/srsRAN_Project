@@ -133,8 +133,8 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer =
+  dummy_f1u_du_rx_sdu_notifier        du_rx;
+  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -191,8 +191,8 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer =
+  dummy_f1u_du_rx_sdu_notifier        du_rx;
+  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -248,8 +248,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier du_rx1;
-  srs_du::f1u_bearer*          du_bearer1 =
+  dummy_f1u_du_rx_sdu_notifier        du_rx1;
+  std::unique_ptr<srs_du::f1u_bearer> du_bearer1 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -282,8 +282,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
   logger.info("Attach new DU bearer");
 
   // Attach new DU bearer
-  dummy_f1u_du_rx_sdu_notifier du_rx2;
-  srs_du::f1u_bearer*          du_bearer2 =
+  dummy_f1u_du_rx_sdu_notifier        du_rx2;
+  std::unique_ptr<srs_du::f1u_bearer> du_bearer2 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
 
   // Attach new DL TEID

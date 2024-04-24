@@ -90,16 +90,16 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t                                                      drb_id;
-  lcid_t                                                        lcid;
-  std::vector<up_transport_layer_info>                          uluptnl_info_list;
-  std::vector<up_transport_layer_info>                          dluptnl_info_list;
-  rlc_config                                                    rlc_cfg;
-  std::unique_ptr<rlc_entity>                                   rlc_bearer;
-  mac_lc_config                                                 mac_cfg;
-  f1u_config                                                    f1u_cfg;
-  std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
-  du_drb_connector                                              connector;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  std::vector<up_transport_layer_info> uluptnl_info_list;
+  std::vector<up_transport_layer_info> dluptnl_info_list;
+  rlc_config                           rlc_cfg;
+  std::unique_ptr<rlc_entity>          rlc_bearer;
+  mac_lc_config                        mac_cfg;
+  f1u_config                           f1u_cfg;
+  std::unique_ptr<f1u_bearer>          drb_f1u;
+  du_drb_connector                     connector;
   /// QoS characteristics to be met by the DRB.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.

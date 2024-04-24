@@ -148,7 +148,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
-  f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
+  std::unique_ptr<f1u_bearer> f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
@@ -161,20 +161,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
     srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
     return nullptr;
   }
-  auto f1u_bearer_deleter =
-      [f1u_gw = &du_params.f1u.f1u_gw, dl_tnl_info = drb->dluptnl_info_list[0], &teid_pool, ue_index](f1u_bearer* p) {
-        if (p != nullptr) {
-          // Return TEID back to TEID pool.
-          if (not teid_pool.release_teid(dl_tnl_info.gtp_teid)) {
-            srslog::fetch_basic_logger("DU-MNG").warning(
-                "ue={}, teid={}: Failure to deallocate TEID.", ue_index, dl_tnl_info.gtp_teid);
-          }
-
-          // Delete F1-U bearer by returning it back to F1-U GW.
-          f1u_gw->remove_du_bearer(dl_tnl_info);
-        }
-      };
-  drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
+  drb->drb_f1u = std::move(f1u_drb);
 
   // > Create RLC DRB entity.
   drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,

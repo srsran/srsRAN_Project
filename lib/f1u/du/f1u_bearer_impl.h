@@ -37,6 +37,8 @@ public:
                   timer_factory                  timers,
                   task_executor&                 ue_executor_);
 
+  ~f1u_bearer_impl() override { stop(); }
+
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }

@@ -64,6 +64,7 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 void f1u_bearer_impl::stop()
 {
   ul_notif_timer.stop();
+  // TODO disconnect from connector
 }
 
 void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
