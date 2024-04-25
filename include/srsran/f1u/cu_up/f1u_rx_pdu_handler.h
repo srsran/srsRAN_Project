@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "srsran/f1u/common/nru_message.h"
+#include "srsran/nrup/nrup_message.h"
 
 namespace srsran {
 namespace srs_cu_up {
