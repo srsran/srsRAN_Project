@@ -65,8 +65,8 @@ using result_type = std::tuple<float, unsigned, float>;
 static std::vector<result_type> measurement_results;
 
 /// Set to true to stop.
-static std::atomic<bool>       stop  = {true};
-std::unique_ptr<radio_session> radio = nullptr;
+static std::atomic<bool>              stop  = {true};
+static std::unique_ptr<radio_session> radio = nullptr;
 
 static void signal_handler(int sig)
 {
@@ -352,8 +352,8 @@ int main(int argc, char** argv)
 
     if (!stop.load()) {
       // Request stop streaming asynchronously. As TX and RX operations run in the main thread, it avoids deadlock.
-      std::thread stop_thread([&radio_ = radio]() {
-        radio_->stop();
+      std::thread stop_thread([]() {
+        radio->stop();
         bool is_stopped = stop.exchange(true);
         srsran_assert(!is_stopped, "Radio must be running before attempting to stop.");
       });
