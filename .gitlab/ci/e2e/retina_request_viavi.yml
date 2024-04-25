@@ -13,6 +13,7 @@
     arch: amd64
     cpu:
       requests: 20
+      limits: 20
     memory:
       requests: "64G"
       limits: "64G"
