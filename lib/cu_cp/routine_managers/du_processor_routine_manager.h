@@ -63,10 +63,6 @@ public:
                                   du_processor_ue_context_notifier&      source_du_processor_notifier,
                                   du_processor_ue_context_notifier&      target_du_processor_notifier);
 
-  async_task<cu_cp_inter_ngran_node_n2_handover_response>
-  start_inter_ngran_node_n2_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& command,
-                                             du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
-
   async_task<ngap_handover_resource_allocation_response>
   start_inter_cu_handover_target_routine(const ngap_handover_request& request,
                                          du_processor_cu_cp_notifier& cu_cp_notifier);

@@ -38,7 +38,10 @@ public:
 class mobility_manager final : public mobility_manager_measurement_handler, public cu_cp_mobility_command_handler
 {
 public:
-  mobility_manager(const mobility_manager_cfg& cfg, du_processor_repository& du_db_, ue_manager& ue_mng_);
+  mobility_manager(const mobility_manager_cfg&         cfg,
+                   du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
+                   du_processor_repository&            du_db_,
+                   ue_manager&                         ue_mng_);
 
   void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override;
 
@@ -58,8 +61,9 @@ private:
 
   mobility_manager_cfg cfg;
 
-  du_processor_repository& du_db;
-  ue_manager&              ue_mng;
+  du_processor_ngap_control_notifier& ngap_ctrl_notifier;
+  du_processor_repository&            du_db;
+  ue_manager&                         ue_mng;
 
   srslog::basic_logger& logger;
 };

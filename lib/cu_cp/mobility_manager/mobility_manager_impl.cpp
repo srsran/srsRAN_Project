@@ -15,10 +15,15 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_,
-                                   du_processor_repository&    du_db_,
-                                   ue_manager&                 ue_mng_) :
-  cfg(cfg_), du_db(du_db_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
+mobility_manager::mobility_manager(const mobility_manager_cfg&         cfg_,
+                                   du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
+                                   du_processor_repository&            du_db_,
+                                   ue_manager&                         ue_mng_) :
+  cfg(cfg_),
+  ngap_ctrl_notifier(ngap_ctrl_notifier_),
+  du_db(du_db_),
+  ue_mng(ue_mng_),
+  logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -145,22 +150,19 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
 {
   du_index_t source_du_index = ue_mng.find_du_ue(source_ue_index)->get_du_index();
 
-  du_processor_ue_task_handler&  ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
-  du_processor_mobility_handler& mob     = du_db.get_du_processor(source_du_index).get_mobility_handler();
+  du_processor_ue_task_handler& ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
 
-  cu_cp_inter_ngran_node_n2_handover_request request = {};
-  request.ue_index                                   = source_ue_index;
-  request.gnb_id                                     = target_gnb_id;
-  request.nci                                        = target_nci;
+  ngap_handover_preparation_request request = {};
+  request.ue_index                          = source_ue_index;
+  request.gnb_id                            = target_gnb_id;
+  request.nci                               = target_nci;
 
-  // Trigger Inter DU handover routine on the DU processor of the source DU.
-  cu_cp_inter_ngran_node_n2_handover_response response;
-  auto ho_trigger = [request, response, &mob](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(response, mob.handle_inter_ngran_node_n2_handover_request(request));
-    CORO_RETURN();
-  };
+  // Trigger Inter CU handover routine on the DU processor of the source DU.
+  auto ho_trigger =
+      [this, request, response = ngap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, ngap_ctrl_notifier.on_ngap_handover_preparation_request(request));
+        CORO_RETURN();
+      };
   ue_task.handle_ue_async_task(request.ue_index, launch_async(std::move(ho_trigger)));
-
-  // TODO: prepare NGAP call
 }

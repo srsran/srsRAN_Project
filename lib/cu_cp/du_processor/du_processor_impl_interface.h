@@ -246,11 +246,6 @@ public:
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
                                    du_processor_ue_context_notifier&      target_du_processor_notifier) = 0;
 
-  /// \brief Start the inter NG-RAN node N2 handover procedure at the source gNB.
-  /// See TS 23.502 section 4.9.1.3.
-  virtual async_task<cu_cp_inter_ngran_node_n2_handover_response>
-  handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) = 0;
-
   /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
   /// See TS 38.413 section 8.4.2.2.
   virtual async_task<ngap_handover_resource_allocation_response>

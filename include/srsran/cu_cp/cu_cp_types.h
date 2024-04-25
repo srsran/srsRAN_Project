@@ -579,17 +579,6 @@ struct cu_cp_inter_du_handover_response {
   bool success = false;
 };
 
-struct cu_cp_inter_ngran_node_n2_handover_request {
-  ue_index_t   ue_index = ue_index_t::invalid;
-  gnb_id_t     gnb_id;
-  nr_cell_id_t nci;
-};
-
-struct cu_cp_inter_ngran_node_n2_handover_response {
-  // Place-holder for possible return values.
-  bool success = false;
-};
-
 } // namespace srs_cu_cp
 } // namespace srsran
 

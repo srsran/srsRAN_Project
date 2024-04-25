@@ -83,8 +83,6 @@ public:
                                    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notif_,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
                                    du_processor_ue_context_notifier&      target_du_processor_notifier_) override;
-  async_task<cu_cp_inter_ngran_node_n2_handover_response>
-  handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) override;
   async_task<ngap_handover_resource_allocation_response>
   handle_ngap_handover_request(const ngap_handover_request& request) override;
 

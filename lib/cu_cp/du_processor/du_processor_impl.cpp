@@ -572,12 +572,6 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
                                                       target_du_processor_notifier_);
 }
 
-async_task<cu_cp_inter_ngran_node_n2_handover_response>
-du_processor_impl::handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& msg)
-{
-  return routine_mng->start_inter_ngran_node_n2_handover_routine(msg, ngap_ctrl_notifier);
-}
-
 async_task<ngap_handover_resource_allocation_response>
 du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
 {
