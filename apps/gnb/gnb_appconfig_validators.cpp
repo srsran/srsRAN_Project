@@ -93,22 +93,29 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
     return false;
   }
 
-  if (config.expert_cfg.discontinuous_tx_mode && (config.device_driver == "zmq")) {
-    fmt::print("Discontinuous transmission mode cannot be used with ZMQ.\n");
+  const duplex_mode dplx_mode = band_helper::get_duplex_mode(cell_config.cell.band.value());
+  if ((config.expert_cfg.transmission_mode == "same-port") && (dplx_mode == duplex_mode::FDD)) {
+    fmt::print("same-port transmission mode cannot be used with FDD cell configurations.\n");
+    return false;
+  }
+
+  bool discontinuous_transmission = (config.expert_cfg.transmission_mode != "continuous");
+  if (discontinuous_transmission && (config.device_driver == "zmq")) {
+    fmt::print("Discontinuous transmission modes cannot be used with ZMQ.\n");
     return false;
   }
 
   static constexpr float subframe_duration_us = 1e3;
   float                  slot_duration_us =
       subframe_duration_us / static_cast<float>(get_nof_slots_per_subframe(cell_config.cell.common_scs));
-  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
+  if (discontinuous_transmission && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
     fmt::print("Power ramping time, i.e., {:.1f} us, cannot exceed the duration of two NR slots, i.e., {:.1f} us.\n",
                config.expert_cfg.power_ramping_time_us,
                2 * slot_duration_us);
     return false;
   }
 
-  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us < 0)) {
+  if (config.expert_cfg.power_ramping_time_us < 0) {
     fmt::print("Power ramping time, i.e., {:.1f} us, must be positive or zero.\n",
                config.expert_cfg.power_ramping_time_us);
     return false;

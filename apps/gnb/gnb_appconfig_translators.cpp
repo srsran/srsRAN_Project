@@ -1340,7 +1340,7 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
   out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
   out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
   out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
-  out_cfg.discontinuous_tx = ru_cfg.expert_cfg.discontinuous_tx_mode;
+  out_cfg.tx_mode          = radio_configuration::to_transmission_mode(ru_cfg.expert_cfg.transmission_mode);
   out_cfg.power_ramping_us = ru_cfg.expert_cfg.power_ramping_time_us;
 
   const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");

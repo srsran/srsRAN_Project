@@ -190,6 +190,18 @@ public:
   {
     return safe_execution([this, &timespec]() { usrp->set_time_unknown_pps(timespec); });
   }
+  bool get_rx_antennas(std::vector<std::string>& rx_antennas, unsigned channel_id)
+  {
+    return safe_execution([this, &rx_antennas, &channel_id]() { rx_antennas = usrp->get_rx_antennas(channel_id); });
+  }
+  bool set_rx_antenna(const std::string& rx_antenna, unsigned channel_id)
+  {
+    return safe_execution([this, &rx_antenna, &channel_id]() { usrp->set_rx_antenna(rx_antenna, channel_id); });
+  }
+  bool get_selected_tx_antenna(std::string& tx_antenna, unsigned channel_id)
+  {
+    return safe_execution([this, &tx_antenna, &channel_id]() { tx_antenna = usrp->get_tx_antenna(channel_id); });
+  }
   bool set_automatic_master_clock_rate(double srate_Hz)
   {
     return safe_execution([this, &srate_Hz]() {

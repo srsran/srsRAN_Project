@@ -232,7 +232,7 @@ int main(int argc, char** argv)
   config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
   config.sampling_rate_hz = sampling_rate_hz;
   config.otw_format       = otw_format;
-  config.discontinuous_tx = false;
+  config.tx_mode          = radio_configuration::transmission_mode::continuous;
   config.power_ramping_us = 0;
   config.args             = device_arguments;
   config.log_level        = log_level;

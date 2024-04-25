@@ -1467,14 +1467,25 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
     return "Invalid DL buffer size policy. Accepted values [auto,single-packet,half-slot,slot,optimal-slot]";
   };
 
+  auto tx_mode_check = [](const std::string& value) -> std::string {
+    if (value == "continuous" || value == "discontinuous" || value == "same-port") {
+      return {};
+    }
+    return "Invalid transmission mode. Accepted values [continuous,discontinuous,same-port]";
+  };
+
   app.add_option("--low_phy_dl_throttling",
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
       ->capture_default_str();
-  app.add_option("--discontinuous_tx",
-                 config.discontinuous_tx_mode,
-                 "Enables discontinuous transmission mode for the radio front-ends supporting it.")
-      ->capture_default_str();
+  app.add_option("--tx_mode",
+                 config.transmission_mode,
+                 "Selects a radio transmission mode. Discontinuous modes are not supported by all radios.\n"
+                 "  continuous:    the TX chain is always active.\n"
+                 "  discontinuous: the transmitter stops when there is no data to transmit.\n"
+                 "  same-port:     the radio transmits and receives from the same antenna port.\n")
+      ->capture_default_str()
+      ->check(tx_mode_check);
   app.add_option("--power_ramping_time_us",
                  config.power_ramping_time_us,
                  "Specifies the power ramping time in microseconds, it proactively initiates the transmission and "

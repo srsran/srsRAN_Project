@@ -334,8 +334,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     stream_description.otw_format                              = otw_format;
     stream_description.srate_hz                                = actual_tx_rate_Hz;
     stream_description.args                                    = stream.args;
-    stream_description.discontiuous_tx                         = radio_config.discontinuous_tx;
-    stream_description.power_ramping_us                        = radio_config.power_ramping_us;
+    stream_description.discontiuous_tx  = (radio_config.tx_mode != radio_configuration::transmission_mode::continuous);
+    stream_description.power_ramping_us = radio_config.power_ramping_us;
 
     // Setup ports.
     for (unsigned channel_idx = 0; channel_idx != stream.channels.size(); ++channel_idx) {
@@ -415,6 +415,36 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       // Setup frequency.
       if (!set_rx_freq(port_idx, channel.freq)) {
         return;
+      }
+
+      // Set the same port for TX and RX.
+      if (radio_config.tx_mode == radio_configuration::transmission_mode::same_port) {
+        // Get the selected TX antenna.
+        std::string selected_tx_antenna;
+        if (!device.get_selected_tx_antenna(selected_tx_antenna, port_idx)) {
+          return;
+        }
+
+        // Get the available RX antennas.
+        std::vector<std::string> rx_antennas;
+        if (!device.get_rx_antennas(rx_antennas, port_idx)) {
+          return;
+        }
+
+        // If the TX antenna is also available for reception, configure the TX antenna as RX antennas as well.
+        if (std::find(rx_antennas.begin(), rx_antennas.end(), selected_tx_antenna) != rx_antennas.end()) {
+          fmt::print("Same port transmission mode: Selecting antenna {} as Rx antenna for channel {}\n",
+                     selected_tx_antenna,
+                     port_idx);
+          if (!device.set_rx_antenna(selected_tx_antenna, port_idx)) {
+            return;
+          };
+        } else {
+          fmt::print("Error: Selected TX antenna, i.e., {}, is not available as RX antenna in channel {}. Same port "
+                     "transmission mode not suppored.\n",
+                     selected_tx_antenna,
+                     port_idx);
+        }
       }
 
       // Inform about ignored argument.
