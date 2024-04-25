@@ -260,15 +260,12 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
         are_crbs_valid = ue_grant_crbs.length() == h.last_alloc_params().rbs.type1().length();
       }
       if (are_crbs_valid) {
-        const aggregation_level aggr_lvl =
-            ue_cc.get_aggregation_level(ue_cc.link_adaptation_controller().get_effective_cqi(), ss, true);
         const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                                                   ue_cc.cell_index,
                                                                                   h.id,
                                                                                   ss.cfg->get_id(),
                                                                                   param_candidate.pdsch_td_res_index(),
                                                                                   ue_grant_crbs,
-                                                                                  aggr_lvl,
                                                                                   mcs_prbs.mcs,
                                                                                   nof_dl_layers});
         // If the allocation failed due to invalid parameters, we continue iteration.
@@ -455,10 +452,8 @@ static alloc_outcome alloc_ul_ue(const ue&                         u,
         are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();
       }
       if (are_crbs_valid) {
-        const aggregation_level aggr_lvl =
-            ue_cc.get_aggregation_level(ue_cc.link_adaptation_controller().get_effective_cqi(), *ss, false);
         const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
-            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_td_res_idx, ss->cfg->get_id(), aggr_lvl, mcs_prbs.mcs});
+            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_td_res_idx, ss->cfg->get_id(), mcs_prbs.mcs});
         // If the allocation failed due to invalid parameters, we continue the iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;

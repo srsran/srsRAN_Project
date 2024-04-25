@@ -89,6 +89,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   const search_space_configuration& ss_cfg = *ss_info->cfg;
   const coreset_configuration&      cs_cfg = *ss_info->coreset;
 
+  const aggregation_level aggr_lvl =
+      ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), *ss_info, true);
+
   if (ue_cc->is_in_fallback_mode()) {
     // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
     return alloc_outcome::skip_ue;
@@ -185,8 +188,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch =
-      get_pdcch_sched(grant.cell_index)
-          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index).alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
     // TODO: For now, given that only one searchSpace is used, we skip the UE. In the future, we might still try
@@ -492,6 +494,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   const dci_ul_rnti_config_type dci_type =
       h_ul.empty() ? ss_supported_crnti_dci_type : h_ul.last_tx_params().dci_cfg_type;
 
+  const aggregation_level aggr_lvl =
+      ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), *ss_info, false);
+
   // See 3GPP TS 38.213, clause 10.1,
   // A UE monitors PDCCH candidates in one or more of the following search spaces sets
   //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
@@ -629,8 +634,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Allocate PDCCH position.
   pdcch_ul_information* pdcch =
-      get_pdcch_sched(grant.cell_index)
-          .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index).alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
     return alloc_outcome::skip_ue;
