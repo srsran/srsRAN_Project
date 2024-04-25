@@ -100,6 +100,11 @@ public:
     }
   }
 
+  byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
+  {
+    return make_byte_buffer("deadbeef");
+  }
+
   async_task<void> on_ue_removal_required(ue_index_t ue_index) override
   {
     logger.info("ue={}: Received a UE removal request", ue_index);

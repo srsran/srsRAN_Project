@@ -559,15 +559,14 @@ optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
   return cgi;
 }
 
-optional<byte_buffer> du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
+byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
 {
-  optional<byte_buffer> sib1;
   for (const auto& cell : cell_db) {
     if (cell.second.cgi == cgi) {
-      return cell.second.sys_info.packed_sib1;
+      return cell.second.sys_info.packed_sib1.copy();
     }
   }
-  return sib1;
+  return byte_buffer{};
 }
 
 async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(

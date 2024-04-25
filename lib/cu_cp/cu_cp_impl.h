@@ -105,6 +105,8 @@ private:
                               rrc_ue_interface&                   rrc_ue,
                               ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
 
+  byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
+
   // NGAP UE creation handler
   bool handle_new_ngap_ue(ue_index_t ue_index) override;
 

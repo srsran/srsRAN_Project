@@ -111,7 +111,6 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.target_pci                      = neighbor_pci;
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
-  request.target_sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
   // Lookup F1AP notifier of source DU.
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_notifier =
@@ -127,16 +126,18 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   du_processor_mobility_handler& mob     = du_db.get_du_processor(source_du_index).get_mobility_handler();
 
   // Trigger Inter DU handover routine on the DU processor of the source DU.
-  cu_cp_inter_du_handover_response response;
-  auto                             ho_trigger =
-      [request, response, &mob, &source_du_f1ap_notifier, &target_du_f1ap_notifier, &target_du_processor_notifier](
-          coro_context<async_task<void>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(response,
-                         mob.handle_inter_du_handover_request(
-                             request, source_du_f1ap_notifier, target_du_f1ap_notifier, target_du_processor_notifier));
-        CORO_RETURN();
-      };
+  auto ho_trigger = [request,
+                     response = cu_cp_inter_du_handover_response{},
+                     &mob,
+                     &source_du_f1ap_notifier,
+                     &target_du_f1ap_notifier,
+                     &target_du_processor_notifier](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(response,
+                     mob.handle_inter_du_handover_request(
+                         request, source_du_f1ap_notifier, target_du_f1ap_notifier, target_du_processor_notifier));
+    CORO_RETURN();
+  };
   ue_task.handle_ue_async_task(request.source_ue_index, launch_async(std::move(ho_trigger)));
 }
 

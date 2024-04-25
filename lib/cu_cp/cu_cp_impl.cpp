@@ -384,6 +384,11 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
       get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), controller, get_cu_cp_measurement_handler());
 }
 
+byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi)
+{
+  return du_db.get_du_processor(du_index).get_mobility_handler().get_packed_sib1(cgi);
+}
+
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
   if (ngap_du_processor_ctrl_notifiers.find(get_du_index_from_ue_index(ue_index)) ==

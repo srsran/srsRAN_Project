@@ -173,7 +173,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                   true, /* Reestablish SRBs */
                                   true /* Reestablish DRBs */,
                                   true, /* Update keys */
-                                  command.target_sib1,
+                                  cu_cp_notifier.on_target_cell_sib1_required(command.target_du_index, command.cgi),
                                   logger)) {
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", command.source_ue_index, name());
         CORO_EARLY_RETURN(response_msg);

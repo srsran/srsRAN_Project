@@ -90,6 +90,12 @@ public:
     cu_cp_handler->handle_rrc_ue_creation(ue_index, rrc_ue, *ngap_du_notifier);
   }
 
+  byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_handler->handle_target_cell_sib1_required(du_index, cgi);
+  }
+
   async_task<void> on_ue_removal_required(ue_index_t ue_index) override
   {
     srsran_assert(ue_removal_handler != nullptr, "CU-CP UE Removal handler must not be nullptr");

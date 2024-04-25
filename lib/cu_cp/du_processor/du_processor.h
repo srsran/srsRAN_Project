@@ -237,7 +237,7 @@ public:
   virtual optional<nr_cell_global_id_t> get_cgi(pci_t pci) = 0;
 
   /// \brief Retrieve the SIB1 for a given PCI of a DU.
-  virtual optional<byte_buffer> get_packed_sib1(nr_cell_global_id_t cgi) = 0;
+  virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
 
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
@@ -364,6 +364,12 @@ public:
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.
   virtual void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
+
+  /// \brief Notify the CU-CP that the SIB1 for a given PCI of a DU is required.
+  /// \param[in] du_index The index of the DU the cell is connected to.
+  /// \param[in] cgi The cell global id of the target cell.
+  /// \returns The packed SIB1 for the target cell, if available. An empty byte_buffer otherwise.
+  virtual byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) = 0;
 
   /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
