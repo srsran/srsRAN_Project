@@ -140,6 +140,7 @@ std::unique_ptr<srs_du::f1u_bearer> f1u_local_connector::create_du_bearer(uint32
   f1u_msg.tx_pdu_notifier                     = du_tx.get();
   f1u_msg.timers                              = timers;
   f1u_msg.ue_executor                         = &ue_executor;
+  f1u_msg.disconnector                        = this;
 
   std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
   auto&                               cu_tun     = cu_map.at(ul_up_tnl_info);

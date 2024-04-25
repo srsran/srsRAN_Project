@@ -22,7 +22,7 @@ namespace srs_du {
 
 /// This class will be used to provide the interfaces to
 /// the DU to create and manage F1-U bearers.
-class f1u_du_gateway
+class f1u_du_gateway : public srs_du::f1u_bearer_disconnector
 {
 public:
   f1u_du_gateway()                                 = default;
@@ -40,8 +40,6 @@ public:
                                                                srs_du::f1u_rx_sdu_notifier&   du_rx,
                                                                timer_factory                  timers,
                                                                task_executor&                 ue_executor) = 0;
-
-  virtual void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) = 0;
 };
 
 } // namespace srs_du
