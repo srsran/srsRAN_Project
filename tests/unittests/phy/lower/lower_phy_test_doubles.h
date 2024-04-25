@@ -148,12 +148,6 @@ public:
     event.buffer          = &buffer;
   }
 
-  // See interface for documentation.
-  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
-  {
-    logger.debug(context.slot.sfn(), context.slot.slot_index(), "Sector {} - On Rx SRS Symbol.", context.sector);
-  }
-
   /// \brief Gets the total number of events of any kind.
   ///
   /// A use case to ensure no event happened:

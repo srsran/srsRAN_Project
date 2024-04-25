@@ -89,9 +89,6 @@ public:
   // See interface for documentation.
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
 
-  // See interface for documentation.
-  void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override;
-
 private:
   /// Process the given PUSCH PDU using the given uplink processor, grid and slot.
   void process_pusch(const uplink_processor::pusch_pdu& pdu,

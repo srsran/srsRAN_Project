@@ -391,9 +391,6 @@ public:
 
   // See interface for documentation.
   void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
-
-  // See interface for documentation.
-  void on_rx_srs_symbol(const ru_uplink_rx_symbol_context& context) override {}
 };
 
 /// Dummy RU notifier class for timing events.

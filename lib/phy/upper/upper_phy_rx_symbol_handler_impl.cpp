@@ -72,11 +72,6 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer
   ul_processor.process_prach(rx_results_notifier, buffer, context);
 }
 
-void upper_phy_rx_symbol_handler_impl::handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context)
-{
-  report_fatal_error("upper_phy_rx_symbol_handler_impl::handle_rx_srs_symbol not yet implemented");
-}
-
 void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pusch_pdu& pdu,
                                                      uplink_processor&                  ul_processor,
                                                      const resource_grid_reader&        grid,
