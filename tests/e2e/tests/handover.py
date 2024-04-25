@@ -13,12 +13,14 @@ import logging
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
+import pytest
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ue_pb2 import HandoverInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
@@ -30,6 +32,7 @@ from .steps.stub import (
     ue_expect_handover,
     ue_move,
     ue_start_and_attach,
+    ue_validate_no_reattaches,
 )
 
 
@@ -148,6 +151,9 @@ def _handover_multi_ues(
     logging.info("Starting Pings after all HO have been completed")
     ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, movement_duration))
 
+    for ue_stub in ue_array:
+        ue_validate_no_reattaches(ue_stub)
+
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
 
 
@@ -172,4 +178,6 @@ def _do_ho(
         sleep(sleep_between_steps)
 
     # We check again the future's result here so it can raise an exception if the HO failed
-    ho_task.result()
+    result: HandoverInfo = ho_task.result()
+    if not result.status:
+        pytest.fail("Handover UE failed")

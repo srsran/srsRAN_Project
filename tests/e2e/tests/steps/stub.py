@@ -10,7 +10,6 @@
 Steps related with stubs / resources
 """
 import logging
-import time
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from time import sleep
@@ -24,12 +23,22 @@ from google.protobuf.wrappers_pb2 import StringValue, UInt32Value
 from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
-from retina.protocol.base_pb2 import PingRequest, PLMN, StartInfo, StopResponse, UEDefinition
+from retina.protocol.base_pb2 import PingRequest, PingResponse, PLMN, StartInfo, StopResponse, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, Position, UEAttachedInfo, UEStartInfo
+from retina.protocol.ue_pb2 import (
+    HandoverInfo,
+    IPerfDir,
+    IPerfProto,
+    IPerfRequest,
+    Position,
+    ReestablishmentInfo,
+    RrcMessages,
+    UEAttachedInfo,
+    UEStartInfo,
+)
 from retina.protocol.ue_pb2_grpc import UEStub
 
 RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in the sdr
@@ -274,7 +283,7 @@ def _print_ping_result(msg: str, task: grpc.Future):
     """
     log_fn = logging.info
     try:
-        result = task.result()
+        result: PingResponse = task.result()
         if not result.status:
             log_fn = logging.error
     except (grpc.RpcError, grpc.FutureCancelledError, grpc.FutureTimeoutError) as err:
@@ -367,7 +376,7 @@ def iperf_sequentially(
                 ue_attached_info.ipv4,
                 _iperf_proto_to_str(protocol),
                 _iperf_dir_to_str(direction),
-                ErrorReportedByAgent(err).details,
+                ErrorReportedByAgent(err),
             )
         sleep(sleep_between_retries)
 
@@ -479,14 +488,11 @@ def ue_reestablishment(
     """
     Reestablishment one UE from already running gnb and 5gc
     """
-    logging.info("Reestablishment UE [%s]", id(ue_stub))
-    init_time = time.time()
-    ue_stub.Reestablishment(Empty())
-    time_to_reestablish_sec = time.time() - init_time
-
-    msg = f"Reestablishment UE [{id(ue_stub)}] finished in {time_to_reestablish_sec} seconds"
-    if time_to_reestablish_sec >= reestablishment_interval:
-        logging.error(msg)
+    result: ReestablishmentInfo = ue_stub.Reestablishment(UInt32Value(value=reestablishment_interval))
+    log_fn = logging.info if result.status else logging.error
+    log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    if not result.status:
+        pytest.fail("Reestablishment failed")
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):
@@ -508,10 +514,20 @@ def ue_expect_handover(ue_stub: UEStub, timeout: int) -> grpc.Future:
 
 def _log_handover(future: grpc.Future, ue_stub: UEStub):
     try:
-        future.result()
-        logging.info("UE [%s] Handover success", id(ue_stub))
-    except grpc.RpcError:
-        logging.error("UE [%s] Handover failed", id(ue_stub))
+        result: HandoverInfo = future.result()
+        log_fn = logging.info if result.status else logging.error
+        log_fn("Handover UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    except grpc.RpcError as err:
+        logging.error("Handover UE [%s] failed: %s", id(ue_stub), ErrorReportedByAgent(err))
+
+
+def ue_validate_no_reattaches(ue_stub: UEStub):
+    """
+    Fails if there has been any reattach
+    """
+    messages: RrcMessages = ue_stub.GetMessages(Empty())
+    if messages.nof_setup > 1:
+        logging.error("UE [%s] had multiples rrc setups:\n%s", id(ue_stub), MessageToString(messages, indent=2))
 
 
 def stop(

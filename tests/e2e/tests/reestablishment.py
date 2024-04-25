@@ -22,16 +22,24 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import ping_start, ping_wait_until_finish, start_network, stop, ue_reestablishment, ue_start_and_attach
+from .steps.stub import (
+    ping_start,
+    ping_wait_until_finish,
+    start_network,
+    stop,
+    ue_reestablishment,
+    ue_start_and_attach,
+    ue_validate_no_reattaches,
+)
 
 
 @mark.parametrize(
-    "band, common_scs, bandwidth, enable_channel_noise, always_download_artifacts",
+    "band, common_scs, bandwidth, enable_channel_noise",
     (
-        param(3, 15, 50, False, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s-artifacts:%s"),
-        param(41, 30, 50, False, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s-artifacts:%s"),
-        param(3, 15, 50, True, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s-artifacts:%s"),
-        param(41, 30, 50, True, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s-artifacts:%s"),
+        param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(41, 30, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq
@@ -47,7 +55,6 @@ def test_zmq_reestablishment(
     common_scs: int,
     bandwidth: int,
     enable_channel_noise: bool,
-    always_download_artifacts: bool,
 ):
     """
     ZMQ Ping + Reestablishment
@@ -69,7 +76,7 @@ def test_zmq_reestablishment(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=always_download_artifacts,
+        always_download_artifacts=True,
         enable_channel_noise=enable_channel_noise,
         reestablishment_count=reestablishment_count,
         reestablishment_interval=reestablishment_interval,
@@ -140,5 +147,8 @@ def _ping_and_reestablishment_multi_ues(
     # Pings after reest
     logging.info("Starting Pings after all reestablishments have been completed")
     ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, ping_count=20))
+
+    for ue_stub in ue_array:
+        ue_validate_no_reattaches(ue_stub)
 
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)

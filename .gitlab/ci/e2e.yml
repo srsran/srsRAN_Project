@@ -296,11 +296,7 @@ amari 32UE beta:
   allow_failure: true
   parallel:
     matrix:
-      - KEYWORDS:
-          [
-            "reestablishment",
-            "handover",
-          ]
+      - KEYWORDS: ["reestablishment", "handover"]
 
 amari 32UE asan:
   extends: .zmq
