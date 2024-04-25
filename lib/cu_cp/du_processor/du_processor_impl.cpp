@@ -530,22 +530,12 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
 
 bool du_processor_impl::has_cell(pci_t pci)
 {
-  for (const auto& cell : cell_db) {
-    if (cell.second.pci == pci) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(cell_db.begin(), cell_db.end(), [pci](const auto& cell) { return cell.second.pci == pci; });
 }
 
 bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
 {
-  for (const auto& cell : cell_db) {
-    if (cell.second.cgi == cgi) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(cell_db.begin(), cell_db.end(), [cgi](const auto& cell) { return cell.second.cgi == cgi; });
 }
 
 optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
@@ -570,20 +560,20 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
 }
 
 async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(
-    const cu_cp_inter_du_handover_request& msg,
-    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notif_,
-    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
-    du_processor_ue_context_notifier&      target_du_processor_notifier_)
+    const cu_cp_inter_du_handover_request& request,
+    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier,
+    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
+    du_processor_ue_context_notifier&      target_du_processor_notifier)
 {
-  du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.source_ue_index);
+  du_ue* ue = ue_manager.find_du_ue(request.source_ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
 
-  return routine_mng->start_inter_du_handover_routine(msg,
+  return routine_mng->start_inter_du_handover_routine(request,
                                                       cu_cp_notifier,
-                                                      source_du_f1ap_ue_ctxt_notif_,
-                                                      target_du_f1ap_ue_ctxt_notif_,
+                                                      source_du_f1ap_ue_ctxt_notifier,
+                                                      target_du_f1ap_ue_ctxt_notifier,
                                                       get_ue_context_notifier(),
-                                                      target_du_processor_notifier_);
+                                                      target_du_processor_notifier);
 }
 
 async_task<ngap_handover_resource_allocation_response>
