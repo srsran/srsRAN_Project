@@ -52,7 +52,8 @@ target_link_libraries(scheduler_test_doubles_test
         srsran_sched
         sched_config
         scheduler_test_suite
-        sched_test_doubles gtest
+        sched_test_doubles
+        gtest
         gtest_main)
 gtest_discover_tests(scheduler_test_doubles_test)
 
@@ -62,6 +63,7 @@ target_link_libraries(multiple_ue_sched_test
         sched_config
         scheduler_test_suite
         mac_configuration_helpers
+        sched_test_doubles
         gtest
         gtest_main)
 gtest_discover_tests(multiple_ue_sched_test)

@@ -9,6 +9,8 @@
  */
 
 #include "pucch_res_test_builder_helper.h"
+#include "../../../lib/scheduler/config/cell_configuration.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
 
@@ -29,31 +31,45 @@ pucch_res_builder_test_helper::pucch_res_builder_test_helper() : pucch_res_mgr(n
 
 pucch_res_builder_test_helper::pucch_res_builder_test_helper(const bwp_uplink_common&          init_ul_bwp,
                                                              optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common,
-                                                             const serving_cell_config&        base_ue_cfg,
                                                              const pucch_builder_params&       pucch_cfg) :
-  pucch_res_mgr(srs_du::du_pucch_resource_manager(
-      static_vector<du_cell_config, 1>{
-          generate_du_cell_config(init_ul_bwp, tdd_ul_dl_cfg_common, base_ue_cfg, pucch_cfg)},
-      max_pucch_grants_per_slot))
+  required_info(pucch_res_builder_info{.init_ul_bwp          = init_ul_bwp,
+                                       .tdd_ul_dl_cfg_common = tdd_ul_dl_cfg_common,
+                                       .pucch_cfg            = pucch_cfg})
 {
 }
 
-void pucch_res_builder_test_helper::setup(const bwp_uplink_common&          init_ul_bwp,
-                                          optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common,
-                                          const serving_cell_config&        base_ue_cfg,
+pucch_res_builder_test_helper::pucch_res_builder_test_helper(const cell_configuration&   cell_cfg,
+                                                             const pucch_builder_params& pucch_cfg) :
+  required_info(pucch_res_builder_info{.init_ul_bwp          = cell_cfg.ul_cfg_common.init_ul_bwp,
+                                       .tdd_ul_dl_cfg_common = cell_cfg.tdd_cfg_common,
+                                       .pucch_cfg            = pucch_cfg})
+{
+}
+
+void pucch_res_builder_test_helper::setup(const bwp_uplink_common&          init_ul_bwp_,
+                                          optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common_,
                                           const pucch_builder_params&       pucch_cfg)
 {
-  srsran_assert(not pucch_res_mgr.has_value(), "The object has been already set-up by the constructor");
-  pucch_res_mgr.emplace(
-      srs_du::du_pucch_resource_manager(static_vector<du_cell_config, 1>{generate_du_cell_config(
-                                            init_ul_bwp, tdd_ul_dl_cfg_common, base_ue_cfg, pucch_cfg)},
-                                        max_pucch_grants_per_slot));
+  if (required_info.has_value()) {
+    return;
+  }
+  required_info.emplace(pucch_res_builder_info{
+      .init_ul_bwp = init_ul_bwp_, .tdd_ul_dl_cfg_common = tdd_ul_dl_cfg_common_, .pucch_cfg = pucch_cfg});
+}
+
+void pucch_res_builder_test_helper::setup(const cell_configuration& cell_cfg, const pucch_builder_params& pucch_cfg)
+{
+  setup(cell_cfg.ul_cfg_common.init_ul_bwp, cell_cfg.tdd_cfg_common, pucch_cfg);
 }
 
 bool pucch_res_builder_test_helper::add_build_new_ue_pucch_cfg(serving_cell_config& serv_cell_cfg)
 {
-  if (not pucch_res_mgr.has_value()) {
+  if (not required_info.has_value()) {
     return false;
+  }
+
+  if (not pucch_res_mgr.has_value()) {
+    init_pucch_res_mgr(serv_cell_cfg);
   }
 
   // Create a temporary struct that will be fed to the function alloc_resources().
@@ -66,4 +82,17 @@ bool pucch_res_builder_test_helper::add_build_new_ue_pucch_cfg(serving_cell_conf
   // Copy the serv_cell_cfg configuration in cell_group_cfg the input serv_cell_cfg.
   serv_cell_cfg = cell_group_cfg.cells[0].serv_cell_cfg;
   return true;
+}
+
+void pucch_res_builder_test_helper::init_pucch_res_mgr(const serving_cell_config& base_ue_cfg)
+{
+  if (pucch_res_mgr.has_value()) {
+    return;
+  }
+  pucch_res_mgr.emplace(srs_du::du_pucch_resource_manager(
+      static_vector<du_cell_config, 1>{generate_du_cell_config(required_info.value().init_ul_bwp,
+                                                               required_info.value().tdd_ul_dl_cfg_common,
+                                                               base_ue_cfg,
+                                                               required_info.value().pucch_cfg)},
+      max_pucch_grants_per_slot));
 }

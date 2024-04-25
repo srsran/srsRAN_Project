@@ -12,6 +12,7 @@
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "test_utils/dummy_test_components.h"
+#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/adt/optional.h"
@@ -73,10 +74,11 @@ struct test_bench {
 class scheduler_impl_tester
 {
 protected:
-  slot_point            current_slot{0, 0};
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
-  optional<test_bench>  bench;
+  slot_point                    current_slot{0, 0};
+  srslog::basic_logger&         mac_logger  = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST", true);
+  optional<test_bench>          bench;
+  pucch_res_builder_test_helper pucch_cfg_builder;
 
   unsigned last_csi_report_offset = 0;
 
@@ -115,6 +117,8 @@ protected:
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+
+    pucch_cfg_builder.setup(bench->cell_cfg);
   }
 
   void run_slot()
@@ -174,7 +178,7 @@ protected:
     return total_cw_tb_size_bytes;
   }
 
-  cell_config_builder_params create_custom_cell_cfg_builder_params(duplex_mode mode) const
+  static cell_config_builder_params create_custom_cell_cfg_builder_params(duplex_mode mode)
   {
     cell_config_builder_params cell_cfg{};
     if (mode == duplex_mode::TDD) {
@@ -261,13 +265,15 @@ protected:
           .report_slot_offset += ue_index;
     }
 
+    pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_creation_req.cfg.cells.value()[0].serv_cell_cfg);
     bench->sch.handle_ue_creation_request(ue_creation_req);
 
     bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}, {}, ue_creation_req};
   }
 
-  void add_ue(const sched_ue_creation_request_message& ue_create_req)
+  void add_ue(sched_ue_creation_request_message& ue_create_req)
   {
+    pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_create_req.cfg.cells.value()[0].serv_cell_cfg);
     bench->sch.handle_ue_creation_request(ue_create_req);
 
     bench->ues[ue_create_req.ue_index] = sched_test_ue{ue_create_req.crnti, {}, {}, ue_create_req};
@@ -1295,7 +1301,6 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
-
                                          multiple_ue_test_params{.nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 2000,
                                                                  .max_buffer_size_in_bytes = 3000,

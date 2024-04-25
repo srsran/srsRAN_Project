@@ -17,48 +17,19 @@
 
 using namespace srsran;
 
-// Initializes the pucch_res_builder_test_helper using the constructor.
-class sched_pucch_res_builder_ctor
-{
-public:
-  explicit sched_pucch_res_builder_ctor() :
-    cell_cfg(config_helpers::make_default_scheduler_expert_config(),
-             test_helpers::make_default_sched_cell_configuration_request()),
-    pucch_res_builder(cell_cfg.ul_cfg_common.init_ul_bwp,
-                      nullopt,
-                      config_helpers::create_default_initial_ue_spcell_cell_config().serv_cell_cfg)
-  {
-  }
-
-  cell_configuration            cell_cfg;
-  pucch_res_builder_test_helper pucch_res_builder;
-};
-
-// Initializes the pucch_res_builder_test_helper using the default constructor followed by the setup() function.
-class sched_pucch_res_builder_no_ctor
-{
-public:
-  explicit sched_pucch_res_builder_no_ctor() :
-    cell_cfg(config_helpers::make_default_scheduler_expert_config(),
-             test_helpers::make_default_sched_cell_configuration_request())
-  {
-    pucch_res_builder.setup(cell_cfg.ul_cfg_common.init_ul_bwp,
-                            nullopt,
-                            config_helpers::create_default_initial_ue_spcell_cell_config().serv_cell_cfg);
-  }
-
-  cell_configuration            cell_cfg;
-  pucch_res_builder_test_helper pucch_res_builder;
-};
-
 class sched_pucch_res_builder_tester : public ::testing::TestWithParam<bool>
 {
 protected:
   sched_pucch_res_builder_tester() :
+    cell_cfg(config_helpers::make_default_scheduler_expert_config(),
+             test_helpers::make_default_sched_cell_configuration_request()),
     cell_cfg_dedicated(config_helpers::create_default_initial_ue_spcell_cell_config()),
-    pucch_builder(GetParam() ? sched_pucch_res_builder_no_ctor().pucch_res_builder
-                             : sched_pucch_res_builder_ctor().pucch_res_builder)
+    pucch_builder(GetParam() ? pucch_res_builder_test_helper(cell_cfg.ul_cfg_common.init_ul_bwp, nullopt)
+                             : pucch_res_builder_test_helper())
   {
+    if (not GetParam()) {
+      pucch_builder.setup(cell_cfg.ul_cfg_common.init_ul_bwp, nullopt);
+    }
   }
 
   struct ue_info {
@@ -73,6 +44,7 @@ protected:
     return &ues.back();
   }
 
+  cell_configuration            cell_cfg;
   cell_config_dedicated         cell_cfg_dedicated;
   pucch_builder_params          pucch_params;
   std::vector<ue_info>          ues;
@@ -131,14 +103,3 @@ TEST_P(sched_pucch_res_builder_tester, when_ues_are_added_their_cfg_have_differe
 INSTANTIATE_TEST_SUITE_P(test_helper_inited_with_ctor_vs_setup,
                          sched_pucch_res_builder_tester,
                          ::testing::Values(true, false));
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}
