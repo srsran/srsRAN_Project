@@ -12,7 +12,7 @@
 
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor_impl_interface.h"
+#include "../du_processor/du_processor.h"
 #include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"

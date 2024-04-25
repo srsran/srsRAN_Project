@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../du_processor/du_processor_impl_interface.h"
+#include "../du_processor/du_processor.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

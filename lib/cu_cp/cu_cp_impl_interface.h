@@ -60,11 +60,11 @@ public:
   virtual bool handle_new_ngap_ue(ue_index_t ue_index) = 0;
 };
 
-/// Interface for an E1AP notifier to communicate with the CU-CP.
-class cu_cp_e1ap_handler
+/// Handler of E1AP-CU-CP events.
+class cu_cp_e1ap_event_handler
 {
 public:
-  virtual ~cu_cp_e1ap_handler() = default;
+  virtual ~cu_cp_e1ap_event_handler() = default;
 
   /// \brief Handle the creation of an E1AP.
   /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
@@ -294,7 +294,7 @@ public:
   virtual async_task<void> handle_ue_removal_request(ue_index_t ue_index) = 0;
 };
 
-class cu_cp_impl_interface : public cu_cp_e1ap_handler,
+class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
                              public cu_cp_measurement_handler,
@@ -306,7 +306,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_handler,
 public:
   virtual ~cu_cp_impl_interface() = default;
 
-  virtual cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler()               = 0;
+  virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()               = 0;
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
   virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;

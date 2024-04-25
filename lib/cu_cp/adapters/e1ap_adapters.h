@@ -40,7 +40,7 @@ private:
 class e1ap_cu_cp_adapter : public e1ap_cu_cp_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_e1ap_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
+  void connect_cu_cp(cu_cp_e1ap_event_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
 
   /// \brief Notifies about the creation of an E1AP.
   /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
@@ -61,7 +61,7 @@ public:
   }
 
 private:
-  cu_cp_e1ap_handler* cu_cp_handler = nullptr;
+  cu_cp_e1ap_event_handler* cu_cp_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

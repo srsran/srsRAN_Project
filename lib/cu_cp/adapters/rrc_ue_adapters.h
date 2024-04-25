@@ -12,7 +12,7 @@
 
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor_impl_interface.h"
+#include "../du_processor/du_processor.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"

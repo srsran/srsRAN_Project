@@ -9,7 +9,7 @@
  */
 
 #include "du_processor_test_helpers.h"
-#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
+#include "lib/cu_cp/du_processor/du_processor.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include <gtest/gtest.h>
 
@@ -26,7 +26,7 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
 {
   // Pass F1 Setup Request to DU processor
   f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
 
   // Check response is F1SetupResponse
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::successful_outcome);
@@ -42,7 +42,7 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
   f1_setup_req.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -62,7 +62,7 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
       .gnb_du_sys_info_present = false;
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -76,7 +76,7 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   f1ap_message f1ap_msg = create_f1_setup_request_with_too_many_cells();
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(f1ap_msg);
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1ap_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -91,7 +91,7 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -99,16 +99,17 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
   ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 6576);
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_response resp =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 }
 
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -116,7 +117,8 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 1);
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_response resp =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_EQ(resp.f1ap_rrc_notifier, nullptr);
 }
 
@@ -127,7 +129,7 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -135,22 +137,23 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
   ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 6576);
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_response resp =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 
   // Pass same message to DU processor again
-  resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  resp = du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_EQ(resp.f1ap_rrc_notifier, nullptr);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 }
 
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Reduce logger loglevel to warning to reduce console output
@@ -166,7 +169,8 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
     ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(ue_index, c_rnti, 6576);
 
     // Pass message to DU processor
-    ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+    ue_rrc_context_creation_response resp =
+        du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
     ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
   }
 
@@ -175,13 +179,13 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Try to allocate additional UE index
   ue_index_t ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
   ASSERT_EQ(ue_index, ue_index_t::invalid);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +194,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_deleted)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -198,10 +202,11 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 6576);
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_response resp =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 
   // Generate UE context release command message
   cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
@@ -212,14 +217,14 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 
   ASSERT_TRUE(t.ready());
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 0);
   ASSERT_EQ(ue_task_sched->get_nof_pending_tasks(), 0);
 }
 
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Reduce logger loglevel to warning to reduce console output
@@ -237,7 +242,8 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(ue_index, c_rnti, 6576);
 
     // Pass message to DU processor
-    ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+    ue_rrc_context_creation_response resp =
+        du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
     ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
 
     // create SRB1
@@ -255,7 +261,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Generate UE context release command message
   cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index_t::min);
@@ -265,7 +271,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   t_launcher.emplace(t);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU - 1);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU - 1);
   ASSERT_EQ(ue_task_sched->get_nof_pending_tasks(), 0);
 
   // Add one more UE to DU processor
@@ -275,8 +281,9 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(ue_index, c_rnti, 6576);
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp = du_processor_obj->handle_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_response resp =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
 }

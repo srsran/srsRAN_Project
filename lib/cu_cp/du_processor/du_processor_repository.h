@@ -64,7 +64,7 @@ public:
   /// \param[out] The index of the DU serving the given PCI.
   du_index_t find_du(pci_t pci);
 
-  du_processor_impl_interface& get_du_processor(du_index_t du_index);
+  du_processor& get_du_processor(du_index_t du_index);
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
@@ -77,25 +77,23 @@ public:
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
 private:
-  struct du_context final : public du_f1c_handler {
+  struct du_context {
     // CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
 
     // NGAP to DU processor notifier;
     ngap_du_processor_adapter ngap_du_processor_notifier;
 
-    std::unique_ptr<du_processor_impl_interface> du_processor;
+    std::unique_ptr<du_processor> processor;
 
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
-
-    f1ap_message_handler& get_message_handler() override;
   };
 
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The DU processor object.
-  du_processor_impl_interface& find_du(du_index_t du_index);
+  du_processor& find_du(du_index_t du_index);
 
   /// \brief Adds a DU processor object to the CU-CP.
   /// \return The DU index of the added DU processor object.

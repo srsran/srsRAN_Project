@@ -13,6 +13,7 @@
 #include "du_metrics_handler.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_handover.h"
@@ -27,7 +28,7 @@ namespace srs_cu_cp {
 struct rrc_ue_creation_message;
 
 /// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface
+class du_processor_f1ap_interface : public du_f1c_handler
 {
 public:
   virtual ~du_processor_f1ap_interface() = default;
@@ -50,10 +51,6 @@ public:
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
-
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
 
   /// \brief Get the F1AP UE context management handler interface of the DU processor object.
   /// \return The F1AP UE context management handler interface of the DU processor object.
@@ -438,19 +435,10 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-class du_processor_impl_interface : public du_processor_f1ap_interface,
-                                    public du_processor_rrc_ue_interface,
-                                    public du_processor_cell_info_interface,
-                                    public du_processor_ngap_interface,
-                                    public du_processor_ue_task_handler,
-                                    public du_processor_paging_handler,
-                                    public du_processor_inactivity_handler,
-                                    public du_processor_statistics_handler,
-                                    public du_processor_mobility_handler
-
+class du_processor : public du_processor_cell_info_interface
 {
 public:
-  virtual ~du_processor_impl_interface() = default;
+  virtual ~du_processor() = default;
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
   virtual du_processor_rrc_ue_interface&   get_rrc_ue_interface()   = 0;
@@ -468,6 +456,7 @@ public:
   /// \brief Retrieve the UE Context notifier of the DU processor.
   virtual du_processor_ue_context_notifier& get_ue_context_notifier() = 0;
 
+  /// \brief Retrieve the DU-specific metrics handler.
   virtual du_metrics_handler& get_metrics_handler() = 0;
 };
 

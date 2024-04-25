@@ -27,7 +27,7 @@ using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
 f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
-                           f1ap_message_notifier&       f1ap_pdu_notifier_,
+                           f1ap_message_notifier&       tx_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
                            timer_manager&               timers_,
@@ -38,7 +38,7 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
   ctrl_exec(ctrl_exec_),
-  tx_pdu_notifier(*this, f1ap_pdu_notifier_)
+  tx_pdu_notifier(*this, tx_pdu_notifier_)
 {
 }
 

@@ -20,6 +20,7 @@ using namespace srs_cu_cp;
 
 namespace {
 
+/// Notifier used to forward Rx F1AP messages from F1-C to CU-CP.
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
@@ -112,24 +113,24 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.du_setup_notif              = &cfg.du_conn_notif;
   du_cfg.f1ap_cfg                    = cfg.cu_cp.f1ap_config;
 
-  std::unique_ptr<du_processor_impl_interface> du = create_du_processor(du_cfg,
-                                                                        du_ctxt.du_to_cu_cp_notifier,
-                                                                        f1ap_ev_notifier,
-                                                                        *du_ctxt.f1ap_tx_pdu_notifier,
-                                                                        cfg.e1ap_ctrl_notifier,
-                                                                        cfg.ngap_ctrl_notifier,
-                                                                        cfg.ue_nas_pdu_notifier,
-                                                                        cfg.ue_ngap_ctrl_notifier,
-                                                                        cfg.meas_config_notifier,
-                                                                        cfg.ue_task_sched,
-                                                                        cfg.ue_manager,
-                                                                        *cfg.cu_cp.cu_cp_executor);
+  std::unique_ptr<du_processor> du = create_du_processor(du_cfg,
+                                                         du_ctxt.du_to_cu_cp_notifier,
+                                                         f1ap_ev_notifier,
+                                                         *du_ctxt.f1ap_tx_pdu_notifier,
+                                                         cfg.e1ap_ctrl_notifier,
+                                                         cfg.ngap_ctrl_notifier,
+                                                         cfg.ue_nas_pdu_notifier,
+                                                         cfg.ue_ngap_ctrl_notifier,
+                                                         cfg.meas_config_notifier,
+                                                         cfg.ue_task_sched,
+                                                         cfg.ue_manager,
+                                                         *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
-  du_ctxt.du_processor = std::move(du);
+  du_ctxt.processor = std::move(du);
 
   // Create connection DU processor to NGAP.
-  du_ctxt.ngap_du_processor_notifier.connect_du_processor(du_ctxt.du_processor.get());
+  du_ctxt.ngap_du_processor_notifier.connect_du_processor(&du_ctxt.processor->get_ngap_interface());
 
   return du_index;
 }
@@ -162,56 +163,51 @@ void du_processor_repository::remove_du_impl(du_index_t du_index)
   logger.info("Removed DU {}", du_index);
 }
 
-du_processor_impl_interface& du_processor_repository::find_du(du_index_t du_index)
+du_processor& du_processor_repository::find_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return *du_db.at(du_index).du_processor;
+  return *du_db.at(du_index).processor;
 }
 
 du_index_t du_processor_repository::find_du(pci_t pci)
 {
   du_index_t index = du_index_t::invalid;
   for (const auto& du : du_db) {
-    if (du.second.du_processor->has_cell(pci))
+    if (du.second.processor->has_cell(pci))
       return du.first;
   }
 
   return index;
 }
 
-du_processor_impl_interface& du_processor_repository::get_du_processor(du_index_t du_index)
+du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return *du_db.at(du_index).du_processor;
+  return *du_db.at(du_index).processor;
 }
 
 du_f1c_handler& du_processor_repository::get_du(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return du_db.at(du_index);
-}
-
-f1ap_message_handler& du_processor_repository::du_context::get_message_handler()
-{
-  return du_processor->get_f1ap_message_handler();
+  return du_db.at(du_index).processor->get_f1ap_interface();
 }
 
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Forward paging message to all DU processors
   for (auto& du : du_db) {
-    du.second.du_processor->get_paging_handler().handle_paging_message(msg);
+    du.second.processor->get_paging_handler().handle_paging_message(msg);
   }
 }
 
 ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
 {
   for (auto& du : du_db) {
-    if (du.second.du_processor->has_cell(cgi)) {
-      return du.second.du_processor->get_ngap_interface().allocate_new_ue_index();
+    if (du.second.processor->has_cell(cgi)) {
+      return du.second.processor->get_ngap_interface().allocate_new_ue_index();
     }
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
@@ -223,7 +219,7 @@ du_processor_repository::handle_ngap_handover_request(const ngap_handover_reques
 {
   auto& du = du_db.at(get_du_index_from_ue_index(request.ue_index));
 
-  du_processor_mobility_handler& mob = du.du_processor->get_mobility_handler();
+  du_processor_mobility_handler& mob = du.processor->get_mobility_handler();
 
   return mob.handle_ngap_handover_request(request);
 }
@@ -232,14 +228,14 @@ void du_processor_repository::handle_inactivity_notification(du_index_t         
                                                              const cu_cp_inactivity_notification& msg)
 {
   // Forward message to DU processor
-  du_db.at(du_index).du_processor->handle_inactivity_notification(msg);
+  du_db.at(du_index).processor->get_inactivity_handler().handle_inactivity_notification(msg);
 }
 
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;
   for (auto& du : du_db) {
-    du_reports.emplace_back(du.second.du_processor->get_metrics_handler().handle_du_metrics_report_request());
+    du_reports.emplace_back(du.second.processor->get_metrics_handler().handle_du_metrics_report_request());
   }
   return du_reports;
 }

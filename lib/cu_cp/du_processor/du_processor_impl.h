@@ -14,8 +14,8 @@
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../routine_managers/du_processor_routine_manager.h"
+#include "du_processor.h"
 #include "du_processor_config.h"
-#include "du_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -27,7 +27,17 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor_impl_interface, public du_setup_handler, public du_metrics_handler
+class du_processor_impl : public du_processor,
+                          public du_setup_handler,
+                          public du_metrics_handler,
+                          public du_processor_f1ap_interface,
+                          public du_processor_rrc_ue_interface,
+                          public du_processor_ngap_interface,
+                          public du_processor_ue_task_handler,
+                          public du_processor_paging_handler,
+                          public du_processor_inactivity_handler,
+                          public du_processor_statistics_handler,
+                          public du_processor_mobility_handler
 {
 public:
   du_processor_impl(const du_processor_config_t&        du_processor_config_,
@@ -47,7 +57,7 @@ public:
   // getter functions
 
   du_index_t               get_du_index() override { return context.du_index; }
-  f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
+  f1ap_message_handler&    get_message_handler() override { return *f1ap; }
   f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
 
@@ -152,7 +162,7 @@ private:
 
   du_processor_cu_cp_notifier&         cu_cp_notifier;
   f1ap_du_management_notifier&         f1ap_du_mgmt_notifier;
-  f1ap_message_notifier&               f1ap_notifier;
+  f1ap_message_notifier&               f1ap_pdu_notifier;
   du_processor_e1ap_control_notifier&  e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier&  ngap_ctrl_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
@@ -167,7 +177,6 @@ private:
 
   du_processor_context                       context;
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
-  std::atomic<uint16_t>                      next_du_cell_index{0};
 
   std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
 

@@ -14,7 +14,7 @@
 #include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
 #include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
-#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
+#include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
