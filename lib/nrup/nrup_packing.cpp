@@ -13,6 +13,13 @@
 
 namespace srsran {
 
+/// Macro used to check a write/append/pack operation and log an error message if the validation fails.
+#define VERIFY_WRITE(cond)                                                                                             \
+  if (not(cond)) {                                                                                                     \
+    logger.error("Write failed in {}", __FUNCTION__);                                                                  \
+    return false;                                                                                                      \
+  }
+
 nrup_pdu_type nrup_packing::get_pdu_type(byte_buffer_view container)
 {
   srsran_assert(!container.empty(), "Cannot get PDU type of empty PDU");
@@ -110,7 +117,60 @@ bool nrup_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view conta
 
 bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const
 {
-  return false;
+  size_t      start_len = out_buf.length();
+  bit_encoder encoder{out_buf};
+
+  // PDU Type
+  VERIFY_WRITE(encoder.pack(nrup_pdu_type_to_uint(nrup_pdu_type::dl_user_data), 4));
+
+  // Spare (v15.2.0)
+  VERIFY_WRITE(encoder.pack(0, 1));
+
+  // DL discard blocks
+  bool dl_discard_blocks = dl_user_data.discard_blocks.has_value() && !dl_user_data.discard_blocks.value().empty();
+  VERIFY_WRITE(encoder.pack(dl_discard_blocks, 1));
+
+  // DL flush
+  VERIFY_WRITE(encoder.pack(dl_user_data.dl_discard_pdcp_sn.has_value(), 1));
+
+  // Report polling
+  VERIFY_WRITE(encoder.pack(dl_user_data.report_polling, 1));
+
+  // Spare (v15.2.0)
+  VERIFY_WRITE(encoder.pack(0, 6));
+
+  // Assistance Info Report Polling Flag
+  VERIFY_WRITE(encoder.pack(dl_user_data.assist_info_report_polling_flag, 1));
+
+  // Retransmission flag
+  VERIFY_WRITE(encoder.pack(dl_user_data.retransmission_flag, 1));
+
+  // NR-U Sequence Number
+  VERIFY_WRITE(encoder.pack(dl_user_data.nru_sn, 24));
+
+  // DL discard NR PDCP PDU SN (if present)
+  if (dl_user_data.dl_discard_pdcp_sn.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_user_data.dl_discard_pdcp_sn.value(), 24));
+  }
+
+  // Discard blocks (if present)
+  if (dl_discard_blocks) {
+    // DL discard number of blocks
+    VERIFY_WRITE(encoder.pack(dl_user_data.discard_blocks.value().size(), 8));
+
+    // Write all discard blocks
+    for (auto discard_block : dl_user_data.discard_blocks.value()) {
+      VERIFY_WRITE(encoder.pack(discard_block.pdcp_sn_start, 24));
+      VERIFY_WRITE(encoder.pack(discard_block.block_size, 8));
+    }
+  }
+
+  // Add padding such that length is (n*4-2) octets, where n is a positive integer.
+  while (((out_buf.length() - start_len) + 2) % 4) {
+    VERIFY_WRITE(out_buf.append(0x0));
+  }
+
+  return true;
 };
 
 bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, byte_buffer_view container) const
