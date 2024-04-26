@@ -135,6 +135,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   drb->mac_cfg      = drb_info.mac_cfg;
   drb->qos_info     = drb_info.qos_info;
   drb->gbr_qos_info = drb_info.gbr_qos_info;
+  drb->s_nssai      = drb_info.s_nssai;
 
   drb->uluptnl_info_list.assign(drb_info.uluptnl_info_list.begin(), drb_info.uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());

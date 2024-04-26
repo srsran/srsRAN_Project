@@ -18,6 +18,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
@@ -100,6 +101,8 @@ struct du_ue_drb {
   f1u_config                           f1u_cfg;
   std::unique_ptr<f1u_bearer>          drb_f1u;
   du_drb_connector                     connector;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
   /// QoS characteristics to be met by the DRB.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
@@ -124,6 +127,7 @@ struct drb_creation_info {
   rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
   const qos_characteristics&           qos_info;
   optional<gbr_qos_info_t>             gbr_qos_info;
+  s_nssai_t                            s_nssai;
 };
 
 /// \brief Creates a DRB instance for the whole DU.

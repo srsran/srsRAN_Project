@@ -163,7 +163,8 @@ void ue_configuration_procedure::update_ue_context()
                                      du_params,
                                      ue->get_rlc_rlf_notifier(),
                                      get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
-                                     drbtoadd.gbr_flow_info});
+                                     drbtoadd.gbr_flow_info,
+                                     drbtoadd.s_nssai});
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;
