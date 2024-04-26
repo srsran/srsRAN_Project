@@ -150,19 +150,20 @@ void ue_configuration_procedure::update_ue_context()
     //  varying 5QI.
 
     // Create DU DRB instance.
-    std::unique_ptr<du_ue_drb> drb = create_drb(ue->ue_index,
-                                                ue->pcell_index,
-                                                drbtoadd.drb_id,
-                                                it->lcid,
-                                                it->rlc_cfg,
-                                                it->mac_cfg,
-                                                f1u_cfg_it->second.f1u,
-                                                drbtoadd.uluptnl_info_list,
-                                                ue_mng.get_f1u_teid_pool(),
-                                                du_params,
-                                                ue->get_rlc_rlf_notifier(),
-                                                get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
-                                                drbtoadd.gbr_flow_info);
+    std::unique_ptr<du_ue_drb> drb =
+        create_drb(drb_creation_info{ue->ue_index,
+                                     ue->pcell_index,
+                                     drbtoadd.drb_id,
+                                     it->lcid,
+                                     it->rlc_cfg,
+                                     it->mac_cfg,
+                                     f1u_cfg_it->second.f1u,
+                                     drbtoadd.uluptnl_info_list,
+                                     ue_mng.get_f1u_teid_pool(),
+                                     du_params,
+                                     ue->get_rlc_rlf_notifier(),
+                                     get_5qi_to_qos_characteristics_mapping(drbtoadd.five_qi),
+                                     drbtoadd.gbr_flow_info});
     if (drb == nullptr) {
       proc_logger.log_proc_warning("Failed to create {}. Cause: Failed to allocate DU UE resources.", drbtoadd.drb_id);
       continue;

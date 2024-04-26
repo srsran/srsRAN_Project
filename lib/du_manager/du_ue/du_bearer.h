@@ -109,20 +109,25 @@ struct du_ue_drb {
   void stop();
 };
 
+/// Holds information needed to create a DRB in the DU.
+struct drb_creation_info {
+  du_ue_index_t                        ue_index;
+  du_cell_index_t                      pcell_index;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  const rlc_config&                    rlc_cfg;
+  const mac_lc_config&                 mac_cfg;
+  const f1u_config&                    f1u_cfg;
+  span<const up_transport_layer_info>  uluptnl_info_list;
+  gtpu_teid_pool&                      teid_pool;
+  const du_manager_params&             du_params;
+  rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
+  const qos_characteristics&           qos_info;
+  optional<gbr_qos_info_t>             gbr_qos_info;
+};
+
 /// \brief Creates a DRB instance for the whole DU.
-std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                        ue_index,
-                                      du_cell_index_t                      pcell_index,
-                                      drb_id_t                             drb_id,
-                                      lcid_t                               lcid,
-                                      const rlc_config&                    rlc_cfg,
-                                      const mac_lc_config&                 mac_cfg,
-                                      const f1u_config&                    f1u_cfg,
-                                      span<const up_transport_layer_info>  uluptnl_info_list,
-                                      gtpu_teid_pool&                      teid_pool,
-                                      const du_manager_params&             du_params,
-                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier,
-                                      const qos_characteristics&           qos_info,
-                                      optional<gbr_qos_info_t>             gbr_qos_info);
+std::unique_ptr<du_ue_drb> create_drb(const drb_creation_info& drb_info);
 
 } // namespace srs_du
 } // namespace srsran

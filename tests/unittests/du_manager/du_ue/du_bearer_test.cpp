@@ -40,19 +40,19 @@ std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
 
   std::array<up_transport_layer_info, 1> ul_tnls = {
       up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{0}}};
-  return create_drb(to_du_ue_index(0),
-                    to_du_cell_index(0),
-                    drb_id,
-                    lcid,
-                    rlc_config{},
-                    mac_lc_config{},
-                    f1u_config{},
-                    ul_tnls,
-                    teid_pool,
-                    du_mng->params,
-                    rlf_notifier,
-                    qos_characteristics{},
-                    nullopt);
+  return create_drb(drb_creation_info{to_du_ue_index(0),
+                                      to_du_cell_index(0),
+                                      drb_id,
+                                      lcid,
+                                      rlc_config{},
+                                      mac_lc_config{},
+                                      f1u_config{},
+                                      ul_tnls,
+                                      teid_pool,
+                                      du_mng->params,
+                                      rlf_notifier,
+                                      qos_characteristics{},
+                                      nullopt});
 }
 
 TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)
