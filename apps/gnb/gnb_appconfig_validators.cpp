@@ -672,7 +672,7 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
       if (cell1.cell.dl_arfcn == cell2.cell.dl_arfcn) {
         // Two cells on the same frequency should not have the same physical cell identifier.
         if (cell1.cell.pci == cell2.cell.pci) {
-          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).",
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).\n",
                      cell1.cell.dl_arfcn,
                      cell1.cell.pci);
         }
@@ -680,8 +680,10 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
         // Two cells on the same frequency should not share the same PRACH root sequence index.
         if ((cell1.cell.prach_cfg.prach_frequency_start == cell2.cell.prach_cfg.prach_frequency_start) &&
             (cell1.cell.prach_cfg.prach_root_sequence_index == cell2.cell.prach_cfg.prach_root_sequence_index)) {
-          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PRACH root sequence index "
-                     "(i.e., {}).",
+          fmt::print("Warning: cells with PCI {} and {} with the same DL ARFCN (i.e., {}) have the same PRACH root "
+                     "sequence index (i.e., {}).\n",
+                     cell1.cell.pci,
+                     cell2.cell.pci,
                      cell1.cell.dl_arfcn,
                      cell1.cell.prach_cfg.prach_root_sequence_index);
         }
