@@ -13,7 +13,7 @@
 
 namespace srsran {
 
-nrup_pdu_type nrup_packing::get_pdu_type(byte_buffer_view container) const
+nrup_pdu_type nrup_packing::get_pdu_type(byte_buffer_view container)
 {
   srsran_assert(!container.empty(), "Cannot get PDU type of empty PDU");
   uint8_t field_value = container[0] >> 4;

@@ -46,7 +46,7 @@ class nrup_packing
 public:
   nrup_packing(srslog::basic_logger& logger_) : logger(logger_) {}
 
-  nrup_pdu_type get_pdu_type(byte_buffer_view container) const;
+  static nrup_pdu_type get_pdu_type(byte_buffer_view container);
 
   bool unpack(nru_dl_user_data& dl_user_data, byte_buffer_view container) const;
   bool pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const;
