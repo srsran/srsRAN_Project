@@ -32,6 +32,11 @@ struct nru_pdcp_sn_discard_block {
   /// Discarded Block size.
   /// This parameter indicates the number of NR PDCP PDUs counted from the starting SN to be discarded.
   uint8_t block_size = 0;
+
+  bool operator==(const nru_pdcp_sn_discard_block& other) const
+  {
+    return pdcp_sn_start == other.pdcp_sn_start && block_size == other.block_size;
+  }
 };
 
 using nru_pdcp_sn_discard_blocks = static_vector<nru_pdcp_sn_discard_block, nru_max_nof_pdcp_sn_discard_blocks>;
@@ -46,6 +51,11 @@ struct nru_lost_nru_sn_range {
   /// End of lost NR-U Sequence Number range.
   /// This parameter indicates the end of an NR-U sequence number range reported to be lost.
   uint32_t nru_sn_end = 0;
+
+  bool operator==(const nru_lost_nru_sn_range& other) const
+  {
+    return nru_sn_start == other.nru_sn_start && nru_sn_end == other.nru_sn_end;
+  }
 };
 
 using nru_lost_nru_sn_ranges = static_vector<nru_lost_nru_sn_range, nru_max_nof_lost_nru_sn_ranges>;
@@ -75,6 +85,14 @@ struct nru_dl_user_data {
   optional<uint32_t> dl_discard_pdcp_sn;
   /// Container holding the DL discard NR PDCP PDU SN blocks.
   optional<nru_pdcp_sn_discard_blocks> discard_blocks;
+
+  bool operator==(const nru_dl_user_data& other) const
+  {
+    return report_polling == other.report_polling &&
+           assist_info_report_polling_flag == other.assist_info_report_polling_flag &&
+           retransmission_flag == other.retransmission_flag && nru_sn == other.nru_sn &&
+           dl_discard_pdcp_sn == other.dl_discard_pdcp_sn && discard_blocks == other.discard_blocks;
+  }
 };
 
 /// NR-U DL Data Delivery Status (PDU Type 1).
