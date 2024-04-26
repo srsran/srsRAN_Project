@@ -55,6 +55,10 @@ f1ap_drb_to_setup make_drb_to_setup(const Asn1Type& drb_item)
       drb_item.qos_info.choice_ext().value().drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi);
   drb_obj.arp_priority_level =
       drb_item.qos_info.choice_ext().value().drb_info().drb_qos.ngra_nalloc_retention_prio.prio_level;
+  drb_obj.s_nssai.sst = drb_item.qos_info.choice_ext().value().drb_info().snssai.sst.to_number();
+  if (drb_item.qos_info.choice_ext().value().drb_info().snssai.sd_present) {
+    drb_obj.s_nssai.sd = drb_item.qos_info.choice_ext().value().drb_info().snssai.sd.to_number();
+  }
   // TODO: Do not populate gbr_flow_info for non-GBR flows.
   if (drb_item.qos_info.choice_ext().value().drb_info().drb_qos.gbr_qos_flow_info_present) {
     drb_obj.gbr_flow_info.emplace();

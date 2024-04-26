@@ -16,6 +16,7 @@
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
@@ -45,6 +46,7 @@ struct f1ap_drb_to_setup {
   drb_rlc_mode     mode;
   five_qi_t        five_qi;
   uint8_t          arp_priority_level;
+  s_nssai_t        s_nssai;
   /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
   optional<gbr_qos_info_t>             gbr_flow_info;
   std::vector<up_transport_layer_info> uluptnl_info_list;
