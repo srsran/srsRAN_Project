@@ -84,7 +84,7 @@ metrics version check in retina:
   stage: compose
   image: docker:24.0.7
   tags:
-    - amd64
+    - saas-linux-small-amd64
   timeout: 2h
   variables:
     DOCKER_HOST: tcp://docker:2375/
