@@ -219,10 +219,10 @@ public:
 
   /// \brief Gets the general Channel State Information.
   ///
-  /// param[in] csi Channel State Information object where the CSI parameters are stored.
+  /// \param[out] csi Channel State Information object where the CSI parameters are stored.
   void get_channel_state_information(channel_state_information& csi) const
   {
-    // EPRE, RSRP and time alignment are reported as a linear average of the results for all Rx ports.
+    // EPRE and RSRP are reported as a linear average of the results for all Rx ports.
     float    epre_lin      = 0.0F;
     float    rsrp_lin      = 0.0F;
     unsigned best_rx_port  = 0;
@@ -246,8 +246,14 @@ public:
     csi.set_epre(convert_power_to_dB(epre_lin));
     csi.set_rsrp(convert_power_to_dB(rsrp_lin));
 
-    // Use the time alignment of the channel path with better SNR.
+    // Use the time alignment of the channel path with best SNR.
     csi.set_time_alignment(get_time_alignment(best_rx_port, 0));
+
+    // Use the CFO of the channel path with best SNR.
+    optional<float> cfo_help = get_cfo_Hz(best_rx_port, 0);
+    if (cfo_help.has_value()) {
+      csi.set_cfo(cfo_help.value());
+    }
 
     // SINR is reported by averaging the signal and noise power contributions of all Rx ports.
     csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator,

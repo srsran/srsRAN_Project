@@ -158,6 +158,22 @@ public:
   /// \return The measured RSRP if present, otherwise \c nullopt.
   optional<float> get_rsrp_dB() const { return rsrp_dB; }
 
+  /// \brief Sets the measured Carrier Frequency Offset (CFO) in hertz.
+  ///
+  /// The CFO value is ignored if NaN.
+  void set_cfo(float cfo_Hz_)
+  {
+    if (std::isnan(cfo_Hz_)) {
+      return;
+    }
+
+    cfo_Hz.emplace(cfo_Hz_);
+  }
+
+  /// \brief Gets the measured Carrier Frequency Offset (CFO) in hertz.
+  /// \return The measured CFO if present, \c nullopt otherwise.
+  optional<float> get_cfo_Hz() const { return cfo_Hz; }
+
 private:
   friend struct fmt::formatter<channel_state_information>;
   /// \brief SINR type that can be accessed by \ref get_sinr_dB.
@@ -179,6 +195,8 @@ private:
   optional<float> epre_dB;
   /// Average RSRP in decibels.
   optional<float> rsrp_dB;
+  /// CFO measurement in hertz.
+  optional<float> cfo_Hz;
 };
 
 } // namespace srsran
