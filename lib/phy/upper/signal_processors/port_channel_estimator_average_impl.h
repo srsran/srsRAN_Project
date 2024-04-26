@@ -65,6 +65,10 @@ private:
                          unsigned                    hop,
                          unsigned                    layer);
 
+  /// Computes the cumulative duration of all CPs (normalized with respect to the OFDM symbol time) for the given
+  /// subcarrier spacing.
+  void initialize_cp_cum_duration(cyclic_prefix cp, subcarrier_spacing scs);
+
   /// Frequency domain smoothing strategy.
   port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy;
 
@@ -83,6 +87,11 @@ private:
   /// Buffer of frequency response coefficients.
   std::array<cf_t, MAX_RB * NRE> freq_response;
 
+  /// Buffer of cumulative duration of CPs.
+  std::array<float, MAX_NSYMB_PER_SLOT> cp_cum_help;
+  /// View on the used part of the cumulative CP buffer \c cp_cum_help.
+  span<float> cp_cum_duration;
+
   /// Estimated RSRP value (single layer).
   float rsrp = 0;
 
@@ -96,6 +105,9 @@ private:
 
   /// Estimated time alignment in seconds.
   float time_alignment_s = 0;
+
+  /// Estimated CFO, normalized with respect to the subcarrier spacing.
+  optional<float> cfo_normalized = nullopt;
 };
 
 } // namespace srsran

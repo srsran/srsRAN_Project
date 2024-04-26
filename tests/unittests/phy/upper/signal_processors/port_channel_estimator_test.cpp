@@ -79,10 +79,9 @@ protected:
 
 std::shared_ptr<port_channel_estimator_factory> ChannelEstFixture::ch_est_factory = nullptr;
 
-constexpr float tolerance = 5e-4;
-
 bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected, const channel_estimate& computed)
 {
+  constexpr float  tolerance  = 5e-4;
   unsigned         old_symbol = 15;
   span<const cf_t> computed_symbol;
 
@@ -156,11 +155,19 @@ TEST_P(ChannelEstFixture, test)
   double tolerance_ta_us = 1e3 / (4096 * scs_to_khz(test_params.cfg.scs));
 
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
-  ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, tolerance);
-  ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, tolerance);
-  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, tolerance);
-  ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, tolerance);
+  ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, 5e-4);
+  ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, 5e-4);
+  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, 0.004);
+  ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, 0.02 * std::abs(test_params.snr_est));
   ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
+  if (test_params.cfo_est_Hz.has_value()) {
+    ASSERT_TRUE(estimates.get_cfo_Hz(0, 0).has_value()) << "CFO estimation was expected, none obtained.";
+    ASSERT_NEAR(estimates.get_cfo_Hz(0, 0).value(),
+                test_params.cfo_est_Hz.value(),
+                0.05 * std::abs(test_params.cfo_est_Hz.value()));
+  } else {
+    ASSERT_FALSE(estimates.get_cfo_Hz(0, 0).has_value()) << "No CFO estimation was expected.";
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(ChannelEstSuite, ChannelEstFixture, ::testing::ValuesIn(port_channel_estimator_test_data));
