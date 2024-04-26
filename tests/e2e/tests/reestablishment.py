@@ -34,12 +34,12 @@ from .steps.stub import (
 
 
 @mark.parametrize(
-    "band, common_scs, bandwidth, enable_channel_noise",
+    "band, common_scs, bandwidth, noise_spd",
     (
-        param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        # param(41, 30, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq
@@ -54,7 +54,7 @@ def test_zmq_reestablishment(
     band: int,
     common_scs: int,
     bandwidth: int,
-    enable_channel_noise: bool,
+    noise_spd: int,
 ):
     """
     ZMQ Ping + Reestablishment
@@ -77,7 +77,7 @@ def test_zmq_reestablishment(
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=True,
-        enable_channel_noise=enable_channel_noise,
+        noise_spd=noise_spd,
         reestablishment_count=reestablishment_count,
         reestablishment_interval=reestablishment_interval,
         ping_count=test_duration_per_ue_sec,
@@ -99,7 +99,7 @@ def _ping_and_reestablishment_multi_ues(
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
-    enable_channel_noise: bool,
+    noise_spd: int,
     ping_count: int,
     warning_as_errors: bool = True,
     reestablishment_count: int = 1,
@@ -116,7 +116,7 @@ def _ping_and_reestablishment_multi_ues(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        enable_channel_noise=enable_channel_noise,
+        noise_spd=noise_spd,
         enable_qos_reestablishment=True,
     )
 

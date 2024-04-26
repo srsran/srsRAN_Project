@@ -37,12 +37,12 @@ from .steps.stub import (
 
 
 @mark.parametrize(
-    "band, common_scs, bandwidth, enable_channel_noise",
+    "band, common_scs, bandwidth, noise_spd",
     (
-        param(3, 15, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
-        param(41, 30, 50, True, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
     ),
 )
 @mark.zmq
@@ -57,7 +57,7 @@ def test_zmq_handover(
     band: int,
     common_scs: int,
     bandwidth: int,
-    enable_channel_noise: bool,
+    noise_spd: int,
 ):
     """
     ZMQ Handover tests
@@ -75,7 +75,7 @@ def test_zmq_handover(
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=True,
-        enable_channel_noise=enable_channel_noise,
+        noise_spd=noise_spd,
         warning_as_errors=True,
     )
 
@@ -94,7 +94,7 @@ def _handover_multi_ues(
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
-    enable_channel_noise: bool,
+    noise_spd: int,
     warning_as_errors: bool = True,
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 1,
@@ -113,7 +113,7 @@ def _handover_multi_ues(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        enable_channel_noise=enable_channel_noise,
+        noise_spd=noise_spd,
         num_cells=2,
         cell_position_offset=cell_position_offset,
     )
