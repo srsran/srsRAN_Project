@@ -66,6 +66,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_smallest)
   nru_dl_user_data exp_data{};
   exp_data.nru_sn = 0x112233;
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_dl_flush)
@@ -91,6 +96,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_dl_flush)
   exp_data.nru_sn             = 0x112233;
   exp_data.dl_discard_pdcp_sn = 0x998877;
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_report_polling)
@@ -112,6 +122,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_report_polling)
   exp_data.nru_sn         = 0x112233;
   exp_data.report_polling = true;
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
@@ -133,6 +148,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
   exp_data.nru_sn                          = 0x112233;
   exp_data.assist_info_report_polling_flag = true;
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
@@ -154,6 +174,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
   exp_data.nru_sn              = 0x112233;
   exp_data.retransmission_flag = true;
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
@@ -184,6 +209,11 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
   exp_data.nru_sn         = 0x112233;
   exp_data.discard_blocks = nru_pdcp_sn_discard_blocks{{0x445566, 0x77}, {0xaabbcc, 0xdd}};
   EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_user_data_empty)
@@ -238,6 +268,32 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_excessive_padding)
       // No further fields
       0x00, // Padding
       0x00, // Excessive Padding
+  };
+
+  byte_buffer      packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_user_data out_data;
+  EXPECT_FALSE(packer->unpack(out_data, packed_buf));
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_blocks)
+{
+  const uint8_t packed_vec[] = {
+      0x04, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
+      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x11, // NR-U Sequence Number (upper byte)
+      0x22, // NR-U Sequence Number (mid byte)
+      0x33, // NR-U Sequence Number (lower byte)
+      0x03, // DL discard Number of blocks - PUT TOO LARGE VALUE
+      0x44, // DL discard NR PDCP PDU SN start (upper byte)
+      0x55, // DL discard NR PDCP PDU SN start (mid byte)
+      0x66, // DL discard NR PDCP PDU SN start (lower byte)
+      0x77, // Discarded Block size
+      0xaa, // DL discard NR PDCP PDU SN start (upper byte)
+      0xbb, // DL discard NR PDCP PDU SN start (mid byte)
+      0xcc, // DL discard NR PDCP PDU SN start (lower byte)
+      0xdd, // Discarded Block size
+            // No further fields
+            // No Padding
   };
 
   byte_buffer      packed_buf = byte_buffer::create(packed_vec).value();
