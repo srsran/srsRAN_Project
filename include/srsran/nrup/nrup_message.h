@@ -109,11 +109,11 @@ struct nru_dl_data_delivery_status {
   /// Desired buffer size for the data radio bearer.
   /// This parameter indicates the desired buffer size in bytes for the concerned data radio bearer as specified in
   /// clause 5.4.2.1.
-  uint8_t desired_buffer_size_for_drb = 0;
+  uint32_t desired_buffer_size_for_drb = 0;
   /// Desired Data Rate.
   /// This parameter indicates the amount of data desired to be received in bytes in a specific amount of time (1 s) for
   /// a specific data radio bearer established for the UE as specified in clause 5.4.2.1.
-  optional<uint8_t> desired_data_rate;
+  optional<uint32_t> desired_data_rate;
   /// Container holding the lost NR-U Sequence Number range
   optional<nru_lost_nru_sn_ranges> lost_nru_sn_ranges;
   /// Highest successfully delivered NR PDCP Sequence Number.
@@ -126,7 +126,7 @@ struct nru_dl_data_delivery_status {
   optional<uint32_t> highest_transmitted_pdcp_sn;
   /// Cause Value.
   /// This parameter indicates specific events reported by the corresponding node.
-  optional<uint32_t> cause_value;
+  optional<uint8_t> cause_value;
   /// Highest successfully delivered retransmitted NR PDCP Sequence Number.
   /// This parameter indicates feedback about the in-sequence delivery status of NR PDCP PDUs of the retransmission
   /// data at the corresponding node towards the UE.
@@ -135,6 +135,17 @@ struct nru_dl_data_delivery_status {
   /// This parameter indicates the feedback about the transmitted status of NR PDCP PDU of the retransmission data at
   /// the corresponding node to the lower layers.
   optional<uint32_t> highest_retransmitted_pdcp_sn;
+
+  bool operator==(const nru_dl_data_delivery_status& other) const
+  {
+    return final_frame_ind == other.final_frame_ind &&
+           desired_buffer_size_for_drb == other.desired_buffer_size_for_drb &&
+           desired_data_rate == other.desired_data_rate && lost_nru_sn_ranges == other.lost_nru_sn_ranges &&
+           highest_delivered_pdcp_sn == other.highest_delivered_pdcp_sn &&
+           highest_transmitted_pdcp_sn == other.highest_transmitted_pdcp_sn && cause_value == other.cause_value &&
+           highest_delivered_retransmitted_pdcp_sn == other.highest_delivered_retransmitted_pdcp_sn &&
+           highest_retransmitted_pdcp_sn == other.highest_retransmitted_pdcp_sn;
+  }
 };
 
 /// NR-U Assistance Information (PDU Type 2).

@@ -184,7 +184,134 @@ bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_da
 
 bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, byte_buffer_view container) const
 {
-  return false;
+  if (container.empty()) {
+    logger.error("Failed to unpack DL data delivery status: pdu_len=0");
+    return false;
+  }
+
+  if ((container.length() + 2) % 4 != 0) {
+    logger.error("Failed to unpack DL data delivery status: pdu_len={} != n*4-2", container.length());
+    return false;
+  }
+
+  bit_decoder decoder{container};
+
+  // PDU Type
+  uint8_t pdu_type = {};
+  VERIFY_READ(decoder.unpack(pdu_type, 4));
+  if (uint_to_nrup_pdu_type(pdu_type) != nrup_pdu_type::dl_data_delivery_status) {
+    logger.error("Failed to unpack DL data delivery status: Invalid pdu_type={}", uint_to_nrup_pdu_type(pdu_type));
+    return false;
+  }
+
+  // Highest transmitted NR PDCP SN indication
+  bool highest_transmitted_pdcp_sn_indication = {};
+  VERIFY_READ(decoder.unpack(highest_transmitted_pdcp_sn_indication, 1));
+
+  // Highest delivered NR PDCP SN indication
+  bool highest_delivered_pdcp_sn_indication = {};
+  VERIFY_READ(decoder.unpack(highest_delivered_pdcp_sn_indication, 1));
+
+  // Final frame indication
+  VERIFY_READ(decoder.unpack(dl_data_delivery_status.final_frame_ind, 1));
+
+  // Lost packet report
+  bool lost_packet_report = {};
+  VERIFY_READ(decoder.unpack(lost_packet_report, 1));
+
+  // Spare (v15.2.0)
+  uint8_t spare = {};
+  VERIFY_READ(decoder.unpack(spare, 4));
+  if (spare != 0) {
+    logger.error("Failed to unpack DL data delivery status: Spare bits set in second octet. value={:#x}", spare);
+    return false;
+  }
+
+  // Data rate indication
+  bool data_rate_indication = {};
+  VERIFY_READ(decoder.unpack(data_rate_indication, 1));
+
+  // Highest retransmitted NR PDCP indication
+  bool highest_retransmitted_pdcp_sn_indication = {};
+  VERIFY_READ(decoder.unpack(highest_retransmitted_pdcp_sn_indication, 1));
+
+  // Highest delivered retransmitted NR PDCP indication
+  bool highest_delivered_retransmitted_pdcp_sn_indication = {};
+  VERIFY_READ(decoder.unpack(highest_delivered_retransmitted_pdcp_sn_indication, 1));
+
+  // Cause report
+  bool cause_report = {};
+  VERIFY_READ(decoder.unpack(cause_report, 1));
+
+  // Desired buffer size for the data radio bearer
+  VERIFY_READ(decoder.unpack(dl_data_delivery_status.desired_buffer_size_for_drb, 32));
+
+  // Desired data rate (if present)
+  if (data_rate_indication) {
+    uint32_t desired_data_rate = {};
+    VERIFY_READ(decoder.unpack(desired_data_rate, 32));
+    dl_data_delivery_status.desired_data_rate = desired_data_rate;
+  }
+
+  // Lost SN ranges (if present)
+  if (lost_packet_report) {
+    // Number of lost NR-U Sequence Number ranges reported (if present)
+    uint8_t nof_lost_sn_ranges = {};
+    VERIFY_READ(decoder.unpack(nof_lost_sn_ranges, 8));
+
+    if (nof_lost_sn_ranges > nru_max_nof_lost_nru_sn_ranges) {
+      logger.error(
+          "Failed to unpack DL data delivery status: nof_lost_sn_ranges={} exceeds max_nof_lost_nru_sn_ranges={}",
+          nof_lost_sn_ranges,
+          nru_max_nof_lost_nru_sn_ranges);
+      return false;
+    }
+
+    // Read all lost NR-U SN ranges
+    dl_data_delivery_status.lost_nru_sn_ranges = nru_lost_nru_sn_ranges{};
+    for (uint8_t i = 0; i < nof_lost_sn_ranges; i++) {
+      dl_data_delivery_status.lost_nru_sn_ranges->push_back(nru_lost_nru_sn_range{});
+      VERIFY_READ(decoder.unpack(dl_data_delivery_status.lost_nru_sn_ranges.value().back().nru_sn_start, 24));
+      VERIFY_READ(decoder.unpack(dl_data_delivery_status.lost_nru_sn_ranges.value().back().nru_sn_end, 24));
+    }
+  }
+
+  // Highest successfully delivered NR PDCP Sequence Number (if present)
+  if (highest_delivered_pdcp_sn_indication) {
+    uint32_t highest_delivered_pdcp_sn = {};
+    VERIFY_READ(decoder.unpack(highest_delivered_pdcp_sn, 24));
+    dl_data_delivery_status.highest_delivered_pdcp_sn = highest_delivered_pdcp_sn;
+  }
+
+  // Highest transmitted NR PDCP Sequence Number (if present)
+  if (highest_transmitted_pdcp_sn_indication) {
+    uint32_t highest_transmitted_pdcp_sn = {};
+    VERIFY_READ(decoder.unpack(highest_transmitted_pdcp_sn, 24));
+    dl_data_delivery_status.highest_transmitted_pdcp_sn = highest_transmitted_pdcp_sn;
+  }
+
+  // Cause Value (if present)
+  if (cause_report) {
+    uint32_t cause_value = {};
+    VERIFY_READ(decoder.unpack(cause_value, 8));
+    dl_data_delivery_status.cause_value = cause_value;
+  }
+
+  // Highest successfully delivered retransmitted NR PDCP Sequence Number (if present)
+  if (highest_delivered_retransmitted_pdcp_sn_indication) {
+    uint32_t highest_delivered_retransmitted_pdcp_sn = {};
+    VERIFY_READ(decoder.unpack(highest_delivered_retransmitted_pdcp_sn, 24));
+    dl_data_delivery_status.highest_delivered_retransmitted_pdcp_sn = highest_delivered_retransmitted_pdcp_sn;
+  }
+
+  // Highest retransmitted NR PDCP Sequence Number (if present)
+  if (highest_retransmitted_pdcp_sn_indication) {
+    uint32_t highest_retransmitted_pdcp_sn = {};
+    VERIFY_READ(decoder.unpack(highest_retransmitted_pdcp_sn, 24));
+    dl_data_delivery_status.highest_retransmitted_pdcp_sn = highest_retransmitted_pdcp_sn;
+  }
+
+  return true;
 };
 
 bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& dl_data_delivery_status) const
