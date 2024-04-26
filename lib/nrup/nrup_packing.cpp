@@ -79,7 +79,7 @@ bool nrup_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view conta
   spare = {};
   VERIFY_READ(decoder.unpack(spare, 6));
   if (spare != 0) {
-    logger.error("Failed to unpack DL user data: Spare bits set in first octet. value={:#x}", spare);
+    logger.error("Failed to unpack DL user data: Spare bits set in second octet. value={:#x}", spare);
     return false;
   }
 
