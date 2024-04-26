@@ -301,6 +301,336 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_blo
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_smallest)
+{
+  const uint8_t packed_vec[] = {
+      0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+            // No further fields
+            // No Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
+{
+  const uint8_t packed_vec[] = {
+      0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x08, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0xaa, // Desired data rate (upper byte)
+      0xbb, // Desired data rate (upper mid byte)
+      0xcc, // Desired data rate (lower mid byte)
+      0xdd, // Desired data rate (lower byte)
+            // No further fields
+            // No Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  exp_status.desired_data_rate           = 0xaabbccdd;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
+{
+  const uint8_t packed_vec[] = {
+      0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0x01, // Number of lost SN ranges
+      0x01, // Start of lost SN range (upper byte)
+      0x02, // Start of lost SN range (mid byte)
+      0x03, // Start of lost SN range (lower byte)
+      0x11, // End of lost SN range (upper byte)
+      0x12, // End of lost SN range (mid byte)
+      0x13, // End of lost SN range (lower byte)
+            // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  exp_status.lost_nru_sn_ranges          = nru_lost_nru_sn_ranges{{0x010203, 0x111213}};
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
+{
+  const uint8_t packed_vec[] = {
+      0x14, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0xca, // Highest successfully delivered NR PDCP SN (upper byte)
+      0xff, // Highest successfully delivered NR PDCP SN (mid byte)
+      0xee, // Highest successfully delivered NR PDCP SN (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  exp_status.highest_delivered_pdcp_sn   = 0xcaffee;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
+{
+  const uint8_t packed_vec[] = {
+      0x18, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0xca, // Highest transmitted NR PDCP NR PDCP SN (upper byte)
+      0xff, // Highest transmitted NR PDCP NR PDCP SN (mid byte)
+      0xee, // Highest transmitted NR PDCP NR PDCP SN (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  exp_status.highest_transmitted_pdcp_sn = 0xcaffee;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
+{
+  const uint8_t packed_vec[] = {
+      0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x01, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0x99, // Cause Value
+      // No further fields
+      0x00, // Padding
+      0x00, // Padding
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb = 0x11223344;
+  exp_status.cause_value                 = 0x99;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
+{
+  const uint8_t packed_vec[] = {
+      0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x02, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0xca, // Highest successfully delivered retransmitted NR PDCP NR PDCP SN (upper byte)
+      0xff, // Highest successfully delivered retransmitted NR PDCP NR PDCP SN (mid byte)
+      0xee, // Highest successfully delivered retransmitted NR PDCP NR PDCP SN (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb             = 0x11223344;
+  exp_status.highest_delivered_retransmitted_pdcp_sn = 0xcaffee;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
+{
+  const uint8_t packed_vec[] = {
+      0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x04, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0xca, // Highest retransmitted NR PDCP NR PDCP SN (upper byte)
+      0xff, // Highest retransmitted NR PDCP NR PDCP SN (mid byte)
+      0xee, // Highest retransmitted NR PDCP NR PDCP SN (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_TRUE(packer->unpack(out_status, packed_buf));
+  nru_dl_data_delivery_status exp_status{};
+  exp_status.desired_buffer_size_for_drb   = 0x11223344;
+  exp_status.highest_retransmitted_pdcp_sn = 0xcaffee;
+  EXPECT_EQ(out_status, exp_status);
+
+  // // Test packing
+  // byte_buffer out_buf;
+  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  // EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_empty)
+{
+  byte_buffer                 packed_buf = {};
+  nru_dl_data_delivery_status out_status;
+  EXPECT_FALSE(packer->unpack(out_status, packed_buf));
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_invalid_pdu_type)
+{
+  const uint8_t packed_vec[] = {
+      0xaa, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+            // No further fields
+            // No Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_FALSE(packer->unpack(out_status, packed_buf));
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_missing_padding)
+{
+  const uint8_t packed_vec[] = {
+      0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0x01, // Number of lost SN ranges
+      0x01, // Start of lost SN range (upper byte)
+      0x02, // Start of lost SN range (mid byte)
+      0x03, // Start of lost SN range (lower byte)
+      0x11, // End of lost SN range (upper byte)
+      0x12, // End of lost SN range (mid byte)
+      0x13, // End of lost SN range (lower byte)
+            // No further fields
+            // Missing Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_FALSE(packer->unpack(out_status, packed_buf));
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_excessive_padding)
+{
+  const uint8_t packed_vec[] = {
+      0x00, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      // No further fields
+      0x00, // Excessive Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_FALSE(packer->unpack(out_status, packed_buf));
+}
+
+TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_too_large_nof_lost_sn_ranges)
+{
+  const uint8_t packed_vec[] = {
+      0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
+      0x00, // 4Spare | Data rate ind | Hi ReTx SN ind | Hi Dlv ReTx SN ind | Cause report
+      0x11, // Desired buffer size (upper byte)
+      0x22, // Desired buffer size (upper mid byte)
+      0x33, // Desired buffer size (lower mid byte)
+      0x44, // Desired buffer size (lower byte)
+      0x01, // Number of lost SN ranges - PUT TOO LARGE VALUE
+            // No further fields
+      0x00, // Padding
+      0x00, // Padding
+      0x00, // Padding
+  };
+
+  byte_buffer                 packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_data_delivery_status out_status;
+  EXPECT_FALSE(packer->unpack(out_status, packed_buf));
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
