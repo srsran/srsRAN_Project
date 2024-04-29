@@ -31,11 +31,11 @@ int main()
   TESTASSERT(pdcch);
 
   for (const test_case_t& test_case : pdcch_modulator_test_data) {
-    int prb_idx_high = test_case.config.rb_mask.find_highest();
-    TESTASSERT(prb_idx_high > 1);
-    unsigned max_prb   = static_cast<unsigned>(prb_idx_high + 1);
-    unsigned max_symb  = test_case.config.start_symbol_index + test_case.config.duration;
-    unsigned max_ports = test_case.config.precoding.get_nof_ports();
+    TESTASSERT(test_case.config.rb_mask.count() > 1);
+    int      prb_idx_high = test_case.config.rb_mask.find_highest();
+    unsigned max_prb      = static_cast<unsigned>(prb_idx_high + 1);
+    unsigned max_symb     = test_case.config.start_symbol_index + test_case.config.duration;
+    unsigned max_ports    = test_case.config.precoding.get_nof_ports();
 
     // Prepare resource grid and resource grid mapper spies.
     resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
