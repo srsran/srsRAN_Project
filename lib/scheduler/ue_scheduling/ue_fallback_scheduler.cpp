@@ -1168,11 +1168,11 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
 {
   if (is_retx) {
     // It is a retx.
-    bool result = h_ul->new_retx(pdcch_slot + k2 + cell_cfg.ntn_cs_koffset);
+    bool result = h_ul->new_retx(pdcch_slot + k2);
     srsran_sanity_check(result, "Failed to setup HARQ retx");
   } else {
     // It is a new tx.
-    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2 + cell_cfg.ntn_cs_koffset, expert_cfg.max_nof_harq_retxs);
+    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2, expert_cfg.max_nof_harq_retxs);
   }
 
   uint8_t                  rv                  = u.get_pcell().get_pusch_rv(h_ul->nof_retxs());
