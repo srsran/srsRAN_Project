@@ -17,16 +17,17 @@ using namespace srsran;
 io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
   // Init epoll socket
-  epoll_fd = ::epoll_create1(0);
-  if (epoll_fd == -1) {
+  epoll_fd = unique_fd{::epoll_create1(0)};
+  if (not epoll_fd.is_open()) {
     report_fatal_error("IO broker: failed to create epoll file descriptor. error={}", strerror(errno));
   }
 
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
-  ctrl_event_fd = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+  ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
   if (not handle_fd_registration(
-          ctrl_event_fd, [this](int fd) { handle_enqueued_events(); }, nullptr)) {
-    report_fatal_error("IO broker: failed to register control event file descriptor. ctrl_event_fd={}", ctrl_event_fd);
+          ctrl_event_fd.value(), [this](int fd) { handle_enqueued_events(); }, nullptr)) {
+    report_fatal_error("IO broker: failed to register control event file descriptor. ctrl_event_fd={}",
+                       ctrl_event_fd.value());
   }
 
   // start thread to handle epoll events.
@@ -51,13 +52,13 @@ io_broker_epoll::~io_broker_epoll()
   }
 
   // Close epoll control event fd.
-  if (ctrl_event_fd >= 0) {
-    close(ctrl_event_fd);
+  if (not ctrl_event_fd.close()) {
+    logger.error("Failed to close control event socket: {}", strerror(errno));
   }
 
   // Close epoll socket.
-  if (epoll_fd >= 0) {
-    close(epoll_fd);
+  if (not epoll_fd.close()) {
+    logger.error("Failed to close io epoll broker file descriptor: {}", strerror(errno));
   }
 }
 
@@ -69,7 +70,7 @@ void io_broker_epoll::thread_loop()
     const int32_t      epoll_timeout_ms   = -1;
     const uint32_t     MAX_EVENTS         = 1;
     struct epoll_event events[MAX_EVENTS] = {};
-    int                nof_events         = ::epoll_wait(epoll_fd, events, MAX_EVENTS, epoll_timeout_ms);
+    int                nof_events         = ::epoll_wait(epoll_fd.value(), events, MAX_EVENTS, epoll_timeout_ms);
 
     // handle event
     if (nof_events == -1) {
@@ -120,7 +121,7 @@ bool io_broker_epoll::enqueue_event(const control_event& event)
 
   // trigger epoll event to interrupt possible epoll_wait()
   uint64_t tmp = 1;
-  ssize_t  ret = ::write(ctrl_event_fd, &tmp, sizeof(tmp));
+  ssize_t  ret = ::write(ctrl_event_fd.value(), &tmp, sizeof(tmp));
   if (ret == -1) {
     logger.error("Error writing to CTRL event_fd");
   }
@@ -147,7 +148,7 @@ void io_broker_epoll::handle_enqueued_events()
 
         // Start by deregistering all existing file descriptors, except control event fd.
         for (const auto& it : event_handler) {
-          if (it.first != ctrl_event_fd) {
+          if (it.first != ctrl_event_fd.value()) {
             handle_fd_deregistration(it.first, nullptr);
           }
         }
@@ -185,7 +186,7 @@ bool io_broker_epoll::handle_fd_registration(int                    fd,
   struct epoll_event epoll_ev = {};
   epoll_ev.data.fd            = fd;
   epoll_ev.events             = EPOLLIN;
-  if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &epoll_ev) == -1) {
+  if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_ADD, fd, &epoll_ev) == -1) {
     logger.error("epoll_ctl failed for fd={}", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
@@ -215,7 +216,7 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
   struct epoll_event epoll_ev = {};
   epoll_ev.data.fd            = fd;
   epoll_ev.events             = EPOLLIN;
-  if (::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
+  if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
     logger.error("epoll_ctl failed for fd={}", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);

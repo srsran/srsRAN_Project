@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
-#include "srsran/gateways/unique_fd.h"
+#include "srsran/support/io/unique_fd.h"
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>

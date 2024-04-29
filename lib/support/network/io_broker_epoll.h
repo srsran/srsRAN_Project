@@ -13,6 +13,7 @@
 #include "cameron314/concurrentqueue.h"
 #include "epoll_helper.h"
 #include "srsran/support/io/io_broker.h"
+#include "srsran/support/io/unique_fd.h"
 #include <future>
 #include <unordered_map>
 
@@ -43,7 +44,7 @@ private:
   // Enqueues event to be asynchronously processed by the epoll thread.
   bool enqueue_event(const control_event& event);
 
-  // Handle events stored in the event queue.
+  // Handle events stored in the ctrl event queue.
   void handle_enqueued_events();
 
   // Handle the registration of a new file descriptor.
@@ -55,10 +56,10 @@ private:
   srslog::basic_logger& logger;
 
   // Main epoll file descriptor
-  int epoll_fd = -1;
+  unique_fd epoll_fd;
   // Event file descriptor used to interrupt epoll_wait call when a stop, fd registration, or fd deregistration is
   // requested.
-  int ctrl_event_fd = -1;
+  unique_fd ctrl_event_fd;
 
   // Lookup table mapping file descriptors to handlers.
   std::unordered_map<int, std::unique_ptr<epoll_handler>> event_handler;

@@ -11,8 +11,8 @@
 #pragma once
 
 #include "srsran/gateways/udp_network_gateway.h"
-#include "srsran/gateways/unique_fd.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/io/unique_fd.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
