@@ -1634,8 +1634,9 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
     unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
 
-    // Calculate the number of UL slots in a PUSCH HARQ process lifetime.
+    // Calculate the number of UL slots in a frame and in PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
+    unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
     if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg.has_value()) {
       const tdd_ul_dl_pattern_appconfig& pattern1     = cell.tdd_ul_dl_cfg->pattern1;
       unsigned                           period_slots = pattern1.dl_ul_period_slots;
@@ -1645,6 +1646,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
         period_slots += pattern2.dl_ul_period_slots;
         nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
       }
+      nof_ul_slots_per_frame        = divide_ceil(nof_slots_per_frame, period_slots) * nof_ul_slots;
       nof_ul_slots_in_harq_lifetime = divide_ceil(expire_pusch_harq_timeout_slots, period_slots) * nof_ul_slots;
     }
 
@@ -1686,12 +1688,12 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
                   to_string(freq_range),
                   to_string(duplex));
 
-    // Maximum concurrent PUSCH processing. If there are no dedicated threads for PUSCH decoding, set the maximum
-    // concurrency to one. Otherwise, assume every possible PUSCH transmission for the maximum number of HARQ could be
-    // enqueued.
-    unsigned max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_in_harq_lifetime;
-    if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads == 0) {
-      max_pusch_concurrency = 1;
+    // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
+    // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
+    // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
+    unsigned max_pusch_concurrency = 1;
+    if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads > 0) {
+      max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_per_frame;
     }
 
     cfg.nof_slots_request_headroom = config.expert_phy_cfg.nof_slots_request_headroom;
