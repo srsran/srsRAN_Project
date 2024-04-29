@@ -25,7 +25,7 @@ io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
   ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
   if (not handle_fd_registration(
-          ctrl_event_fd.value(), [this](int fd) { handle_enqueued_events(); }, nullptr)) {
+          ctrl_event_fd.value(), [this](int fd) { handle_enqueued_events(); }, [](int /*unused*/) {}, nullptr)) {
     report_fatal_error("IO broker: failed to register control event file descriptor. ctrl_event_fd={}",
                        ctrl_event_fd.value());
   }
@@ -84,20 +84,22 @@ void io_broker_epoll::thread_loop()
     }
 
     for (int i = 0; i < nof_events; ++i) {
-      int fd = events[i].data.fd;
-      if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || (!(events[i].events & EPOLLIN))) {
+      int      fd           = events[i].data.fd;
+      uint32_t epoll_events = events[i].events;
+      if ((epoll_events & EPOLLERR) || (epoll_events & EPOLLHUP) || (!(epoll_events & EPOLLIN))) {
         // An error or hang up happened on this file descriptor, or the socket is not ready for reading
         // TODO: add notifier for these events and let the subscriber decide on further actions (e.g. unregister fd)
-        if (events[i].events & EPOLLHUP) {
+        if (epoll_events & EPOLLHUP) {
           // Note: some container environments hang up stdin (fd=0) in case of non-interactive sessions
-          logger.warning("Hang up on file descriptor. fd={} events={:#x}", fd, uint32_t(events[i].events));
-        } else if (events[i].events & EPOLLERR) {
-          logger.error("Error on file descriptor. fd={} events={:#x}", fd, uint32_t(events[i].events));
+          logger.warning("Hang up on file descriptor. fd={} events={:#x}", fd, epoll_events);
+        } else if (epoll_events & EPOLLERR) {
+          logger.error("Error on file descriptor. fd={} events={:#x}", fd, epoll_events);
         } else {
-          logger.error("Unhandled epoll event. fd={} events={:#x}", fd, uint32_t(events[i].events));
+          logger.error("Unhandled epoll event. fd={} events={:#x}", fd, epoll_events);
         }
+
         // Unregister the faulty file descriptor from epoll
-        bool success = unregister_fd(fd);
+        bool success = handle_fd_deregistration(fd, nullptr, true);
         if (!success) {
           logger.error("Failed to unregister file descriptor. fd={}", fd);
         }
@@ -137,11 +139,11 @@ void io_broker_epoll::handle_enqueued_events()
     switch (ev.type) {
       case control_event::event_type::register_fd:
         // Register new fd and event handler.
-        handle_fd_registration(ev.fd, ev.handler, ev.completed);
+        handle_fd_registration(ev.fd, ev.handler, ev.err_handler, ev.completed);
         break;
       case control_event::event_type::deregister_fd:
         // Deregister fd and event handler.
-        handle_fd_deregistration(ev.fd, ev.completed);
+        handle_fd_deregistration(ev.fd, ev.completed, false);
         break;
       case control_event::event_type::close_io_broker:
         // Close io broker.
@@ -149,7 +151,7 @@ void io_broker_epoll::handle_enqueued_events()
         // Start by deregistering all existing file descriptors, except control event fd.
         for (const auto& it : event_handler) {
           if (it.first != ctrl_event_fd.value()) {
-            handle_fd_deregistration(it.first, nullptr);
+            handle_fd_deregistration(it.first, nullptr, false);
           }
         }
         event_handler.clear();
@@ -170,9 +172,10 @@ void io_broker_epoll::handle_enqueued_events()
   }
 }
 
-bool io_broker_epoll::handle_fd_registration(int                    fd,
-                                             const recv_callback_t& handler,
-                                             std::promise<bool>*    complete_notifier)
+bool io_broker_epoll::handle_fd_registration(int                     fd,
+                                             const recv_callback_t&  handler,
+                                             const error_callback_t& err_handler,
+                                             std::promise<bool>*     complete_notifier)
 {
   if (event_handler.count(fd) > 0) {
     logger.error("epoll_ctl failed for fd={}. Cause: fd already registered", fd);
@@ -195,14 +198,14 @@ bool io_broker_epoll::handle_fd_registration(int                    fd,
   }
 
   // Register the handler of the fd.
-  event_handler.insert({fd, std::make_unique<epoll_receive_callback>(handler)});
+  event_handler.insert({fd, std::make_unique<epoll_receive_callback>(handler, err_handler)});
   if (complete_notifier != nullptr) {
     complete_notifier->set_value(true);
   }
   return true;
 }
 
-bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier)
+bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier, bool is_error)
 {
   auto ev_it = event_handler.find(fd);
   if (ev_it == event_handler.end()) {
@@ -224,8 +227,16 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
     return false;
   }
 
+  // Move handler out to call error handler only after the event has been removed from the lookup.
+  std::unique_ptr<epoll_handler> rem_it = std::move(ev_it->second);
+
   // Update lookup
   event_handler.erase(ev_it);
+
+  // Call error handler.
+  if (is_error) {
+    rem_it->handle_error_event(fd, epoll_ev);
+  }
 
   if (complete_notifier != nullptr) {
     complete_notifier->set_value(true);
@@ -235,7 +246,7 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
 
 /// Adds a new file descriptor to the epoll-handler. The call is thread-safe and new
 /// file descriptors can be added while the epoll_wait() is blocking.
-bool io_broker_epoll::register_fd(int fd, recv_callback_t handler)
+bool io_broker_epoll::register_fd(int fd, recv_callback_t handler, error_callback_t err_handler)
 {
   if (fd < 0) {
     logger.error("io_broker_epoll::register_fd: Received an invalid fd={}", fd);
@@ -248,13 +259,13 @@ bool io_broker_epoll::register_fd(int fd, recv_callback_t handler)
 
   if (std::this_thread::get_id() == thread.get_id()) {
     // Registration from within the epoll thread.
-    return handle_fd_registration(fd, handler, nullptr);
+    return handle_fd_registration(fd, handler, err_handler, nullptr);
   }
 
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
 
-  enqueue_event(control_event{control_event::event_type::register_fd, fd, handler, &p});
+  enqueue_event(control_event{control_event::event_type::register_fd, fd, handler, err_handler, &p});
 
   // Wait for the registration to complete.
   return fut.get();
@@ -274,13 +285,13 @@ bool io_broker_epoll::unregister_fd(int fd)
 
   if (std::this_thread::get_id() == thread.get_id()) {
     // Deregistration from within the epoll thread. No need to go through the event queue.
-    return handle_fd_deregistration(fd, nullptr);
+    return handle_fd_deregistration(fd, nullptr, false);
   }
 
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
 
-  if (not enqueue_event(control_event{control_event::event_type::deregister_fd, fd, {}, &p})) {
+  if (not enqueue_event(control_event{control_event::event_type::deregister_fd, fd, {}, {}, &p})) {
     return false;
   }
 

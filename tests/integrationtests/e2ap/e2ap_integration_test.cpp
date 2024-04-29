@@ -41,7 +41,8 @@ public:
     packer(*gw, *this, pcap)
   {
     gw->create_and_connect();
-    bool success = epoll_broker->register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
+    bool success = epoll_broker->register_fd(
+        gw->get_socket_fd(), [this](int fd) { gw->receive(); }, [](int /*unused*/) {});
     if (!success) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gw->get_socket_fd());

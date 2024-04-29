@@ -100,7 +100,8 @@ console_helper::console_helper(io_broker&                        io_broker_,
     logger.error("Couldn't configure fd to non-blocking");
   }
 
-  if (!io_broker_handle.register_fd(STDIN_FILENO, [this](int fd) { stdin_handler(fd); })) {
+  if (!io_broker_handle.register_fd(
+          STDIN_FILENO, [this](int fd) { stdin_handler(fd); }, [](int /*unused*/) {})) {
     logger.error("Couldn't register stdin handler");
   }
 }

@@ -26,7 +26,7 @@ public:
   explicit io_broker_epoll(const io_broker_config& config);
   ~io_broker_epoll() override;
 
-  SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler) override;
+  SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
 
   // Note: Blocking function.
   SRSRAN_NODISCARD bool unregister_fd(int fd) override;
@@ -36,6 +36,7 @@ private:
     enum class event_type { close_io_broker, register_fd, deregister_fd } type;
     int                 fd;
     recv_callback_t     handler;
+    error_callback_t    err_handler;
     std::promise<bool>* completed;
   };
 
@@ -48,10 +49,13 @@ private:
   void handle_enqueued_events();
 
   // Handle the registration of a new file descriptor.
-  bool handle_fd_registration(int fd, const recv_callback_t& callback, std::promise<bool>* complete_notifier);
+  bool handle_fd_registration(int                     fd,
+                              const recv_callback_t&  callback,
+                              const error_callback_t& err_handler,
+                              std::promise<bool>*     complete_notifier);
 
   // Handle the deregistration of an existing file descriptor.
-  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier);
+  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier, bool is_error);
 
   srslog::basic_logger& logger;
 

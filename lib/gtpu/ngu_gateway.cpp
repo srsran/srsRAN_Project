@@ -58,8 +58,10 @@ public:
     if (not conn->udp_gw->create_and_bind()) {
       conn->logger.error("Failed to create and connect NG-U gateway");
     }
-    bool success = io_brk.register_fd(conn->udp_gw->get_socket_fd(),
-                                      [udp_gw_ptr = conn->udp_gw.get()](int fd) { udp_gw_ptr->receive(); });
+    bool success = io_brk.register_fd(
+        conn->udp_gw->get_socket_fd(),
+        [udp_gw_ptr = conn->udp_gw.get()](int fd) { udp_gw_ptr->receive(); },
+        [](int fd) { /* TODO */ });
     if (!success) {
       conn->logger.error("Failed to register NG-U (GTP-U) network gateway at IO broker. socket_fd={}",
                          conn->udp_gw->get_socket_fd());

@@ -27,14 +27,22 @@ class epoll_handler
 {
 public:
   virtual int handle_event(int fd, epoll_event e) = 0;
-  virtual ~epoll_handler()                        = default;
+
+  virtual void handle_error_event(int fd, epoll_event e) = 0;
+
+  virtual ~epoll_handler() = default;
 };
 
 ///< Callback function called when data is received on socket
 class epoll_receive_callback : public epoll_handler
 {
 public:
-  epoll_receive_callback(io_broker::recv_callback_t callback_) : callback(callback_) {}
+  epoll_receive_callback(const io_broker::recv_callback_t&  callback_,
+                         const io_broker::error_callback_t& err_callback_) :
+    callback(callback_), err_callback(err_callback_)
+  {
+  }
+
   int handle_event(int fd, epoll_event e) override
   {
     // TODO: translate epoll events to io_broker_base::event_t
@@ -45,8 +53,11 @@ public:
     return 0;
   }
 
+  void handle_error_event(int fd, epoll_event e) override { err_callback(fd); }
+
 private:
-  io_broker::recv_callback_t callback;
+  io_broker::recv_callback_t  callback;
+  io_broker::error_callback_t err_callback;
 };
 
 ///< Callback function called when timer expires
@@ -56,7 +67,7 @@ using epoll_timer_callback = std::function<void(uint64_t res)>;
 class epoll_timer_handler : public epoll_handler
 {
 public:
-  epoll_timer_handler(int fd_, epoll_timer_callback callback_) : timer_fd(fd_), callback(callback_){};
+  epoll_timer_handler(int fd_, epoll_timer_callback callback_) : timer_fd(fd_), callback(callback_) {}
   int handle_event(int fd, epoll_event e) override
   {
     uint64_t res;

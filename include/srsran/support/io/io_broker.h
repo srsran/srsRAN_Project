@@ -36,6 +36,8 @@ protected:
 public:
   /// Callback called when socket fd (passed as argument) has data
   using recv_callback_t = std::function<void(int)>;
+  /// Callback called when the fd (passed as argument) detected an error and got automatically disconnected.
+  using error_callback_t = std::function<void(int)>;
 
   /// Provides default destructor.
   virtual ~io_broker() = default;
@@ -53,7 +55,7 @@ public:
   io_broker& operator=(io_broker&&) = delete;
 
   /// \brief Register a file descriptor to be handled by the IO interface.
-  SRSRAN_NODISCARD virtual bool register_fd(int fd, recv_callback_t handler) = 0;
+  SRSRAN_NODISCARD virtual bool register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) = 0;
 
   /// \brief Unregister a file descriptor from the IO interface.
   /// \param[in] fd File descriptor to be unregistered.

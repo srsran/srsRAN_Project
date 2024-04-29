@@ -38,8 +38,10 @@ public:
     if (!gateway_ctrl_handler->create_and_connect()) {
       report_error("Failed to create SCTP gateway.\n");
     }
-    bool success =
-        broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    bool success = broker.register_fd(
+        gateway_ctrl_handler->get_socket_fd(),
+        [this](int fd) { gateway_ctrl_handler->receive(); },
+        [](int /* unused */) {});
     if (!success) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());
@@ -62,8 +64,10 @@ public:
       report_error("Failed to listen SCTP gateway.\n");
     }
 
-    bool success =
-        broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
+    bool success = broker.register_fd(
+        gateway_ctrl_handler->get_socket_fd(),
+        [this](int fd) { gateway_ctrl_handler->receive(); },
+        [](int /* unused */) {});
     if (!success) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());
