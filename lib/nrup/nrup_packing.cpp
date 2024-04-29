@@ -316,7 +316,90 @@ bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, 
 
 bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& dl_data_delivery_status) const
 {
-  return false;
+  size_t      start_len = out_buf.length();
+  bit_encoder encoder{out_buf};
+
+  // PDU Type
+  VERIFY_WRITE(encoder.pack(nrup_pdu_type_to_uint(nrup_pdu_type::dl_data_delivery_status), 4));
+
+  // Highest transmitted NR PDCP SN indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_transmitted_pdcp_sn.has_value(), 1));
+
+  // Highest delivered NR PDCP SN indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_delivered_pdcp_sn.has_value(), 1));
+
+  // Final frame indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.final_frame_ind, 1));
+
+  // Lost packet report
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.lost_nru_sn_ranges.has_value(), 1));
+
+  // Spare (v15.2.0)
+  VERIFY_WRITE(encoder.pack(0, 4));
+
+  // Data rate indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.desired_data_rate.has_value(), 1));
+
+  // Highest retransmitted NR PDCP indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_retransmitted_pdcp_sn.has_value(), 1));
+
+  // Highest delivered retransmitted NR PDCP indication
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_delivered_retransmitted_pdcp_sn.has_value(), 1));
+
+  // Cause report
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.cause_value.has_value(), 1));
+
+  // Desired buffer size for the data radio bearer
+  VERIFY_WRITE(encoder.pack(dl_data_delivery_status.desired_buffer_size_for_drb, 32));
+
+  // Desired data rate (if present)
+  if (dl_data_delivery_status.desired_data_rate.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.desired_data_rate.value(), 32));
+  }
+
+  // Lost SN ranges (if present)
+  if (dl_data_delivery_status.lost_nru_sn_ranges.has_value()) {
+    // Number of lost NR-U Sequence Number ranges reported (if present)
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.lost_nru_sn_ranges.value().size(), 8));
+
+    // Write all ranges
+    for (auto range : dl_data_delivery_status.lost_nru_sn_ranges.value()) {
+      VERIFY_WRITE(encoder.pack(range.nru_sn_start, 24));
+      VERIFY_WRITE(encoder.pack(range.nru_sn_end, 24));
+    }
+  }
+
+  // Highest successfully delivered NR PDCP Sequence Number (if present)
+  if (dl_data_delivery_status.highest_delivered_pdcp_sn.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_delivered_pdcp_sn.value(), 24));
+  }
+
+  // Highest transmitted NR PDCP Sequence Number (if present)
+  if (dl_data_delivery_status.highest_transmitted_pdcp_sn.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_transmitted_pdcp_sn.value(), 24));
+  }
+
+  // Cause Value (if present)
+  if (dl_data_delivery_status.cause_value.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.cause_value.value(), 8));
+  }
+
+  // Highest successfully delivered retransmitted NR PDCP Sequence Number (if present)
+  if (dl_data_delivery_status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_delivered_retransmitted_pdcp_sn.value(), 24));
+  }
+
+  // Highest retransmitted NR PDCP Sequence Number (if present)
+  if (dl_data_delivery_status.highest_retransmitted_pdcp_sn.has_value()) {
+    VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_retransmitted_pdcp_sn.value(), 24));
+  }
+
+  // Add padding such that length is (n*4-2) octets, where n is a positive integer.
+  while (((out_buf.length() - start_len) + 2) % 4) {
+    VERIFY_WRITE(out_buf.append(0x0));
+  }
+
+  return true;
 };
 
 } // namespace srsran
