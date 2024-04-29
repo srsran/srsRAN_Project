@@ -36,7 +36,7 @@ public:
                                                      network_gateway_data_notifier_with_src_addr& data_notifier,
                                                      io_broker&                                   io_brk,
                                                      task_executor&                               io_tx_executor,
-                                                     io_broker::io_handle&                        handled_fd)
+                                                     io_broker::subscriber&                       handled_fd)
   {
     std::unique_ptr<udp_ngu_tnl_session> conn(new udp_ngu_tnl_session(data_notifier));
 
@@ -79,7 +79,7 @@ private:
   srslog::basic_logger&                        logger = srslog::fetch_basic_logger("CU-UP");
 
   std::unique_ptr<udp_network_gateway> udp_gw;
-  io_broker::io_handle                 registered_fd;
+  io_broker::subscriber                registered_fd;
 };
 
 /// Implementation of the NG-U gateway for the case a UDP connection is used to a remote UPF.
@@ -101,7 +101,7 @@ private:
   io_broker&                       io_brk;
   task_executor&                   io_tx_executor;
 
-  io_broker::io_handle handled_fd;
+  io_broker::subscriber handled_fd;
 };
 
 } // namespace

@@ -145,7 +145,7 @@ private:
   e2_message_handler*                   e2ap_msg_handler;
   e2_event_handler*                     event_handler;
 
-  io_broker::io_handle fd_listener;
+  io_broker::subscriber fd_listener;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };

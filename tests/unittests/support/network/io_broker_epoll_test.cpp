@@ -24,7 +24,11 @@ static const std::string tx_buf = "hello world!";
 class io_broker_epoll : public ::testing::Test
 {
 protected:
-  void SetUp() override { epoll_broker = create_io_broker(io_broker_type::epoll); }
+  io_broker_epoll()
+  {
+    srslog::init();
+    epoll_broker = create_io_broker(io_broker_type::epoll);
+  }
 
   void data_receive_callback(int fd)
   {
@@ -192,7 +196,7 @@ protected:
   int                        socket_fd   = 0;
   int                        socket_type = 0;
 
-  io_broker::io_handle fd_handle;
+  io_broker::subscriber fd_handle;
 
   // unix domain socket addresses (used by unix sockets only)
   struct sockaddr_un server_addr_un = {};
@@ -236,9 +240,9 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
 {
   create_unix_sockets();
 
-  std::promise<bool>   p;
-  std::future<bool>    fut = p.get_future();
-  io_broker::io_handle handle;
+  std::promise<bool>    p;
+  std::future<bool>     fut = p.get_future();
+  io_broker::subscriber handle;
 
   handle = this->epoll_broker->register_fd(
       socket_fd,

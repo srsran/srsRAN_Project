@@ -26,7 +26,7 @@ public:
   explicit io_broker_epoll(const io_broker_config& config);
   ~io_broker_epoll() override;
 
-  SRSRAN_NODISCARD io_handle register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
+  SRSRAN_NODISCARD subscriber register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
 
 private:
   struct control_event {
@@ -55,7 +55,10 @@ private:
                               std::promise<bool>*     complete_notifier);
 
   // Handle the deregistration of an existing file descriptor.
-  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier, bool is_error);
+  enum class cause_t { epoll_error, frontend_request, epoll_stop };
+  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier, cause_t cause);
+
+  void stop_impl();
 
   srslog::basic_logger& logger;
 

@@ -197,7 +197,7 @@ private:
 
   std::unique_ptr<ngap_asn1_packer> packer;
 
-  io_broker::io_handle fd_listener;
+  io_broker::subscriber fd_listener;
 };
 
 } // namespace

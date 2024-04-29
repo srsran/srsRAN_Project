@@ -97,8 +97,8 @@ int main(int argc, char** argv)
 
   std::unique_ptr<io_broker> epoll_broker;
 
-  epoll_broker                   = create_io_broker(io_broker_type::epoll);
-  io_broker::io_handle gw_handle = epoll_broker->register_fd(
+  epoll_broker                    = create_io_broker(io_broker_type::epoll);
+  io_broker::subscriber gw_handle = epoll_broker->register_fd(
       gw->get_socket_fd(), [&gw]() { gw->receive(); }, []() {});
   if (!gw_handle.connected()) {
     report_fatal_error("Failed to register UDP network gateway at IO broker. socket_fd={}", gw->get_socket_fd());

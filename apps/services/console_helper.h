@@ -76,7 +76,7 @@ private:
   srs_cu_cp::cu_cp_command_handler& cu_cp;
   bool                              autostart_stdout_metrics = false;
 
-  io_broker::io_handle stdin_handle;
+  io_broker::subscriber stdin_handle;
 };
 
 } // namespace srsran
