@@ -245,11 +245,8 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
             });
       }
 
-      // For now, layer demapping is not implemented.
-      srsran_assert(config.nof_tx_layers == 1, "Only a single transmit layer is supported.");
-
       // Get codeword buffer.
-      unsigned                   nof_block_softbits = nof_re_port * nof_bits_per_re * config.nof_tx_layers;
+      unsigned                   nof_block_softbits = nof_re_port * nof_bits_per_re;
       span<log_likelihood_ratio> codeword           = codeword_block.first(nof_block_softbits);
 
       // Build LLRs from channel symbols.
