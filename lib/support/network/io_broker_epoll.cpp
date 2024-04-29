@@ -50,7 +50,7 @@ io_broker_epoll::~io_broker_epoll()
     thread.join();
   }
 
-  // Closeepoll control event fd.
+  // Close epoll control event fd.
   if (ctrl_event_fd >= 0) {
     close(ctrl_event_fd);
   }
@@ -164,7 +164,7 @@ void io_broker_epoll::handle_enqueued_events()
 
         break;
       default:
-        report_fatal_error("Unknown event type");
+        report_fatal_error("Unknown event type {}", (int)ev.type);
     }
   }
 }
