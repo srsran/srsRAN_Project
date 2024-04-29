@@ -322,9 +322,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_smallest)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
@@ -353,9 +353,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
@@ -387,9 +387,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
@@ -417,9 +417,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
@@ -447,9 +447,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
@@ -477,9 +477,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
@@ -507,9 +507,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
@@ -537,9 +537,9 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
   EXPECT_EQ(out_status, exp_status);
 
   // // Test packing
-  // byte_buffer out_buf;
-  // EXPECT_TRUE(packer->pack(out_buf, exp_status));
-  // EXPECT_EQ(out_buf, packed_buf);
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_status));
+  EXPECT_EQ(out_buf, packed_buf);
 }
 
 TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_empty)
