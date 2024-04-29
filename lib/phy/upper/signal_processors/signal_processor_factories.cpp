@@ -349,11 +349,11 @@ public:
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all config fields.
-      logger.debug("NZP-CSI: {:s} {}\n  {:n}", config, time_ns, config);
+      logger.debug(config.slot.sfn(), config.slot.slot_index(), "NZP-CSI: {:s} {}\n  {:n}", config, time_ns, config);
       return;
     }
     // Single line log entry.
-    logger.info("NZP-CSI: {:s} {}", config, time_ns);
+    logger.info(config.slot.sfn(), config.slot.slot_index(), "NZP-CSI: {:s} {}", config, time_ns);
   }
 
 private:

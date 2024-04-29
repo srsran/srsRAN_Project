@@ -1634,7 +1634,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
     unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
 
-    // Calculate the number of UL slots in a frame and in PUSCH HARQ process lifetime.
+    // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
     unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
     unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
     if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg.has_value()) {
