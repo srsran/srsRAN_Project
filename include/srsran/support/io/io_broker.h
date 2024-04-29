@@ -56,6 +56,8 @@ public:
   SRSRAN_NODISCARD virtual bool register_fd(int fd, recv_callback_t handler) = 0;
 
   /// \brief Unregister a file descriptor from the IO interface.
+  /// \param[in] fd File descriptor to be unregistered.
+  /// \return true if the file descriptor was successfully unregistered, false otherwise.
   SRSRAN_NODISCARD virtual bool unregister_fd(int fd) = 0;
 };
 

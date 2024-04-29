@@ -10,33 +10,61 @@
 
 #pragma once
 
+#include "cameron314/concurrentqueue.h"
 #include "epoll_helper.h"
 #include "srsran/support/io/io_broker.h"
-#include <mutex>
+#include <future>
 #include <unordered_map>
 
 namespace srsran {
 
 /// @brief Implementation of an IO broker using epoll.
-class io_broker_epoll : public io_broker
+class io_broker_epoll final : public io_broker
 {
 public:
   explicit io_broker_epoll(const io_broker_config& config);
-  ~io_broker_epoll();
+  ~io_broker_epoll() override;
 
   SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler) override;
+
+  // Note: Blocking function.
   SRSRAN_NODISCARD bool unregister_fd(int fd) override;
 
 private:
+  struct control_event {
+    enum class event_type { close_io_broker, register_fd, deregister_fd } type;
+    int                 fd;
+    recv_callback_t     handler;
+    std::promise<bool>* completed;
+  };
+
   void thread_loop();
+
+  // Enqueues event to be asynchronously processed by the epoll thread.
+  bool enqueue_event(const control_event& event);
+
+  // Handle events stored in the event queue.
+  void handle_enqueued_events();
+
+  // Handle the registration of a new file descriptor.
+  bool handle_fd_registration(int fd, const recv_callback_t& callback, std::promise<bool>* complete_notifier);
+
+  // Handle the deregistration of an existing file descriptor.
+  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier);
 
   srslog::basic_logger& logger;
 
-  // epoll related variables
-  int epoll_fd = -1; ///< Main epoll file descriptor
-  int event_fd = -1; ///< Event file descriptor used to interrupt epoll_wait
-  std::unordered_map<uint32_t, std::unique_ptr<epoll_handler>> event_handler;       ///< Lookup table for handler
-  std::mutex                                                   event_handler_mutex; ///< Mutex to protect event_handler
+  // Main epoll file descriptor
+  int epoll_fd = -1;
+  // Event file descriptor used to interrupt epoll_wait call when a stop, fd registration, or fd deregistration is
+  // requested.
+  int ctrl_event_fd = -1;
+
+  // Lookup table mapping file descriptors to handlers.
+  std::unordered_map<int, std::unique_ptr<epoll_handler>> event_handler;
+
+  // Queue used to communicate commands to the epoll broker.
+  moodycamel::ConcurrentQueue<control_event> event_queue;
 
   std::atomic<bool> running{true};
   unique_thread     thread;

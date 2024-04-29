@@ -11,11 +11,10 @@
 #include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <condition_variable>
+#include <future>
 #include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/timerfd.h>
-#include <sys/types.h>
 #include <sys/un.h> // for unix sockets
 
 using namespace srsran;
@@ -26,15 +25,6 @@ class io_broker_epoll : public ::testing::Test
 {
 protected:
   void SetUp() override { epoll_broker = create_io_broker(io_broker_type::epoll); }
-
-  void TearDown() override
-  {
-    EXPECT_TRUE(epoll_broker->unregister_fd(socket_fd));
-    if (socket_fd > 0) {
-      close(socket_fd);
-    }
-    socket_fd = 0;
-  }
 
   void data_receive_callback(int fd)
   {
@@ -164,6 +154,15 @@ protected:
     ASSERT_TRUE(epoll_broker->register_fd(socket_fd, [this](int fd) { data_receive_callback(fd); }));
   }
 
+  void rem_socket_from_epoll()
+  {
+    if (socket_fd >= 0) {
+      EXPECT_TRUE(epoll_broker->unregister_fd(socket_fd));
+      close(socket_fd);
+      socket_fd = -1;
+    }
+  }
+
   void send_on_socket() const
   {
     // send text
@@ -187,7 +186,6 @@ protected:
     ASSERT_EQ(total_rx_bytes, tx_buf.length() * count);
   }
 
-private:
   std::unique_ptr<io_broker> epoll_broker;
   int                        socket_fd   = 0;
   int                        socket_type = 0;
@@ -211,6 +209,7 @@ TEST_F(io_broker_epoll, unix_socket_trx_test)
   create_unix_sockets();
   add_socket_to_epoll();
   run_tx_rx_test();
+  rem_socket_from_epoll();
 }
 
 TEST_F(io_broker_epoll, af_inet_socket_udp_trx_test)
@@ -218,6 +217,7 @@ TEST_F(io_broker_epoll, af_inet_socket_udp_trx_test)
   create_af_init_sockets(SOCK_DGRAM);
   add_socket_to_epoll();
   run_tx_rx_test();
+  rem_socket_from_epoll();
 }
 
 TEST_F(io_broker_epoll, af_inet_socket_tcp_trx_test)
@@ -225,4 +225,22 @@ TEST_F(io_broker_epoll, af_inet_socket_tcp_trx_test)
   create_af_init_sockets(SOCK_STREAM);
   add_socket_to_epoll();
   run_tx_rx_test();
+  rem_socket_from_epoll();
+}
+
+TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
+{
+  create_unix_sockets();
+
+  std::promise<bool> p;
+  std::future<bool>  fut = p.get_future();
+  ASSERT_TRUE(this->epoll_broker->register_fd(socket_fd, [this, &p](int fd) {
+    bool ret = this->epoll_broker->unregister_fd(fd);
+    p.set_value(ret);
+  }));
+
+  send_on_socket();
+
+  ASSERT_EQ(fut.wait_for(std::chrono::seconds{100}), std::future_status::ready);
+  ASSERT_TRUE(fut.get());
 }
