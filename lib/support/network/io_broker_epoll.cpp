@@ -25,7 +25,7 @@ io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
   ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
   if (not handle_fd_registration(
-          ctrl_event_fd.value(), [this](int fd) { handle_enqueued_events(); }, [](int /*unused*/) {}, nullptr)) {
+          ctrl_event_fd.value(), [this]() { handle_enqueued_events(); }, []() {}, nullptr)) {
     report_fatal_error("IO broker: failed to register control event file descriptor. ctrl_event_fd={}",
                        ctrl_event_fd.value());
   }

@@ -60,8 +60,8 @@ public:
     }
     bool success = io_brk.register_fd(
         conn->udp_gw->get_socket_fd(),
-        [udp_gw_ptr = conn->udp_gw.get()](int fd) { udp_gw_ptr->receive(); },
-        [](int fd) { /* TODO */ });
+        [udp_gw_ptr = conn->udp_gw.get()]() { udp_gw_ptr->receive(); },
+        []() { /* TODO */ });
     if (!success) {
       conn->logger.error("Failed to register NG-U (GTP-U) network gateway at IO broker. socket_fd={}",
                          conn->udp_gw->get_socket_fd());

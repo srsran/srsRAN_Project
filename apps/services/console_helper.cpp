@@ -101,7 +101,7 @@ console_helper::console_helper(io_broker&                        io_broker_,
   }
 
   if (!io_broker_handle.register_fd(
-          STDIN_FILENO, [this](int fd) { stdin_handler(fd); }, [](int /*unused*/) {})) {
+          STDIN_FILENO, [this]() { stdin_handler(STDIN_FILENO); }, []() {})) {
     logger.error("Couldn't register stdin handler");
   }
 }

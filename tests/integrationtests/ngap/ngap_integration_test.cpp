@@ -43,7 +43,7 @@ public:
   {
     gw->create_and_connect();
     bool success = epoll_broker->register_fd(
-        gw->get_socket_fd(), [this](int fd) { gw->receive(); }, [](int /*unused*/) {});
+        gw->get_socket_fd(), [this]() { gw->receive(); }, []() {});
     if (!success) {
       report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gw->get_socket_fd());

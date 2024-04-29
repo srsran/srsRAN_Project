@@ -48,12 +48,12 @@ public:
     // TODO: translate epoll events to io_broker_base::event_t
     if (e.events & EPOLLIN) {
       // just handle the normal receive event
-      callback(fd);
+      callback();
     }
     return 0;
   }
 
-  void handle_error_event(int fd, epoll_event e) override { err_callback(fd); }
+  void handle_error_event(int fd, epoll_event e) override { err_callback(); }
 
 private:
   io_broker::recv_callback_t  callback;

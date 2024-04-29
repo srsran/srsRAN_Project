@@ -152,7 +152,7 @@ protected:
   void add_socket_to_epoll()
   {
     ASSERT_TRUE(epoll_broker->register_fd(
-        socket_fd, [this](int fd) { data_receive_callback(fd); }, [](int /*unused*/) {}));
+        socket_fd, [this]() { data_receive_callback(socket_fd); }, []() {}));
   }
 
   void rem_socket_from_epoll()
@@ -235,12 +235,14 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
 
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
-  ASSERT_TRUE(this->epoll_broker->register_fd(socket_fd, [this, &p](int fd) {
-    auto* p_copy = &p;
-    bool  ret    = this->epoll_broker->unregister_fd(fd);
-    p_copy->set_value(ret);
-  },
-  [](int /* unused */) {}));
+  ASSERT_TRUE(this->epoll_broker->register_fd(
+      socket_fd,
+      [this, &p]() {
+        auto* p_copy = &p;
+        bool  ret    = this->epoll_broker->unregister_fd(socket_fd);
+        p_copy->set_value(ret);
+      },
+      []() {}));
 
   send_on_socket();
 

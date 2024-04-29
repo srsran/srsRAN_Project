@@ -35,9 +35,9 @@ protected:
 
 public:
   /// Callback called when socket fd (passed as argument) has data
-  using recv_callback_t = std::function<void(int)>;
+  using recv_callback_t = std::function<void()>;
   /// Callback called when the fd (passed as argument) detected an error and got automatically disconnected.
-  using error_callback_t = std::function<void(int)>;
+  using error_callback_t = std::function<void()>;
 
   /// Provides default destructor.
   virtual ~io_broker() = default;

@@ -39,9 +39,7 @@ public:
       report_error("Failed to create SCTP gateway.\n");
     }
     bool success = broker.register_fd(
-        gateway_ctrl_handler->get_socket_fd(),
-        [this](int fd) { gateway_ctrl_handler->receive(); },
-        [](int /* unused */) {});
+        gateway_ctrl_handler->get_socket_fd(), [this]() { gateway_ctrl_handler->receive(); }, []() {});
     if (!success) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());
@@ -65,9 +63,7 @@ public:
     }
 
     bool success = broker.register_fd(
-        gateway_ctrl_handler->get_socket_fd(),
-        [this](int fd) { gateway_ctrl_handler->receive(); },
-        [](int /* unused */) {});
+        gateway_ctrl_handler->get_socket_fd(), [this]() { gateway_ctrl_handler->receive(); }, []() {});
     if (!success) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());

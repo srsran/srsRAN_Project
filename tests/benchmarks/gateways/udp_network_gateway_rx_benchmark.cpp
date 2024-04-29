@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 
   epoll_broker = create_io_broker(io_broker_type::epoll);
   bool success = epoll_broker->register_fd(
-      gw->get_socket_fd(), [&gw](int fd) { gw->receive(); }, [](int /*unused*/) {});
+      gw->get_socket_fd(), [&gw]() { gw->receive(); }, []() {});
   if (!success) {
     report_fatal_error("Failed to register UDP network gateway at IO broker. socket_fd={}", gw->get_socket_fd());
   }
