@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/gateways/unique_fd.h"
 #include "srsran/support/executors/task_executor.h"
 #include <netdb.h>
 #include <netinet/in.h>
@@ -30,7 +31,6 @@ public:
   ~udp_network_gateway_impl() override { close_socket(); }
 
 private:
-  bool is_initialized();
   bool set_sockopts();
 
   // udp_network_gateway_data_handler interface, called from CU-UP executor.
@@ -57,7 +57,7 @@ private:
   srslog::basic_logger&                        logger;
   task_executor&                               io_tx_executor;
 
-  int sock_fd = -1;
+  unique_fd sock_fd;
 
   sockaddr_storage local_addr        = {}; // the local address
   socklen_t        local_addrlen     = 0;

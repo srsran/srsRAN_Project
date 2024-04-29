@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
-
+#include "srsran/gateways/unique_fd.h"
 #include <sys/socket.h>
 
 namespace srsran {
@@ -49,8 +49,6 @@ public:
   optional<uint16_t> get_listen_port() override;
 
 private:
-  bool is_initialized();
-
   bool set_sockopts();
 
   /// \brief Recreate and reconnect socket to given address.
@@ -73,7 +71,7 @@ private:
   network_gateway_data_notifier&         data_notifier;
   srslog::basic_logger&                  logger;
 
-  int sock_fd = -1;
+  unique_fd sock_fd;
 
   sockaddr_storage client_addr        = {}; // the local address
   socklen_t        client_addrlen     = 0;
