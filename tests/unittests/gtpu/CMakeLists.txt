@@ -30,6 +30,14 @@ add_executable(gtpu_tunnel_ngu_rx_test gtpu_tunnel_ngu_rx_test.cpp)
 target_link_libraries(gtpu_tunnel_ngu_rx_test srsran_gtpu srsran_support srslog gtest gtest_main)
 gtest_discover_tests(gtpu_tunnel_ngu_rx_test)
 
+add_executable(gtpu_tunnel_nru_test gtpu_tunnel_nru_test.cpp)
+target_link_libraries(gtpu_tunnel_nru_test srsran_gtpu srsran_pcap srsran_support srslog gtest gtest_main)
+gtest_discover_tests(gtpu_tunnel_nru_test)
+
+add_executable(gtpu_tunnel_nru_rx_test gtpu_tunnel_nru_rx_test.cpp)
+target_link_libraries(gtpu_tunnel_nru_rx_test srsran_gtpu srsran_pcap srsran_support srslog gtest gtest_main)
+gtest_discover_tests(gtpu_tunnel_nru_rx_test)
+
 add_executable(gtpu_alloc_test gtpu_test_allocator.cpp)
 target_link_libraries(gtpu_alloc_test srsran_gtpu srsran_support srslog gtest gtest_main)
 gtest_discover_tests(gtpu_alloc_test)
