@@ -63,7 +63,7 @@ private:
   bool set_non_blocking();
   bool set_receive_timeout(unsigned rx_timeout_sec);
   bool set_reuse_addr();
-  bool subscripe_to_events();
+  bool subscribe_to_events();
   bool close_socket();
 
   sctp_network_gateway_config            config; /// configuration

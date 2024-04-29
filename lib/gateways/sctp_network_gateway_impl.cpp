@@ -31,7 +31,7 @@ bool sctp_network_gateway_impl::set_sockopts()
 {
   srsran_assert(sock_fd.is_open(), "Invalid sock_fd");
 
-  if (not subscripe_to_events()) {
+  if (not subscribe_to_events()) {
     logger.error("Couldn't subscribe to SCTP events");
     return false;
   }
@@ -69,7 +69,7 @@ bool sctp_network_gateway_impl::set_sockopts()
 }
 
 /// \brief Subscribes to various SCTP events to handle accociation and shutdown gracefully.
-bool sctp_network_gateway_impl::subscripe_to_events()
+bool sctp_network_gateway_impl::subscribe_to_events()
 {
   struct sctp_event_subscribe events = {};
   events.sctp_data_io_event          = 1;
@@ -312,11 +312,12 @@ bool sctp_network_gateway_impl::create_and_connect()
         }
         continue;
       }
-    }
 
-    if (not set_sockopts()) {
-      close_socket();
-      continue;
+      // Set socket options for the newly created socket.
+      if (not set_sockopts()) {
+        close_socket();
+        continue;
+      }
     }
 
     char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
