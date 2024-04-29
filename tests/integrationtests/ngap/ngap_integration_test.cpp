@@ -42,9 +42,9 @@ public:
     packer(*gw, *this, *this, pcap)
   {
     gw->create_and_connect();
-    bool success = epoll_broker->register_fd(
+    fd_handle = epoll_broker->register_fd(
         gw->get_socket_fd(), [this]() { gw->receive(); }, []() {});
-    if (!success) {
+    if (!fd_handle.connected()) {
       report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gw->get_socket_fd());
     }
@@ -75,6 +75,8 @@ private:
   ngap_asn1_packer                      packer;
   ngap_interface*                       ngap = nullptr;
   null_dlt_pcap                         pcap;
+
+  io_broker::io_handle fd_handle;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

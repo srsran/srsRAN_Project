@@ -130,13 +130,9 @@ public:
 
   void disconnect() override
   {
-    if (sctp_gateway != nullptr) {
-      if (not broker.unregister_fd(sctp_gateway->get_socket_fd())) {
-        logger.error("NGAP Gateway failed to stop SCTP socket");
-      }
-      packer.reset();
-      sctp_gateway.reset();
-    }
+    fd_listener.reset();
+    packer.reset();
+    sctp_gateway.reset();
   }
 
   void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
@@ -154,9 +150,9 @@ public:
       return;
     }
     logger.info("TNL connection to AMF ({}:{}) established", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    bool success = broker.register_fd(
+    fd_listener = broker.register_fd(
         sctp_gateway->get_socket_fd(), [this]() { sctp_gateway->receive(); }, []() {});
-    if (!success) {
+    if (!fd_listener.connected()) {
       report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
                          sctp_gateway->get_socket_fd());
     }
@@ -200,6 +196,8 @@ private:
   std::unique_ptr<sctp_network_gateway> sctp_gateway;
 
   std::unique_ptr<ngap_asn1_packer> packer;
+
+  io_broker::io_handle fd_listener;
 };
 
 } // namespace

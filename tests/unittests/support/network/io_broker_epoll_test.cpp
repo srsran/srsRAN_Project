@@ -151,15 +151,16 @@ protected:
 
   void add_socket_to_epoll()
   {
-    ASSERT_TRUE(epoll_broker->register_fd(
-        socket_fd, [this]() { data_receive_callback(socket_fd); }, []() {}));
+    fd_handle = epoll_broker->register_fd(
+        socket_fd, [this]() { data_receive_callback(socket_fd); }, []() {});
+    ASSERT_TRUE(fd_handle.connected());
   }
 
   void rem_socket_from_epoll()
   {
     if (socket_fd >= 0) {
-      EXPECT_TRUE(epoll_broker->unregister_fd(socket_fd));
-      close(socket_fd);
+      EXPECT_TRUE(fd_handle.reset());
+      EXPECT_NE(close(socket_fd), -1);
       socket_fd = -1;
     }
   }
@@ -190,6 +191,8 @@ protected:
   std::unique_ptr<io_broker> epoll_broker;
   int                        socket_fd   = 0;
   int                        socket_type = 0;
+
+  io_broker::io_handle fd_handle;
 
   // unix domain socket addresses (used by unix sockets only)
   struct sockaddr_un server_addr_un = {};
@@ -233,16 +236,19 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
 {
   create_unix_sockets();
 
-  std::promise<bool> p;
-  std::future<bool>  fut = p.get_future();
-  ASSERT_TRUE(this->epoll_broker->register_fd(
+  std::promise<bool>   p;
+  std::future<bool>    fut = p.get_future();
+  io_broker::io_handle handle;
+
+  handle = this->epoll_broker->register_fd(
       socket_fd,
-      [this, &p]() {
+      [&]() {
         auto* p_copy = &p;
-        bool  ret    = this->epoll_broker->unregister_fd(socket_fd);
+        bool  ret    = handle.reset();
         p_copy->set_value(ret);
       },
-      []() {}));
+      []() {});
+  ASSERT_TRUE(handle.connected());
 
   send_on_socket();
 

@@ -209,7 +209,8 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
 {
   auto ev_it = event_handler.find(fd);
   if (ev_it == event_handler.end()) {
-    logger.error("File descriptor not found. fd={}", fd);
+    // File descriptor not found. It could have been already deregistered.
+    logger.debug("File descriptor not found. fd={}", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -246,20 +247,23 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
 
 /// Adds a new file descriptor to the epoll-handler. The call is thread-safe and new
 /// file descriptors can be added while the epoll_wait() is blocking.
-bool io_broker_epoll::register_fd(int fd, recv_callback_t handler, error_callback_t err_handler)
+io_broker::io_handle io_broker_epoll::register_fd(int fd, recv_callback_t handler, error_callback_t err_handler)
 {
   if (fd < 0) {
     logger.error("io_broker_epoll::register_fd: Received an invalid fd={}", fd);
-    return false;
+    return io_handle{};
   }
   if (not running.load(std::memory_order_relaxed)) {
     logger.warning("io_broker_epoll::register_fd: io_broker is not running. fd={}", fd);
-    return false;
+    return io_handle{};
   }
 
   if (std::this_thread::get_id() == thread.get_id()) {
     // Registration from within the epoll thread.
-    return handle_fd_registration(fd, handler, err_handler, nullptr);
+    if (handle_fd_registration(fd, handler, err_handler, nullptr)) {
+      return io_handle{*this, fd};
+    }
+    return io_handle{};
   }
 
   std::promise<bool> p;
@@ -268,7 +272,10 @@ bool io_broker_epoll::register_fd(int fd, recv_callback_t handler, error_callbac
   enqueue_event(control_event{control_event::event_type::register_fd, fd, handler, err_handler, &p});
 
   // Wait for the registration to complete.
-  return fut.get();
+  if (fut.get()) {
+    return io_handle{*this, fd};
+  }
+  return io_handle{};
 }
 
 /// \brief Remove fd from epoll handler.

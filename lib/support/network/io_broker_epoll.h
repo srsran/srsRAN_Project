@@ -19,17 +19,14 @@
 
 namespace srsran {
 
-/// @brief Implementation of an IO broker using epoll.
+/// \brief Implementation of an IO broker using epoll.
 class io_broker_epoll final : public io_broker
 {
 public:
   explicit io_broker_epoll(const io_broker_config& config);
   ~io_broker_epoll() override;
 
-  SRSRAN_NODISCARD bool register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
-
-  // Note: Blocking function.
-  SRSRAN_NODISCARD bool unregister_fd(int fd) override;
+  SRSRAN_NODISCARD io_handle register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
 
 private:
   struct control_event {
@@ -39,6 +36,9 @@ private:
     error_callback_t    err_handler;
     std::promise<bool>* completed;
   };
+
+  // Note: Blocking function.
+  SRSRAN_NODISCARD bool unregister_fd(int fd) override;
 
   void thread_loop();
 

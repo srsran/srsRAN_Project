@@ -38,9 +38,9 @@ public:
     if (!gateway_ctrl_handler->create_and_connect()) {
       report_error("Failed to create SCTP gateway.\n");
     }
-    bool success = broker.register_fd(
+    fd_listener = broker.register_fd(
         gateway_ctrl_handler->get_socket_fd(), [this]() { gateway_ctrl_handler->receive(); }, []() {});
-    if (!success) {
+    if (!fd_listener.connected()) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());
     }
@@ -62,9 +62,9 @@ public:
       report_error("Failed to listen SCTP gateway.\n");
     }
 
-    bool success = broker.register_fd(
+    fd_listener = broker.register_fd(
         gateway_ctrl_handler->get_socket_fd(), [this]() { gateway_ctrl_handler->receive(); }, []() {});
-    if (!success) {
+    if (!fd_listener.connected()) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gateway_ctrl_handler->get_socket_fd());
     }
@@ -91,10 +91,9 @@ public:
   void disconnect_gateway()
   {
     srsran_assert(gateway_ctrl_handler, "Gateway handler not set.");
-    bool success = broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
-    if (!success) {
-      report_fatal_error("Failed to unregister E2 (SCTP) network gateway at IO broker. socket_fd={}",
-                         gateway_ctrl_handler->get_socket_fd());
+    if (!fd_listener.reset()) {
+      logger.error("Failed to unregister E2 (SCTP) network gateway at IO broker. socket_fd={}",
+                   gateway_ctrl_handler->get_socket_fd());
     }
 
     gateway_ctrl_handler = nullptr;
@@ -145,6 +144,8 @@ private:
   sctp_network_gateway_data_handler*    gateway_data_handler;
   e2_message_handler*                   e2ap_msg_handler;
   e2_event_handler*                     event_handler;
+
+  io_broker::io_handle fd_listener;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };

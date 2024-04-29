@@ -41,9 +41,9 @@ public:
     packer(*gw, *this, pcap)
   {
     gw->create_and_connect();
-    bool success = epoll_broker->register_fd(
+    fd_handle = epoll_broker->register_fd(
         gw->get_socket_fd(), [this]() { gw->receive(); }, []() {});
-    if (!success) {
+    if (!fd_handle.connected()) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gw->get_socket_fd());
     }
@@ -84,6 +84,8 @@ private:
   e2ap_asn1_packer                      packer;
   e2_interface*                         e2ap = nullptr;
   dummy_e2ap_pcap                       pcap;
+
+  io_broker::io_handle fd_handle;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

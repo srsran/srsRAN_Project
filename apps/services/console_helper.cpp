@@ -100,17 +100,17 @@ console_helper::console_helper(io_broker&                        io_broker_,
     logger.error("Couldn't configure fd to non-blocking");
   }
 
-  if (!io_broker_handle.register_fd(
-          STDIN_FILENO, [this]() { stdin_handler(STDIN_FILENO); }, []() {})) {
+  stdin_handle = io_broker_handle.register_fd(
+      STDIN_FILENO, [this]() { stdin_handler(STDIN_FILENO); }, []() {});
+  if (!stdin_handle.connected()) {
     logger.error("Couldn't register stdin handler");
   }
 }
 
 console_helper::~console_helper()
 {
-  bool success = io_broker_handle.unregister_fd(STDIN_FILENO);
-  if (!success) {
-    report_fatal_error("Failed to unregister stdin file descriptor at IO broker. fd={}", STDIN_FILENO);
+  if (!stdin_handle.reset()) {
+    logger.error("Failed to unregister stdin file descriptor at IO broker. fd={}", STDIN_FILENO);
   }
 }
 

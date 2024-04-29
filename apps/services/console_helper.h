@@ -16,11 +16,10 @@
 #include "srsran/du/du_cell_config.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/io/io_broker.h"
 #include <list>
 
 namespace srsran {
-
-class io_broker;
 
 /// \brief Notifier from application to signal current operation state.
 class app_state_notifier
@@ -76,6 +75,8 @@ private:
   optional<ru_controller*>          radio_controller;
   srs_cu_cp::cu_cp_command_handler& cu_cp;
   bool                              autostart_stdout_metrics = false;
+
+  io_broker::io_handle stdin_handle;
 };
 
 } // namespace srsran
