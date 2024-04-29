@@ -11,6 +11,8 @@ Launch tests in Viavi
 """
 
 import logging
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -28,6 +30,29 @@ from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
 from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
+
+CAMPAIGN_FILENAME = "C:\\ci\\CI 4x4 ORAN-FH.xml"
+
+
+class TestName(Enum):
+    """
+    Test names
+    """
+
+    UE1_STATIC_DL_UL_UDP = "1UE static DL + UL UDP - Dell"
+    UE32_STATIC_DL_UL_UDP = "32UE static DL + UL UDP - Dell"
+
+
+@dataclass
+class _ViaviConfiguration:
+    """
+    Viavi configuration
+    """
+
+    max_pdschs_per_slot: int
+    max_puschs_per_slot: int
+    enable_qos_viavi: bool
+    warning_as_errors: bool
 
 
 @pytest.fixture
@@ -69,8 +94,6 @@ def test_viavi_manual(
     viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
     # Test extra params
-    max_puschs_per_slot: int = 8,
-    max_pdschs_per_slot: int = 8,
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
@@ -97,50 +120,24 @@ def test_viavi_manual(
         gnb_startup_timeout=gnb_startup_timeout,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
-        max_puschs_per_slot=max_puschs_per_slot,
-        max_pdschs_per_slot=max_pdschs_per_slot,
-        enable_qos_viavi=False,
-        warning_as_errors=True,
     )
 
 
 @mark.parametrize(
-    "campaign_filename, test_name, test_timeout, max_pdschs_per_slot, max_puschs_per_slot, enable_qos_viavi, \
-warning_as_errors, post_commands",
+    "test_name, test_timeout, post_commands",
     (
         param(
-            "C:\\ci\\CI 4x4 ORAN-FH.xml",
-            "1UE static DL + UL UDP - Dell",
+            TestName.UE1_STATIC_DL_UL_UDP.value,
             45 * 60,
-            8,
-            8,
-            False,
-            True,
             "",
             id="1UE Bidirectional UDP",
         ),
         param(
-            "C:\\ci\\CI 4x4 ORAN-FH.xml",
-            "32UE static DL + UL UDP - Dell",
+            TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
-            1,
-            1,
-            False,
-            True,
             "",
             id="32UE Bidirectional UDP",
         ),
-        # param(
-        #     "C:\\ci\\CI 4x4 ORAN-FH.xml",
-        #     "1UE static DL TCP low segment - Dell",
-        #     45 * 60,
-        #     8,
-        #     8,
-        #     True,
-        #     False,
-        #     "",
-        #     id="1UE Bidirectional TCP",
-        # ),
     ),
 )
 @mark.viavi
@@ -155,15 +152,11 @@ def test_viavi(
     viavi: Viavi,
     metrics_server: MetricServerInfo,
     # Test info
-    campaign_filename: str,
     test_name: str,
     test_timeout: int,
-    max_pdschs_per_slot: int,
-    max_puschs_per_slot: int,
     post_commands: str,
-    warning_as_errors: bool,
-    enable_qos_viavi: bool,
     # Test extra params
+    warning_as_errors: bool = True,
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
@@ -182,34 +175,25 @@ def test_viavi(
         viavi=viavi,
         metrics_server=metrics_server,
         # Test info
-        campaign_filename=campaign_filename,
+        campaign_filename=CAMPAIGN_FILENAME,
         test_name=test_name,
         test_timeout=test_timeout,
         # Test extra params
+        warning_as_errors=warning_as_errors,
         always_download_artifacts=always_download_artifacts,
         gnb_startup_timeout=gnb_startup_timeout,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         post_commands=post_commands,
-        max_pdschs_per_slot=max_pdschs_per_slot,
-        max_puschs_per_slot=max_puschs_per_slot,
-        warning_as_errors=warning_as_errors,
-        enable_qos_viavi=enable_qos_viavi,
     )
 
 
 @mark.parametrize(
-    "campaign_filename, test_name, test_timeout, max_pdschs_per_slot, max_puschs_per_slot, enable_qos_viavi, \
-warning_as_errors, post_commands",
+    "test_name, test_timeout, post_commands",
     (
         param(
-            "C:\\ci\\CI 4x4 ORAN-FH.xml",
-            "32UE static DL + UL UDP - Dell",
+            TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
-            1,
-            1,
-            False,
-            False,
             "",
             id="Debug: 32UE Bidirectional UDP",
         ),
@@ -227,14 +211,9 @@ def test_viavi_debug(
     viavi: Viavi,
     metrics_server: MetricServerInfo,
     # Test info
-    campaign_filename: str,
     test_name: str,
     test_timeout: int,
-    max_pdschs_per_slot: int,
-    max_puschs_per_slot: int,
     post_commands: str,
-    warning_as_errors: bool,
-    enable_qos_viavi: bool,
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -254,7 +233,7 @@ def test_viavi_debug(
         viavi=viavi,
         metrics_server=metrics_server,
         # Test info
-        campaign_filename=campaign_filename,
+        campaign_filename=CAMPAIGN_FILENAME,
         test_name=test_name,
         test_timeout=test_timeout,
         # Test extra params
@@ -263,10 +242,7 @@ def test_viavi_debug(
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=log_search,
         post_commands=post_commands,
-        max_pdschs_per_slot=max_pdschs_per_slot,
-        max_puschs_per_slot=max_puschs_per_slot,
-        warning_as_errors=warning_as_errors,
-        enable_qos_viavi=enable_qos_viavi,
+        warning_as_errors=False,
         fail_if_kos=False,
     )
 
@@ -285,11 +261,8 @@ def _test_viavi(
     campaign_filename: str,
     test_name: str,
     test_timeout: int,
-    max_puschs_per_slot: int,
-    max_pdschs_per_slot: int,
     # Test extra params
-    warning_as_errors: bool,
-    enable_qos_viavi: bool,
+    warning_as_errors: bool = True,
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
@@ -300,6 +273,8 @@ def _test_viavi(
     """
     Runs a test using Viavi
     """
+    test_configuration = get_viavi_configuration(test_name, warning_as_errors)
+
     retina_data.test_config = {
         "gnb": {
             "parameters": {
@@ -316,9 +291,9 @@ def _test_viavi(
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
                 "prach_config_index": 159,
-                "max_puschs_per_slot": max_puschs_per_slot,
-                "max_pdschs_per_slot": max_pdschs_per_slot,
-                "enable_qos_viavi": enable_qos_viavi,
+                "max_puschs_per_slot": test_configuration.max_puschs_per_slot,
+                "max_pdschs_per_slot": test_configuration.max_pdschs_per_slot,
+                "enable_qos_viavi": test_configuration.enable_qos_viavi,
             },
             "templates": {"extra": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
@@ -372,7 +347,7 @@ def _test_viavi(
             retina_data,
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,
-            warning_as_errors=warning_as_errors,
+            warning_as_errors=test_configuration.warning_as_errors,
             fail_if_kos=fail_if_kos,
         )
 
@@ -386,7 +361,33 @@ def _test_viavi(
         try:
             logging.info("Generating Viavi report")
             report_folder = viavi.generate_report(campaign_name)
+            logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
+            viavi_failure_manager = viavi.get_test_failures()
+            if viavi_failure_manager.get_number_of_failures() > 0:
+                viavi_failure_manager.print_failures()
+                pytest.fail(f"Viavi Test Failed with {viavi_failure_manager.get_number_of_failures()} failures")
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
+
+
+def get_viavi_configuration(test_name: str, warning_as_errors: bool) -> _ViaviConfiguration:
+    """
+    Get Viavi configuration
+    """
+    if test_name == TestName.UE1_STATIC_DL_UL_UDP.value:
+        return _ViaviConfiguration(
+            max_pdschs_per_slot=8,
+            max_puschs_per_slot=8,
+            enable_qos_viavi=False,
+            warning_as_errors=warning_as_errors,
+        )
+    if test_name == TestName.UE32_STATIC_DL_UL_UDP.value:
+        return _ViaviConfiguration(
+            max_pdschs_per_slot=1,
+            max_puschs_per_slot=1,
+            enable_qos_viavi=False,
+            warning_as_errors=warning_as_errors,
+        )
+    raise ValueError(f"Test name {test_name} not supported")
