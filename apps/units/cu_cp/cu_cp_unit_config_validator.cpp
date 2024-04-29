@@ -20,7 +20,7 @@
 
 using namespace srsran;
 
-static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_unit_config& config)
+static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_mobility_config& config)
 {
   // check that report config ids are unique
   std::map<unsigned, std::string> report_cfg_ids_to_report_type;
@@ -105,7 +105,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_un
 }
 
 /// Validates the given security configuration. Returns true on success, otherwise false.
-static bool validate_security_appconfig(const security_unit_config& config)
+static bool validate_security_appconfig(const cu_cp_unit_security_config& config)
 {
   // String splitter helper
   auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
@@ -165,7 +165,7 @@ static bool validate_security_appconfig(const security_unit_config& config)
 }
 
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
-static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_cu_cp_unit_config& config)
+static bool validate_pdcp_appconfig(five_qi_t five_qi, const cu_cp_unit_pdcp_config& config)
 {
   if (config.integrity_protection_required) {
     fmt::print("PDCP DRB integrity protection is not supported yet. {}\n", five_qi);
@@ -208,7 +208,7 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_cu_cp_unit_con
   return true;
 }
 
-static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_cu_cp_unit_config& config)
+static bool validate_rlc_um_appconfig(five_qi_t five_qi, const cu_cp_unit_rlc_um_config& config)
 {
   // Validate TX.
 
@@ -244,7 +244,7 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_cu_cp_unit
 }
 
 template <typename id_type>
-static bool validate_rlc_am_appconfig(id_type id, const rlc_am_cu_cp_unit_config& config)
+static bool validate_rlc_am_appconfig(id_type id, const cu_cp_unit_rlc_am_config& config)
 {
   // Validate TX.
 
@@ -348,7 +348,7 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_cu_cp_unit_config
   return true;
 }
 
-static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_cu_cp_unit_config& config)
+static bool validate_rlc_appconfig(five_qi_t five_qi, const cu_cp_unit_rlc_config& config)
 {
   // Check mode.
   if (config.mode != "am" && config.mode != "um-bidir") {
@@ -371,7 +371,7 @@ static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_cu_cp_unit_confi
 }
 
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
-static bool validate_qos_appconfig(span<const qos_cu_cp_unit_config> config)
+static bool validate_qos_appconfig(span<const cu_cp_unit_qos_config> config)
 {
   for (const auto& qos : config) {
     if (!validate_pdcp_appconfig(qos.five_qi, qos.pdcp)) {
