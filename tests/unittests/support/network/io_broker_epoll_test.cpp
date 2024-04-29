@@ -235,8 +235,9 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
   ASSERT_TRUE(this->epoll_broker->register_fd(socket_fd, [this, &p](int fd) {
-    bool ret = this->epoll_broker->unregister_fd(fd);
-    p.set_value(ret);
+    auto* p_copy = &p;
+    bool  ret    = this->epoll_broker->unregister_fd(fd);
+    p_copy->set_value(ret);
   }));
 
   send_on_socket();
