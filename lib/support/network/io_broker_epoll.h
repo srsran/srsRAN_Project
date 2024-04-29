@@ -11,7 +11,6 @@
 #pragma once
 
 #include "cameron314/concurrentqueue.h"
-#include "epoll_helper.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/unique_fd.h"
 #include <future>
@@ -29,12 +28,22 @@ public:
   SRSRAN_NODISCARD subscriber register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) override;
 
 private:
+  // Event enqueued to be handled in the io_broker thread.
   struct control_event {
     enum class event_type { close_io_broker, register_fd, deregister_fd } type;
     int                 fd;
     recv_callback_t     handler;
     error_callback_t    err_handler;
     std::promise<bool>* completed;
+  };
+
+  // Event handler for a file descriptor.
+  struct fd_handler {
+    recv_callback_t  read_callback;
+    error_callback_t error_callback;
+
+    // Determines whether the io_broker has deregistered the event handler from the epoll.
+    bool registered() const { return static_cast<bool>(read_callback); }
   };
 
   // Note: Blocking function.
@@ -69,7 +78,7 @@ private:
   unique_fd ctrl_event_fd;
 
   // Lookup table mapping file descriptors to handlers.
-  std::unordered_map<int, std::unique_ptr<epoll_handler>> event_handler;
+  std::unordered_map<int, fd_handler> event_handler;
 
   // Queue used to communicate commands to the epoll broker.
   moodycamel::ConcurrentQueue<control_event> event_queue;

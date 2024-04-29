@@ -10,6 +10,7 @@
 
 #include "io_broker_epoll.h"
 #include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include <unistd.h>
 
 using namespace srsran;
@@ -88,7 +89,6 @@ void io_broker_epoll::thread_loop()
       uint32_t epoll_events = events[i].events;
       if ((epoll_events & EPOLLERR) || (epoll_events & EPOLLHUP) || (!(epoll_events & EPOLLIN))) {
         // An error or hang up happened on this file descriptor, or the socket is not ready for reading
-        // TODO: add notifier for these events and let the subscriber decide on further actions (e.g. unregister fd)
         if (epoll_events & EPOLLHUP) {
           // Note: some container environments hang up stdin (fd=0) in case of non-interactive sessions
           logger.warning("Hang up on file descriptor. fd={} events={:#x}", fd, epoll_events);
@@ -108,7 +108,7 @@ void io_broker_epoll::thread_loop()
 
       const auto& it = event_handler.find(fd);
       if (it != event_handler.end()) {
-        it->second->handle_event(fd, events[i]);
+        it->second.read_callback();
       } else {
         logger.error("Could not find event handler. fd={}", fd);
       }
@@ -181,7 +181,7 @@ bool io_broker_epoll::handle_fd_registration(int                     fd,
   }
 
   // Register the handler of the fd.
-  event_handler.insert({fd, std::make_unique<epoll_receive_callback>(handler, err_handler)});
+  event_handler.insert(std::make_pair(fd, fd_handler{handler, err_handler}));
   if (complete_notifier != nullptr) {
     complete_notifier->set_value(true);
   }
@@ -203,14 +203,14 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
   }
 
   // Regardless of the cause for the deregistration, we always remove the FD from the epoll.
-  // Note: If ev_it->second == nullptr, it means that the FD has already been removed from the epoll.
-  std::unique_ptr<epoll_handler> released_handler = std::move(ev_it->second);
-  if (released_handler != nullptr) {
+  // Note: If !ev_it->second.registered(), it means that the FD has already been removed from the epoll.
+  if (ev_it->second.registered()) {
     struct epoll_event epoll_ev = {};
     epoll_ev.data.fd            = fd;
     epoll_ev.events             = EPOLLIN;
     if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
       logger.error("epoll_ctl failed for fd={}", fd);
+      event_handler.erase(ev_it);
       if (complete_notifier != nullptr) {
         complete_notifier->set_value(false);
       }
@@ -221,14 +221,20 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
     // Note: We avoid calling the error handling callback in case the deregistration was due to the subscriber
     // close/destruction or due to the io_broker being destroyed.
     if (cause == cause_t::epoll_error) {
-      released_handler->handle_error_event(fd, epoll_ev);
+      ev_it->second.error_callback();
     }
   }
 
-  // In case it was the frontend requesting the deregistration of the FD (e.g. via subscriber destruction), remove
-  // FD from the lookup as well. This will allow the same FD to be re-registered later.
   if (cause == cause_t::frontend_request) {
+    // In case it was the frontend requesting the deregistration of the FD (e.g. via subscriber destruction), remove
+    // FD from the lookup as well. This will allow the same FD to be available to be re-registered later.
     event_handler.erase(ev_it);
+  } else {
+    // In case it was the io_broker deregistering the FD, keep the FD in the lookup table, so we avoid that the
+    // frontend points to inexistent FD. However, we deregister the event handlers so that the FD doesn't get removed
+    // from the epoll more than once.
+    ev_it->second.read_callback  = {};
+    ev_it->second.error_callback = {};
   }
 
   // Notify completion of asynchronous task.
