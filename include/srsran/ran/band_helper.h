@@ -110,8 +110,12 @@ uint32_t freq_to_nr_arfcn(double freq);
 /// \param[in] band NR Band number.
 /// \param[in] scs SSB Subcarrier spacing.
 /// \return    The SSB pattern case if band and subcarrier spacing match, \c invalid otherwise.
-/// \remark    The functionr returns \c invalid if the band has SUL duplexing.
+/// \remark    The function returns \c invalid if the band has SUL duplexing.
 ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
+
+/// \brief Returns the L_max length of the \c ssb-PositionsInBurst, as per TS 38.213, Section 4.1 and TS 38.331,
+/// \c ServingCellConfigCommon.
+uint8_t get_ssb_l_max(nr_band band, subcarrier_spacing scs, uint32_t nr_arfcn);
 
 /// \brief Selects the most suitable SSB subcarrier spacing valid for this band.
 ///

@@ -18,6 +18,7 @@
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/ssb_gscn.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -350,7 +351,7 @@ static const std::array<n_rb_per_scs, 15> tx_bw_config_fr1 = {{
     // clang-format on
 }};
 
-static const nr_band_raster fetch_band_raster(nr_band band, optional<delta_freq_raster> delta_freq_raster)
+static nr_band_raster fetch_band_raster(nr_band band, optional<delta_freq_raster> delta_freq_raster)
 {
   if (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
       band == nr_band::n79 or band == nr_band::n90 or band == nr_band::n104) {
@@ -828,6 +829,29 @@ ssb_pattern_case srsran::band_helper::get_ssb_pattern(nr_band band, subcarrier_s
 
   // Band is out of range, so consider invalid.
   return ssb_pattern_case::invalid;
+}
+
+uint8_t srsran::band_helper::get_ssb_l_max(nr_band band, subcarrier_spacing scs, uint32_t nr_arfcn)
+{
+  // As per TS 38.213, Section 4.1.
+  switch (get_ssb_pattern(band, scs)) {
+    case ssb_pattern_case::A:
+    case ssb_pattern_case::C: {
+      const uint32_t ssb_cut_off_freq =
+          is_paired_spectrum(band) ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
+      return (nr_arfcn <= ssb_cut_off_freq) ? 4U : 8U;
+    }
+    case ssb_pattern_case::B: {
+      return 8U;
+    }
+    case ssb_pattern_case::D:
+    case ssb_pattern_case::E: {
+      return 64U;
+    }
+    default:
+      srsran_assertion_failure("SSB pattern case is invalid");
+      return 64U;
+  }
 }
 
 subcarrier_spacing srsran::band_helper::get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common)
