@@ -25,17 +25,17 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_bearer_disconnector&       disconnector_) :
   logger("DU-F1-U", {ue_index, drb_id_, dl_tnl_info_}),
   cfg(config),
+  dl_tnl_info(dl_tnl_info_),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   disconnector(disconnector_),
   ue_executor(ue_executor_),
-  dl_tnl_info(dl_tnl_info_),
   ul_notif_timer(timers.create_timer())
 {
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
-  logger.log_info("F1-U bearer configured. {}", cfg);
+  logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)

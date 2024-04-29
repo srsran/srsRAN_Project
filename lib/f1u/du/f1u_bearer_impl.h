@@ -55,7 +55,8 @@ private:
   f1u_bearer_logger logger;
 
   /// Config storage
-  const f1u_config cfg;
+  const f1u_config              cfg;
+  const up_transport_layer_info dl_tnl_info;
 
   f1u_rx_sdu_notifier&     rx_sdu_notifier;
   f1u_tx_pdu_notifier&     tx_pdu_notifier;
@@ -64,8 +65,6 @@ private:
   task_executor& ue_executor;
 
   bool stopped = false;
-
-  const up_transport_layer_info& dl_tnl_info;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;

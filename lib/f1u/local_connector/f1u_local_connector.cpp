@@ -135,6 +135,7 @@ std::unique_ptr<srs_du::f1u_bearer> f1u_local_connector::create_du_bearer(uint32
   srs_du::f1u_bearer_creation_message f1u_msg = {};
   f1u_msg.ue_index                            = ue_index;
   f1u_msg.drb_id                              = drb_id;
+  f1u_msg.dl_tnl_info                         = dl_up_tnl_info;
   f1u_msg.config                              = config;
   f1u_msg.rx_sdu_notifier                     = &du_rx;
   f1u_msg.tx_pdu_notifier                     = du_tx.get();
