@@ -488,6 +488,14 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subc
   if (config.pattern2.has_value() and not validate_tdd_ul_dl_pattern_appconfig(config.pattern2.value(), common_scs)) {
     return false;
   }
+  const unsigned period_msec =
+      (config.pattern1.dl_ul_period_slots + (config.pattern2.has_value() ? config.pattern2->dl_ul_period_slots : 0)) /
+      get_nof_slots_per_subframe(common_scs);
+  // As per TS 38.213, clause 11.1, "A UE expects that P + P2 divides 20 msec".
+  if (20 % period_msec != 0) {
+    fmt::print("Invalid TDD pattern total periodicity={}ms. It must divide 20 msec.\n", period_msec);
+    return false;
+  }
   return true;
 }
 
