@@ -109,7 +109,7 @@ struct sched_ue_resource_alloc_config {
   /// Maximum PUSCH HARQ retransmissions.
   unsigned max_pusch_harq_retxs = 4;
   // RRM policy for the UE.
-  RRM_policy_ratio_group rrm_policy_ratio_group;
+  rrm_policy_ratio_group rrm_policy_group;
 };
 
 /// QoS and slicing information associated with a DRB provided to the scheduler.

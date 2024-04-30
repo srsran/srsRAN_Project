@@ -13,16 +13,20 @@
 #include "srsran/ran/s_nssai.h"
 
 namespace srsran {
-
-struct RRM_policy_member {
+/// O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
+struct rrm_policy_member {
   std::string plmn_id;
   s_nssai_t   s_nssai;
 };
 
-struct RRM_policy_ratio_group {
-  RRM_policy_member pol_member;
+struct rrm_policy_ratio_group {
+  // used to identify the group to which the policy is applied.
+  rrm_policy_member pol_member;
+  // sets the minimum percentage of PRBs to be allocated to this group.
   int               min_PRB_policy_ratio;
+  // sets the maximum percentage of PRBs to be allocated to this group.
   int               max_PRB_policy_ratio;
+  // sets the percentage of PRBs to be allocated to this group.
   int               ded_PRB_policy_ratio;
 };
 
