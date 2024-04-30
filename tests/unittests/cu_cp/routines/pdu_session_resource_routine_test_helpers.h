@@ -11,7 +11,8 @@
 #pragma once
 
 #include "../../e1ap/common/test_helpers.h"
-#include "du_processor_routine_manager_test_helpers.h"
+#include "../cu_cp_test_helpers.h"
+#include "cu_cp_routine_manager_test_helpers.h"
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -29,7 +30,7 @@ void VERIFY_EQUAL(const T& result, const T& expected)
   ASSERT_TRUE(std::equal(result.begin(), result.end(), expected.begin()));
 }
 
-class pdu_session_resource_routine_test : public du_processor_routine_manager_test
+class pdu_session_resource_routine_test : public cu_cp_routine_manager_test
 {
 protected:
   void is_valid_f1ap_message(const f1ap_ue_context_modification_request& request)

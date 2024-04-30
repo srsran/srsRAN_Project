@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_processor_routine_manager_test_helpers.h"
+#include "cu_cp_routine_manager_test_helpers.h"
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "pdu_session_resource_routine_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -20,7 +20,7 @@ using namespace srs_cu_cp;
 
 /// Note: Check if UE ID is valid is done by caller. Injection of invalid ue_index results in assertion.
 
-class pdu_session_resource_modification_test : public du_processor_routine_manager_test
+class pdu_session_resource_modification_test : public pdu_session_resource_routine_test
 {
 protected:
   void set_expected_results(const bearer_context_outcome_t& first_e1ap_message_outcome,
@@ -28,16 +28,16 @@ protected:
                             const bearer_context_outcome_t& second_e1ap_message_outcome,
                             bool                            rrc_reconfiguration_outcome)
   {
-    e1ap_ctrl_notifier.set_first_message_outcome(first_e1ap_message_outcome);
-    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
-    e1ap_ctrl_notifier.set_second_message_outcome(second_e1ap_message_outcome);
+    e1ap_bearer_ctxt_mng.set_first_message_outcome(first_e1ap_message_outcome);
+    f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_modification_outcome);
+    e1ap_bearer_ctxt_mng.set_second_message_outcome(second_e1ap_message_outcome);
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(rrc_reconfiguration_outcome);
   }
 
   void start_procedure(const cu_cp_pdu_session_resource_modify_request& msg)
   {
     t = routine_mng->start_pdu_session_resource_modification_routine(
-        msg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+        msg, e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 
@@ -49,20 +49,24 @@ protected:
   void setup_pdu_session()
   {
     // Set expected results for sub-procedures.
-    e1ap_ctrl_notifier.set_first_message_outcome({true, {1}, {}});
-    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome({true});
-    e1ap_ctrl_notifier.set_second_message_outcome({true});
+    e1ap_bearer_ctxt_mng.set_first_message_outcome({true, {1}, {}});
+    f1ap_ue_ctxt_mng.set_ue_context_modification_outcome({true});
+    e1ap_bearer_ctxt_mng.set_second_message_outcome({true});
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
 
     ASSERT_FALSE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());
-    ASSERT_FALSE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
-    ASSERT_FALSE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_bearer_ctxt_mng.second_e1ap_request.has_value());
 
     // Run setup procedure.
     cu_cp_pdu_session_resource_setup_request              request = generate_pdu_session_resource_setup();
     async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
-        routine_mng->start_pdu_session_resource_setup_routine(
-            request, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+        routine_mng->start_pdu_session_resource_setup_routine(request,
+                                                              security_cfg,
+                                                              e1ap_bearer_ctxt_mng,
+                                                              f1ap_ue_ctxt_mng,
+                                                              rrc_ue_ctrl_notifier,
+                                                              *rrc_ue_up_resource_manager);
     lazy_task_launcher<cu_cp_pdu_session_resource_setup_response> setup_launcher(setup_task);
 
     // Verify successful outcome.
@@ -71,7 +75,7 @@ protected:
     ASSERT_EQ(setup_task.get().pdu_session_res_failed_to_setup_items.size(), 0);
 
     // clear stored requests for next procedure
-    e1ap_ctrl_notifier.reset();
+    e1ap_bearer_ctxt_mng.reset();
     rrc_ue_ctrl_notifier.reset();
   }
 
@@ -100,18 +104,18 @@ protected:
     set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
 
     ASSERT_FALSE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());
-    ASSERT_FALSE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
-    ASSERT_FALSE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_bearer_ctxt_mng.second_e1ap_request.has_value());
 
     // Run PDU session modification.
     cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification(psi, qfi);
     async_task<cu_cp_pdu_session_resource_modify_response> modify_task =
         routine_mng->start_pdu_session_resource_modification_routine(
-            request, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+            request, e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
     lazy_task_launcher<cu_cp_pdu_session_resource_modify_response> modify_launcher(modify_task);
 
     // Verify content of UE context modification.
-    ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
+    ASSERT_EQ(f1ap_ue_ctxt_mng.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
 
     // PDU session resource modification succeeded.
     ASSERT_TRUE(modify_task.ready());
@@ -127,7 +131,7 @@ protected:
     }
 
     // clear stored E1AP requests for next procedure
-    e1ap_ctrl_notifier.reset();
+    e1ap_bearer_ctxt_mng.reset();
     rrc_ue_ctrl_notifier.reset();
   }
 
@@ -164,11 +168,11 @@ TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_fai
   start_procedure(request);
 
   // Verify content of initial bearer modification request.
-  ASSERT_TRUE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+  ASSERT_TRUE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
   ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
-      e1ap_ctrl_notifier.first_e1ap_request.value()));
+      e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
   const auto& bearer_ctxt_mod_req =
-      variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
+      variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
   ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
@@ -207,7 +211,7 @@ TEST_F(pdu_session_resource_modification_test, when_ue_ctxt_modification_fails_t
   start_procedure(request);
 
   // Verify content of UE context modification.
-  ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
+  ASSERT_EQ(f1ap_ue_ctxt_mng.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
 
   // PDU session resource modification for session 1 failed.
   ASSERT_TRUE(procedure_ready());
@@ -243,9 +247,9 @@ TEST_F(pdu_session_resource_modification_test,
   start_procedure(request);
 
   // Verify content of 2nd bearer context modification request.
-  ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
-  ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.value().ng_ran_bearer_context_mod_request.has_value());
-  ASSERT_EQ(e1ap_ctrl_notifier.second_e1ap_request.value()
+  ASSERT_TRUE(e1ap_bearer_ctxt_mng.second_e1ap_request.has_value());
+  ASSERT_TRUE(e1ap_bearer_ctxt_mng.second_e1ap_request.value().ng_ran_bearer_context_mod_request.has_value());
+  ASSERT_EQ(e1ap_bearer_ctxt_mng.second_e1ap_request.value()
                 .ng_ran_bearer_context_mod_request.value()
                 .pdu_session_res_to_modify_list.size(),
             1);
@@ -288,7 +292,7 @@ TEST_F(pdu_session_resource_modification_test, when_rrc_reconfiguration_fails_th
   start_procedure(request);
 
   // Verify content of UE context modification.
-  ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
+  ASSERT_EQ(f1ap_ue_ctxt_mng.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
 
   // PDU session resource modification for session 1 failed.
   ASSERT_TRUE(procedure_ready());
@@ -345,11 +349,11 @@ TEST_F(pdu_session_resource_modification_test,
   start_procedure(request);
 
   // Verify content of initial bearer modification request.
-  ASSERT_TRUE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+  ASSERT_TRUE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
   ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
-      e1ap_ctrl_notifier.first_e1ap_request.value()));
+      e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
   const auto& bearer_ctxt_mod_req =
-      variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
+      variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
   ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
@@ -362,7 +366,7 @@ TEST_F(pdu_session_resource_modification_test,
             1);
 
   // Verify content of UE context modification.
-  ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_released_list.size(), 1);
+  ASSERT_EQ(f1ap_ue_ctxt_mng.get_ctxt_mod_request().drbs_to_be_released_list.size(), 1);
 
   // Verify RRC reconfig.
   ASSERT_TRUE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());

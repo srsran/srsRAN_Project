@@ -66,6 +66,14 @@ public:
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
+  // cu_cp_ngap_handler
+  async_task<cu_cp_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override;
+  async_task<cu_cp_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request) override;
+  async_task<cu_cp_pdu_session_resource_release_response>
+  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) override;
+
   // cu_cp_measurement_handler
   optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,
                                                            nr_cell_id_t           nci,
@@ -98,7 +106,7 @@ private:
   void handle_du_processor_creation(du_index_t                       du_index,
                                     f1ap_ue_context_removal_handler& f1ap_handler,
                                     f1ap_statistics_handler&         f1ap_statistic_handler,
-                                    rrc_ue_removal_handler&          rrc_handler,
+                                    rrc_ue_handler&                  rrc_handler,
                                     rrc_du_statistics_handler&       rrc_statistic_handler) override;
 
   void handle_rrc_ue_creation(ue_index_t                          ue_index,
@@ -125,6 +133,8 @@ private:
   mobility_manager mobility_mng;
 
   cell_meas_manager cell_meas_mng; // cell measurement manager
+
+  cu_cp_routine_manager routine_mng;
 
   // CU-CP to NGAP adapter
   cu_cp_ngap_adapter ngap_adapter;
@@ -174,8 +184,6 @@ private:
 
   // CU-UP connections being managed by the CU-CP.
   cu_up_processor_repository cu_up_db;
-
-  cu_cp_routine_manager routine_mng;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   cu_cp_controller controller;

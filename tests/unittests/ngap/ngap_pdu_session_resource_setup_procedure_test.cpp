@@ -40,10 +40,9 @@ protected:
     bool test_1 = pdu_session_resource_setup_request.pdu.init_msg()
                       .value.pdu_session_res_setup_request()
                       ->pdu_session_res_setup_list_su_req.size() ==
-                  du_processor_notifier->last_request.pdu_session_res_setup_items.size();
+                  cu_cp_notifier.last_request.pdu_session_res_setup_items.size();
 
-    bool test_2 =
-        du_processor_notifier->last_request.pdu_session_res_setup_items[pdu_session_id].pdu_session_type == "ipv4";
+    bool test_2 = cu_cp_notifier.last_request.pdu_session_res_setup_items[pdu_session_id].pdu_session_type == "ipv4";
 
     return test_1 && test_2;
   }

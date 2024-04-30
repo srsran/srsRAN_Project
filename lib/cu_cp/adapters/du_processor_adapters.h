@@ -76,7 +76,7 @@ public:
   void on_du_processor_created(du_index_t                       du_index,
                                f1ap_ue_context_removal_handler& f1ap_handler,
                                f1ap_statistics_handler&         f1ap_statistic_handler,
-                               rrc_ue_removal_handler&          rrc_handler,
+                               rrc_ue_handler&                  rrc_handler,
                                rrc_du_statistics_handler&       rrc_statistic_handler) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");

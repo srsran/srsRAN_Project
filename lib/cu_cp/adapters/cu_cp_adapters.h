@@ -115,21 +115,27 @@ private:
 };
 
 /// Adapter between CU-CP and RRC DU to request UE removal
-class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_removal_notifier, public cu_cp_rrc_du_statistics_notifier
+class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_notifier, public cu_cp_rrc_du_statistics_notifier
 {
 public:
   cu_cp_rrc_du_adapter() = default;
 
-  void connect_rrc_du(rrc_ue_removal_handler& ue_removal_handler_, rrc_du_statistics_handler& rrc_du_statistic_handler_)
+  void connect_rrc_du(rrc_ue_handler& rrc_ue_hndlr_, rrc_du_statistics_handler& rrc_du_statistic_handler_)
   {
-    ue_removal_handler       = &ue_removal_handler_;
+    rrc_ue_hndlr             = &rrc_ue_hndlr_;
     rrc_du_statistic_handler = &rrc_du_statistic_handler_;
+  }
+
+  rrc_ue_interface* find_rrc_ue(ue_index_t ue_index) override
+  {
+    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_hndlr->find_ue(ue_index);
   }
 
   void remove_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ue_removal_handler != nullptr, "RRC UE removal handler must not be nullptr");
-    ue_removal_handler->remove_ue(ue_index);
+    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
+    rrc_ue_hndlr->remove_ue(ue_index);
   }
 
   size_t get_nof_ues() const override
@@ -139,7 +145,7 @@ public:
   }
 
 private:
-  rrc_ue_removal_handler*    ue_removal_handler       = nullptr;
+  rrc_ue_handler*            rrc_ue_hndlr             = nullptr;
   rrc_du_statistics_handler* rrc_du_statistic_handler = nullptr;
 };
 

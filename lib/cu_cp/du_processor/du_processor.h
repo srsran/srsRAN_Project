@@ -261,18 +261,6 @@ public:
   /// \brief Allocate a new UE index.
   virtual ue_index_t allocate_new_ue_index() = 0;
 
-  /// \brief Handle the reception of a new PDU Session Resource Setup Request.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
-
-  /// \brief Handle the reception of a new PDU Session Resource Modify Request.
-  virtual async_task<cu_cp_pdu_session_resource_modify_response>
-  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) = 0;
-
-  /// \brief Handle the reception of a new PDU Session Resource Release Command.
-  virtual async_task<cu_cp_pdu_session_resource_release_response>
-  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) = 0;
-
   /// \brief Handle the reception of a new Handover Command.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
@@ -357,7 +345,7 @@ public:
   virtual void on_du_processor_created(du_index_t                       du_index,
                                        f1ap_ue_context_removal_handler& f1ap_handler,
                                        f1ap_statistics_handler&         f1ap_statistic_handler,
-                                       rrc_ue_removal_handler&          rrc_handler,
+                                       rrc_ue_handler&                  rrc_handler,
                                        rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
   /// \brief Notifies about a successful RRC UE creation.

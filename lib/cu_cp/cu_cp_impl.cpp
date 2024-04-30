@@ -39,6 +39,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
   mobility_mng(config_.mobility_config.mobility_manager_config, du_processor_ngap_notifier, du_db, ue_mng),
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
+  routine_mng(ue_mng, cfg.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -320,6 +321,61 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
   });
 }
 
+async_task<cu_cp_pdu_session_resource_setup_response>
+cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request)
+{
+  du_ue* ue = ue_mng.find_du_ue(request.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
+
+  rrc_ue_interface* rrc_ue =
+      rrc_du_adapters.at(get_du_index_from_ue_index(request.ue_index)).find_rrc_ue(request.ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
+
+  return routine_mng.start_pdu_session_resource_setup_routine(
+      request,
+      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::up),
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
+          .get_f1ap_interface()
+          .get_f1ap_ue_context_manager(),
+      ue->get_rrc_ue_notifier(),
+      ue->get_up_resource_manager());
+}
+
+async_task<cu_cp_pdu_session_resource_modify_response>
+cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request)
+{
+  du_ue* ue = ue_mng.find_du_ue(request.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
+
+  return routine_mng.start_pdu_session_resource_modification_routine(
+      request,
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
+          .get_f1ap_interface()
+          .get_f1ap_ue_context_manager(),
+      ue->get_rrc_ue_notifier(),
+      ue->get_up_resource_manager());
+}
+
+async_task<cu_cp_pdu_session_resource_release_response>
+cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command)
+{
+  du_ue* ue = ue_mng.find_du_ue(command.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", command.ue_index);
+
+  return routine_mng.start_pdu_session_resource_release_routine(
+      command,
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(get_du_index_from_ue_index(command.ue_index))
+          .get_f1ap_interface()
+          .get_f1ap_ue_context_manager(),
+      du_processor_ngap_notifier,
+      ue->get_rrc_ue_notifier(),
+      du_processor_task_sched,
+      ue->get_up_resource_manager());
+}
+
 optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(ue_index_t             ue_index,
                                                                      nr_cell_id_t           nci,
                                                                      optional<rrc_meas_cfg> current_meas_config)
@@ -357,7 +413,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,
                                               f1ap_ue_context_removal_handler& f1ap_handler,
                                               f1ap_statistics_handler&         f1ap_statistic_handler,
-                                              rrc_ue_removal_handler&          rrc_handler,
+                                              rrc_ue_handler&                  rrc_handler,
                                               rrc_du_statistics_handler&       rrc_statistic_handler)
 {
   f1ap_adapters[du_index] = {};

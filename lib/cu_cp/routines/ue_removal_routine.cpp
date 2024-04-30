@@ -14,7 +14,7 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 
 ue_removal_routine::ue_removal_routine(ue_index_t                      ue_index_,
-                                       cu_cp_rrc_ue_removal_notifier&  rrc_du_notifier_,
+                                       cu_cp_rrc_ue_notifier&          rrc_du_notifier_,
                                        cu_cp_e1ap_ue_removal_notifier* e1ap_notifier_,
                                        cu_cp_f1ap_ue_removal_notifier& f1ap_notifier_,
                                        cu_cp_ngap_control_notifier&    ngap_notifier_,

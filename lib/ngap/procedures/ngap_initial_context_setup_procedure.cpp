@@ -25,14 +25,14 @@ ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
     const ngap_ue_ids&                     ue_ids_,
     ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
     ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
-    ngap_du_processor_control_notifier&    du_processor_ctrl_notifier_,
+    ngap_cu_cp_notifier&                   cu_cp_notifier_,
     ngap_message_notifier&                 amf_notifier_,
     ngap_ue_logger&                        logger_) :
   request(request_),
   ue_ids(ue_ids_),
   rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
   rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   amf_notifier(amf_notifier_),
   logger(logger_)
 {
@@ -83,9 +83,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     }
 
     // Handle mandatory IEs
-    CORO_AWAIT_VALUE(pdu_session_response,
-                     du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(
-                         request.pdu_session_res_setup_list_cxt_req.value()));
+    CORO_AWAIT_VALUE(
+        pdu_session_response,
+        cu_cp_notifier.on_new_pdu_session_resource_setup_request(request.pdu_session_res_setup_list_cxt_req.value()));
 
     // Handle NAS PDUs
     for (auto& session : request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {

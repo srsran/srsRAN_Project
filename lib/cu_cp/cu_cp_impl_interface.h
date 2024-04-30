@@ -49,15 +49,33 @@ public:
 };
 
 /// Interface for the NGAP notifier to communicate with the CU-CP.
-class cu_cp_ngap_ue_creation_handler
+class cu_cp_ngap_handler
 {
 public:
-  virtual ~cu_cp_ngap_ue_creation_handler() = default;
+  virtual ~cu_cp_ngap_handler() = default;
 
   /// \brief Handle the creation of a new NGAP UE. This will add the NGAP adapters to the UE manager.
   /// \param[in] ue_index The index of the new NGAP UE.
   /// \returns True if the UE was successfully created, false otherwise.
   virtual bool handle_new_ngap_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Handle the reception of a new PDU Session Resource Setup Request.
+  /// \param[in] request The received PDU Session Resource Setup Request.
+  /// \returns The PDU Session Resource Setup Response.
+  virtual async_task<cu_cp_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
+
+  /// \brief Handle the reception of a new PDU Session Resource Modify Request.
+  /// \param[in] request The received PDU Session Resource Modify Request.
+  /// \returns The PDU Session Resource Modify Response.
+  virtual async_task<cu_cp_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request) = 0;
+
+  /// \brief Handle the reception of a new PDU Session Resource Release Command.
+  /// \param[in] command The received PDU Session Resource Release Command.
+  /// \returns The PDU Session Resource Release Response.
+  virtual async_task<cu_cp_pdu_session_resource_release_response>
+  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -123,11 +141,16 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-/// Methods used by CU-CP to request removal of the RRC UE context at the RRD DU
-class cu_cp_rrc_ue_removal_notifier
+/// Methods used by CU-CP to fetch or request removal of an RRC UE from the RRC DU
+class cu_cp_rrc_ue_notifier
 {
 public:
-  virtual ~cu_cp_rrc_ue_removal_notifier() = default;
+  virtual ~cu_cp_rrc_ue_notifier() = default;
+
+  /// \brief Remove the context of a UE at the RRC DU.
+  /// \param[in] ue_index The index of the UE to fetch.
+  /// \returns The RRC UE interface if the UE exists, nullptr otherwise.
+  virtual rrc_ue_interface* find_rrc_ue(ue_index_t ue_index) = 0;
 
   /// \brief Remove the context of a UE at the RRC DU.
   /// \param[in] ue_index The index of the UE to remove.
@@ -160,7 +183,7 @@ public:
   virtual void handle_du_processor_creation(du_index_t                       du_index,
                                             f1ap_ue_context_removal_handler& f1ap_handler,
                                             f1ap_statistics_handler&         f1ap_statistic_handler,
-                                            rrc_ue_removal_handler&          rrc_handler,
+                                            rrc_ue_handler&                  rrc_handler,
                                             rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
   /// \brief Handle a RRC UE creation notification from the DU processor.
@@ -305,7 +328,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_rrc_ue_interface,
                              public cu_cp_measurement_handler,
                              public cu_cp_measurement_config_handler,
-                             public cu_cp_ngap_ue_creation_handler,
+                             public cu_cp_ngap_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_ue_removal_handler
 {

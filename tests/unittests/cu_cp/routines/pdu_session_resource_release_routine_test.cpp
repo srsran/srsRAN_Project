@@ -8,7 +8,8 @@
  *
  */
 
-#include "du_processor_routine_manager_test_helpers.h"
+#include "cu_cp_routine_manager_test_helpers.h"
+#include "pdu_session_resource_routine_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -18,18 +19,23 @@ using namespace srs_cu_cp;
 
 /// Note: Check if UE ID is valid is done by caller. Injection of invalid ue_index results in assertion.
 
-class pdu_session_resource_release_test : public du_processor_routine_manager_test
+class pdu_session_resource_release_test : public pdu_session_resource_routine_test
 {
 protected:
   void start_procedure(const cu_cp_pdu_session_resource_release_command& msg,
                        ue_context_outcome_t                              ue_context_modification_outcome,
                        bearer_context_outcome_t                          bearer_context_modification_outcome)
   {
-    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
-    e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
+    f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_modification_outcome);
+    e1ap_bearer_ctxt_mng.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_pdu_session_resource_release_routine(
-        msg, ngap_control_notifier, rrc_ue_ctrl_notifier, *ue_task_sched, *rrc_ue_up_resource_manager);
+    t = routine_mng->start_pdu_session_resource_release_routine(msg,
+                                                                e1ap_bearer_ctxt_mng,
+                                                                f1ap_ue_ctxt_mng,
+                                                                ngap_control_notifier,
+                                                                rrc_ue_ctrl_notifier,
+                                                                *ue_task_sched,
+                                                                *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 
@@ -57,14 +63,18 @@ protected:
     bearer_context_outcome_t bearer_context_modification_outcome{true};
 
     // Expected results
-    e1ap_ctrl_notifier.set_first_message_outcome(bearer_context_setup_outcome);
-    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
-    e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
+    e1ap_bearer_ctxt_mng.set_first_message_outcome(bearer_context_setup_outcome);
+    f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_modification_outcome);
+    e1ap_bearer_ctxt_mng.set_second_message_outcome(bearer_context_modification_outcome);
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
 
     async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
-        routine_mng->start_pdu_session_resource_setup_routine(
-            request, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+        routine_mng->start_pdu_session_resource_setup_routine(request,
+                                                              security_cfg,
+                                                              e1ap_bearer_ctxt_mng,
+                                                              f1ap_ue_ctxt_mng,
+                                                              rrc_ue_ctrl_notifier,
+                                                              *rrc_ue_up_resource_manager);
     setup_launcher.emplace(setup_task);
   }
 

@@ -80,7 +80,7 @@ protected:
   ue_manager                                        ue_mng{{}, {}, timers, ctrl_worker};
   dummy_ngap_amf_notifier                           msg_notifier;
   std::unique_ptr<dummy_ngap_du_processor_notifier> du_processor_notifier;
-  dummy_ngap_cu_cp_ue_creation_notifier             ngap_ue_creation_notifier{ue_mng};
+  dummy_ngap_cu_cp_notifier                         cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier                  cu_cp_paging_notifier;
   dummy_ngap_ue_task_scheduler                      ngap_ue_task_scheduler;
   std::unique_ptr<ngap_interface>                   ngap;

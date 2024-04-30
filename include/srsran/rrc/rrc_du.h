@@ -55,9 +55,6 @@ public:
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg) = 0;
 
-  /// Get a RRC UE object.
-  virtual rrc_ue_interface* find_ue(ue_index_t ue_index) = 0;
-
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;
 };
@@ -76,10 +73,12 @@ public:
 };
 
 /// Handle RRC UE removal
-class rrc_ue_removal_handler
+class rrc_ue_handler
 {
 public:
-  virtual ~rrc_ue_removal_handler() = default;
+  virtual ~rrc_ue_handler() = default;
+
+  virtual rrc_ue_interface* find_ue(ue_index_t ue_index) = 0;
 
   /// Remove a RRC UE object.
   /// \param[in] ue_index The index of the UE object to remove.
@@ -100,7 +99,7 @@ public:
 /// Combined entry point for the RRC DU handling.
 class rrc_du_interface : public rrc_du_cell_manager,
                          public rrc_du_ue_repository,
-                         public rrc_ue_removal_handler,
+                         public rrc_ue_handler,
                          public rrc_du_statistics_handler
 {
 public:
@@ -108,7 +107,7 @@ public:
 
   virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
   virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
-  virtual rrc_ue_removal_handler&    get_rrc_ue_removal_handler()    = 0;
+  virtual rrc_ue_handler&            get_rrc_ue_handler()            = 0;
   virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;
 };
 

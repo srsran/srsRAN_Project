@@ -71,7 +71,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   cu_cp_notifier.on_du_processor_created(context.du_index,
                                          f1ap->get_f1ap_ue_context_removal_handler(),
                                          f1ap->get_f1ap_statistics_handler(),
-                                         rrc->get_rrc_ue_removal_handler(),
+                                         rrc->get_rrc_ue_handler(),
                                          rrc->get_rrc_du_statistics_handler());
 }
 
@@ -339,43 +339,6 @@ async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modificat
 
   return routine_mng->start_reestablishment_context_modification_routine(
       ue_index, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
-}
-
-async_task<cu_cp_pdu_session_resource_setup_response>
-du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
-{
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
-  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", msg.ue_index);
-
-  return routine_mng->start_pdu_session_resource_setup_routine(
-      msg,
-      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::up),
-      ue->get_rrc_ue_notifier(),
-      ue->get_up_resource_manager());
-}
-
-async_task<cu_cp_pdu_session_resource_modify_response>
-du_processor_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg)
-{
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
-  return routine_mng->start_pdu_session_resource_modification_routine(
-      msg, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
-}
-
-async_task<cu_cp_pdu_session_resource_release_response>
-du_processor_impl::handle_new_pdu_session_resource_release_command(
-    const cu_cp_pdu_session_resource_release_command& msg)
-{
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
-  return routine_mng->start_pdu_session_resource_release_routine(
-      msg, ngap_ctrl_notifier, ue->get_rrc_ue_notifier(), task_sched, ue->get_up_resource_manager());
 }
 
 async_task<bool> du_processor_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)

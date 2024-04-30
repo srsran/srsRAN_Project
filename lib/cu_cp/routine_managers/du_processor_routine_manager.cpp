@@ -11,9 +11,6 @@
 #include "du_processor_routine_manager.h"
 #include "../routines/mobility/inter_cu_handover_target_routine.h"
 #include "../routines/mobility/inter_du_handover_routine.h"
-#include "../routines/pdu_session_resource_modification_routine.h"
-#include "../routines/pdu_session_resource_release_routine.h"
-#include "../routines/pdu_session_resource_setup_routine.h"
 #include "../routines/reestablishment_context_modification_routine.h"
 #include "../routines/ue_context_release_routine.h"
 #include "srsran/support/async/coroutine.h"
@@ -33,52 +30,6 @@ du_processor_routine_manager::du_processor_routine_manager(
   default_security_indication(default_security_indication_),
   logger(logger_)
 {
-}
-
-async_task<cu_cp_pdu_session_resource_setup_response>
-du_processor_routine_manager::start_pdu_session_resource_setup_routine(
-    const cu_cp_pdu_session_resource_setup_request& setup_msg,
-    const srsran::security::sec_as_config&          security_cfg,
-    du_processor_rrc_ue_control_message_notifier&   rrc_ue_ctrl_notifier,
-    up_resource_manager&                            rrc_ue_up_resource_manager)
-{
-  return launch_async<pdu_session_resource_setup_routine>(setup_msg,
-                                                          ue_manager.get_ue_config(),
-                                                          security_cfg,
-                                                          default_security_indication,
-                                                          e1ap_ctrl_notifier,
-                                                          f1ap_ue_ctxt_notifier,
-                                                          rrc_ue_ctrl_notifier,
-                                                          rrc_ue_up_resource_manager,
-                                                          logger);
-}
-
-async_task<cu_cp_pdu_session_resource_modify_response>
-du_processor_routine_manager::start_pdu_session_resource_modification_routine(
-    const cu_cp_pdu_session_resource_modify_request& modify_msg,
-    du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
-    up_resource_manager&                             rrc_ue_up_resource_manager)
-{
-  return launch_async<pdu_session_resource_modification_routine>(
-      modify_msg, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_ctrl_notifier, rrc_ue_up_resource_manager, logger);
-}
-
-async_task<cu_cp_pdu_session_resource_release_response>
-du_processor_routine_manager::start_pdu_session_resource_release_routine(
-    const cu_cp_pdu_session_resource_release_command& release_cmd,
-    du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
-    du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
-    du_processor_ue_task_scheduler&                   task_sched,
-    up_resource_manager&                              rrc_ue_up_resource_manager)
-{
-  return launch_async<pdu_session_resource_release_routine>(release_cmd,
-                                                            e1ap_ctrl_notifier,
-                                                            f1ap_ue_ctxt_notifier,
-                                                            ngap_ctrl_notifier,
-                                                            rrc_ue_ctrl_notifier,
-                                                            task_sched,
-                                                            rrc_ue_up_resource_manager,
-                                                            logger);
 }
 
 async_task<cu_cp_ue_context_release_complete>

@@ -78,12 +78,6 @@ public:
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) override;
-  async_task<cu_cp_pdu_session_resource_release_response>
-  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
 
   // du_processor_mobility_manager_interface

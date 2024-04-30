@@ -20,14 +20,10 @@ using namespace asn1::ngap;
 ngap_pdu_session_resource_release_procedure::ngap_pdu_session_resource_release_procedure(
     const cu_cp_pdu_session_resource_release_command& command_,
     const ngap_ue_ids&                                ue_ids_,
-    ngap_du_processor_control_notifier&               du_processor_ctrl_notif_,
+    ngap_cu_cp_notifier&                              cu_cp_notifier_,
     ngap_message_notifier&                            amf_notif_,
     ngap_ue_logger&                                   logger_) :
-  command(command_),
-  ue_ids(ue_ids_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notif_),
-  amf_notifier(amf_notif_),
-  logger(logger_)
+  command(command_), ue_ids(ue_ids_), cu_cp_notifier(cu_cp_notifier_), amf_notifier(amf_notif_), logger(logger_)
 {
 }
 
@@ -38,7 +34,7 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
   logger.log_debug("\"{}\" initialized", name());
 
   // Handle mandatory IEs
-  CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_release_command(command));
+  CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_release_command(command));
 
   // TODO: Handle optional IEs
 

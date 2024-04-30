@@ -57,8 +57,8 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const ue_configuration&                         ue_cfg_,
     const srsran::security::sec_as_config&          security_cfg_,
     const security_indication_t&                    default_security_indication_,
-    du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
-    du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
+    e1ap_bearer_context_manager&                    e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&                        f1ap_ue_ctxt_mng_,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
     up_resource_manager&                            rrc_ue_up_resource_manager_,
     srslog::basic_logger&                           logger_) :
@@ -66,8 +66,8 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   ue_cfg(ue_cfg_),
   security_cfg(security_cfg_),
   default_security_indication(default_security_indication_),
-  e1ap_ctrl_notifier(e1ap_ctrl_notif_),
-  f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
+  e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
+  f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   rrc_ue_notifier(rrc_ue_notifier_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
@@ -113,7 +113,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     // call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
-                     e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_context_setup_request));
+                     e1ap_bearer_ctxt_mng.handle_bearer_context_setup_request(bearer_context_setup_request));
 
     // Handle BearerContextSetupResponse
     if (!handle_procedure_response(response_msg,
@@ -133,8 +133,9 @@ void pdu_session_resource_setup_routine::operator()(
     fill_initial_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
     // call E1AP procedure and wait for BearerContextModificationResponse
-    CORO_AWAIT_VALUE(bearer_context_modification_response,
-                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+    CORO_AWAIT_VALUE(
+        bearer_context_modification_response,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle BearerContextModificationResponse
     if (!handle_procedure_response(response_msg,
@@ -152,12 +153,12 @@ void pdu_session_resource_setup_routine::operator()(
 
   // Register required SRB and DRB resources at DU
   {
-    // prepare UE Context Modification Request and call F1 notifier
+    // prepare UE Context Modification Request and call F1
     ue_context_mod_request.ue_index = setup_msg.ue_index;
 
     // DRB setup have already added above.
     CORO_AWAIT_VALUE(ue_context_modification_response,
-                     f1ap_ue_ctxt_notifier.on_ue_context_modification_request(ue_context_mod_request));
+                     f1ap_ue_ctxt_mng.handle_ue_context_modification_request(ue_context_mod_request));
 
     // Handle UE Context Modification Response
     if (!handle_procedure_response(response_msg,
@@ -177,8 +178,9 @@ void pdu_session_resource_setup_routine::operator()(
     bearer_context_modification_request.ue_index = setup_msg.ue_index;
 
     // call E1AP procedure and wait for BearerContextModificationResponse
-    CORO_AWAIT_VALUE(bearer_context_modification_response,
-                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+    CORO_AWAIT_VALUE(
+        bearer_context_modification_response,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle BearerContextModificationResponse
     if (!handle_procedure_response(response_msg,

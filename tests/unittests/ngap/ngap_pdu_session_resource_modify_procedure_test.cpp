@@ -47,11 +47,10 @@ protected:
     bool test_1 = pdu_session_resource_modify_request.pdu.init_msg()
                       .value.pdu_session_res_modify_request()
                       ->pdu_session_res_modify_list_mod_req.size() ==
-                  du_processor_notifier->last_modify_request.pdu_session_res_modify_items.size();
+                  cu_cp_notifier.last_modify_request.pdu_session_res_modify_items.size();
 
-    bool test_2 =
-        du_processor_notifier->last_modify_request.pdu_session_res_modify_items[pdu_session_id].pdu_session_id ==
-        pdu_session_id;
+    bool test_2 = cu_cp_notifier.last_modify_request.pdu_session_res_modify_items[pdu_session_id].pdu_session_id ==
+                  pdu_session_id;
 
     return test_1 && test_2;
   }

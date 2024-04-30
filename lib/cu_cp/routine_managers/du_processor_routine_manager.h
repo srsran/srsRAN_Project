@@ -28,24 +28,6 @@ public:
                                         srslog::basic_logger&                  logger_);
   ~du_processor_routine_manager() = default;
 
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  start_pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                           const srsran::security::sec_as_config&          security_cfg,
-                                           du_processor_rrc_ue_control_message_notifier&   rrc_ue_ctrl_notifier,
-                                           up_resource_manager&                            rrc_ue_up_resource_manager);
-
-  async_task<cu_cp_pdu_session_resource_release_response>
-  start_pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd,
-                                             du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
-                                             du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
-                                             du_processor_ue_task_scheduler&                   task_sched,
-                                             up_resource_manager& rrc_ue_up_resource_manager);
-
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  start_pdu_session_resource_modification_routine(const cu_cp_pdu_session_resource_modify_request& modify_msg,
-                                                  du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
-                                                  up_resource_manager& rrc_ue_up_resource_manager);
-
   async_task<cu_cp_ue_context_release_complete>
   start_ue_context_release_routine(const cu_cp_ue_context_release_command& command,
                                    du_processor_cu_cp_notifier&            cu_cp_notifier);

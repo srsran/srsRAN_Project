@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../ngap_asn1_utils.h"
 #include "../ngap_validators/ngap_validators.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
@@ -26,9 +25,9 @@ public:
                                             const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
                                             const ngap_ue_ids&                                 ue_ids_,
                                             ngap_rrc_ue_pdu_notifier&                          rrc_ue_pdu_notifier_,
-                                            ngap_du_processor_control_notifier& du_processor_ctrl_notifier_,
-                                            ngap_message_notifier&              amf_notif_,
-                                            ngap_ue_logger&                     logger_);
+                                            ngap_cu_cp_notifier&                               cu_cp_notifier_,
+                                            ngap_message_notifier&                             amf_notif_,
+                                            ngap_ue_logger&                                    logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -47,7 +46,7 @@ private:
   const ngap_ue_ids                                 ue_ids;
   ngap_rrc_ue_pdu_notifier&                         rrc_ue_pdu_notifier;
   cu_cp_pdu_session_resource_setup_response         response;
-  ngap_du_processor_control_notifier&               du_processor_ctrl_notifier;
+  ngap_cu_cp_notifier&                              cu_cp_notifier;
   ngap_message_notifier&                            amf_notifier;
   ngap_ue_logger&                                   logger;
 

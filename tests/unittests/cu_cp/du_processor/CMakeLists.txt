@@ -23,9 +23,6 @@ target_link_libraries(du_processor_test_helpers
 
 set(SOURCES
         du_processor_test.cpp
-        pdu_session_resource_setup_routine_test.cpp
-        pdu_session_resource_release_routine_test.cpp
-        pdu_session_resource_modification_routine_test.cpp
         ue_context_release_routine_test.cpp
         )
 
