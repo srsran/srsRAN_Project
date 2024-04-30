@@ -73,8 +73,6 @@ private:
   ngap_interface*                       ngap = nullptr;
   null_dlt_pcap                         pcap;
 
-  io_broker::subscriber fd_handle;
-
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 

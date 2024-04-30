@@ -29,40 +29,36 @@ public:
 
   void connect_gateway(std::unique_ptr<sctp_network_gateway> gateway_)
   {
-    gateway              = std::move(gateway_);
-    gateway_ctrl_handler = gateway.get();
-    gateway_data_handler = gateway.get();
+    gateway = std::move(gateway_);
 
-    packer = create_e2ap_asn1_packer(*gateway_data_handler, *this, pcap);
+    packer = create_e2ap_asn1_packer(*gateway, *this, pcap);
 
-    if (!gateway_ctrl_handler->create_and_connect()) {
+    if (!gateway->create_and_connect()) {
       report_error("Failed to create SCTP gateway.\n");
     }
-    if (!gateway_ctrl_handler->subscribe_to(broker)) {
+    if (!gateway->subscribe_to(broker)) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
-                         gateway_ctrl_handler->get_socket_fd());
+                         gateway->get_socket_fd());
     }
   }
 
   void bind_and_listen(std::unique_ptr<sctp_network_gateway> gateway_)
   {
-    gateway              = std::move(gateway_);
-    gateway_ctrl_handler = gateway.get();
-    gateway_data_handler = gateway.get();
+    gateway = std::move(gateway_);
 
-    packer = create_e2ap_asn1_packer(*gateway_data_handler, *this, pcap);
+    packer = create_e2ap_asn1_packer(*gateway, *this, pcap);
 
-    if (!gateway_ctrl_handler->create_and_bind()) {
+    if (!gateway->create_and_bind()) {
       report_error("Failed to create SCTP gateway.\n");
     }
 
-    if (!gateway_ctrl_handler->listen()) {
+    if (!gateway->listen()) {
       report_error("Failed to listen SCTP gateway.\n");
     }
 
-    if (!gateway_ctrl_handler->subscribe_to(broker)) {
+    if (!gateway->subscribe_to(broker)) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
-                         gateway_ctrl_handler->get_socket_fd());
+                         gateway->get_socket_fd());
     }
   }
 
@@ -72,10 +68,10 @@ public:
   /// this function can be used to get the actual port number.
   optional<uint16_t> get_listen_port()
   {
-    if (gateway_ctrl_handler == nullptr) {
+    if (gateway == nullptr) {
       return {};
     }
-    return gateway_ctrl_handler->get_listen_port();
+    return gateway->get_listen_port();
   }
 
   void connect_e2ap(e2_message_handler* e2ap_msg_handler_, e2_event_handler* event_handler_)
@@ -86,15 +82,7 @@ public:
 
   void disconnect_gateway()
   {
-    srsran_assert(gateway_ctrl_handler, "Gateway handler not set.");
-    if (!fd_listener.reset()) {
-      logger.error("Failed to unregister E2 (SCTP) network gateway at IO broker. socket_fd={}",
-                   gateway_ctrl_handler->get_socket_fd());
-    }
-
-    gateway_ctrl_handler = nullptr;
-    gateway_data_handler = nullptr;
-
+    gateway.reset();
     packer.reset();
   }
 
@@ -136,12 +124,8 @@ private:
   dlt_pcap&                             pcap;
   std::unique_ptr<e2ap_packer>          packer;
   std::unique_ptr<sctp_network_gateway> gateway;
-  sctp_network_gateway_controller*      gateway_ctrl_handler;
-  sctp_network_gateway_data_handler*    gateway_data_handler;
   e2_message_handler*                   e2ap_msg_handler;
   e2_event_handler*                     event_handler;
-
-  io_broker::subscriber fd_listener;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };

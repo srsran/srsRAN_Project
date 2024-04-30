@@ -83,8 +83,6 @@ private:
   e2_interface*                         e2ap = nullptr;
   dummy_e2ap_pcap                       pcap;
 
-  io_broker::subscriber fd_handle;
-
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 

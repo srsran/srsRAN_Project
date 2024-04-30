@@ -130,9 +130,8 @@ public:
 
   void disconnect() override
   {
-    fd_listener.reset();
-    packer.reset();
     sctp_gateway.reset();
+    packer.reset();
   }
 
   void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
@@ -193,8 +192,6 @@ private:
   std::unique_ptr<sctp_network_gateway> sctp_gateway;
 
   std::unique_ptr<ngap_asn1_packer> packer;
-
-  io_broker::subscriber fd_listener;
 };
 
 } // namespace

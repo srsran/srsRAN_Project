@@ -75,7 +75,6 @@ private:
   srslog::basic_logger&                        logger = srslog::fetch_basic_logger("CU-UP");
 
   std::unique_ptr<udp_network_gateway> udp_gw;
-  io_broker::subscriber                registered_fd;
 };
 
 /// Implementation of the NG-U gateway for the case a UDP connection is used to a remote UPF.

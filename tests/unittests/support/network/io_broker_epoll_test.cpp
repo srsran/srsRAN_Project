@@ -29,6 +29,7 @@ protected:
     srslog::init();
     epoll_broker = create_io_broker(io_broker_type::epoll);
   }
+  ~io_broker_epoll() { srslog::flush(); }
 
   void data_receive_callback()
   {
@@ -276,8 +277,13 @@ TEST_F(io_broker_epoll, error_callback_called_when_epollhup)
   ASSERT_EQ(this->error_count, 0);
   close(pipefd[1]);
 
-  // Check if the error handler was called.
-  // Note: We use the subscriber shutdown to sync the threads, before checking if the error handler was called.
-  sub.reset();
+  // Check if the error handler was called. The error can take some time to trigger the epoll.
+  const unsigned max_retries = 1000;
+  for (unsigned i = 0; i != max_retries; ++i) {
+    if (this->error_count == 1) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::microseconds{10});
+  }
   ASSERT_EQ(this->error_count, 1);
 }
