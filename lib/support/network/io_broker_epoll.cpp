@@ -87,7 +87,7 @@ void io_broker_epoll::thread_loop()
     for (int i = 0; i < nof_events; ++i) {
       int      fd           = events[i].data.fd;
       uint32_t epoll_events = events[i].events;
-      if ((epoll_events & EPOLLERR) || (epoll_events & EPOLLHUP) || (!(epoll_events & EPOLLIN))) {
+      if ((epoll_events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) || (!(epoll_events & EPOLLIN))) {
         // An error or hang up happened on this file descriptor, or the socket is not ready for reading
         if (epoll_events & EPOLLHUP) {
           // Note: some container environments hang up stdin (fd=0) in case of non-interactive sessions
@@ -110,7 +110,7 @@ void io_broker_epoll::thread_loop()
       if (it != event_handler.end()) {
         it->second.read_callback();
       } else {
-        logger.error("Could not find event handler. fd={}", fd);
+        logger.error("Could not find event handler fd={}", fd);
       }
     }
   }
