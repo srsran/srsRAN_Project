@@ -27,6 +27,11 @@ sctp_network_gateway_impl::sctp_network_gateway_impl(sctp_network_gateway_config
 {
 }
 
+sctp_network_gateway_impl::~sctp_network_gateway_impl()
+{
+  close_socket();
+}
+
 bool sctp_network_gateway_impl::set_sockopts()
 {
   srsran_assert(sock_fd.is_open(), "Invalid sock_fd");
@@ -432,7 +437,9 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
 /// Close socket handle and set FD to -1
 bool sctp_network_gateway_impl::close_socket()
 {
+  // Stop listening to new IO Rx events.
   io_sub.reset();
+
   if (not sock_fd.close()) {
     logger.error("Error closing SCTP socket: {}", strerror(errno));
     return false;

@@ -97,7 +97,10 @@ private:
   // SCTP network gateway calls interface to inject received PDUs (ASN1 packed)
   void on_new_pdu(byte_buffer pdu) override
   {
-    srsran_assert(packer, "E2AP ASN1 packer disconnected");
+    // Note: on_new_pdu could be dispatched right before disconnect() is called.
+    if (packer == nullptr) {
+      logger.warning("Dropping E2AP PDU. Cause: Received PDU while packer is not ready or disconnected");
+    }
     packer->handle_packed_pdu(pdu);
   }
 

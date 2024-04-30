@@ -25,7 +25,7 @@ public:
   explicit sctp_network_gateway_impl(sctp_network_gateway_config            config_,
                                      sctp_network_gateway_control_notifier& ctrl_notfier_,
                                      network_gateway_data_notifier&         data_notifier_);
-  virtual ~sctp_network_gateway_impl() { close_socket(); }
+  ~sctp_network_gateway_impl() override;
 
   /// \brief Create and connect socket to given address.
   bool create_and_connect() override;

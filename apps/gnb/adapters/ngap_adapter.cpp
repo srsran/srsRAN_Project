@@ -130,8 +130,11 @@ public:
 
   void disconnect() override
   {
-    sctp_gateway.reset();
+    // Delete the packer.
     packer.reset();
+
+    // Stop new IO events.
+    sctp_gateway.reset();
   }
 
   void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
@@ -164,7 +167,11 @@ public:
   // Called by io-broker for each Rx PDU.
   void on_new_pdu(byte_buffer pdu) override
   {
-    srsran_assert(packer != nullptr, "Adapter is disconnected");
+    // Note: on_new_pdu could be dispatched right before disconnect() is called.
+    if (packer == nullptr) {
+      logger.warning("Dropping NGAP PDU. Cause: Received PDU while packer is not ready or disconnected");
+      return;
+    }
     packer->handle_packed_pdu(pdu);
   }
 
