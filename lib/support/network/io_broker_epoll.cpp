@@ -91,26 +91,23 @@ void io_broker_epoll::thread_loop()
         // An error or hang up happened on this file descriptor, or the socket is not ready for reading
         if (epoll_events & EPOLLHUP) {
           // Note: some container environments hang up stdin (fd=0) in case of non-interactive sessions
-          logger.warning("Hang up on file descriptor. fd={} events={:#x}", fd, epoll_events);
+          logger.warning("fd={}: Hang up on file descriptor. Events: {:#x}", fd, epoll_events);
         } else if (epoll_events & EPOLLERR) {
-          logger.error("Error on file descriptor. fd={} events={:#x}", fd, epoll_events);
+          logger.error("fd={}: Error on file descriptor. Events={:#x}", fd, epoll_events);
         } else {
-          logger.error("Unhandled epoll event. fd={} events={:#x}", fd, epoll_events);
+          logger.error("fd={}: Unhandled epoll event. Events={:#x}", fd, epoll_events);
         }
 
-        // Unregister the faulty file descriptor from epoll
-        bool success = handle_fd_deregistration(fd, nullptr, cause_t::epoll_error);
-        if (!success) {
-          logger.error("Failed to unregister file descriptor. fd={}", fd);
-        }
+        // Deregister the faulty file descriptor from epoll
+        handle_fd_deregistration(fd, nullptr, cause_t::epoll_error);
         break;
       }
 
       const auto& it = event_handler.find(fd);
-      if (it != event_handler.end()) {
+      if (it != event_handler.end() and it->second.registered()) {
         it->second.read_callback();
       } else {
-        logger.error("Could not find event handler fd={}", fd);
+        logger.error("fd={}: Ignoring event. Cause: File descriptor handler not found", fd);
       }
     }
   }
@@ -125,7 +122,7 @@ bool io_broker_epoll::enqueue_event(const control_event& event)
   uint64_t tmp = 1;
   ssize_t  ret = ::write(ctrl_event_fd.value(), &tmp, sizeof(tmp));
   if (ret == -1) {
-    logger.error("Error writing to CTRL event_fd");
+    logger.error("Error notifying io CTRL event_fd");
   }
   return ret >= 0;
 }
@@ -161,7 +158,7 @@ bool io_broker_epoll::handle_fd_registration(int                     fd,
                                              std::promise<bool>*     complete_notifier)
 {
   if (event_handler.count(fd) > 0) {
-    logger.error("epoll_ctl failed for fd={}. Cause: fd already registered", fd);
+    logger.error("fd={}: Failed to register file descriptor. Cause: File descriptor already registered", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -173,7 +170,7 @@ bool io_broker_epoll::handle_fd_registration(int                     fd,
   epoll_ev.data.fd            = fd;
   epoll_ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_ADD, fd, &epoll_ev) == -1) {
-    logger.error("epoll_ctl failed for fd={}", fd);
+    logger.error("fd={}: Failed to register file descriptor. Cause: epoll_ctl failed", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -195,7 +192,7 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
   if (ev_it == event_handler.end()) {
     // File descriptor not found.
     // Note: It could have been automatically deregistered by the io broker.
-    logger.error("File descriptor fd={} not found", fd);
+    logger.error("fd={}: Failed to deregister file descriptor. Cause: File descriptor not found", fd);
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -209,7 +206,7 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
     epoll_ev.data.fd            = fd;
     epoll_ev.events             = EPOLLIN;
     if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
-      logger.error("epoll_ctl failed for fd={}", fd);
+      logger.error("fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed", fd);
       event_handler.erase(ev_it);
       if (complete_notifier != nullptr) {
         complete_notifier->set_value(false);
@@ -249,11 +246,11 @@ bool io_broker_epoll::handle_fd_deregistration(int fd, std::promise<bool>* compl
 io_broker::subscriber io_broker_epoll::register_fd(int fd, recv_callback_t handler, error_callback_t err_handler)
 {
   if (fd < 0) {
-    logger.error("io_broker_epoll::register_fd: Received an invalid fd={}", fd);
+    logger.error("File descriptor registration failed. Cause: Invalid file descriptor value fd={}", fd);
     return subscriber{};
   }
   if (not running.load(std::memory_order_relaxed)) {
-    logger.warning("io_broker_epoll::register_fd: io_broker is not running. fd={}", fd);
+    logger.warning("fd={}: Registration failed. Cause: io_broker is not running", fd);
     return subscriber{};
   }
 
@@ -281,11 +278,11 @@ io_broker::subscriber io_broker_epoll::register_fd(int fd, recv_callback_t handl
 bool io_broker_epoll::unregister_fd(int fd)
 {
   if (fd < 0) {
-    logger.error("io_broker_epoll::unregister_fd: Received an invalid fd={}", fd);
+    logger.error("File descriptor deregistration failed. Cause: Invalid file descriptor value fd={}", fd);
     return false;
   }
   if (not running.load(std::memory_order_relaxed)) {
-    logger.warning("io_broker_epoll::unregister_fd: io_broker is not running. fd={}", fd);
+    logger.warning("fd={}: Deregistration failed. Cause: io_broker is not running", fd);
     return false;
   }
 
