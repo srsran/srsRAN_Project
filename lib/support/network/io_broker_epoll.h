@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cameron314/concurrentqueue.h"
+#include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/unique_fd.h"
 #include <future>
@@ -43,7 +44,7 @@ private:
     error_callback_t error_callback;
 
     // Determines whether the io_broker has deregistered the event handler from the epoll.
-    bool registered() const { return static_cast<bool>(read_callback); }
+    bool registed_in_epoll() const { return static_cast<bool>(read_callback); }
   };
 
   // Note: Blocking function.
@@ -64,8 +65,10 @@ private:
                               std::promise<bool>*     complete_notifier);
 
   // Handle the deregistration of an existing file descriptor.
-  enum class cause_t { epoll_error, frontend_request, epoll_stop };
-  bool handle_fd_deregistration(int fd, std::promise<bool>* complete_notifier, cause_t cause);
+  bool handle_fd_epoll_removal(int                  fd,
+                               bool                 io_broker_deregistration_required,
+                               optional<error_code> epoll_error,
+                               std::promise<bool>*  complete_notifier);
 
   void stop_impl();
 

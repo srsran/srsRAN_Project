@@ -47,11 +47,9 @@ public:
     if (not conn->udp_gw->create_and_bind()) {
       conn->logger.error("Failed to create and connect NG-U gateway");
     }
-    handled_fd = io_brk.register_fd(
-        conn->udp_gw->get_socket_fd(),
-        [udp_gw_ptr = conn->udp_gw.get()]() { udp_gw_ptr->receive(); },
-        []() { /* TODO */ });
-    if (not handled_fd.connected()) {
+    handled_fd = io_brk.register_fd(conn->udp_gw->get_socket_fd(),
+                                    [udp_gw_ptr = conn->udp_gw.get()]() { udp_gw_ptr->receive(); });
+    if (not handled_fd.registered()) {
       conn->logger.error("Failed to register NG-U (GTP-U) network gateway at IO broker. socket_fd={}",
                          conn->udp_gw->get_socket_fd());
       return nullptr;

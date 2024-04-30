@@ -45,7 +45,7 @@ protected:
     rx_cvar.notify_one();
   }
 
-  void error_callback() { error_count++; }
+  void error_callback(io_broker::error_code code) { error_count++; }
 
   void create_unix_sockets()
   {
@@ -158,8 +158,8 @@ protected:
   void add_socket_to_epoll()
   {
     fd_handle = epoll_broker->register_fd(
-        socket_fd, [this]() { data_receive_callback(); }, [this]() { error_callback(); });
-    ASSERT_TRUE(fd_handle.connected());
+        socket_fd, [this]() { data_receive_callback(); }, [this](io_broker::error_code code) { error_callback(code); });
+    ASSERT_TRUE(fd_handle.registered());
   }
 
   void rem_socket_from_epoll()
@@ -248,15 +248,12 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
   std::future<bool>     fut = p.get_future();
   io_broker::subscriber handle;
 
-  handle = this->epoll_broker->register_fd(
-      socket_fd,
-      [&]() {
-        auto* p_copy = &p;
-        bool  ret    = handle.reset();
-        p_copy->set_value(ret);
-      },
-      []() {});
-  ASSERT_TRUE(handle.connected());
+  handle = this->epoll_broker->register_fd(socket_fd, [&]() {
+    auto* p_copy = &p;
+    bool  ret    = handle.reset();
+    p_copy->set_value(ret);
+  });
+  ASSERT_TRUE(handle.registered());
 
   send_on_socket();
 
@@ -272,8 +269,8 @@ TEST_F(io_broker_epoll, error_callback_called_when_epollhup)
 
   // Subscribe pipe fd.
   auto sub = this->epoll_broker->register_fd(
-      pipefd[0], []() {}, [this]() { this->error_count++; });
-  ASSERT_TRUE(sub.connected());
+      pipefd[0], []() {}, [this](io_broker::error_code code) { this->error_count++; });
+  ASSERT_TRUE(sub.registered());
 
   // Close pipe, while subscribed. This will cause an EPOLLHUP event.
   ASSERT_EQ(this->error_count, 0);

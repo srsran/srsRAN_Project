@@ -48,20 +48,22 @@ public:
     ~subscriber() { reset(); }
 
     /// Checks whether the FD is connected to the broker.
-    bool connected() const { return fd >= 0; }
+    bool registered() const { return fd >= 0; }
 
     /// Resets the handle, deregistering the FD from the broker.
-    bool reset() { return not connected() or broker->unregister_fd(std::exchange(fd, -1)); }
+    bool reset() { return not registered() or broker->unregister_fd(std::exchange(fd, -1)); }
 
   private:
     io_broker* broker = nullptr;
     int        fd     = -1;
   };
 
-  /// Callback called when socket fd (passed as argument) has data
+  /// Callback called when registered fd has data
   using recv_callback_t = std::function<void()>;
-  /// Callback called when the fd (passed as argument) detected an error and got automatically disconnected.
-  using error_callback_t = std::function<void()>;
+
+  /// Callback called when the fd detected an error. After an error is detected, the broker stops listening to the fd.
+  enum class error_code { hang_up, other };
+  using error_callback_t = std::function<void(error_code)>;
 
   virtual ~io_broker() = default;
 
@@ -71,7 +73,10 @@ public:
   /// \param[in] err_handler Callback that handles error events.
   /// \return An RAII handle to the registered file descriptor. On destruction, the fd is automatically deregistered
   /// from the io_broker.
-  SRSRAN_NODISCARD virtual subscriber register_fd(int fd, recv_callback_t handler, error_callback_t err_handler) = 0;
+  SRSRAN_NODISCARD virtual subscriber register_fd(
+      int              fd,
+      recv_callback_t  handler,
+      error_callback_t err_handler = [](error_code) {}) = 0;
 
 private:
   /// \brief Unregister a file descriptor from the IO interface.
