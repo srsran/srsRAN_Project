@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_tunnel_rx.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_tx.h"
 
 namespace srsran {
 
@@ -28,8 +28,8 @@ public:
   gtpu_tunnel_ngu(const gtpu_tunnel_ngu&&)            = delete;
   gtpu_tunnel_ngu& operator=(const gtpu_tunnel_ngu&&) = delete;
 
-  virtual gtpu_tunnel_rx_upper_layer_interface* get_rx_upper_layer_interface() = 0;
-  virtual gtpu_tunnel_tx_lower_layer_interface* get_tx_lower_layer_interface() = 0;
+  virtual gtpu_tunnel_common_rx_upper_layer_interface* get_rx_upper_layer_interface() = 0;
+  virtual gtpu_tunnel_ngu_tx_lower_layer_interface*    get_tx_lower_layer_interface() = 0;
 };
 
 } // namespace srsran

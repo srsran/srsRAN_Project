@@ -13,17 +13,17 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-ue_manager::ue_manager(network_interface_config&            net_config_,
-                       n3_interface_config&                 n3_config_,
-                       e1ap_control_message_handler&        e1ap_,
-                       timer_manager&                       timers_,
-                       f1u_cu_up_gateway&                   f1u_gw_,
-                       gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                       gtpu_demux_ctrl&                     gtpu_rx_demux_,
-                       gtpu_teid_pool&                      f1u_teid_allocator_,
-                       cu_up_executor_pool&                 exec_pool_,
-                       dlt_pcap&                            gtpu_pcap_,
-                       srslog::basic_logger&                logger_) :
+ue_manager::ue_manager(network_interface_config&                   net_config_,
+                       n3_interface_config&                        n3_config_,
+                       e1ap_control_message_handler&               e1ap_,
+                       timer_manager&                              timers_,
+                       f1u_cu_up_gateway&                          f1u_gw_,
+                       gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
+                       gtpu_demux_ctrl&                            gtpu_rx_demux_,
+                       gtpu_teid_pool&                             f1u_teid_allocator_,
+                       cu_up_executor_pool&                        exec_pool_,
+                       dlt_pcap&                                   gtpu_pcap_,
+                       srslog::basic_logger&                       logger_) :
   net_config(net_config_),
   n3_config(n3_config_),
   e1ap(e1ap_),

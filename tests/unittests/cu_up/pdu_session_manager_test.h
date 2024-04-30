@@ -75,21 +75,21 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                        timers_manager;
-  manual_task_worker                                   worker{64};
-  timer_factory                                        timers_factory{timers_manager, worker};
-  unique_timer                                         ue_inactivity_timer;
-  std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
-  std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
-  dummy_inner_f1u_bearer                               f1u_bearer;
-  std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
-  std::unique_ptr<dummy_gtpu_teid_pool>                f1u_allocator;
-  std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
-  null_dlt_pcap                                        gtpu_pcap;
-  security::sec_as_config                              security_info;
-  network_interface_config                             net_config;
-  n3_interface_config                                  n3_config = {};
-  cu_up_ue_logger                                      logger{"CU-UP", {MIN_UE_INDEX}};
+  timer_manager                                               timers_manager;
+  manual_task_worker                                          worker{64};
+  timer_factory                                               timers_factory{timers_manager, worker};
+  unique_timer                                                ue_inactivity_timer;
+  std::unique_ptr<dummy_gtpu_demux_ctrl>                      gtpu_rx_demux;
+  std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
+  dummy_inner_f1u_bearer                                      f1u_bearer;
+  std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;
+  std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;
+  std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;
+  null_dlt_pcap                                               gtpu_pcap;
+  security::sec_as_config                                     security_info;
+  network_interface_config                                    net_config;
+  n3_interface_config                                         n3_config = {};
+  cu_up_ue_logger                                             logger{"CU-UP", {MIN_UE_INDEX}};
 };
 
 /// Fixture class for PDU session manager tests with default network interface config

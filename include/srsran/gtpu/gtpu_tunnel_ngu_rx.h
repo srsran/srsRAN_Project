@@ -38,26 +38,8 @@ namespace srsran {
 /****************************************
  * Interfaces/notifiers for the gateway
  ****************************************/
-/// This interface represents the data entry point of the receiving side of a GTP-U entity.
-/// The IO gateway will use this call to pass GTP-U PDUs into the RX entity.
-class gtpu_tunnel_rx_upper_layer_interface
-{
-public:
-  gtpu_tunnel_rx_upper_layer_interface()                                                        = default;
-  virtual ~gtpu_tunnel_rx_upper_layer_interface()                                               = default;
-  gtpu_tunnel_rx_upper_layer_interface(const gtpu_tunnel_rx_upper_layer_interface&)             = delete;
-  gtpu_tunnel_rx_upper_layer_interface& operator=(const gtpu_tunnel_rx_upper_layer_interface&)  = delete;
-  gtpu_tunnel_rx_upper_layer_interface(const gtpu_tunnel_rx_upper_layer_interface&&)            = delete;
-  gtpu_tunnel_rx_upper_layer_interface& operator=(const gtpu_tunnel_rx_upper_layer_interface&&) = delete;
-
-  /// \brief Interface for the IO gateway to pass PDUs into the GTP-U
-  /// \param pdu PDU to be handled
-  /// \param src_addr Source address of this PDU
-  virtual void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) = 0;
-};
-
 /// This interface represents the data exit point of the receiving side of a GTP-U NGU entity.
-/// The GTP-U will use this notifier to pass GTP-U NGU PDUs into the lower-layers.
+/// The GTP-U will use this notifier to pass GTP-U SDUs (i.e. NG-U PDUs) into the lower layers.
 class gtpu_tunnel_ngu_rx_lower_layer_notifier
 {
 public:
@@ -68,9 +50,10 @@ public:
   gtpu_tunnel_ngu_rx_lower_layer_notifier(const gtpu_tunnel_ngu_rx_lower_layer_notifier&&)            = delete;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& operator=(const gtpu_tunnel_ngu_rx_lower_layer_notifier&&) = delete;
 
-  /// \brief Interface for the GTP-U to pass SDUs into the lower layer
+  /// \brief Interface for the GTP-U to pass a SDU (i.e. NG-U PDU) into the lower layer.
   /// \param sdu SDU to be passed down.
-  virtual void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) = 0;
+  /// \param qfi QoS flow ID that is associated with the SDU.
+  virtual void on_new_sdu(byte_buffer sdu, qos_flow_id_t qfi) = 0;
 };
 
 } // namespace srsran

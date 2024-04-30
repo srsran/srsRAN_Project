@@ -14,15 +14,14 @@
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
-#include <memory>
 #include <mutex>
 #include <unordered_map>
 
 namespace srsran {
 
 struct gtpu_demux_tunnel_ctx_t {
-  task_executor*                        tunnel_exec;
-  gtpu_tunnel_rx_upper_layer_interface* tunnel;
+  task_executor*                               tunnel_exec;
+  gtpu_tunnel_common_rx_upper_layer_interface* tunnel;
 };
 
 class gtpu_demux_impl final : public gtpu_demux
@@ -35,7 +34,9 @@ public:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
   // gtpu_demux_ctrl
-  bool add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_rx_upper_layer_interface* tunnel) override;
+  bool add_tunnel(gtpu_teid_t                                  teid,
+                  task_executor&                               tunnel_exec,
+                  gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(gtpu_teid_t teid) override;
 
 private:

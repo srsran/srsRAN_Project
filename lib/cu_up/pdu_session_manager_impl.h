@@ -19,7 +19,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -42,7 +42,7 @@ public:
                            timer_factory                                    ue_ctrl_timer_factory_,
                            f1u_cu_up_gateway&                               f1u_gw_,
                            gtpu_teid_pool&                                  f1u_teid_allocator_,
-                           gtpu_tunnel_tx_upper_layer_notifier&             gtpu_tx_notifier_,
+                           gtpu_tunnel_common_tx_upper_layer_notifier&      gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                                 gtpu_rx_demux_,
                            task_executor&                                   ue_dl_exec_,
                            task_executor&                                   ue_ul_exec_,
@@ -81,7 +81,7 @@ private:
   timer_factory                                            ue_dl_timer_factory;
   timer_factory                                            ue_ul_timer_factory;
   timer_factory                                            ue_ctrl_timer_factory;
-  gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
+  gtpu_tunnel_common_tx_upper_layer_notifier&              gtpu_tx_notifier;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;

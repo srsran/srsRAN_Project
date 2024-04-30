@@ -11,15 +11,16 @@
 #pragma once
 
 #include "srsran/gateways/udp_network_gateway.h"
-#include "srsran/gtpu/gtpu_tunnel_rx.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_rx.h"
 #include "srsran/sdap/sdap.h"
 
 namespace srsran {
 namespace srs_cu_up {
 
 /// Adapter between GTP-U and Network Gateway
-class gtpu_network_gateway_adapter : public gtpu_tunnel_tx_upper_layer_notifier
+class gtpu_network_gateway_adapter : public gtpu_tunnel_common_tx_upper_layer_notifier
 {
 public:
   gtpu_network_gateway_adapter()  = default;

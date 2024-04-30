@@ -13,6 +13,7 @@
 #include "../support/sdu_window_impl.h"
 #include "gtpu_tunnel_base_rx.h"
 #include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_rx.h"
 #include "srsran/psup/psup_packing.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/support/timers.h"
@@ -41,13 +42,13 @@ struct gtpu_rx_sdu_info {
 };
 
 /// Class used for receiving GTP-U NGU bearers, e.g. on N3 interface.
-class gtpu_tunnel_ngu_rx : public gtpu_tunnel_base_rx
+class gtpu_tunnel_ngu_rx_impl : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_ngu_rx(srs_cu_up::ue_index_t                    ue_index,
-                     gtpu_config::gtpu_rx_config              cfg,
-                     gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_,
-                     timer_factory                            ue_dl_timer_factory_) :
+  gtpu_tunnel_ngu_rx_impl(srs_cu_up::ue_index_t                    ue_index,
+                          gtpu_config::gtpu_rx_config              cfg,
+                          gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_,
+                          timer_factory                            ue_dl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
@@ -62,7 +63,7 @@ public:
     logger.log_info(
         "GTPU NGU Rx configured. local_teid={} t_reodering={}", config.local_teid, config.t_reordering.count());
   }
-  ~gtpu_tunnel_ngu_rx() override = default;
+  ~gtpu_tunnel_ngu_rx_impl() override = default;
 
   /*
    * Testing Helpers
@@ -253,7 +254,7 @@ private:
   class reordering_callback
   {
   public:
-    explicit reordering_callback(gtpu_tunnel_ngu_rx* parent_) : parent(parent_) {}
+    explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
       parent->logger.log_info("reordering timer expired. {}", parent->st);
@@ -261,7 +262,7 @@ private:
     }
 
   private:
-    gtpu_tunnel_ngu_rx* parent;
+    gtpu_tunnel_ngu_rx_impl* parent;
   };
 
   /// \brief Helper function for arithmetic comparisons of state variables or SN values
