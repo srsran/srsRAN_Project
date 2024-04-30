@@ -328,13 +328,14 @@ int ul_harq_process::crc_info(bool ack)
       return (int)prev_tx_params.tbs_bytes;
     }
     if (empty()) {
-      fmt::memory_buffer cause_msg;
       if (harq_cancelled) {
-        fmt::format_to(cause_msg, "HARQ process was cancelled");
+        logger.info(id, "Discarding HARQ with tbs={}. Cause: HARQ process was cancelled", prev_tx_params.tbs_bytes);
       } else {
-        fmt::format_to(cause_msg, "Maximum number of reTxs {} exceeded", max_nof_harq_retxs());
+        logger.info(id,
+                    "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                    prev_tx_params.tbs_bytes,
+                    max_nof_harq_retxs());
       }
-      logger.info(id, "Discarding HARQ with tbs={}. Cause: {}", prev_tx_params.tbs_bytes, to_c_str(cause_msg));
     }
     return 0;
   }

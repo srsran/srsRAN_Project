@@ -369,14 +369,10 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       if (pdcch_slot >= rar_req.rar_window.stop()) {
-        fmt::memory_buffer str_buffer;
-        fmt::format_to(str_buffer,
-                       "Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+        logger.warning("Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
                        pdcch_slot);
-        fmt::print("{}\n", to_c_str(str_buffer));
-        logger.warning("{}", to_c_str(str_buffer));
         it = pending_rars.erase(it);
         continue;
       }
