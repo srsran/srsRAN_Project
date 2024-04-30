@@ -159,6 +159,11 @@ e2e request validation:
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:
+    # Push test metrics
+    - |
+      find . -iname "test_metrics.csv" -exec \
+        influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
+        --bucket ci --file {} \;
     - |
       echo "*******************************************************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/tests/e2e/log//report.html"
