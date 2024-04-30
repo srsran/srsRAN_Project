@@ -849,8 +849,8 @@ uint8_t srsran::band_helper::get_ssb_l_max(nr_band band, subcarrier_spacing scs,
       return 64U;
     }
     default:
-      srsran_assertion_failure("SSB pattern case is invalid");
-      return 64U;
+      report_fatal_error("SSB pattern case is invalid");
+      return 0U;
   }
 }
 
