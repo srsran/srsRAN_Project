@@ -14,7 +14,7 @@
 using namespace srsran;
 using namespace fapi;
 
-TEST(srs_indication_builder, valid_basic_parameters_passes)
+TEST(srs_indication_builder, valid_srs_indication_passes)
 {
   srs_indication_message         msg;
   srs_indication_message_builder builder(msg);
