@@ -35,8 +35,7 @@ public:
   static std::unique_ptr<udp_ngu_tnl_session> create(const udp_network_gateway_config&            cfg,
                                                      network_gateway_data_notifier_with_src_addr& data_notifier,
                                                      io_broker&                                   io_brk,
-                                                     task_executor&                               io_tx_executor,
-                                                     io_broker::subscriber&                       handled_fd)
+                                                     task_executor&                               io_tx_executor)
   {
     std::unique_ptr<udp_ngu_tnl_session> conn(new udp_ngu_tnl_session(data_notifier));
 
@@ -47,9 +46,8 @@ public:
     if (not conn->udp_gw->create_and_bind()) {
       conn->logger.error("Failed to create and connect NG-U gateway");
     }
-    handled_fd = io_brk.register_fd(conn->udp_gw->get_socket_fd(),
-                                    [udp_gw_ptr = conn->udp_gw.get()]() { udp_gw_ptr->receive(); });
-    if (not handled_fd.registered()) {
+
+    if (not conn->udp_gw->subscribe_to(io_brk)) {
       conn->logger.error("Failed to register NG-U (GTP-U) network gateway at IO broker. socket_fd={}",
                          conn->udp_gw->get_socket_fd());
       return nullptr;
@@ -91,15 +89,13 @@ public:
 
   std::unique_ptr<ngu_tnl_pdu_session> create(network_gateway_data_notifier_with_src_addr& data_notifier) override
   {
-    return udp_ngu_tnl_session::create(cfg, data_notifier, io_brk, io_tx_executor, handled_fd);
+    return udp_ngu_tnl_session::create(cfg, data_notifier, io_brk, io_tx_executor);
   }
 
 private:
   const udp_network_gateway_config cfg;
   io_broker&                       io_brk;
   task_executor&                   io_tx_executor;
-
-  io_broker::subscriber handled_fd;
 };
 
 } // namespace

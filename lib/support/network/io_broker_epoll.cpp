@@ -61,11 +61,14 @@ io_broker_epoll::~io_broker_epoll()
   if (not epoll_fd.close()) {
     logger.error("Failed to close io epoll broker file descriptor: {}", strerror(errno));
   }
+
+  logger.info("Closed io_broker");
 }
 
 // Function is executed in a loop until the destructor is called.
 void io_broker_epoll::thread_loop()
 {
+  logger.debug("io_broker thread started...");
   while (running) {
     // wait for event
     const int32_t      epoll_timeout_ms   = -1;
@@ -113,6 +116,7 @@ void io_broker_epoll::thread_loop()
       }
     }
   }
+  logger.debug("io_broker thread stopped");
 }
 
 bool io_broker_epoll::enqueue_event(const control_event& event)
@@ -172,7 +176,7 @@ bool io_broker_epoll::handle_fd_registration(int                     fd,
   epoll_ev.data.fd            = fd;
   epoll_ev.events             = EPOLLIN;
   if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_ADD, fd, &epoll_ev) == -1) {
-    logger.error("fd={}: Failed to register file descriptor. Cause: epoll_ctl failed", fd);
+    logger.error("fd={}: Failed to register file descriptor. Cause: epoll_ctl failed with \"{}\"", fd, strerror(errno));
     if (complete_notifier != nullptr) {
       complete_notifier->set_value(false);
     }
@@ -205,20 +209,8 @@ bool io_broker_epoll::handle_fd_epoll_removal(int                  fd,
   }
 
   // Regardless of the cause for the call, we always remove the FD from the epoll, so epoll errors won't spam the
-  // logger and so that we do not remove the same FD from the epoll more than once.
+  // logger, and so that we do not remove the same FD from the epoll more than once.
   if (ev_it->second.registed_in_epoll()) {
-    struct epoll_event epoll_ev = {};
-    epoll_ev.data.fd            = fd;
-    epoll_ev.events             = EPOLLIN;
-    if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
-      logger.error("fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed", fd);
-      event_handler.erase(ev_it);
-      if (complete_notifier != nullptr) {
-        complete_notifier->set_value(false);
-      }
-      return false;
-    }
-
     // In case the cause for the FD removal was an epoll error, forward the error to the event handler.
     // Note: We avoid calling the error handling callback in case the FD removal was due to the subscriber
     // close/destruction or due to the io_broker being destroyed.
@@ -226,10 +218,25 @@ bool io_broker_epoll::handle_fd_epoll_removal(int                  fd,
       ev_it->second.error_callback(*epoll_error);
     }
 
+    // Remove FD from the epoll.
+    struct epoll_event epoll_ev = {};
+    epoll_ev.data.fd            = fd;
+    epoll_ev.events             = EPOLLIN;
+    if (::epoll_ctl(epoll_fd.value(), EPOLL_CTL_DEL, fd, &epoll_ev) == -1) {
+      logger.error(
+          "fd={}: Failed to deregister file descriptor. Cause: epoll_ctl failed with \"{}\"", fd, strerror(errno));
+      event_handler.erase(ev_it);
+      if (complete_notifier != nullptr) {
+        complete_notifier->set_value(false);
+      }
+      return false;
+    }
+
     // Mark the FD as not registered in the epoll.
     // Note: We keep the FD in the lookup table, so we avoid that the frontend points to inexistent FD.
     ev_it->second.read_callback  = {};
     ev_it->second.error_callback = {};
+    logger.debug("fd={}: File descriptor deregistered from epoll interest list", fd);
   }
 
   if (io_broker_deregistration_required) {
@@ -273,6 +280,7 @@ io_broker::subscriber io_broker_epoll::register_fd(int fd, recv_callback_t handl
 
   // Wait for the registration to complete.
   if (fut.get()) {
+    logger.info("fd={}: Registered file descriptor successfully", fd);
     return subscriber{*this, fd};
   }
   return subscriber{};
@@ -289,6 +297,7 @@ bool io_broker_epoll::unregister_fd(int fd)
     logger.warning("fd={}: Deregistration failed. Cause: io_broker is not running", fd);
     return false;
   }
+  logger.debug("fd={}: Deregistering file descriptor...", fd);
 
   if (std::this_thread::get_id() == thread.get_id()) {
     // Deregistration from within the epoll thread. No need to go through the event queue.
@@ -303,7 +312,11 @@ bool io_broker_epoll::unregister_fd(int fd)
   }
 
   // Wait for the deregistration to complete.
-  return fut.get();
+  if (fut.get()) {
+    logger.info("fd={}: Deregistered file descriptor successfully", fd);
+    return true;
+  }
+  return false;
 }
 
 void io_broker_epoll::stop_impl()

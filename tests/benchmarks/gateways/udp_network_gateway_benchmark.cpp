@@ -112,12 +112,10 @@ int main(int argc, char** argv)
 
   epoll_broker = create_io_broker(io_broker_type::epoll);
 
-  io_broker::subscriber gw1_handle = epoll_broker->register_fd(gw1->get_socket_fd(), [&gw1]() { gw1->receive(); });
-  if (!gw1_handle.registered()) {
+  if (not gw1->subscribe_to(*epoll_broker)) {
     report_fatal_error("Failed to register UDP network gateway 1 at IO broker. socket_fd={}", gw1->get_socket_fd());
   }
-  io_broker::subscriber gw2_handle = epoll_broker->register_fd(gw2->get_socket_fd(), [&gw2]() { gw2->receive(); });
-  if (!gw2_handle.registered()) {
+  if (not gw2->subscribe_to(*epoll_broker)) {
     report_fatal_error("Failed to register UDP network gateway 2 at IO broker. socket_fd={}", gw2->get_socket_fd());
   }
 

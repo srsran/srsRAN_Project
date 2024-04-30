@@ -45,6 +45,17 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   rx_iovecs.resize(config.rx_max_mmsg);
 }
 
+bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
+{
+  io_subcriber = broker.register_fd(
+      get_socket_fd(), [this]() { receive(); }, [this](io_broker::error_code code) { handle_io_error(code); });
+  if (not io_subcriber.registered()) {
+    logger.error("Failed to register UDP network gateway at IO broker. socket_fd={}", get_socket_fd());
+    return false;
+  }
+  return true;
+}
+
 void udp_network_gateway_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr)
 {
   auto fn = [this, p = std::move(pdu), dest_addr]() mutable { handle_pdu_impl(std::move(p), dest_addr); };
@@ -84,6 +95,11 @@ void udp_network_gateway_impl::handle_pdu_impl(const byte_buffer& pdu, const soc
   }
 
   logger.debug("PDU was sent successfully");
+}
+
+void udp_network_gateway_impl::handle_io_error(io_broker::error_code code)
+{
+  logger.error("Error reading from UDP socket: {}", sock_fd.value());
 }
 
 bool udp_network_gateway_impl::create_and_bind()
@@ -365,6 +381,7 @@ bool udp_network_gateway_impl::set_reuse_addr()
 
 bool udp_network_gateway_impl::close_socket()
 {
+  io_subcriber.reset();
   if (not sock_fd.close()) {
     logger.error("Error closing socket: {}", strerror(errno));
     return false;

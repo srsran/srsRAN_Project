@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/unique_fd.h"
 #include <sys/socket.h>
 
@@ -48,6 +49,9 @@ public:
   /// \brief Return the port on which the socket is listening.
   optional<uint16_t> get_listen_port() override;
 
+  /// \brief Subscribe to IO broker for automatic IO Rx notifications.
+  bool subscribe_to(io_broker& broker) override;
+
 private:
   bool set_sockopts();
 
@@ -58,6 +62,7 @@ private:
   using socket_buffer_type = uint8_t;
   void handle_data(span<socket_buffer_type> payload);
   void handle_notification(span<socket_buffer_type> payload);
+  void handle_io_error(io_broker::error_code code);
 
   // socket helpers
   bool set_non_blocking();
@@ -71,7 +76,8 @@ private:
   network_gateway_data_notifier&         data_notifier;
   srslog::basic_logger&                  logger;
 
-  unique_fd sock_fd;
+  unique_fd             sock_fd;
+  io_broker::subscriber io_sub;
 
   sockaddr_storage client_addr        = {}; // the local address
   socklen_t        client_addrlen     = 0;

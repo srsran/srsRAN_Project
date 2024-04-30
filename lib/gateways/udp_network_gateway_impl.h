@@ -30,6 +30,8 @@ public:
                                     task_executor&                               io_executor_);
   ~udp_network_gateway_impl() override { close_socket(); }
 
+  bool subscribe_to(io_broker& broker) override;
+
 private:
   bool set_sockopts();
 
@@ -38,6 +40,9 @@ private:
 
   // Actual PDU handling, shall run in IO executor.
   void handle_pdu_impl(const byte_buffer& pdu, const sockaddr_storage& dest_addr);
+
+  // Handle error detected by io_broker that led to the io deregistration.
+  void handle_io_error(io_broker::error_code code);
 
   // udp_network_gateway_controller interface
   bool               create_and_bind() override;
@@ -57,7 +62,8 @@ private:
   srslog::basic_logger&                        logger;
   task_executor&                               io_tx_executor;
 
-  unique_fd sock_fd;
+  unique_fd             sock_fd;
+  io_broker::subscriber io_subcriber;
 
   sockaddr_storage local_addr        = {}; // the local address
   socklen_t        local_addrlen     = 0;

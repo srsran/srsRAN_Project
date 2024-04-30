@@ -12,6 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
+#include "srsran/support/io/io_broker.h"
 #include <netdb.h>
 #include <sys/types.h>
 
@@ -61,6 +62,9 @@ public:
   /// In case the gateway was configured to use a hostname,
   /// this function can be used to get the actual IP address in string form.
   virtual bool get_bind_address(std::string& ip_address) = 0;
+
+  /// \brief Register the UDP gateway in the IO broker for automatic handling of notifications.
+  virtual bool subscribe_to(io_broker& broker) = 0;
 };
 
 class udp_network_gateway : public udp_network_gateway_data_handler, public udp_network_gateway_controller

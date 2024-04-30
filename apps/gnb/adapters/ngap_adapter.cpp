@@ -150,10 +150,8 @@ public:
       return;
     }
     logger.info("TNL connection to AMF ({}:{}) established", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    fd_listener = broker.register_fd(sctp_gateway->get_socket_fd(), [this]() { sctp_gateway->receive(); });
-    if (!fd_listener.registered()) {
-      report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker. socket_fd={}",
-                         sctp_gateway->get_socket_fd());
+    if (!sctp_gateway->subscribe_to(broker)) {
+      report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker.");
     }
   }
 

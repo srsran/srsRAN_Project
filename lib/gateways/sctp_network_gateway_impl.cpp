@@ -432,6 +432,7 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
 /// Close socket handle and set FD to -1
 bool sctp_network_gateway_impl::close_socket()
 {
+  io_sub.reset();
   if (not sock_fd.close()) {
     logger.error("Error closing SCTP socket: {}", strerror(errno));
     return false;
@@ -557,6 +558,13 @@ void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> paylo
   data_notifier.on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
+void sctp_network_gateway_impl::handle_io_error(io_broker::error_code code)
+{
+  logger.info("Connection loss due to IO error code={}.", (int)code);
+  io_sub.reset();
+  ctrl_notifier.on_connection_loss();
+}
+
 ///< Process outgoing PDU and send over SCTP socket to peer.
 void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 {
@@ -599,7 +607,6 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
   }
 }
 
-///< Set socket to non-blocking-mode.
 bool sctp_network_gateway_impl::set_non_blocking()
 {
   int flags = fcntl(sock_fd.value(), F_GETFL, 0);
@@ -615,4 +622,11 @@ bool sctp_network_gateway_impl::set_non_blocking()
   }
 
   return true;
+}
+
+bool sctp_network_gateway_impl::subscribe_to(io_broker& broker)
+{
+  io_sub = broker.register_fd(
+      sock_fd.value(), [this]() { receive(); }, [this](io_broker::error_code code) { handle_io_error(code); });
+  return io_sub.registered();
 }
