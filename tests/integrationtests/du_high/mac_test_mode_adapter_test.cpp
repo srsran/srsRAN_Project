@@ -236,7 +236,7 @@ TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pucch_grants_then_uci_i
   ASSERT_TRUE(f1.harq_info.has_value());
   ASSERT_EQ(f1.harq_info->harqs.size(), 1);
   ASSERT_EQ(f1.harq_info->harqs[0], uci_pucch_f0_or_f1_harq_values::ack);
-  ASSERT_TRUE(f1.ul_sinr.value() > 0);
+  ASSERT_TRUE(f1.ul_sinr_dB.value() > 0);
 }
 
 TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pusch_grants_then_crc_indications_are_auto_forwarded_to_mac)
@@ -268,7 +268,7 @@ TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pusch_grants_then_crc_i
   ASSERT_EQ(mac_events.last_crc->crcs[0].rnti, this->params.test_ue_cfg.rnti);
   ASSERT_EQ(mac_events.last_crc->crcs[0].harq_id, ulgrant.pusch_cfg.harq_id);
   ASSERT_TRUE(mac_events.last_crc->crcs[0].tb_crc_success);
-  ASSERT_TRUE(mac_events.last_crc->crcs[0].ul_sinr_metric.value() > 0);
+  ASSERT_TRUE(mac_events.last_crc->crcs[0].ul_sinr_dB.value() > 0);
 }
 
 TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_csi_params_are_enforced)
@@ -310,7 +310,7 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
   ASSERT_TRUE(f2.sr_info.has_value());
   ASSERT_EQ(f2.sr_info->size(), 1);
   ASSERT_FALSE(f2.sr_info->test(0)); // SR not detected.
-  ASSERT_TRUE(f2.ul_sinr.value() > 0);
+  ASSERT_TRUE(f2.ul_sinr_dB.value() > 0);
   // check HARQ info.
   ASSERT_TRUE(f2.harq_info.has_value());
   ASSERT_TRUE(f2.harq_info->is_valid);

@@ -209,8 +209,8 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
     // Update PUSCH SNR reported from PHY.
-    if (crc_pdu.ul_sinr_metric.has_value()) {
-      channel_state.update_pusch_snr(crc_pdu.ul_sinr_metric.value());
+    if (crc_pdu.ul_sinr_dB.has_value()) {
+      channel_state.update_pusch_snr(crc_pdu.ul_sinr_dB.value());
     }
   }
 

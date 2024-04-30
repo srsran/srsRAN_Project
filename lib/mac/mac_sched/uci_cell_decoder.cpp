@@ -86,13 +86,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_uci.pdu);
 
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
-      if (pucch.ul_sinr.has_value()) {
-        pdu.ul_sinr.emplace(pucch.ul_sinr.value());
-      }
-      if (pucch.time_advance_offset.has_value()) {
-        pdu.time_advance_offset.emplace(pucch.time_advance_offset.value());
-      }
-      pdu.sr_detected = false;
+
+      pdu.ul_sinr_dB          = pucch.ul_sinr_dB;
+      pdu.time_advance_offset = pucch.time_advance_offset;
+      pdu.sr_detected         = false;
       if (pucch.sr_info.has_value()) {
         pdu.sr_detected = pucch.sr_info.value().detected;
       }
@@ -115,20 +112,20 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
         const auto& harq_pdus = pucch.harq_info.value().harqs;
         pdu.harqs.resize(harq_pdus.size());
-        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-          switch (harq_pdus[j]) {
+        for (unsigned i = 0, e = pdu.harqs.size(); i != e; ++i) {
+          switch (harq_pdus[i]) {
             case uci_pucch_f0_or_f1_harq_values::ack:
-              pdu.harqs[j] = mac_harq_ack_report_status::ack;
+              pdu.harqs[i] = mac_harq_ack_report_status::ack;
               break;
             case uci_pucch_f0_or_f1_harq_values::nack:
-              pdu.harqs[j] = mac_harq_ack_report_status::nack;
+              pdu.harqs[i] = mac_harq_ack_report_status::nack;
               break;
             default:
-              pdu.harqs[j] = mac_harq_ack_report_status::dtx;
+              pdu.harqs[i] = mac_harq_ack_report_status::dtx;
           }
 
           // Report ACK for RLF detection purposes.
-          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[i] == mac_harq_ack_report_status::ack);
         }
       }
       uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
@@ -140,8 +137,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
             convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().is_valid, pusch.harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+        for (unsigned i = 0, e = pdu.harqs.size(); i != e; ++i) {
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[i] == mac_harq_ack_report_status::ack);
         }
       }
 
@@ -176,12 +173,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_uci.pdu);
       auto&       pdu   = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
 
-      if (pucch.ul_sinr.has_value()) {
-        pdu.ul_sinr.emplace(pucch.ul_sinr.value());
-      }
-      if (pucch.time_advance_offset.has_value()) {
-        pdu.time_advance_offset.emplace(pucch.time_advance_offset.value());
-      }
+      pdu.ul_sinr_dB          = pucch.ul_sinr_dB;
+      pdu.time_advance_offset = pucch.time_advance_offset;
       if (pucch.sr_info.has_value()) {
         pdu.sr_info = pucch.sr_info.value();
       }

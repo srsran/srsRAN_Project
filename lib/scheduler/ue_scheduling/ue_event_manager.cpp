@@ -296,14 +296,14 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
           }
 
           // Process Timing Advance Offset.
-          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
+          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_dB.has_value()) {
             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
+                ue_cc.cell_index, crc.ul_sinr_dB.value(), crc.time_advance_offset.value());
           }
 
           // Log event.
           ev_logger.enqueue(scheduler_event_logger::crc_event{
-              crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
+              crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_dB});
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
@@ -363,7 +363,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
             }
 
             // Process SRs.
@@ -378,9 +378,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
             }
 
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu)) {
@@ -401,7 +401,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
             }
 
             // Process SRs.
@@ -423,9 +423,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                                       (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
                                       pdu.csi.has_value();
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
             }
           }
 

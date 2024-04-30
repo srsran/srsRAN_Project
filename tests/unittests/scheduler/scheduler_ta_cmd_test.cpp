@@ -82,7 +82,7 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
         f1.harqs.resize(pucch_pdu.format_1.harq_ack_nof_bits);
         std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
-        f1.ul_sinr             = ul_sinr;
+        f1.ul_sinr_dB          = ul_sinr;
         f1.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
         uci_ind.ucis[0].pdu    = f1;
       } break;
@@ -90,7 +90,7 @@ protected:
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
         f2.harqs.resize(pucch_pdu.format_2.harq_ack_nof_bits);
         std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
-        f2.ul_sinr             = ul_sinr;
+        f2.ul_sinr_dB          = ul_sinr;
         f2.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
         uci_ind.ucis[0].pdu    = f2;
         if (pucch_pdu.format_2.csi_part1_bits > 0) {

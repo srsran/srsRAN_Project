@@ -993,7 +993,7 @@ public:
       crc_pdu.rnti           = pusch.pusch_cfg.rnti;
       crc_pdu.harq_id        = pusch.pusch_cfg.harq_id;
       crc_pdu.tb_crc_success = true;
-      crc_pdu.ul_sinr_metric = 21.0;
+      crc_pdu.ul_sinr_dB     = 21.0;
     }
     if (not sim_phy.slot_ul_result.ul_res->puschs.empty()) {
       pending_crc.push_back(std::move(crc));

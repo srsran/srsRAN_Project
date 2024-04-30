@@ -300,8 +300,8 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     pdu.ue_index                   = parent->rnti_mng[mac_pdu.rnti];
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
-    pdu.ul_sinr_metric             = mac_pdu.ul_sinr_metric;
-    pdu.ul_rsrp_metric             = mac_pdu.ul_rsrp_metric;
+    pdu.ul_sinr_dB                 = mac_pdu.ul_sinr_dB;
+    pdu.ul_rsrp_dBFS               = mac_pdu.ul_rsrp_dBFS;
     pdu.time_advance_offset        = mac_pdu.time_advance_offset;
   }
 

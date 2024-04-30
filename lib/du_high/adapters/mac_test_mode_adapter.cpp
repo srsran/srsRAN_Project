@@ -111,7 +111,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
         // Force CRC=OK for test UE.
         crc_pdu.tb_crc_success = true;
         // Force UL SINR.
-        crc_pdu.ul_sinr_metric = 100;
+        crc_pdu.ul_sinr_dB = 100;
       }
 
       // Forward CRC to the real MAC.
@@ -190,7 +190,7 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
       // Intercept the CRC indication and force crc=OK and UL SNR.
       mac_crc_pdu test_crc    = crc;
       test_crc.tb_crc_success = true;
-      test_crc.ul_sinr_metric = 100;
+      test_crc.ul_sinr_dB     = 100;
       msg_copy.crcs.push_back(test_crc);
 
     } else {
@@ -206,7 +206,7 @@ void mac_test_mode_cell_adapter::handle_crc(const mac_crc_indication_message& ms
 void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& pucch_ind,
                                               const pucch_info&                 pucch) const
 {
-  pucch_ind.ul_sinr = 100;
+  pucch_ind.ul_sinr_dB = 100;
   if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
     // In test mode, SRs are never detected, and instead BSR is injected.
     pucch_ind.sr_info.emplace();
@@ -225,7 +225,7 @@ void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f0_or_f1_type& 
 void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch_ind,
                                               const pucch_info&                       pucch) const
 {
-  pucch_ind.ul_sinr = 100;
+  pucch_ind.ul_sinr_dB = 100;
   if (pucch.format_2.sr_bits != sr_nof_bits::no_sr) {
     // Set SR to not detected.
     pucch_ind.sr_info.emplace();
@@ -248,7 +248,7 @@ void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pucch_f2_or_f3_or_f4_
 void mac_test_mode_cell_adapter::fill_uci_pdu(mac_uci_pdu::pusch_type& pusch_ind, const ul_sched_info& ul_grant) const
 {
   const uci_info& uci_info = *ul_grant.uci;
-  pusch_ind.ul_sinr        = 100;
+  pusch_ind.ul_sinr_dB     = 100;
   if (uci_info.harq.has_value() and uci_info.harq->harq_ack_nof_bits > 0) {
     pusch_ind.harq_info.emplace();
     pusch_ind.harq_info->is_valid = true;

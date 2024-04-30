@@ -132,8 +132,8 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
     pdu.harq_id        = fapi_pdu.harq_id;
     pdu.rnti           = fapi_pdu.rnti;
     pdu.tb_crc_success = fapi_pdu.tb_crc_status_ok;
-    pdu.ul_sinr_metric = convert_fapi_to_mac_ul_sinr(fapi_pdu.ul_sinr_metric);
-    pdu.ul_rsrp_metric = convert_fapi_to_mac_rsrp(fapi_pdu.rsrp);
+    pdu.ul_sinr_dB     = convert_fapi_to_mac_ul_sinr(fapi_pdu.ul_sinr_metric);
+    pdu.ul_rsrp_dBFS   = convert_fapi_to_mac_rsrp(fapi_pdu.rsrp);
     if (fapi_pdu.timing_advance_offset_ns != std::numeric_limits<decltype(fapi_pdu.timing_advance_offset_ns)>::min()) {
       pdu.time_advance_offset = phy_time_unit::from_seconds(fapi_pdu.timing_advance_offset_ns * 1e-9);
     }
@@ -169,9 +169,9 @@ static bool is_fapi_uci_payload_valid(uci_pusch_or_pucch_f2_3_4_detection_status
 static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                                     const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
-  mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
-  mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
-  mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
+  mac_pucch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
+  mac_pucch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
+  mac_pucch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
   convert_fapi_to_mac_ta_offset(mac_pucch.time_advance_offset, fapi_pucch.timing_advance_offset_ns);
 
   // Fill SR.
@@ -187,9 +187,9 @@ static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_
 
 static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch, const fapi::uci_pusch_pdu& fapi_pusch)
 {
-  mac_pusch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric);
-  mac_pusch.rssi    = convert_fapi_to_mac_rssi(fapi_pusch.rssi);
-  mac_pusch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pusch.rsrp);
+  mac_pusch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric);
+  mac_pusch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pusch.rssi);
+  mac_pusch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pusch.rsrp);
   convert_fapi_to_mac_ta_offset(mac_pusch.time_advance_offset, fapi_pusch.timing_advance_offset_ns);
 
   // Fill HARQ.
@@ -221,9 +221,9 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& mac_pucch,
                                                        const fapi::uci_pucch_pdu_format_2_3_4& fapi_pucch)
 {
-  mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
-  mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
-  mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
+  mac_pucch.ul_sinr_dB = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
+  mac_pucch.rssi_dBFS  = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
+  mac_pucch.rsrp_dBFS  = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
   convert_fapi_to_mac_ta_offset(mac_pucch.time_advance_offset, fapi_pucch.timing_advance_offset_ns);
 
   // Fill SR.
@@ -324,7 +324,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
     occas.frequency_index                     = pdu.ra_index;
     occas.slot_index                          = pdu.slot_index;
     occas.start_symbol                        = pdu.symbol_index;
-    occas.rssi_dB                             = to_prach_rssi_dB(pdu.avg_rssi);
+    occas.rssi_dBFS                           = to_prach_rssi_dB(pdu.avg_rssi);
     for (const auto& preamble : pdu.preambles) {
       srsran_assert(preamble.preamble_pwr != std::numeric_limits<decltype(preamble.preamble_pwr)>::max(),
                     "Preamble power field not set");
@@ -334,7 +334,7 @@ void fapi_to_mac_data_msg_translator::on_rach_indication(const fapi::rach_indica
       mac_rach_indication::rach_preamble& mac_pream = occas.preambles.emplace_back();
       mac_pream.index                               = preamble.preamble_index;
       mac_pream.time_advance = phy_time_unit::from_seconds(preamble.timing_advance_offset_ns * 1e-9);
-      mac_pream.power_dB     = to_prach_preamble_power_dB(preamble.preamble_pwr);
+      mac_pream.pwr_dBFS     = to_prach_preamble_power_dB(preamble.preamble_pwr);
       mac_pream.snr_dB       = to_prach_preamble_snr_dB(preamble.preamble_snr);
     }
   }

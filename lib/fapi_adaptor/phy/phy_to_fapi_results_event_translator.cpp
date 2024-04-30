@@ -40,6 +40,12 @@ phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(srslo
 {
 }
 
+/// Coverts normalised dB values to dBFS.
+static float convert_to_dBFS(float value_dB, float full_scale_reference)
+{
+  return value_dB - convert_amplitude_to_dB(full_scale_reference);
+}
+
 void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
   if (result.result.preambles.empty()) {
@@ -71,14 +77,14 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
   // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
   static constexpr float            MIN_AVG_RSSI_VALUE = -140.F;
   static constexpr float            MAX_AVG_RSSI_VALUE = 30.F;
-  fapi::rach_indication_pdu_builder builder_pdu =
-      builder.add_pdu(handle,
-                      result.context.start_symbol,
-                      slot.slot_index(),
-                      fd_ra_index,
-                      clamp(result.result.rssi_dB, MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
-                      {},
-                      {});
+  fapi::rach_indication_pdu_builder builder_pdu        = builder.add_pdu(
+      handle,
+      result.context.start_symbol,
+      slot.slot_index(),
+      fd_ra_index,
+      clamp(convert_to_dBFS(result.result.rssi_dB, dBFS_calibration_value), MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
+      {},
+      {});
 
   for (const auto& preamble : result.result.preambles) {
     // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
@@ -98,7 +104,9 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
         preamble.preamble_index,
         {},
         TA_ns,
-        clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
+        clamp(convert_to_dBFS(convert_power_to_dB(preamble.detection_metric), dBFS_calibration_value),
+              MIN_PREAMBLE_POWER_VALUE,
+              MAX_PREAMBLE_POWER_VALUE),
         clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
 
@@ -273,7 +281,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Extract the RSRP which is optional and clamp it if available.
   optional<float> rsrp = result.csi.get_rsrp_dB();
   if (rsrp.has_value()) {
-    rsrp = clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);
+    rsrp = convert_to_dBFS(clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS), dBFS_calibration_value);
   }
 
   builder.add_pdu(handle,

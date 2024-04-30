@@ -481,8 +481,8 @@ protected:
           // Auto ACK harqs.
           pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         }
-        pucch_pdu.ul_sinr = 55;
-        pdu.pdu           = pucch_pdu;
+        pucch_pdu.ul_sinr_dB = 55;
+        pdu.pdu              = pucch_pdu;
         break;
       }
       case pucch_format::FORMAT_2: {
@@ -497,8 +497,8 @@ protected:
           pucch_pdu.csi->ri                    = 1;
           pucch_pdu.csi->first_tb_wideband_cqi = 15;
         }
-        pucch_pdu.ul_sinr = 55;
-        pdu.pdu           = pucch_pdu;
+        pucch_pdu.ul_sinr_dB = 55;
+        pdu.pdu              = pucch_pdu;
         break;
       }
       default:
@@ -537,7 +537,7 @@ protected:
     pdu.rnti           = u.crnti;
     pdu.harq_id        = (harq_id_t)harq_id;
     pdu.tb_crc_success = true;
-    pdu.ul_sinr_metric = 55;
+    pdu.ul_sinr_dB     = 55;
 
     return pdu;
   }

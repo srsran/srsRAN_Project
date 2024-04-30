@@ -95,11 +95,11 @@ private:
     EXPECT_EQ(start_symbol, occ.start_symbol);
     EXPECT_EQ(slot_index, occ.slot_index);
     EXPECT_EQ(freq_index, occ.frequency_index);
-    EXPECT_FLOAT_EQ(rssi, occ.rssi_dB);
+    EXPECT_FLOAT_EQ(rssi, occ.rssi_dBFS.value());
 
     const mac_rach_indication::rach_preamble& pream = occ.preambles.front();
-    EXPECT_FLOAT_EQ(snr, pream.snr_dB);
-    EXPECT_FLOAT_EQ(power, pream.power_dB);
+    EXPECT_FLOAT_EQ(snr, pream.snr_dB.value());
+    EXPECT_FLOAT_EQ(power, pream.pwr_dBFS.value());
     EXPECT_EQ(time_advance_ns, std::roundf(pream.time_advance.to_seconds() * 1e9));
   }
 };

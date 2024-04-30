@@ -62,6 +62,8 @@ private:
   srslog::basic_logger& logger;
   /// FAPI slot-based, data-specific message notifier.
   std::reference_wrapper<fapi::slot_data_message_notifier> data_notifier;
+  /// dBFS calibration value.
+  const float dBFS_calibration_value = 0;
 };
 
 } // namespace fapi_adaptor
