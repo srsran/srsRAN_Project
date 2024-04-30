@@ -27,7 +27,6 @@ struct ue_pdsch_grant {
   unsigned        time_res_index;
   crb_interval    crbs;
   sch_mcs_index   mcs;
-  unsigned        nof_layers = 1;
 };
 
 /// Information relative to a UE PUSCH grant.
