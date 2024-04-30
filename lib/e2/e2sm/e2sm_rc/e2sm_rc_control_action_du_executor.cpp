@@ -107,7 +107,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
     cur_control_params.rrm_policy_group.value().pol_member.plmn_id.append(
         ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_string());
     ctrl_cfg.param_list.push_back(cur_control_params);
-  } else if (ran_param_id == 8) {
+  } else if (action_params[ran_param_id] == "SST") {
     if (ctrl_cfg.param_list.size()) {
       if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sst) {
         control_config_params cur_control_params = {};
@@ -121,7 +121,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
             ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
       }
     }
-  } else if (ran_param_id == 9) {
+  } else if (action_params[ran_param_id] == "SD") {
     if (ctrl_cfg.param_list.size()) {
       if (ctrl_cfg.param_list.back().rrm_policy_group.value().pol_member.s_nssai.sd.has_value()) {
         control_config_params cur_control_params = {};
@@ -137,7 +137,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
             ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number();
       }
     }
-  } else if (ran_param_id == 10) {
+  } else if (action_params[ran_param_id] == "Min PRB Policy Ratio") {
     if (ctrl_cfg.param_list.size()) {
       if (!ctrl_cfg.param_list.back().rrm_policy_group.has_value()) {
         ctrl_cfg.param_list.back().rrm_policy_group.emplace();
@@ -151,7 +151,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
           ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
       ctrl_cfg.param_list.push_back(cur_control_params);
     }
-  } else if (ran_param_id == 11) {
+  } else if (action_params[ran_param_id] == "Max PRB Policy Ratio") {
     if (ctrl_cfg.param_list.size()) {
       if (!ctrl_cfg.param_list.back().rrm_policy_group.has_value()) {
         ctrl_cfg.param_list.back().rrm_policy_group.emplace();
