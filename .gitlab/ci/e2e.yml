@@ -350,16 +350,6 @@ test mode ue:
     - *txrx-lib
     - *retina-needs
 
-test mode ue tsan:
-  extends: test mode ue
-  when: manual
-  allow_failure: true
-  needs:
-    - job: "basic tsan"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-
 test mode ue asan:
   extends: test mode ue
   needs:
