@@ -12,16 +12,20 @@
 
 namespace srsran {
 
-class du
+class upper_phy;
+
+/// DU low interface.
+class du_low
 {
 public:
-  virtual ~du() = default;
+  /// Default destructor.
+  virtual ~du_low() = default;
 
-  /// Starts the DU.
-  virtual void start() = 0;
-
-  /// Stops the DU.
+  /// Stops the DU low.
   virtual void stop() = 0;
+
+  /// Returns the upper PHY for the given cell of this DU low.
+  virtual upper_phy& get_upper_phy(unsigned cell_id) = 0;
 };
 
 } // namespace srsran

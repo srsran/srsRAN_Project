@@ -72,6 +72,11 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
 
+#include "srsran/du/du_high_wrapper.h"
+#include "srsran/du/du_wrapper.h"
+#include "srsran/du_low/du_low.h"
+#include "srsran/du_low/du_low_wrapper.h"
+
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
 #endif
@@ -507,31 +512,32 @@ int main(int argc, char** argv)
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
   // Instantiate one DU per cell.
-  std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
-                                                          du_unit_cfg,
-                                                          du_cells,
-                                                          workers,
-                                                          ru_dl_rg_adapt,
-                                                          ru_ul_request_adapt,
-                                                          f1c_gw,
-                                                          *f1u_conn->get_f1u_du_gateway(),
-                                                          app_timers,
-                                                          *mac_p,
-                                                          *rlc_p,
-                                                          console,
-                                                          metrics_logger,
-                                                          e2_gw,
-                                                          e2_metric_connectors,
-                                                          rlc_json_plotter,
-                                                          *hub);
+  std::vector<std::unique_ptr<du_wrapper>> du_inst = make_gnb_dus(gnb_cfg,
+                                                                  du_unit_cfg,
+                                                                  du_cells,
+                                                                  workers,
+                                                                  ru_dl_rg_adapt,
+                                                                  ru_ul_request_adapt,
+                                                                  f1c_gw,
+                                                                  *f1u_conn->get_f1u_du_gateway(),
+                                                                  app_timers,
+                                                                  *mac_p,
+                                                                  *rlc_p,
+                                                                  console,
+                                                                  metrics_logger,
+                                                                  e2_gw,
+                                                                  e2_metric_connectors,
+                                                                  rlc_json_plotter,
+                                                                  *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
-    auto& du = du_inst[sector_id];
+    auto& du    = du_inst[sector_id];
+    auto& upper = du->get_du_low_wrapper().get_du_low().get_upper_phy(sector_id);
 
     // Make connections between DU and RU.
-    ru_ul_adapt.map_handler(sector_id, du->get_rx_symbol_handler());
-    ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
-    ru_error_adapt.map_handler(sector_id, du->get_error_handler());
+    ru_ul_adapt.map_handler(sector_id, upper.get_rx_symbol_handler());
+    ru_timing_adapt.map_handler(sector_id, upper.get_timing_handler());
+    ru_error_adapt.map_handler(sector_id, upper.get_error_handler());
 
     // Start DU execution.
     du->start();

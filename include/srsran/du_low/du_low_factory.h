@@ -10,18 +10,14 @@
 
 #pragma once
 
+#include "srsran/du_low/du_low.h"
+#include <memory>
+
 namespace srsran {
 
-class du
-{
-public:
-  virtual ~du() = default;
+struct du_low_config;
 
-  /// Starts the DU.
-  virtual void start() = 0;
-
-  /// Stops the DU.
-  virtual void stop() = 0;
-};
+/// Creates and returns the DU low.
+std::unique_ptr<du_low> make_du_low(const du_low_config& config);
 
 } // namespace srsran

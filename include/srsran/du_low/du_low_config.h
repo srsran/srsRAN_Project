@@ -15,7 +15,7 @@
 namespace srsran {
 
 /// Parameters used to instantiate the DU-low.
-struct du_low_configuration {
+struct du_low_config {
   /// Logger used to report state of the DU-low.
   srslog::basic_logger* logger;
   /// Parameters forwarded to DL processor factory.

@@ -425,8 +425,8 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, du_high_unit_tdd_ul_dl
   // do nothing (this will cause that the cell pattern 2 value equals than the common cell TDD pattern 2). CLI11 needs
   // that the life of the variable last longer than the call of callback function. Therefore, the pattern2_cfg variable
   // needs to be static.
-  tdd_ul_dl_pattern_unit_config pattern2_cfg;
-  CLI::App*                     pattern2_sub_cmd =
+  static tdd_ul_dl_pattern_unit_config pattern2_cfg;
+  CLI::App*                            pattern2_sub_cmd =
       add_subcommand(app, "pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
   configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, pattern2_cfg);
   auto tdd_pattern2_verify_callback = [&]() {

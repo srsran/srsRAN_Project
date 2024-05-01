@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsran/du/du.h"
-#include "srsran/du/du_config.h"
+#include "srsran/du/du_wrapper.h"
+#include "srsran/du/du_wrapper_config.h"
 #include <memory>
 
 namespace srsran {
 
-/// \brief Instantiates a Distributed Unit (DU) object.
-std::unique_ptr<du> make_du(const du_config& du_cfg);
+/// Instantiates a Distributed Unit (DU) wrapper object with the given configuration.
+std::unique_ptr<du_wrapper> make_du_wrapper(const du_wrapper_config& du_cfg);
 
 } // namespace srsran

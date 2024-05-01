@@ -14,27 +14,26 @@
 #include "apps/services/e2_metric_connector_manager.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/units/flexible_du/split_7_2/ru_ofh_factories.h"
-#include "dynamic_du_impl.h"
-#include "srsran/du/du_factory.h"
-#include "srsran/e2/e2_connection_client.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/du/du_wrapper.h"
+#include "srsran/du/du_wrapper_factory.h"
 #include "srsran/pcap/rlc_pcap.h"
 
 using namespace srsran;
 
-static du_low_configuration create_du_low_config(const du_high_unit_config&            du_high,
-                                                 const du_low_unit_config&             params,
-                                                 upper_phy_rg_gateway*                 rg_gateway,
-                                                 span<task_executor*>                  dl_executors,
-                                                 task_executor*                        pucch_executor,
-                                                 task_executor*                        pusch_executor,
-                                                 task_executor*                        pusch_decoder_executor,
-                                                 task_executor*                        prach_executor,
-                                                 task_executor*                        srs_executor,
-                                                 task_executor*                        pdsch_codeblock_executor,
-                                                 upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
+static du_low_wrapper_config create_du_low_config(const du_high_unit_config&            du_high,
+                                                  const du_low_unit_config&             params,
+                                                  upper_phy_rg_gateway*                 rg_gateway,
+                                                  span<task_executor*>                  dl_executors,
+                                                  task_executor*                        pucch_executor,
+                                                  task_executor*                        pusch_executor,
+                                                  task_executor*                        pusch_decoder_executor,
+                                                  task_executor*                        prach_executor,
+                                                  task_executor*                        srs_executor,
+                                                  task_executor*                        pdsch_codeblock_executor,
+                                                  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
-  du_low_configuration du_lo_cfg{};
+  du_low_wrapper_config du_lo_wrap_cfg{};
+  du_low_config&        du_lo_cfg = du_lo_wrap_cfg.du_low_cfg;
 
   du_lo_cfg.logger = &srslog::fetch_basic_logger("DU");
 
@@ -62,6 +61,9 @@ static du_low_configuration create_du_low_config(const du_high_unit_config&     
   du_lo_cfg.dl_proc_cfg.nof_concurrent_threads = upper_phy_threads_cfg.nof_dl_threads;
 
   du_lo_cfg.upper_phy = generate_du_low_config(du_high, params);
+  for (const auto& cell_cfg : du_high.cells_cfg) {
+    du_lo_wrap_cfg.prach_ports.push_back(cell_cfg.cell.prach_cfg.ports);
+  }
 
   // Fill the rest with the parameters.
   upper_phy_config& cfg          = du_lo_cfg.upper_phy.front();
@@ -77,26 +79,27 @@ static du_low_configuration create_du_low_config(const du_high_unit_config&     
   cfg.ldpc_rate_dematcher_type   = "auto";
   cfg.ldpc_decoder_type          = "auto";
 
-  return du_lo_cfg;
+  return du_lo_wrap_cfg;
 }
 
-std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
-                                                      const dynamic_du_unit_config&         dyn_du_cfg,
-                                                      span<du_cell_config>                  du_cells,
-                                                      worker_manager&                       workers,
-                                                      upper_phy_rg_gateway&                 rg_gateway,
-                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                      srs_du::f1c_connection_client&        f1c_client_handler,
-                                                      srs_du::f1u_du_gateway&               f1u_gw,
-                                                      timer_manager&                        timer_mng,
-                                                      mac_pcap&                             mac_p,
-                                                      rlc_pcap&                             rlc_p,
-                                                      console_helper&                       console_helper,
-                                                      metrics_log_helper&                   metrics_logger,
-                                                      e2_connection_client&                 e2_client_handler,
-                                                      e2_metric_connector_manager&          e2_metric_connectors,
-                                                      rlc_metrics_notifier&                 rlc_json_metrics,
-                                                      metrics_hub&                          metrics_hub)
+std::vector<std::unique_ptr<du_wrapper>>
+srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                     const dynamic_du_unit_config&         dyn_du_cfg,
+                     span<du_cell_config>                  du_cells,
+                     worker_manager&                       workers,
+                     upper_phy_rg_gateway&                 rg_gateway,
+                     upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                     srs_du::f1c_connection_client&        f1c_client_handler,
+                     srs_du::f1u_du_gateway&               f1u_gw,
+                     timer_manager&                        timer_mng,
+                     mac_pcap&                             mac_p,
+                     rlc_pcap&                             rlc_p,
+                     console_helper&                       console_helper,
+                     metrics_log_helper&                   metrics_logger,
+                     e2_connection_client&                 e2_client_handler,
+                     e2_metric_connector_manager&          e2_metric_connectors,
+                     rlc_metrics_notifier&                 rlc_json_metrics,
+                     metrics_hub&                          metrics_hub)
 {
   const du_high_unit_config& du_high  = dyn_du_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_low   = dyn_du_cfg.du_low_cfg;
@@ -135,31 +138,31 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     }
   }
 
-  std::vector<std::unique_ptr<du>> du_insts;
+  std::vector<std::unique_ptr<du_wrapper>> du_insts;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create a gNB config with one cell.
     du_high_unit_config tmp_cfg = du_high;
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = du_high.cells_cfg[i];
 
-    du_config                   du_cfg = {};
+    du_wrapper_config           du_cfg = {};
     std::vector<task_executor*> du_low_dl_exec;
     workers.get_du_low_dl_executors(du_low_dl_exec, i);
 
     // DU-low configuration.
-    du_cfg.du_lo = create_du_low_config(tmp_cfg,
-                                        du_low,
-                                        &rg_gateway,
-                                        du_low_dl_exec,
-                                        workers.upper_pucch_exec[i],
-                                        workers.upper_pusch_exec[i],
-                                        workers.upper_pusch_decoder_exec[i],
-                                        workers.upper_prach_exec[i],
-                                        workers.upper_srs_exec[i],
-                                        workers.upper_pdsch_exec[i],
-                                        &rx_symbol_request_notifier);
+    du_cfg.du_low_cfg = create_du_low_config(tmp_cfg,
+                                             du_low,
+                                             &rg_gateway,
+                                             du_low_dl_exec,
+                                             workers.upper_pucch_exec[i],
+                                             workers.upper_pusch_exec[i],
+                                             workers.upper_pusch_decoder_exec[i],
+                                             workers.upper_prach_exec[i],
+                                             workers.upper_srs_exec[i],
+                                             workers.upper_pdsch_exec[i],
+                                             &rx_symbol_request_notifier);
     // DU-high configuration.
-    srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
+    srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_high_cfg.du_hi;
     du_hi_cfg.exec_mapper                    = &workers.get_du_high_executor_mapper(i);
     du_hi_cfg.f1c_client                     = &f1c_client_handler;
     du_hi_cfg.f1u_gw                         = &f1u_gw;
@@ -220,21 +223,21 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                  du_high.test_mode_cfg.test_ue.i_1_3,
                                                  du_high.test_mode_cfg.test_ue.i_2};
     }
+
     // FAPI configuration.
-    du_cfg.fapi.log_level = fapi_cfg.fapi_level;
-    du_cfg.fapi.sector    = i;
+    du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
+    du_cfg.du_high_cfg.fapi.sector    = i;
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
-      du_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
+      du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
     } else {
       report_error_if_not(workers.fapi_exec[i] == nullptr,
                           "FAPI buffered worker created for a cell with no MAC delay configured");
     }
 
     // As the temporal configuration contains only once cell, pick the data from that cell.
-    du_cfg.fapi.prach_ports        = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
-    du_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
+    du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
 
-    du_insts.push_back(make_du(du_cfg));
+    du_insts.push_back(make_du_wrapper(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");
   }
 
@@ -278,19 +281,19 @@ static std::vector<du_cell_config> generate_du_cell_config_temp()
   return out;
 }
 
-std::unique_ptr<flexible_du> srsran::create_du(const dynamic_du_unit_config&        dyn_du_cfg,
-                                               worker_manager&                      workers,
-                                               srs_du::f1c_connection_client&       f1c_client_handler,
-                                               srs_du::f1u_du_gateway&              f1u_gw,
-                                               timer_manager&                       timer_mng,
-                                               mac_pcap&                            mac_p,
-                                               rlc_pcap&                            rlc_p,
-                                               console_helper&                      console_helper,
-                                               e2_connection_client&                e2_client_handler,
-                                               e2_metric_connector_manager&         e2_metric_connectors,
-                                               rlc_metrics_notifier&                rlc_json_metrics,
-                                               metrics_hub&                         metrics_hub,
-                                               span<scheduler_ue_metrics_notifier*> sched_metrics_subscribers)
+std::unique_ptr<du> srsran::create_du_wrapper(const dynamic_du_unit_config&        dyn_du_cfg,
+                                              worker_manager&                      workers,
+                                              srs_du::f1c_connection_client&       f1c_client_handler,
+                                              srs_du::f1u_du_gateway&              f1u_gw,
+                                              timer_manager&                       timer_mng,
+                                              mac_pcap&                            mac_p,
+                                              rlc_pcap&                            rlc_p,
+                                              console_helper&                      console_helper,
+                                              e2_connection_client&                e2_client_handler,
+                                              e2_metric_connector_manager&         e2_metric_connectors,
+                                              rlc_metrics_notifier&                rlc_json_metrics,
+                                              metrics_hub&                         metrics_hub,
+                                              span<scheduler_ue_metrics_notifier*> sched_metrics_subscribers)
 {
   auto du_cells = generate_du_cell_config_temp();
 
@@ -312,32 +315,32 @@ std::unique_ptr<flexible_du> srsran::create_du(const dynamic_du_unit_config&    
   const du_low_unit_config&  du_low   = dyn_du_cfg.du_low_cfg;
   const fapi_unit_config&    fapi_cfg = dyn_du_cfg.fapi_cfg;
 
-  std::vector<std::unique_ptr<du>> du_insts;
-  auto                             du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
+  std::vector<std::unique_ptr<du_wrapper>> du_insts;
+  auto                                     du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create a gNB config with one cell.
     du_high_unit_config tmp_cfg = du_high;
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = du_high.cells_cfg[i];
 
-    du_config                   du_cfg = {};
+    du_wrapper_config           du_cfg = {};
     std::vector<task_executor*> du_low_dl_exec;
     workers.get_du_low_dl_executors(du_low_dl_exec, i);
 
     // DU-low configuration.
-    du_cfg.du_lo = create_du_low_config(tmp_cfg,
-                                        du_low,
-                                        &du_impl->get_upper_ru_dl_rg_adapter(),
-                                        du_low_dl_exec,
-                                        workers.upper_pucch_exec[i],
-                                        workers.upper_pusch_exec[i],
-                                        workers.upper_pusch_decoder_exec[i],
-                                        workers.upper_prach_exec[i],
-                                        workers.upper_srs_exec[i],
-                                        workers.upper_pdsch_exec[i],
-                                        &du_impl->get_upper_ru_ul_request_adapter());
+    du_cfg.du_low_cfg = create_du_low_config(tmp_cfg,
+                                             du_low,
+                                             &du_impl->get_upper_ru_dl_rg_adapter(),
+                                             du_low_dl_exec,
+                                             workers.upper_pucch_exec[i],
+                                             workers.upper_pusch_exec[i],
+                                             workers.upper_pusch_decoder_exec[i],
+                                             workers.upper_prach_exec[i],
+                                             workers.upper_srs_exec[i],
+                                             workers.upper_pdsch_exec[i],
+                                             &du_impl->get_upper_ru_ul_request_adapter());
     // DU-high configuration.
-    srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
+    srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_high_cfg.du_hi;
     du_hi_cfg.exec_mapper                    = &workers.get_du_high_executor_mapper(i);
     du_hi_cfg.f1c_client                     = &f1c_client_handler;
     du_hi_cfg.f1u_gw                         = &f1u_gw;
@@ -396,20 +399,19 @@ std::unique_ptr<flexible_du> srsran::create_du(const dynamic_du_unit_config&    
                                                  du_high.test_mode_cfg.test_ue.i_2};
     }
     // FAPI configuration.
-    du_cfg.fapi.log_level = fapi_cfg.fapi_level;
-    du_cfg.fapi.sector    = i;
+    du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
+    du_cfg.du_high_cfg.fapi.sector    = i;
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
-      du_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
+      du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
     } else {
       report_error_if_not(workers.fapi_exec[i] == nullptr,
                           "FAPI buffered worker created for a cell with no MAC delay configured");
     }
 
     // As the temporal configuration contains only once cell, pick the data from that cell.
-    du_cfg.fapi.prach_ports        = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
-    du_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
+    du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
 
-    du_insts.push_back(make_du(du_cfg));
+    du_insts.push_back(make_du_wrapper(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");
   }
 

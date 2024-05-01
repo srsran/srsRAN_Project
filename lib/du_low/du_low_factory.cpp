@@ -8,15 +8,16 @@
  *
  */
 
+#include "srsran/du_low/du_low_factory.h"
 #include "du_low_impl.h"
 
 using namespace srsran;
 
-du_low_impl::du_low_impl(const du_low_configuration& du_low_cfg) : logger(*du_low_cfg.logger)
+static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&                     upper_config,
+                                                   const downlink_processor_factory_sw_config& dl_fact_config)
 {
   // Create downlink processor factory.
-  std::shared_ptr<downlink_processor_factory> dl_proc_factory =
-      create_downlink_processor_factory_sw(du_low_cfg.dl_proc_cfg);
+  std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
   report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
 
   // Create channel precoder factory.
@@ -32,9 +33,15 @@ du_low_impl::du_low_impl(const du_low_configuration& du_low_cfg) : logger(*du_lo
   report_fatal_error_if_not(upper_phy_factory, "Invalid upper PHY factory.");
 
   // Instantiate upper PHY.
-  phy_up = upper_phy_factory->create(du_low_cfg.upper_phy[0]);
-  report_error_if_not(phy_up != nullptr, "Unable to create upper PHY.");
-  logger.debug("Upper PHY created successfully");
+  return upper_phy_factory->create(upper_config);
+}
 
-  logger.debug("DU-low created successfully");
+std::unique_ptr<du_low> srsran::make_du_low(const du_low_config& config)
+{
+  std::vector<std::unique_ptr<upper_phy>> upper;
+  for (const auto& cell_cfg : config.upper_phy) {
+    upper.push_back(create_upper_phy(cell_cfg, config.dl_proc_cfg));
+  }
+
+  return std::make_unique<du_low_impl>(std::move(upper));
 }

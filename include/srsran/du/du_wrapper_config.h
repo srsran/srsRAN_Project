@@ -10,18 +10,15 @@
 
 #pragma once
 
+#include "srsran//du_low/du_low_wrapper_config.h"
+#include "srsran/du/du_high_wrapper_config.h"
+
 namespace srsran {
 
-class du
-{
-public:
-  virtual ~du() = default;
-
-  /// Starts the DU.
-  virtual void start() = 0;
-
-  /// Stops the DU.
-  virtual void stop() = 0;
+/// DU wrapper configuration.
+struct du_wrapper_config {
+  du_high_wrapper_config du_high_cfg;
+  du_low_wrapper_config  du_low_cfg;
 };
 
 } // namespace srsran
