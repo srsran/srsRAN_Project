@@ -47,8 +47,8 @@ TEST_F(du_ue_ric_config_tester,
 {
   std::vector<control_config_params> param_list;
   rrm_policy_ratio_group             pol;
-  pol.max_PRB_policy_ratio = 10;
-  pol.min_PRB_policy_ratio = 5;
+  pol.max_prb_policy_ratio = 10;
+  pol.min_prb_policy_ratio = 5;
   param_list.emplace_back(control_config_params{nullopt, nullopt, pol});
   start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, param_list});
 

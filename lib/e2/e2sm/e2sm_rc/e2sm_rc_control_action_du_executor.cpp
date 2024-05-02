@@ -142,12 +142,14 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
       if (!ctrl_cfg.param_list.back().rrm_policy_group.has_value()) {
         ctrl_cfg.param_list.back().rrm_policy_group.emplace();
       }
-      ctrl_cfg.param_list.back().rrm_policy_group.value().min_PRB_policy_ratio =
+      ctrl_cfg.param_list.back().rrm_policy_group.value().min_prb_policy_ratio.emplace();
+      ctrl_cfg.param_list.back().rrm_policy_group.value().min_prb_policy_ratio =
           ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
     } else {
       control_config_params cur_control_params = {};
       cur_control_params.rrm_policy_group.emplace();
-      cur_control_params.rrm_policy_group.value().min_PRB_policy_ratio =
+      cur_control_params.rrm_policy_group.value().min_prb_policy_ratio.emplace();
+      cur_control_params.rrm_policy_group.value().min_prb_policy_ratio =
           ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
       ctrl_cfg.param_list.push_back(cur_control_params);
     }
@@ -156,12 +158,14 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
       if (!ctrl_cfg.param_list.back().rrm_policy_group.has_value()) {
         ctrl_cfg.param_list.back().rrm_policy_group.emplace();
       }
-      ctrl_cfg.param_list.back().rrm_policy_group.value().max_PRB_policy_ratio =
+      ctrl_cfg.param_list.back().rrm_policy_group.value().max_prb_policy_ratio.emplace();
+      ctrl_cfg.param_list.back().rrm_policy_group.value().max_prb_policy_ratio =
           ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
     } else {
       control_config_params cur_control_params = {};
       cur_control_params.rrm_policy_group.emplace();
-      cur_control_params.rrm_policy_group.value().max_PRB_policy_ratio =
+      cur_control_params.rrm_policy_group.value().max_prb_policy_ratio.emplace();
+      cur_control_params.rrm_policy_group.value().max_prb_policy_ratio =
           ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
       ctrl_cfg.param_list.push_back(cur_control_params);
     }
@@ -249,16 +253,20 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
   control_config_params req = du_config_req_.param_list[0];
   if (req.rrm_policy_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s min_prb_outcome;
-    min_prb_outcome.ran_param_id                    = 10;
-    min_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().min_PRB_policy_ratio;
-    ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
+    min_prb_outcome.ran_param_id = 10;
+    if (req.rrm_policy_group.value().min_prb_policy_ratio.has_value()) {
+      min_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().min_prb_policy_ratio.value();
+      ctrl_outcome.ran_p_list.push_back(min_prb_outcome);
+    }
   }
 
   if (req.rrm_policy_group.has_value()) {
     e2sm_rc_ctrl_outcome_format1_item_s max_prb_outcome;
-    max_prb_outcome.ran_param_id                    = 11;
-    max_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().max_PRB_policy_ratio;
-    ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
+    max_prb_outcome.ran_param_id = 11;
+    if (req.rrm_policy_group.value().max_prb_policy_ratio.has_value()) {
+      max_prb_outcome.ran_param_value.set_value_int() = req.rrm_policy_group.value().max_prb_policy_ratio.value();
+      ctrl_outcome.ran_p_list.push_back(max_prb_outcome);
+    }
   }
 
   if (!e2sm_response.success) {

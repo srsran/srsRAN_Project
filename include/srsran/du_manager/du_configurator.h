@@ -17,11 +17,11 @@
 namespace srsran {
 
 struct control_config_params {
-  // sets the number of HARQ processes to be used.
-  optional<unsigned>               num_harq_processes;
-  // sets the number of HARQ retransmissions to be used.
-  optional<unsigned>               num_harq_retransmissions;
-  // set the radio resource management policy.
+  // Sets the number of HARQ processes to be used.
+  optional<unsigned> num_harq_processes;
+  // Sets the number of HARQ retransmissions to be used.
+  optional<unsigned> num_harq_retransmissions;
+  // Set the radio resource management policy.
   optional<rrm_policy_ratio_group> rrm_policy_group;
 };
 

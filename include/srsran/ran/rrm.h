@@ -20,14 +20,14 @@ struct rrm_policy_member {
 };
 
 struct rrm_policy_ratio_group {
-  // used to identify the group to which the policy is applied.
+  // Used to identify the group to which the policy is applied.
   rrm_policy_member pol_member;
-  // sets the minimum percentage of PRBs to be allocated to this group.
-  int               min_PRB_policy_ratio;
-  // sets the maximum percentage of PRBs to be allocated to this group.
-  int               max_PRB_policy_ratio;
-  // sets the percentage of PRBs to be allocated to this group.
-  int               ded_PRB_policy_ratio;
+  // Sets the minimum percentage of PRBs to be allocated to this group.
+  optional<int> min_prb_policy_ratio;
+  // Sets the maximum percentage of PRBs to be allocated to this group.
+  optional<int> max_prb_policy_ratio;
+  // Sets the percentage of PRBs to be allocated to this group.
+  optional<int> ded_prb_policy_ratio;
 };
 
 } // namespace srsran
