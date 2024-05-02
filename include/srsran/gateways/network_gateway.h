@@ -75,4 +75,5 @@ public:
   /// \brief Subscribe GW to IO broker for automatic notification of events.
   virtual bool subscribe_to(io_broker& broker) = 0;
 };
+
 } // namespace srsran
