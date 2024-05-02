@@ -154,13 +154,6 @@ void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
       }));
 }
 
-cu_up_processor_impl_interface& cu_up_processor_repository::find_cu_up(cu_up_index_t cu_up_index)
-{
-  srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
-  return *cu_up_db.at(cu_up_index).cu_up_processor;
-}
-
 cu_up_e1_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
@@ -168,11 +161,13 @@ cu_up_e1_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_inde
   return cu_up_db.at(cu_up_index);
 }
 
-cu_up_processor_impl_interface& cu_up_processor_repository::get_cu_up_processor(cu_up_index_t cu_up_index)
+cu_up_processor_impl_interface* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
-  return *cu_up_db.at(cu_up_index).cu_up_processor;
+  if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
+    return nullptr;
+  }
+  return cu_up_db.at(cu_up_index).cu_up_processor.get();
 }
 
 e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_message_handler()

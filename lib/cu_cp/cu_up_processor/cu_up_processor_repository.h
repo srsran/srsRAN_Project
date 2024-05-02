@@ -43,7 +43,10 @@ public:
 
   cu_up_e1_handler& get_cu_up(cu_up_index_t cu_up_index) override;
 
-  cu_up_processor_impl_interface& get_cu_up_processor(cu_up_index_t cu_up_index);
+  /// \brief Find a CU-UP object.
+  /// \param[in] cu_up_index The index of the CU-UP processor object.
+  /// \return The CU-UP processor object if it exists, nullptr otherwise.
+  cu_up_processor_impl_interface* find_cu_up_processor(cu_up_index_t cu_up_index);
 
 private:
   struct cu_up_context final : public cu_up_e1_handler {
@@ -54,11 +57,6 @@ private:
 
     e1ap_message_handler& get_message_handler() override;
   };
-
-  /// \brief Find a CU-UP object.
-  /// \param[in] cu_up_index The index of the CU-UP processor object.
-  /// \return The CU-UP processor object.
-  cu_up_processor_impl_interface& find_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Adds a CU-UP processor object to the CU-CP.
   /// \return The CU-UP index of the added CU-UP processor object.
