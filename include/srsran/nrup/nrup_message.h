@@ -24,7 +24,7 @@ namespace srsran {
 constexpr uint8_t nru_max_nof_pdcp_sn_discard_blocks = 16;
 /// Implementation-specific limit for number of lost NR-U SN ranges reported used for static allocation.
 /// According to TS 38.425 Sec. 5.5.3.15 the value range is {1..161}.
-constexpr uint8_t nru_max_nof_lost_nru_sn_ranges = 1;
+constexpr uint8_t nru_max_nof_lost_nru_sn_ranges = 2;
 
 /// Block of consecutive NR PDCP SNs to be discarded. Part of NR-U DL User Data (PDU Type 0).
 ///
