@@ -21,6 +21,9 @@ using namespace srsran;
 
 namespace {
 
+/// Maximum number of layers the PUSCH processor supports.
+static constexpr unsigned max_supported_nof_layers = 2;
+
 const pusch_processor::pdu_t base_pdu = {nullopt,
                                          {0, 9},
                                          8323,
@@ -32,7 +35,7 @@ const pusch_processor::pdu_t base_pdu = {nullopt,
                                          {0, 1, uci_part2_size_description(1), 1, 20, 6.25, 6.25},
                                          935,
                                          1,
-                                         {0},
+                                         {0, 1, 2, 3},
                                          {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
                                          dmrs_type::TYPE1,
                                          35840,
@@ -63,16 +66,16 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(The sum of the BWP start \(i\.e\., 0\) and size \(i\.e\., 276\) exceeds the maximum grid size \(i\.e\., 275 PRB\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.nof_tx_layers          = 2;
+       pdu.nof_tx_layers          = max_supported_nof_layers + 1;
        return pdu;
      },
-     R"(The number of transmit layers \(i\.e\., 2\) exceeds the maximum number of transmission layers \(i\.e\., 1\)\.)"},
+     R"(The number of transmit layers \(i\.e\., 3\) is out of the range \[1\.\.2\]\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.rx_ports               = {0, 1};
+       pdu.rx_ports.emplace_back(pusch_constants::MAX_NOF_RX_PORTS);
        return pdu;
      },
-     R"(The number of receive ports \(i\.e\., 2\) exceeds the maximum number of receive ports \(i\.e\., 1\)\.)"},
+     R"(The number of receive ports \(i\.e\., 5\) exceeds the maximum number of receive ports \(i\.e\., 4\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.bwp_size_rb            = 1;
@@ -246,8 +249,8 @@ protected:
     pusch_proc_factory_config.uci_dec_factory                      = uci_dec_factory;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_prb       = MAX_RB;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
-    pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = 1;
-    pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = 1;
+    pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = pusch_constants::MAX_NOF_RX_PORTS;
+    pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = max_supported_nof_layers;
     pusch_proc_factory_config.max_nof_concurrent_threads           = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(pusch_proc_factory_config);
