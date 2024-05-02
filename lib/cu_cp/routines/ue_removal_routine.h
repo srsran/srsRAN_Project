@@ -24,7 +24,7 @@ public:
   ue_removal_routine(ue_index_t                       ue_index_,
                      cu_cp_rrc_ue_notifier&           rrc_du_notifier_,
                      cu_cp_e1ap_ue_removal_notifier*  e1ap_notifier_,
-                     cu_cp_f1ap_ue_removal_notifier&  f1ap_notifier_,
+                     f1ap_ue_context_removal_handler& f1ap_removal_handler_,
                      ngap_ue_context_removal_handler& ngap_removal_handler_,
                      ue_manager&                      ue_mng_,
                      srslog::basic_logger&            logger_);
@@ -37,7 +37,7 @@ private:
   const ue_index_t                 ue_index;
   cu_cp_rrc_ue_notifier&           rrc_du_notifier;      // to trigger removal of the UE at the RRC
   cu_cp_e1ap_ue_removal_notifier*  e1ap_notifier;        // to trigger removal of the UE at the E1AP
-  cu_cp_f1ap_ue_removal_notifier&  f1ap_notifier;        // to trigger removal of the UE at the F1AP
+  f1ap_ue_context_removal_handler& f1ap_removal_handler; // to trigger removal of the UE at the F1AP
   ngap_ue_context_removal_handler& ngap_removal_handler; // to trigger removal of the UE at the NGAP
   ue_manager&                      ue_mng;               // to remove UE context from DU processor
   srslog::basic_logger&            logger;

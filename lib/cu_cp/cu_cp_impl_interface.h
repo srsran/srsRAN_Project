@@ -116,28 +116,6 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-/// Methods used by CU-CP to request removal of the UE context at the F1AP
-class cu_cp_f1ap_ue_removal_notifier
-{
-public:
-  virtual ~cu_cp_f1ap_ue_removal_notifier() = default;
-
-  /// \brief Remove the context of a UE at the F1AP.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
-};
-
-/// Methods used by CU-CP to request F1AP statistics
-class cu_cp_f1ap_statistics_notifier
-{
-public:
-  virtual ~cu_cp_f1ap_statistics_notifier() = default;
-
-  /// \brief Get the number of UEs registered at the F1AP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
-};
-
 /// Methods used by CU-CP to fetch or request removal of an RRC UE from the RRC DU
 class cu_cp_rrc_ue_notifier
 {

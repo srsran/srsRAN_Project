@@ -55,6 +55,10 @@ public:
   /// \return The F1AP UE context management handler interface of the DU processor object.
   virtual f1ap_ue_context_manager& get_f1ap_ue_context_manager() = 0;
 
+  /// \brief Get the F1AP UE context removal handler interface of the DU processor object.
+  /// \return The F1AP UE context removal handler interface of the DU processor object.
+  virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
+
   /// \brief Get the F1AP statistics handler interface of the DU processor object.
   /// \return The F1AP statistics handler interface of the DU processor object.
   virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;

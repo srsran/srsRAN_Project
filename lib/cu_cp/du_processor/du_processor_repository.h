@@ -72,6 +72,8 @@ public:
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
+  size_t get_nof_f1ap_ues();
+
 private:
   struct du_context {
     // CU-CP handler of DU processor events.

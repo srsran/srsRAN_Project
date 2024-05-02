@@ -523,13 +523,14 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
   auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
 
-  return launch_async<ue_removal_routine>(ue_index,
-                                          rrc_du_adapters.at(du_index),
-                                          e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
-                                          f1ap_adapters.at(du_index),
-                                          ngap_entity->get_ngap_ue_context_removal_handler(),
-                                          ue_mng,
-                                          logger);
+  return launch_async<ue_removal_routine>(
+      ue_index,
+      rrc_du_adapters.at(du_index),
+      e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
+      du_db.get_du_processor(du_index).get_f1ap_interface().get_f1ap_ue_context_removal_handler(),
+      ngap_entity->get_ngap_ue_context_removal_handler(),
+      ue_mng,
+      logger);
 }
 
 // private
@@ -540,8 +541,6 @@ void cu_cp_impl::handle_du_processor_creation(du_index_t                       d
                                               rrc_ue_handler&                  rrc_handler,
                                               rrc_du_statistics_handler&       rrc_statistic_handler)
 {
-  f1ap_adapters[du_index] = {};
-  f1ap_adapters.at(du_index).connect_f1ap(f1ap_handler, f1ap_statistic_handler);
   rrc_du_adapters[du_index] = {};
   rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
 }
@@ -573,10 +572,7 @@ bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 void cu_cp_impl::on_statistics_report_timer_expired()
 {
   // Get number of F1AP UEs
-  unsigned nof_f1ap_ues = 0;
-  for (auto& f1ap_adapter_pair : f1ap_adapters) {
-    nof_f1ap_ues += f1ap_adapter_pair.second.get_nof_ues();
-  }
+  unsigned nof_f1ap_ues = du_db.get_nof_f1ap_ues();
 
   // Get number of RRC UEs
   unsigned nof_rrc_ues = 0;

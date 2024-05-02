@@ -154,9 +154,6 @@ private:
   // CU-CP to E1AP adapters
   std::map<cu_up_index_t, cu_cp_e1ap_adapter> e1ap_adapters;
 
-  // CU-CP to F1AP adapters
-  std::map<du_index_t, cu_cp_f1ap_adapter> f1ap_adapters;
-
   // CU-CP to RRC DU adapters
   std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
 

@@ -48,35 +48,6 @@ private:
   e1ap_statistics_handler*             e1ap_statistic_handler = nullptr;
 };
 
-/// Adapter between CU-CP and F1AP to request UE removal
-class cu_cp_f1ap_adapter : public cu_cp_f1ap_ue_removal_notifier, public cu_cp_e1ap_statistics_notifier
-{
-public:
-  cu_cp_f1ap_adapter() = default;
-
-  void connect_f1ap(f1ap_ue_context_removal_handler& f1ap_ue_handler_, f1ap_statistics_handler& f1ap_statistic_handler_)
-  {
-    f1ap_ue_handler        = &f1ap_ue_handler_;
-    f1ap_statistic_handler = &f1ap_statistic_handler_;
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(f1ap_ue_handler != nullptr, "F1AP handler must not be nullptr");
-    f1ap_ue_handler->remove_ue_context(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(f1ap_statistic_handler != nullptr, "F1AP statistics handler must not be nullptr");
-    return f1ap_statistic_handler->get_nof_ues();
-  }
-
-private:
-  f1ap_ue_context_removal_handler* f1ap_ue_handler        = nullptr;
-  f1ap_statistics_handler*         f1ap_statistic_handler = nullptr;
-};
-
 /// Adapter between CU-CP and RRC DU to request UE removal
 class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_notifier, public cu_cp_rrc_du_statistics_notifier
 {
