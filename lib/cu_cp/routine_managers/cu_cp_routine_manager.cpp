@@ -74,7 +74,7 @@ cu_cp_routine_manager::start_pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd,
     e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng,
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng,
-    du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
+    ngap_control_message_handler&                     ngap_handler,
     du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
     du_processor_ue_task_scheduler&                   task_sched,
     up_resource_manager&                              rrc_ue_up_resource_manager)
@@ -82,7 +82,7 @@ cu_cp_routine_manager::start_pdu_session_resource_release_routine(
   return launch_async<pdu_session_resource_release_routine>(release_cmd,
                                                             e1ap_bearer_ctxt_mng,
                                                             f1ap_ue_ctxt_mng,
-                                                            ngap_ctrl_notifier,
+                                                            ngap_handler,
                                                             rrc_ue_ctrl_notifier,
                                                             task_sched,
                                                             rrc_ue_up_resource_manager,

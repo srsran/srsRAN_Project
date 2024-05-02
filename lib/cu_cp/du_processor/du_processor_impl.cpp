@@ -24,7 +24,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
-                                     du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
@@ -35,7 +34,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_du_mgmt_notifier(f1ap_du_mgmt_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
-  ngap_ctrl_notifier(ngap_ctrl_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
@@ -411,7 +409,7 @@ void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index
   task_sched.schedule_async_task(ue_index, launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
                                    CORO_BEGIN(ctx);
                                    // Notify NGAP to request a release from the AMF
-                                   CORO_AWAIT(ngap_ctrl_notifier.on_ue_context_release_request(req));
+                                   CORO_AWAIT(cu_cp_notifier.on_ue_release_required(req));
                                    CORO_RETURN();
                                  }));
 }

@@ -42,7 +42,6 @@ public:
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
                     f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                     f1ap_message_notifier&              f1ap_notifier_,
-                    du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
@@ -136,7 +135,6 @@ private:
   du_processor_cu_cp_notifier&         cu_cp_notifier;
   f1ap_du_management_notifier&         f1ap_du_mgmt_notifier;
   f1ap_message_notifier&               f1ap_pdu_notifier;
-  du_processor_ngap_control_notifier&  ngap_ctrl_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
   du_processor_ue_task_scheduler&      task_sched;

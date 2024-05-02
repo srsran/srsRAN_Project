@@ -19,7 +19,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd_,
     e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-    du_processor_ngap_control_notifier&               ngap_ctrl_notifier_,
+    ngap_control_message_handler&                     ngap_handler_,
     du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
     du_processor_ue_task_scheduler&                   task_sched_,
     up_resource_manager&                              rrc_ue_up_resource_manager_,
@@ -27,7 +27,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
   release_cmd(release_cmd_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
-  ngap_ctrl_notifier(ngap_ctrl_notifier_),
+  ngap_handler(ngap_handler_),
   rrc_ue_notifier(rrc_ue_notifier_),
   task_sched(task_sched_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
@@ -170,13 +170,12 @@ pdu_session_resource_release_routine::handle_pdu_session_resource_release_respon
     // Trigger UE context release request.
     cu_cp_ue_context_release_request req{release_cmd.ue_index};
     req.cause = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
-    task_sched.schedule_async_task(
-        release_cmd.ue_index,
-        launch_async([ngap_notif = &ngap_ctrl_notifier, req](coro_context<async_task<void>>& ctx) {
-          CORO_BEGIN(ctx);
-          CORO_AWAIT(ngap_notif->on_ue_context_release_request(req));
-          CORO_RETURN();
-        }));
+    task_sched.schedule_async_task(release_cmd.ue_index,
+                                   launch_async([ngap_notif = &ngap_handler, req](coro_context<async_task<void>>& ctx) {
+                                     CORO_BEGIN(ctx);
+                                     CORO_AWAIT(ngap_notif->handle_ue_context_release_request(req));
+                                     CORO_RETURN();
+                                   }));
   }
 
   return response_msg;

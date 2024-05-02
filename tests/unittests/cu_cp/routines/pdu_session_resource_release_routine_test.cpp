@@ -32,7 +32,7 @@ protected:
     t = routine_mng->start_pdu_session_resource_release_routine(msg,
                                                                 e1ap_bearer_ctxt_mng,
                                                                 f1ap_ue_ctxt_mng,
-                                                                ngap_control_notifier,
+                                                                ngap_control_handler,
                                                                 rrc_ue_ctrl_notifier,
                                                                 *ue_task_sched,
                                                                 *rrc_ue_up_resource_manager);

@@ -410,11 +410,11 @@ private:
   optional<bearer_context_outcome_t> second_e1ap_response;
 };
 
-struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
+struct dummy_ngap_control_message_handler : public ngap_control_message_handler {
 public:
-  dummy_du_processor_ngap_control_notifier() = default;
+  dummy_ngap_control_message_handler() = default;
 
-  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
     return launch_async([this](coro_context<async_task<bool>>& ctx) {
@@ -424,12 +424,19 @@ public:
   }
 
   async_task<ngap_handover_preparation_response>
-  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
+  handle_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
     return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ngap_handover_preparation_response{false});
     });
+  }
+
+  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                             const nr_cell_global_id_t& cgi,
+                                             const unsigned             tac) override
+  {
+    logger.info("Received a RRC Reconfiguration Complete for Inter-CU Handover");
   }
 
   void set_ue_context_release_request_outcome(bool outcome_) { release_request_outcome = outcome_; }

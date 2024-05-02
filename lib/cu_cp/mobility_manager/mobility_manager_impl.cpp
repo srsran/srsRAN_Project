@@ -15,14 +15,14 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-mobility_manager::mobility_manager(const mobility_manager_cfg&         cfg_,
-                                   mobility_manager_cu_cp_notifier&    cu_cp_notifier_,
-                                   du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
-                                   du_processor_repository&            du_db_,
-                                   ue_manager&                         ue_mng_) :
+mobility_manager::mobility_manager(const mobility_manager_cfg&      cfg_,
+                                   mobility_manager_cu_cp_notifier& cu_cp_notifier_,
+                                   ngap_control_message_handler&    ngap_handler_,
+                                   du_processor_repository&         du_db_,
+                                   ue_manager&                      ue_mng_) :
   cfg(cfg_),
   cu_cp_notifier(cu_cp_notifier_),
-  ngap_ctrl_notifier(ngap_ctrl_notifier_),
+  ngap_handler(ngap_handler_),
   du_db(du_db_),
   ue_mng(ue_mng_),
   logger(srslog::fetch_basic_logger("CU-CP"))
@@ -148,7 +148,7 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
   auto ho_trigger =
       [this, request, response = ngap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(response, ngap_ctrl_notifier.on_ngap_handover_preparation_request(request));
+        CORO_AWAIT_VALUE(response, ngap_handler.handle_handover_preparation_request(request));
         CORO_RETURN();
       };
   ue_task.handle_ue_async_task(request.ue_index, launch_async(std::move(ho_trigger)));

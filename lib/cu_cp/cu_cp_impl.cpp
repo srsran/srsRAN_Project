@@ -11,6 +11,7 @@
 #include "cu_cp_impl.h"
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
+#include "mobility_manager/mobility_manager_factory.h"
 #include "routines/ue_removal_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -37,18 +38,12 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
-  mobility_mng(config_.mobility_config.mobility_manager_config,
-               mobility_manager_ev_notifier,
-               du_processor_ngap_notifier,
-               du_db,
-               ue_mng),
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   routine_mng(ue_mng, cfg.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
-                             du_processor_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              du_processor_task_sched,
@@ -66,7 +61,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, *this);
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
-  cell_meas_ev_notifier.connect_mobility_manager(mobility_mng);
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
   conn_notifier.connect_node_connection_handler(controller);
 
@@ -85,9 +79,15 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
                             ngap_entity->get_ngap_ue_context_removal_handler(),
                             ngap_entity->get_ngap_statistics_handler());
-  du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
+
+  mobility_mng = create_mobility_manager(cfg.mobility_config.mobility_manager_config,
+                                         mobility_manager_ev_notifier,
+                                         ngap_entity->get_ngap_control_message_handler(),
+                                         du_db,
+                                         ue_mng);
+  cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng);
 
   // Start statistics report timer
   statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
@@ -403,7 +403,7 @@ cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_sess
       du_db.get_du_processor(get_du_index_from_ue_index(command.ue_index))
           .get_f1ap_interface()
           .get_f1ap_ue_context_manager(),
-      du_processor_ngap_notifier,
+      ngap_entity->get_ngap_control_message_handler(),
       ue->get_rrc_ue_notifier(),
       du_processor_task_sched,
       ue->get_up_resource_manager());
@@ -501,10 +501,6 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
                                              du_index_t&                            source_du_index,
                                              du_index_t&                            target_du_index)
 {
-  srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
-                "cu_up_index={}: could not find CU-UP",
-                uint_to_cu_up_index(0));
-
   du_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
 

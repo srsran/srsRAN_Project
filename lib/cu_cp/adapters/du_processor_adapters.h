@@ -306,31 +306,6 @@ private:
   rrc_ue_srb_handler*             srb_handler    = nullptr;
 };
 
-// Adapter between DU processor and NGAP
-class du_processor_ngap_adapter : public du_processor_ngap_control_notifier
-{
-public:
-  du_processor_ngap_adapter() = default;
-
-  void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
-
-  async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
-  {
-    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
-    return ngap_handler->handle_ue_context_release_request(msg);
-  }
-
-  async_task<ngap_handover_preparation_response>
-  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& msg) override
-  {
-    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
-    return ngap_handler->handle_handover_preparation_request(msg);
-  }
-
-private:
-  ngap_control_message_handler* ngap_handler = nullptr;
-};
-
 class du_processor_cu_cp_connection_adapter final : public du_connection_notifier
 {
 public:

@@ -102,7 +102,7 @@ public:
   // cu_cp_ue_removal_handler
   async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
 
-  cu_cp_mobility_command_handler& get_mobility_command_handler() override { return mobility_mng; }
+  cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *mobility_mng; }
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp public interface
@@ -145,7 +145,7 @@ private:
 
   ue_manager ue_mng;
 
-  mobility_manager mobility_mng;
+  std::unique_ptr<mobility_manager> mobility_mng;
 
   cell_meas_manager cell_meas_mng; // cell measurement manager
 
@@ -168,9 +168,6 @@ private:
 
   // DU repository to Node Manager adapter.
   du_processor_cu_cp_connection_adapter conn_notifier;
-
-  // DU Processor to NGAP adapter
-  du_processor_ngap_adapter du_processor_ngap_notifier;
 
   // Cell Measurement Manager to mobility manager adapters
   cell_meas_mobility_manager_adapter cell_meas_ev_notifier;

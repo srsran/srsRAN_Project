@@ -40,7 +40,7 @@ protected:
   manual_task_worker                                    ctrl_worker{128};
   dummy_e1ap_bearer_context_manager                     e1ap_bearer_ctxt_mng;
   dummy_f1ap_ue_context_manager                         f1ap_ue_ctxt_mng;
-  dummy_du_processor_ngap_control_notifier              ngap_control_notifier;
+  dummy_ngap_control_message_handler                    ngap_control_handler;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   ue_manager                                            ue_mng{ue_config, drb_cfg, timers, ctrl_worker};
   dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;

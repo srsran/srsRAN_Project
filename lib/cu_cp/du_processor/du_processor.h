@@ -226,21 +226,6 @@ public:
   virtual ue_index_t allocate_new_ue_index() = 0;
 };
 
-/// Interface to notify the NGAP about control messages.
-class du_processor_ngap_control_notifier
-{
-public:
-  virtual ~du_processor_ngap_control_notifier() = default;
-
-  /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
-  /// \param[in] msg The UE Context Release Request.
-  /// \returns True if successful, false otherwise.
-  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
-
-  virtual async_task<ngap_handover_preparation_response>
-  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& req) = 0;
-};
-
 /// Interface to notify the F1AP about control messages.
 class du_processor_f1ap_control_notifier
 {
