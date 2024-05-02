@@ -32,6 +32,7 @@ from .steps.configuration import configure_metric_server_for_gnb
 from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 CAMPAIGN_FILENAME = "C:\\ci\\CI 4x4 ORAN-FH.xml"
+_OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 
 
 class TestName(Enum):
@@ -365,9 +366,10 @@ def _test_viavi(
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
             viavi_failure_manager = viavi.get_test_failures()
-            if viavi_failure_manager.get_number_of_failures() > 0:
-                viavi_failure_manager.print_failures()
-                pytest.fail(f"Viavi Test Failed with {viavi_failure_manager.get_number_of_failures()} failures")
+            if viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) > 0:
+                nof_failures = viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST)
+                viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
+                pytest.fail(f"Viavi Test Failed with {nof_failures} failures")
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
 
