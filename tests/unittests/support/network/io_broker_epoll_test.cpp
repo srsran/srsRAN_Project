@@ -268,9 +268,17 @@ TEST_F(io_broker_epoll, error_callback_called_when_epollhup)
   int pipefd[2];
   ASSERT_EQ(pipe(pipefd), 0);
 
+  std::promise<void> p;
+  std::future<void>  f = p.get_future();
+
   // Subscribe pipe fd.
   auto sub = this->epoll_broker->register_fd(
-      pipefd[0], []() {}, [this](io_broker::error_code code) { this->error_count++; });
+      pipefd[0],
+      []() {},
+      [this, &p](io_broker::error_code code) {
+        this->error_count++;
+        p.set_value();
+      });
   ASSERT_TRUE(sub.registered());
 
   // Close pipe, while subscribed. This will cause an EPOLLHUP event.
@@ -278,12 +286,6 @@ TEST_F(io_broker_epoll, error_callback_called_when_epollhup)
   close(pipefd[1]);
 
   // Check if the error handler was called. The error can take some time to trigger the epoll.
-  const unsigned max_retries = 1000;
-  for (unsigned i = 0; i != max_retries; ++i) {
-    if (this->error_count == 1) {
-      break;
-    }
-    std::this_thread::sleep_for(std::chrono::microseconds{10});
-  }
+  f.wait();
   ASSERT_EQ(this->error_count, 1);
 }
