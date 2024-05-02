@@ -151,7 +151,11 @@ struct nru_dl_data_delivery_status {
 /// NR-U Assistance Information (PDU Type 2).
 ///
 /// Ref: TS 38.425 Sec. 5.5.2.3, Sec. 5.5.3.
-struct nru_assistance_information {};
+struct nru_assistance_information {
+  // TODO: NR-U Assistance Information is not implemented
+
+  bool operator==(const nru_assistance_information& other) const { return true; }
+};
 
 /// NR-U DL message exchanged from node holding a PDCP entity (CU-UP) to the peer node (DU).
 struct nru_dl_message {
@@ -161,6 +165,11 @@ struct nru_dl_message {
   optional<uint32_t> pdcp_sn;
   /// NR-U DL User Data.
   nru_dl_user_data dl_user_data;
+
+  bool operator==(const nru_dl_message& other) const
+  {
+    return t_pdu == other.t_pdu && pdcp_sn == other.pdcp_sn && dl_user_data == other.dl_user_data;
+  }
 };
 
 /// NR-U UL message exchanged from node the peer node (DU) to the node holding a PDCP entity (CU-UP).
@@ -171,6 +180,12 @@ struct nru_ul_message {
   optional<nru_dl_data_delivery_status> data_delivery_status;
   /// NR-U Assistance Information.
   optional<nru_assistance_information> assistance_information;
+
+  bool operator==(const nru_ul_message& other) const
+  {
+    return t_pdu == other.t_pdu && data_delivery_status == other.data_delivery_status &&
+           assistance_information == other.assistance_information;
+  }
 };
 
 } // namespace srsran
