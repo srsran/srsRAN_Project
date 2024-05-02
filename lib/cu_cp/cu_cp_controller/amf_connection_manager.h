@@ -18,7 +18,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 class cu_cp_routine_manager;
-class cu_cp_ngap_control_notifier;
 class ngap_cu_cp_connection_notifier;
 
 class amf_connection_manager

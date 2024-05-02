@@ -22,32 +22,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Methods used by CU-CP to initiate NGAP connection procedures.
-class cu_cp_ngap_control_notifier
-{
-public:
-  virtual ~cu_cp_ngap_control_notifier() = default;
-
-  /// \brief Notifies the NGAP to initiate a NG Setup Procedure.
-  /// \param[in] request The NG Setup Request.
-  virtual async_task<ngap_ng_setup_result> on_ng_setup_request(const ngap_ng_setup_request& request) = 0;
-
-  /// \brief Remove the context of a UE at the NGAP.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
-};
-
-/// Methods used by CU-CP to request NGAP statistics
-class cu_cp_ngap_statistics_notifier
-{
-public:
-  virtual ~cu_cp_ngap_statistics_notifier() = default;
-
-  /// \brief Get the number of UEs registered at the NGAP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
-};
-
 class cu_cp_ue_context_release_handler
 {
 public:
