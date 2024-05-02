@@ -49,7 +49,7 @@ public:
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
-  bool amf_is_connected() override { return controller.amf_connection_handler().is_amf_connected(); };
+  bool amf_is_connected() override { return controller->amf_connection_handler().is_amf_connected(); };
 
   // CU-UP handler
   void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
@@ -151,9 +151,6 @@ private:
 
   cu_cp_routine_manager routine_mng;
 
-  // CU-CP to NGAP adapter
-  cu_cp_ngap_adapter ngap_adapter;
-
   // CU-CP to E1AP adapters
   std::map<cu_up_index_t, cu_cp_e1ap_adapter> e1ap_adapters;
 
@@ -195,7 +192,7 @@ private:
   cu_up_processor_repository cu_up_db;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
-  cu_cp_controller controller;
+  std::unique_ptr<cu_cp_controller> controller;
 
   std::unique_ptr<metrics_handler> metrics_hdlr;
 

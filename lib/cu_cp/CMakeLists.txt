@@ -13,6 +13,7 @@ add_subdirectory(up_resource_manager)
 set(SOURCES
       cu_cp_factory.cpp
       cu_cp_impl.cpp
+      cu_cp_controller/cu_cp_controller_factory.cpp
       cu_cp_controller/cu_cp_controller.cpp
       cu_cp_controller/amf_connection_manager.cpp
       cu_up_processor/cu_up_processor_impl.cpp

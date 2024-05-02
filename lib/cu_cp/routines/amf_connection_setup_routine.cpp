@@ -14,9 +14,9 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration&    ngap_config_,
-                                                           cu_cp_ngap_control_notifier& ngap_ctrl_notifier_) :
-  ngap_cfg(ngap_config_), ngap_ctrl_notifier(ngap_ctrl_notifier_)
+amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration& ngap_config_,
+                                                           ngap_connection_manager&  ngap_conn_mng_) :
+  ngap_cfg(ngap_config_), ngap_conn_mng(ngap_conn_mng_)
 {
 }
 
@@ -73,5 +73,5 @@ async_task<ngap_ng_setup_result> amf_connection_setup_routine::send_ng_setup_req
   request.max_setup_retries     = 1;
 
   // Initiate NG Setup Request.
-  return ngap_ctrl_notifier.on_ng_setup_request(request);
+  return ngap_conn_mng.handle_ng_setup_request(request);
 }

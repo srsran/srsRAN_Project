@@ -33,7 +33,7 @@ class cu_cp_controller
 public:
   cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
                    const ngap_configuration&         ngap_cfg_,
-                   cu_cp_ngap_control_notifier&      ngap_ctrl_notif_,
+                   ngap_connection_manager&          ngap_conn_mng_,
                    const cu_up_processor_repository& cu_ups_);
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }

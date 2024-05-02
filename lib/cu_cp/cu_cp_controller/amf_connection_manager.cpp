@@ -16,10 +16,10 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_manager::amf_connection_manager(cu_cp_routine_manager&       routine_manager_,
-                                               const ngap_configuration&    ngap_cfg_,
-                                               cu_cp_ngap_control_notifier& ngap_ctrl_notifier_) :
-  routine_manager(routine_manager_), ngap_cfg(ngap_cfg_), ngap_ctrl_notifier(ngap_ctrl_notifier_)
+amf_connection_manager::amf_connection_manager(cu_cp_routine_manager&    routine_manager_,
+                                               const ngap_configuration& ngap_cfg_,
+                                               ngap_connection_manager&  ngap_conn_mng_) :
+  routine_manager(routine_manager_), ngap_cfg(ngap_cfg_), ngap_conn_mng(ngap_conn_mng_)
 {
 }
 
@@ -31,7 +31,7 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
         CORO_BEGIN(ctx);
 
         // Launch procedure to initiate AMF connection.
-        CORO_AWAIT_VALUE(bool success, launch_async<amf_connection_setup_routine>(ngap_cfg, ngap_ctrl_notifier));
+        CORO_AWAIT_VALUE(bool success, launch_async<amf_connection_setup_routine>(ngap_cfg, ngap_conn_mng));
 
         // Handle result of NG setup.
         handle_connection_setup_result(success);

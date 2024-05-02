@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_impl.h"
+#include "cu_cp_controller/cu_cp_controller_factory.h"
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
@@ -52,7 +53,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  controller(routine_mng, cfg.ngap_config, ngap_adapter, cu_up_db),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
@@ -62,7 +62,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
-  conn_notifier.connect_node_connection_handler(controller);
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_mng.get_task_sched());
@@ -76,11 +75,12 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                             ue_mng,
                             *cfg.ngap_notifier,
                             *cfg.cu_cp_executor);
-  ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
-                            ngap_entity->get_ngap_ue_context_removal_handler(),
-                            ngap_entity->get_ngap_statistics_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
+
+  controller =
+      create_cu_cp_controller(routine_mng, cfg.ngap_config, ngap_entity->get_ngap_connection_manager(), cu_up_db);
+  conn_notifier.connect_node_connection_handler(*controller);
 
   mobility_mng = create_mobility_manager(cfg.mobility_config.mobility_manager_config,
                                          mobility_manager_ev_notifier,
@@ -108,7 +108,7 @@ bool cu_cp_impl::start()
 
   if (not cfg.cu_cp_executor->execute([this, &p]() {
         // start AMF connection procedure.
-        controller.amf_connection_handler().connect_to_amf(&p);
+        controller->amf_connection_handler().connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup.");
   }
@@ -527,7 +527,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                           rrc_du_adapters.at(du_index),
                                           e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
                                           f1ap_adapters.at(du_index),
-                                          ngap_adapter,
+                                          ngap_entity->get_ngap_ue_context_removal_handler(),
                                           ue_mng,
                                           logger);
 }
@@ -556,7 +556,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
   // Connect cu-cp to rrc ue adapters
   ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(
-      get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), controller, get_cu_cp_measurement_handler());
+      get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), *controller, get_cu_cp_measurement_handler());
 }
 
 byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi)
@@ -586,7 +586,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
 
   // Get number of NGAP UEs
   unsigned nof_ngap_ues = 0;
-  nof_ngap_ues          = ngap_adapter.get_nof_ues();
+  nof_ngap_ues          = ngap_entity->get_ngap_statistics_handler().get_nof_ues();
 
   // Get number of E1AP UEs
   unsigned nof_e1ap_ues = 0;
