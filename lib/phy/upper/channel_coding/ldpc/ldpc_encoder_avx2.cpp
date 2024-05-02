@@ -167,7 +167,8 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
                         _mm512_xor_si512(_mm512_loadu_si512(in0_local++), _mm512_loadu_si512(in1_local++)));
   }
 
-  __mmask64 mask = (1 << (out.size() % AVX512_SIZE_BYTE)) - 1;
+  uint64_t  remainder = in0.size() - i;
+  __mmask64 mask      = (1UL << remainder) - 1UL;
   _mm512_mask_storeu_epi8(
       out_local,
       mask,
