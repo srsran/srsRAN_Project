@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_library(du_processor_test_helpers du_processor_test_helpers.cpp du_processor_routine_manager_test_helpers.cpp)
+add_library(du_processor_test_helpers du_processor_test_helpers.cpp)
 target_include_directories(du_processor_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_processor_test_helpers
         cu_cp_test_helpers
@@ -23,7 +23,6 @@ target_link_libraries(du_processor_test_helpers
 
 set(SOURCES
         du_processor_test.cpp
-        ue_context_release_routine_test.cpp
         )
 
 add_executable(du_processor_test ${SOURCES})

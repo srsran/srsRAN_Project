@@ -148,8 +148,7 @@ TEST_F(ue_manager_test, when_ngap_ue_context_exists_then_du_ue_removal_successfu
   auto* ue = ue_mng.set_ue_du_context(ue_index, int_to_gnb_du_id(0), MIN_PCI, rnti);
 
   // add a NGAP context
-  auto* ue_ngap = ue_mng.set_ue_ng_context(
-      ue->get_ue_index(), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue_ngap = ue_mng.set_ue_ng_context(ue->get_ue_index(), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
   // check that the UE has been created
   ASSERT_NE(ue_ngap, nullptr);
 
@@ -257,8 +256,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
 /// Test creation of NGAP UE before creation of a DU UE
 TEST_F(ue_manager_test, when_ue_not_created_then_ngap_ue_not_added)
 {
-  auto* ue = ue_mng.set_ue_ng_context(
-      uint_to_ue_index(0), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(uint_to_ue_index(0), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);
@@ -270,7 +268,7 @@ TEST_F(ue_manager_test, when_ue_created_then_then_ngap_ue_added)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), int_to_gnb_du_id(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   // check that the NGAP UE has been added
   ASSERT_NE(ue, nullptr);
@@ -288,7 +286,7 @@ TEST_F(ue_manager_test, when_ue_index_invalid_then_ngap_ue_not_found)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), int_to_gnb_du_id(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   // check that the NGAP UE has been created
   ASSERT_NE(ue, nullptr);
@@ -302,7 +300,7 @@ TEST_F(ue_manager_test, when_ngap_context_already_exits_then_ue_not_added)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), int_to_gnb_du_id(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   // check that the NGAP UE has been created
   ASSERT_NE(ue, nullptr);
@@ -310,7 +308,7 @@ TEST_F(ue_manager_test, when_ngap_context_already_exits_then_ue_not_added)
   // check that the number of NGAP UEs is 1
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 1U);
 
-  auto* ue2 = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue2 = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   // check that the UE has not been added
   ASSERT_EQ(ue2, nullptr);
@@ -323,7 +321,7 @@ TEST_F(ue_manager_test, when_du_ue_context_exists_then_ngap_ue_removal_successfu
   du_index_t du_index = uint_to_du_index(0);
   ue_index_t ue_index = create_ue(du_index, int_to_gnb_du_id(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   ue_mng.remove_ue(ue->get_ue_index());
 
@@ -338,7 +336,7 @@ TEST_F(ue_manager_test, when_ngap_ue_exists_then_removal_successful)
 
   ue_index_t ue_index = create_ue(du_index, int_to_gnb_du_id(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+  auto* ue = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
   ue_mng.remove_ue(ue->get_ue_index());
 
@@ -362,8 +360,7 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
     for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
          it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), int_to_gnb_du_id(0), MIN_PCI, to_rnti(du_offset + it));
-      auto*      ue =
-          ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+      auto*      ue       = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
       // check that the UE has been created
       ASSERT_NE(ue, nullptr);
@@ -398,8 +395,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
     for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
          it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), int_to_gnb_du_id(0), MIN_PCI, to_rnti(du_offset + it));
-      auto*      ue =
-          ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
+      auto*      ue       = ue_mng.set_ue_ng_context(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier);
 
       // check that the UE has been created
       ASSERT_NE(ue, nullptr);

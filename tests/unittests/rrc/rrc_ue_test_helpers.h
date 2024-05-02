@@ -97,7 +97,6 @@ protected:
     ue_cfg.meas_timings.push_back(meas_timing);
     ue_cfg.rrc_procedure_timeout_ms = rrc_procedure_timeout_ms;
     rrc_ue                          = std::make_unique<rrc_ue_impl>(*up_resource_mng,
-                                           rrc_ue_ev_notifier,
                                            *rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
@@ -415,7 +414,6 @@ protected:
   std::unique_ptr<up_resource_manager> up_resource_mng =
       create_up_resource_manager(up_resource_manager_cfg{cfg.drb_config});
   dummy_rrc_f1ap_pdu_notifier              rrc_ue_f1ap_notifier;
-  dummy_rrc_ue_du_processor_adapter        rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter               rrc_ue_cu_cp_notifier;
   timer_manager                            timers;

@@ -23,8 +23,6 @@ du_processor_test::du_processor_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  cu_cp_notifier = std::make_unique<dummy_du_processor_cu_cp_notifier>(ngap_ue_removal_handler, &ue_mng);
-
   // create ue task scheduler
   ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
 
@@ -34,10 +32,9 @@ du_processor_test::du_processor_test()
   du_cfg.du_setup_notif        = &du_conn_notifier;
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
-                                         *cu_cp_notifier,
+                                         cu_cp_notifier,
                                          f1ap_du_mgmt_notifier,
                                          f1ap_pdu_notifier,
-                                         e1ap_ctrl_notifier,
                                          ngap_ctrl_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,

@@ -89,8 +89,8 @@ TEST_F(ngap_nas_message_routine_test, when_initial_context_setup_request_is_not_
   }
 
   // check that UE release was requested
-  ASSERT_NE(du_processor_notifier->last_command.ue_index, ue_index_t::invalid);
-  ASSERT_EQ(du_processor_notifier->last_command.cause, ngap_cause_t{ngap_cause_radio_network_t::unspecified});
+  ASSERT_NE(cu_cp_notifier.last_command.ue_index, ue_index_t::invalid);
+  ASSERT_EQ(cu_cp_notifier.last_command.cause, ngap_cause_t{ngap_cause_radio_network_t::unspecified});
 }
 
 /// Test DL NAS transport handling

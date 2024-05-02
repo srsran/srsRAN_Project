@@ -26,7 +26,6 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
     rrc_ue_srb_handler&                      srb_notifier_,
-    rrc_ue_du_processor_notifier&            du_processor_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,
     rrc_ue_event_manager&                    event_mng_,
@@ -38,7 +37,6 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   rrc_ue_setup_notifier(rrc_ue_setup_notifier_),
   rrc_ue_reest_notifier(rrc_ue_reest_notifier_),
   srb_notifier(srb_notifier_),
-  du_processor_notifier(du_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   nas_notifier(nas_notifier_),
   event_mng(event_mng_),
@@ -94,7 +92,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
     // Notify DU Processor to start a Reestablishment Context Modification Routine
     CORO_AWAIT_VALUE(context_modification_success,
-                     du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index));
+                     cu_cp_notifier.on_rrc_reestablishment_context_modification_required());
 
     // trigger UE context release at AMF in case of failure
     if (not context_modification_success) {

@@ -33,7 +33,6 @@ struct du_repository_config {
   cu_cp_du_event_handler&                cu_cp_du_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier&    ngap_ctrl_notifier;
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
@@ -69,8 +68,6 @@ public:
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
   ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& nci) override;
-  async_task<ngap_handover_resource_allocation_response>
-  handle_ngap_handover_request(const ngap_handover_request& request) override;
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
@@ -80,9 +77,6 @@ private:
   struct du_context {
     // CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
-
-    // NGAP to DU processor notifier;
-    ngap_du_processor_adapter ngap_du_processor_notifier;
 
     std::unique_ptr<du_processor> processor;
 

@@ -37,14 +37,17 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
-  mobility_mng(config_.mobility_config.mobility_manager_config, du_processor_ngap_notifier, du_db, ue_mng),
+  mobility_mng(config_.mobility_config.mobility_manager_config,
+               mobility_manager_ev_notifier,
+               du_processor_ngap_notifier,
+               du_db,
+               ue_mng),
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   routine_mng(ue_mng, cfg.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
-                             du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
@@ -61,6 +64,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(du_db, *this);
+  mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   cell_meas_ev_notifier.connect_mobility_manager(mobility_mng);
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
@@ -156,8 +160,6 @@ void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager&         bearer
                                      e1ap_bearer_context_removal_handler& bearer_removal_handler,
                                      e1ap_statistics_handler&             e1ap_statistic_handler)
 {
-  // Connect e1ap to DU processor
-  du_processor_e1ap_notifier.connect_e1ap(bearer_context_manager);
   // Connect e1ap to CU-CP
   e1ap_adapters[uint_to_cu_up_index(0)] = {};
   e1ap_adapters.at(uint_to_cu_up_index(0)).connect_e1ap(bearer_removal_handler, e1ap_statistic_handler);
@@ -197,6 +199,19 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   reest_context.ue_index              = old_ue_index;
 
   return reest_context;
+}
+
+async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
+{
+  du_ue* ue = ue_mng.find_du_ue(ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
+
+  return routine_mng.start_reestablishment_context_modification_routine(
+      ue_index,
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(get_du_index_from_ue_index(ue_index)).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      ue->get_rrc_ue_notifier(),
+      ue->get_up_resource_manager());
 }
 
 void cu_cp_impl::handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request)
@@ -313,9 +328,7 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
                      ngap_entity->get_ngap_control_message_handler().handle_ue_context_release_request(request));
     if (!result) {
       // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
-      CORO_AWAIT(du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
-                     .get_ue_context_notifier()
-                     .handle_ue_context_release_command({request.ue_index, request.cause}));
+      CORO_AWAIT(handle_ue_context_release_command({request.ue_index, request.cause}));
     }
     CORO_RETURN();
   });
@@ -376,6 +389,72 @@ cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_sess
       ue->get_up_resource_manager());
 }
 
+async_task<cu_cp_ue_context_release_complete>
+cu_cp_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& command)
+{
+  e1ap_bearer_context_manager* e1ap_bearer_ctxt_mng = nullptr;
+  if (cu_up_db.get_nof_cu_ups() != 0) {
+    e1ap_bearer_ctxt_mng = &cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager();
+  }
+
+  return routine_mng.start_ue_context_release_routine(
+      command,
+      e1ap_bearer_ctxt_mng,
+      du_db.get_du_processor(get_du_index_from_ue_index(command.ue_index))
+          .get_f1ap_interface()
+          .get_f1ap_ue_context_manager(),
+      get_cu_cp_ue_removal_handler());
+}
+
+async_task<ngap_handover_resource_allocation_response>
+cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
+{
+  return routine_mng.start_inter_cu_handover_target_routine(
+      request,
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
+          .get_f1ap_interface()
+          .get_f1ap_ue_context_manager(),
+      get_cu_cp_ue_removal_handler());
+}
+
+async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
+{
+  return launch_async([this,
+                       ue_index,
+                       command,
+                       ho_reconfig_pdu         = byte_buffer{},
+                       ue_context_mod_response = f1ap_ue_context_modification_response{},
+                       ue_context_mod_request =
+                           f1ap_ue_context_modification_request{}](coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    if (ue_mng.find_du_ue(ue_index) == nullptr) {
+      CORO_EARLY_RETURN(false);
+    }
+
+    // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU
+    ho_reconfig_pdu =
+        ue_mng.find_du_ue(ue_index)->get_rrc_ue_notifier().on_new_rrc_handover_command(std::move(command));
+    if (ho_reconfig_pdu.empty()) {
+      logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
+      CORO_EARLY_RETURN(false);
+    }
+
+    ue_context_mod_request.ue_index                 = ue_index;
+    ue_context_mod_request.drbs_to_be_released_list = ue_mng.find_du_ue(ue_index)->get_up_resource_manager().get_drbs();
+    ue_context_mod_request.rrc_container            = ho_reconfig_pdu.copy();
+
+    CORO_AWAIT_VALUE(ue_context_mod_response,
+                     du_db.get_du_processor(get_du_index_from_ue_index(ue_index))
+                         .get_f1ap_interface()
+                         .get_f1ap_ue_context_manager()
+                         .handle_ue_context_modification_request(ue_context_mod_request));
+
+    CORO_RETURN(ue_context_mod_response.success);
+  });
+}
+
 optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(ue_index_t             ue_index,
                                                                      nr_cell_id_t           nci,
                                                                      optional<rrc_meas_cfg> current_meas_config)
@@ -391,6 +470,27 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
 bool cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
+}
+
+async_task<cu_cp_inter_du_handover_response>
+cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                             du_index_t&                            source_du_index,
+                                             du_index_t&                            target_du_index)
+{
+  du_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
+
+  byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
+
+  return routine_mng.start_inter_du_handover_routine(
+      request,
+      std::move(sib1),
+      cu_up_db.get_cu_up_processor(uint_to_cu_up_index(0)).get_e1ap_bearer_context_manager(),
+      du_db.get_du_processor(source_du_index).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(target_du_index).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      *this,
+      get_cu_cp_ue_removal_handler(),
+      *this);
 }
 
 async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
@@ -422,13 +522,8 @@ void cu_cp_impl::handle_du_processor_creation(du_index_t                       d
   rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
 }
 
-void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_index,
-                                        rrc_ue_interface&                   rrc_ue,
-                                        ngap_du_processor_control_notifier& ngap_du_notifier)
+void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {
-  // Store NGAP to DU processor notifier
-  ngap_du_processor_ctrl_notifiers.emplace(get_du_index_from_ue_index(ue_index), ngap_du_notifier);
-
   // Connect RRC UE to NGAP to RRC UE adapter
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
                                                           &rrc_ue.get_rrc_ue_init_security_context_handler(),
@@ -447,17 +542,8 @@ byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr
 
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
-  if (ngap_du_processor_ctrl_notifiers.find(get_du_index_from_ue_index(ue_index)) ==
-      ngap_du_processor_ctrl_notifiers.end()) {
-    logger.warning(
-        "ue={}, du={}: ngap_du_processor_ctrl_notifier was not found", ue_index, get_du_index_from_ue_index(ue_index));
-    return false;
-  }
-
-  return ue_mng.set_ue_ng_context(ue_index,
-                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                                  ue_mng.get_ngap_rrc_ue_adapter(ue_index),
-                                  ngap_du_processor_ctrl_notifiers.at(get_du_index_from_ue_index(ue_index)));
+  return ue_mng.set_ue_ng_context(
+      ue_index, ue_mng.get_ngap_rrc_ue_adapter(ue_index), ue_mng.get_ngap_rrc_ue_adapter(ue_index));
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()

@@ -14,7 +14,6 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ran/nr_cgi.h"
@@ -113,18 +112,6 @@ public:
   virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 };
 
-/// Interface to notify the DU processor about UE context related events.
-class du_processor_ue_context_notifier
-{
-public:
-  virtual ~du_processor_ue_context_notifier() = default;
-
-  /// \brief Handle a UE Context Release Command
-  /// \param[in] cmd The UE Context Release Command.
-  virtual async_task<cu_cp_ue_context_release_complete>
-  handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
-};
-
 /// Interface to notify RRC DU about UE management procedures.
 class du_processor_rrc_du_ue_notifier
 {
@@ -145,17 +132,6 @@ public:
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void on_release_ues() = 0;
-};
-
-/// Interface for an RRC UE entity to communicate with the DU processor.
-class du_processor_rrc_ue_interface
-{
-public:
-  virtual ~du_processor_rrc_ue_interface() = default;
-
-  /// \brief Handle a required reestablishment context modification.
-  /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Interface to notify an RRC UE about control messages.
@@ -238,31 +214,16 @@ public:
 
   /// \brief Retrieve the SIB1 for a given PCI of a DU.
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
-
-  /// \brief Handle an Inter DU handover.
-  virtual async_task<cu_cp_inter_du_handover_response>
-  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
-                                   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier,
-                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
-                                   du_processor_ue_context_notifier&      target_du_processor_notifier) = 0;
-
-  /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
-  /// See TS 38.413 section 8.4.2.2.
-  virtual async_task<ngap_handover_resource_allocation_response>
-  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
-class du_processor_ngap_interface : public du_processor_ue_context_notifier
+class du_processor_ngap_interface
 {
 public:
   virtual ~du_processor_ngap_interface() = default;
 
   /// \brief Allocate a new UE index.
   virtual ue_index_t allocate_new_ue_index() = 0;
-
-  /// \brief Handle the reception of a new Handover Command.
-  virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.
@@ -278,24 +239,6 @@ public:
 
   virtual async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& req) = 0;
-};
-
-/// Interface to notify the E1AP about control messages.
-class du_processor_e1ap_control_notifier
-{
-public:
-  virtual ~du_processor_e1ap_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new Bearer Context Setup Request.
-  virtual async_task<e1ap_bearer_context_setup_response>
-  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) = 0;
-
-  /// \brief Notify about the reception of a new Bearer Context Modification Request.
-  virtual async_task<e1ap_bearer_context_modification_response>
-  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;
-
-  /// \brief Notify about the reception of a new Bearer Context Release Command.
-  virtual async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the F1AP about control messages.
@@ -363,21 +306,6 @@ public:
   /// \param[in] ue_index The index of the UE to remove.
   virtual async_task<void> on_ue_removal_required(ue_index_t ue_index) = 0;
 
-  /// \brief Notify the CU-CP to transfer and remove ue contexts.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
-  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
-  virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
-
-  /// \brief Notify the CU-CP to that the handover reconfiguration was sent to the target UE.
-  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
-  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> on_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) = 0;
-
-  /// \brief Notify the CU-CP to push a UE context to a UE during handover.
-  /// \param[in] source_ue_index The index of the UE that is the source of the handover.
-  /// \param[in] target_ue_index The index of the UE that is the target of the handover.
-  virtual void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
-
   /// \brief Notify the CU-CP to release a UE.
   /// \param[in] request The release request.
   virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
@@ -415,10 +343,6 @@ public:
 
   /// \brief Handles UE index allocation request for N2 handover at target gNB
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
-
-  /// \brief Handles a handover request to start the ngap handover routine at the target CU
-  virtual async_task<ngap_handover_resource_allocation_response>
-  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 /// Methods to get statistics of the DU processor.
@@ -438,7 +362,6 @@ public:
   virtual ~du_processor() = default;
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
-  virtual du_processor_rrc_ue_interface&   get_rrc_ue_interface()   = 0;
   virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
   virtual du_processor_ue_task_handler&    get_ue_task_handler()    = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
@@ -449,9 +372,6 @@ public:
   /// \brief Get the F1AP message handler interface of the DU processor object.
   /// \return The F1AP message handler interface of the DU processor object.
   virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
-
-  /// \brief Retrieve the UE Context notifier of the DU processor.
-  virtual du_processor_ue_context_notifier& get_ue_context_notifier() = 0;
 
   /// \brief Retrieve the DU-specific metrics handler.
   virtual du_metrics_handler& get_metrics_handler() = 0;

@@ -22,7 +22,6 @@ set(SOURCES
       du_processor/du_processor_factory.cpp
       du_processor/du_processor_repository.cpp
       routine_managers/cu_cp_routine_manager.cpp
-      routine_managers/du_processor_routine_manager.cpp
       routines/amf_connection_setup_routine.cpp
       routines/pdu_session_routine_helpers.cpp
       routines/pdu_session_resource_setup_routine.cpp

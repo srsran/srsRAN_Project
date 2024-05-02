@@ -116,7 +116,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              *this,
                                                                              *this,
                                                                              get_rrc_ue_srb_handler(),
-                                                                             du_processor_notifier,
                                                                              cu_cp_notifier,
                                                                              nas_notifier,
                                                                              *event_mng,

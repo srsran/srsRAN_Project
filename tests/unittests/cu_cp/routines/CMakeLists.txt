@@ -25,6 +25,7 @@ set(SOURCES
         pdu_session_resource_setup_routine_test.cpp
         pdu_session_resource_release_routine_test.cpp
         pdu_session_resource_modification_routine_test.cpp
+        ue_context_release_routine_test.cpp
         )
 
 add_executable(cu_cp_routine_test ${SOURCES})

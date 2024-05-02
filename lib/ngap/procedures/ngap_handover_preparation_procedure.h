@@ -28,7 +28,7 @@ public:
                                       const ngap_ue_ids&                       ue_ids_,
                                       ngap_message_notifier&                   amf_notifier_,
                                       ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
-                                      ngap_du_processor_control_notifier&      du_processor_ctrl_notifier_,
+                                      ngap_cu_cp_notifier&                     cu_cp_notifier_,
                                       up_resource_manager&                     up_manager_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
@@ -44,7 +44,7 @@ private:
   const ngap_ue_ids                       ue_ids;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
-  ngap_du_processor_control_notifier&     du_processor_ctrl_notifier;
+  ngap_cu_cp_notifier&                    cu_cp_notifier;
   up_resource_manager&                    up_manager;
   ngap_transaction_manager&               ev_mng;
   ngap_ue_logger&                         logger;

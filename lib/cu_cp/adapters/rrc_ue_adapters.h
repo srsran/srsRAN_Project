@@ -44,25 +44,6 @@ private:
   const ue_index_t          ue_index;
 };
 
-/// Adapter between RRC UE and DU processor
-class rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
-{
-public:
-  void connect_du_processor(du_processor_rrc_ue_interface& du_processor_rrc_ue_)
-  {
-    du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
-  }
-
-  async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
-  {
-    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
-    return du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
-  }
-
-private:
-  du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
-};
-
 /// Adapter between RRC UE and UE Task Scheduler
 class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
 {
@@ -172,6 +153,12 @@ public:
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
+  }
+
+  async_task<bool> on_rrc_reestablishment_context_modification_required() override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
   }
 
   void on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override

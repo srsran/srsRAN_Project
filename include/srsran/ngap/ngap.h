@@ -102,6 +102,18 @@ public:
   /// \returns The PDU Session Resource Release Response.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
+
+  /// \brief Notify about the reception of a new UE Context Release Command.
+  /// \param[in] command the UE Context Release Command.
+  /// \returns The UE Context Release Complete.
+  virtual async_task<cu_cp_ue_context_release_complete>
+  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
+
+  /// \brief Notify about the reception of a new Handover Command.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] command The Handover Command.
+  /// \returns True if the Handover command is valid and was successfully handled by the DU.
+  virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to communication with the DU repository
@@ -183,25 +195,6 @@ public:
 
   /// \brief Get the status of the security context.
   virtual bool on_security_enabled() = 0;
-};
-
-/// Interface to notify the DU Processor about control messages.
-class ngap_du_processor_control_notifier
-{
-public:
-  virtual ~ngap_du_processor_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new UE Context Release Command.
-  /// \param[in] command the UE Context Release Command.
-  /// \returns The UE Context Release Complete.
-  virtual async_task<cu_cp_ue_context_release_complete>
-  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
-
-  /// \brief Notify about the reception of a new Handover Command.
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] command The Handover Command.
-  /// \returns True if the Handover command is valid and was successfully handled by the DU.
-  virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to control the NGAP.

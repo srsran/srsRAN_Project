@@ -9,8 +9,7 @@
  */
 
 #pragma once
-#include "../../du_processor/du_processor.h"
-#include "srsran/cu_cp/ue_manager.h"
+#include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/support/async/async_task.h"
 
@@ -20,13 +19,13 @@ namespace srs_cu_cp {
 class inter_cu_handover_target_routine
 {
 public:
-  inter_cu_handover_target_routine(const ngap_handover_request&           request_,
-                                   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                                   du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-                                   du_processor_cu_cp_notifier&           cu_cp_notifier_,
-                                   du_processor_ue_manager&               ue_manager_,
-                                   const security_indication_t&           default_security_indication_,
-                                   srslog::basic_logger&                  logger_);
+  inter_cu_handover_target_routine(const ngap_handover_request& request_,
+                                   e1ap_bearer_context_manager& e1ap_bearer_ctxt_mng_,
+                                   f1ap_ue_context_manager&     f1ap_ue_ctxt_mng_,
+                                   cu_cp_ue_removal_handler&    ue_removal_handler_,
+                                   ue_manager&                  ue_mng_,
+                                   const security_indication_t& default_security_indication_,
+                                   srslog::basic_logger&        logger_);
 
   void operator()(coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx);
 
@@ -40,11 +39,12 @@ private:
 
   const ngap_handover_request request;
 
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context creation
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context modification at CU-UP
-  du_processor_cu_cp_notifier&           cu_cp_notifier;        // to trigger UE removal if the UE Context Setup fails
-  du_processor_ue_manager&               ue_manager;
-  srslog::basic_logger&                  logger;
+  e1ap_bearer_context_manager& e1ap_bearer_ctxt_mng; // to trigger bearer context modification at CU-UP
+  f1ap_ue_context_manager&     f1ap_ue_ctxt_mng;     // to trigger UE context creation
+  cu_cp_ue_removal_handler&    ue_removal_handler;   // to trigger UE removal if the UE Context Setup fails
+  ue_manager&                  ue_mng;
+
+  srslog::basic_logger& logger;
 
   du_ue*                            ue = nullptr;
   rrc_ue_transfer_context           rrc_context; //< Passed to new RRC UE upon creation.

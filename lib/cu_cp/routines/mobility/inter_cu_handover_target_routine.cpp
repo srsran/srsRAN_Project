@@ -33,18 +33,18 @@ bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_
                                const srslog::basic_logger&               logger);
 
 inter_cu_handover_target_routine::inter_cu_handover_target_routine(
-    const ngap_handover_request&           request_,
-    du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-    du_processor_cu_cp_notifier&           cu_cp_notifier_,
-    du_processor_ue_manager&               ue_manager_,
-    const security_indication_t&           default_security_indication_,
-    srslog::basic_logger&                  logger_) :
+    const ngap_handover_request& request_,
+    e1ap_bearer_context_manager& e1ap_bearer_ctxt_mng_,
+    f1ap_ue_context_manager&     f1ap_ue_ctxt_mng_,
+    cu_cp_ue_removal_handler&    ue_removal_handler_,
+    ue_manager&                  ue_mng_,
+    const security_indication_t& default_security_indication_,
+    srslog::basic_logger&        logger_) :
   request(request_),
-  f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
-  e1ap_ctrl_notifier(e1ap_ctrl_notif_),
-  cu_cp_notifier(cu_cp_notifier_),
-  ue_manager(ue_manager_),
+  e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
+  f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
+  ue_removal_handler(ue_removal_handler_),
+  ue_mng(ue_mng_),
   logger(logger_),
   default_security_indication(default_security_indication_)
 {
@@ -60,7 +60,7 @@ void inter_cu_handover_target_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
-  ue = ue_manager.find_ue(request.ue_index);
+  ue = ue_mng.find_ue(request.ue_index);
 
   // Perform initial sanity checks on incoming message.
   if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
@@ -89,7 +89,7 @@ void inter_cu_handover_target_routine::operator()(
 
     // Call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
-                     e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_context_setup_request));
+                     e1ap_bearer_ctxt_mng.handle_bearer_context_setup_request(bearer_context_setup_request));
 
     // Handle Bearer Context Setup Response
     if (!handle_procedure_response(ue_context_setup_request,
@@ -115,12 +115,12 @@ void inter_cu_handover_target_routine::operator()(
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,
-                     f1ap_ue_ctxt_notifier.on_ue_context_setup_request(ue_context_setup_request, rrc_context));
+                     f1ap_ue_ctxt_mng.handle_ue_context_setup_request(ue_context_setup_request, rrc_context));
     // Handle UE Context Setup Response
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
       logger.warning("ue={}: \"{}\" failed to setup UE context at DU", request.ue_index, name());
-      CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(ue_context_setup_response.ue_index));
+      CORO_AWAIT(ue_removal_handler.handle_ue_removal_request(ue_context_setup_response.ue_index));
       // Note: From this point the UE is removed and only the stored context can be accessed.
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
@@ -139,8 +139,9 @@ void inter_cu_handover_target_routine::operator()(
     bearer_context_modification_request.ue_index = request.ue_index;
 
     // Call E1AP procedure
-    CORO_AWAIT_VALUE(bearer_context_modification_response,
-                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+    CORO_AWAIT_VALUE(
+        bearer_context_modification_response,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle BearerContextModificationResponse
     if (!bearer_context_modification_response.success) {
@@ -282,7 +283,7 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
   bearer_context_setup_request.serving_plmn = request.source_to_target_transparent_container.target_cell_id.plmn;
   bearer_context_setup_request.activity_notif_level = "ue"; // TODO: Remove hardcoded value
   if (bearer_context_setup_request.activity_notif_level == "ue") {
-    bearer_context_setup_request.ue_inactivity_timer = ue_manager.get_ue_config().inactivity_timer;
+    bearer_context_setup_request.ue_inactivity_timer = ue_mng.get_ue_config().inactivity_timer;
   }
 
   // Add new PDU sessions.
@@ -290,7 +291,7 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
                                           logger,
                                           next_config,
                                           request.pdu_session_res_setup_list_ho_req,
-                                          ue_manager.get_ue_config(),
+                                          ue_mng.get_ue_config(),
                                           default_security_indication);
 
   return true;
@@ -304,7 +305,7 @@ void inter_cu_handover_target_routine::create_srb1()
   srb1_msg.srb_id          = srb_id_t::srb1;
   srb1_msg.pdcp_cfg        = {};
   srb1_msg.enable_security = true;
-  ue_manager.find_du_ue(request.ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
+  ue_mng.find_du_ue(request.ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
 }
 
 ngap_handover_resource_allocation_response

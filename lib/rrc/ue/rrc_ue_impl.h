@@ -24,7 +24,6 @@ class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
   rrc_ue_impl(up_resource_manager&              up_resource_mng_,
-              rrc_ue_du_processor_notifier&     du_proc_notif_,
               rrc_pdu_f1ap_notifier&            f1ap_pdu_notifier_,
               rrc_ue_nas_notifier&              nas_notif_,
               rrc_ue_control_notifier&          ngap_ctrl_notif_,
@@ -110,14 +109,13 @@ private:
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
 
   rrc_ue_context_t                context;
-  up_resource_manager&            up_resource_mng;       // UP resource manager
-  rrc_ue_du_processor_notifier&   du_processor_notifier; // notifier to the DU processor
-  rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;     // PDU notifier to the F1AP
-  rrc_ue_nas_notifier&            nas_notifier;          // PDU notifier to the NGAP
-  rrc_ue_control_notifier&        ngap_ctrl_notifier;    // Control message notifier to the NGAP
-  rrc_ue_context_update_notifier& cu_cp_notifier;        // notifier to the CU-CP
-  rrc_ue_measurement_notifier&    measurement_notifier;  // cell measurement notifier
-  byte_buffer                     du_to_cu_container;    // initial RRC message from DU to CU
+  up_resource_manager&            up_resource_mng;      // UP resource manager
+  rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;    // PDU notifier to the F1AP
+  rrc_ue_nas_notifier&            nas_notifier;         // PDU notifier to the NGAP
+  rrc_ue_control_notifier&        ngap_ctrl_notifier;   // Control message notifier to the NGAP
+  rrc_ue_context_update_notifier& cu_cp_notifier;       // notifier to the CU-CP
+  rrc_ue_measurement_notifier&    measurement_notifier; // cell measurement notifier
+  byte_buffer                     du_to_cu_container;   // initial RRC message from DU to CU
   rrc_ue_task_scheduler&          task_sched;
   rrc_ue_logger                   logger;
 

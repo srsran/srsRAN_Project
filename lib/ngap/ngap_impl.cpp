@@ -609,12 +609,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   // start routine
   task_sched.schedule_async_task(
       ue_ctxt.ue_ids.ue_index,
-      launch_async<ngap_ue_context_release_procedure>(msg,
-                                                      ue_ctxt.ue_ids,
-                                                      stored_error_indications,
-                                                      ue->get_du_processor_control_notifier(),
-                                                      tx_pdu_notifier,
-                                                      ue_ctxt.logger));
+      launch_async<ngap_ue_context_release_procedure>(
+          msg, ue_ctxt.ue_ids, stored_error_indications, cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
@@ -847,7 +843,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            ue_ctxt.ue_ids,
                                                            tx_pdu_notifier,
                                                            ue->get_rrc_ue_control_notifier(),
-                                                           ue->get_du_processor_control_notifier(),
+                                                           cu_cp_notifier,
                                                            ue->get_up_resource_manager(),
                                                            ev_mng,
                                                            timer_factory{task_sched.get_timer_manager(), ctrl_exec},
@@ -917,11 +913,10 @@ void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
                     ue_ctxt.ue_ids.ran_ue_id,
                     ue_ctxt.ue_ids.amf_ue_id);
 
-      task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
+      task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
                                        CORO_BEGIN(ctx);
-                                       CORO_AWAIT(
-                                           ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
-                                               {ue_index, ngap_cause_radio_network_t::unspecified}));
+                                       CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
+                                           {ue_index, ngap_cause_radio_network_t::unspecified}));
                                        CORO_RETURN();
                                      }));
     } else {

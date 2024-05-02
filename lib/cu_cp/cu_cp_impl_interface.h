@@ -48,8 +48,20 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
+class cu_cp_ue_context_release_handler
+{
+public:
+  virtual ~cu_cp_ue_context_release_handler() = default;
+
+  /// \brief Handle the reception of a new UE Context Release Command.
+  /// \param[in] command The UE Context Release Command.
+  /// \returns The UE Context Release Complete.
+  virtual async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
+};
+
 /// Interface for the NGAP notifier to communicate with the CU-CP.
-class cu_cp_ngap_handler
+class cu_cp_ngap_handler : public cu_cp_ue_context_release_handler
 {
 public:
   virtual ~cu_cp_ngap_handler() = default;
@@ -76,6 +88,17 @@ public:
   /// \returns The PDU Session Resource Release Response.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) = 0;
+
+  /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
+  /// See TS 38.413 section 8.4.2.2.
+  virtual async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
+
+  /// \brief Handle the reception of a new Handover Command.
+  /// \param[in] ue_index The index of the UE that received the Handover Command.
+  /// \param[in] command The received Handover Command.
+  /// \returns True if the Handover Command was successfully handled, false otherwise.
+  virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -189,10 +212,7 @@ public:
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue The interface of the created RRC UE.
-  /// \param[in] ngap_to_du_ev_notifier The notifier used by the NGAP to signal DU-specific events.
-  virtual void handle_rrc_ue_creation(ue_index_t                          ue_index,
-                                      rrc_ue_interface&                   rrc_ue,
-                                      ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
+  virtual void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
 
   /// \brief Handle a SIB1 request for a given cell.
   /// \param[in] du_index The index of the DU the cell is connected to.
@@ -214,6 +234,10 @@ public:
   /// \returns The RRC Reestablishment UE context for the old UE.
   virtual rrc_ue_reestablishment_context_response
   handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
+
+  /// \brief Handle a required reestablishment context modification.
+  /// \param[in] ue_index The index of the UE that needs the context modification.
+  virtual async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 
   /// \brief Handle reestablishment failure by releasing the old UE.
   /// \param[in] request The release request.
@@ -306,10 +330,11 @@ class cu_cp_mobility_manager_handler
 public:
   virtual ~cu_cp_mobility_manager_handler() = default;
 
-  /// \brief Handle an Inter DU handover request.
-  /// \param[in] ue_index The UE index to be handed over to the new cell.
-  /// \param[in] target_pci The PCI of the target cell.
-  virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
+  /// \brief Handle an Inter DU handover.
+  virtual async_task<cu_cp_inter_du_handover_response>
+  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_index_t&                            source_du_index,
+                                   du_index_t&                            target_du_index) = 0;
 };
 
 /// Interface to handle ue removals
@@ -330,6 +355,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_measurement_config_handler,
                              public cu_cp_ngap_handler,
                              public cu_cp_ue_context_manipulation_handler,
+                             public cu_cp_mobility_manager_handler,
                              public cu_cp_ue_removal_handler
 {
 public:
@@ -340,6 +366,7 @@ public:
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
   virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;
   virtual cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() = 0;
+  virtual cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler()   = 0;
   virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler()         = 0;
 };
 

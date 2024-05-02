@@ -34,11 +34,25 @@ public:
                                                   pci_t        neighbor_pci) = 0;
 };
 
+/// Methods used by mobility manager to signal handover events to the CU-CP.
+class mobility_manager_cu_cp_notifier
+{
+public:
+  virtual ~mobility_manager_cu_cp_notifier() = default;
+
+  /// \brief Notify the CU-CP about an required inter-DU handover.
+  virtual async_task<cu_cp_inter_du_handover_response>
+  on_inter_du_handover_required(const cu_cp_inter_du_handover_request& request,
+                                du_index_t                             source_du_index,
+                                du_index_t                             target_du_index) = 0;
+};
+
 /// Basic cell manager implementation
 class mobility_manager final : public mobility_manager_measurement_handler, public cu_cp_mobility_command_handler
 {
 public:
   mobility_manager(const mobility_manager_cfg&         cfg,
+                   mobility_manager_cu_cp_notifier&    cu_cp_notifier_,
                    du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                    du_processor_repository&            du_db_,
                    ue_manager&                         ue_mng_);
@@ -59,8 +73,8 @@ private:
                                 du_index_t target_du_index);
   void handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
 
-  mobility_manager_cfg cfg;
-
+  mobility_manager_cfg                cfg;
+  mobility_manager_cu_cp_notifier&    cu_cp_notifier;
   du_processor_ngap_control_notifier& ngap_ctrl_notifier;
   du_processor_repository&            du_db;
   ue_manager&                         ue_mng;

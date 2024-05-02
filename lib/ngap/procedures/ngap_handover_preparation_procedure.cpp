@@ -23,7 +23,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notifier_,
     ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
-    ngap_du_processor_control_notifier&      du_processor_ctrl_notifier_,
+    ngap_cu_cp_notifier&                     cu_cp_notifier_,
     up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
@@ -33,7 +33,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
   ue_ids(ue_ids_),
   amf_notifier(amf_notifier_),
   rrc_ue_notifier(rrc_ue_notifier_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
@@ -78,7 +78,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
     // Forward RRC Handover Command to DU Processor
     CORO_AWAIT_VALUE(rrc_reconfig_success,
-                     du_processor_ctrl_notifier.on_new_handover_command(request.ue_index, std::move(rrc_ho_cmd_pdu)));
+                     cu_cp_notifier.on_new_handover_command(request.ue_index, std::move(rrc_ho_cmd_pdu)));
     if (!rrc_reconfig_success) {
       logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});

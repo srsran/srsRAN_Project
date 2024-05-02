@@ -25,6 +25,7 @@ add_library(cu_cp_test_helpers
         test_doubles/mock_du.cpp
         cu_cp_test_environment.cpp
         cu_cp_test_helpers.cpp
+        cu_cp_test_messages.cpp
         du_processor_test_messages.cpp
         test_helpers.cpp)
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})

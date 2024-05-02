@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_processor_routine_manager_test_helpers.h"
+#include "cu_cp_routine_manager_test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
@@ -16,17 +16,17 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-class ue_context_release_test : public du_processor_routine_manager_test
+class ue_context_release_test : public cu_cp_routine_manager_test
 {
 protected:
   void start_procedure(const cu_cp_ue_context_release_command& msg,
                        ue_context_outcome_t                    ue_context_modification_outcome,
                        bearer_context_outcome_t                bearer_context_modification_outcome)
   {
-    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
-    e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
+    f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_modification_outcome);
+    e1ap_bearer_ctxt_mng.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_ue_context_release_routine(msg, *cu_cp_notifier);
+    t = routine_mng->start_ue_context_release_routine(msg, &e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, ue_removal_handler);
     t_launcher.emplace(t);
   }
 

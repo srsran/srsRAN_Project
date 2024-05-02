@@ -101,8 +101,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   auto it = du_db.insert(std::make_pair(du_index, du_context{}));
   srsran_assert(it.second, "Unable to insert DU in map");
   du_context& du_ctxt = it.first->second;
-  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(
-      cfg.cu_cp_du_handler, cfg.ue_removal_handler, du_ctxt.ngap_du_processor_notifier, cfg.ue_context_handler);
+  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_du_handler, cfg.ue_removal_handler, cfg.ue_context_handler);
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config
@@ -117,7 +116,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                          du_ctxt.du_to_cu_cp_notifier,
                                                          f1ap_ev_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
-                                                         cfg.e1ap_ctrl_notifier,
                                                          cfg.ngap_ctrl_notifier,
                                                          cfg.ue_nas_pdu_notifier,
                                                          cfg.ue_ngap_ctrl_notifier,
@@ -128,9 +126,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
   du_ctxt.processor = std::move(du);
-
-  // Create connection DU processor to NGAP.
-  du_ctxt.ngap_du_processor_notifier.connect_du_processor(&du_ctxt.processor->get_ngap_interface());
 
   return du_index;
 }
@@ -212,16 +207,6 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
   return ue_index_t::invalid;
-}
-
-async_task<ngap_handover_resource_allocation_response>
-du_processor_repository::handle_ngap_handover_request(const ngap_handover_request& request)
-{
-  auto& du = du_db.at(get_du_index_from_ue_index(request.ue_index));
-
-  du_processor_mobility_handler& mob = du.processor->get_mobility_handler();
-
-  return mob.handle_ngap_handover_request(request);
 }
 
 void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,

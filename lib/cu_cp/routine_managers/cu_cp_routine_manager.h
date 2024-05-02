@@ -53,6 +53,35 @@ public:
                                                   du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
+  async_task<cu_cp_ue_context_release_complete>
+  start_ue_context_release_routine(const cu_cp_ue_context_release_command& command,
+                                   e1ap_bearer_context_manager*            e1ap_bearer_ctxt_mng,
+                                   f1ap_ue_context_manager&                f1ap_ue_ctxt_mng,
+                                   cu_cp_ue_removal_handler&               ue_removal_handler);
+
+  async_task<bool>
+  start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
+                                                     e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng,
+                                                     f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng,
+                                                     du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
+                                                     up_resource_manager& ue_up_resource_manager);
+
+  async_task<cu_cp_inter_du_handover_response>
+  start_inter_du_handover_routine(const cu_cp_inter_du_handover_request& request,
+                                  const byte_buffer&                     target_cell_sib1,
+                                  e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng,
+                                  f1ap_ue_context_manager&               source_f1ap_ue_ctxt_mng,
+                                  f1ap_ue_context_manager&               target_f1ap_ue_ctxt_mng,
+                                  cu_cp_ue_context_release_handler&      ue_context_release_handler,
+                                  cu_cp_ue_removal_handler&              ue_removal_handler,
+                                  cu_cp_ue_context_manipulation_handler& cu_cp_handler);
+
+  async_task<ngap_handover_resource_allocation_response>
+  start_inter_cu_handover_target_routine(const ngap_handover_request& request_,
+                                         e1ap_bearer_context_manager& e1ap_bearer_ctxt_mng,
+                                         f1ap_ue_context_manager&     f1ap_ue_ctxt_mng,
+                                         cu_cp_ue_removal_handler&    ue_removal_handler);
+
 private:
   ue_manager&                  ue_mng;
   const security_indication_t& default_security_indication;

@@ -24,7 +24,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
-                                     du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                                      du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
@@ -36,7 +35,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_du_mgmt_notifier(f1ap_du_mgmt_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
-  e1ap_ctrl_notifier(e1ap_ctrl_notifier_),
   ngap_ctrl_notifier(ngap_ctrl_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
@@ -59,14 +57,9 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
 
   // create RRC
   rrc_du_creation_message rrc_creation_msg(
-      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier);
+      cfg.rrc_cfg, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
-
-  rrc_ue_ev_notifier.connect_du_processor(get_rrc_ue_interface());
-
-  routine_mng = std::make_unique<du_processor_routine_manager>(
-      e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, cfg.default_security_indication, logger);
 
   cu_cp_notifier.on_du_processor_created(context.du_index,
                                          f1ap->get_f1ap_ue_context_removal_handler(),
@@ -317,65 +310,6 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
       }));
 }
 
-async_task<cu_cp_ue_context_release_complete>
-du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
-{
-  du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  if (ue == nullptr) {
-    logger.warning("ue={}: Dropping UE context release command. UE does not exist", cmd.ue_index);
-    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(cu_cp_ue_context_release_complete{});
-    });
-  }
-
-  return routine_mng->start_ue_context_release_routine(cmd, cu_cp_notifier);
-}
-
-async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
-{
-  du_ue* ue = ue_manager.find_du_ue(ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
-
-  return routine_mng->start_reestablishment_context_modification_routine(
-      ue_index, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
-}
-
-async_task<bool> du_processor_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
-{
-  return launch_async(
-      [this,
-       ue_index,
-       command,
-       ho_reconfig_pdu         = byte_buffer{},
-       ue_context_mod_response = f1ap_ue_context_modification_response{},
-       ue_context_mod_request  = f1ap_ue_context_modification_request{}](coro_context<async_task<bool>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-
-        if (ue_manager.find_du_ue(ue_index) == nullptr) {
-          CORO_EARLY_RETURN(false);
-        }
-
-        // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU
-        ho_reconfig_pdu =
-            ue_manager.find_du_ue(ue_index)->get_rrc_ue_notifier().on_new_rrc_handover_command(std::move(command));
-        if (ho_reconfig_pdu.empty()) {
-          logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
-          CORO_EARLY_RETURN(false);
-        }
-
-        ue_context_mod_request.ue_index = ue_index;
-        ue_context_mod_request.drbs_to_be_released_list =
-            ue_manager.find_du_ue(ue_index)->get_up_resource_manager().get_drbs();
-        ue_context_mod_request.rrc_container = ho_reconfig_pdu.copy();
-
-        CORO_AWAIT_VALUE(ue_context_mod_response,
-                         f1ap_ue_context_notifier.on_ue_context_modification_request(ue_context_mod_request));
-
-        CORO_RETURN(ue_context_mod_response.success);
-      });
-}
-
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Add assist data for paging
@@ -520,29 +454,6 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
     }
   }
   return byte_buffer{};
-}
-
-async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(
-    const cu_cp_inter_du_handover_request& request,
-    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier,
-    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier,
-    du_processor_ue_context_notifier&      target_du_processor_notifier)
-{
-  du_ue* ue = ue_manager.find_du_ue(request.source_ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
-
-  return routine_mng->start_inter_du_handover_routine(request,
-                                                      cu_cp_notifier,
-                                                      source_du_f1ap_ue_ctxt_notifier,
-                                                      target_du_f1ap_ue_ctxt_notifier,
-                                                      get_ue_context_notifier(),
-                                                      target_du_processor_notifier);
-}
-
-async_task<ngap_handover_resource_allocation_response>
-du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
-{
-  return routine_mng->start_inter_cu_handover_target_routine(request, cu_cp_notifier);
 }
 
 metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const

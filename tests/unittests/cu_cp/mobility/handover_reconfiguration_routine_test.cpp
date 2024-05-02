@@ -21,10 +21,7 @@ using namespace srs_cu_cp;
 class handover_reconfiguration_routine_test : public mobility_test
 {
 protected:
-  handover_reconfiguration_routine_test()
-  {
-    cu_cp_notifier = std::make_unique<dummy_du_processor_cu_cp_notifier>(ngap_ue_removal_handler, &ue_mng);
-  }
+  handover_reconfiguration_routine_test() {}
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
@@ -37,7 +34,7 @@ protected:
     ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index);
     target_ue = get_ue_manager()->set_ue_du_context(target_ue_index, int_to_gnb_du_id(0), target_pci, target_rnti);
     ASSERT_NE(target_ue, nullptr);
-    cu_cp_notifier->set_rrc_reconfiguration_outcome(procedure_outcome);
+    cu_cp_handler.set_rrc_reconfiguration_outcome(procedure_outcome);
     target_ue->set_rrc_ue_notifier(target_rrc_ue_notifier);
   }
 
@@ -46,20 +43,20 @@ protected:
     rrc_reconfiguration_procedure_request request;
 
     t = launch_async<handover_reconfiguration_routine>(
-        request, target_ue->get_ue_index(), *source_ue, source_f1ap_ue_ctxt_notifier, *cu_cp_notifier, test_logger);
+        request, target_ue->get_ue_index(), *source_ue, source_f1ap_ue_ctxt_mng, cu_cp_handler, test_logger);
     t_launcher.emplace(t);
   }
 
   void set_sub_procedure_outcome(bool outcome)
   {
-    source_f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_outcome_t{outcome, {}, {}, {}});
+    source_f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_outcome_t{outcome, {}, {}, {}});
   }
 
   bool procedure_ready() const { return t.ready(); }
 
   const bool get_result() { return t.get(); }
 
-  bool check_transaction_id(unsigned transaction_id) { return cu_cp_notifier->last_transaction_id == transaction_id; }
+  bool check_transaction_id(unsigned transaction_id) { return cu_cp_handler.last_transaction_id == transaction_id; }
 
 private:
   // source UE parameters.
@@ -67,7 +64,7 @@ private:
   unsigned                                           source_pci      = 1;
   rnti_t                                             source_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier source_rrc_ue_notifier;
-  dummy_du_processor_f1ap_ue_context_notifier        source_f1ap_ue_ctxt_notifier;
+  dummy_f1ap_ue_context_manager                      source_f1ap_ue_ctxt_mng;
   du_ue*                                             source_ue = nullptr;
 
   // target UE parameters.

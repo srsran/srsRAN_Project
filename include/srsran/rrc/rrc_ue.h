@@ -140,17 +140,6 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Interface to notify about RRC UE Context messages.
-class rrc_ue_du_processor_notifier
-{
-public:
-  virtual ~rrc_ue_du_processor_notifier() = default;
-
-  /// \brief Notify about a required reestablishment context modification.
-  /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
-};
-
 /// Schedules asynchronous tasks associated with an UE.
 class rrc_ue_task_scheduler
 {
@@ -319,6 +308,9 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
   virtual rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) = 0;
+
+  /// \brief Notify about a required reestablishment context modification.
+  virtual async_task<bool> on_rrc_reestablishment_context_modification_required() = 0;
 
   /// \brief Notify the CU-CP to release the old UE after a reestablishment failure.
   /// \param[in] request The release request.

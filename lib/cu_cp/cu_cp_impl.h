@@ -14,6 +14,7 @@
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
+#include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_du_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
@@ -56,15 +57,19 @@ public:
                            e1ap_statistics_handler&             e1ap_statistic_handler) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
-  // RRC UE handler
+  // cu_cp_rrc_ue_interface
   rrc_ue_reestablishment_context_response
                    handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+  async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
+
   void             handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override;
   void             handle_rrc_reestablishment_complete(ue_index_t old_ue_index) override;
   async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
+
+  // cu_cp_ue_context_manipulation_handler
   async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
-  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
   // cu_cp_ngap_handler
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -73,6 +78,11 @@ public:
   handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request) override;
   async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command) override;
+  async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const cu_cp_ue_context_release_command& command) override;
+  async_task<ngap_handover_resource_allocation_response>
+                   handle_ngap_handover_request(const ngap_handover_request& request) override;
+  async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
 
   // cu_cp_measurement_handler
   optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,
@@ -83,7 +93,13 @@ public:
   // cu_cp_measurement_config_handler
   bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
-  // cu_cp_ue_removal_interface
+  // cu_cp_mobility_manager_handler
+  async_task<cu_cp_inter_du_handover_response>
+  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_index_t&                            source_du_index,
+                                   du_index_t&                            target_du_index) override;
+
+  // cu_cp_ue_removal_handler
   async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
 
   cu_cp_mobility_command_handler& get_mobility_command_handler() override { return mobility_mng; }
@@ -98,6 +114,7 @@ public:
   cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface() override { return *this; }
   cu_cp_measurement_handler&             get_cu_cp_measurement_handler() override { return *this; }
   cu_cp_measurement_config_handler&      get_cu_cp_measurement_config_handler() override { return *this; }
+  cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
 
@@ -109,9 +126,7 @@ private:
                                     rrc_ue_handler&                  rrc_handler,
                                     rrc_du_statistics_handler&       rrc_statistic_handler) override;
 
-  void handle_rrc_ue_creation(ue_index_t                          ue_index,
-                              rrc_ue_interface&                   rrc_ue,
-                              ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
+  void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 
   byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
 
@@ -154,9 +169,6 @@ private:
   // DU repository to Node Manager adapter.
   du_processor_cu_cp_connection_adapter conn_notifier;
 
-  // DU Processor to E1AP adapter
-  du_processor_e1ap_adapter du_processor_e1ap_notifier;
-
   // DU Processor to NGAP adapter
   du_processor_ngap_adapter du_processor_ngap_notifier;
 
@@ -170,14 +182,14 @@ private:
   ngap_to_cu_cp_task_scheduler ngap_task_sched;
   ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
 
+  // Mobility manager to CU-CP adapter
+  mobility_manager_adapter mobility_manager_ev_notifier;
+
   // RRC DU to CU-CP adapters
   rrc_du_cu_cp_adapter rrc_du_cu_cp_notifier;
 
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
-
-  // NGAP to DU processor adapter array
-  std::map<du_index_t, ngap_du_processor_control_notifier&> ngap_du_processor_ctrl_notifiers; // indexed by DU index
 
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;
