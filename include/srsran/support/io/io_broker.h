@@ -62,7 +62,7 @@ public:
   using recv_callback_t = std::function<void()>;
 
   /// Callback called when the fd detected an error. After an error is detected, the broker stops listening to the fd.
-  enum class error_code { hang_up, other };
+  enum class error_code { hang_up, error, other };
   using error_callback_t = std::function<void(error_code)>;
 
   virtual ~io_broker() = default;

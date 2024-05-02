@@ -24,9 +24,12 @@ io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog
   }
 
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
-  ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
-  if (not handle_fd_registration(
-          ctrl_event_fd.value(), [this]() { handle_enqueued_events(); }, [](error_code) {}, nullptr)) {
+  ctrl_event_fd      = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
+  auto data_handler  = [this]() { handle_enqueued_events(); };
+  auto error_handler = [this](error_code code) {
+    logger.error("Error on control event file descriptor. Error code: {}", (int)code);
+  };
+  if (not handle_fd_registration(ctrl_event_fd.value(), data_handler, error_handler, nullptr)) {
     report_fatal_error("IO broker: failed to register control event file descriptor. ctrl_event_fd={}",
                        ctrl_event_fd.value());
   }
@@ -99,6 +102,7 @@ void io_broker_epoll::thread_loop()
           code = io_broker::error_code::hang_up;
         } else if (epoll_events & EPOLLERR) {
           logger.error("fd={}: Error on file descriptor. Events={:#x}", fd, epoll_events);
+          code = io_broker::error_code::error;
         } else {
           logger.error("fd={}: Unhandled epoll event. Events={:#x}", fd, epoll_events);
         }
