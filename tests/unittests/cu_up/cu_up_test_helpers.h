@@ -232,7 +232,7 @@ public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                             ue_index,
                                                           drb_id_t                             drb_id,
                                                           const srs_cu_up::f1u_config&         config,
                                                           const up_transport_layer_info&       ul_up_tnl_info,
@@ -244,7 +244,8 @@ public:
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
-    return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
+    return nullptr;
+    /// return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
   }
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,

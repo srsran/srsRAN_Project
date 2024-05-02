@@ -20,6 +20,19 @@
 
 namespace srsran {
 
+/// This class provides an interface for the TX bearer
+/// inside the CU-UP F1-U gateway. In the case of a co-located
+/// deployment this will be an adapter that directly connects
+/// to the DU F1-U gateway bearer, in the case of a split deployment,
+/// this will be an NR-U GTP-U tunnel.
+class f1u_cu_up_gateway_bearer_tx_interface
+{
+public:
+  virtual ~f1u_cu_up_gateway_bearer_tx_interface() = default;
+
+  virtual void on_new_sdu(nru_dl_message msg) = 0;
+};
+
 /// This class will be used to provide the interfaces to
 /// the CU-UP to create and manage F1-U bearers.
 class f1u_cu_up_gateway : public srs_cu_up::f1u_bearer_disconnector
@@ -32,7 +45,7 @@ public:
   f1u_cu_up_gateway(f1u_cu_up_gateway&&)                 = default;
   f1u_cu_up_gateway& operator=(f1u_cu_up_gateway&&)      = default;
 
-  virtual std::unique_ptr<srs_cu_up::f1u_bearer>
+  virtual f1u_cu_up_gateway_bearer_tx_interface*
   create_cu_bearer(uint32_t                             ue_index,
                    drb_id_t                             drb_id,
                    const srs_cu_up::f1u_config&         config,

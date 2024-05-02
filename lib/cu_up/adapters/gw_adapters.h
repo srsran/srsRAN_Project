@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 
@@ -37,6 +39,28 @@ public:
 
 private:
   gtpu_demux_rx_upper_layer_interface* gtpu_demux = nullptr;
+};
+
+/// Adapter between NR-U and F1-U gateway adapter
+class nru_tx_f1u_gateway_adapter : public f1u_tx_pdu_notifier
+{
+public:
+  nru_tx_f1u_gateway_adapter()  = default;
+  ~nru_tx_f1u_gateway_adapter() = default;
+
+  void connect_f1u_gateway_bearer(f1u_cu_up_gateway_bearer_tx_interface& f1u_gw_bearer_)
+  {
+    f1u_gw_bearer = &f1u_gw_bearer_;
+  }
+
+  void on_new_pdu(nru_dl_message msg) override
+  {
+    srsran_assert(f1u_gw_bearer != nullptr, "GTP-U handler must not be nullptr");
+    f1u_gw_bearer->on_new_sdu(std::move(msg));
+  }
+
+private:
+  f1u_cu_up_gateway_bearer_tx_interface* f1u_gw_bearer = nullptr;
 };
 
 } // namespace srsran::srs_cu_up

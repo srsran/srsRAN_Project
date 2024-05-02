@@ -11,6 +11,7 @@
 #pragma once
 
 #include "adapters/f1u_adapters.h"
+#include "adapters/gw_adapters.h"
 #include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
 #include "srsran/f1u/cu_up/f1u_config.h"
@@ -43,6 +44,9 @@ struct drb_context {
   // Adapter PDCP->E1AP
   pdcp_rx_e1ap_adapter pdcp_rx_to_e1ap_adapter;
   pdcp_tx_e1ap_adapter pdcp_tx_to_e1ap_adapter;
+
+  // Adapter NR-U->F1-U gateway
+  nru_tx_f1u_gateway_adapter nru_tx_to_f1u_gateway_adapter;
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 

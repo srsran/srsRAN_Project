@@ -22,6 +22,7 @@ target_link_libraries(srsran_cu_up
         srsran_e1ap_cu_up
         srsran_gtpu
         srsran_pdcp
+        srsran_f1u_cu_up
         srsran_gateway
         e1ap_asn1
         srsran_sdap

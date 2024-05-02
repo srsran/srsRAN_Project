@@ -12,8 +12,8 @@
 #pragma once
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/f1u_rx_pdu_handler.h"
-#include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_rx_pdu_handler.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
@@ -21,7 +21,7 @@
 #include <mutex>
 
 namespace srsran {
-class f1u_dl_local_adapter : public srs_cu_up::f1u_tx_pdu_notifier
+class f1u_dl_local_adapter : public f1u_cu_up_gateway_bearer_tx_interface
 {
 public:
   explicit f1u_dl_local_adapter(uint32_t ue_index, drb_id_t drb_id, const up_transport_layer_info& ul_tnl_info) :
@@ -47,7 +47,7 @@ public:
     }
   }
 
-  void on_new_pdu(nru_dl_message msg) override
+  void on_new_sdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
       logger.log_info("Cannot handle NR-U DL message. DU bearer does not exist.");

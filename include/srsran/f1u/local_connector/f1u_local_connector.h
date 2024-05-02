@@ -21,15 +21,11 @@
 namespace srsran {
 
 struct f1u_cu_bearer {
-  std::unique_ptr<f1u_dl_local_adapter> cu_tx      = nullptr;
-  srs_cu_up::f1u_bearer*                f1u_bearer = nullptr;
+  std::unique_ptr<f1u_dl_local_adapter> cu_tx = nullptr;
   /// Holds the DL UP TNL info associated with the F1-U bearer.
   optional<up_transport_layer_info> dl_up_tnl_info;
 
-  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, srs_cu_up::f1u_bearer* f1u_bearer_) :
-    cu_tx(std::move(cu_tx_)), f1u_bearer(f1u_bearer_)
-  {
-  }
+  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_) : cu_tx(std::move(cu_tx_)) {}
 };
 
 struct f1u_du_bearer {
@@ -60,7 +56,7 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                             ue_index,
                                                           drb_id_t                             drb_id,
                                                           const srs_cu_up::f1u_config&         config,
                                                           const up_transport_layer_info&       ul_up_tnl_info,
