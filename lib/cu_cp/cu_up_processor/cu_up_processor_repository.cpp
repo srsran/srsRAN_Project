@@ -103,12 +103,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
                                                                                  *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
-  cu_up_ctxt.cu_up_processor = std::move(cu_up);
-
-  // Notify CU-CP about E1AP creation
-  cfg.e1ap_ev_notifier.on_e1ap_created(cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_manager(),
-                                       cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_removal_handler(),
-                                       cu_up_ctxt.cu_up_processor->get_e1ap_statistics_handler());
+  cu_up_ctxt.processor = std::move(cu_up);
 
   return cu_up_index;
 }
@@ -167,10 +162,19 @@ cu_up_processor_impl_interface* cu_up_processor_repository::find_cu_up_processor
   if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
     return nullptr;
   }
-  return cu_up_db.at(cu_up_index).cu_up_processor.get();
+  return cu_up_db.at(cu_up_index).processor.get();
+}
+
+size_t cu_up_processor_repository::get_nof_e1ap_ues()
+{
+  size_t nof_ues = 0;
+  for (auto& cu_up : cu_up_db) {
+    nof_ues += cu_up.second.processor->get_e1ap_statistics_handler().get_nof_ues();
+  }
+  return nof_ues;
 }
 
 e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_message_handler()
 {
-  return cu_up_processor->get_e1ap_message_handler();
+  return processor->get_e1ap_message_handler();
 }

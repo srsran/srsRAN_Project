@@ -48,9 +48,11 @@ public:
   /// \return The CU-UP processor object if it exists, nullptr otherwise.
   cu_up_processor_impl_interface* find_cu_up_processor(cu_up_index_t cu_up_index);
 
+  size_t get_nof_e1ap_ues();
+
 private:
   struct cu_up_context final : public cu_up_e1_handler {
-    std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor;
+    std::unique_ptr<cu_up_processor_impl_interface> processor;
 
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;

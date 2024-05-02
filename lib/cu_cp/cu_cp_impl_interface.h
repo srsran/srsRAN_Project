@@ -81,39 +81,9 @@ class cu_cp_e1ap_event_handler
 public:
   virtual ~cu_cp_e1ap_event_handler() = default;
 
-  /// \brief Handle the creation of an E1AP.
-  /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
-  /// \param[in] bearer_removal_handler The E1AP bearer context removal handler.
-  /// \param[in] e1ap_statistic_handler The E1AP statistic interface.
-  virtual void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                                   e1ap_bearer_context_removal_handler& bearer_removal_handler,
-                                   e1ap_statistics_handler&             e1ap_statistic_handler) = 0;
-
   /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
-};
-
-/// Methods used by CU-CP to request removal of the UE context at the E1AP
-class cu_cp_e1ap_ue_removal_notifier
-{
-public:
-  virtual ~cu_cp_e1ap_ue_removal_notifier() = default;
-
-  /// \brief Remove the context of a UE at the E1AP.
-  /// \param[in] ue_index The index of the UE to remove.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
-};
-
-/// Methods used by CU-CP to request E1AP statistics
-class cu_cp_e1ap_statistics_notifier
-{
-public:
-  virtual ~cu_cp_e1ap_statistics_notifier() = default;
-
-  /// \brief Get the number of UEs registered at the E1AP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
 };
 
 /// Methods used by CU-CP to fetch or request removal of an RRC UE from the RRC DU

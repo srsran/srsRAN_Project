@@ -156,15 +156,6 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
   return *ngap_entity;
 }
 
-void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                                     e1ap_bearer_context_removal_handler& bearer_removal_handler,
-                                     e1ap_statistics_handler&             e1ap_statistic_handler)
-{
-  // Connect e1ap to CU-CP
-  e1ap_adapters[uint_to_cu_up_index(0)] = {};
-  e1ap_adapters.at(uint_to_cu_up_index(0)).connect_e1ap(bearer_removal_handler, e1ap_statistic_handler);
-}
-
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
@@ -521,12 +512,16 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 {
   du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
   cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
-  auto          e1_adapter  = e1ap_adapters.find(cu_up_index);
+
+  e1ap_bearer_context_removal_handler* e1ap_removal_handler = nullptr;
+  if (cu_up_db.find_cu_up_processor(cu_up_index) != nullptr) {
+    e1ap_removal_handler = &cu_up_db.find_cu_up_processor(cu_up_index)->get_e1ap_bearer_context_removal_handler();
+  }
 
   return launch_async<ue_removal_routine>(
       ue_index,
       rrc_du_adapters.at(du_index),
-      e1_adapter != e1ap_adapters.end() ? &e1_adapter->second : nullptr,
+      e1ap_removal_handler,
       du_db.get_du_processor(du_index).get_f1ap_interface().get_f1ap_ue_context_removal_handler(),
       ngap_entity->get_ngap_ue_context_removal_handler(),
       ue_mng,
@@ -581,18 +576,13 @@ void cu_cp_impl::on_statistics_report_timer_expired()
   }
 
   // Get number of NGAP UEs
-  unsigned nof_ngap_ues = 0;
-  nof_ngap_ues          = ngap_entity->get_ngap_statistics_handler().get_nof_ues();
+  unsigned nof_ngap_ues = ngap_entity->get_ngap_statistics_handler().get_nof_ues();
 
   // Get number of E1AP UEs
-  unsigned nof_e1ap_ues = 0;
-  for (auto& e1ap_adapter_pair : e1ap_adapters) {
-    nof_e1ap_ues += e1ap_adapter_pair.second.get_nof_ues();
-  }
+  unsigned nof_e1ap_ues = cu_up_db.get_nof_e1ap_ues();
 
   // Get number of CU-CP UEs
-  unsigned nof_cu_cp_ues = 0;
-  nof_cu_cp_ues          = ue_mng.get_nof_ues();
+  unsigned nof_cu_cp_ues = ue_mng.get_nof_ues();
 
   // Log statistics
   logger.debug("num_f1ap_ues={} num_rrc_ues={} num_ngap_ues={} num_e1ap_ues={} num_cu_cp_ues={}",

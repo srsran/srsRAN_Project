@@ -52,9 +52,6 @@ public:
   bool amf_is_connected() override { return controller->amf_connection_handler().is_amf_connected(); };
 
   // CU-UP handler
-  void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                           e1ap_bearer_context_removal_handler& bearer_removal_handler,
-                           e1ap_statistics_handler&             e1ap_statistic_handler) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // cu_cp_rrc_ue_interface
@@ -150,9 +147,6 @@ private:
   cell_meas_manager cell_meas_mng; // cell measurement manager
 
   cu_cp_routine_manager routine_mng;
-
-  // CU-CP to E1AP adapters
-  std::map<cu_up_index_t, cu_cp_e1ap_adapter> e1ap_adapters;
 
   // CU-CP to RRC DU adapters
   std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;

@@ -275,13 +275,6 @@ class dummy_e1ap_cu_cp_notifier : public srs_cu_cp::e1ap_cu_cp_notifier
 public:
   dummy_e1ap_cu_cp_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  void on_e1ap_created(srs_cu_cp::e1ap_bearer_context_manager&         bearer_context_manager,
-                       srs_cu_cp::e1ap_bearer_context_removal_handler& bearer_removal_handler,
-                       srs_cu_cp::e1ap_statistics_handler&             e1ap_statistic_handler) override
-  {
-    logger.info("Received E1AP creation notification");
-  }
-
   void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
   {
     last_msg = msg;

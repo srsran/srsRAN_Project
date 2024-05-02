@@ -18,36 +18,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between CU-CP and E1AP to request UE removal
-class cu_cp_e1ap_adapter : public cu_cp_e1ap_ue_removal_notifier, public cu_cp_e1ap_statistics_notifier
-{
-public:
-  cu_cp_e1ap_adapter() = default;
-
-  void connect_e1ap(e1ap_bearer_context_removal_handler& bearer_context_removal_,
-                    e1ap_statistics_handler&             e1ap_statistic_handler_)
-  {
-    bearer_context_removal = &bearer_context_removal_;
-    e1ap_statistic_handler = &e1ap_statistic_handler_;
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(bearer_context_removal != nullptr, "E1AP bearer context removal handler must not be nullptr");
-    bearer_context_removal->remove_bearer_context(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(e1ap_statistic_handler != nullptr, "E1AP statistics handler must not be nullptr");
-    return e1ap_statistic_handler->get_nof_ues();
-  }
-
-private:
-  e1ap_bearer_context_removal_handler* bearer_context_removal = nullptr;
-  e1ap_statistics_handler*             e1ap_statistic_handler = nullptr;
-};
-
 /// Adapter between CU-CP and RRC DU to request UE removal
 class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_notifier, public cu_cp_rrc_du_statistics_notifier
 {
