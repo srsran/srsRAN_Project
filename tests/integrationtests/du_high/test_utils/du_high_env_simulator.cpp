@@ -48,14 +48,16 @@ public:
     }
 
     // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-    bool result = test_exec.execute([this, msg]() {
+    // Note: F1AP Tx PDU notifier can be deleted by the F1AP-DU at any moment. Therefore, we cannot pass this in the
+    // capture.
+    bool result = test_exec.execute([last_msgs = &last_f1ap_msgs, msg]() {
+      static srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
       logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-      last_f1ap_msgs.push_back(msg);
+      last_msgs->push_back(msg);
     });
     EXPECT_TRUE(result);
   }
 
-  srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
   task_executor&                         test_exec;
   std::vector<f1ap_message>&             last_f1ap_msgs;
   std::unique_ptr<f1ap_message_notifier> du_rx_notifier;

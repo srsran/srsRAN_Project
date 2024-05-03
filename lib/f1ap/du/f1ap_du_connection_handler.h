@@ -39,12 +39,10 @@ private:
   // Called by the F1-C GW when the F1-C TNL association drops.
   void handle_connection_loss() override;
 
-  // Called when the F1-C client drops the Rx path of the F1-C TNL association.
-  void handle_rx_path_disconnection();
+  void handle_connection_loss_impl();
 
   f1c_connection_client& f1c_client_handler;
   f1ap_message_handler&  f1ap_pdu_handler;
-  f1ap_event_handler&    f1ap_ev_handler;
   task_executor&         ctrl_exec;
   srslog::basic_logger&  logger;
 

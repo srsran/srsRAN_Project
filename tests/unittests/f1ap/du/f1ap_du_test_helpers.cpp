@@ -203,11 +203,16 @@ namespace {
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_f1ap_tx_pdu_notifier(f1ap_message& last_tx_pdu_) : last_tx_pdu(last_tx_pdu_) {}
+  dummy_f1ap_tx_pdu_notifier(f1ap_message& last_tx_pdu_, unique_task on_disconnect_) :
+    last_tx_pdu(last_tx_pdu_), on_disconnect(std::move(on_disconnect_))
+  {
+  }
+  ~dummy_f1ap_tx_pdu_notifier() override { on_disconnect(); }
 
   void on_new_message(const f1ap_message& msg) override { last_tx_pdu = msg; }
 
   f1ap_message& last_tx_pdu;
+  unique_task   on_disconnect;
 };
 
 } // namespace
@@ -216,7 +221,7 @@ std::unique_ptr<f1ap_message_notifier>
 dummy_f1c_connection_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_)
 {
   du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
-  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(last_tx_f1ap_pdu);
+  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(last_tx_f1ap_pdu, [this]() { du_rx_pdu_notifier.reset(); });
 }
 
 //////////////////////////////////

@@ -77,7 +77,6 @@ f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1
                                                        task_executor&         ctrl_exec_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),
-  f1ap_ev_handler(f1ap_ev_handler_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
@@ -85,10 +84,13 @@ f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1
 
 f1ap_du_connection_handler::~f1ap_du_connection_handler()
 {
-  // Ensure that the F1-C TNL association is down.
+  // Check whether the F1-C TNL association was previously shutdown as part of the F1 Removal procedure.
   if (is_connected()) {
-    logger.error("F1-C TNL association was not properly shutdown before F1AP shutdown");
+    logger.warning("F1-C TNL association was not properly shutdown before F1AP shutdown");
   }
+
+  // Tear down Tx PDU notifier, which will trigger the shutdown of the Rx path as well.
+  handle_connection_loss_impl();
 }
 
 SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
@@ -121,20 +123,23 @@ void f1ap_du_connection_handler::handle_connection_loss()
   // executor.
   // Note: We use defer, because we want to handle all the already enqueued F1AP events before the association
   // shutdown. This way no pending task is left pointing to an inexistent F1AP context.
-  while (not ctrl_exec.defer([this]() {
-    // Mark the F1-C TNL as disconnected.
-    connected_flag = false;
-
-    // In case the Tx PDU path is still up (unexpected F1-C connection loss), we disconnect it.
-    tx_pdu_notifier.reset();
-
-    // Signal back that the F1-C Rx path has been successfully shutdown to any awaiting coroutine.
-    rx_path_disconnected.set();
-  })) {
+  while (not ctrl_exec.defer([this]() { handle_connection_loss_impl(); })) {
     // Note: This set cannot fail. Keep trying.
     logger.warning("Failed to dispatch handling of F1-C Rx path disconnection. Cause: Task queue is full. Retrying...");
     std::this_thread::sleep_for(std::chrono::microseconds{10});
   }
+}
+
+void f1ap_du_connection_handler::handle_connection_loss_impl()
+{
+  // Mark the F1-C TNL as disconnected.
+  connected_flag = false;
+
+  // In case the Tx PDU path is still up (unexpected F1-C connection loss), we disconnect it.
+  tx_pdu_notifier.reset();
+
+  // Signal back that the F1-C Rx path has been successfully shutdown to any awaiting coroutine.
+  rx_path_disconnected.set();
 }
 
 async_task<void> f1ap_du_connection_handler::handle_tnl_association_removal()
