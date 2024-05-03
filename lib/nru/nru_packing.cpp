@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/nrup/nrup_packing.h"
+#include "srsran/nru/nru_packing.h"
 #include "srsran/support/bit_encoding.h"
 
 namespace srsran {

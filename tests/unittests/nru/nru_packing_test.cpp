@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/nrup/nrup_packing.h"
+#include "srsran/nru/nru_packing.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

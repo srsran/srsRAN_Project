@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES nrup_packing.cpp)
+set(SOURCES nru_packing.cpp)
 
-add_library(srsran_nrup STATIC ${SOURCES})
-target_link_libraries(srsran_nrup srsran_support)
+add_library(srsran_nru STATIC ${SOURCES})
+target_link_libraries(srsran_nru srsran_support)

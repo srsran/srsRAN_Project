@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/nrup/nrup_message.h"
+#include "srsran/nru/nru_message.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
