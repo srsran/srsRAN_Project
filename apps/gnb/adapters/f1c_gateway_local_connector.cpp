@@ -63,24 +63,24 @@ void f1c_gateway_local_connector::attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_
 }
 
 std::unique_ptr<f1ap_message_notifier>
-f1c_gateway_local_connector::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
+f1c_gateway_local_connector::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_notifier)
 {
   report_fatal_error_if_not(cu_cp_du_mng != nullptr, "CU-CP has not been attached to F1-C gateway.");
 
-  // Decorate DU RX notifier with pcap and logging.
+  // Decorate DU RX notifier with pcap writing.
   if (f1ap_pcap_writer.is_write_enabled()) {
-    du_rx_pdu_notifier = std::make_unique<f1ap_pdu_pcap_notifier>(
-        std::move(du_rx_pdu_notifier), f1ap_pcap_writer, srslog::fetch_basic_logger("DU-F1"));
+    du_notifier = std::make_unique<f1ap_pdu_pcap_notifier>(
+        std::move(du_notifier), f1ap_pcap_writer, srslog::fetch_basic_logger("DU-F1"));
   }
 
   // Create direct connection between CU-CP and DU notifier.
-  auto cu_cp_rx_pdu_notifier = cu_cp_du_mng->handle_new_du_connection(std::move(du_rx_pdu_notifier));
+  auto cu_notifier = cu_cp_du_mng->handle_new_du_connection(std::move(du_notifier));
 
-  // Decorate CU-CP RX notifier with pcap and logging.
+  // Decorate CU-CP RX notifier with pcap writing.
   if (f1ap_pcap_writer.is_write_enabled()) {
-    cu_cp_rx_pdu_notifier = std::make_unique<f1ap_pdu_pcap_notifier>(
-        std::move(cu_cp_rx_pdu_notifier), f1ap_pcap_writer, srslog::fetch_basic_logger("CU-CP-F1"));
+    cu_notifier = std::make_unique<f1ap_pdu_pcap_notifier>(
+        std::move(cu_notifier), f1ap_pcap_writer, srslog::fetch_basic_logger("CU-CP-F1"));
   }
 
-  return cu_cp_rx_pdu_notifier;
+  return cu_notifier;
 }

@@ -51,7 +51,7 @@ public:
 
   void stop();
 
-  // DU interface
+  // F1-C interface
   std::unique_ptr<f1ap_message_notifier>
        handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
   void handle_du_remove_request(du_index_t du_index) override;
