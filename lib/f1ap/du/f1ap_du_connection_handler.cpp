@@ -100,7 +100,7 @@ SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handl
 
   // Create F1AP Rx PDU notifier.
   rx_path_disconnected.reset();
-  auto rx_notifier = std::make_unique<f1c_rx_channel>(f1ap_pdu_handler, f1ap_ev_handler);
+  auto rx_notifier = std::make_unique<f1c_rx_channel>(f1ap_pdu_handler, *this);
 
   // Start F1-C TNL association and get F1AP Tx PDU notifier.
   tx_pdu_notifier = f1c_client_handler.handle_du_connection_request(std::move(rx_notifier));

@@ -78,7 +78,7 @@ srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned 
   return msg;
 }
 
-f1ap_message srsran::test_helpers::create_f1_setup_response(const f1ap_message& f1_setup_request)
+f1ap_message srsran::test_helpers::generate_f1_setup_response(const f1ap_message& f1_setup_request)
 {
   srsran_assert(f1_setup_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 setup request");
   srsran_assert(f1_setup_request.pdu.init_msg().value.type().value ==
@@ -100,6 +100,21 @@ f1ap_message srsran::test_helpers::create_f1_setup_response(const f1ap_message& 
     cell.nr_pci_present = true;
     cell.nr_pci         = req_cell.served_cell_info.nr_pci;
   }
+
+  return resp;
+}
+
+f1ap_message srsran::test_helpers::generate_f1_removal_response(const f1ap_message& f1_removal_request)
+{
+  srsran_assert(f1_removal_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 removal request");
+  srsran_assert(f1_removal_request.pdu.init_msg().value.type().value ==
+                    f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request,
+                "Expected F1 removal request");
+
+  f1ap_message resp;
+  resp.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_REMOVAL);
+  f1_removal_resp_s& ie = resp.pdu.successful_outcome().value.f1_removal_resp();
+  ie->transaction_id    = (*f1_removal_request.pdu.init_msg().value.f1_removal_request())[0]->transaction_id();
 
   return resp;
 }

@@ -38,7 +38,10 @@ f1ap_message generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(
                                        unsigned    tac       = 7);
 
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
-f1ap_message create_f1_setup_response(const f1ap_message& f1_setup_request);
+f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);
+
+/// \brief Generates dummy F1 REMOVAL RESPONSE message based on the request.
+f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request);
 
 /// \brief Generates dummy F1AP UE CONTEXT SETUP REQUEST message.
 f1ap_message create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t           cu_ue_id,
