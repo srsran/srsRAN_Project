@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <iterator>
 #include <memory>
@@ -114,8 +115,8 @@ struct non_trivial_storage {
     }
   }
 
-  T*       data() noexcept { return reinterpret_cast<T*>(array.data()); }
-  const T* data() const noexcept { return reinterpret_cast<const T*>(array.data()); }
+  T*       data() noexcept { return SRSRAN_LAUNDER(reinterpret_cast<T*>(array.data())); }
+  const T* data() const noexcept { return SRSRAN_LAUNDER(reinterpret_cast<const T*>(array.data())); }
   T&       operator[](size_t i) noexcept
   {
     srsran_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);

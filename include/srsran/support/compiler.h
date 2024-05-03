@@ -31,3 +31,10 @@
 
 /// Ensures a function is always inlinable.
 #define SRSRAN_FORCE_INLINE __attribute__((always_inline)) inline
+
+/// Wrapper macro for std::launder which is only active for C++17 and above.
+#if __cplusplus >= 201703L
+#define SRSRAN_LAUNDER(a) std::launder((a))
+#else
+#define SRSRAN_LAUNDER(a) (a)
+#endif

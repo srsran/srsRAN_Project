@@ -2994,8 +2994,8 @@ private:
 				assert(i == prevCapacity);
 			}
 			for (size_t i = 0; i != entryCount; ++i) {
-				new (entries + i) BlockIndexEntry;
-				entries[i].key.store(INVALID_BLOCK_BASE, std::memory_order_relaxed);
+				auto* new_entry = new (entries + i) BlockIndexEntry;
+				new_entry->key.store(INVALID_BLOCK_BASE, std::memory_order_relaxed);
 				index[prevCapacity + i] = entries + i;
 			}
 			header->prev = prev;
@@ -3479,8 +3479,8 @@ private:
 					newHash->capacity = static_cast<size_t>(newCapacity);
 					newHash->entries = reinterpret_cast<ImplicitProducerKVP*>(details::align_for<ImplicitProducerKVP>(raw + sizeof(ImplicitProducerHash)));
 					for (size_t i = 0; i != newCapacity; ++i) {
-						new (newHash->entries + i) ImplicitProducerKVP;
-						newHash->entries[i].key.store(details::invalid_thread_id, std::memory_order_relaxed);
+						auto* new_entry = new (newHash->entries + i) ImplicitProducerKVP;
+						new_entry->key.store(details::invalid_thread_id, std::memory_order_relaxed);
 					}
 					newHash->prev = mainHash;
 					implicitProducerHash.store(newHash, std::memory_order_release);
