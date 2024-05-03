@@ -12,6 +12,7 @@
 #include "../common/asn1_helpers.h"
 #include "../common/log_helpers.h"
 #include "f1ap_du_connection_handler.h"
+#include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
@@ -107,6 +108,11 @@ bool f1ap_du_impl::connect_to_cu_cp()
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
   return launch_async<f1ap_du_setup_procedure>(request, *tx_pdu_notifier, *events, du_mng.get_timer_factory(), ctxt);
+}
+
+async_task<void> f1ap_du_impl::handle_f1_removal_request()
+{
+  return launch_async<f1ap_du_removal_procedure>(connection_handler, *tx_pdu_notifier, *events);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)

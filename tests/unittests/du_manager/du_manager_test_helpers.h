@@ -121,6 +121,7 @@ public:
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
   wait_manual_event_tester<f1_setup_response_message>            wait_f1_setup;
+  wait_manual_event_tester<void>                                 wait_f1_removal;
   optional<f1ap_ue_creation_request>                             last_ue_create;
   f1ap_ue_creation_response                                      next_ue_create_response;
   optional<f1ap_ue_configuration_request>                        last_ue_config;
@@ -135,6 +136,8 @@ public:
   {
     return wait_f1_setup.launch();
   }
+
+  async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
 
   /// Initiates creation of UE context in F1.
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
