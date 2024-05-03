@@ -73,7 +73,6 @@ private:
 
 f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
                                                        f1ap_message_handler&  f1ap_pdu_handler_,
-                                                       f1ap_event_handler&    f1ap_ev_handler_,
                                                        task_executor&         ctrl_exec_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),

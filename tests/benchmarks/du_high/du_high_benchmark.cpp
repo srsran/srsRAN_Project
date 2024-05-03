@@ -30,6 +30,7 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -250,7 +251,7 @@ private:
   {
     switch (msg.pdu.type().value) {
       case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
-        handle_init_msg(msg.pdu.init_msg());
+        handle_init_msg(msg);
         break;
       case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
         handle_success_outcome(msg.pdu.successful_outcome());
@@ -260,31 +261,31 @@ private:
     }
   }
 
-  void handle_init_msg(const asn1::f1ap::init_msg_s& init_msg)
+  void handle_init_msg(const f1ap_message& msg)
   {
+    const asn1::f1ap::init_msg_s& init_msg = msg.pdu.init_msg();
     switch (init_msg.value.type().value) {
       case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request: {
-        f1ap_message f1ap_msg;
-        f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-        f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
-        f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.resize(1);
-        du_rx_pdu_notifier->on_new_message(f1ap_msg);
+        du_rx_pdu_notifier->on_new_message(test_helpers::generate_f1_setup_response(msg));
+      } break;
+      case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
+        du_rx_pdu_notifier->on_new_message(test_helpers::generate_f1_removal_response(msg));
       } break;
       case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
         // Send UE Context Modification to create DRB1.
-        f1ap_message msg = generate_ue_context_modification_request({drb_id_t::drb1});
+        f1ap_message msg2 = generate_ue_context_modification_request({drb_id_t::drb1});
         // Note: Use UM because AM requires status PDUs.
-        auto& drb1 = msg.pdu.init_msg()
+        auto& drb1 = msg2.pdu.init_msg()
                          .value.ue_context_mod_request()
                          ->drbs_to_be_setup_mod_list[0]
                          ->drbs_to_be_setup_mod_item();
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
         drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
             7; // UM in default configs
-        msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id = get_next_gnb_cu_ue_f1ap_id();
-        msg.pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id =
+        msg2.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id = get_next_gnb_cu_ue_f1ap_id();
+        msg2.pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id =
             init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
-        du_rx_pdu_notifier->on_new_message(msg);
+        du_rx_pdu_notifier->on_new_message(msg2);
       } break;
       default:
         report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());

@@ -72,6 +72,8 @@ public:
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
+  void on_f1c_disconnection() override {}
+
   du_ue_index_t find_free_ue_index() override { return next_ue_creation_req.ue_index; }
 
   async_task<f1ap_ue_context_creation_response>
