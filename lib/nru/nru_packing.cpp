@@ -27,14 +27,14 @@ namespace srsran {
     return false;                                                                                                      \
   }
 
-nrup_pdu_type nrup_packing::get_pdu_type(byte_buffer_view container)
+nru_pdu_type nru_packing::get_pdu_type(byte_buffer_view container)
 {
   srsran_assert(!container.empty(), "Cannot get PDU type of empty PDU");
   uint8_t field_value = container[0] >> 4;
-  return uint_to_nrup_pdu_type(field_value);
+  return uint_to_nru_pdu_type(field_value);
 }
 
-bool nrup_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view container) const
+bool nru_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view container) const
 {
   if (container.empty()) {
     logger.error("Failed to unpack DL user data: pdu_len=0");
@@ -51,8 +51,8 @@ bool nrup_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view conta
   // PDU Type
   uint8_t pdu_type = {};
   VERIFY_READ(decoder.unpack(pdu_type, 4));
-  if (uint_to_nrup_pdu_type(pdu_type) != nrup_pdu_type::dl_user_data) {
-    logger.error("Failed to unpack DL user data: Invalid pdu_type={}", uint_to_nrup_pdu_type(pdu_type));
+  if (uint_to_nru_pdu_type(pdu_type) != nru_pdu_type::dl_user_data) {
+    logger.error("Failed to unpack DL user data: Invalid pdu_type={}", uint_to_nru_pdu_type(pdu_type));
     return false;
   }
 
@@ -124,13 +124,13 @@ bool nrup_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view conta
   return true;
 };
 
-bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const
+bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const
 {
   size_t      start_len = out_buf.length();
   bit_encoder encoder{out_buf};
 
   // PDU Type
-  VERIFY_WRITE(encoder.pack(nrup_pdu_type_to_uint(nrup_pdu_type::dl_user_data), 4));
+  VERIFY_WRITE(encoder.pack(nru_pdu_type_to_uint(nru_pdu_type::dl_user_data), 4));
 
   // Spare (v15.2.0)
   VERIFY_WRITE(encoder.pack(0, 1));
@@ -182,7 +182,7 @@ bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_da
   return true;
 };
 
-bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, byte_buffer_view container) const
+bool nru_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, byte_buffer_view container) const
 {
   if (container.empty()) {
     logger.error("Failed to unpack DL data delivery status: pdu_len=0");
@@ -199,8 +199,8 @@ bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, 
   // PDU Type
   uint8_t pdu_type = {};
   VERIFY_READ(decoder.unpack(pdu_type, 4));
-  if (uint_to_nrup_pdu_type(pdu_type) != nrup_pdu_type::dl_data_delivery_status) {
-    logger.error("Failed to unpack DL data delivery status: Invalid pdu_type={}", uint_to_nrup_pdu_type(pdu_type));
+  if (uint_to_nru_pdu_type(pdu_type) != nru_pdu_type::dl_data_delivery_status) {
+    logger.error("Failed to unpack DL data delivery status: Invalid pdu_type={}", uint_to_nru_pdu_type(pdu_type));
     return false;
   }
 
@@ -314,13 +314,13 @@ bool nrup_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, 
   return true;
 };
 
-bool nrup_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& dl_data_delivery_status) const
+bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& dl_data_delivery_status) const
 {
   size_t      start_len = out_buf.length();
   bit_encoder encoder{out_buf};
 
   // PDU Type
-  VERIFY_WRITE(encoder.pack(nrup_pdu_type_to_uint(nrup_pdu_type::dl_data_delivery_status), 4));
+  VERIFY_WRITE(encoder.pack(nru_pdu_type_to_uint(nru_pdu_type::dl_data_delivery_status), 4));
 
   // Highest transmitted NR PDCP SN indication
   VERIFY_WRITE(encoder.pack(dl_data_delivery_status.highest_transmitted_pdcp_sn.has_value(), 1));

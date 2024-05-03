@@ -29,7 +29,7 @@ struct sockaddr_storage;
  *    with the upper or lower layers.
  * 3. Interface/Notifier: whether this is an interface the GTP-U tunnel will
  *    inherit or a notifier that the GTP-U will keep as a member.
- * 4. DOMAIN indicates the GTP-U specialization for a particular domain {NGU (N3), NRUP (F1-U),...}
+ * 4. DOMAIN indicates the GTP-U specialization for a particular domain {NG-U (N3), NR-U (F1-U),...}
  *
  */
 

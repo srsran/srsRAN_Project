@@ -16,37 +16,37 @@
 
 namespace srsran {
 
-/// NRUP PDU type field
+/// NR-U PDU type field
 ///
 /// Ref: TS 38.425 Sec. 5.5.3.1
-enum class nrup_pdu_type : uint8_t {
+enum class nru_pdu_type : uint8_t {
   dl_user_data            = 0, ///< DL user data (PDU type 0)
   dl_data_delivery_status = 1, ///< DL data delivery status (PDU type 1)
   assistance_information  = 2, ///< Assistance information (PDU type 2)
   reserved                = 3  ///< Reserved for future use (PDU type 3-15)
 };
 
-/// Convert NRUP PDU type to unsigned integer.
-constexpr inline uint8_t nrup_pdu_type_to_uint(nrup_pdu_type pdu_type)
+/// Convert NR-U PDU type to unsigned integer.
+constexpr inline uint8_t nru_pdu_type_to_uint(nru_pdu_type pdu_type)
 {
   return static_cast<uint8_t>(pdu_type);
 }
 
-/// Convert unsigned integer to NRUP PDU type.
-constexpr inline nrup_pdu_type uint_to_nrup_pdu_type(uint8_t num)
+/// Convert unsigned integer to NR-U PDU type.
+constexpr inline nru_pdu_type uint_to_nru_pdu_type(uint8_t num)
 {
-  return static_cast<nrup_pdu_type>(num);
+  return static_cast<nru_pdu_type>(num);
 }
 
-/// Packing and unpacking of NR user plane protocol messages
+/// Packing and unpacking of NR user plane protocol (NR-U) messages
 ///
 /// Ref: TS 38.425
-class nrup_packing
+class nru_packing
 {
 public:
-  nrup_packing(srslog::basic_logger& logger_) : logger(logger_) {}
+  nru_packing(srslog::basic_logger& logger_) : logger(logger_) {}
 
-  static nrup_pdu_type get_pdu_type(byte_buffer_view container);
+  static nru_pdu_type get_pdu_type(byte_buffer_view container);
 
   bool unpack(nru_dl_user_data& dl_user_data, byte_buffer_view container) const;
   bool pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const;
@@ -62,9 +62,9 @@ private:
 
 namespace fmt {
 
-// NRUP PDU type field formatter
+// NR-U PDU type field formatter
 template <>
-struct formatter<srsran::nrup_pdu_type> {
+struct formatter<srsran::nru_pdu_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -72,13 +72,13 @@ struct formatter<srsran::nrup_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::nrup_pdu_type pdu_type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::nru_pdu_type pdu_type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"dl_user_data", "dl_data_delivery_status", "assistance_information"};
-    if (nrup_pdu_type_to_uint(pdu_type) < nrup_pdu_type_to_uint(srsran::nrup_pdu_type::reserved)) {
-      format_to(ctx.out(), "{}", options[nrup_pdu_type_to_uint(pdu_type)]);
+    if (nru_pdu_type_to_uint(pdu_type) < nru_pdu_type_to_uint(srsran::nru_pdu_type::reserved)) {
+      format_to(ctx.out(), "{}", options[nru_pdu_type_to_uint(pdu_type)]);
     }
-    return format_to(ctx.out(), "reserved ({})", nrup_pdu_type_to_uint(pdu_type));
+    return format_to(ctx.out(), "reserved ({})", nru_pdu_type_to_uint(pdu_type));
   };
 };
 } // namespace fmt

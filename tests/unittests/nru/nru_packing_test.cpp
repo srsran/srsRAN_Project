@@ -13,8 +13,8 @@
 
 using namespace srsran;
 
-/// Fixture class for MRUP packing tests
-class nrup_packing_test : public ::testing::Test
+/// Fixture class for NR-U packing tests
+class nru_packing_test : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -27,10 +27,10 @@ protected:
     srslog::fetch_basic_logger("GTP-U", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("GTP-U", false).set_hex_dump_max_size(-1);
 
-    logger.info("Creating NRUP packing object.");
+    logger.info("Creating NR-U packing object.");
 
     // Create packer object
-    packer = std::make_unique<nrup_packing>(srslog::fetch_basic_logger("GTP-U", false));
+    packer = std::make_unique<nru_packing>(srslog::fetch_basic_logger("GTP-U", false));
   }
 
   void TearDown() override
@@ -39,16 +39,16 @@ protected:
     srslog::flush();
   }
 
-  srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST", false);
-  std::unique_ptr<nrup_packing> packer;
+  srslog::basic_logger&        logger = srslog::fetch_basic_logger("TEST", false);
+  std::unique_ptr<nru_packing> packer;
 };
 
-TEST_F(nrup_packing_test, create_new_entity)
+TEST_F(nru_packing_test, create_new_entity)
 {
   EXPECT_NE(packer, nullptr);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_smallest)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_smallest)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -73,7 +73,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_smallest)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_dl_flush)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_dl_flush)
 {
   const uint8_t packed_vec[] = {
       0x02, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -103,7 +103,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_dl_flush)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_report_polling)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_report_polling)
 {
   const uint8_t packed_vec[] = {
       0x01, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -129,7 +129,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_report_polling)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -155,7 +155,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -181,7 +181,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
 {
   const uint8_t packed_vec[] = {
       0x04, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -216,14 +216,14 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_empty)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_empty)
 {
   byte_buffer      packed_buf = {};
   nru_dl_user_data out_data;
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_invalid_pdu_type)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_invalid_pdu_type)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -240,7 +240,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_invalid_pdu_type)
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_missing_padding)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_missing_padding)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -257,7 +257,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_missing_padding)
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_excessive_padding)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_excessive_padding)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -275,7 +275,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_excessive_padding)
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_blocks)
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_blocks)
 {
   const uint8_t packed_vec[] = {
       0x04, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
@@ -301,7 +301,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_blo
   EXPECT_FALSE(packer->unpack(out_data, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_smallest)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_smallest)
 {
   const uint8_t packed_vec[] = {
       0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -327,7 +327,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_smallest)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
 {
   const uint8_t packed_vec[] = {
       0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -358,7 +358,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_data_rate)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
 {
   const uint8_t packed_vec[] = {
       0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -392,7 +392,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_lost_sn_range)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
 {
   const uint8_t packed_vec[] = {
       0x14, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -422,7 +422,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_sn)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
 {
   const uint8_t packed_vec[] = {
       0x18, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -452,7 +452,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_tx_sn)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
 {
   const uint8_t packed_vec[] = {
       0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -482,7 +482,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_cause)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
 {
   const uint8_t packed_vec[] = {
       0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -512,7 +512,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_dlv_retx_sn)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
 {
   const uint8_t packed_vec[] = {
       0x10, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -542,14 +542,14 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_with_hi_retx_sn)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_empty)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_empty)
 {
   byte_buffer                 packed_buf = {};
   nru_dl_data_delivery_status out_status;
   EXPECT_FALSE(packer->unpack(out_status, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_invalid_pdu_type)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_invalid_pdu_type)
 {
   const uint8_t packed_vec[] = {
       0xaa, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -567,7 +567,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_invalid_pdu_type)
   EXPECT_FALSE(packer->unpack(out_status, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_missing_padding)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_missing_padding)
 {
   const uint8_t packed_vec[] = {
       0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -592,7 +592,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_missing_padding)
   EXPECT_FALSE(packer->unpack(out_status, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_excessive_padding)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_excessive_padding)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
@@ -610,7 +610,7 @@ TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_excessive_padding)
   EXPECT_FALSE(packer->unpack(out_status, packed_buf));
 }
 
-TEST_F(nrup_packing_test, unpack_nru_dl_data_deliv_status_too_large_nof_lost_sn_ranges)
+TEST_F(nru_packing_test, unpack_nru_dl_data_deliv_status_too_large_nof_lost_sn_ranges)
 {
   const uint8_t packed_vec[] = {
       0x11, // 4PDU Type | Hi Tx SN ind | Hi Dlv SN ind | Final frame ind | Lost pkg report
