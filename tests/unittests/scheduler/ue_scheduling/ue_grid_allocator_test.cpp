@@ -93,8 +93,10 @@ protected:
 };
 
 TEST_F(ue_grid_allocator_tester,
-       when_grant_inside_coreset_start_and_coreset0_end_rb_lims_for_css_then_allocation_is_successful)
+       when_ue_dedicated_ss_is_css_then_allocation_is_within_coreset_start_crb_and_coreset0_end_crb)
 {
+  static const unsigned nof_bytes_to_schedule = 40U;
+
   sched_ue_creation_request_message ue_creation_req =
       test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
   // Change SS type to common.
@@ -108,21 +110,22 @@ TEST_F(ue_grid_allocator_tester,
 
   const crb_interval crbs =
       get_coreset_crbs((*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back());
+  const crb_interval crb_lims = {
+      crbs.start(), crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()};
 
-  ue_pdsch_grant grant{
-      .user           = &u,
-      .cell_index     = to_du_cell_index(0),
-      .h_id           = to_harq_id(0),
-      .ss_id          = to_search_space_id(2),
-      .time_res_index = 0,
-      .crbs           = {crbs.start(),
-                         crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()}};
+  ue_pdsch_grant grant{.user                  = &u,
+                       .cell_index            = to_du_cell_index(0),
+                       .h_id                  = to_harq_id(0),
+                       .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  ASSERT_TRUE(crb_lims.contains(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1()));
 }
 
 TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_table_set_in_pdsch_cfg)
 {
+  static const unsigned nof_bytes_to_schedule = 40U;
+
   sched_ue_creation_request_message ue_creation_req =
       test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
@@ -133,12 +136,10 @@ TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
   const ue& u = add_ue(ue_creation_req);
 
   // SearchSpace#2 uses non-fallback DCI format hence the MCS table set in dedicated PDSCH configuration must be used.
-  const ue_pdsch_grant grant{.user           = &u,
-                             .cell_index     = to_du_cell_index(0),
-                             .h_id           = to_harq_id(0),
-                             .ss_id          = to_search_space_id(2),
-                             .time_res_index = 0,
-                             .crbs = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs()};
+  const ue_pdsch_grant grant{.user                  = &u,
+                             .cell_index            = to_du_cell_index(0),
+                             .h_id                  = to_harq_id(0),
+                             .recommended_nof_bytes = nof_bytes_to_schedule};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
@@ -156,33 +157,24 @@ TEST_F(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per
   ue_creation_req.crnti    = to_rnti(0x4602);
   const ue& u2             = add_ue(ue_creation_req);
 
-  const crb_interval   grant1_crbs = {cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().start(),
-                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().start() +
-                                          2};
-  const ue_pdsch_grant grant1{.user           = &u1,
-                              .cell_index     = to_du_cell_index(0),
-                              .h_id           = to_harq_id(0),
-                              .ss_id          = to_search_space_id(2),
-                              .time_res_index = 0,
-                              .crbs           = grant1_crbs};
+  static const unsigned sched_bytes = 20U;
+  const ue_pdsch_grant  grant1{
+       .user = &u1, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
 
   // Successfully allocates RBs corresponding to the grant.
   ASSERT_EQ(alloc.allocate_dl_grant(grant1), alloc_outcome::success);
-  ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().length(), grant1_crbs.length());
+  ASSERT_GE(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().tb_size_bytes, sched_bytes);
 
-  const crb_interval grant2_crbs = {
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().start() + 2,
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().start() + 4};
-  const ue_pdsch_grant grant2{.user           = &u2,
-                              .cell_index     = to_du_cell_index(0),
-                              .h_id           = to_harq_id(0),
-                              .ss_id          = to_search_space_id(2),
-                              .time_res_index = 0,
-                              .crbs           = grant2_crbs};
+  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
+  const unsigned total_crbs     = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+  const unsigned crbs_allocated = res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().length();
+
+  const ue_pdsch_grant grant2{
+      .user = &u2, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
 
   // Allocates all remaining RBs to UE2.
   ASSERT_EQ(alloc.allocate_dl_grant(grant2), alloc_outcome::success);
-  ASSERT_GT(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().length(), grant2_crbs.length());
+  ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().length(), (total_crbs - crbs_allocated));
 }
 
 TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_per_slot_is_reached)

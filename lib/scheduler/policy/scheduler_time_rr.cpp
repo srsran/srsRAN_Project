@@ -113,6 +113,56 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&        
   return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);
 }
 
+/// \brief Fetches list of DL HARQ candidates to schedule.
+static static_vector<const dl_harq_process*, MAX_NOF_HARQS>
+get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_retx, srslog::basic_logger& logger)
+{
+  static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
+
+  const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  if (is_retx) {
+    // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
+    for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
+      const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
+      if (h.has_pending_retx() and (not h.last_alloc_params().is_fallback)) {
+        dl_harq_candidates.push_back(&h);
+      }
+    }
+    std::sort(dl_harq_candidates.begin(),
+              dl_harq_candidates.end(),
+              [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
+  } else if (ue_cc.is_active()) {
+    // If there are no pending new Tx bytes or UE in fallback, return.
+    if (ue_cc.is_in_fallback_mode() or (not ue_ref.has_pending_dl_newtx_bytes())) {
+      return dl_harq_candidates;
+    }
+
+    // Find empty HARQ. Create a list with a single position.
+    const dl_harq_process* h = ue_cc.harqs.find_empty_dl_harq();
+    if (h != nullptr) {
+      dl_harq_candidates.push_back(h);
+    } else {
+      // No empty HARQs are available. Log this occurrence.
+      if (ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
+        // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+        logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+                     ue_cc.ue_index,
+                     ue_cc.rnti());
+      } else {
+        // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
+        // and HARQ-ACK.
+        logger.warning(
+            "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
+            "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
+            "the scheduler.",
+            ue_cc.ue_index,
+            ue_cc.rnti());
+      }
+    }
+  }
+  return dl_harq_candidates;
+}
+
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
 /// \param[in] ue_db map of "slot_ue"
 /// \param[in] next_ue_index UE index with the highest priority to be allocated.
@@ -172,8 +222,7 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell&   ue_cc      = u.get_cell(to_ue_cell_index(i));
-    const slot_point pdcch_slot = res_grid.get_pdcch_slot(ue_cc.cell_index);
+    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
     if (ue_cc.is_in_fallback_mode()) {
       // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
@@ -186,83 +235,24 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
       return alloc_outcome::skip_ue;
     }
 
-    // Create PDSCH param candidate search object.
-    ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot, logger};
-    if (candidates.dl_harqs().empty()) {
+    // Get DL HARQ candidates.
+    const auto harq_candidates = get_ue_dl_harq_candidates(u, to_ue_cell_index(i), is_retx, logger);
+    if (harq_candidates.empty()) {
       // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available HARQs).
       continue;
     }
 
     // Iterate through allocation parameter candidates.
-    for (const ue_pdsch_param_candidate_searcher::candidate& param_candidate : candidates) {
-      const pdsch_time_domain_resource_allocation& pdsch    = param_candidate.pdsch_td_res();
-      const search_space_info&                     ss       = param_candidate.ss();
-      const dl_harq_process&                       h        = param_candidate.harq();
-      const dci_dl_rnti_config_type                dci_type = param_candidate.dci_dl_rnti_cfg_type();
-      const cell_slot_resource_grid&               grid     = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
-      // Apply RB allocation limits.
-      const unsigned start_rb = std::max(ue_expert_cfg.pdsch_crb_limits.start(), ss.dl_crb_lims.start());
-      const unsigned end_rb   = std::min(ue_expert_cfg.pdsch_crb_limits.stop(), ss.dl_crb_lims.stop());
-      if (start_rb >= end_rb) {
-        logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: Invalid RB allocation range [{}, {})",
-                     ue_cc.ue_index,
-                     ue_cc.rnti(),
-                     start_rb,
-                     end_rb);
-        continue;
-      }
-      const crb_interval dl_crb_lims = {start_rb, end_rb};
-      const crb_bitmap   used_crbs = grid.used_crbs(ss.bwp->dl_common->generic_params.scs, dl_crb_lims, pdsch.symbols);
-      if (used_crbs.all()) {
-        logger.debug(
-            "ue={} rnti={} PDSCH allocation skipped. Cause: No more RBs available", ue_cc.ue_index, ue_cc.rnti());
-        return alloc_outcome::skip_slot;
-      }
-      grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
-                                                         h.last_alloc_params().rbs.type1().length()}
-                                        : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
-      // Limit the grant PRBs.
-      if (not is_retx and dl_new_tx_max_nof_rbs_per_ue_per_slot.has_value()) {
-        mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, dl_new_tx_max_nof_rbs_per_ue_per_slot.value());
-        // [Implementation-defined]
-        // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs for
-        // which dl_new_tx_max_nof_rbs_per_ue_per_slot was computed. One way is by checking if the emtpy interval is
-        // less than 2 times the required RBs. If so, allocate all remaining RBs. NOTE: This approach won't hold good in
-        // case of low traffic scenario.
-        const unsigned twice_grant_crbs_length =
-            rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
-        if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
-          mcs_prbs.n_prbs = twice_grant_crbs_length;
-        }
-      }
-
-      if (mcs_prbs.n_prbs == 0) {
-        logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
-        return alloc_outcome::skip_ue;
-      }
-
-      // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
-      // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
-      // to greater than 1 PRB.
-      const auto& cell_cfg = res_grid.get_cell_cfg_common(ue_cc.cell_index);
-      if (not cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0) and mcs_prbs.n_prbs == 1) {
-        mcs_prbs.n_prbs = 2;
-      }
-
-      const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
-      bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+    for (const dl_harq_process* h_dl : harq_candidates) {
       if (is_retx) {
-        // In case of Retx, the #CRBs need to stay the same.
-        are_crbs_valid = ue_grant_crbs.length() == h.last_alloc_params().rbs.type1().length();
-      }
-      if (are_crbs_valid) {
-        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h.id,
-                                                                                  ss.cfg->get_id(),
-                                                                                  param_candidate.pdsch_td_res_index(),
-                                                                                  ue_grant_crbs,
-                                                                                  mcs_prbs.mcs});
+        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u, ue_cc.cell_index, h_dl->id});
+        // If the allocation failed due to invalid parameters, we continue iteration.
+        if (result != alloc_outcome::invalid_params) {
+          return result;
+        }
+      } else {
+        const alloc_outcome result =
+            pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u, ue_cc.cell_index, h_dl->id, u.pending_dl_newtx_bytes()});
         // If the allocation failed due to invalid parameters, we continue iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;

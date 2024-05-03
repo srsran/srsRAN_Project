@@ -23,10 +23,8 @@ struct ue_pdsch_grant {
   const ue*       user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
-  search_space_id ss_id;
-  unsigned        time_res_index;
-  crb_interval    crbs;
-  sch_mcs_index   mcs;
+  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> recommended_nof_bytes;
 };
 
 /// Information relative to a UE PUSCH grant.

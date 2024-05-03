@@ -9,8 +9,12 @@
  */
 
 #include "../test_utils/config_generators.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/policy/scheduler_time_rr.h"
+#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
+#include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
+#include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/error_handling.h"
@@ -20,45 +24,6 @@
 using namespace srsran;
 
 enum class policy_type { time_rr };
-
-class dummy_pdsch_allocator : public ue_pdsch_allocator
-{
-public:
-  cell_resource_allocator&    res_grid;
-  std::vector<ue_pdsch_grant> last_grants;
-
-  dummy_pdsch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
-
-  alloc_outcome allocate_dl_grant(const ue_pdsch_grant& grant) override
-  {
-    last_grants.push_back(grant);
-    const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
-    res_grid[0].dl_res_grid.fill(grant_info{
-        cell_cfg_cmn.dl_cfg_common.init_dl_bwp.generic_params.scs,
-        cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[grant.time_res_index].symbols,
-        grant.crbs});
-    return alloc_outcome::success;
-  }
-};
-
-class dummy_pusch_allocator : public ue_pusch_allocator
-{
-public:
-  cell_resource_allocator&    res_grid;
-  std::vector<ue_pusch_grant> last_grants;
-
-  dummy_pusch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
-
-  alloc_outcome allocate_ul_grant(const ue_pusch_grant& grant) override
-  {
-    last_grants.push_back(grant);
-    const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
-    unsigned k2 = cell_cfg_cmn.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[grant.time_res_index].k2;
-    res_grid[k2].ul_res_grid.fill(
-        grant_info{cell_cfg_cmn.ul_cfg_common.init_ul_bwp.generic_params.scs, {0, 14}, grant.crbs});
-    return alloc_outcome::success;
-  }
-};
 
 class base_scheduler_policy_test
 {
@@ -75,6 +40,7 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
 
     switch (policy) {
@@ -90,18 +56,16 @@ protected:
 
   void run_slot()
   {
-    pdsch_alloc.last_grants.clear();
-    pusch_alloc.last_grants.clear();
+    grid_alloc.slot_indication();
 
     res_grid.slot_indication(next_slot);
+    pdcch_alloc.slot_indication(next_slot);
+    pucch_alloc.slot_indication(next_slot);
+    uci_alloc.slot_indication(next_slot);
 
-    unsigned dl_idx = next_slot.to_uint() % 2;
-    for (unsigned i = 0; i != 2; ++i) {
-      if (dl_idx == i) {
-        sched->dl_sched(pdsch_alloc, ue_res_grid, ues);
-      } else {
-        sched->ul_sched(pusch_alloc, ue_res_grid, ues);
-      }
+    if (cell_cfg.is_dl_enabled(next_slot)) {
+      sched->dl_sched(grid_alloc, ue_res_grid, ues);
+      sched->ul_sched(grid_alloc, ue_res_grid, ues);
     }
 
     next_slot++;
@@ -172,11 +136,13 @@ protected:
   scheduler_ue_metrics_dummy_notifier  metrics_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
-  cell_resource_allocator           res_grid{cell_cfg};
-  ue_resource_grid_view             ue_res_grid;
-  dummy_pdsch_allocator             pdsch_alloc{res_grid};
-  dummy_pusch_allocator             pusch_alloc{res_grid};
-  ue_repository                     ues;
+  cell_resource_allocator       res_grid{cell_cfg};
+  pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
+  pucch_allocator_impl   pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
+  uci_allocator_impl     uci_alloc{pucch_alloc};
+  ue_resource_grid_view  ue_res_grid;
+  ue_repository          ues;
+  ue_cell_grid_allocator grid_alloc{sched_cfg.ue, ues, logger};
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
@@ -204,40 +170,18 @@ TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_
 
   run_slot();
 
-  ASSERT_FALSE(this->pdsch_alloc.last_grants.empty());
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  crb_interval crbs = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].crbs, crbs);
+  ASSERT_FALSE(this->res_grid[0].result.dl.ue_grants.empty());
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants.back().context.ue_index, u.ue_index);
+  crb_interval crbs         = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
+  prb_interval alloced_prbs = prb_interval{this->res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().start(),
+                                           this->res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().stop()};
+  ASSERT_EQ(prb_to_crb(crbs, alloced_prbs), crbs);
 }
 
-TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for_aggr_lvl)
+TEST_P(scheduler_policy_test, scheduler_uses_only_specific_searchspaces_defined_in_dedicated_configuration)
 {
   sched_ue_creation_request_message ue_req =
       make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(1));
-  // Default CORESET(s) and SearchSpace(s) configurations are as follows:
-  // CS#0 - PRBs [0, 48)
-  // CS#1 - PRBs [0, 36)
-  // SS#0 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 0], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#0
-  // SS#1 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 2], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#0
-  // SS#2 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 2], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#1
-
-  // NOTE: Policy scheduler currently uses fixed aggr. lvl of 4 so test is based on nof. PDCCH candidates for aggr.
-  // lvl. 4.
-
-  // Modify SS#2 to have more nof. candidates for aggregation level 4.
-  auto& ss_list = (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
-  for (auto& ss : ss_list) {
-    if (ss.get_id() == to_search_space_id(2)) {
-      ss.set_non_ss0_nof_candidates(
-          {0,
-           0,
-           config_helpers::compute_max_nof_candidates(
-               aggregation_level::n4,
-               ue_req.cfg.cells.value()[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets[0]),
-           0});
-      break;
-    }
-  }
 
   const ue& u = add_ue(ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 1053);
@@ -245,13 +189,11 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
 
   run_slot();
 
-  ASSERT_FALSE(this->pdsch_alloc.last_grants.empty());
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].ss_id, to_search_space_id(2));
-
-  ASSERT_FALSE(this->pusch_alloc.last_grants.empty());
-  ASSERT_EQ(this->pusch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  ASSERT_EQ(this->pusch_alloc.last_grants[0].ss_id, to_search_space_id(2));
+  ASSERT_EQ(this->res_grid[0].result.dl.dl_pdcchs.size(), 1);
+  ASSERT_EQ(this->res_grid[0].result.dl.ul_pdcchs.size(), 1);
+  // SearchSpace#2 is the only SearchSpace defined in UE dedicated configuration.
+  ASSERT_EQ(this->res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id, to_search_space_id(2));
+  ASSERT_EQ(this->res_grid[0].result.dl.ul_pdcchs.back().ctx.context.ss_id, to_search_space_id(2));
 }
 
 TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their_bsr_is_low)
@@ -265,9 +207,20 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
 
   run_slot();
 
-  ASSERT_EQ(pusch_alloc.last_grants.size(), 2);
-  ASSERT_NE(pusch_alloc.last_grants[0].user->ue_index, pusch_alloc.last_grants[1].user->ue_index);
-  ASSERT_FALSE(pusch_alloc.last_grants[0].crbs.overlaps(pusch_alloc.last_grants[1].crbs));
+  ASSERT_EQ(this->res_grid[0].result.dl.ul_pdcchs.size(), 2);
+  ASSERT_NE(this->res_grid[0].result.dl.ul_pdcchs[0].ctx.rnti, this->res_grid[0].result.dl.ul_pdcchs[1].ctx.rnti);
+  // NOTE: Both UEs have same PUSCH time domain resources configured.
+  span<const pusch_time_domain_resource_allocation> pusch_td_res_list =
+      u1.get_pcell().cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  // In default UE dedicated configuration, SearchSpace#2 is configured to use DCI format 1_1/0_1.
+  if (this->res_grid[0].result.dl.ul_pdcchs[0].dci.c_rnti_f0_1.time_resource ==
+      this->res_grid[0].result.dl.ul_pdcchs[1].dci.c_rnti_f0_1.time_resource) {
+    const unsigned k2 = pusch_td_res_list[this->res_grid[0].result.dl.ul_pdcchs[0].dci.c_rnti_f0_1.time_resource].k2;
+    const auto&    pusch_res_grid = this->res_grid[k2];
+    ASSERT_EQ(pusch_res_grid.result.ul.puschs.size(), 2);
+    ASSERT_FALSE(pusch_res_grid.result.ul.puschs[0].pusch_cfg.rbs.type1().overlaps(
+        pusch_res_grid.result.ul.puschs[1].pusch_cfg.rbs.type1()));
+  }
 }
 
 TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their_dl_buffer_state_is_low)
@@ -281,9 +234,11 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
 
   run_slot();
 
-  ASSERT_EQ(pdsch_alloc.last_grants.size(), 2);
-  ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, pdsch_alloc.last_grants[1].user->ue_index);
-  ASSERT_FALSE(pdsch_alloc.last_grants[0].crbs.overlaps(pdsch_alloc.last_grants[1].crbs));
+  ASSERT_EQ(this->res_grid[0].result.dl.dl_pdcchs.size(), 2);
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants.size(), 2);
+  ASSERT_NE(this->res_grid[0].result.dl.dl_pdcchs[0].ctx.rnti, this->res_grid[0].result.dl.dl_pdcchs[1].ctx.rnti);
+  ASSERT_FALSE(this->res_grid[0].result.dl.ue_grants[0].pdsch_cfg.rbs.type1().overlaps(
+      this->res_grid[0].result.dl.ue_grants[1].pdsch_cfg.rbs.type1()));
 }
 
 TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_sr_opportunity_first_than_ues_with_only_ul_data)
@@ -297,8 +252,8 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_sr_opportunity_first_
 
   run_slot();
 
-  ASSERT_GE(pusch_alloc.last_grants.size(), 1);
-  ASSERT_EQ(pusch_alloc.last_grants.front().user->ue_index, to_du_ue_index(1))
+  ASSERT_GE(this->res_grid[0].result.dl.ul_pdcchs.size(), 1);
+  ASSERT_EQ(this->res_grid[0].result.dl.ul_pdcchs.front().ctx.rnti, to_rnti(0x4602))
       << fmt::format("UE with SR opportunity should have been scheduled first.");
 }
 
@@ -330,22 +285,16 @@ protected:
                                                       builder_params.search_space0_index,
                                                       builder_params.max_coreset0_duration);
       srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
-      builder_params.offset_to_point_a  = ssb_freq_loc->offset_to_point_A;
-      builder_params.k_ssb              = ssb_freq_loc->k_ssb;
-      builder_params.coreset0_index     = ssb_freq_loc->coreset0_idx;
-      auto                          cfg = test_helpers::make_default_sched_cell_configuration_request(builder_params);
-      const tdd_ul_dl_config_common tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
-                                            .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
-                                                         .nof_dl_slots              = 6,
-                                                         .nof_dl_symbols            = 5,
-                                                         .nof_ul_slots              = 3,
-                                                         .nof_ul_symbols            = 0}};
-      cfg.tdd_ul_dl_cfg_common = tdd_cfg;
-      // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
-      cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
-          cfg.searchspace0, cfg.dl_cfg_common.init_dl_bwp.pdcch_common, std::nullopt, cfg.tdd_ul_dl_cfg_common);
-
-      return cfg;
+      builder_params.offset_to_point_a    = ssb_freq_loc->offset_to_point_A;
+      builder_params.k_ssb                = ssb_freq_loc->k_ssb;
+      builder_params.coreset0_index       = ssb_freq_loc->coreset0_idx;
+      builder_params.tdd_ul_dl_cfg_common = tdd_ul_dl_config_common{.ref_scs  = subcarrier_spacing::kHz30,
+                                                                    .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
+                                                                                 .nof_dl_slots              = 5,
+                                                                                 .nof_dl_symbols            = 5,
+                                                                                 .nof_ul_slots              = 4,
+                                                                                 .nof_ul_symbols            = 0}};
+      return test_helpers::make_default_sched_cell_configuration_request(builder_params);
     }())
   {
     next_slot = {to_numerology_value(subcarrier_spacing::kHz30), 0};
@@ -367,7 +316,7 @@ TEST_P(scheduler_policy_partial_slot_tdd_test, scheduler_allocates_in_partial_sl
   // Run for partial slot.
   run_slot();
 
-  ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants.size(), 1);
 }
 
 class scheduler_round_robin_test : public base_scheduler_policy_test, public ::testing::Test
@@ -390,12 +339,12 @@ TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_b
   unsigned                     offset = 0;
   for (unsigned i = 0; i != 10; ++i) {
     run_slot();
-    ASSERT_GE(pdsch_alloc.last_grants.size(), 1);
+    ASSERT_GE(this->res_grid[0].result.dl.ue_grants.size(), 1);
     if (i == 0) {
-      offset = pdsch_alloc.last_grants[0].user->ue_index == u1.ue_index ? 0 : 1;
-      ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, u2.ue_index);
+      offset = this->res_grid[0].result.dl.ue_grants[0].context.ue_index == u1.ue_index ? 0 : 1;
+      ASSERT_NE(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, u2.ue_index);
     } else {
-      ASSERT_EQ(pdsch_alloc.last_grants[0].user->ue_index, rr_ues[(i + offset) % rr_ues.size()]);
+      ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, rr_ues[(i + offset) % rr_ues.size()]);
     }
   }
 }
@@ -406,14 +355,14 @@ TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twic
   ue&            u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
 
   auto get_pdsch_grant_count_for_ue = [&](const rnti_t crnti) {
-    return std::count_if(pdsch_alloc.last_grants.begin(),
-                         pdsch_alloc.last_grants.end(),
-                         [&](const ue_pdsch_grant& grant) { return crnti == grant.user->crnti; });
+    return std::count_if(this->res_grid[0].result.dl.ue_grants.begin(),
+                         this->res_grid[0].result.dl.ue_grants.end(),
+                         [&](const dl_msg_alloc& grant) { return crnti == grant.pdsch_cfg.rnti; });
   };
   auto get_pusch_grant_count_for_ue = [&](const rnti_t crnti) {
-    return std::count_if(pusch_alloc.last_grants.begin(),
-                         pusch_alloc.last_grants.end(),
-                         [&](const ue_pusch_grant& grant) { return crnti == grant.user->crnti; });
+    return std::count_if(this->res_grid[0].result.ul.puschs.begin(),
+                         this->res_grid[0].result.ul.puschs.end(),
+                         [&](const ul_sched_info& grant) { return crnti == grant.pusch_cfg.rnti; });
   };
 
   // Action: Push buffer status notification for DL + Ul and a SR indication.
@@ -461,9 +410,12 @@ TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pdsch_within_conf
 
   // Expected CRBs is based on the expert configuration passed to scheduler during class initialization.
   crb_interval expected_crb_allocation{10, 15};
+  prb_interval expected_prb_interval = crb_to_prb(
+      u1.get_pcell().cfg().bwp(u1.get_pcell().active_bwp_id()).dl_common->generic_params.crbs, expected_crb_allocation);
+  vrb_interval expected_vrb_interval{expected_prb_interval.start(), expected_prb_interval.stop()};
 
-  ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
-  ASSERT_TRUE(pdsch_alloc.last_grants.back().crbs == expected_crb_allocation);
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants.size(), 1);
+  ASSERT_TRUE(this->res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1() == expected_vrb_interval);
 }
 
 TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pusch_within_configured_boundaries)
@@ -474,14 +426,18 @@ TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pusch_within_conf
   // Buffer has to be large enough so that the allocation does not stop.
   notify_ul_bsr(u1.ue_index, lcg_id, 2000000);
 
-  // Run for partial slot.
-  run_slot();
+  // Run until one slot before partial slot.
+  while (this->res_grid[0].result.ul.puschs.empty()) {
+    run_slot();
+  }
 
   // Expected CRBs is based on the expert configuration passed to scheduler during class initialization.
   crb_interval expected_crb_allocation{10, 15};
+  prb_interval expected_prb_interval = crb_to_prb(
+      u1.get_pcell().cfg().bwp(u1.get_pcell().active_bwp_id()).ul_common->generic_params.crbs, expected_crb_allocation);
+  vrb_interval expected_vrb_interval{expected_prb_interval.start(), expected_prb_interval.stop()};
 
-  ASSERT_EQ(pusch_alloc.last_grants.size(), 1);
-  ASSERT_TRUE(pusch_alloc.last_grants.back().crbs == expected_crb_allocation);
+  ASSERT_TRUE(this->res_grid[0].result.ul.puschs.back().pusch_cfg.rbs.type1() == expected_vrb_interval);
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
