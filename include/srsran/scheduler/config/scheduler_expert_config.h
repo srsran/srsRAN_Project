@@ -77,7 +77,7 @@ struct scheduler_ue_expert_config {
   float olla_dl_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_cqi_offset{4.0};
-  /// UL SNR offset increment in dBs used in OLLA algorithm. If set to zero, OLLA is disabled.
+  /// UL SNR offset increment in dB used in OLLA algorithm. If set to zero, OLLA is disabled.
   float olla_ul_snr_inc{0.001};
   /// UL Target BLER to be achieved with OLLA.
   float olla_ul_target_bler{0.01};

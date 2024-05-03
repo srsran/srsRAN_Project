@@ -31,7 +31,7 @@ struct mac_crc_pdu {
   uint8_t harq_id;
   /// True if transport block is successfully decoded, otherwise false.
   bool tb_crc_success;
-  /// PUSCH SINR value in dBs.
+  /// PUSCH SINR value in dB.
   optional<float> ul_sinr_dB;
   /// PUSCH RSRP value in dBFS.
   optional<float> ul_rsrp_dBFS;
@@ -98,7 +98,7 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    /// Metric of channel quality in dBs.
+    /// Metric of channel quality in dB.
     optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;
@@ -129,7 +129,7 @@ struct mac_uci_pdu {
       static_vector<uci_pucch_f0_or_f1_harq_values, NOF_HARQS_PER_UCI> harqs;
     };
 
-    /// Metric of channel quality in dBs.
+    /// Metric of channel quality in dB.
     optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;
@@ -196,7 +196,7 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    /// Metric of channel quality in dBs.
+    /// Metric of channel quality in dB.
     optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;

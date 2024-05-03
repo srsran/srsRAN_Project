@@ -50,13 +50,13 @@ static mac_pdu_handler_dummy dummy_pdu_handler;
 /// actual, cell-specific MAC CRC handler, which will be later set up through the \ref set_cell_crc_handler() method.
 static mac_cell_control_information_handler_dummy dummy_crc_handler;
 
-/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI SINR to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_sinr(int sinr)
 {
   return static_cast<float>(sinr) * 0.002F;
 }
 
-/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI RSSI to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_rssi(unsigned rssi)
 {
   return static_cast<float>(rssi - 1280) * 0.1F;
@@ -68,7 +68,7 @@ static float to_uci_ul_rsrp(uint16_t rsrp)
   return (static_cast<float>(rsrp) - 1280.0F) * 0.1F;
 }
 
-/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI SINR to dB as per SCF-222 v4.0 section 3.4.9.
 static optional<float> convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr)
 {
   if (fapi_ul_sinr != std::numeric_limits<decltype(fapi_ul_sinr)>::min()) {
@@ -150,7 +150,7 @@ static void convert_fapi_to_mac_ta_offset(optional<phy_time_unit>& mac_ta_offset
   }
 }
 
-/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI RSSI to dB as per SCF-222 v4.0 section 3.4.9.
 static optional<float> convert_fapi_to_mac_rssi(uint16_t fapi_rssi)
 {
   if (fapi_rssi != std::numeric_limits<decltype(fapi_rssi)>::max()) {
@@ -295,19 +295,19 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
 
 void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indication_message& msg) {}
 
-/// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH occasion RSSI to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_prach_rssi_dB(int fapi_rssi)
 {
   return (fapi_rssi - 140000) * 0.001F;
 }
 
-/// Converts the given FAPI RACH preamble power to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH preamble power to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_prach_preamble_power_dB(int fapi_power)
 {
   return static_cast<float>(fapi_power - 140000) * 0.001F;
 }
 
-/// Converts the given FAPI RACH preamble SNR to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_prach_preamble_snr_dB(int fapi_snr)
 {
   return (fapi_snr - 128) * 0.5F;

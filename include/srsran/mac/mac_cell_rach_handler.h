@@ -28,7 +28,7 @@ struct mac_rach_indication {
     phy_time_unit time_advance;
     /// Preamble received power in dBFS.
     optional<float> pwr_dBFS;
-    /// Average SNR value in dBs.
+    /// Average SNR value in dB.
     optional<float> snr_dB;
   };
 

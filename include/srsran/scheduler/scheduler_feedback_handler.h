@@ -55,7 +55,7 @@ struct ul_crc_pdu_indication {
   harq_id_t harq_id;
   /// If true, transport block has been successfully decoded, otherwise false.
   bool tb_crc_success;
-  /// PUSCH SINR value in dBs.
+  /// PUSCH SINR value in dB.
   optional<float> ul_sinr_dB;
   /// PUSCH RSRP value in dBFS.
   optional<float> ul_rsrp_dBFS;
@@ -81,7 +81,7 @@ struct uci_indication {
       bool sr_detected;
       /// HARQ bits.
       static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
-      /// Metric of channel quality in dBs.
+      /// Metric of channel quality in dB.
       optional<float> ul_sinr_dB;
       /// Timing Advance Offset measured for the UE.
       optional<phy_time_unit> time_advance_offset;
@@ -106,7 +106,7 @@ struct uci_indication {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
       /// CSI report.
       optional<csi_report_data> csi;
-      /// Metric of channel quality in dBs.
+      /// Metric of channel quality in dB.
       optional<float> ul_sinr_dB;
       /// Timing Advance Offset measured for the UE.
       optional<phy_time_unit> time_advance_offset;
