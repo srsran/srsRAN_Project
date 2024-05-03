@@ -228,6 +228,8 @@ protected:
   /// \brief Run F1 Setup Procedure to completion.
   void run_f1_setup_procedure();
 
+  void run_f1_removal_procedure();
+
   /// \brief Create new UE in F1AP.
   ue_test_context* run_f1ap_ue_create(du_ue_index_t ue_index);
 

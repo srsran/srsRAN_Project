@@ -237,6 +237,8 @@ f1ap_du_test::f1ap_du_test()
 
 f1ap_du_test::~f1ap_du_test()
 {
+  run_f1_removal_procedure();
+
   // flush logger after each test
   srslog::flush();
 }
@@ -258,6 +260,23 @@ void f1ap_du_test::run_f1_setup_procedure()
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
+}
+
+void f1ap_du_test::run_f1_removal_procedure()
+{
+  // Launch F1 Removal procedure.
+  async_task<void>         t = f1ap->handle_f1_removal_request();
+  lazy_task_launcher<void> t_launcher(t);
+
+  // Inject F1 removal response.
+  f1ap_message f1_removal_response = test_helpers::generate_f1_removal_response(f1c_gw.last_tx_f1ap_pdu);
+  test_logger.info("Injecting F1RemovalResponse");
+  f1ap->handle_message(f1_removal_response);
+
+  // Wait for F1 Removal procedure to complete with the TNL association removal.
+  while (not t_launcher.ready()) {
+    ctrl_worker.run_pending_tasks();
+  }
 }
 
 f1ap_du_test::ue_test_context* f1ap_du_test::run_f1ap_ue_create(du_ue_index_t ue_index)
