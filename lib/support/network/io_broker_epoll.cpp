@@ -24,7 +24,10 @@ io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog
   }
 
   // Register fd and event_handler to handle stops, fd registrations and fd deregistrations.
-  ctrl_event_fd      = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
+  ctrl_event_fd = unique_fd{::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
+  if (not ctrl_event_fd.is_open()) {
+    report_fatal_error("IO broker: failed to create control event file descriptor. error={}", strerror(errno));
+  }
   auto data_handler  = [this]() { handle_enqueued_events(); };
   auto error_handler = [this](error_code code) {
     logger.error("Error on control event file descriptor. Error code: {}", (int)code);
@@ -139,6 +142,11 @@ bool io_broker_epoll::enqueue_event(const control_event& event)
 
 void io_broker_epoll::handle_enqueued_events()
 {
+  // Read from the FD to avoid keep triggering the epoll.
+  uint64_t ignore_counter;
+  int      ignore = ::read(ctrl_event_fd.value(), &ignore_counter, sizeof(ignore_counter));
+  (void)ignore;
+
   // Keep popping from the event queue.
   control_event ev;
   while (event_queue.try_dequeue(ev)) {
