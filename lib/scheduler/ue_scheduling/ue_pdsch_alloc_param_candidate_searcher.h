@@ -173,16 +173,26 @@ private:
     // Consider SearchSpaces only in UE dedicated configuration.
     span<const search_space_configuration> ue_ded_cfg_ss =
         ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces;
-    const search_space_info** ss_iterator = ss_candidate_list.begin();
-    while (ss_iterator != ss_candidate_list.end()) {
-      const auto* ue_ded_cfg_ss_it = std::find_if(
-          ue_ded_cfg_ss.begin(),
-          ue_ded_cfg_ss.end(),
-          [id = (*ss_iterator)->cfg->get_id()](const search_space_configuration& ss) { return ss.get_id() == id; });
-      if (ue_ded_cfg_ss_it == ue_ded_cfg_ss.end()) {
-        ss_iterator = ss_candidate_list.erase(ss_iterator);
-      } else {
-        ++ss_iterator;
+    bool is_css_in_ue_dedicated_cfg =
+        std::any_of(ue_ded_cfg_ss.begin(), ue_ded_cfg_ss.end(), [](const search_space_configuration& ss) {
+          return ss.is_common_search_space();
+        });
+    // Filter out any SearchSpace configured which belong to common configuration only if there is no Common
+    // SearchSpace (CSS) configured in UE dedicated configuration. If there is atleast one CSS configured in UE
+    // dedicated configuration then we need to consider also the SearchSpaces configured in common configuration as they
+    // have higher priority due to lower SearchSpace index.
+    if (not is_css_in_ue_dedicated_cfg) {
+      const search_space_info** ss_iterator = ss_candidate_list.begin();
+      while (ss_iterator != ss_candidate_list.end()) {
+        const auto* ue_ded_cfg_ss_it = std::find_if(
+            ue_ded_cfg_ss.begin(),
+            ue_ded_cfg_ss.end(),
+            [id = (*ss_iterator)->cfg->get_id()](const search_space_configuration& ss) { return ss.get_id() == id; });
+        if (ue_ded_cfg_ss_it == ue_ded_cfg_ss.end()) {
+          ss_iterator = ss_candidate_list.erase(ss_iterator);
+        } else {
+          ++ss_iterator;
+        }
       }
     }
   }
