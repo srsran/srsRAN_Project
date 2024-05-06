@@ -264,17 +264,7 @@ namespace moodycamel { namespace details {
 // TSAN can false report races in lock-free code.  To enable TSAN to be used from projects that use this one,
 // we can apply per-function compile-time suppression.
 // See https://clang.llvm.org/docs/ThreadSanitizer.html#has-feature-thread-sanitizer
-#if defined(__has_feature)
-  #if __has_feature(thread_sanitizer)
-    #define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
-  #else
-    #define MOODYCAMEL_NO_TSAN
-  #endif
-#elif defined(__SANITIZE_THREAD__)
-  #define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
-#else
-  #define MOODYCAMEL_NO_TSAN
-#endif // TSAN
+#define MOODYCAMEL_NO_TSAN __attribute__((no_sanitize("thread")))
 
 // Compiler-specific likely/unlikely hints
 namespace moodycamel { namespace details {
