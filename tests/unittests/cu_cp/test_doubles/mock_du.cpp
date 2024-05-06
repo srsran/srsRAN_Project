@@ -15,6 +15,7 @@
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/error_handling.h"
+#include <future>
 #include <unordered_map>
 
 using namespace srsran;
@@ -30,6 +31,14 @@ public:
   synchronized_mock_du(mock_du_params params) : cu_cp_f1c(params.cu_cp)
   {
     tx_pdu_notifier = cu_cp_f1c.handle_new_du_connection(std::make_unique<rx_pdu_notifier>(*this));
+  }
+  ~synchronized_mock_du() override
+  {
+    // Destroy the Tx notifier used by the DU, which should trigger a DU removal in the CU-CP.
+    tx_pdu_notifier.reset();
+
+    // Wait for the CU-CP to signal the destruction of the Rx notifier.
+    rx_pdu_notifier_destroyed.wait();
   }
 
   bool connected() const { return tx_pdu_notifier != nullptr; }
@@ -94,12 +103,21 @@ private:
   class rx_pdu_notifier final : public f1ap_message_notifier
   {
   public:
-    rx_pdu_notifier(synchronized_mock_du& parent_) : parent(parent_) {}
+    rx_pdu_notifier(synchronized_mock_du& parent_) : parent(parent_)
+    {
+      parent.rx_pdu_notifier_destroyed = rx_pdu_dtor_signal.get_future();
+    }
+    ~rx_pdu_notifier() override
+    {
+      // Signal to the mock DU that the Rx PDU notifier was deleted by the CU-CP.
+      rx_pdu_dtor_signal.set_value();
+    }
 
     void on_new_message(const f1ap_message& msg) override { parent.handle_rx_pdu(msg); }
 
   private:
     synchronized_mock_du& parent;
+    std::promise<void>    rx_pdu_dtor_signal;
   };
 
   struct ue_context {
@@ -113,7 +131,9 @@ private:
     report_fatal_error_if_not(rx_pdus.push_blocking(msg), "queue is full");
   }
 
-  cu_cp_f1c_handler&                                  cu_cp_f1c;
+  cu_cp_f1c_handler& cu_cp_f1c;
+  // Used to signal the Rx PDU notifier destruction by the CU-CP.
+  std::future<void>                                   rx_pdu_notifier_destroyed;
   std::unique_ptr<f1ap_message_notifier>              tx_pdu_notifier;
   std::unordered_map<gnb_du_ue_f1ap_id_t, ue_context> ue_contexts;
 

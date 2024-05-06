@@ -268,6 +268,8 @@ TEST_F(f1ap_cu_test, when_f1_removal_request_received_then_du_deleted)
   f1ap_message removal_request = {};
   removal_request.pdu.set_init_msg();
   removal_request.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_REMOVAL);
+  removal_request.pdu.init_msg().value.f1_removal_request()->resize(1);
+  (*removal_request.pdu.init_msg().value.f1_removal_request())[0]->transaction_id() = 0;
 
   // Pass message to F1AP
   f1ap->handle_message(removal_request);

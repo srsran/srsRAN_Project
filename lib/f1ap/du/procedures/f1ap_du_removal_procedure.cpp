@@ -41,7 +41,9 @@ void f1ap_du_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
   transaction = ev_mng.transactions.create_transaction(std::chrono::milliseconds{1000});
   if (not transaction.valid()) {
     // Just shutdown the TNL association and finish procedure.
+    logger.error("{}: Unable to allocate transaction. Shutting down F1 TNL association...", name());
     CORO_AWAIT(du_conn_handler.handle_tnl_association_removal());
+    logger.info("{}: F1 TNL association shut down", name());
     CORO_EARLY_RETURN();
   }
 
@@ -54,7 +56,9 @@ void f1ap_du_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
   handle_f1_removal_response();
 
   // Await for the TNL association tear down.
+  logger.debug("{}: Shutting down F1 TNL association...", name());
   CORO_AWAIT(du_conn_handler.handle_tnl_association_removal());
+  logger.info("{}: F1 TNL association shut down", name());
 
   CORO_RETURN();
 }
@@ -94,6 +98,7 @@ void f1ap_du_removal_procedure::handle_f1_removal_response()
       logger.warning("{}: Received F1 Removal Response with wrong transaction ID.", name());
       return;
     }
+    logger.debug("{}: F1 session successfully removed", name());
   } else {
     const asn1::f1ap::unsuccessful_outcome_s& unsuccess = transaction.response().error();
     if (unsuccess.value.type().value != f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_removal_fail) {

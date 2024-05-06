@@ -112,10 +112,6 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Handle the reception of an F1 Removal Request.
-  /// \param[in] msg The F1 Removal Request message.
-  void handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg);
-
   /// \brief Handle the reception of an UE Context Release Request.
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);

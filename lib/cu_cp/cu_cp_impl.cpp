@@ -126,7 +126,7 @@ void cu_cp_impl::stop()
   logger.info("Stopping CU-CP...");
 
   // Shut down components from within CU-CP executor.
-  force_blocking_execute(
+  sync_execute(
       *cfg.cu_cp_executor,
       [this]() {
         // Stop the activity of UEs that are currently attached.

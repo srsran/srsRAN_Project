@@ -225,6 +225,7 @@ private:
   {
   public:
     f1ap_du_tx_pdu_notifier(cu_cp_simulator& parent_) : parent(parent_) {}
+    ~f1ap_du_tx_pdu_notifier() override { parent.du_rx_pdu_notifier.reset(); }
 
     void on_new_message(const f1ap_message& msg) override { parent.handle_message(msg); }
 

@@ -80,13 +80,10 @@ void du_processor_repository::handle_du_remove_request(du_index_t du_index)
   if (not running.load(std::memory_order_acquire)) {
     return;
   }
-  force_blocking_execute(
-      *cfg.cu_cp.cu_cp_executor,
-      [this, du_index]() { remove_du_impl(du_index); },
-      [&]() {
-        logger.warning("Failed to schedule DU removal task. Retrying...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      });
+  while (not cfg.cu_cp.cu_cp_executor->defer([this, du_index]() { remove_du_impl(du_index); })) {
+    logger.error("Failed to schedule DU removal task. Retrying...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
