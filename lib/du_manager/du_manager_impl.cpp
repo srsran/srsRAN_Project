@@ -109,6 +109,7 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
 void du_manager_impl::handle_du_stop_request()
 {
   if (not running) {
+    // Already stopped.
     return;
   }
 
@@ -117,7 +118,8 @@ void du_manager_impl::handle_du_stop_request()
     CORO_BEGIN(ctx);
 
     if (not running) {
-      return;
+      // Already stopped.
+      CORO_EARLY_RETURN();
     }
 
     // Tear down activity in remaining layers.

@@ -76,7 +76,7 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
   ctrl_exec(ctrl_exec_),
   du_mng(du_mng_),
   paging_notifier(paging_notifier_),
-  connection_handler(f1c_client_handler_, *this, ctrl_exec),
+  connection_handler(f1c_client_handler_, *this, du_mng, ctrl_exec),
   ues(du_mng, ctrl_exec, ue_exec_mapper_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
 {

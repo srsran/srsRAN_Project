@@ -18,12 +18,15 @@
 namespace srsran {
 namespace srs_du {
 
+class f1ap_du_configurator;
+
 /// \brief Handler of TNL connection between DU and CU-CP.
 class f1ap_du_connection_handler : public f1ap_event_handler
 {
 public:
   f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
                              f1ap_message_handler&  f1ap_pdu_handler_,
+                             f1ap_du_configurator&  du_mng_,
                              task_executor&         ctrl_exec_);
   ~f1ap_du_connection_handler();
 
@@ -42,6 +45,7 @@ private:
 
   f1c_connection_client& f1c_client_handler;
   f1ap_message_handler&  f1ap_pdu_handler;
+  f1ap_du_configurator&  du_mng;
   task_executor&         ctrl_exec;
   srslog::basic_logger&  logger;
 

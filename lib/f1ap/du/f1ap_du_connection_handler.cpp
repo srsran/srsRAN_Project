@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_connection_handler.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include <thread>
 
 using namespace srsran;
@@ -73,9 +74,11 @@ private:
 
 f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
                                                        f1ap_message_handler&  f1ap_pdu_handler_,
+                                                       f1ap_du_configurator&  du_mng_,
                                                        task_executor&         ctrl_exec_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),
+  du_mng(du_mng_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
@@ -85,7 +88,7 @@ f1ap_du_connection_handler::~f1ap_du_connection_handler()
 {
   // Check whether the F1-C TNL association was previously shutdown as part of the F1 Removal procedure.
   if (is_connected()) {
-    logger.warning("F1-C TNL association was not properly shutdown before F1AP shutdown");
+    logger.warning("F1-C TNL association was not properly shutdown before F1AP shutdown. Forcing it...");
   }
 
   // Tear down Tx PDU notifier, which will trigger the shutdown of the Rx path as well.
@@ -134,8 +137,14 @@ void f1ap_du_connection_handler::handle_connection_loss_impl()
   // Mark the F1-C TNL as disconnected.
   connected_flag = false;
 
-  // In case the Tx PDU path is still up (unexpected F1-C connection loss), we disconnect it.
-  tx_pdu_notifier.reset();
+  // In case of unexpected F1-C connection loss, the Tx path is still up.
+  if (tx_pdu_notifier != nullptr) {
+    // Disconnect Tx path.
+    tx_pdu_notifier.reset();
+
+    // Signal to DU that the F1-C connection is lost.
+    du_mng.on_f1c_disconnection();
+  }
 
   // Signal back that the F1-C Rx path has been successfully shutdown to any awaiting coroutine.
   rx_path_disconnected.set();
@@ -148,7 +157,7 @@ async_task<void> f1ap_du_connection_handler::handle_tnl_association_removal()
 
     if (not is_connected()) {
       // No need to wait for any event if the F1-C TNL association is already down.
-      return CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN();
     }
 
     // Stop Tx PDU path.

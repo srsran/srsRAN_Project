@@ -32,6 +32,11 @@ void f1ap_du_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  // Check if the TNL is still up.
+  if (not du_conn_handler.is_connected()) {
+    CORO_EARLY_RETURN();
+  }
+
   // Send the F1AP DU removal request and await response.
   transaction = ev_mng.transactions.create_transaction(std::chrono::milliseconds{1000});
   if (not transaction.valid()) {
