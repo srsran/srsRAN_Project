@@ -377,8 +377,9 @@ int main(int argc, char** argv)
 
     ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
         *ngap_p,
-        gnb_cfg.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
-                                : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(gnb_cfg)}}});
+        cu_cp_config.amf_cfg.no_core
+            ? ngap_mode_t{no_core_mode_t{}}
+            : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(cu_cp_config.amf_cfg)}}});
   }
 
   // E2AP configuration.
@@ -438,7 +439,7 @@ int main(int argc, char** argv)
 
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not gnb_cfg.amf_cfg.no_core) {
+  if (not cu_up_config.amf_cfg.no_core) {
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = cu_up_cfg.net_cfg.n3_bind_addr;
     ngu_gw_config.bind_port                  = cu_up_cfg.net_cfg.n3_bind_port;

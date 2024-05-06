@@ -206,6 +206,21 @@ struct cu_cp_unit_metrics_config {
   unsigned cu_cp_statistics_report_period = 1;
 };
 
+struct cu_cp_unit_amf_config {
+  std::string ip_addr                = "127.0.0.1";
+  uint16_t    port                   = 38412;
+  std::string bind_addr              = "127.0.0.1";
+  std::string n2_bind_addr           = "auto";
+  std::string n2_bind_interface      = "auto";
+  int         sctp_rto_initial       = 120;
+  int         sctp_rto_min           = 120;
+  int         sctp_rto_max           = 500;
+  int         sctp_init_max_attempts = 3;
+  int         sctp_max_init_timeo    = 500;
+  bool        sctp_nodelay           = false;
+  bool        no_core                = false;
+};
+
 /// CU-CP application unit configuration.
 struct cu_cp_unit_config {
   /// Node name.
@@ -224,6 +239,8 @@ struct cu_cp_unit_config {
   cu_cp_unit_logger_config loggers;
   /// Metrics configuration.
   cu_cp_unit_metrics_config metrics;
+  /// AMF configuration.
+  cu_cp_unit_amf_config amf_cfg;
   /// Mobility configuration.
   cu_cp_unit_mobility_config mobility_config;
   /// RRC configuration.

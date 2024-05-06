@@ -396,9 +396,23 @@ static bool validate_qos_appconfig(span<const cu_cp_unit_qos_config> config)
   return true;
 }
 
+/// Validates the given AMF configuration. Returns true on success, otherwise false.
+static bool validate_amf_appconfig(const cu_cp_unit_amf_config& config)
+{
+  // only check for non-empty AMF address and default port
+  if (config.ip_addr.empty() or config.port != 38412) {
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given CU-CP configuration. Returns true on success, otherwise false.
 static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_config& config)
 {
+  if (!validate_amf_appconfig(config.amf_cfg)) {
+    return false;
+  }
+
   // validate mobility config
   if (!validate_mobility_appconfig(gnb_id, config.mobility_config)) {
     return false;

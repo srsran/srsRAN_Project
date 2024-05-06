@@ -140,38 +140,6 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
       ->capture_default_str();
 }
 
-static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
-{
-  app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
-  app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr",
-                 amf_params.bind_addr,
-                 "Default local IP address interfaces bind to, unless a specific bind address is specified")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
-      ->capture_default_str();
-  app.add_option("--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
-      ->capture_default_str();
-  app.add_option("--n3_ext_addr",
-                 amf_params.n3_ext_addr,
-                 "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
-  app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
-  app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
-  app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
-  app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
-  app.add_option("--sctp_nodelay",
-                 amf_params.sctp_nodelay,
-                 "Send SCTP messages as soon as possible without any Nagle-like algorithm");
-  app.add_option("--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
-}
-
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
 {
   app.add_option("--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
@@ -384,10 +352,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
-
-  // AMF section.
-  CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
-  configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
 
   // E2 section.
   CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();

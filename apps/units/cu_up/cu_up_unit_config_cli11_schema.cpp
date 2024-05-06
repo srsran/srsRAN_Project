@@ -64,37 +64,22 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_amf_args(CLI::App& app, cu_up_unit_amf_config& amf_params)
+static void configure_cli11_amf_args(CLI::App& app, cu_up_unit_upf_config& amf_params)
 {
-  add_option(app, "--addr", amf_params.ip_addr, "AMF IP address");
-  add_option(app, "--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
   add_option(app,
              "--bind_addr",
              amf_params.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
-  add_option(app, "--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
-      ->check(CLI::ValidIPV4);
   add_option(app, "--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
   add_option(app, "--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
-      ->capture_default_str();
-  add_option(app, "--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
   add_option(app,
              "--n3_ext_addr",
              amf_params.n3_ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4);
-  add_option(app, "--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
-  add_option(app, "--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
-  add_option(app, "--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
-  add_option(app, "--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
-  add_option(app, "--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
-  add_option(app,
-             "--sctp_nodelay",
-             amf_params.sctp_nodelay,
-             "Send SCTP messages as soon as possible without any Nagle-like algorithm");
   add_option(app, "--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   add_option(app, "--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }

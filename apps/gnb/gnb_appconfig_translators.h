@@ -25,6 +25,7 @@
 
 namespace srsran {
 
+struct cu_cp_unit_amf_config;
 struct cu_cp_unit_config;
 struct cu_up_unit_config;
 struct du_high_unit_config;
@@ -41,7 +42,7 @@ srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, un
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
 /// Converts and returns the given gnb application configuration to a NGAP Network Gateway configuration.
-srsran::sctp_network_gateway_config generate_ngap_nw_config(const gnb_appconfig& config);
+srsran::sctp_network_gateway_config generate_ngap_nw_config(const cu_cp_unit_amf_config& config);
 
 /// Converts and returns the given gnb application configuration to a CU-CP configuration.
 srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const du_high_unit_config& config,
