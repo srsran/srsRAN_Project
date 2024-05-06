@@ -35,7 +35,7 @@ CAMPAIGN_FILENAME = "C:\\ci\\CI 4x4 ORAN-FH.xml"
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 
 
-class TestName(Enum):
+class _TestName(Enum):
     """
     Test names
     """
@@ -128,13 +128,13 @@ def test_viavi_manual(
     "test_name, test_timeout, post_commands",
     (
         param(
-            TestName.UE1_STATIC_DL_UL_UDP.value,
+            _TestName.UE1_STATIC_DL_UL_UDP.value,
             45 * 60,
             "",
             id="1UE Bidirectional UDP",
         ),
         param(
-            TestName.UE32_STATIC_DL_UL_UDP.value,
+            _TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
             "",
             id="32UE Bidirectional UDP",
@@ -193,7 +193,7 @@ def test_viavi(
     "test_name, test_timeout, post_commands",
     (
         param(
-            TestName.UE32_STATIC_DL_UL_UDP.value,
+            _TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
             "",
             id="Debug: 32UE Bidirectional UDP",
@@ -378,14 +378,14 @@ def get_viavi_configuration(test_name: str, warning_as_errors: bool) -> _ViaviCo
     """
     Get Viavi configuration
     """
-    if test_name == TestName.UE1_STATIC_DL_UL_UDP.value:
+    if test_name == _TestName.UE1_STATIC_DL_UL_UDP.value:
         return _ViaviConfiguration(
             max_pdschs_per_slot=8,
             max_puschs_per_slot=8,
             enable_qos_viavi=False,
             warning_as_errors=warning_as_errors,
         )
-    if test_name == TestName.UE32_STATIC_DL_UL_UDP.value:
+    if test_name == _TestName.UE32_STATIC_DL_UL_UDP.value:
         return _ViaviConfiguration(
             max_pdschs_per_slot=1,
             max_puschs_per_slot=1,

@@ -112,6 +112,7 @@ variables:
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
     ENABLE_WERROR: "" # Empty for cmake default
+    FORCE_DEBUG_INFO: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
@@ -181,6 +182,9 @@ variables:
         fi
         if [ -n "${ENABLE_WERROR}" ]; then
           BUILD_CMD="${BUILD_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
+        fi
+        if [ -n "${FORCE_DEBUG_INFO}" ]; then
+          BUILD_CMD="${BUILD_CMD} -DFORCE_DEBUG_INFO=${FORCE_DEBUG_INFO}"
         fi
         if [[ $TEST_MODE = "none" ]]; then
           BUILD_CMD="${BUILD_CMD} -DBUILD_TESTS=False"
@@ -1793,6 +1797,7 @@ basic avx512 dpdk:
     DPDK_VERSION: "23.11"
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
+    FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
     SAVE_ARTIFACTS: "True"
     KUBERNETES_CPU_REQUEST: 14
@@ -1823,6 +1828,7 @@ basic avx512 dpdk withassert:
     DPDK_VERSION: "23.11"
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
+    FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: NORMAL
     SAVE_ARTIFACTS: "True"
     KUBERNETES_CPU_REQUEST: 14
