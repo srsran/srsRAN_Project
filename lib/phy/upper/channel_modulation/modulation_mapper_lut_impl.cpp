@@ -12,7 +12,6 @@
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/sc_prod.h"
-#include <immintrin.h>
 
 using namespace srsran;
 
