@@ -9,12 +9,12 @@
 """
 Launch tests in Viavi
 """
-
 import logging
+import operator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import pytest
 from pytest import mark, param
@@ -29,7 +29,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
-from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
+from .steps.stub import get_metrics, GNB_STARTUP_TIMEOUT, GnbMetrics, handle_start_error, stop
 
 CAMPAIGN_FILENAME = "C:\\ci\\CI 4x4 ORAN-FH.xml"
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
@@ -50,10 +50,12 @@ class _ViaviConfiguration:
     Viavi configuration
     """
 
-    max_pdschs_per_slot: int
-    max_puschs_per_slot: int
-    enable_qos_viavi: bool
-    warning_as_errors: bool
+    max_pdschs_per_slot: int = 1
+    max_puschs_per_slot: int = 1
+    enable_qos_viavi: bool = False
+    warning_as_errors: bool = True
+    expected_ul_bitrate: float = 0
+    expected_dl_bitrate: float = 0
 
 
 @pytest.fixture
@@ -244,7 +246,6 @@ def test_viavi_debug(
         log_search=log_search,
         post_commands=post_commands,
         warning_as_errors=False,
-        fail_if_kos=False,
     )
 
 
@@ -349,7 +350,7 @@ def _test_viavi(
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,
             warning_as_errors=test_configuration.warning_as_errors,
-            fail_if_kos=fail_if_kos,
+            fail_if_kos=False,
         )
 
     # This except and the finally should be inside the request, but the campaign_name makes it complicated
@@ -365,13 +366,50 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
-            viavi_failure_manager = viavi.get_test_failures()
-            if viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) > 0:
-                nof_failures = viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST)
-                viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
-                pytest.fail(f"Viavi Test Failed with {nof_failures} failures")
+            run_check_fail_criteria(test_configuration, gnb, viavi, fail_if_kos)
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
+
+
+def run_check_fail_criteria(test_configuration: _ViaviConfiguration, gnb: GNBStub, viavi: Viavi, fail_if_kos: bool):
+    """
+    Check pass/fail criteria
+    """
+
+    is_ok = True
+
+    # Check metrics
+    gnb_metrics: GnbMetrics = get_metrics(gnb)
+
+    is_ok &= check_and_print_criteria(
+        "DL bitrate", gnb_metrics.dl_brate_agregate, test_configuration.expected_dl_bitrate, operator.gt
+    )
+    is_ok &= check_and_print_criteria(
+        "UL bitrate", gnb_metrics.ul_brate_agregate, test_configuration.expected_ul_bitrate, operator.gt
+    )
+    is_ok &= (
+        check_and_print_criteria("Number of KOs and/or retrxs", gnb_metrics.nof_kos_aggregate, 0, operator.eq)
+        and not fail_if_kos
+    )
+
+    # Check procedure table
+    viavi_failure_manager = viavi.get_test_failures()
+    viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
+    is_ok &= viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) > 0
+
+    if not is_ok:
+        pytest.fail("Test didn't pass all the criteria")
+
+
+def check_and_print_criteria(
+    name: str, current: float, expected: float, operator_method: Callable[[float, float], bool]
+) -> bool:
+    """
+    Check and print criteria
+    """
+    is_ok = operator_method(current, expected)
+    (logging.info if is_ok else logging.error)(f"{name} expected: {expected}, actual: {current}")
+    return is_ok
 
 
 def get_viavi_configuration(test_name: str, warning_as_errors: bool) -> _ViaviConfiguration:
@@ -384,6 +422,8 @@ def get_viavi_configuration(test_name: str, warning_as_errors: bool) -> _ViaviCo
             max_puschs_per_slot=8,
             enable_qos_viavi=False,
             warning_as_errors=warning_as_errors,
+            expected_dl_bitrate=80e6,
+            expected_ul_bitrate=80e6,
         )
     if test_name == _TestName.UE32_STATIC_DL_UL_UDP.value:
         return _ViaviConfiguration(
@@ -391,5 +431,7 @@ def get_viavi_configuration(test_name: str, warning_as_errors: bool) -> _ViaviCo
             max_puschs_per_slot=1,
             enable_qos_viavi=False,
             warning_as_errors=warning_as_errors,
+            expected_dl_bitrate=80e6,
+            expected_ul_bitrate=80e6,
         )
     raise ValueError(f"Test name {test_name} not supported")

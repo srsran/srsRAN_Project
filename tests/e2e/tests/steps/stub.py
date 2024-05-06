@@ -12,6 +12,7 @@ Steps related with stubs / resources
 import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
+from dataclasses import dataclass
 from time import sleep
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
@@ -23,7 +24,7 @@ from google.protobuf.wrappers_pb2 import StringValue, UInt32Value
 from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
-from retina.protocol.base_pb2 import PingRequest, PingResponse, PLMN, StartInfo, StopResponse, UEDefinition
+from retina.protocol.base_pb2 import Metrics, PingRequest, PingResponse, PLMN, StartInfo, StopResponse, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -46,6 +47,17 @@ UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 2  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 90
+
+
+@dataclass
+class GnbMetrics:
+    """
+    Metrics from a GNB
+    """
+
+    ul_brate_agregate: float
+    dl_brate_agregate: float
+    nof_kos_aggregate: float
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -681,3 +693,25 @@ def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str
                     return f"{name} has KOs and/or retrxs"
 
     return ""
+
+
+def get_metrics(stub: RanStub) -> GnbMetrics:
+    """
+    Get metrics from a stub
+    """
+    with suppress(grpc.RpcError):
+        metrics: Metrics = stub.GetMetrics(Empty())
+
+        ul_brate_aggregate = 0
+        dl_brate_aggregate = 0
+        nof_kos_aggregate = 0
+
+        for ue_info in metrics.ue_array:
+            if ue_info.ul_bitrate:
+                ul_brate_aggregate += ue_info.ul_bitrate
+            if ue_info.dl_bitrate:
+                dl_brate_aggregate += ue_info.dl_bitrate
+            if ue_info.nof_kos or ue_info.nof_retx:
+                nof_kos_aggregate += ue_info.nof_kos
+
+    return GnbMetrics(ul_brate_aggregate, dl_brate_aggregate, nof_kos_aggregate)
