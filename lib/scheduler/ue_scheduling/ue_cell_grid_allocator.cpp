@@ -186,21 +186,24 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                 : ue_cc->required_dl_prbs(pdsch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
     // Limit the grant PRBs.
     if (not is_retx) {
-      // [Implementation-defined]
-      // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs for
-      // which dl_new_tx_max_nof_rbs_per_ue_per_slot was computed. One way is by checking if the emtpy interval is
-      // less than 2 times the required RBs. If so, allocate all remaining RBs. NOTE: This approach won't hold good in
-      // case of low traffic scenario.
-      const unsigned twice_grant_crbs_length =
-          rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
-      if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
-        mcs_prbs.n_prbs = twice_grant_crbs_length;
-      }
       // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
       // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
       // to greater than 1 PRB.
       if (not cell_cfg.is_fully_dl_enabled(pdsch_alloc.slot) and mcs_prbs.n_prbs == 1) {
         mcs_prbs.n_prbs = 2;
+      }
+      // Limit nof. RBs to allocate to maximum RBs provided in grant.
+      if (grant.max_nof_rbs.has_value()) {
+        mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
+      }
+      // [Implementation-defined]
+      // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs per slot
+      // and not X+1 nof. UEs. One way is by checking if the emtpy interval is less than 2 times the required RBs. If
+      // so, allocate all remaining RBs. NOTE: This approach won't hold good in case of low traffic scenario.
+      const unsigned twice_grant_crbs_length =
+          rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
+      if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
+        mcs_prbs.n_prbs = twice_grant_crbs_length;
       }
     }
 
