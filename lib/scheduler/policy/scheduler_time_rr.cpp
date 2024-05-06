@@ -251,8 +251,8 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
           return result;
         }
       } else {
-        const alloc_outcome result =
-            pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u, ue_cc.cell_index, h_dl->id, u.pending_dl_newtx_bytes()});
+        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
+            &u, ue_cc.cell_index, h_dl->id, u.pending_dl_newtx_bytes(), dl_new_tx_max_nof_rbs_per_ue_per_slot});
         // If the allocation failed due to invalid parameters, we continue iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;

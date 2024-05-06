@@ -25,6 +25,8 @@ struct ue_pdsch_grant {
   harq_id_t       h_id;
   /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
   std::optional<unsigned> recommended_nof_bytes;
+  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> max_nof_rbs;
 };
 
 /// Information relative to a UE PUSCH grant.
