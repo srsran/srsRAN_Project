@@ -39,8 +39,10 @@ public:
   /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
   port_channel_estimator_average_impl(std::unique_ptr<interpolator>                interp,
                                       std::unique_ptr<time_alignment_estimator>    ta_estimator_,
-                                      port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy_) :
+                                      port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy_,
+                                      bool                                         compensate_cfo_ = true) :
     fd_smoothing_strategy(fd_smoothing_strategy_),
+    compensate_cfo(compensate_cfo_),
     freq_interpolator(std::move(interp)),
     ta_estimator(std::move(ta_estimator_))
   {
@@ -71,6 +73,9 @@ private:
 
   /// Frequency domain smoothing strategy.
   port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy;
+
+  /// Boolean flag for activating CFO compensation (active when true).
+  bool compensate_cfo;
 
   /// \brief Interpolator.
   ///

@@ -111,7 +111,7 @@ public:
     return std::make_unique<dmrs_pucch_processor_format1_impl>(
         prg_factory->create(),
         lpc_factory->create(m, delta, alphas),
-        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean));
+        ch_estimator_factory->create(port_channel_estimator_fd_smoothing_strategy::mean, /*compensate_cfo =*/false));
   }
 
   std::unique_ptr<dmrs_pucch_processor> create_format2() override
@@ -230,13 +230,13 @@ public:
     srsran_assert(ta_estimator_factory, "Invalid TA estimator factory.");
   }
 
-  std::unique_ptr<port_channel_estimator>
-  create(port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy) override
+  std::unique_ptr<port_channel_estimator> create(port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy,
+                                                 bool                                         compensate_cfo) override
   {
     std::unique_ptr<interpolator> interp = create_interpolator();
 
     return std::make_unique<port_channel_estimator_average_impl>(
-        std::move(interp), ta_estimator_factory->create(), fd_smoothing_strategy);
+        std::move(interp), ta_estimator_factory->create(), fd_smoothing_strategy, compensate_cfo);
   }
 
 private:
