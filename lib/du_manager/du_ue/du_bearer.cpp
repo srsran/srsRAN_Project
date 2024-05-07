@@ -11,6 +11,7 @@
 #include "du_bearer.h"
 #include "../converters/rlc_config_helpers.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include "srsran/f1u/du/f1u_bearer_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 
 using namespace srsran;
@@ -141,7 +142,21 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
-  std::unique_ptr<f1u_bearer> f1u_drb = f1u_gw.create_du_bearer(
+  srsran::srs_du::f1u_bearer_creation_message f1u_msg = {};
+  f1u_msg.ue_index                                    = ue_index;
+  f1u_msg.drb_id                                      = drb->drb_id;
+  f1u_msg.config                                      = drb->f1u_cfg;
+  f1u_msg.dl_tnl_info                                 = drb->dluptnl_info_list[0];
+  f1u_msg.rx_sdu_notifier                             = &drb->connector.f1u_rx_sdu_notif;
+  f1u_msg.tx_pdu_notifier                             = nullptr; // TODO put adapter here
+  f1u_msg.timers =
+      timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)};
+  f1u_msg.ue_executor  = &drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index);
+  f1u_msg.disconnector = &drb_info.du_params.f1u.f1u_gw;
+
+  std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
+
+  std::unique_ptr<srs_du::f1u_bearer> f1u_drb = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
