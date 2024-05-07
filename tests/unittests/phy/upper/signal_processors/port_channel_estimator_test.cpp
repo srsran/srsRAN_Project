@@ -15,6 +15,7 @@
 /// vectors.
 
 #include "port_channel_estimator_test_data.h"
+#include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
 #include <gtest/gtest.h>
@@ -69,7 +70,9 @@ protected:
     // Assert factories again for compatibility with GTest < 1.11.
     ASSERT_NE(ch_est_factory, nullptr);
 
-    ch_estimator = ch_est_factory->create(port_channel_estimator_fd_smoothing_strategy::filter);
+    port_channel_estimator_fd_smoothing_strategy smoothing      = GetParam().smoothing;
+    bool                                         compensate_cfo = GetParam().compensate_cfo;
+    ch_estimator                                                = ch_est_factory->create(smoothing, compensate_cfo);
     ASSERT_NE(ch_estimator, nullptr);
   }
 
@@ -104,15 +107,15 @@ bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> exp
 
 TEST_P(ChannelEstFixture, test)
 {
-  test_case_t test_params = GetParam();
+  const test_case_t& test_params = GetParam();
 
-  port_channel_estimator::configuration cfg = test_params.cfg;
+  const port_channel_estimator::configuration& cfg = test_params.cfg;
 
   // For now, single-layer/single-port transmissions only.
   ASSERT_EQ(cfg.dmrs_pattern.size(), 1) << "For now, only single-layer transmissions.";
   ASSERT_EQ(cfg.rx_ports.size(), 1) << "For now, only single-port reception is implemented.";
 
-  port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = cfg.dmrs_pattern[0];
+  const port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = cfg.dmrs_pattern[0];
 
   unsigned nof_dmrs_symbols     = dmrs_pattern.symbols.count();
   unsigned nof_allocatd_rblocks = dmrs_pattern.rb_mask.count();
