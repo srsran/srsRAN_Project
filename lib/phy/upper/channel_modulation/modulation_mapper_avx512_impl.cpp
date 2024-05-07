@@ -97,8 +97,16 @@ float modulation_mapper_avx512_impl::modulate_qam64(span<ci8_t> symbols, const b
   __m512i bswap_idx1 = _mm512_loadu_si512(vbswap_idx1);
   __m512i bswap_idx2 = _mm512_loadu_si512(vbswap_idx2);
 
-  const uint8_t* input_ptr = input.get_buffer().data();
-  for (unsigned i_symbol = 0, i_symbol_end = (symbols.size() / 64) * 64; i_symbol != i_symbol_end; i_symbol += 64) {
+  const uint8_t* input_ptr    = input.get_buffer().data();
+  unsigned       i_symbol     = 0;
+  unsigned       i_symbol_end = 0;
+  if (symbols.size() >= 64) {
+    // The input stride is 48 bytes but the register is 64 bytes. Skip the last 64 symbols to avoid reading out of the
+    // input bounds.
+    i_symbol_end = ((symbols.size() - 64) / 64) * 64;
+  }
+
+  for (; i_symbol != i_symbol_end; i_symbol += 64) {
     // Load all data for 64 symbols.
     __m512i avx_in = _mm512_loadu_si512(input_ptr + (i_symbol * 6) / 8);
 
@@ -136,7 +144,7 @@ float modulation_mapper_avx512_impl::modulate_qam64(span<ci8_t> symbols, const b
   }
 
   // Process the remaining symbols using the LUT implementation.
-  unsigned remainder = symbols.size() % 64;
+  unsigned remainder = symbols.size() - i_symbol;
   return lut_modulator.modulate(symbols.last(remainder), input.last(6 * remainder), modulation_scheme::QAM64);
 }
 
