@@ -310,16 +310,6 @@ public:
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
-/// DU processor inactivity handler.
-class du_processor_inactivity_handler
-{
-public:
-  virtual ~du_processor_inactivity_handler() = default;
-
-  /// \brief Handles an Inactivity notification message.
-  virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
-};
-
 /// Interface for the NGAP to interface with the DU repository
 /// Useful for paging and handover
 class du_repository_ngap_handler
@@ -354,7 +344,6 @@ public:
   virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
   virtual du_processor_ue_task_handler&    get_ue_task_handler()    = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
-  virtual du_processor_inactivity_handler& get_inactivity_handler() = 0;
   virtual du_processor_statistics_handler& get_statistics_handler() = 0;
   virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;
 

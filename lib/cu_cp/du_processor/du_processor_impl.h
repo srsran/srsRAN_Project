@@ -33,7 +33,6 @@ class du_processor_impl : public du_processor,
                           public du_processor_ngap_interface,
                           public du_processor_ue_task_handler,
                           public du_processor_paging_handler,
-                          public du_processor_inactivity_handler,
                           public du_processor_statistics_handler,
                           public du_processor_mobility_handler
 {
@@ -74,9 +73,6 @@ public:
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
-  // du_processor inactivity handler
-  void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
-
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;
   bool has_cell(nr_cell_global_id_t cgi) override;
@@ -95,7 +91,6 @@ public:
   du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
   du_processor_ue_task_handler&          get_ue_task_handler() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
-  du_processor_inactivity_handler&       get_inactivity_handler() override { return *this; }
   du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }

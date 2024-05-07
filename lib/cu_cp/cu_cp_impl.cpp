@@ -158,7 +158,30 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
-  du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
+  if (msg.ue_inactive) {
+    du_ue* ue = ue_mng.find_du_ue(msg.ue_index);
+    srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
+
+    cu_cp_ue_context_release_request req;
+    req.ue_index = msg.ue_index;
+    req.cause    = ngap_cause_radio_network_t::user_inactivity;
+
+    // Add PDU Session IDs
+    auto& up_resource_manager            = ue->get_up_resource_manager();
+    req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+
+    logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, req.cause);
+
+    // Schedule on UE task scheduler
+    ue->get_task_sched().schedule_async_task(launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      // Notify NGAP to request a release from the AMF
+      CORO_AWAIT(handle_ue_context_release(req));
+      CORO_RETURN();
+    }));
+  } else {
+    logger.debug("Inactivity notification level not supported");
+  }
 }
 
 rrc_ue_reestablishment_context_response

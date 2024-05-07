@@ -68,8 +68,6 @@ public:
 
   ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& nci) override;
 
-  void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
-
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   size_t get_nof_f1ap_ues();

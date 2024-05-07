@@ -208,13 +208,6 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
   return ue_index_t::invalid;
 }
 
-void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,
-                                                             const cu_cp_inactivity_notification& msg)
-{
-  // Forward message to DU processor
-  du_db.at(du_index).processor->get_inactivity_handler().handle_inactivity_notification(msg);
-}
-
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;

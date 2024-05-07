@@ -414,15 +414,6 @@ void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index
                                  }));
 }
 
-void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
-{
-  if (msg.ue_inactive) {
-    send_ngap_ue_context_release_request(msg.ue_index, ngap_cause_radio_network_t::user_inactivity);
-  } else {
-    logger.debug("Inactivity notification level not supported");
-  }
-}
-
 bool du_processor_impl::has_cell(pci_t pci)
 {
   return std::any_of(cell_db.begin(), cell_db.end(), [pci](const auto& cell) { return cell.second.pci == pci; });
