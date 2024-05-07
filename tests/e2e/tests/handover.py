@@ -97,7 +97,7 @@ def _handover_multi_ues(
     noise_spd: int,
     warning_as_errors: bool = True,
     movement_steps: int = 10,
-    sleep_between_movement_steps: int = 1,
+    sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
 ):
     logging.info("Hanover Test")
