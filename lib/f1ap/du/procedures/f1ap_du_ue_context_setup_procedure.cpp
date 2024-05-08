@@ -68,7 +68,7 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     // Save allocated C-RNTI for created UE.
     ue->context.rnti = du_ue_create_response->crnti;
 
-    // Set that the UE has having a pending configuration (provided by the ReconfigWithSync).
+    // Set that the UE has a pending configuration (provided by the ReconfigWithSync).
     ue->context.rrc_state = f1ap_ue_context::ue_rrc_state::config_pending;
   }
 
