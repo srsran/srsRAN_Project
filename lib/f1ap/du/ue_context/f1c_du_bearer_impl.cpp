@@ -144,7 +144,8 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
 void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
 {
   if (pdu.length() < 3) {
-    logger.warning("DL {} Rx PDU: Dropping PDU. Cause: Invalid SRB{}.", ue_ctxt, srb_id_to_uint(srb_id));
+    logger.warning(
+        "DL {} Rx SRB{} PDU: Dropping PDU. Cause: Invalid length={}.", ue_ctxt, srb_id_to_uint(srb_id), pdu.length());
     return;
   }
 

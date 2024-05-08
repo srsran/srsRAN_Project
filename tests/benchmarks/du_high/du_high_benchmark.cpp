@@ -256,7 +256,7 @@ private:
         handle_success_outcome(msg.pdu.successful_outcome());
         break;
       default:
-        report_fatal_error("Unreachable code in this benchmark");
+        report_fatal_error("Received invalid PDU type {} in this benchmark", msg.pdu.type().value);
     }
   }
 
@@ -287,7 +287,7 @@ private:
         du_rx_pdu_notifier->on_new_message(msg);
       } break;
       default:
-        report_fatal_error("Unreachable code in this benchmark");
+        report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());
     }
   }
 
