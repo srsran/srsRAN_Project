@@ -20,13 +20,24 @@
 namespace srsran {
 namespace srs_du {
 
+/// This class provides a notifier for the RX bearer
+/// inside the DU F1-U gateway. This provides an adapter
+/// to the NR-U bearer to pass SDUs into.
+class f1u_du_gateway_bearer_rx_notifier
+{
+public:
+  virtual ~f1u_du_gateway_bearer_rx_notifier() = default;
+
+  virtual void on_new_pdu(nru_dl_message msg) = 0;
+};
+
 /// This class will be used to provide the interfaces to
 /// the DU to create and manage F1-U bearers.
 class f1u_du_gateway : public srs_du::f1u_bearer_disconnector
 {
 public:
   f1u_du_gateway()                                 = default;
-  virtual ~f1u_du_gateway()                        = default;
+  ~f1u_du_gateway() override                       = default;
   f1u_du_gateway(const f1u_du_gateway&)            = default;
   f1u_du_gateway& operator=(const f1u_du_gateway&) = default;
   f1u_du_gateway(f1u_du_gateway&&)                 = default;
@@ -37,9 +48,9 @@ public:
                                                                srs_du::f1u_config             config,
                                                                const up_transport_layer_info& dl_up_tnl_info,
                                                                const up_transport_layer_info& ul_up_tnl_info,
-                                                               srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                                               timer_factory                  timers,
-                                                               task_executor&                 ue_executor) = 0;
+                                                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                               timer_factory                              timers,
+                                                               task_executor& ue_executor) = 0;
 };
 
 } // namespace srs_du

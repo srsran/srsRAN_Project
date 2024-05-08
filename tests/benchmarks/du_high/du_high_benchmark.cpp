@@ -331,19 +331,19 @@ public:
   static_vector<f1u_dummy_bearer*, MAX_NOF_DU_UES>            bearer_list;
   static_vector<srs_du::f1u_rx_sdu_notifier*, MAX_NOF_DU_UES> du_notif_list;
 
-  std::unique_ptr<f1u_bearer> create_du_bearer(uint32_t                       ue_index,
-                                               drb_id_t                       drb_id,
-                                               srs_du::f1u_config             config,
-                                               const up_transport_layer_info& dl_tnl,
-                                               const up_transport_layer_info& ul_tnl,
-                                               srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                               timer_factory                  timers,
-                                               task_executor&                 ue_executor) override
+  std::unique_ptr<srs_du::f1u_bearer> create_du_bearer(uint32_t                                   ue_index,
+                                                       drb_id_t                                   drb_id,
+                                                       srs_du::f1u_config                         config,
+                                                       const up_transport_layer_info&             dl_up_tnl_info,
+                                                       const up_transport_layer_info&             ul_up_tnl_info,
+                                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                       timer_factory                              timers,
+                                                       task_executor&                             ue_executor) override
   {
     auto f1u_bearer = std::make_unique<f1u_dummy_bearer>();
-    du_notif_list.push_back(&du_rx);
-    bearer_list.push_back(f1u_bearer.get());
-    return f1u_bearer;
+    // du_notif_list.push_back(&du_rx);
+    // bearer_list.push_back(f1u_bearer.get());
+    return nullptr;
   }
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override {}

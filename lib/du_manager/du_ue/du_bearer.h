@@ -60,6 +60,7 @@ struct du_drb_connector {
   rlc_f1u_tx_data_notifier        rlc_tx_data_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1u_rx_rlc_sdu_adapter          f1u_rx_sdu_notif;
+  f1u_gateway_nru_rx_adapter      f1u_gateway_nru_rx_notif;
 
   /// \brief Connect MAC, RLC and F1AP layers if bearer is a DRB.
   void connect(du_ue_index_t                       ue_index,

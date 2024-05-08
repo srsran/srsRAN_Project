@@ -15,6 +15,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/f1u_rx_pdu_handler.h"
 #include "srsran/f1u/du/f1u_bearer_logger.h"
+#include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/f1u/du/f1u_rx_pdu_handler.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -29,7 +30,8 @@ public:
   {
   }
 
-  void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_, const up_transport_layer_info& dl_tnl_info_)
+  void attach_du_handler(srs_du::f1u_du_gateway_bearer_rx_notifier& handler_,
+                         const up_transport_layer_info&             dl_tnl_info_)
   {
     handler = &handler_;
     dl_tnl_info.emplace(dl_tnl_info_);
@@ -50,17 +52,17 @@ public:
   void on_new_sdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
-      logger.log_info("Cannot handle NR-U DL message. DU bearer does not exist.");
+      logger.log_info("Cannot handle F1-U GW DL message. F1-U DU GW bearer does not exist.");
       return;
     }
     logger.log_debug("Passing PDU to DU bearer. {}", dl_tnl_info);
-    handler->handle_pdu(std::move(msg));
+    handler->on_new_pdu(std::move(msg));
   };
 
 private:
   srs_cu_up::f1u_bearer_logger logger;
 
-  srs_du::f1u_rx_pdu_handler* handler = nullptr;
+  srs_du::f1u_du_gateway_bearer_rx_notifier* handler = nullptr;
 
   optional<up_transport_layer_info> dl_tnl_info;
 };

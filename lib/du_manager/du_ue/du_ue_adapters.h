@@ -13,7 +13,9 @@
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/mac/mac_sdu_handler.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 #include "srsran/rlc/rlc_rx.h"
@@ -66,8 +68,25 @@ private:
   rlc_tx_upper_layer_data_interface* rlc_tx = nullptr;
 };
 
-// RLC
+// F1-U Gateway
+class f1u_gateway_nru_rx_adapter final : public f1u_du_gateway_bearer_rx_notifier
+{
+  void connect(srs_du::f1u_rx_pdu_handler& nru_rx_) { nru_rx = &nru_rx_; }
 
+  /// \brief Stop forwarding SDUs to the RLC layer.
+  void disconnect();
+
+  void on_new_pdu(nru_dl_message msg) override
+  {
+    srsran_assert(nru_rx != nullptr, "NR-U RX PDU notifier is disconnected");
+    nru_rx->handle_pdu(std::move(msg));
+  }
+
+private:
+  srs_du::f1u_rx_pdu_handler* nru_rx;
+};
+
+// RLC
 class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
 public:

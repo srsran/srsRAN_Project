@@ -40,6 +40,17 @@ struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_del
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
+struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
+  void on_new_pdu(nru_dl_message msg) override
+  {
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
+    last_sdu = std::move(msg);
+  }
+  nru_dl_message last_sdu;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
+};
 // dummy DU RX bearer interface
 struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
   void on_new_sdu(pdcp_tx_pdu sdu) override
@@ -134,8 +145,8 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
+  std::unique_ptr<srs_du::f1u_bearer>     du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -145,8 +156,11 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   byte_buffer cu_buf     = make_byte_buffer("ABCD");
   auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
   ASSERT_FALSE(du_exp_buf.is_error());
-  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-  nru_dl_message    sdu;
+  nru_dl_message du_exp = {};
+  auto           cpy    = cu_buf.deep_copy();
+  du_exp.pdcp_sn        = 0;
+  du_exp.t_pdu          = std::move(cpy.value());
+  nru_dl_message sdu;
   sdu.t_pdu   = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->on_new_sdu(std::move(sdu));
@@ -193,8 +207,8 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
+  std::unique_ptr<srs_du::f1u_bearer>     du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -204,8 +218,9 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   byte_buffer cu_buf     = make_byte_buffer("ABCD");
   auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
   ASSERT_FALSE(du_exp_buf.is_error());
-  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-  nru_dl_message    sdu;
+  nru_dl_message du_exp = {};
+  du_exp.t_pdu          = cu_buf.deep_copy().value();
+  nru_dl_message sdu;
   sdu.t_pdu   = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->on_new_sdu(std::move(sdu));
@@ -250,8 +265,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
       0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx1;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer1 =
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx1;
+  std::unique_ptr<srs_du::f1u_bearer>     du_bearer1 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
@@ -262,8 +277,9 @@ TEST_F(f1u_connector_test, update_du_f1u)
     byte_buffer cu_buf     = make_byte_buffer("ABCD");
     auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
     ASSERT_FALSE(du_exp_buf.is_error());
-    byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-    nru_dl_message    sdu;
+    nru_dl_message du_exp = {};
+    du_exp.t_pdu          = cu_buf.deep_copy().value();
+    nru_dl_message sdu;
     sdu.t_pdu   = std::move(cu_buf);
     sdu.pdcp_sn = 0;
     cu_bearer->on_new_sdu(std::move(sdu));
@@ -284,8 +300,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
   logger.info("Attach new DU bearer");
 
   // Attach new DU bearer
-  dummy_f1u_du_rx_sdu_notifier        du_rx2;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer2 =
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx2;
+  std::unique_ptr<srs_du::f1u_bearer>     du_bearer2 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
 
   // Attach new DL TEID

@@ -148,28 +148,27 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   f1u_msg.config                                      = drb->f1u_cfg;
   f1u_msg.dl_tnl_info                                 = drb->dluptnl_info_list[0];
   f1u_msg.rx_sdu_notifier                             = &drb->connector.f1u_rx_sdu_notif;
-  f1u_msg.tx_pdu_notifier                             = nullptr; // TODO put adapter here
+  f1u_msg.tx_pdu_notifier                             = nullptr;
   f1u_msg.timers =
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)};
   f1u_msg.ue_executor  = &drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index);
   f1u_msg.disconnector = &drb_info.du_params.f1u.f1u_gw;
 
-  std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
+  drb->drb_f1u = srs_du::create_f1u_bearer(f1u_msg);
 
-  std::unique_ptr<srs_du::f1u_bearer> f1u_drb = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
+  auto f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
       drb->dluptnl_info_list[0],
       drb->uluptnl_info_list[0],
-      drb->connector.f1u_rx_sdu_notif,
+      drb->connector.f1u_gateway_nru_rx_notif,
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)},
       drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index));
-  if (f1u_drb == nullptr) {
+  if (f1u_gw_bearer == nullptr) {
     srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
     return nullptr;
   }
-  drb->drb_f1u = std::move(f1u_drb);
 
   // > Create RLC DRB entity.
   drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(drb_info.du_params.ran.gnb_du_id,
