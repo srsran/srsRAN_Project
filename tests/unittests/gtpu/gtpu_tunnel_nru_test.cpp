@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/gtpu/gtpu_pdu.h"
+#include "lib/gtpu/gtpu_tunnel_logger.h"
 #include "srsran/gtpu/gtpu_tunnel_common_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
@@ -19,6 +19,8 @@
 #include <sys/socket.h>
 
 using namespace srsran;
+
+static std::string pcap_dir;
 
 class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_nru_rx_lower_layer_notifier
 {
@@ -57,21 +59,21 @@ public:
 /// This class serves as a wrapper for a DLT PCAP object that allows to control wheter PCAP files shall actually be
 /// written or not. This is useful for development of unit tests in order to export the test vectors for further
 /// evaluation with 3rd party tools like wireshark.
-/// By default (i.e. \c is_dummy is true) a dummy object with not file output is used. If \c is_dummy is false, a
-/// regular PCAP writer is used which writes a PCAP file to /tmp. The file name is automatically derived from the test
-/// suite name and the test name.
+/// By default (i.e. \c output_dir is empty) a dummy object with no file output is used. If \c output_dir is set, a
+/// regular PCAP writer is used which writes a PCAP file to the given directory. The file name is automatically derived
+/// from the test suite name and the test name.
 class dlt_pcap_helper
 {
 public:
-  dlt_pcap_helper(bool is_dummy = true)
+  dlt_pcap_helper(std::string output_dir)
   {
-    if (is_dummy) {
+    if (output_dir.empty()) {
       pcap = std::make_unique<null_dlt_pcap>();
       return;
     }
     pcap_worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
     pcap_executor = make_task_executor_ptr(*pcap_worker);
-    pcap          = create_gtpu_pcap(generate_pcap_filename(), *pcap_executor);
+    pcap          = create_gtpu_pcap(fmt::format("{}/{}", output_dir, generate_pcap_filename()), *pcap_executor);
   }
 
   ~dlt_pcap_helper()
@@ -82,7 +84,7 @@ public:
     }
   }
 
-  /// \brief Get a reference to the internal DLT PCAP object, which is either a real DLC PCAP or a dummy.
+  /// \brief Get a reference to the internal DLT PCAP object, which is either a real DLT PCAP or a dummy.
   /// \return Reference to DLT PCAP object.
   dlt_pcap& get_pcap() const { return *pcap; }
 
@@ -91,7 +93,7 @@ private:
   /// \return A per-test filename for the PCAP.
   static std::string generate_pcap_filename()
   {
-    return fmt::format("/tmp/{}.{}.pcap",
+    return fmt::format("{}.{}.pcap",
                        testing::UnitTest::GetInstance()->current_test_info()->test_suite_name(),
                        testing::UnitTest::GetInstance()->current_test_info()->name());
   }
@@ -137,7 +139,7 @@ protected:
   gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "UL"}};
 
   // PCAP
-  dlt_pcap_helper pcap_helper{/* is_dummy = */ true};
+  dlt_pcap_helper pcap_helper{pcap_dir};
 
   // Timers
   manual_task_worker worker{64};
@@ -226,8 +228,32 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   ASSERT_EQ(exp_pdu, gtpu_tx.last_tx);
 };
 
+void usage(const char* prog)
+{
+  fmt::print("Usage: {} [-p DIR]\n", prog);
+  fmt::print("\t-p Set DIR for writing PCAPs [Off by default]\n");
+  fmt::print("\t-h Show this message\n");
+}
+
+void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "p:h")) != -1) {
+    switch (opt) {
+      case 'p':
+        pcap_dir = std::string(optarg);
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(0);
+    }
+  }
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
+  parse_args(argc, argv);
   return RUN_ALL_TESTS();
 }
