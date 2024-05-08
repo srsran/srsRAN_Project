@@ -83,6 +83,9 @@ public:
 
   /// \brief Reconfigure an existing UE instance.
   virtual void handle_ue_deletion(ue_config_delete_event ev) = 0;
+
+  /// Called when the UE applied the last sent RRC configuration.
+  virtual void handle_ue_config_applied(du_ue_index_t ue_idx) = 0;
 };
 
 /// Class that handles the creation/reconfiguration/deletion of cell and UE configurations in the scheduler.

@@ -221,6 +221,20 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
   });
 }
 
+void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
+{
+  common_events.emplace(ue_idx, [this, ue_idx]() {
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
+      return;
+    }
+    ue& u = ue_db[ue_idx];
+
+    // Remove UE from fallback mode.
+    u.get_pcell().set_fallback_state(false);
+  });
+}
+
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");

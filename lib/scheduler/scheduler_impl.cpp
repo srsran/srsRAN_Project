@@ -92,6 +92,13 @@ void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
   groups[grp_idx]->get_ue_configurator().handle_ue_deletion(std::move(ue_del_ev));
 }
 
+void scheduler_impl::handle_ue_config_applied(du_ue_index_t ue_index)
+{
+  du_cell_group_index_t grp_idx = cfg_mng.get_cell_group_index(ue_index);
+  srsran_assert(grp_idx != INVALID_DU_CELL_GROUP_INDEX, "UE={} not yet created", ue_index);
+  groups[grp_idx]->get_ue_configurator().handle_ue_config_applied(ue_index);
+}
+
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
   srsran_assert(cells.contains(msg.cell_index), "cell={} does not exist", msg.cell_index);

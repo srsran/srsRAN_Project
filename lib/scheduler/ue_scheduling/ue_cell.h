@@ -39,7 +39,7 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  bool is_in_fallback_mode() const { return fallback_mode_current != fallback_state::normal; }
+  bool is_in_fallback_mode() const { return in_fallback_mode; }
 
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
@@ -64,6 +64,8 @@ public:
   void deactivate();
 
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
+
+  void set_fallback_state(bool in_fallback);
 
   optional<dl_harq_process::dl_ack_info_result> handle_dl_ack_info(slot_point                 uci_slot,
                                                                    mac_harq_ack_report_status ack_value,
@@ -122,9 +124,6 @@ public:
   /// CRC=OK after the first SR or CSI is received.
   enum class fallback_state { fallback, sr_csi_received, normal };
 
-  /// \brief Set UE fallback state.
-  void set_fallback_state(fallback_state fallback_mode_new);
-
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
@@ -149,11 +148,9 @@ private:
   /// \brief Whether cell is currently active.
   bool active = true;
 
-  /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
+  /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
   /// cellConfigCommon are used.
-  fallback_state fallback_mode_current = fallback_state::normal;
-  /// Counter of received CRC=OK after the first SR or CSI has been received.
-  unsigned fallback_crc_cnt = 0;
+  bool in_fallback_mode = true;
 
   metrics ue_metrics;
 

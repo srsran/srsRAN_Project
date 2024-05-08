@@ -110,6 +110,11 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_removal_request(const mac_u
   });
 }
 
+void srsran_scheduler_adapter::handle_ue_config_applied(du_ue_index_t ue_index)
+{
+  sched_impl->handle_ue_config_applied(ue_index);
+}
+
 /// Converts BSR MAC CE (See 38.321, 6.1.3.1) to Scheduler UL BSR event type.
 static ul_bsr_lcg_report make_sched_lcg_report(const lcg_bsr_report& ul_mac_bsr, bsr_format bsr_format)
 {

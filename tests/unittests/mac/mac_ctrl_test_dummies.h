@@ -159,6 +159,7 @@ public:
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
   async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override;
+  void             handle_ue_config_applied(du_ue_index_t ue_idx) override;
 
   class dummy_notifier : public sched_configuration_notifier
   {

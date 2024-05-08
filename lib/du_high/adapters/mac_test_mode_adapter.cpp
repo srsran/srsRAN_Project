@@ -646,6 +646,11 @@ bool mac_test_mode_adapter::handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buff
   return mac_adapted->get_ue_configurator().handle_ul_ccch_msg(ue_index, std::move(pdu));
 }
 
+void mac_test_mode_adapter::handle_ue_config_applied(du_ue_index_t ue_idx)
+{
+  mac_adapted->get_ue_configurator().handle_ue_config_applied(ue_idx);
+}
+
 std::unique_ptr<mac_interface> srsran::create_du_high_mac(const mac_config&             mac_cfg,
                                                           const srs_du::du_test_config& test_cfg)
 {

@@ -29,8 +29,7 @@ ue::ue(const ue_creation_command& cmd) :
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
-      cell->set_fallback_state(cmd.starts_in_fallback ? ue_cell::fallback_state::fallback
-                                                      : ue_cell::fallback_state::normal);
+      cell->set_fallback_state(cmd.starts_in_fallback);
     }
   }
 }
