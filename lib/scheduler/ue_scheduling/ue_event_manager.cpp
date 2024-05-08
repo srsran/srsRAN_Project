@@ -230,6 +230,9 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
     }
     ue& u = ue_db[ue_idx];
 
+    // Log UE config applied event.
+    ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+
     // Remove UE from fallback mode.
     u.get_pcell().set_fallback_state(false);
   });
