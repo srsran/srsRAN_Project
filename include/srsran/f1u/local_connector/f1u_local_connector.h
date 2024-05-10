@@ -22,10 +22,17 @@ namespace srsran {
 
 struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter> cu_tx = nullptr;
+
+  /// Holds notifier that will point to NR-U bearer on the UL path
+  f1u_cu_up_gateway_bearer_rx_notifier& cu_rx;
+
   /// Holds the DL UP TNL info associated with the F1-U bearer.
   optional<up_transport_layer_info> dl_up_tnl_info;
 
-  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_) : cu_tx(std::move(cu_tx_)) {}
+  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_) :
+    cu_tx(std::move(cu_tx_)), cu_rx(cu_rx_)
+  {
+  }
 };
 
 struct f1u_du_bearer {
@@ -56,29 +63,27 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                             ue_index,
-                                                          drb_id_t                             drb_id,
-                                                          const srs_cu_up::f1u_config&         config,
-                                                          const up_transport_layer_info&       ul_up_tnl_info,
-                                                          srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                                          srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
-                                                          task_executor&                       ul_exec,
-                                                          timer_factory                        ue_dl_timer_factory,
+  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                              ue_index,
+                                                          drb_id_t                              drb_id,
+                                                          const srs_cu_up::f1u_config&          config,
+                                                          const up_transport_layer_info&        ul_up_tnl_info,
+                                                          f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                                                          task_executor&                        ul_exec,
+                                                          timer_factory                         ue_dl_timer_factory,
                                                           unique_timer& ue_inactivity_timer) override;
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                       const up_transport_layer_info& dl_up_tnl_info) override;
 
   void disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info) override;
-
-  std::unique_ptr<srs_du::f1u_bearer> create_du_bearer(uint32_t                                   ue_index,
-                                                       drb_id_t                                   drb_id,
-                                                       srs_du::f1u_config                         config,
-                                                       const up_transport_layer_info&             dl_up_tnl_info,
-                                                       const up_transport_layer_info&             ul_up_tnl_info,
-                                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
-                                                       timer_factory                              timers,
-                                                       task_executor&                             ue_executor) override;
+  srs_du::f1u_du_gateway_bearer_tx_interface* create_du_bearer(uint32_t                       ue_index,
+                                                               drb_id_t                       drb_id,
+                                                               srs_du::f1u_config             config,
+                                                               const up_transport_layer_info& dl_up_tnl_info,
+                                                               const up_transport_layer_info& ul_up_tnl_info,
+                                                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                               timer_factory                              timers,
+                                                               task_executor& ue_executor) override;
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override;
 

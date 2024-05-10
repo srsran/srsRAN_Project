@@ -232,18 +232,17 @@ public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                             ue_index,
-                                                          drb_id_t                             drb_id,
-                                                          const srs_cu_up::f1u_config&         config,
-                                                          const up_transport_layer_info&       ul_up_tnl_info,
-                                                          srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
-                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
-                                                          task_executor&                       ul_exec,
-                                                          timer_factory                        ue_dl_timer_factory,
+  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                              ue_index,
+                                                          drb_id_t                              drb_id,
+                                                          const srs_cu_up::f1u_config&          config,
+                                                          const up_transport_layer_info&        ul_up_tnl_info,
+                                                          f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                                                          task_executor&                        ul_exec,
+                                                          timer_factory                         ue_dl_timer_factory,
                                                           unique_timer& ue_inactivity_timer) override
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
-    bearer.connect_f1u_rx_sdu_notifier(cu_rx);
+    // bearer.connect_f1u_rx_sdu_notifier(rx_notifier);
     return nullptr;
     /// return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
   }

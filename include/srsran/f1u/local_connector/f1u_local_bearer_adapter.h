@@ -67,7 +67,7 @@ private:
   optional<up_transport_layer_info> dl_tnl_info;
 };
 
-class f1u_ul_local_adapter : public srs_du::f1u_tx_pdu_notifier
+class f1u_ul_local_adapter : public srs_du::f1u_du_gateway_bearer_tx_interface
 {
 public:
   explicit f1u_ul_local_adapter(uint32_t ue_index, drb_id_t drb_id, const up_transport_layer_info& dl_tnl_info) :
@@ -75,7 +75,7 @@ public:
   {
   }
 
-  void attach_cu_handler(srs_cu_up::f1u_rx_pdu_handler& handler_)
+  void attach_cu_handler(f1u_cu_up_gateway_bearer_rx_notifier& handler_)
   {
     std::unique_lock<std::mutex> lock(handler_mutex);
     handler = &handler_;
@@ -87,21 +87,21 @@ public:
     handler = nullptr;
   }
 
-  void on_new_pdu(nru_ul_message msg) override
+  void on_new_sdu(nru_ul_message msg) override
   {
     std::unique_lock<std::mutex> lock(handler_mutex);
     if (handler == nullptr) {
       logger.log_info("Cannot handle NR-U UL message. CU-UP bearer does not exist.");
       return;
     }
-    handler->handle_pdu(std::move(msg));
+    handler->on_new_pdu(std::move(msg));
   };
 
 private:
   srs_du::f1u_bearer_logger logger;
 
-  srs_cu_up::f1u_rx_pdu_handler* handler = nullptr;
-  std::mutex                     handler_mutex;
+  f1u_cu_up_gateway_bearer_rx_notifier* handler = nullptr;
+  std::mutex                            handler_mutex;
 };
 
 } // namespace srsran

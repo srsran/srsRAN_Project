@@ -63,4 +63,23 @@ private:
   f1u_cu_up_gateway_bearer_tx_interface* f1u_gw_bearer = nullptr;
 };
 
+/// Adapter between NR-U and F1-U gateway adapter
+class f1u_gateway_rx_nru_adapter : public f1u_cu_up_gateway_bearer_rx_notifier
+{
+public:
+  f1u_gateway_rx_nru_adapter()  = default;
+  ~f1u_gateway_rx_nru_adapter() = default;
+
+  void connect_nru_bearer(f1u_rx_pdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
+
+  void on_new_pdu(nru_ul_message msg) override
+  {
+    srsran_assert(f1u_handler != nullptr, "GTP-U handler must not be nullptr");
+    f1u_handler->handle_pdu(std::move(msg));
+  }
+
+private:
+  f1u_rx_pdu_handler* f1u_handler = nullptr;
+};
+
 } // namespace srsran::srs_cu_up

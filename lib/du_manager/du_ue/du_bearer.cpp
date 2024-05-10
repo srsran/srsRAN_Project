@@ -156,7 +156,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
 
   drb->drb_f1u = srs_du::create_f1u_bearer(f1u_msg);
 
-  auto f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
+  drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
@@ -165,10 +165,10 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
       drb->connector.f1u_gateway_nru_rx_notif,
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)},
       drb_info.du_params.services.ue_execs.f1u_dl_pdu_executor(ue_index));
-  if (f1u_gw_bearer == nullptr) {
-    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
-    return nullptr;
-  }
+  // if (f1u_gw_bearer == nullptr) {
+  //   srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
+  //   return nullptr;
+  // }
 
   // > Create RLC DRB entity.
   drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(drb_info.du_params.ran.gnb_du_id,

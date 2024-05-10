@@ -48,6 +48,9 @@ struct drb_context {
   // Adapter NR-U->F1-U gateway
   nru_tx_f1u_gateway_adapter nru_tx_to_f1u_gateway_adapter;
 
+  // Adapter F1-U gateway -> NR-U
+  f1u_gateway_rx_nru_adapter f1u_gateway_rx_to_nru_adapter;
+
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 
   std::map<qos_flow_id_t, std::unique_ptr<qos_flow_context>> qos_flows; // key is qos_flow_id

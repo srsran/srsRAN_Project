@@ -52,7 +52,7 @@ public:
   optional<uint32_t> last_ue_idx;
   optional<drb_id_t> last_drb_id;
 
-  std::unique_ptr<srs_du::f1u_bearer> create_du_bearer(uint32_t                                   ue_index,
+  f1u_du_gateway_bearer_tx_interface* create_du_bearer(uint32_t                                   ue_index,
                                                        drb_id_t                                   drb_id,
                                                        srs_du::f1u_config                         config,
                                                        const up_transport_layer_info&             dl_up_tnl_info,
@@ -65,7 +65,7 @@ public:
     registered_dl_tnls.push_back(dl_up_tnl_info);
     last_ue_idx = ue_index;
     last_drb_id = drb_id;
-    return std::make_unique<f1u_dummy_bearer>();
+    return nullptr;
   }
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override

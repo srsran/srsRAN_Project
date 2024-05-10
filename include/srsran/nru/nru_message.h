@@ -183,6 +183,7 @@ struct nru_dl_message {
   {
     return t_pdu == other.t_pdu && pdcp_sn == other.pdcp_sn && dl_user_data == other.dl_user_data;
   }
+  bool operator!=(const nru_dl_message& other) const { return not(*this == other); }
 };
 
 /// NR-U UL message exchanged from node the peer node (DU) to the node holding a PDCP entity (CU-UP).
@@ -222,6 +223,7 @@ struct nru_ul_message {
     return t_pdu == other.t_pdu && data_delivery_status == other.data_delivery_status &&
            assistance_information == other.assistance_information;
   }
+  bool operator!=(const nru_ul_message& other) const { return not(*this == other); }
 };
 
 } // namespace srsran

@@ -212,7 +212,7 @@ class f1u_gateway_dummy : public f1u_du_gateway
 public:
   bool next_bearer_is_created = true;
 
-  std::unique_ptr<srs_du::f1u_bearer> create_du_bearer(uint32_t                                   ue_index,
+  f1u_du_gateway_bearer_tx_interface* create_du_bearer(uint32_t                                   ue_index,
                                                        drb_id_t                                   drb_id,
                                                        srs_du::f1u_config                         config,
                                                        const up_transport_layer_info&             dl_up_tnl_info,
