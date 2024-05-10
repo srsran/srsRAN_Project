@@ -260,7 +260,7 @@ struct formatter<srsran::channel_state_information> {
         helper.format_if_verbose(ctx, "t_align=na");
       }
       if (cfo_Hz.has_value()) {
-        helper.format_if_verbose(ctx, "cfo={:.2f}Hz", cfo_Hz.value());
+        helper.format_if_verbose(ctx, "cfo={+:.1f}Hz", cfo_Hz.value());
       } else {
         helper.format_if_verbose(ctx, "cfo=na");
       }
