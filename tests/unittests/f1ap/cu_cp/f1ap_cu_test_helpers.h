@@ -187,7 +187,7 @@ public:
     }
   }
 
-  du_index_t last_du_idx;
+  optional<du_index_t> last_du_idx;
 
 private:
   srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
