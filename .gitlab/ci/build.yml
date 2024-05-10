@@ -27,10 +27,12 @@ variables:
       - amd64
       - amd64-avx2
       - amd64-avx2-avx512
-      - "on-prem-amd64"
-      - "on-prem-arm64"
-      - "aws-spot-amd64"
-      - "aws-spot-arm64"
+      - arm64
+      - on-prem-amd64
+      - on-prem-amd64-avx2-avx512
+      - on-prem-arm64
+      - aws-spot-amd64
+      - aws-spot-arm64
     value: "amd64-avx2"
   OS:
     description: Operating system
