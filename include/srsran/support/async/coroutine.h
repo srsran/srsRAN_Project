@@ -52,9 +52,9 @@ struct base_coro_frame;
 /// Contains a small memory buffer to store awaiters and the current coroutine state
 template <>
 struct base_coro_frame<void> {
-  base_coro_frame<void>()                                        = default;
-  base_coro_frame<void>(const base_coro_frame<void>&)            = delete;
-  base_coro_frame<void>(base_coro_frame<void>&&)                 = delete;
+  base_coro_frame()                                              = default;
+  base_coro_frame(const base_coro_frame<void>&)                  = delete;
+  base_coro_frame(base_coro_frame<void>&&)                       = delete;
   base_coro_frame<void>& operator=(const base_coro_frame<void>&) = delete;
   base_coro_frame<void>& operator=(base_coro_frame<void>&&)      = delete;
   virtual ~base_coro_frame()                                     = default;

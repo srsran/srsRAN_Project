@@ -15,11 +15,6 @@
 // Enables intel intrinsics, it includes AVX, AVX2, FMA, AVX512.
 #ifdef HAVE_SSE
 
-// Enables optimizations in this file.
-#ifndef __OPTIMIZE__
-#define __OPTIMIZE__
-#endif // __OPTIMIZE__
-
 // gcc-12 gives a likely false alarm when including AVX512 intrinsics. Disable maybe-uninitialized diagnostics.
 #ifndef __clang__
 #pragma GCC diagnostic push
