@@ -88,7 +88,7 @@ void equalize_zf_single_tx_layer(unsigned                              nof_ports
                                  span<float>                           eq_noise_vars,
                                  const channel_equalizer::re_list&     ch_symbols,
                                  const channel_equalizer::ch_est_list& ch_estimates,
-                                 float                                 noise_var,
+                                 span<const float>                     noise_var,
                                  float                                 tx_scaling)
 {
   if (NOF_PORTS != nof_ports) {
@@ -108,7 +108,7 @@ void equalize_zf_single_tx_layer<1>(unsigned /**/,
                                     span<float>                           eq_noise_vars,
                                     const channel_equalizer::re_list&     ch_symbols,
                                     const channel_equalizer::ch_est_list& ch_estimates,
-                                    float                                 noise_var,
+                                    span<const float>                     noise_var,
                                     float                                 tx_scaling)
 {
   // Perform equalization.
@@ -137,7 +137,7 @@ void channel_equalizer_zf_impl::equalize(span<cf_t>         eq_symbols,
   // Single transmit layer and any number of receive ports.
   if (nof_tx_layers == 1) {
     equalize_zf_single_tx_layer<MAX_PORTS>(
-        nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+        nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
     return;
   }
 
