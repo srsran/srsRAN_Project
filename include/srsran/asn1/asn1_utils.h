@@ -253,7 +253,8 @@ public:
     if (new_cap > 0) {
       new_data = new T[new_cap];
       if (data_ != nullptr) {
-        std::move(data_, data_ + size_, new_data);
+        unsigned min_size = std::min(size_, new_size);
+        std::move(data_, data_ + min_size, new_data);
       }
     }
     cap_  = new_cap;
