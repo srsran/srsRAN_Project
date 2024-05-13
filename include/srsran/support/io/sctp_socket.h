@@ -23,7 +23,8 @@ struct sctp_socket_params {
   int                  ai_family;
   int                  ai_socktype;
   int                  ai_protocol;
-  bool                 reuse_addr = false;
+  bool                 reuse_addr        = false;
+  bool                 non_blocking_mode = false;
   std::chrono::seconds rx_timeout{0};
   optional<int32_t>    rto_initial;
   optional<int32_t>    rto_min;
@@ -60,8 +61,10 @@ public:
 private:
   bool set_sockopts(const sctp_socket_params& params);
 
+  bool                  non_blocking_mode = false;
   srslog::basic_logger& logger;
-  unique_fd             sock_fd;
+
+  unique_fd sock_fd;
 };
 
 } // namespace srsran

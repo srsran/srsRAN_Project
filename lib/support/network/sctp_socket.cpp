@@ -171,7 +171,7 @@ bool set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
 bool set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger)
 {
   if (not fd.is_open()) {
-    logger.error("Failed to set socket as non-blocking. Cause: socket is closed");
+    logger.error("Failed to set socket as non-blocking. Cause: Socket is closed");
     return false;
   }
   int flags = fcntl(fd.value(), F_GETFL, 0);
@@ -217,6 +217,9 @@ expected<sctp_socket> sctp_socket::create(const sctp_socket_params& params)
     socket.close();
     return default_error_t{};
   }
+
+  // Save non-blocking mode to apply after bind/connect. We do not yet support async bind/connect.
+  socket.non_blocking_mode = params.non_blocking_mode;
 
   return socket;
 }
@@ -264,6 +267,13 @@ sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const s
     return false;
   }
 
+  // set socket to non-blocking after bind is successful
+  if (non_blocking_mode) {
+    if (not set_non_blocking()) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -283,6 +293,13 @@ SRSRAN_NODISCARD bool sctp_socket::connect(struct sockaddr& ai_addr, const sockl
     auto addr = get_nameinfo(ai_addr, ai_addrlen);
     logger.debug("Failed to connect to {}:{} - {}", addr.first, addr.second, strerror(errno));
     return false;
+  }
+
+  // set socket to non-blocking after connect is established
+  if (non_blocking_mode) {
+    if (not set_non_blocking()) {
+      return false;
+    }
   }
 
   return true;

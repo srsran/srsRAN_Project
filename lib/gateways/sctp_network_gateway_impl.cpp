@@ -40,6 +40,8 @@ expected<sctp_socket> sctp_network_gateway_impl::create_socket(int ai_family, in
   params.ai_family         = ai_family;
   params.ai_socktype       = ai_socktype;
   params.ai_protocol       = ai_protocol;
+  params.reuse_addr        = config.reuse_addr;
+  params.non_blocking_mode = config.non_blocking_mode;
   params.rx_timeout        = std::chrono::seconds(config.rx_timeout_sec);
   params.rto_initial       = config.rto_initial;
   params.rto_min           = config.rto_min;
@@ -75,39 +77,23 @@ bool sctp_network_gateway_impl::create_and_bind()
   struct addrinfo* result;
   for (result = results; result != nullptr; result = result->ai_next) {
     // create SCTP socket
-    auto obj_or_error = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (obj_or_error.is_error()) {
+    auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (outcome.is_error()) {
       if (errno == ESOCKTNOSUPPORT) {
+        // Stop search.
         break;
       }
       continue;
     }
-    sctp_socket candidate = std::move(obj_or_error.value());
+    sctp_socket candidate = std::move(outcome.value());
 
     if (not candidate.bind(*result->ai_addr, result->ai_addrlen, config.bind_interface)) {
       // Bind failed. Try next candidate
       continue;
     }
 
-    // set socket to non-blocking after bind is successful
-    if (config.non_blocking_mode) {
-      if (not candidate.set_non_blocking()) {
-        // failed, try next address
-        continue;
-      }
-    }
-
-    // store client address
-    std::memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
-    client_addrlen     = result->ai_addrlen;
-    client_ai_family   = result->ai_family;
-    client_ai_socktype = result->ai_socktype;
-    client_ai_protocol = result->ai_protocol;
-
     // Save socket.
     socket = std::move(candidate);
-    logger.debug("Binding successful");
-
     break;
   }
 
@@ -126,6 +112,15 @@ bool sctp_network_gateway_impl::create_and_bind()
                  strerror(ret));
     return false;
   }
+
+  // store client address
+  std::memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
+  client_addrlen     = result->ai_addrlen;
+  client_ai_family   = result->ai_family;
+  client_ai_socktype = result->ai_socktype;
+  client_ai_protocol = result->ai_protocol;
+
+  logger.debug("Binding successful");
 
   return true;
 }
@@ -194,28 +189,6 @@ bool sctp_network_gateway_impl::create_and_connect()
       continue;
     }
 
-    // store server address
-    std::memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
-    server_addrlen     = result->ai_addrlen;
-    server_ai_family   = result->ai_family;
-    server_ai_socktype = result->ai_socktype;
-    server_ai_protocol = result->ai_protocol;
-
-    // set socket to non-blocking after connect is established
-    if (config.non_blocking_mode) {
-      if (not socket.set_non_blocking()) {
-        // failed, try next address
-        logger.error("Socket not non-blocking");
-        close_socket();
-        continue;
-      }
-    }
-
-    // If connected then use server address as destination address.
-    std::memcpy(&msg_dst_addr, &server_addr, server_addrlen);
-    msg_dst_addrlen = server_addrlen;
-
-    logger.debug("Connection successful");
     break;
   }
 
@@ -240,40 +213,18 @@ bool sctp_network_gateway_impl::create_and_connect()
     return false;
   }
 
-  return true;
-}
+  // store server address
+  std::memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
+  server_addrlen     = result->ai_addrlen;
+  server_ai_family   = result->ai_family;
+  server_ai_socktype = result->ai_socktype;
+  server_ai_protocol = result->ai_protocol;
 
-bool sctp_network_gateway_impl::recreate_and_reconnect()
-{
-  // Recreate socket
-  auto ret = create_socket(server_ai_family, server_ai_socktype, server_ai_protocol);
-  if (ret.is_error()) {
-    return false;
-  }
-  socket = std::move(ret.value());
+  // If connected then use server address as destination address.
+  std::memcpy(&msg_dst_addr, &server_addr, server_addrlen);
+  msg_dst_addrlen = server_addrlen;
 
-  // set socket to non-blocking before reconnecting
-  if (config.non_blocking_mode) {
-    if (not socket.set_non_blocking()) {
-      logger.error("Socket not non-blocking");
-      close_socket();
-      return false;
-    }
-  }
-
-  // rebind to address/port
-  if (not socket.bind((sockaddr&)server_addr, server_addrlen, config.bind_interface)) {
-    close_socket();
-    return false;
-  }
-
-  // reconnect to address/port
-  if (not socket.connect((sockaddr&)server_addr, server_addrlen) && errno != EINPROGRESS) {
-    auto addr = get_nameinfo((sockaddr&)server_addr, server_addrlen);
-    logger.error("Failed to connect to {}:{} - {}", addr.first, addr.second, strerror(errno));
-    close_socket();
-    return false;
-  }
+  logger.debug("Connection successful");
 
   return true;
 }
@@ -433,7 +384,7 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  if (not server_addrlen) {
+  if (server_addrlen == 0) {
     // If only bind, send msg to the last src address.
     std::memcpy(&msg_dst_addr, &msg_src_addr, msg_src_addrlen);
     msg_dst_addrlen = msg_src_addrlen;

@@ -53,9 +53,6 @@ public:
 private:
   expected<sctp_socket> create_socket(int ai_family, int ai_socktype, int ai_protocol) const;
 
-  /// \brief Recreate and reconnect socket to given address.
-  bool recreate_and_reconnect() override;
-
   // internal helpers
   using socket_buffer_type = uint8_t;
   void handle_data(span<socket_buffer_type> payload);
