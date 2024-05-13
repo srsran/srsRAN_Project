@@ -921,7 +921,7 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u,
   for (const auto* ss : search_spaces) {
     for (unsigned pusch_td_res_idx : pusch_td_res_index_list) {
       const pusch_time_domain_resource_allocation& pusch_td    = ss->pusch_time_domain_list[pusch_td_res_idx];
-      const cell_slot_resource_allocator&          pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
+      cell_slot_resource_allocator&                pusch_alloc = res_alloc[pusch_td.k2 + cell_cfg.ntn_cs_koffset];
       const slot_point                             pusch_slot  = pusch_alloc.slot;
 
       if (not cell_cfg.is_ul_enabled(pusch_slot)) {
@@ -973,15 +973,14 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u,
         continue;
       }
 
-      const bool existing_pucch =
-          pusch_alloc.result.ul.pucchs.end() !=
-          std::find_if(pusch_alloc.result.ul.pucchs.begin(),
-                       pusch_alloc.result.ul.pucchs.end(),
-                       [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+      auto* existing_pucch = std::find_if(pusch_alloc.result.ul.pucchs.begin(),
+                                          pusch_alloc.result.ul.pucchs.end(),
+                                          [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
-      if (existing_pucch) {
-        // No PUSCH in slots with PUCCH.
-        continue;
+      if (existing_pucch != pusch_alloc.result.ul.pucchs.end() and existing_pucch->format == pucch_format::FORMAT_1 and
+          existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr) {
+        // Remove existing PUCCH SR grant if any.
+        pusch_alloc.result.ul.pucchs.erase(existing_pucch);
       }
 
       ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx);
