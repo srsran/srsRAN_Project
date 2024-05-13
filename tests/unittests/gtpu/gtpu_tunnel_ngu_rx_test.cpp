@@ -32,9 +32,9 @@ class gtpu_pdu_generator
 public:
   gtpu_pdu_generator(gtpu_teid_t teid) : tx_upper_dummy(*this)
   {
-    gtpu_config::gtpu_tx_config cfg = {};
-    cfg.peer_teid                   = teid;
-    cfg.peer_addr                   = "127.0.0.1";
+    gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg = {};
+    cfg.peer_teid                                         = teid;
+    cfg.peer_addr                                         = "127.0.0.1";
 
     tx =
         std::make_unique<gtpu_tunnel_ngu_tx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
@@ -187,9 +187,9 @@ protected:
 TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
 
@@ -200,9 +200,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -225,9 +225,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -250,9 +250,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -326,9 +326,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -400,9 +400,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -472,9 +472,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
 {
   // create Rx entity
-  gtpu_config::gtpu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);

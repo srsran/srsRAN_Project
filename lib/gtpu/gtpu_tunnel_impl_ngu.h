@@ -23,7 +23,7 @@ class gtpu_tunnel_ngu_impl : public gtpu_tunnel_ngu
 {
 public:
   gtpu_tunnel_ngu_impl(srs_cu_up::ue_index_t                       ue_index,
-                       gtpu_config                                 cfg,
+                       gtpu_tunnel_ngu_config                      cfg,
                        dlt_pcap&                                   gtpu_pcap,
                        gtpu_tunnel_ngu_rx_lower_layer_notifier&    rx_lower,
                        gtpu_tunnel_common_tx_upper_layer_notifier& tx_upper,

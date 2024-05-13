@@ -25,10 +25,10 @@ namespace srsran {
 class gtpu_tunnel_ngu_tx_impl : public gtpu_tunnel_base_tx, public gtpu_tunnel_ngu_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_ngu_tx_impl(srs_cu_up::ue_index_t                       ue_index,
-                          gtpu_config::gtpu_tx_config                 cfg_,
-                          dlt_pcap&                                   gtpu_pcap_,
-                          gtpu_tunnel_common_tx_upper_layer_notifier& upper_dn_) :
+  gtpu_tunnel_ngu_tx_impl(srs_cu_up::ue_index_t                             ue_index,
+                          gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg_,
+                          dlt_pcap&                                         gtpu_pcap_,
+                          gtpu_tunnel_common_tx_upper_layer_notifier&       upper_dn_) :
     gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_), cfg(cfg_)
   {
     to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
@@ -81,7 +81,7 @@ public:
   }
 
 private:
-  const gtpu_config::gtpu_tx_config cfg;
-  sockaddr_storage                  peer_sockaddr;
+  const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg;
+  sockaddr_storage                                        peer_sockaddr;
 };
 } // namespace srsran

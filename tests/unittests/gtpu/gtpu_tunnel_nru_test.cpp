@@ -103,11 +103,11 @@ private:
   std::unique_ptr<dlt_pcap>      pcap;
 };
 
-/// Fixture class for GTP-U tunnel NG-U tests
-class gtpu_tunnel_ngu_test : public ::testing::Test
+/// Fixture class for GTP-U tunnel NR-U tests
+class gtpu_tunnel_nru_test : public ::testing::Test
 {
 public:
-  gtpu_tunnel_ngu_test() :
+  gtpu_tunnel_nru_test() :
     logger(srslog::fetch_basic_logger("TEST", false)), gtpu_logger(srslog::fetch_basic_logger("GTPU", false))
   {
   }
@@ -155,7 +155,7 @@ protected:
 };
 
 /// \brief Test correct creation of GTP-U entity
-TEST_F(gtpu_tunnel_ngu_test, entity_creation)
+TEST_F(gtpu_tunnel_nru_test, entity_creation)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
@@ -165,14 +165,13 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
   gtpu                                 = create_gtpu_tunnel_nru(msg);
 
   ASSERT_NE(gtpu, nullptr);
 };
 
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
-TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
+TEST_F(gtpu_tunnel_nru_test, rx_sdu)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
@@ -182,7 +181,6 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
   gtpu                                 = create_gtpu_tunnel_nru(msg);
 
   sockaddr_storage orig_addr     = {};
@@ -201,7 +199,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 };
 
 /// \brief Test correct transmission of GTP-U packet
-TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
+TEST_F(gtpu_tunnel_nru_test, tx_pdu)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
@@ -211,7 +209,6 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   msg.gtpu_pcap                        = &pcap_helper.get_pcap();
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
   gtpu                                 = create_gtpu_tunnel_nru(msg);
 
   nru_ul_message tx_msg                 = {};

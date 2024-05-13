@@ -10,65 +10,28 @@
 
 #pragma once
 
-#include "../support/sdu_window_impl.h"
 #include "gtpu_tunnel_base_rx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/nru/nru_packing.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
-
-constexpr unsigned gtpu_sn_mod         = 65536;
-constexpr unsigned gtpu_rx_window_size = 32768;
-
-/// GTP-U RX state variables
-struct gtpu_rx_state {
-  /// RX_NEXT indicates the SN value of the next GTP-U SDU expected to be received.
-  uint16_t rx_next;
-  /// RX_DELIV indicates the SN value of the first GTP-U SDU not delivered to the lower layers, but still
-  /// waited for.
-  uint16_t rx_deliv;
-  /// RX_REORD indicates the SN value following the SN value associated with the GTP-U PDU which
-  /// triggered t-Reordering.
-  uint16_t rx_reord;
-};
-
-struct gtpu_rx_sdu_info {
-  nru_dl_message     dl_message = {};
-  optional<uint16_t> sn         = {};
-};
 
 /// Class used for receiving GTP-U NR-U bearers, e.g. on F1-U interface.
 class gtpu_tunnel_nru_rx_impl : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_nru_rx_impl(srs_cu_up::ue_index_t                    ue_index,
-                          gtpu_config::gtpu_rx_config              cfg,
-                          gtpu_tunnel_nru_rx_lower_layer_notifier& rx_lower_,
-                          timer_factory                            ue_dl_timer_factory_) :
+  gtpu_tunnel_nru_rx_impl(srs_cu_up::ue_index_t                             ue_index,
+                          gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config cfg,
+                          gtpu_tunnel_nru_rx_lower_layer_notifier&          rx_lower_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
-    config(cfg),
-    rx_window(std::make_unique<sdu_window_impl<gtpu_rx_sdu_info, gtpu_rx_window_size, gtpu_tunnel_logger>>(logger)),
-    ue_dl_timer_factory(ue_dl_timer_factory_)
+    config(cfg)
   {
-    if (config.t_reordering.count() != 0) {
-      reordering_timer = ue_dl_timer_factory.create_timer();
-      reordering_timer.set(config.t_reordering, reordering_callback{this});
-    }
-    logger.log_info(
-        "GTPU NR-U Rx configured. local_teid={} t_reodering={}", config.local_teid, config.t_reordering.count());
+    logger.log_info("GTPU NR-U Rx configured. local_teid={}", config.local_teid);
   }
   ~gtpu_tunnel_nru_rx_impl() override = default;
-
-  /*
-   * Testing Helpers
-   */
-  void          set_state(gtpu_rx_state st_) { st = st_; }
-  gtpu_rx_state get_state() { return st; }
-  bool          is_reordering_timer_running() { return reordering_timer.is_running(); }
 
 protected:
   // domain-specific PDU handler
@@ -103,135 +66,14 @@ protected:
       return;
     }
 
-    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
+    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={}", pdu.buf.length());
 
-    if (!pdu.hdr.flags.seq_number || config.t_reordering.count() == 0) {
-      // Forward this SDU straight away.
-      gtpu_rx_sdu_info rx_sdu_info        = {};
-      rx_sdu_info.dl_message.t_pdu        = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction
-      rx_sdu_info.dl_message.dl_user_data = std::move(dl_user_data);
-      deliver_sdu(rx_sdu_info);
-      return;
-    }
+    nru_dl_message dl_message = {};
+    dl_message.t_pdu          = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction;
+    dl_message.dl_user_data   = std::move(dl_user_data);
 
-    uint16_t    sn     = pdu.hdr.seq_number;
-    byte_buffer rx_sdu = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction
-
-    // Check out-of-window
-    if (!inside_rx_window(sn)) {
-      logger.log_warning("SN falls out of Rx window. sn={} {}", sn, st);
-      gtpu_rx_sdu_info rx_sdu_info        = {};
-      rx_sdu_info.dl_message.t_pdu        = std::move(rx_sdu);
-      rx_sdu_info.dl_message.dl_user_data = std::move(dl_user_data);
-      rx_sdu_info.sn                      = sn;
-      deliver_sdu(rx_sdu_info);
-      return;
-    }
-
-    // Check late SN
-    if (rx_mod_base(sn) < rx_mod_base(st.rx_deliv)) {
-      logger.log_debug("Out-of-order after timeout or duplicate. sn={} {}", sn, st);
-      gtpu_rx_sdu_info rx_sdu_info        = {};
-      rx_sdu_info.dl_message.t_pdu        = std::move(rx_sdu);
-      rx_sdu_info.dl_message.dl_user_data = std::move(dl_user_data);
-      rx_sdu_info.sn                      = sn;
-      deliver_sdu(rx_sdu_info);
-      return;
-    }
-
-    // Check if PDU has been received
-    if (rx_window->has_sn(sn)) {
-      logger.log_warning("Duplicate PDU dropped. sn={}", sn);
-      return;
-    }
-
-    gtpu_rx_sdu_info& rx_sdu_info       = rx_window->add_sn(sn);
-    rx_sdu_info.dl_message.t_pdu        = std::move(rx_sdu);
-    rx_sdu_info.dl_message.dl_user_data = std::move(dl_user_data);
-    rx_sdu_info.sn                      = sn;
-
-    // Update RX_NEXT
-    if (rx_mod_base(sn) >= rx_mod_base(st.rx_next)) {
-      st.rx_next = sn + 1;
-    }
-
-    if (rx_mod_base(sn) == rx_mod_base(st.rx_deliv)) {
-      // Deliver all consecutive SDUs in ascending order of associated SN
-      deliver_all_consecutive_sdus();
-    }
-
-    // Stop re-ordering timer if we advanced the window past RX_REORD
-    if (reordering_timer.is_running() and (not inside_rx_window(st.rx_reord))) {
-      reordering_timer.stop();
-      logger.log_debug("Stopped t-Reordering. {}", st);
-    }
-
-    if (config.t_reordering.count() == 0) {
-      st.rx_reord = st.rx_next;
-      handle_t_reordering_expire();
-    } else if (!reordering_timer.is_running() and rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
-      st.rx_reord = st.rx_next;
-      reordering_timer.run();
-      logger.log_debug("Started t-Reordering. {}", st);
-    }
-  }
-
-  void deliver_sdu(gtpu_rx_sdu_info& sdu_info)
-  {
-    logger.log_info(sdu_info.dl_message.t_pdu.begin(),
-                    sdu_info.dl_message.t_pdu.end(),
-                    "RX SDU. sdu_len={} sn={}",
-                    sdu_info.dl_message.t_pdu.length(),
-                    sdu_info.sn);
-    lower_dn.on_new_sdu(std::move(sdu_info.dl_message));
-  }
-
-  void deliver_all_consecutive_sdus()
-  {
-    while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
-      gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
-      deliver_sdu(sdu_info);
-      rx_window->remove_sn(st.rx_deliv);
-
-      // Update RX_DELIV
-      st.rx_deliv = st.rx_deliv + 1;
-    }
-  }
-
-  void handle_t_reordering_expire()
-  {
-    // Check if timer has been restarted by the PDU handling routine between expiration and execution of this handler.
-    if (reordering_timer.is_running()) {
-      logger.log_info("reordering timer has been already restarted. Skipping outdated event. {}", st);
-      return;
-    }
-    if (not inside_rx_window(st.rx_reord)) {
-      logger.log_info("rx_reord is outside RX window. Skipping outdated event. {}", st);
-      return;
-    }
-
-    while (st.rx_deliv != st.rx_reord) {
-      if (rx_window->has_sn(st.rx_deliv)) {
-        gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
-        deliver_sdu(sdu_info);
-        rx_window->remove_sn(st.rx_deliv);
-      }
-
-      // Update RX_DELIV
-      st.rx_deliv = st.rx_deliv + 1;
-    }
-
-    deliver_all_consecutive_sdus();
-
-    if (rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
-      if (config.t_reordering.count() == 0) {
-        logger.log_error("reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
-        return;
-      }
-      logger.log_debug("updating rx_reord to rx_next. {}", st);
-      st.rx_reord = st.rx_next;
-      reordering_timer.run();
-    }
+    logger.log_info(dl_message.t_pdu.begin(), dl_message.t_pdu.end(), "RX SDU. sdu_len={}", dl_message.t_pdu.length());
+    lower_dn.on_new_sdu(std::move(dl_message));
   }
 
 private:
@@ -239,70 +81,6 @@ private:
   gtpu_tunnel_nru_rx_lower_layer_notifier& lower_dn;
 
   /// Rx config
-  gtpu_config::gtpu_rx_config config;
-
-  /// Rx state
-  gtpu_rx_state st = {};
-
-  /// Rx window
-  std::unique_ptr<sdu_window<gtpu_rx_sdu_info>> rx_window;
-
-  /// Rx reordering timer
-  unique_timer reordering_timer;
-
-  /// Timer factory
-  timer_factory ue_dl_timer_factory;
-
-  /// Reordering callback (t-Reordering)
-  class reordering_callback
-  {
-  public:
-    explicit reordering_callback(gtpu_tunnel_nru_rx_impl* parent_) : parent(parent_) {}
-    void operator()(timer_id_t timer_id)
-    {
-      parent->logger.log_info("reordering timer expired. {}", parent->st);
-      parent->handle_t_reordering_expire();
-    }
-
-  private:
-    gtpu_tunnel_nru_rx_impl* parent;
-  };
-
-  /// \brief Helper function for arithmetic comparisons of state variables or SN values
-  ///
-  /// When performing arithmetic comparisons of state variables or SN values, a modulus base shall be used.
-  /// This is adapted from RLC AM, TS 38.322 Sec. 7.1
-  ///
-  /// \param sn The sequence number to be rebased from RX_Deliv, as this is the lower-edge of the window.
-  /// \return The rebased value of sn
-  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_deliv) % gtpu_sn_mod; }
-
-  /// Checks whether a sequence number is inside the current Rx window
-  /// \param sn The sequence number to be checked
-  /// \return True if sn is inside the Rx window, false otherwise
-  constexpr bool inside_rx_window(uint16_t sn) const
-  {
-    // RX_Deliv <= SN < RX_Deliv + Window_Size
-    return rx_mod_base(sn) < gtpu_rx_window_size;
-  }
+  gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config config;
 };
-
 } // namespace srsran
-
-namespace fmt {
-template <>
-struct formatter<srsran::gtpu_rx_state> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::gtpu_rx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "rx_deliv={} rx_reord={} rx_next={} ", st.rx_deliv, st.rx_reord, st.rx_next);
-  }
-};
-
-} // namespace fmt
