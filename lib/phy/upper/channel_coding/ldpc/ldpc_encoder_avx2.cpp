@@ -166,6 +166,26 @@ void ldpc_encoder_avx2::load_input(const bit_buffer& in)
 // "out". The representation is unpacked (1 byte represents 1 bit).
 static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
 {
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+  // Upgrades the XOR to AVX512 if it is possible.
+  unsigned       nof_vectors = in0.size() / AVX512_SIZE_BYTE;
+  const __m512i* in0_local   = reinterpret_cast<const __m512i*>(in0.data());
+  const __m512i* in1_local   = reinterpret_cast<const __m512i*>(in1.data());
+  __m512i*       out_local   = reinterpret_cast<__m512i*>(out.data());
+
+  unsigned i = 0;
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += AVX512_SIZE_BYTE) {
+    _mm512_storeu_si512(out_local++,
+                        _mm512_xor_si512(_mm512_loadu_si512(in0_local++), _mm512_loadu_si512(in1_local++)));
+  }
+
+  uint64_t  remainder = in0.size() - i;
+  __mmask64 mask      = (1UL << remainder) - 1UL;
+  _mm512_mask_storeu_epi8(
+      out_local,
+      mask,
+      _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, in0_local), _mm512_maskz_loadu_epi8(mask, in1_local)));
+#else  // defined(__AVX512F__) && defined(__AVX512BW__)
   unsigned               nof_vectors = in0.size() / AVX2_SIZE_BYTE;
   mm256::avx2_const_span in0_local(in0, nof_vectors);
   mm256::avx2_const_span in1_local(in1, nof_vectors);
@@ -180,6 +200,7 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
   for (unsigned i_end = out.size(); i != i_end; ++i) {
     out[i] = in0[i] ^ in1[i];
   }
+#endif // defined(__AVX512F__) && defined(__AVX512BW__)
 }
 
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>

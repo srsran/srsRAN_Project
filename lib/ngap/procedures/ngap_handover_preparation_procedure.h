@@ -38,8 +38,9 @@ public:
   ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
                                       const ngap_context_t&                    context_,
                                       const ngap_ue_ids&                       ue_ids_,
-                                      ngap_message_notifier&                   amf_notif_,
-                                      ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+                                      ngap_message_notifier&                   amf_notifier_,
+                                      ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
+                                      ngap_cu_cp_notifier&                     cu_cp_notifier_,
                                       up_resource_manager&                     up_manager_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
@@ -55,6 +56,7 @@ private:
   const ngap_ue_ids                       ue_ids;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
+  ngap_cu_cp_notifier&                    cu_cp_notifier;
   up_resource_manager&                    up_manager;
   ngap_transaction_manager&               ev_mng;
   ngap_ue_logger&                         logger;
@@ -64,10 +66,12 @@ private:
   ngap_ue_source_handover_context ho_ue_context;
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
+  byte_buffer rrc_ho_cmd_pdu       = byte_buffer{};
+  bool        rrc_reconfig_success = false;
 
-  void get_required_handover_context();
-  void send_handover_required();
-  bool forward_rrc_handover_command();
+  void        get_required_handover_context();
+  void        send_handover_required();
+  byte_buffer get_rrc_handover_command();
 
   // ASN.1 helpers
   void        fill_asn1_target_ran_node_id(asn1::ngap::target_id_c& target_id);

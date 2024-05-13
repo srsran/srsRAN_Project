@@ -248,6 +248,7 @@ struct formatter<srsran::channel_state_information> {
       srsran::optional<float>                 rsrp_dB       = csi.get_rsrp_dB();
       srsran::optional<float>                 sinr_dB       = csi.get_sinr_dB();
       srsran::optional<srsran::phy_time_unit> time_aligment = csi.get_time_alignment();
+      srsran::optional<float>                 cfo_Hz        = csi.get_cfo_Hz();
 
       // Print the measurements that are present.
       if (epre_dB.has_value()) {
@@ -269,6 +270,11 @@ struct formatter<srsran::channel_state_information> {
         helper.format_if_verbose(ctx, "t_align={:.2f}us", time_aligment.value().to_seconds() * 1e6);
       } else {
         helper.format_if_verbose(ctx, "t_align=na");
+      }
+      if (cfo_Hz.has_value()) {
+        helper.format_if_verbose(ctx, "cfo={+:.1f}Hz", cfo_Hz.value());
+      } else {
+        helper.format_if_verbose(ctx, "cfo=na");
       }
     } else {
       // Short representation only prints the SINR selected for CSI reporting to higher layers.

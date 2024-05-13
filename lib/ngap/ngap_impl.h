@@ -41,7 +41,7 @@ class ngap_impl final : public ngap_interface
 {
 public:
   ngap_impl(ngap_configuration&                ngap_cfg_,
-            ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier_,
+            ngap_cu_cp_notifier&               cu_cp_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
             ngap_ue_task_scheduler&            task_sched_,
             ngap_ue_manager&                   ue_manager_,
@@ -170,7 +170,7 @@ private:
 
   std::unordered_map<ue_index_t, error_indication_request_t> stored_error_indications;
 
-  ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier;
+  ngap_cu_cp_notifier&               cu_cp_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;

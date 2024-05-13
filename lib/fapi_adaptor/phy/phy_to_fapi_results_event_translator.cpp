@@ -52,6 +52,12 @@ phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(srslo
 {
 }
 
+/// Coverts normalised dB values to dBFS.
+static float convert_to_dBFS(float value_dB, float full_scale_reference)
+{
+  return value_dB - convert_amplitude_to_dB(full_scale_reference);
+}
+
 void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
   if (result.result.preambles.empty()) {
@@ -83,14 +89,14 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
   // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
   static constexpr float            MIN_AVG_RSSI_VALUE = -140.F;
   static constexpr float            MAX_AVG_RSSI_VALUE = 30.F;
-  fapi::rach_indication_pdu_builder builder_pdu =
-      builder.add_pdu(handle,
-                      result.context.start_symbol,
-                      slot.slot_index(),
-                      fd_ra_index,
-                      clamp(result.result.rssi_dB, MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
-                      {},
-                      {});
+  fapi::rach_indication_pdu_builder builder_pdu        = builder.add_pdu(
+      handle,
+      result.context.start_symbol,
+      slot.slot_index(),
+      fd_ra_index,
+      clamp(convert_to_dBFS(result.result.rssi_dB, dBFS_calibration_value), MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
+      {},
+      {});
 
   for (const auto& preamble : result.result.preambles) {
     // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
@@ -110,7 +116,9 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
         preamble.preamble_index,
         {},
         TA_ns,
-        clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
+        clamp(convert_to_dBFS(convert_power_to_dB(preamble.detection_metric), dBFS_calibration_value),
+              MIN_PREAMBLE_POWER_VALUE,
+              MAX_PREAMBLE_POWER_VALUE),
         clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
 
@@ -275,7 +283,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -285,7 +293,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Extract the RSRP which is optional and clamp it if available.
   optional<float> rsrp = result.csi.get_rsrp_dB();
   if (rsrp.has_value()) {
-    rsrp = clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS);
+    rsrp = convert_to_dBFS(clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS), dBFS_calibration_value);
   }
 
   builder.add_pdu(handle,
@@ -394,7 +402,7 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -500,7 +508,7 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
     sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  // Extract time in advance.
+  // Extract timing advance.
   optional<int>           timing_advance_offset_ns;
   optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
@@ -550,5 +558,25 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
 
 void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_results& result)
 {
-  // TBD.
+  fapi::srs_indication_message         msg;
+  fapi::srs_indication_message_builder builder(msg);
+
+  const ul_srs_context& context = result.context;
+  builder.set_basic_parameters(context.slot.sfn(), context.slot.slot_index());
+
+  // Do not use the handle for now.
+  static const unsigned            handle          = 0;
+  fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
+
+  srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
+
+  srs_pdu_builder.set_codebook_report_matrix(result.processor_result.channel_matrix);
+
+  error_type<fapi::validator_report> validation_result = validate_srs_indication(msg);
+  if (!validation_result) {
+    log_validator_report(validation_result.error(), logger);
+    return;
+  }
+
+  data_notifier.get().on_srs_indication(msg);
 }

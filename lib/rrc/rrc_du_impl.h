@@ -37,7 +37,6 @@ class rrc_du_impl : public rrc_du_interface
 {
 public:
   rrc_du_impl(const rrc_cfg_t&                    cfg_,
-              rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notif_,
               rrc_ue_nas_notifier&                nas_notif_,
               rrc_ue_control_notifier&            ngap_ctrl_notif_,
               rrc_du_measurement_config_notifier& meas_config_notifier_);
@@ -50,31 +49,29 @@ public:
   rrc_ue_interface* add_ue(up_resource_manager& up_resource_mng, const rrc_ue_creation_message& msg) override;
   void              release_ues() override;
 
-  // rrc_ue_removal_handler
-  void remove_ue(ue_index_t ue_index) override;
-
+  // rrc_ue_handler
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
     srsran_assert(ue_db.find(ue_index) != ue_db.end(), "UE not found");
     return ue_db.at(ue_index).get();
   }
+  void remove_ue(ue_index_t ue_index) override;
 
   // rrc_du_statistics_handler
   size_t get_nof_ues() const override { return ue_db.size(); }
 
   rrc_du_cell_manager&       get_rrc_du_cell_manager() override { return *this; }
   rrc_du_ue_repository&      get_rrc_du_ue_repository() override { return *this; }
-  rrc_ue_removal_handler&    get_rrc_ue_removal_handler() override { return *this; }
+  rrc_ue_handler&            get_rrc_ue_handler() override { return *this; }
   rrc_du_statistics_handler& get_rrc_du_statistics_handler() override { return *this; }
 
 private:
   // helpers
   const rrc_cfg_t& cfg;
 
-  rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&                nas_notifier;            // PDU notifier to the NGAP
-  rrc_ue_control_notifier&            ngap_ctrl_notifier;      // Control notifier to the NGAP
-  rrc_du_measurement_config_notifier& meas_config_notifier;    // notifier to the CU-CP
+  rrc_ue_nas_notifier&                nas_notifier;         // PDU notifier to the NGAP
+  rrc_ue_control_notifier&            ngap_ctrl_notifier;   // Control notifier to the NGAP
+  rrc_du_measurement_config_notifier& meas_config_notifier; // notifier to the CU-CP
   srslog::basic_logger&               logger;
 
   // RRC-internal user database indexed by ue_index

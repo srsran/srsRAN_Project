@@ -24,6 +24,7 @@
 
 #include "awaiter_memory_storage.h"
 #include "srsran/support/async/detail/function_signature.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
@@ -63,9 +64,9 @@ struct base_coro_frame;
 /// Contains a small memory buffer to store awaiters and the current coroutine state
 template <>
 struct base_coro_frame<void> {
-  base_coro_frame<void>()                                        = default;
-  base_coro_frame<void>(const base_coro_frame<void>&)            = delete;
-  base_coro_frame<void>(base_coro_frame<void>&&)                 = delete;
+  base_coro_frame()                                              = default;
+  base_coro_frame(const base_coro_frame<void>&)                  = delete;
+  base_coro_frame(base_coro_frame<void>&&)                       = delete;
   base_coro_frame<void>& operator=(const base_coro_frame<void>&) = delete;
   base_coro_frame<void>& operator=(base_coro_frame<void>&&)      = delete;
   virtual ~base_coro_frame()                                     = default;
@@ -218,7 +219,7 @@ struct coro_frame : public base_coro_frame<detail::promise_of<FunT>> {
   void on_return() final { get_impl()->~FunT(); }
 
 private:
-  FunT* get_impl() { return reinterpret_cast<FunT*>(&task_storage); }
+  FunT* get_impl() { return SRSRAN_LAUNDER(reinterpret_cast<FunT*>(&task_storage)); }
   void  cancel()
   {
     if (this->state_index < 0) {

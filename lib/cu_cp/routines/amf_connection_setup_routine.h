@@ -34,7 +34,7 @@ namespace srs_cu_cp {
 class amf_connection_setup_routine
 {
 public:
-  amf_connection_setup_routine(const ngap_configuration& ngap_cfg_, cu_cp_ngap_control_notifier& ngap_ctrl_notifier_);
+  amf_connection_setup_routine(const ngap_configuration& ngap_cfg_, ngap_connection_manager& ngap_conn_mng_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -42,8 +42,8 @@ private:
   ngap_ng_setup_request            fill_ng_setup_request();
   async_task<ngap_ng_setup_result> send_ng_setup_request();
 
-  const ngap_configuration&    ngap_cfg;
-  cu_cp_ngap_control_notifier& ngap_ctrl_notifier;
+  const ngap_configuration& ngap_cfg;
+  ngap_connection_manager&  ngap_conn_mng;
 
   ngap_ng_setup_result result_msg = {};
 };

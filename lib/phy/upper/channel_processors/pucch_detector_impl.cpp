@@ -218,8 +218,8 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   unsigned nof_ports = config.ports.size();
   time_spread_sequence.resize({nof_res, nof_ports});
   ch_estimates.resize({nof_res, nof_ports, 1});
-  eq_time_spread_sequence.resize({nof_res, 1});
-  eq_time_spread_noise_var.resize({nof_res, 1});
+  eq_time_spread_sequence.resize(nof_res);
+  eq_time_spread_noise_var.resize(nof_res);
 
   // Compute the number of data symbols before frequency hop.
   nof_data_symbols         = config.nof_symbols / 2;
@@ -405,7 +405,7 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
   for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, offset += NRE) {
     span<const cf_t> seq_r = low_papr->get(group_index, sequence_number, alpha_indices[i_symbol]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[{offset + i_elem}] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
@@ -416,13 +416,13 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
     span<const cf_t> seq_r =
         low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[{offset + i_elem}] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
-  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.get_data().size());
+  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.size());
   detected_symbol /= n_repetitions;
   // For the noise variance, we have to compute the sum of all variances and divide by the square of their number: same
   // as computing the mean and dividing again buy their number.
-  eq_noise_var = srsvec::mean(eq_time_spread_noise_var.get_data()) / n_repetitions;
+  eq_noise_var = srsvec::mean(eq_time_spread_noise_var) / n_repetitions;
 }

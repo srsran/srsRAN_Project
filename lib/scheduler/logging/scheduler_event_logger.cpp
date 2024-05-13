@@ -119,6 +119,13 @@ void scheduler_event_logger::enqueue_impl(const sched_ue_delete_message& ue_requ
   }
 }
 
+void scheduler_event_logger::enqueue_impl(const ue_cfg_applied_event& ev)
+{
+  if (mode == debug) {
+    fmt::format_to(fmtbuf, "\n- UE dedicated config applied: ue={} rnti={}", ev.ue_index, ev.rnti);
+  }
+}
+
 void scheduler_event_logger::enqueue_impl(const error_indication_event& err_ind)
 {
   if (mode == debug) {

@@ -113,8 +113,7 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
                        .h_id           = to_harq_id(0),
                        .ss_id          = to_search_space_id(0),
                        .time_res_index = 0,
-                       .crbs           = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
-                       .aggr_lvl       = aggregation_level::n4};
+                       .crbs           = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs()};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
 }
@@ -143,8 +142,7 @@ TEST_F(ue_grid_allocator_tester,
       .ss_id          = to_search_space_id(2),
       .time_res_index = 0,
       .crbs           = {crbs.start(),
-                         crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()},
-      .aggr_lvl       = aggregation_level::n4};
+                         crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()}};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
 }
@@ -166,8 +164,7 @@ TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_
                              .h_id           = to_harq_id(0),
                              .ss_id          = to_search_space_id(0),
                              .time_res_index = 0,
-                             .crbs     = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
-                             .aggr_lvl = aggregation_level::n4};
+                             .crbs = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs()};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
@@ -191,8 +188,7 @@ TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
                              .h_id           = to_harq_id(0),
                              .ss_id          = to_search_space_id(2),
                              .time_res_index = 0,
-                             .crbs     = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
-                             .aggr_lvl = aggregation_level::n4};
+                             .crbs = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs()};
 
   ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
@@ -218,8 +214,7 @@ TEST_F(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per
                               .h_id           = to_harq_id(0),
                               .ss_id          = to_search_space_id(2),
                               .time_res_index = 0,
-                              .crbs           = grant1_crbs,
-                              .aggr_lvl       = aggregation_level::n4};
+                              .crbs           = grant1_crbs};
 
   // Successfully allocates RBs corresponding to the grant.
   ASSERT_EQ(alloc.allocate_dl_grant(grant1), alloc_outcome::success);
@@ -233,8 +228,7 @@ TEST_F(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per
                               .h_id           = to_harq_id(0),
                               .ss_id          = to_search_space_id(2),
                               .time_res_index = 0,
-                              .crbs           = grant2_crbs,
-                              .aggr_lvl       = aggregation_level::n4};
+                              .crbs           = grant2_crbs};
 
   // Allocates all remaining RBs to UE2.
   ASSERT_EQ(alloc.allocate_dl_grant(grant2), alloc_outcome::success);
@@ -259,7 +253,6 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
                               .h_id       = to_harq_id(0),
                               .crbs       = grant1_crbs,
                               .ss_id      = to_search_space_id(2),
-                              .aggr_lvl   = aggregation_level::n4,
                               .mcs        = sch_mcs_index{24}};
 
   // Successfully allocates RBs corresponding to the grant.
@@ -276,7 +269,6 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
                               .h_id       = to_harq_id(0),
                               .crbs       = grant1_crbs,
                               .ss_id      = to_search_space_id(2),
-                              .aggr_lvl   = aggregation_level::n4,
                               .mcs        = sch_mcs_index{24}};
 
   // Allocates all remaining RBs to UE2.

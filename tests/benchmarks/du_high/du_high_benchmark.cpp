@@ -268,7 +268,7 @@ private:
         handle_success_outcome(msg.pdu.successful_outcome());
         break;
       default:
-        report_fatal_error("Unreachable code in this benchmark");
+        report_fatal_error("Received invalid PDU type {} in this benchmark", msg.pdu.type().value);
     }
   }
 
@@ -299,7 +299,7 @@ private:
         du_rx_pdu_notifier->on_new_message(msg);
       } break;
       default:
-        report_fatal_error("Unreachable code in this benchmark");
+        report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());
     }
   }
 
@@ -338,21 +338,22 @@ public:
 class cu_up_simulator : public f1u_du_gateway
 {
 public:
-  static_vector<f1u_dummy_bearer, MAX_NOF_DU_UES>             bearer_list;
+  static_vector<f1u_dummy_bearer*, MAX_NOF_DU_UES>            bearer_list;
   static_vector<srs_du::f1u_rx_sdu_notifier*, MAX_NOF_DU_UES> du_notif_list;
 
-  f1u_bearer* create_du_bearer(uint32_t                       ue_index,
-                               drb_id_t                       drb_id,
-                               srs_du::f1u_config             config,
-                               const up_transport_layer_info& dl_tnl,
-                               const up_transport_layer_info& ul_tnl,
-                               srs_du::f1u_rx_sdu_notifier&   du_rx,
-                               timer_factory                  timers,
-                               task_executor&                 ue_executor) override
+  std::unique_ptr<f1u_bearer> create_du_bearer(uint32_t                       ue_index,
+                                               drb_id_t                       drb_id,
+                                               srs_du::f1u_config             config,
+                                               const up_transport_layer_info& dl_tnl,
+                                               const up_transport_layer_info& ul_tnl,
+                                               srs_du::f1u_rx_sdu_notifier&   du_rx,
+                                               timer_factory                  timers,
+                                               task_executor&                 ue_executor) override
   {
+    auto f1u_bearer = std::make_unique<f1u_dummy_bearer>();
     du_notif_list.push_back(&du_rx);
-    bearer_list.emplace_back();
-    return &bearer_list.back();
+    bearer_list.push_back(f1u_bearer.get());
+    return f1u_bearer;
   }
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override {}
@@ -1004,7 +1005,7 @@ public:
       crc_pdu.rnti           = pusch.pusch_cfg.rnti;
       crc_pdu.harq_id        = pusch.pusch_cfg.harq_id;
       crc_pdu.tb_crc_success = true;
-      crc_pdu.ul_sinr_metric = 21.0;
+      crc_pdu.ul_sinr_dB     = 21.0;
     }
     if (not sim_phy.slot_ul_result.ul_res->puschs.empty()) {
       pending_crc.push_back(std::move(crc));

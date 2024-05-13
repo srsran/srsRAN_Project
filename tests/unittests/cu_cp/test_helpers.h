@@ -22,13 +22,13 @@
 
 #pragma once
 
+#include "cu_cp_test_messages.h"
 #include "du_processor_test_messages.h"
 #include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
 #include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
-#include "lib/cu_cp/du_processor/du_processor_impl_interface.h"
-#include "lib/e1ap/common/e1ap_asn1_helpers.h"
-#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "lib/cu_cp/du_processor/du_processor.h"
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -73,11 +73,7 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  explicit dummy_du_processor_cu_cp_notifier(ngap_ue_context_removal_handler& ngap_handler_,
-                                             ue_manager*                      ue_mng_ = nullptr) :
-    ngap_notifier(std::make_unique<dummy_ngap_du_processor_notifier>(ngap_handler_)), ue_mng(ue_mng_)
-  {
-  }
+  explicit dummy_du_processor_cu_cp_notifier(ue_manager* ue_mng_ = nullptr) : ue_mng(ue_mng_) {}
 
   void attach_handler(cu_cp_du_event_handler* cu_cp_handler_, cu_cp_ue_removal_handler* ue_removal_handler_)
   {
@@ -88,7 +84,7 @@ public:
   void on_du_processor_created(du_index_t                       du_index,
                                f1ap_ue_context_removal_handler& f1ap_handler,
                                f1ap_statistics_handler&         f1ap_statistic_handler,
-                               rrc_ue_removal_handler&          rrc_handler,
+                               rrc_ue_handler&                  rrc_handler,
                                rrc_du_statistics_handler&       rrc_statistic_handler) override
   {
     logger.info("du={}: Received a DU Processor creation notification", du_index);
@@ -106,8 +102,13 @@ public:
     logger.info("ue={}: Received a RRC UE creation notification", ue_index);
 
     if (cu_cp_handler != nullptr) {
-      cu_cp_handler->handle_rrc_ue_creation(ue_index, rrc_ue, *ngap_notifier);
+      cu_cp_handler->handle_rrc_ue_creation(ue_index, rrc_ue);
     }
+  }
+
+  byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
+  {
+    return make_byte_buffer("deadbeef");
   }
 
   async_task<void> on_ue_removal_required(ue_index_t ue_index) override
@@ -142,7 +143,29 @@ public:
     });
   }
 
-  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+private:
+  srslog::basic_logger&     logger              = srslog::fetch_basic_logger("TEST");
+  ue_manager*               ue_mng              = nullptr;
+  cu_cp_du_event_handler*   cu_cp_handler       = nullptr;
+  cu_cp_ue_removal_handler* ue_removal_handler  = nullptr;
+  rrc_ue_handler*           rrc_removal_handler = nullptr;
+};
+
+struct dummy_cu_cp_ue_context_manipulation_handler : public cu_cp_ue_context_manipulation_handler {
+public:
+  void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
+
+  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Received UE release request", request.ue_index);
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     logger.info("ue={} old_ue={}: Received UE transfer required", ue_index, old_ue_index);
 
@@ -152,19 +175,48 @@ public:
     });
   }
 
-  void on_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
+  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id_) override
+  {
+    logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})", target_ue_index, transaction_id_);
+    last_transaction_id = transaction_id_;
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(rrc_reconfiguration_outcome);
+    });
+  }
+
+  void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
   {
     logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
   }
 
+  unsigned last_transaction_id = 99999;
+
 private:
-  srslog::basic_logger&                             logger = srslog::fetch_basic_logger("TEST");
-  std::unique_ptr<dummy_ngap_du_processor_notifier> ngap_notifier;
-  ue_manager*                                       ue_mng              = nullptr;
-  cu_cp_du_event_handler*                           cu_cp_handler       = nullptr;
-  cu_cp_ue_removal_handler*                         ue_removal_handler  = nullptr;
-  rrc_ue_removal_handler*                           rrc_removal_handler = nullptr;
-  bool                                              ue_transfer_outcome = true;
+  srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
+  bool                  ue_transfer_outcome         = true;
+  bool                  rrc_reconfiguration_outcome = true;
+};
+
+class dummy_cu_cp_ue_removal_handler : public cu_cp_ue_removal_handler
+{
+public:
+  explicit dummy_cu_cp_ue_removal_handler(ue_manager* ue_mng_ = nullptr) : ue_mng(ue_mng_) {}
+
+  async_task<void> handle_ue_removal_request(ue_index_t ue_index) override
+  {
+    if (ue_mng != nullptr) {
+      ue_mng->remove_ue(ue_index);
+    }
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+private:
+  ue_manager* ue_mng = nullptr;
 };
 
 class dummy_du_connection_notifier : public du_connection_notifier
@@ -197,9 +249,9 @@ struct bearer_context_outcome_t {
       pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
 };
 
-struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
+struct dummy_e1ap_bearer_context_manager : public e1ap_bearer_context_manager {
 public:
-  dummy_du_processor_e1ap_control_notifier() = default;
+  dummy_e1ap_bearer_context_manager() = default;
 
   void set_first_message_outcome(const bearer_context_outcome_t& outcome) { first_e1ap_response = outcome; }
 
@@ -292,7 +344,7 @@ public:
   }
 
   async_task<e1ap_bearer_context_setup_response>
-  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
   {
     logger.info("Received a new bearer context setup request");
 
@@ -315,7 +367,7 @@ public:
   }
 
   async_task<e1ap_bearer_context_modification_response>
-  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
+  handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
   {
     logger.info("Received a new bearer context modification request");
 
@@ -345,7 +397,7 @@ public:
     });
   }
 
-  virtual async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
+  async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
   {
     logger.info("Received a new bearer context release command");
 
@@ -370,11 +422,11 @@ private:
   optional<bearer_context_outcome_t> second_e1ap_response;
 };
 
-struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
+struct dummy_ngap_control_message_handler : public ngap_control_message_handler {
 public:
-  dummy_du_processor_ngap_control_notifier() = default;
+  dummy_ngap_control_message_handler() = default;
 
-  virtual async_task<bool> on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
     return launch_async([this](coro_context<async_task<bool>>& ctx) {
@@ -384,12 +436,19 @@ public:
   }
 
   async_task<ngap_handover_preparation_response>
-  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
+  handle_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
     return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ngap_handover_preparation_response{false});
     });
+  }
+
+  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                             const nr_cell_global_id_t& cgi,
+                                             const unsigned             tac) override
+  {
+    logger.info("Received a RRC Reconfiguration Complete for Inter-CU Handover");
   }
 
   void set_ue_context_release_request_outcome(bool outcome_) { release_request_outcome = outcome_; }
@@ -406,17 +465,17 @@ struct ue_context_outcome_t {
   std::list<unsigned> drb_removed_list; // List of DRB IDs that were removed.
 };
 
-struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
+struct dummy_f1ap_ue_context_manager : public f1ap_ue_context_manager {
 public:
-  dummy_du_processor_f1ap_ue_context_notifier() = default;
+  dummy_f1ap_ue_context_manager() = default;
 
   void set_ue_context_setup_outcome(bool outcome) { ue_context_setup_outcome = outcome; }
 
   void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
   async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                              optional<rrc_ue_transfer_context>    rrc_context) override
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                                  optional<rrc_ue_transfer_context>    rrc_context) override
   {
     logger.info("Received a new UE context setup request");
 
@@ -432,7 +491,7 @@ public:
   }
 
   async_task<f1ap_ue_context_modification_response>
-  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     logger.info("Received a new UE context modification request");
 
@@ -457,7 +516,7 @@ public:
     });
   }
 
-  async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
+  async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
   {
     logger.info("Received a new UE context release command");
 
@@ -467,7 +526,7 @@ public:
     });
   }
 
-  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override { return true; }
+  bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) override { return true; }
 
   const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
 
@@ -516,11 +575,12 @@ public:
     });
   }
 
-  uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  rrc_ue_handover_reconfiguration_context
+  get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override
   {
     logger.info("Received a new handover reconfiguration request (transaction_id={})", transaction_id);
-    last_radio_bearer_cfg = msg.radio_bearer_cfg;
-    return transaction_id;
+    last_radio_bearer_cfg = request.radio_bearer_cfg;
+    return {transaction_id, byte_buffer{}};
   }
 
   async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id_) override
@@ -556,6 +616,8 @@ public:
     logger.info("Received a new security context.");
     return true;
   }
+
+  byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }
 
   byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                unsigned                                     transaction_id_) override

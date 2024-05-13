@@ -106,6 +106,8 @@ public:
     du_mng->handle_ue_reestablishment(new_ue_index, old_ue_index);
   }
 
+  void on_ue_config_applied(du_ue_index_t ue_index) override { du_mng->handle_ue_config_applied(ue_index); }
+
 private:
   timer_factory                                                 timers;
   du_manager_configurator*                                      du_mng = nullptr;

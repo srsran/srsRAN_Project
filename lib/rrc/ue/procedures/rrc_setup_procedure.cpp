@@ -115,5 +115,13 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
     init_ue_msg.five_g_s_tmsi = five_g_s_tmsi;
   }
 
+  if (rrc_setup_complete_msg.crit_exts.rrc_setup_complete().registered_amf_present) {
+    cu_cp_amf_identifier_t amf_id =
+        asn1_to_amf_identifier(rrc_setup_complete_msg.crit_exts.rrc_setup_complete().registered_amf.amf_id);
+
+    init_ue_msg.amf_set_id = amf_id.amf_set_id;
+    // TODO: Handle PLMN ID
+  }
+
   nas_notifier.on_initial_ue_message(init_ue_msg);
 }

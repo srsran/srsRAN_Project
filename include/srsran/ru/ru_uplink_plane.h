@@ -66,11 +66,6 @@ public:
   /// \param[in] context PRACH context.
   /// \param[in] buffer  Read-only PRACH buffer.
   virtual void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
-
-  /// \brief Notifies the completion of SRS symbols.
-  ///
-  /// \param[in] context Notification context.
-  virtual void on_rx_srs_symbol(const ru_uplink_rx_symbol_context& context) = 0;
 };
 
 /// \brief Radio Unit uplink plane handler.

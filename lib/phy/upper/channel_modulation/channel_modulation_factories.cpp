@@ -23,7 +23,12 @@
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "demodulation_mapper_impl.h"
 #include "evm_calculator_generic_impl.h"
-#include "modulation_mapper_impl.h"
+#include "modulation_mapper_lut_impl.h"
+#include "srsran/support/cpu_features.h"
+
+#ifdef __x86_64__
+#include "modulation_mapper_avx512_impl.h"
+#endif // __x86_64__
 
 using namespace srsran;
 
@@ -34,7 +39,14 @@ class channel_modulation_sw_factory : public channel_modulation_factory
 public:
   std::unique_ptr<modulation_mapper> create_modulation_mapper() override
   {
-    return std::make_unique<modulation_mapper_impl>();
+#ifdef __x86_64__
+    if (cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw) &&
+        cpu_supports_feature(cpu_feature::avx512vbmi)) {
+      return std::make_unique<modulation_mapper_avx512_impl>();
+    }
+#endif // __x86_64__
+
+    return std::make_unique<modulation_mapper_lut_impl>();
   }
   std::unique_ptr<demodulation_mapper> create_demodulation_mapper() override
   {

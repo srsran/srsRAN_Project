@@ -39,19 +39,16 @@ struct ue_context;
 
 struct rrc_du_creation_message {
   rrc_du_creation_message(const rrc_cfg_t&                    cfg_,
-                          rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notif_,
                           rrc_ue_nas_notifier&                nas_notif_,
                           rrc_ue_control_notifier&            ngap_ctrl_notif_,
                           rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier_) :
     cfg(cfg_),
-    rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
     nas_notifier(nas_notif_),
     ngap_ctrl_notifier(ngap_ctrl_notif_),
     rrc_du_cu_cp_notifier(rrc_du_cu_cp_notifier_)
   {
   }
   const rrc_cfg_t&                    cfg;
-  rrc_ue_du_processor_notifier&       rrc_ue_du_proc_notifier;
   rrc_ue_nas_notifier&                nas_notifier;
   rrc_ue_control_notifier&            ngap_ctrl_notifier;
   rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier;

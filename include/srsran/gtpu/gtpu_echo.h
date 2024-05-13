@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_tunnel_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_rx.h"
 
 namespace srsran {
 
@@ -39,7 +39,7 @@ public:
   gtpu_echo(const gtpu_echo&&)            = delete;
   gtpu_echo& operator=(const gtpu_echo&&) = delete;
 
-  virtual gtpu_tunnel_rx_upper_layer_interface* get_rx_upper_layer_interface() = 0;
+  virtual gtpu_tunnel_common_rx_upper_layer_interface* get_rx_upper_layer_interface() = 0;
 };
 
 } // namespace srsran

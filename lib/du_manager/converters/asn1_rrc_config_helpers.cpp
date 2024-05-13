@@ -3113,10 +3113,23 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
         serving_cell_cfg_common_s::n_timing_advance_offset_opts::n39936;
   }
 
-  // TODO: check how to fill this field.
+  // As per \c ssb-PositionsInBurst, in \c ServingCellConfigCommon, TS 38.331, the length of \c ssb-PositionsInBurst
+  // needs to be set according to TS 38.213, Section 4.1.
   out.sp_cell_cfg_common.ssb_positions_in_burst_present = true;
-  out.sp_cell_cfg_common.ssb_positions_in_burst.set_medium_bitmap().from_number(
-      static_cast<uint64_t>(du_cell_cfg.ssb_cfg.ssb_bitmap) >> static_cast<uint64_t>(56U));
+  const uint8_t l_max =
+      band_helper::get_ssb_l_max(du_cell_cfg.dl_carrier.band,
+                                 du_cell_cfg.ssb_cfg.scs,
+                                 static_cast<uint32_t>(du_cell_cfg.dl_cfg_common.freq_info_dl.absolute_freq_point_a));
+  srsran_assert(l_max == 4U or l_max == 8U or l_max == 64U, "L_max value {} not valid", l_max);
+  if (l_max == 4U) {
+    out.sp_cell_cfg_common.ssb_positions_in_burst.set_short_bitmap().from_number(
+        static_cast<uint64_t>(du_cell_cfg.ssb_cfg.ssb_bitmap) >> static_cast<uint64_t>(60U));
+  } else if (l_max == 8U) {
+    out.sp_cell_cfg_common.ssb_positions_in_burst.set_medium_bitmap().from_number(
+        static_cast<uint64_t>(du_cell_cfg.ssb_cfg.ssb_bitmap) >> static_cast<uint64_t>(56U));
+  } else {
+    out.sp_cell_cfg_common.ssb_positions_in_burst.set_long_bitmap().from_number(du_cell_cfg.ssb_cfg.ssb_bitmap);
+  }
 
   out.sp_cell_cfg_common.ssb_periodicity_serving_cell_present = true;
   asn1::number_to_enum(out.sp_cell_cfg_common.ssb_periodicity_serving_cell,

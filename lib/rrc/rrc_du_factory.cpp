@@ -29,6 +29,5 @@ using namespace srs_cu_cp;
 
 std::unique_ptr<rrc_du_interface> srsran::srs_cu_cp::create_rrc_du(const rrc_du_creation_message& msg)
 {
-  return std::make_unique<rrc_du_impl>(
-      msg.cfg, msg.rrc_ue_du_proc_notifier, msg.nas_notifier, msg.ngap_ctrl_notifier, msg.rrc_du_cu_cp_notifier);
+  return std::make_unique<rrc_du_impl>(msg.cfg, msg.nas_notifier, msg.ngap_ctrl_notifier, msg.rrc_du_cu_cp_notifier);
 }

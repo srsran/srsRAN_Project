@@ -778,7 +778,6 @@ struct metrics_appconfig {
   struct pdcp_metrics {
     unsigned report_period = 0; // PDCP report period in ms
   } pdcp;
-  unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
   /// JSON metrics reporting.
   bool        enable_json_metrics      = false;
   std::string addr                     = "127.0.0.1";
@@ -861,28 +860,29 @@ struct test_mode_appconfig {
 struct ru_sdr_expert_appconfig {
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
   float lphy_dl_throttling = 0.0F;
-  /// \brief Enables discontinuous transmission mode for the radio front-ends supporting it.
+  /// \brief Selects the radio transmission mode.
   ///
-  /// Discontinuous Transmission (DTX) is a power-saving technique used in radio communication where the transmitter is
-  /// turned off during periods of silence or when no data needs to be transmitted. This flag allows the user to
-  /// activate DTX for radio front-ends that support this transmission mode.
+  /// Selects the radio transmission mode between the available options:
+  ///   - continuous: The radio keeps the transmitter chain active, even when there are no transmission requests.
+  ///   - discontinuous: The transmitter stops when there is no data to transmit.
+  ///   - same-port: like discontinuous mode, but using the same port to transmit and receive.
   ///
-  /// When DTX is enabled, the radio transmitter intelligently manages its transmission state, reducing power
-  /// consumption during idle or silent periods. This is particularly beneficial in scenarios where power efficiency is
-  /// a critical consideration, such as battery-operated devices.
-  bool discontinuous_tx_mode = false;
+  /// \remark The discontinuous and same-port transmission modes may not be supported for some radio devices.
+  std::string transmission_mode = "continuous";
   /// \brief Power ramping time of the transmit chain in microseconds.
   ///
   /// This parameter represents the duration, in microseconds, required for the transmit chain to reach its full power
   /// level.
   ///
-  /// In discontinuous transmission mode, the transmitter is powered on ahead of the actual data transmission. By doing
-  /// so, the data-carrying samples remain unaffected by any transient effects or fluctuations in the transmit chain
-  /// during the power ramping time. The maximum supported power ramping time is equivalent to the duration of two NR
-  /// slots.
+  /// In discontinuous and same-port transmission modes, the transmitter is powered on ahead of the actual data
+  /// transmission. By doing so, the data-carrying samples remain unaffected by any transient effects or fluctuations in
+  /// the transmit chain during the power ramping time. The maximum supported power ramping time is equivalent to the
+  /// duration of two NR slots.
   ///
   /// \note It is recommended to configure this parameter carefully, taking into account the characteristics of the
   /// transmit chain in order to achieve optimal performance.
+  /// \note In same-port transmission mode, reception is interrupted on the TRX port as soon as the power ramping guard
+  /// time starts.
   /// \note Powering up the transmitter ahead of time requires starting the transmission earlier, and reduces the time
   /// window for the radio to transmit the provided samples.
   float power_ramping_time_us = 0.0F;
@@ -1192,8 +1192,6 @@ struct gnb_appconfig {
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.
   amf_appconfig amf_cfg;
-  /// CU-UP configuration.
-  cu_up_appconfig cu_up_cfg;
   /// DU configuration.
   du_appconfig du_cfg;
   /// \brief E2 configuration.

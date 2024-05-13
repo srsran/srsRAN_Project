@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
-
+#include "srsran/support/io/io_broker.h"
+#include "srsran/support/io/unique_fd.h"
 #include <sys/socket.h>
 
 namespace srsran {
@@ -36,7 +37,7 @@ public:
   explicit sctp_network_gateway_impl(sctp_network_gateway_config            config_,
                                      sctp_network_gateway_control_notifier& ctrl_notfier_,
                                      network_gateway_data_notifier&         data_notifier_);
-  virtual ~sctp_network_gateway_impl() { close_socket(); }
+  ~sctp_network_gateway_impl() override;
 
   /// \brief Create and connect socket to given address.
   bool create_and_connect() override;
@@ -60,9 +61,10 @@ public:
   /// \brief Return the port on which the socket is listening.
   optional<uint16_t> get_listen_port() override;
 
-private:
-  bool is_initialized();
+  /// \brief Subscribe to IO broker for automatic IO Rx notifications.
+  bool subscribe_to(io_broker& broker) override;
 
+private:
   bool set_sockopts();
 
   /// \brief Recreate and reconnect socket to given address.
@@ -72,12 +74,13 @@ private:
   using socket_buffer_type = uint8_t;
   void handle_data(span<socket_buffer_type> payload);
   void handle_notification(span<socket_buffer_type> payload);
+  void handle_io_error(io_broker::error_code code);
 
   // socket helpers
   bool set_non_blocking();
   bool set_receive_timeout(unsigned rx_timeout_sec);
   bool set_reuse_addr();
-  bool subscripe_to_events();
+  bool subscribe_to_events();
   bool close_socket();
 
   sctp_network_gateway_config            config; /// configuration
@@ -85,7 +88,8 @@ private:
   network_gateway_data_notifier&         data_notifier;
   srslog::basic_logger&                  logger;
 
-  int sock_fd = -1;
+  unique_fd             sock_fd;
+  io_broker::subscriber io_sub;
 
   sockaddr_storage client_addr        = {}; // the local address
   socklen_t        client_addrlen     = 0;

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <memory>
 
@@ -40,7 +41,7 @@ struct promise_data : public Base {
   ~promise_data()
   {
     if (Base::has_value) {
-      reinterpret_cast<R*>(&mem)->~R();
+      SRSRAN_LAUNDER(reinterpret_cast<R*>(&mem))->~R();
     }
   }
 
@@ -57,12 +58,12 @@ struct promise_data : public Base {
   const R& get() const&
   {
     srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
-    return *reinterpret_cast<const R*>(&mem);
+    return *SRSRAN_LAUNDER(reinterpret_cast<const R*>(&mem));
   }
   R get() &&
   {
     srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
-    return std::move(*reinterpret_cast<R*>(&mem));
+    return std::move(*SRSRAN_LAUNDER(reinterpret_cast<R*>(&mem)));
   }
 
 private:

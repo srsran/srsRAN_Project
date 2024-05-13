@@ -33,6 +33,7 @@
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/qos_info.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
@@ -120,10 +121,12 @@ struct sched_ue_resource_alloc_config {
   unsigned max_pusch_harq_retxs = 4;
 };
 
-/// QoS parameters associated with a DRB provided to the scheduler.
-struct sched_drb_qos_info {
+/// QoS and slicing information associated with a DRB provided to the scheduler.
+struct sched_drb_info {
   /// Logical Channel ID.
   lcid_t lcid;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
   /// QoS characteristics associated with the logical channel.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
@@ -140,8 +143,8 @@ struct sched_ue_config_request {
   optional<std::vector<cell_config_dedicated>> cells;
   /// Resource allocation configuration for the given UE.
   optional<sched_ue_resource_alloc_config> res_alloc_cfg;
-  /// List of QoS information for DRBs.
-  std::vector<sched_drb_qos_info> drb_qos_list;
+  /// List of QoS and slicing information for DRBs.
+  std::vector<sched_drb_info> drb_info_list;
 };
 
 /// Request to create a new UE in scheduler.
@@ -206,6 +209,7 @@ public:
   virtual void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)       = 0;
   virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) = 0;
   virtual void handle_ue_removal_request(du_ue_index_t ue_index)                                     = 0;
+  virtual void handle_ue_config_applied(du_ue_index_t ue_index)                                      = 0;
 };
 
 /// Interface used by scheduler to notify MAC that a configuration is complete.

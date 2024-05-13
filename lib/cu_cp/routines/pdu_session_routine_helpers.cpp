@@ -95,6 +95,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
     bool                                                               reestablish_srbs,
     bool                                                               reestablish_drbs,
     bool                                                               update_keys,
+    byte_buffer                                                        sib1,
     const srslog::basic_logger&                                        logger)
 {
   rrc_radio_bearer_config radio_bearer_config;
@@ -180,6 +181,10 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
   }
 
   rrc_reconfig_args.meas_cfg = rrc_meas_cfg;
+
+  if (!sib1.empty()) {
+    rrc_reconfig_args.non_crit_ext.value().ded_sib1_delivery = std::move(sib1);
+  }
 
   return true;
 }

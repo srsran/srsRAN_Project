@@ -45,6 +45,8 @@ enum class cpu_feature {
   avx512dq,
   /// CPU supports AVX512CD instruction set.
   avx512cd,
+  /// CPU supports AVX512_VBMI instruction set.
+  avx512vbmi,
   /// CPU supports carry-less multiplication instruction PCLMUL.
   pclmul,
   /// CPU supports SSE 4.1.
@@ -78,6 +80,8 @@ constexpr const char* to_string(cpu_feature feature)
       return "avx512dq";
     case cpu_feature::avx512cd:
       return "avx512cd";
+    case cpu_feature::avx512vbmi:
+      return "avx512vbmi";
     case cpu_feature::pclmul:
       return "pclmul";
     case cpu_feature::sse4_1:
@@ -115,6 +119,8 @@ inline bool cpu_supports_feature(cpu_feature feature)
       return __builtin_cpu_supports("avx512dq");
     case cpu_feature::avx512cd:
       return __builtin_cpu_supports("avx512cd");
+    case cpu_feature::avx512vbmi:
+      return __builtin_cpu_supports("avx512vbmi");
     case cpu_feature::pclmul:
       return __builtin_cpu_supports("pclmul");
     case cpu_feature::sse4_1:
@@ -159,6 +165,9 @@ static const std::vector<cpu_feature> cpu_features_included = {
 #ifdef __AVX512CD__
     cpu_feature::avx512cd,
 #endif // __AVX512CD__
+#ifdef __AVX512VBMI__
+    cpu_feature::avx512vbmi,
+#endif // __AVX512VBMI__
 #ifdef __FMA__
     cpu_feature::fma,
 #endif // __FMA__

@@ -242,6 +242,7 @@ private:
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) override;
   async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) override;
   bool                               handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
+  void                               handle_ue_config_applied(du_ue_index_t ue_idx) override;
 
   std::vector<mac_logical_channel_config> adapt_bearers(const std::vector<mac_logical_channel_config>& orig_bearers);
 

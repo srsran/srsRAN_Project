@@ -48,6 +48,7 @@ public:
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override;
   void handle_ue_removal_request(du_ue_index_t ue_index) override;
+  void handle_ue_config_applied(du_ue_index_t ue_index) override;
 
   // F1 events.
   void handle_paging_information(const sched_paging_information& pi) override;

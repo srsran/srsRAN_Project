@@ -30,118 +30,28 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between CU-CP and NGAP, to initialize connection procedures
-class cu_cp_ngap_adapter : public cu_cp_ngap_control_notifier, public cu_cp_ngap_statistics_notifier
-{
-public:
-  void connect_ngap(ngap_connection_manager&         ngap_conn_mng_,
-                    ngap_ue_context_removal_handler& ngap_ue_handler_,
-                    ngap_statistics_handler&         ngap_statistic_handler_)
-  {
-    ngap_conn_mng          = &ngap_conn_mng_;
-    ngap_ue_handler        = &ngap_ue_handler_;
-    ngap_statistic_handler = &ngap_statistic_handler_;
-  }
-
-  async_task<ngap_ng_setup_result> on_ng_setup_request(const ngap_ng_setup_request& request) override
-  {
-    srsran_assert(ngap_conn_mng != nullptr, "NGAP handler must not be nullptr");
-    return ngap_conn_mng->handle_ng_setup_request(request);
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(ngap_ue_handler != nullptr, "NGAP handler must not be nullptr");
-    return ngap_ue_handler->remove_ue_context(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(ngap_statistic_handler != nullptr, "NGAP statistics handler must not be nullptr");
-    return ngap_statistic_handler->get_nof_ues();
-  }
-
-private:
-  ngap_connection_manager*         ngap_conn_mng          = nullptr;
-  ngap_ue_context_removal_handler* ngap_ue_handler        = nullptr;
-  ngap_statistics_handler*         ngap_statistic_handler = nullptr;
-};
-
-/// Adapter between CU-CP and E1AP to request UE removal
-class cu_cp_e1ap_adapter : public cu_cp_e1ap_ue_removal_notifier, public cu_cp_e1ap_statistics_notifier
-{
-public:
-  cu_cp_e1ap_adapter() = default;
-
-  void connect_e1ap(e1ap_bearer_context_removal_handler& bearer_context_removal_,
-                    e1ap_statistics_handler&             e1ap_statistic_handler_)
-  {
-    bearer_context_removal = &bearer_context_removal_;
-    e1ap_statistic_handler = &e1ap_statistic_handler_;
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(bearer_context_removal != nullptr, "E1AP bearer context removal handler must not be nullptr");
-    bearer_context_removal->remove_bearer_context(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(e1ap_statistic_handler != nullptr, "E1AP statistics handler must not be nullptr");
-    return e1ap_statistic_handler->get_nof_ues();
-  }
-
-private:
-  e1ap_bearer_context_removal_handler* bearer_context_removal = nullptr;
-  e1ap_statistics_handler*             e1ap_statistic_handler = nullptr;
-};
-
-/// Adapter between CU-CP and F1AP to request UE removal
-class cu_cp_f1ap_adapter : public cu_cp_f1ap_ue_removal_notifier, public cu_cp_e1ap_statistics_notifier
-{
-public:
-  cu_cp_f1ap_adapter() = default;
-
-  void connect_f1ap(f1ap_ue_context_removal_handler& f1ap_ue_handler_, f1ap_statistics_handler& f1ap_statistic_handler_)
-  {
-    f1ap_ue_handler        = &f1ap_ue_handler_;
-    f1ap_statistic_handler = &f1ap_statistic_handler_;
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(f1ap_ue_handler != nullptr, "F1AP handler must not be nullptr");
-    f1ap_ue_handler->remove_ue_context(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(f1ap_statistic_handler != nullptr, "F1AP statistics handler must not be nullptr");
-    return f1ap_statistic_handler->get_nof_ues();
-  }
-
-private:
-  f1ap_ue_context_removal_handler* f1ap_ue_handler        = nullptr;
-  f1ap_statistics_handler*         f1ap_statistic_handler = nullptr;
-};
-
 /// Adapter between CU-CP and RRC DU to request UE removal
-class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_removal_notifier, public cu_cp_rrc_du_statistics_notifier
+class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_notifier, public cu_cp_rrc_du_statistics_notifier
 {
 public:
   cu_cp_rrc_du_adapter() = default;
 
-  void connect_rrc_du(rrc_ue_removal_handler& ue_removal_handler_, rrc_du_statistics_handler& rrc_du_statistic_handler_)
+  void connect_rrc_du(rrc_ue_handler& rrc_ue_hndlr_, rrc_du_statistics_handler& rrc_du_statistic_handler_)
   {
-    ue_removal_handler       = &ue_removal_handler_;
+    rrc_ue_hndlr             = &rrc_ue_hndlr_;
     rrc_du_statistic_handler = &rrc_du_statistic_handler_;
+  }
+
+  rrc_ue_interface* find_rrc_ue(ue_index_t ue_index) override
+  {
+    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_hndlr->find_ue(ue_index);
   }
 
   void remove_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ue_removal_handler != nullptr, "RRC UE removal handler must not be nullptr");
-    ue_removal_handler->remove_ue(ue_index);
+    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
+    rrc_ue_hndlr->remove_ue(ue_index);
   }
 
   size_t get_nof_ues() const override
@@ -151,7 +61,7 @@ public:
   }
 
 private:
-  rrc_ue_removal_handler*    ue_removal_handler       = nullptr;
+  rrc_ue_handler*            rrc_ue_hndlr             = nullptr;
   rrc_du_statistics_handler* rrc_du_statistic_handler = nullptr;
 };
 

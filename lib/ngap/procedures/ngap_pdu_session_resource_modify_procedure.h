@@ -36,10 +36,10 @@ public:
   ngap_pdu_session_resource_modify_procedure(const cu_cp_pdu_session_resource_modify_request&    request_,
                                              const asn1::ngap::pdu_session_res_modify_request_s& asn1_request_,
                                              const ngap_ue_ids&                                  ue_ids_,
-                                             ngap_du_processor_control_notifier& du_processor_ctrl_notifier_,
-                                             ngap_message_notifier&              amf_notifier_,
-                                             ngap_control_message_handler&       ngap_ctrl_handler_,
-                                             ngap_ue_logger&                     logger_);
+                                             ngap_cu_cp_notifier&                                cu_cp_notifier_,
+                                             ngap_message_notifier&                              amf_notifier_,
+                                             ngap_control_message_handler&                       ngap_ctrl_handler_,
+                                             ngap_ue_logger&                                     logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -55,7 +55,7 @@ private:
   const asn1::ngap::pdu_session_res_modify_request_s asn1_request;
   const ngap_ue_ids                                  ue_ids;
   cu_cp_pdu_session_resource_modify_response         response;
-  ngap_du_processor_control_notifier&                du_processor_ctrl_notifier;
+  ngap_cu_cp_notifier&                               cu_cp_notifier;
   ngap_message_notifier&                             amf_notifier;
   ngap_control_message_handler&                      ngap_ctrl_handler;
   ngap_ue_logger&                                    logger;

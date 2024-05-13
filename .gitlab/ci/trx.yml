@@ -86,4 +86,4 @@ build amariue zmq driver:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   artifacts:
     <<: *trx_artifacts
-    expire_in: 1 day
+    expire_in: 3 days

@@ -45,26 +45,6 @@ public:
   srb_id_t    last_srb_id;
 };
 
-class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
-{
-public:
-  async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
-  {
-    logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
-
-    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-  srb_creation_message             last_srb_creation_message;
-  cu_cp_ue_context_release_command last_cu_cp_ue_context_release_command;
-
-private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-};
-
 class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
@@ -109,6 +89,16 @@ public:
     logger.info("old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", old_pci, old_c_rnti);
 
     return reest_context;
+  }
+
+  async_task<bool> on_rrc_reestablishment_context_modification_required() override
+  {
+    logger.info("Received Reestablishment Context Modification Required");
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
   void on_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override

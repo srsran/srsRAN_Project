@@ -325,7 +325,12 @@ protected:
     ASSERT_NE(pusch_proc_factory, nullptr) << "Invalid PUSCH processor factory.";
 
     // Create actual PUSCH processor.
+#if 0
+    srslog::init();
+    pusch_proc = pusch_proc_factory->create(srslog::fetch_basic_logger("PUSCH"));
+#else
     pusch_proc = pusch_proc_factory->create();
+#endif
     ASSERT_NE(pusch_proc, nullptr);
 
     // Create actual PUSCH processor validator.

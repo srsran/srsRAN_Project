@@ -159,6 +159,11 @@ e2e request validation:
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:
+    # Push test metrics
+    - |
+      find . -iname "test_metrics.csv" -exec \
+        influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
+        --bucket ci --file {} \;
     - |
       echo "*******************************************************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/tests/e2e/log//report.html"
@@ -289,8 +294,14 @@ amari 32UE:
             "iperf and udp and not band:3",
             "iperf and tcp and band:3",
             "iperf and tcp and not band:3",
-            "reestablishment",
           ]
+
+amari 32UE beta:
+  extends: amari 32UE
+  allow_failure: true
+  parallel:
+    matrix:
+      - KEYWORDS: ["reestablishment", "handover"]
 
 amari 32UE asan:
   extends: .zmq
@@ -340,16 +351,6 @@ test mode ue:
     E2E_LOG_LEVEL: "warning"
   needs:
     - job: "basic relwithdeb"
-      artifacts: true
-    - *txrx-lib
-    - *retina-needs
-
-test mode ue tsan:
-  extends: test mode ue
-  when: manual
-  allow_failure: true
-  needs:
-    - job: "basic tsan"
       artifacts: true
     - *txrx-lib
     - *retina-needs

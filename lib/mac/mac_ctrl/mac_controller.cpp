@@ -76,6 +76,13 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
   return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit, sched_cfg);
 }
 
+void mac_controller::handle_ue_config_applied(du_ue_index_t ue_index)
+{
+  srsran_assert(ue_db.contains(ue_index), "Invalid ue_index={}", ue_index);
+
+  sched_cfg.handle_ue_config_applied(ue_index);
+}
+
 rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index, rnti_t tc_rnti)
 {
   srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);

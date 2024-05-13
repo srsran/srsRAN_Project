@@ -25,13 +25,12 @@
 #include "gtpu_pdu.h"
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/gtpu/gtpu_tunnel_rx.h"
-#include <cstdint>
+#include "srsran/gtpu/gtpu_tunnel_common_rx.h"
 
 namespace srsran {
 
 /// Class used for receiving GTP-U bearers.
-class gtpu_tunnel_base_rx : public gtpu_tunnel_rx_upper_layer_interface
+class gtpu_tunnel_base_rx : public gtpu_tunnel_common_rx_upper_layer_interface
 {
 public:
   gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix log_prefix) : logger("GTPU", log_prefix) {}

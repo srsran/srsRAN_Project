@@ -233,6 +233,23 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
   });
 }
 
+void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
+{
+  common_events.emplace(ue_idx, [this, ue_idx]() {
+    if (not ue_db.contains(ue_idx)) {
+      logger.warning("Received config application confirmation for ue={} that does not exist", ue_idx);
+      return;
+    }
+    ue& u = ue_db[ue_idx];
+
+    // Log UE config applied event.
+    ev_logger.enqueue(scheduler_event_logger::ue_cfg_applied_event{ue_idx, u.crnti});
+
+    // Remove UE from fallback mode.
+    u.get_pcell().set_fallback_state(false);
+  });
+}
+
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
@@ -308,14 +325,14 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
           }
 
           // Process Timing Advance Offset.
-          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
+          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_dB.has_value()) {
             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
+                ue_cc.cell_index, crc.ul_sinr_dB.value(), crc.time_advance_offset.value());
           }
 
           // Log event.
           ev_logger.enqueue(scheduler_event_logger::crc_event{
-              crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
+              crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_dB});
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
@@ -332,19 +349,20 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
-    dl_harq_process::dl_ack_info_result result =
+    optional<dl_harq_process::dl_ack_info_result> result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
-    if (result.h_id != INVALID_HARQ_ID) {
+    if (result.has_value()) {
       // Respective HARQ was found.
-      const units::bytes tbs{result.tbs_bytes};
+      const units::bytes tbs{result->tb.tbs_bytes};
 
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result.h_id, harq_bits[harq_idx], tbs});
-      if (result.update == dl_harq_process::status_update::acked or
-          result.update == dl_harq_process::status_update::nacked) {
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, result->h_id, harq_bits[harq_idx], tbs});
+      if (result->update == dl_harq_process::status_update::acked or
+          result->update == dl_harq_process::status_update::nacked) {
         // In case the HARQ process is not waiting for more HARQ-ACK bits. Notify metrics handler with HARQ outcome.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, result.update == dl_harq_process::status_update::acked, tbs);
+        metrics_handler.handle_dl_harq_ack(
+            ue_cc.ue_index, result->update == dl_harq_process::status_update::acked, tbs);
       }
     }
   }
@@ -374,7 +392,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
             }
 
             // Process SRs.
@@ -389,9 +407,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
             }
 
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu)) {
@@ -412,7 +430,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
             }
 
             // Process SRs.
@@ -434,9 +452,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                                       (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
                                       pdu.csi.has_value();
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
             }
           }
 
@@ -482,6 +500,8 @@ static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot
     // - The lower layers will not attempt to decode the PUSCH and will not send any CRC indication.
     ul_harq_process& h_ul = u->get_pcell().harqs.ul_harq(grant.pusch_cfg.harq_id);
     if (not h_ul.empty()) {
+      // Note: We don't use this cancellation to update the UL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       if (h_ul.tb().nof_retxs == 0) {
         // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
         // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
@@ -498,6 +518,8 @@ static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot
     if (grant.uci.has_value() and grant.uci->harq.has_value() and grant.uci->harq->harq_ack_nof_bits > 0) {
       // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to NACK the
       // DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
     }
   }
@@ -525,8 +547,10 @@ static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot
 
     // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
     if (has_harq_ack) {
-      // To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK in
-      // the DL HARQ processes with UCI falling in this slot.
+      // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
+      // in the DL HARQ processes with UCI falling in this slot.
+      // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link
+      // adaptation.
       u->get_pcell().harqs.dl_ack_info_cancelled(prev_slot_result.slot);
     }
   }

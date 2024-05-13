@@ -564,7 +564,7 @@ static radio_configuration::radio generate_radio_config()
   out_cfg.args             = "tx_port=" + tx_address + ",rx_port=" + rx_address;
   out_cfg.log_level        = log_level;
   out_cfg.sampling_rate_hz = srate.to_Hz();
-  out_cfg.discontinuous_tx = false;
+  out_cfg.tx_mode          = radio_configuration::transmission_mode::continuous;
   out_cfg.power_ramping_us = 0.0F;
   out_cfg.otw_format       = otw_format;
   out_cfg.clock            = clock_src;

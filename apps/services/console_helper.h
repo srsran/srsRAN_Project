@@ -28,11 +28,10 @@
 #include "srsran/du/du_cell_config.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/io/io_broker.h"
 #include <list>
 
 namespace srsran {
-
-class io_broker;
 
 /// \brief Notifier from application to signal current operation state.
 class app_state_notifier
@@ -51,10 +50,10 @@ public:
 class console_helper : public app_state_notifier
 {
 public:
-  console_helper(io_broker&                                            io_broker_,
-                 srslog::log_channel&                                  log_chan_,
-                 srs_cu_cp::cu_cp_mobility_manager_ho_trigger_handler& mob_,
-                 bool                                                  autostart_stdout_metrics_ = false);
+  console_helper(io_broker&                        io_broker_,
+                 srslog::log_channel&              log_chan_,
+                 srs_cu_cp::cu_cp_command_handler& cu_cp_,
+                 bool                              autostart_stdout_metrics_ = false);
   ~console_helper();
 
   scheduler_ue_metrics_notifier& get_stdout_metrics_notifier() { return metrics_plotter; };
@@ -80,14 +79,16 @@ private:
   void handle_command(const std::string& command);
   void print_help();
 
-  srslog::basic_logger&                                 logger;
-  io_broker&                                            io_broker_handle;
-  metrics_plotter_stdout                                metrics_plotter;
-  metrics_plotter_json                                  metrics_json;
-  std::vector<du_cell_config>                           cells;
-  optional<ru_controller*>                              radio_controller;
-  srs_cu_cp::cu_cp_mobility_manager_ho_trigger_handler& mob;
-  bool                                                  autostart_stdout_metrics = false;
+  srslog::basic_logger&             logger;
+  io_broker&                        io_broker_handle;
+  metrics_plotter_stdout            metrics_plotter;
+  metrics_plotter_json              metrics_json;
+  std::vector<du_cell_config>       cells;
+  optional<ru_controller*>          radio_controller;
+  srs_cu_cp::cu_cp_command_handler& cu_cp;
+  bool                              autostart_stdout_metrics = false;
+
+  io_broker::subscriber stdin_handle;
 };
 
 } // namespace srsran

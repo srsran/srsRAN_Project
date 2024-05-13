@@ -35,7 +35,7 @@ namespace srsran {
 
 /// Manages the workers of the app.
 struct worker_manager {
-  explicit worker_manager(const gnb_appconfig& appcfg);
+  worker_manager(const gnb_appconfig& appcfg, unsigned gtpu_queue_size);
 
   void stop();
 
@@ -123,7 +123,7 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
   execution_config_helper::worker_pool create_low_prio_workers(const gnb_appconfig& appcfg);
-  void                                 create_low_prio_executors(const gnb_appconfig& appcfg);
+  void                                 create_low_prio_executors(const gnb_appconfig& appcfg, unsigned gtpu_queue_size);
   void                                 associate_low_prio_executors();
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(const gnb_appconfig& appcfg);

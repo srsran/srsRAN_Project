@@ -94,7 +94,8 @@ public:
   virtual ~port_channel_estimator_factory() = default;
   virtual std::unique_ptr<port_channel_estimator>
   create(port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =
-             port_channel_estimator_fd_smoothing_strategy::filter) = 0;
+             port_channel_estimator_fd_smoothing_strategy::filter,
+         bool complensate_cfo = true) = 0;
 };
 
 std::shared_ptr<port_channel_estimator_factory>

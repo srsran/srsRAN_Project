@@ -49,10 +49,9 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   cfg.pdu_session_setup_timeout = std::chrono::seconds(2);
 
   ngap = create_ngap(
-      cfg, ngap_ue_creation_notifier, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
+      cfg, cu_cp_notifier, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 
-  du_processor_notifier =
-      std::make_unique<dummy_ngap_du_processor_notifier>(ngap->get_ngap_ue_context_removal_handler());
+  cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());
 }
 
 ngap_test::~ngap_test()
@@ -76,8 +75,7 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   test_ue& new_test_ue = test_ues.at(ue_index);
 
   // Add UE to NGAP notifier
-  ngap_ue_creation_notifier.add_ue(
-      ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
+  cu_cp_notifier.add_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier);
 
   // generate and inject valid initial ue message
   cu_cp_initial_ue_message msg = generate_initial_ue_message(ue_index);
@@ -104,8 +102,7 @@ ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
   test_ue& new_test_ue = test_ues.at(ue_index);
 
   // Add UE to NGAP notifier
-  ngap_ue_creation_notifier.add_ue(
-      ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
+  cu_cp_notifier.add_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier);
 
   return ue_index;
 }

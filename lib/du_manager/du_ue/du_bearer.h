@@ -30,6 +30,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/qos_info.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
@@ -102,16 +103,18 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t                                                      drb_id;
-  lcid_t                                                        lcid;
-  std::vector<up_transport_layer_info>                          uluptnl_info_list;
-  std::vector<up_transport_layer_info>                          dluptnl_info_list;
-  rlc_config                                                    rlc_cfg;
-  std::unique_ptr<rlc_entity>                                   rlc_bearer;
-  mac_lc_config                                                 mac_cfg;
-  f1u_config                                                    f1u_cfg;
-  std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
-  du_drb_connector                                              connector;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  std::vector<up_transport_layer_info> uluptnl_info_list;
+  std::vector<up_transport_layer_info> dluptnl_info_list;
+  rlc_config                           rlc_cfg;
+  std::unique_ptr<rlc_entity>          rlc_bearer;
+  mac_lc_config                        mac_cfg;
+  f1u_config                           f1u_cfg;
+  std::unique_ptr<f1u_bearer>          drb_f1u;
+  du_drb_connector                     connector;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
   /// QoS characteristics to be met by the DRB.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
@@ -121,20 +124,26 @@ struct du_ue_drb {
   void stop();
 };
 
+/// Holds information needed to create a DRB in the DU.
+struct drb_creation_info {
+  du_ue_index_t                        ue_index;
+  du_cell_index_t                      pcell_index;
+  drb_id_t                             drb_id;
+  lcid_t                               lcid;
+  const rlc_config&                    rlc_cfg;
+  const mac_lc_config&                 mac_cfg;
+  const f1u_config&                    f1u_cfg;
+  span<const up_transport_layer_info>  uluptnl_info_list;
+  gtpu_teid_pool&                      teid_pool;
+  const du_manager_params&             du_params;
+  rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
+  const qos_characteristics&           qos_info;
+  optional<gbr_qos_info_t>             gbr_qos_info;
+  s_nssai_t                            s_nssai;
+};
+
 /// \brief Creates a DRB instance for the whole DU.
-std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                        ue_index,
-                                      du_cell_index_t                      pcell_index,
-                                      drb_id_t                             drb_id,
-                                      lcid_t                               lcid,
-                                      const rlc_config&                    rlc_cfg,
-                                      const mac_lc_config&                 mac_cfg,
-                                      const f1u_config&                    f1u_cfg,
-                                      span<const up_transport_layer_info>  uluptnl_info_list,
-                                      gtpu_teid_pool&                      teid_pool,
-                                      const du_manager_params&             du_params,
-                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier,
-                                      const qos_characteristics&           qos_info,
-                                      optional<gbr_qos_info_t>             gbr_qos_info);
+std::unique_ptr<du_ue_drb> create_drb(const drb_creation_info& drb_info);
 
 } // namespace srs_du
 } // namespace srsran

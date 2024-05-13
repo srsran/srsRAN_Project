@@ -38,15 +38,21 @@ namespace srsran {
 namespace srs_du {
 
 class f1ap_event_manager;
+class f1ap_du_configurator;
 
 class ue_bearer_manager
 {
 public:
   ue_bearer_manager(f1ap_ue_context&       ue_ctx_,
                     f1ap_message_notifier& f1ap_notif_,
+                    f1ap_du_configurator&  du_configurator_,
                     task_executor&         ctrl_exec_,
                     task_executor&         ue_exec_) :
-    ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_), ctrl_exec(ctrl_exec_), ue_exec(ue_exec_)
+    ue_ctx(ue_ctx_),
+    f1ap_notifier(f1ap_notif_),
+    du_configurator(du_configurator_),
+    ctrl_exec(ctrl_exec_),
+    ue_exec(ue_exec_)
   {
   }
 
@@ -69,6 +75,7 @@ public:
 private:
   f1ap_ue_context&       ue_ctx;
   f1ap_message_notifier& f1ap_notifier;
+  f1ap_du_configurator&  du_configurator;
   task_executor&         ctrl_exec;
   task_executor&         ue_exec;
 

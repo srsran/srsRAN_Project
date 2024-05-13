@@ -57,59 +57,80 @@ struct ul_bsr_indication_message {
   ul_bsr_lcg_report_list reported_lcgs;
 };
 
+/// CRC indication PDU.
 struct ul_crc_pdu_indication {
   rnti_t rnti;
   /// UE index associated to the UL CRC. In case there is no UE with the respective RNTI (e.g. Msg3), this value is
   /// set to INVALID_DU_UE_INDEX.
-  du_ue_index_t   ue_index;
-  harq_id_t       harq_id;
-  bool            tb_crc_success;
-  optional<float> ul_sinr_metric;
-  optional<float> ul_rsrp_metric;
-  /// \brief Timing Advance Offset measured for the UE.
+  du_ue_index_t ue_index;
+  /// HARQ process identifier.
+  harq_id_t harq_id;
+  /// If true, transport block has been successfully decoded, otherwise false.
+  bool tb_crc_success;
+  /// PUSCH SINR value in dB.
+  optional<float> ul_sinr_dB;
+  /// PUSCH RSRP value in dBFS.
+  optional<float> ul_rsrp_dBFS;
+  /// Timing Advance Offset measured for the UE.
   optional<phy_time_unit> time_advance_offset;
 };
 
-/// \brief UL HARQ CRC indication for a given UE PDU.
+/// UL HARQ CRC indication for a given UE PDU.
 struct ul_crc_indication {
   du_cell_index_t                                               cell_index;
   slot_point                                                    sl_rx;
   static_vector<ul_crc_pdu_indication, MAX_PUSCH_PDUS_PER_SLOT> crcs;
 };
 
-/// \brief UCI indication for a given UE.
+/// UCI indication for a given UE.
 struct uci_indication {
   struct uci_pdu {
+    /// UCI carried in PUCCH Format0 or Format1.
     struct uci_pucch_f0_or_f1_pdu {
-      constexpr static size_t                                      NOF_HARQS_PER_UCI = 2;
-      bool                                                         sr_detected;
+      static constexpr size_t NOF_HARQS_PER_UCI = 2;
+
+      /// Set to true if a SR is detected, otherwise false.
+      bool sr_detected;
+      /// HARQ bits.
       static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
-      /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
-      optional<float> ul_sinr;
-      /// \brief Timing Advance Offset measured for the UE.
+      /// Metric of channel quality in dB.
+      optional<float> ul_sinr_dB;
+      /// Timing Advance Offset measured for the UE.
       optional<phy_time_unit> time_advance_offset;
     };
+
+    /// UCI multiplexed in the PUSCH.
     struct uci_pusch_pdu {
+      /// HARQ bits.
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      optional<csi_report_data>                                                   csi;
+      /// CSI report.
+      optional<csi_report_data> csi;
     };
+
+    /// UCI carried in PUCCH Format2, Format3 or Format4.
     struct uci_pucch_f2_or_f3_or_f4_pdu {
       /// Maximum number of SR bits expected on the PUCCH transmission.
-      static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
+      static constexpr unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-      bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                                    sr_info;
+      /// SR bits.
+      bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS> sr_info;
+      /// HARQ bits.
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      optional<csi_report_data>                                                   csi;
-      /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
-      optional<float> ul_sinr;
-      /// \brief Timing Advance Offset measured for the UE.
+      /// CSI report.
+      optional<csi_report_data> csi;
+      /// Metric of channel quality in dB.
+      optional<float> ul_sinr_dB;
+      /// Timing Advance Offset measured for the UE.
       optional<phy_time_unit> time_advance_offset;
     };
 
-    du_ue_index_t                                                                ue_index;
-    rnti_t                                                                       crnti;
+    du_ue_index_t ue_index;
+    /// RNTI value corresponding to the UE that generated this PDU.
+    rnti_t crnti;
+    /// UCI PDU multiplexed either in the PUSCH or encoded in the PUCCH.
     variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu, uci_pucch_f2_or_f3_or_f4_pdu> pdu;
   };
+
   using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;
 
   // Note: user-defined ctor to avoid zero-initialization of uci_pdu_list.
@@ -125,7 +146,7 @@ struct dl_mac_ce_indication {
   lcid_dl_sch_t ce_lcid;
 };
 
-/// \brief Information and context relative to PHR forwarded by MAC.
+/// Information and context relative to PHR forwarded by MAC.
 struct ul_phr_indication_message {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
@@ -142,10 +163,12 @@ public:
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
+  ///
   /// \param phr PHR indication message sent by MAC.
   virtual void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
+  ///
   /// \param mac_ce DL MAC CE to be scheduled.
   virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;
 };

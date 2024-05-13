@@ -32,10 +32,14 @@ namespace srs_du {
 
 /// UE F1 context that is referenced by both the F1 UE object and its bearers.
 struct f1ap_ue_context {
+  /// Different stages of a UE RRC configuration.
+  enum class ue_rrc_state { no_config, config_pending, config_applied };
+
   const du_ue_index_t       ue_index;
   const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id;
   gnb_cu_ue_f1ap_id_t       gnb_cu_ue_f1ap_id  = gnb_cu_ue_f1ap_id_t::invalid;
   rnti_t                    rnti               = rnti_t::INVALID_RNTI;
+  ue_rrc_state              rrc_state          = ue_rrc_state::no_config;
   bool                      marked_for_release = false;
 
   f1ap_ue_context(du_ue_index_t ue_index_, gnb_du_ue_f1ap_id_t du_f1ap_ue_id_) :

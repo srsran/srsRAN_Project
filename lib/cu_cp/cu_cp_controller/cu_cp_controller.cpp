@@ -28,9 +28,9 @@ using namespace srs_cu_cp;
 
 cu_cp_controller::cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
                                    const ngap_configuration&         ngap_cfg_,
-                                   cu_cp_ngap_control_notifier&      ngap_ctrl_notif_,
+                                   ngap_connection_manager&          ngap_conn_mng_,
                                    const cu_up_processor_repository& cu_ups_) :
-  amf_mng(routine_manager_, ngap_cfg_, ngap_ctrl_notif_), cu_ups(cu_ups_)
+  amf_mng(routine_manager_, ngap_cfg_, ngap_conn_mng_), cu_ups(cu_ups_)
 {
 }
 

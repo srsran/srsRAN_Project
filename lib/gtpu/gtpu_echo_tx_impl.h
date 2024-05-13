@@ -25,7 +25,6 @@
 #include "gtpu_pdu.h"
 #include "gtpu_tunnel_base_tx.h"
 #include "srsran/gtpu/gtpu_echo_tx.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <arpa/inet.h>
 #include <cstdint>
 #include <netinet/in.h>
@@ -36,7 +35,7 @@ namespace srsran {
 class gtpu_echo_tx : public gtpu_tunnel_base_tx, public gtpu_echo_tx_interface
 {
 public:
-  gtpu_echo_tx(dlt_pcap& gtpu_pcap_, gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
+  gtpu_echo_tx(dlt_pcap& gtpu_pcap_, gtpu_tunnel_common_tx_upper_layer_notifier& upper_dn_) :
     gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{{}, GTPU_PATH_MANAGEMENT_TEID, "UL"}, gtpu_pcap_, upper_dn_)
   {
   }

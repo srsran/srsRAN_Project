@@ -23,7 +23,7 @@
 #pragma once
 
 #include "gtpu_tunnel_logger.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <arpa/inet.h>
 #include <cstdint>
@@ -35,9 +35,9 @@ namespace srsran {
 class gtpu_tunnel_base_tx
 {
 public:
-  gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix               log_prefix,
-                      dlt_pcap&                            gtpu_pcap_,
-                      gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
+  gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix                      log_prefix,
+                      dlt_pcap&                                   gtpu_pcap_,
+                      gtpu_tunnel_common_tx_upper_layer_notifier& upper_dn_) :
     logger("GTPU", log_prefix), gtpu_pcap(gtpu_pcap_), upper_dn(upper_dn_)
   {
   }
@@ -76,7 +76,7 @@ protected:
   }
 
 private:
-  dlt_pcap&                            gtpu_pcap;
-  gtpu_tunnel_tx_upper_layer_notifier& upper_dn;
+  dlt_pcap&                                   gtpu_pcap;
+  gtpu_tunnel_common_tx_upper_layer_notifier& upper_dn;
 };
 } // namespace srsran

@@ -22,6 +22,7 @@
 
 #include "gnb_appconfig_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
+#include "apps/units/cu_up/cu_up_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
@@ -417,12 +418,12 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig& config)
+srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_config& config)
 {
   srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.warn_on_drop          = config.cu_up_cfg.warn_on_drop;
+  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
+  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
+  out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
 
   if (config.amf_cfg.n3_bind_addr == "auto") {
     out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
@@ -1032,11 +1033,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   return out_cfg;
 }
 
-std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig& config)
+std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_config(const gnb_appconfig&     config,
+                                                                                   const cu_up_unit_config& cu_up_cfg)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(config.cu_up_cfg.warn_on_drop,
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(cu_up_cfg.warn_on_drop,
                                                                  timer_duration(config.metrics_cfg.pdcp.report_period));
     return out_cfg;
   }
@@ -1044,7 +1046,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
   // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
   std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(config);
 
-  for (const qos_appconfig& qos : config.qos_cfg) {
+  for (const auto& qos : cu_up_cfg.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
@@ -1053,7 +1055,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
     }
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.tx.warn_on_drop     = config.cu_up_cfg.warn_on_drop;
+    out_pdcp_custom.tx.warn_on_drop     = cu_up_cfg.warn_on_drop;
     out_pdcp_custom.metrics_period      = timer_duration(config.metrics_cfg.pdcp.report_period);
 
     // Obtain RLC config parameters from the respective RLC mode
@@ -1072,7 +1074,7 @@ std::map<five_qi_t, srs_cu_up::cu_up_qos_config> srsran::generate_cu_up_qos_conf
 
     // Convert F1-U config
     srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
-    f1u_cfg.warn_on_drop           = config.cu_up_cfg.warn_on_drop;
+    f1u_cfg.warn_on_drop           = cu_up_cfg.warn_on_drop;
   }
   return out_cfg;
 }
@@ -1352,7 +1354,7 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
   out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
   out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
   out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
-  out_cfg.discontinuous_tx = ru_cfg.expert_cfg.discontinuous_tx_mode;
+  out_cfg.tx_mode          = radio_configuration::to_transmission_mode(ru_cfg.expert_cfg.transmission_mode);
   out_cfg.power_ramping_us = ru_cfg.expert_cfg.power_ramping_time_us;
 
   const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
@@ -1630,40 +1632,56 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const base_cell_appconfig& cell = config.cells_cfg[i].cell;
     upper_phy_config           cfg;
 
-    // Get bandwidth in PRB.
-    const unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
-    // Build the biggest CORESET possible assuming a duration of 2 symbols and the maximum channel bandwidth.
-    coreset_configuration coreset;
-    coreset.id       = to_coreset_id(1);
-    coreset.duration = 2;
-    coreset.set_freq_domain_resources(~freq_resource_bitmap(bw_rb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE));
+    // Get band, frequency range and duplex mode from the band.
+    nr_band               band       = cell.band.value();
+    const frequency_range freq_range = band_helper::get_freq_range(band);
+    const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
 
-    // Calculate the maximum number of users per slot. Pick the minimum of CCE assuming the CORESET above and the
-    // maximum of PDU per slot.
-    const unsigned max_nof_users_slot = std::min(coreset.get_nof_cces(), static_cast<unsigned>(MAX_UE_PDUS_PER_SLOT));
-    // Assume a maximum of 16 HARQ processes for PUSCH and PDSCH.
-    const unsigned max_harq_process = MAX_NOF_HARQS;
+    // Get bandwidth in PRB.
+    const unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, freq_range);
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
     // Deduce the number of slots per frame.
     unsigned nof_slots_per_frame = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
     // Number of slots per system frame.
     unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
-    // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
-    const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
-    // Assume the maximum number of active PUSCH and PDSCH HARQ processes is twice the maximum number of users per slot
-    // for the maximum number of HARQ processes.
-    const unsigned nof_buffers = 2 * max_nof_users_slot * max_harq_process;
-    // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot.
+    // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
+    unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
+
+    // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
+    unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
+    unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
+    if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg.has_value()) {
+      const tdd_ul_dl_pattern_appconfig& pattern1     = cell.tdd_ul_dl_cfg->pattern1;
+      unsigned                           period_slots = pattern1.dl_ul_period_slots;
+      unsigned nof_ul_slots = pattern1.nof_ul_slots + ((pattern1.nof_ul_symbols != 0) ? 1 : 0);
+      if (cell.tdd_ul_dl_cfg->pattern2.has_value()) {
+        const tdd_ul_dl_pattern_appconfig& pattern2 = cell.tdd_ul_dl_cfg->pattern2.value();
+        period_slots += pattern2.dl_ul_period_slots;
+        nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
+      }
+      nof_ul_slots_per_frame        = divide_ceil(nof_slots_per_frame, period_slots) * nof_ul_slots;
+      nof_ul_slots_in_harq_lifetime = divide_ceil(expire_pusch_harq_timeout_slots, period_slots) * nof_ul_slots;
+    }
+
+    // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot assuming:
+    // - The maximum number of resource elements used for data for each scheduled resource block;
+    // - the cell bandwidth;
+    // - the highest modulation order possible; and
+    // - the maximum coding rate.
     const unsigned max_nof_pusch_cb_slot =
-        (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
-        ldpc::MAX_MESSAGE_SIZE;
-    // Assume the minimum number of codeblocks per softbuffer.
-    const unsigned min_cb_softbuffer = 2;
-    // Assume that the maximum number of receive codeblocks is equal to the number of HARQ processes times the maximum
-    // number of codeblocks per slot.
-    const unsigned max_rx_nof_codeblocks =
-        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * nof_buffers);
+        divide_ceil(pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256),
+                    ldpc::MAX_MESSAGE_SIZE);
+
+    // Calculate the maximum number of active PUSCH HARQ processes from:
+    // - the maximum number of users per slot; and
+    // - the number of PUSCH occasions in a HARQ process lifetime.
+    const unsigned nof_buffers = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_in_harq_lifetime;
+
+    // Calculate the maximum number of receive codeblocks. It is equal to the product of:
+    // - the maximum number of codeblocks that can be scheduled in one slot; and
+    // - the number of PUSCH occasions in a HARQ process lifetime.
+    const unsigned max_rx_nof_codeblocks = nof_ul_slots_in_harq_lifetime * max_nof_pusch_cb_slot;
 
     // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
     // depths.
@@ -1675,11 +1693,6 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
 
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    // Get band, frequency range and duplex mode from the band.
-    nr_band               band       = cell.band.value();
-    const frequency_range freq_range = band_helper::get_freq_range(band);
-    const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
-
     const prach_configuration prach_cfg =
         prach_configuration_get(freq_range, duplex, cell.prach_cfg.prach_config_index.value());
     srsran_assert(prach_cfg.format != prach_format_type::invalid,
@@ -1689,15 +1702,12 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
                   to_string(freq_range),
                   to_string(duplex));
 
-    // Maximum number of HARQ processes for a PUSCH HARQ process.
-    static constexpr unsigned max_nof_pusch_harq = 16;
-
-    // Maximum concurrent PUSCH processing. If there are no dedicated threads for PUSCH decoding, set the maximum
-    // concurrency to one. Otherwise, assume every possible PUSCH transmission for the maximum number of HARQ could be
-    // enqueued.
-    unsigned max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * max_nof_pusch_harq;
-    if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads == 0) {
-      max_pusch_concurrency = 1;
+    // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
+    // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
+    // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
+    unsigned max_pusch_concurrency = 1;
+    if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads > 0) {
+      max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_per_frame;
     }
 
     cfg.nof_slots_request_headroom = config.expert_phy_cfg.nof_slots_request_headroom;

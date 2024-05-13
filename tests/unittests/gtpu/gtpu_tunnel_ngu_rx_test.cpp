@@ -21,19 +21,18 @@
  */
 
 #include "lib/gtpu/gtpu_pdu.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_rx.h"
-#include "lib/gtpu/gtpu_tunnel_ngu_tx.h"
+#include "lib/gtpu/gtpu_tunnel_ngu_rx_impl.h"
+#include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
-#include <queue>
 #include <sys/socket.h>
 
 using namespace srsran;
 
 class gtpu_pdu_generator
 {
-  class gtpu_tunnel_tx_upper_dummy : public gtpu_tunnel_tx_upper_layer_notifier
+  class gtpu_tunnel_tx_upper_dummy : public gtpu_tunnel_common_tx_upper_layer_notifier
   {
     void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& dest_addr) final { parent.gen_pdu = std::move(buf); }
     gtpu_pdu_generator& parent;
@@ -49,7 +48,8 @@ public:
     cfg.peer_teid                   = teid;
     cfg.peer_addr                   = "127.0.0.1";
 
-    tx = std::make_unique<gtpu_tunnel_ngu_tx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
+    tx =
+        std::make_unique<gtpu_tunnel_ngu_tx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
   }
 
   byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, qos_flow_id_t flow_id, optional<uint16_t> sn)
@@ -95,11 +95,11 @@ public:
   }
 
 private:
-  null_dlt_pcap                       dummy_pcap = {};
-  gtpu_tunnel_tx_upper_dummy          tx_upper_dummy;
-  std::unique_ptr<gtpu_tunnel_ngu_tx> tx;
-  byte_buffer                         gen_pdu;
-  gtpu_tunnel_logger                  gtpu_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
+  null_dlt_pcap                            dummy_pcap = {};
+  gtpu_tunnel_tx_upper_dummy               tx_upper_dummy;
+  std::unique_ptr<gtpu_tunnel_ngu_tx_impl> tx;
+  byte_buffer                              gen_pdu;
+  gtpu_tunnel_logger                       gtpu_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
 
 public:
 };
@@ -123,7 +123,7 @@ public:
   std::vector<qos_flow_id_t> rx_qfis;
 };
 
-class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
+class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_common_rx_upper_layer_interface
 {
 public:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) final
@@ -189,7 +189,7 @@ protected:
   timer_factory      timers{timers_manager, worker};
 
   // GTP-U tunnel Rx entity
-  std::unique_ptr<gtpu_tunnel_ngu_rx> rx;
+  std::unique_ptr<gtpu_tunnel_ngu_rx_impl> rx;
 
   // Surrounding tester
   gtpu_tunnel_rx_lower_dummy rx_lower = {};
@@ -203,7 +203,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
 
   ASSERT_NE(rx, nullptr);
 };
@@ -216,7 +216,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -241,7 +241,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -266,7 +266,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -342,7 +342,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -416,7 +416,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -488,7 +488,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   rx_cfg.local_teid                  = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                = std::chrono::milliseconds{10};
 
-  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;

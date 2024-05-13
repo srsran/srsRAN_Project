@@ -66,6 +66,8 @@ private:
     processing
   };
 
+  /// PHY logger.
+  srslog::basic_logger& logger;
   /// OFDM PRACH demodulator.
   std::unique_ptr<ofdm_prach_demodulator> demodulator;
   /// Asynchronous task executor.
@@ -104,6 +106,7 @@ public:
                          task_executor&                          async_task_executor_,
                          sampling_rate                           srate,
                          unsigned                                max_nof_ports) :
+    logger(srslog::fetch_basic_logger("PHY")),
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(srate.to_Hz()),

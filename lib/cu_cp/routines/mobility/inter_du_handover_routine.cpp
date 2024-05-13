@@ -30,26 +30,26 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-bool verify_ho_command(const cu_cp_inter_du_handover_request& command,
-                       du_processor_ue_manager&               ue_manager,
+bool verify_ho_request(const cu_cp_inter_du_handover_request& request,
+                       ue_manager&                            ue_mng,
                        const srslog::basic_logger&            logger)
 {
-  if (command.target_pci == INVALID_PCI) {
+  if (request.target_pci == INVALID_PCI) {
     logger.warning("Target PCI must not be invalid");
     return false;
   }
 
-  if (command.target_du_index == du_index_t::invalid) {
+  if (request.target_du_index == du_index_t::invalid) {
     logger.warning("Target DU index must not be invalid");
     return false;
   }
 
-  if (command.source_ue_index == ue_index_t::invalid) {
+  if (request.source_ue_index == ue_index_t::invalid) {
     logger.warning("Source UE index must not be invalid");
     return false;
   }
 
-  if (!ue_manager.find_du_ue(command.source_ue_index)) {
+  if (!ue_mng.find_du_ue(request.source_ue_index)) {
     logger.warning("Can't find source ue={}");
     return false;
   }
@@ -57,22 +57,25 @@ bool verify_ho_command(const cu_cp_inter_du_handover_request& command,
   return true;
 }
 
-inter_du_handover_routine::inter_du_handover_routine(
-    const cu_cp_inter_du_handover_request& command_,
-    du_processor_cu_cp_notifier&           cu_cp_notifier_,
-    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
-    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-    du_processor_ue_context_notifier&      source_du_processor_notifier_,
-    du_processor_ue_context_notifier&      target_du_processor_notifier_,
-    du_processor_ue_manager&               ue_manager_,
-    srslog::basic_logger&                  logger_) :
-  command(command_),
-  cu_cp_notifier(cu_cp_notifier_),
-  target_du_f1ap_ue_ctxt_notifier(target_du_f1ap_ue_ctxt_notif_),
-  e1ap_ctrl_notifier(e1ap_ctrl_notif_),
-  source_du_processor_notifier(source_du_processor_notifier_),
-  target_du_processor_notifier(target_du_processor_notifier_),
-  ue_manager(ue_manager_),
+inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
+                                                     const byte_buffer&                     target_cell_sib1_,
+                                                     e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
+                                                     f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
+                                                     f1ap_ue_context_manager&               target_du_f1ap_ue_ctxt_mng_,
+                                                     cu_cp_ue_context_release_handler&      ue_context_release_handler_,
+                                                     cu_cp_ue_removal_handler&              ue_removal_handler_,
+                                                     cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
+                                                     ue_manager&                            ue_mng_,
+                                                     srslog::basic_logger&                  logger_) :
+  request(request_),
+  target_cell_sib1(target_cell_sib1_),
+  e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
+  source_du_f1ap_ue_ctxt_mng(source_du_f1ap_ue_ctxt_mng_),
+  target_du_f1ap_ue_ctxt_mng(target_du_f1ap_ue_ctxt_mng_),
+  ue_context_release_handler(ue_context_release_handler_),
+  ue_removal_handler(ue_removal_handler_),
+  cu_cp_handler(cu_cp_handler_),
+  ue_mng(ue_mng_),
   logger(logger_)
 {
 }
@@ -83,37 +86,37 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   {
     // Verify input.
-    if (!verify_ho_command(command, ue_manager, logger)) {
-      logger.warning("ue={}: \"{}\" - invalid input parameters", command.source_ue_index, name());
+    if (!verify_ho_request(request, ue_mng, logger)) {
+      logger.warning("ue={}: \"{}\" - invalid input parameters", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
     // Retrieve source UE context.
-    source_ue          = ue_manager.find_du_ue(command.source_ue_index);
+    source_ue          = ue_mng.find_du_ue(request.source_ue_index);
     source_rrc_context = source_ue->get_rrc_ue_notifier().get_transfer_context();
     next_config        = to_config_update(source_rrc_context.up_ctx);
   }
 
-  logger.debug("ue={}: \"{}\" initialized", command.source_ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", request.source_ue_index, name());
 
   {
     // Allocate UE index at target DU
-    target_ue_context_setup_request.ue_index = ue_manager.add_ue(command.target_du_index);
+    target_ue_context_setup_request.ue_index = ue_mng.add_ue(request.target_du_index);
     if (target_ue_context_setup_request.ue_index == ue_index_t::invalid) {
-      logger.warning("ue={}: \"{}\" failed to allocate UE index at target DU", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to allocate UE index at target DU", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
     if (!generate_ue_context_setup_request(
             target_ue_context_setup_request, source_ue->get_rrc_ue_srb_notifier().get_srbs(), source_rrc_context)) {
-      logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
-                     target_du_f1ap_ue_ctxt_notifier.on_ue_context_setup_request(target_ue_context_setup_request,
-                                                                                 source_rrc_context));
+                     target_du_f1ap_ue_ctxt_mng.handle_ue_context_setup_request(target_ue_context_setup_request,
+                                                                                source_rrc_context));
 
     // Handle UE Context Setup Response
     if (!handle_context_setup_response(response_msg,
@@ -122,15 +125,15 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                        next_config,
                                        logger,
                                        false)) {
-      logger.warning("ue={}: \"{}\" failed to create UE context at target DU", command.source_ue_index, name());
-      CORO_AWAIT(cu_cp_notifier.on_ue_removal_required(target_ue_context_setup_request.ue_index));
+      logger.warning("ue={}: \"{}\" failed to create UE context at target DU", request.source_ue_index, name());
+      CORO_AWAIT(ue_removal_handler.handle_ue_removal_request(target_ue_context_setup_request.ue_index));
       // Note: From this point the UE is removed and only the stored context can be accessed.
       CORO_EARLY_RETURN(response_msg);
     }
   }
 
   // Target UE object exists from this point on.
-  target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
+  target_ue = ue_mng.find_du_ue(target_ue_context_setup_response.ue_index);
   srsran_assert(target_ue != nullptr, "Couldn't find ue={} in target DU", target_ue_context_setup_response.ue_index);
 
   // Setup SRB1 and initialize security context in RRC
@@ -143,26 +146,27 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   // Inform CU-UP about new DL tunnels.
   {
     //  prepare Bearer Context Release Command and call E1AP notifier
-    bearer_context_modification_request.ue_index = command.source_ue_index;
+    bearer_context_modification_request.ue_index = request.source_ue_index;
 
     // call E1AP procedure and wait for BearerContextModificationResponse
-    CORO_AWAIT_VALUE(bearer_context_modification_response,
-                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+    CORO_AWAIT_VALUE(
+        bearer_context_modification_response,
+        e1ap_bearer_ctxt_mng.handle_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle Bearer Context Modification Response
     if (!handle_bearer_context_modification_response(
             response_msg, source_ue_context_mod_request, bearer_context_modification_response, next_config, logger)) {
-      logger.warning("ue={}: \"{}\" failed to modify bearer context at target CU-UP", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" failed to modify bearer context at target CU-UP", request.source_ue_index, name());
 
       {
         // Remove target UE context if Bearer Context Modification failed.
         {
           ue_context_release_command.ue_index = target_ue_context_setup_response.ue_index;
           ue_context_release_command.cause    = ngap_cause_radio_network_t::unspecified;
-          CORO_AWAIT(target_du_processor_notifier.handle_ue_context_release_command(ue_context_release_command));
+          CORO_AWAIT(ue_context_release_handler.handle_ue_context_release_command(ue_context_release_command));
         }
 
-        logger.debug("ue={}: \"{}\" removed target UE context", command.source_ue_index, name());
+        logger.debug("ue={}: \"{}\" removed target UE context", request.source_ue_index, name());
       }
 
       CORO_EARLY_RETURN(response_msg);
@@ -183,19 +187,25 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                                   true, /* Reestablish SRBs */
                                   true /* Reestablish DRBs */,
                                   true, /* Update keys */
+                                  target_cell_sib1.copy(),
                                   logger)) {
-        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", command.source_ue_index, name());
+        logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", request.source_ue_index, name());
         CORO_EARLY_RETURN(response_msg);
       }
     }
 
-    target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
+    target_ue = ue_mng.find_du_ue(target_ue_context_setup_response.ue_index);
     // Trigger RRC Reconfiguration
     CORO_AWAIT_VALUE(reconf_result,
-                     launch_async<handover_reconfiguration_routine>(rrc_reconfig_args, *source_ue, *target_ue, logger));
+                     launch_async<handover_reconfiguration_routine>(rrc_reconfig_args,
+                                                                    target_ue_context_setup_response.ue_index,
+                                                                    *source_ue,
+                                                                    source_du_f1ap_ue_ctxt_mng,
+                                                                    cu_cp_handler,
+                                                                    logger));
 
     if (!reconf_result) {
-      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", command.source_ue_index, name());
+      logger.warning("ue={}: \"{}\" RRC reconfiguration failed", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
   }
@@ -211,7 +221,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   {
     // Transfer old UE context (NGAP and E1AP) to new UE context and remove old UE context.
-    cu_cp_notifier.on_handover_ue_context_push(command.source_ue_index, target_ue->get_ue_index());
+    cu_cp_handler.handle_handover_ue_context_push(request.source_ue_index, target_ue->get_ue_index());
   }
 
   // Remove source UE context.
@@ -219,11 +229,11 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     ue_context_release_command.ue_index             = source_ue->get_ue_index();
     ue_context_release_command.cause                = ngap_cause_radio_network_t::unspecified;
     ue_context_release_command.requires_rrc_release = false;
-    CORO_AWAIT(source_du_processor_notifier.handle_ue_context_release_command(ue_context_release_command));
+    CORO_AWAIT(ue_context_release_handler.handle_ue_context_release_command(ue_context_release_command));
     logger.debug("ue={}: \"{}\" removed source UE context", ue_context_release_command.ue_index, name());
   }
 
-  logger.debug("ue={}: \"{}\" finalized", command.source_ue_index, name());
+  logger.debug("ue={}: \"{}\" finalized", request.source_ue_index, name());
   response_msg.success = true;
 
   CORO_RETURN(response_msg);
@@ -234,7 +244,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
                                                                   const rrc_ue_transfer_context& transfer_context)
 {
   setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
-  setup_request.sp_cell_id    = command.cgi;
+  setup_request.sp_cell_id    = request.cgi;
 
   if (transfer_context.handover_preparation_info.empty()) {
     return false;

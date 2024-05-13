@@ -30,7 +30,8 @@
 namespace srsran {
 
 /// Defines an entry of the uplink slot PDU repository.
-using uplink_slot_pdu_entry = variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu>;
+using uplink_slot_pdu_entry =
+    variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu, uplink_processor::srs_pdu>;
 
 /// \brief Uplink slot PDU repository.
 ///
@@ -38,7 +39,12 @@ using uplink_slot_pdu_entry = variant<uplink_processor::pusch_pdu, uplink_proces
 // :TODO: move this class to private when the uplink processor gets refactorized.
 class uplink_slot_pdu_repository
 {
-  using slot_entry = static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>;
+  using slot_entry = std::array<static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT>;
+
+  /// Number of slots.
+  const size_t nof_slots;
+  /// Repository that contains the PDUs.
+  std::vector<slot_entry> repository;
 
 public:
   /// \brief Constructs an uplink slot pdu repository that supports the given number of slots.
@@ -50,36 +56,63 @@ public:
   void add_pusch_pdu(slot_point slot, const uplink_processor::pusch_pdu& pdu)
   {
     assert_slot(slot);
-    repository[slot.to_uint() % nof_slots].push_back(pdu);
+
+    unsigned end_symbol_index = pdu.pdu.start_symbol_index + pdu.pdu.nof_symbols - 1;
+    get_entry(slot, end_symbol_index).push_back(pdu);
   }
 
   /// Adds the given PUCCH PDU to the repository at the given slot.
   void add_pucch_pdu(slot_point slot, const uplink_processor::pucch_pdu& pdu)
   {
     assert_slot(slot);
-    repository[slot.to_uint() % nof_slots].push_back(pdu);
+
+    auto fetch_end_symbol_index = [](const uplink_processor::pucch_pdu& _pdu) {
+      switch (_pdu.context.format) {
+        case pucch_format::FORMAT_0:
+          return _pdu.format0.start_symbol_index + _pdu.format0.nof_symbols - 1;
+        case pucch_format::FORMAT_1:
+          return _pdu.format1.start_symbol_index + _pdu.format1.nof_symbols - 1;
+        case pucch_format::FORMAT_2:
+          return _pdu.format2.start_symbol_index + _pdu.format2.nof_symbols - 1;
+        default:
+          srsran_assert(false, "Unsupported PUCCH format");
+          return 0U;
+      }
+    };
+
+    unsigned end_symbol_index = fetch_end_symbol_index(pdu);
+    get_entry(slot, end_symbol_index).push_back(pdu);
+  }
+
+  /// Adds the given SRS PDU to the repository at the given slot.
+  void add_srs_pdu(slot_point slot, const uplink_processor::srs_pdu& pdu)
+  {
+    assert_slot(slot);
+
+    unsigned end_symbol_index =
+        pdu.config.resource.start_symbol.to_uint() + static_cast<unsigned>(pdu.config.resource.nof_symbols) - 1;
+    get_entry(slot, end_symbol_index).push_back(pdu);
   }
 
   /// Clears the given slot of the registry.
   void clear_slot(slot_point slot)
   {
     assert_slot(slot);
-    repository[slot.to_uint() % nof_slots].clear();
+
+    for (auto& entry : repository[slot.to_uint() % nof_slots]) {
+      entry = {};
+    }
   }
 
-  /// Returns a span that contains the PDUs for the given slot.
-  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot) const
+  /// Returns a span that contains the PDUs for the given slot and symbol index.
+  span<const uplink_slot_pdu_entry> get_pdus(slot_point slot, unsigned end_symbol_index) const
   {
     assert_slot(slot);
-    return repository[slot.to_uint() % nof_slots];
+
+    return get_entry(slot, end_symbol_index);
   }
 
 private:
-  /// Number of slots.
-  const size_t nof_slots;
-  /// Repository that contains the PDUs.
-  std::vector<slot_entry> repository;
-
   /// Asserts the slot numerology with the pool dimensions.
   void assert_slot(slot_point slot) const
   {
@@ -89,5 +122,21 @@ private:
                   slot.nof_slots_per_system_frame(),
                   nof_slots);
   }
+
+  /// Returns a reference to the list of PDUs for the given slot and end symbol index.
+  const static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>& get_entry(slot_point slot,
+                                                                              unsigned   end_symbol_index) const
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index");
+    return repository[slot.to_uint() % nof_slots][end_symbol_index];
+  }
+
+  /// Returns a reference to the list of PDUs for the given slot and end symbol index.
+  static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>& get_entry(slot_point slot, unsigned end_symbol_index)
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index");
+    return repository[slot.to_uint() % nof_slots][end_symbol_index];
+  }
 };
+
 } // namespace srsran

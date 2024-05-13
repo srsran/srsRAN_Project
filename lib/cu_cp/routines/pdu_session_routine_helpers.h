@@ -68,6 +68,7 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] rrc_meas_cfg Optional measurement config to include in Reconfiguration.
 /// \param[in] reestablish_srbs Whether to request SRB reestablishment.
 /// \param[in] reestablish_drbs Whether to request DRB reestablishment.
+/// \param[in] sib1 Packed SIB1 content for direct delivery to UE (optional).
 /// \param[in] logger Logger reference.
 /// \return True on success, false otherwise.
 bool fill_rrc_reconfig_args(
@@ -81,6 +82,7 @@ bool fill_rrc_reconfig_args(
     bool                                                               reestablish_srbs,
     bool                                                               reestablish_drbs,
     bool                                                               update_keys,
+    byte_buffer                                                        sib1,
     const srslog::basic_logger&                                        logger);
 
 bool update_setup_list(

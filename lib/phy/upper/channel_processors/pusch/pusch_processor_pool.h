@@ -110,7 +110,7 @@ class pusch_processor_pool : public pusch_processor
 public:
   /// Creates a PUSCH processor pool from a list of processors. Ownership is transferred to the pool.
   explicit pusch_processor_pool(span<std::unique_ptr<pusch_processor>> processors_, bool blocking_) :
-    free_list(processors_.size()), blocking(blocking_)
+    logger(srslog::fetch_basic_logger("PHY")), free_list(processors_.size()), blocking(blocking_)
   {
     unsigned index = 0;
     for (std::unique_ptr<pusch_processor>& processor : processors_) {
@@ -134,7 +134,8 @@ public:
 
     // If no worker is available.
     if (!index.has_value()) {
-      srslog::fetch_basic_logger("PHY").warning("PUSCH processing queue is full. Dropping PUSCH {:s}.", pdu);
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "PUSCH processing queue is full. Dropping PUSCH {:s}.", pdu);
 
       // Report data-related discarded result if shared channel data is present.
       if (pdu.codeword.has_value()) {
@@ -161,6 +162,7 @@ public:
   }
 
 private:
+  srslog::basic_logger&                        logger;
   std::vector<detail::pusch_processor_wrapper> processors;
   detail::pusch_processor_free_list            free_list;
   bool                                         blocking;

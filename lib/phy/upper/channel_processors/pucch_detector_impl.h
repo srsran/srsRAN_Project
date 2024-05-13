@@ -112,23 +112,15 @@ private:
       ch_estimates;
   /// \brief Buffer for storing the spread data sequence after equalization.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cf_t,
-                MAX_ALLOCATED_RE_F1 / 2,
-                channel_equalizer::re_list::dims>
-      eq_time_spread_sequence;
+  static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_sequence;
   /// \brief Buffer for storing the equivalent channel noise variances corresponding to the equalized spread data
   /// sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                float,
-                MAX_ALLOCATED_RE_F1 / 2,
-                channel_equalizer::re_list::dims>
-      eq_time_spread_noise_var;
-  /// Buffer for noise variances.
-  std::array<float, MAX_PORTS> noise_var_buffer;
+  static_vector<float, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_noise_var;
   /// Buffer for storing alpha indices.
   std::array<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_buffer;
+  /// Buffer for noise variances.
+  std::array<float, MAX_PORTS> noise_var_buffer;
   /// View of the alpha indices buffer.
   span<unsigned> alpha_indices;
   /// Detected symbol.

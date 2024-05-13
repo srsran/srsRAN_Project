@@ -45,7 +45,7 @@ public:
     context(ue_index_, gnb_f1ap_du_ue_id_),
     f1ap_msg_notifier(f1ap_msg_notifier_),
     du_handler(du_handler_),
-    bearers(context, f1ap_msg_notifier, ctrl_exec, ue_exec)
+    bearers(context, f1ap_msg_notifier, du_handler, ctrl_exec, ue_exec)
   {
   }
 

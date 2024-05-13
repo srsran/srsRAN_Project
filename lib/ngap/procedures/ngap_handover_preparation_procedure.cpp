@@ -33,8 +33,9 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
     const ngap_context_t&                    context_,
     const ngap_ue_ids&                       ue_ids_,
-    ngap_message_notifier&                   amf_notif_,
-    ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+    ngap_message_notifier&                   amf_notifier_,
+    ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
+    ngap_cu_cp_notifier&                     cu_cp_notifier_,
     up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
@@ -42,8 +43,9 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
   request(request_),
   context(context_),
   ue_ids(ue_ids_),
-  amf_notifier(amf_notif_),
-  rrc_ue_notifier(rrc_ue_notif_),
+  amf_notifier(amf_notifier_),
+  rrc_ue_notifier(rrc_ue_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
@@ -58,7 +60,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   logger.log_debug("\"{}\" initialized", name());
 
   if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
-    logger.log_error("Invalid NGAP id pair");
+    logger.log_error("\"{}\" failed. Cause: Invalid NGAP id pair");
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
@@ -79,11 +81,22 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   }
 
   if (transaction_sink.successful()) {
-    // Forward RRC Container
-    if (!forward_rrc_handover_command()) {
+    // Unpack transparent container to get RRC Handover Command
+    rrc_ho_cmd_pdu = get_rrc_handover_command();
+    if (rrc_ho_cmd_pdu.empty()) {
+      logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
     }
-    logger.log_debug("\"{}\" finalized", name());
+
+    // Forward RRC Handover Command to DU Processor
+    CORO_AWAIT_VALUE(rrc_reconfig_success,
+                     cu_cp_notifier.on_new_handover_command(request.ue_index, std::move(rrc_ho_cmd_pdu)));
+    if (!rrc_reconfig_success) {
+      logger.log_warning("\"{}\" failed. Cause: Received invalid Handover Command", name());
+      CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+    }
+
+    logger.log_debug("\"{}\" finished successfully", name());
   }
 
   // Forward procedure result to DU manager.
@@ -199,7 +212,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   return buf;
 }
 
-bool ngap_handover_preparation_procedure::forward_rrc_handover_command()
+byte_buffer ngap_handover_preparation_procedure::get_rrc_handover_command()
 {
   auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
 
@@ -207,10 +220,9 @@ bool ngap_handover_preparation_procedure::forward_rrc_handover_command()
   asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});
 
   if (target_to_source_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.log_error("Couldn't unpack target to source transparent container.");
-    return false;
+    logger.log_error("Couldn't unpack target to source transparent container");
+    return byte_buffer{};
   }
 
-  // Send RRC Container to RRC
-  return rrc_ue_notifier.on_new_rrc_handover_command(target_to_source_container.rrc_container.copy());
+  return std::move(target_to_source_container.rrc_container);
 }

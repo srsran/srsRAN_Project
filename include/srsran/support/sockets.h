@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/support/io/unique_fd.h"
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -35,7 +36,7 @@ namespace srsran {
 
 /// Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the maximum re-transmission timeout (rto_max).
-inline bool sctp_set_rto_opts(int                   fd,
+inline bool sctp_set_rto_opts(const unique_fd&      fd,
                               optional<int>         rto_initial,
                               optional<int>         rto_min,
                               optional<int>         rto_max,
@@ -50,7 +51,7 @@ inline bool sctp_set_rto_opts(int                   fd,
   sctp_rtoinfo rto_opts  = {};
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
-  if (getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
+  if (getsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
     logger.error("Error getting RTO_INFO sockopts. errono={}", strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
@@ -72,7 +73,7 @@ inline bool sctp_set_rto_opts(int                   fd,
       rto_opts.srto_min,
       rto_opts.srto_max);
 
-  if (::setsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, rto_sz) < 0) {
+  if (::setsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, rto_sz) < 0) {
     logger.error("Error setting RTO_INFO sockopts. errno={}", strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
@@ -138,7 +139,7 @@ inline bool sctp_set_nodelay(int fd, optional<bool> nodelay, srslog::basic_logge
   return true;
 }
 
-inline bool bind_to_interface(int fd, std::string& interface, srslog::basic_logger& logger)
+inline bool bind_to_interface(const unique_fd& fd, std::string& interface, srslog::basic_logger& logger)
 {
   if (interface.empty() || interface == "auto") {
     // no need to change anything
@@ -149,7 +150,7 @@ inline bool bind_to_interface(int fd, std::string& interface, srslog::basic_logg
   std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ);
   ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
 
-  if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
+  if (setsockopt(fd.value(), SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
     logger.error("Could not bind socket to interface. interface={} error={}", ifr.ifr_ifrn.ifrn_name, strerror(errno));
     return false;
   }

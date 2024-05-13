@@ -77,7 +77,7 @@ public:
   bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
   bool is_valid(const pucch_processor::format4_configuration& config) const override { return true; }
   bool is_valid(const pusch_processor::pdu_t& pdu) const override { return true; }
-  bool is_valid(const srs_estimator_configuration& config) override { return true; }
+  bool is_valid(const srs_estimator_configuration& config) const override { return true; }
 };
 
 class resource_grid_pool_dummy : public resource_grid_pool

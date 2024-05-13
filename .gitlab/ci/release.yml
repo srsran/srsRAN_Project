@@ -167,7 +167,7 @@ release public:
     # Public tag name: release_X_Y. Ex: release_23_4
     - export PUBLIC_TAG=release_${CI_COMMIT_TAG//./_}
     # Public release name: $PUBLIC_NAME X_Y. Ex: srsRAN Project 23.4
-    - export PUBLIC_RELEASE_NAME=${PUBLIC_NAME} ${CI_COMMIT_TAG}
+    - export PUBLIC_RELEASE_NAME="${PUBLIC_NAME} ${CI_COMMIT_TAG}"
     # Public release notes: tag message
     - export PUBLIC_RELEASE_NOTES=${CI_COMMIT_TAG_MESSAGE}
 

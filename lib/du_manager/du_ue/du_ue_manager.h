@@ -58,6 +58,8 @@ public:
 
   void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
 
+  void handle_ue_config_applied(du_ue_index_t ue_index);
+
   /// \brief Handle the configuration of an existing UE context by RIC request.
   async_task<du_mac_sched_control_config_response> handle_ue_config_request(const du_mac_sched_control_config& msg);
 

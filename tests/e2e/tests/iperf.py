@@ -240,7 +240,10 @@ def test_srsue(
     ),
 )
 @mark.android
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Exception calling application"])
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
 # pylint: disable=too-many-arguments
 def test_android(
     retina_manager: RetinaTestManager,
@@ -302,7 +305,10 @@ def test_android(
     ),
 )
 @mark.android_hp
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Exception calling application"])
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
 # pylint: disable=too-many-arguments
 def test_android_hp(
     retina_manager: RetinaTestManager,

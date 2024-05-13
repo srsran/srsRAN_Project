@@ -32,7 +32,7 @@ using namespace srs_du;
 namespace {
 
 /// Mocking class of the surrounding layers invoked by the F1-U bearer
-class f1u_du_test_frame : public f1u_rx_sdu_notifier, public f1u_tx_pdu_notifier
+class f1u_du_test_frame : public f1u_rx_sdu_notifier, public f1u_tx_pdu_notifier, public f1u_bearer_disconnector
 {
 public:
   std::list<pdcp_tx_pdu>    rx_sdu_list;
@@ -45,6 +45,8 @@ public:
 
   // f1u_tx_pdu_notifier interface
   void on_new_pdu(nru_ul_message msg) override { tx_msg_list.push_back(std::move(msg)); }
+
+  void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override {}
 };
 
 class f1u_trx_test
@@ -93,7 +95,8 @@ protected:
         *tester,
         *tester,
         timer_factory{timers, ue_worker},
-        ue_worker);
+        ue_worker,
+        *tester);
   }
 
   void TearDown() override

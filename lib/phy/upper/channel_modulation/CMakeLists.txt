@@ -26,7 +26,13 @@ set(SOURCES
         demodulation_mapper_qam256.cpp
         demodulation_mapper_qpsk.cpp
         evm_calculator_generic_impl.cpp
-        modulation_mapper_impl.cpp)
+        modulation_mapper_lut_impl.cpp)
+
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    list(APPEND SOURCES modulation_mapper_avx512_impl.cpp)
+    set_source_files_properties(modulation_mapper_avx512_impl.cpp PROPERTIES
+            COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vbmi;")
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 add_library(srsran_channel_modulation STATIC ${SOURCES})
 target_link_libraries(srsran_channel_modulation srsran_support log_likelihood_ratio)

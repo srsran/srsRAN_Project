@@ -102,7 +102,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       // TODO: communicate with NGAP
       break;
     default:
-      logger.log_error("Unsupported RrcSetupRequest");
+      logger.log_error("Unsupported RRCSetupRequest");
       on_ue_release_required(ngap_cause_radio_network_t::unspecified);
       return;
   }
@@ -128,7 +128,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              *this,
                                                                              *this,
                                                                              get_rrc_ue_srb_handler(),
-                                                                             du_processor_notifier,
                                                                              cu_cp_notifier,
                                                                              nas_notifier,
                                                                              *event_mng,
@@ -265,19 +264,36 @@ async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_recon
       context, msg, *this, cu_cp_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
-uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
+rrc_ue_handover_reconfiguration_context
+rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request)
 {
+  rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
+
   // Create transaction to get transaction ID
-  rrc_transaction transaction    = event_mng->transactions.create_transaction();
-  unsigned        transaction_id = transaction.id();
+  rrc_transaction transaction   = event_mng->transactions.create_transaction();
+  ho_reconf_ctxt.transaction_id = transaction.id();
 
+  // pack RRC Reconfig
   dl_dcch_msg_s dl_dcch_msg;
-  dl_dcch_msg.msg.set_c1().set_rrc_recfg();
-  rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
-  fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, msg);
-  on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  dl_dcch_msg.msg.set_c1().set_rrc_recfg().crit_exts.set_rrc_recfg();
+  fill_asn1_rrc_reconfiguration_msg(dl_dcch_msg.msg.c1().rrc_recfg(), ho_reconf_ctxt.transaction_id, request);
 
-  return transaction_id;
+  // pack DL CCCH msg
+  pdcp_tx_result pdcp_packing_result =
+      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
+  if (!pdcp_packing_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                    pdcp_packing_result.get_failure_cause());
+    on_ue_release_required(pdcp_packing_result.get_failure_cause());
+    return ho_reconf_ctxt;
+  }
+
+  ho_reconf_ctxt.rrc_ue_handover_reconfiguration_pdu = pdcp_packing_result.pop_pdu();
+
+  // Log Tx message
+  log_rrc_message(logger, Tx, ho_reconf_ctxt.rrc_ue_handover_reconfiguration_pdu, dl_dcch_msg, "DCCH DL");
+
+  return ho_reconf_ctxt;
 }
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
@@ -328,9 +344,9 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
   if (requires_rrc_message) {
     if (context.srbs.empty()) {
       // SRB1 was not created, so we need to reject the UE
-      // Create and RrcReject container, see section 5.3.15 in TS 38.331
+      // Create and RRCReject container, see section 5.3.15 in TS 38.331
       dl_ccch_msg_s dl_ccch_msg;
-      // SRB1 was not created, so we create a RRC Container with RrcReject
+      // SRB1 was not created, so we create a RRC Container with RRCReject
       rrc_reject_ies_s& reject = dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
 
       // See TS 38.331, RejectWaitTime
@@ -346,7 +362,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
     } else {
       // prepare SRB1 RRC Release PDU to return
       if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
-        logger.log_error("Can't create RrcRelease PDU. RX {} is not set up", srb_id_t::srb1);
+        logger.log_error("Can't create RRCRelease PDU. RX {} is not set up", srb_id_t::srb1);
         return release_context;
       } else {
         dl_dcch_msg_s dl_dcch_msg;
@@ -448,28 +464,30 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   ho_cmd.crit_exts.set_c1().set_ho_cmd().ho_cmd_msg = reconfig_pdu.copy();
 
   // pack Handover Command
-  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd, "HandoverCommand");
+  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd, "RRCHandoverCommand");
 
   // Log message
   logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RRCHandoverCommand ({} B)", ho_cmd_pdu.length());
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     ho_cmd.to_json(js);
-    logger.log_debug("Containerized RrcHandoverCommand: {}", js.to_string());
+    logger.log_debug("Containerized RRCHandoverCommand: {}", js.to_string());
   }
 
   return ho_cmd_pdu;
 }
 
-bool rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
+byte_buffer rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
 {
-  // Unpack HGandover Command
+  byte_buffer ho_reconf_pdu = byte_buffer{};
+
+  // Unpack Handover Command
   asn1::rrc_nr::ho_cmd_s handover_command;
   asn1::cbit_ref         bref({cmd.begin(), cmd.end()});
 
   if (handover_command.unpack(bref) != asn1::SRSASN_SUCCESS) {
     logger.log_error("Couldn't unpack Handover Command RRC container");
-    return false;
+    return ho_reconf_pdu;
   }
 
   // Unpack RRC Reconfiguration to new DL DCCH Message
@@ -481,11 +499,23 @@ bool rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
 
   if (rrc_recfg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
     logger.log_error("Couldn't unpack RRC Reconfiguration container");
-    return false;
+    return ho_reconf_pdu;
   }
 
-  // Send to UE
-  on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  // pack DL CCCH msg
+  pdcp_tx_result pdcp_packing_result =
+      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
+  if (!pdcp_packing_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                    pdcp_packing_result.get_failure_cause());
+    on_ue_release_required(pdcp_packing_result.get_failure_cause());
+    return ho_reconf_pdu;
+  }
 
-  return true;
+  ho_reconf_pdu = pdcp_packing_result.pop_pdu();
+
+  // Log Tx message
+  log_rrc_message(logger, Tx, ho_reconf_pdu, dl_dcch_msg, "DCCH DL");
+
+  return ho_reconf_pdu;
 }

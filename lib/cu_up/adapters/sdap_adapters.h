@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_tx.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/sdap/sdap.h"
 
@@ -36,7 +36,7 @@ public:
   sdap_gtpu_adapter()  = default;
   ~sdap_gtpu_adapter() = default;
 
-  void connect_gtpu(gtpu_tunnel_tx_lower_layer_interface& gtpu_handler_) { gtpu_handler = &gtpu_handler_; }
+  void connect_gtpu(gtpu_tunnel_ngu_tx_lower_layer_interface& gtpu_handler_) { gtpu_handler = &gtpu_handler_; }
 
   void on_new_sdu(byte_buffer sdu, qos_flow_id_t qfi) override
   {
@@ -45,7 +45,7 @@ public:
   }
 
 private:
-  gtpu_tunnel_tx_lower_layer_interface* gtpu_handler = nullptr;
+  gtpu_tunnel_ngu_tx_lower_layer_interface* gtpu_handler = nullptr;
 };
 
 class sdap_pdcp_adapter : public sdap_tx_pdu_notifier

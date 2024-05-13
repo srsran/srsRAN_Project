@@ -195,6 +195,9 @@ public:
   /// \brief Notify DU that a given UE is performing RRC Reestablishment.
   virtual void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;
 
+  /// Confirm that the UE applied the pending configuration.
+  virtual void on_ue_config_applied(du_ue_index_t ue_index) = 0;
+
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
 };

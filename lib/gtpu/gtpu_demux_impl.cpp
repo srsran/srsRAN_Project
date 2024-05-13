@@ -32,9 +32,9 @@ gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, dlt_pcap& gtpu_pcap_) :
   logger.info("GTP-U demux. {}", cfg);
 }
 
-bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                           teid,
-                                 task_executor&                        tunnel_exec,
-                                 gtpu_tunnel_rx_upper_layer_interface* tunnel)
+bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                                  teid,
+                                 task_executor&                               tunnel_exec,
+                                 gtpu_tunnel_common_rx_upper_layer_interface* tunnel)
 {
   std::lock_guard<std::mutex> guard(map_mutex);
   if (teid_to_tunnel.find(teid) != teid_to_tunnel.end()) {
@@ -98,7 +98,7 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const s
 
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu.length(), teid);
 
-  gtpu_tunnel_rx_upper_layer_interface* tunnel = nullptr;
+  gtpu_tunnel_common_rx_upper_layer_interface* tunnel = nullptr;
   {
     /// Get GTP-U tunnel. We lookup the tunnel again, as the tunnel could have been
     /// removed between the time PDU processing was enqueued and the time we actually

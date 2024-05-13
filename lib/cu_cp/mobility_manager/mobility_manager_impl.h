@@ -23,13 +23,15 @@
 #pragma once
 
 #include "../ue_manager/ue_manager_impl.h"
+#include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
-#include "srsran/cu_cp/mobility_manager_measurement_handler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+class du_processor_repository;
 
 /// Handler for measurement related events.
 class mobility_manager_measurement_handler
@@ -44,15 +46,31 @@ public:
                                                   pci_t        neighbor_pci) = 0;
 };
 
-/// Basic cell manager implementation
-class mobility_manager final : public mobility_manager_measurement_handler,
-                               public cu_cp_mobility_manager_ho_trigger_handler
+/// Methods used by mobility manager to signal handover events to the CU-CP.
+class mobility_manager_cu_cp_notifier
 {
 public:
-  mobility_manager(const mobility_manager_cfg& cfg, cu_cp_f1c_handler& du_db_, ue_manager& ue_mng_);
-  ~mobility_manager() = default;
+  virtual ~mobility_manager_cu_cp_notifier() = default;
+
+  /// \brief Notify the CU-CP about an required inter-DU handover.
+  virtual async_task<cu_cp_inter_du_handover_response>
+  on_inter_du_handover_required(const cu_cp_inter_du_handover_request& request,
+                                du_index_t                             source_du_index,
+                                du_index_t                             target_du_index) = 0;
+};
+
+/// Basic cell manager implementation
+class mobility_manager final : public mobility_manager_measurement_handler, public cu_cp_mobility_command_handler
+{
+public:
+  mobility_manager(const mobility_manager_cfg&      cfg,
+                   mobility_manager_cu_cp_notifier& cu_cp_notifier_,
+                   ngap_control_message_handler&    ngap_handler_,
+                   du_processor_repository&         du_db_,
+                   ue_manager&                      ue_mng_);
 
   void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override;
+
   void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
                                           gnb_id_t     neighbor_gnb_id,
                                           nr_cell_id_t neighbor_nci,
@@ -67,10 +85,11 @@ private:
                                 du_index_t target_du_index);
   void handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
 
-  mobility_manager_cfg cfg;
-
-  cu_cp_f1c_handler& du_db;
-  ue_manager&        ue_mng;
+  mobility_manager_cfg             cfg;
+  mobility_manager_cu_cp_notifier& cu_cp_notifier;
+  ngap_control_message_handler&    ngap_handler;
+  du_processor_repository&         du_db;
+  ue_manager&                      ue_mng;
 
   srslog::basic_logger& logger;
 };

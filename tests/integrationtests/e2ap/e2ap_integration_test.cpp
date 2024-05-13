@@ -52,9 +52,8 @@ public:
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
     packer(*gw, *this, pcap)
   {
-    gw->create_and_connect();
-    bool success = epoll_broker->register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
-    if (!success) {
+    report_fatal_error_if_not(gw->create_and_connect(), "Failed to connect E2 GW");
+    if (!gw->subscribe_to(*epoll_broker)) {
       report_fatal_error("Failed to register E2 (SCTP) network gateway at IO broker. socket_fd={}",
                          gw->get_socket_fd());
     }

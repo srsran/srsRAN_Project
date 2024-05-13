@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/executors/unique_thread.h"
+#include <utility>
 
 namespace srsran {
 
@@ -34,40 +35,65 @@ struct io_broker_config {
   io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(mask_) {}
 };
 
-/// \brief Describes the base interface for an (async) IO broker.
-/// The IO broker is responsible for handling all IO events, including
-/// sockets, signals, and system timers.
-/// File descriptors can be registered with the IO broker via register_fd()
-/// and unregistered via unregister_fd().
+/// \brief Describes the interface for an (async) IO broker.
+/// The IO broker is responsible for handling all IO events, including sockets, signals, and system timers.
+/// File descriptors can be registered with the IO broker via register_fd(), which will return an RAII subscriber
+/// object that handles the deregistration of the file descriptor when it goes out of scope.
 class io_broker
 {
-protected:
-  /// Allow default constructor for child.
-  io_broker() = default;
-
 public:
-  /// Callback called when socket fd (passed as argument) has data
-  using recv_callback_t = std::function<void(int)>;
+  /// \brief Handle to a file descriptor + callbacks that were registered in the io_broker.
+  /// On destruction, the file descriptor and associated callback are automatically deregistered from the io_broker.
+  class subscriber
+  {
+  public:
+    subscriber() = default;
+    subscriber(io_broker& broker_, int fd_) : broker(&broker_), fd(fd_) {}
+    subscriber(subscriber&& other) noexcept : broker(other.broker), fd(std::exchange(other.fd, -1)) {}
+    subscriber& operator=(subscriber&& other) noexcept
+    {
+      reset();
+      broker = other.broker;
+      fd     = std::exchange(other.fd, -1);
+      return *this;
+    }
+    ~subscriber() { reset(); }
 
-  /// Provides default destructor.
+    /// Checks whether the FD is connected to the broker.
+    bool registered() const { return fd >= 0; }
+
+    /// Resets the handle, deregistering the FD from the broker.
+    bool reset() { return not registered() or broker->unregister_fd(std::exchange(fd, -1)); }
+
+  private:
+    io_broker* broker = nullptr;
+    int        fd     = -1;
+  };
+
+  /// Callback called when registered fd has data
+  using recv_callback_t = std::function<void()>;
+
+  /// Callback called when the fd detected an error. After an error is detected, the broker stops listening to the fd.
+  enum class error_code { hang_up, error, other };
+  using error_callback_t = std::function<void(error_code)>;
+
   virtual ~io_broker() = default;
 
-  /// Forbid copy constructor.
-  io_broker(const io_broker& other) = delete;
-
-  /// Forbid move constructor.
-  io_broker(const io_broker&& other) = delete;
-
-  /// Forbid copy assigment operator.
-  io_broker& operator=(const io_broker&) = delete;
-
-  /// Forbid move assigment operator.
-  io_broker& operator=(io_broker&&) = delete;
-
   /// \brief Register a file descriptor to be handled by the IO interface.
-  SRSRAN_NODISCARD virtual bool register_fd(int fd, recv_callback_t handler) = 0;
+  /// \param[in] fd File descriptor to be registered.
+  /// \param[in] handler Callback that handles receive events.
+  /// \param[in] err_handler Callback that handles error events.
+  /// \return An RAII handle to the registered file descriptor. On destruction, the fd is automatically deregistered
+  /// from the io_broker.
+  SRSRAN_NODISCARD virtual subscriber register_fd(
+      int              fd,
+      recv_callback_t  handler,
+      error_callback_t err_handler = [](error_code) {}) = 0;
 
+private:
   /// \brief Unregister a file descriptor from the IO interface.
+  /// \param[in] fd File descriptor to be unregistered.
+  /// \return true if the file descriptor was successfully unregistered, false otherwise.
   SRSRAN_NODISCARD virtual bool unregister_fd(int fd) = 0;
 };
 

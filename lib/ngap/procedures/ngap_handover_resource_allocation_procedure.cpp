@@ -33,7 +33,7 @@ ngap_handover_resource_allocation_procedure::ngap_handover_resource_allocation_p
     const ngap_handover_request&       request_,
     const amf_ue_id_t                  amf_ue_id_,
     ngap_ue_context_list&              ue_ctxt_list_,
-    ngap_cu_cp_ue_creation_notifier&   cu_cp_ue_creation_notifier_,
+    ngap_cu_cp_notifier&               cu_cp_ue_creation_notifier_,
     ngap_cu_cp_du_repository_notifier& du_repository_notif_,
     ngap_message_notifier&             amf_notif_,
     timer_manager&                     timers_,

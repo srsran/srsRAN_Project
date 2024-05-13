@@ -135,11 +135,6 @@ public:
     }
   }
 
-  void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override
-  {
-    handler->handle_rx_srs_symbol(context);
-  }
-
 private:
   size_t                                       file_offset = 0;
   std::unique_ptr<upper_phy_rx_symbol_handler> handler;

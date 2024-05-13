@@ -55,8 +55,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
                                                                        pdu_repository,
                                                                        rx_buf_pool->get_pool(),
-                                                                       rx_results_notifier,
-                                                                       logger)),
+                                                                       rx_results_notifier)),
   timing_handler(notifier_dummy)
 {
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");

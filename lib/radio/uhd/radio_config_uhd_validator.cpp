@@ -224,7 +224,7 @@ bool radio_config_uhd_config_validator::is_configuration_valid(const radio_confi
     return false;
   }
 
-  if (config.discontinuous_tx && (config.power_ramping_us < 0)) {
+  if (config.power_ramping_us < 0) {
     fmt::print("Power ramping time, i.e., {:.1f} us, must be positive or zero.\n", config.power_ramping_us);
     return false;
   }

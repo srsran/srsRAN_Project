@@ -113,6 +113,8 @@ public:
     snr.resize(nof_paths);
     time_alignment.reserve(MAX_TX_RX_PATHS);
     time_alignment.resize(nof_paths);
+    cfo.reserve(MAX_TX_RX_PATHS);
+    cfo.resize(nof_paths);
   }
 
   /// Default destructor
@@ -189,6 +191,12 @@ public:
     return time_alignment[path_to_index(rx_port, tx_layer)];
   }
 
+  /// Returns the carrier frequency offset in hertz estimated for the given Rx port and Tx layer.
+  optional<float> get_cfo_Hz(unsigned rx_port, unsigned tx_layer = 0) const
+  {
+    return cfo[path_to_index(rx_port, tx_layer)];
+  }
+
   /// \brief Returns a read-write view to the RE channel estimates of the path between the given Rx port and Tx layer.
   ///
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
@@ -223,10 +231,10 @@ public:
 
   /// \brief Gets the general Channel State Information.
   ///
-  /// param[in] csi Channel State Information object where the CSI parameters are stored.
+  /// \param[out] csi Channel State Information object where the CSI parameters are stored.
   void get_channel_state_information(channel_state_information& csi) const
   {
-    // EPRE, RSRP and time alignment are reported as a linear average of the results for all Rx ports.
+    // EPRE and RSRP are reported as a linear average of the results for all Rx ports.
     float    epre_lin      = 0.0F;
     float    rsrp_lin      = 0.0F;
     unsigned best_rx_port  = 0;
@@ -250,8 +258,14 @@ public:
     csi.set_epre(convert_power_to_dB(epre_lin));
     csi.set_rsrp(convert_power_to_dB(rsrp_lin));
 
-    // Use the time alignment of the channel path with better SNR.
+    // Use the time alignment of the channel path with best SNR.
     csi.set_time_alignment(get_time_alignment(best_rx_port, 0));
+
+    // Use the CFO of the channel path with best SNR.
+    optional<float> cfo_help = get_cfo_Hz(best_rx_port, 0);
+    if (cfo_help.has_value()) {
+      csi.set_cfo(cfo_help.value());
+    }
 
     // SINR is reported by averaging the signal and noise power contributions of all Rx ports.
     csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator,
@@ -292,6 +306,12 @@ public:
     time_alignment[path_to_index(rx_port, tx_layer)] = ta;
   }
 
+  /// Sets the estimated carrier frequency offset in hertz for the path between the given Rx port and Tx layer.
+  void set_cfo_Hz(optional<float> new_cfo, unsigned rx_port, unsigned tx_layer = 0)
+  {
+    cfo[path_to_index(rx_port, tx_layer)] = new_cfo;
+  }
+
   /// Sets the channel estimate for the resource element at the given coordinates.
   void set_ch_estimate(cf_t ce_val, unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0)
   {
@@ -316,6 +336,7 @@ public:
     epre.resize(nof_paths);
     rsrp.resize(nof_paths);
     snr.resize(nof_paths);
+    cfo.resize(nof_paths);
 
     unsigned nof_res = nof_paths * nof_subcarriers * nof_symbols;
     srsran_assert(nof_res <= MAX_BUFFER_SIZE,
@@ -374,6 +395,9 @@ private:
 
   /// Estimated time alignment.
   std::vector<phy_time_unit> time_alignment;
+
+  /// Estimated CFO.
+  std::vector<optional<float>> cfo;
   ///@}
 
   /// \brief Container for channel estimates.

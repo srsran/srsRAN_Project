@@ -71,6 +71,8 @@ public:
     return ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
   }
 
+  void handle_ue_config_applied(du_ue_index_t ue_index) override;
+
   /// Fetch UE context
   mac_ue_context* find_ue(du_ue_index_t ue_index);
   mac_ue_context* find_by_rnti(rnti_t rnti);

@@ -52,7 +52,7 @@ rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, u
     } else {
       logger.warning(slot.sfn(),
                      slot.slot_index(),
-                     "UL HARQ {}: failed to reserve, identifier for retransmissions not found.",
+                     "UL HARQ {}: failed to reserve buffer, identifier for retransmissions not found.",
                      id);
       return unique_rx_buffer();
     }
@@ -61,7 +61,7 @@ rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, u
   // Report warning and return invalid buffer if no available buffer has been found.
   if (id_found == identifiers.end()) {
     logger.warning(
-        slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
+        slot.sfn(), slot.slot_index(), "UL HARQ {}: failed to reserve buffer, insufficient buffers in the pool.", id);
     return unique_rx_buffer();
   }
 
@@ -75,7 +75,7 @@ rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, u
   if (!new_data && nof_codeblocks != buffer.get_nof_codeblocks()) {
     logger.warning(slot.sfn(),
                    slot.slot_index(),
-                   "UL HARQ {}: failed to reserve, number of codeblocks for retransmission do not match.",
+                   "UL HARQ {}: failed to reserve buffer, number of codeblocks for retransmission do not match.",
                    id);
     return unique_rx_buffer();
   }
@@ -87,9 +87,9 @@ rx_buffer_pool_impl::reserve(const slot_point& slot, trx_buffer_identifier id, u
   if (status != rx_buffer_status::successful) {
     logger.warning(slot.sfn(),
                    slot.slot_index(),
-                   "UL HARQ {}: failed to reserve, {}.",
+                   "UL HARQ {}: failed to reserve buffer, {}.",
                    id,
-                   (status == rx_buffer_status::already_in_use) ? "HARQ already in use" : "insufficient CBs");
+                   (status == rx_buffer_status::already_in_use) ? "HARQ already in use" : "exhausted CB pool");
     return unique_rx_buffer();
   }
 

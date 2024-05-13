@@ -27,7 +27,7 @@
 
 using namespace srsran;
 
-static void configure_cli11_report_args(CLI::App& app, cu_cp_report_unit_config& report_params)
+static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config& report_params)
 {
   add_option(app, "--report_cfg_id", report_params.report_cfg_id, "Report configuration id to be configured")
       ->check(CLI::Range(1, 64));
@@ -55,14 +55,14 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_report_unit_config&
       ->check(CLI::IsMember({0, 40, 64, 80, 100, 128, 160, 256, 320, 480, 512, 640, 1024, 1280, 2560, 5120}));
 }
 
-static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_unit_config_item& config)
+static void configure_cli11_ncell_args(CLI::App& app, cu_cp_unit_neighbor_cell_config_item& config)
 {
   add_option(app, "--nr_cell_id", config.nr_cell_id, "Neighbor cell id");
   add_option(
       app, "--report_configs", config.report_cfg_ids, "Report configurations to configure for this neighbor cell");
 }
 
-static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_unit_config_item& config)
+static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_item& config)
 {
   add_option(app, "--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
   add_option(app,
@@ -101,7 +101,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_unit_config_ite
       "Sets the list of neighbor cells known to the CU-CP");
 }
 
-static void configure_cli11_mobility_args(CLI::App& app, mobility_unit_config& config)
+static void configure_cli11_mobility_args(CLI::App& app, cu_cp_unit_mobility_config& config)
 {
   add_option(app,
              "--trigger_handover_from_measurements",
@@ -144,7 +144,7 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_unit_config& c
       "Sets report configurations");
 }
 
-static void configure_cli11_rrc_args(CLI::App& app, rrc_cu_cp_unit_config& config)
+static void configure_cli11_rrc_args(CLI::App& app, cu_cp_unit_rrc_config& config)
 {
   add_option(app,
              "--force_reestablishment_fallback",
@@ -161,7 +161,7 @@ static void configure_cli11_rrc_args(CLI::App& app, rrc_cu_cp_unit_config& confi
       ->capture_default_str();
 }
 
-static void configure_cli11_security_args(CLI::App& app, security_unit_config& config)
+static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_config& config)
 {
   auto sec_check = [](const std::string& value) -> std::string {
     if (value == "required" || value == "preferred" || value == "not_needed") {
@@ -193,7 +193,7 @@ static void configure_cli11_security_args(CLI::App& app, security_unit_config& c
       ->capture_default_str();
 }
 
-static void configure_cli11_f1ap_args(CLI::App& app, f1ap_cu_unit_config& f1ap_params)
+static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1ap_params)
 {
   add_option(app,
              "--ue_context_setup_timeout",
@@ -263,7 +263,7 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
       ->always_capture_default();
 }
 
-static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_cu_cp_unit_config& rlc_um_params)
+static void configure_cli11_rlc_um_args(CLI::App& app, cu_cp_unit_rlc_um_config& rlc_um_params)
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
   rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
@@ -275,7 +275,7 @@ static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_cu_cp_unit_config&
       ->capture_default_str();
 }
 
-static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_cu_cp_unit_config& rlc_am_params)
+static void configure_cli11_rlc_am_args(CLI::App& app, cu_cp_unit_rlc_am_config& rlc_am_params)
 {
   CLI::App* tx_subcmd = app.add_subcommand("tx", "AM TX parameters");
   add_option(*tx_subcmd, "--sn", rlc_am_params.tx.sn_field_length, "RLC AM TX SN size")->capture_default_str();
@@ -303,7 +303,7 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_cu_cp_unit_config&
       ->capture_default_str();
 }
 
-static void configure_cli11_rlc_args(CLI::App& app, rlc_cu_cp_unit_config& rlc_params)
+static void configure_cli11_rlc_args(CLI::App& app, cu_cp_unit_rlc_config& rlc_params)
 {
   add_option(app, "--mode", rlc_params.mode, "RLC mode")->capture_default_str();
 
@@ -316,7 +316,7 @@ static void configure_cli11_rlc_args(CLI::App& app, rlc_cu_cp_unit_config& rlc_p
   configure_cli11_rlc_am_args(*rlc_am_subcmd, rlc_params.am);
 }
 
-static void configure_cli11_pdcp_tx_args(CLI::App& app, pdcp_tx_cu_cp_unit_config& pdcp_tx_params)
+static void configure_cli11_pdcp_tx_args(CLI::App& app, cu_cp_unit_pdcp_tx_config& pdcp_tx_params)
 {
   add_option(app, "--sn", pdcp_tx_params.sn_field_length, "PDCP TX SN size")->capture_default_str();
   add_option(app, "--discard_timer", pdcp_tx_params.discard_timer, "PDCP TX discard timer (ms)")->capture_default_str();
@@ -324,7 +324,7 @@ static void configure_cli11_pdcp_tx_args(CLI::App& app, pdcp_tx_cu_cp_unit_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_pdcp_rx_args(CLI::App& app, pdcp_rx_cu_cp_unit_config& pdcp_rx_params)
+static void configure_cli11_pdcp_rx_args(CLI::App& app, cu_cp_unit_pdcp_rx_config& pdcp_rx_params)
 {
   add_option(app, "--sn", pdcp_rx_params.sn_field_length, "PDCP RX SN size")->capture_default_str();
   add_option(app, "--t_reordering", pdcp_rx_params.t_reordering, "PDCP RX t-Reordering (ms)")->capture_default_str();
@@ -333,7 +333,7 @@ static void configure_cli11_pdcp_rx_args(CLI::App& app, pdcp_rx_cu_cp_unit_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_pdcp_args(CLI::App& app, pdcp_cu_cp_unit_config& pdcp_params)
+static void configure_cli11_pdcp_args(CLI::App& app, cu_cp_unit_pdcp_config& pdcp_params)
 {
   add_option(app, "integrity_required", pdcp_params.integrity_protection_required, "DRB Integrity required")
       ->capture_default_str();
@@ -347,7 +347,7 @@ static void configure_cli11_pdcp_args(CLI::App& app, pdcp_cu_cp_unit_config& pdc
   configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
 }
 
-static void configure_cli11_qos_args(CLI::App& app, qos_cu_cp_unit_config& qos_params)
+static void configure_cli11_qos_args(CLI::App& app, cu_cp_unit_qos_config& qos_params)
 {
   add_option(app, "--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
 
@@ -364,7 +364,7 @@ static void configure_cli11_qos_args(CLI::App& app, qos_cu_cp_unit_config& qos_p
   app.needs(pdcp_subcmd);
 }
 
-static void configure_cli11_metrics_args(CLI::App& app, metrics_cu_cp_unit_config& metrics_params)
+static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)
 {
   add_option(app,
              "--cu_cp_statistics_report_period",
@@ -381,37 +381,37 @@ static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
       ->check(CLI::Range(0, 0xffffff));
 }
 
-void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& parsed_cfg)
+void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)
 {
-  add_option(app, "--gnb_id", parsed_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
-  add_option(app, "--gnb_id_bit_length", parsed_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
+  add_option(app, "--gnb_id", unit_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  add_option(app, "--gnb_id_bit_length", unit_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
-  add_option(app, "--ran_node_name", parsed_cfg.ran_node_name, "RAN node name")->capture_default_str();
+  add_option(app, "--ran_node_name", unit_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
   // CU-CP section
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();
-  configure_cli11_cu_cp_args(*cu_cp_subcmd, parsed_cfg);
+  configure_cli11_cu_cp_args(*cu_cp_subcmd, unit_cfg);
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
-  configure_cli11_log_args(*log_subcmd, parsed_cfg.loggers);
+  configure_cli11_log_args(*log_subcmd, unit_cfg.loggers);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
-  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics);
+  configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
 
   // QoS section.
-  auto qos_lambda = [&parsed_cfg](const std::vector<std::string>& values) {
+  auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
-    parsed_cfg.qos_cfg.resize(values.size());
+    unit_cfg.qos_cfg.resize(values.size());
 
     // Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("QoS parameters", "QoS config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());
       subapp.allow_config_extras(CLI::config_extras_mode::capture);
-      configure_cli11_qos_args(subapp, parsed_cfg.qos_cfg[i]);
+      configure_cli11_qos_args(subapp, unit_cfg.qos_cfg[i]);
       std::istringstream ss(values[i]);
       subapp.parse_from_stream(ss);
     }
@@ -419,16 +419,16 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 
   // Slicing section.
-  auto slicing_lambda = [&parsed_cfg](const std::vector<std::string>& values) {
+  auto slicing_lambda = [&unit_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
-    parsed_cfg.slice_cfg.resize(values.size());
+    unit_cfg.slice_cfg.resize(values.size());
 
     // Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());
       subapp.allow_config_extras(CLI::config_extras_mode::capture);
-      configure_cli11_slicing_args(subapp, parsed_cfg.slice_cfg[i]);
+      configure_cli11_slicing_args(subapp, unit_cfg.slice_cfg[i]);
       std::istringstream ss(values[i]);
       subapp.parse_from_stream(ss);
     }

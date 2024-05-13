@@ -88,13 +88,14 @@ static test_profile selected_profile = {};
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-T X] [-e] [-i X] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
-  fmt::print("\t-T Hardware-accelerated PUSCH decoder type [acc100][Default {}]\n", hwacc_decoder_type);
-  fmt::print("\t-e Use LDPC decoder early stop [Default {}]\n", use_early_stop);
-  fmt::print("\t-i X Number of LDPC iterations [Default X = {}]\n", nof_ldpc_iterations);
+  fmt::print("\t-T       Hardware-accelerated PUSCH decoder type [acc100][Default {}]\n", hwacc_decoder_type);
+  fmt::print("\t-e       Use LDPC decoder early stop [Default {}]\n", use_early_stop);
+  fmt::print("\t-i       Number of LDPC iterations [Default {}]\n", nof_ldpc_iterations);
 #ifdef DPDK_FOUND
-  fmt::print("\t-x Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
-  fmt::print("\t-y Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
-  fmt::print("\t-z Force DEBUG logging level for the hal [Default {}]\n", hal_log_level);
+  fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
+  fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
+  fmt::print("\t-z       Force DEBUG logging level for the HAL [Default {}]\n", hal_log_level);
+  fmt::print("\teal_args EAL arguments\n");
 #endif // DPDK_FOUND
   fmt::print("\t-h This help\n");
 }
@@ -186,6 +187,8 @@ static std::shared_ptr<pusch_decoder_factory> create_generic_pusch_decoder_facto
   pusch_decoder_factory_sw_config.decoder_factory   = ldpc_decoder_factory;
   pusch_decoder_factory_sw_config.dematcher_factory = ldpc_rate_dematcher_factory;
   pusch_decoder_factory_sw_config.segmenter_factory = segmenter_rx_factory;
+  pusch_decoder_factory_sw_config.nof_prb           = MAX_RB;
+  pusch_decoder_factory_sw_config.nof_layers        = pusch_constants::MAX_NOF_LAYERS;
   return create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
 }
 

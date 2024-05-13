@@ -105,22 +105,29 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
     return false;
   }
 
-  if (config.expert_cfg.discontinuous_tx_mode && (config.device_driver == "zmq")) {
-    fmt::print("Discontinuous transmission mode cannot be used with ZMQ.\n");
+  const duplex_mode dplx_mode = band_helper::get_duplex_mode(cell_config.cell.band.value());
+  if ((config.expert_cfg.transmission_mode == "same-port") && (dplx_mode == duplex_mode::FDD)) {
+    fmt::print("same-port transmission mode cannot be used with FDD cell configurations.\n");
+    return false;
+  }
+
+  bool discontinuous_transmission = (config.expert_cfg.transmission_mode != "continuous");
+  if (discontinuous_transmission && (config.device_driver == "zmq")) {
+    fmt::print("Discontinuous transmission modes cannot be used with ZMQ.\n");
     return false;
   }
 
   static constexpr float subframe_duration_us = 1e3;
   float                  slot_duration_us =
       subframe_duration_us / static_cast<float>(get_nof_slots_per_subframe(cell_config.cell.common_scs));
-  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
+  if (discontinuous_transmission && (config.expert_cfg.power_ramping_time_us > 2 * slot_duration_us)) {
     fmt::print("Power ramping time, i.e., {:.1f} us, cannot exceed the duration of two NR slots, i.e., {:.1f} us.\n",
                config.expert_cfg.power_ramping_time_us,
                2 * slot_duration_us);
     return false;
   }
 
-  if (config.expert_cfg.discontinuous_tx_mode && (config.expert_cfg.power_ramping_time_us < 0)) {
+  if (config.expert_cfg.power_ramping_time_us < 0) {
     fmt::print("Power ramping time, i.e., {:.1f} us, must be positive or zero.\n",
                config.expert_cfg.power_ramping_time_us);
     return false;
@@ -500,6 +507,14 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subc
   if (config.pattern2.has_value() and not validate_tdd_ul_dl_pattern_appconfig(config.pattern2.value(), common_scs)) {
     return false;
   }
+  const unsigned period_msec =
+      (config.pattern1.dl_ul_period_slots + (config.pattern2.has_value() ? config.pattern2->dl_ul_period_slots : 0)) /
+      get_nof_slots_per_subframe(common_scs);
+  // As per TS 38.213, clause 11.1, "A UE expects that P + P2 divides 20 msec".
+  if (20 % period_msec != 0) {
+    fmt::print("Invalid TDD pattern total periodicity={}ms. It must divide 20 msec.\n", period_msec);
+    return false;
+  }
   return true;
 }
 
@@ -684,7 +699,7 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
       if (cell1.cell.dl_arfcn == cell2.cell.dl_arfcn) {
         // Two cells on the same frequency should not have the same physical cell identifier.
         if (cell1.cell.pci == cell2.cell.pci) {
-          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).",
+          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).\n",
                      cell1.cell.dl_arfcn,
                      cell1.cell.pci);
         }
@@ -692,8 +707,10 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
         // Two cells on the same frequency should not share the same PRACH root sequence index.
         if ((cell1.cell.prach_cfg.prach_frequency_start == cell2.cell.prach_cfg.prach_frequency_start) &&
             (cell1.cell.prach_cfg.prach_root_sequence_index == cell2.cell.prach_cfg.prach_root_sequence_index)) {
-          fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PRACH root sequence index "
-                     "(i.e., {}).",
+          fmt::print("Warning: cells with PCI {} and {} with the same DL ARFCN (i.e., {}) have the same PRACH root "
+                     "sequence index (i.e., {}).\n",
+                     cell1.cell.pci,
+                     cell2.cell.pci,
                      cell1.cell.dl_arfcn,
                      cell1.cell.prach_cfg.prach_root_sequence_index);
         }

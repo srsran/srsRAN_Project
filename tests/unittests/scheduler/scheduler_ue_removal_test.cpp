@@ -274,7 +274,7 @@ TEST_F(sched_ue_removal_test,
       uci.slot_rx    = last_result_slot();
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f0;
       f0.sr_detected = true;
-      f0.ul_sinr     = 10;
+      f0.ul_sinr_dB  = 10;
       uci.ucis.push_back(uci_indication::uci_pdu{.ue_index = ue_index, .crnti = rnti, .pdu = f0});
       this->sched->handle_uci_indication(uci);
     }

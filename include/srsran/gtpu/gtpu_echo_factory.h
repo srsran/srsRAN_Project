@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_echo.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <memory>
 
@@ -32,8 +32,8 @@
 namespace srsran {
 
 struct gtpu_echo_creation_message {
-  dlt_pcap*                            gtpu_pcap;
-  gtpu_tunnel_tx_upper_layer_notifier* tx_upper;
+  dlt_pcap*                                   gtpu_pcap;
+  gtpu_tunnel_common_tx_upper_layer_notifier* tx_upper;
 };
 
 /// Creates an instance of a GTP-U entity.

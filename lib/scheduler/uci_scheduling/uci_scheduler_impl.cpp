@@ -22,6 +22,7 @@
 
 #include "uci_scheduler_impl.h"
 #include "../cell/resource_grid.h"
+#include "../support/sched_result_helpers.h"
 #include "uci_allocator_impl.h"
 
 using namespace srsran;
@@ -261,7 +262,7 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
       auto& slot_ucis = periodic_uci_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_uci_slot_wheel.size()];
 
       // Skip UCI scheduling for this UE and slot, if the maximum number of PUCCHs has been reached.
-      if (cell_alloc[n].result.ul.pucchs.full()) {
+      if (not has_space_for_uci_pdu(cell_alloc[n].result, rnti, cell_cfg.expert_cfg.ue)) {
         if (logger.debug.enabled()) {
           // If we want more detailed logs on the skipped allocations.
           for (const periodic_uci_info& uci_info : slot_ucis) {

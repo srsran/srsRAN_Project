@@ -56,10 +56,11 @@ protected:
     bool test_1 = pdu_session_resource_release_command.pdu.init_msg()
                       .value.pdu_session_res_release_cmd()
                       ->pdu_session_res_to_release_list_rel_cmd.size() ==
-                  du_processor_notifier->last_release_command.pdu_session_res_to_release_list_rel_cmd.size();
+                  cu_cp_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd.size();
 
-    bool test_2 = du_processor_notifier->last_release_command.pdu_session_res_to_release_list_rel_cmd[pdu_session_id]
-                      .pdu_session_id == pdu_session_id;
+    bool test_2 =
+        cu_cp_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd[pdu_session_id].pdu_session_id ==
+        pdu_session_id;
 
     return test_1 && test_2;
   }

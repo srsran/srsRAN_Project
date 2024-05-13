@@ -98,13 +98,6 @@ public:
     handlers[context.sector]->handle_rx_prach_window(context, buffer);
   }
 
-  // See interface for documentation.
-  void on_rx_srs_symbol(const ru_uplink_rx_symbol_context& context) override
-  {
-    srsran_assert(context.sector < handlers.size(), "Unsupported sector {}", context.sector);
-    handlers[context.sector]->handle_rx_srs_symbol({context.sector, context.slot, context.symbol_id});
-  }
-
   /// Maps the given upper PHY received symbol handler and sector to this adapter.
   void map_handler(unsigned sector, upper_phy_rx_symbol_handler& hndlr)
   {

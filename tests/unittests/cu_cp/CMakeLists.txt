@@ -23,8 +23,9 @@ set_directory_properties(PROPERTIES LABELS "cu_cp")
 include_directories(../../..)
 
 add_subdirectory(cell_meas_manager)
-add_subdirectory(du_processor)
 add_subdirectory(cu_up_processor)
+add_subdirectory(du_processor)
+add_subdirectory(routines)
 add_subdirectory(ue_manager)
 add_subdirectory(up_resource_manager)
 add_subdirectory(mobility)
@@ -36,6 +37,7 @@ add_library(cu_cp_test_helpers
         test_doubles/mock_du.cpp
         cu_cp_test_environment.cpp
         cu_cp_test_helpers.cpp
+        cu_cp_test_messages.cpp
         du_processor_test_messages.cpp
         test_helpers.cpp)
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})

@@ -32,7 +32,7 @@
 
 using namespace srsran;
 
-static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_unit_config& config)
+static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_mobility_config& config)
 {
   // check that report config ids are unique
   std::map<unsigned, std::string> report_cfg_ids_to_report_type;
@@ -44,10 +44,12 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_un
     report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
   }
 
+  std::map<nr_cell_id_t, std::set<unsigned>> cell_to_report_cfg_id;
+
   // check cu_cp_cell_config
   for (const auto& cell : config.cells) {
     std::set<nr_cell_id_t> ncis;
-    if (ncis.emplace(cell.nr_cell_id).second == false) {
+    if (!ncis.emplace(cell.nr_cell_id).second) {
       fmt::print("Cells must be unique ({:#x} already present)\n");
       return false;
     }
@@ -58,31 +60,55 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_un
       return false;
     }
 
-    // check that for the serving cell only periodic reports are configured
     if (cell.periodic_report_cfg_id.has_value()) {
+      // try to add report config id to cell_to_report_cfg_id map
+      cell_to_report_cfg_id.emplace(cell.nr_cell_id, std::set<unsigned>());
+      auto& report_cfg_ids = cell_to_report_cfg_id.at(cell.nr_cell_id);
+      if (!report_cfg_ids.emplace(cell.periodic_report_cfg_id.value()).second) {
+        fmt::print("cell={}: report_config_id={} already configured for this cell)\n",
+                   cell.nr_cell_id,
+                   cell.periodic_report_cfg_id.value());
+        return false;
+      }
+      // check that for the serving cell only periodic reports are configured
       if (report_cfg_ids_to_report_type.at(cell.periodic_report_cfg_id.value()) != "periodical") {
         fmt::print("For the serving cell only periodic reports are allowed\n");
         return false;
       }
     }
 
-    // Check if cell is an external managed cell
+    // check if cell is an external managed cell
     if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
       if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
           !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
-        fmt::print(
-            "For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, ssb_offset and "
-            "ssb_duration must be configured in the mobility config\n");
+        fmt::print("cell={:#x}: For external cells, the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+                   "ssb_offset and "
+                   "ssb_duration must be configured in the mobility config\n",
+                   cell.nr_cell_id);
         return false;
       }
     } else {
       if (cell.pci.has_value() || cell.band.has_value() || cell.ssb_arfcn.has_value() || cell.ssb_scs.has_value() ||
           cell.ssb_period.has_value() || cell.ssb_offset.has_value() || cell.ssb_duration.has_value()) {
-        fmt::print("For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, ssb_period, "
+        fmt::print("cell={:#x}: For cells managed by the CU-CP the gnb_id_bit_length, pci, band, ssb_argcn, ssb_scs, "
+                   "ssb_period, "
                    "ssb_offset and "
-                   "ssb_duration must not be configured in the mobility config\n");
+                   "ssb_duration must not be configured in the mobility config\n",
+                   cell.nr_cell_id);
         return false;
+      }
+    }
+
+    // check that for neighbor cells managed by this CU-CP no periodic reports are configured
+    for (const auto& ncell : cell.ncells) {
+      // try to add report config ids to cell_to_report_cfg_id map
+      for (const auto& id : ncell.report_cfg_ids) {
+        if (cell_to_report_cfg_id.find(ncell.nr_cell_id) != cell_to_report_cfg_id.end() &&
+            !cell_to_report_cfg_id.at(ncell.nr_cell_id).emplace(id).second) {
+          fmt::print("cell={}: report_config_id={} already configured for this cell\n", ncell.nr_cell_id, id);
+          return false;
+        }
       }
     }
   }
@@ -91,7 +117,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const mobility_un
 }
 
 /// Validates the given security configuration. Returns true on success, otherwise false.
-static bool validate_security_appconfig(const security_unit_config& config)
+static bool validate_security_appconfig(const cu_cp_unit_security_config& config)
 {
   // String splitter helper
   auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
@@ -151,7 +177,7 @@ static bool validate_security_appconfig(const security_unit_config& config)
 }
 
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
-static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_cu_cp_unit_config& config)
+static bool validate_pdcp_appconfig(five_qi_t five_qi, const cu_cp_unit_pdcp_config& config)
 {
   if (config.integrity_protection_required) {
     fmt::print("PDCP DRB integrity protection is not supported yet. {}\n", five_qi);
@@ -194,7 +220,7 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_cu_cp_unit_con
   return true;
 }
 
-static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_cu_cp_unit_config& config)
+static bool validate_rlc_um_appconfig(five_qi_t five_qi, const cu_cp_unit_rlc_um_config& config)
 {
   // Validate TX.
 
@@ -230,7 +256,7 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_cu_cp_unit
 }
 
 template <typename id_type>
-static bool validate_rlc_am_appconfig(id_type id, const rlc_am_cu_cp_unit_config& config)
+static bool validate_rlc_am_appconfig(id_type id, const cu_cp_unit_rlc_am_config& config)
 {
   // Validate TX.
 
@@ -334,7 +360,7 @@ static bool validate_rlc_am_appconfig(id_type id, const rlc_am_cu_cp_unit_config
   return true;
 }
 
-static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_cu_cp_unit_config& config)
+static bool validate_rlc_appconfig(five_qi_t five_qi, const cu_cp_unit_rlc_config& config)
 {
   // Check mode.
   if (config.mode != "am" && config.mode != "um-bidir") {
@@ -357,7 +383,7 @@ static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_cu_cp_unit_confi
 }
 
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
-static bool validate_qos_appconfig(span<const qos_cu_cp_unit_config> config)
+static bool validate_qos_appconfig(span<const cu_cp_unit_qos_config> config)
 {
   for (const auto& qos : config) {
     if (!validate_pdcp_appconfig(qos.five_qi, qos.pdcp)) {

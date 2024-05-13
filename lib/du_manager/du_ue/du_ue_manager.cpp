@@ -133,6 +133,14 @@ void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, d
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
 }
 
+void du_ue_manager::handle_ue_config_applied(du_ue_index_t ue_index)
+{
+  srsran_assert(ue_db.contains(ue_index), "Invalid UE index={}", ue_index);
+
+  // Forward configuration to MAC.
+  cfg.mac.ue_cfg.handle_ue_config_applied(ue_index);
+}
+
 async_task<du_mac_sched_control_config_response>
 du_ue_manager::handle_ue_config_request(const du_mac_sched_control_config& msg)
 {

@@ -47,7 +47,10 @@ public:
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   timer_factory                  timers,
-                  task_executor&                 ue_executor_);
+                  task_executor&                 ue_executor_,
+                  f1u_bearer_disconnector&       disconnector_);
+
+  ~f1u_bearer_impl() override { stop(); }
 
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -61,17 +64,19 @@ public:
   void stop() override;
 
 private:
-  void on_expired_ul_notif_timer();
-
   f1u_bearer_logger logger;
 
   /// Config storage
-  const f1u_config cfg;
+  const f1u_config              cfg;
+  const up_transport_layer_info dl_tnl_info;
 
-  f1u_rx_sdu_notifier& rx_sdu_notifier;
-  f1u_tx_pdu_notifier& tx_pdu_notifier;
+  f1u_rx_sdu_notifier&     rx_sdu_notifier;
+  f1u_tx_pdu_notifier&     tx_pdu_notifier;
+  f1u_bearer_disconnector& disconnector;
 
   task_executor& ue_executor;
+
+  bool stopped = false;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;
@@ -94,6 +99,8 @@ private:
   void fill_data_delivery_status(nru_ul_message& msg);
 
   void handle_pdu_impl(nru_dl_message msg);
+
+  void on_expired_ul_notif_timer();
 };
 
 } // namespace srs_du

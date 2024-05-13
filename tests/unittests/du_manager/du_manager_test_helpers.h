@@ -221,19 +221,20 @@ class f1u_gateway_dummy : public f1u_du_gateway
 public:
   bool next_bearer_is_created = true;
 
-  srs_du::f1u_bearer* create_du_bearer(uint32_t                       ue_index,
-                                       drb_id_t                       drb_id,
-                                       srs_du::f1u_config             config,
-                                       const up_transport_layer_info& dl_tnl_info,
-                                       const up_transport_layer_info& ul_tnl_info,
-                                       srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                       timer_factory                  timers,
-                                       task_executor&                 ue_executor) override
+  std::unique_ptr<srs_du::f1u_bearer> create_du_bearer(uint32_t                       ue_index,
+                                                       drb_id_t                       drb_id,
+                                                       srs_du::f1u_config             config,
+                                                       const up_transport_layer_info& dl_tnl_info,
+                                                       const up_transport_layer_info& ul_tnl_info,
+                                                       srs_du::f1u_rx_sdu_notifier&   du_rx,
+                                                       timer_factory                  timers,
+                                                       task_executor&                 ue_executor) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_tnl_info) == 0) {
-      f1u_bearers.insert(std::make_pair(dl_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy>{}));
-      f1u_bearers[dl_tnl_info].emplace(ul_tnl_info, du_rx);
-      return &f1u_bearers.at(dl_tnl_info).at(ul_tnl_info);
+      auto f1u_bearer = std::make_unique<f1u_bearer_dummy>(du_rx);
+      f1u_bearers.insert(std::make_pair(dl_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy*>{}));
+      f1u_bearers[dl_tnl_info].emplace(ul_tnl_info, f1u_bearer.get());
+      return f1u_bearer;
     }
     return nullptr;
   }
@@ -249,7 +250,7 @@ public:
     f1u_bearers.erase(bearer_it);
   }
 
-  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_bearer_dummy>> f1u_bearers;
+  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_bearer_dummy*>> f1u_bearers;
 };
 
 class mac_test_dummy : public mac_cell_manager,
@@ -274,6 +275,7 @@ public:
   optional<mac_ue_delete_request>                           last_ue_delete_msg{};
   optional<mac_dl_buffer_state_indication_message>          last_dl_bs;
   byte_buffer                                               last_pushed_ul_ccch_msg;
+  optional<du_ue_index_t>                                   last_ue_config_applied;
   wait_manual_event_tester<mac_ue_create_response>          wait_ue_create;
   wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
@@ -304,6 +306,7 @@ public:
     last_pushed_ul_ccch_msg = std::move(pdu);
     return next_ul_ccch_msg_result;
   }
+  void handle_ue_config_applied(du_ue_index_t ue_index) override { last_ue_config_applied = ue_index; }
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override
   {

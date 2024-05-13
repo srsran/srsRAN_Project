@@ -110,9 +110,8 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker;
 
   epoll_broker = create_io_broker(io_broker_type::epoll);
-  bool success = epoll_broker->register_fd(gw->get_socket_fd(), [&gw](int fd) { gw->receive(); });
-  if (!success) {
-    report_fatal_error("Failed to register UDP network gateway at IO broker. socket_fd={}", gw->get_socket_fd());
+  if (not gw->subscribe_to(*epoll_broker)) {
+    report_fatal_error("Failed to register UDP network gateway at IO broker.");
   }
 
   // Wait for all packets to be received

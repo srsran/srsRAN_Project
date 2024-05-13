@@ -32,18 +32,21 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                                  timer_factory                  timers,
-                                 task_executor&                 ue_executor_) :
+                                 task_executor&                 ue_executor_,
+                                 f1u_bearer_disconnector&       disconnector_) :
   logger("DU-F1-U", {ue_index, drb_id_, dl_tnl_info_}),
   cfg(config),
+  dl_tnl_info(dl_tnl_info_),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
+  disconnector(disconnector_),
   ue_executor(ue_executor_),
   ul_notif_timer(timers.create_timer())
 {
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
-  logger.log_info("F1-U bearer configured. {}", cfg);
+  logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
@@ -75,6 +78,10 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 void f1u_bearer_impl::stop()
 {
   ul_notif_timer.stop();
+  if (not stopped) {
+    disconnector.remove_du_bearer(dl_tnl_info);
+  }
+  stopped = true;
 }
 
 void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)

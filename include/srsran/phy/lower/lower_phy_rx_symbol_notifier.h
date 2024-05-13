@@ -53,11 +53,6 @@ public:
   /// \param[in] context PRACH context.
   /// \param[in] buffer  Read-only PRACH buffer.
   virtual void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
-
-  /// \brief Notifies the completion of SRS symbols.
-  ///
-  /// \param[in] context Notification context.
-  virtual void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) = 0;
 };
 
 } // namespace srsran

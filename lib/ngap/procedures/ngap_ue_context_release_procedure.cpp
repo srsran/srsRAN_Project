@@ -33,13 +33,13 @@ ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
     const cu_cp_ue_context_release_command&                     command_,
     const ngap_ue_ids&                                          ue_ids_,
     std::unordered_map<ue_index_t, error_indication_request_t>& stored_error_indications_,
-    ngap_du_processor_control_notifier&                         du_processor_ctrl_notifier_,
+    ngap_cu_cp_notifier&                                        cu_cp_notifier_,
     ngap_message_notifier&                                      amf_notifier_,
     ngap_ue_logger&                                             logger_) :
   command(command_),
   ue_ids(ue_ids_),
   stored_error_indications(stored_error_indications_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   amf_notifier(amf_notifier_),
   logger(logger_)
 {
@@ -52,7 +52,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
   logger.log_debug("\"{}\" initialized", name());
 
   // Notify DU processor about UE Context Release Command
-  CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
+  CORO_AWAIT_VALUE(ue_context_release_complete, cu_cp_notifier.on_new_ue_context_release_command(command));
 
   // Verify response from DU processor.
   if (ue_context_release_complete.ue_index != command.ue_index) {

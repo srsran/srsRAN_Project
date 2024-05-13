@@ -94,15 +94,7 @@ public:
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
   /// \brief Handle received SR indication.
-  void handle_sr_indication()
-  {
-    // Reception of the SR means that the UE has applied its dedicated configuration; this triggers the new state
-    // transition to \ref fallback_state::sr_csi_received.
-    if (ue_cells[0]->is_in_fallback_mode()) {
-      ue_cells[0]->set_fallback_state(ue_cell::fallback_state::sr_csi_received);
-    }
-    ul_lc_ch_mgr.handle_sr_indication();
-  }
+  void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
 
   /// \brief Once an UL grant is given, the SR status of the UE must be reset.
   void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }

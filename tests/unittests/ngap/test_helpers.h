@@ -162,12 +162,6 @@ public:
 
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
-  bool on_new_rrc_handover_command(byte_buffer cmd) override
-  {
-    last_handover_command = std::move(cmd);
-    return true;
-  }
-
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
   {
     ho_preparation_message = std::move(ho_preparation_message_);
@@ -183,12 +177,73 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy NGAP to DU processor notifier
-class dummy_ngap_du_processor_notifier : public ngap_du_processor_control_notifier
+class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier
 {
 public:
-  dummy_ngap_du_processor_notifier(ngap_ue_context_removal_handler& ngap_handler_) :
-    logger(srslog::fetch_basic_logger("TEST")), ngap_handler(ngap_handler_){};
+  dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    logger.info("Received a new Paging message");
+    last_msg = std::move(msg);
+  }
+
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
+
+  async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) override
+  {
+    return launch_async([res = ngap_handover_resource_allocation_response{}](
+                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_RETURN(res);
+    });
+  }
+
+  cu_cp_paging_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+class dummy_ngap_cu_cp_notifier : public ngap_cu_cp_notifier
+{
+public:
+  dummy_ngap_cu_cp_notifier(ngap_ue_manager& ue_manager_) :
+    ue_manager(ue_manager_), logger(srslog::fetch_basic_logger("TEST")){};
+
+  void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
+
+  void add_ue(ue_index_t                    ue_index,
+              ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+              ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
+  {
+    ue_notifiers_map.emplace(ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier});
+  }
+
+  bool on_new_ngap_ue(ue_index_t ue_index) override
+  {
+    srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
+    auto& ue_notifier = ue_notifiers_map.at(ue_index);
+
+    srsran_assert(ue_notifier.rrc_ue_pdu_notifier != nullptr, "rrc_ue_pdu_notifier must not be nullptr");
+    srsran_assert(ue_notifier.rrc_ue_ctrl_notifier != nullptr, "rrc_ue_ctrl_notifier must not be nullptr");
+
+    last_ue = ue_index;
+
+    // Add NGAP UE to UE manager
+    ngap_ue* ue =
+        ue_manager.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
+
+    if (ue == nullptr) {
+      logger.error("ue={}: Failed to create UE", ue_index);
+      return false;
+    }
+
+    logger.info("ue={}: NGAP UE was created", ue_index);
+    return true;
+  }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
@@ -253,6 +308,8 @@ public:
   async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) override
   {
+    srsran_assert(ngap_handler != nullptr, "ngap_handler must not be nullptr");
+
     logger.info("Received a new UE Context Release Command");
 
     last_command.ue_index = command.ue_index;
@@ -261,7 +318,7 @@ public:
     cu_cp_ue_context_release_complete release_complete;
     release_complete.ue_index = command.ue_index;
 
-    ngap_handler.remove_ue_context(command.ue_index);
+    ngap_handler->remove_ue_context(command.ue_index);
 
     return launch_async([release_complete](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -270,10 +327,20 @@ public:
     });
   }
 
-  cu_cp_ue_context_release_command           last_command;
-  cu_cp_pdu_session_resource_setup_request   last_request;
-  cu_cp_pdu_session_resource_modify_request  last_modify_request;
-  cu_cp_pdu_session_resource_release_command last_release_command;
+  async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
+  {
+    logger.info("Received a new Handover Command");
+
+    last_handover_command = std::move(command);
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  cu_cp_ue_context_release_command last_command;
+  byte_buffer                      last_handover_command;
 
   ue_index_t allocate_ue_index()
   {
@@ -287,99 +354,26 @@ public:
     return ue_index;
   }
 
-  optional<ue_index_t> last_created_ue_index;
+  ue_index_t                                 last_ue = ue_index_t::invalid;
+  cu_cp_pdu_session_resource_setup_request   last_request;
+  cu_cp_pdu_session_resource_modify_request  last_modify_request;
+  cu_cp_pdu_session_resource_release_command last_release_command;
+  optional<ue_index_t>                       last_created_ue_index;
 
 private:
-  srslog::basic_logger&            logger;
-  uint64_t                         ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
-  ngap_ue_context_removal_handler& ngap_handler;
-};
-
-class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier
-{
-public:
-  dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void on_paging_message(cu_cp_paging_message& msg) override
-  {
-    logger.info("Received a new Paging message");
-    last_msg = std::move(msg);
-  }
-
-  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
-
-  async_task<ngap_handover_resource_allocation_response>
-  on_ngap_handover_request(const ngap_handover_request& request) override
-  {
-    return launch_async([res = ngap_handover_resource_allocation_response{}](
-                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      CORO_RETURN(res);
-    });
-  }
-
-  cu_cp_paging_message last_msg;
-
-private:
+  ngap_ue_manager&      ue_manager;
   srslog::basic_logger& logger;
-};
 
-class dummy_ngap_cu_cp_ue_creation_notifier : public ngap_cu_cp_ue_creation_notifier
-{
-public:
-  dummy_ngap_cu_cp_ue_creation_notifier(ngap_ue_manager& ue_manager_) :
-    ue_manager(ue_manager_), logger(srslog::fetch_basic_logger("TEST")){};
-
-  void add_ue(ue_index_t                          ue_index,
-              ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-              ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-              ngap_du_processor_control_notifier& du_processor_ctrl_notifier)
-  {
-    ue_notifiers_map.emplace(
-        ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier, &du_processor_ctrl_notifier});
-  }
-
-  bool on_new_ngap_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
-    auto& ue_notifier = ue_notifiers_map.at(ue_index);
-
-    srsran_assert(ue_notifier.rrc_ue_pdu_notifier != nullptr, "rrc_ue_pdu_notifier must not be nullptr");
-    srsran_assert(ue_notifier.rrc_ue_ctrl_notifier != nullptr, "rrc_ue_ctrl_notifier must not be nullptr");
-    srsran_assert(ue_notifier.du_processor_ctrl_notifier != nullptr, "du_processor_ctrl_notifier must not be nullptr");
-
-    last_ue = ue_index;
-
-    // Add NGAP UE to UE manager
-    ngap_ue* ue = ue_manager.set_ue_ng_context(ue_index,
-                                               *ue_notifier.rrc_ue_pdu_notifier,
-                                               *ue_notifier.rrc_ue_ctrl_notifier,
-                                               *ue_notifier.du_processor_ctrl_notifier);
-
-    if (ue == nullptr) {
-      logger.error("ue={}: Failed to create UE", ue_index);
-      return false;
-    }
-
-    logger.info("ue={}: NGAP UE was created", ue_index);
-    return true;
-  }
-
-  ue_index_t last_ue = ue_index_t::invalid;
-
-private:
-  ngap_ue_manager& ue_manager;
-
-  srslog::basic_logger& logger;
+  ngap_ue_context_removal_handler* ngap_handler = nullptr;
 
   struct ngap_ue_notifiers {
-    ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
-    ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
-    ngap_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+    ngap_rrc_ue_pdu_notifier*     rrc_ue_pdu_notifier  = nullptr;
+    ngap_rrc_ue_control_notifier* rrc_ue_ctrl_notifier = nullptr;
   };
 
   std::map<ue_index_t, ngap_ue_notifiers> ue_notifiers_map;
+
+  uint64_t ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
 } // namespace srs_cu_cp

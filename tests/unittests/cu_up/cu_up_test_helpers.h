@@ -30,7 +30,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
-#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include <chrono>
 #include <condition_variable>
 #include <list>
@@ -83,7 +83,8 @@ public:
   dummy_gtpu_demux_ctrl()  = default;
   ~dummy_gtpu_demux_ctrl() = default;
 
-  bool add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
+  bool
+  add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
     return true;
@@ -121,7 +122,7 @@ public:
 };
 
 /// Dummy adapter between GTP-U and Network Gateway
-class dummy_gtpu_network_gateway_adapter final : public gtpu_tunnel_tx_upper_layer_notifier
+class dummy_gtpu_network_gateway_adapter final : public gtpu_tunnel_common_tx_upper_layer_notifier
 {
 public:
   dummy_gtpu_network_gateway_adapter()           = default;

@@ -53,17 +53,6 @@ public:
     rx_symbol_handler.on_new_prach_window_data(context, buffer);
   }
 
-  // See interface for documentation.
-  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
-  {
-    ru_uplink_rx_symbol_context upper_context;
-    upper_context.slot      = context.slot;
-    upper_context.sector    = context.sector;
-    upper_context.symbol_id = context.nof_symbols;
-
-    rx_symbol_handler.on_rx_srs_symbol(upper_context);
-  }
-
 private:
   ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler;
 };

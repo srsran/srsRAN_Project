@@ -198,7 +198,7 @@ static bool validate_rapid(unsigned value, message_type_id msg_id, validator_rep
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RAPID", msg_id, report);
 }
 
-/// Validates the HARQ ID property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
+/// Validates the HARQ ID property of a CRC.indication PDU or Rx_Data.indication PDU, as per SCF-222 v4.0 section 3.4.8
 /// and 3.4.7.
 static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_report& report)
 {
@@ -208,8 +208,9 @@ static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_r
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", msg_id, report);
 }
 
-/// Validates the timing advance offset property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
-static bool validate_timing_advance_offset(unsigned value, validator_report& report)
+/// Validates the timing advance offset property of a CRC.indication or SRS.indication PDU, as per SCF-222 v4.0
+/// section 3.4.8 and 3.4.10.
+static bool validate_timing_advance_offset(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned INVALID   = 65535;
   static constexpr unsigned MIN_VALUE = 0;
@@ -219,12 +220,12 @@ static bool validate_timing_advance_offset(unsigned value, validator_report& rep
     return true;
   }
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Timing advance offset", message_type_id::crc_indication, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Timing advance offset", msg_id, report);
 }
 
-/// Validates the timing advance offset in nanoseconds property of a CRC.indication PDU, as per SCF-222 v4.0
-/// section 3.4.8.
-static bool validate_timing_advance_offset_ns(int value, validator_report& report)
+/// Validates the timing advance offset in nanoseconds property of a CRC.indication or SRS.indication PDU, as per
+/// SCF-222 v4.0 section 3.4.8 and 3.4.10.
+static bool validate_timing_advance_offset_ns(int value, message_type_id msg_id, validator_report& report)
 {
   static constexpr int INVALID   = -32768;
   static constexpr int MIN_VALUE = -16800;
@@ -234,8 +235,7 @@ static bool validate_timing_advance_offset_ns(int value, validator_report& repor
     return true;
   }
 
-  return validate_field(
-      MIN_VALUE, MAX_VALUE, value, "Timing advance offset in nanoseconds", message_type_id::crc_indication, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Timing advance offset in nanoseconds", msg_id, report);
 }
 
 /// Validates the RSSI property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
@@ -283,8 +283,8 @@ error_type<validator_report> srsran::fapi::validate_crc_indication(const crc_ind
     success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
     // NOTE: CB CRC status bitmap property will not be validated.
     // NOTE: SINR property uses the whole variable range, so it will not be tested.
-    success &= validate_timing_advance_offset(pdu.timing_advance_offset, report);
-    success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, report);
+    success &= validate_timing_advance_offset(pdu.timing_advance_offset, message_type_id::crc_indication, report);
+    success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, message_type_id::crc_indication, report);
     success &= validate_rssi(pdu.rssi, report);
     success &= validate_rsrp(pdu.rsrp, report);
   }
@@ -436,6 +436,53 @@ error_type<validator_report> srsran::fapi::validate_rach_indication(const rach_i
       success &= validate_preamble_power(preamble.preamble_pwr, report);
       // NOTE: Preamble SNR property uses the whole range of the property, so it will not be validated.
     }
+  }
+
+  // Build the result.
+  if (!success) {
+    return {std::move(report)};
+  }
+
+  return {};
+}
+
+/// Validates the SRS usage property of the SRS.indication PDU, as per SCF-222 v4.0 section 3.4.10 in table
+/// SRS.indication message body.
+static bool validate_srs_usage(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 3;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "SRS usage", message_type_id::srs_indication, report);
+}
+
+/// Validates the report type of the SRS.indication PDU, as per SCF-222 v4.0 section 3.4.10 in table SRS.indication
+/// message body.
+static bool validate_report_type(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 1;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Report type", message_type_id::srs_indication, report);
+}
+
+error_type<validator_report> srsran::fapi::validate_srs_indication(const srs_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, message_type_id::srs_indication, report);
+  success &= validate_slot(msg.slot, message_type_id::srs_indication, report);
+  // NOTE: Control length property will not be validated.
+
+  for (const auto& pdu : msg.pdus) {
+    // NOTE: Handle property will not be validated.
+    success &= validate_rnti(to_value(pdu.rnti), message_type_id::srs_indication, report);
+    success &= validate_timing_advance_offset(pdu.timing_advance_offset, message_type_id::srs_indication, report);
+    success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, message_type_id::srs_indication, report);
+    success &= validate_srs_usage(static_cast<unsigned>(pdu.srs_usage), report);
+    success &= validate_report_type(pdu.report_type, report);
   }
 
   // Build the result.

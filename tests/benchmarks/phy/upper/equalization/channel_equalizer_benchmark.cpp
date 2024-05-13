@@ -93,8 +93,9 @@ int main(int argc, char** argv)
   for (unsigned i_rx_port = 1; i_rx_port <= max_simo_rx_ports; ++i_rx_port) {
     channel_topologies.emplace_back(std::make_pair(i_rx_port, 1));
   }
-  // MIMO 2x2.
+  // MIMO 2x2 and 2x4.
   channel_topologies.emplace_back(std::make_pair(2, 2));
+  channel_topologies.emplace_back(std::make_pair(4, 2));
 
   for (auto topology : channel_topologies) {
     // Get dimensions.
@@ -106,10 +107,8 @@ int main(int argc, char** argv)
     // Create input and output data tensors.
     dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims> rx_symbols(
         {nof_subcarriers * nof_ofdm_symbols, nof_rx_ports});
-    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims> eq_symbols(
-        {nof_subcarriers * nof_ofdm_symbols, nof_tx_layers});
-    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), float, re_dims> eq_noise_vars(
-        {nof_subcarriers * nof_ofdm_symbols, nof_tx_layers});
+    std::vector<cf_t>  eq_symbols(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
+    std::vector<float> eq_noise_vars(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
 
     // Create channel estimates tensor.
     dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims> channel_ests(

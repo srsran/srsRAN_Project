@@ -190,7 +190,7 @@ TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
   }
   radio_config.log_level        = log_level;
   radio_config.sampling_rate_hz = sample_rate_hz;
-  radio_config.discontinuous_tx = false;
+  radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
 
   // Notifier.
   radio_notifier_spy radio_notifier;

@@ -93,17 +93,13 @@ public:
   upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
                                    uplink_slot_pdu_repository&    ul_pdu_repository_,
                                    rx_buffer_pool&                buffer_pool_,
-                                   upper_phy_rx_results_notifier& rx_results_notifier_,
-                                   srslog::basic_logger&          logger_);
+                                   upper_phy_rx_results_notifier& rx_results_notifier_);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;
 
   // See interface for documentation.
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
-
-  // See interface for documentation.
-  void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override;
 
 private:
   /// Process the given PUSCH PDU using the given uplink processor, grid and slot.
@@ -121,8 +117,6 @@ private:
   rx_buffer_pool& rm_buffer_pool;
   /// Upper PHY results notifier.
   upper_phy_rx_results_notifier& rx_results_notifier;
-  /// Upper PHY logger.
-  srslog::basic_logger& logger;
   /// Pool of containers for the payload.
   rx_payload_buffer_pool rx_payload_pool;
 };

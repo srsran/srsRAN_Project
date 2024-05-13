@@ -39,13 +39,13 @@ void srsran::fapi::log_error_indication(const error_indication_message& msg, srs
   logger.debug("{}", to_c_str(buffer));
 }
 
-/// Converts the given FAPI CRC SINR to dBs as per SCF-222 v4.0 section 3.4.8.
+/// Converts the given FAPI CRC SINR to dB as per SCF-222 v4.0 section 3.4.8.
 static float to_crc_ul_sinr(int sinr)
 {
   return static_cast<float>(sinr) * 0.002F;
 }
 
-/// Converts the given FAPI CRC RSRP to dBs as per SCF-222 v4.0 section 3.4.8.
+/// Converts the given FAPI CRC RSRP to dB as per SCF-222 v4.0 section 3.4.8.
 static float to_crc_ul_rsrp(unsigned rsrp)
 {
   return static_cast<float>(rsrp - 1400) * 0.1F;
@@ -160,19 +160,19 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog:
   logger.debug("{}", to_c_str(buffer));
 }
 
-/// Converts the given FAPI RACH occasion RSSI to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH occasion RSSI to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_rach_rssi_dB(int fapi_rssi)
 {
   return (fapi_rssi - 140000) * 0.001F;
 }
 
-/// Converts the given FAPI RACH preamble power to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH preamble power to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_rach_preamble_power_dB(int fapi_power)
 {
   return static_cast<float>(fapi_power - 140000) * 0.001F;
 }
 
-/// Converts the given FAPI RACH preamble SNR to dBs as per SCF-222 v4.0 section 3.4.11.
+/// Converts the given FAPI RACH preamble SNR to dB as per SCF-222 v4.0 section 3.4.11.
 static float to_rach_preamble_snr_dB(int fapi_snr)
 {
   return (fapi_snr - 128) * 0.5F;
@@ -226,13 +226,13 @@ void srsran::fapi::log_tx_data_request(const tx_data_request_message& msg, srslo
   logger.debug("Tx_Data.request slot={}.{} nof_pdus={}", msg.sfn, msg.slot, msg.pdus.size());
 }
 
-/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI SINR to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_sinr(int sinr)
 {
   return static_cast<float>(sinr) * 0.002F;
 }
 
-/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
+/// Converts the given FAPI UCI RSRP to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_rsrp(unsigned rsrp)
 {
   return static_cast<float>(rsrp - 1400) * 0.1F;

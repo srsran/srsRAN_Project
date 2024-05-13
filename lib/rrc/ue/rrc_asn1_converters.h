@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/security/security.h"
@@ -244,6 +246,20 @@ integrity_prot_algorithm_to_rrc_asn1(const security::integrity_algorithm& integr
   }
 
   return asn1_integrity_prot_algo;
+}
+
+inline cu_cp_amf_identifier_t asn1_to_amf_identifier(const asn1::fixed_bitstring<24>& asn1_amf_id)
+{
+  cu_cp_amf_identifier_t amf_id;
+
+  uint32_t amf_identifier = 0;
+  amf_identifier          = (uint32_t)asn1_amf_id.to_number();
+
+  amf_id.amf_region_id = amf_identifier >> 16U;
+  amf_id.amf_set_id    = (amf_identifier - (amf_id.amf_region_id << 16U)) >> 6U;
+  amf_id.amf_pointer   = (amf_identifier << 26U) >> 26U;
+
+  return amf_id;
 }
 
 } // namespace srs_cu_cp

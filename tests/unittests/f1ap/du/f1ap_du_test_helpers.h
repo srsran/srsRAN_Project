@@ -74,6 +74,7 @@ public:
   optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
   f1ap_ue_context_update_response            next_ue_context_update_response;
   optional<f1ap_ue_delete_request>           last_ue_delete_req;
+  optional<du_ue_index_t>                    last_ue_cfg_applied;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -115,6 +116,8 @@ public:
       CORO_RETURN();
     });
   }
+
+  void on_ue_config_applied(du_ue_index_t ue_index) override { last_ue_cfg_applied = ue_index; }
 
   async_task<void> request_ue_drb_deactivation(du_ue_index_t ue_index) override { return launch_no_op_task(); }
 

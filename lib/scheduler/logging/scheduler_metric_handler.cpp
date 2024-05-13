@@ -57,13 +57,13 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
     auto& u = ues[crc_pdu.ue_index];
     u.data.count_crc_acks += crc_pdu.tb_crc_success ? 1 : 0;
     u.data.count_crc_pdus++;
-    if (crc_pdu.ul_sinr_metric.has_value()) {
+    if (crc_pdu.ul_sinr_dB.has_value()) {
       u.data.nof_pusch_snr_reports++;
-      u.data.sum_pusch_snrs += crc_pdu.ul_sinr_metric.value();
+      u.data.sum_pusch_snrs += crc_pdu.ul_sinr_dB.value();
     }
-    if (crc_pdu.ul_rsrp_metric.has_value()) {
+    if (crc_pdu.ul_rsrp_dBFS.has_value()) {
       u.data.nof_pusch_rsrp_reports++;
-      u.data.sum_pusch_rsrp += crc_pdu.ul_rsrp_metric.value();
+      u.data.sum_pusch_rsrp += crc_pdu.ul_rsrp_dBFS.value();
     }
     if (crc_pdu.tb_crc_success) {
       u.data.sum_ul_tb_bytes += tbs.value();
@@ -122,8 +122,8 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
     if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu)) {
       auto& f1 = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu);
 
-      if (f1.ul_sinr.has_value()) {
-        handle_pucch_sinr(u, f1.ul_sinr.value());
+      if (f1.ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f1.ul_sinr_dB.value());
       }
 
       if (f1.time_advance_offset.has_value()) {
@@ -132,8 +132,8 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
     } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu)) {
       auto& f2 = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu);
 
-      if (f2.ul_sinr.has_value()) {
-        handle_pucch_sinr(u, f2.ul_sinr.value());
+      if (f2.ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f2.ul_sinr_dB.value());
       }
 
       if (f2.csi.has_value()) {

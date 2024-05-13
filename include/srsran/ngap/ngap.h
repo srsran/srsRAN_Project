@@ -87,15 +87,45 @@ public:
 };
 
 /// Interface to notify the CU-CP about an NGAP UE creation.
-class ngap_cu_cp_ue_creation_notifier
+class ngap_cu_cp_notifier
 {
 public:
-  virtual ~ngap_cu_cp_ue_creation_notifier() = default;
+  virtual ~ngap_cu_cp_notifier() = default;
 
   /// \brief Notifies the CU-CP about a new NGAP UE.
   /// \param[in] ue_index The index of the new NGAP UE.
   /// \returns True if the UE was successfully created, false otherwise.
   virtual bool on_new_ngap_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
+  /// \param[in] request The received PDU Session Resource Setup Request.
+  /// \returns The PDU Session Resource Setup Response.
+  virtual async_task<cu_cp_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Modify Request.
+  /// \param[in] request The received PDU Session Resource Modify Request.
+  /// \returns The PDU Session Resource Modify Response.
+  virtual async_task<cu_cp_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) = 0;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Release Command.
+  /// \param[in] command The received PDU Session Resource Release Command.
+  /// \returns The PDU Session Resource Release Response.
+  virtual async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
+
+  /// \brief Notify about the reception of a new UE Context Release Command.
+  /// \param[in] command the UE Context Release Command.
+  /// \returns The UE Context Release Complete.
+  virtual async_task<cu_cp_ue_context_release_complete>
+  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
+
+  /// \brief Notify about the reception of a new Handover Command.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] command The Handover Command.
+  /// \returns True if the Handover command is valid and was successfully handled by the DU.
+  virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 };
 
 /// Interface to communication with the DU repository
@@ -177,36 +207,6 @@ public:
 
   /// \brief Get the status of the security context.
   virtual bool on_security_enabled() = 0;
-
-  /// \brief Notify about the reception of a new Handover Command pdu.
-  /// \param[in] cmd The handover command RRC PDU.
-  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
-  virtual bool on_new_rrc_handover_command(byte_buffer cmd) = 0;
-};
-
-/// Interface to notify the DU Processor about control messages.
-class ngap_du_processor_control_notifier
-{
-public:
-  virtual ~ngap_du_processor_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Modify Request.
-  virtual async_task<cu_cp_pdu_session_resource_modify_response>
-  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) = 0;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Release Command.
-  virtual async_task<cu_cp_pdu_session_resource_release_response>
-  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
-
-  /// \brief Notify about the reception of a new UE Context Release Command.
-  /// \param[in] command the UE Context Release Command.
-  /// \returns The UE Context Release Complete.
-  virtual async_task<cu_cp_ue_context_release_complete>
-  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
 };
 
 /// Interface to control the NGAP.

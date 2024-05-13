@@ -139,3 +139,5 @@ async_task<bool> mac_scheduler_dummy_adapter::handle_ue_removal_request(const ma
     CORO_RETURN(true);
   });
 }
+
+void mac_scheduler_dummy_adapter::handle_ue_config_applied(du_ue_index_t ue_idx) {}

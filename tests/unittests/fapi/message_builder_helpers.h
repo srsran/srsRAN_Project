@@ -146,4 +146,8 @@ srsran::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
 /// Section 3.4.3.
 srsran::fapi::ul_tti_request_message build_valid_ul_tti_request();
 
+/// Builds and returns a valid SRS.indication. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.10.
+srsran::fapi::srs_indication_message build_valid_srs_indication();
+
 } // namespace unittest

@@ -48,9 +48,9 @@ add_executable(error_indication_builder_test error_indication_test.cpp)
 target_link_libraries(error_indication_builder_test srsran_support srslog gtest gtest_main)
 gtest_discover_tests(error_indication_builder_test)
 
-add_executable(rach_indicator_builder_test rach_indicator_test.cpp)
-target_link_libraries(rach_indicator_builder_test srsran_support srslog gtest gtest_main)
-gtest_discover_tests(rach_indicator_builder_test)
+add_executable(rach_indication_builder_test rach_indication_test.cpp)
+target_link_libraries(rach_indication_builder_test srsran_support srslog gtest gtest_main)
+gtest_discover_tests(rach_indication_builder_test)
 
 add_executable(rx_data_indication_builder_test rx_data_indication_test.cpp)
 target_link_libraries(rx_data_indication_builder_test srsran_support srslog gtest gtest_main)
@@ -59,6 +59,10 @@ gtest_discover_tests(rx_data_indication_builder_test)
 add_executable(slot_indication_builder_test slot_indication_test.cpp)
 target_link_libraries(slot_indication_builder_test srsran_support srslog gtest gtest_main)
 gtest_discover_tests(slot_indication_builder_test)
+
+add_executable(srs_indication_builder_test srs_indication_test.cpp)
+target_link_libraries(srs_indication_builder_test srsran_support srslog gtest gtest_main)
+gtest_discover_tests(srs_indication_builder_test)
 
 add_executable(tx_data_request_builder_test tx_data_request_test.cpp)
 target_link_libraries(tx_data_request_builder_test srsran_support srslog gtest gtest_main)

@@ -177,17 +177,94 @@ void interleave_bits_Qm<1>(bit_buffer& out, span<const uint8_t> in)
 }
 
 template <>
+void interleave_bits_Qm<6>(bit_buffer& out, span<const uint8_t> in)
+{
+  static constexpr unsigned Qm = 6;
+  unsigned                  E  = out.size();
+  unsigned                  K  = E / Qm;
+
+  const uint8_t* in_ptr  = in.data();
+  uint8_t*       out_ptr = out.get_buffer().data();
+
+  // Unrolled processing in batches of four symbols.
+  for (unsigned i = 0, i_end = (K / 4) * 4; i != i_end; ++i) {
+    // First symbol.
+    uint8_t byte = in_ptr[0 * K + i] << 7;
+    byte |= in_ptr[1 * K + i] << 6;
+    byte |= in_ptr[2 * K + i] << 5;
+    byte |= in_ptr[3 * K + i] << 4;
+    byte |= in_ptr[4 * K + i] << 3;
+    byte |= in_ptr[5 * K + i] << 2;
+
+    // Second symbol.
+    ++i;
+    byte |= in_ptr[0 * K + i] << 1;
+    byte |= in_ptr[1 * K + i] << 0;
+    *(out_ptr++) = byte;
+
+    byte = in_ptr[2 * K + i] << 7;
+    byte |= in_ptr[3 * K + i] << 6;
+    byte |= in_ptr[4 * K + i] << 5;
+    byte |= in_ptr[5 * K + i] << 4;
+
+    // Third symbol.
+    ++i;
+    byte |= in_ptr[0 * K + i] << 3;
+    byte |= in_ptr[1 * K + i] << 2;
+    byte |= in_ptr[2 * K + i] << 1;
+    byte |= in_ptr[3 * K + i] << 0;
+    *(out_ptr++) = byte;
+
+    byte = in_ptr[4 * K + i] << 7;
+    byte |= in_ptr[5 * K + i] << 6;
+
+    // Fourth symbol.
+    ++i;
+    byte |= in_ptr[0 * K + i] << 5;
+    byte |= in_ptr[1 * K + i] << 4;
+    byte |= in_ptr[2 * K + i] << 3;
+    byte |= in_ptr[3 * K + i] << 2;
+    byte |= in_ptr[4 * K + i] << 1;
+    byte |= in_ptr[5 * K + i] << 0;
+    *(out_ptr++) = byte;
+  }
+
+  // Remainder symbols.
+  for (unsigned i = (K / 4) * 4; i != K; ++i) {
+    uint8_t word = in[i];
+
+    for (unsigned j = 1; j != Qm; ++j) {
+      // Extract bit to pack.
+      uint8_t bit = in[K * j + i];
+
+      // Append bit to the word.
+      word = (word << 1) | bit;
+    }
+
+    // Insert word in the packed buffer.
+    out.insert(word, i * Qm, Qm);
+  }
+}
+
+template <>
 void interleave_bits_Qm<8>(bit_buffer& out, span<const uint8_t> in)
 {
   unsigned      E         = out.size();
   unsigned      K         = E / 8;
   span<uint8_t> out_bytes = out.get_buffer().first(K);
 
+  uint8_t* out_ptr = out.get_buffer().begin();
+
+  // Copy LSB for each byte.
   srsvec::copy(out_bytes, in.first(K));
+
+  // Append a bit in the LSB for each byte.
   for (unsigned q = 1; q != 8; ++q) {
-    span<const uint8_t> in_q = in.subspan(K * q, K);
+    // Select input pointer for the bit to append.
+    const uint8_t* in_q = in.subspan(K * q, K).begin();
+    // Vectorized
     for (unsigned k = 0; k != K; ++k) {
-      out_bytes[k] = (out_bytes[k] << 1) | in_q[k];
+      out_ptr[k] = (out_ptr[k] << 1) | in_q[k];
     }
   }
 }

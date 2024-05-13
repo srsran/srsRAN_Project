@@ -34,14 +34,15 @@ namespace srsran {
 namespace srs_du {
 
 struct f1u_bearer_creation_message {
-  uint32_t                ue_index;
-  drb_id_t                drb_id;
-  up_transport_layer_info dl_tnl_info;
-  f1u_config              config;
-  f1u_rx_sdu_notifier*    rx_sdu_notifier;
-  f1u_tx_pdu_notifier*    tx_pdu_notifier;
-  timer_factory           timers;
-  task_executor*          ue_executor;
+  uint32_t                 ue_index;
+  drb_id_t                 drb_id;
+  up_transport_layer_info  dl_tnl_info;
+  f1u_config               config;
+  f1u_rx_sdu_notifier*     rx_sdu_notifier;
+  f1u_tx_pdu_notifier*     tx_pdu_notifier;
+  timer_factory            timers;
+  task_executor*           ue_executor;
+  f1u_bearer_disconnector* disconnector;
 };
 
 /// \brief Creates an F1-U bearer for the DU.

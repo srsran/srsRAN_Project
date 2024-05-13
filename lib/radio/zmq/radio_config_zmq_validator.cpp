@@ -197,8 +197,8 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
     return false;
   }
 
-  if (config.discontinuous_tx) {
-    fmt::print("Discontinuous transmission mode is not supported by the ZMQ radio.\n");
+  if (config.tx_mode != radio_configuration::transmission_mode::continuous) {
+    fmt::print("Discontinuous transmission modes are not supported by the ZMQ radio.\n");
     return false;
   }
 

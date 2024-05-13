@@ -41,7 +41,7 @@ public:
 
   void update_pusch_snr(float snr_db) { pusch_snr_db = snr_db; }
 
-  /// \brief Get PUSCH SNR in dBs.
+  /// \brief Get PUSCH SNR in dB.
   float get_pusch_snr() const { return pusch_snr_db; }
 
   csi_report_wideband_cqi_type get_wideband_cqi() const { return wideband_cqi; }

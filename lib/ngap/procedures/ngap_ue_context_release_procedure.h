@@ -37,7 +37,7 @@ public:
       const cu_cp_ue_context_release_command&                     command_,
       const ngap_ue_ids&                                          ue_ids_,
       std::unordered_map<ue_index_t, error_indication_request_t>& stored_error_indications_,
-      ngap_du_processor_control_notifier&                         du_processor_ctrl_notifier_,
+      ngap_cu_cp_notifier&                                        cu_cp_notifier_,
       ngap_message_notifier&                                      amf_notifier_,
       ngap_ue_logger&                                             logger_);
 
@@ -53,7 +53,7 @@ private:
   const ngap_ue_ids                                           ue_ids;
   std::unordered_map<ue_index_t, error_indication_request_t>& stored_error_indications;
   cu_cp_ue_context_release_complete                           ue_context_release_complete;
-  ngap_du_processor_control_notifier&                         du_processor_ctrl_notifier;
+  ngap_cu_cp_notifier&                                        cu_cp_notifier;
   ngap_message_notifier&                                      amf_notifier;
   ngap_ue_logger                                              logger;
 };

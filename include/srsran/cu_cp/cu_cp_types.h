@@ -151,6 +151,14 @@ struct cu_cp_user_location_info_nr {
   optional<uint64_t>  time_stamp;
 };
 
+/// <AMF Identifier> = <AMF Region ID><AMF Set ID><AMF Pointer>
+/// with AMF Region ID length is 8 bits, AMF Set ID length is 10 bits and AMF Pointer length is 6 bits
+struct cu_cp_amf_identifier_t {
+  uint8_t  amf_region_id = 0;
+  uint16_t amf_set_id    = 0;
+  uint8_t  amf_pointer   = 0;
+};
+
 struct cu_cp_five_g_s_tmsi {
   uint16_t amf_set_id;
   uint8_t  amf_pointer;
@@ -163,6 +171,7 @@ struct cu_cp_initial_ue_message {
   establishment_cause_t         establishment_cause;
   cu_cp_user_location_info_nr   user_location_info;
   optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
+  optional<uint16_t>            amf_set_id;
 };
 
 struct cu_cp_ul_nas_transport {
@@ -578,17 +587,6 @@ struct cu_cp_inter_du_handover_request {
 };
 
 struct cu_cp_inter_du_handover_response {
-  // Place-holder for possible return values.
-  bool success = false;
-};
-
-struct cu_cp_inter_ngran_node_n2_handover_request {
-  ue_index_t   ue_index = ue_index_t::invalid;
-  gnb_id_t     gnb_id;
-  nr_cell_id_t nci;
-};
-
-struct cu_cp_inter_ngran_node_n2_handover_response {
   // Place-holder for possible return values.
   bool success = false;
 };

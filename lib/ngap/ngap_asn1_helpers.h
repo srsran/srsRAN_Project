@@ -176,6 +176,11 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
     asn1_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
   }
 
+  if (msg.amf_set_id.has_value()) {
+    asn1_msg->amf_set_id_present = true;
+    asn1_msg->amf_set_id.from_number(msg.amf_set_id.value());
+  }
+
   // TODO: Add missing optional values
 }
 

@@ -55,17 +55,6 @@ public:
     report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
     rx_symbol_handler->handle_rx_prach_window(context, buffer);
   }
-
-  // See interface for documentation.
-  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
-  {
-    report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
-    upper_phy_rx_symbol_context upper_context;
-    upper_context.slot   = context.slot;
-    upper_context.sector = context.sector;
-    upper_context.symbol = context.nof_symbols;
-    rx_symbol_handler->handle_rx_srs_symbol(upper_context);
-  }
 };
 
 } // namespace srsran

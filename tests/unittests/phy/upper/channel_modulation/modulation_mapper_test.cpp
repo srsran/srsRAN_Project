@@ -33,7 +33,7 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "modulation={} nsymbols={}", test_case.scheme, test_case.nsymbols);
+  fmt::print(os, "modulation={} nsymbols={}", to_string(test_case.scheme), test_case.nsymbols);
   return os;
 }
 

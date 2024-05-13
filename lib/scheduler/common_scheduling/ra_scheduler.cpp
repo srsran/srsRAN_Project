@@ -381,14 +381,10 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(pdcch_slot)) {
       if (pdcch_slot >= rar_req.rar_window.stop()) {
-        fmt::memory_buffer str_buffer;
-        fmt::format_to(str_buffer,
-                       "Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+        logger.warning("Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
                        pdcch_slot);
-        fmt::print("{}\n", to_c_str(str_buffer));
-        logger.warning("{}", to_c_str(str_buffer));
         it = pending_rars.erase(it);
         continue;
       }
@@ -643,7 +639,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.pusch_cfg.new_data = true;
 
     // Store parameters used in HARQ.
-    pending_msg3.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, pusch.pusch_cfg);
+    pending_msg3.harq.save_alloc_params(ul_harq_sched_context{dci_ul_rnti_config_type::tc_rnti_f0_0}, pusch.pusch_cfg);
   }
 }
 
@@ -750,7 +746,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     ul_info.pusch_cfg.new_data = false;
 
     // Store parameters used in HARQ.
-    msg3_ctx.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, ul_info.pusch_cfg);
+    msg3_ctx.harq.save_alloc_params(ul_harq_sched_context{dci_ul_rnti_config_type::tc_rnti_f0_0}, ul_info.pusch_cfg);
 
     // successful allocation. Exit loop.
     break;

@@ -20,7 +20,7 @@
  *
  */
 
-#include "../du_processor_test_messages.h"
+#include "../cu_cp_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/support/test_utils.h"

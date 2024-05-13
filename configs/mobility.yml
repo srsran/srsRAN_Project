@@ -1,22 +1,21 @@
 # Example configuration file for mobility.
 
-gnb_id: 1 # This will let the NR cell IDs start with 0x10 and increment for each cell of the DU.
-
 cu_cp:
   mobility:
     # List of all cells known to the CU-CP, their configs (if not provided over F1) and their respective neighbor cells.
     cells:
-      - nr_cell_id: 0x10
+      - nr_cell_id: 0x66C000 # For the default gnb_id=411 (gnb_id_bit_length=22), NR cell IDs start with 0x66C000 and increment for each cell of the DU.
         periodic_report_cfg_id: 1 # This will configure a periodical report config for the serving cell.
         ncells: # List of nr_cell_ids that are a neighbor of this serving cell.
           - nr_cell_id: 0x20
             report_configs: [ 2 ]
-      - nr_cell_id: 0x20
+      - nr_cell_id: 0x20 # This cell is not managed by this CU-CP
         ncells:
-            - nr_cell_id: 0x10
+            - nr_cell_id: 0x66C000
               report_configs: [ 2 ]
         # Must be present if values are not provided over F1.
-        gnb_id: 412
+        gnb_id_bit_length: 32
+        pci: 1
         ssb_arfcn: 632628
         band: 78
         ssb_scs: 30
@@ -27,7 +26,7 @@ cu_cp:
     # gNB uses this report config to dynamically build a measConfig sent to the UEs using the below values.
     report_configs:
       - report_cfg_id: 1
-        report_type: periodical # periodical reports are only supported for serving cells
+        report_type: periodical
         report_interval_ms: 1024
       - report_cfg_id: 2
         report_type: event_triggered

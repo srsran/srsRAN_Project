@@ -140,6 +140,9 @@ public:
 
   /// \brief Forward UL-CCCH message to upper layers.
   virtual bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
+
+  /// Handle the confirmation that the UE received the last UE dedicated RRC configuration.
+  virtual void handle_ue_config_applied(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsran

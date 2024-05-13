@@ -59,10 +59,6 @@ public:
   /// \param[in] context PRACH context: specifies sector, slot and window.
   /// \param[in] buffer  Read-only buffer containing the PRACH sequence.
   virtual void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
-
-  /// \brief Handles the arrival of SRS packets at a given symbol.
-  /// \param[in] context Notification context: specifies sector, slot and symbol.
-  virtual void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) = 0;
 };
 
 } // namespace srsran

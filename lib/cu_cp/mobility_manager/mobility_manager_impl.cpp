@@ -21,14 +21,23 @@
  */
 
 #include "mobility_manager_impl.h"
-#include "../du_processor/du_processor_impl_interface.h"
+#include "../du_processor/du_processor_repository.h"
 #include "srsran/ran/nr_cgi.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-mobility_manager::mobility_manager(const mobility_manager_cfg& cfg_, cu_cp_f1c_handler& du_db_, ue_manager& ue_mng_) :
-  cfg(cfg_), du_db(du_db_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("CU-CP"))
+mobility_manager::mobility_manager(const mobility_manager_cfg&      cfg_,
+                                   mobility_manager_cu_cp_notifier& cu_cp_notifier_,
+                                   ngap_control_message_handler&    ngap_handler_,
+                                   du_processor_repository&         du_db_,
+                                   ue_manager&                      ue_mng_) :
+  cfg(cfg_),
+  cu_cp_notifier(cu_cp_notifier_),
+  ngap_handler(ngap_handler_),
+  du_db(du_db_),
+  ue_mng(ue_mng_),
+  logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -70,6 +79,10 @@ void mobility_manager::handle_handover(ue_index_t   ue_index,
     logger.debug("ue={}: MeasurementReport ignored. Cause: UE cannot be reconfigured", ue_index);
     return;
   }
+  if (neighbor_pci == INVALID_PCI) {
+    logger.error("ue={}: Ignoring Handover Request. Cause: Invalid target PCI {} received", ue_index, neighbor_pci);
+    return;
+  }
 
   // Handover is going ahead.
 
@@ -99,7 +112,8 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
                                                 du_index_t target_du_index)
 {
   // Lookup CGI at target DU.
-  optional<nr_cell_global_id_t> cgi = du_db.get_du(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
+  optional<nr_cell_global_id_t> cgi =
+      du_db.get_du_processor(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
   if (!cgi.has_value()) {
     logger.warning(
         "ue={}: Couldn't retrieve CGI for pci={} at du_index={}", source_ue_index, neighbor_pci, target_du_index);
@@ -112,22 +126,13 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
 
-  // Lookup F1AP notifier of target DU.
-  du_processor_f1ap_ue_context_notifier& target_du_f1ap_notifier =
-      du_db.get_du(target_du_index).get_f1ap_ue_context_notifier();
-  du_processor_ue_context_notifier& target_du_processor_notifier =
-      du_db.get_du(target_du_index).get_du_processor_ue_context_notifier();
-
-  du_processor_ue_task_handler&  ue_task = du_db.get_du(source_du_index).get_du_processor_ue_task_handler();
-  du_processor_mobility_handler& mob     = du_db.get_du(source_du_index).get_mobility_handler();
+  du_processor_ue_task_handler& ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
 
   // Trigger Inter DU handover routine on the DU processor of the source DU.
-  cu_cp_inter_du_handover_response response;
-  auto ho_trigger = [request, response, &mob, &target_du_f1ap_notifier, &target_du_processor_notifier](
+  auto ho_trigger = [this, request, response = cu_cp_inter_du_handover_response{}, &source_du_index, &target_du_index](
                         coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(
-        response, mob.handle_inter_du_handover_request(request, target_du_f1ap_notifier, target_du_processor_notifier));
+    CORO_AWAIT_VALUE(response, cu_cp_notifier.on_inter_du_handover_required(request, source_du_index, target_du_index));
     CORO_RETURN();
   };
   ue_task.handle_ue_async_task(request.source_ue_index, launch_async(std::move(ho_trigger)));
@@ -144,22 +149,19 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
 {
   du_index_t source_du_index = ue_mng.find_du_ue(source_ue_index)->get_du_index();
 
-  du_processor_ue_task_handler&  ue_task = du_db.get_du(source_du_index).get_du_processor_ue_task_handler();
-  du_processor_mobility_handler& mob     = du_db.get_du(source_du_index).get_mobility_handler();
+  du_processor_ue_task_handler& ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
 
-  cu_cp_inter_ngran_node_n2_handover_request request = {};
-  request.ue_index                                   = source_ue_index;
-  request.gnb_id                                     = target_gnb_id;
-  request.nci                                        = target_nci;
+  ngap_handover_preparation_request request = {};
+  request.ue_index                          = source_ue_index;
+  request.gnb_id                            = target_gnb_id;
+  request.nci                               = target_nci;
 
-  // Trigger Inter DU handover routine on the DU processor of the source DU.
-  cu_cp_inter_ngran_node_n2_handover_response response;
-  auto ho_trigger = [request, response, &mob](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(response, mob.handle_inter_ngran_node_n2_handover_request(request));
-    CORO_RETURN();
-  };
+  // Send handover preparation request to the NGAP handler.
+  auto ho_trigger =
+      [this, request, response = ngap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, ngap_handler.handle_handover_preparation_request(request));
+        CORO_RETURN();
+      };
   ue_task.handle_ue_async_task(request.ue_index, launch_async(std::move(ho_trigger)));
-
-  // TODO: prepare NGAP call
 }

@@ -22,12 +22,11 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_ng_handler.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/mobility_manager_measurement_handler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -47,8 +46,8 @@ public:
   /// \brief Get handler of the NG interface of the CU-CP.
   virtual cu_cp_ng_handler& get_ng_handler() = 0;
 
-  /// \brief Get the mobility manager handover trigger interface of the CU-CP.
-  virtual cu_cp_mobility_manager_ho_trigger_handler& get_mobility_manager_ho_trigger_handler() = 0;
+  /// \brief Get the handler of external commands/events to the CU-CP.
+  virtual cu_cp_command_handler& get_command_handler() = 0;
 
   /// \brief Get the metrics handler interface of the CU-CP.
   virtual metrics_handler& get_metrics_handler() = 0;

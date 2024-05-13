@@ -57,7 +57,6 @@ protected:
   std::unordered_map<ue_index_t, dummy_du_processor_rrc_ue_control_message_notifier> rrc_ue_adapters;
   dummy_ngap_rrc_ue_notifier                                                         rrc_ue_pdu_notifier;
   dummy_ngap_ue_context_removal_handler                                              ngap_ue_removal_handler;
-  std::unique_ptr<dummy_ngap_du_processor_notifier>                                  du_processor_ctrl_notifier;
 };
 
 } // namespace srs_cu_cp

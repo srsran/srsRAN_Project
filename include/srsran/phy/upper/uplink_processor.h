@@ -177,7 +177,7 @@ public:
 
   /// \brief Validates Sounding Reference Signals channel estimator configuration.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const srs_estimator_configuration& config) = 0;
+  virtual bool is_valid(const srs_estimator_configuration& config) const = 0;
 };
 
 /// \brief Pool of uplink processors.

@@ -28,6 +28,8 @@ struct sockaddr_storage;
 
 namespace srsran {
 
+class io_broker;
+
 /// \brief Generic network gateway interfaces to connect components to the outside world.
 
 /// \brief Common parameters to all network gateways. Specific gateway
@@ -81,5 +83,8 @@ public:
 
   /// \brief Return socket file descriptor.
   virtual int get_socket_fd() = 0;
+
+  /// \brief Subscribe GW to IO broker for automatic notification of events.
+  virtual bool subscribe_to(io_broker& broker) = 0;
 };
 } // namespace srsran

@@ -27,18 +27,15 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Handler of a single CU-UP connected to the CU-CP.
-class cu_up_handler
+/// Handler of the E1 interface of a single CU-UP connected to the CU-CP.
+class cu_up_e1_handler
 {
 public:
-  virtual ~cu_up_handler() = default;
+  virtual ~cu_up_e1_handler() = default;
 
   /// \brief Get the E1AP message handler interface of the CU-UP processor object.
   /// \return The E1AP message handler interface of the CU-UP processor object.
-  virtual e1ap_message_handler& get_e1ap_message_handler() = 0;
-
-  /// \brief Update the index of an UE.
-  virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+  virtual e1ap_message_handler& get_message_handler() = 0;
 };
 
 /// \brief Handler of the E1 interface of the CU-CP.
@@ -63,7 +60,7 @@ public:
   virtual void handle_cu_up_remove_request(cu_up_index_t cu_up_index) = 0;
 
   /// \brief Get handler to a CU-UP connected to the CU-CP.
-  virtual cu_up_handler& get_cu_up(cu_up_index_t cu_up_index) = 0;
+  virtual cu_up_e1_handler& get_cu_up(cu_up_index_t cu_up_index) = 0;
 };
 
 } // namespace srs_cu_cp

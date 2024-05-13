@@ -1237,3 +1237,23 @@ srsran::fapi::tx_precoding_and_beamforming_pdu unittest::build_valid_tx_precodin
 
   return pdu;
 }
+
+srs_indication_message unittest::build_valid_srs_indication()
+{
+  srs_indication_message msg;
+  msg.message_type = message_type_id::srs_indication;
+
+  msg.sfn            = generate_sfn();
+  msg.slot           = generate_slot();
+  msg.control_length = 0;
+
+  msg.pdus.emplace_back();
+  auto& pdu                    = msg.pdus.back();
+  pdu.handle                   = generate_handle();
+  pdu.rnti                     = generate_rnti();
+  pdu.timing_advance_offset    = generate_timing_advance_offset();
+  pdu.timing_advance_offset_ns = generate_timing_advance_offset_in_ns();
+  pdu.srs_usage                = srs_usage_mode::codebook;
+
+  return msg;
+}

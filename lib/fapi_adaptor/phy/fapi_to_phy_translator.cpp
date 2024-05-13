@@ -28,6 +28,7 @@
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
 #include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
+#include "srsran/fapi_adaptor/phy/messages/srs.h"
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_context.h"
@@ -167,6 +168,7 @@ struct uplink_pdus {
   static_vector<uplink_processor::pucch_pdu, MAX_PUCCH_PDUS_PER_SLOT> pucch;
   static_vector<uplink_processor::pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT> pusch;
   static_vector<prach_buffer_context, MAX_PRACH_OCCASIONS_PER_SLOT>   prach;
+  static_vector<uplink_processor::srs_pdu, MAX_SRS_PDUS_PER_SLOT>     srs;
 };
 
 } // namespace
@@ -441,11 +443,21 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
         }
         break;
       }
-      case fapi::ul_pdu_type::SRS:
+      case fapi::ul_pdu_type::SRS: {
+        uplink_processor::srs_pdu& ul_pdu = pdus.srs.emplace_back();
+        convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, msg.sfn, msg.slot);
+        if (!ul_pdu_validator.is_valid(ul_pdu.config)) {
+          logger.warning("Upper PHY flagged a SRS PDU as having an invalid configuration. Skipping UL_TTI.request");
+
+          return {default_error_t{}};
+        }
+        break;
+      }
       default:
         srsran_assert(0, "UL_TTI.request PDU type value '{}' not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
+
   return pdus;
 }
 
@@ -483,21 +495,24 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     return;
   }
 
-  // Process the PRACHs
+  // Process the PRACHs.
   for (const auto& context : pdus.value().prach) {
     ul_request_processor.process_prach_request(context);
   }
 
-  if (pdus.value().pusch.empty() && pdus.value().pucch.empty()) {
+  if (pdus.value().pusch.empty() && pdus.value().pucch.empty() && pdus.value().srs.empty()) {
     return;
   }
 
-  // Add the PUCCH and PUSCH PDUs to the repository for later processing.
+  // Add the PUCCH, PUSCH and SRS PDUs to the repository for later processing.
   for (const auto& pdu : pdus.value().pusch) {
     ul_pdu_repository.add_pusch_pdu(slot, pdu);
   }
   for (const auto& pdu : pdus.value().pucch) {
     ul_pdu_repository.add_pucch_pdu(slot, pdu);
+  }
+  for (const auto& pdu : pdus.value().srs) {
+    ul_pdu_repository.add_srs_pdu(slot, pdu);
   }
 
   // Notify to capture uplink slot.

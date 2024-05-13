@@ -34,7 +34,7 @@
 namespace srsran {
 
 /// Report configuration, for now only supporting the A3 event.
-struct cu_cp_report_unit_config {
+struct cu_cp_unit_report_config {
   unsigned           report_cfg_id;
   std::string        report_type;
   optional<unsigned> report_interval_ms;
@@ -45,7 +45,7 @@ struct cu_cp_report_unit_config {
   optional<unsigned> a3_time_to_trigger_ms;
 };
 
-struct cu_cp_neighbor_cell_unit_config_item {
+struct cu_cp_unit_neighbor_cell_config_item {
   /// Cell id.
   uint64_t nr_cell_id;
   /// Report config ids.
@@ -53,7 +53,7 @@ struct cu_cp_neighbor_cell_unit_config_item {
 };
 
 /// Each item describes the relationship between one cell to all other cells.
-struct cu_cp_cell_unit_config_item {
+struct cu_cp_unit_cell_config_item {
   /// Cell id.
   uint64_t           nr_cell_id;
   optional<unsigned> periodic_report_cfg_id;
@@ -76,22 +76,22 @@ struct cu_cp_cell_unit_config_item {
   /// SSB duration.
   optional<unsigned> ssb_duration;
   /// Vector of cells that are a neighbor of this cell.
-  std::vector<cu_cp_neighbor_cell_unit_config_item> ncells;
+  std::vector<cu_cp_unit_neighbor_cell_config_item> ncells;
   // TODO: Add optional SSB parameters.
 };
 
 /// All mobility related configuration parameters.
-struct mobility_unit_config {
+struct cu_cp_unit_mobility_config {
   /// List of all cells known to the CU-CP.
-  std::vector<cu_cp_cell_unit_config_item> cells;
+  std::vector<cu_cp_unit_cell_config_item> cells;
   /// Report config.
-  std::vector<cu_cp_report_unit_config> report_configs;
+  std::vector<cu_cp_unit_report_config> report_configs;
   /// Whether to start HO if neighbor cell measurements arrive.
   bool trigger_handover_from_measurements = false;
 };
 
 /// RRC specific configuration parameters.
-struct rrc_cu_cp_unit_config {
+struct cu_cp_unit_rrc_config {
   bool force_reestablishment_fallback = false;
   /// Timeout for RRC procedures (2 * default SRB maxRetxThreshold * t-PollRetransmit = 2 * 8 * 45ms = 720ms, see
   /// TS 38.331 Sec 9.2.1).
@@ -99,7 +99,7 @@ struct rrc_cu_cp_unit_config {
 };
 
 /// Security configuration parameters.
-struct security_unit_config {
+struct cu_cp_unit_security_config {
   std::string integrity_protection       = "not_needed";
   std::string confidentiality_protection = "required";
   std::string nea_preference_list        = "nea0,nea2,nea1,nea3";
@@ -107,13 +107,13 @@ struct security_unit_config {
 };
 
 /// F1AP-CU configuration parameters.
-struct f1ap_cu_unit_config {
+struct cu_cp_unit_f1ap_config {
   /// Timeout for the UE context setup procedure in milliseconds.
   unsigned ue_context_setup_timeout = 1000;
 };
 
 /// RLC UM TX configuration
-struct rlc_tx_um_cu_cp_unit_config {
+struct cu_cp_unit_rlc_tx_um_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// RLC SDU queue size.
@@ -121,7 +121,7 @@ struct rlc_tx_um_cu_cp_unit_config {
 };
 
 /// RLC UM RX configuration
-struct rlc_rx_um_cu_cp_unit_config {
+struct cu_cp_unit_rlc_rx_um_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// Timer used by rx to detect PDU loss (ms).
@@ -129,13 +129,13 @@ struct rlc_rx_um_cu_cp_unit_config {
 };
 
 /// RLC UM configuration
-struct rlc_um_cu_cp_unit_config {
-  rlc_tx_um_cu_cp_unit_config tx;
-  rlc_rx_um_cu_cp_unit_config rx;
+struct cu_cp_unit_rlc_um_config {
+  cu_cp_unit_rlc_tx_um_config tx;
+  cu_cp_unit_rlc_rx_um_config rx;
 };
 
 /// RLC UM TX configuration
-struct rlc_tx_am_cu_cp_unit_config {
+struct cu_cp_unit_rlc_tx_am_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// Poll retx timeout (ms).
@@ -153,7 +153,7 @@ struct rlc_tx_am_cu_cp_unit_config {
 };
 
 /// RLC UM RX configuration
-struct rlc_rx_am_cu_cp_unit_config {
+struct cu_cp_unit_rlc_rx_am_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// Timer used by rx to detect PDU loss (ms).
@@ -168,19 +168,19 @@ struct rlc_rx_am_cu_cp_unit_config {
 };
 
 /// RLC AM configuration
-struct rlc_am_cu_cp_unit_config {
-  rlc_tx_am_cu_cp_unit_config tx;
-  rlc_rx_am_cu_cp_unit_config rx;
+struct cu_cp_unit_rlc_am_config {
+  cu_cp_unit_rlc_tx_am_config tx;
+  cu_cp_unit_rlc_rx_am_config rx;
 };
 
 /// RLC configuration
-struct rlc_cu_cp_unit_config {
+struct cu_cp_unit_rlc_config {
   std::string              mode = "am";
-  rlc_um_cu_cp_unit_config um;
-  rlc_am_cu_cp_unit_config am;
+  cu_cp_unit_rlc_um_config um;
+  cu_cp_unit_rlc_am_config am;
 };
 
-struct pdcp_rx_cu_cp_unit_config {
+struct cu_cp_unit_pdcp_rx_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// Timer used to detect PDUs losses (ms).
@@ -189,7 +189,7 @@ struct pdcp_rx_cu_cp_unit_config {
   bool out_of_order_delivery;
 };
 
-struct pdcp_tx_cu_cp_unit_config {
+struct cu_cp_unit_pdcp_tx_config {
   /// Number of bits used for sequence number.
   uint16_t sn_field_length;
   /// Timer used to notify lower layers to discard PDUs (ms).
@@ -198,30 +198,28 @@ struct pdcp_tx_cu_cp_unit_config {
   bool status_report_required;
 };
 
-struct pdcp_cu_cp_unit_config {
+struct cu_cp_unit_pdcp_config {
   /// Whether DRB integrity is required.
   bool                      integrity_protection_required;
-  pdcp_tx_cu_cp_unit_config tx;
-  pdcp_rx_cu_cp_unit_config rx;
+  cu_cp_unit_pdcp_tx_config tx;
+  cu_cp_unit_pdcp_rx_config rx;
 };
 
 /// QoS configuration.
-struct qos_cu_cp_unit_config {
+struct cu_cp_unit_qos_config {
   five_qi_t              five_qi = uint_to_five_qi(9);
-  rlc_cu_cp_unit_config  rlc;
-  pdcp_cu_cp_unit_config pdcp;
+  cu_cp_unit_rlc_config  rlc;
+  cu_cp_unit_pdcp_config pdcp;
 };
 
 /// Metrics configuration.
-struct metrics_cu_cp_unit_config {
+struct cu_cp_unit_metrics_config {
   /// Statistics report period in seconds
   unsigned cu_cp_statistics_report_period = 1;
 };
 
 /// CU-CP application unit configuration.
 struct cu_cp_unit_config {
-  /// Loggers configuration.
-  cu_cp_unit_logger_config loggers;
   /// Node name.
   std::string ran_node_name = "cu_cp_01";
   /// gNB identifier.
@@ -234,18 +232,20 @@ struct cu_cp_unit_config {
   int inactivity_timer = 120;
   /// PDU session setup timeout in seconds (must be larger than T310).
   unsigned pdu_session_setup_timeout = 3;
+  /// Loggers configuration.
+  cu_cp_unit_logger_config loggers;
   /// Metrics configuration.
-  metrics_cu_cp_unit_config metrics;
+  cu_cp_unit_metrics_config metrics;
   /// Mobility configuration.
-  mobility_unit_config mobility_config;
+  cu_cp_unit_mobility_config mobility_config;
   /// RRC configuration.
-  rrc_cu_cp_unit_config rrc_config;
+  cu_cp_unit_rrc_config rrc_config;
   /// Security configuration.
-  security_unit_config security_config;
+  cu_cp_unit_security_config security_config;
   /// F1-AP configuration.
-  f1ap_cu_unit_config f1ap_config;
+  cu_cp_unit_f1ap_config f1ap_config;
   /// QoS configuration.
-  std::vector<qos_cu_cp_unit_config> qos_cfg;
+  std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.
   std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
 };

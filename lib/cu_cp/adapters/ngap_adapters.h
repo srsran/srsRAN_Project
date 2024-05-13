@@ -23,9 +23,8 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor_impl_interface.h"
+#include "../du_processor/du_processor.h"
 #include "../ue_manager/ue_task_scheduler.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
@@ -65,22 +64,15 @@ private:
 };
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap_cu_cp_ue_creation_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap_cu_cp_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(du_repository_ngap_handler&     du_repository_handler_,
-                     cu_cp_ngap_ue_creation_handler& ngap_ue_creation_handler_)
+  void connect_cu_cp(du_repository_ngap_handler& du_repository_handler_, cu_cp_ngap_handler& cu_cp_handler_)
   {
-    du_repository_handler    = &du_repository_handler_;
-    ngap_ue_creation_handler = &ngap_ue_creation_handler_;
-  }
-
-  void on_paging_message(cu_cp_paging_message& msg) override
-  {
-    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    du_repository_handler->handle_paging_message(msg);
+    du_repository_handler = &du_repository_handler_;
+    cu_cp_handler         = &cu_cp_handler_;
   }
 
   ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
@@ -89,22 +81,62 @@ public:
     return du_repository_handler->handle_ue_index_allocation_request(cgi);
   }
 
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    du_repository_handler->handle_paging_message(msg);
+  }
+
   async_task<ngap_handover_resource_allocation_response>
   on_ngap_handover_request(const ngap_handover_request& request) override
   {
-    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return du_repository_handler->handle_ngap_handover_request(request);
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_ngap_handover_request(request);
   }
 
   bool on_new_ngap_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ngap_ue_creation_handler != nullptr, "CU-CP NGAP UE creation handler must not be nullptr");
-    return ngap_ue_creation_handler->handle_new_ngap_ue(ue_index);
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_ngap_ue(ue_index);
+  }
+
+  async_task<cu_cp_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_pdu_session_resource_setup_request(request);
+  }
+
+  async_task<cu_cp_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_pdu_session_resource_modify_request(request);
+  }
+
+  async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_pdu_session_resource_release_command(command);
+  }
+
+  async_task<cu_cp_ue_context_release_complete>
+  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_ue_context_release_command(command);
+  }
+
+  async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_handover_command(ue_index, std::move(command));
   }
 
 private:
-  du_repository_ngap_handler*     du_repository_handler    = nullptr;
-  cu_cp_ngap_ue_creation_handler* ngap_ue_creation_handler = nullptr;
+  du_repository_ngap_handler* du_repository_handler = nullptr;
+  cu_cp_ngap_handler*         cu_cp_handler         = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE
@@ -146,59 +178,10 @@ public:
     return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
   }
 
-  bool on_new_rrc_handover_command(byte_buffer cmd) override
-  {
-    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
-    return rrc_ue_ho_prep_handler->handle_rrc_handover_command(std::move(cmd));
-  }
-
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
-};
-
-/// Adapter between NGAP and DU Processor
-class ngap_du_processor_adapter : public ngap_du_processor_control_notifier
-{
-public:
-  ngap_du_processor_adapter() = default;
-
-  void connect_du_processor(du_processor_ngap_interface* du_processor_ngap_handler_)
-  {
-    du_processor_ngap_handler = du_processor_ngap_handler_;
-  }
-
-  async_task<cu_cp_pdu_session_resource_setup_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
-  {
-    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-    return du_processor_ngap_handler->handle_new_pdu_session_resource_setup_request(request);
-  }
-
-  async_task<cu_cp_pdu_session_resource_modify_response>
-  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
-  {
-    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-    return du_processor_ngap_handler->handle_new_pdu_session_resource_modify_request(request);
-  }
-
-  async_task<cu_cp_pdu_session_resource_release_response>
-  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
-  {
-    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-    return du_processor_ngap_handler->handle_new_pdu_session_resource_release_command(command);
-  }
-
-  async_task<cu_cp_ue_context_release_complete>
-  on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) override
-  {
-    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-    return du_processor_ngap_handler->handle_ue_context_release_command(command);
-  }
-
-private:
-  du_processor_ngap_interface* du_processor_ngap_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

@@ -79,6 +79,9 @@ static constexpr size_t MAX_UL_PDCCH_PDUS_PER_SLOT = 16U;
 /// [Implementation defined] Maximum number of PUCCH PDUs per slot.
 static constexpr size_t MAX_PUCCH_PDUS_PER_SLOT = 64U;
 
+/// [Implementation defined] Maximum number of SRS PDUs per slot.
+static constexpr size_t MAX_SRS_PDUS_PER_SLOT = 16U;
+
 /// [Implementation defined] Maximum number of codeblocks per PDU.
 static constexpr size_t MAX_CBS_PER_PDU = 64;
 
@@ -89,7 +92,7 @@ static constexpr size_t MAX_DL_PDUS_PER_SLOT = MAX_SSB_PER_SLOT + MAX_DL_PDCCH_P
 
 /// [Implementation defined] Maximum number of uplink PDUs per slot.
 static constexpr size_t MAX_UL_PDUS_PER_SLOT =
-    MAX_PRACH_OCCASIONS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT;
+    MAX_PRACH_OCCASIONS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT + MAX_SRS_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of UCI PDUS per UCI indication.
 static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = MAX_PUCCH_PDUS_PER_SLOT;

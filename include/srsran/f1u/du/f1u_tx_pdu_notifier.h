@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/f1u/common/nru_message.h"
+#include "srsran/nru/nru_message.h"
 
 namespace srsran {
 namespace srs_du {

@@ -152,17 +152,6 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Interface to notify about RRC UE Context messages.
-class rrc_ue_du_processor_notifier
-{
-public:
-  virtual ~rrc_ue_du_processor_notifier() = default;
-
-  /// \brief Notify about a required reestablishment context modification.
-  /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
-};
-
 /// Schedules asynchronous tasks associated with an UE.
 class rrc_ue_task_scheduler
 {
@@ -220,6 +209,11 @@ struct rrc_ue_release_context {
   srb_id_t                    srb_id = srb_id_t::nulltype;
 };
 
+struct rrc_ue_handover_reconfiguration_context {
+  unsigned    transaction_id;
+  byte_buffer rrc_ue_handover_reconfiguration_pdu;
+};
+
 /// Handle control messages.
 class rrc_ue_control_message_handler
 {
@@ -231,10 +225,11 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
-  /// \brief Handle an RRC Reconfiguration Request for a handover.
+  /// \brief Get the RRC Reconfiguration context for a handover.
   /// \param[in] msg The new RRC Reconfiguration Request.
-  /// \returns The transaction ID of the RRC Reconfiguration request.
-  virtual uint8_t handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
+  /// \returns The RRC handover reconfiguration context.
+  virtual rrc_ue_handover_reconfiguration_context
+  get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Await a RRC Reconfiguration Complete for a handover.
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
@@ -245,7 +240,7 @@ public:
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
-  /// \returns The release context of the UE.  If SRB1 is not created yet, a RrcReject message is contained in the
+  /// \returns The release context of the UE. If SRB1 is not created yet, a RrcReject message is contained in the
   /// release context, see section 5.3.15 in TS 38.331. Otherwise, a RrcRelease message is contained in the release
   /// context.
   virtual rrc_ue_release_context get_rrc_ue_release_context(bool requires_rrc_msg) = 0;
@@ -263,7 +258,13 @@ public:
   /// \return True if the security context was applied successfully, false otherwise
   virtual bool handle_new_security_context(const security::security_context& sec_context) = 0;
 
+  /// \brief Handle the handover command RRC PDU.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns The handover RRC Reconfiguration PDU. If the handover command is invalid, the PDU is empty.
+  virtual byte_buffer handle_rrc_handover_command(byte_buffer cmd) = 0;
+
   /// \brief Get the packed RRC Handover Command.
+  /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The RRC Handover Command.
   virtual byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                unsigned                                     transaction_id) = 0;
@@ -292,11 +293,6 @@ public:
   virtual ~rrc_ue_handover_preparation_handler() = default;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
-
-  /// \brief Handle the handover command RRC PDU.
-  /// \param[in] cmd The handover command RRC PDU.
-  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
-  virtual bool handle_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
@@ -324,6 +320,9 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
   virtual rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) = 0;
+
+  /// \brief Notify about a required reestablishment context modification.
+  virtual async_task<bool> on_rrc_reestablishment_context_modification_required() = 0;
 
   /// \brief Notify the CU-CP to release the old UE after a reestablishment failure.
   /// \param[in] request The release request.

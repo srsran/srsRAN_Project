@@ -52,6 +52,10 @@ public:
     du_ue_index_t ue_index;
     rnti_t        rnti;
   };
+  struct ue_cfg_applied_event {
+    du_ue_index_t ue_index;
+    rnti_t        rnti;
+  };
   struct crc_event {
     du_ue_index_t   ue_index;
     rnti_t          rnti;
@@ -138,6 +142,7 @@ private:
   void enqueue_impl(const ue_creation_event& ue_request);
   void enqueue_impl(const ue_reconf_event& ue_request);
   void enqueue_impl(const sched_ue_delete_message& ue_request);
+  void enqueue_impl(const ue_cfg_applied_event& ue_cfg_applied);
 
   void enqueue_impl(const error_indication_event& err_ind);
 

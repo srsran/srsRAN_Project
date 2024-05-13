@@ -51,7 +51,7 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  bool is_in_fallback_mode() const { return fallback_mode_current != fallback_state::normal; }
+  bool is_in_fallback_mode() const { return in_fallback_mode; }
 
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
@@ -77,10 +77,12 @@ public:
 
   void handle_reconfiguration_request(const ue_cell_configuration& ue_cell_cfg);
 
-  dl_harq_process::dl_ack_info_result handle_dl_ack_info(slot_point                 uci_slot,
-                                                         mac_harq_ack_report_status ack_value,
-                                                         unsigned                   harq_bit_idx,
-                                                         optional<float>            pucch_snr);
+  void set_fallback_state(bool in_fallback);
+
+  optional<dl_harq_process::dl_ack_info_result> handle_dl_ack_info(slot_point                 uci_slot,
+                                                                   mac_harq_ack_report_status ack_value,
+                                                                   unsigned                   harq_bit_idx,
+                                                                   optional<float>            pucch_snr);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -115,8 +117,8 @@ public:
 
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
-  /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-  aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
+  /// \brief Get recommended aggregation level for PDCCH at a given CQI.
+  aggregation_level get_aggregation_level(float cqi, const search_space_info& ss_info, bool is_dl) const;
 
   /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
   /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.
@@ -133,9 +135,6 @@ public:
   /// is triggered by the reception of SR or CSI, the sr_csi_received => normal is triggered by the reception of 2
   /// CRC=OK after the first SR or CSI is received.
   enum class fallback_state { fallback, sr_csi_received, normal };
-
-  /// \brief Set UE fallback state.
-  void set_fallback_state(fallback_state fallback_mode_new);
 
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
@@ -161,11 +160,9 @@ private:
   /// \brief Whether cell is currently active.
   bool active = true;
 
-  /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
+  /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
   /// cellConfigCommon are used.
-  fallback_state fallback_mode_current = fallback_state::normal;
-  /// Counter of received CRC=OK after the first SR or CSI has been received.
-  unsigned fallback_crc_cnt = 0;
+  bool in_fallback_mode = true;
 
   metrics ue_metrics;
 

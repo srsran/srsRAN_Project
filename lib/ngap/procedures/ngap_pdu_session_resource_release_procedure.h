@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../ngap_asn1_utils.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
@@ -35,9 +34,9 @@ class ngap_pdu_session_resource_release_procedure
 public:
   ngap_pdu_session_resource_release_procedure(const cu_cp_pdu_session_resource_release_command& command_,
                                               const ngap_ue_ids&                                ue_ids_,
-                                              ngap_du_processor_control_notifier& du_processor_ctrl_notif_,
-                                              ngap_message_notifier&              amf_notif_,
-                                              ngap_ue_logger&                     logger_);
+                                              ngap_cu_cp_notifier&                              cu_cp_notifier_,
+                                              ngap_message_notifier&                            amf_notif_,
+                                              ngap_ue_logger&                                   logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -50,7 +49,7 @@ private:
   cu_cp_pdu_session_resource_release_command  command;
   const ngap_ue_ids                           ue_ids;
   cu_cp_pdu_session_resource_release_response response;
-  ngap_du_processor_control_notifier&         du_processor_ctrl_notifier;
+  ngap_cu_cp_notifier&                        cu_cp_notifier;
   ngap_message_notifier&                      amf_notifier;
   ngap_ue_logger&                             logger;
 };

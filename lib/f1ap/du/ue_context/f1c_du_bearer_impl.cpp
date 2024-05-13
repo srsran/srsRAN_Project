@@ -94,12 +94,14 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
                                                  srb_id_t               srb_id_,
                                                  f1ap_message_notifier& f1ap_notifier_,
                                                  f1c_rx_sdu_notifier&   f1c_sdu_notifier_,
+                                                 f1ap_du_configurator&  du_configurator_,
                                                  task_executor&         ctrl_exec_,
                                                  task_executor&         ue_exec_) :
   ue_ctxt(ue_ctxt_),
   srb_id(srb_id_),
   f1ap_notifier(f1ap_notifier_),
   sdu_notifier(f1c_sdu_notifier_),
+  du_configurator(du_configurator_),
   ctrl_exec(ctrl_exec_),
   ue_exec(ue_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
@@ -138,6 +140,13 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
         ul_msg->new_gnb_du_ue_f1ap_id_present = false;
 
         f1ap_notifier.on_new_message(msg);
+
+        // If a UE RRC config is pending, we consider the reception of a UL RRC message as the confirmation that the
+        // RRC config has been applied by the UE.
+        if (ue_ctxt.rrc_state == f1ap_ue_context::ue_rrc_state::config_pending) {
+          ue_ctxt.rrc_state = f1ap_ue_context::ue_rrc_state::config_applied;
+          du_configurator.on_ue_config_applied(ue_ctxt.ue_index);
+        }
       })) {
     logger.error(
         "Tx PDU {}: Discarding SRB{} Tx PDU. Cause: The task executor queue is full.", ue_ctxt, srb_id_to_uint(srb_id));
@@ -147,7 +156,8 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
 void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
 {
   if (pdu.length() < 3) {
-    logger.warning("DL {} Rx PDU: Dropping PDU. Cause: Invalid SRB{}.", ue_ctxt, srb_id_to_uint(srb_id));
+    logger.warning(
+        "DL {} Rx SRB{} PDU: Dropping PDU. Cause: Invalid length={}.", ue_ctxt, srb_id_to_uint(srb_id), pdu.length());
     return;
   }
 

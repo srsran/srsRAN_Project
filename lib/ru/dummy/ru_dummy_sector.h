@@ -153,12 +153,15 @@ public:
       if (ul_context.slot == slot) {
         // Prepare receive symbol context.
         ru_uplink_rx_symbol_context rx_context;
-        rx_context.slot      = ul_context.slot;
-        rx_context.sector    = ul_context.sector;
-        rx_context.symbol_id = MAX_NSYMB_PER_SLOT - 1;
+        rx_context.slot   = ul_context.slot;
+        rx_context.sector = ul_context.sector;
 
-        // Notify received resource grid.
-        symbol_notifier.on_new_uplink_symbol(rx_context, rx_symbols_resource_grid);
+        // Notify received resource grid for each symbol.
+        for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+          rx_context.symbol_id = i_symbol;
+          symbol_notifier.on_new_uplink_symbol(rx_context, rx_symbols_resource_grid);
+        }
+
       } else {
         // Notify with a warning message if the UL previous saved context do not match with the current slot.
         logger.warning(slot.sfn(),

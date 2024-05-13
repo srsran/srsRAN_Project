@@ -101,7 +101,7 @@ class pdsch_processor_pool : public pdsch_processor
 {
 public:
   explicit pdsch_processor_pool(span<std::unique_ptr<pdsch_processor>> processors_, bool blocking_) :
-    free_list(processors_.size()), blocking(blocking_)
+    logger(srslog::fetch_basic_logger("PHY")), free_list(processors_.size()), blocking(blocking_)
   {
     unsigned index = 0;
     for (std::unique_ptr<pdsch_processor>& processor : processors_) {
@@ -124,7 +124,8 @@ public:
 
     // If no worker is available.
     if (!index.has_value()) {
-      srslog::fetch_basic_logger("PHY").warning("Insufficient number of PDSCH processors. Dropping PDSCH {:s}.", pdu);
+      logger.warning(
+          pdu.slot.sfn(), pdu.slot.slot_index(), "Insufficient number of PDSCH processors. Dropping PDSCH {:s}.", pdu);
       notifier.on_finish_processing();
       return;
     }
@@ -134,6 +135,7 @@ public:
   }
 
 private:
+  srslog::basic_logger&                        logger;
   std::vector<detail::pdsch_processor_wrapper> processors;
   detail::pdsch_processor_free_list            free_list;
   bool                                         blocking;

@@ -254,6 +254,14 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     }
   }
 
+  if (ue->context.rrc_state == f1ap_ue_context::ue_rrc_state::no_config and not msg->old_gnb_du_ue_f1ap_id_present) {
+    // If the UE has no dedicated configuration yet, we assume that this DL RRC Message Transfer contains it (e.g.
+    // RRC Setup or RRC Reconfiguration). The only exception is when this DL RRC Message Transfer is an RRC
+    // Reestablishment. In such case, we let the following DL RRC Message Transfer (with RRC Reconfiguration) to be the
+    // one setting the state to config_pending.
+    ue->context.rrc_state = f1ap_ue_context::ue_rrc_state::config_pending;
+  }
+
   const srb_id_t srb_id     = int_to_srb_id(msg->srb_id);
   f1c_bearer*    srb_bearer = ue->bearers.find_srb(srb_id);
   if (srb_bearer == nullptr) {
