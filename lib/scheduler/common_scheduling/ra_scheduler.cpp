@@ -247,7 +247,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
 
       // Check if TC-RNTI value to be scheduled is already under use
       if (not pending_msg3s[to_value(prach_preamble.tc_rnti) % MAX_NOF_MSG3].harq.empty()) {
-        logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", prach_preamble.tc_rnti);
+        logger.warning("PRACH ignored, as the allocated TC-RNTI={} is already under use", prach_preamble.tc_rnti);
         continue;
       }
 
@@ -277,7 +277,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
       srsran_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
       auto& pending_msg3 = pending_msg3s[to_value(crc.rnti) % MAX_NOF_MSG3];
       if (pending_msg3.preamble.tc_rnti != crc.rnti) {
-        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: Inexistent rnti.",
+        logger.warning("Invalid UL CRC, cell={}, rnti={}, h_id={}. Cause: Nonexistent rnti.",
                        cell_cfg.cell_index,
                        crc.rnti,
                        crc.harq_id);
