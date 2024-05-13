@@ -19,6 +19,45 @@ namespace srsran {
 
 constexpr uint32_t network_gateway_sctp_max_len = 9100;
 
+struct sctp_socket_params {
+  int                  ai_family;
+  int                  ai_socktype;
+  int                  ai_protocol;
+  bool                 reuse_addr = false;
+  std::chrono::seconds rx_timeout{0};
+  optional<int32_t>    rto_initial;
+  optional<int32_t>    rto_min;
+  optional<int32_t>    rto_max;
+  optional<int32_t>    init_max_attempts;
+  optional<int32_t>    max_init_timeo;
+  optional<bool>       nodelay;
+};
+
+class sctp_socket
+{
+public:
+  ~sctp_socket();
+  sctp_socket();
+  sctp_socket(sctp_socket&& other) noexcept = default;
+
+  sctp_socket& operator=(sctp_socket&& other) noexcept;
+
+  static expected<sctp_socket, int> create(const sctp_socket_params& params);
+
+  bool close();
+
+  bool             is_open() const { return sock_fd.is_open(); }
+  const unique_fd& fd() const { return sock_fd; }
+
+  bool set_non_blocking();
+
+private:
+  bool set_sockopts(const sctp_socket_params& params);
+
+  srslog::basic_logger& logger;
+  unique_fd             sock_fd;
+};
+
 class sctp_network_gateway_impl final : public sctp_network_gateway
 {
 public:
@@ -53,7 +92,7 @@ public:
   bool subscribe_to(io_broker& broker) override;
 
 private:
-  bool set_sockopts();
+  expected<sctp_socket, int> create_socket(int ai_family, int ai_socktype, int ai_protocol) const;
 
   /// \brief Recreate and reconnect socket to given address.
   bool recreate_and_reconnect() override;
@@ -65,10 +104,6 @@ private:
   void handle_io_error(io_broker::error_code code);
 
   // socket helpers
-  bool set_non_blocking();
-  bool set_receive_timeout(unsigned rx_timeout_sec);
-  bool set_reuse_addr();
-  bool subscribe_to_events();
   bool close_socket();
 
   sctp_network_gateway_config            config; /// configuration
@@ -76,7 +111,7 @@ private:
   network_gateway_data_notifier&         data_notifier;
   srslog::basic_logger&                  logger;
 
-  unique_fd             sock_fd;
+  sctp_socket           socket;
   io_broker::subscriber io_sub;
 
   sockaddr_storage client_addr        = {}; // the local address
