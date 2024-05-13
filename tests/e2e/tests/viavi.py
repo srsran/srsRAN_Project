@@ -21,7 +21,7 @@ from pytest import mark, param
 from requests import HTTPError
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
-from retina.launcher.public import MetricServerInfo
+from retina.launcher.public import MetricServerInfo, MetricsSummary
 from retina.launcher.utils import configure_artifacts
 from retina.protocol.base_pb2 import FiveGCDefinition, PLMN, StartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -115,6 +115,7 @@ def test_viavi_manual(
         viavi=viavi,
         metrics_server=None,
         # Test info
+        metrics_summary=None,
         campaign_filename=viavi_manual_campaign_filename,
         test_name=viavi_manual_test_name,
         test_timeout=viavi_manual_test_timeout,
@@ -155,6 +156,7 @@ def test_viavi(
     viavi: Viavi,
     metrics_server: MetricServerInfo,
     # Test info
+    metrics_summary: MetricsSummary,
     test_name: str,
     test_timeout: int,
     post_commands: str,
@@ -178,6 +180,7 @@ def test_viavi(
         viavi=viavi,
         metrics_server=metrics_server,
         # Test info
+        metrics_summary=metrics_summary,
         campaign_filename=CAMPAIGN_FILENAME,
         test_name=test_name,
         test_timeout=test_timeout,
@@ -214,6 +217,7 @@ def test_viavi_debug(
     viavi: Viavi,
     metrics_server: MetricServerInfo,
     # Test info
+    metrics_summary: MetricsSummary,
     test_name: str,
     test_timeout: int,
     post_commands: str,
@@ -236,6 +240,7 @@ def test_viavi_debug(
         viavi=viavi,
         metrics_server=metrics_server,
         # Test info
+        metrics_summary=metrics_summary,
         campaign_filename=CAMPAIGN_FILENAME,
         test_name=test_name,
         test_timeout=test_timeout,
@@ -260,6 +265,7 @@ def _test_viavi(
     viavi: Viavi,
     metrics_server: Optional[MetricServerInfo],
     # Test info
+    metrics_summary: Optional[MetricsSummary],
     campaign_filename: str,
     test_name: str,
     test_timeout: int,
@@ -366,12 +372,18 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
-            run_check_fail_criteria(test_configuration, gnb, viavi, fail_if_kos)
+            check_metrics_criteria(test_configuration, gnb, viavi, metrics_summary, fail_if_kos)
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
 
 
-def run_check_fail_criteria(test_configuration: _ViaviConfiguration, gnb: GNBStub, viavi: Viavi, fail_if_kos: bool):
+def check_metrics_criteria(
+    test_configuration: _ViaviConfiguration,
+    gnb: GNBStub,
+    viavi: Viavi,
+    metrics_summary: Optional[MetricsSummary],
+    fail_if_kos: bool,
+):
     """
     Check pass/fail criteria
     """
@@ -391,6 +403,12 @@ def run_check_fail_criteria(test_configuration: _ViaviConfiguration, gnb: GNBStu
         check_and_print_criteria("Number of KOs and/or retrxs", gnb_metrics.nof_kos_aggregate, 0, operator.eq)
         and not fail_if_kos
     )
+
+    # Save metrics
+    if metrics_summary is not None:
+        metrics_summary.write_metric("dl_bitrate", gnb_metrics.dl_brate_agregate)
+        metrics_summary.write_metric("ul_bitrate", gnb_metrics.ul_brate_agregate)
+        metrics_summary.write_metric("kos", gnb_metrics.nof_kos_aggregate)
 
     # Check procedure table
     viavi_failure_manager = viavi.get_test_failures()
