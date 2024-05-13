@@ -46,7 +46,7 @@ private:
                                             const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
                                             const f1ap_ue_context_modification_response& ue_context_modification_resp,
                                             up_resource_manager&                         up_resource_manager,
-                                            bool                                         reestablish_pdcp = false);
+                                            bool                                         reestablish_pdcp);
 
   ue_index_t                                    ue_index = ue_index_t::invalid;
   e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng;       // to trigger bearer context setup at CU-UP

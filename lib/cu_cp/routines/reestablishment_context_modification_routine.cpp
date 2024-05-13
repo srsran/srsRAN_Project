@@ -68,7 +68,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     if (!generate_bearer_context_modification(bearer_context_modification_request,
                                               bearer_context_modification_response,
                                               ue_context_modification_response,
-                                              rrc_ue_up_resource_manager)) {
+                                              rrc_ue_up_resource_manager,
+                                              true)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
