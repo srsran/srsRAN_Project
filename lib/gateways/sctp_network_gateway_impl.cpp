@@ -11,272 +11,11 @@
 #include "sctp_network_gateway_impl.h"
 #include "srsran/gateways/addr_info.h"
 #include "srsran/support/error_handling.h"
-#include <fcntl.h>
-#include <srsran/support/sockets.h>
+#include "srsran/support/io/sockets.h"
+#include <sys/socket.h>
 #include <utility>
 
 using namespace srsran;
-
-namespace {
-
-/// Subscribes to various SCTP events to handle association and shutdown gracefully.
-SRSRAN_NODISCARD bool subscribe_to_events(const unique_fd& fd, srslog::basic_logger& logger)
-{
-  srsran_sanity_check(fd.is_open(), "Invalid FD");
-  struct sctp_event_subscribe events = {};
-  events.sctp_data_io_event          = 1;
-  events.sctp_shutdown_event         = 1;
-  events.sctp_association_event      = 1;
-
-  if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events)) != 0) {
-    logger.error("SCTP failed to be created. Cause: Subscribing to SCTP events failed: {}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-/// Set a receive timeout for a SCTP socket.
-SRSRAN_NODISCARD bool
-set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_timeout, srslog::basic_logger& logger)
-{
-  srsran_sanity_check(fd.is_open(), "Invalid FD");
-  struct timeval tv;
-  tv.tv_sec  = rx_timeout.count();
-  tv.tv_usec = 0;
-
-  if (::setsockopt(fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) != 0) {
-    logger.error("SCTP failed to be created. Cause: Couldn't set receive timeout for socket: {}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-/// \brief Modify SCTP default parameters for quicker detection of broken links.
-/// Changes to the maximum re-transmission timeout (rto_max).
-bool sctp_set_rto_opts(const unique_fd&      fd,
-                       optional<int>         rto_initial,
-                       optional<int>         rto_min,
-                       optional<int>         rto_max,
-                       srslog::basic_logger& logger)
-{
-  srsran_sanity_check(fd.is_open(), "Invalid FD");
-
-  if (not rto_initial.has_value() && not rto_min.has_value() && not rto_max.has_value()) {
-    // no need to set RTO
-    return true;
-  }
-
-  // Set RTO_MAX to quickly detect broken links.
-  sctp_rtoinfo rto_opts  = {};
-  socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
-  rto_opts.srto_assoc_id = 0;
-  if (getsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
-    logger.error("Error getting RTO_INFO sockopts. errono={}", strerror(errno));
-    return false; // Responsibility of closing the socket is on the caller
-  }
-
-  if (rto_initial.has_value()) {
-    rto_opts.srto_initial = rto_initial.value();
-  }
-  if (rto_min.has_value()) {
-    rto_opts.srto_min = rto_min.value();
-  }
-  if (rto_max.has_value()) {
-    rto_opts.srto_max = rto_max.value();
-  }
-
-  logger.debug(
-      "Setting RTO_INFO options on SCTP socket. Association {}, Initial RTO {}, Minimum RTO {}, Maximum RTO {}",
-      rto_opts.srto_assoc_id,
-      rto_opts.srto_initial,
-      rto_opts.srto_min,
-      rto_opts.srto_max);
-
-  if (::setsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, rto_sz) < 0) {
-    logger.error("Error setting RTO_INFO sockopts. errno={}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-/// \brief Modify SCTP default parameters for quicker detection of broken links.
-/// Changes to the SCTP_INITMSG parameters (to control the timeout of the connect() syscall)
-bool sctp_set_init_msg_opts(const unique_fd&      fd,
-                            optional<int>         init_max_attempts,
-                            optional<int>         max_init_timeo,
-                            srslog::basic_logger& logger)
-{
-  if (not init_max_attempts.has_value() && not max_init_timeo.has_value()) {
-    // No value set for init max attempts or max init_timeo,
-    // no need to call set_sockopts()
-    return true;
-  }
-
-  // Set SCTP INITMSG options to reduce blocking timeout of connect()
-  sctp_initmsg init_opts = {};
-  socklen_t    init_sz   = sizeof(sctp_initmsg);
-  if (getsockopt(fd.value(), SOL_SCTP, SCTP_INITMSG, &init_opts, &init_sz) < 0) {
-    logger.error("Error getting sockopts. errno={}", strerror(errno));
-    return false; // Responsibility of closing the socket is on the caller
-  }
-
-  if (init_max_attempts.has_value()) {
-    init_opts.sinit_max_attempts = init_max_attempts.value();
-  }
-  if (max_init_timeo.has_value()) {
-    init_opts.sinit_max_init_timeo = max_init_timeo.value();
-  }
-
-  logger.debug("Setting SCTP_INITMSG options on SCTP socket. Max attempts {}, Max init attempts timeout {}",
-               init_opts.sinit_max_attempts,
-               init_opts.sinit_max_init_timeo);
-  if (::setsockopt(fd.value(), SOL_SCTP, SCTP_INITMSG, &init_opts, init_sz) < 0) {
-    logger.error("Error setting SCTP_INITMSG sockopts. errno={}\n", strerror(errno));
-    return false; // Responsibility of closing the socket is on the caller
-  }
-  return true;
-}
-
-/// Set or unset SCTP_NODELAY. With NODELAY enabled, SCTP messages are sent as soon as possible with no unnecessary
-/// delay, at the cost of transmitting more packets over the network. Otherwise their transmission might be delayed and
-/// concatenated with subsequent messages in order to transmit them in one big PDU.
-///
-/// Note: If the local interface supports jumbo frames (MTU size > 1500) but not the receiver, then the receiver might
-/// discard big PDUs and the stream might get stuck.
-bool sctp_set_nodelay(const unique_fd& fd, optional<bool> nodelay, srslog::basic_logger& logger)
-{
-  if (not nodelay.has_value()) {
-    // no need to change anything
-    return true;
-  }
-
-  int optval = nodelay.value() == true ? 1 : 0;
-  if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
-    logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-bool set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
-{
-  int one = 1;
-  if (::setsockopt(fd.value(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-    logger.error("Couldn't set reuseaddr for socket: {}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-bool set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger)
-{
-  int flags = fcntl(fd.value(), F_GETFL, 0);
-  if (flags == -1) {
-    logger.error("Error getting socket flags: {}", strerror(errno));
-    return false;
-  }
-
-  int s = fcntl(fd.value(), F_SETFL, flags | O_NONBLOCK);
-  if (s == -1) {
-    logger.error("Error setting socket to non-blocking mode: {}", strerror(errno));
-    return false;
-  }
-
-  return true;
-}
-
-} // namespace
-
-// sctp_socket class.
-
-sctp_socket::sctp_socket() : logger(srslog::fetch_basic_logger("SCTP-GW")) {}
-
-expected<sctp_socket, int> sctp_socket::create(const sctp_socket_params& params)
-{
-  sctp_socket socket;
-  socket.sock_fd = unique_fd{::socket(params.ai_family, params.ai_socktype, params.ai_protocol)};
-  if (not socket.sock_fd.is_open()) {
-    int ret = errno;
-    if (ret == ESOCKTNOSUPPORT) {
-      // probably the sctp kernel module is missing on the system, inform the user and exit here
-      socket.logger.error(
-          "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
-          strerror(ret));
-      report_error(
-          "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.\n",
-          strerror(ret));
-    }
-    return ret;
-  }
-
-  if (not socket.set_sockopts(params)) {
-    socket.close();
-    return errno;
-  }
-  return socket;
-}
-
-sctp_socket& sctp_socket::operator=(sctp_socket&& other) noexcept
-{
-  sock_fd = std::move(other.sock_fd);
-  return *this;
-}
-
-sctp_socket::~sctp_socket()
-{
-  close();
-}
-
-bool sctp_socket::close()
-{
-  if (not sock_fd.close()) {
-    logger.error("Error closing SCTP socket: {}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-bool sctp_socket::set_non_blocking()
-{
-  srsran_assert(is_open(), "socket is not open");
-  return ::set_non_blocking(sock_fd, logger);
-}
-
-bool sctp_socket::set_sockopts(const sctp_socket_params& params)
-{
-  if (not subscribe_to_events(sock_fd, logger)) {
-    return false;
-  }
-
-  if (params.rx_timeout.count() > 0) {
-    if (not set_receive_timeout(sock_fd, params.rx_timeout, logger)) {
-      return false;
-    }
-  }
-
-  // Set SRTO_MAX
-  if (not sctp_set_rto_opts(sock_fd, params.rto_initial, params.rto_min, params.rto_max, logger)) {
-    return false;
-  }
-
-  // Set SCTP init options
-  if (not sctp_set_init_msg_opts(sock_fd, params.init_max_attempts, params.max_init_timeo, logger)) {
-    return false;
-  }
-
-  // Set SCTP NODELAY option
-  if (not sctp_set_nodelay(sock_fd, params.nodelay, logger)) {
-    return false;
-  }
-
-  if (params.reuse_addr) {
-    if (not set_reuse_addr(sock_fd, logger)) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 // Gateway Client.
 
@@ -295,8 +34,7 @@ sctp_network_gateway_impl::~sctp_network_gateway_impl()
   close_socket();
 }
 
-expected<sctp_socket, int>
-sctp_network_gateway_impl::create_socket(int ai_family, int ai_socktype, int ai_protocol) const
+expected<sctp_socket> sctp_network_gateway_impl::create_socket(int ai_family, int ai_socktype, int ai_protocol) const
 {
   sctp_socket_params params;
   params.ai_family         = ai_family;
@@ -315,7 +53,7 @@ sctp_network_gateway_impl::create_socket(int ai_family, int ai_socktype, int ai_
 /// \brief Create and bind socket to given address.
 bool sctp_network_gateway_impl::create_and_bind()
 {
-  struct addrinfo hints;
+  struct addrinfo hints {};
   // support ipv4, ipv6 and hostnames
   hints.ai_family    = AF_UNSPEC;
   hints.ai_socktype  = SOCK_SEQPACKET;
@@ -339,31 +77,24 @@ bool sctp_network_gateway_impl::create_and_bind()
     // create SCTP socket
     auto obj_or_error = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (obj_or_error.is_error()) {
-      ret = obj_or_error.error();
-      if (ret == ESOCKTNOSUPPORT) {
+      if (errno == ESOCKTNOSUPPORT) {
         break;
       }
       continue;
     }
-    socket = std::move(obj_or_error.value());
+    sctp_socket candidate = std::move(obj_or_error.value());
 
-    // Bind socket to interface (if requested)
-    if (not bind_to_interface(socket.fd(), config.bind_interface, logger)) {
-      close_socket();
+    if (not candidate.bind(*result->ai_addr, result->ai_addrlen, config.bind_interface)) {
+      // Bind failed. Try next candidate
       continue;
     }
 
-    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-    getnameinfo(
-        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
-    logger.debug("Binding to {} port {}", ip_addr, port_nr);
-
-    if (::bind(socket.fd().value(), result->ai_addr, result->ai_addrlen) == -1) {
-      // binding failed, try next address
-      ret = errno;
-      logger.debug("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(ret));
-      close_socket();
-      continue;
+    // set socket to non-blocking after bind is successful
+    if (config.non_blocking_mode) {
+      if (not candidate.set_non_blocking()) {
+        // failed, try next address
+        continue;
+      }
     }
 
     // store client address
@@ -373,16 +104,10 @@ bool sctp_network_gateway_impl::create_and_bind()
     client_ai_socktype = result->ai_socktype;
     client_ai_protocol = result->ai_protocol;
 
-    // set socket to non-blocking after bind is successful
-    if (config.non_blocking_mode) {
-      if (not socket.set_non_blocking()) {
-        // failed, try next address
-        close_socket();
-        continue;
-      }
-    }
-
+    // Save socket.
+    socket = std::move(candidate);
     logger.debug("Binding successful");
+
     break;
   }
 
@@ -407,49 +132,12 @@ bool sctp_network_gateway_impl::create_and_bind()
 
 bool sctp_network_gateway_impl::listen()
 {
-  // Listen for connections
-  int ret = ::listen(socket.fd().value(), SOMAXCONN);
-  if (ret != 0) {
-    logger.error("Error in SCTP socket listen: {}", strerror(errno));
-    close_socket();
-    return false;
-  }
-
-  return true;
+  return socket.listen();
 }
 
 optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
 {
-  if (not socket.is_open()) {
-    logger.error("Socket of SCTP network gateway not created.");
-    return {};
-  }
-
-  sockaddr_storage gw_addr_storage;
-  sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
-  socklen_t        gw_addr_len = sizeof(gw_addr_storage);
-
-  int ret = getsockname(socket.fd().value(), gw_addr, &gw_addr_len);
-  if (ret != 0) {
-    logger.error(
-        "Failed `getsockname` in SCTP network gateway with sock_fd={}: {}", socket.fd().value(), strerror(errno));
-    return {};
-  }
-
-  uint16_t gw_listen_port;
-  if (gw_addr->sa_family == AF_INET) {
-    gw_listen_port = ntohs(((sockaddr_in*)gw_addr)->sin_port);
-  } else if (gw_addr->sa_family == AF_INET6) {
-    gw_listen_port = ntohs(((sockaddr_in6*)gw_addr)->sin6_port);
-  } else {
-    logger.error("Unhandled address family in SCTP network gateway with sock_fd={}, family={}",
-                 socket.fd().value(),
-                 gw_addr->sa_family);
-    return {};
-  }
-
-  logger.debug("Read bind port of SCTP network gateway: {}", gw_listen_port);
-  return gw_listen_port;
+  return socket.get_listen_port();
 }
 
 bool sctp_network_gateway_impl::create_and_connect()
@@ -458,7 +146,6 @@ bool sctp_network_gateway_impl::create_and_connect()
   if (not config.bind_address.empty()) {
     if (not create_and_bind()) {
       logger.error("Couldn't bind to address {}:{}", config.bind_address, config.bind_port);
-      close_socket();
       return false;
     }
   }
@@ -493,7 +180,6 @@ bool sctp_network_gateway_impl::create_and_connect()
     if (not socket.is_open()) {
       auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
       if (outcome.is_error()) {
-        ret = outcome.error();
         if (ret == ESOCKTNOSUPPORT) {
           break;
         }
@@ -502,15 +188,8 @@ bool sctp_network_gateway_impl::create_and_connect()
       socket = std::move(outcome.value());
     }
 
-    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-    getnameinfo(
-        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
-    logger.debug("Connecting to {} port {}", ip_addr, port_nr);
-
-    if (::connect(socket.fd().value(), result->ai_addr, result->ai_addrlen) == -1) {
+    if (not socket.connect(*result->ai_addr, result->ai_addrlen)) {
       // connection failed, try next address
-      ret = errno;
-      logger.debug("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(ret));
       close_socket();
       continue;
     }
@@ -543,6 +222,7 @@ bool sctp_network_gateway_impl::create_and_connect()
   freeaddrinfo(results);
 
   if (not socket.fd().is_open()) {
+    ret                                                    = errno;
     std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     fmt::print("Failed to connect {} socket to {}:{}. error=\"{}\" timeout={}ms\n",
@@ -568,7 +248,6 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
   // Recreate socket
   auto ret = create_socket(server_ai_family, server_ai_socktype, server_ai_protocol);
   if (ret.is_error()) {
-    logger.error("Failed to recreate socket: {}", strerror(ret.error()));
     return false;
   }
   socket = std::move(ret.value());
@@ -582,25 +261,16 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
     }
   }
 
-  char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-  getnameinfo((sockaddr*)&server_addr,
-              server_addrlen,
-              ip_addr,
-              NI_MAXHOST,
-              port_nr,
-              NI_MAXSERV,
-              NI_NUMERICHOST | NI_NUMERICSERV);
-
   // rebind to address/port
-  if (::bind(socket.fd().value(), (sockaddr*)&server_addr, server_addrlen) == -1) {
-    logger.error("Failed to bind to {}:{} - {}", ip_addr, port_nr, strerror(errno));
+  if (not socket.bind((sockaddr&)server_addr, server_addrlen, config.bind_interface)) {
     close_socket();
     return false;
   }
 
   // reconnect to address/port
-  if (::connect(socket.fd().value(), (sockaddr*)&server_addr, server_addrlen) == -1 && errno != EINPROGRESS) {
-    logger.error("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(errno));
+  if (not socket.connect((sockaddr&)server_addr, server_addrlen) && errno != EINPROGRESS) {
+    auto addr = get_nameinfo((sockaddr&)server_addr, server_addrlen);
+    logger.error("Failed to connect to {}:{} - {}", addr.first, addr.second, strerror(errno));
     close_socket();
     return false;
   }

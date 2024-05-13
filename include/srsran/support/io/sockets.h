@@ -22,7 +22,18 @@
 
 namespace srsran {
 
-inline bool bind_to_interface(const unique_fd& fd, std::string& interface, srslog::basic_logger& logger)
+/// Get the IP address and port from sockaddr structure.
+inline std::pair<std::string, int> get_nameinfo(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
+{
+  char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
+  if (getnameinfo(&ai_addr, ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV) !=
+      0) {
+    return {std::string(""), -1};
+  }
+  return std::make_pair(std::string(ip_addr), std::stoi(port_nr));
+}
+
+inline bool bind_to_interface(const unique_fd& fd, const std::string& interface, srslog::basic_logger& logger)
 {
   if (interface.empty() || interface == "auto") {
     // no need to change anything

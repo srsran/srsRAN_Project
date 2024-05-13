@@ -12,7 +12,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/gateways/addr_info.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/sockets.h"
+#include "srsran/support/io/sockets.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/socket.h>
