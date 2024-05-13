@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "gtpu_tunnel_nru_rx.h"
-#include "gtpu_tunnel_nru_tx.h"
+#include "gtpu_tunnel_nru_rx_impl.h"
+#include "gtpu_tunnel_nru_tx_impl.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
 #include "srsran/pcap/dlt_pcap.h"
@@ -30,8 +30,8 @@ public:
                        timer_factory                               ue_dl_timer_factory) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
-    rx = std::make_unique<gtpu_tunnel_nru_rx>(ue_index, cfg.rx, rx_lower, ue_dl_timer_factory);
-    tx = std::make_unique<gtpu_tunnel_nru_tx>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
+    rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(ue_index, cfg.rx, rx_lower, ue_dl_timer_factory);
+    tx = std::make_unique<gtpu_tunnel_nru_tx_impl>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
   }
   ~gtpu_tunnel_nru_impl() override = default;
 
@@ -41,7 +41,7 @@ public:
 private:
   srslog::basic_logger& logger;
 
-  std::unique_ptr<gtpu_tunnel_nru_rx> rx = {};
-  std::unique_ptr<gtpu_tunnel_nru_tx> tx = {};
+  std::unique_ptr<gtpu_tunnel_nru_rx_impl> rx = {};
+  std::unique_ptr<gtpu_tunnel_nru_tx_impl> tx = {};
 };
 } // namespace srsran

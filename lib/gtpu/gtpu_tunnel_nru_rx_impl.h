@@ -40,13 +40,13 @@ struct gtpu_rx_sdu_info {
 };
 
 /// Class used for receiving GTP-U NR-U bearers, e.g. on F1-U interface.
-class gtpu_tunnel_nru_rx : public gtpu_tunnel_base_rx
+class gtpu_tunnel_nru_rx_impl : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_nru_rx(srs_cu_up::ue_index_t                    ue_index,
-                     gtpu_config::gtpu_rx_config              cfg,
-                     gtpu_tunnel_nru_rx_lower_layer_notifier& rx_lower_,
-                     timer_factory                            ue_dl_timer_factory_) :
+  gtpu_tunnel_nru_rx_impl(srs_cu_up::ue_index_t                    ue_index,
+                          gtpu_config::gtpu_rx_config              cfg,
+                          gtpu_tunnel_nru_rx_lower_layer_notifier& rx_lower_,
+                          timer_factory                            ue_dl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
@@ -61,7 +61,7 @@ public:
     logger.log_info(
         "GTPU NR-U Rx configured. local_teid={} t_reodering={}", config.local_teid, config.t_reordering.count());
   }
-  ~gtpu_tunnel_nru_rx() override = default;
+  ~gtpu_tunnel_nru_rx_impl() override = default;
 
   /*
    * Testing Helpers
@@ -257,7 +257,7 @@ private:
   class reordering_callback
   {
   public:
-    explicit reordering_callback(gtpu_tunnel_nru_rx* parent_) : parent(parent_) {}
+    explicit reordering_callback(gtpu_tunnel_nru_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
       parent->logger.log_info("reordering timer expired. {}", parent->st);
@@ -265,7 +265,7 @@ private:
     }
 
   private:
-    gtpu_tunnel_nru_rx* parent;
+    gtpu_tunnel_nru_rx_impl* parent;
   };
 
   /// \brief Helper function for arithmetic comparisons of state variables or SN values
