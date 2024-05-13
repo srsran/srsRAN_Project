@@ -133,13 +133,13 @@ def test_viavi_manual(
         param(
             _TestName.UE1_STATIC_DL_UL_UDP.value,
             45 * 60,
-            "",
+            "log --mac_level=info",
             id="1UE Bidirectional UDP",
         ),
         param(
             _TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
-            "",
+            "log --mac_level=info",
             id="32UE Bidirectional UDP",
         ),
     ),
@@ -200,8 +200,8 @@ def test_viavi(
         param(
             _TestName.UE32_STATIC_DL_UL_UDP.value,
             45 * 60,
-            "",
-            id="Debug: 32UE Bidirectional UDP",
+            "log --mac_level=info",
+            id="32UE Bidirectional UDP",
         ),
     ),
 )
