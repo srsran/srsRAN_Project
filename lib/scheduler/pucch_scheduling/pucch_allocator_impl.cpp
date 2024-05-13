@@ -1245,7 +1245,7 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
   pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
   pucch_grant.format  = pucch_format::FORMAT_1;
 
-  // Set PRBs and symbols, first.º
+  // Set PRBs and symbols, first.
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
   const auto& res_f1 = variant_get<pucch_format_1_cfg>(pucch_ded_res_cfg.format_params);
   pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
