@@ -200,9 +200,14 @@ private:
   // Check if a candidate has valid parameters for an allocation.
   bool is_candidate_valid(const candidate& current) const
   {
+    // Check whether PDSCH slot is DL enabled.
+    if (not ue_cc->cfg().cell_cfg_common.is_dl_enabled(pdcch_slot + current.pdsch_td_res().k0)) {
+      return false;
+    }
+
+    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
     if (ue_cc->cfg().cell_cfg_common.get_nof_dl_symbol_per_slot(pdcch_slot + current.pdsch_td_res().k0) <
         current.pdsch_td_res().symbols.stop()) {
-      // Check whether PDSCH time domain resource fits in DL symbols of the slot.
       return false;
     }
 
