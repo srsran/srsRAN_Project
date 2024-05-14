@@ -976,11 +976,33 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u,
       auto* existing_pucch = std::find_if(pusch_alloc.result.ul.pucchs.begin(),
                                           pusch_alloc.result.ul.pucchs.end(),
                                           [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+      auto  existing_pucch_count =
+          std::count_if(pusch_alloc.result.ul.pucchs.begin(),
+                        pusch_alloc.result.ul.pucchs.end(),
+                        [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
-      if (existing_pucch != pusch_alloc.result.ul.pucchs.end() and existing_pucch->format == pucch_format::FORMAT_1 and
-          existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr) {
-        // Remove existing PUCCH SR grant if any.
-        pusch_alloc.result.ul.pucchs.erase(existing_pucch);
+      // [Implementation-defined]
+      // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant
+      // requires careful consideration since we can have multiple PUCCH grants. Following are the possible options:
+      //
+      // - PUCCH common only (very unlikely, but a possibility)
+      // - PUCCH common (1 HARQ bit) + 1 PUCCH F1 dedicated (1 HARQ bit)
+      // - PUCCH common (1 HARQ bit) + 2 PUCCH F1 dedicated (1 HARQ bit, 1 HARQ bit + SR bit)
+      // - PUCCH common (1 HARQ bit) + 1 PUCCH F2 dedicated (with CSI + HARQ bit)
+      // - PUCCH F1 dedicated only (SR bit)
+      // - PUCCH F2 dedicated only (CSI)
+      //
+      // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
+      // bit.
+      if (existing_pucch_count > 0) {
+        if (existing_pucch_count == 1 and existing_pucch->format == pucch_format::FORMAT_1 and
+            existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr and
+            existing_pucch->format_1.harq_ack_nof_bits == 0) {
+          pusch_alloc.result.ul.pucchs.erase(existing_pucch);
+        } else {
+          // No PUSCH in slots with PUCCH.
+          continue;
+        }
       }
 
       ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx);
