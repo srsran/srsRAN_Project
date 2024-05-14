@@ -24,10 +24,12 @@ static std::string pcap_dir;
 
 class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_nru_rx_lower_layer_notifier
 {
-  void on_new_sdu(nru_dl_message dl_message) final { last_rx = std::move(dl_message); }
+  void on_new_sdu(nru_dl_message dl_message) final { last_dl_msg = std::move(dl_message); }
+  void on_new_sdu(nru_ul_message ul_message) final { last_ul_msg = std::move(ul_message); }
 
 public:
-  nru_dl_message last_rx;
+  nru_dl_message last_dl_msg;
+  nru_ul_message last_ul_msg;
 };
 
 class gtpu_tunnel_tx_upper_dummy : public gtpu_tunnel_common_tx_upper_layer_notifier
@@ -195,7 +197,7 @@ TEST_F(gtpu_tunnel_nru_test, rx_sdu)
   nru_dl_message exp_msg              = {};
   exp_msg.dl_user_data.nru_sn         = 0x112233;
   exp_msg.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{{0x445566, 0x77}, {0xaabbcc, 0xdd}};
-  ASSERT_EQ(gtpu_rx.last_rx, exp_msg);
+  ASSERT_EQ(gtpu_rx.last_dl_msg, exp_msg);
 };
 
 /// \brief Test correct transmission of GTP-U packet

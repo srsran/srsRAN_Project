@@ -38,7 +38,7 @@ namespace srsran {
  * Interfaces/notifiers for the gateway
  ****************************************/
 /// This interface represents the data entry point of the transmitting side of a GTP-U entity.
-/// The lower layer will use this call to pass GTP-U SDUs (i.e. NR-U UL messages) into the TX entity.
+/// The lower layer will use this call to pass GTP-U SDUs (i.e. NR-U DL/UL messages) into the TX entity.
 class gtpu_tunnel_nru_tx_lower_layer_interface
 {
 public:
@@ -48,6 +48,10 @@ public:
   gtpu_tunnel_nru_tx_lower_layer_interface& operator=(const gtpu_tunnel_nru_tx_lower_layer_interface&)  = delete;
   gtpu_tunnel_nru_tx_lower_layer_interface(const gtpu_tunnel_nru_tx_lower_layer_interface&&)            = delete;
   gtpu_tunnel_nru_tx_lower_layer_interface& operator=(const gtpu_tunnel_nru_tx_lower_layer_interface&&) = delete;
+
+  /// \brief Interface for the lower layer to pass a SDU (i.e. NR-U DL message) into the GTP-U.
+  /// \param dl_message NR-U DL message with optional T-PDU.
+  virtual void handle_sdu(nru_dl_message dl_message) = 0;
 
   /// \brief Interface for the lower layer to pass a SDU (i.e. NR-U UL message) into the GTP-U.
   /// \param ul_message NR-U UL message with optional T-PDU.
