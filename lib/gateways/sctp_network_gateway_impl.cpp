@@ -12,10 +12,62 @@
 #include "srsran/gateways/addr_info.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/io/sockets.h"
+#include <netdb.h>
+#include <netinet/sctp.h>
 #include <sys/socket.h>
 #include <utility>
 
 using namespace srsran;
+
+constexpr uint32_t network_gateway_sctp_max_len = 9100;
+
+namespace {
+
+/// Helper generator class that traverses a list of SCTP sockaddr param candidates (ipv4, ipv6, hostnames).
+class sockaddr_searcher
+{
+public:
+  sockaddr_searcher(const std::string& address, int port, srslog::basic_logger& logger)
+  {
+    struct addrinfo hints {};
+    // support ipv4, ipv6 and hostnames
+    hints.ai_family    = AF_UNSPEC;
+    hints.ai_socktype  = SOCK_SEQPACKET;
+    hints.ai_flags     = 0;
+    hints.ai_protocol  = IPPROTO_SCTP;
+    hints.ai_canonname = nullptr;
+    hints.ai_addr      = nullptr;
+    hints.ai_next      = nullptr;
+
+    std::string port_str = std::to_string(port);
+    int         ret      = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
+    if (ret != 0) {
+      logger.error("Getaddrinfo error: {} - {}", address, gai_strerror(ret));
+      results = nullptr;
+      return;
+    }
+    next_result = results;
+  }
+  sockaddr_searcher(const sockaddr_searcher&) = delete;
+  sockaddr_searcher(sockaddr_searcher&&)      = delete;
+  ~sockaddr_searcher() { freeaddrinfo(results); }
+
+  /// Get next candidate or nullptr of search has ended.
+  struct addrinfo* next()
+  {
+    struct addrinfo* ret = next_result;
+    if (next_result != nullptr) {
+      next_result = next_result->ai_next;
+    }
+    return ret;
+  }
+
+private:
+  struct addrinfo* results     = nullptr;
+  struct addrinfo* next_result = nullptr;
+};
+
+} // namespace
 
 // Gateway Client.
 
@@ -55,27 +107,9 @@ expected<sctp_socket> sctp_network_gateway_impl::create_socket(int ai_family, in
 /// \brief Create and bind socket to given address.
 bool sctp_network_gateway_impl::create_and_bind()
 {
-  struct addrinfo hints {};
-  // support ipv4, ipv6 and hostnames
-  hints.ai_family    = AF_UNSPEC;
-  hints.ai_socktype  = SOCK_SEQPACKET;
-  hints.ai_flags     = 0;
-  hints.ai_protocol  = IPPROTO_SCTP;
-  hints.ai_canonname = nullptr;
-  hints.ai_addr      = nullptr;
-  hints.ai_next      = nullptr;
-
-  std::string      bind_port = std::to_string(config.bind_port);
-  struct addrinfo* results;
-
-  int ret = getaddrinfo(config.bind_address.c_str(), bind_port.c_str(), &hints, &results);
-  if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", config.bind_address, gai_strerror(ret));
-    return false;
-  }
-
-  struct addrinfo* result;
-  for (result = results; result != nullptr; result = result->ai_next) {
+  sockaddr_searcher searcher{config.bind_address, config.bind_port, logger};
+  struct addrinfo*  result = nullptr;
+  for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // create SCTP socket
     auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (outcome.is_error()) {
@@ -85,7 +119,7 @@ bool sctp_network_gateway_impl::create_and_bind()
       }
       continue;
     }
-    sctp_socket candidate = std::move(outcome.value());
+    sctp_socket& candidate = outcome.value();
 
     if (not candidate.bind(*result->ai_addr, result->ai_addrlen, config.bind_interface)) {
       // Bind failed. Try next candidate
@@ -97,28 +131,11 @@ bool sctp_network_gateway_impl::create_and_bind()
     break;
   }
 
-  freeaddrinfo(results);
-
   if (not socket.is_open()) {
-    fmt::print("Failed to bind {} socket to {}:{}. {}\n",
-               ipproto_to_string(hints.ai_protocol),
-               config.bind_address,
-               config.bind_port,
-               strerror(ret));
-    logger.error("Failed to bind {} socket to {}:{}. {}",
-                 ipproto_to_string(hints.ai_protocol),
-                 config.bind_address,
-                 config.bind_port,
-                 strerror(ret));
+    fmt::print("Failed to bind SCTP socket to {}:{}. {}\n", config.bind_address, config.bind_port, strerror(errno));
+    logger.error("Failed to bind SCTP socket to {}:{}. {}", config.bind_address, config.bind_port, strerror(errno));
     return false;
   }
-
-  // store client address
-  std::memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
-  client_addrlen     = result->ai_addrlen;
-  client_ai_family   = result->ai_family;
-  client_ai_socktype = result->ai_socktype;
-  client_ai_protocol = result->ai_protocol;
 
   logger.debug("Binding successful");
 
@@ -145,37 +162,20 @@ bool sctp_network_gateway_impl::create_and_connect()
     }
   }
 
-  struct addrinfo hints;
-  // support ipv4, ipv6 and hostnames
-  hints.ai_family    = AF_UNSPEC;
-  hints.ai_socktype  = SOCK_SEQPACKET;
-  hints.ai_flags     = 0;
-  hints.ai_protocol  = IPPROTO_SCTP;
-  hints.ai_canonname = nullptr;
-  hints.ai_addr      = nullptr;
-  hints.ai_next      = nullptr;
-
-  std::string      connect_port = std::to_string(config.connect_port);
-  struct addrinfo* results;
-
-  int ret = getaddrinfo(config.connect_address.c_str(), connect_port.c_str(), &hints, &results);
-  if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", config.connect_address, gai_strerror(ret));
-    return false;
-  }
-
   fmt::print("Connecting to {} on {}:{}\n",
              config.connection_name.c_str(),
              config.connect_address.c_str(),
-             connect_port.c_str());
-  std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
-  struct addrinfo*                                   result;
-  for (result = results; result != nullptr; result = result->ai_next) {
+             config.connect_port);
+
+  sockaddr_searcher                                  searcher{config.connect_address, config.connect_port, logger};
+  std::chrono::time_point<std::chrono::steady_clock> start  = std::chrono::steady_clock::now();
+  struct addrinfo*                                   result = nullptr;
+  for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // Create SCTP socket only if not created in create_and_bind function.
     if (not socket.is_open()) {
       auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
       if (outcome.is_error()) {
-        if (ret == ESOCKTNOSUPPORT) {
+        if (errno == ESOCKTNOSUPPORT) {
           break;
         }
         continue;
@@ -192,37 +192,28 @@ bool sctp_network_gateway_impl::create_and_connect()
     break;
   }
 
-  freeaddrinfo(results);
-
   if (not socket.fd().is_open()) {
-    ret                                                    = errno;
     std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    fmt::print("Failed to connect {} socket to {}:{}. error=\"{}\" timeout={}ms\n",
-               ipproto_to_string(hints.ai_protocol),
+    fmt::print("Failed to connect SCTP socket to {}:{}. error=\"{}\" timeout={}ms\n",
                config.connect_address,
                config.connect_port,
-               strerror(ret),
+               strerror(errno),
                now_ms.count());
-    logger.error("Failed to connect {} socket to {}:{}. error=\"{}\" timeout={}ms",
-                 ipproto_to_string(hints.ai_protocol),
+    logger.error("Failed to connect SCTP socket to {}:{}. error=\"{}\" timeout={}ms",
                  config.connect_address,
                  config.connect_port,
-                 strerror(ret),
+                 strerror(errno),
                  now_ms.count());
     return false;
   }
 
-  // store server address
-  std::memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
-  server_addrlen     = result->ai_addrlen;
-  server_ai_family   = result->ai_family;
-  server_ai_socktype = result->ai_socktype;
-  server_ai_protocol = result->ai_protocol;
+  // Connect was successful.
+  client_mode = true;
 
-  // If connected then use server address as destination address.
-  std::memcpy(&msg_dst_addr, &server_addr, server_addrlen);
-  msg_dst_addrlen = server_addrlen;
+  // Use server address as destination address.
+  std::memcpy(&msg_dst_addr, result->ai_addr, result->ai_addrlen);
+  msg_dst_addrlen = result->ai_addrlen;
 
   logger.debug("Connection successful");
 
@@ -309,7 +300,7 @@ void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> pay
           break;
         case SCTP_COMM_LOST:
           state = "COMM_LOST";
-          ctrl_notifier.on_connection_loss();
+          handle_connection_loss();
           break;
         case SCTP_RESTART:
           state = "RESTART";
@@ -319,7 +310,7 @@ void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> pay
           break;
         case SCTP_CANT_STR_ASSOC:
           state = "CAN'T START ASSOC";
-          ctrl_notifier.on_connection_loss();
+          handle_connection_loss();
           break;
       }
 
@@ -339,7 +330,7 @@ void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> pay
       }
       struct sctp_shutdown_event* n = &notif->sn_shutdown_event;
       logger.debug("SCTP_SHUTDOWN_EVENT notif: assoc id: {}", n->sse_assoc_id);
-      ctrl_notifier.on_connection_loss();
+      handle_connection_loss();
       break;
     }
 
@@ -357,10 +348,12 @@ void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> paylo
   data_notifier.on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
-void sctp_network_gateway_impl::handle_io_error(io_broker::error_code code)
+void sctp_network_gateway_impl::handle_connection_loss()
 {
-  logger.info("Connection loss due to IO error code={}.", (int)code);
+  // Stop listening to new Rx events.
   io_sub.reset();
+
+  // Notify the connection drop.
   ctrl_notifier.on_connection_loss();
 }
 
@@ -384,7 +377,7 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  if (server_addrlen == 0) {
+  if (not client_mode) {
     // If only bind, send msg to the last src address.
     std::memcpy(&msg_dst_addr, &msg_src_addr, msg_src_addrlen);
     msg_dst_addrlen = msg_src_addrlen;
@@ -409,6 +402,11 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 bool sctp_network_gateway_impl::subscribe_to(io_broker& broker)
 {
   io_sub = broker.register_fd(
-      socket.fd().value(), [this]() { receive(); }, [this](io_broker::error_code code) { handle_io_error(code); });
+      socket.fd().value(),
+      [this]() { receive(); },
+      [this](io_broker::error_code code) {
+        logger.info("Connection loss due to IO error code={}.", (int)code);
+        handle_connection_loss();
+      });
   return io_sub.registered();
 }

@@ -16,13 +16,11 @@
 
 namespace srsran {
 
-constexpr uint32_t network_gateway_sctp_max_len = 9100;
-
 class sctp_network_gateway_impl final : public sctp_network_gateway
 {
 public:
   explicit sctp_network_gateway_impl(sctp_network_gateway_config            config_,
-                                     sctp_network_gateway_control_notifier& ctrl_notfier_,
+                                     sctp_network_gateway_control_notifier& ctrl_notifier_,
                                      network_gateway_data_notifier&         data_notifier_);
   ~sctp_network_gateway_impl() override;
 
@@ -39,7 +37,6 @@ public:
   void handle_pdu(const byte_buffer& pdu) override;
 
   // network_gateway_controller interface
-  /// \brief Create and bind socket to given address.
   bool create_and_bind() override;
 
   bool listen() override;
@@ -57,12 +54,12 @@ private:
   using socket_buffer_type = uint8_t;
   void handle_data(span<socket_buffer_type> payload);
   void handle_notification(span<socket_buffer_type> payload);
-  void handle_io_error(io_broker::error_code code);
+  void handle_connection_loss();
 
   // socket helpers
   bool close_socket();
 
-  sctp_network_gateway_config            config; /// configuration
+  sctp_network_gateway_config            config;
   sctp_network_gateway_control_notifier& ctrl_notifier;
   network_gateway_data_notifier&         data_notifier;
   srslog::basic_logger&                  logger;
@@ -70,17 +67,7 @@ private:
   sctp_socket           socket;
   io_broker::subscriber io_sub;
 
-  sockaddr_storage client_addr        = {}; // the local address
-  socklen_t        client_addrlen     = 0;
-  int              client_ai_family   = 0;
-  int              client_ai_socktype = 0;
-  int              client_ai_protocol = 0;
-
-  sockaddr_storage server_addr        = {}; // the server address when operating as client
-  socklen_t        server_addrlen     = 0;
-  int              server_ai_family   = 0;
-  int              server_ai_socktype = 0;
-  int              server_ai_protocol = 0;
+  bool client_mode = false;
 
   sockaddr_storage msg_src_addr    = {}; // message source address
   socklen_t        msg_src_addrlen = 0;

@@ -6,7 +6,12 @@
 # the distribution.
 #
 
-add_library(srsran_network transport_layer_address.cpp io_broker_factory.cpp io_broker_epoll.cpp sctp_socket.cpp)
+add_library(srsran_network
+        transport_layer_address.cpp
+        io_broker_factory.cpp
+        io_broker_epoll.cpp
+        sctp_socket.cpp
+        sockets.cpp)
 target_link_libraries(srsran_network srslog)
 
 install(TARGETS srsran_network

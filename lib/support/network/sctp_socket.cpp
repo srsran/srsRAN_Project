@@ -12,6 +12,8 @@
 #include "srsran/support/error_handling.h"
 #include "srsran/support/io/sockets.h"
 #include <fcntl.h>
+#include <netinet/in.h>
+#include <netinet/sctp.h>
 #include <sys/socket.h>
 
 using namespace srsran;
@@ -153,16 +155,6 @@ bool sctp_set_nodelay(const unique_fd& fd, optional<bool> nodelay, srslog::basic
   int optval = nodelay.value() == true ? 1 : 0;
   if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
     logger.error("Could not set SCTP_NODELAY. optval={} error={}", optval, strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-bool set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
-{
-  int one = 1;
-  if (::setsockopt(fd.value(), SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-    logger.error("Couldn't set reuseaddr for socket: {}", strerror(errno));
     return false;
   }
   return true;
