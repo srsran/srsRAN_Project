@@ -401,7 +401,7 @@ def check_metrics_criteria(
     )
     is_ok &= (
         check_and_print_criteria("Number of KOs and/or retrxs", gnb_metrics.nof_kos_aggregate, 0, operator.eq)
-        and not fail_if_kos
+        or not fail_if_kos
     )
 
     # Save metrics
