@@ -200,7 +200,7 @@ smoke zmq:
     TESTBED: zmq
     MARKERS: "smoke"
     PYTEST_ARGS: "-x"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
     E2E_LOG_LEVEL: "debug"
   needs:
     - job: "smoke relwithdeb cached"
@@ -242,7 +242,7 @@ amari 1UE:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -255,6 +255,7 @@ amari 1UE 4x4 mimo:
     TESTBED: "zmq_4x4_mimo"
     MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
+    RETINA_ARGS: "gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -267,6 +268,7 @@ amari 4UE deb:
     TESTBED: "zmq_deb"
     MARKERS: "smoke"
     E2E_LOG_LEVEL: "info"
+    RETINA_ARGS: "gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic package"
       artifacts: true
@@ -278,7 +280,7 @@ amari 32UE:
   variables:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -307,7 +309,7 @@ amari 32UE asan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic asan"
       artifacts: true
@@ -318,7 +320,7 @@ amari 32UE tsan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -330,7 +332,7 @@ amari 32UE memcheck:
   variables:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic memcheck"
       artifacts: true
