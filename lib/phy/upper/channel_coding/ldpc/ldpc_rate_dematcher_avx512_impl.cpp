@@ -74,27 +74,27 @@ static void mm512_deinterleave(__m512i& out_even, __m512i& out_odd, __m512i in_l
 static void mm512_deinterleave(__m512i& out0, __m512i& out1, __m512i& out2, __m512i in0, __m512i in1, __m512i in2)
 {
   // Permute indexes.
-  alignas(AVX512_SIZE_BYTE) int8_t idx0_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx0_[AVX512_SIZE_BYTE] = {
       0,  3,  6,  9,  12, 15, 18, 21, 24, 27, 30, 33, 36,  39,  42,  45,  48,  51,  54,  57,  60,  63,
       66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126, 0,
       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0};
-  alignas(AVX512_SIZE_BYTE) int8_t idx1_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx1_[AVX512_SIZE_BYTE] = {
       65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 0,
       3,  6,  9,  12, 15, 18, 21, 24, 27, 30, 33, 36, 39,  42,  45,  48,  51,  54,  57,  60,  63,  0,
       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0};
-  alignas(AVX512_SIZE_BYTE) int8_t idx2_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx2_[AVX512_SIZE_BYTE] = {
       2,  5,  8,  11, 14, 17, 20, 23, 26, 29, 32, 35,  38,  41,  44,  47,  50,  53,  56,  59,  62, 65,
       68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 0,  0,
       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0};
-  alignas(AVX512_SIZE_BYTE) int8_t idx3_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx3_[AVX512_SIZE_BYTE] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
       22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  34,  35,  36,  37,  38,  39,  40,  41, 42, 65,
       68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125};
-  alignas(AVX512_SIZE_BYTE) int8_t idx4_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx4_[AVX512_SIZE_BYTE] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
       22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  34,  35,  36,  37,  38,  39,  40,  41, 42, 66,
       69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126};
-  alignas(AVX512_SIZE_BYTE) int8_t idx5_[AVX512_SIZE_BYTE] = {
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx5_[AVX512_SIZE_BYTE] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
       22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,  33,  34,  35,  36,  37,  38,  39,  40,  41, 64, 67,
       70, 73, 76, 79, 82, 85, 88, 91, 94, 97, 100, 103, 106, 109, 112, 115, 118, 121, 124, 127};
