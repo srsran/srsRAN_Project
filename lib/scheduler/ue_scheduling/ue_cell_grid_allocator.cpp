@@ -13,6 +13,7 @@
 #include "../support/mcs_calculator.h"
 #include "../support/sched_result_helpers.h"
 #include "ue_pdsch_alloc_param_candidate_searcher.h"
+#include "ue_pusch_alloc_param_candidate_searcher.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"
@@ -71,7 +72,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   // Fetch PDCCH resource grid allocator.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-    logger.warning("ue={} rnti={}: Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot",
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: DL is not active in the PDCCH slot={}",
                    u.ue_index,
                    u.crnti,
                    pdcch_alloc.slot);
@@ -470,388 +471,375 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
+  const bool                   is_retx     = not h_ul.empty();
 
-  if (not ue_cc->is_active() and h_ul.empty()) {
-    // newTxs are not allowed for inactive UEs.
-    logger.warning("PUSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
-                   u.ue_index,
-                   grant.cell_index);
-    return alloc_outcome::skip_ue;
-  }
-
-  // Find a SearchSpace candidate.
-  const search_space_info* ss_info = ue_cell_cfg.find_search_space(grant.ss_id);
-  if (ss_info == nullptr) {
-    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: No valid SearchSpace found.", u.ue_index, u.crnti);
-    return alloc_outcome::invalid_params;
-  }
-  if (ss_info->bwp->bwp_id != ue_cc->active_bwp_id()) {
-    logger.warning(
-        "ue={} rnti={}: Failed to allocate PUSCH. Cause: Chosen SearchSpace {} does not belong to the active BWP {}",
-        u.ue_index,
-        u.crnti,
-        grant.ss_id,
-        ue_cc->active_bwp_id());
-    return alloc_outcome::invalid_params;
-  }
-  const search_space_configuration&            ss_cfg       = *ss_info->cfg;
-  const bwp_uplink_common&                     bwp_ul_cmn   = *ss_info->bwp->ul_common;
-  const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg = ss_info->pusch_time_domain_list[grant.time_res_index];
-  const dci_ul_rnti_config_type ss_supported_crnti_dci_type = ss_info->get_ul_dci_format() == dci_ul_format::f0_0
-                                                                  ? dci_ul_rnti_config_type::c_rnti_f0_0
-                                                                  : dci_ul_rnti_config_type::c_rnti_f0_1;
-  const dci_ul_rnti_config_type dci_type =
-      h_ul.empty() ? ss_supported_crnti_dci_type : h_ul.last_tx_params().dci_cfg_type;
-
-  const aggregation_level aggr_lvl =
-      ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), *ss_info, false);
-
-  // See 3GPP TS 38.213, clause 10.1,
-  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
-  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
-  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-  if (dci_type == dci_ul_rnti_config_type::tc_rnti_f0_0 and
-      grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: SearchSpace not valid for re-transmission.",
-                u.ue_index,
-                u.crnti);
-    return alloc_outcome::invalid_params;
-  }
-
-  // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
-  // that DCI format.
-  if (dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0 and dci_type != ss_supported_crnti_dci_type) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in "
-                "SearchSpace {}.",
-                u.ue_index,
-                u.crnti,
-                dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
-                grant.ss_id);
-    return alloc_outcome::invalid_params;
-  }
-
-  // Fetch PDCCH and PDSCH resource grid allocators.
+  // Fetch PDCCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
-  cell_slot_resource_allocator& pusch_alloc =
-      get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset];
-
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-    logger.warning("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",
+    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: DL is not active in the PDCCH slot={}",
                    u.ue_index,
                    u.crnti,
-                   pusch_alloc.slot);
-    return alloc_outcome::skip_slot;
-  }
-  if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
-    logger.warning(
-        "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
-        u.ue_index,
-        u.crnti,
-        pusch_alloc.slot,
-        pusch_td_cfg.k2);
-    return alloc_outcome::invalid_params;
-  }
-
-  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will be
-  // removed when multiplexing the UCI on PUSCH.
-  unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
-  if (pusch_pdu_rem_space == 0) {
-    if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
-      logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of PUSCHs per slot {} was reached.",
-                  u.ue_index,
-                  u.crnti,
-                  expert_cfg.max_puschs_per_slot);
-    } else {
-      logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: Max number of UL grants per slot {} was reached.",
-                  u.ue_index,
-                  u.crnti,
-                  expert_cfg.max_puschs_per_slot);
-    }
+                   pdcch_alloc.slot);
     return alloc_outcome::skip_slot;
   }
 
   // Verify there is space in PDCCH result lists for new allocations.
   if (pdcch_alloc.result.dl.ul_pdcchs.full()) {
-    logger.warning(
-        "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Maximum number of PDCCH grants per slot {} reached",
-        u.ue_index,
-        u.crnti,
-        pusch_alloc.slot,
-        pdcch_alloc.result.dl.ul_pdcchs.capacity());
+    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: Maximum number of PDCCH grants per "
+                   "slot {} reached",
+                   u.ue_index,
+                   u.crnti,
+                   pdcch_alloc.result.dl.ul_pdcchs.capacity());
     return alloc_outcome::skip_slot;
   }
 
-  // Verify only one PUSCH exists for a RNTI.
-  for (const ul_sched_info& pusch : pusch_alloc.result.ul.puschs) {
-    if (pusch.pusch_cfg.rnti == u.crnti) {
+  if (not ue_cc->is_active() and not is_retx) {
+    // newTxs are not allowed for inactive UEs.
+    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: The ue={} carrier with cell_index={} is inactive",
+                   u.ue_index,
+                   u.crnti,
+                   grant.cell_index);
+    return alloc_outcome::skip_ue;
+  }
+
+  // Create PUSCH param candidate search object.
+  ue_pusch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_ul, is_retx, pdcch_alloc.slot};
+  if (candidates.search_spaces().empty()) {
+    // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
+    return alloc_outcome::skip_ue;
+  }
+
+  // Iterate through allocation parameter candidates.
+  for (const ue_pusch_alloc_param_candidate_searcher::candidate& param_candidate : candidates) {
+    const pusch_time_domain_resource_allocation& pusch_td_cfg = param_candidate.pusch_td_res();
+    const search_space_info&                     ss_info      = param_candidate.ss();
+    const dci_ul_rnti_config_type                dci_type     = param_candidate.dci_ul_rnti_cfg_type();
+    const search_space_configuration&            ss_cfg       = *ss_info.cfg;
+    const bwp_uplink_common&                     bwp_ul_cmn   = *ss_info.bwp->ul_common;
+    const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
+
+    const aggregation_level aggr_lvl =
+        ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), ss_info, false);
+
+    // Fetch PUSCH resource grid allocators.
+    cell_slot_resource_allocator& pusch_alloc =
+        get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset];
+    if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
+      logger.warning(
+          "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
+          u.ue_index,
+          u.crnti,
+          pusch_alloc.slot,
+          pusch_td_cfg.k2);
+      // Try next candidate.
+      continue;
+    }
+
+    // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will
+    // be removed when multiplexing the UCI on PUSCH.
+    unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
+    if (pusch_pdu_rem_space == 0) {
+      if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
+        logger.info(
+            "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of PUSCHs per slot {} was reached.",
+            u.ue_index,
+            u.crnti,
+            pusch_alloc.slot,
+            expert_cfg.max_puschs_per_slot);
+      } else {
+        logger.info("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of UL grants per slot {} "
+                    "was reached.",
+                    u.ue_index,
+                    u.crnti,
+                    pusch_alloc.slot,
+                    expert_cfg.max_puschs_per_slot);
+      }
+      // Try next candidate.
+      continue;
+    }
+
+    // Verify only one PUSCH exists for a RNTI.
+    const ul_sched_info* pusch_exists_it =
+        std::find_if(pusch_alloc.result.ul.puschs.begin(),
+                     pusch_alloc.result.ul.puschs.end(),
+                     [rnti = u.crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
+    if (pusch_exists_it != pusch_alloc.result.ul.puschs.end()) {
+      // Try next candidate.
+      continue;
+    }
+
+    // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
+    // PUCCH resources.
+    if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
+      logger.debug("ue={} rnti={} Allocation of PUSCH in slot={} skipped. Cause: UE has PUCCH grant using common PUCCH "
+                   "resources scheduled",
+                   u.ue_index,
+                   u.crnti,
+                   pusch_alloc.slot);
+      // Try next candidate.
+      continue;
+    }
+
+    // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If
+    // so, allocate remaining RBs to the current UE only if it's a new Tx.
+    crb_interval adjusted_crbs{grant.crbs};
+    if (not is_retx and pusch_pdu_rem_space == 1) {
+      const crb_interval ul_crb_lims = {std::max(expert_cfg.pusch_crb_limits.start(), ss_info.ul_crb_lims.start()),
+                                        std::min(expert_cfg.pusch_crb_limits.stop(), ss_info.ul_crb_lims.stop())};
+      const crb_bitmap   used_crbs =
+          pusch_alloc.ul_res_grid.used_crbs(bwp_ul_cmn.generic_params.scs, ul_crb_lims, pusch_td_cfg.symbols);
+      adjusted_crbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0);
+    }
+
+    // Verify CRBs allocation.
+    if (not ss_info.ul_crb_lims.contains(adjusted_crbs)) {
+      logger.warning("rnti={} Failed to allocate PUSCH. Cause: CRBs {} allocated outside the BWP {}",
+                     u.ue_index,
+                     u.crnti,
+                     adjusted_crbs,
+                     ss_info.ul_crb_lims);
+      // Try next candidate.
+      continue;
+    }
+
+    // In case of retx, ensure the number of PRBs for the grant did not change.
+    if (is_retx and adjusted_crbs.length() != h_ul.last_tx_params().rbs.type1().length()) {
+      logger.warning(
+          "ue={} rnti={}: Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs "
+          "(harq-id={}, "
+          "nof_prbs={}!={})",
+          u.ue_index,
+          u.crnti,
+          h_ul.id,
+          h_ul.last_tx_params().rbs.type1().length(),
+          adjusted_crbs.length());
+      // Try next candidate.
+      continue;
+    }
+
+    // Verify there is no RB collision.
+    if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, adjusted_crbs)) {
+      logger.warning(
+          "ue={} rnti={}: Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
+          u.ue_index,
+          u.crnti);
+      // Try next candidate.
+      continue;
+    }
+
+    // Allocate PDCCH position.
+    pdcch_ul_information* pdcch = get_pdcch_sched(grant.cell_index)
+                                      .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), aggr_lvl);
+    if (pdcch == nullptr) {
+      logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
       return alloc_outcome::skip_ue;
     }
-  }
 
-  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common PUCCH
-  // resources.
-  if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
-    logger.debug("ue={} rnti={} Allocation of PUSCH in slot={} skipped. Cause: UE has PUCCH grant using common PUCCH "
-                 "resources scheduled",
-                 u.ue_index,
-                 u.crnti,
-                 pusch_alloc.slot);
-    return alloc_outcome::skip_ue;
-  }
+    const unsigned nof_harq_ack_bits =
+        get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
 
-  // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If so,
-  // allocate remaining RBs to the current UE only if it's a new Tx.
-  crb_interval adjusted_crbs{grant.crbs};
-  if (h_ul.empty() and pusch_pdu_rem_space == 1) {
-    const crb_interval ul_crb_lims = {std::max(expert_cfg.pusch_crb_limits.start(), ss_info->ul_crb_lims.start()),
-                                      std::min(expert_cfg.pusch_crb_limits.stop(), ss_info->ul_crb_lims.stop())};
-    const crb_bitmap   used_crbs =
-        pusch_alloc.ul_res_grid.used_crbs(bwp_ul_cmn.generic_params.scs, ul_crb_lims, pusch_td_cfg.symbols);
-    adjusted_crbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0);
-  }
+    const bool is_csi_report_slot =
+        csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
 
-  // Verify CRBs allocation.
-  if (not ss_info->ul_crb_lims.contains(adjusted_crbs)) {
-    logger.warning("rnti={} Failed to allocate PUSCH. Cause: CRBs {} allocated outside the BWP {}",
-                   u.ue_index,
-                   u.crnti,
-                   adjusted_crbs,
-                   ss_info->ul_crb_lims);
-    return alloc_outcome::invalid_params;
-  }
-
-  // In case of retx, ensure the number of PRBs for the grant did not change.
-  if (not h_ul.empty() and adjusted_crbs.length() != h_ul.last_tx_params().rbs.type1().length()) {
-    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs "
-                   "(harq-id={}, "
-                   "nof_prbs={}!={})",
-                   u.ue_index,
-                   u.crnti,
-                   h_ul.id,
-                   h_ul.last_tx_params().rbs.type1().length(),
-                   adjusted_crbs.length());
-    return alloc_outcome::invalid_params;
-  }
-
-  // Verify there is no RB collision.
-  if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, adjusted_crbs)) {
-    logger.warning("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
-                   u.ue_index,
-                   u.crnti);
-    return alloc_outcome::invalid_params;
-  }
-
-  // Allocate PDCCH position.
-  pdcch_ul_information* pdcch =
-      get_pdcch_sched(grant.cell_index).alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), aggr_lvl);
-  if (pdcch == nullptr) {
-    logger.info("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
-    return alloc_outcome::skip_ue;
-  }
-
-  const unsigned nof_harq_ack_bits =
-      get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
-
-  const bool is_csi_report_slot =
-      csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
-
-  // Fetch PUSCH parameters based on type of transmission.
-  pusch_config_params pusch_cfg;
-  switch (dci_type) {
-    case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(
-          cell_cfg, &ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg,
-                                               pusch_td_cfg,
-                                               ue_cc->channel_state_manager().get_nof_ul_layers(),
-                                               nof_harq_ack_bits,
-                                               is_csi_report_slot);
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI UL format");
-  }
-
-  // Compute MCS and TBS for this transmission.
-  std::optional<sch_mcs_tbs> mcs_tbs_info;
-  // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
-  if (h_ul.empty()) {
-    bool contains_dc = dc_offset_helper::is_contained(
-        cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, adjusted_crbs);
-
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, grant.mcs, adjusted_crbs.length(), contains_dc);
-  }
-  // If it's a reTx, fetch the MCS and TBS from the previous transmission.
-  else {
-    mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
-  }
-
-  // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
-  if (not mcs_tbs_info.has_value()) {
-    logger.warning(
-        "ue={} rnti={}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
-        "configuration: mcs={} crbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
-        "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
-        u.ue_index,
-        u.crnti,
-        grant.mcs.to_uint(),
-        adjusted_crbs,
-        pusch_cfg.symbols,
-        pusch_cfg.nof_oh_prb,
-        pusch_cfg.tb_scaling_field,
-        pusch_cfg.nof_layers,
-        pusch_cfg.tp_pi2bpsk_present ? "yes" : "no",
-        pusch_cfg.nof_harq_ack_bits,
-        pusch_cfg.nof_csi_part1_bits,
-        pusch_cfg.max_nof_csi_part2_bits,
-        static_cast<unsigned>(pusch_cfg.mcs_table),
-        ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
-        ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2
-            ? "yes"
-            : "no",
-        static_cast<unsigned>(ue_cell_cfg.cfg_dedicated()
-                                  .ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value()
-                                  .additional_positions));
-    get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
-    return alloc_outcome::invalid_params;
-  }
-
-  // Mark resources as occupied in the ResourceGrid.
-  pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, adjusted_crbs});
-
-  // Remove NTN offset when adding slot to HARQ process.
-  slot_point harq_slot = pusch_alloc.slot - ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
-  // Allocate UE UL HARQ.
-  bool is_new_data = h_ul.empty();
-  if (is_new_data) {
-    // It is a new tx.
-    h_ul.new_tx(harq_slot, expert_cfg.max_nof_harq_retxs);
-  } else {
-    // It is a retx.
-    h_ul.new_retx(harq_slot);
-  }
-
-  // Compute total DAI. See TS 38.213, 9.1.3.2.
-  // Total DAI provides total number of transmissions at the end of each interval (slot in a cell). Values range from 1
-  // to 4.
-  // If a UE is not provided PDSCH-CodeBlockGroupTransmission and the UE is scheduled for a PUSCH transmission by
-  // DCI format 0_1 with DAI field value V_T_DAI_UL = 4 and the UE has not received any PDCCH within the monitoring
-  // occasions for PDCCH with DCI format 1_0 or DCI format 1_1 for scheduling PDSCH receptions or SPS PDSCH
-  // release on any serving cell c and the UE does not have HARQ-ACK information in response to a SPS PDSCH
-  // reception to multiplex in the PUSCH, the UE does not multiplex HARQ-ACK information in the PUSCH transmission.
-  // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
-  unsigned dai = 3;
-  if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
-    unsigned total_harq_ack_in_uci = nof_harq_ack_bits;
-    if (total_harq_ack_in_uci != 0) {
-      // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
-      dai = ((total_harq_ack_in_uci - 1) % 4);
+    // Fetch PUSCH parameters based on type of transmission.
+    pusch_config_params pusch_cfg;
+    switch (dci_type) {
+      case dci_ul_rnti_config_type::tc_rnti_f0_0:
+        pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        pusch_cfg = get_pusch_config_f0_0_c_rnti(
+            cell_cfg, &ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg,
+                                                 pusch_td_cfg,
+                                                 ue_cc->channel_state_manager().get_nof_ul_layers(),
+                                                 nof_harq_ack_bits,
+                                                 is_csi_report_slot);
+        break;
+      default:
+        report_fatal_error("Unsupported PDCCH DCI UL format");
     }
-  }
 
-  // Fill UL PDCCH DCI.
-  uint8_t rv = ue_cc->get_pusch_rv(h_ul);
-  switch (dci_type) {
-    case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      build_dci_f0_0_tc_rnti(pdcch->dci,
-                             *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common,
-                             ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common->generic_params,
-                             adjusted_crbs,
-                             grant.time_res_index,
-                             mcs_tbs_info.value().mcs,
-                             rv,
-                             h_ul);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_0:
-      build_dci_f0_0_c_rnti(pdcch->dci,
-                            ue_cell_cfg.search_space(grant.ss_id),
-                            cell_cfg.ul_cfg_common.init_ul_bwp,
-                            adjusted_crbs,
-                            grant.time_res_index,
-                            mcs_tbs_info.value().mcs,
-                            rv,
-                            h_ul);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_1:
-      build_dci_f0_1_c_rnti(pdcch->dci,
-                            ue_cell_cfg,
-                            grant.ss_id,
-                            adjusted_crbs,
-                            grant.time_res_index,
-                            mcs_tbs_info.value().mcs,
-                            rv,
-                            h_ul,
-                            dai,
-                            ue_cc->channel_state_manager().get_nof_ul_layers());
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH UL DCI format");
-  }
+    // Compute MCS and TBS for this transmission.
+    std::optional<sch_mcs_tbs> mcs_tbs_info;
+    // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
+    if (not is_retx) {
+      bool contains_dc = dc_offset_helper::is_contained(
+          cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, adjusted_crbs);
 
-  // Fill PUSCH.
-  ul_sched_info& msg    = pusch_alloc.result.ul.puschs.emplace_back();
-  msg.context.ue_index  = u.ue_index;
-  msg.context.ss_id     = ss_cfg.get_id();
-  msg.context.k2        = pusch_td_cfg.k2;
-  msg.context.nof_retxs = h_ul.tb().nof_retxs;
-  if (is_new_data and ue_cc->link_adaptation_controller().is_ul_olla_enabled()) {
-    msg.context.olla_offset = ue_cc->link_adaptation_controller().ul_snr_offset_db();
-  }
-  switch (pdcch->dci.type) {
-    case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      build_pusch_f0_0_tc_rnti(msg.pusch_cfg,
-                               pusch_cfg,
-                               mcs_tbs_info.value().tbs,
-                               u.crnti,
-                               cell_cfg,
-                               pdcch->dci.tc_rnti_f0_0,
+      mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, grant.mcs, adjusted_crbs.length(), contains_dc);
+    }
+    // If it's a reTx, fetch the MCS and TBS from the previous transmission.
+    else {
+      mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
+    }
+
+    // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
+    if (not mcs_tbs_info.has_value()) {
+      logger.warning(
+          "ue={} rnti={}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
+          "configuration: mcs={} crbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
+          "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
+          u.ue_index,
+          u.crnti,
+          grant.mcs.to_uint(),
+          adjusted_crbs,
+          pusch_cfg.symbols,
+          pusch_cfg.nof_oh_prb,
+          pusch_cfg.tb_scaling_field,
+          pusch_cfg.nof_layers,
+          pusch_cfg.tp_pi2bpsk_present ? "yes" : "no",
+          pusch_cfg.nof_harq_ack_bits,
+          pusch_cfg.nof_csi_part1_bits,
+          pusch_cfg.max_nof_csi_part2_bits,
+          static_cast<unsigned>(pusch_cfg.mcs_table),
+          ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
+          ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2
+              ? "yes"
+              : "no",
+          static_cast<unsigned>(ue_cell_cfg.cfg_dedicated()
+                                    .ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value()
+                                    .additional_positions));
+      get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
+      return alloc_outcome::invalid_params;
+    }
+
+    // Mark resources as occupied in the ResourceGrid.
+    pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, adjusted_crbs});
+
+    // Remove NTN offset when adding slot to HARQ process.
+    slot_point harq_slot = pusch_alloc.slot - ue_cell_cfg.cell_cfg_common.ntn_cs_koffset;
+    // Allocate UE UL HARQ.
+    bool is_new_data = not is_retx;
+    if (is_new_data) {
+      // It is a new tx.
+      h_ul.new_tx(harq_slot, expert_cfg.max_nof_harq_retxs);
+    } else {
+      // It is a retx.
+      h_ul.new_retx(harq_slot);
+    }
+
+    // Compute total DAI. See TS 38.213, 9.1.3.2.
+    // Total DAI provides total number of transmissions at the end of each interval (slot in a cell). Values range from
+    // 1 to 4. If a UE is not provided PDSCH-CodeBlockGroupTransmission and the UE is scheduled for a PUSCH transmission
+    // by DCI format 0_1 with DAI field value V_T_DAI_UL = 4 and the UE has not received any PDCCH within the monitoring
+    // occasions for PDCCH with DCI format 1_0 or DCI format 1_1 for scheduling PDSCH receptions or SPS PDSCH
+    // release on any serving cell c and the UE does not have HARQ-ACK information in response to a SPS PDSCH
+    // reception to multiplex in the PUSCH, the UE does not multiplex HARQ-ACK information in the PUSCH transmission.
+    // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
+    unsigned dai = 3;
+    if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
+      unsigned total_harq_ack_in_uci = nof_harq_ack_bits;
+      if (total_harq_ack_in_uci != 0) {
+        // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
+        dai = ((total_harq_ack_in_uci - 1) % 4);
+      }
+    }
+
+    // Fill UL PDCCH DCI.
+    uint8_t rv = ue_cc->get_pusch_rv(h_ul);
+    switch (dci_type) {
+      case dci_ul_rnti_config_type::tc_rnti_f0_0:
+        build_dci_f0_0_tc_rnti(pdcch->dci,
+                               *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common,
+                               ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common->generic_params,
                                adjusted_crbs,
-                               is_new_data);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_0:
-      build_pusch_f0_0_c_rnti(msg.pusch_cfg,
-                              u.crnti,
-                              pusch_cfg,
-                              mcs_tbs_info.value().tbs,
-                              cell_cfg,
-                              bwp_ul_cmn,
-                              pdcch->dci.c_rnti_f0_0,
+                               grant.time_res_index,
+                               mcs_tbs_info.value().mcs,
+                               rv,
+                               h_ul);
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        build_dci_f0_0_c_rnti(pdcch->dci,
+                              ue_cell_cfg.search_space(grant.ss_id),
+                              cell_cfg.ul_cfg_common.init_ul_bwp,
                               adjusted_crbs,
-                              is_new_data);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_1:
-      build_pusch_f0_1_c_rnti(msg.pusch_cfg,
-                              u.crnti,
-                              pusch_cfg,
-                              mcs_tbs_info.value(),
-                              ue_cell_cfg,
-                              ss_cfg.get_id(),
-                              pdcch->dci.c_rnti_f0_1,
-                              adjusted_crbs,
+                              grant.time_res_index,
+                              mcs_tbs_info.value().mcs,
+                              rv,
                               h_ul);
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH UL DCI format");
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        build_dci_f0_1_c_rnti(pdcch->dci,
+                              ue_cell_cfg,
+                              grant.ss_id,
+                              adjusted_crbs,
+                              grant.time_res_index,
+                              mcs_tbs_info.value().mcs,
+                              rv,
+                              h_ul,
+                              dai,
+                              ue_cc->channel_state_manager().get_nof_ul_layers());
+        break;
+      default:
+        report_fatal_error("Unsupported PDCCH UL DCI format");
+    }
+
+    // Fill PUSCH.
+    ul_sched_info& msg    = pusch_alloc.result.ul.puschs.emplace_back();
+    msg.context.ue_index  = u.ue_index;
+    msg.context.ss_id     = ss_cfg.get_id();
+    msg.context.k2        = pusch_td_cfg.k2;
+    msg.context.nof_retxs = h_ul.tb().nof_retxs;
+    if (is_new_data and ue_cc->link_adaptation_controller().is_ul_olla_enabled()) {
+      msg.context.olla_offset = ue_cc->link_adaptation_controller().ul_snr_offset_db();
+    }
+    switch (pdcch->dci.type) {
+      case dci_ul_rnti_config_type::tc_rnti_f0_0:
+        build_pusch_f0_0_tc_rnti(msg.pusch_cfg,
+                                 pusch_cfg,
+                                 mcs_tbs_info.value().tbs,
+                                 u.crnti,
+                                 cell_cfg,
+                                 pdcch->dci.tc_rnti_f0_0,
+                                 adjusted_crbs,
+                                 is_new_data);
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        build_pusch_f0_0_c_rnti(msg.pusch_cfg,
+                                u.crnti,
+                                pusch_cfg,
+                                mcs_tbs_info.value().tbs,
+                                cell_cfg,
+                                bwp_ul_cmn,
+                                pdcch->dci.c_rnti_f0_0,
+                                adjusted_crbs,
+                                is_new_data);
+        break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        build_pusch_f0_1_c_rnti(msg.pusch_cfg,
+                                u.crnti,
+                                pusch_cfg,
+                                mcs_tbs_info.value(),
+                                ue_cell_cfg,
+                                ss_cfg.get_id(),
+                                pdcch->dci.c_rnti_f0_1,
+                                adjusted_crbs,
+                                h_ul);
+        break;
+      default:
+        report_fatal_error("Unsupported PDCCH UL DCI format");
+    }
+
+    // Check if there is any UCI grant allocated on the PUCCH that can be moved to the PUSCH.
+    get_uci_alloc(grant.cell_index).multiplex_uci_on_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
+
+    // Save set PDCCH and PUSCH PDU parameters in HARQ process.
+    ul_harq_sched_context pusch_sched_ctx;
+    pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
+    if (is_new_data) {
+      pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
+    }
+    h_ul.save_alloc_params(pusch_sched_ctx, msg.pusch_cfg);
+
+    // In case there is a SR pending. Reset it.
+    u.reset_sr_indication();
+
+    return alloc_outcome::success;
   }
 
-  // Check if there is any UCI grant allocated on the PUCCH that can be moved to the PUSCH.
-  get_uci_alloc(grant.cell_index).multiplex_uci_on_pusch(msg, pusch_alloc, ue_cell_cfg, u.crnti);
-
-  // Save set PDCCH and PUSCH PDU parameters in HARQ process.
-  ul_harq_sched_context pusch_sched_ctx;
-  pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
-  if (is_new_data) {
-    pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
-  }
-  h_ul.save_alloc_params(pusch_sched_ctx, msg.pusch_cfg);
-
-  // In case there is a SR pending. Reset it.
-  u.reset_sr_indication();
-
-  return alloc_outcome::success;
+  // No candidates for PUSCH allocation.
+  return alloc_outcome::invalid_params;
 }
