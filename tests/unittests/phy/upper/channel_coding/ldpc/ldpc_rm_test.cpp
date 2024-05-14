@@ -66,6 +66,12 @@ std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const bit_buffer& data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 } // namespace srsran
 
 namespace {

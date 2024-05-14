@@ -14,6 +14,9 @@
 
 namespace srsran {
 
+/// \brief LDPC Rate dematcher specialized with AVX512 instruction set.
+///
+/// It implements \ref ldpc_rate_dematcher interface. It relies on AVX512F, AVX512BW and AVX512VBMI instruction sets.
 class ldpc_rate_dematcher_avx512_impl : public ldpc_rate_dematcher_impl
 {
 protected:
