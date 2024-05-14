@@ -388,7 +388,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
       // - in case all Msg3 grants were allocated, remove pending RAR, and continue with following RAR
       // - otherwise, erase only Msg3 grants that were allocated, and stop iteration
 
-      if (nof_allocs == rar_req.tc_rntis.size()) {
+      if (nof_allocs >= rar_req.tc_rntis.size()) {
         it = pending_rars.erase(it);
       } else {
         // Remove only allocated Msg3 grants
