@@ -271,18 +271,12 @@ def ping_start(
     return ping_task_array
 
 
-def ping_wait_until_finish(ping_task_array: List[grpc.Future], task_no_check_index=-1) -> None:
+def ping_wait_until_finish(ping_task_array: List[grpc.Future]) -> None:
     """
     Wait until the requested ping has finished.
     """
     ping_success = True
-    index = -1
     for ping_task in ping_task_array:
-        if ping_task_array.index(ping_task) % 2 == 0:
-            index += 1
-
-        if index == task_no_check_index:
-            continue
         ping_success &= ping_task.result().status
 
     if not ping_success:
@@ -445,7 +439,14 @@ def iperf_wait_until_finish(
         task.result()
     except grpc.RpcError as err:
         if ErrorReportedByAgent(err).code is not grpc.StatusCode.UNAVAILABLE:
-            raise err from None
+            logging.warning(
+                "Iperf %s [%s %s] failed due to %s",
+                ue_attached_info.ipv4,
+                _iperf_proto_to_str(iperf_request.proto),
+                _iperf_dir_to_str(iperf_request.direction),
+                ErrorReportedByAgent(err),
+            )
+            return (False, IPerfResponse())
 
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(

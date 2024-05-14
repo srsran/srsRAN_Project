@@ -10,10 +10,12 @@
 Handover Tests
 """
 import logging
+from contextlib import suppress
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
 import pytest
+from _pytest.outcomes import Failed
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -135,17 +137,26 @@ def _handover_multi_ues(
         (original_position, cell_position_offset),
         (cell_position_offset, original_position),
     )
+    traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
 
-    for index, ue_stub in enumerate(ue_array):
+    for ue_stub in ue_array:
         logging.info(
             "Zigzag HO for UE [%s] (%s) + Pings running in background for all UEs",
             id(ue_stub),
             ue_attach_info_dict[ue_stub].ipv4,
         )
-        ping_task_array = ping_start(ue_attach_info_dict, fivegc, (len(movements) * movement_duration) + len(ue_array))
+        other_ue_attach_info_dict = dict(ue_attach_info_dict)
+        other_ue_attach_info_dict.pop(ue_stub)
+
+        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_seconds)
+        ping_task_array_handover = ping_start({ue_stub: ue_attach_info_dict[ue_stub]}, fivegc, traffic_seconds)
+
         for from_position, to_position in movements:
             _do_ho(ue_stub, from_position, to_position, movement_steps, sleep_between_movement_steps)
-        ping_wait_until_finish(ping_task_array, index)
+
+        ping_wait_until_finish(ping_task_array_other)
+        with suppress(Failed):
+            ping_wait_until_finish(ping_task_array_handover)
 
     # Pings after reest
     logging.info("Starting Pings after all HO have been completed")
