@@ -51,7 +51,7 @@ from .steps.stub import (
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments
-def test_zmq_reestablishment_ping(
+def test_zmq_reestablishment(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_32: UEStub,
@@ -104,7 +104,7 @@ def test_zmq_reestablishment_ping(
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
 # pylint: disable=too-many-arguments
-def test_zmq_reestablishment_iperf(
+def test_zmq_reestablishment_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: UEStub,
@@ -179,17 +179,23 @@ def _ping_and_reestablishment_multi_ues(
         noise_spd=noise_spd,
         warning_as_errors=warning_as_errors,
     ):
-        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_duration)
+        # Launch reestablished UEs
         ping_task_array_reest = ping_start(reest_ue_attach_info_dict, fivegc, traffic_duration)
+        # Launch other UEs
+        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_duration)
 
+        # Trigger reestablishments
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
                 ue_reestablishment(ue_stub, reestablishment_interval)
                 time.sleep(reestablishment_interval)
 
-        ping_wait_until_finish(ping_task_array_other)
+        # Wait and ignore reestablished UEs
         with suppress(Failed):
             ping_wait_until_finish(ping_task_array_reest)
+
+        # Wait and validate other UEs
+        ping_wait_until_finish(ping_task_array_other)
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -230,23 +236,37 @@ def _iperf_and_reestablishment_multi_ues(
         noise_spd=noise_spd,
         warning_as_errors=warning_as_errors,
     ):
-        iperf_dict = tuple(
+        # Launch reestablished UEs
+        iperf_dict_reest = tuple(
             (
                 ue_attached_info,
                 *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, traffic_duration, 0),
             )
-            for ue_stub, ue_attached_info in {**other_ue_attach_info_dict, **reest_ue_attach_info_dict}.items()
+            for ue_stub, ue_attached_info in reest_ue_attach_info_dict.items()
+        )
+        # Launch other UEs
+        iperf_dict_other = tuple(
+            (
+                ue_attached_info,
+                *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, traffic_duration, 0),
+            )
+            for ue_stub, ue_attached_info in other_ue_attach_info_dict.items()
         )
 
+        # Trigger reestablishments
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
                 ue_reestablishment(ue_stub, reestablishment_interval)
                 time.sleep(reestablishment_interval)
 
-        iperf_success = True
-        for ue_attached_info, task, iperf_request in iperf_dict:
-            iperf_success &= iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)[0]
+        # Wait and ignore reestablished UEs
+        for ue_attached_info, task, iperf_request in iperf_dict_reest:
+            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
 
+        # Wait and validate other UEs
+        iperf_success = True
+        for ue_attached_info, task, iperf_request in iperf_dict_other:
+            iperf_success &= iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)[0]
         if not iperf_success:
             pytest.fail("iperf did not achieve the expected data rate.")
 
