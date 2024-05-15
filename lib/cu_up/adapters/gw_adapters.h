@@ -67,8 +67,8 @@ private:
 class f1u_gateway_rx_nru_adapter : public f1u_cu_up_gateway_bearer_rx_notifier
 {
 public:
-  f1u_gateway_rx_nru_adapter()  = default;
-  ~f1u_gateway_rx_nru_adapter() = default;
+  f1u_gateway_rx_nru_adapter()           = default;
+  ~f1u_gateway_rx_nru_adapter() override = default;
 
   void connect_nru_bearer(f1u_rx_pdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
 

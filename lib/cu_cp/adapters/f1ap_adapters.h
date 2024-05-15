@@ -10,14 +10,10 @@
 
 #pragma once
 
-#include "../../f1ap/common/asn1_helpers.h"
 #include "../cu_cp_controller/common_task_scheduler.h"
-#include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../du_processor/du_setup_handler.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/pdcp/pdcp_rx.h"
 
 namespace srsran {
 namespace srs_cu_cp {
