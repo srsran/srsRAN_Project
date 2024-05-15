@@ -9,7 +9,9 @@
  */
 
 #include "srsran/support/io/sockets.h"
+#include "srsran/support/srsran_assert.h"
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -17,14 +19,14 @@
 
 using namespace srsran;
 
-std::pair<std::string, int> srsran::get_nameinfo(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
+socket_name_info srsran::get_nameinfo(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
 {
   char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
   if (getnameinfo(&ai_addr, ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV) !=
       0) {
     return {std::string(""), -1};
   }
-  return std::make_pair(std::string(ip_addr), std::stoi(port_nr));
+  return socket_name_info{std::string(ip_addr), std::stoi(port_nr)};
 }
 
 bool srsran::set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
@@ -76,6 +78,41 @@ bool srsran::sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, s
 
   ip_address = addr_str;
   logger.debug("Read bind port of UDP network gateway: {}", ip_address);
+  return true;
+}
+
+bool srsran::set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_timeout, srslog::basic_logger& logger)
+{
+  srsran_sanity_check(fd.is_open(), "Invalid FD");
+  struct timeval tv;
+  tv.tv_sec  = rx_timeout.count();
+  tv.tv_usec = 0;
+
+  if (::setsockopt(fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) != 0) {
+    logger.error("SCTP failed to be created. Cause: Couldn't set receive timeout for socket: {}", strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+bool srsran::set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger)
+{
+  if (not fd.is_open()) {
+    logger.error("Failed to set socket as non-blocking. Cause: Socket is closed");
+    return false;
+  }
+  int flags = fcntl(fd.value(), F_GETFL, 0);
+  if (flags == -1) {
+    logger.error("Failed to set socket as non-blocking. Cause: Error getting socket flags: {}", strerror(errno));
+    return false;
+  }
+
+  int s = fcntl(fd.value(), F_SETFL, flags | O_NONBLOCK);
+  if (s == -1) {
+    logger.error("Failed to set socket as non-blocking. Cause: Error {}", strerror(errno));
+    return false;
+  }
+
   return true;
 }
 

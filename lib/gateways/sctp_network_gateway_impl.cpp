@@ -173,7 +173,7 @@ bool sctp_network_gateway_impl::create_and_connect()
   for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // Create SCTP socket only if not created in create_and_bind function.
     if (not socket.is_open()) {
-      auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+      expected<sctp_socket> outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
       if (outcome.is_error()) {
         if (errno == ESOCKTNOSUPPORT) {
           break;

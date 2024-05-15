@@ -21,7 +21,7 @@ using namespace srsran;
 namespace {
 
 /// Subscribes to various SCTP events to handle association and shutdown gracefully.
-bool subscribe_to_events(const unique_fd& fd, srslog::basic_logger& logger)
+bool sctp_subscribe_to_events(const unique_fd& fd, srslog::basic_logger& logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
   struct sctp_event_subscribe events = {};
@@ -31,21 +31,6 @@ bool subscribe_to_events(const unique_fd& fd, srslog::basic_logger& logger)
 
   if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events)) != 0) {
     logger.error("SCTP failed to be created. Cause: Subscribing to SCTP events failed: {}", strerror(errno));
-    return false;
-  }
-  return true;
-}
-
-/// Set a receive timeout for a SCTP socket.
-bool set_receive_timeout(const unique_fd& fd, std::chrono::seconds rx_timeout, srslog::basic_logger& logger)
-{
-  srsran_sanity_check(fd.is_open(), "Invalid FD");
-  struct timeval tv;
-  tv.tv_sec  = rx_timeout.count();
-  tv.tv_usec = 0;
-
-  if (::setsockopt(fd.value(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) != 0) {
-    logger.error("SCTP failed to be created. Cause: Couldn't set receive timeout for socket: {}", strerror(errno));
     return false;
   }
   return true;
@@ -71,7 +56,7 @@ bool sctp_set_rto_opts(const unique_fd&      fd,
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
-    logger.error("Error getting RTO_INFO sockopts. errono={}", strerror(errno));
+    logger.error("Error getting RTO_INFO sockopts. errno={}", strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
@@ -160,27 +145,6 @@ bool sctp_set_nodelay(const unique_fd& fd, optional<bool> nodelay, srslog::basic
   return true;
 }
 
-bool set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger)
-{
-  if (not fd.is_open()) {
-    logger.error("Failed to set socket as non-blocking. Cause: Socket is closed");
-    return false;
-  }
-  int flags = fcntl(fd.value(), F_GETFL, 0);
-  if (flags == -1) {
-    logger.error("Failed to set socket as non-blocking. Cause: Error getting socket flags: {}", strerror(errno));
-    return false;
-  }
-
-  int s = fcntl(fd.value(), F_SETFL, flags | O_NONBLOCK);
-  if (s == -1) {
-    logger.error("Failed to set socket as non-blocking. Cause: Error {}", strerror(errno));
-    return false;
-  }
-
-  return true;
-}
-
 } // namespace
 
 // sctp_socket class.
@@ -250,12 +214,12 @@ sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const s
 
   if (logger.debug.enabled()) {
     auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    logger.debug("Binding to {}:{}...", addr.first, addr.second);
+    logger.debug("Binding to {}:{}...", addr.address, addr.port);
   }
 
   if (::bind(fd().value(), &ai_addr, ai_addrlen) == -1) {
     auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    logger.debug("Failed to bind to {}:{} - {}", addr.first, addr.second, strerror(errno));
+    logger.debug("Failed to bind to {}:{} - {}", addr.address, addr.port, strerror(errno));
     return false;
   }
 
@@ -272,18 +236,18 @@ sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const s
 SRSRAN_NODISCARD bool sctp_socket::connect(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
 {
   if (logger.debug.enabled()) {
-    auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    logger.debug("Connecting to {}:{}...", addr.first, addr.second);
+    socket_name_info addr = get_nameinfo(ai_addr, ai_addrlen);
+    logger.debug("Connecting to {}:{}...", addr.address, addr.port);
   }
   if (not is_open()) {
-    auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    logger.error("Failed to connect to {}:{}. Cause: socket is closed", addr.first, addr.second);
+    socket_name_info addr = get_nameinfo(ai_addr, ai_addrlen);
+    logger.error("Failed to connect to {}:{}. Cause: socket is closed", addr.address, addr.port);
     return false;
   }
 
   if (::connect(sock_fd.value(), &ai_addr, ai_addrlen) == -1) {
-    auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    logger.debug("Failed to connect to {}:{} - {}", addr.first, addr.second, strerror(errno));
+    socket_name_info addr = get_nameinfo(ai_addr, ai_addrlen);
+    logger.debug("Failed to connect to {}:{} - {}", addr.address, addr.port, strerror(errno));
     return false;
   }
 
@@ -319,7 +283,7 @@ bool sctp_socket::set_non_blocking()
 
 bool sctp_socket::set_sockopts(const sctp_socket_params& params)
 {
-  if (not subscribe_to_events(sock_fd, logger)) {
+  if (not sctp_subscribe_to_events(sock_fd, logger)) {
     return false;
   }
 
@@ -376,7 +340,7 @@ optional<uint16_t> sctp_socket::get_listen_port() const
   } else if (gw_addr->sa_family == AF_INET6) {
     gw_listen_port = ntohs(((sockaddr_in6*)gw_addr)->sin6_port);
   } else {
-    logger.error("Unhandled address family in SCTP network gateway with sock_fd={}, family={}",
+    logger.error("Unhandled address family in SCTP network gateway with sock_fd={} family={}",
                  sock_fd.value(),
                  gw_addr->sa_family);
     return {};
