@@ -79,12 +79,12 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${AUTO_DETECT_ISA}-${ENABLE_AVX512}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${AUTO_DETECT_ISA}-${ENABLE_AVX512}
     paths: [ccache]
     policy: pull
 
@@ -426,6 +426,40 @@ variables:
     BUILD_ARGS: -DEXIT_TIMEOUT=120
   tags: ["${AMD64_AVX2_TAG}"]
 
+.smoke avx512:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+  tags: ["${AMD64_AVX512_TAG}"]
+
+.smoke arm:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    AUTO_DETECT_ISA: "False"
+  tags: ["${ARM64_TAG}"]
+
+.smoke arm neon:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    AUTO_DETECT_ISA: "True"
+  tags: ["${ARM64_TAG}"]
+
 # Combinations to use in schedules matrix
 
 .combinations: &basic_combinations
@@ -512,6 +546,70 @@ smoke dpdk cached:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
+.infra_path_changes:
+  - changes: &instruction_set_changes
+      paths:
+        - include/srsran/phy/**/*
+        - lib/phy/**/*
+        - tests/unittests/phy/**/*
+
+smoke avx512 cached:
+  extends: .smoke avx512
+  stage: manual
+  timeout: 45 min
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      changes:
+        <<: *instruction_set_changes
+    - if: $ON_MR
+      changes:
+        <<: *instruction_set_changes
+      when: manual
+      allow_failure: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
+
+smoke arm cached:
+  extends: .smoke arm
+  stage: manual
+  timeout: 45 min
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      changes:
+        <<: *instruction_set_changes
+    - if: $ON_MR
+      changes:
+        <<: *instruction_set_changes
+      when: manual
+      allow_failure: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
+
+smoke arm neon cached:
+  extends: .smoke arm neon
+  stage: manual
+  timeout: 45 min
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      changes:
+        <<: *instruction_set_changes
+    - if: $ON_MR
+      changes:
+        <<: *instruction_set_changes
+      when: manual
+      allow_failure: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
+
 smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
@@ -538,6 +636,27 @@ smoke dpdk clean:
   extends: .smoke dpdk
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+
+smoke avx512 clean:
+  extends: .smoke avx512
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      changes:
+        <<: *instruction_set_changes
+
+smoke arm clean:
+  extends: .smoke arm
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      changes:
+        <<: *instruction_set_changes
+
+smoke arm neon clean:
+  extends: .smoke arm neon
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      changes:
+        <<: *instruction_set_changes
 
 # Intermediate commits
 
@@ -718,6 +837,42 @@ smoke valgrind update cache:
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
+
+smoke avx512 update cache:
+  extends: .smoke avx512
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
+
+smoke arm update cache:
+  extends: .smoke arm
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
+
+smoke arm neon update cache:
+  extends: .smoke arm neon
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
+  retry: 2
+  interruptible: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
 
 smoke asan:
   extends: .build_and_unit
