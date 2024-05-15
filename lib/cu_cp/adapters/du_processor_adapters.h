@@ -106,6 +106,11 @@ public:
     return ue_context_handler->handle_ue_context_release(request);
   }
 
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return cu_cp_handler->handle_transaction_info_loss(ev);
+  }
+
 private:
   cu_cp_du_event_handler*                cu_cp_handler      = nullptr;
   cu_cp_ue_removal_handler*              ue_removal_handler = nullptr;

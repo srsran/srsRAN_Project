@@ -131,6 +131,14 @@ public:
     });
   }
 
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
 private:
   srslog::basic_logger&     logger              = srslog::fetch_basic_logger("TEST");
   ue_manager*               ue_mng              = nullptr;

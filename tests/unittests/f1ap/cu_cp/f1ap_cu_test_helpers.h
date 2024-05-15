@@ -155,8 +155,7 @@ public:
 
   bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
 
-  /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
-  async_task<void> on_ue_reset_required(const std::vector<ue_index_t>& ues_to_reset) override
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
   {
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);

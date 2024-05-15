@@ -33,14 +33,14 @@ f1_removal_procedure::f1_removal_procedure(const asn1::f1ap::f1_removal_request_
 {
 }
 
-static std::vector<ue_index_t> get_list_of_ues_to_reset(const f1ap_ue_context_list& ue_list)
+static f1_ue_transaction_info_loss_event create_f1_ue_transaction_loss_request(const f1ap_ue_context_list& ue_list)
 {
-  std::vector<ue_index_t> vec;
-  vec.reserve(ue_list.size());
+  f1_ue_transaction_info_loss_event ev;
+  ev.ues_lost.reserve(ue_list.size());
   for (const auto& ue : ue_list) {
-    vec.push_back(ue.second.ue_ids.ue_index);
+    ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
   }
-  return vec;
+  return ev;
 }
 
 void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -49,7 +49,7 @@ void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // If there are still active UEs, reset their context in other layers.
   if (ue_list.size() > 0) {
-    CORO_AWAIT(cu_cp_notifier.on_ue_reset_required(get_list_of_ues_to_reset(ue_list)));
+    CORO_AWAIT(cu_cp_notifier.on_transaction_info_loss(create_f1_ue_transaction_loss_request(ue_list)));
   }
 
   // Send F1 Removal Response

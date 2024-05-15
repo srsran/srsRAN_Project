@@ -60,6 +60,10 @@ public:
   /// \return The F1AP UE context removal handler interface of the DU processor object.
   virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
 
+  /// \brief Handle the loss of some transaction information for some UEs.
+  /// \return Asynchronous task that is completed when the event is fully handled.
+  virtual async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) = 0;
+
   /// \brief Get the F1AP statistics handler interface of the DU processor object.
   /// \return The F1AP statistics handler interface of the DU processor object.
   virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
@@ -299,6 +303,9 @@ public:
   /// \brief Notify the CU-CP to release a UE.
   /// \param[in] request The release request.
   virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
+
+  /// \brief Notify that the F1 transaction information was lost for some UEs.
+  virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// DU processor Paging handler.

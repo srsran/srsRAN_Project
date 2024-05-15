@@ -81,13 +81,9 @@ public:
     return common_task_sched->schedule_async_task(std::move(task));
   }
 
-  async_task<void> on_ue_reset_required(const std::vector<ue_index_t>& ues_to_reset) override
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
   {
-    return launch_async([](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      // TODO
-      CORO_RETURN();
-    });
+    return du_f1ap_handler->handle_ue_transaction_info_loss(ev);
   }
 
 private:

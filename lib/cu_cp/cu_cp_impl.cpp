@@ -14,6 +14,7 @@
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
 #include "routines/ue_removal_routine.h"
+#include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -580,6 +581,11 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi)
 {
   return du_db.get_du_processor(du_index).get_mobility_handler().get_packed_sib1(cgi);
+}
+
+async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev)
+{
+  return launch_async<ue_transaction_info_release_routine>(ev.ues_lost, ue_mng, *this);
 }
 
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)

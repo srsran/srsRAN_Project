@@ -66,6 +66,7 @@ public:
   ue_rrc_context_creation_response
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
+  async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
 
   // du_processor_mobility_manager_interface
   optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;

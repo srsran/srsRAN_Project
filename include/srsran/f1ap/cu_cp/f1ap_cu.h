@@ -117,6 +117,11 @@ struct ue_rrc_context_creation_response {
   f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
+/// Notification from the F1AP that the loss of transaction reference information for some UEs has been lost.
+struct f1_ue_transaction_info_loss_event {
+  std::vector<ue_index_t> ues_lost;
+};
+
 struct ue_update_message {
   ue_index_t          ue_index = ue_index_t::invalid;
   nr_cell_global_id_t cgi;
@@ -159,7 +164,7 @@ public:
   virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
   /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
-  virtual async_task<void> on_ue_reset_required(const std::vector<ue_index_t>& ues_to_reset) = 0;
+  virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 
   /// \brief Get the DU index.
   /// \return The DU index.

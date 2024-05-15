@@ -309,6 +309,11 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
       }));
 }
 
+async_task<void> du_processor_impl::handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request)
+{
+  return cu_cp_notifier.on_transaction_info_loss(request);
+}
+
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Add assist data for paging
