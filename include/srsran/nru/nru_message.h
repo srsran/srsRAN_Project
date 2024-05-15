@@ -181,6 +181,29 @@ struct nru_ul_message {
   /// NR-U Assistance Information.
   optional<nru_assistance_information> assistance_information;
 
+  expected<nru_ul_message> deep_copy()
+  {
+    nru_ul_message copy = {};
+    if (t_pdu.has_value()) {
+      expected<byte_buffer> buf = t_pdu.value().deep_copy();
+      if (buf.is_error()) {
+        return default_error_t{};
+      }
+      expected<byte_buffer_chain> chain = byte_buffer_chain::create(std::move(buf.value()));
+      if (chain.is_error()) {
+        return default_error_t{};
+      }
+      copy.t_pdu = std::move(chain.value());
+    }
+    if (data_delivery_status.has_value()) {
+      copy.data_delivery_status = data_delivery_status.value();
+    }
+    if (assistance_information.has_value()) {
+      copy.assistance_information = assistance_information.value();
+    }
+    return copy;
+  }
+
   bool operator==(const nru_ul_message& other) const
   {
     return t_pdu == other.t_pdu && data_delivery_status == other.data_delivery_status &&

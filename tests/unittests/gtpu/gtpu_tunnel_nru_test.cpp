@@ -172,8 +172,8 @@ TEST_F(gtpu_tunnel_nru_test, entity_creation)
   ASSERT_NE(gtpu, nullptr);
 };
 
-/// \brief Test correct reception of GTP-U packet with PDU Session Container
-TEST_F(gtpu_tunnel_nru_test, rx_sdu)
+/// \brief Test correct reception and transmission of a NR-U DL message
+TEST_F(gtpu_tunnel_nru_test, rx_tx_nru_dl_msg)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
@@ -191,17 +191,27 @@ TEST_F(gtpu_tunnel_nru_test, rx_sdu)
   byte_buffer   orig_pdu;
   ASSERT_TRUE(orig_pdu.append(orig_pdu_bytes));
   pcap_helper.get_pcap().push_pdu(orig_pdu.deep_copy().value());
+
+  // RX
+
   gtpu_tunnel_common_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
-  rx->handle_pdu(std::move(orig_pdu), orig_addr);
+  rx->handle_pdu(orig_pdu.deep_copy().value(), orig_addr);
 
   nru_dl_message exp_msg              = {};
   exp_msg.dl_user_data.nru_sn         = 0x112233;
   exp_msg.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{{0x445566, 0x77}, {0xaabbcc, 0xdd}};
   ASSERT_EQ(gtpu_rx.last_dl_msg, exp_msg);
+
+  // TX
+
+  gtpu_tunnel_nru_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
+  tx->handle_sdu(std::move(gtpu_rx.last_dl_msg));
+
+  ASSERT_EQ(gtpu_tx.last_tx, orig_pdu);
 };
 
-/// \brief Test correct transmission of GTP-U packet
-TEST_F(gtpu_tunnel_nru_test, tx_pdu)
+/// \brief Test correct transmission and reception of a NR-U UL message
+TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
 {
   // init GTP-U entity
   gtpu_tunnel_nru_creation_message msg = {};
@@ -213,18 +223,27 @@ TEST_F(gtpu_tunnel_nru_test, tx_pdu)
   msg.tx_upper                         = &gtpu_tx;
   gtpu                                 = create_gtpu_tunnel_nru(msg);
 
-  nru_ul_message tx_msg                 = {};
-  auto&          tx_status              = tx_msg.data_delivery_status.emplace();
+  sockaddr_storage orig_addr            = {};
+  nru_ul_message   tx_msg               = {};
+  auto&            tx_status            = tx_msg.data_delivery_status.emplace();
   tx_status.desired_buffer_size_for_drb = 11223344;
   tx_status.lost_nru_sn_ranges          = nru_lost_nru_sn_ranges{{2000001, 2000009}, {5000100, 5000321}};
 
-  // TODO: attach T-PDU
+  // TX
 
-  gtpu_tunnel_nru_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
-  tx->handle_sdu(std::move(tx_msg));
+  gtpu_tunnel_nru_tx_lower_layer_interface* tx          = gtpu->get_tx_lower_layer_interface();
+  auto                                      tx_msg_copy = tx_msg.deep_copy();
+  ASSERT_FALSE(tx_msg_copy.is_error());
+  tx->handle_sdu(std::move(tx_msg_copy.value()));
 
   byte_buffer exp_pdu = make_byte_buffer("34ff001c000000020000008406110000ab4130021e84811e84894c4ba44c4c8100000000");
   ASSERT_EQ(exp_pdu, gtpu_tx.last_tx);
+
+  // RX
+
+  gtpu_tunnel_common_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
+  rx->handle_pdu(std::move(gtpu_tx.last_tx), orig_addr);
+  ASSERT_EQ(gtpu_rx.last_ul_msg, tx_msg);
 };
 
 void usage(const char* prog)
