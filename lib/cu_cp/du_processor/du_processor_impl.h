@@ -151,10 +151,6 @@ private:
   // timers associated with a given DU.
   timer_manager timer_db;
 
-  // Components
-  std::unique_ptr<f1ap_cu>          f1ap;
-  std::unique_ptr<rrc_du_interface> rrc;
-
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
 
@@ -166,6 +162,10 @@ private:
 
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
+
+  // Components
+  std::unique_ptr<f1ap_cu>          f1ap;
+  std::unique_ptr<rrc_du_interface> rrc;
 };
 
 } // namespace srs_cu_cp

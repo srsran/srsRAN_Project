@@ -13,6 +13,7 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
+#include "routines/ue_amf_context_release_request_routine.h"
 #include "routines/ue_removal_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -347,18 +348,8 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
 
 async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_release_request& request)
 {
-  return launch_async([this, result = bool{false}, request](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // Notify NGAP to request a release from the AMF
-    CORO_AWAIT_VALUE(result,
-                     ngap_entity->get_ngap_control_message_handler().handle_ue_context_release_request(request));
-    if (!result) {
-      // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
-      CORO_AWAIT(handle_ue_context_release_command({request.ue_index, request.cause}));
-    }
-    CORO_RETURN();
-  });
+  return launch_async<ue_amf_context_release_request_routine>(
+      request, ngap_entity->get_ngap_control_message_handler(), *this, logger);
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>

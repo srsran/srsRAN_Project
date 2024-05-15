@@ -60,6 +60,8 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&              up_resource_mng_,
   }
 }
 
+rrc_ue_impl::~rrc_ue_impl() {}
+
 void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 {
   logger.log_debug("Creating {}", msg.srb_id);

@@ -11,8 +11,6 @@
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
-#include "tests/test_doubles/ngap/ngap_test_message_validators.h"
-#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

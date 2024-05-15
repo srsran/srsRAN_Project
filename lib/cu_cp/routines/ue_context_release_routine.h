@@ -18,7 +18,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handles the setup of PDU session resources from the RRC viewpoint.
-/// TODO Add seqdiag
 class ue_context_release_routine
 {
 public:

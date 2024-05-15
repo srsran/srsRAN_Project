@@ -36,7 +36,7 @@ public:
               const byte_buffer                 du_to_cu_container,
               rrc_ue_task_scheduler&            task_sched,
               optional<rrc_ue_transfer_context> rrc_context);
-  ~rrc_ue_impl() = default;
+  ~rrc_ue_impl();
 
   // rrc_ul_ccch_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer pdu) override;

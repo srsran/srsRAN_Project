@@ -153,11 +153,14 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
 
 void rrc_du_impl::remove_ue(ue_index_t ue_index)
 {
-  if (ue_db.find(ue_index) == ue_db.end()) {
+  auto ue_it = ue_db.find(ue_index);
+  if (ue_it == ue_db.end()) {
     logger.warning("ue={}: Can't remove UE. Cause: UE not found", ue_index);
     return;
   }
-  ue_db.erase(ue_index);
+
+  // Delete RRC UE.
+  ue_db.erase(ue_it);
 }
 
 void rrc_du_impl::release_ues()
