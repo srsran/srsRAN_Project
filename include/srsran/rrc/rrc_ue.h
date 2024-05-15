@@ -37,6 +37,15 @@ struct dl_dcch_msg_s;
 namespace srsran {
 namespace srs_cu_cp {
 
+class rrc_ue_controller
+{
+public:
+  virtual ~rrc_ue_controller() = default;
+
+  /// \brief Cancel currently running transactions.
+  virtual void stop() = 0;
+};
+
 /// Interface to notify F1AP about a new SRB PDU.
 class rrc_pdu_f1ap_notifier
 {
@@ -377,6 +386,7 @@ public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
+  virtual rrc_ue_controller&                    get_controller()                           = 0;
   virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
   virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
   virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;

@@ -52,6 +52,9 @@ public:
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
 
+  /// \brief Retrieve F1AP handler for the respective DU.
+  virtual f1ap_cu& get_f1ap_handler() = 0;
+
   /// \brief Get the F1AP UE context management handler interface of the DU processor object.
   /// \return The F1AP UE context management handler interface of the DU processor object.
   virtual f1ap_ue_context_manager& get_f1ap_ue_context_manager() = 0;

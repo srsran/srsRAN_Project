@@ -98,6 +98,7 @@ public:
 
   // cu_cp_ue_removal_handler
   async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
+  void             handle_pending_ue_task_cancellation(ue_index_t ue_index) override;
 
   cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *mobility_mng; }
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }

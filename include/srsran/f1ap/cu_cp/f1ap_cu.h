@@ -217,8 +217,10 @@ class f1ap_cu : public f1ap_message_handler,
 public:
   virtual ~f1ap_cu() = default;
 
+  virtual async_task<void> stop() = 0;
+
   virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
-  virtual f1ap_event_handler&              get_f1ap_event_handler()              = 0;
+  virtual f1ap_event_handler&              get_event_handler()                   = 0;
   virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
   virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
   virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;

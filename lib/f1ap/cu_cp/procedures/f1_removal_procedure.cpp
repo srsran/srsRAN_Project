@@ -54,7 +54,9 @@ async_task<void> f1_removal_procedure::handle_ue_transaction_info_loss()
     ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
   }
 
-  logger.info("F1 Removal Request received, but there were still UEs connected. Resetting {} UEs.", ev.ues_lost.size());
+  logger.info("{}: F1 Removal Request received, but there are still UEs connected to the DU. Resetting {} UEs.",
+              name(),
+              ev.ues_lost.size());
 
   return cu_cp_notifier.on_transaction_info_loss(std::move(ev));
 }

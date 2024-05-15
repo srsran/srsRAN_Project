@@ -15,6 +15,7 @@
 #include "f1ap_asn1_helpers.h"
 #include "procedures/f1_removal_procedure.h"
 #include "procedures/f1_setup_procedure.h"
+#include "procedures/f1ap_stop_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
@@ -44,6 +45,11 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
+
+async_task<void> f1ap_cu_impl::stop()
+{
+  return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list);
+}
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {

@@ -34,6 +34,7 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  const char*      name() const { return "F1 Removal"; }
   async_task<void> handle_ue_transaction_info_loss();
   void             send_f1_removal_response();
 

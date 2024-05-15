@@ -42,6 +42,14 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 
 void ue_transaction_info_release_routine::launch_ue_removal(ue_index_t ue_idx)
 {
+  auto* ue_it = ue_mng.find_ue(ue_idx);
+  if (ue_it == nullptr) {
+    return;
+  }
+
+  // Cancel any pending transactions.
+  ue_rem_handler.handle_pending_ue_task_cancellation(ue_idx);
+
   // Create task to be called after a UE removal.
   auto on_ue_removal = make_scope_exit([this]() {
     // If it is the last UE to be removed, notify the completion.

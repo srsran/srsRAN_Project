@@ -90,3 +90,22 @@ TEST_F(cu_cp_setup_test, when_cu_cp_receives_f1_removal_request_then_rrc_setup_p
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0);
 }
+
+TEST_F(cu_cp_setup_test, when_du_hangs_up_then_rrc_setup_procedure_is_cancelled)
+{
+  // Create UE by sending Initial UL RRC Message.
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+
+  // Verify F1AP DL RRC Message is sent with RRC Setup.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+
+  // DU hangs up.
+  ASSERT_TRUE(drop_du_connection(du_idx));
+
+  // Check UE is deleted.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 0);
+}

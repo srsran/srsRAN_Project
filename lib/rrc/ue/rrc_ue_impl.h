@@ -20,7 +20,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_impl final : public rrc_ue_interface
+class rrc_ue_impl final : public rrc_ue_interface, public rrc_ue_controller
 {
 public:
   rrc_ue_impl(up_resource_manager&              up_resource_mng_,
@@ -44,6 +44,7 @@ public:
   void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
+  rrc_ue_controller&                    get_controller() override { return *this; }
   rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler() override { return *this; }
   rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler() override { return *this; }
   rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
@@ -82,6 +83,8 @@ public:
   rrc_ue_reestablishment_context_response get_context() override;
 
 private:
+  void stop() override;
+
   // message handlers
   void handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu);
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);

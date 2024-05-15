@@ -32,6 +32,8 @@ public:
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
 
+  async_task<void> stop() override;
+
   // f1ap rrc message transfer procedure functions
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) override;
 
@@ -63,7 +65,7 @@ public:
 
   // f1ap_cu_interface
   f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }
-  f1ap_event_handler&              get_f1ap_event_handler() override { return *this; }
+  f1ap_event_handler&              get_event_handler() override { return *this; }
   f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler() override { return *this; }
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *this; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *this; }

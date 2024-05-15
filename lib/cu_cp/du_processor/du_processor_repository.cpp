@@ -143,16 +143,24 @@ void du_processor_repository::remove_du_impl(du_index_t du_index)
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Removing DU {}...", du_index);
 
-  // Remove DU
-  auto du_it = du_db.find(du_index);
-  if (du_it == du_db.end()) {
-    logger.warning("Remove DU called for inexistent du_index={}", du_index);
-    return;
-  }
+  cfg.common_task_sched.schedule_async_task(launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-  // Remove DU
-  du_db.erase(du_index);
-  logger.info("Removed DU {}", du_index);
+    // Remove DU
+    if (du_db.find(du_index) == du_db.end()) {
+      logger.warning("Remove DU called for inexistent du_index={}", du_index);
+      return;
+    }
+
+    // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
+    CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_interface().get_f1ap_handler().stop());
+
+    // Remove DU
+    du_db.erase(du_index);
+    logger.info("Removed DU {}", du_index);
+
+    CORO_RETURN();
+  }));
 }
 
 du_processor& du_processor_repository::find_du(du_index_t du_index)

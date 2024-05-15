@@ -544,6 +544,20 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
       logger);
 }
 
+void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
+{
+  du_index_t du_index = get_du_index_from_ue_index(ue_index);
+
+  // Clear all enqueued tasks for this UE.
+  ue_mng.get_task_sched().clear_pending_tasks(ue_index);
+
+  // Cancel running transactions for the RRC UE.
+  rrc_ue_interface* rrc_ue = rrc_du_adapters.at(du_index).find_rrc_ue(ue_index);
+  if (rrc_ue != nullptr) {
+    rrc_ue->get_controller().stop();
+  }
+}
+
 // private
 
 void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,

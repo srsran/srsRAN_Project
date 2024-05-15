@@ -211,6 +211,8 @@ public:
     });
   }
 
+  void handle_pending_ue_task_cancellation(ue_index_t ue_index) override {}
+
 private:
   ue_manager* ue_mng = nullptr;
 };
