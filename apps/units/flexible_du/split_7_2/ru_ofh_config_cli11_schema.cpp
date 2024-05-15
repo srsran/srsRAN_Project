@@ -23,16 +23,25 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
       "--ru_bandwidth_MHz",
       [&config](const std::string& value) {
         unsigned bandwidth;
-        CLI::detail::lexical_cast(value, bandwidth);
-        config.ru_operating_bw = MHz_to_bs_channel_bandwidth(bandwidth);
+        if (CLI::detail::lexical_cast(value, bandwidth)) {
+          config.ru_operating_bw = MHz_to_bs_channel_bandwidth(bandwidth);
+        } else {
+          config.ru_operating_bw.reset();
+        }
       },
       "Channel bandwidth in MHz")
       ->check([](const std::string& value) -> std::string {
+        const std::string& error_message = "Error in the channel bandwidth property. Valid values "
+                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100]";
+
+        if (value.empty()) {
+          return error_message;
+        }
+
         std::stringstream ss(value);
         unsigned          bw;
         ss >> bw;
-        const std::string& error_message = "Error in the channel bandwidth property. Valid values "
-                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100]";
+
         // Bandwidth cannot be less than 5MHz.
         if (bw < 5U) {
           return error_message;
