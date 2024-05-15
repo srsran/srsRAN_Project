@@ -27,6 +27,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
+                                     common_task_scheduler&              common_task_sched_,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
                                      task_executor&                      ctrl_exec_) :
@@ -38,7 +39,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
-  f1ap_ev_notifier(*this)
+  f1ap_ev_notifier(common_task_sched_, *this)
 {
   context.du_index = cfg.du_index;
 

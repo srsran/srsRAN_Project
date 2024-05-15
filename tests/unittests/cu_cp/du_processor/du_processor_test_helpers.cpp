@@ -17,7 +17,20 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-du_processor_test::du_processor_test()
+namespace {
+
+class dummy_task_sched final : public common_task_scheduler
+{
+public:
+  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+
+private:
+  fifo_async_task_scheduler task_sched{32};
+};
+
+} // namespace
+
+du_processor_test::du_processor_test() : common_task_sched(std::make_unique<dummy_task_sched>())
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
@@ -38,6 +51,7 @@ du_processor_test::du_processor_test()
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_du_cu_cp_notifier,
+                                         *common_task_sched,
                                          *ue_task_sched,
                                          ue_mng,
                                          ctrl_worker);

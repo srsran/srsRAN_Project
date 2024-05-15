@@ -153,6 +153,17 @@ public:
     // TODO
   }
 
+  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+
+  /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
+  async_task<void> on_ue_reset_required(const std::vector<ue_index_t>& ues_to_reset) override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::du_setup_request last_f1_setup_request_msg;
@@ -164,8 +175,9 @@ public:
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
-  srslog::basic_logger& logger;
-  uint16_t              ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  srslog::basic_logger&     logger;
+  uint16_t                  ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  fifo_async_task_scheduler task_sched{16};
 };
 
 /// Reusable notifier class that a) stores the received du_index for test inspection and b)

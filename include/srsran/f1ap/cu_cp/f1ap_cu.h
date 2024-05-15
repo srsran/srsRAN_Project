@@ -131,8 +131,18 @@ struct ue_update_complete_message {
   f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
+/// Scheduler of F1AP async tasks using common signalling.
+class f1ap_common_du_task_notifier
+{
+public:
+  virtual ~f1ap_common_du_task_notifier() = default;
+
+  /// Schedule common F1 task.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
+};
+
 /// Methods used by F1AP to notify the DU processor.
-class f1ap_du_processor_notifier : public du_setup_notifier
+class f1ap_du_processor_notifier : public du_setup_notifier, public f1ap_common_du_task_notifier
 {
 public:
   virtual ~f1ap_du_processor_notifier() = default;
@@ -148,6 +158,9 @@ public:
   /// section 8.3.2.
   virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
+  /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
+  virtual async_task<void> on_ue_reset_required(const std::vector<ue_index_t>& ues_to_reset) = 0;
+
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
@@ -162,7 +175,7 @@ public:
   /// \brief Notifies about a successful F1 Removal procedure.
   /// The corresponding DU processor will be removed now.
   /// \param[in] du_index The index of the DU processor to delete.
-  virtual void on_du_remove_request_received(const du_index_t du_index) = 0;
+  virtual void on_du_remove_request_received(du_index_t du_index) = 0;
 };
 
 /// Methods to get statistics of the F1AP.

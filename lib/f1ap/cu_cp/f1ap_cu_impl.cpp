@@ -193,11 +193,12 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       handle_ul_rrc_message(msg.value.ul_rrc_msg_transfer());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
-      handle_f1_removal_procedure(msg.value.f1_removal_request(),
-                                  du_processor_notifier.get_du_index(),
-                                  tx_pdu_notifier,
-                                  du_management_notifier,
-                                  logger);
+      du_processor_notifier.schedule_async_task(launch_async<f1_removal_procedure>(msg.value.f1_removal_request(),
+                                                                                   du_processor_notifier.get_du_index(),
+                                                                                   tx_pdu_notifier,
+                                                                                   du_processor_notifier,
+                                                                                   ue_ctxt_list,
+                                                                                   logger));
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ue_context_release_request: {
       handle_ue_context_release_request(msg.value.ue_context_release_request());

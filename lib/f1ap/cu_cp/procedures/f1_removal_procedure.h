@@ -13,18 +13,37 @@
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-class f1ap_du_management_notifier;
+class f1ap_du_processor_notifier;
+class f1ap_ue_context_list;
 
 /// \brief Handle the F1 Removal Procedure as per TS 38.473 section 8.2.8.
-void handle_f1_removal_procedure(const asn1::f1ap::f1_removal_request_s& request,
-                                 du_index_t                              du_index,
-                                 f1ap_message_notifier&                  pdu_notifier,
-                                 f1ap_du_management_notifier&            du_management_notifier,
-                                 srslog::basic_logger&                   logger);
+class f1_removal_procedure
+{
+public:
+  f1_removal_procedure(const asn1::f1ap::f1_removal_request_s& request,
+                       du_index_t                              du_index,
+                       f1ap_message_notifier&                  pdu_notifier,
+                       f1ap_du_processor_notifier&             cu_cp_notifier,
+                       f1ap_ue_context_list&                   ue_list,
+                       srslog::basic_logger&                   logger);
+
+  void operator()(coro_context<async_task<void>>& ctx);
+
+private:
+  void send_f1_removal_response();
+
+  const asn1::f1ap::f1_removal_request_s request;
+  du_index_t                             du_index;
+  f1ap_message_notifier&                 pdu_notifier;
+  f1ap_du_processor_notifier&            cu_cp_notifier;
+  f1ap_ue_context_list&                  ue_list;
+  srslog::basic_logger&                  logger;
+};
 
 } // namespace srs_cu_cp
 } // namespace srsran

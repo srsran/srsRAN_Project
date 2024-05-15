@@ -47,6 +47,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              get_cu_cp_ue_context_handler(),
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
+                             routine_mng,
                              du_processor_task_sched,
                              ue_mng,
                              rrc_du_cu_cp_notifier,

@@ -13,7 +13,7 @@
 #include "../adapters/du_processor_adapters.h"
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/ngap_adapters.h"
-#include "../cu_cp_controller/cu_cp_controller.h"
+#include "../cu_cp_controller/common_task_scheduler.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
 #include "du_metrics_handler.h"
@@ -26,7 +26,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_cp_configuration;
-class cu_cp_controller;
 
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
@@ -35,6 +34,7 @@ struct du_repository_config {
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
+  common_task_scheduler&                 common_task_sched;
   du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   rrc_du_measurement_config_notifier&    meas_config_notifier;

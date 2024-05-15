@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cu_cp_controller/common_task_scheduler.h"
 #include "du_metrics_handler.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
