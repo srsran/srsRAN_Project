@@ -166,6 +166,19 @@ struct nru_dl_message {
   /// NR-U DL User Data.
   nru_dl_user_data dl_user_data;
 
+  expected<nru_dl_message> deep_copy()
+  {
+    nru_dl_message        copy = {};
+    expected<byte_buffer> buf  = t_pdu.deep_copy();
+    if (buf.is_error()) {
+      return default_error_t{};
+    }
+    copy.t_pdu        = std::move(buf.value());
+    copy.pdcp_sn      = pdcp_sn;
+    copy.dl_user_data = dl_user_data;
+    return copy;
+  }
+
   bool operator==(const nru_dl_message& other) const
   {
     return t_pdu == other.t_pdu && pdcp_sn == other.pdcp_sn && dl_user_data == other.dl_user_data;
