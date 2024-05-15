@@ -53,7 +53,7 @@ from .steps.stub import (
 def test_zmq_handover(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_1: UEStub,
+    ue_8: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -67,7 +67,7 @@ def test_zmq_handover(
     _handover_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_1,
+        ue_array=ue_8,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
