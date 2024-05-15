@@ -9,6 +9,7 @@
  */
 
 #include "ue_transaction_info_release_routine.h"
+#include "srsran/adt/scope_exit.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -40,18 +41,22 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
 
 void ue_transaction_info_release_routine::launch_ue_removal(ue_index_t ue_idx)
 {
-  async_task<void> ue_rem_task = launch_async([this, ue_idx](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-
-    // Launch UE removal routine and wait for its completion.
-    CORO_AWAIT(ue_rem_handler.handle_ue_removal_request(ue_idx));
-
+  // Create task to be called after a UE removal.
+  auto on_ue_removal = make_scope_exit([this]() {
     // If it is the last UE to be removed, notify the completion.
     if (--ues_remaining_count == 0) {
       all_ues_reset.set();
     }
-
-    CORO_RETURN();
   });
+
+  async_task<void> ue_rem_task =
+      launch_async([this, ue_idx, on_ue_removal = std::move(on_ue_removal)](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+
+        // Launch UE removal routine and wait for its completion.
+        CORO_AWAIT(ue_rem_handler.handle_ue_removal_request(ue_idx));
+
+        CORO_RETURN();
+      });
   ue_mng.get_task_sched().handle_ue_async_task(ue_idx, std::move(ue_rem_task));
 }

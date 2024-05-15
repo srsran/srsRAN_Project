@@ -129,9 +129,8 @@ private:
   f1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
-  f1ap_du_processor_notifier&  du_processor_notifier;
-  f1ap_du_management_notifier& du_management_notifier;
-  task_executor&               ctrl_exec;
+  f1ap_du_processor_notifier& du_processor_notifier;
+  task_executor&              ctrl_exec;
 
   tx_pdu_notifier_with_logging tx_pdu_notifier;
 

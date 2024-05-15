@@ -19,28 +19,12 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 f1_removal_procedure::f1_removal_procedure(const asn1::f1ap::f1_removal_request_s& request_,
-                                           du_index_t                              du_index_,
                                            f1ap_message_notifier&                  pdu_notifier_,
                                            f1ap_du_processor_notifier&             cu_cp_notifier_,
                                            f1ap_ue_context_list&                   ue_list_,
                                            srslog::basic_logger&                   logger_) :
-  request(request_),
-  du_index(du_index_),
-  pdu_notifier(pdu_notifier_),
-  cu_cp_notifier(cu_cp_notifier_),
-  ue_list(ue_list_),
-  logger(logger_)
+  request(request_), pdu_notifier(pdu_notifier_), cu_cp_notifier(cu_cp_notifier_), ue_list(ue_list_), logger(logger_)
 {
-}
-
-static f1_ue_transaction_info_loss_event create_f1_ue_transaction_loss_request(const f1ap_ue_context_list& ue_list)
-{
-  f1_ue_transaction_info_loss_event ev;
-  ev.ues_lost.reserve(ue_list.size());
-  for (const auto& ue : ue_list) {
-    ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
-  }
-  return ev;
 }
 
 void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -49,13 +33,30 @@ void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // If there are still active UEs, reset their context in other layers.
   if (ue_list.size() > 0) {
-    CORO_AWAIT(cu_cp_notifier.on_transaction_info_loss(create_f1_ue_transaction_loss_request(ue_list)));
+    CORO_AWAIT(handle_ue_transaction_info_loss());
   }
 
   // Send F1 Removal Response
   send_f1_removal_response();
 
   CORO_RETURN();
+}
+
+async_task<void> f1_removal_procedure::handle_ue_transaction_info_loss()
+{
+  f1_ue_transaction_info_loss_event ev;
+  ev.ues_lost.reserve(ue_list.size());
+  for (auto& ue : ue_list) {
+    // After receiving an F1 Removal Request, no more F1AP Rx PDUs are expected. Cancel running UE F1AP transactions.
+    ue.second.ev_mng.cancel_all();
+
+    // Add UE to the list of UEs with transaction information lost.
+    ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
+  }
+
+  logger.info("F1 Removal Request received, but there were still UEs connected. Resetting {} UEs.", ev.ues_lost.size());
+
+  return cu_cp_notifier.on_transaction_info_loss(std::move(ev));
 }
 
 void f1_removal_procedure::send_f1_removal_response()

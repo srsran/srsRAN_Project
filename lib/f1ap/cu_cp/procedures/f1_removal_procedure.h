@@ -26,7 +26,6 @@ class f1_removal_procedure
 {
 public:
   f1_removal_procedure(const asn1::f1ap::f1_removal_request_s& request,
-                       du_index_t                              du_index,
                        f1ap_message_notifier&                  pdu_notifier,
                        f1ap_du_processor_notifier&             cu_cp_notifier,
                        f1ap_ue_context_list&                   ue_list,
@@ -35,10 +34,10 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  void send_f1_removal_response();
+  async_task<void> handle_ue_transaction_info_loss();
+  void             send_f1_removal_response();
 
   const asn1::f1ap::f1_removal_request_s request;
-  du_index_t                             du_index;
   f1ap_message_notifier&                 pdu_notifier;
   f1ap_du_processor_notifier&            cu_cp_notifier;
   f1ap_ue_context_list&                  ue_list;

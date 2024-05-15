@@ -198,7 +198,9 @@ public:
     return gnb_cu_ue_f1ap_id_t::invalid;
   }
 
+  std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context>::iterator       begin() { return ues.begin(); }
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context>::const_iterator begin() const { return ues.begin(); }
+  std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context>::iterator       end() { return ues.end(); }
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context>::const_iterator end() const { return ues.end(); }
 
 protected:
