@@ -29,6 +29,7 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
   // TODO
 
   // Launch removal procedure for the provided UEs.
+  ues_remaining_count = ues_to_release.size();
   for (ue_index_t ue_idx : ues_to_release) {
     launch_ue_removal(ue_idx);
   }

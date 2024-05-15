@@ -40,6 +40,9 @@ f1ap_message generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
 f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);
 
+/// \brief Generates dummy F1 REMOVAL REQUEST message.
+f1ap_message generate_f1_removal_request(unsigned transaction_id);
+
 /// \brief Generates dummy F1 REMOVAL RESPONSE message based on the request.
 f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request);
 

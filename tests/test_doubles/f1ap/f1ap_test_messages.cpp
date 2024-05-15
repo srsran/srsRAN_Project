@@ -104,6 +104,19 @@ f1ap_message srsran::test_helpers::generate_f1_setup_response(const f1ap_message
   return resp;
 }
 
+f1ap_message srsran::test_helpers::generate_f1_removal_request(unsigned transaction_id)
+{
+  f1ap_message req;
+  req.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_F1_REMOVAL);
+  f1_removal_request_s& ie = req.pdu.init_msg().value.f1_removal_request();
+
+  ie->resize(1);
+  (*ie)[0].load_info_obj(ASN1_F1AP_ID_TRANSACTION_ID);
+  (*ie)[0]->transaction_id() = transaction_id;
+
+  return req;
+}
+
 f1ap_message srsran::test_helpers::generate_f1_removal_response(const f1ap_message& f1_removal_request)
 {
   srsran_assert(f1_removal_request.pdu.type().value == f1ap_pdu_c::types_opts::init_msg, "Expected F1 removal request");
