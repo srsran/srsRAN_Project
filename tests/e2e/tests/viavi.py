@@ -33,6 +33,7 @@ from .steps.stub import get_metrics, GNB_STARTUP_TIMEOUT, GnbMetrics, handle_sta
 
 CAMPAIGN_FILENAME = "C:\\ci\\CI 4x4 ORAN-FH.xml"
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
+_POD_ERROR = "Error creating the pod"
 
 
 class _TestName(Enum):
@@ -145,6 +146,10 @@ def test_viavi_manual(
     ),
 )
 @mark.viavi
+@mark.flaky(
+    reruns=2,
+    only_rerun=[_POD_ERROR],
+)
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi(
     # Retina
@@ -206,6 +211,10 @@ def test_viavi(
     ),
 )
 @mark.viavi_debug
+@mark.flaky(
+    reruns=2,
+    only_rerun=[_POD_ERROR],
+)
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi_debug(
     # Retina
