@@ -80,9 +80,6 @@ load retina variables:
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
       export KUBECONFIG=$K_PATH
-  needs: &retina-needs
-    - job: "load retina variables"
-      artifacts: true
 
 e2e request validation:
   stage: static
@@ -102,6 +99,9 @@ e2e request validation:
       for f in $file_list; do
           retina-request-checker --input $f
       done
+  needs: &retina-needs
+    - job: "load retina variables"
+      artifacts: true
 
 .e2e-run:
   resource_group: e2e-${GROUP}
@@ -169,6 +169,8 @@ e2e request validation:
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/tests/e2e/log//report.html"
       echo "*******************************************************************************************************************************"
     - du -hs tests/e2e/log/
+  needs:
+    - *retina-needs
 
 custom e2e:
   stage: manual
