@@ -265,3 +265,27 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1) << "Old UE was not removed";
 }
+
+TEST_F(cu_cp_reestablishment_test,
+       when_f1_removal_request_is_sent_before_reestablishment_completion_then_cu_cp_ue_is_removed)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+
+  // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_TRUE(send_rrc_reest_request_and_wait_response(new_du_ue_id, new_crnti, old_crnti, old_pci))
+      << "Reestablishment failed";
+
+  // DU sends F1 Removal Request.
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_removal_request(0));
+
+  // Await F1 Removal Response.
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+
+  // Check UE is deleted.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 0);
+}
