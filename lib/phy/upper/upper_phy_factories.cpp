@@ -715,12 +715,12 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  if (variant_holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
+  if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory =
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
-  } else if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+  } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
-        variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
+        std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
     report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 2,
                               "The number of threads (i.e., {}) must be equal to or greater than 2.");
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
@@ -737,7 +737,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
-  } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
+  } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);
   }
@@ -762,9 +762,9 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   if (config.nof_concurrent_threads > 1) {
     // If the PDSCH instance is concurrent, the number of instances is given by the PDSCH processor configuration.
     unsigned max_nof_simultaneous_pdsch = config.nof_concurrent_threads;
-    if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+    if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
       max_nof_simultaneous_pdsch =
-          variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
+          std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
     }
 
     pdcch_proc_factory =

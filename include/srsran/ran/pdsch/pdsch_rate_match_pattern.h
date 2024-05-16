@@ -38,8 +38,8 @@ struct rate_match_pattern {
     /// \brief Type of symbols in resource block.
     enum class symbols_in_rb_type { one_slot, two_slot };
 
-    symbols_in_rb_type          type;
-    variant<one_slot, two_slot> symbols;
+    symbols_in_rb_type               type;
+    std::variant<one_slot, two_slot> symbols;
 
     bool operator==(const symbols_in_rb& rhs) const { return type == rhs.type && symbols == rhs.symbols; }
     bool operator!=(const symbols_in_rb& rhs) const { return !(rhs == *this); }
@@ -62,13 +62,13 @@ struct rate_match_pattern {
     enum class periodicity_and_pattern_type { n2, n4, n5, n8, n10, n20, n40 };
 
     periodicity_and_pattern_type type;
-    variant<periodicity_and_pattern_n2,
-            periodicity_and_pattern_n4,
-            periodicity_and_pattern_n5,
-            periodicity_and_pattern_n8,
-            periodicity_and_pattern_n10,
-            periodicity_and_pattern_n20,
-            periodicity_and_pattern_n40>
+    std::variant<periodicity_and_pattern_n2,
+                 periodicity_and_pattern_n4,
+                 periodicity_and_pattern_n5,
+                 periodicity_and_pattern_n8,
+                 periodicity_and_pattern_n10,
+                 periodicity_and_pattern_n20,
+                 periodicity_and_pattern_n40>
         prd_and_patt;
 
     bool operator==(const periodicity_and_pattern& rhs) const

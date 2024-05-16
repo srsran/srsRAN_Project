@@ -113,21 +113,21 @@ static sib19_info create_sib19_info(const du_high_unit_config& config)
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
 
   // These ephemeris parameters are all scaled in accordance with NIMA TR 8350.2.
-  if (variant_holds_alternative<ecef_coordinates_t>(sib19.ephemeris_info.value())) {
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vx /= 0.06;
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vy /= 0.06;
-    variant_get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vz /= 0.06;
-  } else if (variant_holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis -= 6500000;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).longitude /= 0.00000002341;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).inclination /= 0.00000002341;
-    variant_get<orbital_coordinates_t>(sib19.ephemeris_info.value()).mean_anomaly /= 0.00000002341;
+  if (std::holds_alternative<ecef_coordinates_t>(sib19.ephemeris_info.value())) {
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_x /= 1.3;
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_y /= 1.3;
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).position_z /= 1.3;
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vx /= 0.06;
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vy /= 0.06;
+    std::get<ecef_coordinates_t>(sib19.ephemeris_info.value()).velocity_vz /= 0.06;
+  } else if (std::holds_alternative<orbital_coordinates_t>(sib19.ephemeris_info.value())) {
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis -= 6500000;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).semi_major_axis /= 0.004249;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).eccentricity /= 0.00000001431;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).periapsis /= 0.00000002341;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).longitude /= 0.00000002341;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).inclination /= 0.00000002341;
+    std::get<orbital_coordinates_t>(sib19.ephemeris_info.value()).mean_anomaly /= 0.00000002341;
   }
   if (config.ntn_cfg.value().distance_threshold.has_value()) {
     sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
@@ -550,7 +550,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
           .uci_cfg.value()
           .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
-    if (not variant_holds_alternative<uci_on_pusch::beta_offsets_semi_static>(
+    if (not std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(
             out_cell.ue_ded_serv_cell_cfg.ul_config.value()
                 .init_ul_bwp.pusch_cfg.value()
                 .uci_cfg.value()
@@ -564,11 +564,10 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
           .uci_cfg.value()
           .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
-    auto& b_offsets =
-        variant_get<uci_on_pusch::beta_offsets_semi_static>(out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-                                                                .init_ul_bwp.pusch_cfg.value()
-                                                                .uci_cfg.value()
-                                                                .beta_offsets_cfg.value());
+    auto& b_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+                                                                           .init_ul_bwp.pusch_cfg.value()
+                                                                           .uci_cfg.value()
+                                                                           .beta_offsets_cfg.value());
     b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.b_offset_ack_idx_1;
     b_offsets.beta_offset_ack_idx_2    = base_cell.pusch_cfg.b_offset_ack_idx_2;
     b_offsets.beta_offset_ack_idx_3    = base_cell.pusch_cfg.b_offset_ack_idx_3;

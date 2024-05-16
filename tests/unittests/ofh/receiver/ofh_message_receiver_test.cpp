@@ -96,9 +96,9 @@ public:
 /// Dummy Ethernet receiver class.
 class dummy_eth_receiver : public ether::receiver
 {
-  void start(ether::frame_notifier& notifier) override{};
+  void start(ether::frame_notifier& notifier) override {}
 
-  void stop() override{};
+  void stop() override {}
 };
 
 } // namespace
@@ -247,8 +247,8 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_uplink_eacx)
 {
   static_vector<uint8_t, 1> msg = {1};
 
-  ecpri::packet_parameters params                                  = ecpri_params;
-  variant_get<ecpri::iq_data_parameters>(params.type_params).pc_id = 2;
+  ecpri::packet_parameters params                               = ecpri_params;
+  std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 2;
   ecpri_decoder->set_ecpri_params(params);
 
   ul_handler.on_new_frame(msg);
@@ -263,8 +263,8 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_prach_eacx)
 {
   static_vector<uint8_t, 1> msg = {1};
 
-  ecpri::packet_parameters params                                  = ecpri_params;
-  variant_get<ecpri::iq_data_parameters>(params.type_params).pc_id = 6;
+  ecpri::packet_parameters params                               = ecpri_params;
+  std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 6;
   ecpri_decoder->set_ecpri_params(params);
 
   ul_handler.on_new_frame(msg);

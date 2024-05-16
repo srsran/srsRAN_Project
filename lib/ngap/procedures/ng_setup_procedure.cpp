@@ -108,7 +108,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
-    for (const auto& guami_item : variant_get<ngap_ng_setup_response>(res).served_guami_list) {
+    for (const auto& guami_item : std::get<ngap_ng_setup_response>(res).served_guami_list) {
       context.served_guami_list.push_back(guami_item.guami);
     }
 

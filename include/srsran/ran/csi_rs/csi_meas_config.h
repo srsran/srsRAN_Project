@@ -247,8 +247,8 @@ struct csi_associated_report_config_info {
     bool operator!=(const nzp_csi_rs& rhs) const { return !(rhs == *this); }
   };
 
-  csi_report_config_id_t                    report_cfg_id;
-  variant<nzp_csi_rs, csi_ssb_resource_set> res_for_channel;
+  csi_report_config_id_t                         report_cfg_id;
+  std::variant<nzp_csi_rs, csi_ssb_resource_set> res_for_channel;
   /// CSI-IM-ResourceSet for interference measurement. Values
   /// {1,...,MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
   /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with

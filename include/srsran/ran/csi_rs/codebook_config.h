@@ -12,7 +12,7 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/optional.h"
-#include "srsran/adt/variant.h"
+#include <variant>
 
 namespace srsran {
 
@@ -61,7 +61,8 @@ struct codebook_config {
         bool operator!=(const more_than_two_antenna_ports& rhs) const { return !(rhs == *this); }
       };
 
-      variant<two_antenna_ports_two_tx_codebook_subset_restriction, more_than_two_antenna_ports> nof_antenna_ports;
+      char                                                                                            dummy;
+      std::variant<two_antenna_ports_two_tx_codebook_subset_restriction, more_than_two_antenna_ports> nof_antenna_ports;
       /// Restriction for RI for typeI-SinglePanel-RI-Restriction.
       bounded_bitset<8> typei_single_panel_ri_restriction;
 
@@ -102,7 +103,8 @@ struct codebook_config {
       bool operator!=(const multi_panel& rhs) const { return !(rhs == *this); }
     };
 
-    variant<single_panel, multi_panel> sub_type;
+    char                                    dummy;
+    std::variant<single_panel, multi_panel> sub_type;
     /// CodebookMode as specified in TS 38.214, clause 5.2.2.2.2. Value {1,...,2}.
     unsigned codebook_mode;
 
@@ -148,6 +150,7 @@ struct codebook_config {
 
     /// \brief See TS 38.331, \c typeII-PortSelection in \c CodebookConfig.
     struct typeii_port_selection {
+      char dummy;
       /// The size of the port selection codebook (parameter d). See TS 38.214 clause 5.2.2.2.6. Values {1, 2, 3, 4}.
       optional<unsigned> port_selection_sampling_size;
       /// Restriction for RI for TypeII-PortSelection-RI-Restriction.
@@ -161,7 +164,7 @@ struct codebook_config {
       bool operator!=(const typeii_port_selection& rhs) const { return !(rhs == *this); }
     };
 
-    variant<typeii, typeii_port_selection> sub_type;
+    std::variant<typeii, typeii_port_selection> sub_type;
     /// The size of the PSK alphabet, QPSK or 8-PSK. Values {4, 8}.
     unsigned phase_alphabet_size;
     /// If subband amplitude reporting is activated (true).
@@ -177,7 +180,7 @@ struct codebook_config {
     bool operator!=(const type2& rhs) const { return !(rhs == *this); }
   };
 
-  variant<type1, type2> codebook_type;
+  std::variant<type1, type2> codebook_type;
 
   bool operator==(const codebook_config& rhs) const { return codebook_type == rhs.codebook_type; }
   bool operator!=(const codebook_config& rhs) const { return !(rhs == *this); }

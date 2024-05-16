@@ -82,18 +82,16 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       continue;
     }
 
-    if (variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(mac_uci.pdu)) {
-      const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_uci.pdu);
-
+    if (const auto* pucch_f0f1 = std::get_if<mac_uci_pdu::pucch_f0_or_f1_type>(&mac_uci.pdu)) {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
 
-      pdu.ul_sinr_dB          = pucch.ul_sinr_dB;
-      pdu.time_advance_offset = pucch.time_advance_offset;
+      pdu.ul_sinr_dB          = pucch_f0f1->ul_sinr_dB;
+      pdu.time_advance_offset = pucch_f0f1->time_advance_offset;
       pdu.sr_detected         = false;
-      if (pucch.sr_info.has_value()) {
-        pdu.sr_detected = pucch.sr_info.value().detected;
+      if (pucch_f0f1->sr_info.has_value()) {
+        pdu.sr_detected = pucch_f0f1->sr_info.value().detected;
       }
-      if (pucch.harq_info.has_value()) {
+      if (pucch_f0f1->harq_info.has_value()) {
         // NOTES:
         // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
         // UCIs with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
@@ -110,7 +108,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         // expected 2-bit reporting. To prevent this, we assume that PUCCH Format 0 or 1 UCI is valid if none of the 1
         // or 2 bits report is DTX (not detected).
 
-        const auto& harq_pdus = pucch.harq_info.value().harqs;
+        const auto& harq_pdus = pucch_f0f1->harq_info.value().harqs;
         pdu.harqs.resize(harq_pdus.size());
         for (unsigned i = 0, e = pdu.harqs.size(); i != e; ++i) {
           switch (harq_pdus[i]) {
@@ -129,28 +127,27 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         }
       }
       uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
-    } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(mac_uci.pdu)) {
-      const auto& pusch = variant_get<mac_uci_pdu::pusch_type>(mac_uci.pdu);
-      auto&       pdu   = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
-      if (pusch.harq_info.has_value()) {
+    } else if (const auto* pusch = std::get_if<mac_uci_pdu::pusch_type>(&mac_uci.pdu)) {
+      auto& pdu = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
+      if (pusch->harq_info.has_value()) {
         pdu.harqs =
-            convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().is_valid, pusch.harq_info->payload);
+            convert_mac_harq_bits_to_sched_harq_values(pusch->harq_info.value().is_valid, pusch->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (unsigned i = 0, e = pdu.harqs.size(); i != e; ++i) {
-          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, pdu.harqs[i] == mac_harq_ack_report_status::ack);
+        for (auto harq : pdu.harqs) {
+          rlf_handler.handle_ack(uci_pdu.ue_index, cell_index, harq == mac_harq_ack_report_status::ack);
         }
       }
 
-      if (pusch.csi_part1_info.has_value()) {
-        if (pusch.csi_part1_info->is_valid) {
+      if (pusch->csi_part1_info.has_value()) {
+        if (pusch->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
 
           // Search for CSI report config with matching RNTI.
           for (const auto& expected_slot_uci : slot_ucis) {
             if (expected_slot_uci.rnti == uci_pdu.crnti) {
-              pdu.csi = decode_csi_bits(pusch, expected_slot_uci.csi_rep_cfg);
+              pdu.csi = decode_csi_bits(*pusch, expected_slot_uci.csi_rep_cfg);
               break;
             }
           }
@@ -164,23 +161,22 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
-        if (pusch.csi_part1_info->is_valid) {
+        if (pusch->csi_part1_info->is_valid) {
           rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, true);
         }
       }
 
-    } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_uci.pdu)) {
-      const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_uci.pdu);
-      auto&       pdu   = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
+    } else if (const auto* pucch_f2f3f4 = std::get_if<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(&mac_uci.pdu)) {
+      auto& pdu = uci_pdu.pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>();
 
-      pdu.ul_sinr_dB          = pucch.ul_sinr_dB;
-      pdu.time_advance_offset = pucch.time_advance_offset;
-      if (pucch.sr_info.has_value()) {
-        pdu.sr_info = pucch.sr_info.value();
+      pdu.ul_sinr_dB          = pucch_f2f3f4->ul_sinr_dB;
+      pdu.time_advance_offset = pucch_f2f3f4->time_advance_offset;
+      if (pucch_f2f3f4->sr_info.has_value()) {
+        pdu.sr_info = pucch_f2f3f4->sr_info.value();
       }
-      if (pucch.harq_info.has_value()) {
-        pdu.harqs =
-            convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().is_valid, pucch.harq_info->payload);
+      if (pucch_f2f3f4->harq_info.has_value()) {
+        pdu.harqs = convert_mac_harq_bits_to_sched_harq_values(pucch_f2f3f4->harq_info.value().is_valid,
+                                                               pucch_f2f3f4->harq_info->payload);
 
         // Report ACK for RLF detection purposes.
         for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
@@ -189,15 +185,15 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       // Check if the UCI has been correctly decoded.
-      if (pucch.csi_part1_info.has_value()) {
-        if (pucch.csi_part1_info->is_valid) {
+      if (pucch_f2f3f4->csi_part1_info.has_value()) {
+        if (pucch_f2f3f4->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
 
           // Search for CSI report config with matching RNTI.
           for (const auto& expected_slot_uci : slot_ucis) {
             if (expected_slot_uci.rnti == uci_pdu.crnti) {
-              pdu.csi = decode_csi_bits(pucch, expected_slot_uci.csi_rep_cfg);
+              pdu.csi = decode_csi_bits(*pucch_f2f3f4, expected_slot_uci.csi_rep_cfg);
               break;
             }
           }
@@ -209,7 +205,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
         }
         // We consider any status other than "crc_pass" as non-decoded CSI.
-        rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, pucch.csi_part1_info->is_valid);
+        rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, pucch_f2f3f4->csi_part1_info->is_valid);
       }
     }
   }

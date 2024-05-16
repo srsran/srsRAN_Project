@@ -13,13 +13,13 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_mapping.h"
+#include <variant>
 
 namespace srsran {
 
@@ -98,6 +98,8 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
+    // TODO: cpp17 transition workaround for a clang compiler issue
+    char dummy;
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
@@ -129,6 +131,8 @@ struct mac_uci_pdu {
       static_vector<uci_pucch_f0_or_f1_harq_values, NOF_HARQS_PER_UCI> harqs;
     };
 
+    // TODO: cpp17 transition workaround for a clang compiler issue
+    char dummy;
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
@@ -196,6 +200,8 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
+    // TODO: cpp17 transition workaround for a clang compiler issue
+    char dummy;
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
@@ -217,7 +223,7 @@ struct mac_uci_pdu {
   /// RNTI value corresponding to the UE that generated this PDU.
   rnti_t rnti;
   /// UCI PDU multiplexed either in the PUSCH or encoded in the PUCCH.
-  variant<pusch_type, pucch_f0_or_f1_type, pucch_f2_or_f3_or_f4_type> pdu;
+  std::variant<pusch_type, pucch_f0_or_f1_type, pucch_f2_or_f3_or_f4_type> pdu;
 };
 
 /// List of UCI indication PDUs for a given slot.

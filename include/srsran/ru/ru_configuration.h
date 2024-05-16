@@ -19,7 +19,7 @@ namespace srsran {
 
 /// Radio Unit configuration.
 struct ru_configuration {
-  variant<ru_generic_configuration, ru_ofh_configuration, ru_dummy_configuration> config;
+  std::variant<ru_generic_configuration, ru_ofh_configuration, ru_dummy_configuration> config;
 };
 
 } // namespace srsran

@@ -39,8 +39,8 @@ TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
   ngap->handle_message(ng_setup_response);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(variant_holds_alternative<ngap_ng_setup_response>(t.get()));
-  ASSERT_EQ(variant_get<ngap_ng_setup_response>(t.get()).amf_name, "open5gs-amf0");
+  ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_response>(t.get()));
+  ASSERT_EQ(std::get<ngap_ng_setup_response>(t.get()).amf_name, "open5gs-amf0");
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and successful retry
@@ -82,8 +82,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   ngap->handle_message(ng_setup_response);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(variant_holds_alternative<ngap_ng_setup_response>(t.get()));
-  ASSERT_EQ(variant_get<ngap_ng_setup_response>(t.get()).amf_name, "open5gs-amf0");
+  ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_response>(t.get()));
+  ASSERT_EQ(std::get<ngap_ng_setup_response>(t.get()).amf_name, "open5gs-amf0");
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and unsuccessful retry
@@ -125,7 +125,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   ngap->handle_message(ng_setup_failure);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(variant_holds_alternative<ngap_ng_setup_failure>(t.get()));
+  ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_failure>(t.get()));
 }
 
 /// Test the ng setup procedure
@@ -156,5 +156,5 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
   }
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(variant_holds_alternative<ngap_ng_setup_failure>(t.get()));
+  ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_failure>(t.get()));
 }

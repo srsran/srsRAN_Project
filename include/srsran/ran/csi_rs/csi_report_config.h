@@ -226,7 +226,7 @@ struct csi_report_config {
   /// NZP CSI RS resources for interference measurement.
   optional<csi_res_config_id_t> nzp_csi_rs_res_for_interference;
   /// Time domain behavior of reporting configuration.
-  variant<periodic_or_semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
+  std::variant<periodic_or_semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
                          report_cfg_type;
   report_quantity_type_t report_qty_type;
   /// Relevant only when \c report_quantity_type_t is of type \c cri_ri_i1_cqi.

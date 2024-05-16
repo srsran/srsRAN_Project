@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include <memory>
+#include <variant>
 
 namespace srsran {
 
@@ -159,9 +160,9 @@ struct downlink_processor_factory_sw_config {
   /// - \c generic: for using unoptimized PDSCH processing, or
   /// - \c concurrent: for using a processor that processes code blocks in parallel, or
   /// - \c lite: for using a memory optimized processor.
-  variant<pdsch_processor_generic_configuration,
-          pdsch_processor_concurrent_configuration,
-          pdsch_processor_lite_configuration>
+  std::variant<pdsch_processor_generic_configuration,
+               pdsch_processor_concurrent_configuration,
+               pdsch_processor_lite_configuration>
       pdsch_processor;
   /// Number of concurrent threads processing downlink transmissions.
   unsigned nof_concurrent_threads;

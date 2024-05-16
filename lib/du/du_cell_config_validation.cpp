@@ -175,8 +175,8 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
     HANDLE_ERROR(is_search_space_valid(ss));
     CHECK_TRUE(ss.is_common_search_space(), "Common SearchSpace#{} type", ss.get_id());
-    const auto dci_format_variant = ss.get_monitored_dci_formats();
-    const auto dci_format         = variant_get<search_space_configuration::common_dci_format>(dci_format_variant);
+    const auto& dci_format_variant = ss.get_monitored_dci_formats();
+    const auto& dci_format         = std::get<search_space_configuration::common_dci_format>(dci_format_variant);
     CHECK_TRUE(dci_format.f0_0_and_f1_0, "Common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.get_id());
     if (ss.get_coreset_id() == 0) {
       CHECK_TRUE(bwp.pdcch_common.coreset0.has_value(),
@@ -233,10 +233,10 @@ static check_outcome is_nof_monitored_pdcch_candidates_per_slot_within_limit(con
   const bwp_downlink_dedicated& bwp_ded = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp;
 
   for (const search_space_configuration& ss : bwp_ded.pdcch_cfg->search_spaces) {
-    const auto dci_format_variant = ss.get_monitored_dci_formats();
-    const bool non_fallback_dci_fmt =
-        variant_holds_alternative<search_space_configuration::ue_specific_dci_format>(dci_format_variant) and
-        variant_get<search_space_configuration::ue_specific_dci_format>(dci_format_variant) ==
+    const auto& dci_format_variant = ss.get_monitored_dci_formats();
+    const bool  non_fallback_dci_fmt =
+        std::holds_alternative<search_space_configuration::ue_specific_dci_format>(dci_format_variant) and
+        std::get<search_space_configuration::ue_specific_dci_format>(dci_format_variant) ==
             search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
 
     unsigned nof_monitored_pdcch_candidates;
@@ -275,10 +275,10 @@ static check_outcome is_nof_monitored_pdcch_candidates_per_slot_within_limit(con
   }
 
   for (const search_space_configuration& ss : bwp_cmn.pdcch_common.search_spaces) {
-    const auto dci_format_variant = ss.get_monitored_dci_formats();
-    const bool non_fallback_dci_fmt =
-        variant_holds_alternative<search_space_configuration::ue_specific_dci_format>(dci_format_variant) and
-        variant_get<search_space_configuration::ue_specific_dci_format>(dci_format_variant) ==
+    const auto& dci_format_variant = ss.get_monitored_dci_formats();
+    const bool  non_fallback_dci_fmt =
+        std::holds_alternative<search_space_configuration::ue_specific_dci_format>(dci_format_variant) and
+        std::get<search_space_configuration::ue_specific_dci_format>(dci_format_variant) ==
             search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
 
     unsigned nof_monitored_pdcch_candidates;
@@ -350,7 +350,7 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
     for (const search_space_configuration& ss : bwp.pdcch_cfg->search_spaces) {
       const bool fallback_dci_format_in_ss2 =
           ss.is_common_search_space() or
-          not(variant_get<search_space_configuration::ue_specific_dci_format>(ss.get_monitored_dci_formats()) ==
+          not(std::get<search_space_configuration::ue_specific_dci_format>(ss.get_monitored_dci_formats()) ==
               search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
 
       if (fallback_dci_format_in_ss2) {
@@ -490,7 +490,7 @@ static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
     const search_space_configuration& ss2 = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back();
     const bool                        fallback_dci_format_in_ss2 =
         ss2.is_common_search_space() or
-        not(variant_get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
+        not(std::get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
             search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
     if (fallback_dci_format_in_ss2) {
       CHECK_TRUE(bwp.pusch_cfg->mcs_table != pusch_mcs_table::qam256,
@@ -531,7 +531,7 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   const std::optional<coreset_configuration>& common_coreset = common_pdcch_cfg.common_coreset;
   CHECK_TRUE(coreset0.has_value(), "CORESET#0 not configured");
 
-  const pdcch_type0_css_occasion_pattern1_description ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
+  const pdcch_type0_css_occasion_pattern1_description& ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
       pdcch_type0_css_occasion_pattern1_configuration{.is_fr2        = false,
                                                       .ss_zero_index = static_cast<uint8_t>(cell_cfg.searchspace0_idx),
                                                       .nof_symb_coreset = coreset0->duration});

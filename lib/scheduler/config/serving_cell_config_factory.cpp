@@ -568,36 +568,36 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   // >>> PUCCH resource 4.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res4                                                   = pucch_cfg.pucch_res_list.back();
-  res4.res_id                                                            = pucch_res_id_t{4, 4};
-  variant_get<pucch_format_2_3_cfg>(res4.format_params).starting_sym_idx = 2;
+  pucch_resource& res4                                                = pucch_cfg.pucch_res_list.back();
+  res4.res_id                                                         = pucch_res_id_t{4, 4};
+  std::get<pucch_format_2_3_cfg>(res4.format_params).starting_sym_idx = 2;
   // >>> PUCCH resource 5.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res5                                                   = pucch_cfg.pucch_res_list.back();
-  res5.res_id                                                            = pucch_res_id_t{5, 5};
-  variant_get<pucch_format_2_3_cfg>(res5.format_params).starting_sym_idx = 4;
+  pucch_resource& res5                                                = pucch_cfg.pucch_res_list.back();
+  res5.res_id                                                         = pucch_res_id_t{5, 5};
+  std::get<pucch_format_2_3_cfg>(res5.format_params).starting_sym_idx = 4;
   // >>> PUCCH resource 6.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res6                                                   = pucch_cfg.pucch_res_list.back();
-  res6.res_id                                                            = pucch_res_id_t{6, 6};
-  variant_get<pucch_format_2_3_cfg>(res6.format_params).starting_sym_idx = 6;
+  pucch_resource& res6                                                = pucch_cfg.pucch_res_list.back();
+  res6.res_id                                                         = pucch_res_id_t{6, 6};
+  std::get<pucch_format_2_3_cfg>(res6.format_params).starting_sym_idx = 6;
   // >>> PUCCH resource 7.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res7                                                   = pucch_cfg.pucch_res_list.back();
-  res7.res_id                                                            = pucch_res_id_t{7, 7};
-  variant_get<pucch_format_2_3_cfg>(res7.format_params).starting_sym_idx = 8;
+  pucch_resource& res7                                                = pucch_cfg.pucch_res_list.back();
+  res7.res_id                                                         = pucch_res_id_t{7, 7};
+  std::get<pucch_format_2_3_cfg>(res7.format_params).starting_sym_idx = 8;
   // >>> PUCCH resource 8.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res8                                                   = pucch_cfg.pucch_res_list.back();
-  res8.res_id                                                            = pucch_res_id_t{8, 8};
-  variant_get<pucch_format_2_3_cfg>(res8.format_params).starting_sym_idx = 10;
+  pucch_resource& res8                                                = pucch_cfg.pucch_res_list.back();
+  res8.res_id                                                         = pucch_res_id_t{8, 8};
+  std::get<pucch_format_2_3_cfg>(res8.format_params).starting_sym_idx = 10;
 
   // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res9                                                   = pucch_cfg.pucch_res_list.back();
-  res9.res_id                                                            = pucch_res_id_t{9, 9};
-  variant_get<pucch_format_2_3_cfg>(res9.format_params).starting_sym_idx = 12;
+  pucch_resource& res9                                                = pucch_cfg.pucch_res_list.back();
+  res9.res_id                                                         = pucch_res_id_t{9, 9};
+  std::get<pucch_format_2_3_cfg>(res9.format_params).starting_sym_idx = 12;
 
   // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.

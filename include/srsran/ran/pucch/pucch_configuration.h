@@ -149,11 +149,11 @@ struct pucch_format_4_cfg {
 
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  pucch_res_id_t                                                                            res_id = {0, 0};
-  unsigned                                                                                  starting_prb;
-  std::optional<unsigned>                                                                   second_hop_prb;
-  pucch_format                                                                              format;
-  variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
+  pucch_res_id_t                                                                                 res_id = {0, 0};
+  unsigned                                                                                       starting_prb;
+  std::optional<unsigned>                                                                        second_hop_prb;
+  pucch_format                                                                                   format;
+  std::variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
 
   bool operator==(const pucch_resource& rhs) const
   {

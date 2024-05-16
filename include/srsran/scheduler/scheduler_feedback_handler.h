@@ -12,7 +12,6 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/adt/variant.h"
 #include "srsran/mac/bsr_format.h"
 #include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/mac/phr_report.h"
@@ -24,6 +23,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/harq_id.h"
+#include <variant>
 
 namespace srsran {
 
@@ -116,7 +116,7 @@ struct uci_indication {
     /// RNTI value corresponding to the UE that generated this PDU.
     rnti_t crnti;
     /// UCI PDU multiplexed either in the PUSCH or encoded in the PUCCH.
-    variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu, uci_pucch_f2_or_f3_or_f4_pdu> pdu;
+    std::variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu, uci_pucch_f2_or_f3_or_f4_pdu> pdu;
   };
 
   using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;

@@ -9,12 +9,14 @@
  */
 
 #include "ue_configuration.h"
+
 #include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 #include "../support/pusch/pusch_resource_allocation.h"
 #include "srsran/support/math/gcd.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -39,11 +41,13 @@ void search_space_info::update_pdcch_candidates(
   ss_pdcch_candidates = candidates;
 
   crbs_of_candidates.resize(ss_pdcch_candidates.size());
-  for (unsigned sl = 0; sl < ss_pdcch_candidates.size(); sl++) {
-    for (unsigned lidx = 0; lidx < ss_pdcch_candidates[sl].size(); lidx++) {
+  for (unsigned sl = 0, sl_end = ss_pdcch_candidates.size(); sl != sl_end; ++sl) {
+    for (unsigned lidx = 0, lidx_end = ss_pdcch_candidates[sl].size(); lidx != lidx_end; ++lidx) {
       const aggregation_level aggr_lvl = aggregation_index_to_level(lidx);
       crbs_of_candidates[sl][lidx].resize(ss_pdcch_candidates[sl][lidx].size());
-      for (unsigned candidate_idx = 0; candidate_idx != ss_pdcch_candidates[sl][lidx].size(); ++candidate_idx) {
+      for (unsigned candidate_idx = 0, candidate_idx_end = ss_pdcch_candidates[sl][lidx].size();
+           candidate_idx != candidate_idx_end;
+           ++candidate_idx) {
         uint8_t ncce     = ss_pdcch_candidates[sl][lidx][candidate_idx];
         auto&   crb_list = crbs_of_candidates[sl][lidx][candidate_idx];
 
@@ -73,7 +77,7 @@ static bool is_dci_format_monitored_in_ue_ss(const ue_cell_configuration& ue_cel
                                       ? search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
                                       : search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
   return std::any_of(bwp_search_spaces.begin(), bwp_search_spaces.end(), [dci_format](const search_space_info* ss) {
-    return (not ss->cfg->is_common_search_space()) and (variant_get<search_space_configuration::ue_specific_dci_format>(
+    return (not ss->cfg->is_common_search_space()) and (std::get<search_space_configuration::ue_specific_dci_format>(
                                                             ss->cfg->get_monitored_dci_formats()) == dci_format);
   });
 }
@@ -150,7 +154,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
       if (opt_pusch_cfg.value().uci_cfg.has_value() and
           opt_pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.has_value() and
-          variant_holds_alternative<uci_on_pusch::beta_offsets_dynamic>(
+          std::holds_alternative<uci_on_pusch::beta_offsets_dynamic>(
               opt_pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())) {
         dci_sz_cfg.dynamic_beta_offsets = true;
       }
@@ -258,7 +262,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
   if (opt_pdsch_cfg.has_value()) {
     dci_sz_cfg.dynamic_prb_bundling =
-        variant_holds_alternative<prb_bundling::dynamic_bundling>(opt_pdsch_cfg.value().prb_bndlg.bundling);
+        std::holds_alternative<prb_bundling::dynamic_bundling>(opt_pdsch_cfg.value().prb_bndlg.bundling);
     dci_sz_cfg.pdsch_two_codewords = opt_pdsch_cfg.value().is_max_cw_sched_by_dci_is_two;
     switch (opt_pdsch_cfg.value().res_alloc) {
       case pdsch_config::resource_allocation::resource_allocation_type_0: {
@@ -328,9 +332,7 @@ static unsigned compute_nof_dl_ports(const serving_cell_config& serv_cell_cfg)
 
   unsigned max_ports = 1;
   for (const auto& nzp : serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list) {
-    if (max_ports < nzp.res_mapping.nof_ports) {
-      max_ports = nzp.res_mapping.nof_ports;
-    }
+    max_ports = std::max(max_ports, nzp.res_mapping.nof_ports);
   }
   return max_ports;
 }
@@ -344,11 +346,13 @@ static units::bits get_dl_dci_size(const search_space_info& ss_info)
                                                             : ss_info.dci_sz.format1_1_ue_size->total;
 }
 
+namespace {
 /// List of PDCCH candidates for different SearchSpaces of a BWP for different slot indexes.
 using frame_pdcch_candidate_list =
     slotted_id_table<search_space_id,
                      std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>,
                      MAX_NOF_SEARCH_SPACE_PER_BWP>;
+} // namespace
 
 /// \brief Implement TS 38.213, section 10.1 rules to remove ambiguous PDCCH candidates.
 ///
@@ -402,7 +406,7 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
 
           pdcch_candidate_list& ss_candidates2 = candidates[ss2.cfg->get_id()][slot_index][i];
           for (const uint8_t candidate1 : ss_candidates1) {
-            for (auto it2 = ss_candidates2.begin(); it2 != ss_candidates2.end();) {
+            for (auto* it2 = ss_candidates2.begin(); it2 != ss_candidates2.end();) {
               if (*it2 == candidate1) {
                 // Case: *candidate_it1 is PDCCH candidate with index m^{(L)}_{s_i,n_{CI}} (See above).
                 it2 = ss_candidates2.erase(it2);
@@ -422,9 +426,9 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
 static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& candidates, const bwp_info& bwp)
 {
   // TS 38.213, Table 10.1-3 - Maximum number of non-overlapped CCEs.
-  const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
+  static const std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
   // Maximum nof. CCEs in a CORESET = maximum PDCCH frequency resources * maximum CORESET duration.
-  const static unsigned maximum_nof_cces =
+  static const unsigned maximum_nof_cces =
       pdcch_constants::MAX_NOF_FREQ_RESOURCES * pdcch_constants::MAX_CORESET_DURATION;
 
   const unsigned max_pdcch_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
@@ -453,22 +457,22 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
     // TODO: Account for multiple SSB beams.
     std::array<std::array<bounded_bitset<maximum_nof_cces>, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>, MAX_NOF_CORESETS_PER_BWP>
         cce_bitmap_per_coreset_per_first_pdcch_symb;
-    for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
-      for (unsigned symb = 0; symb < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
+    for (unsigned cs_idx = 0; cs_idx != MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+      for (unsigned symb = 0; symb != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
         cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].resize(maximum_nof_cces);
         cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].reset();
       }
     }
     auto get_cce_monitored_sum = [&cce_bitmap_per_coreset_per_first_pdcch_symb]() {
       unsigned monitored_cces = 0;
-      for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
-        for (unsigned symb = 0; symb < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
+      for (unsigned cs_idx = 0; cs_idx != MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+        for (unsigned symb = 0; symb != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
           monitored_cces += cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].count();
         }
       }
       return monitored_cces;
     };
-    for (unsigned ss1_idx = 0; ss1_idx < bwp.search_spaces.size(); ++ss1_idx) {
+    for (unsigned ss1_idx = 0, ss1_idx_end = bwp.search_spaces.size(); ss1_idx != ss1_idx_end; ++ss1_idx) {
       const search_space_info* ss1 = bwp.search_spaces[static_cast<search_space_id>(ss1_idx)];
       for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
         pdcch_candidate_list& ss_candidates = candidates[ss1->cfg->get_id()][slot_index][i];
@@ -521,7 +525,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
     auto& ss_candidates = candidates[ss->cfg->get_id()];
     ss_candidates.resize(max_slot_periodicity);
 
-    for (unsigned slot_count = 0; slot_count != ss_candidates.size(); ++slot_count) {
+    for (unsigned slot_count = 0, slot_count_end = ss_candidates.size(); slot_count != slot_count_end; ++slot_count) {
       const slot_point slot_mod{bwp_cfg.dl_common->generic_params.scs, slot_count};
 
       // If the SearchSpace is not monitored in this slot, skip its candidate generation.
@@ -536,15 +540,16 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
           ss_candidates[slot_count][i] =
               pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
                   aggr_lvl, ss->cfg->get_nof_candidates()[i], ss->coreset->get_nof_cces()});
-        } else {
-          ss_candidates[slot_count][i] = pdcch_candidates_ue_ss_get_lowest_cce(
-              pdcch_candidates_ue_ss_configuration{aggr_lvl,
-                                                   ss->cfg->get_nof_candidates()[i],
-                                                   ss->coreset->get_nof_cces(),
-                                                   ss->coreset->id,
-                                                   crnti,
-                                                   slot_mod.slot_index()});
+          continue;
         }
+
+        ss_candidates[slot_count][i] =
+            pdcch_candidates_ue_ss_get_lowest_cce(pdcch_candidates_ue_ss_configuration{aggr_lvl,
+                                                                                       ss->cfg->get_nof_candidates()[i],
+                                                                                       ss->coreset->get_nof_cces(),
+                                                                                       ss->coreset->id,
+                                                                                       crnti,
+                                                                                       slot_mod.slot_index()});
       }
     }
   }
@@ -786,15 +791,15 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
     }
 
     // Check for cells that have been added/modified.
-    for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
+    for (unsigned i = 0, e = cfg_req.cells->size(); i != e; ++i) {
       const cell_config_dedicated& ded_cell   = cfg_req.cells.value()[i];
       const du_cell_index_t        cell_index = ded_cell.serv_cell_cfg.cell_index;
 
       if (not du_cells.contains(cell_index)) {
         // New Cell.
-        du_cells.emplace(cell_index,
-                         std::make_unique<ue_cell_configuration>(
-                             crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, cfg_req.cells->size() > 1));
+        du_cells.emplace(
+            cell_index,
+            std::make_unique<ue_cell_configuration>(crnti, *common_cells[cell_index], ded_cell.serv_cell_cfg, e > 1));
       } else {
         // Reconfiguration of existing cell.
         du_cells[cell_index]->reconfigure(ded_cell.serv_cell_cfg);
@@ -803,14 +808,14 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
 
     // Update UE cell to DU cell indexing
     ue_cell_to_du_cell_index.resize(cfg_req.cells.value().size());
-    for (unsigned i = 0; i != cfg_req.cells->size(); ++i) {
+    for (unsigned i = 0, e = cfg_req.cells->size(); i != e; ++i) {
       ue_cell_to_du_cell_index[i] = cfg_req.cells.value()[i].serv_cell_cfg.cell_index;
     }
   }
 
   // Update RRM policies for the UE.
   if (cfg_req.res_alloc_cfg.has_value()) {
-    for (unsigned i = 0; i != nof_cells(); ++i) {
+    for (unsigned i = 0, e = nof_cells(); i != e; ++i) {
       du_cells[ue_cell_to_du_cell_index[i]]->set_rrm_config(*cfg_req.res_alloc_cfg);
     }
   }

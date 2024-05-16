@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
 #include "srsran/ran/alpha.h"
 #include "srsran/ran/csi_rs/csi_rs_id.h"
+#include <variant>
 
 namespace srsran {
 
@@ -63,6 +63,8 @@ struct srs_config {
     };
 
     struct semi_persistent_resource_type {
+      // TODO: cpp17 transition workaround for a clang compiler issue
+      char dummy;
       /// This field is optionally present, in case of non-codebook based transmission.
       optional<nzp_csi_rs_res_id_t> associated_csi_rs;
 
@@ -74,6 +76,8 @@ struct srs_config {
     };
 
     struct periodic_resource_type {
+      // TODO: cpp17 transition workaround for a clang compiler issue
+      char dummy;
       /// This field is optionally present, in case of non-codebook based transmission.
       optional<nzp_csi_rs_res_id_t> associated_csi_rs;
 
@@ -96,7 +100,7 @@ struct srs_config {
     static_vector<srs_res_id, srs_res_id::MAX_NOF_SRS_RES_PER_SET> srs_res_id_list;
     /// Time domain behavior of SRS resource configuration. The network configures SRS resources in the same resource
     /// set with the same time domain behavior on periodic, aperiodic and semi-persistent SRS.
-    variant<aperiodic_resource_type, semi_persistent_resource_type, periodic_resource_type> res_type;
+    std::variant<aperiodic_resource_type, semi_persistent_resource_type, periodic_resource_type> res_type;
     /// Indicates if the SRS resource set is used for beam management, codebook based or non-codebook based
     /// transmission or antenna switching.
     usage srs_res_set_usage;
@@ -111,7 +115,7 @@ struct srs_config {
     /// PUSCH. If not set, the UE applies the value sameAs-Fci1.
     srs_pwr_ctrl_adjustment_states pwr_ctrl_adj_states{srs_pwr_ctrl_adjustment_states::not_set};
     /// A reference signal (e.g. a CSI-RS config or a SS block) to be used for SRS path loss estimation.
-    optional<variant<ssb_id_t, nzp_csi_rs_res_id_t>> pathloss_ref_rs;
+    optional<std::variant<ssb_id_t, nzp_csi_rs_res_id_t>> pathloss_ref_rs;
 
     bool operator==(const srs_resource_set& rhs) const
     {
@@ -212,7 +216,7 @@ struct srs_config {
         bool operator!=(const srs_ref_signal& rhs) const { return !(rhs == *this); }
       };
 
-      variant<ssb_id_t, nzp_csi_rs_res_id_t, srs_ref_signal> reference_signal;
+      std::variant<ssb_id_t, nzp_csi_rs_res_id_t, srs_ref_signal> reference_signal;
 
       bool operator==(const srs_spatial_relation_info& rhs) const
       {

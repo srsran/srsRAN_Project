@@ -74,7 +74,7 @@ TEST_P(sched_pucch_res_builder_tester, when_ues_are_added_their_cfg_have_differe
       const bool has_csi_cfg = ue->serv_cell_cfg.csi_meas_cfg.has_value() and
                                not ue->serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty();
       ASSERT_TRUE(has_csi_cfg);
-      const auto& csi_res_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+      const auto& csi_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
           ue->serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.front().report_cfg_type);
       auto ue_csi_res_offset_pair = std::make_pair(csi_res_cfg.pucch_csi_res_list.front().pucch_res_id.cell_res_id,
                                                    csi_res_cfg.report_slot_offset);

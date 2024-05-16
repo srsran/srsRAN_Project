@@ -117,23 +117,28 @@ inline asn1::ngap::cause_c cause_to_asn1(ngap_cause_t cause)
 {
   asn1::ngap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<ngap_cause_radio_network_t>(cause)) {
-    asn1_cause.set_radio_network() =
-        static_cast<asn1::ngap::cause_radio_network_opts::options>(variant_get<ngap_cause_radio_network_t>(cause));
-  } else if (variant_holds_alternative<ngap_cause_transport_t>(cause)) {
-    asn1_cause.set_transport() =
-        static_cast<asn1::ngap::cause_transport_opts::options>(variant_get<ngap_cause_transport_t>(cause));
-  } else if (variant_holds_alternative<cause_nas_t>(cause)) {
-    asn1_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(variant_get<cause_nas_t>(cause));
-  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    asn1_cause.set_protocol() =
-        static_cast<asn1::ngap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
-  } else if (variant_holds_alternative<ngap_cause_misc_t>(cause)) {
-    asn1_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(variant_get<ngap_cause_misc_t>(cause));
-  } else {
-    report_fatal_error("Cannot convert cause to NGAP type:{}", cause);
+  if (const auto* result = std::get_if<ngap_cause_radio_network_t>(&cause)) {
+    asn1_cause.set_radio_network() = static_cast<asn1::ngap::cause_radio_network_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<ngap_cause_transport_t>(&cause)) {
+    asn1_cause.set_transport() = static_cast<asn1::ngap::cause_transport_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<cause_nas_t>(&cause)) {
+    asn1_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<cause_protocol_t>(&cause)) {
+    asn1_cause.set_protocol() = static_cast<asn1::ngap::cause_protocol_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<ngap_cause_misc_t>(&cause)) {
+    asn1_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(*result);
+    return asn1_cause;
   }
 
+  report_fatal_error("Cannot convert cause to NGAP type:{}", cause);
   return asn1_cause;
 }
 

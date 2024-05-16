@@ -32,7 +32,7 @@ uci_allocator_impl::~uci_allocator_impl() = default;
 static void update_uci_on_pusch_harq_offsets(uci_info::harq_info& uci_harq, const uci_on_pusch& uci_cfg)
 {
   // We assume the configuration contains the values for beta_offsets.
-  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+  const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
   // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
   const uint16_t harq_ack_nof_bits = uci_harq.harq_ack_nof_bits;
@@ -59,7 +59,7 @@ static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_c
     const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
 
     // We assume the configuration contains the values for beta_offsets.
-    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+    const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
     // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
     if (uci_csi.csi_part1_nof_bits <= 11) {
@@ -80,7 +80,7 @@ static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_c
     const auto& uci_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value();
 
     // We assume the configuration contains the values for beta_offsets.
-    const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+    const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
     // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
     if (uci_csi.csi_part1_nof_bits <= 11) {

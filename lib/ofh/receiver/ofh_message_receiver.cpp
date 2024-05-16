@@ -54,7 +54,7 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   }
 
   // Verify the sequence identifier.
-  const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
+  const ecpri::iq_data_parameters& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   unsigned                         eaxc            = ecpri_iq_params.pc_id;
   int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
@@ -106,7 +106,7 @@ bool message_receiver::should_ecpri_packet_be_filtered(const ecpri::packet_param
     return true;
   }
 
-  const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
+  const ecpri::iq_data_parameters& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
       (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
     logger.info(

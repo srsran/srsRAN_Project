@@ -103,8 +103,8 @@ private:
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
 // nof UEs as a conservative estimate of the expected number of events per slot.
-static const size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
-static const size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
+static constexpr size_t INITIAL_COMMON_EVENT_LIST_SIZE = MAX_NOF_DU_UES;
+static constexpr size_t INITIAL_CELL_EVENT_LIST_SIZE   = MAX_NOF_DU_UES;
 
 ue_event_manager::ue_event_manager(ue_repository& ue_db_, scheduler_metrics_handler& metrics_handler_) :
   ue_db(ue_db_),
@@ -144,7 +144,7 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
 
     // Update UCI scheduler with new UE UCI resources.
     const auto& added_ue = ue_db[ueidx];
-    for (unsigned i = 0; i != added_ue.nof_cells(); ++i) {
+    for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
       du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
     }
 
@@ -166,7 +166,7 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     auto& u = ue_db[ue_idx];
 
     // Update UE UCI resources in UCI scheduler.
-    for (unsigned i = 0; i != u.nof_cells(); ++i) {
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
       auto& ue_cc = u.get_cell(to_ue_cell_index(i));
       if (not ev.next_config().contains(ue_cc.cell_index)) {
         // UE carrier is being removed.
@@ -176,9 +176,9 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
         du_cells[ue_cc.cell_index].uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
       }
     }
-    for (unsigned i = 0; i != ev.next_config().nof_cells(); ++i) {
-      auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
-      auto* ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
+    for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
+      const auto& new_ue_cc_cfg = ev.next_config().ue_cell_cfg(to_ue_cell_index(i));
+      auto*       ue_cc         = u.find_cell(new_ue_cc_cfg.cell_cfg_common.cell_index);
       if (ue_cc == nullptr) {
         // New UE carrier is being added.
         du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
@@ -207,7 +207,7 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     du_cell_index_t pcell_idx = u.get_pcell().cell_index;
 
     // Update UCI scheduling by removing existing UE UCI resources.
-    for (unsigned i = 0; i != u.nof_cells(); ++i) {
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
       du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].uci_sched->rem_ue(u.get_pcell().cfg());
     }
 
@@ -304,7 +304,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
 
-  for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
+  for (unsigned i = 0, e = crc_ind.crcs.size(); i != e; ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
         crc_ind.crcs[i].ue_index,
         [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
@@ -336,7 +336,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        span<const mac_harq_ack_report_status> harq_bits,
                                        std::optional<float>                   pucch_snr)
 {
-  for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
+  for (unsigned harq_idx = 0, harq_end_idx = harq_bits.size(); harq_idx != harq_end_idx; ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
     std::optional<dl_harq_process::dl_ack_info_result> result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
@@ -371,22 +371,20 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 {
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
-  for (unsigned i = 0; i != ind.ucis.size(); ++i) {
+  for (unsigned i = 0, e = ind.ucis.size(); i != e; ++i) {
     const uci_indication::uci_pdu& uci = ind.ucis[i];
 
     cell_specific_events[ind.cell_index].emplace(
         uci.ue_index,
         [this, uci_sl = ind.slot_rx, uci_pdu = uci](ue_cell& ue_cc) {
-          if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu.pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu.pdu);
-
+          if (const auto* pucch_f0f1 = std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu.pdu)) {
             // Process DL HARQ ACKs.
-            if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
+            if (not pucch_f0f1->harqs.empty()) {
+              handle_harq_ind(ue_cc, uci_sl, pucch_f0f1->harqs, pucch_f0f1->ul_sinr_dB);
             }
 
             // Process SRs.
-            if (pdu.sr_detected) {
+            if (pucch_f0f1->sr_detected) {
               // Handle SR indication.
               ue_db[ue_cc.ue_index].handle_sr_indication();
               du_cells[ue_cc.cell_index].fallback_sched->handle_sr_indication(ue_cc.ue_index);
@@ -396,37 +394,32 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                   scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
             }
 
-            const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
+            const bool is_uci_valid = not pucch_f0f1->harqs.empty() or pucch_f0f1->sr_detected;
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
+            if (is_uci_valid and pucch_f0f1->time_advance_offset.has_value() and pucch_f0f1->ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pucch_f0f1->ul_sinr_dB.value(), pucch_f0f1->time_advance_offset.value());
             }
-
-          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu.pdu);
-
+          } else if (const auto* pusch_pdu = std::get_if<uci_indication::uci_pdu::uci_pusch_pdu>(&uci_pdu.pdu)) {
             // Process DL HARQ ACKs.
-            if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, std::nullopt);
+            if (not pusch_pdu->harqs.empty()) {
+              handle_harq_ind(ue_cc, uci_sl, pusch_pdu->harqs, std::nullopt);
             }
 
             // Process CSI.
-            if (pdu.csi.has_value()) {
-              handle_csi(ue_cc, *pdu.csi);
+            if (pusch_pdu->csi.has_value()) {
+              handle_csi(ue_cc, *pusch_pdu->csi);
             }
-
-          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu.pdu)) {
-            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu.pdu);
-
+          } else if (const auto* pucch_f2f3f4 =
+                         std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu.pdu)) {
             // Process DL HARQ ACKs.
-            if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, pdu.ul_sinr_dB);
+            if (not pucch_f2f3f4->harqs.empty()) {
+              handle_harq_ind(ue_cc, uci_sl, pucch_f2f3f4->harqs, pucch_f2f3f4->ul_sinr_dB);
             }
 
             // Process SRs.
             const size_t sr_bit_position_with_1_sr_bit = 0;
-            if (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
+            if (not pucch_f2f3f4->sr_info.empty() and pucch_f2f3f4->sr_info.test(sr_bit_position_with_1_sr_bit)) {
               // Handle SR indication.
               ue_db[ue_cc.ue_index].handle_sr_indication();
 
@@ -436,17 +429,19 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             }
 
             // Process CSI.
-            if (pdu.csi.has_value()) {
-              handle_csi(ue_cc, *pdu.csi);
+            if (pucch_f2f3f4->csi.has_value()) {
+              handle_csi(ue_cc, *pucch_f2f3f4->csi);
             }
 
-            const bool is_uci_valid = not pdu.harqs.empty() or
-                                      (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
-                                      pdu.csi.has_value();
+            const bool is_uci_valid =
+                not pucch_f2f3f4->harqs.empty() or
+                (not pucch_f2f3f4->sr_info.empty() and pucch_f2f3f4->sr_info.test(sr_bit_position_with_1_sr_bit)) or
+                pucch_f2f3f4->csi.has_value();
             // Process Timing Advance Offset.
-            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr_dB.has_value()) {
+            if (is_uci_valid and pucch_f2f3f4->time_advance_offset.has_value() and
+                pucch_f2f3f4->ul_sinr_dB.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                  ue_cc.cell_index, pdu.ul_sinr_dB.value(), pdu.time_advance_offset.value());
+                  ue_cc.cell_index, pucch_f2f3f4->ul_sinr_dB.value(), pucch_f2f3f4->time_advance_offset.value());
             }
           }
 

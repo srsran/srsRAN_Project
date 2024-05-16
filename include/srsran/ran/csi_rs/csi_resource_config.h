@@ -56,8 +56,8 @@ struct csi_resource_config {
   /// \remark See TS 38.214, clause 5.2.1.2 and TS 38.331, \c CSI-ResourceConfig.
   enum class resource_type { aperiodic, semiPersistent, periodic };
 
-  csi_res_config_id_t                               res_cfg_id;
-  variant<nzp_csi_rs_ssb, csi_im_resource_set_list> csi_rs_res_set_list;
+  csi_res_config_id_t                                    res_cfg_id;
+  std::variant<nzp_csi_rs_ssb, csi_im_resource_set_list> csi_rs_res_set_list;
   /// The DL BWP which the CSI-RS associated with this CSI-ResourceConfig are located in.
   bwp_id_t      bwp_id;
   resource_type res_type;

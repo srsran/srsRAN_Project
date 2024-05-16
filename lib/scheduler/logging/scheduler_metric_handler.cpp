@@ -107,33 +107,29 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
   if (ues.contains(pdu.ue_index)) {
     auto& u = ues[pdu.ue_index];
 
-    if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu)) {
-      auto& f1 = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu.pdu);
-
-      if (f1.ul_sinr_dB.has_value()) {
-        handle_pucch_sinr(u, f1.ul_sinr_dB.value());
+    if (const auto* f1 = std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&pdu.pdu)) {
+      if (f1->ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f1->ul_sinr_dB.value());
       }
 
-      if (f1.time_advance_offset.has_value()) {
-        u.last_ta = f1.time_advance_offset.value().to_seconds();
+      if (f1->time_advance_offset.has_value()) {
+        u.last_ta = f1->time_advance_offset.value().to_seconds();
       }
-    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu)) {
-      auto& f2 = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu.pdu);
-
-      if (f2.ul_sinr_dB.has_value()) {
-        handle_pucch_sinr(u, f2.ul_sinr_dB.value());
+    } else if (const auto* f2 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
+      if (f2->ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f2->ul_sinr_dB.value());
       }
 
-      if (f2.csi.has_value()) {
-        handle_csi_report(u, f2.csi.value());
+      if (f2->csi.has_value()) {
+        handle_csi_report(u, f2->csi.value());
       }
 
-      if (f2.time_advance_offset.has_value()) {
-        u.last_ta = f2.time_advance_offset.value().to_seconds();
+      if (f2->time_advance_offset.has_value()) {
+        u.last_ta = f2->time_advance_offset.value().to_seconds();
       }
     } else {
       // PUSCH case.
-      auto& pusch = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(pdu.pdu);
+      const auto& pusch = std::get<uci_indication::uci_pdu::uci_pusch_pdu>(pdu.pdu);
 
       if (pusch.csi.has_value()) {
         handle_csi_report(u, pusch.csi.value());
@@ -202,7 +198,7 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
       continue;
     }
     ue_metric_context& u = ues[it->second];
-    for (auto& cw : dl_grant.pdsch_cfg.codewords) {
+    for (const auto& cw : dl_grant.pdsch_cfg.codewords) {
       u.data.dl_mcs += cw.mcs_index.to_uint();
       u.data.nof_dl_cws++;
     }

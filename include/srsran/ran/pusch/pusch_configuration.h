@@ -56,8 +56,8 @@ struct pusch_config {
     /// \brief Reference Signals (e.g. a CSI-RS config or a SS block) to be used for PUSCH path loss estimation.
     /// \remark See TS 38.213, clause 7.1 and TS 38.331, "PUSCH-PathlossReferenceRS".
     struct pusch_pathloss_ref_rs {
-      pusch_pathloss_ref_rs_id               id;
-      variant<nzp_csi_rs_res_id_t, ssb_id_t> rs;
+      pusch_pathloss_ref_rs_id                    id;
+      std::variant<nzp_csi_rs_res_id_t, ssb_id_t> rs;
 
       bool operator==(const pusch_pathloss_ref_rs& rhs) const { return id == rhs.id && rs == rhs.rs; }
       bool operator!=(const pusch_pathloss_ref_rs& rhs) const { return !(rhs == *this); }

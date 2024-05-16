@@ -968,7 +968,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
                              pdcch_grant->ctx.context.ss_id);
         } else {
           const auto dci_fmt =
-              variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
+              std::get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
           if (dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0) << fmt::format(
                 "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
@@ -1095,7 +1095,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
                              pdcch_grant->ctx.context.ss_id);
         } else {
           const auto dci_fmt =
-              variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
+              std::get<search_space_configuration::ue_specific_dci_format>(ss_cfg->get_monitored_dci_formats());
           if (dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
             ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_0) << fmt::format(
                 "Condition failed for UE with c-rnti={} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);

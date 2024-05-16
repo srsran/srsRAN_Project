@@ -43,6 +43,8 @@ static expected<mac_rx_data_indication> create_test_pdu_with_bsr(slot_point sl_r
       sl_rx, to_du_cell_index(0), mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
 }
 
+namespace {
+
 /// \brief Adapter for the MAC SDU TX builder that auto fills the DL buffer state update.
 class test_ue_mac_sdu_tx_builder_adapter : public mac_sdu_tx_builder
 {
@@ -64,8 +66,10 @@ public:
   unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
 
 private:
-  byte_buffer tx_sdu = {};
+  byte_buffer tx_sdu;
 };
+
+} // namespace
 
 mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
                                                        const mac_cell_creation_request&              cell_cfg,
@@ -268,8 +272,8 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
     return false;
   }
   if (pucch.format == pucch_format::FORMAT_1 and
-      variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
-    const auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
+      std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
+    const auto& f1_ind = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
     if (f1_ind.sr_info.has_value() != (pucch.format_1.sr_bits != sr_nof_bits::no_sr)) {
       return false;
     }
@@ -279,8 +283,8 @@ static bool pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci_
     return true;
   }
   if (pucch.format == pucch_format::FORMAT_2 and
-      variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu)) {
-    const auto& f2_ind = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
+      std::holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu)) {
+    const auto& f2_ind = std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
     if (f2_ind.sr_info.has_value() != (pucch.format_2.sr_bits != sr_nof_bits::no_sr)) {
       return false;
     }
@@ -306,29 +310,31 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
 
   // Update buffer states.
   for (const mac_uci_pdu& pdu : uci_msg.ucis) {
-    if (ue_info_mgr.is_test_ue(pdu.rnti) and variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu)) {
-      const auto& f1_ind = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
+    if (ue_info_mgr.is_test_ue(pdu.rnti) and std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu)) {
+      const auto& f1_ind = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(pdu.pdu);
 
-      if (f1_ind.harq_info.has_value()) {
-        // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 has been received. At this point, we
-        // update the test UE with positive DL buffer states and BSR.
-        if (not ue_info_mgr.is_msg4_rxed(pdu.rnti)) {
-          if (test_ue_cfg.pdsch_active) {
-            // Update DL buffer state automatically.
-            dl_bs_notifier(pdu.rnti);
-          }
+      if (not f1_ind.harq_info.has_value()) {
+        continue;
+      }
 
-          if (test_ue_cfg.pusch_active) {
-            auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
-            if (rx_pdu.is_error()) {
-              logger.warning("Unable to create test PDU with BSR");
-              continue;
-            }
-            // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
-            pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
-          }
-          ue_info_mgr.msg4_rxed(pdu.rnti, true);
+      // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 has been received. At this point, we
+      // update the test UE with positive DL buffer states and BSR.
+      if (not ue_info_mgr.is_msg4_rxed(pdu.rnti)) {
+        if (test_ue_cfg.pdsch_active) {
+          // Update DL buffer state automatically.
+          dl_bs_notifier(pdu.rnti);
         }
+
+        if (test_ue_cfg.pusch_active) {
+          auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
+          if (rx_pdu.is_error()) {
+            logger.warning("Unable to create test PDU with BSR");
+            continue;
+          }
+          // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
+          pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
+        }
+        ue_info_mgr.msg4_rxed(pdu.rnti, true);
       }
     }
   }
@@ -380,10 +386,10 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
       mac_uci_pdu& test_uci = msg_copy.ucis.back();
 
       bool entry_found = false;
-      if (variant_holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
+      if (std::holds_alternative<mac_uci_pdu::pusch_type>(test_uci.pdu)) {
         for (const ul_sched_info& pusch : entry.puschs) {
           if (pusch.pusch_cfg.rnti == pdu.rnti and pusch.uci.has_value()) {
-            fill_uci_pdu(variant_get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
+            fill_uci_pdu(std::get<mac_uci_pdu::pusch_type>(test_uci.pdu), pusch);
             entry_found = true;
           }
         }
@@ -393,9 +399,9 @@ void mac_test_mode_cell_adapter::handle_uci(const mac_uci_indication_message& ms
           if (pucch_info_and_uci_ind_match(pucch, test_uci)) {
             // Intercept the UCI indication and force HARQ-ACK=ACK and UCI.
             if (pucch.format == pucch_format::FORMAT_1) {
-              fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
+              fill_uci_pdu(std::get<mac_uci_pdu::pucch_f0_or_f1_type>(test_uci.pdu), pucch);
             } else {
-              fill_uci_pdu(variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
+              fill_uci_pdu(std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(test_uci.pdu), pucch);
             }
             entry_found = true;
           }
@@ -582,7 +588,7 @@ void mac_test_mode_adapter::handle_dl_buffer_state_update(const mac_dl_buffer_st
 }
 
 std::vector<mac_logical_channel_config>
-mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_config>& orig_bearers)
+mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_config>& orig_bearers) const
 {
   static test_ue_mac_sdu_tx_builder_adapter dl_adapter;
 

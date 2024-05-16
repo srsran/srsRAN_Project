@@ -232,8 +232,8 @@ TEST_P(mac_test_mode_adapter_test, when_test_mode_ue_has_pucch_grants_then_uci_i
   ASSERT_EQ(mac_events.last_uci->sl_rx, sl_rx);
   ASSERT_EQ(mac_events.last_uci->ucis.size(), 1);
   ASSERT_EQ(mac_events.last_uci->ucis[0].rnti, this->params.test_ue_cfg.rnti);
-  ASSERT_TRUE(variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu));
-  const auto& f1 = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu);
+  ASSERT_TRUE(std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu));
+  const auto& f1 = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(mac_events.last_uci->ucis[0].pdu);
   ASSERT_FALSE(f1.sr_info.has_value());
   ASSERT_TRUE(f1.harq_info.has_value());
   ASSERT_EQ(f1.harq_info->harqs.size(), 1);
@@ -306,8 +306,8 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
   ASSERT_EQ(mac_events.last_uci->sl_rx, sl_rx);
   ASSERT_EQ(mac_events.last_uci->ucis.size(), 1);
   ASSERT_EQ(mac_events.last_uci->ucis[0].rnti, this->params.test_ue_cfg.rnti);
-  ASSERT_TRUE(variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_events.last_uci->ucis[0].pdu));
-  const auto& f2 = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_events.last_uci->ucis[0].pdu);
+  ASSERT_TRUE(std::holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_events.last_uci->ucis[0].pdu));
+  const auto& f2 = std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(mac_events.last_uci->ucis[0].pdu);
   // check SR info.
   ASSERT_TRUE(f2.sr_info.has_value());
   ASSERT_EQ(f2.sr_info->size(), 1);
@@ -336,11 +336,11 @@ TEST_P(mac_test_mode_adapter_test, when_uci_is_forwarded_to_mac_then_test_mode_c
   } else {
     ASSERT_EQ(*report.ri, params.test_ue_cfg.ri);
     if (params.nof_ports == 2) {
-      ASSERT_TRUE(variant_holds_alternative<csi_report_pmi::two_antenna_port>(report.pmi->type));
-      ASSERT_EQ(variant_get<csi_report_pmi::two_antenna_port>(report.pmi->type).pmi, params.test_ue_cfg.pmi);
+      ASSERT_TRUE(std::holds_alternative<csi_report_pmi::two_antenna_port>(report.pmi->type));
+      ASSERT_EQ(std::get<csi_report_pmi::two_antenna_port>(report.pmi->type).pmi, params.test_ue_cfg.pmi);
     } else {
-      ASSERT_TRUE(variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type));
-      auto& t = variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type);
+      ASSERT_TRUE(std::holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type));
+      auto& t = std::get<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type);
       ASSERT_EQ(t.i_1_1, params.test_ue_cfg.i_1_1);
       if (t.i_1_3.has_value()) {
         ASSERT_EQ(*t.i_1_3, params.test_ue_cfg.i_1_3);

@@ -13,6 +13,7 @@
 #include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/crit_diagnostics.h"
+#include <variant>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -66,7 +67,7 @@ struct ngap_ng_setup_failure {
   std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-using ngap_ng_setup_result = variant<ngap_ng_setup_response, ngap_ng_setup_failure>;
+using ngap_ng_setup_result = std::variant<ngap_ng_setup_response, ngap_ng_setup_failure>;
 
 } // namespace srs_cu_cp
 } // namespace srsran

@@ -11,9 +11,9 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/adt/variant.h"
 #include <cstdint>
 #include <string>
+#include <variant>
 
 namespace srsran {
 
@@ -47,7 +47,7 @@ struct epoch_time_t {
 };
 
 struct ntn_config {
-  // SIB 19 values
+  /// SIB 19 values
   /// Reference location of the serving cell provided via NTN quasi-Earth fixed system. (TS 38.304)
   std::optional<std::string> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
@@ -62,7 +62,7 @@ struct ntn_config {
   std::optional<unsigned> k_mac;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_common_t> ta_info;
