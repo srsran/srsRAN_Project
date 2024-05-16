@@ -15,7 +15,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-/// Notifier used to forward Rx F1AP messages from F1-C to CU-CP.
+/// Notifier used to forward Rx F1AP messages from the F1-C GW to CU-CP.
 class du_connection_manager::f1_gw_to_cu_cp_pdu_adapter final : public f1ap_message_notifier
 {
 public:
@@ -60,14 +60,10 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
       dus.get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
 }
 
-void du_connection_manager::handle_du_remove_request(du_index_t du_index)
-{
-  handle_f1c_gw_connection_closed(du_index);
-}
-
 void du_connection_manager::handle_f1c_gw_connection_closed(du_index_t du_idx)
 {
-  // This defer cannot fail.
+  // Note: The caller may be in a different thread than the CU-CP, thus, we need to dispatch it to the CU-CP executor.
+  // Note: The dispatch call cannot fail.
   while (not cu_cp_exec.defer([this, du_idx]() { dus.remove_du(du_idx); })) {
     logger.error("Failed to schedule DU removal task. Retrying...");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

@@ -56,7 +56,6 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 
   std::unique_ptr<du_processor> du = create_du_processor(du_cfg,
                                                          du_ctxt.du_to_cu_cp_notifier,
-                                                         cfg.f1ap_to_cu_cp_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
                                                          cfg.ue_nas_pdu_notifier,
                                                          cfg.ue_ngap_ctrl_notifier,

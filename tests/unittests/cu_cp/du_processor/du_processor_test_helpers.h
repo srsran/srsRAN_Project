@@ -52,7 +52,6 @@ protected:
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier{&ue_mng};
   dummy_du_connection_notifier                          du_conn_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
-  dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter                            rrc_du_cu_cp_notifier;

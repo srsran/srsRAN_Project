@@ -171,18 +171,6 @@ public:
   virtual du_index_t get_du_index() = 0;
 };
 
-/// Methods used by F1AP to notify about DU specific events.
-class f1ap_du_management_notifier
-{
-public:
-  virtual ~f1ap_du_management_notifier() = default;
-
-  /// \brief Notifies about a successful F1 Removal procedure.
-  /// The corresponding DU processor will be removed now.
-  /// \param[in] du_index The index of the DU processor to delete.
-  virtual void on_du_remove_request_received(du_index_t du_index) = 0;
-};
-
 /// Methods to get statistics of the F1AP.
 class f1ap_statistics_handler
 {

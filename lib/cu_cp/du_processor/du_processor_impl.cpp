@@ -22,7 +22,6 @@ using namespace srs_cu_cp;
 
 du_processor_impl::du_processor_impl(const du_processor_config_t&        du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                                     f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
@@ -33,7 +32,6 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
-  f1ap_du_mgmt_notifier(f1ap_du_mgmt_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
@@ -44,12 +42,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   context.du_index = cfg.du_index;
 
   // create f1ap
-  f1ap = create_f1ap(cfg.f1ap_cfg,
-                     f1ap_pdu_notifier,
-                     f1ap_ev_notifier,
-                     f1ap_du_mgmt_notifier,
-                     task_sched.get_timer_manager(),
-                     ctrl_exec_);
+  f1ap = create_f1ap(cfg.f1ap_cfg, f1ap_pdu_notifier, f1ap_ev_notifier, task_sched.get_timer_manager(), ctrl_exec_);
 
   f1ap_ev_notifier.connect_du_processor(get_f1ap_interface());
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());

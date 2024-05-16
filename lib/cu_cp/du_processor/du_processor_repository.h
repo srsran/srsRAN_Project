@@ -29,7 +29,6 @@ struct cu_cp_configuration;
 
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
-  f1ap_du_management_notifier&           f1ap_to_cu_cp_notifier;
   cu_cp_du_event_handler&                cu_cp_du_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;

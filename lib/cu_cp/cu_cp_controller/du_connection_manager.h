@@ -17,7 +17,11 @@ namespace srs_cu_cp {
 
 class du_processor_repository;
 
-/// Manager of creation/deletion of DU-dedicated resources in the CU-CP, and admission control of new DU connections.
+/// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
+/// or drop of F1-C GW connections.
+///
+/// This class acts as a facade, hiding the details associated with the dispatching of F1-C GW events to the
+/// the CU-CP through the appropriate task executors.
 class du_connection_manager : public cu_cp_f1c_handler
 {
 public:
@@ -25,8 +29,6 @@ public:
 
   std::unique_ptr<f1ap_message_notifier>
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
-
-  void handle_du_remove_request(du_index_t du_index) override;
 
 private:
   class f1_gw_to_cu_cp_pdu_adapter;

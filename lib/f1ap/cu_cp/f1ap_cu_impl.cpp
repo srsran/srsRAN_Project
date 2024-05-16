@@ -28,12 +28,11 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
-f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
-                           f1ap_message_notifier&       tx_pdu_notifier_,
-                           f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
-                           f1ap_du_management_notifier& f1ap_du_management_notifier_,
-                           timer_manager&               timers_,
-                           task_executor&               ctrl_exec_) :
+f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&   f1ap_cfg_,
+                           f1ap_message_notifier&      tx_pdu_notifier_,
+                           f1ap_du_processor_notifier& f1ap_du_processor_notifier_,
+                           timer_manager&              timers_,
+                           task_executor&              ctrl_exec_) :
   cfg(f1ap_cfg_),
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),

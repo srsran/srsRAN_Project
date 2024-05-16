@@ -43,7 +43,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   routine_mng(ue_mng, cfg.default_security_indication, logger),
   du_db(du_repository_config{cfg,
-                             f1ap_adapter,
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
@@ -89,7 +88,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                                   du_db,
                                                   *cfg.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
-  f1ap_adapter.connect_cu_cp(*controller);
 
   mobility_mng = create_mobility_manager(cfg.mobility_config.mobility_manager_config,
                                          mobility_manager_ev_notifier,

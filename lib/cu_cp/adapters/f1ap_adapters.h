@@ -24,18 +24,6 @@ namespace srs_cu_cp {
 
 class cu_cp_controller;
 
-/// Adapter between F1AP and CU-CP controller
-class f1ap_cu_cp_adapter : public f1ap_du_management_notifier
-{
-public:
-  void connect_cu_cp(cu_cp_controller& controller_) { controller = &controller_; }
-
-  void on_du_remove_request_received(du_index_t du_index) override;
-
-private:
-  cu_cp_controller* controller = nullptr;
-};
-
 /// Adapter between F1AP and DU processor
 class f1ap_du_processor_adapter : public f1ap_du_processor_notifier
 {

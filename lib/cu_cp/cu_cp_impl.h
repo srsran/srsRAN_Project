@@ -179,9 +179,6 @@ private:
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
 
-  // Adapter between F1AP and CU-CP.
-  f1ap_cu_cp_adapter f1ap_adapter;
-
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;
 
