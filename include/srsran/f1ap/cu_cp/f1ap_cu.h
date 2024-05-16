@@ -122,20 +122,6 @@ struct f1_ue_transaction_info_loss_event {
   std::vector<ue_index_t> ues_lost;
 };
 
-struct ue_update_message {
-  ue_index_t          ue_index = ue_index_t::invalid;
-  nr_cell_global_id_t cgi;
-  rnti_t              c_rnti = rnti_t::INVALID_RNTI;
-  byte_buffer         cell_group_cfg;
-  byte_buffer         meas_gap_cfg;
-  byte_buffer         requested_p_max_fr1;
-};
-
-struct ue_update_complete_message {
-  ue_index_t                 ue_index          = ue_index_t::invalid;
-  f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
-};
-
 /// Scheduler of F1AP async tasks using common signalling.
 class f1ap_common_du_task_notifier
 {
@@ -195,7 +181,6 @@ public:
 
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
-                public f1ap_event_handler,
                 public f1ap_rrc_message_handler,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
@@ -208,7 +193,6 @@ public:
   virtual async_task<void> stop() = 0;
 
   virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
-  virtual f1ap_event_handler&              get_event_handler()                   = 0;
   virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
   virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
   virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;

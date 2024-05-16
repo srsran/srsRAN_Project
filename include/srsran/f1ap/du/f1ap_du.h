@@ -209,13 +209,7 @@ class f1ap_du : public f1ap_message_handler,
                 public f1ap_connection_manager,
                 public f1ap_ue_context_manager,
                 public f1ap_ue_id_translator
-{
-public:
-  virtual ~f1ap_du() = default;
-
-  /// \brief Get handler of F1-C connectivity updates.
-  virtual f1ap_event_handler& get_f1c_connection_handler() = 0;
-};
+{};
 
 } // namespace srs_du
 } // namespace srsran

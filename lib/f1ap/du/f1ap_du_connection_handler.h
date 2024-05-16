@@ -21,7 +21,7 @@ namespace srs_du {
 class f1ap_du_configurator;
 
 /// \brief Handler of TNL connection between DU and CU-CP.
-class f1ap_du_connection_handler : public f1ap_event_handler
+class f1ap_du_connection_handler
 {
 public:
   f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
@@ -39,7 +39,7 @@ public:
 
 private:
   // Called by the F1-C GW when the F1-C TNL association drops.
-  void handle_connection_loss() override;
+  void handle_connection_loss();
 
   void handle_connection_loss_impl();
 

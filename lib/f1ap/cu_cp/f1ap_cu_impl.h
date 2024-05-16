@@ -54,8 +54,6 @@ public:
   // f1ap message handler functions
   void handle_message(const f1ap_message& msg) override;
 
-  void handle_connection_loss() override {}
-
   // f1ap statistics
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
 
@@ -64,7 +62,6 @@ public:
 
   // f1ap_cu_interface
   f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }
-  f1ap_event_handler&              get_event_handler() override { return *this; }
   f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler() override { return *this; }
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *this; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *this; }
