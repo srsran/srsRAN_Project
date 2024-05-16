@@ -22,20 +22,18 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between F1AP and DU repository, to handle DU specific procedure outcomes (e.g. F1 Remove)
-class f1ap_du_repository_adapter : public f1ap_du_management_notifier
+class cu_cp_controller;
+
+/// Adapter between F1AP and CU-CP controller
+class f1ap_cu_cp_adapter : public f1ap_du_management_notifier
 {
 public:
-  void connect_du_repository(cu_cp_f1c_handler& du_handler_) { du_handler = &du_handler_; }
+  void connect_cu_cp(cu_cp_controller& controller_) { controller = &controller_; }
 
-  void on_du_remove_request_received(du_index_t du_index) override
-  {
-    srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
-    du_handler->handle_du_remove_request(du_index);
-  }
+  void on_du_remove_request_received(du_index_t du_index) override;
 
 private:
-  cu_cp_f1c_handler* du_handler = nullptr;
+  cu_cp_controller* controller = nullptr;
 };
 
 /// Adapter between F1AP and DU processor

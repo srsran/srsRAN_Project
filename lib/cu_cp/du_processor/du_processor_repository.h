@@ -29,6 +29,7 @@ struct cu_cp_configuration;
 
 struct du_repository_config {
   const cu_cp_configuration&             cu_cp;
+  f1ap_du_management_notifier&           f1ap_to_cu_cp_notifier;
   cu_cp_du_event_handler&                cu_cp_du_handler;
   cu_cp_ue_removal_handler&              ue_removal_handler;
   cu_cp_ue_context_manipulation_handler& ue_context_handler;
@@ -42,19 +43,12 @@ struct du_repository_config {
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public cu_cp_f1c_handler,
-                                public du_repository_ngap_handler,
-                                public du_repository_metrics_handler
+class du_processor_repository : public du_repository_ngap_handler, public du_repository_metrics_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
 
   void stop();
-
-  // F1-C interface
-  std::unique_ptr<f1ap_message_notifier>
-       handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
-  void handle_du_remove_request(du_index_t du_index) override;
 
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
   /// \param[out] The index of the DU serving the given PCI.
@@ -69,6 +63,12 @@ public:
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   size_t get_nof_f1ap_ues();
+
+  /// \brief Adds a DU processor object to the CU-CP.
+  /// \return The DU index of the added DU processor object.
+  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
+
+  void remove_du(du_index_t du_idx);
 
 private:
   struct du_context {
@@ -86,10 +86,6 @@ private:
   /// \return The DU processor object.
   du_processor& find_du(du_index_t du_index);
 
-  /// \brief Adds a DU processor object to the CU-CP.
-  /// \return The DU index of the added DU processor object.
-  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
-
   /// \brief Removes the specified DU processor object from the CU-CP.
   ///
   /// Note: This function assumes that the caller is in the CU-CP execution context.
@@ -102,9 +98,6 @@ private:
 
   du_repository_config  cfg;
   srslog::basic_logger& logger;
-
-  // F1AP to DU repository adapter.
-  f1ap_du_repository_adapter f1ap_ev_notifier;
 
   std::map<du_index_t, du_context> du_db;
 

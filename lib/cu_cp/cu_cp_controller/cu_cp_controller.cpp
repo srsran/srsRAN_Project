@@ -15,11 +15,15 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_cp_controller::cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
+                                   ue_manager&                       ue_mng_,
                                    const ngap_configuration&         ngap_cfg_,
                                    ngap_connection_manager&          ngap_conn_mng_,
-                                   const cu_up_processor_repository& cu_ups_) :
-  amf_mng(routine_manager_, ngap_cfg_, ngap_conn_mng_), cu_ups(cu_ups_)
+                                   const cu_up_processor_repository& cu_ups_,
+                                   du_processor_repository&          dus,
+                                   task_executor&                    ctrl_exec) :
+  ue_mng(ue_mng_), cu_ups(cu_ups_), amf_mng(routine_manager_, ngap_cfg_, ngap_conn_mng_), du_mng(dus, ctrl_exec)
 {
+  (void)ue_mng;
 }
 
 bool cu_cp_controller::handle_du_setup_request(const du_setup_request& req)

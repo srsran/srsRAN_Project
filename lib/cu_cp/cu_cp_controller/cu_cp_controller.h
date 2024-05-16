@@ -11,6 +11,7 @@
 #pragma once
 
 #include "amf_connection_manager.h"
+#include "du_connection_manager.h"
 #include "node_connection_notifier.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
@@ -19,6 +20,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 class cu_up_processor_repository;
+class ue_manager;
 
 /// \brief Entity responsible for managing the CU-CP connections to remote nodes and determining whether the CU-CP
 /// is in a state to accept new connections.
@@ -32,9 +34,12 @@ class cu_cp_controller
 {
 public:
   cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
+                   ue_manager&                       ue_mng_,
                    const ngap_configuration&         ngap_cfg_,
                    ngap_connection_manager&          ngap_conn_mng_,
-                   const cu_up_processor_repository& cu_ups_);
+                   const cu_up_processor_repository& cu_ups_,
+                   du_processor_repository&          dus_,
+                   task_executor&                    ctrl_exec);
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
@@ -43,9 +48,15 @@ public:
   /// \brief Determines whether the CU-CP should accept a new UE connection.
   bool request_ue_setup() const;
 
+  cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
+
 private:
-  amf_connection_manager            amf_mng;
+  ue_manager&                       ue_mng;
   const cu_up_processor_repository& cu_ups;
+
+  amf_connection_manager amf_mng;
+
+  du_connection_manager du_mng;
 };
 
 } // namespace srs_cu_cp

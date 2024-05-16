@@ -18,38 +18,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-namespace {
-
-/// Notifier used to forward Rx F1AP messages from F1-C to CU-CP.
-class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
-{
-public:
-  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_, f1ap_message_handler& msg_handler_) :
-    parent(&parent_), du_index(du_index_), msg_handler(msg_handler_)
-  {
-  }
-
-  ~f1ap_rx_pdu_notifier() override
-  {
-    if (parent != nullptr) {
-      parent->handle_du_remove_request(du_index);
-    }
-  }
-
-  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
-
-private:
-  cu_cp_f1c_handler*    parent;
-  du_index_t            du_index;
-  f1ap_message_handler& msg_handler;
-};
-
-} // namespace
-
-du_processor_repository::du_processor_repository(du_repository_config cfg_) : cfg(cfg_), logger(cfg.logger)
-{
-  f1ap_ev_notifier.connect_du_repository(*this);
-}
+du_processor_repository::du_processor_repository(du_repository_config cfg_) : cfg(cfg_), logger(cfg.logger) {}
 
 void du_processor_repository::stop()
 {
@@ -59,31 +28,6 @@ void du_processor_repository::stop()
   while (not du_db.empty()) {
     du_index_t du_idx = du_db.begin()->first;
     remove_du_impl(du_idx);
-  }
-}
-
-std::unique_ptr<f1ap_message_notifier>
-du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
-{
-  du_index_t du_index = add_du(std::move(f1ap_tx_pdu_notifier));
-  if (du_index == du_index_t::invalid) {
-    logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
-    return nullptr;
-  }
-
-  logger.info("Added TNL connection to DU {}", du_index);
-  return std::make_unique<f1ap_rx_pdu_notifier>(
-      *this, du_index, get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
-}
-
-void du_processor_repository::handle_du_remove_request(du_index_t du_index)
-{
-  if (not running.load(std::memory_order_acquire)) {
-    return;
-  }
-  while (not cfg.cu_cp.cu_cp_executor->defer([this, du_index]() { remove_du_impl(du_index); })) {
-    logger.error("Failed to schedule DU removal task. Retrying...");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
@@ -112,7 +56,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 
   std::unique_ptr<du_processor> du = create_du_processor(du_cfg,
                                                          du_ctxt.du_to_cu_cp_notifier,
-                                                         f1ap_ev_notifier,
+                                                         cfg.f1ap_to_cu_cp_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
                                                          cfg.ue_nas_pdu_notifier,
                                                          cfg.ue_ngap_ctrl_notifier,
@@ -126,6 +70,14 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_ctxt.processor = std::move(du);
 
   return du_index;
+}
+
+void du_processor_repository::remove_du(du_index_t du_idx)
+{
+  if (not running.load(std::memory_order_acquire)) {
+    return;
+  }
+  remove_du_impl(du_idx);
 }
 
 du_index_t du_processor_repository::get_next_du_index()

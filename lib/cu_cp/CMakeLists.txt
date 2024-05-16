@@ -13,9 +13,9 @@ add_subdirectory(up_resource_manager)
 set(SOURCES
       cu_cp_factory.cpp
       cu_cp_impl.cpp
-      cu_cp_controller/cu_cp_controller_factory.cpp
       cu_cp_controller/cu_cp_controller.cpp
       cu_cp_controller/amf_connection_manager.cpp
+      cu_cp_controller/du_connection_manager.cpp
       cu_up_processor/cu_up_processor_impl.cpp
       cu_up_processor/cu_up_processor_factory.cpp
       cu_up_processor/cu_up_processor_repository.cpp
@@ -37,6 +37,7 @@ set(SOURCES
       routines/mobility/inter_du_handover_routine.cpp
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
+      adapters/f1ap_adapters.cpp
       metrics_handler/metrics_handler_impl.cpp
         ue_manager/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
