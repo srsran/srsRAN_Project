@@ -15,6 +15,7 @@
 namespace srsran {
 
 /// Validates the given dynamic DU unit configuration. Returns true on success, false otherwise.
-bool validate_dynamic_du_unit_config(const dynamic_du_unit_config& config, const os_sched_affinity_bitmask& isolated);
+bool validate_dynamic_du_unit_config(const dynamic_du_unit_config&    config,
+                                     const os_sched_affinity_bitmask& available_cpus);
 
 } // namespace srsran

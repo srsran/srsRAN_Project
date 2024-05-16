@@ -16,7 +16,7 @@ using namespace srsran;
 
 static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&        config,
                                                   unsigned                         nof_cells,
-                                                  const os_sched_affinity_bitmask& isolated_cores)
+                                                  const os_sched_affinity_bitmask& available_cpus)
 {
   if ((config.expert_execution_cfg.threads.execution_profile == lower_phy_thread_profile::single) &&
       (config.expert_cfg.dl_buffer_size_policy != "auto")) {
@@ -39,7 +39,7 @@ static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&     
                                const std::string&               name) {
     auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
     if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.\n", invalid_cpu_ids, name);
+      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
       return false;
     }
 
@@ -47,13 +47,13 @@ static bool validate_expert_execution_unit_config(const ru_sdr_unit_config&     
   };
 
   for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(isolated_cores, cell.ru_cpu_cfg.mask, "ru_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.ru_cpu_cfg.mask, "ru_cpus")) {
       return false;
     }
-    if (!validate_cpu_range(isolated_cores, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
       return false;
     }
-    if (!validate_cpu_range(isolated_cores, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
       return false;
     }
   }
@@ -158,7 +158,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 
 bool srsran::validate_ru_sdr_config(const ru_sdr_unit_config&                 config,
                                     span<const ru_sdr_cell_validation_config> cell_config,
-                                    const os_sched_affinity_bitmask&          isolated_cores)
+                                    const os_sched_affinity_bitmask&          available_cpus)
 {
   if (!validate_ru_sdr_appconfig(config, cell_config)) {
     return false;
@@ -170,7 +170,7 @@ bool srsran::validate_ru_sdr_config(const ru_sdr_unit_config&                 co
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config, cell_config.size(), isolated_cores)) {
+  if (!validate_expert_execution_unit_config(config, cell_config.size(), available_cpus)) {
     return false;
   }
 

@@ -52,7 +52,7 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
 
 static bool validate_expert_execution_unit_config(const du_low_unit_config&        config,
                                                   unsigned                         nof_cells,
-                                                  const os_sched_affinity_bitmask& isolated_cores)
+                                                  const os_sched_affinity_bitmask& available_cpus)
 {
   if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads,
                                             config.expert_phy_cfg.max_processing_delay_slots)) {
@@ -74,7 +74,7 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
                                const std::string&               name) {
     auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
     if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.\n", invalid_cpu_ids, name);
+      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
       return false;
     }
 
@@ -82,10 +82,10 @@ static bool validate_expert_execution_unit_config(const du_low_unit_config&     
   };
 
   for (const auto& cell : config.expert_execution_cfg.cell_affinities) {
-    if (!validate_cpu_range(isolated_cores, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.l1_dl_cpu_cfg.mask, "l1_dl_cpus")) {
       return false;
     }
-    if (!validate_cpu_range(isolated_cores, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.l1_ul_cpu_cfg.mask, "l1_ul_cpus")) {
       return false;
     }
   }
@@ -141,7 +141,7 @@ static bool validate_log_options(const du_low_unit_logger_config& config, const 
 
 bool srsran::validate_du_low_config(const du_low_unit_config&                  config,
                                     span<const du_low_prach_validation_config> prach_cells_config,
-                                    const os_sched_affinity_bitmask&           isolated_cores)
+                                    const os_sched_affinity_bitmask&           available_cpus)
 {
   if (!validate_log_options(config.loggers, prach_cells_config.front())) {
     return false;
@@ -155,7 +155,7 @@ bool srsran::validate_du_low_config(const du_low_unit_config&                  c
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config, prach_cells_config.size(), isolated_cores)) {
+  if (!validate_expert_execution_unit_config(config, prach_cells_config.size(), available_cpus)) {
     return false;
   }
 

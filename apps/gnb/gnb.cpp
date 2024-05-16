@@ -246,7 +246,7 @@ int main(int argc, char** argv)
       !validate_dynamic_du_unit_config(du_unit_cfg,
                                        (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                            ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                           : os_sched_affinity_bitmask())) {
+                                           : os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 

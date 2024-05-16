@@ -15,7 +15,7 @@ using namespace srsran;
 
 static bool validate_expert_execution_unit_config(const ru_ofh_unit_expert_execution_config& config,
                                                   unsigned                                   nof_cells,
-                                                  const os_sched_affinity_bitmask&           isolated_cores)
+                                                  const os_sched_affinity_bitmask&           available_cpus)
 {
   // Configure more cells for expert execution than the number of cells is an error.
   if (config.cell_affinities.size() != nof_cells) {
@@ -32,7 +32,7 @@ static bool validate_expert_execution_unit_config(const ru_ofh_unit_expert_execu
                                const std::string&               name) {
     auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
     if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.\n", invalid_cpu_ids, name);
+      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
       return false;
     }
 
@@ -40,7 +40,7 @@ static bool validate_expert_execution_unit_config(const ru_ofh_unit_expert_execu
   };
 
   for (const auto& cell : config.cell_affinities) {
-    if (!validate_cpu_range(isolated_cores, cell.ru_cpu_cfg.mask, "ru_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.ru_cpu_cfg.mask, "ru_cpus")) {
       return false;
     }
   }
@@ -145,7 +145,7 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
 
 bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 config,
                                     span<const ru_ofh_cell_validation_config> cell_config,
-                                    const os_sched_affinity_bitmask&          isolated_cores)
+                                    const os_sched_affinity_bitmask&          available_cpus)
 {
   if (config.cells.size() != cell_config.size()) {
     fmt::print("Number of cells in the DU={} don't match the number of cells in the RU={}\n",
@@ -159,7 +159,7 @@ bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 co
     return false;
   }
 
-  if (!validate_expert_execution_unit_config(config.expert_execution_cfg, cell_config.size(), isolated_cores)) {
+  if (!validate_expert_execution_unit_config(config.expert_execution_cfg, cell_config.size(), available_cpus)) {
     return false;
   }
 

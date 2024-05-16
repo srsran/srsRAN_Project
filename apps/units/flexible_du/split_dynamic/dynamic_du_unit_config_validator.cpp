@@ -93,14 +93,14 @@ static std::vector<ru_sdr_cell_validation_config> get_ru_sdr_validation_dependen
 }
 
 static bool validate_expert_execution_unit_config(const ru_dummy_unit_config&      config,
-                                                  const os_sched_affinity_bitmask& isolated_cores)
+                                                  const os_sched_affinity_bitmask& available_cpus)
 {
   auto validate_cpu_range = [](const os_sched_affinity_bitmask& allowed_cpus_mask,
                                const os_sched_affinity_bitmask& mask,
                                const std::string&               name) {
     auto invalid_cpu_ids = mask.subtract(allowed_cpus_mask);
     if (not invalid_cpu_ids.empty()) {
-      fmt::print("CPU cores {} selected in '{}' option doesn't belong to isolated cpuset.\n", invalid_cpu_ids, name);
+      fmt::print("CPU cores {} selected in '{}' option doesn't belong to available cpuset.\n", invalid_cpu_ids, name);
       return false;
     }
 
@@ -108,7 +108,7 @@ static bool validate_expert_execution_unit_config(const ru_dummy_unit_config&   
   };
 
   for (const auto& cell : config.cell_affinities) {
-    if (!validate_cpu_range(isolated_cores, cell.ru_cpu_cfg.mask, "ru_cpus")) {
+    if (!validate_cpu_range(available_cpus, cell.ru_cpu_cfg.mask, "ru_cpus")) {
       return false;
     }
   }
@@ -116,29 +116,29 @@ static bool validate_expert_execution_unit_config(const ru_dummy_unit_config&   
 }
 
 bool srsran::validate_dynamic_du_unit_config(const dynamic_du_unit_config&    config,
-                                             const os_sched_affinity_bitmask& isolated)
+                                             const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_du_high_config(config.du_high_cfg.config, isolated)) {
+  if (!validate_du_high_config(config.du_high_cfg.config, available_cpus)) {
     return false;
   }
 
   auto du_low_dependencies = get_du_low_validation_dependencies(config.du_high_cfg.config);
-  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, isolated)) {
+  if (!validate_du_low_config(config.du_low_cfg, du_low_dependencies, available_cpus)) {
     return false;
   }
 
   if (variant_holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
     auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.du_high_cfg.config);
     return validate_ru_ofh_config(
-        variant_get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, isolated);
+        variant_get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
   }
 
   if (variant_holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.du_high_cfg.config);
-    return validate_ru_sdr_config(variant_get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, isolated);
+    return validate_ru_sdr_config(variant_get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
   }
 
-  if (!validate_expert_execution_unit_config(variant_get<ru_dummy_unit_config>(config.ru_cfg), isolated)) {
+  if (!validate_expert_execution_unit_config(variant_get<ru_dummy_unit_config>(config.ru_cfg), available_cpus)) {
     return false;
   }
 
