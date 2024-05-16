@@ -11,11 +11,11 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <cstdint>
-#include <memory>
 #include <string>
 
 namespace srsran {
@@ -676,6 +676,9 @@ struct rlc_rx_am_config {
 struct rlc_tx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
 
+  /// Length of the PDCP sequence number. This value is needed to extract the PDCP SN from SDUs to support SDU discard.
+  pdcp_sn_size pdcp_sn_len;
+
   // Timers Ref: 3GPP TS 38.322 Section 7.3
   int32_t t_poll_retx; ///< Poll retx timeout (ms)
 
@@ -710,6 +713,9 @@ struct rlc_rx_um_config {
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_tx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
+
+  /// Length of the PDCP sequence number. This value is needed to extract the PDCP SN from SDUs to support SDU discard.
+  pdcp_sn_size pdcp_sn_len;
 
   // Implementation-specific parameters that are not specified by 3GPP
   uint32_t queue_size; ///< SDU queue size
@@ -913,7 +919,8 @@ struct formatter<srsran::rlc_tx_um_config> {
   template <typename FormatContext>
   auto format(srsran::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "tx_sn_size={} queue_size={}", cfg.sn_field_length, cfg.queue_size);
+    return format_to(
+        ctx.out(), "tx_sn_size={} pdcp_sn_len={} queue_size={}", cfg.sn_field_length, cfg.pdcp_sn_len, cfg.queue_size);
   }
 };
 
@@ -961,15 +968,17 @@ struct formatter<srsran::rlc_tx_am_config> {
   template <typename FormatContext>
   auto format(srsran::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(),
-                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} queue_size={} max_window={}",
-                     cfg.sn_field_length,
-                     cfg.t_poll_retx,
-                     cfg.max_retx_thresh,
-                     cfg.poll_pdu,
-                     cfg.poll_byte,
-                     cfg.queue_size,
-                     cfg.max_window);
+    return format_to(
+        ctx.out(),
+        "tx_sn_size={} pdcp_sn_len={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} queue_size={} max_window={}",
+        cfg.sn_field_length,
+        cfg.pdcp_sn_len,
+        cfg.t_poll_retx,
+        cfg.max_retx_thresh,
+        cfg.poll_pdu,
+        cfg.poll_byte,
+        cfg.queue_size,
+        cfg.max_window);
   }
 };
 
