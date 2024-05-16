@@ -56,8 +56,6 @@ public:
        handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
   void handle_du_remove_request(du_index_t du_index) override;
 
-  du_f1c_handler& get_du(du_index_t du_index) override;
-
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
   /// \param[out] The index of the DU serving the given PCI.
   du_index_t find_du(pci_t pci);

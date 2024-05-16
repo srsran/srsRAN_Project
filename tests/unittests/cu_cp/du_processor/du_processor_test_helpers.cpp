@@ -68,7 +68,7 @@ void du_processor_test::attach_ue()
   // Generate valid F1SetupRequest
   f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Generate ue_creation message
   ue_index_t                      ue_index = ue_index_t::min;

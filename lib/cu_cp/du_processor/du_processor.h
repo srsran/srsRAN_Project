@@ -28,7 +28,7 @@ namespace srs_cu_cp {
 struct rrc_ue_creation_message;
 
 /// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface : public du_f1c_handler
+class du_processor_f1ap_interface
 {
 public:
   virtual ~du_processor_f1ap_interface() = default;

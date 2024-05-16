@@ -42,7 +42,7 @@ public:
     local_f1c_gw.attach_cu_cp_du_repo(cu_cp_du_mng_);
   }
 
-  void request_new_du_connection()
+  f1ap_message_notifier* request_new_du_connection()
   {
     class sink_f1ap_message_notifier : public f1ap_message_notifier
     {
@@ -53,8 +53,12 @@ public:
     auto notifier = local_f1c_gw.handle_du_connection_request(std::make_unique<sink_f1ap_message_notifier>());
     if (notifier != nullptr) {
       du_tx_notifiers.push_back(std::move(notifier));
+      return du_tx_notifiers.back().get();
     }
+    return nullptr;
   }
+
+  f1ap_message_notifier& get_du(du_index_t du_idx) { return *du_tx_notifiers.at((unsigned)du_idx); }
 
   void remove_du_connection(size_t connection_idx) { du_tx_notifiers.erase(du_tx_notifiers.begin() + connection_idx); }
 

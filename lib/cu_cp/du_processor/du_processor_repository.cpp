@@ -24,8 +24,8 @@ namespace {
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
-  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_) :
-    parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_message_handler())
+  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_, f1ap_message_handler& msg_handler_) :
+    parent(&parent_), du_index(du_index_), msg_handler(msg_handler_)
   {
   }
 
@@ -36,12 +36,12 @@ public:
     }
   }
 
-  void on_new_message(const f1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
+  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
 
 private:
   cu_cp_f1c_handler*    parent;
   du_index_t            du_index;
-  f1ap_message_handler& cached_msg_handler;
+  f1ap_message_handler& msg_handler;
 };
 
 } // namespace
@@ -72,7 +72,8 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
   }
 
   logger.info("Added TNL connection to DU {}", du_index);
-  return std::make_unique<f1ap_rx_pdu_notifier>(*this, du_index);
+  return std::make_unique<f1ap_rx_pdu_notifier>(
+      *this, du_index, get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
 }
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
@@ -186,13 +187,6 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return *du_db.at(du_index).processor;
-}
-
-du_f1c_handler& du_processor_repository::get_du(du_index_t du_index)
-{
-  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return du_db.at(du_index).processor->get_f1ap_interface();
 }
 
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)

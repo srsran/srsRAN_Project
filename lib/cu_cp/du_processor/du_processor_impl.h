@@ -54,7 +54,6 @@ public:
 
   du_index_t                       get_du_index() override { return context.du_index; }
   f1ap_cu&                         get_f1ap_handler() override { return *f1ap; };
-  f1ap_message_handler&            get_message_handler() override { return *f1ap; }
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *f1ap; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *f1ap; }
