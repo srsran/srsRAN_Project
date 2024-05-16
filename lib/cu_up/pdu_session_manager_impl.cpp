@@ -213,14 +213,14 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               ue_ul_exec,
                                               f1u_gw);
 
-  auto* test = f1u_gw.create_cu_bearer(ue_index,
-                                       drb_to_setup.drb_id,
-                                       new_drb->f1u_cfg,
-                                       f1u_ul_tunnel_addr,
-                                       new_drb->f1u_gateway_rx_to_nru_adapter,
-                                       ue_ul_exec,
-                                       ue_dl_timer_factory,
-                                       ue_inactivity_timer);
+  auto test = f1u_gw.create_cu_bearer(ue_index,
+                                      drb_to_setup.drb_id,
+                                      new_drb->f1u_cfg,
+                                      f1u_ul_tunnel_addr,
+                                      new_drb->f1u_gateway_rx_to_nru_adapter,
+                                      ue_ul_exec,
+                                      ue_dl_timer_factory,
+                                      ue_inactivity_timer);
   (void)test;
   new_drb->f1u_ul_teid  = f1u_ul_teid;
   drb_result.gtp_tunnel = f1u_ul_tunnel_addr;

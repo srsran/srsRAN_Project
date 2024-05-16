@@ -32,8 +32,9 @@ public:
   f1u_gateway_cu_bearer(uint32_t                              ue_index,
                         drb_id_t                              drb_id,
                         const up_transport_layer_info&        ul_tnl_info,
-                        f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_) :
-    cu_rx(cu_rx_), logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info})
+                        f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
+                        task_executor&                        ul_exec_) :
+    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info}), cu_rx(cu_rx_), ul_exec(ul_exec_)
   {
   }
 
@@ -66,15 +67,19 @@ public:
     handler->on_new_pdu(std::move(msg));
   }
 
+private:
+  srs_cu_up::f1u_bearer_logger               logger;
+  srs_du::f1u_du_gateway_bearer_rx_notifier* handler = nullptr;
+
+public:
   /// Holds notifier that will point to NR-U bearer on the UL path
   f1u_cu_up_gateway_bearer_rx_notifier& cu_rx;
 
   /// Holds the DL UP TNL info associated with the F1-U bearer.
   optional<up_transport_layer_info> dl_tnl_info;
 
-private:
-  srs_cu_up::f1u_bearer_logger               logger;
-  srs_du::f1u_du_gateway_bearer_rx_notifier* handler = nullptr;
+  /// Holds the DL UP TNL info associated with the F1-U bearer.
+  task_executor& ul_exec;
 };
 
 class f1u_gateway_du_bearer : public srs_du::f1u_du_gateway_bearer_tx_interface
@@ -136,14 +141,15 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                              ue_index,
-                                                          drb_id_t                              drb_id,
-                                                          const srs_cu_up::f1u_config&          config,
-                                                          const up_transport_layer_info&        ul_up_tnl_info,
-                                                          f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                          task_executor&                        ul_exec,
-                                                          timer_factory                         ue_dl_timer_factory,
-                                                          unique_timer& ue_inactivity_timer) override;
+  std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface>
+  create_cu_bearer(uint32_t                              ue_index,
+                   drb_id_t                              drb_id,
+                   const srs_cu_up::f1u_config&          config,
+                   const up_transport_layer_info&        ul_up_tnl_info,
+                   f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                   task_executor&                        ul_exec,
+                   timer_factory                         ue_dl_timer_factory,
+                   unique_timer&                         ue_inactivity_timer) override;
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                       const up_transport_layer_info& dl_up_tnl_info) override;
@@ -164,7 +170,7 @@ private:
   srslog::basic_logger& logger_cu;
   srslog::basic_logger& logger_du;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
-  std::unordered_map<up_transport_layer_info, std::unique_ptr<f1u_gateway_cu_bearer>> cu_map;
+  std::unordered_map<up_transport_layer_info, f1u_gateway_cu_bearer*> cu_map;
   // Key is the DL UP TNL Info (DU address and DL TEID reserved by DU)
   std::unordered_map<up_transport_layer_info, std::unique_ptr<f1u_gateway_du_bearer>> du_map;
 

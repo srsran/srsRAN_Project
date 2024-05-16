@@ -56,14 +56,15 @@ public:
   f1u_cu_up_gateway(f1u_cu_up_gateway&&)                 = default;
   f1u_cu_up_gateway& operator=(f1u_cu_up_gateway&&)      = default;
 
-  virtual f1u_cu_up_gateway_bearer_tx_interface* create_cu_bearer(uint32_t                              ue_index,
-                                                                  drb_id_t                              drb_id,
-                                                                  const srs_cu_up::f1u_config&          config,
-                                                                  const up_transport_layer_info&        ul_up_tnl_info,
-                                                                  f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                                  task_executor&                        ul_exec,
-                                                                  timer_factory ue_dl_timer_factory,
-                                                                  unique_timer& ue_inactivity_timer) = 0;
+  virtual std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface>
+  create_cu_bearer(uint32_t                              ue_index,
+                   drb_id_t                              drb_id,
+                   const srs_cu_up::f1u_config&          config,
+                   const up_transport_layer_info&        ul_up_tnl_info,
+                   f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                   task_executor&                        ul_exec,
+                   timer_factory                         ue_dl_timer_factory,
+                   unique_timer&                         ue_inactivity_timer) = 0;
 
   virtual void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                               const up_transport_layer_info& dl_up_tnl_info) = 0;

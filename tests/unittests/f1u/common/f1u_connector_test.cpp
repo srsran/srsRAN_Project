@@ -128,7 +128,7 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
-  f1u_cu_up_gateway_bearer_tx_interface* cu_bearer =
+  std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface> cu_bearer =
       cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
@@ -199,8 +199,8 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_notifier            cu_rx;
-  f1u_cu_up_gateway_bearer_tx_interface* cu_bearer =
+  dummy_f1u_cu_up_rx_notifier                            cu_rx;
+  std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface> cu_bearer =
       cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
@@ -255,8 +255,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
   up_transport_layer_info dl_tnl2{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_notifier            cu_rx;
-  f1u_cu_up_gateway_bearer_tx_interface* cu_bearer =
+  dummy_f1u_cu_up_rx_notifier                            cu_rx;
+  std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface> cu_bearer =
       cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
