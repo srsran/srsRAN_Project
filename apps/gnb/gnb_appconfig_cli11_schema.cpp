@@ -142,18 +142,18 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
 
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
 {
-  app.add_option("--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
-  app.add_option("--addr", e2_params.ip_addr, "RIC IP address");
-  app.add_option("--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
+  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address");
+  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
       ->check(CLI::ValidIPV4);
-  app.add_option("--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
-  app.add_option("--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
-  app.add_option("--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
-  app.add_option("--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
-  app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
-  app.add_option("--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
-  app.add_option("--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
+  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
+  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
+  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
+  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
+  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
+  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
+  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
 }
 
 static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
@@ -168,7 +168,7 @@ static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& con
 {
   config.emplace();
 
-  app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
+  add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
@@ -354,7 +354,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
 
   // E2 section.
-  CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();
+  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, gnb_cfg.e2_cfg);
 
   // Buffer pool section.
@@ -366,7 +366,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_expert_execution_args(*expert_subcmd, gnb_cfg.expert_execution_cfg);
 
   // HAL section.
-  CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
+  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 }
 

@@ -149,7 +149,7 @@ struct gnb_appconfig {
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
-  /// \brief E2 configuration.
+  /// E2 configuration.
   e2_appconfig e2_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;

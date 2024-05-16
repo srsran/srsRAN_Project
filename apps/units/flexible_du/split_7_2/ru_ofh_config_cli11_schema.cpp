@@ -307,6 +307,13 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
       "Sets the cell CPU affinities configuration on a per cell basis");
 }
 
+static void configure_cli11_hal_args(CLI::App& app, optional<ru_ofh_unit_hal_config>& config)
+{
+  config.emplace();
+
+  add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
+}
+
 void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)
 {
   // OFH RU section.
@@ -320,4 +327,21 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.config.expert_execution_cfg);
+
+  // HAL section.
+  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
+  configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
+}
+
+static void manage_hal_optional(CLI::App& app, optional<ru_ofh_unit_hal_config>& hal_config)
+{
+  // Clean the HAL optional.
+  if (app.get_subcommand("hal")->count_all() == 0) {
+    hal_config.reset();
+  }
+}
+
+void srsran::autoderive_ru_ofh_parameters_after_parsing(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)
+{
+  manage_hal_optional(app, parsed_cfg.config.hal_config);
 }

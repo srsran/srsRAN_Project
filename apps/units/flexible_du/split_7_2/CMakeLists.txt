@@ -8,6 +8,8 @@
 
 set(SOURCES
             ru_ofh_config_cli11_schema.cpp
+            ru_ofh_factories.cpp
+            ru_ofh_config_translator.cpp
             ru_ofh_config_validator.cpp)
 
 add_library(srsran_split_7_2_app_unit_helpers STATIC ${SOURCES})

@@ -135,6 +135,8 @@ static void configure_cli11_log_args(CLI::App& app, ru_sdr_unit_logger_config& l
   add_option(app, "--radio_level", log_params.radio_level, "Radio log level")
       ->capture_default_str()
       ->check(level_check);
+
+  add_option(app, "--phy_level", log_params.phy_level, "PHY log level")->capture_default_str()->check(level_check);
 }
 
 static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_affinities_cell_config& config)

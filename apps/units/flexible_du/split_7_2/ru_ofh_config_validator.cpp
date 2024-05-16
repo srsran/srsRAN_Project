@@ -143,6 +143,22 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
   return true;
 }
 
+static bool validate_hal_config(const optional<ru_ofh_unit_hal_config>& config)
+{
+#ifdef DPDK_FOUND
+  if (config && config->eal_args.empty()) {
+    fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
+    return false;
+  }
+#else
+  if (config) {
+    fmt::print("Unable to use DPDK as the application was not compiled with DPDK support\n");
+    return false;
+  }
+#endif
+  return true;
+}
+
 bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 config,
                                     span<const ru_ofh_cell_validation_config> cell_config,
                                     const os_sched_affinity_bitmask&          available_cpus)
@@ -160,6 +176,10 @@ bool srsran::validate_ru_ofh_config(const ru_ofh_unit_config&                 co
   }
 
   if (!validate_expert_execution_unit_config(config.expert_execution_cfg, cell_config.size(), available_cpus)) {
+    return false;
+  }
+
+  if (!validate_hal_config(config.hal_config)) {
     return false;
   }
 
