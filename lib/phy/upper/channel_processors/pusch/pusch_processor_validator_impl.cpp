@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2021-2024 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -70,7 +70,7 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // The number of symbols carrying DM-RS must be greater than zero.
+  // The number of OFDM symbols in the DM-RS mask must be equal to the number of OFDM symbols in a slot.
   if (pdu.dmrs_symbol_mask.size() != nof_symbols_slot) {
     return false;
   }

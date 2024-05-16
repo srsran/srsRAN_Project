@@ -790,7 +790,7 @@ int main(int argc, char** argv)
     // Measurement description.
     fmt::memory_buffer meas_description;
     fmt::format_to(meas_description,
-                   "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} rv={} ν={} - {:>5.1f} Mbps",
+                   "PUSCH RB={:<3} Mod={:<6} R={:<5.3f} rv={} n_layers={} - {:>5.1f} Mbps",
                    config.freq_alloc.get_nof_rb(),
                    to_string(config.mcs_descr.modulation),
                    config.mcs_descr.get_normalised_target_code_rate(),
