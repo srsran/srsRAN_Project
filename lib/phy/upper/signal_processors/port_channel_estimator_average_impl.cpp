@@ -235,7 +235,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
       for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
            i_symbol != last_symbol;
            ++i_symbol) {
-        span<cf_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol);
+        span<cf_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
         srsvec::sc_prod(
             symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo), symbol_ch_estimate);
       }
