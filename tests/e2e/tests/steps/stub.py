@@ -437,25 +437,25 @@ def iperf_wait_until_finish(
     # Stop server, get results and print it
     try:
         task.result()
+        iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
+        logging.info(
+            "Iperf %s [%s %s]:\n%s",
+            ue_attached_info.ipv4,
+            _iperf_proto_to_str(iperf_request.proto),
+            _iperf_dir_to_str(iperf_request.direction),
+            MessageToString(iperf_data, indent=2),
+        )
     except grpc.RpcError as err:
-        if ErrorReportedByAgent(err).code is not grpc.StatusCode.UNAVAILABLE:
-            logging.warning(
-                "Iperf %s [%s %s] failed due to %s",
-                ue_attached_info.ipv4,
-                _iperf_proto_to_str(iperf_request.proto),
-                _iperf_dir_to_str(iperf_request.direction),
-                ErrorReportedByAgent(err),
-            )
-            return (False, IPerfResponse())
-
-    iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
-    logging.info(
-        "Iperf %s [%s %s]:\n%s",
-        ue_attached_info.ipv4,
-        _iperf_proto_to_str(iperf_request.proto),
-        _iperf_dir_to_str(iperf_request.direction),
-        MessageToString(iperf_data, indent=2),
-    )
+        if ErrorReportedByAgent(err).code is grpc.StatusCode.UNAVAILABLE:
+            raise err from None
+        logging.warning(
+            "Iperf %s [%s %s] failed due to %s",
+            ue_attached_info.ipv4,
+            _iperf_proto_to_str(iperf_request.proto),
+            _iperf_dir_to_str(iperf_request.direction),
+            ErrorReportedByAgent(err),
+        )
+        return (False, IPerfResponse())
 
     # Assertion
     iperf_success = True
