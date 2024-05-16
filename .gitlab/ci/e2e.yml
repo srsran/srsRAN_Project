@@ -551,7 +551,10 @@ viavi-debug:
 retina setup:
   stage: ci
   extends: .demolition
+  needs:
+    - *retina-needs
 
 retina post:
   stage: .post
   extends: .demolition
+  dependencies: []
