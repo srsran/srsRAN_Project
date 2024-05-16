@@ -1,0 +1,28 @@
+# campaign_filename: path to Viavi campaign file
+# test_name: name of test in Viavi campaign file
+# test_timeout: timeout for test in seconds
+# gnb_extra_commands: extra GNB configuration
+# id: name of test in Pytest
+# max_pdschs_per_slot: maximum number of PDSCHs per slot
+# max_puschs_per_slot: maximum number of PUSCHs per slot
+# enable_qos_viavi: enable QoS in GNB configuration for Viavi
+# expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
+# expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
+# fail_if_kos: fail if KPIs are out of spec
+# warning_as_errors: treat warnings as errors
+
+tests:
+
+  - campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH.xml"
+    test_name: "32UE static DL + UL UDP - Dell"
+    test_timeout: 2700  # 45 * 60
+    gnb_extra_commands: "log --mac_level=info"
+    id: "32UE Bidirectional UDP - Debug"
+    max_pdschs_per_slot: 1
+    max_puschs_per_slot: 1
+    enable_qos_viavi: false
+    # test/fail criteria
+    expected_dl_bitrate: 80000000
+    expected_ul_bitrate: 80000000
+    fail_if_kos: false
+    warning_as_errors: false

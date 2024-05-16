@@ -81,7 +81,7 @@ load retina variables:
       export FORCE_COLOR=1
       export KUBECONFIG=$K_PATH
 
-e2e request validation:
+e2e request and config validation:
   stage: static
   extends:
     - .prepare_test
@@ -89,6 +89,7 @@ e2e request validation:
     - if: $ON_MR
       changes:
         - .gitlab/ci/e2e/**/*
+        - tests/e2e/tests/viavi/*
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
@@ -99,6 +100,7 @@ e2e request validation:
       for f in $file_list; do
           retina-request-checker --input $f
       done
+      python3 ${CI_PROJECT_DIR}/tests/e2e/tests/viavi/validate_test_declaration.py
   needs: &retina-needs
     - job: "load retina variables"
       artifacts: true
