@@ -81,6 +81,7 @@ protected:
 
     // Set Tx config
     config.tx.sn_field_length = sn_size;
+    config.tx.pdcp_sn_len     = pdcp_sn_size::size12bits;
     config.tx.queue_size      = 4096;
 
     // Create RLC entities

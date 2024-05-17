@@ -49,6 +49,14 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
+  // check PDCP SN length
+  srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
+                "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
+                config.pdcp_sn_len,
+                du_index,
+                ue_index,
+                rb_id);
+
   // check timer t_poll_retransmission timer
   srsran_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
 

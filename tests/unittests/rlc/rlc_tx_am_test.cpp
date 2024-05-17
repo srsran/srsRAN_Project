@@ -83,6 +83,7 @@ protected:
 
     // Set Tx config
     config.sn_field_length = sn_size;
+    config.pdcp_sn_len     = pdcp_sn_size::size12bits;
     config.t_poll_retx     = 45;
     config.max_retx_thresh = 4;
     config.poll_pdu        = 4;
