@@ -13,16 +13,16 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -46,7 +46,7 @@ variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
-  AUTOREBASER_MODE: minimal
+  AUTOREBASER_PRS_IN_QUEUE: 1
 
 ################################################################################
 ## CI
