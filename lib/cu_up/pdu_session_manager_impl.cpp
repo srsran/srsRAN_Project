@@ -201,18 +201,6 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
                                              f1u_ul_teid);
 
-  new_drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
-                                              new_drb->drb_id,
-                                              f1u_ul_tunnel_addr,
-                                              new_drb->f1u_cfg,
-                                              new_drb->nru_tx_to_f1u_gateway_adapter,
-                                              new_drb->f1u_to_pdcp_adapter,
-                                              new_drb->f1u_to_pdcp_adapter,
-                                              ue_dl_timer_factory,
-                                              ue_inactivity_timer,
-                                              ue_ul_exec,
-                                              f1u_gw);
-
   auto test = f1u_gw.create_cu_bearer(ue_index,
                                       drb_to_setup.drb_id,
                                       new_drb->f1u_cfg,
@@ -221,7 +209,19 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                       ue_ul_exec,
                                       ue_dl_timer_factory,
                                       ue_inactivity_timer);
-  (void)test;
+
+  new_drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
+                                              new_drb->drb_id,
+                                              f1u_ul_tunnel_addr,
+                                              new_drb->f1u_cfg,
+                                              *test,
+                                              new_drb->f1u_to_pdcp_adapter,
+                                              new_drb->f1u_to_pdcp_adapter,
+                                              ue_dl_timer_factory,
+                                              ue_inactivity_timer,
+                                              ue_ul_exec,
+                                              f1u_gw);
+
   new_drb->f1u_ul_teid  = f1u_ul_teid;
   drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 

@@ -16,6 +16,7 @@
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
@@ -232,15 +233,14 @@ public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  std::unique_ptr<f1u_cu_up_gateway_bearer_tx_interface>
-  create_cu_bearer(uint32_t                              ue_index,
-                   drb_id_t                              drb_id,
-                   const srs_cu_up::f1u_config&          config,
-                   const up_transport_layer_info&        ul_up_tnl_info,
-                   f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                   task_executor&                        ul_exec,
-                   timer_factory                         ue_dl_timer_factory,
-                   unique_timer&                         ue_inactivity_timer) override
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> create_cu_bearer(uint32_t                              ue_index,
+                                                                   drb_id_t                              drb_id,
+                                                                   const srs_cu_up::f1u_config&          config,
+                                                                   const up_transport_layer_info&        ul_up_tnl_info,
+                                                                   f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                                                                   task_executor&                        ul_exec,
+                                                                   timer_factory ue_dl_timer_factory,
+                                                                   unique_timer& ue_inactivity_timer) override
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     // bearer.connect_f1u_rx_sdu_notifier(rx_notifier);

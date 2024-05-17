@@ -12,26 +12,12 @@
 
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_config.h"
-#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
-namespace srsran {
-namespace srs_du {
-
-/// This class provides an interface for the TX bearer
-/// inside the DU F1-U gateway. In the case of a co-located
-/// deployment this will be an adapter that directly connects
-/// to the DU F1-U gateway bearer, in the case of a split deployment,
-/// this will be an NR-U GTP-U tunnel.
-class f1u_du_gateway_bearer_tx_interface
-{
-public:
-  virtual ~f1u_du_gateway_bearer_tx_interface() = default;
-
-  virtual void on_new_sdu(nru_ul_message msg) = 0;
-};
+namespace srsran::srs_du {
 
 /// This class provides a notifier for the RX bearer
 /// inside the DU F1-U gateway. This provides an adapter
@@ -56,15 +42,14 @@ public:
   f1u_du_gateway(f1u_du_gateway&&)                 = default;
   f1u_du_gateway& operator=(f1u_du_gateway&&)      = default;
 
-  virtual f1u_du_gateway_bearer_tx_interface* create_du_bearer(uint32_t                       ue_index,
-                                                               drb_id_t                       drb_id,
-                                                               srs_du::f1u_config             config,
-                                                               const up_transport_layer_info& dl_up_tnl_info,
-                                                               const up_transport_layer_info& ul_up_tnl_info,
-                                                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
-                                                               timer_factory                              timers,
-                                                               task_executor& ue_executor) = 0;
+  virtual std::unique_ptr<f1u_tx_pdu_notifier> create_du_bearer(uint32_t                       ue_index,
+                                                                drb_id_t                       drb_id,
+                                                                srs_du::f1u_config             config,
+                                                                const up_transport_layer_info& dl_up_tnl_info,
+                                                                const up_transport_layer_info& ul_up_tnl_info,
+                                                                srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                                timer_factory                              timers,
+                                                                task_executor& ue_executor) = 0;
 };
 
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du

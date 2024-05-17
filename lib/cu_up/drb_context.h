@@ -45,9 +45,6 @@ struct drb_context {
   pdcp_rx_e1ap_adapter pdcp_rx_to_e1ap_adapter;
   pdcp_tx_e1ap_adapter pdcp_tx_to_e1ap_adapter;
 
-  // Adapter NR-U->F1-U gateway
-  nru_tx_f1u_gateway_adapter nru_tx_to_f1u_gateway_adapter;
-
   // Adapter F1-U gateway -> NR-U
   f1u_gateway_rx_nru_adapter f1u_gateway_rx_to_nru_adapter;
 

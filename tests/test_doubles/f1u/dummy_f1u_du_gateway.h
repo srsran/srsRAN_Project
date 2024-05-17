@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 
 namespace srsran {
 namespace srs_du {
@@ -52,14 +53,14 @@ public:
   optional<uint32_t> last_ue_idx;
   optional<drb_id_t> last_drb_id;
 
-  f1u_du_gateway_bearer_tx_interface* create_du_bearer(uint32_t                                   ue_index,
-                                                       drb_id_t                                   drb_id,
-                                                       srs_du::f1u_config                         config,
-                                                       const up_transport_layer_info&             dl_up_tnl_info,
-                                                       const up_transport_layer_info&             ul_up_tnl_info,
-                                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
-                                                       timer_factory                              timers,
-                                                       task_executor&                             ue_executor) override
+  std::unique_ptr<f1u_tx_pdu_notifier> create_du_bearer(uint32_t                                   ue_index,
+                                                        drb_id_t                                   drb_id,
+                                                        srs_du::f1u_config                         config,
+                                                        const up_transport_layer_info&             dl_up_tnl_info,
+                                                        const up_transport_layer_info&             ul_up_tnl_info,
+                                                        srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                        timer_factory                              timers,
+                                                        task_executor&                             ue_executor) override
   {
     // created_du_notifs.push_back(&du_rx);
     registered_dl_tnls.push_back(dl_up_tnl_info);

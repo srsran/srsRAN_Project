@@ -20,13 +20,14 @@
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
+#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/pdcp/pdcp_tx_pdu.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 /// \brief Generate a random gnb_du_ue_f1ap_id
 gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
@@ -261,5 +262,4 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du
