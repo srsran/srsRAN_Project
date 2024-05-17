@@ -25,6 +25,7 @@ class io_broker;
 /// needs.
 struct common_network_gateway_config {
   std::string bind_interface;
+  /// Bind address to use for the SCTP socket. If left empty, the SCTP node can only operate as a client.
   std::string bind_address;
   int         bind_port         = 0;
   bool        non_blocking_mode = false;

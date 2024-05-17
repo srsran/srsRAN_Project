@@ -8,7 +8,7 @@
 
 set_directory_properties(PROPERTIES LABELS "gateways")
 
-add_executable(sctp_network_gateway_test sctp_network_gateway_test.cpp)
+add_executable(sctp_network_gateway_test sctp_network_gateway_test.cpp sctp_network_server_test.cpp)
 target_link_libraries(sctp_network_gateway_test srsran_gateway srsran_support srslog gtest gtest_main)
 gtest_discover_tests(sctp_network_gateway_test)
 

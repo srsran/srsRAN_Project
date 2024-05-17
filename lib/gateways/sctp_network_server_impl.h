@@ -12,31 +12,37 @@
 
 #include "cameron314/concurrentqueue.h"
 #include "sctp_network_gateway_common_impl.h"
-#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/gateways/sctp_network_server.h"
 #include "srsran/support/io/transport_layer_address.h"
 #include <unordered_map>
 
+struct sctp_sndrcvinfo;
+struct sctp_assoc_change;
+
 namespace srsran {
 
+/// Implements an SCTP server, capable of handling multiple SCTP associations.
+///
+/// The server handles Rx data and SCTP association updates in the same thread of the io_broker.
 class sctp_network_server_impl : public sctp_network_server, public sctp_network_gateway_common_impl
 {
+  explicit sctp_network_server_impl(const sctp_network_node_config&   sctp_cfg,
+                                    io_broker&                        broker,
+                                    sctp_network_association_factory& assoc_factory);
+
 public:
-  explicit sctp_network_server_impl(const sctp_network_node_config& sctp_cfg);
   ~sctp_network_server_impl() override;
 
-  bool create_and_bind() override;
+  static std::unique_ptr<sctp_network_server>
+  create(const sctp_network_node_config& sctp_cfg, io_broker& broker, sctp_network_association_factory& assoc_factory);
 
-  void receive() override;
+  int get_socket_fd() const override { return socket.fd().value(); }
 
-  int get_socket_fd() override { return this->socket.fd().value(); }
+  void receive();
 
   bool listen() override;
 
-  optional<uint16_t> get_listen_port() override;
-
-  bool subscribe_to(io_broker& broker) override;
-
-  void attach_association_handler(sctp_network_association_factory& factory) override;
+  optional<uint16_t> get_listen_port();
 
 private:
   class sctp_send_notifier;
@@ -46,19 +52,33 @@ private:
     transport_layer_address addr;
     bool                    sender_closed = false;
 
-    std::unique_ptr<network_gateway_data_notifier> sctp_data_recv_notifier;
+    std::unique_ptr<sctp_association_pdu_notifier> sctp_data_recv_notifier;
 
-    sctp_associaton_context(int assoc_id, const sockaddr& saddr, socklen_t saddr_len);
+    sctp_associaton_context(int assoc_id);
   };
 
-  using association_iterator = std::unordered_map<int, sctp_associaton_context>::iterator;
+  // We use unique_ptr to maintain address stability.
+  using association_map      = std::unordered_map<int, sctp_associaton_context>;
+  using association_iterator = association_map::iterator;
+
+  // Create a bind SCTP socket.
+  bool create_and_bind();
+
+  // Subscribe to IO broker to listen for incoming SCTP messages/events.
+  bool subscribe_to_broker();
 
   void handle_socket_error();
 
-  std::unordered_map<int, sctp_associaton_context>::iterator handle_new_sctp_association(int assoc_id);
-  void handle_data(association_iterator assoc_it, span<const uint8_t> payload);
-  void handle_notification(association_iterator assoc_it, span<const uint8_t> payload);
-  void handle_association_shutdown(association_iterator assoc_it);
+  void handle_data(int assoc_id, span<const uint8_t> payload);
+  void handle_notification(span<const uint8_t>           payload,
+                           const struct sctp_sndrcvinfo& sri,
+                           const sockaddr&               src_addr,
+                           socklen_t                     src_addr_len);
+  void handle_association_shutdown(int assoc_id);
+
+  /// Handle SCTP COMM UP event.
+  void
+  handle_sctp_comm_up(const struct sctp_assoc_change& assoc_change, const sockaddr& src_addr, socklen_t src_addr_len);
 
   // Handle commands from the sender telling that it released its association.
   void handle_pending_sender_close_commands();
@@ -66,16 +86,16 @@ private:
   bool send_sctp_data(const sctp_associaton_context& assoc, byte_buffer pdu);
   void close_sctp_sender(const sctp_associaton_context& assoc);
 
-  std::unordered_map<int, sctp_associaton_context> associations;
+  io_broker&                        broker;
+  sctp_network_association_factory& assoc_factory;
+
+  association_map associations;
 
   // Queue used to communicate commands to the receiver execution context.
-  moodycamel::ConcurrentQueue<int> pending_cmds;
+  moodycamel::ConcurrentQueue<int> pending_assocs_to_rem;
 
-  sctp_network_association_factory* assoc_factory = nullptr;
-
+  // Temporary buffer where read data is saved.
   std::vector<uint8_t> temp_buffer;
-  sockaddr_storage     msg_src_addr    = {};
-  socklen_t            msg_src_addrlen = 0;
 
   // the stream number to use for sending
   const unsigned stream_no = 0;

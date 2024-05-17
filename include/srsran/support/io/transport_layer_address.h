@@ -10,10 +10,9 @@
 
 #pragma once
 
+#include "sockets.h"
 #include "fmt/format.h"
-#include <netdb.h>
 #include <string>
-#include <sys/socket.h>
 
 namespace srsran {
 
@@ -25,8 +24,8 @@ class transport_layer_address
 public:
   /// Underlying native type used to store a transport layer address.
   struct native_type {
-    const struct sockaddr* addr;
-    socklen_t              addrlen;
+    struct sockaddr* addr;
+    socklen_t        addrlen;
   };
 
   transport_layer_address() = default;
@@ -48,7 +47,7 @@ public:
   std::string to_bitstring() const;
 
   /// Extracts the POSIX representation of the transport layer address.
-  native_type native() const { return {(const struct sockaddr*)&addr_storage, addrlen}; }
+  native_type native() const { return {(struct sockaddr*)&addr_storage, addrlen}; }
 
   /// Compares two transport_layer_addresses.
   bool operator==(const transport_layer_address& other) const;
@@ -85,14 +84,16 @@ struct formatter<srsran::transport_layer_address> : public formatter<std::string
   auto format(const srsran::transport_layer_address& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    char ip_addr[NI_MAXHOST];
-    auto native_repr = s.native();
-    if (::getnameinfo(native_repr.addr, native_repr.addrlen, ip_addr, sizeof(ip_addr), nullptr, 0, NI_NUMERICHOST) !=
-        0) {
-      return format_to(ctx.out(), "invalid_addr");
+    std::array<char, NI_MAXHOST> ip_addr;
+    int                          port;
+    auto                         native_repr = s.native();
+    if (not srsran::getnameinfo(*native_repr.addr, native_repr.addrlen, ip_addr, port)) {
+      return format_to(ctx.out(), "invalid");
     }
-
-    return format_to(ctx.out(), "{}", ip_addr);
+    if (port != 0) {
+      return format_to(ctx.out(), "{}:{}", ip_addr.data(), port);
+    }
+    return format_to(ctx.out(), "{}", ip_addr.data());
   }
 };
 

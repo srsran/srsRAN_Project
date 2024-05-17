@@ -17,6 +17,7 @@
 namespace srsran {
 
 constexpr uint16_t NGAP_PPID  = 60; // NGAP PPID, see TS 38.412, section 7.
+constexpr uint16_t F1AP_PPID  = 62; // F1AP PPID, see TS 38.472, section 7.
 constexpr uint16_t E2_CP_PPID = 70; // E2-CP PPID assigned by IANA
 constexpr uint16_t E2_UP_PPID = 71; // E2-UP PPID assigned by IANA
 constexpr uint16_t E2_DU_PPID = 72; // E2-DU PPID assigned by IANA
@@ -87,28 +88,5 @@ public:
 
 class sctp_network_gateway : public sctp_network_gateway_controller, public sctp_network_gateway_data_handler
 {};
-
-class sctp_network_association_factory
-{
-public:
-  virtual ~sctp_network_association_factory() = default;
-
-  virtual std::unique_ptr<network_gateway_data_notifier> create() = 0;
-};
-
-class sctp_network_server : public network_gateway_controller
-{
-public:
-  /// \brief Start listening on socket.
-  virtual bool listen() = 0;
-
-  /// \brief Return the port on which the socket is listening.
-  ///
-  /// In case the gateway was configured to listen on port 0, i.e. the operating system shall pick a random free port,
-  /// this function can be used to get the actual port number.
-  virtual optional<uint16_t> get_listen_port() = 0;
-
-  virtual void attach_association_handler(sctp_network_association_factory& factory) = 0;
-};
 
 } // namespace srsran

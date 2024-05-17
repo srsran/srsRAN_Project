@@ -29,7 +29,7 @@ sockaddr_searcher::sockaddr_searcher(const std::string& address, int port, srslo
   std::string port_str = std::to_string(port);
   int         ret      = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
   if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", address, gai_strerror(ret));
+    logger.error("Error in \"getaddrinfo\" for \"{}\":{}. Cause: {}", address, port, gai_strerror(ret));
     results = nullptr;
     return;
   }
@@ -72,13 +72,11 @@ bool sctp_network_gateway_common_impl::close_socket()
   return socket.close();
 }
 
-expected<sctp_socket>
-sctp_network_gateway_common_impl::create_socket(int ai_family, int ai_socktype, int ai_protocol) const
+expected<sctp_socket> sctp_network_gateway_common_impl::create_socket(int ai_family, int ai_socktype) const
 {
   sctp_socket_params params;
   params.ai_family         = ai_family;
   params.ai_socktype       = ai_socktype;
-  params.ai_protocol       = ai_protocol;
   params.reuse_addr        = node_cfg.reuse_addr;
   params.non_blocking_mode = node_cfg.non_blocking_mode;
   params.rx_timeout        = std::chrono::seconds(node_cfg.rx_timeout_sec);
@@ -98,7 +96,7 @@ bool sctp_network_gateway_common_impl::common_create_and_bind()
   struct addrinfo*  result = nullptr;
   for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // create SCTP socket
-    auto outcome = this->create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    auto outcome = this->create_socket(result->ai_family, result->ai_socktype);
     if (outcome.is_error()) {
       if (errno == ESOCKTNOSUPPORT) {
         // There is no support for this type of socket. Stop search.
@@ -119,12 +117,18 @@ bool sctp_network_gateway_common_impl::common_create_and_bind()
   }
 
   if (not socket.is_open()) {
-    fmt::print("Failed to bind SCTP socket to {}:{}. {}\n", node_cfg.bind_address, node_cfg.bind_port, strerror(errno));
-    logger.error("Failed to bind SCTP socket to {}:{}. {}", node_cfg.bind_address, node_cfg.bind_port, strerror(errno));
+    fmt::print("Failed to bind SCTP socket to \"{}\":{}. errno=\"{}\"\n",
+               node_cfg.bind_address,
+               node_cfg.bind_port,
+               strerror(errno));
+    logger.error("Failed to bind SCTP socket to \"{}\":{}. errno=\"{}\"",
+                 node_cfg.bind_address,
+                 node_cfg.bind_port,
+                 strerror(errno));
     return false;
   }
 
-  logger.debug("Binding successful");
+  logger.debug("Binding to \"{}\":{} was successful", node_cfg.bind_address, node_cfg.bind_port);
 
   return true;
 }

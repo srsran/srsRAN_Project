@@ -43,15 +43,15 @@ private:
   const sctp_network_server_impl::sctp_associaton_context* assoc = nullptr;
 };
 
-sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int                    assoc_id_,
-                                                                           const struct sockaddr& saddr_,
-                                                                           socklen_t              saddr_len_) :
-  assoc_id(assoc_id_), addr(transport_layer_address::create_from_sockaddr(saddr_, saddr_len_))
-{
-}
+sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int assoc_id_) : assoc_id(assoc_id_) {}
 
-sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_node_config& sctp_cfg_) :
-  sctp_network_gateway_common_impl(sctp_cfg_), temp_buffer(network_gateway_sctp_max_len)
+sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_node_config& sctp_cfg_,
+                                                   io_broker&                              broker_,
+                                                   sctp_network_association_factory&       assoc_factory_) :
+  sctp_network_gateway_common_impl(sctp_cfg_),
+  broker(broker_),
+  assoc_factory(assoc_factory_),
+  temp_buffer(network_gateway_sctp_max_len)
 {
 }
 
@@ -66,12 +66,13 @@ void sctp_network_server_impl::receive()
 {
   struct sctp_sndrcvinfo sri       = {};
   int                    msg_flags = 0;
-
-  std::array<uint8_t, network_gateway_sctp_max_len> tmp_mem;
+  // fromlen is an in/out variable in sctp_recvmsg.
+  sockaddr_storage msg_src_addr;
+  socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
 
   int rx_bytes = ::sctp_recvmsg(socket.fd().value(),
-                                tmp_mem.data(),
-                                network_gateway_sctp_max_len,
+                                temp_buffer.data(),
+                                temp_buffer.size(),
                                 (struct sockaddr*)&msg_src_addr,
                                 &msg_src_addrlen,
                                 &sri,
@@ -90,43 +91,14 @@ void sctp_network_server_impl::receive()
     return;
   }
 
-  // Check if association already exists.
-  auto assoc_it = associations.find(sri.sinfo_assoc_id);
-  if (assoc_it == associations.end()) {
-    assoc_it = handle_new_sctp_association(sri.sinfo_assoc_id);
-    if (assoc_it == associations.end()) {
-      logger.error(
-          "fd={} assoc_id={}: Unable to create new association handler", socket.fd().value(), sri.sinfo_assoc_id);
-      return;
-    }
-  }
-
-  span<const uint8_t> payload(tmp_mem.data(), rx_bytes);
+  span<const uint8_t> payload(temp_buffer.data(), rx_bytes);
   if (msg_flags & MSG_NOTIFICATION) {
-    handle_notification(assoc_it, payload);
+    handle_notification(payload, sri, (const sockaddr&)msg_src_addr, msg_src_addrlen);
   } else {
-    handle_data(assoc_it, payload);
+    handle_data(sri.sinfo_assoc_id, payload);
   }
 
   handle_pending_sender_close_commands();
-}
-
-std::unordered_map<int, sctp_network_server_impl::sctp_associaton_context>::iterator
-sctp_network_server_impl::handle_new_sctp_association(int assoc_id)
-{
-  const socket_name_info addr = get_nameinfo((struct sockaddr&)msg_src_addr, msg_src_addrlen);
-
-  logger.debug(
-      "fd={} assoc_id={}: New SCTP association from {}:{}", socket.fd().value(), assoc_id, addr.address, addr.port);
-
-  sctp_associaton_context context{assoc_id, (struct sockaddr&)msg_src_addr, msg_src_addrlen};
-  context.sctp_data_recv_notifier = assoc_factory->create();
-  if (context.sctp_data_recv_notifier == nullptr) {
-    return associations.end();
-  }
-
-  auto ret = associations.insert(std::make_pair(assoc_id, std::move(context)));
-  return ret.first;
 }
 
 void sctp_network_server_impl::handle_pending_sender_close_commands()
@@ -134,8 +106,8 @@ void sctp_network_server_impl::handle_pending_sender_close_commands()
   // Note: This is called from the SCTP recv thread.
 
   // Check if any sender released its connection.
-  int assoc_to_rem;
-  while (pending_cmds.try_dequeue(assoc_to_rem)) {
+  int assoc_to_rem = -1;
+  while (pending_assocs_to_rem.try_dequeue(assoc_to_rem)) {
     auto assoc_it = associations.find(assoc_to_rem);
     if (assoc_it == associations.end()) {
       logger.error("assoc={}: Removing nonexistent SCTP association", assoc_to_rem);
@@ -145,7 +117,7 @@ void sctp_network_server_impl::handle_pending_sender_close_commands()
     // Mark that the sender has no handle for this association.
     assoc_it->second.sender_closed = true;
 
-    handle_association_shutdown(assoc_it);
+    handle_association_shutdown(assoc_it->first);
   }
 }
 
@@ -154,23 +126,29 @@ void sctp_network_server_impl::handle_socket_error()
   // TODO: Notify associations and handle socket shutdown.
 }
 
-void sctp_network_server_impl::handle_data(association_iterator assoc_it, span<const uint8_t> payload)
+void sctp_network_server_impl::handle_data(int assoc_id, span<const uint8_t> payload)
 {
-  logger.debug(
-      "fd={} assoc_id={}: Received {} bytes on SCTP socket", socket.fd().value(), assoc_it->first, payload.size());
+  auto assoc_it = associations.find(assoc_id);
+  if (assoc_it == associations.end()) {
+    logger.error("fd={} assoc={}: Received data on unknown SCTP association", socket.fd().value(), assoc_id);
+    return;
+  }
+
+  logger.debug("fd={} assoc={}: Received {} bytes", socket.fd().value(), assoc_id, payload.size());
 
   // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
   assoc_it->second.sctp_data_recv_notifier->on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
-void sctp_network_server_impl::handle_notification(association_iterator assoc_it, span<const uint8_t> payload)
+void sctp_network_server_impl::handle_notification(span<const uint8_t>           payload,
+                                                   const struct sctp_sndrcvinfo& sri,
+                                                   const sockaddr&               src_addr,
+                                                   socklen_t                     src_addr_len)
 {
-  logger.debug("fd={} assoc_id={}: Received notification on SCTP socket", socket.fd().value(), assoc_it->first);
-
   const auto* notif             = reinterpret_cast<const union sctp_notification*>(payload.data());
   uint32_t    notif_header_size = sizeof(notif->sn_header);
   if (notif_header_size > payload.size_bytes()) {
-    logger.error("fd={}: Notification msg size ({} B) is smaller than notification header size ({} B)",
+    logger.error("fd={}: SCTP Notification msg size ({} B) is smaller than notification header size ({} B)",
                  socket.fd().value(),
                  payload.size_bytes(),
                  notif_header_size);
@@ -191,12 +169,12 @@ void sctp_network_server_impl::handle_notification(association_iterator assoc_it
 
       switch (n->sac_state) {
         case SCTP_COMM_UP:
+          handle_sctp_comm_up(*n, src_addr, src_addr_len);
           state = "COMM UP";
-          // TODO: Handle.
           break;
         case SCTP_COMM_LOST:
           state = "COMM_LOST";
-          handle_association_shutdown(assoc_it);
+          handle_association_shutdown(n->sac_assoc_id);
           break;
         case SCTP_RESTART:
           state = "RESTART";
@@ -206,16 +184,19 @@ void sctp_network_server_impl::handle_notification(association_iterator assoc_it
           break;
         case SCTP_CANT_STR_ASSOC:
           state = "CAN'T START ASSOC";
-          handle_association_shutdown(assoc_it);
+          handle_association_shutdown(n->sac_assoc_id);
           break;
       }
 
-      logger.debug("SCTP_ASSOC_CHANGE notif: state: {}, error code: {}, out streams: {}, in streams: {}, assoc id: {}",
-                   state,
-                   n->sac_error,
-                   n->sac_outbound_streams,
-                   n->sac_inbound_streams,
-                   n->sac_assoc_id);
+      if (n->sac_state != SCTP_COMM_UP) {
+        logger.debug(
+            "SCTP_ASSOC_CHANGE notif: state: {}, error code: {}, out streams: {}, in streams: {}, assoc id: {}",
+            state,
+            n->sac_error,
+            n->sac_outbound_streams,
+            n->sac_inbound_streams,
+            n->sac_assoc_id);
+      }
       break;
     }
 
@@ -225,8 +206,7 @@ void sctp_network_server_impl::handle_notification(association_iterator assoc_it
         return;
       }
       const struct sctp_shutdown_event* n = &notif->sn_shutdown_event;
-      logger.debug("SCTP_SHUTDOWN_EVENT notif: assoc id: {}", n->sse_assoc_id);
-      handle_association_shutdown(assoc_it);
+      handle_association_shutdown(n->sse_assoc_id);
       break;
     }
 
@@ -236,8 +216,48 @@ void sctp_network_server_impl::handle_notification(association_iterator assoc_it
   }
 }
 
-void sctp_network_server_impl::handle_association_shutdown(association_iterator assoc_it)
+void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_change& assoc_change,
+                                                   const sockaddr&                 src_addr,
+                                                   socklen_t                       src_addr_len)
 {
+  int  assoc_id = assoc_change.sac_assoc_id;
+  auto it       = associations.find(assoc_id);
+  if (it != associations.end()) {
+    logger.warning(
+        "fd={} assoc={}: SCTP COMM UP received but association already existed", socket.fd().value(), assoc_id);
+    return;
+  }
+
+  // Add an entry for the association in the lookup
+  auto result = associations.emplace(assoc_id, assoc_id);
+  if (not result.second) {
+    logger.error("fd={} assoc={}: Unable to create new SCTP association", socket.fd().value(), assoc_id);
+    return;
+  }
+
+  // Fill the association context.
+  sctp_associaton_context& assoc_ctxt = result.first->second;
+  assoc_ctxt.addr                     = transport_layer_address::create_from_sockaddr(src_addr, src_addr_len);
+  assoc_ctxt.sctp_data_recv_notifier  = assoc_factory.create();
+  if (assoc_ctxt.sctp_data_recv_notifier == nullptr) {
+    associations.erase(assoc_id);
+    logger.error("fd={} assoc={}: Unable to create a new SCTP association handler", socket.fd().value(), assoc_id);
+    return;
+  }
+
+  logger.info("fd={} assoc={} src={}: New SCTP association created", socket.fd().value(), assoc_id, assoc_ctxt.addr);
+}
+
+void sctp_network_server_impl::handle_association_shutdown(int assoc_id)
+{
+  auto assoc_it = associations.find(assoc_id);
+  if (assoc_it == associations.end()) {
+    logger.error("fd={} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
+                 socket.fd().value(),
+                 assoc_id);
+    return;
+  }
+
   // Signal to the SCTP association Rx handler that the Rx channel is closed.
   assoc_it->second.sctp_data_recv_notifier.reset();
 
@@ -245,7 +265,10 @@ void sctp_network_server_impl::handle_association_shutdown(association_iterator 
     // Sender has already released its notifier. It is safe to delete the association instance.
     associations.erase(assoc_it);
   } else {
-    logger.debug("fd={} assoc={}: SCTP association connection was lost", socket.fd().value(), assoc_it->first);
+    logger.info("fd={} assoc={} src={}: SCTP association was shut down",
+                socket.fd().value(),
+                assoc_it->first,
+                assoc_it->second.addr);
   }
 }
 
@@ -274,7 +297,7 @@ void sctp_network_server_impl::close_sctp_sender(const sctp_associaton_context& 
   }
 
   // Notify that the association can now be deleted.
-  pending_cmds.enqueue(assoc.assoc_id);
+  pending_assocs_to_rem.enqueue(assoc.assoc_id);
 }
 
 bool sctp_network_server_impl::send_sctp_data(const sctp_associaton_context& assoc, byte_buffer pdu)
@@ -314,7 +337,27 @@ bool sctp_network_server_impl::send_sctp_data(const sctp_associaton_context& ass
 
 bool sctp_network_server_impl::listen()
 {
-  return socket.listen();
+  if (node_cfg.bind_address.empty()) {
+    logger.error("Cannot listen to new SCTP associations if an address to bind to is not provided");
+    return false;
+  }
+
+  if (not socket.listen()) {
+    return false;
+  }
+
+  if (not subscribe_to_broker()) {
+    return false;
+  }
+
+  if (logger.debug.enabled()) {
+    logger.debug("fd={}: Listening for new SCTP associations on {}:{}...",
+                 socket.fd().value(),
+                 node_cfg.bind_address,
+                 get_listen_port());
+  }
+
+  return true;
 }
 
 optional<uint16_t> sctp_network_server_impl::get_listen_port()
@@ -322,7 +365,7 @@ optional<uint16_t> sctp_network_server_impl::get_listen_port()
   return socket.get_listen_port();
 }
 
-bool sctp_network_server_impl::subscribe_to(io_broker& broker)
+bool sctp_network_server_impl::subscribe_to_broker()
 {
   io_sub = broker.register_fd(
       socket.fd().value(),
@@ -334,7 +377,23 @@ bool sctp_network_server_impl::subscribe_to(io_broker& broker)
   return io_sub.registered();
 }
 
-void sctp_network_server_impl::attach_association_handler(sctp_network_association_factory& factory)
+std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp_network_node_config&   sctp_cfg,
+                                                                      io_broker&                        broker_,
+                                                                      sctp_network_association_factory& assoc_factory_)
 {
-  assoc_factory = &factory;
+  // Validate arguments
+  if (sctp_cfg.bind_address.empty()) {
+    srslog::fetch_basic_logger("SCTP-GW").error("Cannot create SCTP server without bind address");
+    return nullptr;
+  }
+
+  // Create a SCTP server instance.
+  std::unique_ptr<sctp_network_server_impl> server{new sctp_network_server_impl(sctp_cfg, broker_, assoc_factory_)};
+
+  // Create a socket and bind it to the provided address.
+  if (not server->create_and_bind()) {
+    return nullptr;
+  }
+
+  return server;
 }

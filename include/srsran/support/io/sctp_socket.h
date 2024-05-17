@@ -22,7 +22,6 @@ namespace srsran {
 struct sctp_socket_params {
   int                  ai_family;
   int                  ai_socktype;
-  int                  ai_protocol;
   bool                 reuse_addr        = false;
   bool                 non_blocking_mode = false;
   std::chrono::seconds rx_timeout{0};

@@ -31,10 +31,4 @@ struct sctp_network_gateway_creation_message {
 /// Creates an instance of an network gateway
 std::unique_ptr<sctp_network_gateway> create_sctp_network_gateway(sctp_network_gateway_creation_message msg);
 
-struct sctp_network_server_config {
-  sctp_network_node_config sctp;
-};
-
-std::unique_ptr<sctp_network_server> create_sctp_network_server(const sctp_network_server_config& config);
-
 } // namespace srsran

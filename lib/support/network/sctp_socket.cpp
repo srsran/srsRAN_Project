@@ -154,7 +154,7 @@ sctp_socket::sctp_socket() : logger(srslog::fetch_basic_logger("SCTP-GW")) {}
 expected<sctp_socket> sctp_socket::create(const sctp_socket_params& params)
 {
   sctp_socket socket;
-  socket.sock_fd = unique_fd{::socket(params.ai_family, params.ai_socktype, params.ai_protocol)};
+  socket.sock_fd = unique_fd{::socket(params.ai_family, params.ai_socktype, IPPROTO_SCTP)};
   if (not socket.sock_fd.is_open()) {
     int ret = errno;
     if (ret == ESOCKTNOSUPPORT) {
@@ -256,6 +256,11 @@ SRSRAN_NODISCARD bool sctp_socket::connect(struct sockaddr& ai_addr, const sockl
     if (not set_non_blocking()) {
       return false;
     }
+  }
+
+  if (logger.debug.enabled()) {
+    socket_name_info addr = get_nameinfo(ai_addr, ai_addrlen);
+    logger.debug("fd={}: Connected to {}:{}", sock_fd.value(), addr.address, addr.port);
   }
 
   return true;

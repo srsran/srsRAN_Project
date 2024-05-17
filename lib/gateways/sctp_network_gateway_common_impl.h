@@ -50,7 +50,7 @@ protected:
   bool close_socket();
 
   // Creates an SCTP socket with the provided protocol.
-  SRSRAN_NODISCARD expected<sctp_socket> create_socket(int ai_family, int ai_socktype, int ai_protocol) const;
+  SRSRAN_NODISCARD expected<sctp_socket> create_socket(int ai_family, int ai_socktype) const;
 
   bool common_create_and_bind();
 
