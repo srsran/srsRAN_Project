@@ -24,7 +24,7 @@ ru_ofh:
   compr_bitwidth_prach: 9                                         # PRACH IQ samples bitwidth after compression.
   enable_ul_static_compr_hdr: true                                # Configures if the compression header is present for uplink User-Plane messages (false) or not present (true).
   enable_dl_static_compr_hdr: true                                # Configures if the compression header is present for downlink User-Plane messages (false) or not present (true).
-  iq_scaling: 5.5                                                # IQ samples scaling factor applied before compression, should be a positive value smaller than 10.
+  iq_scaling: 5.5                                                 # IQ samples scaling factor applied before compression, should be a positive value smaller than 10.
   cells:
     - network_interface: enp1s0f0                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: 70:b3:d5:e1:5b:06                              # RU MAC address.
@@ -51,10 +51,10 @@ cell_cfg:
     zero_correlation_zone: 0                                      # Zero correlation zone.
     prach_frequency_start: 0                                      # Offset in PRBs of lowest PRACH transmission occasion in frequency domain respective to PRB 0.
   tdd_ul_dl_cfg:
-    dl_ul_tx_period: 10                     # Optional INT (10). Sets the TDD pattern periodicity in slots. The combination of this value and the chosen numerology must lead to a TDD periodicity of 0.5, >
-    nof_dl_slots: 7                         # Optional INT (6). Number of consecutive full Downlink slots. Supported: [0-80].
-    nof_dl_symbols: 6                       # Optional INT (0). Number of Downlink symbols at the beginning of the slot following full Downlink slots. Supported: [0-13].
-    nof_ul_slots: 2                         # Optional INT (3). Number of consecutive full Uplink slots. Supported: [0 - 80].
+    dl_ul_tx_period: 10                                           # Optional INT (10). Sets the TDD pattern periodicity in slots. The combination of this value and the chosen numerology must lead to a TDD periodicity of 0.5, >
+    nof_dl_slots: 7                                               # Optional INT (6). Number of consecutive full Downlink slots. Supported: [0-80].
+    nof_dl_symbols: 6                                             # Optional INT (0). Number of Downlink symbols at the beginning of the slot following full Downlink slots. Supported: [0-13].
+    nof_ul_slots: 2                                               # Optional INT (3). Number of consecutive full Uplink slots. Supported: [0 - 80].
     nof_ul_symbols: 4
 
 log:
