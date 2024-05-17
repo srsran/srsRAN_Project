@@ -557,4 +557,5 @@ retina setup:
 retina post:
   stage: .post
   extends: .demolition
-  dependencies: []
+  dependencies: 
+    - load retina variables
