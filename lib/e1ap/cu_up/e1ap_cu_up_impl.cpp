@@ -252,6 +252,22 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   bearer_context_mod.ue_index = ue_ctxt.ue_ids.ue_index;
 
+  // security info
+  if (msg->security_info_present) {
+    bearer_context_mod.security_info.emplace();
+    bearer_context_mod.security_info->security_algorithm.ciphering_algo =
+        e1ap_asn1_to_ciphering_algorithm(msg->security_info.security_algorithm.ciphering_algorithm);
+
+    if (msg->security_info.security_algorithm.integrity_protection_algorithm_present) {
+      bearer_context_mod.security_info->security_algorithm.integrity_protection_algorithm =
+          e1ap_asn1_to_integrity_algorithm(msg->security_info.security_algorithm.integrity_protection_algorithm);
+    }
+    bearer_context_mod.security_info->up_security_key.encryption_key =
+        msg->security_info.up_securitykey.encryption_key.copy();
+    bearer_context_mod.security_info->up_security_key.integrity_protection_key =
+        msg->security_info.up_securitykey.integrity_protection_key.copy();
+  }
+
   // sys bearer context mod request
   if (msg->sys_bearer_context_mod_request_present) {
     // We only support NG-RAN Bearer

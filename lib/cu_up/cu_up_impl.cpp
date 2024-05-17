@@ -11,12 +11,9 @@
 #include "cu_up_impl.h"
 #include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/support/io/io_broker.h"
-#include <condition_variable>
 #include <future>
 
 using namespace srsran;
@@ -352,6 +349,12 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   response.success                                   = true;
 
   bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
+
+  if (msg.security_info.has_value()) {
+    security::sec_as_config security_info;
+    fill_sec_as_config(security_info, msg.security_info.value());
+    ue_ctxt->set_security_config(security_info);
+  }
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified

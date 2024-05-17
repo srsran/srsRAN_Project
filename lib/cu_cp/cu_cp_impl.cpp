@@ -226,8 +226,13 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
+  rrc_ue_interface*          rrc_ue  = rrc_du_adapters.at(get_du_index_from_ue_index(ue_index)).find_rrc_ue(ue_index);
+  security::security_context sec_ctx = rrc_ue->get_rrc_ue_security_context();
+  security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
+
   return routine_mng.start_reestablishment_context_modification_routine(
       ue_index,
+      up_sec,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(get_du_index_from_ue_index(ue_index)).get_f1ap_interface().get_f1ap_ue_context_manager(),
       ue->get_rrc_ue_notifier(),

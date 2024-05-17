@@ -12,6 +12,7 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/five_qi.h"
