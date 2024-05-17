@@ -87,14 +87,17 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
                      cu_tun->dl_tnl_info,
                      ul_up_tnl_info);
     }
+    cu_tun->detach_du_handler(cu_tun->dl_tnl_info.value());
   } else {
-    logger_cu.warning("No DL-TEID provided to disconnect DU F1-U bearer from CU handler. UL GTP Tunnel={}",
-                      ul_up_tnl_info);
+    logger_cu.warning(
+        "Could not find DU F1-U bearer from which to disconect CU bearer, no DL-TEID info present at CU bearer. "
+        "UL GTP Tunnel={}",
+        ul_up_tnl_info);
   }
 
   // Remove DL path
-  logger_cu.debug("Removing CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
   cu_map.erase(bearer_it);
+  logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
 }
 
 std::unique_ptr<srs_du::f1u_tx_pdu_notifier>
@@ -143,5 +146,6 @@ void f1u_local_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
     cu_bearer_it->second->detach_du_handler(dl_up_tnl_info);
   }
 
+  du_bearer_it->second->detach_cu_handler();
   du_map.erase(du_bearer_it);
 }

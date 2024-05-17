@@ -32,8 +32,9 @@ struct drb_context {
   gtpu_teid_t f1u_ul_teid;
   f1u_config  f1u_cfg;
 
-  std::unique_ptr<f1u_bearer>  f1u;
-  std::unique_ptr<pdcp_entity> pdcp;
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> f1u_gw_bearer;
+  std::unique_ptr<f1u_bearer>                     f1u;
+  std::unique_ptr<pdcp_entity>                    pdcp;
 
   // Adapter PDCP->SDAP
   // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.

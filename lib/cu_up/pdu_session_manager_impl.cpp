@@ -86,7 +86,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // get DRB from list and create context
   new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
-  auto& new_drb = new_session.drbs.at(drb_to_setup.drb_id);
+  drb_context* new_drb = new_session.drbs.at(drb_to_setup.drb_id).get();
 
   // Create Qos Flows
   uint32_t nof_flow_success = 0;
@@ -201,20 +201,20 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
                                              f1u_ul_teid);
 
-  auto test = f1u_gw.create_cu_bearer(ue_index,
-                                      drb_to_setup.drb_id,
-                                      new_drb->f1u_cfg,
-                                      f1u_ul_tunnel_addr,
-                                      new_drb->f1u_gateway_rx_to_nru_adapter,
-                                      ue_ul_exec,
-                                      ue_dl_timer_factory,
-                                      ue_inactivity_timer);
+  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb_to_setup.drb_id,
+                                                   new_drb->f1u_cfg,
+                                                   f1u_ul_tunnel_addr,
+                                                   new_drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec,
+                                                   ue_dl_timer_factory,
+                                                   ue_inactivity_timer);
 
   new_drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
                                               new_drb->drb_id,
                                               f1u_ul_tunnel_addr,
                                               new_drb->f1u_cfg,
-                                              *test,
+                                              *new_drb->f1u_gw_bearer,
                                               new_drb->f1u_to_pdcp_adapter,
                                               new_drb->f1u_to_pdcp_adapter,
                                               ue_dl_timer_factory,

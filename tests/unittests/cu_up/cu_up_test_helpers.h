@@ -244,8 +244,7 @@ public:
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     // bearer.connect_f1u_rx_sdu_notifier(rx_notifier);
-    return nullptr;
-    /// return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
+    return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
   }
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,

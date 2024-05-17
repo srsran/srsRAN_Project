@@ -90,6 +90,7 @@ protected:
     srslog::init();
 
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
     // create worker thread and executer
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
