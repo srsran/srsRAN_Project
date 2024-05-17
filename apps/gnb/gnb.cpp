@@ -194,6 +194,10 @@ static void register_app_logs(const log_appconfig&            log_cfg,
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
 
+  auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
+  config_logger.set_level(srslog::str_to_basic_level(log_cfg.config_level));
+  config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
   auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
   metrics_logger.set_level(srslog::str_to_basic_level(log_cfg.metrics_level));
   metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -258,6 +262,14 @@ int main(int argc, char** argv)
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
   register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, du_unit_cfg);
+
+  // Log input configuration.
+  srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
+  if (config_logger.debug.enabled()) {
+    config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
+  } else {
+    config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
+  }
 
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {

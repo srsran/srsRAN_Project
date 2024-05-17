@@ -53,6 +53,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       ->capture_default_str()
       ->check(level_check);
   app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
+  app.add_option("--config_level", log_params.config_level, "Config log level")
+      ->capture_default_str()
+      ->check(metric_level_check);
   app.add_option("--metrics_level", log_params.metrics_level, "Metrics log level")
       ->capture_default_str()
       ->check(metric_level_check);
@@ -87,7 +90,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       }
 
       // Config and metrics loggers have only subset of levels.
-      if (option->check_name("--metrics_level")) {
+      if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
         if (log_params.all_level == "error") {
           option->default_val<std::string>("none");
           continue;
