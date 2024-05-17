@@ -10,13 +10,9 @@
 
 #pragma once
 
-#include "pdcp_bearer_logger.h"
 #include "pdcp_sn.h"
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/security/security.h"
+#include "srsran/ran/lcid.h"
 
 namespace srsran {
 
