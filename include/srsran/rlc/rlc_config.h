@@ -677,7 +677,7 @@ struct rlc_tx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
 
   /// Length of the PDCP sequence number. This value is needed to extract the PDCP SN from SDUs to support SDU discard.
-  pdcp_sn_size pdcp_sn_len;
+  pdcp_sn_size pdcp_sn_len = pdcp_sn_size::invalid;
 
   // Timers Ref: 3GPP TS 38.322 Section 7.3
   int32_t t_poll_retx; ///< Poll retx timeout (ms)
@@ -715,7 +715,7 @@ struct rlc_tx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
 
   /// Length of the PDCP sequence number. This value is needed to extract the PDCP SN from SDUs to support SDU discard.
-  pdcp_sn_size pdcp_sn_len;
+  pdcp_sn_size pdcp_sn_len = pdcp_sn_size::invalid;
 
   // Implementation-specific parameters that are not specified by 3GPP
   uint32_t queue_size; ///< SDU queue size

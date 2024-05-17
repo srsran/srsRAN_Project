@@ -16,7 +16,7 @@
 namespace srsran {
 
 /// PDCP NR sequence number field.
-enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18 };
+enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18, invalid };
 inline bool pdcp_sn_size_from_uint(pdcp_sn_size& sn_size, uint16_t num)
 {
   if (num == 12) {
@@ -52,7 +52,12 @@ struct formatter<srsran::pdcp_sn_size> {
   template <typename FormatContext>
   auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", pdcp_sn_size_to_uint(sn_size));
+    switch (sn_size) {
+      case srsran::pdcp_sn_size::invalid:
+        return format_to(ctx.out(), "invalid");
+      default:
+        return format_to(ctx.out(), "{}", pdcp_sn_size_to_uint(sn_size));
+    }
   }
 };
 
