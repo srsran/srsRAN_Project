@@ -10,6 +10,7 @@
 
 #include "du_connection_manager.h"
 #include "../du_processor/du_processor_repository.h"
+#include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
 
 using namespace srsran;
@@ -46,18 +47,32 @@ du_connection_manager::du_connection_manager(du_processor_repository& dus_, task
 std::unique_ptr<f1ap_message_notifier>
 du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
-  du_index_t du_index = dus.add_du(std::move(f1ap_tx_pdu_notifier));
-  if (du_index == du_index_t::invalid) {
-    logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
-    return nullptr;
-  }
+  std::unique_ptr<f1ap_message_notifier> rx_pdu_notifier;
 
-  logger.info("Added TNL connection to DU {}", du_index);
+  // The caller may be in another thread (outside of the CU-CP). Dispatch this task to the CU-CP executor and block
+  // waiting for the task to be executed before returning.
+  sync_execute(
+      cu_cp_exec,
+      [&]() mutable {
+        du_index_t du_index = dus.add_du(std::move(f1ap_tx_pdu_notifier));
+        if (du_index == du_index_t::invalid) {
+          logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
+          return;
+        }
 
-  return std::make_unique<f1_gw_to_cu_cp_pdu_adapter>(
-      *this,
-      du_index,
-      dus.get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
+        logger.info("Added TNL connection to DU {}", du_index);
+
+        rx_pdu_notifier = std::make_unique<f1_gw_to_cu_cp_pdu_adapter>(
+            *this,
+            du_index,
+            dus.get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
+      },
+      [this]() {
+        logger.debug("Failed to dispatch CU-CP DU connection task. Retrying...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      });
+
+  return rx_pdu_notifier;
 }
 
 void du_connection_manager::handle_f1c_gw_connection_closed(du_index_t du_idx)
