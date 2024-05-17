@@ -110,6 +110,7 @@ struct f1ap_drbs_to_be_setup_mod_item {
   f1ap_drb_info                        qos_info;
   std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list;
   srsran::rlc_mode                     rlc_mod;
+  pdcp_sn_size                         pdcp_sn_len = pdcp_sn_size::invalid;
   optional<f1ap_ul_cfg>                ul_cfg;
   optional<f1ap_dupl_activation>       dupl_activation;
 };

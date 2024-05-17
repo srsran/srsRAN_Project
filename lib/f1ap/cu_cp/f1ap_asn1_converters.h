@@ -447,7 +447,32 @@ inline asn1::f1ap::dupl_activation_e f1ap_dupl_activation_to_asn1(const f1ap_dup
   return asn1_dupl_activation;
 }
 
+/// \brief Convert extension fields of drb to be setup item to F1AP ASN.1.
+/// \param[out] ie_exts The ASN.1 struct to store the result.
+/// \param[in] drb_to_be_setup_item The drb to be setup item common type struct.
+inline void
+f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_item_ext_ies_container& ie_exts,
+                                               const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+{
+  ie_exts.dl_pdcp_sn_len = asn1::f1ap::pdcp_sn_len_opts::options::twelve_bits;
+}
+
+/// \brief Convert extension fields of drb to be setup mod item to F1AP ASN.1.
+/// \param[out] ie_exts The ASN.1 struct to store the result.
+/// \param[in] drb_to_be_setup_mod_item The drb to be setup mod item common type struct.
+inline void
+f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_container& ie_exts,
+                                               const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+{
+  ie_exts.dl_pdcp_sn_len_present = true;
+  ie_exts.dl_pdcp_sn_len         = asn1::f1ap::pdcp_sn_len_opts::options::twelve_bits;
+}
+
 /// \brief Convert drbs to be setup/setup mod item to F1AP ASN.1.
+///
+/// This is as shared function for \c drbs_to_be_setup_item_s and \c drbs_to_be_setup_item_s, because of identical
+/// items. Since the \c ie_exts are different, the filling of these extensions is delegated to respective overloads.
+///
 /// \param[out] asn1_drbs_to_be_setup_mod_item The ASN.1 struct to store the result.
 /// \param[in] drbs_to_be_setup_mod_item The drbs to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
@@ -469,6 +494,10 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
 
   // rlc mode
   asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.rlc_mod);
+
+  // pdcp sn size
+  f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1_drb_to_be_setup_mod_item.ie_exts, drb_to_be_setup_mod_item);
+  asn1_drb_to_be_setup_mod_item.ie_exts_present = true;
 
   // ul cfg
   if (drb_to_be_setup_mod_item.ul_cfg.has_value()) {

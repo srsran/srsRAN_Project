@@ -12,6 +12,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
@@ -44,6 +45,7 @@ struct f1ap_drb_to_setup {
   drb_id_t         drb_id;
   optional<lcid_t> lcid;
   drb_rlc_mode     mode;
+  pdcp_sn_size     pdcp_sn_len = pdcp_sn_size::invalid;
   five_qi_t        five_qi;
   uint8_t          arp_priority_level;
   s_nssai_t        s_nssai;

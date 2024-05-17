@@ -17,6 +17,14 @@
 using namespace srsran;
 using namespace srs_du;
 
+constexpr bool equals(const rlc_mode& lhs, const drb_rlc_mode& rhs)
+{
+  return (lhs == rlc_mode::am && rhs == drb_rlc_mode::am) ||
+         (lhs == rlc_mode::um_bidir && rhs == drb_rlc_mode::um_bidir) ||
+         (lhs == rlc_mode::um_unidir_dl && rhs == drb_rlc_mode::um_unidir_dl) ||
+         (lhs == rlc_mode::um_unidir_ul && rhs == drb_rlc_mode::um_unidir_ul);
+}
+
 /// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.
 static lcid_t find_empty_lcid(const std::vector<rlc_bearer_config>& rlc_bearers)
 {
@@ -184,11 +192,35 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     logger.debug("Getting RLC and MAC config for {} from {}", drb.drb_id, drb.five_qi);
     const du_qos_config& qos = qos_config.at(drb.five_qi);
 
+    if (!equals(qos.rlc.mode, drb.mode)) {
+      logger.warning("RLC mode mismatch for {}. QoS config for {} configures {} but CU-UP requested {}",
+                     drb.drb_id,
+                     drb.five_qi,
+                     qos.rlc.mode,
+                     drb.mode);
+      resp.failed_drbs.push_back(drb.drb_id);
+      continue;
+    }
+
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;
     ue_mcg.rlc_bearers.back().rlc_cfg = qos.rlc;
     ue_mcg.rlc_bearers.back().mac_cfg = qos.mac;
+
+    // Update pdcp_sn_len in RLC config
+    auto& rlc_cfg = ue_mcg.rlc_bearers.back().rlc_cfg;
+    switch (rlc_cfg.mode) {
+      case rlc_mode::am:
+        rlc_cfg.am.tx.pdcp_sn_len = drb.pdcp_sn_len;
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        rlc_cfg.um.tx.pdcp_sn_len = drb.pdcp_sn_len;
+        break;
+      default:
+        break;
+    }
   }
   // >> Sort by LCID.
   std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {
