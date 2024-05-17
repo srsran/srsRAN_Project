@@ -71,6 +71,8 @@ struct transmitter_config {
   ru_compression_params prach_compr_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_compr_hdr_enabled;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_compr_hdr_enabled;
   /// \brief Downlink broadcast flag.
   ///
   /// If this flag is enabled the same downlink data will be send to all the configured downlink eAxCs.
