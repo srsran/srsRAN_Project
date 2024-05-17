@@ -32,6 +32,7 @@ pusch_processor_validator_impl::pusch_processor_validator_impl(
 
 bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu) const
 {
+  using namespace units::literals;
   unsigned nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
 
   // The BWP size exceeds the grid size.
@@ -67,6 +68,11 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
 
   // CSI Part 2 size parameters must be compatible with the CSI Part 1 number of bits.
   if (!pdu.uci.csi_part2_size.is_valid(pdu.uci.nof_csi_part1)) {
+    return false;
+  }
+
+  // The limited buffer for rate matching size must not be zero.
+  if (pdu.tbs_lbrm == 0_bytes) {
     return false;
   }
 

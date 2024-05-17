@@ -225,12 +225,16 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   csi_part1_feedback.connect_notifier(notifier_adaptor);
 
   if (has_sch_data) {
+    units::bits tbs            = units::bytes(data.size()).to_bits();
+    unsigned    nof_codeblocks = ldpc::compute_nof_codeblocks(tbs, pdu.codeword.value().ldpc_base_graph);
+    units::bits Nref           = ldpc::compute_N_ref(pdu.tbs_lbrm, nof_codeblocks);
+
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
     decoder_config.base_graph          = pdu.codeword.value().ldpc_base_graph;
     decoder_config.rv                  = pdu.codeword.value().rv;
     decoder_config.mod                 = pdu.mcs_descr.modulation;
-    decoder_config.Nref                = pdu.tbs_lbrm_bytes * 8;
+    decoder_config.Nref                = Nref.value();
     decoder_config.nof_layers          = pdu.nof_tx_layers;
     decoder_config.nof_ldpc_iterations = dec_nof_iterations;
     decoder_config.use_early_stop      = dec_enable_early_stop;
@@ -282,6 +286,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
 void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu, const channel_estimate& ch_estimate) const
 {
+  using namespace units::literals;
   interval<unsigned, true> nof_tx_layers_range(1, ch_estimate.capacity().nof_tx_layers);
 
   // Make sure the configuration is supported.
@@ -305,6 +310,7 @@ void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu, const c
                 "CSI Part 1 UCI field length (i.e., {}) does not correspond with the CSI Part 2 (i.e., {})",
                 pdu.uci.nof_csi_part1,
                 pdu.uci.csi_part2_size);
+  srsran_assert(pdu.tbs_lbrm > 0_bytes, "Invalid LBRM size (0 bytes).");
 
   // Check DC is whithin the CE.
   if (pdu.dc_position.has_value()) {

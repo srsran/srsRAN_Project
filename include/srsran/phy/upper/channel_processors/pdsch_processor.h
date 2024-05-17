@@ -122,12 +122,12 @@ public:
     // ...
     /// LDPC base graph to use for CW generation.
     ldpc_base_graph_type ldpc_base_graph;
-    /// \brief Limits codeblock encoding circular buffer in bytes.
+    /// \brief Transport block size for limited buffer rate match.
     ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS 38.212 section 5.4.2.1, for computing the size of the circular buffer.
-    /// \remark Use <tt> ldpc::MAX_CODEBLOCK_SIZE / 8 </tt> for maximum length.
+    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 section 5.4.2.1, for computing the size of the circular buffer.
+    /// \remark Use <tt> tbs_lbrm_default </tt> for maximum length.
     /// \remark Zero is reserved.
-    unsigned tbs_lbrm_bytes;
+    units::bytes tbs_lbrm;
     /// Indicates the reserved resource elements which cannot carry PDSCH.
     re_pattern_list reserved;
     /// \brief Ratio of PDSCH DM-RS EPRE to SSS EPRE in decibels.

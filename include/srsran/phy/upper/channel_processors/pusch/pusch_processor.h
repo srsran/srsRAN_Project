@@ -126,12 +126,12 @@ public:
     unsigned start_symbol_index;
     /// Time domain allocation number of symbols (1...14).
     unsigned nof_symbols;
-    /// \brief Limits codeblock encoding circular buffer in bytes.
+    /// \brief Transport block size for limited buffer rate match.
     ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS 38.212 section 5.4.2.1, for computing the size of the circular buffer.
-    /// \remark Use <tt> ldpc::MAX_CODEBLOCK_SIZE / 8 </tt> for maximum length.
+    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 section 5.4.2.1, for computing the size of the circular buffer.
+    /// \remark Use <tt> tbs_lbrm_default </tt> for maximum length.
     /// \remark Zero is reserved.
-    unsigned tbs_lbrm_bytes;
+    units::bytes tbs_lbrm;
     /// \brief Direct current position.
     ///
     /// Sets the direct current position relative to Point A.

@@ -128,7 +128,7 @@ void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   proc_pdu.nof_cdm_groups_without_data = fapi_pdu.num_dmrs_cdm_grps_no_data;
   proc_pdu.start_symbol_index          = fapi_pdu.start_symbol_index;
   proc_pdu.nof_symbols                 = fapi_pdu.nr_of_symbols;
-  proc_pdu.tbs_lbrm_bytes              = fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes.value();
+  proc_pdu.tbs_lbrm                    = fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes;
 
   if (fapi_pdu.tx_direct_current_location < 3300) {
     proc_pdu.dc_position = static_cast<unsigned>(fapi_pdu.tx_direct_current_location);

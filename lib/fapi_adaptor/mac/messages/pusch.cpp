@@ -12,6 +12,7 @@
 #include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/ran/sch/sch_constants.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -137,7 +138,7 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
 
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS38.214, Section 6.1.4.1, Table 6.1.4.1-1.
   float              R                  = pusch_pdu.mcs_descr.get_normalised_target_code_rate();
-  const units::bytes tb_size_lbrm_bytes = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes();
+  const units::bytes tb_size_lbrm_bytes = tbs_lbrm_default;
   builder.set_maintenance_v3_frequency_allocation_parameters(
       pusch_pdu.pusch_second_hop_prb,
       get_ldpc_base_graph(R, units::bytes{pusch_pdu.tb_size_bytes}.to_bits()),

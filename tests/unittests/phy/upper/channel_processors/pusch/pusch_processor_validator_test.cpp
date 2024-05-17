@@ -44,7 +44,7 @@ const pusch_processor::pdu_t base_pdu = {nullopt,
                                          rb_allocation::make_type1(15, 1),
                                          0,
                                          14,
-                                         ldpc::MAX_CODEBLOCK_SIZE / 8};
+                                         units::bytes(ldpc::MAX_CODEBLOCK_SIZE / 8)};
 
 struct test_case_t {
   std::function<pusch_processor::pdu_t()> get_pdu;
@@ -139,6 +139,12 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        return pdu;
      },
      R"(Only two CDM groups without data are currently supported\.)"},
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
+       pdu.tbs_lbrm               = units::bytes(0);
+       return pdu;
+     },
+     R"(Invalid LBRM size \(0 bytes\)\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dc_position            = MAX_RB * NRE;
