@@ -35,7 +35,7 @@ class ngap_network_adapter : public ngap_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(const sctp_network_gateway_config& nw_config_) :
+  ngap_network_adapter(const sctp_network_connector_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
@@ -66,7 +66,7 @@ private:
   void on_connection_established() override { test_logger.info("on_connection_established"); }
 
   /// We require a network gateway and a packer
-  const sctp_network_gateway_config&    nw_config;
+  const sctp_network_connector_config&  nw_config;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
   ngap_asn1_packer                      packer;
@@ -92,7 +92,7 @@ protected:
     slice_cfg.sst = 1;
     cfg.slice_configurations.push_back(slice_cfg);
 
-    sctp_network_gateway_config nw_config;
+    sctp_network_connector_config nw_config;
     nw_config.connection_name   = "AMF";
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;

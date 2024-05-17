@@ -9,7 +9,9 @@
 find_package(SCTP REQUIRED)
 
 add_library(srsran_gateway
+        sctp_network_gateway_common_impl.cpp
               sctp_network_gateway_impl.cpp
+              sctp_network_server_impl.cpp
               udp_network_gateway_impl.cpp
               sctp_network_gateway_factory.cpp
               udp_network_gateway_factory.cpp

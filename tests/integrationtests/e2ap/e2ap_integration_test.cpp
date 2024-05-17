@@ -34,7 +34,7 @@ class dummy_e2ap_network_adapter : public e2_message_notifier,
                                    public network_gateway_data_notifier
 {
 public:
-  dummy_e2ap_network_adapter(const sctp_network_gateway_config& nw_config_) :
+  dummy_e2ap_network_adapter(const sctp_network_connector_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
@@ -76,7 +76,7 @@ private:
   void on_connection_established() override { test_logger.info("on_connection_established"); }
 
   /// We require a network gateway and a packer
-  const sctp_network_gateway_config&    nw_config;
+  const sctp_network_connector_config&  nw_config;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
   e2ap_asn1_packer                      packer;
@@ -97,7 +97,7 @@ protected:
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    sctp_network_gateway_config nw_config;
+    sctp_network_connector_config nw_config;
     nw_config.connection_name = "NearRT-RIC";
     nw_config.connect_address = "127.0.0.1";
     nw_config.connect_port    = 36421;
@@ -175,7 +175,7 @@ protected:
     cfg.e2sm_kpm_enabled = true;
     cfg.gnb_id           = {123, 22};
 
-    sctp_network_gateway_config nw_config;
+    sctp_network_connector_config nw_config;
     nw_config.connection_name = "NearRT-RIC";
     nw_config.connect_address = "127.0.0.1";
     nw_config.connect_port    = 36421;

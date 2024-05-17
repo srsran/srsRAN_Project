@@ -196,10 +196,10 @@ public:
   }
 
 private:
-  dlt_pcap&                           pcap_writer;
-  io_broker&                          broker;
-  srsran::sctp_network_gateway_config sctp_params;
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("DU-F1");
+  dlt_pcap&                             pcap_writer;
+  io_broker&                            broker;
+  srsran::sctp_network_connector_config sctp_params;
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("DU-F1");
 
   // Adapter between SCTP client and F1AP ASN.1 packer.
   f1c_rx_pdu_sctp_notifier sctp_f1ap_adapter;

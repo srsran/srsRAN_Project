@@ -20,9 +20,9 @@ class dlt_pcap;
 class io_broker;
 
 struct f1c_cu_gateway_params {
-  dlt_pcap&                           pcap;
-  io_broker&                          broker;
-  srsran::sctp_network_gateway_config sctp;
+  dlt_pcap&                        pcap;
+  io_broker&                       broker;
+  srsran::sctp_network_node_config sctp;
 };
 
 std::unique_ptr<srs_cu_cp::f1c_connection_server> create_f1c_gateway_server(const f1c_cu_gateway_params& params);

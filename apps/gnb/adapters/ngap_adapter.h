@@ -33,8 +33,8 @@ struct ngap_gateway_params {
 
   /// Parameters specific to an SCTP network gateway.
   struct network {
-    io_broker&                          broker;
-    srsran::sctp_network_gateway_config sctp;
+    io_broker&                            broker;
+    srsran::sctp_network_connector_config sctp;
   };
 
   /// PCAP writer for the NGAP messages.

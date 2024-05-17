@@ -20,9 +20,9 @@ class io_broker;
 
 struct f1c_gateway_params {
   /// PCAP writer for the F1AP messages.
-  dlt_pcap&                           pcap;
-  io_broker&                          broker;
-  srsran::sctp_network_gateway_config sctp;
+  dlt_pcap&                             pcap;
+  io_broker&                            broker;
+  srsran::sctp_network_connector_config sctp;
 };
 
 /// \brief Create an F1-C gateway connector that the DU can use to connect to the CU-CP.

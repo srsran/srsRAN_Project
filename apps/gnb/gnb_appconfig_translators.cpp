@@ -197,9 +197,9 @@ srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned of
   return ssb_mtc;
 }
 
-srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const cu_cp_unit_amf_config& config)
+srsran::sctp_network_connector_config srsran::generate_ngap_nw_config(const cu_cp_unit_amf_config& config)
 {
-  srsran::sctp_network_gateway_config out_cfg;
+  srsran::sctp_network_connector_config out_cfg;
   out_cfg.connection_name = "AMF";
   out_cfg.connect_address = config.ip_addr;
   out_cfg.connect_port    = config.port;
@@ -1835,9 +1835,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   return out_cfg;
 }
 
-srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
+srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
 {
-  srsran::sctp_network_gateway_config out_cfg;
+  srsran::sctp_network_connector_config out_cfg;
   out_cfg.connection_name = "NearRT-RIC";
   out_cfg.connect_address = config.e2_cfg.ip_addr;
   out_cfg.connect_port    = config.e2_cfg.port;

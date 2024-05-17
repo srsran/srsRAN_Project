@@ -129,7 +129,7 @@ protected:
     epoll_broker = create_io_broker(io_broker_type::epoll);
 
     // simulate RIC side
-    sctp_network_gateway_config ric_config;
+    sctp_network_connector_config ric_config;
     ric_config.bind_address = "127.0.0.1";
     ric_config.bind_port    = 0;
     ric_config.reuse_addr   = true;
@@ -146,7 +146,7 @@ protected:
     ASSERT_NE(ric_gw_port.value(), 0);
 
     // create E2 agent
-    sctp_network_gateway_config e2agent_config;
+    sctp_network_connector_config e2agent_config;
     e2agent_config.connect_address = ric_config.bind_address;
     e2agent_config.connect_port    = ric_gw_port.value();
     e2agent_config.bind_address    = "127.0.0.101";

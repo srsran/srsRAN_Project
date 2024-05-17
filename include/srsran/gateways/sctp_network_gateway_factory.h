@@ -17,18 +17,24 @@
 namespace srsran {
 
 struct sctp_network_gateway_creation_message {
-  sctp_network_gateway_creation_message(sctp_network_gateway_config            config_,
+  sctp_network_gateway_creation_message(sctp_network_connector_config          config_,
                                         sctp_network_gateway_control_notifier& ctrl_notifier_,
                                         network_gateway_data_notifier&         data_notifier_) :
     config(std::move(config_)), ctrl_notifier(ctrl_notifier_), data_notifier(data_notifier_)
   {
   }
-  sctp_network_gateway_config            config;
+  sctp_network_connector_config          config;
   sctp_network_gateway_control_notifier& ctrl_notifier;
   network_gateway_data_notifier&         data_notifier;
 };
 
 /// Creates an instance of an network gateway
 std::unique_ptr<sctp_network_gateway> create_sctp_network_gateway(sctp_network_gateway_creation_message msg);
+
+struct sctp_network_server_config {
+  sctp_network_node_config sctp;
+};
+
+std::unique_ptr<sctp_network_server> create_sctp_network_server(const sctp_network_server_config& config);
 
 } // namespace srsran
