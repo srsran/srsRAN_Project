@@ -10,7 +10,6 @@
 
 #include "sctp_network_gateway_impl.h"
 #include "srsran/gateways/addr_info.h"
-#include "srsran/support/error_handling.h"
 #include "srsran/support/io/sockets.h"
 #include <netdb.h>
 #include <netinet/sctp.h>
@@ -18,58 +17,6 @@
 #include <utility>
 
 using namespace srsran;
-
-constexpr uint32_t network_gateway_sctp_max_len = 9100;
-
-namespace {
-
-/// Helper generator class that traverses a list of SCTP sockaddr param candidates (ipv4, ipv6, hostnames).
-class sockaddr_searcher
-{
-public:
-  sockaddr_searcher(const std::string& address, int port, srslog::basic_logger& logger)
-  {
-    struct addrinfo hints {};
-    // support ipv4, ipv6 and hostnames
-    hints.ai_family    = AF_UNSPEC;
-    hints.ai_socktype  = SOCK_SEQPACKET;
-    hints.ai_flags     = 0;
-    hints.ai_protocol  = IPPROTO_SCTP;
-    hints.ai_canonname = nullptr;
-    hints.ai_addr      = nullptr;
-    hints.ai_next      = nullptr;
-
-    std::string port_str = std::to_string(port);
-    int         ret      = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
-    if (ret != 0) {
-      logger.error("Getaddrinfo error: {} - {}", address, gai_strerror(ret));
-      results = nullptr;
-      return;
-    }
-    next_result = results;
-  }
-  sockaddr_searcher(const sockaddr_searcher&) = delete;
-  sockaddr_searcher(sockaddr_searcher&&)      = delete;
-  ~sockaddr_searcher() { freeaddrinfo(results); }
-
-  /// Get next candidate or nullptr of search has ended.
-  struct addrinfo* next()
-  {
-    struct addrinfo* ret = next_result;
-    if (next_result != nullptr) {
-      next_result = next_result->ai_next;
-    }
-    return ret;
-  }
-
-private:
-  struct addrinfo* results     = nullptr;
-  struct addrinfo* next_result = nullptr;
-};
-
-} // namespace
-
-// Gateway Client.
 
 sctp_network_gateway_impl::sctp_network_gateway_impl(const sctp_network_connector_config&   config_,
                                                      sctp_network_gateway_control_notifier& ctrl_notfier_,

@@ -36,6 +36,7 @@ private:
   struct addrinfo* next_result = nullptr;
 };
 
+/// This class holds common functionality to the SCTP network server and client implementations.
 class sctp_network_gateway_common_impl
 {
 public:
@@ -43,6 +44,8 @@ public:
   ~sctp_network_gateway_common_impl();
 
 protected:
+  constexpr static uint32_t network_gateway_sctp_max_len = 9100;
+
   // Close socket and unsubscribe it from the io_broker.
   bool close_socket();
 
@@ -52,8 +55,7 @@ protected:
   bool common_create_and_bind();
 
   const sctp_network_node_config node_cfg;
-
-  srslog::basic_logger& logger;
+  srslog::basic_logger&          logger;
 
   sctp_socket socket;
 
