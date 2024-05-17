@@ -45,7 +45,8 @@ static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunct
 // Ensures commutativity of byte_buffer::operator==, and consistency when compared to std::equal(...).
 #define ASSERT_EQ_BUFFER(buffer1, buffer2)                                                                             \
   ASSERT_EQ(buffer1, buffer2);                                                                                         \
-  std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end());                                          \
+  ASSERT_TRUE(std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end()))                              \
+      << fmt::format("\nbuf1: {}\nbuf2: {}", buffer1, buffer2);                                                        \
   ASSERT_EQ(buffer2, buffer1)
 
 namespace {
