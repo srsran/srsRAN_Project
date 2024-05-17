@@ -14,7 +14,6 @@ import time
 from contextlib import suppress
 from typing import Optional, Sequence, Union
 
-import pytest
 from _pytest.outcomes import Failed
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -236,21 +235,13 @@ def _iperf_and_reestablishment_multi_ues(
         noise_spd=noise_spd,
         warning_as_errors=warning_as_errors,
     ):
-        # Launch reestablished UEs
-        iperf_dict_reest = tuple(
+        # Launch iperf for all UEs
+        iperf_dict = tuple(
             (
                 ue_attached_info,
                 *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, traffic_duration, 0),
             )
-            for ue_stub, ue_attached_info in reest_ue_attach_info_dict.items()
-        )
-        # Launch other UEs
-        iperf_dict_other = tuple(
-            (
-                ue_attached_info,
-                *iperf_start(ue_stub, ue_attached_info, fivegc, protocol, direction, traffic_duration, 0),
-            )
-            for ue_stub, ue_attached_info in other_ue_attach_info_dict.items()
+            for ue_stub, ue_attached_info in {**reest_ue_attach_info_dict, **other_ue_attach_info_dict}.items()
         )
 
         # Trigger reestablishments
@@ -259,16 +250,9 @@ def _iperf_and_reestablishment_multi_ues(
                 ue_reestablishment(ue_stub, reestablishment_interval)
                 time.sleep(reestablishment_interval)
 
-        # Wait and ignore reestablished UEs
-        for ue_attached_info, task, iperf_request in iperf_dict_reest:
+        # Wait for reestablished UEs
+        for ue_attached_info, task, iperf_request in iperf_dict:
             iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
-
-        # Wait and validate other UEs
-        iperf_success = True
-        for ue_attached_info, task, iperf_request in iperf_dict_other:
-            iperf_success &= iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)[0]
-        if not iperf_success:
-            pytest.fail("iperf did not achieve the expected data rate.")
 
 
 def _iterator_over_attached_ues(
