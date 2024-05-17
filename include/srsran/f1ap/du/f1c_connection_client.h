@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/f1ap/common/f1ap_common.h"
+#include <memory>
 
 namespace srsran {
 namespace srs_du {

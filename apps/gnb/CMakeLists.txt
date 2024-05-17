@@ -14,6 +14,7 @@ add_executable(gnb
         adapters/e1ap_gateway_local_connector.cpp
         adapters/f1c_gateway_local_connector.cpp
         adapters/f1c_gateway_remote_connector.cpp
+        adapters/f1c_gateway_remote_server.cpp
         adapters/e2_gateway_remote_connector.cpp
         adapters/ngap_adapter.cpp
         )

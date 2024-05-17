@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
+#include "srsran/f1ap/cu_cp/f1c_connection_server.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 
 namespace srsran {
@@ -18,14 +19,12 @@ namespace srsran {
 class dlt_pcap;
 class io_broker;
 
-struct f1c_gateway_params {
-  /// PCAP writer for the F1AP messages.
+struct f1c_cu_gateway_params {
   dlt_pcap&                           pcap;
   io_broker&                          broker;
   srsran::sctp_network_gateway_config sctp;
 };
 
-/// \brief Create an F1-C gateway connector that the DU can use to connect to the CU-CP.
-std::unique_ptr<srs_du::f1c_connection_client> create_f1c_gateway_connector(const f1c_gateway_params& params);
+std::unique_ptr<srs_cu_cp::f1c_connection_server> create_f1c_gateway_server(const f1c_cu_gateway_params& params);
 
 } // namespace srsran
