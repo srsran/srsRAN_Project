@@ -151,10 +151,6 @@ public:
 
   /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
   virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
-
-  /// \brief Get the DU index.
-  /// \return The DU index.
-  virtual du_index_t get_du_index() = 0;
 };
 
 /// Methods to get statistics of the F1AP.

@@ -41,8 +41,6 @@ public:
     return du_setup_hdlr->handle_du_setup_request(msg);
   }
 
-  du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
-
   ue_index_t on_new_cu_cp_ue_required() override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");

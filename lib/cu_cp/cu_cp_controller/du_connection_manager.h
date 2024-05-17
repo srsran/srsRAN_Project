@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace srs_cu_cp {

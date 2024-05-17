@@ -115,8 +115,6 @@ class dummy_f1ap_du_processor_notifier : public srs_cu_cp::f1ap_du_processor_not
 public:
   dummy_f1ap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
-
   du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
   {
     logger.info("Received F1SetupRequest");

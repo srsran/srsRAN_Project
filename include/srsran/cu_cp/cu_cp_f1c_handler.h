@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include <memory>
 
 namespace srsran {
 namespace srs_cu_cp {
