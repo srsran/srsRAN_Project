@@ -23,6 +23,7 @@ class e2_connection_client;
 class e2_metric_connector_manager;
 class f1ap_message_notifier;
 class console_helper;
+class metrics_log_helper;
 class mac_pcap;
 class timer_manager;
 class upper_phy_rg_gateway;
@@ -46,6 +47,7 @@ std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&              
                                               mac_pcap&                             mac_p,
                                               rlc_pcap&                             rlc_p,
                                               console_helper&                       console_helper,
+                                              metrics_log_helper&                   metrics_logger,
                                               e2_connection_client&                 e2_client_handler,
                                               e2_metric_connector_manager&          e2_metric_connectors,
                                               rlc_metrics_notifier&                 rlc_json_metrics,

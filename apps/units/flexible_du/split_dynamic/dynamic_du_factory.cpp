@@ -12,6 +12,7 @@
 #include "apps/gnb/gnb_appconfig_translators.h"
 #include "apps/services/console_helper.h"
 #include "apps/services/e2_metric_connector_manager.h"
+#include "apps/services/metrics_log_helper.h"
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
@@ -89,6 +90,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       mac_pcap&                             mac_p,
                                                       rlc_pcap&                             rlc_p,
                                                       console_helper&                       console_helper,
+                                                      metrics_log_helper&                   metrics_logger,
                                                       e2_connection_client&                 e2_client_handler,
                                                       e2_metric_connector_manager&          e2_metric_connectors,
                                                       rlc_metrics_notifier&                 rlc_json_metrics,
@@ -115,6 +117,10 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
 
     // Connect Console Aggregator to DU Scheduler UE metrics.
     sched_source->add_subscriber(console_helper.get_stdout_metrics_notifier());
+
+    if (metrics_logger.is_enabled()) {
+      sched_source->add_subscriber(metrics_logger);
+    }
 
     // Connect JSON metrics reporter to DU Scheduler UE metrics.
     if (gnb_cfg.metrics_cfg.enable_json_metrics) {
@@ -181,6 +187,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
       if (du_high.metrics.rlc.json_enabled) {
         // Connect JSON metrics plotter to RLC metric source.
         rlc_source->add_subscriber(rlc_json_metrics);
+      }
+      if (metrics_logger.is_enabled()) {
+        rlc_source->add_subscriber(metrics_logger);
       }
       if (gnb_cfg.e2_cfg.enable_du_e2) {
         // Connect E2 agent to RLC metric source.

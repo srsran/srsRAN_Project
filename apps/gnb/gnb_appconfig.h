@@ -67,8 +67,9 @@ struct log_appconfig {
   /// Default log level for all layers.
   std::string all_level = "warning";
   /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level  = "warning";
-  std::string e2ap_level = "warning";
+  std::string lib_level     = "warning";
+  std::string e2ap_level    = "warning";
+  std::string metrics_level = "none";
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
   /// Set to true to log broadcasting messages and all PRACH opportunities.

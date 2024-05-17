@@ -42,6 +42,7 @@
 
 #include "apps/services/console_helper.h"
 #include "apps/services/metrics_hub.h"
+#include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
@@ -192,6 +193,10 @@ static void register_app_logs(const log_appconfig&            log_cfg,
     logger.set_level(srslog::str_to_basic_level(log_cfg.lib_level));
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
+
+  auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
+  metrics_logger.set_level(srslog::str_to_basic_level(log_cfg.metrics_level));
+  metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
   e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
@@ -385,6 +390,9 @@ int main(int argc, char** argv)
       *epoll_broker, json_channel, cu_cp_obj->get_command_handler(), gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
+  // Create metrics log helper.
+  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
+
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
                               cu_cp_obj->get_ng_handler().get_ngap_event_handler());
@@ -498,6 +506,7 @@ int main(int argc, char** argv)
                                                           *mac_p,
                                                           *rlc_p,
                                                           console,
+                                                          metrics_logger,
                                                           e2_gw,
                                                           e2_metric_connectors,
                                                           rlc_json_plotter,
