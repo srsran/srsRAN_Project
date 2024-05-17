@@ -396,7 +396,8 @@ TEST_P(two_vector_size_param_test, shallow_copy_and_append)
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
     ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
   }
-  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes1, bytes2));
+  auto combined = concat_vec(bytes1, bytes2);
+  ASSERT_EQ_BUFFER(pdu, combined);
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
@@ -416,7 +417,8 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append)
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
     ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
   }
-  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes2, concat_vec(bytes1, bytes3)));
+  auto combined = concat_vec(bytes2, concat_vec(bytes1, bytes3));
+  ASSERT_EQ_BUFFER(pdu, combined);
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
