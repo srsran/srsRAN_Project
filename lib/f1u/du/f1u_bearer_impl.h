@@ -35,8 +35,7 @@ public:
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   timer_factory                  timers,
-                  task_executor&                 ue_executor_,
-                  f1u_bearer_disconnector&       disconnector_);
+                  task_executor&                 ue_executor_);
 
   ~f1u_bearer_impl() override { stop(); }
 
@@ -58,13 +57,10 @@ private:
   const f1u_config              cfg;
   const up_transport_layer_info dl_tnl_info;
 
-  f1u_rx_sdu_notifier&     rx_sdu_notifier;
-  f1u_tx_pdu_notifier&     tx_pdu_notifier;
-  f1u_bearer_disconnector& disconnector;
+  f1u_rx_sdu_notifier& rx_sdu_notifier;
+  f1u_tx_pdu_notifier& tx_pdu_notifier;
 
   task_executor& ue_executor;
-
-  bool stopped = false;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;

@@ -136,7 +136,6 @@ public:
 
   void connect_f1u_rx_sdu_notifier(f1u_cu_up_gateway_bearer_rx_notifier& rx_sdu_notifier_)
   {
-    fmt::print("testeeeee\n");
     rx_sdu_notifier = &rx_sdu_notifier_;
   }
 

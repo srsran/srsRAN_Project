@@ -108,8 +108,7 @@ protected:
         *tester,
         ue_timer_factory,
         ue_inactivity_timer,
-        ue_worker,
-        *tester);
+        ue_worker);
   }
 
   void TearDown() override

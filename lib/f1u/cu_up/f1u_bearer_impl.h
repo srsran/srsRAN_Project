@@ -34,8 +34,7 @@ public:
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   timer_factory                  ue_dl_timer_factory,
                   unique_timer&                  ue_inactivity_timer_,
-                  task_executor&                 ul_exec_,
-                  f1u_bearer_disconnector&       diconnector_);
+                  task_executor&                 ul_exec_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
@@ -44,14 +43,7 @@ public:
   f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
-  void stop() override
-  {
-    dl_notif_timer.stop();
-    if (not stopped) {
-      disconnector.disconnect_cu_bearer(ul_tnl_info); // reference tx_pdu_notifier becomes invalid
-    }
-    stopped = true;
-  }
+  void stop() override { dl_notif_timer.stop(); }
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(pdcp_tx_pdu sdu) override;
@@ -74,11 +66,9 @@ private:
   /// Config storage
   const f1u_config cfg;
 
-  bool                      stopped = false;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
-  f1u_bearer_disconnector&  disconnector;
   up_transport_layer_info   ul_tnl_info;
   task_executor&            ul_exec;
 

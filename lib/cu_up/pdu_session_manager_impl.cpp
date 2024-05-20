@@ -219,8 +219,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               new_drb->f1u_to_pdcp_adapter,
                                               ue_dl_timer_factory,
                                               ue_inactivity_timer,
-                                              ue_ul_exec,
-                                              f1u_gw);
+                                              ue_ul_exec);
 
   new_drb->f1u_ul_teid  = f1u_ul_teid;
   drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
