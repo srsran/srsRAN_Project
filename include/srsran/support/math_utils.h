@@ -32,10 +32,10 @@ static constexpr float near_zero = 1e-9;
 /// \param[out] den     Denominator.
 /// \return The result of the operation.
 template <typename NumType, typename DenType>
-inline constexpr auto divide_ceil(NumType num, DenType den)
+constexpr auto divide_ceil(NumType num, DenType den)
 {
-  static_assert(std::is_integral<NumType>::value, "The numerator must be an integer.");
-  static_assert(std::is_integral<DenType>::value, "The denominator must be an integer.");
+  static_assert(std::is_integral_v<NumType>, "The numerator must be an integer.");
+  static_assert(std::is_integral_v<DenType>, "The denominator must be an integer.");
   srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return (num + (den - 1)) / den;
 }
@@ -45,7 +45,7 @@ inline constexpr auto divide_ceil(NumType num, DenType den)
 /// \param[in]  num Numerator.
 /// \param[out] den Denominator.
 /// \return The result of the operation.
-inline constexpr unsigned divide_round(unsigned num, unsigned den)
+constexpr unsigned divide_round(unsigned num, unsigned den)
 {
   srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return static_cast<unsigned>(std::round(static_cast<float>(num) / static_cast<float>(den)));
@@ -55,7 +55,7 @@ inline constexpr unsigned divide_round(unsigned num, unsigned den)
 ///
 /// \param[in] power Indicates the power of 2 to calculate.
 /// \return The result of the operation.
-inline constexpr unsigned pow2(unsigned power)
+constexpr unsigned pow2(unsigned power)
 {
   return 1U << power;
 }
@@ -63,7 +63,7 @@ inline constexpr unsigned pow2(unsigned power)
 /// \brief Calculates the squared modulus of a complex value.
 /// \param[in] x Complex value.
 /// \return The squared absolute of the given value, i.e. \f$\abs{x}^2=x\cdot\conj{x}=\Re(x)^2+\Im(x)^2\f$.
-inline constexpr float abs_sq(cf_t x)
+constexpr float abs_sq(cf_t x)
 {
   // Equivalent to but computationally simpler than std::pow(std::abs(x),2).
   return x.real() * x.real() + x.imag() * x.imag();
@@ -87,9 +87,9 @@ inline bool is_near_zero(cf_t value)
 /// \param[in] value Parameter \f$n\f$.
 /// \return The result of the calculation if \c value is not zero. Otherwise 0.
 template <typename Integer>
-inline constexpr Integer log2_ceil(Integer value)
+constexpr Integer log2_ceil(Integer value)
 {
-  static_assert(std::is_unsigned<Integer>::value, "log2_ceil only works for unsigned integers");
+  static_assert(std::is_unsigned_v<Integer>, "log2_ceil only works for unsigned integers");
 
   // Avoid unbounded results.
   if (value == 0) {
@@ -142,7 +142,7 @@ unsigned prime_lower_than(unsigned n);
 template <typename Integer>
 inline Integer reverse_byte(Integer byte)
 {
-  static_assert(std::is_convertible<Integer, uint8_t>::value,
+  static_assert(std::is_convertible_v<Integer, uint8_t>,
                 "The input type must be convertible to an unsigned integer of eight bits");
   static const std::array<Integer, 256> reverse_lut = {
       0b00000000, 0b10000000, 0b01000000, 0b11000000, 0b00100000, 0b10100000, 0b01100000, 0b11100000, 0b00010000,
@@ -176,34 +176,6 @@ inline Integer reverse_byte(Integer byte)
       0b00111111, 0b10111111, 0b01111111, 0b11111111,
   };
   return reverse_lut[byte];
-}
-
-/// \brief Ensures a value is between the given bounds, according to a specified order relation.
-///
-/// \tparam T            Class of the value to clamp. A strict order relation (less than) should be definable between
-///                      elements of class \c T.
-/// \tparam CompareLess  Class of the comparison object (see below).
-/// \param value         The value to clamp.
-/// \param lower_bound   Minimum value after clamping.
-/// \param upper_bound   Maximum value after clamping.
-/// \param comp          Comparison function object implementing an order relation between elements of \c T. The
-///                      signature should be equivalent to `bool comp(const T& a, const T& b)` and should return \c true
-///                      if <tt>a < b</tt> (according to any order relation in \c T), \c false otherwise.
-/// \return A reference to \c lower_bound if <tt>value < lower_bound</tt>; a reference to \c upper_bound if
-///         <tt>upper_bound < value</tt>; a reference to \c value itself otherwise.
-template <class T, class CompareLess>
-constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bound, CompareLess comp)
-{
-  return comp(value, lower_bound) ? lower_bound : (comp(upper_bound, value) ? upper_bound : value);
-}
-
-/// \brief Ensures a value is between the given bounds, according to the default order relation.
-///
-/// See the documentation for the extended form for more information.
-template <class T>
-constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bound)
-{
-  return srsran::clamp(value, lower_bound, upper_bound, std::less<T>());
 }
 
 } // namespace srsran

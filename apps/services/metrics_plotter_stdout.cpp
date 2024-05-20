@@ -163,7 +163,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     fmt::print(" |");
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
-      fmt::print(" {:>5.1f}", clamp(ue.pusch_snr_db, -99.9f, 99.9f));
+      fmt::print(" {:>5.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     } else {
       fmt::print(" {:>5.5}", "n/a");
     }
@@ -172,7 +172,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
       if (ue.pusch_rsrp_db >= 0.0F) {
         fmt::print(" {:>5.5}", "ovl");
       } else {
-        fmt::print(" {:>5.1f}", clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
+        fmt::print(" {:>5.1f}", std::clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
       }
     } else {
       fmt::print(" {:>5.5}", "n/a");

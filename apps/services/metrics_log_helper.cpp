@@ -10,7 +10,6 @@
 
 #include "metrics_log_helper.h"
 #include "srsran/support/format_utils.h"
-#include "srsran/support/math_utils.h"
 #include <cfloat>
 #include <iomanip>
 #include <ostream>
@@ -143,7 +142,7 @@ void metrics_log_helper::report_metrics(span<const scheduler_ue_metrics> ue_metr
     fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs));
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
-      fmt::format_to(buffer, " pusch_snr_db={:.1f}", clamp(ue.pusch_snr_db, -99.9f, 99.9f));
+      fmt::format_to(buffer, " pusch_snr_db={:.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     } else {
       fmt::format_to(buffer, " pusch_snr_db=n/a");
     }
@@ -152,7 +151,7 @@ void metrics_log_helper::report_metrics(span<const scheduler_ue_metrics> ue_metr
       if (ue.pusch_rsrp_db >= 0.0F) {
         fmt::format_to(buffer, " pusch_rsrp_db=ovl");
       } else {
-        fmt::format_to(buffer, " pusch_rsrp_db={:.1f}", clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
+        fmt::format_to(buffer, " pusch_rsrp_db={:.1f}", std::clamp(ue.pusch_rsrp_db, -99.9F, 0.0F));
       }
     } else {
       fmt::format_to(buffer, " pusch_rsrp_db=n/a");

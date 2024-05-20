@@ -82,7 +82,8 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
       result.context.start_symbol,
       slot.slot_index(),
       fd_ra_index,
-      clamp(convert_to_dBFS(result.result.rssi_dB, dBFS_calibration_value), MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
+      std::clamp(
+          convert_to_dBFS(result.result.rssi_dB, dBFS_calibration_value), MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
       {},
       {});
 
@@ -104,10 +105,10 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
         preamble.preamble_index,
         {},
         TA_ns,
-        clamp(convert_to_dBFS(convert_power_to_dB(preamble.detection_metric), dBFS_calibration_value),
-              MIN_PREAMBLE_POWER_VALUE,
-              MAX_PREAMBLE_POWER_VALUE),
-        clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
+        std::clamp(convert_to_dBFS(convert_power_to_dB(preamble.detection_metric), dBFS_calibration_value),
+                   MIN_PREAMBLE_POWER_VALUE,
+                   MAX_PREAMBLE_POWER_VALUE),
+        std::clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);
@@ -191,7 +192,7 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
 
   optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
-    sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
+    sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   optional<int>           timing_advance_offset_ns;
@@ -268,7 +269,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Extract the SINR which is optional and clamp it if available.
   optional<float> sinr_dB = result.csi.get_sinr_dB();
   if (sinr_dB.has_value()) {
-    sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
+    sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
@@ -281,7 +282,8 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Extract the RSRP which is optional and clamp it if available.
   optional<float> rsrp = result.csi.get_rsrp_dB();
   if (rsrp.has_value()) {
-    rsrp = convert_to_dBFS(clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS), dBFS_calibration_value);
+    rsrp = convert_to_dBFS(std::clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS),
+                           dBFS_calibration_value);
   }
 
   builder.add_pdu(handle,
@@ -387,7 +389,7 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
   // Extract the SINR which is optional and clamp it if available.
   optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
-    sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
+    sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
@@ -493,7 +495,7 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
   // Extract the SINR which is optional and clamp it if available.
   optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
-    sinr_dB = clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
+    sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
