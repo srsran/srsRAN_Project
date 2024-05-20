@@ -225,6 +225,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->f1u_ul_teid  = f1u_ul_teid;
   drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 
+  // Connect F1-U GW bearer RX adapter to NR-U bearer
+  new_drb->f1u_gateway_rx_to_nru_adapter.connect_nru_bearer(new_drb->f1u->get_rx_pdu_handler());
+
   // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
   new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
                                             new_drb->pdcp->get_tx_lower_interface());
