@@ -350,11 +350,11 @@ void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> paylo
 
 void sctp_network_gateway_impl::handle_connection_loss()
 {
-  // Stop listening to new Rx events.
-  io_sub.reset();
-
   // Notify the connection drop.
   ctrl_notifier.on_connection_loss();
+
+  // Stop listening to new Rx events.
+  io_sub.reset();
 }
 
 ///< Process outgoing PDU and send over SCTP socket to peer.
