@@ -14,33 +14,107 @@
 
 using namespace srsran;
 
-class sctp_network_server_impl::sctp_send_notifier : public network_gateway_data_notifier
+// the stream number to use for sending
+const unsigned stream_no = 0;
+
+class sctp_network_server_impl::sctp_send_notifier : public sctp_association_pdu_notifier
 {
 public:
-  sctp_send_notifier(sctp_network_server_impl&                                parent_,
-                     const sctp_network_server_impl::sctp_associaton_context& assoc_) :
-    parent(parent_), assoc(&assoc_)
+  sctp_send_notifier(sctp_network_server_impl&                                parent,
+                     const sctp_network_server_impl::sctp_associaton_context& assoc,
+                     srslog::basic_logger&                                    logger_) :
+    ppid(parent.node_cfg.ppid),
+    fd(parent.socket.fd().value()),
+    assoc_id(assoc.assoc_id),
+    client_addr(assoc.addr),
+    assoc_shutdown_flag(assoc.association_shutdown_received),
+    logger(logger_)
   {
   }
 
-  ~sctp_send_notifier() override
-  {
-    if (assoc != nullptr) {
-      parent.close_sctp_sender(*assoc);
-    }
-  }
+  ~sctp_send_notifier() override { close(); }
 
-  void on_new_pdu(byte_buffer pdu) override
+  bool on_new_pdu(byte_buffer pdu) override
   {
-    if (assoc != nullptr and not parent.send_sctp_data(*assoc, std::move(pdu))) {
-      parent.close_sctp_sender(*assoc);
-      assoc = nullptr;
+    if (assoc_shutdown_flag->load(std::memory_order_relaxed)) {
+      // It has already been released.
+      return false;
     }
+    if (pdu.length() > network_gateway_sctp_max_len) {
+      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), network_gateway_sctp_max_len);
+      return false;
+    }
+    logger.debug("assoc={}: Sending PDU of {} bytes", assoc_id, pdu.length());
+
+    // Note: each sender needs its own buffer to avoid race conditions with the recv.
+    std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
+    span<const uint8_t>                               pdu_span = to_span(pdu, temp_send_buffer);
+
+    auto dest_addr  = client_addr.native();
+    int  bytes_sent = sctp_sendmsg(fd,
+                                  pdu_span.data(),
+                                  pdu_span.size(),
+                                  const_cast<struct sockaddr*>(dest_addr.addr),
+                                  dest_addr.addrlen,
+                                  htonl(ppid),
+                                  0,
+                                  stream_no,
+                                  0,
+                                  0);
+    if (bytes_sent == -1) {
+      logger.error("assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
+                   assoc_id,
+                   pdu_span.size_bytes(),
+                   strerror(errno));
+      close();
+      return false;
+    }
+    return true;
   }
 
 private:
-  sctp_network_server_impl&                                parent;
-  const sctp_network_server_impl::sctp_associaton_context* assoc = nullptr;
+  void close()
+  {
+    if (assoc_shutdown_flag->load(std::memory_order_relaxed)) {
+      // Already closed.
+      return;
+    }
+
+    // Send EOF to SCTP client.
+    auto dest_addr  = client_addr.native();
+    int  bytes_sent = sctp_sendmsg(fd,
+                                  nullptr,
+                                  0,
+                                  const_cast<struct sockaddr*>(dest_addr.addr),
+                                  dest_addr.addrlen,
+                                  htonl(ppid),
+                                  SCTP_EOF,
+                                  stream_no,
+                                  0,
+                                  0);
+
+    if (bytes_sent == -1) {
+      // Failed to send EOF.
+      // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
+      // the server recv thread.
+      logger.info("fd={} assoc={}: Couldn't send EOF during shut down (errno=\"{}\")", fd, assoc_id, strerror(errno));
+    } else {
+      logger.debug("fd={} assoc={}: Sent EOF to SCTP client and closed SCTP association", fd, assoc_id);
+    }
+
+    // Signal send closed the channel.
+    assoc_shutdown_flag->store(true, std::memory_order_relaxed);
+  }
+
+  // Note: We copy all the required params by value to avoid race conditions with the server thread.
+  const uint32_t                ppid;
+  const int                     fd;
+  const int                     assoc_id;
+  const transport_layer_address client_addr;
+  // This flag is shared by the server main class and this notifier and is used to signal the association shut down.
+  // Note: shared_ptr copy used to avoid the case when the notifier outlives the association.
+  std::shared_ptr<std::atomic<bool>> assoc_shutdown_flag;
+  srslog::basic_logger&              logger;
 };
 
 sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int assoc_id_) : assoc_id(assoc_id_) {}
@@ -51,11 +125,22 @@ sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_no
   sctp_network_gateway_common_impl(sctp_cfg_),
   broker(broker_),
   assoc_factory(assoc_factory_),
-  temp_buffer(network_gateway_sctp_max_len)
+  temp_recv_buffer(network_gateway_sctp_max_len)
 {
 }
 
-sctp_network_server_impl::~sctp_network_server_impl() {}
+sctp_network_server_impl::~sctp_network_server_impl()
+{
+  // Stop handling new SCTP events.
+  io_sub.reset();
+
+  // Signal to senders to all existing senders that the server was deleted, so they don't bother with sending EOF.
+  while (not associations.empty()) {
+    handle_association_shutdown(associations.begin()->first, false);
+  }
+
+  logger.info("fd={}: SCTP server closed", socket.fd().value());
+}
 
 bool sctp_network_server_impl::create_and_bind()
 {
@@ -71,8 +156,8 @@ void sctp_network_server_impl::receive()
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
 
   int rx_bytes = ::sctp_recvmsg(socket.fd().value(),
-                                temp_buffer.data(),
-                                temp_buffer.size(),
+                                temp_recv_buffer.data(),
+                                temp_recv_buffer.size(),
                                 (struct sockaddr*)&msg_src_addr,
                                 &msg_src_addrlen,
                                 &sri,
@@ -91,33 +176,11 @@ void sctp_network_server_impl::receive()
     return;
   }
 
-  span<const uint8_t> payload(temp_buffer.data(), rx_bytes);
+  span<const uint8_t> payload(temp_recv_buffer.data(), rx_bytes);
   if (msg_flags & MSG_NOTIFICATION) {
     handle_notification(payload, sri, (const sockaddr&)msg_src_addr, msg_src_addrlen);
   } else {
     handle_data(sri.sinfo_assoc_id, payload);
-  }
-
-  handle_pending_sender_close_commands();
-}
-
-void sctp_network_server_impl::handle_pending_sender_close_commands()
-{
-  // Note: This is called from the SCTP recv thread.
-
-  // Check if any sender released its connection.
-  int assoc_to_rem = -1;
-  while (pending_assocs_to_rem.try_dequeue(assoc_to_rem)) {
-    auto assoc_it = associations.find(assoc_to_rem);
-    if (assoc_it == associations.end()) {
-      logger.error("assoc={}: Removing nonexistent SCTP association", assoc_to_rem);
-      continue;
-    }
-
-    // Mark that the sender has no handle for this association.
-    assoc_it->second.sender_closed = true;
-
-    handle_association_shutdown(assoc_it->first);
   }
 }
 
@@ -236,19 +299,25 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   }
 
   // Fill the association context.
-  sctp_associaton_context& assoc_ctxt = result.first->second;
-  assoc_ctxt.addr                     = transport_layer_address::create_from_sockaddr(src_addr, src_addr_len);
-  assoc_ctxt.sctp_data_recv_notifier  = assoc_factory.create();
+  sctp_associaton_context& assoc_ctxt      = result.first->second;
+  assoc_ctxt.addr                          = transport_layer_address::create_from_sockaddr(src_addr, src_addr_len);
+  assoc_ctxt.association_shutdown_received = std::make_shared<std::atomic<bool>>(false);
+  assoc_ctxt.sctp_data_recv_notifier =
+      assoc_factory.create(std::make_unique<sctp_send_notifier>(*this, assoc_ctxt, logger));
   if (assoc_ctxt.sctp_data_recv_notifier == nullptr) {
     associations.erase(assoc_id);
-    logger.error("fd={} assoc={}: Unable to create a new SCTP association handler", socket.fd().value(), assoc_id);
+    logger.error("fd={} assoc={} client={}: Unable to create a new SCTP association handler",
+                 socket.fd().value(),
+                 assoc_id,
+                 assoc_ctxt.addr);
     return;
   }
 
-  logger.info("fd={} assoc={} src={}: New SCTP association created", socket.fd().value(), assoc_id, assoc_ctxt.addr);
+  logger.info(
+      "fd={} assoc={}: New client SCTP association (client_addr={})", socket.fd().value(), assoc_id, assoc_ctxt.addr);
 }
 
-void sctp_network_server_impl::handle_association_shutdown(int assoc_id)
+void sctp_network_server_impl::handle_association_shutdown(int assoc_id, bool client_shutdown)
 {
   auto assoc_it = associations.find(assoc_id);
   if (assoc_it == associations.end()) {
@@ -258,81 +327,20 @@ void sctp_network_server_impl::handle_association_shutdown(int assoc_id)
     return;
   }
 
-  // Signal to the SCTP association Rx handler that the Rx channel is closed.
-  assoc_it->second.sctp_data_recv_notifier.reset();
-
-  if (assoc_it->second.sender_closed) {
-    // Sender has already released its notifier. It is safe to delete the association instance.
-    associations.erase(assoc_it);
-  } else {
-    logger.info("fd={} assoc={} src={}: SCTP association was shut down",
+  // The client wishes to close the association.
+  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
+  bool prev = assoc_it->second.association_shutdown_received->exchange(true);
+  if (not prev and client_shutdown) {
+    // The association sender didn't yet close the connection and the association was closed by the client
+    logger.info("fd={} assoc={}: Client shut down SCTP association (client_addr={})",
                 socket.fd().value(),
                 assoc_it->first,
                 assoc_it->second.addr);
   }
-}
 
-void sctp_network_server_impl::close_sctp_sender(const sctp_associaton_context& assoc)
-{
-  // Note: This function may be called from a different thread than the one that calls sctp_recv.
-  srsran_assert(socket.fd().is_open(), "Socket is closed");
-
-  // Send EOF.
-  auto dest_addr  = assoc.addr.native();
-  int  bytes_sent = sctp_sendmsg(socket.fd().value(),
-                                nullptr,
-                                0,
-                                const_cast<struct sockaddr*>(dest_addr.addr),
-                                dest_addr.addrlen,
-                                htonl(node_cfg.ppid),
-                                SCTP_EOF,
-                                stream_no,
-                                0,
-                                0);
-  if (bytes_sent == -1) {
-    logger.error(
-        "fd={} assoc={}: Couldn't send EOF on SCTP socket: {}", socket.fd().value(), assoc.assoc_id, strerror(errno));
-  } else {
-    logger.debug("fd={} assoc={}: SCTP association Tx channel was closed", socket.fd().value(), assoc.assoc_id);
-  }
-
-  // Notify that the association can now be deleted.
-  pending_assocs_to_rem.enqueue(assoc.assoc_id);
-}
-
-bool sctp_network_server_impl::send_sctp_data(const sctp_associaton_context& assoc, byte_buffer pdu)
-{
-  // Note: This function may be called from a different thread than the one that calls sctp_recv.
-  srsran_assert(socket.fd().is_open(), "Socket is closed");
-
-  logger.debug("assoc={}: Sending PDU of {} bytes", assoc.assoc_id, pdu.length());
-
-  if (pdu.length() > temp_buffer.size()) {
-    logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), temp_buffer.size());
-    return false;
-  }
-
-  span<const uint8_t> pdu_span = to_span(pdu, temp_buffer);
-
-  auto dest_addr  = assoc.addr.native();
-  int  bytes_sent = sctp_sendmsg(socket.fd().value(),
-                                pdu_span.data(),
-                                pdu_span.size(),
-                                const_cast<struct sockaddr*>(dest_addr.addr),
-                                dest_addr.addrlen,
-                                htonl(node_cfg.ppid),
-                                0,
-                                stream_no,
-                                0,
-                                0);
-  if (bytes_sent == -1) {
-    logger.error("assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data on SCTP socket: {}",
-                 assoc.assoc_id,
-                 pdu_span.size_bytes(),
-                 strerror(errno));
-    return false;
-  }
-  return true;
+  // Remove association.
+  // Note: Deleting the recv notifier should trigger the deletion of the sender interface.
+  associations.erase(assoc_it);
 }
 
 bool sctp_network_server_impl::listen()

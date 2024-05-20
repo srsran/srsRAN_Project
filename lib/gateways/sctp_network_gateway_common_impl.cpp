@@ -117,18 +117,18 @@ bool sctp_network_gateway_common_impl::common_create_and_bind()
   }
 
   if (not socket.is_open()) {
-    fmt::print("Failed to bind SCTP socket to \"{}\":{}. errno=\"{}\"\n",
+    fmt::print("Failed to bind SCTP socket to {}:{}. errno=\"{}\"\n",
                node_cfg.bind_address,
                node_cfg.bind_port,
                strerror(errno));
-    logger.error("Failed to bind SCTP socket to \"{}\":{}. errno=\"{}\"",
+    logger.error("Failed to bind SCTP socket to {}:{}. errno=\"{}\"",
                  node_cfg.bind_address,
                  node_cfg.bind_port,
                  strerror(errno));
     return false;
   }
 
-  logger.debug("Binding to \"{}\":{} was successful", node_cfg.bind_address, node_cfg.bind_port);
+  logger.debug("Binding to {}:{} was successful", node_cfg.bind_address, node_cfg.bind_port);
 
   return true;
 }

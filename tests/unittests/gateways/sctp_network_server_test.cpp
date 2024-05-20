@@ -57,22 +57,42 @@ public:
   class dummy_sctp_recv_notifier : public sctp_association_pdu_notifier
   {
   public:
-    dummy_sctp_recv_notifier(association_factory& parent_) : parent(parent_) {}
-    ~dummy_sctp_recv_notifier() { parent.association_destroyed = true; }
+    dummy_sctp_recv_notifier(association_factory& parent_, sctp_association_pdu_notifier* send_notifier_) :
+      parent(parent_), send_notifier(send_notifier_)
+    {
+    }
+    ~dummy_sctp_recv_notifier()
+    {
+      for (auto& sender : parent.association_senders) {
+        if (sender.get() == send_notifier) {
+          parent.association_senders.erase(parent.association_senders.begin());
+          break;
+        }
+      }
+      parent.association_destroyed = true;
+    }
 
-    void on_new_pdu(byte_buffer pdu) override { parent.last_pdu = std::move(pdu); }
+    bool on_new_pdu(byte_buffer pdu) override
+    {
+      parent.last_pdu = std::move(pdu);
+      return true;
+    }
 
   private:
-    association_factory& parent;
+    association_factory&           parent;
+    sctp_association_pdu_notifier* send_notifier;
   };
 
-  bool association_created   = false;
-  bool association_destroyed = false;
+  std::vector<std::unique_ptr<sctp_association_pdu_notifier>> association_senders;
+  bool                                                        association_created   = false;
+  bool                                                        association_destroyed = false;
 
-  std::unique_ptr<sctp_association_pdu_notifier> create() override
+  std::unique_ptr<sctp_association_pdu_notifier>
+  create(std::unique_ptr<sctp_association_pdu_notifier> send_notifier) override
   {
     association_created = true;
-    return std::make_unique<dummy_sctp_recv_notifier>(*this);
+    association_senders.push_back(std::move(send_notifier));
+    return std::make_unique<dummy_sctp_recv_notifier>(*this, association_senders.back().get());
   }
 };
 
@@ -90,6 +110,112 @@ protected:
   association_factory assoc_factory;
 };
 
+struct recv_data {
+  struct sctp_sndrcvinfo sri       = {};
+  int                    msg_flags = 0;
+  sockaddr_storage       msg_src_addr;
+  // fromlen is an in/out variable in sctp_recvmsg.
+  socklen_t            msg_src_addrlen = sizeof(msg_src_addr);
+  std::vector<uint8_t> data;
+
+  bool has_notification() const { return msg_flags & MSG_NOTIFICATION; }
+  int  sctp_notification() const
+  {
+    srsran_assert(has_notification(), "bad access");
+    const auto* notif = reinterpret_cast<const union sctp_notification*>(data.data());
+    return notif->sn_header.sn_type;
+  }
+  const struct sctp_assoc_change& sctp_assoc_change() const
+  {
+    srsran_assert(has_notification() and sctp_notification() == SCTP_ASSOC_CHANGE, "bad access");
+    const auto* notif = reinterpret_cast<const union sctp_notification*>(data.data());
+    return notif->sn_assoc_change;
+  }
+};
+
+class dummy_sctp_client
+{
+public:
+  dummy_sctp_client() { logger.set_level(srslog::basic_levels::debug); }
+  ~dummy_sctp_client() { close(); }
+
+  bool close()
+  {
+    if (socket.is_open()) {
+      socket.close();
+      logger.info("Client shut down");
+      return true;
+    }
+    return false;
+  }
+
+  void set_dest(const sctp_network_node_config& server_cfg_) { server_cfg = server_cfg_; }
+
+  bool connect()
+  {
+    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_STREAM});
+    if (not result.has_value()) {
+      return false;
+    }
+    socket = std::move(result.value());
+    sockaddr_in addr;
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(server_cfg.bind_port);
+    addr.sin_addr.s_addr = ::inet_addr(server_cfg.bind_address.c_str());
+    if (not socket.connect((struct sockaddr&)addr, sizeof(addr))) {
+      socket.close();
+      return false;
+    }
+    logger.info("Client connected to {}:{}", server_cfg.bind_address, server_cfg.bind_port);
+    return true;
+  }
+
+  optional<recv_data> receive()
+  {
+    constexpr static uint32_t network_gateway_sctp_max_len = 9100;
+
+    recv_data data;
+
+    std::array<uint8_t, network_gateway_sctp_max_len> temp_buf;
+    int                                               rx_bytes = ::sctp_recvmsg(socket.fd().value(),
+                                  temp_buf.data(),
+                                  temp_buf.size(),
+                                  (struct sockaddr*)&data.msg_src_addr,
+                                  &data.msg_src_addrlen,
+                                  &data.sri,
+                                  &data.msg_flags);
+    if (rx_bytes < 0) {
+      return nullopt;
+    }
+
+    data.data.assign(temp_buf.begin(), temp_buf.begin() + rx_bytes);
+    return data;
+  }
+
+  bool send_data(const std::vector<uint8_t>& bytes)
+  {
+    sockaddr_in addr;
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(server_cfg.bind_port);
+    addr.sin_addr.s_addr = ::inet_addr(server_cfg.bind_address.c_str());
+    int bytes_sent       = ::sctp_sendmsg(socket.fd().value(),
+                                    bytes.data(),
+                                    bytes.size(),
+                                    (struct sockaddr*)&addr,
+                                    sizeof(addr),
+                                    htonl(server_cfg.ppid),
+                                    0,
+                                    0,
+                                    0,
+                                    0);
+    return bytes_sent == (int)bytes.size();
+  }
+
+  sctp_socket              socket;
+  sctp_network_node_config server_cfg;
+  srslog::basic_logger&    logger = srslog::fetch_basic_logger("CLIENT");
+};
+
 } // namespace
 
 class sctp_network_server_test : public base_sctp_network_test, public ::testing::Test
@@ -100,60 +226,47 @@ protected:
     server_cfg.sctp.ppid         = NGAP_PPID;
     server_cfg.sctp.bind_address = "127.0.0.1";
     server_cfg.sctp.bind_port    = 38412;
+
+    client.set_dest(server_cfg.sctp);
   }
 
-  bool connect_client()
+  bool connect_client(bool broker_trigger_required = true)
   {
-    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_STREAM});
-    EXPECT_TRUE(result.has_value());
-    client = std::move(result.value());
-    sockaddr_in addr;
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(server_cfg.sctp.bind_port);
-    addr.sin_addr.s_addr = ::inet_addr(server_cfg.sctp.bind_address.c_str());
-    if (not client.connect((struct sockaddr&)addr, sizeof(addr))) {
-      client.close();
+    if (not client.connect()) {
       return false;
     }
-    broker.handle_receive();
+    if (broker_trigger_required) {
+      trigger_broker();
+    }
     return true;
   }
 
-  bool close_client(bool broker_triggered = true)
+  bool close_client(bool broker_trigger_required = true)
   {
     bool ret = client.close();
-    if (broker_triggered) {
-      broker.handle_receive();
+    if (broker_trigger_required) {
+      trigger_broker();
     }
     return ret;
   }
 
   bool send_data(const std::vector<uint8_t>& bytes, bool broker_triggered = true)
   {
-    sockaddr_in addr;
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(server_cfg.sctp.bind_port);
-    addr.sin_addr.s_addr = ::inet_addr(server_cfg.sctp.bind_address.c_str());
-    int bytes_sent       = ::sctp_sendmsg(client.fd().value(),
-                                    bytes.data(),
-                                    bytes.size(),
-                                    (struct sockaddr*)&addr,
-                                    sizeof(addr),
-                                    htonl(server_cfg.sctp.ppid),
-                                    0,
-                                    0,
-                                    0,
-                                    0);
-    if (broker_triggered) {
-      broker.handle_receive();
+    if (not client.send_data(bytes)) {
+      return false;
     }
-    return bytes_sent == (int)bytes.size();
+    if (broker_triggered) {
+      trigger_broker();
+    }
+    return true;
   }
+
+  void trigger_broker() { broker.handle_receive(); }
 
   sctp_network_server_config server_cfg{{}, broker, assoc_factory};
 
   std::unique_ptr<sctp_network_server> server;
-  sctp_socket                          client;
+  dummy_sctp_client                    client;
 };
 
 TEST_F(sctp_network_server_test, when_config_is_valid_then_server_is_created_successfully)
@@ -206,7 +319,7 @@ TEST_F(sctp_network_server_test, when_server_is_shutdown_then_fd_is_deregistered
   ASSERT_EQ(broker.last_registered_fd, fd);
 }
 
-TEST_F(sctp_network_server_test, when_peer_connects_then_server_request_new_sctp_association_handler_creation)
+TEST_F(sctp_network_server_test, when_client_connects_then_server_request_new_sctp_association_handler_creation)
 {
   server = create_sctp_network_server(server_cfg);
   ASSERT_TRUE(server->listen());
@@ -219,7 +332,29 @@ TEST_F(sctp_network_server_test, when_peer_connects_then_server_request_new_sctp
   ASSERT_FALSE(assoc_factory.association_destroyed);
 }
 
-TEST_F(sctp_network_server_test, when_peer_disconnects_then_server_deletes_association_handler)
+TEST_F(sctp_network_server_test, when_client_connects_then_client_receives_sctp_comm_up_notification)
+{
+  server = create_sctp_network_server(server_cfg);
+  ASSERT_TRUE(server->listen());
+
+  // Connect client to server.
+  ASSERT_TRUE(connect_client(false));
+
+  // Ensure SCTP ASSOC COMM UP is received by the client, even before the broker handles the SCTP association on the
+  // server side.
+  auto result = client.receive();
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->has_notification());
+  ASSERT_EQ(result->sctp_notification(), SCTP_ASSOC_CHANGE);
+  ASSERT_EQ(result->sctp_assoc_change().sac_state, SCTP_COMM_UP);
+  client.logger.info("Client received SCTP COMM UP notification for assoc_id={}",
+                     result->sctp_assoc_change().sac_assoc_id);
+
+  // server handles now the SCTP association event.
+  trigger_broker();
+}
+
+TEST_F(sctp_network_server_test, when_client_disconnects_then_server_deletes_association_handler)
 {
   server = create_sctp_network_server(server_cfg);
   ASSERT_TRUE(server->listen());
@@ -230,7 +365,7 @@ TEST_F(sctp_network_server_test, when_peer_disconnects_then_server_deletes_assoc
   ASSERT_TRUE(assoc_factory.association_destroyed);
 }
 
-TEST_F(sctp_network_server_test, when_peer_sends_sctp_message_then_message_is_forwarded_to_association_handler)
+TEST_F(sctp_network_server_test, when_client_sends_sctp_message_then_message_is_forwarded_to_association_handler)
 {
   server = create_sctp_network_server(server_cfg);
   ASSERT_TRUE(server->listen());
@@ -245,7 +380,7 @@ TEST_F(sctp_network_server_test, when_peer_sends_sctp_message_then_message_is_fo
 }
 
 TEST_F(sctp_network_server_test,
-       when_peer_sends_sctp_message_and_closes_before_server_handles_events_then_events_are_still_handled)
+       when_client_sends_sctp_message_and_closes_before_server_handles_events_then_events_are_still_handled)
 {
   server = create_sctp_network_server(server_cfg);
   ASSERT_TRUE(server->listen());
@@ -261,4 +396,56 @@ TEST_F(sctp_network_server_test,
   ASSERT_FALSE(assoc_factory.association_destroyed) << "Association Handler was destroyed too early";
   broker.handle_receive(); // Should close connection
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Association Handler was not destroyed";
+}
+
+TEST_F(sctp_network_server_test, when_association_handler_closes_connection_then_sctp_eof_is_sent_to_client)
+{
+  server = create_sctp_network_server(server_cfg);
+  ASSERT_TRUE(server->listen());
+  ASSERT_TRUE(connect_client());
+  // Client receives SCTP COMM UP
+  auto result = client.receive();
+
+  // Server-side association handler closes, signalling that the server wants to close association.
+  assoc_factory.association_senders.clear();
+
+  // Ensure SCTP EOF is sent to client.
+  result = client.receive();
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->has_notification());
+  ASSERT_EQ(result->sctp_notification(), SCTP_SHUTDOWN_EVENT);
+}
+
+TEST_F(sctp_network_server_test, when_multiple_clients_connect_then_multiple_association_handlers_are_created)
+{
+  server = create_sctp_network_server(server_cfg);
+  ASSERT_TRUE(server->listen());
+
+  // First client connect.
+  ASSERT_TRUE(connect_client());
+
+  // Client 2 connects.
+  assoc_factory.association_created = false;
+  dummy_sctp_client client2;
+  client2.set_dest(server_cfg.sctp);
+  client2.connect();
+  // Handle client 2 association creation.
+  trigger_broker();
+  ASSERT_TRUE(assoc_factory.association_created);
+  ASSERT_FALSE(assoc_factory.association_destroyed);
+
+  // Close Client 1.
+  client.close();
+
+  // Close Client 2.
+  client2.close();
+
+  // SCTP shutdown client 1
+  trigger_broker();
+  // SCTP SHUTDOWN_COMP client 1
+  trigger_broker();
+  // SCTP shutdown client 2
+  trigger_broker();
+  // SCTP SHUTDOWN_COMP client 2
+  trigger_broker();
 }

@@ -48,9 +48,9 @@ private:
   class sctp_send_notifier;
 
   struct sctp_associaton_context {
-    const int               assoc_id;
-    transport_layer_address addr;
-    bool                    sender_closed = false;
+    const int                          assoc_id;
+    transport_layer_address            addr;
+    std::shared_ptr<std::atomic<bool>> association_shutdown_received;
 
     std::unique_ptr<sctp_association_pdu_notifier> sctp_data_recv_notifier;
 
@@ -74,31 +74,19 @@ private:
                            const struct sctp_sndrcvinfo& sri,
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
-  void handle_association_shutdown(int assoc_id);
+  void handle_association_shutdown(int assoc_id, bool client_shutdown = true);
 
   /// Handle SCTP COMM UP event.
   void
   handle_sctp_comm_up(const struct sctp_assoc_change& assoc_change, const sockaddr& src_addr, socklen_t src_addr_len);
-
-  // Handle commands from the sender telling that it released its association.
-  void handle_pending_sender_close_commands();
-
-  bool send_sctp_data(const sctp_associaton_context& assoc, byte_buffer pdu);
-  void close_sctp_sender(const sctp_associaton_context& assoc);
 
   io_broker&                        broker;
   sctp_network_association_factory& assoc_factory;
 
   association_map associations;
 
-  // Queue used to communicate commands to the receiver execution context.
-  moodycamel::ConcurrentQueue<int> pending_assocs_to_rem;
-
   // Temporary buffer where read data is saved.
-  std::vector<uint8_t> temp_buffer;
-
-  // the stream number to use for sending
-  const unsigned stream_no = 0;
+  std::vector<uint8_t> temp_recv_buffer;
 };
 
 } // namespace srsran

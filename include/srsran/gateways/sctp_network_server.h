@@ -21,15 +21,18 @@ class sctp_association_pdu_notifier
 public:
   virtual ~sctp_association_pdu_notifier() = default;
 
-  virtual void on_new_pdu(byte_buffer pdu) = 0;
+  virtual bool on_new_pdu(byte_buffer pdu) = 0;
 };
 
+/// Factory of new SCTP association handlers.
 class sctp_network_association_factory
 {
 public:
   virtual ~sctp_network_association_factory() = default;
 
-  virtual std::unique_ptr<sctp_association_pdu_notifier> create() = 0;
+  /// Called on every SCTP association notification, to create a new SCTP association handler.
+  virtual std::unique_ptr<sctp_association_pdu_notifier>
+  create(std::unique_ptr<sctp_association_pdu_notifier> sctp_send_notifier) = 0;
 };
 
 class sctp_network_gateway_info
