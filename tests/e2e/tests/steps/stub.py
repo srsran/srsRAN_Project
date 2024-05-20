@@ -13,7 +13,7 @@ import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
-from time import sleep
+from time import sleep, time
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
@@ -244,7 +244,7 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
 
 
 def ping_start(
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 1
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 1
 ) -> List[grpc.Future]:
     """
     Ping command between an UE and a 5GC
@@ -501,11 +501,14 @@ def ue_reestablishment(
     """
     Reestablishment one UE from already running gnb and 5gc
     """
+    t_before = time()
     result: ReestablishmentInfo = ue_stub.Reestablishment(UInt32Value(value=reestablishment_interval))
     log_fn = logging.info if result.status else logging.error
     log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
     if not result.status:
         pytest.fail("Reestablishment failed")
+    with suppress(ValueError):
+        sleep(reestablishment_interval - (time() - t_before))
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):

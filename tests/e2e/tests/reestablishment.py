@@ -10,7 +10,6 @@
 Ping + Reestablishment Tests
 """
 import logging
-import time
 from contextlib import suppress
 from typing import Optional, Sequence, Union
 
@@ -179,15 +178,14 @@ def _ping_and_reestablishment_multi_ues(
         warning_as_errors=warning_as_errors,
     ):
         # Launch reestablished UEs
-        ping_task_array_reest = ping_start(reest_ue_attach_info_dict, fivegc, traffic_duration)
+        ping_task_array_reest = ping_start(reest_ue_attach_info_dict, fivegc, traffic_duration, time_step=0)
         # Launch other UEs
-        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_duration)
+        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_duration, time_step=0)
 
         # Trigger reestablishments
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
                 ue_reestablishment(ue_stub, reestablishment_interval)
-                time.sleep(reestablishment_interval)
 
         # Wait and ignore reestablished UEs
         with suppress(Failed):
@@ -248,7 +246,6 @@ def _iperf_and_reestablishment_multi_ues(
         for ue_stub in reest_ue_attach_info_dict:
             for _ in range(int(traffic_duration / reestablishment_interval)):
                 ue_reestablishment(ue_stub, reestablishment_interval)
-                time.sleep(reestablishment_interval)
 
         # Wait for reestablished UEs
         for ue_attached_info, task, iperf_request in iperf_dict:
