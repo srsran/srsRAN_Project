@@ -135,8 +135,9 @@ sctp_network_server_impl::~sctp_network_server_impl()
   io_sub.reset();
 
   // Signal to senders to all existing senders that the server was deleted, so they don't bother with sending EOF.
+  // Note: Since we already unsubscribed from the io_broker. It is safe to make these steps in a separate thread.
   while (not associations.empty()) {
-    handle_association_shutdown(associations.begin()->first, false);
+    handle_association_shutdown(associations.begin()->first, nullptr);
   }
 
   logger.info("fd={}: SCTP server closed", socket.fd().value());
@@ -144,7 +145,7 @@ sctp_network_server_impl::~sctp_network_server_impl()
 
 bool sctp_network_server_impl::create_and_bind()
 {
-  return this->common_create_and_bind();
+  return this->create_and_bind_common();
 }
 
 void sctp_network_server_impl::receive()
@@ -167,7 +168,7 @@ void sctp_network_server_impl::receive()
   if (rx_bytes == -1) {
     if (errno != EAGAIN) {
       logger.error("Error reading from SCTP socket: {}", strerror(errno));
-      handle_socket_error();
+      handle_socket_shutdown(nullptr);
     } else {
       if (!node_cfg.non_blocking_mode) {
         logger.debug("Socket timeout reached");
@@ -184,9 +185,17 @@ void sctp_network_server_impl::receive()
   }
 }
 
-void sctp_network_server_impl::handle_socket_error()
+void sctp_network_server_impl::handle_socket_shutdown(const char* cause)
 {
-  // TODO: Notify associations and handle socket shutdown.
+  // Signal to senders to all existing senders that the server was deleted, so they don't bother with sending EOF.
+  // Note: This function is called from within the io_broker. So, it safe to delete the associations while the io_broker
+  // subscription is still active.
+  while (not associations.empty()) {
+    handle_association_shutdown(associations.begin()->first, cause);
+  }
+
+  // Stop handling new SCTP events.
+  io_sub.reset();
 }
 
 void sctp_network_server_impl::handle_data(int assoc_id, span<const uint8_t> payload)
@@ -208,73 +217,37 @@ void sctp_network_server_impl::handle_notification(span<const uint8_t>          
                                                    const sockaddr&               src_addr,
                                                    socklen_t                     src_addr_len)
 {
-  const auto* notif             = reinterpret_cast<const union sctp_notification*>(payload.data());
-  uint32_t    notif_header_size = sizeof(notif->sn_header);
-  if (notif_header_size > payload.size_bytes()) {
-    logger.error("fd={}: SCTP Notification msg size ({} B) is smaller than notification header size ({} B)",
-                 socket.fd().value(),
-                 payload.size_bytes(),
-                 notif_header_size);
+  if (not validate_and_log_sctp_notification(payload)) {
+    // Handle error.
+    handle_association_shutdown(sri.sinfo_assoc_id, "The received message is invalid");
     return;
   }
 
+  const auto* notif = reinterpret_cast<const union sctp_notification*>(payload.data());
   switch (notif->sn_header.sn_type) {
     case SCTP_ASSOC_CHANGE: {
-      if (sizeof(struct sctp_assoc_change) > payload.size_bytes()) {
-        logger.error("Notification msg size ({} B) is smaller than struct sctp_assoc_change size ({} B)",
-                     payload.size_bytes(),
-                     sizeof(struct sctp_assoc_change));
-        return;
-      }
-
-      const char*                     state = NULL;
-      const struct sctp_assoc_change* n     = &notif->sn_assoc_change;
-
+      const struct sctp_assoc_change* n = &notif->sn_assoc_change;
       switch (n->sac_state) {
         case SCTP_COMM_UP:
           handle_sctp_comm_up(*n, src_addr, src_addr_len);
-          state = "COMM UP";
           break;
         case SCTP_COMM_LOST:
-          state = "COMM_LOST";
-          handle_association_shutdown(n->sac_assoc_id);
-          break;
-        case SCTP_RESTART:
-          state = "RESTART";
-          break;
-        case SCTP_SHUTDOWN_COMP:
-          state = "SHUTDOWN_COMP";
+          handle_association_shutdown(n->sac_assoc_id, "Communication was lost");
           break;
         case SCTP_CANT_STR_ASSOC:
-          state = "CAN'T START ASSOC";
-          handle_association_shutdown(n->sac_assoc_id);
+          handle_association_shutdown(n->sac_assoc_id, "Can't state association");
+          break;
+        default:
           break;
       }
-
-      if (n->sac_state != SCTP_COMM_UP) {
-        logger.debug(
-            "SCTP_ASSOC_CHANGE notif: state: {}, error code: {}, out streams: {}, in streams: {}, assoc id: {}",
-            state,
-            n->sac_error,
-            n->sac_outbound_streams,
-            n->sac_inbound_streams,
-            n->sac_assoc_id);
-      }
       break;
     }
-
     case SCTP_SHUTDOWN_EVENT: {
-      if (sizeof(struct sctp_shutdown_event) > payload.size_bytes()) {
-        logger.error("Error notification msg size is smaller than struct sctp_shutdown_event size");
-        return;
-      }
       const struct sctp_shutdown_event* n = &notif->sn_shutdown_event;
-      handle_association_shutdown(n->sse_assoc_id);
+      handle_association_shutdown(n->sse_assoc_id, "Client shutdown");
       break;
     }
-
     default:
-      logger.warning("Unhandled notification type {}", notif->sn_header.sn_type);
       break;
   }
 }
@@ -317,7 +290,7 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
       "fd={} assoc={}: New client SCTP association (client_addr={})", socket.fd().value(), assoc_id, assoc_ctxt.addr);
 }
 
-void sctp_network_server_impl::handle_association_shutdown(int assoc_id, bool client_shutdown)
+void sctp_network_server_impl::handle_association_shutdown(int assoc_id, const char* cause)
 {
   auto assoc_it = associations.find(assoc_id);
   if (assoc_it == associations.end()) {
@@ -330,12 +303,13 @@ void sctp_network_server_impl::handle_association_shutdown(int assoc_id, bool cl
   // The client wishes to close the association.
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
   bool prev = assoc_it->second.association_shutdown_received->exchange(true);
-  if (not prev and client_shutdown) {
+  if (not prev and cause != nullptr) {
     // The association sender didn't yet close the connection and the association was closed by the client
-    logger.info("fd={} assoc={}: Client shut down SCTP association (client_addr={})",
+    logger.info("fd={} assoc={}: SCTP association was shut down (client_addr={}). Cause: {}",
                 socket.fd().value(),
                 assoc_it->first,
-                assoc_it->second.addr);
+                assoc_it->second.addr,
+                cause);
   }
 
   // Remove association.
@@ -380,7 +354,7 @@ bool sctp_network_server_impl::subscribe_to_broker()
       [this]() { receive(); },
       [this](io_broker::error_code code) {
         logger.info("Connection loss due to IO error code={}.", (int)code);
-        handle_socket_error();
+        handle_socket_shutdown(nullptr);
       });
   return io_sub.registered();
 }

@@ -67,14 +67,14 @@ private:
   // Subscribe to IO broker to listen for incoming SCTP messages/events.
   bool subscribe_to_broker();
 
-  void handle_socket_error();
+  void handle_socket_shutdown(const char* cause);
 
   void handle_data(int assoc_id, span<const uint8_t> payload);
   void handle_notification(span<const uint8_t>           payload,
                            const struct sctp_sndrcvinfo& sri,
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
-  void handle_association_shutdown(int assoc_id, bool client_shutdown = true);
+  void handle_association_shutdown(int assoc_id, const char* cause);
 
   /// Handle SCTP COMM UP event.
   void

@@ -10,6 +10,7 @@
 
 #include "sctp_network_gateway_common_impl.h"
 #include <netdb.h>
+#include <netinet/sctp.h>
 #include <sys/socket.h>
 
 using namespace srsran;
@@ -90,7 +91,7 @@ expected<sctp_socket> sctp_network_gateway_common_impl::create_socket(int ai_fam
 }
 
 /// \brief Create and bind socket to given address.
-bool sctp_network_gateway_common_impl::common_create_and_bind()
+bool sctp_network_gateway_common_impl::create_and_bind_common()
 {
   sockaddr_searcher searcher{node_cfg.bind_address, node_cfg.bind_port, logger};
   struct addrinfo*  result = nullptr;
@@ -129,6 +130,71 @@ bool sctp_network_gateway_common_impl::common_create_and_bind()
   }
 
   logger.debug("Binding to {}:{} was successful", node_cfg.bind_address, node_cfg.bind_port);
+
+  return true;
+}
+
+static const char* sctp_assoc_change_name(sctp_sac_state state)
+{
+  switch (state) {
+    case SCTP_COMM_UP:
+      return "SCTP_COMM_UP";
+    case SCTP_COMM_LOST:
+      return "SCTP_COMM_LOST";
+    case SCTP_RESTART:
+      return "SCTP_RESTART";
+    case SCTP_SHUTDOWN_COMP:
+      return "SCTP_SHUTDOWN_COMP";
+    case SCTP_CANT_STR_ASSOC:
+      return "SCTP_CANT_STR_ASSOC";
+    default:
+      break;
+  }
+  return "UNKNOWN";
+}
+
+bool sctp_network_gateway_common_impl::validate_and_log_sctp_notification(span<const uint8_t> payload) const
+{
+  const auto* notif             = reinterpret_cast<const union sctp_notification*>(payload.data());
+  uint32_t    notif_header_size = sizeof(notif->sn_header);
+  if (notif_header_size > payload.size_bytes()) {
+    logger.error("fd={}: SCTP Notification msg size ({} B) is smaller than notification header size ({} B)",
+                 socket.fd().value(),
+                 payload.size_bytes(),
+                 notif_header_size);
+    return false;
+  }
+
+  switch (notif->sn_header.sn_type) {
+    case SCTP_ASSOC_CHANGE: {
+      if (sizeof(struct sctp_assoc_change) > payload.size_bytes()) {
+        logger.error("Notification msg size ({} B) is smaller than struct sctp_assoc_change size ({} B)",
+                     payload.size_bytes(),
+                     sizeof(struct sctp_assoc_change));
+        return false;
+      }
+
+      const struct sctp_assoc_change* n     = &notif->sn_assoc_change;
+      const char*                     state = sctp_assoc_change_name(static_cast<sctp_sac_state>(n->sac_state));
+      logger.debug("SCTP_ASSOC_CHANGE: state={} error={} outbound_streams={} inbound_streams={} assoc_id={}",
+                   state,
+                   n->sac_error,
+                   n->sac_outbound_streams,
+                   n->sac_inbound_streams,
+                   n->sac_assoc_id);
+    } break;
+    case SCTP_SHUTDOWN_EVENT: {
+      if (sizeof(struct sctp_shutdown_event) > payload.size_bytes()) {
+        logger.error("Error notification msg size is smaller than struct sctp_shutdown_event size");
+        return false;
+      }
+      const struct sctp_shutdown_event* n = &notif->sn_shutdown_event;
+      logger.debug("SCTP_SHUTDOWN_EVENT: assoc_id={}", n->sse_assoc_id);
+    } break;
+    default:
+      logger.warning("Unhandled notification type {}", notif->sn_header.sn_type);
+      return false;
+  }
 
   return true;
 }

@@ -30,7 +30,7 @@ sctp_network_gateway_impl::sctp_network_gateway_impl(const sctp_network_connecto
 
 bool sctp_network_gateway_impl::create_and_bind()
 {
-  return this->common_create_and_bind();
+  return this->create_and_bind_common();
 }
 
 bool sctp_network_gateway_impl::listen()

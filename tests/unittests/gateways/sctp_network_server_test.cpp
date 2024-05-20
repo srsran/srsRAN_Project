@@ -391,10 +391,10 @@ TEST_F(sctp_network_server_test,
   ASSERT_TRUE(close_client(false));
 
   ASSERT_EQ(assoc_factory.last_pdu.length(), 0);
-  broker.handle_receive(); // Should handle packet receive
+  trigger_broker(); // Should handle packet receive
   ASSERT_EQ(assoc_factory.last_pdu, bytes);
   ASSERT_FALSE(assoc_factory.association_destroyed) << "Association Handler was destroyed too early";
-  broker.handle_receive(); // Should close connection
+  trigger_broker(); // Should close connection
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Association Handler was not destroyed";
 }
 
@@ -414,6 +414,9 @@ TEST_F(sctp_network_server_test, when_association_handler_closes_connection_then
   ASSERT_TRUE(result.has_value());
   ASSERT_TRUE(result->has_notification());
   ASSERT_EQ(result->sctp_notification(), SCTP_SHUTDOWN_EVENT);
+
+  // IO broker in the server handles SCTP_SHUTDOWN_COMP
+  trigger_broker();
 }
 
 TEST_F(sctp_network_server_test, when_multiple_clients_connect_then_multiple_association_handlers_are_created)
@@ -442,10 +445,13 @@ TEST_F(sctp_network_server_test, when_multiple_clients_connect_then_multiple_ass
 
   // SCTP shutdown client 1
   trigger_broker();
+  ASSERT_TRUE(assoc_factory.association_destroyed) << "Client 1 shutdown was not processed";
+  assoc_factory.association_destroyed = false;
   // SCTP SHUTDOWN_COMP client 1
   trigger_broker();
   // SCTP shutdown client 2
   trigger_broker();
+  ASSERT_TRUE(assoc_factory.association_destroyed) << "Client 2 shutdown was not processed";
   // SCTP SHUTDOWN_COMP client 2
   trigger_broker();
 }

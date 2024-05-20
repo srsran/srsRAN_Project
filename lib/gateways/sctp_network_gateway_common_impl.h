@@ -50,9 +50,11 @@ protected:
   bool close_socket();
 
   // Creates an SCTP socket with the provided protocol.
-  SRSRAN_NODISCARD expected<sctp_socket> create_socket(int ai_family, int ai_socktype) const;
+  [[nodiscard]] expected<sctp_socket> create_socket(int ai_family, int ai_socktype) const;
 
-  bool common_create_and_bind();
+  bool create_and_bind_common();
+
+  [[nodiscard]] bool validate_and_log_sctp_notification(span<const uint8_t> payload) const;
 
   const sctp_network_node_config node_cfg;
   srslog::basic_logger&          logger;
