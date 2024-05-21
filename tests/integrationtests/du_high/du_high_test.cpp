@@ -79,10 +79,9 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
 
   // Forward several DRB PDUs.
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
-
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
-    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
+    nru_dl_message f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
   }
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
@@ -140,8 +139,8 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
-    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
+    nru_dl_message f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
   }
 
   // DU receives F1AP UE Context Release Command.
@@ -221,8 +220,8 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
-    cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
+    nru_dl_message f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    cu_up_sim.created_du_notifs[0]->on_new_pdu(f1u_pdu);
   }
 
   // DU receives F1AP UE Context Modification Command.
