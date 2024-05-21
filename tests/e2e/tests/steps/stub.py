@@ -690,11 +690,12 @@ def _stop_stub(
 def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:
     if fail_if_kos:
         with suppress(grpc.RpcError):
-            metrics = stub.GetMetrics(Empty())
+            metrics: Metrics = stub.GetMetrics(Empty())
 
             for ue_info in metrics.ue_array:
-                if ue_info.nof_kos or ue_info.nof_retx:
-                    return f"{name} has KOs and/or retrxs"
+                nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
+                if nof_kos:
+                    return f"{name} has {nof_kos} KOs / retrxs"
 
     return ""
 
@@ -715,7 +716,8 @@ def get_metrics(stub: RanStub) -> GnbMetrics:
                 ul_brate_aggregate += ue_info.ul_bitrate
             if ue_info.dl_bitrate:
                 dl_brate_aggregate += ue_info.dl_bitrate
-            if ue_info.nof_kos or ue_info.nof_retx:
-                nof_kos_aggregate += ue_info.nof_kos
+            nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
+            if nof_kos:
+                nof_kos_aggregate += nof_kos
 
     return GnbMetrics(ul_brate_aggregate, dl_brate_aggregate, nof_kos_aggregate)
