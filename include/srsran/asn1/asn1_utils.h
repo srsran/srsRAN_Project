@@ -1335,12 +1335,12 @@ struct choice_buffer_base_t {
   template <typename T>
   T& get()
   {
-    return *SRSRAN_LAUNDER(reinterpret_cast<T*>(&buffer));
+    return *std::launder(reinterpret_cast<T*>(&buffer));
   }
   template <typename T>
   const T& get() const
   {
-    return *SRSRAN_LAUNDER(reinterpret_cast<const T*>(&buffer));
+    return *std::launder(reinterpret_cast<const T*>(&buffer));
   }
   template <typename T>
   void destroy()
