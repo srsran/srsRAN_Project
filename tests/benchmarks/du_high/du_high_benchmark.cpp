@@ -307,29 +307,18 @@ private:
 };
 
 /// \brief Dummy F1-U bearer for the purpose of benchmark.
-class f1u_dummy_bearer : public f1u_bearer,
-                         public f1u_rx_pdu_handler,
-                         public f1u_tx_delivery_handler,
-                         public f1u_tx_sdu_handler
+class f1u_gw_dummy_bearer : public srs_du::f1u_tx_pdu_notifier
 {
 public:
-  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
-  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
-  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
-  void                     stop() override {}
-
-  void handle_pdu(nru_dl_message msg) override {}
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_chain sdu) override {}
+  void on_new_pdu(nru_ul_message msg) override {}
 };
 
 /// \brief Simulator of the CU-UP from the perspective of the DU.
 class cu_up_simulator : public f1u_du_gateway
 {
 public:
-  static_vector<f1u_dummy_bearer*, MAX_NOF_DU_UES>            bearer_list;
-  static_vector<srs_du::f1u_rx_sdu_notifier*, MAX_NOF_DU_UES> du_notif_list;
+  static_vector<f1u_gw_dummy_bearer*, MAX_NOF_DU_UES>                       bearer_list;
+  static_vector<srs_du::f1u_du_gateway_bearer_rx_notifier*, MAX_NOF_DU_UES> du_notif_list;
 
   std::unique_ptr<f1u_tx_pdu_notifier> create_du_bearer(uint32_t                                   ue_index,
                                                         drb_id_t                                   drb_id,
@@ -340,10 +329,10 @@ public:
                                                         timer_factory                              timers,
                                                         task_executor&                             ue_executor) override
   {
-    auto f1u_bearer = std::make_unique<f1u_dummy_bearer>();
-    // du_notif_list.push_back(&du_rx);
-    // bearer_list.push_back(f1u_bearer.get());
-    return nullptr;
+    auto f1u_bearer = std::make_unique<f1u_gw_dummy_bearer>();
+    du_notif_list.push_back(&du_rx);
+    bearer_list.push_back(f1u_bearer.get());
+    return f1u_bearer;
   }
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override {}
@@ -792,7 +781,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdu_copy.value().length(), std::memory_order_relaxed);
-        du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
+        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
       }
     })) {
       // keep trying to push new PDUs.
