@@ -420,16 +420,19 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, du_high_unit_tdd_ul_dl
 {
   configure_cli11_tdd_ul_dl_pattern_args(app, tdd_ul_dl_params.pattern1);
   // TDD pattern 2.
-  // NOTE: CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
-  // pattern2_cfg variable needs to be static.
-  tdd_ul_dl_params.pattern2.emplace();
-  CLI::App* pattern2_sub_cmd =
+  // NOTE: As the pattern2 can be configured in the common cell and not in the cell, use a different variable to parse
+  // the cell pattern 2 property. If the pattern 2 is present for the cell, update the cell pattern 2 value, otherwise
+  // do nothing (this will cause that the cell pattern 2 value equals than the common cell TDD pattern 2). CLI11 needs
+  // that the life of the variable last longer than the call of callback function. Therefore, the pattern2_cfg variable
+  // needs to be static.
+  tdd_ul_dl_pattern_unit_config pattern2_cfg;
+  CLI::App*                     pattern2_sub_cmd =
       add_subcommand(app, "pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, *tdd_ul_dl_params.pattern2);
+  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, pattern2_cfg);
   auto tdd_pattern2_verify_callback = [&]() {
     CLI::App* sub_cmd = app.get_subcommand("pattern2");
-    if (sub_cmd->count() == 0) {
-      tdd_ul_dl_params.pattern2.reset();
+    if (sub_cmd->count() != 0) {
+      tdd_ul_dl_params.pattern2.emplace(pattern2_cfg);
     }
   };
   pattern2_sub_cmd->parse_complete_callback(tdd_pattern2_verify_callback);
@@ -1060,14 +1063,19 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
   // TDD UL DL configuration.
-  cell_params.tdd_ul_dl_cfg.emplace();
-  CLI::App* tdd_ul_dl_subcmd =
+  // NOTE: As the cell TDD pattern can be configured in the common cell and not in the cell, use a different variable to
+  // parse the cell TDD property. If the TDD pattern is present for the cell, update the cell TDD pattern value,
+  // otherwise do nothing (this will cause that the cell TDD pattern value equals than the common cell TDD pattern).
+  // CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
+  // cell_tdd_pattern variable needs to be static.
+  static du_high_unit_tdd_ul_dl_config cell_tdd_pattern;
+  CLI::App*                            tdd_ul_dl_subcmd =
       add_subcommand(app, "tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, *cell_params.tdd_ul_dl_cfg);
+  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_tdd_pattern);
   auto tdd_ul_dl_verify_callback = [&]() {
     CLI::App* tdd_sub_cmd = app.get_subcommand("tdd_ul_dl_cfg");
-    if (tdd_sub_cmd->count() == 0) {
-      cell_params.tdd_ul_dl_cfg.reset();
+    if (tdd_sub_cmd->count() != 0) {
+      cell_params.tdd_ul_dl_cfg.emplace(cell_tdd_pattern);
     }
   };
   tdd_ul_dl_subcmd->parse_complete_callback(tdd_ul_dl_verify_callback);
