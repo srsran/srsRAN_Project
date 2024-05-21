@@ -71,6 +71,7 @@ private:
 // F1-U Gateway
 class f1u_gateway_nru_rx_adapter final : public f1u_du_gateway_bearer_rx_notifier
 {
+public:
   void connect(srs_du::f1u_rx_pdu_handler& nru_rx_) { nru_rx = &nru_rx_; }
 
   /// \brief Stop forwarding SDUs to the RLC layer.

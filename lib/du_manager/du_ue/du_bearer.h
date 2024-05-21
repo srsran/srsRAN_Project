@@ -66,6 +66,7 @@ struct du_drb_connector {
   void connect(du_ue_index_t                       ue_index,
                drb_id_t                            drb_id,
                lcid_t                              lcid,
+               f1u_tx_pdu_notifier&                f1_gw_bearer,
                f1u_bearer&                         f1_bearer,
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);

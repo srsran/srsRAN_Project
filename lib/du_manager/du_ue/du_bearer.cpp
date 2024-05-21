@@ -63,10 +63,14 @@ void du_ue_srb::stop()
 void du_drb_connector::connect(du_ue_index_t                       ue_index,
                                drb_id_t                            drb_id,
                                lcid_t                              lcid,
+                               f1u_tx_pdu_notifier&                f1_gw_bearer,
                                f1u_bearer&                         f1_bearer,
                                rlc_entity&                         rlc_bearer,
                                mac_ue_control_information_handler& mac_ue_info_handler)
 {
+  // > Connect F1-U Rx SDU -> F1-U GW Tx SDU handler.
+  f1u_gateway_nru_rx_notif.connect(f1_bearer.get_rx_pdu_handler());
+
   // > Connect RLC Rx SDU -> F1-U Tx SDU handler.
   rlc_rx_sdu_notif.connect(f1_bearer.get_tx_sdu_handler());
 
@@ -190,8 +194,13 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   }
 
   // > Connect DRB F1-U with RLC, and RLC with MAC logical channel notifier.
-  drb->connector.connect(
-      ue_index, drb->drb_id, drb->lcid, *drb->drb_f1u, *drb->rlc_bearer, drb_info.du_params.rlc.mac_ue_info_handler);
+  drb->connector.connect(ue_index,
+                         drb->drb_id,
+                         drb->lcid,
+                         *drb->f1u_gw_bearer,
+                         *drb->drb_f1u,
+                         *drb->rlc_bearer,
+                         drb_info.du_params.rlc.mac_ue_info_handler);
 
   return drb;
 }

@@ -18,17 +18,13 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 /// Mocking class of the surrounding layers invoked by the F1-U bearer
-class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier,
-                             public f1u_rx_delivery_notifier,
-                             public f1u_rx_sdu_notifier,
-                             public f1u_bearer_disconnector
+class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier, public f1u_rx_delivery_notifier, public f1u_rx_sdu_notifier
 {
 public:
-  std::list<nru_dl_message>          tx_msg_list;
-  std::list<uint32_t>                highest_transmitted_pdcp_sn_list;
-  std::list<uint32_t>                highest_delivered_pdcp_sn_list;
-  std::list<byte_buffer_chain>       rx_sdu_list;
-  std::list<up_transport_layer_info> removed_ul_tnls;
+  std::list<nru_dl_message>    tx_msg_list;
+  std::list<uint32_t>          highest_transmitted_pdcp_sn_list;
+  std::list<uint32_t>          highest_delivered_pdcp_sn_list;
+  std::list<byte_buffer_chain> rx_sdu_list;
 
   // f1u_tx_pdu_notifier interface
   void on_new_pdu(nru_dl_message msg) override { tx_msg_list.push_back(std::move(msg)); }
@@ -45,9 +41,6 @@ public:
 
   // f1u_rx_sdu_notifier interface
   void on_new_sdu(byte_buffer_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
-
-  // f1u_bearer_disconnector interface
-  void disconnect_cu_bearer(const up_transport_layer_info& ul_tnl) override { removed_ul_tnls.push_back(ul_tnl); }
 };
 
 class f1u_trx_test
@@ -145,13 +138,7 @@ TEST_F(f1u_cu_up_test, create_and_delete)
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
-  EXPECT_TRUE(tester->removed_ul_tnls.empty());
-  gtpu_teid_t ul_teid = f1u->get_ul_teid();
   f1u.reset();
-  ASSERT_FALSE(tester->removed_ul_tnls.empty());
-  EXPECT_EQ(tester->removed_ul_tnls.front().gtp_teid, ul_teid);
-  tester->removed_ul_tnls.pop_front();
-  EXPECT_TRUE(tester->removed_ul_tnls.empty());
 }
 
 TEST_F(f1u_cu_up_test, tx_discard)

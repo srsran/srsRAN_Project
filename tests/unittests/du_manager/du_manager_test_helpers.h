@@ -150,16 +150,15 @@ class f1u_gw_bearer_dummy : public srs_du::f1u_tx_pdu_notifier
 public:
   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx;
 
-  optional<nru_dl_message> last_pdu;
-  optional<uint32_t>       last_highest_transmitted_pdcp_sn;
-  optional<uint32_t>       last_highest_delivered_pdcp_sn;
-  byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
+  optional<nru_ul_message> last_sdu;
+  // byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
 
   f1u_gw_bearer_dummy(srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_) : du_rx(du_rx_) {}
 
-  void on_new_pdu(nru_ul_message msg) override
-  { /*last_pdu = std::move(msg);*/
-  }
+  void on_new_pdu(nru_ul_message msg) override { last_sdu = std::move(msg); }
+
+  // helper function to push DL PDUs to the RX path.
+  void on_new_sdu(nru_dl_message msg) { du_rx.on_new_pdu(std::move(msg)); }
 };
 
 class f1u_gateway_dummy : public f1u_du_gateway
