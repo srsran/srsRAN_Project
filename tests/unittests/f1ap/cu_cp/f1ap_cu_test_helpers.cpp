@@ -128,6 +128,7 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
     drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not_pre_emptable";
     drb_item.qos_info.s_nssai.sst                                                = 1;
     drb_item.rlc_mod                                                             = rlc_mode::am;
+    drb_item.pdcp_sn_len                                                         = pdcp_sn_size::size12bits;
 
     req.drbs_to_be_setup_list.emplace(drb, drb_item);
   }

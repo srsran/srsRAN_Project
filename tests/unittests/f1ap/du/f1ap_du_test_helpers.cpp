@@ -56,7 +56,9 @@ asn1::f1ap::drbs_to_be_setup_item_s srsran::srs_du::generate_drb_am_setup_item(d
       qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
-  drb.rlc_mode.value = rlc_mode_opts::rlc_am;
+  drb.rlc_mode.value         = rlc_mode_opts::rlc_am;
+  drb.ie_exts_present        = true;
+  drb.ie_exts.dl_pdcp_sn_len = pdcp_sn_len_opts::twelve_bits;
   drb.ul_up_tnl_info_to_be_setup_list.resize(1);
   auto& gtp_tun = drb.ul_up_tnl_info_to_be_setup_list[0].ul_up_tnl_info.set_gtp_tunnel();
   auto  addr    = transport_layer_address::create_from_string("127.0.0.1");
@@ -116,7 +118,10 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsran::srs_du::generate_drb_am_mod_item
       qos_flow_level_qos_params_s::reflective_qos_attribute_opts::subject_to;
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
-  drb.rlc_mode.value = rlc_mode_opts::rlc_am;
+  drb.rlc_mode.value                 = rlc_mode_opts::rlc_am;
+  drb.ie_exts_present                = true;
+  drb.ie_exts.dl_pdcp_sn_len_present = true;
+  drb.ie_exts.dl_pdcp_sn_len         = pdcp_sn_len_opts::twelve_bits;
   drb.ul_up_tnl_info_to_be_setup_list.resize(1);
   auto& gtp_tun = drb.ul_up_tnl_info_to_be_setup_list[0].ul_up_tnl_info.set_gtp_tunnel();
   auto  addr    = transport_layer_address::create_from_string("127.0.0.1");
