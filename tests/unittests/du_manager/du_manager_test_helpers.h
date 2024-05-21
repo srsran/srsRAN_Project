@@ -74,35 +74,6 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
 };
 
-class dummy_f1u_bearer : public f1u_bearer,
-                         public f1u_rx_pdu_handler,
-                         public f1u_tx_delivery_handler,
-                         public f1u_tx_sdu_handler
-{
-public:
-  nru_dl_message     last_msg;
-  optional<uint32_t> last_highest_transmitted_pdcp_sn;
-  optional<uint32_t> last_highest_delivered_pdcp_sn;
-  byte_buffer_chain  last_sdu;
-
-  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
-  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
-  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
-
-  void handle_pdu(nru_dl_message msg) override { last_msg = std::move(msg); }
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
-  {
-    last_highest_transmitted_pdcp_sn = highest_pdcp_sn;
-  }
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
-  {
-    last_highest_delivered_pdcp_sn = highest_pdcp_sn;
-  }
-  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
-
-  void stop() override {}
-};
-
 class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_ue_context_manager,
                         public f1ap_message_handler,
@@ -172,39 +143,6 @@ public:
   void handle_message(const f1ap_message& msg) override {}
 
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
-};
-
-class f1u_bearer_dummy : public f1u_bearer,
-                         public f1u_rx_pdu_handler,
-                         public f1u_tx_delivery_handler,
-                         public f1u_tx_sdu_handler
-{
-public:
-  srs_du::f1u_rx_sdu_notifier& du_rx;
-
-  optional<nru_dl_message> last_pdu;
-  optional<uint32_t>       last_highest_transmitted_pdcp_sn;
-  optional<uint32_t>       last_highest_delivered_pdcp_sn;
-  byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
-
-  f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
-
-  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
-  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
-  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
-
-  void handle_pdu(nru_dl_message msg) override { last_pdu = std::move(msg); }
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
-  {
-    last_highest_transmitted_pdcp_sn = highest_pdcp_sn;
-  }
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
-  {
-    last_highest_delivered_pdcp_sn = highest_pdcp_sn;
-  }
-  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
-
-  void stop() override {}
 };
 
 class f1u_gw_bearer_dummy : public srs_du::f1u_tx_pdu_notifier
