@@ -22,10 +22,12 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/io/io_broker.h"
+#include "srsran/support/io/sctp_socket.h"
 
-using namespace srsran;
+namespace srsran {
 
-byte_buffer make_tx_byte_buffer(uint32_t length)
+inline byte_buffer make_tx_byte_buffer(uint32_t length)
 {
   byte_buffer pdu{};
   for (uint32_t i = 0; i < length; ++i) {
@@ -37,22 +39,22 @@ byte_buffer make_tx_byte_buffer(uint32_t length)
   return pdu;
 }
 
-byte_buffer make_small_tx_byte_buffer()
+inline byte_buffer make_small_tx_byte_buffer()
 {
   return make_tx_byte_buffer(15);
 }
 
-byte_buffer make_large_tx_byte_buffer()
+inline byte_buffer make_large_tx_byte_buffer()
 {
   return make_tx_byte_buffer(9000);
 }
 
-byte_buffer make_oversized_tx_byte_buffer()
+inline byte_buffer make_oversized_tx_byte_buffer()
 {
   return make_tx_byte_buffer(9500);
 }
 
-void fill_sctp_hints(struct addrinfo& hints)
+inline void fill_sctp_hints(struct addrinfo& hints)
 {
   // support ipv4, ipv6 and hostnames
   hints.ai_family    = AF_UNSPEC;
@@ -64,7 +66,7 @@ void fill_sctp_hints(struct addrinfo& hints)
   hints.ai_next      = nullptr;
 }
 
-void fill_udp_hints(struct addrinfo& hints)
+inline void fill_udp_hints(struct addrinfo& hints)
 {
   // support ipv4, ipv6 and hostnames
   hints.ai_family    = AF_UNSPEC;
@@ -202,3 +204,5 @@ public:
 
   byte_buffer last_pdu;
 };
+
+} // namespace srsran

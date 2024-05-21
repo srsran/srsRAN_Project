@@ -10,13 +10,14 @@
 
 #pragma once
 
-#include "sctp_network_gateway.h"
+#include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/gateways/sctp_network_server.h"
 
 namespace srsran {
 
+/// Configuration of an SCTP server.
 struct sctp_network_server_config {
-  sctp_network_node_config          sctp;
+  sctp_network_gateway_config       sctp;
   io_broker&                        broker;
   sctp_network_association_factory& association_handler_factory;
 };

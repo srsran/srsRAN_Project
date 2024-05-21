@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include "cameron314/concurrentqueue.h"
 #include "sctp_network_gateway_common_impl.h"
 #include "srsran/gateways/sctp_network_server.h"
-#include "srsran/support/io/transport_layer_address.h"
 #include <unordered_map>
 
 struct sctp_sndrcvinfo;
@@ -26,15 +24,16 @@ namespace srsran {
 /// The server handles Rx data and SCTP association updates in the same thread of the io_broker.
 class sctp_network_server_impl : public sctp_network_server, public sctp_network_gateway_common_impl
 {
-  explicit sctp_network_server_impl(const sctp_network_node_config&   sctp_cfg,
-                                    io_broker&                        broker,
-                                    sctp_network_association_factory& assoc_factory);
+  explicit sctp_network_server_impl(const sctp_network_gateway_config& sctp_cfg,
+                                    io_broker&                         broker,
+                                    sctp_network_association_factory&  assoc_factory);
 
 public:
   ~sctp_network_server_impl() override;
 
-  static std::unique_ptr<sctp_network_server>
-  create(const sctp_network_node_config& sctp_cfg, io_broker& broker, sctp_network_association_factory& assoc_factory);
+  static std::unique_ptr<sctp_network_server> create(const sctp_network_gateway_config& sctp_cfg,
+                                                     io_broker&                         broker,
+                                                     sctp_network_association_factory&  assoc_factory);
 
   int get_socket_fd() const override { return socket.fd().value(); }
 

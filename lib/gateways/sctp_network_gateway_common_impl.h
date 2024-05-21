@@ -40,7 +40,7 @@ private:
 class sctp_network_gateway_common_impl
 {
 public:
-  sctp_network_gateway_common_impl(const sctp_network_node_config& cfg);
+  sctp_network_gateway_common_impl(const sctp_network_gateway_config& cfg);
   ~sctp_network_gateway_common_impl();
 
 protected:
@@ -56,8 +56,8 @@ protected:
 
   [[nodiscard]] bool validate_and_log_sctp_notification(span<const uint8_t> payload) const;
 
-  const sctp_network_node_config node_cfg;
-  srslog::basic_logger&          logger;
+  const sctp_network_gateway_config node_cfg;
+  srslog::basic_logger&             logger;
 
   sctp_socket socket;
 

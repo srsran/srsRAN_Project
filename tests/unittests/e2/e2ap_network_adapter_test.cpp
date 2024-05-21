@@ -8,7 +8,6 @@
  *
  */
 
-#include "../gateways/test_helpers.h"
 #include "apps/gnb/adapters/e2ap_adapter.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -18,7 +17,6 @@
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
-#include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 

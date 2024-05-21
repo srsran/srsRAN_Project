@@ -102,7 +102,7 @@ private:
       logger.debug("fd={} assoc={}: Sent EOF to SCTP client and closed SCTP association", fd, assoc_id);
     }
 
-    // Signal send closed the channel.
+    // Signal sender closed the channel.
     assoc_shutdown_flag->store(true, std::memory_order_relaxed);
   }
 
@@ -119,9 +119,9 @@ private:
 
 sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int assoc_id_) : assoc_id(assoc_id_) {}
 
-sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_node_config& sctp_cfg_,
-                                                   io_broker&                              broker_,
-                                                   sctp_network_association_factory&       assoc_factory_) :
+sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_gateway_config& sctp_cfg_,
+                                                   io_broker&                                 broker_,
+                                                   sctp_network_association_factory&          assoc_factory_) :
   sctp_network_gateway_common_impl(sctp_cfg_),
   broker(broker_),
   assoc_factory(assoc_factory_),
@@ -359,9 +359,9 @@ bool sctp_network_server_impl::subscribe_to_broker()
   return io_sub.registered();
 }
 
-std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp_network_node_config&   sctp_cfg,
-                                                                      io_broker&                        broker_,
-                                                                      sctp_network_association_factory& assoc_factory_)
+std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp_network_gateway_config& sctp_cfg,
+                                                                      io_broker&                         broker_,
+                                                                      sctp_network_association_factory&  assoc_factory_)
 {
   // Validate arguments
   if (sctp_cfg.bind_address.empty()) {

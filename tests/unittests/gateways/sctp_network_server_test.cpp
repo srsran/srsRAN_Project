@@ -8,46 +8,15 @@
  *
  */
 
+#include "sctp_test_helpers.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
-#include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/sctp_socket.h"
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
-#include <netinet/sctp.h>
 
 using namespace srsran;
 
 namespace {
-
-class dummy_io_broker : public io_broker
-{
-public:
-  bool             accept_next_fd     = true;
-  int              last_registered_fd = -1;
-  recv_callback_t  handle_receive;
-  error_callback_t handle_error;
-  int              last_unregistered_fd = -1;
-
-  subscriber register_fd(
-      int              fd,
-      recv_callback_t  handler_,
-      error_callback_t err_handler_ = [](error_code) {}) override
-  {
-    last_registered_fd = fd;
-    if (not accept_next_fd) {
-      return {};
-    }
-    handle_receive = handler_;
-    handle_error   = err_handler_;
-    return subscriber{*this, fd};
-  }
-
-  bool unregister_fd(int fd) override
-  {
-    last_unregistered_fd = fd;
-    return true;
-  }
-};
 
 class association_factory : public sctp_network_association_factory
 {
@@ -110,50 +79,16 @@ protected:
   association_factory assoc_factory;
 };
 
-struct recv_data {
-  struct sctp_sndrcvinfo sri       = {};
-  int                    msg_flags = 0;
-  sockaddr_storage       msg_src_addr;
-  // fromlen is an in/out variable in sctp_recvmsg.
-  socklen_t            msg_src_addrlen = sizeof(msg_src_addr);
-  std::vector<uint8_t> data;
-
-  bool has_notification() const { return msg_flags & MSG_NOTIFICATION; }
-  int  sctp_notification() const
-  {
-    srsran_assert(has_notification(), "bad access");
-    const auto* notif = reinterpret_cast<const union sctp_notification*>(data.data());
-    return notif->sn_header.sn_type;
-  }
-  const struct sctp_assoc_change& sctp_assoc_change() const
-  {
-    srsran_assert(has_notification() and sctp_notification() == SCTP_ASSOC_CHANGE, "bad access");
-    const auto* notif = reinterpret_cast<const union sctp_notification*>(data.data());
-    return notif->sn_assoc_change;
-  }
-};
-
-class dummy_sctp_client
+class dummy_sctp_client : public dummy_sctp_node
 {
 public:
-  dummy_sctp_client() { logger.set_level(srslog::basic_levels::debug); }
-  ~dummy_sctp_client() { close(); }
+  dummy_sctp_client() : dummy_sctp_node("CLIENT") {}
 
-  bool close()
-  {
-    if (socket.is_open()) {
-      socket.close();
-      logger.info("Client shut down");
-      return true;
-    }
-    return false;
-  }
-
-  void set_dest(const sctp_network_node_config& server_cfg_) { server_cfg = server_cfg_; }
+  void set_dest(const sctp_network_gateway_config& server_cfg_) { server_cfg = server_cfg_; }
 
   bool connect()
   {
-    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_STREAM});
+    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_SEQPACKET});
     if (not result.has_value()) {
       return false;
     }
@@ -170,50 +105,12 @@ public:
     return true;
   }
 
-  optional<recv_data> receive()
-  {
-    constexpr static uint32_t network_gateway_sctp_max_len = 9100;
-
-    recv_data data;
-
-    std::array<uint8_t, network_gateway_sctp_max_len> temp_buf;
-    int                                               rx_bytes = ::sctp_recvmsg(socket.fd().value(),
-                                  temp_buf.data(),
-                                  temp_buf.size(),
-                                  (struct sockaddr*)&data.msg_src_addr,
-                                  &data.msg_src_addrlen,
-                                  &data.sri,
-                                  &data.msg_flags);
-    if (rx_bytes < 0) {
-      return nullopt;
-    }
-
-    data.data.assign(temp_buf.begin(), temp_buf.begin() + rx_bytes);
-    return data;
-  }
-
   bool send_data(const std::vector<uint8_t>& bytes)
   {
-    sockaddr_in addr;
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(server_cfg.bind_port);
-    addr.sin_addr.s_addr = ::inet_addr(server_cfg.bind_address.c_str());
-    int bytes_sent       = ::sctp_sendmsg(socket.fd().value(),
-                                    bytes.data(),
-                                    bytes.size(),
-                                    (struct sockaddr*)&addr,
-                                    sizeof(addr),
-                                    htonl(server_cfg.ppid),
-                                    0,
-                                    0,
-                                    0,
-                                    0);
-    return bytes_sent == (int)bytes.size();
+    return dummy_sctp_node::send_data(bytes, server_cfg.ppid, server_cfg.bind_address, server_cfg.bind_port);
   }
 
-  sctp_socket              socket;
-  sctp_network_node_config server_cfg;
-  srslog::basic_logger&    logger = srslog::fetch_basic_logger("CLIENT");
+  sctp_network_gateway_config server_cfg;
 };
 
 } // namespace

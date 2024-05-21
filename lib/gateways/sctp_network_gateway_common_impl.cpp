@@ -54,7 +54,7 @@ struct addrinfo* sockaddr_searcher::next()
 
 // class common_sctp_network_gateway_impl
 
-sctp_network_gateway_common_impl::sctp_network_gateway_common_impl(const sctp_network_node_config& cfg) :
+sctp_network_gateway_common_impl::sctp_network_gateway_common_impl(const sctp_network_gateway_config& cfg) :
   node_cfg(cfg), logger(srslog::fetch_basic_logger("SCTP-GW"))
 {
 }
