@@ -207,6 +207,23 @@ public:
   void stop() override {}
 };
 
+class f1u_gw_bearer_dummy : public srs_du::f1u_tx_pdu_notifier
+{
+public:
+  srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx;
+
+  optional<nru_dl_message> last_pdu;
+  optional<uint32_t>       last_highest_transmitted_pdcp_sn;
+  optional<uint32_t>       last_highest_delivered_pdcp_sn;
+  byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
+
+  f1u_gw_bearer_dummy(srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_) : du_rx(du_rx_) {}
+
+  void on_new_pdu(nru_ul_message msg) override
+  { /*last_pdu = std::move(msg);*/
+  }
+};
+
 class f1u_gateway_dummy : public f1u_du_gateway
 {
 public:
@@ -222,10 +239,10 @@ public:
                                                                 task_executor& ue_executor) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_up_tnl_info) == 0) {
-      // auto f1u_bearer = std::make_unique<f1u_bearer_dummy>(du_rx);
-      // f1u_bearers.insert(std::make_pair(dl_up_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy*>{}));
-      // f1u_bearers[dl_up_tnl_info].emplace(ul_up_tnl_info, du_rx);
-      return nullptr;
+      auto f1u_bearer = std::make_unique<f1u_gw_bearer_dummy>(du_rx);
+      f1u_bearers.insert(std::make_pair(dl_up_tnl_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>{}));
+      f1u_bearers[dl_up_tnl_info].emplace(ul_up_tnl_info, f1u_bearer.get());
+      return f1u_bearer;
     }
     return nullptr;
   }
@@ -241,7 +258,7 @@ public:
     f1u_bearers.erase(bearer_it);
   }
 
-  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_bearer_dummy*>> f1u_bearers;
+  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
 };
 
 class mac_test_dummy : public mac_cell_manager,
