@@ -209,7 +209,8 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
   // S-NSSAI
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
 
-  drb_setup_mod_item.rlc_mod = next_drb_config.rlc_mod;
+  drb_setup_mod_item.rlc_mod     = next_drb_config.rlc_mod;
+  drb_setup_mod_item.pdcp_sn_len = next_drb_config.pdcp_cfg.tx.sn_size;
 
   // Add up tnl info
   for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {

@@ -11,9 +11,8 @@
 #pragma once
 
 #include "srsran/asn1/f1ap/f1ap_ies.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
 
@@ -21,5 +20,8 @@ namespace srsran {
 /// \param[in] asn1_cgi The ASN.1 encoded NR-CGI.
 /// \return The CGI converted to flat internal struct.
 nr_cell_global_id_t cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi);
+
+pdcp_sn_size              pdcp_sn_size_from_f1ap_asn1(const asn1::f1ap::pdcp_sn_len_e& asn1_pdcp_sn_size);
+asn1::f1ap::pdcp_sn_len_e pdcp_sn_size_to_f1ap_asn1(pdcp_sn_size sn_size);
 
 } // namespace srsran

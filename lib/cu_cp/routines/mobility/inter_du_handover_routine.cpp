@@ -263,6 +263,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
       }
       drb_item.ul_up_tnl_info_to_be_setup_list = drb_context.ul_up_tnl_info_to_be_setup_list;
       drb_item.rlc_mod                         = drb_context.rlc_mod;
+      drb_item.pdcp_sn_len                     = drb_context.pdcp_cfg.tx.sn_size;
 
       setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
     }

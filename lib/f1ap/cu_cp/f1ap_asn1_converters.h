@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common/asn1_helpers.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -454,7 +455,7 @@ inline void
 f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_item_ext_ies_container& ie_exts,
                                                const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
 {
-  ie_exts.dl_pdcp_sn_len = asn1::f1ap::pdcp_sn_len_opts::options::twelve_bits;
+  ie_exts.dl_pdcp_sn_len = pdcp_sn_size_to_f1ap_asn1(drb_to_be_setup_mod_item.pdcp_sn_len);
 }
 
 /// \brief Convert extension fields of drb to be setup mod item to F1AP ASN.1.
@@ -465,7 +466,7 @@ f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(asn1::f1ap::drbs_to_be_setup_mod_
                                                const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
 {
   ie_exts.dl_pdcp_sn_len_present = true;
-  ie_exts.dl_pdcp_sn_len         = asn1::f1ap::pdcp_sn_len_opts::options::twelve_bits;
+  ie_exts.dl_pdcp_sn_len         = pdcp_sn_size_to_f1ap_asn1(drb_to_be_setup_mod_item.pdcp_sn_len);
 }
 
 /// \brief Convert drbs to be setup/setup mod item to F1AP ASN.1.

@@ -220,7 +220,8 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         }
 
         // Add rlc mode
-        drb_setup_mod_item.rlc_mod = drb_up_context.rlc_mod;
+        drb_setup_mod_item.rlc_mod     = drb_up_context.rlc_mod;
+        drb_setup_mod_item.pdcp_sn_len = drb_up_context.pdcp_cfg.tx.sn_size;
 
         // fill QoS info
         drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
