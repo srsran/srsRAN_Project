@@ -29,7 +29,7 @@ public:
                           gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config cfg_,
                           dlt_pcap&                                         gtpu_pcap_,
                           gtpu_tunnel_common_tx_upper_layer_notifier&       upper_dn_) :
-    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_),
+    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "TX"}, gtpu_pcap_, upper_dn_),
     packer(logger.get_basic_logger()),
     cfg(cfg_)
   {

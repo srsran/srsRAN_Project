@@ -24,7 +24,7 @@ public:
   gtpu_tunnel_nru_rx_impl(srs_cu_up::ue_index_t                             ue_index,
                           gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config cfg,
                           gtpu_tunnel_nru_rx_lower_layer_notifier&          rx_lower_) :
-    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "RX"}),
     packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg)
