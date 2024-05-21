@@ -157,8 +157,6 @@ TEST(uci_indication_builder, valid_pucch_f01_pdu_sr_passes)
       confidence.emplace(i);
     }
 
-    static_vector<uint8_t, uci_harq_format_0_1::MAX_NUM_HARQ> payload = {2, 3};
-
     builder.set_sr_parameters(i, confidence);
 
     const auto& sr_pdu = pdu.sr;

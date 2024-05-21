@@ -21,7 +21,8 @@
 include_directories(../../..)
 
 add_library(f1ap_du_test_helpers f1ap_du_test_helpers.cpp)
-target_link_libraries(f1ap_du_test_helpers f1ap_test_helpers srsran_f1ap_du srsran_support du_manager_converters sched_config)
+target_link_libraries(f1ap_du_test_helpers f1ap_test_helpers f1ap_test_doubles
+        srsran_f1ap_du srsran_support du_manager_converters sched_config)
 
 set(SOURCES f1ap_du_setup_procedure_test.cpp
             f1ap_du_dl_rrc_message_transfer_test.cpp

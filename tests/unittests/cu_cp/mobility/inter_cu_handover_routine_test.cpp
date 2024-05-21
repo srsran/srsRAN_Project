@@ -68,7 +68,7 @@ protected:
                                          srb_id_t::srb1,
                                          make_byte_buffer("000800400004015d3c18c0806bae872c411e548b"));
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
-    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_message_handler().handle_message(ul_rrc_msg);
+    f1c_gw.get_du(source_du_index).on_new_message(ul_rrc_msg);
   }
 
   du_index_t get_source_du_index() { return source_du_index; }

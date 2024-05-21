@@ -71,7 +71,7 @@ protected:
                                          srb_id_t::srb1,
                                          make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699"));
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
-    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_message_handler().handle_message(ul_rrc_msg);
+    f1c_gw.get_du(source_du_index).on_new_message(ul_rrc_msg);
   }
 
   /// \brief Start the inter-DU handover procedure.
@@ -86,7 +86,7 @@ protected:
   {
     f1ap_message ue_context_setup_fail =
         generate_ue_context_setup_failure(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(ue_context_setup_fail);
+    f1c_gw.get_du(target_du_index).on_new_message(ue_context_setup_fail);
   }
 
   /// \brief Inject UE Context Setup Response.
@@ -105,7 +105,7 @@ protected:
             "38ffd294a5294f28160000219760000000000005000001456aa28023800c00041000710804e20070101084000e21009c200e040220"
             "8001c420138401c0c042100038840270c038200882000710804e18004000000410c04080c100e0d0000e388000000400800100c001"
             "0120044014c00004620090e3800c"));
-    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(ue_context_setup_resp);
+    f1c_gw.get_du(target_du_index).on_new_message(ue_context_setup_resp);
   }
 
   /// \brief Inject Bearer Context Modification Failure.
@@ -146,7 +146,7 @@ protected:
   {
     f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601));
-    cu_cp_obj->get_f1c_handler().get_du(source_du_index).get_message_handler().handle_message(ue_context_mod_resp);
+    f1c_gw.get_du(source_du_index).on_new_message(ue_context_mod_resp);
   }
 
   /// \brief Inject RRC Reconfiguration Complete.
@@ -154,7 +154,7 @@ protected:
   {
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));
-    cu_cp_obj->get_f1c_handler().get_du(target_du_index).get_message_handler().handle_message(rrc_recfg_complete);
+    f1c_gw.get_du(target_du_index).on_new_message(rrc_recfg_complete);
   }
 
   /// \brief Inject UE Context Release Complete.
@@ -162,7 +162,7 @@ protected:
   {
     f1ap_message ue_context_release_complete =
         generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-    cu_cp_obj->get_f1c_handler().get_du(du_index).get_message_handler().handle_message(ue_context_release_complete);
+    f1c_gw.get_du(du_index).on_new_message(ue_context_release_complete);
   }
 
   du_index_t get_source_du_index() { return source_du_index; }

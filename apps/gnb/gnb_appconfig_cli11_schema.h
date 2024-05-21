@@ -26,9 +26,12 @@
 
 namespace srsran {
 
-struct gnb_parsed_appconfig;
+struct gnb_appconfig;
 
 /// Configures the given CLI11 application with the gNB application configuration schema.
-void configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_parsed_appconfig& gnb_parsed_cfg);
+void configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_parsed_cfg);
+
+/// Auto derive gNB parameters after the parsing.
+void autoderive_gnb_parameters_after_parsing(CLI::App& app, gnb_appconfig& parsed_cfg);
 
 } // namespace srsran

@@ -24,9 +24,9 @@
 
 using namespace srsran;
 
-e2_metric_connector_manager::e2_metric_connector_manager(const gnb_appconfig& appcfg)
+e2_metric_connector_manager::e2_metric_connector_manager(unsigned nof_cells)
 {
-  for (unsigned i = 0, e = appcfg.cells_cfg.size(); i != e; ++i) {
+  for (unsigned i = 0, e = nof_cells; i != e; ++i) {
     e2_du_metric_connectors.push_back(std::make_unique<e2_du_metrics_connector>());
   }
 }

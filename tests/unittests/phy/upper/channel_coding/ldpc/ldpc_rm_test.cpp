@@ -78,13 +78,20 @@ std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const bit_buffer& data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 } // namespace srsran
 
 namespace {
 
 #ifdef __x86_64__
 bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
-bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512bw) && cpu_supports_feature(cpu_feature::avx512f);
+bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512bw) && cpu_supports_feature(cpu_feature::avx512f) &&
+                       cpu_supports_feature(cpu_feature::avx512vbmi);
 #endif // __x86_64__
 
 using LDPCRateMatchingParams = std::tuple<std::string, test_case_t>;

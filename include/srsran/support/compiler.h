@@ -46,6 +46,7 @@
 
 /// Wrapper macro for std::launder which is only active for C++17 and above.
 #if __cplusplus >= 201703L
+#include <new>
 #define SRSRAN_LAUNDER(a) std::launder((a))
 #else
 #define SRSRAN_LAUNDER(a) (a)

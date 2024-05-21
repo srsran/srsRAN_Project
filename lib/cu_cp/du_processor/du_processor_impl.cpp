@@ -39,6 +39,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
+                                     common_task_scheduler&              common_task_sched_,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
                                      task_executor&                      ctrl_exec_) :
@@ -50,7 +51,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
-  f1ap_ev_notifier(*this)
+  f1ap_ev_notifier(common_task_sched_, *this)
 {
   context.du_index = cfg.du_index;
 
@@ -320,6 +321,11 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
       }));
 }
 
+async_task<void> du_processor_impl::handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request)
+{
+  return cu_cp_notifier.on_transaction_info_loss(request);
+}
+
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Add assist data for paging
@@ -424,15 +430,6 @@ void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index
                                    CORO_AWAIT(cu_cp_notifier.on_ue_release_required(req));
                                    CORO_RETURN();
                                  }));
-}
-
-void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
-{
-  if (msg.ue_inactive) {
-    send_ngap_ue_context_release_request(msg.ue_index, ngap_cause_radio_network_t::user_inactivity);
-  } else {
-    logger.debug("Inactivity notification level not supported");
-  }
 }
 
 bool du_processor_impl::has_cell(pci_t pci)

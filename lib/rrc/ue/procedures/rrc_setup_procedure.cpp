@@ -68,9 +68,12 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     logger.log_debug("\"{}\" finished successfully", name());
     context.state = rrc_state::connected;
     send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
-  } else {
+  } else if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
     logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
+  } else {
+    logger.log_warning("\"{}\" cancelled", name());
+    // Do nothing. We are likely shutting down the DU processor.
   }
 
   CORO_RETURN();

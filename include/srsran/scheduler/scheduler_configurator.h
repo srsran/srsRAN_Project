@@ -33,6 +33,7 @@
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/qos/qos_info.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
@@ -119,6 +120,8 @@ struct sched_ue_resource_alloc_config {
   unsigned max_pdsch_harq_retxs = 4;
   /// Maximum PUSCH HARQ retransmissions.
   unsigned max_pusch_harq_retxs = 4;
+  // RRM policy for the UE.
+  rrm_policy_ratio_group rrm_policy_group;
 };
 
 /// QoS and slicing information associated with a DRB provided to the scheduler.

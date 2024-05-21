@@ -134,6 +134,11 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              logger));
 }
 
+void rrc_ue_impl::stop()
+{
+  event_mng->transactions.stop();
+}
+
 void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
 {
   // Parse UL-DCCH

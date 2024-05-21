@@ -56,11 +56,9 @@
 #include "apps/services/metrics_hub.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
-#include "apps/units/flexible_du/split_ru_dynamic/dynamic_du_factory.h"
-#include "srsran/phy/upper/upper_phy_timing_notifier.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "srsran/ru/ru_adapters.h"
-#include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_dummy_factory.h"
 #include "srsran/ru/ru_generic_factory.h"
 #include "srsran/ru/ru_ofh_factory.h"
@@ -81,7 +79,9 @@
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
-#include "../units/flexible_du/split_ru_dynamic/logger_registrator.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -119,7 +119,7 @@ static void local_signal_handler()
 
 /// Resolves the generic Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_generic_executors_and_notifiers(ru_generic_configuration&           config,
-                                                         const log_appconfig&                log_cfg,
+                                                         const std::string&                  phy_log_level,
                                                          worker_manager&                     workers,
                                                          ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                          ru_timing_notifier&                 timing_notifier)
@@ -139,7 +139,7 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
     low_phy_cfg.ul_task_executor         = workers.lower_phy_ul_exec[i];
     low_phy_cfg.prach_async_executor     = workers.lower_prach_exec[i];
 
-    low_phy_cfg.logger->set_level(srslog::str_to_basic_level(log_cfg.phy_level));
+    low_phy_cfg.logger->set_level(srslog::str_to_basic_level(phy_log_level));
   }
 }
 
@@ -195,7 +195,8 @@ static void initialize_log(const std::string& filename)
 
 static void register_app_logs(const log_appconfig&            log_cfg,
                               const cu_cp_unit_logger_config& cu_cp_loggers,
-                              const cu_up_unit_logger_config& cu_up_loggers)
+                              const cu_up_unit_logger_config& cu_up_loggers,
+                              const dynamic_du_unit_config&   du_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -208,12 +209,10 @@ static void register_app_logs(const log_appconfig&            log_cfg,
   e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
-  // Register the loggers of the modules.
-  modules::flexible_du::split_ru_dynamic::register_logs(log_cfg);
-
   // Register units logs.
   register_cu_cp_loggers(cu_cp_loggers);
   register_cu_up_loggers(cu_up_loggers);
+  register_dynamic_du_loggers(du_loggers);
 }
 
 int main(int argc, char** argv)
@@ -231,9 +230,9 @@ int main(int argc, char** argv)
   // Fill the generic application arguments to parse.
   populate_cli11_generic_args(app);
 
-  gnb_parsed_appconfig gnb_parsed_cfg;
+  gnb_appconfig gnb_cfg;
   // Configure CLI11 with the gNB application configuration schema.
-  configure_cli11_with_gnb_appconfig_schema(app, gnb_parsed_cfg);
+  configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   cu_cp_unit_config cu_cp_config;
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
@@ -241,23 +240,31 @@ int main(int argc, char** argv)
   cu_up_unit_config cu_up_config;
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
+  dynamic_du_unit_config du_unit_cfg;
+  configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
+
+  // Set the callback for the app calling all the autoderivation functions.
+  app.callback([&app, &gnb_cfg, &du_unit_cfg]() {
+    autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
+    autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
+  });
+
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
-  gnb_appconfig& gnb_cfg = gnb_parsed_cfg.config;
-
-  // Derive the parameters that were set to be derived automatically.
-  derive_auto_params(gnb_cfg);
-
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg) || !validate_cu_cp_unit_config(cu_cp_config) ||
-      !validate_cu_up_unit_config(cu_up_config)) {
+      !validate_cu_up_unit_config(cu_up_config) ||
+      !validate_dynamic_du_unit_config(du_unit_cfg,
+                                       (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
+                                           ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
+                                           : os_sched_affinity_bitmask::available_cpus())) {
     report_error("Invalid configuration detected.\n");
   }
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
-  register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers);
+  register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, du_unit_cfg);
 
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
@@ -305,16 +312,19 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
-  worker_manager workers{gnb_cfg, cu_up_config.gtpu_queue_size};
+  worker_manager workers{gnb_cfg, du_unit_cfg, cu_up_config.gtpu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
   std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
-  std::unique_ptr<dlt_pcap>              f1ap_p      = modules::flexible_du::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
-  std::unique_ptr<mac_pcap>              mac_p       = modules::flexible_du::create_mac_pcap(gnb_cfg.pcap_cfg, workers);
-  std::unique_ptr<rlc_pcap>              rlc_p       = modules::flexible_du::create_rlc_pcap(gnb_cfg.pcap_cfg, workers);
+  std::unique_ptr<dlt_pcap>              f1ap_p =
+      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  std::unique_ptr<mac_pcap> mac_p =
+      modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  std::unique_ptr<rlc_pcap> rlc_p =
+      modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<dlt_pcap> e2ap_p = gnb_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(gnb_cfg.pcap_cfg.e2ap.filename,
                                                                                       workers.get_executor("pcap_exec"))
                                                                    : create_null_dlt_pcap();
@@ -326,7 +336,7 @@ int main(int argc, char** argv)
   timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
-  if (gnb_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
+  if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
     // In case test mode is enabled, we pass dummy timers to the upper layers.
     dummy_timers = std::make_unique<timer_manager>(256);
     cu_timers    = dummy_timers.get();
@@ -347,11 +357,11 @@ int main(int argc, char** argv)
 
   // Set up RLC JSON log channel used by metrics.
   srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
-  rlc_json_channel.set_enabled(gnb_cfg.metrics_cfg.rlc.json_enabled);
+  rlc_json_channel.set_enabled(du_unit_cfg.du_high_cfg.config.metrics.rlc.json_enabled);
   rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
-  e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
+  e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   // Create NGAP Gateway.
   std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
@@ -373,7 +383,7 @@ int main(int argc, char** argv)
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
 
   // Create CU-CP config.
-  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg, cu_cp_config);
+  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(du_unit_cfg.du_high_cfg.config, cu_cp_config);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec;
   cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
@@ -416,7 +426,7 @@ int main(int argc, char** argv)
   cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.gtpu_pcap             = cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get();
   cu_up_cfg.timers                = cu_timers;
-  cu_up_cfg.qos                   = generate_cu_up_qos_config(gnb_cfg, cu_up_config);
+  cu_up_cfg.qos                   = generate_cu_up_qos_config(cu_up_config, du_unit_cfg.du_high_cfg.config);
 
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
@@ -436,14 +446,14 @@ int main(int argc, char** argv)
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
   cu_up_obj->start();
 
-  std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
+  std::vector<du_cell_config> du_cells = generate_du_cell_config(du_unit_cfg.du_high_cfg.config);
 
   // Radio Unit instantiation block.
-  ru_configuration ru_cfg = generate_ru_config(gnb_cfg, du_cells);
+  ru_configuration ru_cfg = generate_ru_config(gnb_cfg, du_cells, du_unit_cfg);
 
-  upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
-  upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
-  upper_ru_error_adapter  ru_error_adapt(gnb_cfg.cells_cfg.size());
+  upper_ru_ul_adapter     ru_ul_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  upper_ru_timing_adapter ru_timing_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  upper_ru_error_adapter  ru_error_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
@@ -458,8 +468,11 @@ int main(int argc, char** argv)
 
     ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
   } else if (variant_holds_alternative<ru_generic_configuration>(ru_cfg.config)) {
-    configure_ru_generic_executors_and_notifiers(
-        variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
+    configure_ru_generic_executors_and_notifiers(variant_get<ru_generic_configuration>(ru_cfg.config),
+                                                 du_unit_cfg.du_low_cfg.loggers.phy_level,
+                                                 workers,
+                                                 ru_ul_adapt,
+                                                 ru_timing_adapt);
 
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
 
@@ -486,6 +499,7 @@ int main(int argc, char** argv)
 
   // Instantiate one DU per cell.
   std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
+                                                          du_unit_cfg,
                                                           du_cells,
                                                           workers,
                                                           ru_dl_rg_adapt,

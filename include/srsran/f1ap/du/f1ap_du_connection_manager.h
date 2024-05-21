@@ -74,6 +74,9 @@ public:
   /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3
   /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
   virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
+
+  /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
+  virtual async_task<void> handle_f1_removal_request() = 0;
 };
 
 } // namespace srs_du

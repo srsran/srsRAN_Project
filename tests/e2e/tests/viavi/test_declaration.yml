@@ -1,0 +1,48 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+tests:
+  - campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH.xml"
+    test_name: "1UE static DL + UL UDP - Dell"
+    test_timeout: 2700  # 45 * 60
+    gnb_extra_commands: "log --mac_level=info"
+    id: "1UE Bidirectional UDP"
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
+    enable_qos_viavi: false
+    # test/fail criteria
+    expected_dl_bitrate: 80000000
+    expected_ul_bitrate: 80000000
+    fail_if_kos: true
+    warning_as_errors: true
+
+  - campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH.xml"
+    test_name: "32UE static DL + UL UDP - Dell"
+    test_timeout: 2700  # 45 * 60
+    gnb_extra_commands: "log --mac_level=info"
+    id: "32UE Bidirectional UDP"
+    max_pdschs_per_slot: 1
+    max_puschs_per_slot: 1
+    enable_qos_viavi: false
+    # test/fail criteria
+    expected_dl_bitrate: 80000000
+    expected_ul_bitrate: 80000000
+    fail_if_kos: true
+    warning_as_errors: true

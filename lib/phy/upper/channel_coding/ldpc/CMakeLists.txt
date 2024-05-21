@@ -38,7 +38,7 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
             ldpc_rate_dematcher_avx2_impl.cpp
             ldpc_rate_dematcher_avx512_impl.cpp)
     set_source_files_properties(ldpc_rate_dematcher_avx2_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
-    set_source_files_properties(ldpc_rate_dematcher_avx512_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")
+    set_source_files_properties(ldpc_rate_dematcher_avx512_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vbmi;")
     set_source_files_properties(ldpc_encoder_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
     set_source_files_properties(ldpc_decoder_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
     set_source_files_properties(ldpc_decoder_avx512.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")

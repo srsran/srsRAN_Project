@@ -25,7 +25,9 @@
 #include "../common/f1ap_asn1_utils.h"
 #include "../common/log_helpers.h"
 #include "f1ap_asn1_helpers.h"
+#include "procedures/f1_removal_procedure.h"
 #include "procedures/f1_setup_procedure.h"
+#include "procedures/f1ap_stop_procedure.h"
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
@@ -48,7 +50,6 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   du_processor_notifier(f1ap_du_processor_notifier_),
-  du_management_notifier(f1ap_du_management_notifier_),
   ctrl_exec(ctrl_exec_),
   tx_pdu_notifier(*this, tx_pdu_notifier_)
 {
@@ -56,6 +57,11 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
+
+async_task<void> f1ap_cu_impl::stop()
+{
+  return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list);
+}
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
@@ -204,7 +210,8 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       handle_ul_rrc_message(msg.value.ul_rrc_msg_transfer());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
-      handle_f1_removal_request(msg.value.f1_removal_request());
+      du_processor_notifier.schedule_async_task(launch_async<f1_removal_procedure>(
+          msg.value.f1_removal_request(), tx_pdu_notifier, du_processor_notifier, ue_ctxt_list, logger));
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ue_context_release_request: {
       handle_ue_context_release_request(msg.value.ue_context_release_request());
@@ -312,12 +319,6 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 
   // Notify upper layers about reception
   ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());
-}
-
-void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
-{
-  du_index_t du_index = du_processor_notifier.get_du_index();
-  du_management_notifier.on_du_remove_request_received(du_index);
 }
 
 void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)

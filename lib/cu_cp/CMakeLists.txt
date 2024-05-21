@@ -43,6 +43,8 @@ set(SOURCES
       routines/ue_context_release_routine.cpp
       routines/reestablishment_context_modification_routine.cpp
       routines/ue_removal_routine.cpp
+      routines/ue_transaction_info_release_routine.cpp
+      routines/ue_amf_context_release_request_routine.cpp
       routines/mobility/mobility_helpers.cpp
       routines/mobility/inter_du_handover_routine.cpp
       routines/mobility/inter_cu_handover_target_routine.cpp

@@ -1562,6 +1562,16 @@ inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel_t sele
   return ret;
 }
 
+inline simd_cf_t srsran_simd_cf_add_sel(simd_cf_t a, simd_cf_t b, simd_sel_t sel)
+{
+  return srsran_simd_cf_select(a, srsran_simd_cf_add(a, b), sel);
+}
+
+inline simd_f_t srsran_simd_f_add_sel(simd_f_t a, simd_f_t b, simd_sel_t sel)
+{
+  return srsran_simd_f_select(a, srsran_simd_f_add(a, b), sel);
+}
+
 inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector)
 {
 #ifdef HAVE_AVX512

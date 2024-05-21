@@ -148,7 +148,7 @@ protected:
 
     ric_pcap        = std::make_unique<dummy_e2ap_pcap>();
     ric_net_adapter = std::make_unique<e2ap_network_adapter>(*epoll_broker, *ric_pcap);
-    ric_gw          = create_sctp_network_gateway({ric_config, *ric_net_adapter, *ric_net_adapter});
+    auto ric_gw     = create_sctp_network_gateway({ric_config, *ric_net_adapter, *ric_net_adapter});
     ric_net_adapter->bind_and_listen(std::move(ric_gw));
     ric_e2_iface = std::make_unique<dummy_ric_e2>(*ric_net_adapter);
     ric_net_adapter->connect_e2ap(ric_e2_iface.get(), ric_e2_iface.get());
@@ -167,9 +167,9 @@ protected:
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    pcap        = std::make_unique<dummy_e2ap_pcap>();
-    net_adapter = std::make_unique<e2ap_network_adapter>(*epoll_broker, *pcap);
-    e2_agent_gw = create_sctp_network_gateway({e2agent_config, *net_adapter, *net_adapter});
+    pcap             = std::make_unique<dummy_e2ap_pcap>();
+    net_adapter      = std::make_unique<e2ap_network_adapter>(*epoll_broker, *pcap);
+    auto e2_agent_gw = create_sctp_network_gateway({e2agent_config, *net_adapter, *net_adapter});
     net_adapter->connect_gateway(std::move(e2_agent_gw));
     du_metrics       = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
@@ -199,7 +199,6 @@ protected:
   std::unique_ptr<dummy_e2ap_pcap>      ric_pcap;
   std::unique_ptr<e2ap_asn1_packer>     ric_packer;
   std::unique_ptr<e2ap_network_adapter> ric_net_adapter;
-  std::unique_ptr<sctp_network_gateway> ric_gw;
 
   // E2 agent
   e2ap_configuration                       cfg;
@@ -207,7 +206,6 @@ protected:
   timer_manager                            timers;
   std::unique_ptr<e2ap_network_adapter>    net_adapter;
   manual_task_worker                       task_exec{128};
-  std::unique_ptr<sctp_network_gateway>    e2_agent_gw;
   std::unique_ptr<dummy_e2ap_pcap>         pcap;
   std::unique_ptr<e2_subscription_manager> e2_subscription_mngr;
   std::unique_ptr<e2sm_handler>            e2sm_packer;

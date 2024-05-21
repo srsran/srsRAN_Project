@@ -22,6 +22,7 @@
 
 #include "du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/scheduler/test_utils/result_test_helpers.h"
@@ -32,19 +33,6 @@
 
 using namespace srsran;
 using namespace srs_du;
-
-static f1ap_message create_f1_setup_response()
-{
-  f1ap_message f1ap_msg;
-  f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
-  f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.resize(1);
-  auto& cell = f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list[0];
-  cell.load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
-  cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_string("00f101");
-  cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_string("000000000000101111000110000101001110");
-  return f1ap_msg;
-}
 
 namespace {
 
@@ -61,21 +49,27 @@ public:
 
   void on_new_message(const f1ap_message& msg) override
   {
-    if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-        msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_SETUP) {
-      // Auto-schedule CU response.
-      du_rx_notifier->on_new_message(create_f1_setup_response());
+    if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg) {
+      if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_SETUP) {
+        // Auto-schedule CU response.
+        du_rx_notifier->on_new_message(test_helpers::generate_f1_setup_response(msg));
+      } else if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_REMOVAL) {
+        // Auto-schedule CU response.
+        du_rx_notifier->on_new_message(test_helpers::generate_f1_removal_response(msg));
+      }
     }
 
     // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-    bool result = test_exec.execute([this, msg]() {
+    // Note: F1AP Tx PDU notifier can be deleted by the F1AP-DU at any moment. Therefore, we cannot pass this in the
+    // capture.
+    bool result = test_exec.execute([last_msgs = &last_f1ap_msgs, msg]() {
+      static srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
       logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-      last_f1ap_msgs.push_back(msg);
+      last_msgs->push_back(msg);
     });
     EXPECT_TRUE(result);
   }
 
-  srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
   task_executor&                         test_exec;
   std::vector<f1ap_message>&             last_f1ap_msgs;
   std::unique_ptr<f1ap_message_notifier> du_rx_notifier;

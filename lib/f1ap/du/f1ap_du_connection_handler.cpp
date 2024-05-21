@@ -21,42 +21,164 @@
  */
 
 #include "f1ap_du_connection_handler.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include <thread>
 
 using namespace srsran;
 using namespace srs_du;
 
 namespace {
 
-/// Adapter used to convert F1AP Rx PDUs coming from the CU-CP into F1AP messages.
-class f1ap_rx_pdu_adapter final : public f1ap_message_notifier
+/// Adapter used to forward F1AP Rx PDUs coming from the F1-C GW to the F1AP-DU.
+///
+/// On destruction, this class will signal to the F1AP-DU that the F1-C Rx path has been shut down (e.g. due to
+/// peer connection drop).
+class f1c_rx_channel final : public f1ap_message_notifier
 {
 public:
-  f1ap_rx_pdu_adapter(f1ap_message_handler& msg_handler_) : msg_handler(msg_handler_) {}
+  f1c_rx_channel(f1ap_message_handler& msg_handler_, f1ap_event_handler& ev_handler_) :
+    msg_handler(msg_handler_), ev_handler(ev_handler_)
+  {
+  }
+
+  ~f1c_rx_channel() override
+  {
+    // Signal back that the Rx path was taken down.
+    ev_handler.handle_connection_loss();
+  }
 
   void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
 
 private:
   f1ap_message_handler& msg_handler;
+  f1ap_event_handler&   ev_handler;
+};
+
+/// Adapter to forward F1AP PDUs to the F1-C GW that also manages the lifetime of the TNL connection.
+class f1c_tx_channel final : public f1ap_message_notifier
+{
+public:
+  f1c_tx_channel(std::unique_ptr<f1ap_message_notifier>& f1c_notifier_, srslog::basic_logger& logger_) :
+    f1c_notifier(f1c_notifier_), logger(logger_)
+  {
+  }
+  ~f1c_tx_channel() override
+  {
+    // Resetting the F1-C Tx notifier should trigger the shutdown of the Rx path in the F1-C client.
+    f1c_notifier.reset();
+  }
+
+  void on_new_message(const f1ap_message& msg) override
+  {
+    if (f1c_notifier == nullptr) {
+      logger.warning("Dropping F1AP Tx PDU. Cause: The F1-C TNL association is down");
+      return;
+    }
+    f1c_notifier->on_new_message(msg);
+  }
+
+private:
+  std::unique_ptr<f1ap_message_notifier>& f1c_notifier;
+  srslog::basic_logger&                   logger;
 };
 
 } // namespace
 
 f1ap_du_connection_handler::f1ap_du_connection_handler(f1c_connection_client& f1c_client_handler_,
-                                                       f1ap_message_handler&  f1ap_pdu_handler_) :
+                                                       f1ap_message_handler&  f1ap_pdu_handler_,
+                                                       f1ap_du_configurator&  du_mng_,
+                                                       task_executor&         ctrl_exec_) :
   f1c_client_handler(f1c_client_handler_),
   f1ap_pdu_handler(f1ap_pdu_handler_),
+  du_mng(du_mng_),
+  ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
 }
 
-SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
+f1ap_du_connection_handler::~f1ap_du_connection_handler()
 {
-  std::unique_ptr<f1ap_message_notifier> f1ap_notifier =
-      f1c_client_handler.handle_du_connection_request(std::make_unique<f1ap_rx_pdu_adapter>(f1ap_pdu_handler));
-
-  if (f1ap_notifier != nullptr) {
-    connected = true;
+  // Check whether the F1-C TNL association was previously shutdown as part of the F1 Removal procedure.
+  if (is_connected()) {
+    logger.warning("F1-C TNL association was not properly shutdown before F1AP shutdown. Forcing it...");
   }
 
-  return f1ap_notifier;
+  // Tear down Tx PDU notifier, which will trigger the shutdown of the Rx path as well.
+  handle_connection_loss_impl();
+}
+
+SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handler::connect_to_cu_cp()
+{
+  if (is_connected()) {
+    logger.warning("Reconnections to CU-CP not supported");
+    return nullptr;
+  }
+
+  // Create F1AP Rx PDU notifier.
+  rx_path_disconnected.reset();
+  auto rx_notifier = std::make_unique<f1c_rx_channel>(f1ap_pdu_handler, *this);
+
+  // Start F1-C TNL association and get F1AP Tx PDU notifier.
+  tx_pdu_notifier = f1c_client_handler.handle_du_connection_request(std::move(rx_notifier));
+  if (tx_pdu_notifier == nullptr) {
+    return nullptr;
+  }
+
+  // Connection successful.
+  connected_flag = true;
+
+  return std::make_unique<f1c_tx_channel>(tx_pdu_notifier, logger);
+}
+
+void f1ap_du_connection_handler::handle_connection_loss()
+{
+  // Signal back (via F1AP thread) that the Rx channel has been shut down.
+  // Note: The caller might be in a different thread than the F1AP, so we dispatch the continuation to the F1AP
+  // executor.
+  // Note: We use defer, because we want to handle all the already enqueued F1AP events before the association
+  // shutdown. This way no pending task is left pointing to an inexistent F1AP context.
+  while (not ctrl_exec.defer([this]() { handle_connection_loss_impl(); })) {
+    // Note: This set cannot fail. Keep trying.
+    logger.warning("Failed to dispatch handling of F1-C Rx path disconnection. Cause: Task queue is full. Retrying...");
+    std::this_thread::sleep_for(std::chrono::microseconds{10});
+  }
+}
+
+void f1ap_du_connection_handler::handle_connection_loss_impl()
+{
+  // Mark the F1-C TNL as disconnected.
+  connected_flag = false;
+
+  // In case of unexpected F1-C connection loss, the Tx path is still up.
+  if (tx_pdu_notifier != nullptr) {
+    // Disconnect Tx path.
+    tx_pdu_notifier.reset();
+
+    // Signal to DU that the F1-C connection is lost.
+    du_mng.on_f1c_disconnection();
+  }
+
+  // Signal back that the F1-C Rx path has been successfully shutdown to any awaiting coroutine.
+  rx_path_disconnected.set();
+}
+
+async_task<void> f1ap_du_connection_handler::handle_tnl_association_removal()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (not is_connected()) {
+      // No need to wait for any event if the F1-C TNL association is already down.
+      CORO_EARLY_RETURN();
+    }
+
+    // Stop Tx PDU path.
+    // Note: This should notify the F1-C GW that the Rx path should be disconnected as well.
+    tx_pdu_notifier.reset();
+
+    // Wait for Rx PDU disconnection notification.
+    CORO_AWAIT(rx_path_disconnected);
+
+    CORO_RETURN();
+  });
 }

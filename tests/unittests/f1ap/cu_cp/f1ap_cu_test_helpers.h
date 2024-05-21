@@ -54,7 +54,7 @@ public:
     local_f1c_gw.attach_cu_cp_du_repo(cu_cp_du_mng_);
   }
 
-  void request_new_du_connection()
+  f1ap_message_notifier* request_new_du_connection()
   {
     class sink_f1ap_message_notifier : public f1ap_message_notifier
     {
@@ -65,8 +65,12 @@ public:
     auto notifier = local_f1c_gw.handle_du_connection_request(std::make_unique<sink_f1ap_message_notifier>());
     if (notifier != nullptr) {
       du_tx_notifiers.push_back(std::move(notifier));
+      return du_tx_notifiers.back().get();
     }
+    return nullptr;
   }
+
+  f1ap_message_notifier& get_du(du_index_t du_idx) { return *du_tx_notifiers.at((unsigned)du_idx); }
 
   void remove_du_connection(size_t connection_idx) { du_tx_notifiers.erase(du_tx_notifiers.begin() + connection_idx); }
 
@@ -165,6 +169,16 @@ public:
     // TODO
   }
 
+  bool schedule_async_task(async_task<void> task) override { return task_sched.schedule(std::move(task)); }
+
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::du_setup_request last_f1_setup_request_msg;
@@ -176,8 +190,9 @@ public:
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
-  srslog::basic_logger& logger;
-  uint16_t              ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  srslog::basic_logger&     logger;
+  uint16_t                  ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  fifo_async_task_scheduler task_sched{16};
 };
 
 /// Reusable notifier class that a) stores the received du_index for test inspection and b)
@@ -199,7 +214,7 @@ public:
     }
   }
 
-  du_index_t last_du_idx;
+  optional<du_index_t> last_du_idx;
 
 private:
   srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");

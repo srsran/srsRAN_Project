@@ -28,6 +28,7 @@
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
 #include "pusch_processor_pool.h"
+#include "pusch_processor_validator_impl.h"
 #include "ulsch_demultiplex_impl.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"

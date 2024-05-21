@@ -80,11 +80,8 @@ load retina variables:
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
       export KUBECONFIG=$K_PATH
-  needs: &retina-needs
-    - job: "load retina variables"
-      artifacts: true
 
-e2e request validation:
+e2e request and config validation:
   stage: static
   extends:
     - .prepare_test
@@ -92,6 +89,7 @@ e2e request validation:
     - if: $ON_MR
       changes:
         - .gitlab/ci/e2e/**/*
+        - tests/e2e/tests/viavi/*
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
@@ -102,6 +100,10 @@ e2e request validation:
       for f in $file_list; do
           retina-request-checker --input $f
       done
+      python3 ${CI_PROJECT_DIR}/tests/e2e/tests/viavi/validate_test_declaration.py
+  needs: &retina-needs
+    - job: "load retina variables"
+      artifacts: true
 
 .e2e-run:
   resource_group: e2e-${GROUP}
@@ -155,7 +157,7 @@ e2e request validation:
       sed -i "s|- local_path: ../../build/apps/gnb/gnb|- local_path: ../../|; s|remote_path: /usr/local/bin|remote_path: $CI_PROJECT_DIR|; s|is_executable: true|is_executable: false|" ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Run Retina
     - |
-      E2E_CMD="retina-launcher --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}"
+      E2E_CMD="retina-launcher --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}"
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:
@@ -169,6 +171,8 @@ e2e request validation:
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/tests/e2e/log//report.html"
       echo "*******************************************************************************************************************************"
     - du -hs tests/e2e/log/
+  needs:
+    - *retina-needs
 
 custom e2e:
   stage: manual
@@ -200,7 +204,7 @@ smoke zmq:
     TESTBED: zmq
     MARKERS: "smoke"
     PYTEST_ARGS: "-x"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
     E2E_LOG_LEVEL: "debug"
   needs:
     - job: "smoke relwithdeb cached"
@@ -242,7 +246,7 @@ amari 1UE:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -255,6 +259,7 @@ amari 1UE 4x4 mimo:
     TESTBED: "zmq_4x4_mimo"
     MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
+    RETINA_ARGS: "gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -267,6 +272,7 @@ amari 4UE deb:
     TESTBED: "zmq_deb"
     MARKERS: "smoke"
     E2E_LOG_LEVEL: "info"
+    RETINA_ARGS: "gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic package"
       artifacts: true
@@ -278,7 +284,7 @@ amari 32UE:
   variables:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -307,7 +313,7 @@ amari 32UE asan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic asan"
       artifacts: true
@@ -318,7 +324,7 @@ amari 32UE tsan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -330,7 +336,7 @@ amari 32UE memcheck:
   variables:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True"
+    RETINA_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic memcheck"
       artifacts: true
@@ -547,7 +553,11 @@ viavi-debug:
 retina setup:
   stage: ci
   extends: .demolition
+  needs:
+    - *retina-needs
 
 retina post:
   stage: .post
   extends: .demolition
+  dependencies: 
+    - load retina variables

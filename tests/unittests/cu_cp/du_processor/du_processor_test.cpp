@@ -39,7 +39,7 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
 {
   // Pass F1 Setup Request to DU processor
   f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Check response is F1SetupResponse
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::successful_outcome);
@@ -55,7 +55,7 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
   f1_setup_req.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -75,7 +75,7 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
       .gnb_du_sys_info_present = false;
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1_setup_req);
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1_setup_req);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -89,7 +89,7 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   f1ap_message f1ap_msg = create_f1_setup_request_with_too_many_cells();
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(f1ap_msg);
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1ap_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -104,7 +104,7 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -122,7 +122,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -142,7 +142,7 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
@@ -166,7 +166,7 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest and pass it to DU processor
-  du_processor_obj->get_f1ap_interface().get_message_handler().handle_message(
+  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(
       test_helpers::generate_f1_setup_request());
 
   // Reduce logger loglevel to warning to reduce console output

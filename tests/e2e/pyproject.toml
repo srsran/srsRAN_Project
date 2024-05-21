@@ -19,7 +19,7 @@
 #
 
 [tool.pytest.ini_options]
-addopts = "--tb=short --random-order --random-order-bucket=class"
+addopts = "--tb=short --random-order --random-order-bucket=class --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml"
 filterwarnings = [
   "ignore:HTTPResponse.getheaders:DeprecationWarning",
 ]

@@ -71,8 +71,9 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (nof_skipped_seq_id < 0) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as sequence identifier field is from the past");
-
+    logger.info("Dropped received Open Fronthaul User-Plane packet for eAxC value '{}' as sequence identifier field is "
+                "from the past",
+                eaxc);
     return;
   }
   if (nof_skipped_seq_id > 0) {

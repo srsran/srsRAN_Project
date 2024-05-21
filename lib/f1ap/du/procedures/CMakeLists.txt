@@ -21,10 +21,11 @@
 set(SOURCES
         gnb_cu_configuration_update_procedure.cpp
         f1ap_du_setup_procedure.cpp
+        f1ap_du_removal_procedure.cpp
         f1ap_du_ue_context_setup_procedure.cpp
         f1ap_du_ue_context_modification_procedure.cpp
         f1ap_du_ue_context_release_procedure.cpp
         )
 
 add_library(srsran_f1ap_du_procedures STATIC ${SOURCES})
-target_link_libraries(srsran_f1ap_du_procedures f1ap_asn1)
+target_link_libraries(srsran_f1ap_du_procedures srsran_f1ap_common f1ap_asn1)

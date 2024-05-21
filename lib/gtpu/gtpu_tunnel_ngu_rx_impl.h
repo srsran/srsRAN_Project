@@ -57,10 +57,10 @@ struct gtpu_rx_sdu_info {
 class gtpu_tunnel_ngu_rx_impl : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_ngu_rx_impl(srs_cu_up::ue_index_t                    ue_index,
-                          gtpu_config::gtpu_rx_config              cfg,
-                          gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_,
-                          timer_factory                            ue_dl_timer_factory_) :
+  gtpu_tunnel_ngu_rx_impl(srs_cu_up::ue_index_t                             ue_index,
+                          gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config cfg,
+                          gtpu_tunnel_ngu_rx_lower_layer_notifier&          rx_lower_,
+                          timer_factory                                     ue_dl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
@@ -248,7 +248,7 @@ private:
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
 
   /// Rx config
-  gtpu_config::gtpu_rx_config config;
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config config;
 
   /// Rx state
   gtpu_rx_state st = {};

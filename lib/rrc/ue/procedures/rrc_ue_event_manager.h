@@ -33,7 +33,6 @@ namespace srs_cu_cp {
 using rrc_outcome     = asn1::rrc_nr::ul_dcch_msg_s;
 using rrc_transaction = protocol_transaction<rrc_outcome>;
 
-/// TODO: Do we need a separate class for each procedure? Note that the outcome's expected only has two choices.
 class rrc_ue_event_manager
 {
 public:
@@ -42,6 +41,12 @@ public:
   protocol_transaction_manager<rrc_outcome> transactions;
 
   explicit rrc_ue_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
+  ~rrc_ue_event_manager()
+  {
+    for (unsigned tid = 0; tid != rrc_ue_event_manager::MAX_NOF_TRANSACTIONS; ++tid) {
+      transactions.cancel_transaction(tid);
+    }
+  }
 };
 
 } // namespace srs_cu_cp

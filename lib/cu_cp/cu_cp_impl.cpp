@@ -25,7 +25,9 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
+#include "routines/ue_amf_context_release_request_routine.h"
 #include "routines/ue_removal_routine.h"
+#include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -59,6 +61,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              get_cu_cp_ue_context_handler(),
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
+                             routine_mng,
                              du_processor_task_sched,
                              ue_mng,
                              rrc_du_cu_cp_notifier,
@@ -138,7 +141,7 @@ void cu_cp_impl::stop()
   logger.info("Stopping CU-CP...");
 
   // Shut down components from within CU-CP executor.
-  force_blocking_execute(
+  sync_execute(
       *cfg.cu_cp_executor,
       [this]() {
         // Stop the activity of UEs that are currently attached.
@@ -170,7 +173,30 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
-  du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
+  if (msg.ue_inactive) {
+    du_ue* ue = ue_mng.find_du_ue(msg.ue_index);
+    srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
+
+    cu_cp_ue_context_release_request req;
+    req.ue_index = msg.ue_index;
+    req.cause    = ngap_cause_radio_network_t::user_inactivity;
+
+    // Add PDU Session IDs
+    auto& up_resource_manager            = ue->get_up_resource_manager();
+    req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+
+    logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, req.cause);
+
+    // Schedule on UE task scheduler
+    ue->get_task_sched().schedule_async_task(launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      // Notify NGAP to request a release from the AMF
+      CORO_AWAIT(handle_ue_context_release(req));
+      CORO_RETURN();
+    }));
+  } else {
+    logger.debug("Inactivity notification level not supported");
+  }
 }
 
 rrc_ue_reestablishment_context_response
@@ -334,18 +360,8 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
 
 async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_release_request& request)
 {
-  return launch_async([this, result = bool{false}, request](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // Notify NGAP to request a release from the AMF
-    CORO_AWAIT_VALUE(result,
-                     ngap_entity->get_ngap_control_message_handler().handle_ue_context_release_request(request));
-    if (!result) {
-      // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
-      CORO_AWAIT(handle_ue_context_release_command({request.ue_index, request.cause}));
-    }
-    CORO_RETURN();
-  });
+  return launch_async<ue_amf_context_release_request_routine>(
+      request, ngap_entity->get_ngap_control_message_handler(), *this, logger);
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>
@@ -540,6 +556,20 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
       logger);
 }
 
+void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
+{
+  du_index_t du_index = get_du_index_from_ue_index(ue_index);
+
+  // Clear all enqueued tasks for this UE.
+  ue_mng.get_task_sched().clear_pending_tasks(ue_index);
+
+  // Cancel running transactions for the RRC UE.
+  rrc_ue_interface* rrc_ue = rrc_du_adapters.at(du_index).find_rrc_ue(ue_index);
+  if (rrc_ue != nullptr) {
+    rrc_ue->get_controller().stop();
+  }
+}
+
 // private
 
 void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,
@@ -568,6 +598,11 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi)
 {
   return du_db.get_du_processor(du_index).get_mobility_handler().get_packed_sib1(cgi);
+}
+
+async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev)
+{
+  return launch_async<ue_transaction_info_release_routine>(ev.ues_lost, ue_mng, *this);
 }
 
 bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)

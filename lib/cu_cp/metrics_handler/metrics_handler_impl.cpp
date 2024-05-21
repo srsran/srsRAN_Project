@@ -82,7 +82,7 @@ metrics_report metrics_handler_impl::request_metrics_report() const
 {
   metrics_report report;
 
-  force_blocking_execute(
+  sync_execute(
       cu_cp_exec,
       [&]() { report = create_report(); },
       [this]() {

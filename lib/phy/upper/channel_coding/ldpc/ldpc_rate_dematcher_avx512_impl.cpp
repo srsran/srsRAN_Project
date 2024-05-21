@@ -85,24 +85,49 @@ static void mm512_deinterleave(__m512i& out_even, __m512i& out_odd, __m512i in_l
 
 static void mm512_deinterleave(__m512i& out0, __m512i& out1, __m512i& out2, __m512i in0, __m512i in1, __m512i in2)
 {
-  // Convert AVX registers to a linear input.
-  alignas(AVX512_SIZE_BYTE) std::array<int8_t, 3 * AVX512_SIZE_BYTE> in = {};
-  _mm512_store_si512(reinterpret_cast<__m512i*>(in.data() + 0), in0);
-  _mm512_store_si512(reinterpret_cast<__m512i*>(in.data() + 1 * AVX512_SIZE_BYTE), in1);
-  _mm512_store_si512(reinterpret_cast<__m512i*>(in.data() + 2 * AVX512_SIZE_BYTE), in2);
+  // Permute indexes.
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx0_[AVX512_SIZE_BYTE] = {
+      0,  3,  6,  9,  12, 15, 18, 21, 24, 27, 30, 33, 36,  39,  42,  45,  48,  51,  54,  57,  60,  63,
+      66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126, 0,
+      0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0};
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx1_[AVX512_SIZE_BYTE] = {
+      65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 0,
+      3,  6,  9,  12, 15, 18, 21, 24, 27, 30, 33, 36, 39,  42,  45,  48,  51,  54,  57,  60,  63,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0};
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx2_[AVX512_SIZE_BYTE] = {
+      2,  5,  8,  11, 14, 17, 20, 23, 26, 29, 32, 35,  38,  41,  44,  47,  50,  53,  56,  59,  62, 65,
+      68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 0,  0,
+      0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0};
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx3_[AVX512_SIZE_BYTE] = {
+      0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  34,  35,  36,  37,  38,  39,  40,  41, 42, 65,
+      68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125};
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx4_[AVX512_SIZE_BYTE] = {
+      0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  34,  35,  36,  37,  38,  39,  40,  41, 42, 66,
+      69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126};
+  alignas(AVX512_SIZE_BYTE) static constexpr int8_t idx5_[AVX512_SIZE_BYTE] = {
+      0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,  33,  34,  35,  36,  37,  38,  39,  40,  41, 64, 67,
+      70, 73, 76, 79, 82, 85, 88, 91, 94, 97, 100, 103, 106, 109, 112, 115, 118, 121, 124, 127};
 
-  // Actual deinterleaver algorithm. Let the compiler optimize.
-  alignas(AVX512_SIZE_BYTE) std::array<int8_t, 3 * AVX512_SIZE_BYTE> out = {};
-  for (unsigned i = 0; i != AVX512_SIZE_BYTE; ++i) {
-    for (unsigned j = 0; j != 3; ++j) {
-      out[AVX512_SIZE_BYTE * j + i] = in[i * 3 + j];
-    }
-  }
+  // Deinterleave first output.
+  __m512i idx0  = _mm512_load_si512(idx0_);
+  __m512i idx3  = _mm512_load_si512(idx3_);
+  __m512i temp0 = _mm512_permutex2var_epi8(in0, idx0, in1);
+  out0          = _mm512_permutex2var_epi8(temp0, idx3, in2);
 
-  // Convert linear output to AVX registers.
-  out0 = _mm512_load_si512(reinterpret_cast<const __m512i*>(out.data() + 0 * AVX512_SIZE_BYTE));
-  out1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(out.data() + 1 * AVX512_SIZE_BYTE));
-  out2 = _mm512_load_si512(reinterpret_cast<const __m512i*>(out.data() + 2 * AVX512_SIZE_BYTE));
+  // Deinterleave second output.
+  __m512i idx1  = _mm512_load_si512(idx1_);
+  __m512i idx4  = _mm512_load_si512(idx4_);
+  __m512i temp1 = _mm512_permutex2var_epi8(in1, idx1, in0);
+  out1          = _mm512_permutex2var_epi8(temp1, idx4, in2);
+
+  // Deinterleave third output.
+  __m512i idx2  = _mm512_load_si512(idx2_);
+  __m512i idx5  = _mm512_load_si512(idx5_);
+  __m512i temp2 = _mm512_permutex2var_epi8(in0, idx2, in1);
+  out2          = _mm512_permutex2var_epi8(temp2, idx5, in2);
 }
 
 void ldpc_rate_dematcher_avx512_impl::deinterleave_qpsk(span<log_likelihood_ratio>       out,

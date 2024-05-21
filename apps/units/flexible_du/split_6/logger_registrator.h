@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "../du_high/logger_registrator.h"
-#include "../du_low//logger_registrator.h"
-#include "../fapi//logger_registrator.h"
+#include "apps/units/flexible_du/du_high/du_high_logger_registrator.h"
+#include "apps/units/flexible_du/du_low//du_low_logger_registrator.h"
+#include "apps/units/flexible_du/fapi/fapi_logger_registrator.h"
 
 namespace srsran {
 namespace modules {

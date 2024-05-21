@@ -110,6 +110,7 @@ public:
 
   // cu_cp_ue_removal_handler
   async_task<void> handle_ue_removal_request(ue_index_t ue_index) override;
+  void             handle_pending_ue_task_cancellation(ue_index_t ue_index) override;
 
   cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *mobility_mng; }
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
@@ -138,6 +139,8 @@ private:
   void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 
   byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
+
+  async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override;
 
   // NGAP UE creation handler
   bool handle_new_ngap_ue(ue_index_t ue_index) override;

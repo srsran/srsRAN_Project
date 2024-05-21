@@ -68,9 +68,6 @@ public:
   /// \brief Create and connect socket to given address.
   virtual bool create_and_connect() = 0;
 
-  /// \brief Recreate a formerly closed socket and reconnect to a known address and port.
-  virtual bool recreate_and_reconnect() = 0;
-
   /// \brief Start listening on socket.
   virtual bool listen() = 0;
 

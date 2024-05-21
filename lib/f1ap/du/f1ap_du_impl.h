@@ -50,13 +50,15 @@ public:
 
   // F1AP interface management procedures functions as per TS38.473, Section 8.2.
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override;
+  async_task<void>                      handle_f1_removal_request() override;
 
   // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 
   // F1AP message handler functions
   void handle_message(const f1ap_message& msg) override;
-  void handle_connection_loss() override {}
+
+  f1ap_event_handler& get_f1c_connection_handler() override { return connection_handler; }
 
   // F1AP UE configuration functions
   f1ap_ue_creation_response      handle_ue_creation_request(const f1ap_ue_creation_request& msg) override;

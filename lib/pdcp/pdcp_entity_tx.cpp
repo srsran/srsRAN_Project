@@ -155,6 +155,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
 void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
 {
+  logger.log_debug("Reestablishing PDCP. st={}", st);
   // - for UM DRBs and AM DRBs, reset the ROHC protocol for uplink and start with an IR state in U-mode (as
   //   defined in RFC 3095 [8] and RFC 4815 [9]) if drb-ContinueROHC is not configured in TS 38.331 [3];
   // - for UM DRBs and AM DRBs, reset the EHC protocol for uplink if drb-ContinueEHC-UL is not configured in
@@ -202,6 +203,7 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   if (is_am()) {
     retransmit_all_pdus();
   }
+  logger.log_info("Reestablished PDCP. st={}", st);
 }
 
 void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)

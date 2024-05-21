@@ -44,6 +44,8 @@ public:
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
 
+  async_task<void> stop() override;
+
   // f1ap rrc message transfer procedure functions
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) override;
 
@@ -75,7 +77,7 @@ public:
 
   // f1ap_cu_interface
   f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }
-  f1ap_event_handler&              get_f1ap_event_handler() override { return *this; }
+  f1ap_event_handler&              get_event_handler() override { return *this; }
   f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler() override { return *this; }
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *this; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *this; }
@@ -124,10 +126,6 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Handle the reception of an F1 Removal Request.
-  /// \param[in] msg The F1 Removal Request message.
-  void handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg);
-
   /// \brief Handle the reception of an UE Context Release Request.
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
@@ -145,9 +143,8 @@ private:
   f1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
-  f1ap_du_processor_notifier&  du_processor_notifier;
-  f1ap_du_management_notifier& du_management_notifier;
-  task_executor&               ctrl_exec;
+  f1ap_du_processor_notifier& du_processor_notifier;
+  task_executor&              ctrl_exec;
 
   tx_pdu_notifier_with_logging tx_pdu_notifier;
 

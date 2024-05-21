@@ -215,7 +215,7 @@ constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bo
 template <class T>
 constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bound)
 {
-  return clamp(value, lower_bound, upper_bound, std::less<T>());
+  return srsran::clamp(value, lower_bound, upper_bound, std::less<T>());
 }
 
 } // namespace srsran

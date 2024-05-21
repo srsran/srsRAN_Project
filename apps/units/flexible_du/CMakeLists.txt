@@ -18,4 +18,10 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(split_ru_dynamic)
+add_subdirectory(du_high)
+add_subdirectory(du_low)
+add_subdirectory(fapi)
+add_subdirectory(split_7_2)
+add_subdirectory(split_8)
+add_subdirectory(split_dynamic)
+add_subdirectory(support)

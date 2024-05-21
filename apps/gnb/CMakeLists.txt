@@ -25,6 +25,7 @@ add_executable(gnb
         gnb_appconfig_translators.cpp
         adapters/e1ap_gateway_local_connector.cpp
         adapters/f1c_gateway_local_connector.cpp
+        adapters/f1c_gateway_remote_connector.cpp
         adapters/e2_gateway_remote_connector.cpp
         adapters/ngap_adapter.cpp
         )
@@ -59,5 +60,4 @@ endif (DPDK_FOUND)
 
 add_backward(gnb)
 
-target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/external)
+target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)

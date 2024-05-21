@@ -167,7 +167,8 @@ public:
   {
 #ifdef __x86_64__
     bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
-    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw);
+    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw) &&
+                           cpu_supports_feature(cpu_feature::avx512vbmi);
 
     if (((dematcher_type == "avx512") || (dematcher_type == "auto")) && supports_avx512) {
       return std::make_unique<ldpc_rate_dematcher_avx512_impl>();

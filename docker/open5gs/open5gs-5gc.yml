@@ -200,6 +200,7 @@ upf:
   gtpu:
     server:
       - address: ${OPEN5GS_IP}
+        advertise: ${UPF_ADVERTISE_IP}
   session:
     - subnet: ${UE_GATEWAY_IP}
 

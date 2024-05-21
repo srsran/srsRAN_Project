@@ -46,6 +46,11 @@ static constexpr unsigned MAX_MODULATION_ORDER = 8;
 /// As per TS38.211 Section 6.3.1.3.
 static constexpr unsigned MAX_NOF_LAYERS = 4;
 
+/// \brief Maximum number of receive ports for receiving PUSCH.
+///
+/// Equal to the maximum number of transmission layers for PUSCH.
+static constexpr unsigned MAX_NOF_RX_PORTS = MAX_NOF_LAYERS;
+
 /// Returns number of REs per codeword in a single transmission.
 inline constexpr unsigned get_codeword_max_symbols(unsigned nof_prb, unsigned nof_layers)
 {

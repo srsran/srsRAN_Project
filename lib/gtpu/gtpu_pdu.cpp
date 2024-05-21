@@ -412,10 +412,10 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
     case gtpu_extension_header_type::long_pdcp_pdu_number_0:
     case gtpu_extension_header_type::long_pdcp_pdu_number_1:
     case gtpu_extension_header_type::xw_ran_container:
-    case gtpu_extension_header_type::nr_ran_container:
       break;
+    case gtpu_extension_header_type::nr_ran_container:
     case gtpu_extension_header_type::pdu_session_container:
-      return true; // TODO add actual support for PDU session container
+      return true;
     case gtpu_extension_header_type::pdcp_pdu_number:
       return true; // TODO add actual support for PDCP PDU number
     case gtpu_extension_header_type::reserved_0:

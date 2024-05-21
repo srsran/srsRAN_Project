@@ -27,8 +27,13 @@
 using namespace srsran;
 using namespace srs_du;
 
-du_stop_procedure::du_stop_procedure(du_ue_manager& ue_mng_, du_cell_manager& cell_mng_) :
-  ue_mng(ue_mng_), cell_mng(cell_mng_), proc_logger(srslog::fetch_basic_logger("DU-MNG"), "DU Stop")
+du_stop_procedure::du_stop_procedure(du_ue_manager&           ue_mng_,
+                                     du_cell_manager&         cell_mng_,
+                                     f1ap_connection_manager& f1ap_conn_mng_) :
+  ue_mng(ue_mng_),
+  cell_mng(cell_mng_),
+  f1ap_conn_mng(f1ap_conn_mng_),
+  proc_logger(srslog::fetch_basic_logger("DU-MNG"), "DU Stop")
 {
 }
 
@@ -43,7 +48,8 @@ void du_stop_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   proc_logger.log_progress("Stopped all cells");
 
-  // TODO: Call F1 Removal Request if not yet called.
+  // Run F1 Remove Procedure.
+  CORO_AWAIT(f1ap_conn_mng.handle_f1_removal_request());
 
   // Forcefully interrupt all UE activity.
   CORO_AWAIT(ue_mng.stop());

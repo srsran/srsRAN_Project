@@ -153,6 +153,9 @@ public:
   /// \param[in] cgi The cell global id of the cell.
   /// \returns The packed SIB1 for the cell, if available. An empty byte_buffer otherwise.
   virtual byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) = 0;
+
+  /// \brief Handle transaction information loss in the F1AP.
+  virtual async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// Interface for an RRC UE entity to communicate with the CU-CP.
@@ -280,6 +283,9 @@ public:
   /// \brief Completly remove a UE from the CU-CP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual async_task<void> handle_ue_removal_request(ue_index_t ue_index) = 0;
+
+  /// \brief Cancel pending UE tasks.
+  virtual void handle_pending_ue_task_cancellation(ue_index_t ue_index) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,

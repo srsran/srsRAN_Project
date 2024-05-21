@@ -274,15 +274,19 @@ TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
 /* F1 Removal Request handling                                                      */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(f1ap_cu_test, when_f1_removal_request_received_then_du_deleted)
+TEST_F(f1ap_cu_test, when_f1_removal_request_received_then_f1_removal_response_is_sent)
 {
   // Generate F1 Removal Request Message
   f1ap_message removal_request = {};
   removal_request.pdu.set_init_msg();
   removal_request.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_REMOVAL);
+  removal_request.pdu.init_msg().value.f1_removal_request()->resize(1);
+  (*removal_request.pdu.init_msg().value.f1_removal_request())[0]->transaction_id() = 0;
 
   // Pass message to F1AP
   f1ap->handle_message(removal_request);
 
-  EXPECT_EQ(f1ap_du_mgmt_notifier.last_du_idx, du_index_t::min);
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types::successful_outcome);
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.successful_outcome().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types::f1_removal_resp);
 }

@@ -27,6 +27,7 @@
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include <condition_variable>
 
 namespace srsran {
 namespace srs_du {
@@ -50,6 +51,8 @@ public:
   {
     ue_mng.schedule_async_task(ue_index, std::move(task));
   }
+
+  void handle_du_stop_request() override;
 
   du_ue_index_t find_unused_du_ue_index() override;
 
@@ -82,8 +85,9 @@ private:
   du_ran_resource_manager_impl cell_res_alloc;
   du_ue_manager                ue_mng;
 
-  std::mutex mutex;
-  bool       running{false};
+  std::mutex              mutex;
+  std::condition_variable cvar;
+  bool                    running{false};
 
   // Handler for DU tasks.
   fifo_async_task_scheduler main_ctrl_loop;

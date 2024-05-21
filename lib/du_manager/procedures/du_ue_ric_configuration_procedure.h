@@ -25,6 +25,7 @@
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
 #include "srsran/du_manager/du_configurator.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/support/async/manual_event.h"
 
 namespace srsran {

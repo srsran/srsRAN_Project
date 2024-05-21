@@ -724,7 +724,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
       if (is_bsr_zero_sent[idx] && pusch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pusch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
-            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
+            << fmt::format("Condition failed for UE with CRNTI={}", test_ue.crnti);
         continue;
       }
 
@@ -1148,7 +1148,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
       if (is_bsr_zero_sent[idx] && pusch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pusch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
-            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
+            << fmt::format("Condition failed for UE with CRNTI={}", test_ue.crnti);
         continue;
       }
 

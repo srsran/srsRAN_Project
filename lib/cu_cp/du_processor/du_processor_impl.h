@@ -45,7 +45,6 @@ class du_processor_impl : public du_processor,
                           public du_processor_ngap_interface,
                           public du_processor_ue_task_handler,
                           public du_processor_paging_handler,
-                          public du_processor_inactivity_handler,
                           public du_processor_statistics_handler,
                           public du_processor_mobility_handler
 {
@@ -57,6 +56,7 @@ public:
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
+                    common_task_scheduler&              common_task_sched_,
                     du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
                     task_executor&                      ctrl_exec_);
@@ -65,7 +65,7 @@ public:
   // getter functions
 
   du_index_t                       get_du_index() override { return context.du_index; }
-  f1ap_message_handler&            get_message_handler() override { return *f1ap; }
+  f1ap_cu&                         get_f1ap_handler() override { return *f1ap; };
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *f1ap; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *f1ap; }
@@ -78,6 +78,7 @@ public:
   ue_rrc_context_creation_response
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
+  async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
 
   // du_processor_mobility_manager_interface
   optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
@@ -85,9 +86,6 @@ public:
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
-
-  // du_processor inactivity handler
-  void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;
@@ -107,7 +105,6 @@ public:
   du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
   du_processor_ue_task_handler&          get_ue_task_handler() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
-  du_processor_inactivity_handler&       get_inactivity_handler() override { return *this; }
   du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
@@ -166,10 +163,6 @@ private:
   // timers associated with a given DU.
   timer_manager timer_db;
 
-  // Components
-  std::unique_ptr<f1ap_cu>          f1ap;
-  std::unique_ptr<rrc_du_interface> rrc;
-
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
 
@@ -181,6 +174,10 @@ private:
 
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
+
+  // Components
+  std::unique_ptr<f1ap_cu>          f1ap;
+  std::unique_ptr<rrc_du_interface> rrc;
 };
 
 } // namespace srs_cu_cp

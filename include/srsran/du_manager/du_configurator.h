@@ -23,15 +23,18 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 
 struct control_config_params {
+  // Sets the number of HARQ processes to be used.
   optional<unsigned> num_harq_processes;
+  // Sets the number of HARQ retransmissions to be used.
   optional<unsigned> num_harq_retransmissions;
-  optional<unsigned> min_prb_alloc;
-  optional<unsigned> max_prb_alloc;
+  // Set the radio resource management policy.
+  optional<rrm_policy_ratio_group> rrm_policy_group;
 };
 
 struct du_mac_sched_control_config {

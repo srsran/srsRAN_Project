@@ -213,7 +213,7 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
                 .ric_ctrl_action_list[0]
                 .ran_ctrl_action_params_list[9]
                 .ran_param_id,
-            11);
+            10);
   ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0]
                 .ric_ctrl_action_list[0]
                 .ran_ctrl_action_params_list[9]

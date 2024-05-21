@@ -48,26 +48,27 @@ du_manager_impl::~du_manager_impl()
 
 void du_manager_impl::start()
 {
-  logger.info("DU manager starting...");
-
-  std::unique_lock<std::mutex> lock(mutex);
-  if (std::exchange(running, true)) {
-    logger.warning("DU Manager already started. Ignoring start request.");
-    return;
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (running) {
+      logger.warning("Ignoring start request. Cause: DU Manager already started.");
+      return;
+    }
   }
 
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
+  logger.info("DU manager starting...");
 
-  if (not params.services.du_mng_exec.execute([this, &p]() {
-        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+  if (not params.services.du_mng_exec.execute([this]() {
+        main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
           CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
 
           // Signal start() caller thread that the operation is complete.
-          p.set_value();
+          std::lock_guard<std::mutex> lock(mutex);
+          running = true;
+          cvar.notify_all();
 
           CORO_RETURN();
         });
@@ -76,47 +77,31 @@ void du_manager_impl::start()
   }
 
   // Block waiting for DU setup to complete.
-  fut.wait();
+  std::unique_lock<std::mutex> lock(mutex);
+  cvar.wait(lock, [this]() { return running; });
 
   logger.info("DU manager started successfully.");
 }
 
 void du_manager_impl::stop()
 {
-  std::unique_lock<std::mutex> lock(mutex);
-  if (not std::exchange(running, false)) {
+  {
+    // Avoid stopping the DU Manager multiple times.
+    std::lock_guard<std::mutex> lock(mutex);
+    if (not running) {
+      return;
+    }
+  }
+
+  while (not params.services.du_mng_exec.execute([this]() { handle_du_stop_request(); })) {
+    logger.error("Unable to dispatch DU Manager shutdown. Retrying...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     return;
   }
 
-  eager_async_task<void> main_loop;
-  std::atomic<bool>      main_loop_stopped{false};
-
-  auto stop_du_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
-    if (main_loop.empty()) {
-      // First call. Initiate shutdown operations.
-
-      // Start DU disconnect procedure.
-      schedule_async_task(launch_async<du_stop_procedure>(ue_mng, cell_mng));
-
-      // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
-      // thread.
-      main_loop = main_ctrl_loop.request_stop();
-    }
-
-    if (main_loop.ready()) {
-      // if the main loop finished, return back to the caller.
-      main_loop_stopped = true;
-    }
-  };
-
-  // Wait until the all tasks of the main loop are completed and main loop has stopped.
-  while (not main_loop_stopped) {
-    if (not params.services.du_mng_exec.execute(stop_du_main_loop)) {
-      logger.error("Unable to stop DU Manager.");
-      return;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  // Wait for the DU Manager thread to signal that the stop was completed.
+  std::unique_lock<std::mutex> lock(mutex);
+  cvar.wait(lock, [this]() { return not running; });
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
@@ -131,6 +116,43 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
                    msg.tc_rnti,
                    msg.slot_rx);
   }
+}
+
+void du_manager_impl::handle_du_stop_request()
+{
+  if (not running) {
+    // Already stopped.
+    return;
+  }
+
+  // Start DU stop procedure.
+  schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (not running) {
+      // Already stopped.
+      CORO_EARLY_RETURN();
+    }
+
+    // Tear down activity in remaining layers.
+    CORO_AWAIT(launch_async<du_stop_procedure>(ue_mng, cell_mng, params.f1ap.conn_mng));
+
+    // DU stop successfully finished.
+    // Dispatch main async task loop destruction via defer so that the current coroutine ends successfully.
+    while (not params.services.du_mng_exec.defer([this]() {
+      // Let main loop go out of scope and be destroyed.
+      auto main_loop = main_ctrl_loop.request_stop();
+
+      std::lock_guard<std::mutex> lock(mutex);
+      running = false;
+      cvar.notify_all();
+    })) {
+      logger.warning("Unable to stop DU Manager. Retrying...");
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    CORO_RETURN();
+  }));
 }
 
 du_ue_index_t du_manager_impl::find_unused_du_ue_index()

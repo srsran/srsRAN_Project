@@ -160,7 +160,15 @@ def test_android_hp(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "Some packages got lost"])
+@mark.flaky(
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "Some packages got lost",
+        "socket is already closed",
+    ],
+)
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,

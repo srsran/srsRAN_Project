@@ -25,7 +25,7 @@ import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
-from time import sleep
+from time import sleep, time
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
@@ -256,7 +256,7 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
 
 
 def ping_start(
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 1
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 1
 ) -> List[grpc.Future]:
     """
     Ping command between an UE and a 5GC
@@ -283,18 +283,12 @@ def ping_start(
     return ping_task_array
 
 
-def ping_wait_until_finish(ping_task_array: List[grpc.Future], task_no_check_index=-1) -> None:
+def ping_wait_until_finish(ping_task_array: List[grpc.Future]) -> None:
     """
     Wait until the requested ping has finished.
     """
     ping_success = True
-    index = -1
     for ping_task in ping_task_array:
-        if ping_task_array.index(ping_task) % 2 == 0:
-            index += 1
-
-        if index == task_no_check_index:
-            continue
         ping_success &= ping_task.result().status
 
     if not ping_success:
@@ -455,18 +449,25 @@ def iperf_wait_until_finish(
     # Stop server, get results and print it
     try:
         task.result()
+        iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
+        logging.info(
+            "Iperf %s [%s %s]:\n%s",
+            ue_attached_info.ipv4,
+            _iperf_proto_to_str(iperf_request.proto),
+            _iperf_dir_to_str(iperf_request.direction),
+            MessageToString(iperf_data, indent=2),
+        )
     except grpc.RpcError as err:
-        if ErrorReportedByAgent(err).code is not grpc.StatusCode.UNAVAILABLE:
+        if ErrorReportedByAgent(err).code is grpc.StatusCode.UNAVAILABLE:
             raise err from None
-
-    iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
-    logging.info(
-        "Iperf %s [%s %s]:\n%s",
-        ue_attached_info.ipv4,
-        _iperf_proto_to_str(iperf_request.proto),
-        _iperf_dir_to_str(iperf_request.direction),
-        MessageToString(iperf_data, indent=2),
-    )
+        logging.warning(
+            "Iperf %s [%s %s] failed due to %s",
+            ue_attached_info.ipv4,
+            _iperf_proto_to_str(iperf_request.proto),
+            _iperf_dir_to_str(iperf_request.direction),
+            ErrorReportedByAgent(err),
+        )
+        return (False, IPerfResponse())
 
     # Assertion
     iperf_success = True
@@ -512,11 +513,14 @@ def ue_reestablishment(
     """
     Reestablishment one UE from already running gnb and 5gc
     """
+    t_before = time()
     result: ReestablishmentInfo = ue_stub.Reestablishment(UInt32Value(value=reestablishment_interval))
     log_fn = logging.info if result.status else logging.error
     log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
     if not result.status:
         pytest.fail("Reestablishment failed")
+    with suppress(ValueError):
+        sleep(reestablishment_interval - (time() - t_before))
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):

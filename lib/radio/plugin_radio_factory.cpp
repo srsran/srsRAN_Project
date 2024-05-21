@@ -101,7 +101,14 @@ public:
                                         task_executor&                    async_task_executor,
                                         radio_notification_handler&       notifier) override
   {
-    return std::make_unique<radio_dynamic_wrapper>(handle, factory->create(config, async_task_executor, notifier));
+    // Create base radio using the loaded factory.
+    std::unique_ptr<radio_session> radio = factory->create(config, async_task_executor, notifier);
+    if (radio == nullptr) {
+      report_error("Failed to create plugin radio");
+    }
+
+    // Wrap the dynamic library handler and the radio instance.
+    return std::make_unique<radio_dynamic_wrapper>(handle, std::move(radio));
   }
 
 private:

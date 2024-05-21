@@ -36,8 +36,8 @@ namespace {
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
-  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_) :
-    parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_message_handler())
+  f1ap_rx_pdu_notifier(cu_cp_f1c_handler& parent_, du_index_t du_index_, f1ap_message_handler& msg_handler_) :
+    parent(&parent_), du_index(du_index_), msg_handler(msg_handler_)
   {
   }
 
@@ -48,12 +48,12 @@ public:
     }
   }
 
-  void on_new_message(const f1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
+  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
 
 private:
   cu_cp_f1c_handler*    parent;
   du_index_t            du_index;
-  f1ap_message_handler& cached_msg_handler;
+  f1ap_message_handler& msg_handler;
 };
 
 } // namespace
@@ -84,7 +84,8 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
   }
 
   logger.info("Added TNL connection to DU {}", du_index);
-  return std::make_unique<f1ap_rx_pdu_notifier>(*this, du_index);
+  return std::make_unique<f1ap_rx_pdu_notifier>(
+      *this, du_index, get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler());
 }
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
@@ -92,13 +93,10 @@ void du_processor_repository::handle_du_remove_request(du_index_t du_index)
   if (not running.load(std::memory_order_acquire)) {
     return;
   }
-  force_blocking_execute(
-      *cfg.cu_cp.cu_cp_executor,
-      [this, du_index]() { remove_du_impl(du_index); },
-      [&]() {
-        logger.warning("Failed to schedule DU removal task. Retrying...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      });
+  while (not cfg.cu_cp.cu_cp_executor->defer([this, du_index]() { remove_du_impl(du_index); })) {
+    logger.error("Failed to schedule DU removal task. Retrying...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
@@ -131,6 +129,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                          cfg.ue_nas_pdu_notifier,
                                                          cfg.ue_ngap_ctrl_notifier,
                                                          cfg.meas_config_notifier,
+                                                         cfg.common_task_sched,
                                                          cfg.ue_task_sched,
                                                          cfg.ue_manager,
                                                          *cfg.cu_cp.cu_cp_executor);
@@ -157,16 +156,24 @@ void du_processor_repository::remove_du_impl(du_index_t du_index)
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Removing DU {}...", du_index);
 
-  // Remove DU
-  auto du_it = du_db.find(du_index);
-  if (du_it == du_db.end()) {
-    logger.warning("Remove DU called for inexistent du_index={}", du_index);
-    return;
-  }
+  cfg.common_task_sched.schedule_async_task(launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-  // Remove DU
-  du_db.erase(du_index);
-  logger.info("Removed DU {}", du_index);
+    // Remove DU
+    if (du_db.find(du_index) == du_db.end()) {
+      logger.warning("Remove DU called for inexistent du_index={}", du_index);
+      return;
+    }
+
+    // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
+    CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_interface().get_f1ap_handler().stop());
+
+    // Remove DU
+    du_db.erase(du_index);
+    logger.info("Removed DU {}", du_index);
+
+    CORO_RETURN();
+  }));
 }
 
 du_processor& du_processor_repository::find_du(du_index_t du_index)
@@ -194,13 +201,6 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
   return *du_db.at(du_index).processor;
 }
 
-du_f1c_handler& du_processor_repository::get_du(du_index_t du_index)
-{
-  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return du_db.at(du_index).processor->get_f1ap_interface();
-}
-
 void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
 {
   // Forward paging message to all DU processors
@@ -218,13 +218,6 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
   return ue_index_t::invalid;
-}
-
-void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,
-                                                             const cu_cp_inactivity_notification& msg)
-{
-  // Forward message to DU processor
-  du_db.at(du_index).processor->get_inactivity_handler().handle_inactivity_notification(msg);
 }
 
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const

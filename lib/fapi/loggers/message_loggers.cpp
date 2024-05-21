@@ -48,7 +48,7 @@ static float to_crc_ul_sinr(int sinr)
 /// Converts the given FAPI CRC RSRP to dB as per SCF-222 v4.0 section 3.4.8.
 static float to_crc_ul_rsrp(unsigned rsrp)
 {
-  return static_cast<float>(rsrp - 1400) * 0.1F;
+  return static_cast<float>(static_cast<int>(rsrp) - 1280) * 0.1F;
 }
 
 void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog::basic_logger& logger)
@@ -60,7 +60,7 @@ void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog:
     fmt::format_to(
         buffer, "\n\t- CRC rnti={} harq_id={} tb_status={}", pdu.rnti, pdu.harq_id, pdu.tb_crc_status_ok ? "OK" : "KO");
     if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
-      fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+      fmt::format_to(buffer, " ta_s={:.1f}", pdu.timing_advance_offset_ns * 1e-9F);
     }
     if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
       fmt::format_to(buffer, " sinr={:.1f}", to_crc_ul_sinr(pdu.ul_sinr_metric));
@@ -195,7 +195,7 @@ void srsran::fapi::log_rach_indication(const rach_indication_message& msg, srslo
       fmt::format_to(buffer, "\n\t\t- PREAMBLE index={}", preamble.preamble_index);
       if (preamble.timing_advance_offset_ns !=
           std::numeric_limits<decltype(preamble.timing_advance_offset_ns)>::max()) {
-        fmt::format_to(buffer, " ta_s={}", preamble.timing_advance_offset_ns * 1e-9);
+        fmt::format_to(buffer, " ta_s={:.1f}", preamble.timing_advance_offset_ns * 1e-9F);
       }
       if (preamble.preamble_pwr != std::numeric_limits<decltype(preamble.preamble_pwr)>::max()) {
         fmt::format_to(buffer, " pwr={:.1f}", to_rach_preamble_power_dB(preamble.preamble_pwr));
@@ -235,7 +235,7 @@ static float to_uci_ul_sinr(int sinr)
 /// Converts the given FAPI UCI RSRP to dB as per SCF-222 v4.0 section 3.4.9.
 static float to_uci_ul_rsrp(unsigned rsrp)
 {
-  return static_cast<float>(rsrp - 1400) * 0.1F;
+  return static_cast<float>(static_cast<int>(rsrp) - 1280) * 0.1F;
 }
 
 static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::memory_buffer& buffer)
@@ -247,7 +247,7 @@ static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::me
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
   }
   if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
-    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+    fmt::format_to(buffer, " ta_s={:.1f}", pdu.timing_advance_offset_ns * 1e-9F);
   }
   if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
     fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));
@@ -279,7 +279,7 @@ static void log_uci_pucch_f234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, fmt::m
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
   }
   if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
-    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+    fmt::format_to(buffer, " ta_s={:.1f}", pdu.timing_advance_offset_ns * 1e-9F);
   }
   if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
     fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));
@@ -305,7 +305,7 @@ static void log_uci_pusch_pdu(const uci_pusch_pdu& pdu, fmt::memory_buffer& buff
     fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
   }
   if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
-    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+    fmt::format_to(buffer, " ta_s={:.1f}", pdu.timing_advance_offset_ns * 1e-9F);
   }
   if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
     fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));

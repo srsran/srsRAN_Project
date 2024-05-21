@@ -33,14 +33,14 @@ namespace modules {
 namespace flexible_du {
 
 /// Creates the DLT PCAP of the DU.
-inline std::unique_ptr<dlt_pcap> create_dlt_pcap(const pcap_appconfig& pcap_cfg, worker_manager& workers)
+inline std::unique_ptr<dlt_pcap> create_dlt_pcap(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
 {
   return pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_executor("pcap_exec"))
                                : create_null_dlt_pcap();
 }
 
 /// Creates the MAC PCAP of the DU.
-inline std::unique_ptr<mac_pcap> create_mac_pcap(const pcap_appconfig& pcap_cfg, worker_manager& workers)
+inline std::unique_ptr<mac_pcap> create_mac_pcap(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
 {
   if (pcap_cfg.mac.type != "dlt" && pcap_cfg.mac.type != "udp") {
     report_error("Invalid type for MAC PCAP. type={}\n", pcap_cfg.mac.type);
@@ -52,7 +52,7 @@ inline std::unique_ptr<mac_pcap> create_mac_pcap(const pcap_appconfig& pcap_cfg,
 }
 
 /// Creates the RLC PCAP of the DU.
-inline std::unique_ptr<rlc_pcap> create_rlc_pcap(const pcap_appconfig& pcap_cfg, worker_manager& workers)
+inline std::unique_ptr<rlc_pcap> create_rlc_pcap(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
 {
   if (pcap_cfg.rlc.rb_type != "all" && pcap_cfg.rlc.rb_type != "srb" && pcap_cfg.rlc.rb_type != "drb") {
     report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", pcap_cfg.rlc.rb_type);

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../../f1ap/common/asn1_helpers.h"
+#include "../cu_cp_controller/common_task_scheduler.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../du_processor/du_setup_handler.h"
@@ -53,7 +54,10 @@ private:
 class f1ap_du_processor_adapter : public f1ap_du_processor_notifier
 {
 public:
-  f1ap_du_processor_adapter(du_setup_handler& du_setup_hdlr_) : du_setup_hdlr(&du_setup_hdlr_) {}
+  f1ap_du_processor_adapter(common_task_scheduler& common_task_sched_, du_setup_handler& du_setup_hdlr_) :
+    common_task_sched(&common_task_sched_), du_setup_hdlr(&du_setup_hdlr_)
+  {
+  }
 
   void connect_du_processor(du_processor_f1ap_interface& du_processor_f1ap_) { du_f1ap_handler = &du_processor_f1ap_; }
 
@@ -84,9 +88,20 @@ public:
     du_f1ap_handler->handle_du_initiated_ue_context_release_request(req);
   }
 
+  bool schedule_async_task(async_task<void> task) override
+  {
+    return common_task_sched->schedule_async_task(std::move(task));
+  }
+
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return du_f1ap_handler->handle_ue_transaction_info_loss(ev);
+  }
+
 private:
-  du_setup_handler*            du_setup_hdlr   = nullptr;
-  du_processor_f1ap_interface* du_f1ap_handler = nullptr;
+  common_task_scheduler*       common_task_sched = nullptr;
+  du_setup_handler*            du_setup_hdlr     = nullptr;
+  du_processor_f1ap_interface* du_f1ap_handler   = nullptr;
 };
 
 /// Adapter between F1AP and RRC UE

@@ -21,6 +21,9 @@
  */
 
 #pragma once
+
+#include "srsran/adt/optional.h"
+#include "srsran/adt/variant.h"
 #include <cstdint>
 #include <string>
 
@@ -71,7 +74,7 @@ struct ntn_config {
   optional<unsigned> k_mac;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
-  srsran::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
+  variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   optional<ta_common_t> ta_info;

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../cu_cp_controller/common_task_scheduler.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -31,7 +32,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by CU-CP to handle routines.
-class cu_cp_routine_manager
+class cu_cp_routine_manager : public common_task_scheduler
 {
 public:
   explicit cu_cp_routine_manager(ue_manager&                  ue_mng_,
@@ -39,7 +40,7 @@ public:
                                  srslog::basic_logger&        logger_);
   ~cu_cp_routine_manager() = default;
 
-  bool schedule_async_task(async_task<void> task);
+  bool schedule_async_task(async_task<void> task) override;
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   start_pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg,

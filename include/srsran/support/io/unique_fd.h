@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/compiler.h"
+#include "fmt/format.h"
 #include <unistd.h>
 
 namespace srsran {

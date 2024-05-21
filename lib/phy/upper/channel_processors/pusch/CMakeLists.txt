@@ -24,6 +24,7 @@ add_library(srsran_pusch_processor STATIC
         pusch_demodulator_impl.cpp
         factories.cpp
         pusch_processor_impl.cpp
+        pusch_processor_validator_impl.cpp
         pusch_decoder_hw_impl.cpp
         ulsch_demultiplex_impl.cpp)
 set(SRSRAN_PUSCH_LIBS srsran_upper_phy_support srsran_ran)

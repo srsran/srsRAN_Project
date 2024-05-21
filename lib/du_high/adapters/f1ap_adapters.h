@@ -77,6 +77,8 @@ public:
 
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
+  void on_f1c_disconnection() override { return du_mng->handle_du_stop_request(); }
+
   du_ue_index_t find_free_ue_index() override { return du_mng->find_unused_du_ue_index(); }
 
   async_task<f1ap_ue_context_creation_response>

@@ -496,7 +496,13 @@ def test_zmq_smoke(
 )
 @mark.zmq
 @mark.flaky(
-    reruns=2, only_rerun=["failed to start", "Attach timeout reached", "iperf did not achieve the expected data rate"]
+    reruns=2,
+    only_rerun=[
+        "failed to start",
+        "Attach timeout reached",
+        "iperf did not achieve the expected data rate",
+        "socket is already closed",
+    ],
 )
 # pylint: disable=too-many-arguments
 def test_zmq(

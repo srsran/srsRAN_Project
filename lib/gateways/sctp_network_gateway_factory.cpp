@@ -22,7 +22,6 @@
 
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "sctp_network_gateway_impl.h"
-#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

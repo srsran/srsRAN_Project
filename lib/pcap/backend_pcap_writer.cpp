@@ -82,7 +82,7 @@ void backend_pcap_writer::close()
 
   // The pcap writing is still enabled. Dispatch closing of the pcap writer to backend executor.
   // Note: We block waiting until the pcap finishes closing.
-  force_blocking_execute(
+  sync_execute(
       backend_exec,
       [this]() { writer.close(); },
       []() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });

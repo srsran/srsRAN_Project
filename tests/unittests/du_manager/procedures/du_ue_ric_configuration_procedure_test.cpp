@@ -58,7 +58,10 @@ TEST_F(du_ue_ric_config_tester,
        when_new_ric_config_is_started_then_du_manager_starts_mac_config_and_waits_for_mac_response)
 {
   std::vector<control_config_params> param_list;
-  param_list.emplace_back(control_config_params{nullopt, nullopt, 5, 10});
+  rrm_policy_ratio_group             pol;
+  pol.max_prb_policy_ratio = 10;
+  pol.min_prb_policy_ratio = 5;
+  param_list.emplace_back(control_config_params{nullopt, nullopt, pol});
   start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, param_list});
 
   ASSERT_TRUE(mac.last_ue_reconf_msg.has_value()) << "MAC should have received new configuration";
@@ -75,7 +78,8 @@ TEST_F(du_ue_ric_config_tester,
 TEST_F(du_ue_ric_config_tester, when_mac_finished_configuration_then_procedure_finishes)
 {
   std::vector<control_config_params> param_list;
-  param_list.emplace_back(control_config_params{nullopt, nullopt, 5, 10});
+  rrm_policy_ratio_group             pol;
+  param_list.emplace_back(control_config_params{nullopt, nullopt, pol});
   start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, param_list});
 
   ASSERT_FALSE(proc_result().has_value()) << "The procedure should wait for MAC response";
@@ -100,7 +104,8 @@ TEST_F(du_ue_ric_config_tester,
 
   // Start RIC UE config.
   std::vector<control_config_params> param_list;
-  param_list.emplace_back(control_config_params{nullopt, nullopt, 5, 10});
+  rrm_policy_ratio_group             pol;
+  param_list.emplace_back(control_config_params{nullopt, nullopt, pol});
   start_procedure(du_mac_sched_control_config{(uint64_t)test_ue->f1ap_ue_id, param_list});
 
   // Status: RIC config procedure is waiting for previous procedure.

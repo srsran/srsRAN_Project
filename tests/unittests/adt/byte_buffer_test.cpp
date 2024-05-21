@@ -57,7 +57,8 @@ static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunct
 // Ensures commutativity of byte_buffer::operator==, and consistency when compared to std::equal(...).
 #define ASSERT_EQ_BUFFER(buffer1, buffer2)                                                                             \
   ASSERT_EQ(buffer1, buffer2);                                                                                         \
-  std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end());                                          \
+  ASSERT_TRUE(std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end()))                              \
+      << fmt::format("\nbuf1: {}\nbuf2: {}", buffer1, buffer2);                                                        \
   ASSERT_EQ(buffer2, buffer1)
 
 namespace {
@@ -407,7 +408,8 @@ TEST_P(two_vector_size_param_test, shallow_copy_and_append)
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
     ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
   }
-  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes1, bytes2));
+  auto combined = concat_vec(bytes1, bytes2);
+  ASSERT_EQ_BUFFER(pdu, combined);
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
@@ -427,7 +429,8 @@ TEST_P(three_vector_size_param_test, shallow_copy_prepend_and_append)
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
     ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
   }
-  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes2, concat_vec(bytes1, bytes3)));
+  auto combined = concat_vec(bytes2, concat_vec(bytes1, bytes3));
+  ASSERT_EQ_BUFFER(pdu, combined);
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 

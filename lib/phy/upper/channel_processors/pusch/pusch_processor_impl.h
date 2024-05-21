@@ -38,38 +38,13 @@
 
 namespace srsran {
 
-/// Implements a parameter validator for \ref pusch_processor_impl.
-class pusch_processor_validator_impl : public pusch_pdu_validator
-{
-public:
-  /// \brief Constructs PUSCH processor validator.
-  ///
-  /// It requires channel estimate dimensions to limit the bandwidth, slot duration, number of receive ports and
-  /// transmit layers.
-  ///
-  /// \param[in] ce_dims_ Provides the channel estimates dimensions.
-  explicit pusch_processor_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_) :
-    ce_dims(ce_dims_)
-  {
-    srsran_assert(
-        (ce_dims.nof_prb > 0) && (ce_dims.nof_prb <= MAX_RB), "Invalid number of PRB (i.e. {}).", ce_dims.nof_prb);
-    srsran_assert((ce_dims.nof_symbols > 0) && (ce_dims.nof_symbols <= MAX_NSYMB_PER_SLOT),
-                  "Invalid number of OFDM symbols.");
-    srsran_assert(ce_dims.nof_rx_ports > 0, "The number of receive ports cannot be zero.");
-    srsran_assert(ce_dims.nof_tx_layers == 1, "Only one transmit layer is currently supported.");
-  }
-
-  // See interface for documentation.
-  bool is_valid(const pusch_processor::pdu_t& pdu) const override;
-
-private:
-  channel_estimate::channel_estimate_dimensions ce_dims;
-};
-
 /// Implements a generic software PUSCH processor.
 class pusch_processor_impl : public pusch_processor
 {
 public:
+  /// The current maximum supported number of layers.
+  static constexpr unsigned max_nof_layers = 2;
+
   /// Groups the PUSCH processor dependencies that can be reused locally by the same processing thread.
   class concurrent_dependencies
   {

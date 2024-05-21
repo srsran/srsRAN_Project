@@ -36,7 +36,7 @@ bool handle_context_setup_response(cu_cp_inter_du_handover_response&         res
                                    const f1ap_ue_context_setup_response&     target_ue_context_setup_response,
                                    up_config_update&                         next_config,
                                    const srslog::basic_logger&               logger,
-                                   bool                                      reestablish_drb);
+                                   bool                                      reestablish_pdcp);
 
 /// \brief Handler Bearer context modification response from CU-UP and prefill UE context modification for source DU.
 bool handle_bearer_context_modification_response(

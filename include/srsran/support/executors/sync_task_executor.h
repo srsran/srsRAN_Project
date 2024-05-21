@@ -102,10 +102,10 @@ std::unique_ptr<task_executor> make_sync_executor(Executor&& executor)
 ///
 /// The user should be only use this call in exceptional situations where a blocking call is required.
 template <typename Exec, typename Task, typename OnTaskDispatchFailure>
-void force_blocking_execute(Exec&&                  exec,
-                            Task&&                  task,
-                            OnTaskDispatchFailure&& fail_func,
-                            unsigned                max_attempts = std::numeric_limits<unsigned>::max())
+void sync_execute(Exec&&                  exec,
+                  Task&&                  task,
+                  OnTaskDispatchFailure&& fail_func,
+                  unsigned                max_attempts = std::numeric_limits<unsigned>::max())
 {
   static_assert(std::is_copy_constructible<Task>::value, "Task must be copy assignable");
 

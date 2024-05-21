@@ -206,12 +206,7 @@ public:
   RIGTORP_NODISCARD size_t capacity() const noexcept { return capacity_ - 1; }
 
 private:
-#ifdef __cpp_lib_hardware_interference_size
-  static constexpr size_t kCacheLineSize =
-      std::hardware_destructive_interference_size;
-#else
   static constexpr size_t kCacheLineSize = 64;
-#endif
 
   // Padding to avoid false sharing between slots_ and adjacent allocations
   static constexpr size_t kPadding = (kCacheLineSize - 1) / sizeof(T) + 1;

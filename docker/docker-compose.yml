@@ -35,7 +35,8 @@ services:
     ports:
       - "9999:9999/tcp"
     # Uncomment port to use the 5gc from outside the docker network
-    #   - "38412:38412/sctp"
+    #  - "38412:38412/sctp"
+    #  - "2152:2152/udp"
     command: 5gc -c open5gs-5gc.yml
     healthcheck:
       test: [ "CMD-SHELL", "nc -z 127.0.0.20 7777" ]

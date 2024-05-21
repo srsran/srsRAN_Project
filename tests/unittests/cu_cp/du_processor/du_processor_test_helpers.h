@@ -68,6 +68,7 @@ protected:
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter                            rrc_du_cu_cp_notifier;
+  std::unique_ptr<common_task_scheduler>                common_task_sched;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   std::unique_ptr<du_processor>                         du_processor_obj;
 

@@ -28,27 +28,41 @@ namespace srsran {
 
 namespace detail {
 
-/// Type to store arguments and return of callable type Sig
+/// Type to store arguments and return of callable type Sig.
 template <typename Sig>
 struct function_signature;
 
-/// Specialization for free functions
+/// Specialization for free functions.
 template <typename Ret, typename... Args>
 struct function_signature<Ret(Args...)> {
   using return_type = Ret;
   using arg_types   = type_list<Args...>;
 };
 
-/// Specialization for mutable class methods
+/// Specialization for mutable class methods.
 template <typename Ret, typename Obj, typename... Args>
 struct function_signature<Ret (Obj::*)(Args...)> {
   using return_type = Ret;
   using arg_types   = type_list<Args...>;
 };
 
-/// Specialization for const class methods
+/// Specialization for mutable and noexcept class methods.
+template <typename Ret, typename Obj, typename... Args>
+struct function_signature<Ret (Obj::*)(Args...) noexcept> {
+  using return_type = Ret;
+  using arg_types   = type_list<Args...>;
+};
+
+/// Specialization for const class methods.
 template <typename Ret, typename Obj, typename... Args>
 struct function_signature<Ret (Obj::*)(Args...) const> {
+  using return_type = Ret;
+  using arg_types   = type_list<Args...>;
+};
+
+/// Specialization for const and noexcept class methods.
+template <typename Ret, typename Obj, typename... Args>
+struct function_signature<Ret (Obj::*)(Args...) const noexcept> {
   using return_type = Ret;
   using arg_types   = type_list<Args...>;
 };

@@ -1,0 +1,69 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema#",
+    "type": "object",
+    "properties": {
+        "tests": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "campaign_filename": {
+                        "type": "string"
+                    },
+                    "test_name": {
+                        "type": "string"
+                    },
+                    "test_timeout": {
+                        "type": "integer"
+                    },
+                    "gnb_extra_commands": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "max_pdschs_per_slot": {
+                        "type": "integer"
+                    },
+                    "max_puschs_per_slot": {
+                        "type": "integer"
+                    },
+                    "enable_qos_viavi": {
+                        "type": "boolean"
+                    },
+                    "expected_dl_bitrate": {
+                        "type": "integer"
+                    },
+                    "expected_ul_bitrate": {
+                        "type": "integer"
+                    },
+                    "fail_if_kos": {
+                        "type": "boolean"
+                    },
+                    "warning_as_errors": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "campaign_filename",
+                    "test_name",
+                    "test_timeout",
+                    "gnb_extra_commands",
+                    "id",
+                    "max_pdschs_per_slot",
+                    "max_puschs_per_slot",
+                    "enable_qos_viavi",
+                    "expected_dl_bitrate",
+                    "expected_ul_bitrate",
+                    "fail_if_kos",
+                    "warning_as_errors"
+                ],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": [
+        "tests"
+    ],
+    "additionalProperties": false
+}

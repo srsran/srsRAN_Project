@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../cu_cp_controller/common_task_scheduler.h"
 #include "du_metrics_handler.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
@@ -39,7 +40,7 @@ namespace srs_cu_cp {
 struct rrc_ue_creation_message;
 
 /// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface : public du_f1c_handler
+class du_processor_f1ap_interface
 {
 public:
   virtual ~du_processor_f1ap_interface() = default;
@@ -63,6 +64,9 @@ public:
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
 
+  /// \brief Retrieve F1AP handler for the respective DU.
+  virtual f1ap_cu& get_f1ap_handler() = 0;
+
   /// \brief Get the F1AP UE context management handler interface of the DU processor object.
   /// \return The F1AP UE context management handler interface of the DU processor object.
   virtual f1ap_ue_context_manager& get_f1ap_ue_context_manager() = 0;
@@ -70,6 +74,10 @@ public:
   /// \brief Get the F1AP UE context removal handler interface of the DU processor object.
   /// \return The F1AP UE context removal handler interface of the DU processor object.
   virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
+
+  /// \brief Handle the loss of some transaction information for some UEs.
+  /// \return Asynchronous task that is completed when the event is fully handled.
+  virtual async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) = 0;
 
   /// \brief Get the F1AP statistics handler interface of the DU processor object.
   /// \return The F1AP statistics handler interface of the DU processor object.
@@ -310,6 +318,9 @@ public:
   /// \brief Notify the CU-CP to release a UE.
   /// \param[in] request The release request.
   virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
+
+  /// \brief Notify that the F1 transaction information was lost for some UEs.
+  virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 
 /// DU processor Paging handler.
@@ -320,16 +331,6 @@ public:
 
   /// \brief Handles a Paging message.
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-};
-
-/// DU processor inactivity handler.
-class du_processor_inactivity_handler
-{
-public:
-  virtual ~du_processor_inactivity_handler() = default;
-
-  /// \brief Handles an Inactivity notification message.
-  virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
 /// Interface for the NGAP to interface with the DU repository
@@ -366,7 +367,6 @@ public:
   virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
   virtual du_processor_ue_task_handler&    get_ue_task_handler()    = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
-  virtual du_processor_inactivity_handler& get_inactivity_handler() = 0;
   virtual du_processor_statistics_handler& get_statistics_handler() = 0;
   virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;
 

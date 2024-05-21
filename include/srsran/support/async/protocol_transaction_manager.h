@@ -188,6 +188,18 @@ public:
       srslog::fetch_basic_logger("ALL").error("Protocol transaction manager destroyed with {} running transactions",
                                               running_transactions.size());
     }
+    stop();
+  }
+
+  void stop()
+  {
+    if (not running) {
+      return;
+    }
+    running = false;
+    while (not running_transactions.empty()) {
+      cancel_transaction(running_transactions.begin()->first);
+    }
   }
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
@@ -223,16 +235,21 @@ public:
       return {};
     }
 
-    // Create timer, set timeout and callback, and start running it.
-    unique_timer& timer = ret.first->second.timer;
-    timer               = timer_service.create_timer();
-    timer.set(time_to_cancel, [this, transaction_id](timer_id_t /*unused*/) {
-      if (not set_transaction_outcome(transaction_id, protocol_transaction_failure::timeout)) {
-        srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
-                                                  transaction_id);
-      }
-    });
-    timer.run();
+    if (running) {
+      // Create timer, set timeout and callback, and start running it.
+      unique_timer& timer = ret.first->second.timer;
+      timer               = timer_service.create_timer();
+      timer.set(time_to_cancel, [this, transaction_id](timer_id_t /*unused*/) {
+        if (not set_transaction_outcome(transaction_id, protocol_transaction_failure::timeout)) {
+          srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
+                                                    transaction_id);
+        }
+      });
+      timer.run();
+    } else {
+      // If the transaction manager is not running anymore, we mark the transaction as cancelled right away.
+      cancel_transaction(transaction_id);
+    }
 
     return {*this, ret.first->first, ret.first->second.event};
   }
@@ -256,6 +273,11 @@ public:
 
 private:
   friend class protocol_transaction<T>;
+
+  struct transaction_context {
+    unique_timer               timer;
+    manual_event<outcome_type> event;
+  };
 
   template <typename U>
   SRSRAN_NODISCARD bool set_transaction_outcome(unsigned transaction_id, U&& result)
@@ -287,10 +309,7 @@ private:
   const protocol_transaction_id_t nof_transaction_ids;
   timer_factory                   timer_service;
 
-  struct transaction_context {
-    unique_timer               timer;
-    manual_event<outcome_type> event;
-  };
+  bool running{true};
 
   protocol_transaction_id_t next_transaction_id{0};
 
