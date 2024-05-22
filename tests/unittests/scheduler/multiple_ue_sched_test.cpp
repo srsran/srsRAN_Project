@@ -118,7 +118,11 @@ protected:
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
-    pucch_cfg_builder.setup(bench->cell_cfg);
+    pucch_builder_params pucch_basic_params{
+        .nof_ue_pucch_f1_res_harq = 8, .nof_ue_pucch_f2_res_harq = 8, .nof_sr_resources = 8, .nof_csi_resources = 8};
+    pucch_basic_params.f1_params.nof_cyc_shifts = srsran::nof_cyclic_shifts::twelve;
+    pucch_basic_params.f1_params.occ_supported  = true;
+    pucch_cfg_builder.setup(bench->cell_cfg, pucch_basic_params);
   }
 
   void run_slot()
@@ -235,35 +239,6 @@ protected:
       it = ue_creation_req.cfg.lc_config_list->end() - 1;
     }
     it->lc_group = lcgid_;
-
-    const unsigned csi_report_period_slots = csi_report_periodicity_to_uint(
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-            ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
-            .report_slot_period);
-    if (bench->cell_cfg.tdd_cfg_common.has_value()) {
-      optional<unsigned> slot_offset =
-          find_next_tdd_full_ul_slot(bench->cell_cfg.tdd_cfg_common.value(), last_csi_report_offset + 1);
-      srsran_assert(slot_offset.has_value(), "Unable to find a valid CSI report slot offset UE={}", ue_index);
-      srsran_assert(slot_offset.value() < csi_report_period_slots,
-                    "Unable to find a valid CSI report slot offset UE={}",
-                    ue_index);
-      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-          ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
-          .report_slot_offset = *slot_offset;
-      last_csi_report_offset  = *slot_offset;
-    } else {
-      srsran_assert(
-          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-              ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
-                      .report_slot_offset +
-                  ue_index <
-              csi_report_period_slots,
-          "Unable to find a valid CSI report slot offset UE={}",
-          ue_index);
-      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-          ue_creation_req.cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
-          .report_slot_offset += ue_index;
-    }
 
     pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_creation_req.cfg.cells.value()[0].serv_cell_cfg);
     bench->sch.handle_ue_creation_request(ue_creation_req);
@@ -1301,6 +1276,10 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
+                                         multiple_ue_test_params{.nof_ues                  = 32,
+                                                                 .min_buffer_size_in_bytes = 100,
+                                                                 .max_buffer_size_in_bytes = 300,
+                                                                 .duplx_mode               = duplex_mode::FDD},
                                          multiple_ue_test_params{.nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 2000,
                                                                  .max_buffer_size_in_bytes = 3000,
@@ -1308,6 +1287,10 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                          multiple_ue_test_params{.nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
+                                                                 .duplx_mode               = duplex_mode::TDD},
+                                         multiple_ue_test_params{.nof_ues                  = 32,
+                                                                 .min_buffer_size_in_bytes = 100,
+                                                                 .max_buffer_size_in_bytes = 300,
                                                                  .duplx_mode               = duplex_mode::TDD}),
                          [](const testing::TestParamInfo<multiple_ue_sched_tester::ParamType>& params) -> std::string {
                            const auto& p = params.param;
