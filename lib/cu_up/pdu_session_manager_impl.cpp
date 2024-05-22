@@ -404,17 +404,26 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                                  drb->f1u_ul_teid);
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
-      /* TODO make sure this is correct.
-      drb->f1u = f1u_gw.create_cu_bearer(ue_index,
-                                         drb->drb_id,
-                                         drb->f1u_cfg, // reuse previous F1-U config
-                                         f1u_ul_tunnel_addr,
-                                         drb->f1u_to_pdcp_adapter,
-                                         drb->f1u_to_pdcp_adapter,
-                                         ue_dl_exec,
-                                         ue_dl_timer_factory,
-                                         ue_inactivity_timer);
-                                         */
+      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb->drb_id,
+                                                   drb->f1u_cfg,
+                                                   f1u_ul_tunnel_addr,
+                                                   drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec,
+                                                   ue_dl_timer_factory,
+                                                   ue_inactivity_timer);
+
+      drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
+                                              drb->drb_id,
+                                              f1u_ul_tunnel_addr,
+                                              drb->f1u_cfg,
+                                              *drb->f1u_gw_bearer,
+                                              drb->f1u_to_pdcp_adapter,
+                                              drb->f1u_to_pdcp_adapter,
+                                              ue_dl_timer_factory,
+                                              ue_inactivity_timer,
+                                              ue_ul_exec);
+
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
