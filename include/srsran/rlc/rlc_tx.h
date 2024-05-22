@@ -11,10 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/optional.h"
-#include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
 
 /*
  * This file will hold the interfaces and notifiers for the RLC entity.

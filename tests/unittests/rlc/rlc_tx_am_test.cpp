@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_tx_am_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -901,11 +902,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
   byte_buffer_chain pdus[n_pdus]    = {
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
   };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
@@ -966,11 +967,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
   byte_buffer_chain pdus[n_pdus]    = {
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
   };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
@@ -1241,11 +1242,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
   byte_buffer_chain pdus[n_pdus]    = {
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
   };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
@@ -1303,11 +1304,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
   byte_buffer_chain pdus[n_pdus]    = {
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
-         byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
+      byte_buffer_chain::create().value(),
   };
 
   tx_full_pdus(pdus, n_pdus, sdu_size);

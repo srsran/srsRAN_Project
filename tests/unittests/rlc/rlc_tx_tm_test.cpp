@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_tx_tm_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
