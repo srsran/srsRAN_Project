@@ -41,7 +41,7 @@ public:
 
   bool listen() override;
 
-  optional<uint16_t> get_listen_port();
+  optional<uint16_t> get_listen_port() override;
 
 private:
   class sctp_send_notifier;

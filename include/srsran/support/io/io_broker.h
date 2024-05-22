@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/support/executors/unique_thread.h"
+#include <atomic>
 #include <utility>
 
 namespace srsran {
@@ -37,25 +38,34 @@ public:
   public:
     subscriber() = default;
     subscriber(io_broker& broker_, int fd_) : broker(&broker_), fd(fd_) {}
-    subscriber(subscriber&& other) noexcept : broker(other.broker), fd(std::exchange(other.fd, -1)) {}
+    subscriber(subscriber&& other) noexcept : broker(other.broker), fd(other.fd.exchange(-1, std::memory_order_relaxed))
+    {
+    }
     subscriber& operator=(subscriber&& other) noexcept
     {
       reset();
       broker = other.broker;
-      fd     = std::exchange(other.fd, -1);
+      fd     = other.fd.exchange(-1, std::memory_order_relaxed);
       return *this;
     }
     ~subscriber() { reset(); }
 
     /// Checks whether the FD is connected to the broker.
-    bool registered() const { return fd >= 0; }
+    bool registered() const { return fd.load(std::memory_order_relaxed) >= 0; }
 
     /// Resets the handle, deregistering the FD from the broker.
-    bool reset() { return not registered() or broker->unregister_fd(std::exchange(fd, -1)); }
+    bool reset()
+    {
+      int fd_tmp = fd.exchange(-1, std::memory_order_relaxed);
+      if (fd_tmp >= 0) {
+        return broker->unregister_fd(fd_tmp);
+      }
+      return false;
+    }
 
   private:
-    io_broker* broker = nullptr;
-    int        fd     = -1;
+    io_broker*       broker = nullptr;
+    std::atomic<int> fd{-1};
   };
 
   /// Callback called when registered fd has data

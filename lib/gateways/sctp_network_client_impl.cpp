@@ -125,13 +125,23 @@ sctp_network_client_impl::sctp_network_client_impl(const std::string&           
 
 sctp_network_client_impl::~sctp_network_client_impl()
 {
-  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
+  logger.debug("{}: Closing...", client_name);
+
+  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
   if (shutdown_received != nullptr) {
     shutdown_received->store(true);
     shutdown_received = nullptr;
   }
 
-  close_socket();
+  io_sub.reset();
+
+  {
+    // Note: we have to protect the shutdown of the socket in case the io_broker is handling concurrently the io_broker
+    // unsubscription.
+    // TODO: Refactor.
+    std::lock_guard<std::mutex> lock(shutdown_mutex);
+    socket.close();
+  }
 
   logger.info("{}: SCTP client closed", client_name);
 }
@@ -153,6 +163,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
   }
   if (not node_cfg.bind_address.empty()) {
     // Make sure to close any socket created for any previous connection.
+    std::lock_guard<std::mutex> lock(shutdown_mutex);
     socket.close();
   }
 
@@ -300,6 +311,7 @@ void sctp_network_client_impl::handle_sctp_shutdown_comp()
   recv_handler.reset();
 
   // Unsubscribe from listening to new IO events.
+  std::lock_guard<std::mutex> lock(shutdown_mutex);
   io_sub.reset();
 }
 

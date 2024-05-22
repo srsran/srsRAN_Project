@@ -302,7 +302,7 @@ io_broker::subscriber io_broker_epoll::register_fd(int fd, recv_callback_t handl
 bool io_broker_epoll::unregister_fd(int fd)
 {
   if (fd < 0) {
-    logger.error("File descriptor deregistration failed. Cause: Invalid file descriptor value fd={}", fd);
+    logger.error("fd={}: File descriptor deregistration failed. Cause: Invalid file descriptor value", fd);
     return false;
   }
   if (not running.load(std::memory_order_relaxed)) {

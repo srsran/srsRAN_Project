@@ -11,6 +11,7 @@
 #include "sctp_network_gateway_common_impl.h"
 #include "srsran/gateways/sctp_network_client.h"
 #include "srsran/support/io/transport_layer_address.h"
+#include <mutex>
 
 struct sctp_sndrcvinfo;
 
@@ -61,6 +62,8 @@ private:
 
   // Shared state between client a notifier.
   std::shared_ptr<std::atomic<bool>> shutdown_received;
+
+  std::mutex shutdown_mutex;
 };
 
 } // namespace srsran

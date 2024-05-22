@@ -53,15 +53,16 @@ public:
 
     sockaddr_in addr;
     addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(bind_port);
+    addr.sin_port        = htons(0);
     addr.sin_addr.s_addr = ::inet_addr(address.c_str());
     report_fatal_error_if_not(socket.bind((struct sockaddr&)addr, sizeof(addr), ""), "Failed to bind server socket");
     report_fatal_error_if_not(socket.listen(), "Failed to listen to new connections");
     report_fatal_error_if_not(socket.set_non_blocking(), "Failed to set as non-blocking");
+    bind_port = socket.get_listen_port().value();
   }
 
   const std::string address   = "127.0.0.1";
-  const int         bind_port = 38412;
+  int               bind_port = -1;
 };
 
 } // namespace
@@ -111,7 +112,7 @@ protected:
 TEST_F(sctp_network_client_test, when_bind_address_is_valid_then_client_is_created_successfully)
 {
   client_cfg.sctp.bind_address = "127.0.0.2";
-  client_cfg.sctp.bind_port    = 0;
+  client_cfg.sctp.bind_port    = server.bind_port;
   client                       = create_sctp_network_client(client_cfg);
   ASSERT_NE(client, nullptr);
 }
@@ -126,7 +127,7 @@ TEST_F(sctp_network_client_test, when_bind_interface_is_invalid_then_server_is_n
 {
   client_cfg.sctp.bind_interface = "invalid";
   client_cfg.sctp.bind_address   = "127.0.0.1";
-  client_cfg.sctp.bind_port      = 38412;
+  client_cfg.sctp.bind_port      = server.bind_port;
   client                         = create_sctp_network_client(client_cfg);
   ASSERT_EQ(client, nullptr);
 }

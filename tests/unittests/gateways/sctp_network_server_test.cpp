@@ -84,10 +84,12 @@ class dummy_sctp_client : public dummy_sctp_node
 public:
   dummy_sctp_client() : dummy_sctp_node("CLIENT") {}
 
-  void set_dest(const sctp_network_gateway_config& server_cfg_) { server_cfg = server_cfg_; }
-
-  bool connect()
+  bool connect(int ppid_, const std::string& server_addr_, int server_port_)
   {
+    ppid        = ppid_;
+    server_addr = server_addr_;
+    server_port = server_port_;
+
     auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_SEQPACKET});
     if (not result.has_value()) {
       return false;
@@ -95,22 +97,24 @@ public:
     socket = std::move(result.value());
     sockaddr_in addr;
     addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(server_cfg.bind_port);
-    addr.sin_addr.s_addr = ::inet_addr(server_cfg.bind_address.c_str());
+    addr.sin_port        = htons(server_port);
+    addr.sin_addr.s_addr = ::inet_addr(server_addr.c_str());
     if (not socket.connect((struct sockaddr&)addr, sizeof(addr))) {
       socket.close();
       return false;
     }
-    logger.info("Client connected to {}:{}", server_cfg.bind_address, server_cfg.bind_port);
+    logger.info("Client connected to {}:{}", server_addr, server_port);
     return true;
   }
 
   bool send_data(const std::vector<uint8_t>& bytes)
   {
-    return dummy_sctp_node::send_data(bytes, server_cfg.ppid, server_cfg.bind_address, server_cfg.bind_port);
+    return dummy_sctp_node::send_data(bytes, ppid, server_addr, server_port);
   }
 
-  sctp_network_gateway_config server_cfg;
+  std::string server_addr;
+  int         server_port;
+  int         ppid;
 };
 
 } // namespace
@@ -122,14 +126,12 @@ protected:
   {
     server_cfg.sctp.ppid         = NGAP_PPID;
     server_cfg.sctp.bind_address = "127.0.0.1";
-    server_cfg.sctp.bind_port    = 38412;
-
-    client.set_dest(server_cfg.sctp);
+    server_cfg.sctp.bind_port    = 0;
   }
 
   bool connect_client(bool broker_trigger_required = true)
   {
-    if (not client.connect()) {
+    if (not client.connect(server_cfg.sctp.ppid, server_cfg.sctp.bind_address, server->get_listen_port().value())) {
       return false;
     }
     if (broker_trigger_required) {
@@ -327,8 +329,7 @@ TEST_F(sctp_network_server_test, when_multiple_clients_connect_then_multiple_ass
   // Client 2 connects.
   assoc_factory.association_created = false;
   dummy_sctp_client client2;
-  client2.set_dest(server_cfg.sctp);
-  client2.connect();
+  client2.connect(server_cfg.sctp.ppid, server_cfg.sctp.bind_address, server->get_listen_port().value());
   // Handle client 2 association creation.
   trigger_broker();
   ASSERT_TRUE(assoc_factory.association_created);
