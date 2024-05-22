@@ -10,17 +10,15 @@
 Ping + Reestablishment Tests
 """
 import logging
-from contextlib import suppress
-from typing import Optional, Sequence, Union
+from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
-from _pytest.outcomes import Failed
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
+from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
@@ -48,11 +46,11 @@ from .steps.stub import (
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments
-def test_zmq_reestablishment(
+# pylint: disable=too-many-arguments,too-many-locals
+def test_zmq_reestablishment_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_32: UEStub,
+    ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -63,25 +61,37 @@ def test_zmq_reestablishment(
     """
     ZMQ Ping + Reestablishment
     """
+    traffic_duration = 15
+    reestablishment_interval = 5
 
-    _ping_and_reestablishment_multi_ues(
+    for reest_ue_attach_info_dict, other_ue_attach_info_dict in _iterator_over_attached_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_32,
-        gnb=gnb,
         fivegc=fivegc,
+        gnb=gnb,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
-        sample_rate=None,  # default from testbed
+        sample_rate=None,
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
-        traffic_duration=50,
-        reestablishment_interval=10,
         warning_as_errors=True,
-    )
+    ):
+        # Launch pings
+        ping_task_array = ping_start(
+            {**reest_ue_attach_info_dict, **other_ue_attach_info_dict}, fivegc, traffic_duration
+        )
+
+        # Trigger reestablishments
+        for ue_stub in reest_ue_attach_info_dict:
+            for _ in range(int(traffic_duration / reestablishment_interval)):
+                ue_reestablishment(ue_stub, reestablishment_interval)
+
+        # Wait and validate pings
+        ping_wait_until_finish(ping_task_array)
 
 
 @mark.parametrize(
@@ -101,11 +111,11 @@ def test_zmq_reestablishment(
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments
-def test_zmq_reestablishment_full_rate(
+# pylint: disable=too-many-arguments,too-many-locals
+def test_zmq_reestablishment_sequentially_full_rate(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_8: UEStub,
+    ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -118,13 +128,15 @@ def test_zmq_reestablishment_full_rate(
     """
     ZMQ IPerf + Reestablishment
     """
+    traffic_duration = 15
+    reestablishment_interval = 5
 
-    _iperf_and_reestablishment_multi_ues(
+    for reest_ue_attach_info_dict, other_ue_attach_info_dict in _iterator_over_attached_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_8,
-        gnb=gnb,
         fivegc=fivegc,
+        gnb=gnb,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -133,105 +145,7 @@ def test_zmq_reestablishment_full_rate(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
-        protocol=protocol,
-        direction=direction,
-        traffic_duration=50,
-        reestablishment_interval=10,
         warning_as_errors=True,
-    )
-
-
-# pylint: disable=too-many-arguments,too-many-locals
-def _ping_and_reestablishment_multi_ues(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_array: Sequence[UEStub],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    sample_rate: Optional[int],
-    global_timing_advance: int,
-    time_alignment_calibration: Union[int, str],
-    always_download_artifacts: bool,
-    noise_spd: int,
-    traffic_duration: int,
-    reestablishment_interval: int,
-    warning_as_errors: bool,
-):
-
-    for reest_ue_attach_info_dict, other_ue_attach_info_dict in _iterator_over_attached_ues(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_array,
-        fivegc=fivegc,
-        gnb=gnb,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-        always_download_artifacts=always_download_artifacts,
-        noise_spd=noise_spd,
-        warning_as_errors=warning_as_errors,
-    ):
-        # Launch reestablished UEs
-        ping_task_array_reest = ping_start(reest_ue_attach_info_dict, fivegc, traffic_duration, time_step=0)
-        # Launch other UEs
-        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_duration, time_step=0)
-
-        # Trigger reestablishments
-        for ue_stub in reest_ue_attach_info_dict:
-            for _ in range(int(traffic_duration / reestablishment_interval)):
-                ue_reestablishment(ue_stub, reestablishment_interval)
-
-        # Wait and ignore reestablished UEs
-        with suppress(Failed):
-            ping_wait_until_finish(ping_task_array_reest)
-
-        # Wait and validate other UEs
-        ping_wait_until_finish(ping_task_array_other)
-
-
-# pylint: disable=too-many-arguments,too-many-locals
-def _iperf_and_reestablishment_multi_ues(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_array: Sequence[UEStub],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    sample_rate: Optional[int],
-    global_timing_advance: int,
-    time_alignment_calibration: Union[int, str],
-    always_download_artifacts: bool,
-    noise_spd: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
-    traffic_duration: int,
-    reestablishment_interval: int,
-    warning_as_errors: bool,
-):
-
-    for reest_ue_attach_info_dict, other_ue_attach_info_dict in _iterator_over_attached_ues(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=ue_array,
-        fivegc=fivegc,
-        gnb=gnb,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-        always_download_artifacts=always_download_artifacts,
-        noise_spd=noise_spd,
-        warning_as_errors=warning_as_errors,
     ):
         # Launch iperf for all UEs
         iperf_dict = tuple(
@@ -252,6 +166,7 @@ def _iperf_and_reestablishment_multi_ues(
             iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
 
 
+# pylint: disable=too-many-arguments,too-many-locals
 def _iterator_over_attached_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -267,7 +182,7 @@ def _iterator_over_attached_ues(
     always_download_artifacts: bool,
     noise_spd: int,
     warning_as_errors: bool = True,
-):
+) -> Generator[Tuple[Dict[UEStub, UEAttachedInfo], Dict[UEStub, UEAttachedInfo]], None, None]:
 
     logging.info("Reestablishment Test")
 
