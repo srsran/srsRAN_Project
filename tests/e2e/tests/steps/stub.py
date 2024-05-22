@@ -502,13 +502,41 @@ def ue_reestablishment(
     Reestablishment one UE from already running gnb and 5gc
     """
     t_before = time()
-    result: ReestablishmentInfo = ue_stub.Reestablishment(UInt32Value(value=reestablishment_interval))
-    log_fn = logging.info if result.status else logging.error
-    log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    task = _ue_reestablishment_future(ue_stub, reestablishment_interval)
+    result: ReestablishmentInfo = task.result()
     if not result.status:
         pytest.fail("Reestablishment failed")
     with suppress(ValueError):
         sleep(reestablishment_interval - (time() - t_before))
+
+
+def ue_reestablishment_parallel(
+    ue_array: Tuple[UEStub, ...],
+    reestablishment_interval: int,
+):
+    """
+    Reestablishment multiple UEs in from already running gnb and 5gc
+    """
+
+    reest_task_array = [_ue_reestablishment_future(ue_stub, reestablishment_interval) for ue_stub in ue_array]
+    if not all((task.result().status for task in reest_task_array)):
+        pytest.fail("Reestablishment failed.")
+
+
+def _ue_reestablishment_future(
+    ue_stub: UEStub,
+    reestablishment_interval: int,
+) -> grpc.Future:
+
+    reest_future: grpc.Future = ue_stub.Reestablishment.future(UInt32Value(value=reestablishment_interval))
+    reest_future.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_reestablishment(_task, _ue_stub))
+    return reest_future
+
+
+def _log_reestablishment(future: grpc.Future, ue_stub: UEStub):
+    result: ReestablishmentInfo = future.result()
+    log_fn = logging.info if result.status else logging.error
+    log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):
