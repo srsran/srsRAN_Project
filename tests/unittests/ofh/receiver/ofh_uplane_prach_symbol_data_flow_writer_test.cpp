@@ -53,7 +53,7 @@ public:
     results.params.slot      = slot;
     results.params.symbol_id = 0;
     auto& section            = results.sections.emplace_back();
-    section.iq_samples.resize(MAX_NOF_PRBS * NRE);
+    section.iq_samples.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
   }
 };
 

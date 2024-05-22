@@ -13,6 +13,7 @@
 #include "../../phy/support/resource_grid_mapper_test_doubles.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "srsran/phy/support/prach_buffer.h"
+#include "srsran/ran/resource_block.h"
 
 namespace srsran {
 namespace ofh {
@@ -66,43 +67,43 @@ class resource_grid_writer_bool_spy : public resource_grid_writer
 
 public:
   unsigned get_nof_ports() const override { return 1; };
-  unsigned get_nof_subc() const override { return 51 * NRE; };
+  unsigned get_nof_subc() const override { return 51 * NOF_SUBCARRIERS_PER_RB; };
   unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; };
   void     put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
   {
     grid_written = true;
-    nof_prbs_written += symbols.size() / NRE;
+    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
   }
 
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {
     grid_written = true;
-    nof_prbs_written += symbols.size() / NRE;
+    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
     return {};
   }
 
-  span<const cf_t> put(unsigned                            port,
-                       unsigned                            l,
-                       unsigned                            k_init,
-                       const bounded_bitset<NRE * MAX_RB>& mask,
-                       span<const cf_t>                    symbols) override
+  span<const cf_t> put(unsigned                                               port,
+                       unsigned                                               l,
+                       unsigned                                               k_init,
+                       const bounded_bitset<NOF_SUBCARRIERS_PER_RB * MAX_RB>& mask,
+                       span<const cf_t>                                       symbols) override
   {
     grid_written = true;
-    nof_prbs_written += symbols.size() / NRE;
+    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
     return {};
   }
 
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
     grid_written = true;
-    nof_prbs_written += symbols.size() / NRE;
+    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
   }
 
   void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
   {
     grid_written = true;
-    nof_prbs_written += divide_ceil(symbols.size() * stride, NRE);
+    nof_prbs_written += divide_ceil(symbols.size() * stride, NOF_SUBCARRIERS_PER_RB);
   }
 
   /// Returns true if the gris has been written, otherise false.

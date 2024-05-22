@@ -32,7 +32,8 @@ struct uplane_section_params {
   bool use_current_symbol_number;
   /// Start PRB.
   unsigned start_prb;
-  /// Number of PRBs.
+  /// Number of PRBs (though a value of 0 signals more than 255 PRBs in the OFH specification, this field always
+  /// contains the real amount of PRBs).
   unsigned nof_prbs;
   /// User data compression header.
   ru_compression_params ud_comp_hdr;
@@ -41,7 +42,7 @@ struct uplane_section_params {
   /// User data compression parameter.
   /// \note For simplicity, all the PRBs use the same compression parameters.
   optional<unsigned> ud_comp_param;
-  /// IQ samples.
+  /// IQ samples for the number of PRBs indicated by \c nof_prbs.
   static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> iq_samples;
 };
 
