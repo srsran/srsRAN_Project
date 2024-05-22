@@ -324,6 +324,12 @@ public:
     this->set(protocol_transaction_failure::cancel);
   }
 
+  void stop()
+  {
+    stopped = true;
+    set(protocol_transaction_failure::cancel);
+  }
+
   /// \brief Forwards a result to the registered listener/subscriber/observer.
   /// \return If no subscriber is registered, returns false.
   template <typename U>
@@ -335,6 +341,7 @@ public:
 private:
   friend class protocol_transaction_outcome_observer<SuccessResp, FailureResp>;
 
+  bool                                                                                stopped = false;
   async_event_source<variant<SuccessResp, FailureResp, protocol_transaction_failure>> ev_source;
 };
 
@@ -353,15 +360,15 @@ public:
   using event_source_type     = protocol_transaction_event_source<success_response_type, failure_response_type>;
   using awaiter_type          = typename observer_type::awaiter_type;
 
-  /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source.
-  /// Only one simultaneous subscriber is allowed.
-  void subscribe_to(event_source_type& publisher) { observer.subscribe_to(publisher.ev_source); }
-
   /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and
   /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
   void subscribe_to(event_source_type& publisher, std::chrono::milliseconds time_to_cancel)
   {
     observer.subscribe_to(publisher.ev_source, time_to_cancel, protocol_transaction_failure::timeout);
+    if (publisher.stopped) {
+      // Cancel right away, if the source has been stopped.
+      publisher.set(protocol_transaction_failure::cancel);
+    }
   }
 
   /// \brief Checks whether this sink has been registered to an event source.

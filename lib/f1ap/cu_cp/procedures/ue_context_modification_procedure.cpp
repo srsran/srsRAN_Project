@@ -33,7 +33,7 @@ void ue_context_modification_procedure::operator()(coro_context<async_task<f1ap_
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome, std::chrono::milliseconds{1000});
 
   // Send command to DU.
   send_ue_context_modification_request();

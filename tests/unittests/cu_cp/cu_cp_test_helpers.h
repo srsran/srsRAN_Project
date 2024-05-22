@@ -65,12 +65,14 @@ protected:
   bool check_minimal_paging_result();
   bool check_paging_result();
 
+  void start_auto_tick(const std::future<void>& stop_signal);
+
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  dummy_ngap_amf_notifier        ngap_amf_notifier;
-  std::unique_ptr<timer_manager> timers = std::make_unique<timer_manager>(256);
-  manual_task_worker             ctrl_worker{128};
+  dummy_ngap_amf_notifier ngap_amf_notifier;
+  timer_manager           timers{256};
+  manual_task_worker      ctrl_worker{128};
 
   std::unique_ptr<ngap_message_handler> dummy_amf;
 

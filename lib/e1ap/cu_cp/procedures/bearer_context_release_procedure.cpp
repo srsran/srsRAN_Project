@@ -31,7 +31,7 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
   logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
-  transaction_sink.subscribe_to(ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ev_mng.context_release_complete, std::chrono::milliseconds{1000});
 
   // Send command to CU-UP.
   send_bearer_context_release_command();

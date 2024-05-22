@@ -38,6 +38,12 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_
   e1ap_ev_notifier.connect_cu_up_processor(*this);
 }
 
+void cu_up_processor_impl::stop(ue_index_t ue_idx)
+{
+  // Cancel E1AP running tasks.
+  e1ap->cancel_ue_tasks(ue_idx);
+}
+
 void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg)
 {
   if (msg.gnb_cu_up_name.has_value()) {

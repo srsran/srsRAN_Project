@@ -43,7 +43,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete, std::chrono::milliseconds{1000});
 
   ue_ctxt.marked_for_release = true;
 

@@ -43,7 +43,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
-    transaction_sink.subscribe_to(ev_mng.ng_setup_outcome);
+    transaction_sink.subscribe_to(ev_mng.ng_setup_outcome, std::chrono::milliseconds{5000});
 
     // Send request to AMF.
     amf_notifier.on_new_message(request);

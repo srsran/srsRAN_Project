@@ -326,6 +326,17 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
   }
 }
 
+void e1ap_cu_cp_impl::cancel_ue_tasks(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.info("ue={}: UE does not exist in the CU-CP", ue_index);
+    return;
+  }
+
+  auto& u = ue_ctxt_list[ue_index];
+  u.bearer_ev_mng.cancel_all();
+}
+
 void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {

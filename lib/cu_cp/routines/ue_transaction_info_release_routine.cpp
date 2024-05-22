@@ -35,7 +35,9 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
   }
 
   // Wait for all UEs to be removed.
-  CORO_AWAIT(all_ues_reset);
+  if (ues_remaining_count != 0) {
+    CORO_AWAIT(all_ues_reset);
+  }
 
   CORO_RETURN();
 }

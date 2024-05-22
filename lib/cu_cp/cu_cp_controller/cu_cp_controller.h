@@ -33,13 +33,16 @@ class ue_manager;
 class cu_cp_controller
 {
 public:
-  cu_cp_controller(cu_cp_routine_manager&            routine_manager_,
+  cu_cp_controller(const cu_cp_configuration&        config_,
+                   cu_cp_routine_manager&            routine_manager_,
                    ue_manager&                       ue_mng_,
                    const ngap_configuration&         ngap_cfg_,
                    ngap_connection_manager&          ngap_conn_mng_,
                    const cu_up_processor_repository& cu_ups_,
                    du_processor_repository&          dus_,
                    task_executor&                    ctrl_exec);
+
+  void stop();
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
@@ -51,6 +54,7 @@ public:
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
 
 private:
+  const cu_cp_configuration&        cfg;
   ue_manager&                       ue_mng;
   const cu_up_processor_repository& cu_ups;
 

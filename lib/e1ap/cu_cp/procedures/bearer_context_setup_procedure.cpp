@@ -32,7 +32,7 @@ void bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bea
   logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT SETUP RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ev_mng.context_setup_outcome);
+  transaction_sink.subscribe_to(ev_mng.context_setup_outcome, std::chrono::milliseconds{1000});
 
   // Send command to CU-UP.
   send_bearer_context_setup_request();

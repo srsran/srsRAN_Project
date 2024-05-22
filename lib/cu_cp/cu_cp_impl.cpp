@@ -80,7 +80,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
-  controller = std::make_unique<cu_cp_controller>(routine_mng,
+  controller = std::make_unique<cu_cp_controller>(cfg,
+                                                  routine_mng,
                                                   ue_mng,
                                                   cfg.ngap_config,
                                                   ngap_entity->get_ngap_connection_manager(),
@@ -133,22 +134,15 @@ void cu_cp_impl::stop()
   logger.info("Stopping CU-CP...");
 
   // Shut down components from within CU-CP executor.
-  sync_execute(
-      *cfg.cu_cp_executor,
-      [this]() {
-        // Stop the activity of UEs that are currently attached.
-        ue_mng.stop();
+  while (not cfg.cu_cp_executor->execute([this]() {
+    // Stop statistics gathering.
+    statistics_report_timer.stop();
+  })) {
+    logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 
-        // Stop DU repository.
-        du_db.stop();
-
-        // Stop statistics gathering.
-        statistics_report_timer.stop();
-      },
-      [this]() {
-        logger.debug("Failed to dispatch CU-CP stop task. Retrying...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      });
+  controller->stop();
 
   logger.info("CU-CP stopped successfully.");
 }

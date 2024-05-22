@@ -29,9 +29,9 @@ public:
 
   void cancel_all()
   {
-    context_setup_outcome.set(protocol_transaction_failure::cancel);
-    context_modification_outcome.set(protocol_transaction_failure::cancel);
-    context_release_complete.set(protocol_transaction_failure::cancel);
+    context_setup_outcome.stop();
+    context_modification_outcome.stop();
+    context_release_complete.stop();
   }
 
   /// F1AP UE Context Setup Response/Failure Event Source.

@@ -20,17 +20,6 @@ using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) : cfg(cfg_), logger(cfg.logger) {}
 
-void du_processor_repository::stop()
-{
-  if (running.exchange(false, std::memory_order_acq_rel)) {
-    return;
-  }
-  while (not du_db.empty()) {
-    du_index_t du_idx = du_db.begin()->first;
-    remove_du_impl(du_idx);
-  }
-}
-
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
   du_index_t du_index = get_next_du_index();
@@ -71,12 +60,29 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   return du_index;
 }
 
-void du_processor_repository::remove_du(du_index_t du_idx)
+async_task<void> du_processor_repository::remove_du(du_index_t du_index)
 {
-  if (not running.load(std::memory_order_acquire)) {
-    return;
-  }
-  remove_du_impl(du_idx);
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  logger.debug("Removing DU {}...", du_index);
+
+  return launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    // Remove DU
+    if (du_db.find(du_index) == du_db.end()) {
+      logger.warning("Remove DU called for inexistent du_index={}", du_index);
+      return;
+    }
+
+    // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
+    CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_interface().get_f1ap_handler().stop());
+
+    // Remove DU
+    du_db.erase(du_index);
+    logger.info("Removed DU {}", du_index);
+
+    CORO_RETURN();
+  });
 }
 
 du_index_t du_processor_repository::get_next_du_index()

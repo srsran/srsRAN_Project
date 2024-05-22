@@ -47,8 +47,6 @@ class du_processor_repository : public du_repository_ngap_handler, public du_rep
 public:
   explicit du_processor_repository(du_repository_config cfg_);
 
-  void stop();
-
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
   /// \param[out] The index of the DU serving the given PCI.
   du_index_t find_du(pci_t pci);
@@ -67,7 +65,7 @@ public:
   /// \return The DU index of the added DU processor object.
   du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
-  void remove_du(du_index_t du_idx);
+  async_task<void> remove_du(du_index_t du_idx);
 
 private:
   struct du_context {
@@ -102,8 +100,6 @@ private:
 
   // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
   std::map<du_index_t, du_context> removed_du_db;
-
-  std::atomic<bool> running{true};
 };
 
 } // namespace srs_cu_cp

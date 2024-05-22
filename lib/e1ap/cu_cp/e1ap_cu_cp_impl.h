@@ -52,6 +52,7 @@ public:
   void handle_connection_loss() override {}
 
   // e1ap_ue_handler functions
+  void cancel_ue_tasks(ue_index_t ue_index) override;
   void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
   // e1ap_bearer_context_removal_handler functions
