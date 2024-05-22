@@ -52,6 +52,7 @@ public:
 
 private:
   f1u_bearer_logger logger;
+  bool              stopped = false;
 
   /// Config storage
   const f1u_config              cfg;
