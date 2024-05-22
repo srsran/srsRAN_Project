@@ -12,10 +12,10 @@
 #include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
-#include <set>
 
 using namespace srsran;
 
@@ -73,7 +73,10 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 {
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
-  size_t sdu_length   = sdu.buf.length();
+
+  sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+
+  size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(sdu.buf.begin(),
                     sdu.buf.end(),
