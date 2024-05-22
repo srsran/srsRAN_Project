@@ -62,7 +62,7 @@ TEST_F(rlc_pdu_recycler_test, recycler_memory_reserved)
 
 TEST_F(rlc_pdu_recycler_test, clear_by_executor)
 {
-  byte_buffer pdu = create_sdu(1, 0xaa);
+  byte_buffer pdu = create_sdu(pdcp_sn_size::size12bits, 0xaa, 3, 0xaa);
   EXPECT_TRUE(pdu_recycler->add_discarded_pdu(pdu.deep_copy().value()));
   // Check the PDU is stored in first recycle bin
   std::array<std::vector<byte_buffer>, 3>& recycle_bins = pdu_recycler->get_recycle_bins();
@@ -88,10 +88,10 @@ TEST_F(rlc_pdu_recycler_test, clear_by_executor)
 
 TEST_F(rlc_pdu_recycler_test, clear_multiple_times)
 {
-  byte_buffer pdu1 = create_sdu(1, 0xaa);
-  byte_buffer pdu2 = create_sdu(1, 0xbb);
-  byte_buffer pdu3 = create_sdu(1, 0xcc);
-  byte_buffer pdu4 = create_sdu(1, 0xdd);
+  byte_buffer pdu1 = create_sdu(pdcp_sn_size::size12bits, 0xaa, 3, 0xaa);
+  byte_buffer pdu2 = create_sdu(pdcp_sn_size::size12bits, 0xbb, 3, 0xbb);
+  byte_buffer pdu3 = create_sdu(pdcp_sn_size::size12bits, 0xcc, 3, 0xcc);
+  byte_buffer pdu4 = create_sdu(pdcp_sn_size::size12bits, 0xdd, 3, 0xdd);
   EXPECT_TRUE(pdu_recycler->add_discarded_pdu(pdu1.deep_copy().value()));
   // Check the PDU is stored in first recycle bin
   std::array<std::vector<byte_buffer>, 3>& recycle_bins = pdu_recycler->get_recycle_bins();
@@ -165,9 +165,9 @@ TEST_F(rlc_pdu_recycler_test, clear_multiple_times)
 
 TEST_F(rlc_pdu_recycler_test, full_recycle_bin)
 {
-  byte_buffer pdu1 = create_sdu(1, 0xaa);
-  byte_buffer pdu2 = create_sdu(1, 0xbb);
-  byte_buffer pdu3 = create_sdu(1, 0xcc);
+  byte_buffer pdu1 = create_sdu(pdcp_sn_size::size12bits, 0xaa, 3, 0xaa);
+  byte_buffer pdu2 = create_sdu(pdcp_sn_size::size12bits, 0xbb, 3, 0xbb);
+  byte_buffer pdu3 = create_sdu(pdcp_sn_size::size12bits, 0xcc, 3, 0xcc);
 
   EXPECT_TRUE(pdu_recycler->add_discarded_pdu(pdu1.deep_copy().value()));
   EXPECT_TRUE(pdu_recycler->add_discarded_pdu(pdu2.deep_copy().value()));
