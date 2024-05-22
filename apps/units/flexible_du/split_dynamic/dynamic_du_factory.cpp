@@ -16,8 +16,12 @@
 #include "apps/units/flexible_du/du_low/du_low_config_translator.h"
 #include "apps/units/flexible_du/du_low/du_low_wrapper_config_helper.h"
 #include "apps/units/flexible_du/split_7_2/ru_ofh_factories.h"
+#include "apps/units/flexible_du/split_8/ru_sdr_factories.h"
+#include "dynamic_du_impl.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/du/du_wrapper_factory.h"
+#include "srsran/e2/e2_connection_client.h"
+#include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/pcap/rlc_pcap.h"
 
 using namespace srsran;
@@ -269,6 +273,21 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
     dependencies.timing_notifier = &timing_notifier;
 
     return create_ofh_radio_unit(config, dependencies);
+  }
+
+  if (variant_holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
+    ru_sdr_factory_config config;
+    config.du_cells                   = du_cells;
+    config.ru_cfg                     = variant_get<ru_sdr_unit_config>(ru_cfg);
+    config.max_processing_delay_slots = max_processing_delay;
+
+    ru_sdr_factory_dependencies dependencies;
+    dependencies.workers         = &workers;
+    dependencies.error_notifier  = &error_notifier;
+    dependencies.symbol_notifier = &symbol_notifier;
+    dependencies.timing_notifier = &timing_notifier;
+
+    return create_sdr_radio_unit(config, dependencies);
   }
 
   // :TODO: add the rest of the variant.
