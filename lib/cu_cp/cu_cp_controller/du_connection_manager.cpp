@@ -144,14 +144,14 @@ du_connection_manager::handle_new_du_connection(std::unique_ptr<f1ap_message_not
 
   // We dispatch the task to allocate a DU processor and "attach" it to the notifier
   while (not cu_cp_exec.execute([this, shared_ctxt, sender_notifier = std::move(f1ap_tx_pdu_notifier)]() mutable {
-    // Allocation of DU resources.
+    // Create a new DU processor.
     du_index_t du_index = dus.add_du(std::move(sender_notifier));
     if (du_index == du_index_t::invalid) {
       logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
       return;
     }
 
-    // Register the allocated DU index in the shared context.
+    // Register the allocated DU processor index in the DU connection context.
     shared_ctxt->connect_du(du_index);
 
     if (not du_connections.insert(std::make_pair(du_index, std::move(shared_ctxt))).second) {

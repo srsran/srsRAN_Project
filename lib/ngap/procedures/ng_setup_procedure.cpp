@@ -18,6 +18,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
+constexpr std::chrono::milliseconds ng_setup_response_timeout{5000};
+
 ng_setup_procedure::ng_setup_procedure(ngap_context_t&           context_,
                                        const ngap_message&       request_,
                                        const unsigned            max_setup_retries_,
@@ -43,7 +45,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
 
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
-    transaction_sink.subscribe_to(ev_mng.ng_setup_outcome, std::chrono::milliseconds{5000});
+    transaction_sink.subscribe_to(ev_mng.ng_setup_outcome, ng_setup_response_timeout);
 
     // Send request to AMF.
     amf_notifier.on_new_message(request);

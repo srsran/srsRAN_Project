@@ -65,6 +65,9 @@ public:
   /// \return The DU index of the added DU processor object.
   du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
+  /// \brief Launches task that removes the specified DU processor object from the CU-CP.
+  /// \param[in] du_index The index of the DU processor to delete.
+  /// \return asynchronous task for the DU processor removal.
   async_task<void> remove_du(du_index_t du_idx);
 
 private:
@@ -83,12 +86,6 @@ private:
   /// \return The DU processor object.
   du_processor& find_du(du_index_t du_index);
 
-  /// \brief Removes the specified DU processor object from the CU-CP.
-  ///
-  /// Note: This function assumes that the caller is in the CU-CP execution context.
-  /// \param[in] du_index The index of the DU processor to delete.
-  void remove_du_impl(du_index_t du_index);
-
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
   du_index_t get_next_du_index();
@@ -97,9 +94,6 @@ private:
   srslog::basic_logger& logger;
 
   std::map<du_index_t, du_context> du_db;
-
-  // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
-  std::map<du_index_t, du_context> removed_du_db;
 };
 
 } // namespace srs_cu_cp
