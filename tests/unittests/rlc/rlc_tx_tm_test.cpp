@@ -105,11 +105,9 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
-  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
-                         /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
-  rlc->handle_sdu(std::move(sdu));
+  rlc->handle_sdu(sdu_buf.deep_copy().value()); // no std::move - keep local copy for later comparison
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
@@ -140,8 +138,8 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
-  sdu     = {sdu_buf.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
-  rlc->handle_sdu(std::move(sdu));
+
+  rlc->handle_sdu(sdu_buf.deep_copy().value()); // no std::move - keep local copy for later comparison
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
@@ -160,10 +158,9 @@ TEST_F(rlc_tx_tm_test, test_tx)
   // write another SDU into upper end
   count++;
   byte_buffer sdu_buf2 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
-  sdu = {sdu_buf2.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
-  rlc->handle_sdu(std::move(sdu));
+  rlc->handle_sdu(sdu_buf2.deep_copy().value()); // no std::move - keep local copy for later comparison
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 2 * sdu_size);
   EXPECT_EQ(tester->bsr, 2 * sdu_size);
@@ -200,11 +197,9 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
-  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
-                         /* pdcp_sn = */ count}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
-  rlc->handle_sdu(std::move(sdu));
+  rlc->handle_sdu(sdu_buf.deep_copy().value()); // no std::move - keep local copy for later comparison
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
@@ -239,11 +234,9 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
-  rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
-                         /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
-  rlc->handle_sdu(std::move(sdu));
+  rlc->handle_sdu(sdu_buf.deep_copy().value()); // no std::move - keep local copy for later comparison
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);

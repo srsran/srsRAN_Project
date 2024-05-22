@@ -73,7 +73,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
 {
   // Change to UE execution context before forwarding the SDU to lower layers.
-  if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu), {}); })) {
+  if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu)); })) {
     logger.error("Rx {} PDU: Discarding SRB0 Rx PDU. Cause: The task executor queue is full.", ue_ctxt);
   }
 }
@@ -149,27 +149,10 @@ void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
     return;
   }
 
-  uint32_t pdcp_sn = get_srb_pdcp_sn(pdu);
-
   // Change to UE execution context before forwarding the SDU to lower layers.
-  if (not ue_exec.execute(
-          [this, sdu = std::move(pdu), pdcp_sn]() mutable { sdu_notifier.on_new_sdu(std::move(sdu), pdcp_sn); })) {
+  if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu)); })) {
     logger.error("Rx PDU {}: Discarding  SRB{} Rx PDU. Cause: The task executor queue is full.",
                  ue_ctxt,
                  srb_id_to_uint(srb_id));
   }
-}
-
-uint32_t f1c_other_srb_du_bearer::get_srb_pdcp_sn(const byte_buffer& buf)
-{
-  byte_buffer::const_iterator buf_it = buf.begin();
-
-  // Extract PDCP SN (SRBs are always 12bits)
-  uint32_t sn = {};
-  sn          = (*buf_it & 0x0fU) << 8U; // first 4 bits SN (R bits are dropped)
-  ++buf_it;
-  sn |= (*buf_it & 0xffU); // last 8 bits SN
-  ++buf_it;
-
-  return sn;
 }

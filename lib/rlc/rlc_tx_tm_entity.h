@@ -52,7 +52,7 @@ public:
   };
 
   // Interfaces for higher layers
-  void handle_sdu(rlc_sdu sdu) override;
+  void handle_sdu(byte_buffer sdu_buf) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers

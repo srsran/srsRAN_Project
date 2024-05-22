@@ -9,6 +9,7 @@
  */
 
 #include "lib/rlc/rlc_tx_am_entity.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
@@ -85,6 +86,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   // Set Tx config
   rlc_tx_am_config config;
   config.sn_field_length = rlc_am_sn_size::size18bits;
+  config.pdcp_sn_len     = pdcp_sn_size::size18bits;
   config.t_poll_retx     = 45;
   config.max_retx_thresh = 4;
   config.poll_pdu        = 4;
@@ -125,16 +127,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
     rlc->set_status_provider(tester.get());
 
     for (int i = 0; i < 2048; i++) {
-      rlc_sdu sdu;
-      auto    pdcp_hdr = byte_buffer::create({0x80, 0x00, 0x16});
-      report_error_if_not(!pdcp_hdr.is_error(), "Failed to allocate byte_buffer");
-      byte_buffer pdcp_hdr_buf = std::move(pdcp_hdr.value());
-      auto        sdu_buf      = byte_buffer::create({0x00, 0x01, 0x02, 0x04});
-      report_error_if_not(!sdu_buf.is_error(), "Failed to allocate byte_buffer");
-      byte_buffer sdu_buffer = std::move(sdu_buf.value());
-      sdu.pdcp_sn            = i;
-      sdu.buf                = std::move(pdcp_hdr_buf);
-      report_error_if_not(sdu.buf.append(std::move(sdu_buffer)), "Failed to allocate SDU");
+      byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, 7, 0);
       rlc->handle_sdu(std::move(sdu));
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);

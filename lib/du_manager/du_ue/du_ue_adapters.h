@@ -34,11 +34,11 @@ public:
 
   void disconnect();
 
-  void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) override
+  void on_new_sdu(byte_buffer pdu) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
 
-    rlc_tx->handle_sdu(rlc_sdu{std::move(pdu), pdcp_sn});
+    rlc_tx->handle_sdu(std::move(pdu));
   }
 
 private:
@@ -59,7 +59,7 @@ public:
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_sn});
+    rlc_tx->handle_sdu(std::move(sdu.buf));
   }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { rlc_tx->discard_sdu(pdcp_sn); }

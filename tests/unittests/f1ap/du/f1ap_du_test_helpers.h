@@ -172,7 +172,7 @@ class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 public:
   byte_buffer last_pdu;
 
-  void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) override { last_pdu = std::move(pdu); }
+  void on_new_sdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
 };
 
 class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
