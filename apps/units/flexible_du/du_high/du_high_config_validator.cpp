@@ -572,6 +572,9 @@ static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& conf
 
 static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_cfg)
 {
+  // See TS 38.331, V17.0.0, \c type1-r17 in \c SIB-TypeInfo-v1700.
+  static const unsigned r17_min_sib_type = 15;
+
   const du_high_unit_sib_config& sib_cfg = cell_cfg.sib_cfg;
 
   for (const auto& si_msg : sib_cfg.si_sched_info) {
@@ -585,18 +588,39 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
     }
   }
 
-  // Check if there are repeated SIBs in the SI messages.
-  std::vector<uint8_t> sibs_included;
+  std::vector<uint8_t>  sibs_included;
+  std::vector<unsigned> si_window_positions;
   for (const auto& si_msg : sib_cfg.si_sched_info) {
     for (const uint8_t sib_it : si_msg.sib_mapping_info) {
+      // si-WindowPosition-r17 is part of release 17 specification only. See TS 38.331, V17.0.0, \c SchedulingInfo2-r17.
+      if (sib_it < r17_min_sib_type and si_msg.si_window_position.has_value()) {
+        fmt::print("The SIB{} cannot be configured with SI-window position", sib_it);
+        return false;
+      }
       sibs_included.push_back(sib_it);
+    }
+    if (si_msg.si_window_position.has_value()) {
+      si_window_positions.push_back(si_msg.si_window_position.value());
     }
   }
   std::sort(sibs_included.begin(), sibs_included.end());
+  // Check if there are repeated SIBs in the SI messages.
   const auto duplicate_it = std::adjacent_find(sibs_included.begin(), sibs_included.end());
   if (duplicate_it != sibs_included.end()) {
     fmt::print("The SIB{} cannot be included more than once in the broadcast SI messages", *duplicate_it);
     return false;
+  }
+
+  // Check whether SI window position when provided in SI scheduling information is in ascending order. See TS 38.331,
+  // \c si-WindowPosition.
+  for (unsigned i = 0, j = 0; i < si_window_positions.size() && j < si_window_positions.size(); ++i, ++j) {
+    if (si_window_positions[i] > si_window_positions[j]) {
+      fmt::print("The SI window position in the subsequent entry in SI scheduling information must have higher value "
+                 "than in the previous entry ({}>{})",
+                 si_window_positions[i],
+                 si_window_positions[j]);
+      return false;
+    }
   }
 
   return true;

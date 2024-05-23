@@ -302,6 +302,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
         auto& out_si                  = out_cell.si_config->si_sched_info[i];
         out_si.si_period_radio_frames = base_cell.sib_cfg.si_sched_info[i].si_period_rf;
         out_si.sib_mapping_info.resize(base_cell.sib_cfg.si_sched_info[i].sib_mapping_info.size());
+        out_si.si_window_position = base_cell.sib_cfg.si_sched_info[i].si_window_position;
         for (unsigned j = 0; j != base_cell.sib_cfg.si_sched_info[i].sib_mapping_info.size(); ++j) {
           sibs_included.push_back(base_cell.sib_cfg.si_sched_info[i].sib_mapping_info[j]);
           out_si.sib_mapping_info[j] = static_cast<sib_type>(sibs_included.back());

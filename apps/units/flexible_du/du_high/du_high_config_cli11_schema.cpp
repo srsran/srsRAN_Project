@@ -806,6 +806,10 @@ static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config
              "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 19}));
+  add_option(
+      app, "--si_window_position", si_sched_info.si_window_position, "SI window position of the associated SI-message")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 256));
 }
 
 static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config& prach_params)
