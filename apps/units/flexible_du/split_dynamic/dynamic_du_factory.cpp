@@ -18,11 +18,11 @@
 #include "apps/units/flexible_du/split_7_2/ru_ofh_factories.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_factories.h"
 #include "dynamic_du_impl.h"
+#include "dynamic_du_translators.h"
 #include "srsran/du/du_wrapper.h"
 #include "srsran/du/du_wrapper_factory.h"
-#include "srsran/e2/e2_connection_client.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/pcap/rlc_pcap.h"
+#include "srsran/ru/ru_dummy_factory.h"
 
 using namespace srsran;
 
@@ -251,6 +251,25 @@ srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
   return du_insts;
 }
 
+static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_config& ru_cfg,
+                                                           unsigned                    max_processing_delay_slots,
+                                                           unsigned                    nof_prach_ports,
+                                                           worker_manager&             workers,
+                                                           span<const du_cell_config>  du_cells,
+                                                           ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                           ru_timing_notifier&                 timing_notifier,
+                                                           ru_error_notifier&                  error_notifier)
+{
+  ru_dummy_dependencies dependencies;
+  dependencies.logger          = &srslog::fetch_basic_logger("RU");
+  dependencies.executor        = workers.radio_exec;
+  dependencies.timing_notifier = &timing_notifier;
+  dependencies.symbol_notifier = &symbol_notifier;
+
+  return create_dummy_ru(generate_ru_dummy_config(ru_cfg, du_cells, max_processing_delay_slots, nof_prach_ports),
+                         dependencies);
+}
+
 static std::unique_ptr<radio_unit>
 create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
                   worker_manager&                                                                     workers,
@@ -258,7 +277,8 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
                   ru_uplink_plane_rx_symbol_notifier&                                                 symbol_notifier,
                   ru_timing_notifier&                                                                 timing_notifier,
                   ru_error_notifier&                                                                  error_notifier,
-                  unsigned max_processing_delay)
+                  unsigned max_processing_delay,
+                  unsigned prach_nof_ports)
 {
   if (variant_holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
     ru_ofh_factory_config config;
@@ -290,10 +310,14 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
     return create_sdr_radio_unit(config, dependencies);
   }
 
-  // :TODO: add the rest of the variant.
-  ru_ofh_factory_config       config;
-  ru_ofh_factory_dependencies dependencies;
-  return create_ofh_radio_unit(config, dependencies);
+  return create_dummy_radio_unit(variant_get<ru_dummy_unit_config>(ru_cfg),
+                                 max_processing_delay,
+                                 prach_nof_ports,
+                                 workers,
+                                 du_cells,
+                                 symbol_notifier,
+                                 timing_notifier,
+                                 error_notifier);
 }
 
 static std::vector<du_cell_config> generate_du_cell_config_temp()
@@ -445,7 +469,9 @@ std::unique_ptr<du> srsran::create_du_wrapper(const dynamic_du_unit_config&     
                                     du_impl->get_upper_ru_ul_adapter(),
                                     du_impl->get_upper_ru_timing_adapter(),
                                     du_impl->get_upper_ru_error_adapter(),
-                                    du_lo.expert_phy_cfg.max_processing_delay_slots));
+                                    du_lo.expert_phy_cfg.max_processing_delay_slots,
+                                    du_hi.cells_cfg.front().cell.prach_cfg.ports.size()));
+
   du_impl->add_dus(std::move(du_insts));
 
   return du_impl;
