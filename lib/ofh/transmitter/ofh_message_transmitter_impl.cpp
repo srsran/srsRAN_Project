@@ -47,6 +47,8 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     return;
   }
 
+  srsran_assert(frame_burst.size() + frame_buffers.size() <= frame_burst.capacity(), "Frame burst vector is too small");
+
   for (const auto& frame : frame_buffers) {
     frame_burst.emplace_back(frame->data());
   }
