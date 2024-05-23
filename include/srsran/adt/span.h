@@ -14,7 +14,6 @@
 #include "fmt/format.h"
 #include <algorithm>
 #include <array>
-#include <cassert>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -27,14 +26,6 @@ class span;
 namespace detail {
 
 /// Helper traits used by SFINAE expressions in constructors.
-
-template <typename... Ts>
-struct make_void {
-  typedef void type;
-};
-
-template <typename... Ts>
-using void_t = typename make_void<Ts...>::type;
 
 template <typename U>
 struct is_span : std::false_type {
@@ -51,7 +42,7 @@ struct is_std_array<std::array<U, N>> : std::true_type {
 };
 
 template <typename U>
-using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<U>::type>::type;
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<U>>;
 
 template <class Container, class U, class = void>
 struct is_container_compatible : public std::false_type {
@@ -60,21 +51,20 @@ template <class Container, class U>
 struct is_container_compatible<
     Container,
     U,
-    void_t<
+    std::void_t<
         // Check if the container type has data and size members.
         decltype(std::declval<Container>().data()),
         decltype(std::declval<Container>().size()),
         // Container should not be a span.
-        typename std::enable_if<!is_span<remove_cvref_t<Container>>::value, int>::type,
+        std::enable_if_t<!is_span<remove_cvref_t<Container>>::value, int>,
         // Container should not be a std::array.
-        typename std::enable_if<!is_std_array<remove_cvref_t<Container>>::value, int>::type,
+        std::enable_if_t<!is_std_array<remove_cvref_t<Container>>::value, int>,
         // Container should not be an array.
-        typename std::enable_if<!std::is_array<remove_cvref_t<Container>>::value, int>::type,
+        std::enable_if_t<!std::is_array_v<remove_cvref_t<Container>>, int>,
         // Check type compatibility between the contained type and the span type.
-        typename std::enable_if<
-            std::is_convertible<typename std::remove_pointer<decltype(std::declval<Container>().data())>::type (*)[],
-                                U (*)[]>::value,
-            int>::type>> : public std::true_type {
+        std::enable_if_t<
+            std::is_convertible_v<std::remove_pointer_t<decltype(std::declval<Container>().data())> (*)[], U (*)[]>,
+            int>>> : public std::true_type {
 };
 
 } // namespace detail
@@ -87,7 +77,7 @@ class span
 public:
   /// Member types.
   using element_type     = T;
-  using value_type       = typename std::remove_cv<T>::type;
+  using value_type       = std::remove_cv_t<T>;
   using size_type        = std::size_t;
   using difference_type  = std::ptrdiff_t;
   using pointer          = element_type*;
@@ -99,6 +89,9 @@ public:
 
   /// Constructs an empty span with data() == nullptr and size() == 0.
   constexpr span() noexcept = default;
+
+  constexpr span(const span&) noexcept        = default;
+  span& operator=(const span& other) noexcept = default;
 
   /// Constructs a span that is a view over the range [ptr, ptr + len).
   constexpr span(pointer ptr_, size_type len_) noexcept : ptr(ptr_), len(len_) {}
@@ -113,9 +106,7 @@ public:
   }
 
   /// Constructs a span that is a view over the array arr.
-  template <typename U,
-            std::size_t N,
-            typename std::enable_if<std::is_convertible<U (*)[], element_type (*)[]>::value, int>::type = 0>
+  template <typename U, std::size_t N, std::enable_if_t<std::is_convertible_v<U (*)[], element_type (*)[]>, int> = 0>
   constexpr span(std::array<U, N>& arr) noexcept : ptr(arr.data()), len(N)
   {
   }
@@ -123,34 +114,29 @@ public:
   /// Constructs a span that is a view over the array arr.
   template <typename U,
             std::size_t N,
-            typename std::enable_if<std::is_convertible<const U (*)[], element_type (*)[]>::value, int>::type = 0>
+            std::enable_if_t<std::is_convertible_v<const U (*)[], element_type (*)[]>, int> = 0>
   constexpr span(const std::array<U, N>& arr) noexcept : ptr(arr.data()), len(N)
   {
   }
 
   /// Constructs a span that is a view over the container c.
   template <typename Container,
-            typename std::enable_if<detail::is_container_compatible<Container, element_type>::value, int>::type = 0>
+            std::enable_if_t<detail::is_container_compatible<Container, element_type>::value, int> = 0>
   constexpr span(Container& container) noexcept : ptr(container.data()), len(container.size())
   {
   }
 
   /// Constructs a span that is a view over the container c.
-  template <
-      typename Container,
-      typename std::enable_if<detail::is_container_compatible<const Container, element_type>::value, int>::type = 0>
+  template <typename Container,
+            std::enable_if_t<detail::is_container_compatible<const Container, element_type>::value, int> = 0>
   constexpr span(const Container& container) noexcept : ptr(container.data()), len(container.size())
   {
   }
 
-  template <typename U, typename std::enable_if<std::is_convertible<U (*)[], element_type (*)[]>::value, int>::type = 0>
+  template <typename U, std::enable_if_t<std::is_convertible_v<U (*)[], element_type (*)[]>, int> = 0>
   constexpr span(const span<U>& other) noexcept : ptr(other.data()), len(other.size())
   {
   }
-
-  span& operator=(const span& other) noexcept = default;
-
-  ~span() noexcept = default;
 
   /// Returns the number of elements in the span.
   constexpr size_type size() const noexcept { return len; }
@@ -219,7 +205,8 @@ public:
   /// Obtains a span that is a view over the count elements of this span starting at offset offset.
   span<element_type> subspan(size_type offset, size_type count) const
   {
-    srsran_assert(count <= size() - offset, "Size out of bounds!");
+    srsran_assert(offset <= size(), "Offset is out of bounds!");
+    srsran_assert(count <= size() - offset, "Offset plus size is out of bounds!");
     return {data() + offset, count};
   }
 
