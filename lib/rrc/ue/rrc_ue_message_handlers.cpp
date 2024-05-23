@@ -417,6 +417,14 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
   }
   rrc_reest_context.up_ctx = up_resource_mng.get_up_context();
 
+  // TODO: Handle scenario with multiple reestablishments for the same UE
+  rrc_reest_context.reestablishment_ongoing = context.reestablishment_ongoing;
+
+  // If no reestablishment is ongoing, set it to true.
+  if (not context.reestablishment_ongoing) {
+    context.reestablishment_ongoing = true;
+  }
+
   return rrc_reest_context;
 }
 

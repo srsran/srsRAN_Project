@@ -173,6 +173,11 @@ bool rrc_reestablishment_procedure::is_reestablishment_accepted()
     return false;
   }
 
+  if (old_ue_reest_context.reestablishment_ongoing) {
+    log_rejected_reestablishment("Old UE is already in reestablishment procedure");
+    return false;
+  }
+
   // Check if the old UE completed the SRB2 and DRB establishment.
   if (not old_ue_reest_context.old_ue_fully_attached) {
     log_rejected_reestablishment("Old UE bearers were not fully established");
