@@ -534,9 +534,12 @@ def _ue_reestablishment_future(
 
 
 def _log_reestablishment(future: grpc.Future, ue_stub: UEStub):
-    result: ReestablishmentInfo = future.result()
-    log_fn = logging.info if result.status else logging.error
-    log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    try:
+        result: ReestablishmentInfo = future.result()
+        log_fn = logging.info if result.status else logging.error
+        log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    except grpc.RpcError as err:
+        logging.error("Reestablishment UE [%s] failed: %s", id(ue_stub), ErrorReportedByAgent(err))
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):
@@ -720,10 +723,11 @@ def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str
         with suppress(grpc.RpcError):
             metrics: Metrics = stub.GetMetrics(Empty())
 
+            nof_kos = 0
             for ue_info in metrics.ue_array:
                 nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
-                if nof_kos:
-                    return f"{name} has {nof_kos} KOs / retrxs"
+            if nof_kos:
+                return f"{name} has {nof_kos} KOs / retrxs"
 
     return ""
 

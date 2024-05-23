@@ -279,10 +279,8 @@ def test_zmq_reestablishment_parallel(
         warning_as_errors=True,
     ) as ue_attach_info_dict:
 
-        for _ in range(number_of_reestablishments):
-            logging.info(
-                "Starting Reestablishment for all UEs + Traffic running in background",
-            )
+        for i in range(number_of_reestablishments):
+            logging.info("Starting Reestablishment for all UEs + Traffic running in background. Iteration %s", i + 1)
             ping_task_array = ping_start(ue_attach_info_dict, fivegc, reestablishment_time)
             ue_reestablishment_parallel(ue_32, reestablishment_time)
             ping_wait_until_finish(ping_task_array)
