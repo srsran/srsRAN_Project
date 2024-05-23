@@ -24,6 +24,7 @@
 #include <vector>
 
 namespace srsran {
+struct du_high_unit_cell_config;
 
 struct cu_cp_unit_amf_config;
 struct cu_cp_unit_config;
@@ -71,8 +72,8 @@ mac_expert_config generate_mac_expert_config(const du_high_unit_config& config);
 scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config);
 
 /// Converts and returns the given gnb application configuration to an upper PHY configuration.
-std::vector<upper_phy_config> generate_du_low_config(const du_high_unit_config& config,
-                                                     const du_low_unit_config&  du_low);
+upper_phy_config
+generate_du_low_config(const du_high_unit_cell_config& config, const du_low_unit_config& du_low, unsigned sector_id);
 
 /// Converts and returns the given gnb application configuration to a Radio Unit configuration.
 ru_configuration generate_ru_config(const gnb_appconfig&          config,

@@ -293,7 +293,7 @@ struct upper_phy_config {
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.
-  span<task_executor*> dl_executors;
+  std::vector<task_executor*> dl_executors;
   /// PUCCH task executor.
   task_executor* pucch_executor;
   /// PUSCH task executor.

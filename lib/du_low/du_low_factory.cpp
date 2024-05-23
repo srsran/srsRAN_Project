@@ -39,8 +39,8 @@ static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&      
 std::unique_ptr<du_low> srsran::make_du_low(const du_low_config& config)
 {
   std::vector<std::unique_ptr<upper_phy>> upper;
-  for (const auto& cell_cfg : config.upper_phy) {
-    upper.push_back(create_upper_phy(cell_cfg, config.dl_proc_cfg));
+  for (const auto& cell_cfg : config.cells) {
+    upper.push_back(create_upper_phy(cell_cfg.upper_phy_cfg, cell_cfg.dl_proc_cfg));
   }
 
   return std::make_unique<du_low_impl>(std::move(upper));

@@ -83,7 +83,7 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.rx_buffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
   upper_config.rx_buffer_config.external_soft_bits   = false;
 
-  upper_config.dl_executors               = dl_executors;
+  upper_config.dl_executors               = std::vector<task_executor*>(dl_executors.begin(), dl_executors.end());
   upper_config.rg_gateway                 = rg_gateway;
   upper_config.pucch_executor             = ul_executor;
   upper_config.pusch_executor             = ul_executor;

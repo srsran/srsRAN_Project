@@ -14,14 +14,20 @@
 
 namespace srsran {
 
+/// DU low cell configuration
+struct du_low_cell_config {
+  /// Parameters forwarded to DL processor factory.
+  downlink_processor_factory_sw_config dl_proc_cfg;
+  /// Upper PHY configuration.
+  upper_phy_config upper_phy_cfg;
+};
+
 /// Parameters used to instantiate the DU-low.
 struct du_low_config {
   /// Logger used to report state of the DU-low.
   srslog::basic_logger* logger;
-  /// Parameters forwarded to DL processor factory.
-  downlink_processor_factory_sw_config dl_proc_cfg;
-  /// Upper PHY configuration.
-  std::vector<upper_phy_config> upper_phy;
+  /// Cell configuration.
+  std::vector<du_low_cell_config> cells;
 };
 
 } // namespace srsran

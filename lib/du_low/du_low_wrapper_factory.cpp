@@ -117,13 +117,13 @@ static std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> create_phy_fapi_adaptor(u
 std::unique_ptr<du_low_wrapper> srsran::make_du_low_wrapper(const du_low_wrapper_config& config,
                                                             span<const du_cell_config>   du_cells)
 {
-  srsran_assert(config.du_low_cfg.upper_phy.size() == du_cells.size(),
+  srsran_assert(config.du_low_cfg.cells.size() == du_cells.size(),
                 "Number of cells mismatch between upper PHY '{}' and DU high '{}'",
-                config.du_low_cfg.upper_phy.size(),
+                config.du_low_cfg.cells.size(),
                 du_cells.size());
-  srsran_assert(config.du_low_cfg.upper_phy.size() == config.prach_ports.size(),
+  srsran_assert(config.du_low_cfg.cells.size() == config.prach_ports.size(),
                 "Number of cells mismatch between upper PHY '{}' and cell PRACH ports '{}'",
-                config.du_low_cfg.upper_phy.size(),
+                config.du_low_cfg.cells.size(),
                 config.prach_ports.size());
 
   auto& logger = srslog::fetch_basic_logger("DU");
@@ -133,10 +133,10 @@ std::unique_ptr<du_low_wrapper> srsran::make_du_low_wrapper(const du_low_wrapper
   logger.debug("DU low created successfully");
 
   // Instantiate adaptor of FAPI to DU-low.
-  std::vector<std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>> fapi_adaptors(config.du_low_cfg.upper_phy.size());
-  for (unsigned i = 0, e = config.du_low_cfg.upper_phy.size(); i != e; ++i) {
+  std::vector<std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>> fapi_adaptors(config.du_low_cfg.cells.size());
+  for (unsigned i = 0, e = config.du_low_cfg.cells.size(); i != e; ++i) {
     fapi_adaptors[i] = create_phy_fapi_adaptor(
-        du_lo->get_upper_phy(i), config.du_low_cfg.upper_phy[i], du_cells[i], config.prach_ports[i]);
+        du_lo->get_upper_phy(i), config.du_low_cfg.cells[i].upper_phy_cfg, du_cells[i], config.prach_ports[i]);
 
     report_error_if_not(fapi_adaptors.back(), "Unable to create PHY adaptor for cell '{}'", i);
   }

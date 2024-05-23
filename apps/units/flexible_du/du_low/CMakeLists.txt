@@ -8,7 +8,9 @@
 
 set(SOURCES
             du_low_config_cli11_schema.cpp
-            du_low_config_validator.cpp)
+            du_low_config_translator.cpp
+            du_low_config_validator.cpp
+            du_low_wrapper_config_helper.cpp)
 
 add_library(srsran_du_low_unit_helpers STATIC ${SOURCES})
 target_include_directories(srsran_du_low_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})
