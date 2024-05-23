@@ -278,7 +278,9 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     }
 
     // Transfer NGAP UE Context to new UE and remove the old context
-    ngap_entity->update_ue_index(ue_index, old_ue_index);
+    if (not ngap_entity->update_ue_index(ue_index, old_ue_index)) {
+      return false;
+    }
 
     // Transfer E1AP UE Context to new UE and remove old context
     cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->update_ue_index(ue_index, old_ue_index);
