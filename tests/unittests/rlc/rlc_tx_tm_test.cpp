@@ -9,7 +9,7 @@
  */
 
 #include "lib/rlc/rlc_tx_tm_entity.h"
-#include "rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -45,7 +45,7 @@ public:
 };
 
 /// Fixture class for RLC TM Tx tests
-class rlc_tx_tm_test : public ::testing::Test, public rlc_trx_test
+class rlc_tx_tm_test : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -103,7 +103,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
                          /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
@@ -138,7 +138,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write another SDU into upper end
   count++;
-  sdu_buf = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   sdu     = {sdu_buf.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   pcell_worker.run_pending_tasks();
@@ -158,7 +158,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write another SDU into upper end
   count++;
-  byte_buffer sdu_buf2 = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf2 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   sdu = {sdu_buf2.deep_copy().value(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 
   // write SDU into upper end
@@ -198,7 +198,7 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
                          /* pdcp_sn = */ count}; // no std::move - keep local copy for later comparison
 
@@ -237,7 +237,7 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   rlc_sdu     sdu     = {sdu_buf.deep_copy().value(),
                          /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
 

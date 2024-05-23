@@ -10,7 +10,7 @@
 
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
-#include "tests/unittests/rlc/rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -34,9 +34,7 @@ void PrintTo(const test_params& value, ::std::ostream* os)
 
 } // namespace
 
-class du_high_many_cells_tester : public du_high_env_simulator,
-                                  public testing::TestWithParam<test_params>,
-                                  public rlc_trx_test
+class du_high_many_cells_tester : public du_high_env_simulator, public testing::TestWithParam<test_params>
 {
 public:
   du_high_many_cells_tester() : du_high_env_simulator(du_high_env_sim_params{GetParam().nof_cells}) {}
@@ -106,7 +104,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
     for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-      pdcp_tx_pdu f1u_pdu{create_sdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+      pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
       cu_up_sim.created_du_notifs[c]->on_new_sdu(f1u_pdu);
     }
   }

@@ -9,7 +9,7 @@
  */
 
 #include "lib/rlc/rlc_rx_tm_entity.h"
-#include "rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -32,7 +32,7 @@ public:
 };
 
 /// Fixture class for RLC TM Rx tests
-class rlc_rx_am_test : public ::testing::Test, public rlc_trx_test
+class rlc_rx_am_test : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -78,14 +78,14 @@ TEST_F(rlc_rx_am_test, test_rx)
   uint32_t       count    = 0;
 
   // write first PDU into lower end
-  byte_buffer       pdu_buf = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer       pdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   byte_buffer_slice pdu     = {pdu_buf.deep_copy().value()};
   rlc->handle_pdu(std::move(pdu));
 
   count++;
 
   // write second PDU into lower end
-  byte_buffer pdu_buf2 = create_sdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer pdu_buf2 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
   pdu                  = {pdu_buf2.deep_copy().value()};
   rlc->handle_pdu(std::move(pdu));
 

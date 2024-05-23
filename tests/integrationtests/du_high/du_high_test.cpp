@@ -14,10 +14,10 @@
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
-#include "tests/unittests/rlc/rlc_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/support/test_utils.h"
@@ -26,7 +26,7 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
-class du_high_tester : public du_high_env_simulator, public testing::Test, public rlc_trx_test
+class du_high_tester : public du_high_env_simulator, public testing::Test
 {};
 
 /// Test F1 setup over "local" connection to DU.
@@ -81,7 +81,7 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{create_sdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
     cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
@@ -140,7 +140,7 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{create_sdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
     cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 
@@ -221,7 +221,7 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
-    pdcp_tx_pdu f1u_pdu{create_sdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+    pdcp_tx_pdu f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
     cu_up_sim.created_du_notifs[0]->on_new_sdu(f1u_pdu);
   }
 

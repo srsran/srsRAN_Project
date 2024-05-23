@@ -9,7 +9,7 @@
  */
 
 #include "lib/rlc/rlc_rx_am_entity.h"
-#include "rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -68,9 +68,7 @@ public:
 
 /// Fixture class for RLC AM Rx tests.
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each config
-class rlc_rx_am_test : public ::testing::Test,
-                       public ::testing::WithParamInterface<rlc_rx_am_config>,
-                       public rlc_trx_test
+class rlc_rx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_rx_am_config>
 {
 protected:
   void SetUp() override
@@ -143,7 +141,8 @@ protected:
     ASSERT_GT(sdu_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU";
     ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
 
-    sdu = create_sdu(pdcp_sn_size::size12bits, sn, sdu_size, first_byte); // 12-bit PDCP SN allows smaller SDUs
+    sdu = test_helpers::create_pdcp_pdu(
+        pdcp_sn_size::size12bits, sn, sdu_size, first_byte); // 12-bit PDCP SN allows smaller SDUs
     pdu_list.clear();
     byte_buffer_view rest = {sdu};
 

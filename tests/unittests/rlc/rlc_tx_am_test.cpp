@@ -9,7 +9,7 @@
  */
 
 #include "lib/rlc/rlc_tx_am_entity.h"
-#include "rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -67,7 +67,7 @@ public:
 
 /// Fixture class for RLC AM Tx tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class rlc_tx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>, public rlc_trx_test
+class rlc_tx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>
 {
 protected:
   void SetUp() override
@@ -129,7 +129,7 @@ protected:
   /// \return the produced SDU as a rlc_sdu
   rlc_sdu create_rlc_sdu(uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte = 0) const
   {
-    rlc_sdu sdu = {create_sdu(config.pdcp_sn_len, pdcp_sn, sdu_size, first_byte), pdcp_sn};
+    rlc_sdu sdu = {test_helpers::create_pdcp_pdu(config.pdcp_sn_len, pdcp_sn, sdu_size, first_byte), pdcp_sn};
     return sdu;
   }
 
@@ -144,7 +144,7 @@ protected:
     // Push "n_pdus" SDUs into RLC
     auto sdu_bufs = std::vector<byte_buffer>(n_pdus);
     for (uint32_t i = 0; i < n_pdus; i++) {
-      sdu_bufs[i] = create_sdu(config.pdcp_sn_len, i, sdu_size, i);
+      sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, sdu_size, i);
 
       // write SDU into upper end
       rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
@@ -211,7 +211,7 @@ protected:
     // Push "n_sdus" SDUs into RLC
     auto sdu_bufs = std::vector<byte_buffer>(n_sdus);
     for (uint32_t i = 0; i < n_sdus; i++) {
-      sdu_bufs[i] = create_sdu(config.pdcp_sn_len, i, sdu_size, i);
+      sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, sdu_size, i);
 
       // write SDU into upper end
       rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
@@ -462,7 +462,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   // Push "n_pdus" SDUs into RLC
   byte_buffer sdu_bufs[n_pdus];
   for (uint32_t i = 0; i < n_pdus; i++) {
-    sdu_bufs[i] = create_sdu(config.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
@@ -576,7 +576,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   // Push "n_pdus" SDUs into RLC
   byte_buffer sdu_bufs[n_pdus];
   for (uint32_t i = 0; i < n_pdus; i++) {
-    sdu_bufs[i] = create_sdu(config.pdcp_sn_len, pdcp_sn_start + i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, pdcp_sn_start + i, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
@@ -1937,7 +1937,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 
   // push SDU to SDU queue so that it is not empty
   uint32_t    n_bsr   = tester->bsr_count;
-  byte_buffer sdu_buf = create_sdu(config.pdcp_sn_len, 7, sdu_size, 7);
+  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, 7, sdu_size, 7);
   rlc_sdu sdu = {sdu_buf.deep_copy().value(), /* pdcp_sn = */ 7}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   pcell_worker.run_pending_tasks();

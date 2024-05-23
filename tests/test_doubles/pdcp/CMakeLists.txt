@@ -6,9 +6,6 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(rrc)
-add_subdirectory(f1ap)
-add_subdirectory(ngap)
-add_subdirectory(scheduler)
-add_subdirectory(pdcp)
+add_library(pdcp_test_doubles pdcp_pdu_generator.cpp)
+set_target_properties(pdcp_test_doubles PROPERTIES UNITY_BUILD ON)
+target_link_libraries(pdcp_test_doubles srsran_support srslog)
