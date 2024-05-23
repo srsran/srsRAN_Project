@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "sctp_network_gateway_common_impl.h"
 #include "srsran/gateways/sctp_network_client.h"
 #include "srsran/support/io/transport_layer_address.h"
