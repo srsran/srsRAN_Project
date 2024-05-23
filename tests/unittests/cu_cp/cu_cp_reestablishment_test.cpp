@@ -289,3 +289,24 @@ TEST_F(cu_cp_reestablishment_test,
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0);
 }
+
+TEST_F(cu_cp_reestablishment_test,
+       when_reestablishment_request_for_same_ue_is_received_twice_then_second_reestablishment_fails)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+
+  // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_TRUE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+
+  // old UE should not be removed at this stage.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
+
+  // Run second Reestablishment. This should fail.
+  new_du_ue_id = int_to_gnb_du_ue_f1ap_id(2);
+  new_crnti    = to_rnti(0x4603);
+  ASSERT_FALSE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+}
