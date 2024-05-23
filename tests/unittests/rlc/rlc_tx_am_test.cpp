@@ -879,13 +879,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   const uint32_t    so_size         = 2;
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus]    = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -944,13 +942,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   const uint32_t    so_size         = 2;
   const uint32_t    header_max_size = header_min_size + so_size;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus]    = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1080,22 +1076,20 @@ TEST_P(rlc_tx_am_test, retx_of_sn_under_segmentation_is_ignored_for_unsent_bytes
   const uint32_t    header_size  = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
   const uint32_t    so_size      = 2;
   const uint32_t    pdu_size     = header_size + so_size + (sdu_size / n_splits);
-  byte_buffer_chain pdus[n_pdus] = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
@@ -1159,22 +1153,20 @@ TEST_P(rlc_tx_am_test, retx_only_sent_bytes_of_sn_under_segmentation)
   const uint32_t    header_size  = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
   const uint32_t    so_size      = 2;
   const uint32_t    pdu_size     = header_size + so_size + (sdu_size / n_splits);
-  byte_buffer_chain pdus[n_pdus] = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t unsent_sdu_bytes = sdu_size / n_splits - so_size; // subtract 2 extra bytes from 1st segment (no SO)
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size, unsent_sdu_bytes + header_size + so_size);
@@ -1219,13 +1211,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   const uint32_t    sdu_size        = 4;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus]    = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1281,13 +1271,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   const uint32_t    sdu_size        = 4;
   const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t    n_pdus          = 5;
-  byte_buffer_chain pdus[n_pdus]    = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus]    = {byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value(),
+                                       byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
   uint32_t n_bsr = tester->bsr_count;
@@ -1340,20 +1328,18 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 {
   const uint32_t    sdu_size     = 4;
   const uint32_t    n_pdus       = 12;
-  byte_buffer_chain pdus[n_pdus] = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
 
@@ -1405,20 +1391,18 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 {
   const uint32_t    sdu_size     = 4;
   const uint32_t    n_pdus       = 12;
-  byte_buffer_chain pdus[n_pdus] = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
 
@@ -1900,13 +1884,11 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 {
   const uint32_t    n_pdus       = 5;
-  byte_buffer_chain pdus[n_pdus] = {
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-      byte_buffer_chain::create().value(),
-  };
+  byte_buffer_chain pdus[n_pdus] = {byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value(),
+                                    byte_buffer_chain::create().value()};
 
   const uint32_t sdu_size        = 10;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
