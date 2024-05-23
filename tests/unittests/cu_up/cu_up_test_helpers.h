@@ -175,7 +175,7 @@ public:
   }
 };
 
-class dummy_f1u_gateway_bearer final : public srs_cu_up::f1u_tx_pdu_notifier
+class dummy_f1u_gateway_bearer final : public f1u_cu_up_gateway_bearer
 {
 public:
   dummy_f1u_gateway_bearer(dummy_inner_f1u_bearer&             inner_,
@@ -184,21 +184,21 @@ public:
     inner(inner_), disconnector(disconnector_), ul_up_tnl_info(ul_up_tnl_info_)
   {
   }
-  void stop()
+
+  ~dummy_f1u_gateway_bearer() override { stop(); }
+
+  void stop() override
   {
     if (not stopped) {
       disconnector.disconnect_cu_bearer(ul_up_tnl_info);
     }
     stopped = true;
   }
-  ~dummy_f1u_gateway_bearer() override { stop(); }
 
   void connect_f1u_rx_sdu_notifier(f1u_cu_up_gateway_bearer_rx_notifier& rx_sdu_notifier_)
   {
     inner.connect_f1u_rx_sdu_notifier(rx_sdu_notifier_);
   }
-
-  // void handle_pdu(nru_ul_message msg) { inner.handle_pdu(std::move(msg)); }
 
   void on_new_pdu(nru_dl_message sdu) final { inner.on_new_pdu(std::move(sdu)); }
 
@@ -218,14 +218,14 @@ public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> create_cu_bearer(uint32_t                              ue_index,
-                                                                   drb_id_t                              drb_id,
-                                                                   const srs_cu_up::f1u_config&          config,
-                                                                   const up_transport_layer_info&        ul_up_tnl_info,
-                                                                   f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                                   task_executor&                        ul_exec,
-                                                                   timer_factory ue_dl_timer_factory,
-                                                                   unique_timer& ue_inactivity_timer) override
+  std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
+                                                             drb_id_t                              drb_id,
+                                                             const srs_cu_up::f1u_config&          config,
+                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
+                                                             task_executor&                        ul_exec,
+                                                             timer_factory                         ue_dl_timer_factory,
+                                                             unique_timer& ue_inactivity_timer) override
   {
     created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     bearer.connect_f1u_rx_sdu_notifier(rx_notifier);

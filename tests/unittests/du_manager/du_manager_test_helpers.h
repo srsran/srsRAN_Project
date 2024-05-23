@@ -145,15 +145,16 @@ public:
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 };
 
-class f1u_gw_bearer_dummy : public srs_du::f1u_tx_pdu_notifier
+class f1u_gw_bearer_dummy : public f1u_du_gateway_bearer
 {
 public:
   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx;
 
   optional<nru_ul_message> last_sdu;
-  // byte_buffer_chain        last_sdu = byte_buffer_chain::create().value();
 
   f1u_gw_bearer_dummy(srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_) : du_rx(du_rx_) {}
+
+  void stop() override {}
 
   void on_new_pdu(nru_ul_message msg) override { last_sdu = std::move(msg); }
 
@@ -166,14 +167,14 @@ class f1u_gateway_dummy : public f1u_du_gateway
 public:
   bool next_bearer_is_created = true;
 
-  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> create_du_bearer(uint32_t                       ue_index,
-                                                                drb_id_t                       drb_id,
-                                                                srs_du::f1u_config             config,
-                                                                const up_transport_layer_info& dl_up_tnl_info,
-                                                                const up_transport_layer_info& ul_up_tnl_info,
-                                                                srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
-                                                                timer_factory                              timers,
-                                                                task_executor& ue_executor) override
+  std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
+                                                          drb_id_t                                   drb_id,
+                                                          srs_du::f1u_config                         config,
+                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const up_transport_layer_info&             ul_up_tnl_info,
+                                                          srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                          timer_factory                              timers,
+                                                          task_executor& ue_executor) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_up_tnl_info) == 0) {
       auto f1u_bearer = std::make_unique<f1u_gw_bearer_dummy>(du_rx);

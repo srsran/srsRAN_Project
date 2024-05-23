@@ -14,7 +14,7 @@
 
 using namespace srsran;
 
-std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier>
+std::unique_ptr<f1u_cu_up_gateway_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                              ue_index,
                                       drb_id_t                              drb_id,
                                       const srs_cu_up::f1u_config&          config,
@@ -100,7 +100,7 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
 }
 
-std::unique_ptr<srs_du::f1u_tx_pdu_notifier>
+std::unique_ptr<srs_du::f1u_du_gateway_bearer>
 f1u_local_connector::create_du_bearer(uint32_t                                   ue_index,
                                       drb_id_t                                   drb_id,
                                       srs_du::f1u_config                         config,
