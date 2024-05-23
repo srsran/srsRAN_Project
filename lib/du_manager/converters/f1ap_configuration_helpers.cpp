@@ -341,6 +341,9 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
           bool ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
+          if (cfg_si.si_window_position.has_value()) {
+            asn1_si_r17.si_win_position_r17 = cfg_si.si_window_position.value();
+          }
           for (auto mapping_info : cfg_si.sib_mapping_info) {
             sib_type_info_v1700_s type_info;
             const uint8_t         sib_id_r17 = static_cast<uint8_t>(mapping_info);
