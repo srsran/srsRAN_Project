@@ -565,6 +565,7 @@ struct du_high_unit_metrics_config {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
+  bool     enable_json_metrics   = false;
   unsigned stdout_metrics_period = 1000; // Statistics report period in milliseconds
 };
 

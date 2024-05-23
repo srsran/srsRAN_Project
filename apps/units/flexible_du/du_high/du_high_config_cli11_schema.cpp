@@ -1230,6 +1230,9 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
   add_option(app, "--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
       ->always_capture_default();
 
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
+
   add_option(app,
              "--stdout_metrics_period",
              metrics_params.stdout_metrics_period,

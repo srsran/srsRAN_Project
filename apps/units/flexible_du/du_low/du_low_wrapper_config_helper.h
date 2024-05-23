@@ -26,6 +26,7 @@ void make_du_low_wrapper_config_and_dependencies(du_low_wrapper_config&         
                                                  span<const unsigned>                  max_puschs_per_slot,
                                                  upper_phy_rg_gateway&                 rg_gateway,
                                                  upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                 worker_manager&                       workers);
+                                                 worker_manager&                       workers,
+                                                 unsigned                              du_id);
 
 } // namespace srsran

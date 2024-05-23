@@ -121,7 +121,7 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
       ->capture_default_str();
 
-  app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 
   app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);

@@ -233,7 +233,6 @@ srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
 
     // FAPI configuration.
     du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
-    du_cfg.du_high_cfg.fapi.sector    = i;
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
       du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
     } else {
@@ -320,13 +319,6 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
                                  error_notifier);
 }
 
-static std::vector<du_cell_config> generate_du_cell_config_temp()
-{
-  std::vector<du_cell_config> out;
-
-  return out;
-}
-
 std::unique_ptr<du> srsran::create_du_wrapper(const dynamic_du_unit_config&        dyn_du_cfg,
                                               worker_manager&                      workers,
                                               srs_du::f1c_connection_client&       f1c_client_handler,
@@ -341,25 +333,14 @@ std::unique_ptr<du> srsran::create_du_wrapper(const dynamic_du_unit_config&     
                                               metrics_hub&                         metrics_hub,
                                               span<scheduler_ue_metrics_notifier*> sched_metrics_subscribers)
 {
-  auto du_cells = generate_du_cell_config_temp();
-
-  // DU cell config
-  console_helper.set_cells(du_cells);
-
-  // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
-  for (unsigned i = 0; i < du_cells.size(); i++) {
-    std::string source_name = "DU " + std::to_string(i);
-    auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
-    for (auto* subscriber : sched_metrics_subscribers) {
-      source->add_subscriber(*subscriber);
-    }
-
-    metrics_hub.add_source(std::move(source));
-  }
-
   const du_high_unit_config& du_hi    = dyn_du_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_lo    = dyn_du_cfg.du_low_cfg;
   const fapi_unit_config&    fapi_cfg = dyn_du_cfg.fapi_cfg;
+
+  auto du_cells = generate_du_cell_config(du_hi);
+
+  // DU cell config
+  console_helper.set_cells(du_cells);
 
   std::vector<std::unique_ptr<du_wrapper>> du_insts;
   auto                                     du_impl = std::make_unique<dynamic_du_impl>(du_cells.size());
@@ -371,93 +352,33 @@ std::unique_ptr<du> srsran::create_du_wrapper(const dynamic_du_unit_config&     
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
-  du_wrapper_config du_cfg = {};
-  make_du_low_wrapper_config_and_dependencies(du_cfg.du_low_cfg,
-                                              du_lo,
-                                              std::move(prach_ports),
-                                              du_cells,
-                                              max_pusch_per_slot,
-                                              du_impl->get_upper_ru_dl_rg_adapter(),
-                                              du_impl->get_upper_ru_ul_request_adapter(),
-                                              workers);
-
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    // Create a gNB config with one cell.
+    // Create one DU per cell.
+    du_wrapper_config   du_cfg  = {};
     du_high_unit_config tmp_cfg = du_hi;
     tmp_cfg.cells_cfg.resize(1);
     tmp_cfg.cells_cfg[0] = du_hi.cells_cfg[i];
 
-    // DU-high configuration.
-    srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_high_cfg.du_hi;
-    du_hi_cfg.exec_mapper                    = &workers.get_du_high_executor_mapper(i);
-    du_hi_cfg.f1c_client                     = &f1c_client_handler;
-    du_hi_cfg.f1u_gw                         = &f1u_gw;
-    du_hi_cfg.phy_adapter                    = nullptr;
-    du_hi_cfg.timers                         = &timer_mng;
-    du_hi_cfg.cells                          = {du_cells[i]};
-    du_hi_cfg.srbs                           = generate_du_srb_config(du_hi);
-    du_hi_cfg.qos                            = generate_du_qos_config(du_hi);
-    du_hi_cfg.mac_p                          = &mac_p;
-    du_hi_cfg.rlc_p                          = &rlc_p;
-    du_hi_cfg.gnb_du_id                      = du_insts.size() + 1;
-    du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
-    du_hi_cfg.du_bind_addr =
-        transport_layer_address::create_from_string(fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id));
-    du_hi_cfg.mac_cfg = generate_mac_expert_config(du_hi);
-    // Assign different initial C-RNTIs to different DUs.
-    du_hi_cfg.mac_cfg.initial_crnti     = to_rnti(0x4601 + (0x1000 * du_insts.size()));
-    du_hi_cfg.sched_ue_metrics_notifier = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(i));
-    du_hi_cfg.sched_cfg                 = generate_scheduler_expert_config(du_hi);
+    make_du_low_wrapper_config_and_dependencies(du_cfg.du_low_cfg,
+                                                du_lo,
+                                                {prach_ports[i]},
+                                                span<const du_cell_config>(&du_cells[i], 1),
+                                                span<const unsigned>(&max_pusch_per_slot[i], 1),
+                                                du_impl->get_upper_ru_dl_rg_adapter(),
+                                                du_impl->get_upper_ru_ul_request_adapter(),
+                                                workers,
+                                                i);
 
-    // Connect RLC metrics to sinks, if required
-    if (du_hi.metrics.rlc.json_enabled || du_hi.e2_cfg.enable_du_e2) {
-      // This source aggregates the RLC metrics from all DRBs in a single DU.
-      std::string source_name = "rlc_metric_aggr_du_" + std::to_string(i);
-      auto        rlc_source  = std::make_unique<rlc_metrics_source>(source_name);
-
-      if (du_hi.metrics.rlc.json_enabled) {
-        // Connect JSON metrics plotter to RLC metric source.
-        rlc_source->add_subscriber(rlc_json_metrics);
-      }
-      if (du_hi.e2_cfg.enable_du_e2) {
-        // Connect E2 agent to RLC metric source.
-        du_hi_cfg.e2_client          = &e2_client_handler;
-        du_hi_cfg.e2ap_config        = generate_e2_config(du_hi);
-        du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
-        rlc_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
-      }
-      // Pass RLC metric source to the DU high.
-      metrics_hub.add_source(std::move(rlc_source));
-      du_hi_cfg.rlc_metrics_notif = metrics_hub.get_rlc_metrics_source(source_name);
-    }
-
-    // Configure test mode
-    if (du_hi.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-      du_hi_cfg.test_cfg.test_ue =
-          srs_du::du_test_config::test_ue_config{du_hi.test_mode_cfg.test_ue.rnti,
-                                                 du_hi.test_mode_cfg.test_ue.nof_ues,
-                                                 du_hi.test_mode_cfg.test_ue.auto_ack_indication_delay,
-                                                 du_hi.test_mode_cfg.test_ue.pdsch_active,
-                                                 du_hi.test_mode_cfg.test_ue.pusch_active,
-                                                 du_hi.test_mode_cfg.test_ue.cqi,
-                                                 du_hi.test_mode_cfg.test_ue.ri,
-                                                 du_hi.test_mode_cfg.test_ue.pmi,
-                                                 du_hi.test_mode_cfg.test_ue.i_1_1,
-                                                 du_hi.test_mode_cfg.test_ue.i_1_3,
-                                                 du_hi.test_mode_cfg.test_ue.i_2};
-    }
     // FAPI configuration.
     du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
-    du_cfg.du_high_cfg.fapi.sector    = i;
     if (fapi_cfg.l2_nof_slots_ahead != 0) {
+      // As the temporal configuration contains only one cell, pick the data from that cell.
+      du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
       du_cfg.du_high_cfg.fapi.executor.emplace(workers.fapi_exec[i]);
     } else {
       report_error_if_not(workers.fapi_exec[i] == nullptr,
                           "FAPI buffered worker created for a cell with no MAC delay configured");
     }
-
-    // As the temporal configuration contains only once cell, pick the data from that cell.
-    du_cfg.du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
 
     du_insts.push_back(make_du_wrapper(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");

@@ -51,7 +51,8 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
     span<const unsigned>                  max_puschs_per_slot,
     upper_phy_rg_gateway&                 rg_gateway,
     upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-    worker_manager&                       workers)
+    worker_manager&                       workers,
+    unsigned                              du_id)
 {
   out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
@@ -62,16 +63,16 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
   for (unsigned i = 0, e = out_cfg.du_low_cfg.cells.size(); i != e; ++i) {
     du_low_cell_config& cell = out_cfg.du_low_cfg.cells[i];
 
-    generate_dl_processor_config(cell.dl_proc_cfg, du_low_unit_cfg, *workers.upper_pdsch_exec[i]);
+    generate_dl_processor_config(cell.dl_proc_cfg, du_low_unit_cfg, *workers.upper_pdsch_exec[i + du_id]);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &rg_gateway;
     upper.rx_symbol_request_notifier = &rx_symbol_request_notifier;
-    upper.pucch_executor             = workers.upper_pucch_exec[i];
-    upper.pusch_executor             = workers.upper_pusch_exec[i];
-    upper.pusch_decoder_executor     = workers.upper_pusch_decoder_exec[i];
-    upper.prach_executor             = workers.upper_prach_exec[i];
-    upper.srs_executor               = workers.upper_srs_exec[i];
-    workers.get_du_low_dl_executors(upper.dl_executors, i);
+    upper.pucch_executor             = workers.upper_pucch_exec[i + du_id];
+    upper.pusch_executor             = workers.upper_pusch_exec[i + du_id];
+    upper.pusch_decoder_executor     = workers.upper_pusch_decoder_exec[i + du_id];
+    upper.prach_executor             = workers.upper_prach_exec[i + du_id];
+    upper.srs_executor               = workers.upper_srs_exec[i + du_id];
+    workers.get_du_low_dl_executors(upper.dl_executors, i + du_id);
   }
 }
