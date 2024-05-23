@@ -42,6 +42,8 @@ public:
   // ngap connection manager functions
   async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
 
+  async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
+
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
 
   void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;

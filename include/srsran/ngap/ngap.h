@@ -12,6 +12,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
@@ -61,6 +62,10 @@ public:
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
   /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
   virtual async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) = 0;
+
+  /// \brief Initiates NG Reset procedure as per TS 38.413 section 8.7.4.2.2.
+  /// \param[in] msg The ng reset message to transmit.
+  virtual async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) = 0;
 };
 
 /// Handle ue context removal
