@@ -192,6 +192,11 @@ struct si_message_sched_info {
   std::vector<sib_type> sib_mapping_info;
   /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
   unsigned si_period_radio_frames = 32;
+  /// SI window position of the associated SI-message. The network provides si-WindowPosition in an ascending order,
+  /// i.e. si-WindowPosition in the subsequent entry in schedulingInfoList2 has always value higher than in the previous
+  /// entry of schedulingInfoList2. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
+  /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+  std::optional<unsigned> si_window_position;
 };
 
 /// This struct contains the information required for the generation of the SI messages sent by the network and the
