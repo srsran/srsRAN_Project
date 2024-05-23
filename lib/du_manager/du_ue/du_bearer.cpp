@@ -92,7 +92,10 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
 
 void du_drb_connector::disconnect()
 {
-  // Disconnect F1-U <-> RLC interface.
+  // Disconnect NR-U <-> F1-U GW interface
+  f1u_gateway_nru_rx_notif.disconnect();
+
+  // Disconnect NR-U <-> RLC interface.
   rlc_rx_sdu_notif.disconnect();
   rlc_tx_data_notif.disconnect();
   f1u_rx_sdu_notif.disconnect();

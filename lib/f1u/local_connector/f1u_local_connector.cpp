@@ -70,7 +70,7 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
     logger_cu.warning("Could not find UL GTP Tunnel={} at CU to remove.", ul_up_tnl_info);
     return;
   }
-  f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info);
+  f1u_gateway_cu_bearer* cu_tun = bearer_it->second;
 
   // Disconnect UL path of DU first if we have a dl_teid for lookup
   if (cu_tun->dl_tnl_info.has_value()) {

@@ -84,7 +84,7 @@ public:
   }
 
 private:
-  srs_du::f1u_rx_pdu_handler* nru_rx;
+  srs_du::f1u_rx_pdu_handler* nru_rx = nullptr;
 };
 
 // RLC
