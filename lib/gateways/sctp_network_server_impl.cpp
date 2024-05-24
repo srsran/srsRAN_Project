@@ -46,9 +46,7 @@ public:
     }
     logger.debug("assoc={}: Sending PDU of {} bytes", assoc_id, sdu.length());
 
-    // Note: each sender needs its own buffer to avoid race conditions with the recv.
-    std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
-    span<const uint8_t>                               pdu_span = to_span(sdu, temp_send_buffer);
+    span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
     transport_layer_address::native_type dest_addr  = client_addr.native();
     int                                  bytes_sent = sctp_sendmsg(fd,
@@ -115,6 +113,9 @@ private:
   // Note: shared_ptr copy used to avoid the case when the notifier outlives the association.
   std::shared_ptr<std::atomic<bool>> assoc_shutdown_flag;
   srslog::basic_logger&              logger;
+
+  // Buffer used to store data to send to client.
+  std::array<uint8_t, network_gateway_sctp_max_len> send_buffer;
 };
 
 sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int assoc_id_) : assoc_id(assoc_id_) {}
