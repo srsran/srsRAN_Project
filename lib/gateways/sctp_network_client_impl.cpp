@@ -71,6 +71,7 @@ public:
   }
 
 private:
+  // Closes the SCTP association, sending an EOF, when required.
   void close()
   {
     if (closed_flag->load(std::memory_order_relaxed)) {

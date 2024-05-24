@@ -50,8 +50,8 @@ public:
     std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
     span<const uint8_t>                               pdu_span = to_span(sdu, temp_send_buffer);
 
-    auto dest_addr  = client_addr.native();
-    int  bytes_sent = sctp_sendmsg(fd,
+    transport_layer_address::native_type dest_addr  = client_addr.native();
+    int                                  bytes_sent = sctp_sendmsg(fd,
                                   pdu_span.data(),
                                   pdu_span.size(),
                                   const_cast<struct sockaddr*>(dest_addr.addr),
@@ -81,8 +81,8 @@ private:
     }
 
     // Send EOF to SCTP client.
-    auto dest_addr  = client_addr.native();
-    int  bytes_sent = sctp_sendmsg(fd,
+    transport_layer_address::native_type dest_addr  = client_addr.native();
+    int                                  bytes_sent = sctp_sendmsg(fd,
                                   nullptr,
                                   0,
                                   const_cast<struct sockaddr*>(dest_addr.addr),

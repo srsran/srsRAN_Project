@@ -25,8 +25,7 @@ constexpr uint16_t E2_DU_PPID = 72; // E2-DU PPID assigned by IANA
 /// \brief Configuration for SCTP network gateway that is common to the server and client.
 struct sctp_network_gateway_config : public common_network_gateway_config {
   /// Payload Protocol Identifier
-  int ppid = 0;
-  /// SCTP specific options
+  int               ppid = 0;
   optional<int32_t> rto_initial;
   optional<int32_t> rto_min;
   optional<int32_t> rto_max;

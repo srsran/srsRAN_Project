@@ -224,6 +224,7 @@ TEST_F(sctp_network_server_test, when_client_connects_then_server_request_new_sc
   ASSERT_TRUE(server->listen());
 
   // Connect client to server.
+  ASSERT_FALSE(assoc_factory.association_created);
   ASSERT_TRUE(connect_client());
 
   // Ensure SCTP server requested the creation of a new SCTP association handler.
