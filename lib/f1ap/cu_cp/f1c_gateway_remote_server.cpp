@@ -19,39 +19,23 @@ using namespace srsran;
 
 namespace {
 
-/// Interface used by F1AP PDU notifiers to shutdown the SCTP connection.
-class cu_cp_sctp_connection_controller
+/// Notifier passed to the CU-CP, which the CU-CP will use to send F1AP Tx PDUs.
+class f1c_to_gw_pdu_notifier final : public f1ap_message_notifier
 {
 public:
-  virtual ~cu_cp_sctp_connection_controller() = default;
-
-  /// \brief Deregister the SCTP connection from the io_broker to disconnect listening to new SCTP events.
-  virtual void disconnect() = 0;
-};
-
-/// Notifier passed to the CU-CP, which the CU-CP will use to push F1AP Tx PDUs.
-///
-/// On destruction, the notifier will disconnect the SCTP gateway.
-class f1c_tx_sctp_notifier final : public f1ap_message_notifier
-{
-public:
-  f1c_tx_sctp_notifier(sctp_network_gateway_data_handler& gateway,
-                       cu_cp_sctp_connection_controller&  conn_controller_,
-                       dlt_pcap&                          pcap_writer_,
-                       srslog::basic_logger&              logger_) :
-    gw(gateway), conn_controller(conn_controller_), pcap_writer(pcap_writer_), logger(logger_)
+  f1c_to_gw_pdu_notifier(std::unique_ptr<sctp_association_sdu_notifier> sctp_sender_,
+                         dlt_pcap&                                      pcap_writer_,
+                         srslog::basic_logger&                          logger_) :
+    sctp_sender(std::move(sctp_sender_)), pcap_writer(pcap_writer_), logger(logger_)
   {
   }
-
-  // Called by CU-CP to shutdown the SCTP connection.
-  ~f1c_tx_sctp_notifier() override { conn_controller.disconnect(); }
 
   /// Handle unpacked Tx F1AP PDU by packing and forwarding it into the SCTP GW.
   void on_new_message(const f1ap_message& msg) override
   {
-    // pack PDU into temporary buffer
-    byte_buffer   tx_pdu{byte_buffer::fallback_allocation_tag{}};
-    asn1::bit_ref bref(tx_pdu);
+    // pack F1AP PDU into SCTP SDU.
+    byte_buffer   tx_sdu{byte_buffer::fallback_allocation_tag{}};
+    asn1::bit_ref bref(tx_sdu);
     if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
       logger.error("Failed to pack F1AP PDU");
       return;
@@ -59,100 +43,100 @@ public:
 
     // Push Tx PDU to pcap.
     if (pcap_writer.is_write_enabled()) {
-      pcap_writer.push_pdu(tx_pdu.copy());
+      pcap_writer.push_pdu(tx_sdu.copy());
     }
 
-    // Forward packed Tx PDU to SCTP gateway.
-    gw.handle_pdu(tx_pdu);
+    // Forward packed F1AP Tx PDU to SCTP gateway.
+    sctp_sender->on_new_sdu(std::move(tx_sdu));
   }
 
 private:
-  sctp_network_gateway_data_handler& gw;
-  cu_cp_sctp_connection_controller&  conn_controller;
-  dlt_pcap&                          pcap_writer;
-  srslog::basic_logger&              logger;
+  std::unique_ptr<sctp_association_sdu_notifier> sctp_sender;
+  dlt_pcap&                                      pcap_writer;
+  srslog::basic_logger&                          logger;
 };
 
-/// \brief Notifier passed to the SCTP gateway, which the SCTP gateway will use to forward F1AP Rx PDUs to the CU-CP.
-class f1c_rx_pdu_sctp_notifier final : public sctp_network_gateway_control_notifier,
-                                       public network_gateway_data_notifier
+/// Notifier passed to the SCTP GW, which the GW will use to forward F1AP Rx PDUs to the CU-CP.
+class gw_to_f1c_pdu_notifier final : public sctp_association_sdu_notifier
 {
 public:
-  f1c_rx_pdu_sctp_notifier(cu_cp_sctp_connection_controller& connection_controller_,
-                           dlt_pcap&                         pcap_writer_,
-                           srslog::basic_logger&             logger_) :
-    connection_controller(connection_controller_), pcap_writer(pcap_writer_), logger(logger_)
+  gw_to_f1c_pdu_notifier(std::unique_ptr<f1ap_message_notifier> f1ap_notifier_,
+                         dlt_pcap&                              pcap_writer_,
+                         srslog::basic_logger&                  logger_) :
+    f1ap_notifier(std::move(f1ap_notifier_)), pcap_writer(pcap_writer_), logger(logger_)
   {
   }
-  ~f1c_rx_pdu_sctp_notifier() override
-  {
-    du_rx_pdu_notifier = nullptr;
-    connection_controller.disconnect();
-  }
 
-  /// Connect the notifier that will be used to forward F1AP Rx PDUs to the DU.
-  void connect_rx_pdu_notifier(f1ap_message_notifier& du_rx_pdu_notifier_)
+  bool on_new_sdu(byte_buffer sdu) override
   {
-    du_rx_pdu_notifier = &du_rx_pdu_notifier_;
-  }
-
-  void on_connection_established() override
-  {
-    // TODO
-  }
-
-  // Called by SCTP GW on SCTP connection loss.
-  void on_connection_loss() override
-  {
-    du_rx_pdu_notifier = nullptr;
-    connection_controller.disconnect();
-  }
-
-  // Called by SCTP GW to forward an F1AP Rx PDU to the DU.
-  void on_new_pdu(byte_buffer pdu) override
-  {
-    if (du_rx_pdu_notifier == nullptr) {
-      logger.warning("Dropping F1AP Rx PDU. Cause: PDU received after connection loss");
-      return;
-    }
-
-    // Unpack F1AP PDU.
-    asn1::cbit_ref bref(pdu);
+    // Unpack SCTP SDU into F1AP PDU.
+    asn1::cbit_ref bref(sdu);
     f1ap_message   msg;
     if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
       logger.error("Couldn't unpack F1AP PDU");
-      return;
+      return false;
     }
 
-    // Forward Rx PDU to pcap, if enabled.
+    // Forward SCTP Rx SDU to pcap, if enabled.
     if (pcap_writer.is_write_enabled()) {
-      pcap_writer.push_pdu(pdu.copy());
+      pcap_writer.push_pdu(sdu.copy());
     }
 
-    // Forward unpacked Rx PDU to the DU.
-    du_rx_pdu_notifier->on_new_message(msg);
+    // Forward unpacked Rx PDU to the CU-CP.
+    f1ap_notifier->on_new_message(msg);
+
+    return true;
   }
 
 private:
-  cu_cp_sctp_connection_controller& connection_controller;
-  f1ap_message_notifier*            du_rx_pdu_notifier = nullptr;
-  dlt_pcap&                         pcap_writer;
-  srslog::basic_logger&             logger;
+  std::unique_ptr<f1ap_message_notifier> f1ap_notifier;
+  dlt_pcap&                              pcap_writer;
+  srslog::basic_logger&                  logger;
 };
 
-class f1c_sctp_server final : public srs_cu_cp::f1c_connection_server
+/// Adapter of the SCTP server to the F1-C interface of the CU-CP.
+class f1c_sctp_server final : public srs_cu_cp::f1c_connection_server, public sctp_network_association_factory
 {
 public:
-  f1c_sctp_server(const f1c_cu_sctp_gateway_config& cfg_) : cfg(cfg_) {}
+  f1c_sctp_server(const f1c_cu_sctp_gateway_config& params_) : params(params_)
+  {
+    // Create SCTP server.
+    sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
+  }
 
-  void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_f1c_handler_) override { cu_f1c_handler = &cu_f1c_handler_; }
+  void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_f1c_handler_) override
+  {
+    cu_f1c_handler = &cu_f1c_handler_;
 
-  optional<uint16_t> get_listen_port() const override { return nullopt; }
+    // Start listening for new DU SCTP connections.
+    bool result = sctp_server->listen();
+    report_fatal_error_if_not(result, "Failed to start SCTP server.\n");
+  }
+
+  optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }
+
+  std::unique_ptr<sctp_association_sdu_notifier>
+  create(std::unique_ptr<sctp_association_sdu_notifier> sctp_send_notifier) override
+  {
+    // Create an unpacked F1AP PDU notifier and pass it to the CU-CP.
+    auto f1c_sender = std::make_unique<f1c_to_gw_pdu_notifier>(std::move(sctp_send_notifier), params.pcap, logger);
+
+    std::unique_ptr<f1ap_message_notifier> f1c_receiver =
+        cu_f1c_handler->handle_new_du_connection(std::move(f1c_sender));
+
+    // Wrap the received F1AP Rx PDU notifier in an SCTP notifier and return it.
+    if (f1c_receiver == nullptr) {
+      return nullptr;
+    }
+    return std::make_unique<gw_to_f1c_pdu_notifier>(std::move(f1c_receiver), params.pcap, logger);
+  }
 
 private:
-  const f1c_cu_sctp_gateway_config cfg;
+  const f1c_cu_sctp_gateway_config params;
   srslog::basic_logger&            logger         = srslog::fetch_basic_logger("CU-CP-F1");
   srs_cu_cp::cu_cp_f1c_handler*    cu_f1c_handler = nullptr;
+
+  std::unique_ptr<sctp_network_server> sctp_server;
 };
 
 } // namespace
