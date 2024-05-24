@@ -10,6 +10,7 @@
 
 #include "sctp_test_helpers.h"
 #include "srsran/gateways/sctp_network_client_factory.h"
+#include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/io/sctp_socket.h"
 #include <gtest/gtest.h>
 
@@ -77,7 +78,31 @@ public:
 
     client_cfg.sctp.ppid = NGAP_PPID;
   }
-  ~sctp_network_client_test() { srslog::flush(); }
+  ~sctp_network_client_test()
+  {
+    close_client();
+    srslog::flush();
+  }
+
+  // Forces client shutdown.
+  void close_client()
+  {
+    // We may need io_broker running asynchronously to complete SCTP event handling and shutdown.
+    if (client_sender != nullptr) {
+      std::atomic<bool> finished{false};
+      // Handle SCTP SHUTDOWN
+      unique_thread t("io_broker", [this, &finished]() {
+        while (not finished and broker.handle_receive) {
+          broker.handle_receive();
+          std::this_thread::sleep_for(std::chrono::microseconds{10});
+        }
+      });
+      // client dtor waits for SCTP SHUTDOWN COMP before returning.
+      client.reset();
+      finished = true;
+      t.join();
+    }
+  }
 
   void trigger_broker() { broker.handle_receive(); }
 
@@ -174,6 +199,12 @@ TEST_F(sctp_network_client_test, when_server_exists_then_connection_succeeds)
 
   // Client receives SCTP_COMM_UP
   trigger_broker();
+
+  // Client sends EOF
+  client_sender = nullptr;
+
+  // Client receives SCTP_COMM_COMP and closes connection.
+  trigger_broker();
 }
 
 TEST_F(sctp_network_client_test, when_client_binds_address_then_connection_succeeds)
@@ -264,7 +295,7 @@ TEST_F(sctp_network_client_test, when_client_is_destroyed_then_server_gets_eof)
   auto server_recv = server.receive();
   ASSERT_EQ(server_recv.value().sctp_assoc_change().sac_state, SCTP_COMM_UP);
 
-  client.reset();
+  close_client();
 
   // Server receives SCTP COMM SHUTDOWN
   server_recv = server.receive();

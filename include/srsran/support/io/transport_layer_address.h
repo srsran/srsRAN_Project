@@ -40,6 +40,8 @@ public:
   static transport_layer_address create_from_sockaddr(const struct sockaddr& sockaddr, socklen_t addr_len);
   static transport_layer_address create_from_sockaddr(native_type addr);
 
+  bool empty() const { return addrlen == 0; }
+
   /// Converts the transport_layer_address to an IPv4 or IPv6 string.
   std::string to_string() const { return fmt::format("{}", *this); }
 

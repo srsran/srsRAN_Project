@@ -45,6 +45,8 @@ public:
   bool unregister_fd(int fd) override
   {
     last_unregistered_fd = fd;
+    handle_receive       = {};
+    handle_error         = {};
     return true;
   }
 };

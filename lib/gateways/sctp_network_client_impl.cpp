@@ -45,8 +45,7 @@ public:
     logger.debug("Sending PDU of {} bytes", sdu.length());
 
     // Note: each sender needs its own buffer to avoid race conditions with the recv.
-    std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
-    span<const uint8_t>                               pdu_span = to_span(sdu, temp_send_buffer);
+    span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
     auto dest_addr  = server_addr.native();
     int  bytes_sent = sctp_sendmsg(fd,
@@ -111,6 +110,8 @@ private:
   srslog::basic_logger&         logger;
   const transport_layer_address server_addr;
 
+  std::array<uint8_t, network_gateway_sctp_max_len> send_buffer;
+
   std::shared_ptr<std::atomic<bool>> closed_flag;
 };
 
@@ -128,21 +129,39 @@ sctp_network_client_impl::~sctp_network_client_impl()
 {
   logger.debug("{}: Closing...", client_name);
 
-  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
+  // If there is a connection on-going.
   if (shutdown_received != nullptr) {
-    shutdown_received->store(true);
+    // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
+    bool eof_needed   = not shutdown_received->exchange(true);
     shutdown_received = nullptr;
+
+    // Send EOF to force the connection shutdown.
+    // Note: This is necessary to avoid a data race in the recv_handler and io_sub unsubscription
+    if (eof_needed) {
+      transport_layer_address server_addr_cpy;
+      {
+        std::unique_lock<std::mutex> lock(connection_mutex);
+        server_addr_cpy = server_addr;
+      }
+      if (not server_addr_cpy.empty()) {
+        sctp_sendmsg(socket.fd().value(),
+                     nullptr,
+                     0,
+                     const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
+                     server_addr_cpy.native().addrlen,
+                     htonl(node_cfg.ppid),
+                     SCTP_EOF,
+                     stream_no,
+                     0,
+                     0);
+      }
+    }
   }
 
-  io_sub.reset();
-
-  {
-    // Note: we have to protect the shutdown of the socket in case the io_broker is handling concurrently the io_broker
-    // unsubscription.
-    // TODO: Refactor.
-    std::lock_guard<std::mutex> lock(shutdown_mutex);
-    socket.close();
-  }
+  // No subscription is on-going. It is now safe to close the socket.
+  std::unique_lock<std::mutex> lock(connection_mutex);
+  connection_cvar.wait(lock, [this]() { return server_addr.empty(); });
+  socket.close();
 
   logger.info("{}: SCTP client closed", client_name);
 }
@@ -164,7 +183,6 @@ sctp_network_client_impl::connect_to(const std::string&                         
   }
   if (not node_cfg.bind_address.empty()) {
     // Make sure to close any socket created for any previous connection.
-    std::lock_guard<std::mutex> lock(shutdown_mutex);
     socket.close();
   }
 
@@ -199,22 +217,6 @@ sctp_network_client_impl::connect_to(const std::string&                         
       continue;
     }
 
-    // Register the socket in the IO broker.
-    io_sub = broker.register_fd(
-        socket.fd().value(),
-        [this]() { receive(); },
-        [this](io_broker::error_code code) {
-          std::string cause = fmt::format("IO error code={}", (int)code);
-          handle_connection_close(cause.c_str());
-        });
-    if (not io_sub.registered()) {
-      // IO subscription failed.
-      if (not reuse_socket) {
-        socket.close();
-      }
-      continue;
-    }
-
     // Found a valid candidate.
     result = candidate;
   }
@@ -242,10 +244,37 @@ sctp_network_client_impl::connect_to(const std::string&                         
     return nullptr;
   }
 
-  // Subscribe to the IO broker.
+  // Create objects representing state of the client.
   recv_handler      = std::move(recv_handler_);
   shutdown_received = std::make_shared<std::atomic<bool>>(false);
   auto addr         = transport_layer_address::create_from_sockaddr(*result->ai_addr, result->ai_addrlen);
+  {
+    // Save server address
+    std::unique_lock<std::mutex> lock(connection_mutex);
+    server_addr = addr;
+  }
+
+  // Register the socket in the IO broker.
+  io_sub = broker.register_fd(
+      socket.fd().value(),
+      [this]() { receive(); },
+      [this](io_broker::error_code code) {
+        std::string cause = fmt::format("IO error code={}", (int)code);
+        handle_connection_close(cause.c_str());
+      });
+  if (not io_sub.registered()) {
+    {
+      std::unique_lock<std::mutex> lock(connection_mutex);
+      // IO subscription failed.
+      if (not reuse_socket) {
+        socket.close();
+      }
+      server_addr = {};
+    }
+    shutdown_received.reset();
+    recv_handler.reset();
+    return nullptr;
+  }
 
   logger.info("{}: SCTP connection to {}:{} was successful", client_name, dest_addr, dest_port);
 
@@ -311,9 +340,15 @@ void sctp_network_client_impl::handle_sctp_shutdown_comp()
   // Notify the connection drop to the SCTP sender.
   recv_handler.reset();
 
+  std::unique_lock<std::mutex> lock(connection_mutex);
   // Unsubscribe from listening to new IO events.
-  std::lock_guard<std::mutex> lock(shutdown_mutex);
   io_sub.reset();
+
+  // Erase server_addr.
+  server_addr = {};
+
+  // Notify the dtor that the connection is closed.
+  connection_cvar.notify_one();
 }
 
 void sctp_network_client_impl::handle_data(span<const uint8_t> payload)

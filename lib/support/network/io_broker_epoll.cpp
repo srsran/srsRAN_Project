@@ -15,7 +15,11 @@
 
 using namespace srsran;
 
-io_broker_epoll::io_broker_epoll(const io_broker_config& config) : logger(srslog::fetch_basic_logger("IO-EPOLL"))
+// TODO: parameterize
+const unsigned event_queue_size = 32;
+
+io_broker_epoll::io_broker_epoll(const io_broker_config& config) :
+  logger(srslog::fetch_basic_logger("IO-EPOLL")), event_queue(event_queue_size)
 {
   // Init epoll socket
   epoll_fd = unique_fd{::epoll_create1(0)};
@@ -128,8 +132,8 @@ void io_broker_epoll::thread_loop()
 
 bool io_broker_epoll::enqueue_event(const control_event& event)
 {
-  // Push of an event. It may malloc.
-  event_queue.enqueue(event);
+  // Push of an event
+  event_queue.push_blocking(event);
 
   // trigger epoll event to interrupt possible epoll_wait()
   uint64_t tmp = 1;
@@ -149,7 +153,7 @@ void io_broker_epoll::handle_enqueued_events()
 
   // Keep popping from the event queue.
   control_event ev;
-  while (event_queue.try_dequeue(ev)) {
+  while (event_queue.try_pop(ev)) {
     // Handle event dequeued.
     switch (ev.type) {
       case control_event::event_type::register_fd:
@@ -342,10 +346,7 @@ void io_broker_epoll::stop_impl()
   }
 
   // Clear event queue.
-  control_event ev;
-  while (event_queue.try_dequeue(ev)) {
-    // Do nothing.
-  }
+  event_queue.clear();
 
   event_handler.erase(ctrl_event_fd.value());
   if (not event_handler.empty()) {
