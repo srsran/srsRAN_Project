@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1c_gateway_remote_server.h"
+#include "srsran/f1ap/cu_cp/f1c_gateway_remote_server.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/pcap/dlt_pcap.h"

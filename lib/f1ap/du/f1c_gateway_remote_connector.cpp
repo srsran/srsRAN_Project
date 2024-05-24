@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1c_gateway_remote_connector.h"
+#include "srsran/f1ap/du/f1c_gateway_remote_connector.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"

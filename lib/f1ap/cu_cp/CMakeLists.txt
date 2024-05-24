@@ -10,6 +10,7 @@
 add_library(srsran_f1ap_cu
         f1ap_cu_impl.cpp
         f1ap_cu_factory.cpp
+        f1c_gateway_remote_server.cpp
         procedures/f1_setup_procedure.cpp
         procedures/f1_removal_procedure.cpp
         procedures/f1ap_stop_procedure.cpp
