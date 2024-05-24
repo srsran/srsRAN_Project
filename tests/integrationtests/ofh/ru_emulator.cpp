@@ -209,8 +209,8 @@ public:
 
     // Skip U-Plane packets.
     auto message_type = static_cast<ecpri::message_type>(packet[15]);
-    if (message_type == ecpri::message_type::iq_data) {
-      logger.debug("Discarding U-Plane packet");
+    if (message_type != ecpri::message_type::rt_control_data) {
+      logger.debug("Discarding eCPRI packet with non 'real-time control data' type");
       return false;
     }
 
