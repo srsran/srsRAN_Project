@@ -135,11 +135,8 @@ sctp_network_server_impl::~sctp_network_server_impl()
   // Stop handling new SCTP events.
   io_sub.reset();
 
-  // Signal to senders to all existing senders that the server was deleted, so they don't bother with sending EOF.
-  // Note: Since we already unsubscribed from the io_broker. It is safe to make these steps in a separate thread.
-  while (not associations.empty()) {
-    handle_association_shutdown(associations.begin()->first, nullptr);
-  }
+  // Once the IO unsubscription completes, it is safe to remove associations.
+  handle_socket_shutdown(nullptr);
 
   logger.info("fd={}: SCTP server closed", socket.fd().value());
 }
@@ -193,6 +190,7 @@ void sctp_network_server_impl::handle_socket_shutdown(const char* cause)
   // subscription is still active.
   while (not associations.empty()) {
     handle_association_shutdown(associations.begin()->first, cause);
+    handle_sctp_shutdown_comp(associations.begin()->first);
   }
 
   // Stop handling new SCTP events.

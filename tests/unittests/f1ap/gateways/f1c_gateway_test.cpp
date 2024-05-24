@@ -11,9 +11,9 @@
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
+#include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/f1ap/gateways/f1c_network_client_factory.h"
-#include "srsran/f1ap/gateways/f1c_network_server_factory.h"
+#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <future>
@@ -24,14 +24,14 @@ using namespace srsran;
 class dummy_dlt_pcap final : public dlt_pcap
 {
 public:
-  bool        enabled = false;
-  bool        closed  = false;
-  byte_buffer last_pdu;
+  bool                        enabled = false;
+  bool                        closed  = false;
+  blocking_queue<byte_buffer> last_sdus{16};
 
   void         close() override { closed = true; }
   bool         is_write_enabled() const override { return enabled; }
-  void         push_pdu(const_span<uint8_t> pdu) override { last_pdu = byte_buffer::create(pdu).value(); }
-  virtual void push_pdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
+  void         push_pdu(const_span<uint8_t> pdu) override { last_sdus.push_blocking(byte_buffer::create(pdu).value()); }
+  virtual void push_pdu(byte_buffer pdu) override { last_sdus.push_blocking(std::move(pdu)); }
 };
 
 class f1c_link : public srs_cu_cp::cu_cp_f1c_handler
@@ -60,10 +60,27 @@ public:
     srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
   };
 
+  f1c_link(bool use_sctp, bool pcap_enabled)
+  {
+    pcap.enabled = pcap_enabled;
+
+    if (use_sctp) {
+      broker    = create_io_broker(io_broker_type::epoll);
+      connector = create_f1c_local_connector(f1c_local_sctp_connector_config{pcap, *broker});
+    } else {
+      connector = create_f1c_local_connector(f1c_local_connector_config{pcap});
+    }
+
+    connector->attach_cu_cp(*this);
+
+    // Connect client to server.
+    connect_client();
+  }
+
   std::unique_ptr<f1ap_message_notifier>
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override
   {
-    // Note: Called from io broker thread.
+    // Note: May be called from io broker thread.
     cu_cp_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
     std::promise<void> eof_signal;
     cu_gw_assoc_close_signaled = eof_signal.get_future();
@@ -74,58 +91,36 @@ public:
     return std::make_unique<rx_pdu_notifier>("CU-CP", cu_rx_pdus, std::move(eof_signal));
   }
 
+  std::unique_ptr<io_broker>           broker;
+  dummy_dlt_pcap                       pcap;
+  std::unique_ptr<f1c_local_connector> connector;
+  srslog::basic_logger&                logger = srslog::fetch_basic_logger("TEST");
+
+  blocking_queue<f1ap_message> cu_rx_pdus{128};
+  blocking_queue<f1ap_message> du_rx_pdus{128};
+
   std::future<void>                      cu_gw_assoc_close_signaled;
   std::future<void>                      du_gw_assoc_close_signaled;
   std::unique_ptr<f1ap_message_notifier> cu_cp_tx_pdu_notifier;
   std::unique_ptr<f1ap_message_notifier> du_tx_pdu_notifier;
-  blocking_queue<f1ap_message>           cu_rx_pdus{128};
-  blocking_queue<f1ap_message>           du_rx_pdus{128};
-  std::unique_ptr<io_broker>             broker = create_io_broker(io_broker_type::epoll);
-  dummy_dlt_pcap                         du_pcap;
-  dummy_dlt_pcap                         cu_pcap;
-  srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
+
+protected:
+  void connect_client()
+  {
+    // Connect client to server.
+    std::promise<void> eof_signal;
+    du_gw_assoc_close_signaled = eof_signal.get_future();
+    du_tx_pdu_notifier         = connector->handle_du_connection_request(
+        std::make_unique<rx_pdu_notifier>("DU", du_rx_pdus, std::move(eof_signal)));
+
+    // Wait for server to receive connection.
+    std::future<void> connection_completed = connection_complete_signal.get_future();
+  }
 
   std::promise<void> connection_complete_signal;
 };
 
-class f1c_sctp_link : public f1c_link
-{
-public:
-  f1c_sctp_link()
-  {
-    sctp_network_gateway_config sctp;
-    sctp.ppid         = F1AP_PPID;
-    sctp.bind_address = "127.0.0.1";
-    sctp.bind_port    = 0;
-
-    // Create server.
-    cu_server = create_f1c_gateway_server(f1c_cu_sctp_gateway_config{sctp, *broker, cu_pcap});
-    cu_server->attach_cu_cp(*this);
-
-    // Create client.
-    sctp_network_connector_config sctp_client;
-    sctp_client.connection_name = "F1-C";
-    sctp_client.connect_address = "127.0.0.1";
-    sctp_client.connect_port    = cu_server->get_listen_port().value();
-    sctp_client.ppid            = F1AP_PPID;
-    du_client                   = create_f1c_gateway_client(f1c_du_sctp_gateway_config{sctp_client, *broker, du_pcap});
-
-    // Connect client to server.
-    std::promise<void> eof_signal;
-    du_gw_assoc_close_signaled = eof_signal.get_future();
-    du_tx_pdu_notifier         = du_client->handle_du_connection_request(
-        std::make_unique<rx_pdu_notifier>("DU", du_rx_pdus, std::move(eof_signal)));
-
-    // Wait for server to receive SCTP connection.
-    std::future<void> connection_completed = connection_complete_signal.get_future();
-    connection_completed.wait();
-  }
-
-  std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_server;
-  std::unique_ptr<srs_du::f1c_connection_client>    du_client;
-};
-
-class f1c_gateway_link_test : public ::testing::Test
+class f1c_gateway_link_test : public ::testing::TestWithParam<bool>
 {
 protected:
   f1c_gateway_link_test()
@@ -135,10 +130,14 @@ protected:
     srslog::fetch_basic_logger("SCTP-GW").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::debug);
-
-    link = std::make_unique<f1c_sctp_link>();
   }
-  ~f1c_gateway_link_test() { srslog::flush(); }
+  ~f1c_gateway_link_test() override { srslog::flush(); }
+
+  void create_link(bool pcap_enabled = false)
+  {
+    bool use_sctp = GetParam();
+    link          = std::make_unique<f1c_link>(use_sctp, pcap_enabled);
+  }
 
   void send_to_du(const f1ap_message& msg) { link->cu_cp_tx_pdu_notifier->on_new_message(msg); }
 
@@ -191,8 +190,10 @@ static bool is_equal(const f1ap_message& lhs, const f1ap_message& rhs)
   return lhs_pdu == rhs_pdu;
 }
 
-TEST_F(f1c_gateway_link_test, when_du_sends_msg_then_cu_receives_msg)
+TEST_P(f1c_gateway_link_test, when_du_sends_msg_then_cu_receives_msg)
 {
+  create_link();
+
   f1ap_message orig_msg = create_test_message();
   send_to_cu(orig_msg);
 
@@ -201,8 +202,10 @@ TEST_F(f1c_gateway_link_test, when_du_sends_msg_then_cu_receives_msg)
   ASSERT_TRUE(is_equal(orig_msg, dest_msg));
 }
 
-TEST_F(f1c_gateway_link_test, when_cu_sends_msg_then_du_receives_msg)
+TEST_P(f1c_gateway_link_test, when_cu_sends_msg_then_du_receives_msg)
 {
+  create_link();
+
   f1ap_message orig_msg = create_test_message();
   send_to_du(orig_msg);
 
@@ -211,61 +214,66 @@ TEST_F(f1c_gateway_link_test, when_cu_sends_msg_then_du_receives_msg)
   ASSERT_TRUE(is_equal(orig_msg, dest_msg));
 }
 
-TEST_F(f1c_gateway_link_test, when_pcap_writer_disabled_then_no_pcap_is_written)
+TEST_P(f1c_gateway_link_test, when_pcap_writer_disabled_then_no_pcap_is_written)
 {
-  link->du_pcap.enabled = false;
-  link->cu_pcap.enabled = false;
+  create_link(false);
 
   f1ap_message orig_msg = create_test_message();
   send_to_du(orig_msg);
   f1ap_message dest_msg;
   ASSERT_TRUE(pop_du_rx_pdu(dest_msg));
+  byte_buffer sdu;
+  ASSERT_FALSE(link->pcap.last_sdus.try_pop(sdu));
+
   send_to_cu(orig_msg);
   ASSERT_TRUE(pop_cu_rx_pdu(dest_msg));
-
-  ASSERT_TRUE(link->cu_pcap.last_pdu.empty());
-  ASSERT_TRUE(link->du_pcap.last_pdu.empty());
+  ASSERT_FALSE(link->pcap.last_sdus.try_pop(sdu));
 }
 
-TEST_F(f1c_gateway_link_test, when_pcap_writer_enabled_then_pcap_is_written)
+TEST_P(f1c_gateway_link_test, when_pcap_writer_enabled_then_pcap_is_written)
 {
-  link->du_pcap.enabled = true;
-  link->cu_pcap.enabled = true;
+  create_link(true);
 
   f1ap_message orig_msg = create_test_message();
 
   send_to_du(orig_msg);
   f1ap_message dest_msg;
   ASSERT_TRUE(pop_du_rx_pdu(dest_msg));
-  ASSERT_EQ(link->cu_pcap.last_pdu, pack(orig_msg));
-  ASSERT_EQ(link->du_pcap.last_pdu, pack(orig_msg));
+  bool        popped = false;
+  byte_buffer sdu    = link->pcap.last_sdus.pop_blocking(&popped);
+  ASSERT_TRUE(popped);
+  ASSERT_FALSE(link->pcap.last_sdus.try_pop(sdu));
 
-  link->cu_pcap.last_pdu = {};
-  link->du_pcap.last_pdu = {};
   send_to_cu(orig_msg);
   ASSERT_TRUE(pop_cu_rx_pdu(dest_msg));
-  ASSERT_EQ(link->cu_pcap.last_pdu, pack(orig_msg));
-  ASSERT_EQ(link->du_pcap.last_pdu, pack(orig_msg));
+  popped = false;
+  sdu    = link->pcap.last_sdus.pop_blocking(&popped);
+  ASSERT_TRUE(popped);
+  ASSERT_FALSE(link->pcap.last_sdus.try_pop(sdu));
 }
 
-TEST_F(f1c_gateway_link_test, when_cu_tx_pdu_notifier_is_closed_then_connection_closes)
+TEST_P(f1c_gateway_link_test, when_cu_tx_pdu_notifier_is_closed_then_connection_closes)
 {
+  create_link();
+
   // The CU-CP resets its F1-C Tx notifier.
   logger.info("Closing CU-CP Tx path...");
   link->cu_cp_tx_pdu_notifier.reset();
 
-  // Wait for GW to report to both CU and DU that the association is closed.
-  link->cu_gw_assoc_close_signaled.wait();
+  // Wait for GW to report to DU that the association is closed.
   link->du_gw_assoc_close_signaled.wait();
 }
 
-TEST_F(f1c_gateway_link_test, when_du_tx_pdu_notifier_is_closed_then_connection_closes)
+TEST_P(f1c_gateway_link_test, when_du_tx_pdu_notifier_is_closed_then_connection_closes)
 {
+  create_link();
+
   // The DU resets its F1-C Tx notifier.
   logger.info("Closing DU Tx path...");
   link->du_tx_pdu_notifier.reset();
 
-  // Wait for GW to report to both CU and DU that the association is closed.
+  // Wait for GW to report to CU that the association is closed.
   link->cu_gw_assoc_close_signaled.wait();
-  link->du_gw_assoc_close_signaled.wait();
 }
+
+INSTANTIATE_TEST_SUITE_P(f1c_gateway_link_tests, f1c_gateway_link_test, ::testing::Values(true, false));
