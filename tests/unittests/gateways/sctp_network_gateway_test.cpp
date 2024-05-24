@@ -383,9 +383,3 @@ TEST_F(sctp_network_gateway_tester, when_connection_loss_then_reconnect)
 {
   // TODO: Add test for reconnect
 }
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

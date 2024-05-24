@@ -136,7 +136,7 @@ public:
 
   bool send_data(const std::vector<uint8_t>& bytes, int ppid, std::string dest_addr, int dest_port)
   {
-    sockaddr_in addr;
+    sockaddr_in addr     = {};
     addr.sin_family      = AF_INET;
     addr.sin_port        = htons(dest_port);
     addr.sin_addr.s_addr = ::inet_addr(dest_addr.c_str());

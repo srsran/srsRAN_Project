@@ -61,7 +61,7 @@ bool srsran::bind_to_interface(const unique_fd& fd, const std::string& interface
     return true;
   }
 
-  ifreq ifr;
+  ifreq ifr{};
   std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ);
   ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
 
