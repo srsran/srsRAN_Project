@@ -241,17 +241,6 @@ TEST(dl_logical_channel_test, check_scheduling_of_ue_con_res_id_mac_ce)
   ASSERT_EQ(subpdu.sched_bytes, lcid_dl_sch_t{ce_lcid}.sizeof_ce());
 }
 
-TEST(dl_logical_channel_test, pending_bytes_does_not_include_ue_con_res_id_mac_ce)
-{
-  dl_logical_channel_manager lch_mng;
-
-  lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
-  const unsigned dummy_ce_payload = 0;
-  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
-
-  ASSERT_EQ(lch_mng.pending_bytes(), 0);
-}
-
 TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_include_other_mac_ce)
 {
   dl_logical_channel_manager lch_mng;

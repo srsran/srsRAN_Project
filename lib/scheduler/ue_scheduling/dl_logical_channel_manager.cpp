@@ -178,7 +178,7 @@ unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
 
 unsigned dl_logical_channel_manager::allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
-  if (not pending_con_res_id) {
+  if (not is_con_res_id_pending()) {
     return 0;
   }
 

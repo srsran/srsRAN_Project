@@ -113,17 +113,6 @@ unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
   return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
-unsigned ue::pending_dl_srb0_or_srb1_newtx_bytes(bool is_srb0) const
-{
-  unsigned pending_bytes = dl_lc_ch_mgr.pending_bytes(is_srb0 ? LCID_SRB0 : LCID_SRB1);
-
-  if (pending_bytes != 0) {
-    // In case SRB0 has data, only allocate SRB0 and CEs.
-    return pending_bytes + dl_lc_ch_mgr.pending_ue_con_res_id_ce_bytes();
-  }
-  return pending_bytes;
-}
-
 unsigned ue::pending_ul_newtx_bytes() const
 {
   constexpr static unsigned SR_GRANT_BYTES = 512;
@@ -164,11 +153,9 @@ unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_
   return total_subpdu_bytes;
 }
 
-unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, bool is_srb0)
+unsigned ue::build_dl_con_res_ce_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  total_subpdu_bytes +=
-      allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, is_srb0 ? LCID_SRB0 : LCID_SRB1);
   return total_subpdu_bytes;
 }

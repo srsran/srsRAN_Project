@@ -466,6 +466,11 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
     auto& u = ue_db[ce.ue_index];
     u.handle_dl_mac_ce_indication(ce);
 
+    // Notify SRB fallback scheduler upon receiving ConRes CE indication.
+    if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      du_cells[ue_db[ce.ue_index].get_pcell().cell_index].fallback_sched->handle_conres_indication(ce.ue_index);
+    }
+
     // Log event.
     du_cells[u.get_pcell().cell_index].ev_logger->enqueue(ce);
   });

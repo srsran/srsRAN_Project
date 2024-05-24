@@ -231,14 +231,31 @@ protected:
   {
     return std::any_of(bench->res_grid[0].result.dl.dl_pdcchs.begin(),
                        bench->res_grid[0].result.dl.dl_pdcchs.end(),
-                       [&u](const auto& pdcch) { return pdcch.ctx.rnti == u.crnti; });
+                       [&u](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti == u.crnti; });
+  }
+
+  const pdcch_dl_information* get_ue_allocated_pdcch(const ue& u)
+  {
+    const auto* it = std::find_if(bench->res_grid[0].result.dl.dl_pdcchs.begin(),
+                                  bench->res_grid[0].result.dl.dl_pdcchs.end(),
+                                  [&u](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti == u.crnti; });
+    return it == bench->res_grid[0].result.dl.dl_pdcchs.end() ? nullptr : it;
   }
 
   bool ue_is_allocated_pdsch(const ue& u)
   {
     return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
                        bench->res_grid[0].result.dl.ue_grants.end(),
-                       [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+                       [&u](const dl_msg_alloc& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+  }
+
+  const dl_msg_alloc* get_ue_allocated_pdsch(const ue& u)
+  {
+    const auto* it = std::find_if(bench->res_grid[0].result.dl.ue_grants.begin(),
+                                  bench->res_grid[0].result.dl.ue_grants.end(),
+                                  [&u](const dl_msg_alloc& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+
+    return it == bench->res_grid[0].result.dl.ue_grants.end() ? nullptr : it;
   }
 
   bool ue_is_allocated_pucch(const ue& u)
@@ -286,6 +303,7 @@ protected:
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
     if (tx_conres) {
       bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
+      bench->fallback_sched.handle_conres_indication(ue_idx);
     }
 
     // Notify scheduler of DL buffer state.
@@ -317,9 +335,9 @@ protected:
     bench->fallback_sched.handle_sr_indication(ue_idx);
   }
 
-  unsigned get_pending_bytes(du_ue_index_t ue_idx)
+  unsigned get_srb0_pending_bytes(du_ue_index_t ue_idx)
   {
-    return bench->ue_db[ue_idx].pending_dl_srb0_or_srb1_newtx_bytes(true);
+    return bench->ue_db[ue_idx].pending_dl_newtx_bytes(LCID_SRB0);
   }
 
   ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
@@ -355,7 +373,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   const unsigned mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(ue_idx, current_slot, mac_srb0_sdu_size, true);
 
-  const unsigned exp_size = get_pending_bytes(ue_idx);
+  const unsigned exp_size = get_srb0_pending_bytes(ue_idx);
 
   // Test the following:
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
@@ -366,12 +384,18 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources)
   bool        is_ue_allocated_pdsch{false};
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
-    if (ue_is_allocated_pdcch(test_ue)) {
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    // ConRes CE is sent beforehand hence DCI 1_0 scrambled with C-RNTI is used to send Msg4.
+    if (pdcch_it != nullptr and pdcch_it->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0) {
       is_ue_allocated_pdcch = true;
     }
-    if (ue_is_allocated_pdsch(test_ue)) {
-      is_ue_allocated_pdsch = true;
-      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+    if (is_ue_allocated_pdcch) {
+      const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
+      // ConRes CE is sent beforehand hence Msg4 should consist only SDU with no ConRes MAC CE.
+      if (pdsch_it != nullptr and pdsch_it->tb_list.back().lc_chs_to_sched.back().lcid.is_sdu()) {
+        is_ue_allocated_pdsch = true;
+        ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+      }
     }
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
@@ -401,8 +425,14 @@ TEST_P(fallback_scheduler_tester, failed_allocating_resources)
   const auto& test_ue = get_ue(to_du_ue_index(1));
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
-    ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
-    ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    // ConRes CE is sent beforehand hence DCI 1_0 scrambled with C-RNTI is used to send Msg4.
+    ASSERT_FALSE(pdcch_it != nullptr and pdcch_it->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0);
+    if (pdcch_it != nullptr) {
+      const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
+      // ConRes CE is sent beforehand hence Msg4 should consist only SDU with no ConRes MAC CE.
+      ASSERT_FALSE(pdsch_it != nullptr and pdsch_it->tb_list.back().lc_chs_to_sched.back().lcid.is_sdu());
+    }
   }
 }
 
@@ -416,19 +446,25 @@ TEST_P(fallback_scheduler_tester, test_large_srb0_buffer_size)
   const unsigned mac_srb0_sdu_size = 458;
   push_buffer_state_to_dl_ue(ue_idx, current_slot, mac_srb0_sdu_size, true);
 
-  const unsigned exp_size = get_pending_bytes(ue_idx);
+  const unsigned exp_size = get_srb0_pending_bytes(ue_idx);
 
   const auto& test_ue = get_ue(ue_idx);
   bool        is_ue_allocated_pdcch{false};
   bool        is_ue_allocated_pdsch{false};
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
-    if (ue_is_allocated_pdcch(test_ue)) {
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    // ConRes CE is sent beforehand hence DCI 1_0 scrambled with C-RNTI is used to send Msg4.
+    if (pdcch_it != nullptr and pdcch_it->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0) {
       is_ue_allocated_pdcch = true;
     }
-    if (ue_is_allocated_pdsch(test_ue)) {
-      is_ue_allocated_pdsch = true;
-      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+    if (is_ue_allocated_pdcch) {
+      const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
+      // ConRes CE is sent beforehand hence Msg4 should consist only SDU with no ConRes MAC CE.
+      if (pdsch_it != nullptr and pdsch_it->tb_list.back().lc_chs_to_sched.back().lcid.is_sdu()) {
+        is_ue_allocated_pdsch = true;
+        ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+      }
     }
   }
   ASSERT_TRUE(is_ue_allocated_pdcch);
@@ -450,8 +486,14 @@ TEST_P(fallback_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_i
   const auto& test_ue = get_ue(to_du_ue_index(0));
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
-    ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
-    ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+    const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);
+    // ConRes CE is sent beforehand hence DCI 1_0 scrambled with C-RNTI is used to send Msg4.
+    ASSERT_FALSE(pdcch_it != nullptr and pdcch_it->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0);
+    if (pdcch_it != nullptr) {
+      const dl_msg_alloc* pdsch_it = get_ue_allocated_pdsch(test_ue);
+      // ConRes CE is sent beforehand hence Msg4 should consist only SDU with no ConRes MAC CE.
+      ASSERT_FALSE(pdsch_it != nullptr and pdsch_it->tb_list.back().lc_chs_to_sched.back().lcid.is_sdu());
+    }
   }
 }
 
@@ -526,8 +568,8 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   const unsigned                k0                 = 0;
   const sch_mcs_index           max_msg4_mcs_index = 8;
   const tdd_ul_dl_config_common tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
-                                        .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
-                                                     .nof_dl_slots              = 2,
+                                        .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
+                                                     .nof_dl_slots              = 7,
                                                      .nof_dl_symbols            = 8,
                                                      .nof_ul_slots              = 2,
                                                      .nof_ul_symbols            = 0}};
@@ -540,7 +582,10 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
                                                       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common,
                                                       std::nullopt,
                                                       cell_cfg.tdd_ul_dl_cfg_common);
-  setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
+  // Set minimum k1 according to TDD pattern.
+  scheduler_expert_config expert_cfg = create_expert_config(max_msg4_mcs_index);
+  expert_cfg.ue.min_k1               = 2;
+  setup_sched(expert_cfg, cell_cfg);
 
   const unsigned MAX_TEST_RUN_SLOTS = 40;
   const unsigned MAC_SRB0_SDU_SIZE  = 129;
@@ -550,10 +595,11 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 
   for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
-    // Notify about SRB0 message in DL one slot before partial slot in order for it to be scheduled in the next
-    // (partial) slot.
-    if (bench->cell_cfg.is_dl_enabled(current_slot + 1) and
-        (not bench->cell_cfg.is_fully_dl_enabled(current_slot + 1))) {
+    // Notify about SRB0 message in DL two slots before partial slot in order for it to be scheduled in the next
+    // (partial) slot. The reason for two slots before partial slot is due to scheduling of ConRes CE separately from
+    // Msg4.
+    if (bench->cell_cfg.is_dl_enabled(current_slot + 2) and
+        (not bench->cell_cfg.is_fully_dl_enabled(current_slot + 2))) {
       push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, MAC_SRB0_SDU_SIZE, true);
     }
     // Check SRB0 allocation in partial slot.
@@ -570,6 +616,8 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
                          fallback_scheduler_tester,
                          testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
                                          srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
+
+TEST_RGEN_SET_SEED(3549504638);
 
 class fallback_scheduler_head_scheduling : public base_fallback_tester,
                                            public ::testing::TestWithParam<fallback_sched_test_params>
@@ -623,19 +671,30 @@ protected:
     } while (occupy_grid_slot_cnt != nof_slot_grid_occupancy);
 
     auto k1_falls_on_ul = [&cfg = bench->cell_cfg](slot_point pdsch_slot) {
-      static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
+      static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7};
       return std::any_of(dci_1_0_k1_values.begin(), dci_1_0_k1_values.end(), [&cfg, pdsch_slot](uint8_t k1) {
         return cfg.is_ul_enabled(pdsch_slot + k1);
       });
     };
 
-    // Make sure the final slot for the SRB0/SRB1 PDSCH is such that the corresponding PUCCH is in falls on a UL slot.
+    // Make sure the final slot for the SRB0/SRB1 PDSCH is such that the corresponding PUCCH falls on a UL slot.
     while ((not k1_falls_on_ul(sched_slot)) or (not bench->cell_cfg.is_dl_enabled(sched_slot)) or
            csi_helper::is_csi_rs_slot(bench->cell_cfg, sched_slot)) {
       sched_slot++;
     }
 
     return sched_slot;
+  }
+
+  void fill_resource_grid(slot_point sl, unsigned nof_slots, crb_interval crbs)
+  {
+    for (unsigned sl_inc = 0; sl_inc < nof_slots; ++sl_inc) {
+      if (bench->cell_cfg.is_dl_enabled(sl + sl_inc)) {
+        unsigned   nof_dl_symbols = bench->cell_cfg.get_nof_dl_symbol_per_slot(sl + sl_inc);
+        grant_info grant{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, {0, nof_dl_symbols}, crbs};
+        bench->res_grid[sl + sl_inc].dl_res_grid.fill(grant);
+      }
+    }
   }
 };
 
@@ -652,46 +711,40 @@ TEST_P(fallback_scheduler_head_scheduling, test_ahead_scheduling_for_srb_allocat
   auto& test_ue = get_ue(to_du_ue_index(du_idx));
 
   // The slots at which we generate traffic and the number of slots the grid is occupied are generated randomly.
-  slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
-  unsigned   nof_slots_grid_is_busy = generate_nof_slot_grid_occupancy();
-  slot_point candidate_srb_slot     = get_next_dl_slot(slot_update_srb_traffic);
-  slot_point check_alloc_slot       = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+  slot_point     slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
+  unsigned       nof_slots_grid_is_busy  = generate_nof_slot_grid_occupancy();
+  slot_point     candidate_srb_slot      = get_next_dl_slot(slot_update_srb_traffic);
+  slot_point     check_conres_alloc_slot = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+  const unsigned nof_slots_occupied_by_conres_alloc = 1;
+  slot_point     check_srb_alloc_slot =
+      get_next_candidate_alloc_slot(check_conres_alloc_slot, nof_slots_occupied_by_conres_alloc);
 
   for (unsigned idx = 1; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
-
-    if (current_slot != check_alloc_slot) {
+    // ConRes CE and Msg4 are scheduled in different slots.
+    if (current_slot != check_conres_alloc_slot and current_slot != check_srb_alloc_slot) {
       ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
       ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
-    } else {
+    } else if (current_slot == check_srb_alloc_slot) {
+      // Msg4 is scheduled after scheduling ConRes CE.
       ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
       ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
 
-      check_alloc_slot = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+      slot_update_srb_traffic = current_slot + generate_srb0_traffic_slot();
+      nof_slots_grid_is_busy  = generate_nof_slot_grid_occupancy();
+      candidate_srb_slot      = get_next_dl_slot(slot_update_srb_traffic);
+      check_conres_alloc_slot = get_next_candidate_alloc_slot(candidate_srb_slot, nof_slots_grid_is_busy);
+      check_srb_alloc_slot = get_next_candidate_alloc_slot(check_conres_alloc_slot, nof_slots_occupied_by_conres_alloc);
     }
 
     // Allocate buffer and occupy the grid to test the scheduler in advance scheduling.
     if (current_slot == slot_update_srb_traffic) {
       push_buffer_state_to_dl_ue(to_du_ue_index(du_idx), current_slot, MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
 
-      auto fill_bw_grant = grant_info{bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                                      ofdm_symbol_range{0, 14},
-                                      bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs};
-
-      slot_point occupy_grid_slot     = slot_update_srb_traffic;
-      unsigned   occupy_grid_slot_cnt = 0;
-      while (occupy_grid_slot_cnt < nof_slots_grid_is_busy) {
-        // Only set the grid busy in the DL slots.
-        if (bench->cell_cfg.is_dl_enabled(occupy_grid_slot)) {
-          bench->res_grid[occupy_grid_slot].dl_res_grid.fill(fill_bw_grant);
-          occupy_grid_slot_cnt++;
-        }
-        occupy_grid_slot++;
-      }
-
-      slot_update_srb_traffic = current_slot + generate_srb0_traffic_slot();
-      nof_slots_grid_is_busy  = generate_nof_slot_grid_occupancy();
-      candidate_srb_slot      = get_next_dl_slot(slot_update_srb_traffic);
+      // Mark resource grid as occupied.
+      fill_resource_grid(current_slot,
+                         check_conres_alloc_slot.to_uint() - current_slot.to_uint(),
+                         bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs);
     }
 
     // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
@@ -733,7 +786,7 @@ protected:
     explicit ue_retx_tester(const cell_configuration& cell_cfg_, ue& test_ue_, fallback_scheduler_retx* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
-      slot_update_srb_traffic = generate_srb1_next_update_delay();
+      slot_update_srb_traffic = parent->current_slot + generate_srb1_next_update_delay();
       nof_packet_to_tx        = parent->SRB_PACKETS_TOT_TX;
     }
 
@@ -743,17 +796,21 @@ protected:
           // Wait until the slot to update the SRB0 traffic.
         case ue_state::idle: {
           if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
-            // Notify about SRB0 message in DL.
+            // Notify about SRB0/SRB1 message in DL.
             parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, parent->MAC_SRB0_SDU_SIZE, GetParam().is_srb0);
             state = ue_state::waiting_for_tx;
           }
           break;
         }
-          // Wait until the UE transmits the PDSCH with SRB0 or SRB1.
+          // Wait until the UE transmits the PDSCH with SRB0/SRB1.
         case ue_state::waiting_for_tx: {
           for (harq_id_t h_id = to_harq_id(0); h_id != MAX_HARQ_ID;
                h_id           = to_harq_id(std::underlying_type_t<harq_id_t>(h_id) + 1)) {
-            if (test_ue.get_pcell().harqs.dl_harq(h_id).is_waiting_ack() == true) {
+            const auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+            // NOTE: Msg4 is scheduled with DCI 1_0 scrambled with C-RNTI since ConRes CE is already sent with DCI 1_0
+            // scrambled with TC-RNTI.
+            if (h_dl.is_waiting_ack() and
+                h_dl.last_alloc_params().dci_cfg_type == dci_dl_rnti_config_type::c_rnti_f1_0) {
               ongoing_h_id = h_id;
               break;
             }
@@ -772,7 +829,7 @@ protected:
           if (h_dl.slot_ack() == sl) {
             static constexpr double ack_probability = 0.5f;
             ack_outcome                             = test_rgen::bernoulli(ack_probability);
-            if (ack_outcome == true) {
+            if (ack_outcome) {
               ++successful_tx_cnt;
               state = ue_state::reset_harq;
             } else {
@@ -803,7 +860,7 @@ protected:
           // ack_harq_process() function.
         case ue_state::reset_harq: {
           // Notify about SRB0 message in DL.
-          slot_update_srb_traffic = sl.to_uint() + generate_srb1_next_update_delay();
+          slot_update_srb_traffic = sl + generate_srb1_next_update_delay();
           ongoing_h_id            = INVALID_HARQ_ID;
           state                   = ue_state::idle;
 
@@ -815,20 +872,25 @@ protected:
     void ack_harq_process(slot_point sl)
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
-      const unsigned   bit_index_1_harq_only = 0U;
+      const unsigned            bit_index_1_harq_only = 0U;
+      static constexpr unsigned tb_idx                = 0U;
       dl_harq_process* dl_harq = test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl, bit_index_1_harq_only);
       if (dl_harq != nullptr) {
-        srsran_assert(dl_harq->id == ongoing_h_id, "HARQ process mismatch");
-        static constexpr unsigned tb_idx = 0U;
-        dl_harq->ack_info(tb_idx, ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+        // Automatically ACK HARQ used for sending ConRes CE.
+        if (dl_harq->last_alloc_params().dci_cfg_type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
+          dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::ack, {});
+        } else {
+          srsran_assert(dl_harq->id == ongoing_h_id, "HARQ process mismatch");
+          dl_harq->ack_info(
+              tb_idx, ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+        }
       }
     }
 
-    slot_point generate_srb1_next_update_delay() const
+    unsigned generate_srb1_next_update_delay() const
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
-      return slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
-                        test_rgen::uniform_int(20U, 40U)};
+      return test_rgen::uniform_int(20U, 40U);
     }
 
     const cell_configuration& cell_cfg;
@@ -893,11 +955,10 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
                                          fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
 
-class fallback_scheduler_srb1_segmentation : public base_fallback_tester,
-                                             public ::testing::TestWithParam<fallback_sched_test_params>
+class fallback_scheduler_srb1_segmentation : public base_fallback_tester, public ::testing::TestWithParam<duplex_mode>
 {
 protected:
-  fallback_scheduler_srb1_segmentation() : base_fallback_tester(GetParam().duplx_mode)
+  fallback_scheduler_srb1_segmentation() : base_fallback_tester(GetParam())
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -915,7 +976,7 @@ protected:
                             fallback_scheduler_srb1_segmentation* parent_) :
       cell_cfg(cell_cfg_), test_ue(test_ue_), parent(parent_)
     {
-      slot_update_srb_traffic = generate_srb1_next_update_delay();
+      slot_update_srb_traffic = parent->current_slot + generate_srb1_next_update_delay();
       nof_packet_to_tx        = parent->SRB_PACKETS_TOT_TX;
       test_logger.set_level(srslog::basic_levels::debug);
 
@@ -931,7 +992,7 @@ protected:
       if (sl == slot_update_srb_traffic and nof_packet_to_tx > 0) {
         // Notify about SRB1 message in DL.
         pending_srb1_bytes = generate_srb1_buffer_size();
-        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
         latest_rlc_update_slot.emplace(sl);
         --nof_packet_to_tx;
         test_logger.debug("rnti={}, slot={}: pushing SRB1 traffic of {} bytes", test_ue.crnti, sl, pending_srb1_bytes);
@@ -939,26 +1000,33 @@ protected:
 
       // When all pending bytes have been transmitted, generate the slot for the next traffic generation.
       if (sl > slot_update_srb_traffic and pending_srb1_bytes == 0 and nof_packet_to_tx > 0) {
-        slot_update_srb_traffic = sl.to_uint() + generate_srb1_next_update_delay();
+        slot_update_srb_traffic = sl + generate_srb1_next_update_delay();
       }
 
       // Generate an RLC buffer update every time a HARQ process gets transmitted for the first time.
       for (uint8_t h_id_idx = 0; h_id_idx != std::underlying_type_t<harq_id_t>(MAX_HARQ_ID); ++h_id_idx) {
         harq_id_t h_id = to_harq_id(h_id_idx);
 
-        auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
+        dl_harq_process& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
+        // NOTE: Msg4 is scheduled with DCI 1_0 scrambled with C-RNTI since ConRes CE is already sent with DCI 1_0
+        // scrambled with TC-RNTI.
+        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl and
+            h_dl.last_alloc_params().dci_cfg_type == dci_dl_rnti_config_type::c_rnti_f1_0) {
           const unsigned tb_idx   = 0U;
           const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
                                         ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
                                         : 0U;
-          pending_srb1_bytes > tx_bytes ? pending_srb1_bytes -= tx_bytes : pending_srb1_bytes = 0U;
+          if (pending_srb1_bytes > tx_bytes) {
+            pending_srb1_bytes -= tx_bytes;
+          } else {
+            pending_srb1_bytes = 0U;
+          }
           test_logger.debug("rnti={}, slot={}: RLC buffer state update for h_id={} with {} bytes",
                             test_ue.crnti,
                             sl,
                             to_harq_id(h_dl.id),
                             pending_srb1_bytes);
-          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
           latest_rlc_update_slot.emplace(sl);
         }
       }
@@ -973,7 +1041,7 @@ protected:
                           test_ue.crnti,
                           sl,
                           pending_srb1_bytes);
-        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+        parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
         latest_rlc_update_slot.emplace(sl);
       }
     }
@@ -984,7 +1052,10 @@ protected:
         harq_id_t h_id = to_harq_id(h_id_idx);
 
         auto& h_dl = test_ue.get_pcell().harqs.dl_harq(h_id);
-        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl) {
+        // NOTE: Msg4 is scheduled with DCI 1_0 scrambled with C-RNTI since ConRes CE is already sent with DCI 1_0
+        // scrambled with TC-RNTI.
+        if (h_dl.is_waiting_ack() and h_dl.tb(0).nof_retxs == 0 and h_dl.slot_tx() == sl and
+            h_dl.last_alloc_params().dci_cfg_type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0) {
           const unsigned tb_idx   = 0U;
           const unsigned tx_bytes = h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes > MAX_MAC_SDU_SUBHEADER_SIZE
                                         ? h_dl.last_alloc_params().tb[tb_idx]->tbs_bytes - MAX_MAC_SDU_SUBHEADER_SIZE
@@ -995,7 +1066,7 @@ protected:
                             sl,
                             to_harq_id(h_dl.id),
                             pending_srb1_bytes);
-          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, GetParam().is_srb0);
+          parent->push_buffer_state_to_dl_ue(test_ue.ue_index, sl, pending_srb1_bytes, false);
         }
 
         // Check if any HARQ process with pending transmissions is re-set by the scheduler.
@@ -1026,21 +1097,27 @@ protected:
         static constexpr unsigned tb_idx          = 0U;
         static constexpr double   ack_probability = 0.5f;
         const bool                ack             = test_rgen::bernoulli(ack_probability);
-        dl_harq->ack_info(tb_idx, ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
-        test_logger.debug("Slot={}, rnti={}: acking process h_id={} with {}",
-                          sl,
-                          test_ue.crnti,
-                          to_harq_id(dl_harq->id),
-                          ack ? "ACK" : "NACK");
+        // Automatically ACK HARQ used for sending ConRes CE.
+        if (dl_harq->last_alloc_params().dci_cfg_type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
+          dl_harq->ack_info(tb_idx, mac_harq_ack_report_status::ack, {});
+          test_logger.debug(
+              "Slot={}, rnti={}: acking process h_id={} with {}", sl, test_ue.crnti, to_harq_id(dl_harq->id), "ACK");
+        } else {
+          dl_harq->ack_info(tb_idx, ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
+          test_logger.debug("Slot={}, rnti={}: acking process h_id={} with {}",
+                            sl,
+                            test_ue.crnti,
+                            to_harq_id(dl_harq->id),
+                            ack ? "ACK" : "NACK");
+        }
       }
     }
 
-    unsigned   generate_srb1_buffer_size() { return test_rgen::uniform_int(128U, parent->MAX_MAC_SRB0_SDU_SIZE); }
-    slot_point generate_srb1_next_update_delay() const
+    unsigned generate_srb1_buffer_size() { return test_rgen::uniform_int(128U, parent->MAX_MAC_SRB0_SDU_SIZE); }
+    unsigned generate_srb1_next_update_delay() const
     {
       // Generate a random number of slots to wait until the next SRB1 buffer update.
-      return slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
-                        test_rgen::uniform_int(20U, 40U)};
+      return test_rgen::uniform_int(20U, 40U);
     }
 
     const cell_configuration&             cell_cfg;
@@ -1060,7 +1137,7 @@ protected:
 
   const unsigned SRB_PACKETS_TOT_TX    = 10;
   const unsigned MAX_UES               = 10;
-  const unsigned MAX_TEST_RUN_SLOTS    = 100;
+  const unsigned MAX_TEST_RUN_SLOTS    = 200;
   const unsigned MAX_MAC_SRB0_SDU_SIZE = 1600;
 
   std::vector<ue_retx_tester> ues_testers;
@@ -1096,8 +1173,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 
 INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
                          fallback_scheduler_srb1_segmentation,
-                         testing::Values(fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::FDD},
-                                         fallback_sched_test_params{.is_srb0 = false, .duplx_mode = duplex_mode::TDD}));
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 /////// UL Scheduling tests ///////
 

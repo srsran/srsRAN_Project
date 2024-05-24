@@ -63,11 +63,7 @@ public:
   bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
 
   /// \brief Checks whether a ConRes CE is pending for transmission.
-  /// \remark ConRes CE is only sent when there is pending data for SRB0 or SRB1.
-  bool is_con_res_id_pending() const
-  {
-    return (pending_con_res_id and (has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1)));
-  }
+  bool is_con_res_id_pending() const { return pending_con_res_id; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
   bool has_pending_ces() const { return not pending_ces.empty(); }
