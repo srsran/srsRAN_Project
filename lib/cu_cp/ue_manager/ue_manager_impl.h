@@ -223,6 +223,15 @@ public:
   /// Stop UE activity.
   void stop();
 
+  /// \brief Remove the UE context with the given UE index.
+  /// \param[in] ue_index Index of the UE to be removed.
+  void remove_ue(ue_index_t ue_index);
+
+  /// \brief Get the UE index of the UE.
+  /// \param[in] pci The PCI of the cell the UE is/was connected to.
+  /// \param[in] c_rnti The RNTI of the UE.
+  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti);
+
   // common
 
   /// \brief Find the UE with the given UE index.
@@ -234,15 +243,6 @@ public:
   /// \return The CU-CP UE configuration.
   ue_configuration get_ue_config() override { return ue_config; }
 
-  /// \brief Get the UE index of the UE.
-  /// \param[in] pci The PCI of the cell the UE is/was connected to.
-  /// \param[in] c_rnti The RNTI of the UE.
-  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override;
-
-  /// \brief Remove the UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  void remove_ue(ue_index_t ue_index) override;
-
   /// \brief Get the number of UEs.
   /// \return Number of UEs.
   size_t get_nof_ues() const override { return ues.size(); }
@@ -250,7 +250,7 @@ public:
   // du_processor_ue_manager
 
   /// \brief Allocate resources for the UE in the CU-CP.
-  ///
+  /// \param[in] du_index Index of the DU the UE is connected to.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
   ue_index_t add_ue(du_index_t du_index) override;
 

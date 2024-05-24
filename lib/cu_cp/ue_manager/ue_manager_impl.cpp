@@ -31,23 +31,31 @@ void ue_manager::stop()
   ue_task_scheds.stop();
 }
 
-// generic_ue_manager
-
-common_ue* ue_manager::find_ue(ue_index_t ue_index)
+ue_index_t ue_manager::add_ue(du_index_t du_index)
 {
-  if (ues.find(ue_index) != ues.end()) {
-    return &ues.at(ue_index);
+  if (ues.size() == ue_config.max_nof_supported_ues) {
+    logger.warning("CU-CP UE creation Failed. Cause: Maximum number of UEs {} supported by the CU-CP has been reached",
+                   ue_config.max_nof_supported_ues);
+    return ue_index_t::invalid;
   }
-  return nullptr;
-}
 
-ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
-{
-  if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {
-    return pci_rnti_to_ue_index.at(std::make_tuple(pci, rnti));
+  ue_index_t new_ue_index = get_next_ue_index(du_index);
+  if (new_ue_index == ue_index_t::invalid) {
+    logger.warning("CU-CP UE creation Failed. Cause: No free UE index available");
+    return ue_index_t::invalid;
   }
-  logger.debug("UE index for pci={} and rnti={} not found", pci, rnti);
-  return ue_index_t::invalid;
+
+  // Create a dedicated task scheduler for the UE.
+  ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
+
+  // Create UE object
+  ues.emplace(std::piecewise_construct,
+              std::forward_as_tuple(new_ue_index),
+              std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
+
+  logger.info("ue={}: Created new CU-CP UE", new_ue_index);
+
+  return new_ue_index;
 }
 
 void ue_manager::remove_ue(ue_index_t ue_index)
@@ -81,34 +89,26 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   logger.debug("ue={}: Removed", ue_index);
 }
 
-// du_processor_ue_manager
-
-ue_index_t ue_manager::add_ue(du_index_t du_index)
+ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
 {
-  if (ues.size() == ue_config.max_nof_supported_ues) {
-    logger.warning("CU-CP UE creation Failed. Cause: Maximum number of UEs {} supported by the CU-CP has been reached",
-                   ue_config.max_nof_supported_ues);
-    return ue_index_t::invalid;
+  if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {
+    return pci_rnti_to_ue_index.at(std::make_tuple(pci, rnti));
   }
-
-  ue_index_t new_ue_index = get_next_ue_index(du_index);
-  if (new_ue_index == ue_index_t::invalid) {
-    logger.warning("CU-CP UE creation Failed. Cause: No free UE index available");
-    return ue_index_t::invalid;
-  }
-
-  // Create a dedicated task scheduler for the UE.
-  ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
-
-  // Create UE object
-  ues.emplace(std::piecewise_construct,
-              std::forward_as_tuple(new_ue_index),
-              std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
-
-  logger.info("ue={}: Created new CU-CP UE", new_ue_index);
-
-  return new_ue_index;
+  logger.debug("UE index for pci={} and rnti={} not found", pci, rnti);
+  return ue_index_t::invalid;
 }
+
+// common_ue_manager
+
+common_ue* ue_manager::find_ue(ue_index_t ue_index)
+{
+  if (ues.find(ue_index) != ues.end()) {
+    return &ues.at(ue_index);
+  }
+  return nullptr;
+}
+
+// du_processor_ue_manager
 
 du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {

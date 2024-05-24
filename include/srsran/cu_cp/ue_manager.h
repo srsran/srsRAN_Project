@@ -113,26 +113,14 @@ class common_ue_manager
 public:
   virtual ~common_ue_manager() = default;
 
-  /// \brief Find the UE with the given UE index.
-  /// \param[in] ue_index Index of the UE to be found.
-  /// \return Pointer to the UE if found, nullptr otherwise.
-  virtual common_ue* find_ue(ue_index_t ue_index) = 0;
-
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   virtual ue_configuration get_ue_config() = 0;
 
-  /// \brief Get the UE index of a UE by a given pci and rnti.
-  /// \param[in] pci The PCI of the cell the UE is/was connected to.
-  /// \param[in] c_rnti The RNTI of the UE.
-  virtual ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) = 0;
-
-  /// \brief Allocate and return the UE index of a new UE.
-  virtual ue_index_t add_ue(du_index_t du_index) = 0;
-
-  /// \brief Remove the UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
+  /// \brief Find the UE with the given UE index.
+  /// \param[in] ue_index Index of the UE to be found.
+  /// \return Pointer to the UE if found, nullptr otherwise.
+  virtual common_ue* find_ue(ue_index_t ue_index) = 0;
 
   /// \brief Get the number of UEs.
   /// \return Number of UEs.
@@ -140,10 +128,13 @@ public:
 };
 
 /// DU Processor UE manager interface.
-class du_processor_ue_manager : public common_ue_manager
+class du_processor_ue_manager : virtual public common_ue_manager
 {
 public:
   virtual ~du_processor_ue_manager() = default;
+
+  /// \brief Allocate and return the UE index of a new UE.
+  virtual ue_index_t add_ue(du_index_t du_index) = 0;
 
   /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE index
   /// was already setup, nulltpr is returned.
@@ -178,7 +169,7 @@ public:
 };
 
 /// NGAP UE manager interface.
-class ngap_ue_manager : public common_ue_manager
+class ngap_ue_manager : virtual public common_ue_manager
 {
 public:
   virtual ~ngap_ue_manager() = default;

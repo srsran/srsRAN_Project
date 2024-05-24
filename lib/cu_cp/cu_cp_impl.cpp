@@ -53,7 +53,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              rrc_du_cu_cp_notifier,
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
-  cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
+  cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, ue_mng, srslog::fetch_basic_logger("CU-CP")}),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
