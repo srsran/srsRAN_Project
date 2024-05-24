@@ -10,6 +10,7 @@ add_library(srsran_network
         transport_layer_address.cpp
         io_broker_factory.cpp
         io_broker_epoll.cpp
+        io_timer_source.cpp
         sctp_socket.cpp
         sockets.cpp)
 target_link_libraries(srsran_network srslog)
