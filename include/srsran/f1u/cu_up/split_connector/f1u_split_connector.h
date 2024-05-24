@@ -13,13 +13,43 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
 #include <unordered_map>
 
-namespace srsran {
+namespace srsran::srs_cu_up {
+
+class gtpu_tx_udp_gw_adapter : public gtpu_tunnel_common_tx_upper_layer_notifier
+{
+public:
+  /// \brief Interface for the GTP-U to pass PDUs to the IO gateway
+  /// \param sdu PDU to be transmitted.
+  void on_new_pdu(byte_buffer buf, const sockaddr_storage& addr) override { handler->handle_pdu(std::move(buf), addr); }
+
+  srs_cu_up::ngu_tnl_pdu_session* handler;
+};
+
+/// Adapter between Network Gateway (Data) and GTP-U demux
+class network_gateway_data_gtpu_demux_adapter : public srsran::network_gateway_data_notifier_with_src_addr
+{
+public:
+  network_gateway_data_gtpu_demux_adapter()           = default;
+  ~network_gateway_data_gtpu_demux_adapter() override = default;
+
+  void connect_gtpu_demux(gtpu_demux_rx_upper_layer_interface& gtpu_demux_) { gtpu_demux = &gtpu_demux_; }
+
+  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
+  {
+    srsran_assert(gtpu_demux != nullptr, "GTP-U handler must not be nullptr");
+    gtpu_demux->handle_pdu(std::move(pdu), src_addr);
+  }
+
+private:
+  gtpu_demux_rx_upper_layer_interface* gtpu_demux = nullptr;
+};
 
 /// \brief Object used to represent a bearer at the CU F1-U gateway
 /// On the co-located case this is done by connecting both entities directly.
@@ -41,8 +71,9 @@ public:
     cu_rx(cu_rx_),
     ul_exec(ul_exec_)
   {
-    gtpu_tunnel_nru_creation_message msg{};
-    tunnel = srsran::create_gtpu_tunnel_nru(msg);
+    gtpu_tunnel_nru_creation_message msg;
+    msg.tx_upper = &gtpu_network_adapter;
+    tunnel       = srsran::create_gtpu_tunnel_nru(msg);
   }
 
   ~f1u_split_gateway_cu_bearer() override { stop(); }
@@ -59,6 +90,7 @@ private:
   srs_cu_up::f1u_bearer_disconnector& disconnector;
   up_transport_layer_info             ul_tnl_info;
   std::unique_ptr<gtpu_tunnel_nru>    tunnel;
+  gtpu_tx_udp_gw_adapter              gtpu_network_adapter;
 
 public:
   /// Holds notifier that will point to NR-U bearer on the UL path
@@ -79,7 +111,10 @@ public:
 class f1u_split_connector final : public f1u_cu_up_gateway
 {
 public:
-  f1u_split_connector() : logger_cu(srslog::fetch_basic_logger("CU-F1-U")) {}
+  f1u_split_connector(ngu_gateway* udp_gw_) : logger_cu(srslog::fetch_basic_logger("CU-F1-U")), udp_gw(udp_gw_)
+  {
+    udp_gw->create(gw_data_gtpu_demux_adapter);
+  }
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
 
@@ -102,8 +137,10 @@ private:
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
 
-  srs_cu_up::ngu_tnl_pdu_session* udp_gw;
-  std::mutex                      map_mutex; // shared mutex for access to cu_map
+  network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
+  std::unique_ptr<gtpu_demux>             demux;
+  ngu_gateway*                            udp_gw;
+  std::mutex                              map_mutex; // shared mutex for access to cu_map
 };
 
-} // namespace srsran
+} // namespace srsran::srs_cu_up

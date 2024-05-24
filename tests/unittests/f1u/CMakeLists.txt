@@ -27,6 +27,7 @@ target_link_libraries(f1u_cu_up_split_connector_test
 srsgnb_app_f1u_cu_up_split_connector
 srsran_f1u_cu_up
 srsran_gtpu
+srsran_network
 srsran_support
 srslog
 gtest

@@ -14,6 +14,7 @@
 #include "srsran/ran/lcid.h"
 
 using namespace srsran;
+using namespace srs_cu_up;
 
 std::unique_ptr<f1u_cu_up_gateway_bearer>
 f1u_split_connector::create_cu_bearer(uint32_t                              ue_index,
@@ -31,7 +32,8 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
                 "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
                 ul_up_tnl_info);
   gtpu_tunnel_nru_creation_message msg{};
-  auto                             tunnel = srsran::create_gtpu_tunnel_nru(msg);
+  msg.tx_upper = {};
+  auto tunnel  = srsran::create_gtpu_tunnel_nru(msg);
   return nullptr;
 }
 
