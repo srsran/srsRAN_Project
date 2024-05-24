@@ -21,14 +21,17 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
                                  std::chrono::milliseconds tick_period_) :
   tick_sink(tick_sink_), broker(broker_), tick_period(tick_period_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
+  using namespace std::chrono;
+
   timer_fd = unique_fd{timerfd_create(CLOCK_REALTIME, 0)};
   if (not timer_fd.is_open()) {
     report_fatal_error_if_not("Failed to create timer source (errno={})", strerror(errno));
   }
 
-  struct itimerspec timerspec = {{0, 0},
-                                 {std::chrono::duration_cast<std::chrono::seconds>(tick_period).count(),
-                                  std::chrono::duration_cast<std::chrono::nanoseconds>(tick_period).count()}};
+  auto              tsecs     = duration_cast<seconds>(tick_period);
+  auto              tnsecs    = duration_cast<nanoseconds>(tick_period) - duration_cast<nanoseconds>(tsecs);
+  struct timespec   period    = {tsecs.count(), tnsecs.count()};
+  struct itimerspec timerspec = {period, period};
   timerfd_settime(timer_fd.value(), 0, &timerspec, nullptr);
 
   io_sub = broker.register_fd(
