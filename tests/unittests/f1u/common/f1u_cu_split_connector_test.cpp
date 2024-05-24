@@ -43,10 +43,6 @@ protected:
 
     ue_inactivity_timer = timers.create_timer();
 
-    // prepare F1-U DU bearer config
-    f1u_du_config.t_notify     = 10;
-    f1u_du_config.warn_on_drop = true;
-
     // prepare F1-U CU-UP bearer config
     f1u_cu_up_cfg.warn_on_drop = false;
   }
@@ -62,7 +58,6 @@ protected:
   timer_factory      timers;
   unique_timer       ue_inactivity_timer;
 
-  srs_du::f1u_config                   f1u_du_config;
   srs_cu_up::f1u_config                f1u_cu_up_cfg;
   std::unique_ptr<f1u_split_connector> f1u_conn;
   srslog::basic_logger&                logger        = srslog::fetch_basic_logger("TEST", false);

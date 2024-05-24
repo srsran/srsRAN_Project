@@ -13,7 +13,8 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
-#include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
+#include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
 #include <unordered_map>
@@ -40,47 +41,24 @@ public:
     cu_rx(cu_rx_),
     ul_exec(ul_exec_)
   {
+    gtpu_tunnel_nru_creation_message msg{};
+    tunnel = srsran::create_gtpu_tunnel_nru(msg);
   }
 
   ~f1u_split_gateway_cu_bearer() override { stop(); }
 
   void stop() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
 
-  void attach_du_handler(srs_du::f1u_du_gateway_bearer_rx_notifier& handler_,
-                         const up_transport_layer_info&             dl_tnl_info_)
-  {
-    handler = &handler_;
-    dl_tnl_info.emplace(dl_tnl_info_);
-  }
-
-  void detach_du_handler(const up_transport_layer_info& dl_tnl_info_)
-  {
-    if (dl_tnl_info == dl_tnl_info_) {
-      handler = nullptr;
-      dl_tnl_info.reset();
-    } else {
-      logger.log_info("Cannot dettach DU bearer, DL-FTEID does not match. F-TEID={}, requested F-TEID={}",
-                      dl_tnl_info,
-                      dl_tnl_info_);
-    }
-  }
-
-  /// This should be handle_sdu...
   void on_new_pdu(nru_dl_message msg) override
   {
-    if (handler == nullptr) {
-      logger.log_info("Cannot handle F1-U GW DL message. F1-U DU GW bearer does not exist.");
-      return;
-    }
-    logger.log_debug("Passing PDU to DU bearer. {}", dl_tnl_info);
-    handler->on_new_pdu(std::move(msg));
+    // TODO
   }
 
 private:
-  srs_cu_up::f1u_bearer_logger               logger;
-  srs_du::f1u_du_gateway_bearer_rx_notifier* handler = nullptr;
-  srs_cu_up::f1u_bearer_disconnector&        disconnector;
-  up_transport_layer_info                    ul_tnl_info;
+  srs_cu_up::f1u_bearer_logger        logger;
+  srs_cu_up::f1u_bearer_disconnector& disconnector;
+  up_transport_layer_info             ul_tnl_info;
+  std::unique_ptr<gtpu_tunnel_nru>    tunnel;
 
 public:
   /// Holds notifier that will point to NR-U bearer on the UL path
@@ -124,7 +102,8 @@ private:
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
 
-  std::mutex map_mutex; // shared mutex for access to cu_map
+  srs_cu_up::ngu_tnl_pdu_session* udp_gw;
+  std::mutex                      map_mutex; // shared mutex for access to cu_map
 };
 
 } // namespace srsran

@@ -29,7 +29,7 @@ namespace srs_cu_up {
 class ngu_tnl_pdu_session : public udp_network_gateway_data_handler, public network_gateway_data_notifier_with_src_addr
 {
 public:
-  virtual ~ngu_tnl_pdu_session() = default;
+  ~ngu_tnl_pdu_session() override = default;
 
   /// Get bind port currently being used by the NG-U TNL session for the reception of PDUs.
   /// \return If a UDP link is being used, returns the respective bind port. If the connection is local, it returns
