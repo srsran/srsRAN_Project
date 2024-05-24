@@ -144,6 +144,9 @@ protected:
   {
     bool ret = client.close();
     if (broker_trigger_required) {
+      // SCTP SHUTDOWN EVENT
+      trigger_broker();
+      // SCTP SHUTDOWN COMP
       trigger_broker();
     }
     return ret;
@@ -294,7 +297,8 @@ TEST_F(sctp_network_server_test,
   trigger_broker(); // Should handle packet receive
   ASSERT_EQ(assoc_factory.last_sdu, bytes);
   ASSERT_FALSE(assoc_factory.association_destroyed) << "Association Handler was destroyed too early";
-  trigger_broker(); // Should close connection
+  trigger_broker(); // SCTP_SHUTDOWN_EVENT
+  trigger_broker(); // SCTP_SHUTDOWN_COMP
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Association Handler was not destroyed";
 }
 
@@ -343,14 +347,12 @@ TEST_F(sctp_network_server_test, when_multiple_clients_connect_then_multiple_ass
   client2.close();
 
   // SCTP shutdown client 1
-  trigger_broker();
+  trigger_broker(); // < Client 1: SCTP SHUTDOWN EVENT
+  trigger_broker(); // < Client 1: SCTP SHUTDOWN COMP
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Client 1 shutdown was not processed";
   assoc_factory.association_destroyed = false;
-  // SCTP SHUTDOWN_COMP client 1
-  trigger_broker();
   // SCTP shutdown client 2
-  trigger_broker();
+  trigger_broker(); // < Client2: SCTP SHUTDOWN EVENT
+  trigger_broker(); // < Client2: SCTP SHUTDOWN COMP
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Client 2 shutdown was not processed";
-  // SCTP SHUTDOWN_COMP client 2
-  trigger_broker();
 }
