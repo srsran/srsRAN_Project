@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-        cu_up_executor_pool.cpp
+      cu_up_executor_pool.cpp
       cu_up_factory.cpp
       cu_up_impl.cpp
       ue_manager.cpp
@@ -18,7 +18,8 @@ set(SOURCES
 add_library(srsran_cu_up STATIC ${SOURCES})
 
 target_link_libraries(srsran_cu_up
-        srsran_e1ap
+        srsran_e1ap_common
+        srsran_e1ap_cu_up
         srsran_gtpu
         srsran_pdcp
         srsran_gateway

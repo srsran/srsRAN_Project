@@ -6,6 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(common)
-add_subdirectory(cu_cp)
-add_subdirectory(cu_up)
+add_library(srsran_e1ap_common e1ap_asn1_packer.cpp log_helpers.cpp)
+target_link_libraries(srsran_e1ap_common e1ap_asn1)

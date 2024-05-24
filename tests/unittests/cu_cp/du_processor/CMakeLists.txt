@@ -11,7 +11,6 @@ target_include_directories(du_processor_test_helpers PRIVATE ${CMAKE_SOURCE_DIR}
 target_link_libraries(du_processor_test_helpers
         cu_cp_test_helpers
         srsran_cu_cp
-        srsran_e1ap
         e1ap_test_helpers
         f1ap_test_helpers
         ngap_test_helpers
