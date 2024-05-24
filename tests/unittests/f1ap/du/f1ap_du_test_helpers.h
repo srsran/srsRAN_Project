@@ -19,7 +19,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"

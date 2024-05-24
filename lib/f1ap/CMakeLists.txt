@@ -9,3 +9,4 @@
 add_subdirectory(common)
 add_subdirectory(cu_cp)
 add_subdirectory(du)
+add_subdirectory(gateways)

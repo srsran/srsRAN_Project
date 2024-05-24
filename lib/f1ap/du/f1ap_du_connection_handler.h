@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/executors/task_executor.h"
 

@@ -21,7 +21,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 

@@ -10,7 +10,7 @@
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/f1ap/du/f1ap_du.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/pcap/dlt_pcap.h"

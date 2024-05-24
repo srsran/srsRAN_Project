@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "f1c_connection_client.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 
 namespace srsran {
@@ -19,8 +19,10 @@ class dlt_pcap;
 class io_broker;
 
 struct f1c_du_sctp_gateway_config {
+  /// SCTP configuration.
   sctp_network_connector_config sctp;
-  io_broker&                    broker;
+  /// IO broker responsible for handling SCTP Rx data and notifications.
+  io_broker& broker;
   /// PCAP writer for the F1AP messages.
   dlt_pcap& pcap;
 };

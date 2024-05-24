@@ -12,8 +12,8 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/f1ap/cu_cp/f1c_gateway_remote_server.h"
-#include "srsran/f1ap/du/f1c_gateway_remote_client.h"
+#include "srsran/f1ap/gateways/f1c_network_client_factory.h"
+#include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <future>
