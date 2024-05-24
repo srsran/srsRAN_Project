@@ -36,7 +36,7 @@ public:
                         f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
                         task_executor&                        ul_exec_,
                         srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
-    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info}),
+    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info_}),
     disconnector(disconnector_),
     ul_tnl_info(ul_tnl_info_),
     cu_rx(cu_rx_),

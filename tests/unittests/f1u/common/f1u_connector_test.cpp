@@ -169,24 +169,43 @@ void check_dl_path_disconnected(const byte_buffer&                       cu_buf,
   ASSERT_NE(du_rx.last_sdu, cu_not_exp); // Last SDU should not have changed
 }
 
+expected<nru_ul_message> make_nru_ul_message(const byte_buffer& du_buf)
+{
+  expected<byte_buffer> buf_cpy = du_buf.deep_copy();
+  if (buf_cpy.is_error()) {
+    return default_error_t{};
+  }
+
+  expected<byte_buffer_chain> du_chain_buf = byte_buffer_chain::create(std::move(buf_cpy.value()));
+  if (du_chain_buf.is_error()) {
+    return default_error_t{};
+  }
+
+  nru_ul_message msg = {};
+  msg.t_pdu          = std::move(du_chain_buf.value());
+  return msg;
+}
+
 // Helper function to check DU-> CU-UP path is disconnected
 void check_ul_path_disconnected(const byte_buffer&           du_buf,
                                 srs_du::f1u_tx_pdu_notifier* du_bearer,
                                 dummy_f1u_cu_up_rx_notifier& cu_rx)
 {
-  nru_ul_message sdu          = {};
-  auto           du_chain_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
-  sdu.t_pdu                   = std::move(du_chain_buf.value());
+  srslog::basic_logger&    logger = srslog::fetch_basic_logger("TEST", false);
+  expected<nru_ul_message> sdu    = make_nru_ul_message(du_buf);
+  ASSERT_FALSE(sdu.is_error());
 
-  nru_ul_message cu_not_exp    = {};
-  auto           du_chain_buf2 = byte_buffer_chain::create(du_buf.deep_copy().value());
-  cu_not_exp.t_pdu             = std::move(du_chain_buf2.value());
+  expected<nru_ul_message> cu_not_exp = make_nru_ul_message(du_buf);
+  ASSERT_FALSE(cu_not_exp.is_error());
 
-  ASSERT_NE(cu_rx.last_sdu, sdu); // Make sure last SDU is not equal to test SDU
-                                  // Test cannot be done acuratly if it is already the same.
+  // logger.info("Testing equallity last_sdu T-PDU = {}", *sdu.value().t_pdu->begin());
+  logger.info("Testing equallity last_sdu T-PDU = {}", cu_not_exp.value() == sdu.value());
 
-  du_bearer->on_new_pdu(std::move(sdu));
-  ASSERT_NE(cu_rx.last_sdu, cu_not_exp); // Last SDU should not have changed
+  ASSERT_NE(cu_rx.last_sdu, sdu.value()); // Make sure last SDU is not equal to test SDU
+                                          //   Test cannot be done acuratly if it is already the same.
+
+  du_bearer->on_new_pdu(std::move(sdu.value()));
+  ASSERT_NE(cu_rx.last_sdu, cu_not_exp.value()); // Last SDU should not have changed
 }
 
 /// Test the instantiation of a new entity
@@ -264,7 +283,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   cu_bearer.reset();
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("LMNO");
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -303,11 +322,11 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   cu_gw->disconnect_cu_bearer(ul_tnl);
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("LMNO");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
   check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("ONML");
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -345,7 +364,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
   du_bearer.reset();
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("LMNO");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 }
 
@@ -383,11 +402,11 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   du_gw->remove_du_bearer(dl_tnl);
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("LMNO");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
   check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("ONML");
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
