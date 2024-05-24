@@ -19,12 +19,16 @@ namespace srsran {
 class dlt_pcap;
 class io_broker;
 
-struct f1c_cu_gateway_params {
-  dlt_pcap&                           pcap;
-  io_broker&                          broker;
-  srsran::sctp_network_gateway_config sctp;
+/// Configuration of an SCTP-based F1-C Gateway.
+struct f1c_cu_sctp_gateway_config {
+  sctp_network_gateway_config sctp;
+  io_broker&                  broker;
+  /// PCAP writer for the F1AP messages.
+  dlt_pcap& pcap;
 };
 
-std::unique_ptr<srs_cu_cp::f1c_connection_server> create_f1c_gateway_server(const f1c_cu_gateway_params& params);
+/// Creates an F1-C Gateway server that listens for incoming SCTP connections, packs/unpacks F1AP PDUs and forwards
+/// them to the GW/CU-CP F1AP handler.
+std::unique_ptr<srs_cu_cp::f1c_connection_server> create_f1c_gateway_server(const f1c_cu_sctp_gateway_config& params);
 
 } // namespace srsran

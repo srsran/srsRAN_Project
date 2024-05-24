@@ -237,6 +237,9 @@ void sctp_network_server_impl::handle_notification(span<const uint8_t>          
         case SCTP_CANT_STR_ASSOC:
           handle_association_shutdown(n->sac_assoc_id, "Can't state association");
           break;
+        case SCTP_SHUTDOWN_COMP:
+          handle_sctp_shutdown_comp(n->sac_assoc_id);
+          break;
         default:
           break;
       }
@@ -310,6 +313,17 @@ void sctp_network_server_impl::handle_association_shutdown(int assoc_id, const c
                 assoc_it->first,
                 assoc_it->second.addr,
                 cause);
+  }
+}
+
+void sctp_network_server_impl::handle_sctp_shutdown_comp(int assoc_id)
+{
+  auto assoc_it = associations.find(assoc_id);
+  if (assoc_it == associations.end()) {
+    logger.error("fd={} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
+                 socket.fd().value(),
+                 assoc_id);
+    return;
   }
 
   // Remove association.

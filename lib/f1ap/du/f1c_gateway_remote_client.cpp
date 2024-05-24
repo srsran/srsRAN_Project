@@ -140,10 +140,10 @@ private:
   srslog::basic_logger&          logger;
 };
 
-class f1c_sctp_gateway_connector final : public srs_du::f1c_connection_client, public du_sctp_connection_controller
+class f1c_sctp_client final : public srs_du::f1c_connection_client, public du_sctp_connection_controller
 {
 public:
-  f1c_sctp_gateway_connector(const f1c_gateway_params& params) :
+  f1c_sctp_client(const f1c_du_sctp_gateway_config& params) :
     pcap_writer(params.pcap),
     broker(params.broker),
     sctp_params(params.sctp),
@@ -213,7 +213,7 @@ private:
 
 } // namespace
 
-std::unique_ptr<srs_du::f1c_connection_client> srsran::create_f1c_gateway_connector(const f1c_gateway_params& params)
+std::unique_ptr<srs_du::f1c_connection_client> srsran::create_f1c_gateway_client(const f1c_du_sctp_gateway_config& cfg)
 {
-  return std::make_unique<f1c_sctp_gateway_connector>(params);
+  return std::make_unique<f1c_sctp_client>(cfg);
 }

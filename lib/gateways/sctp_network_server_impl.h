@@ -74,6 +74,7 @@ private:
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
   void handle_association_shutdown(int assoc_id, const char* cause);
+  void handle_sctp_shutdown_comp(int assoc_id);
 
   /// Handle SCTP COMM UP event.
   void

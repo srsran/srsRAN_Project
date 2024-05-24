@@ -11,7 +11,9 @@
 #include "srsran/f1ap/cu_cp/f1c_gateway_remote_server.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
@@ -141,19 +143,22 @@ private:
 class f1c_sctp_server final : public srs_cu_cp::f1c_connection_server
 {
 public:
-  f1c_sctp_server(const f1c_cu_gateway_params& params_) : params(params_) {}
+  f1c_sctp_server(const f1c_cu_sctp_gateway_config& cfg_) : cfg(cfg_) {}
 
   void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_f1c_handler_) override { cu_f1c_handler = &cu_f1c_handler_; }
 
+  optional<uint16_t> get_listen_port() const override { return nullopt; }
+
 private:
-  const f1c_cu_gateway_params   params;
-  srslog::basic_logger&         logger         = srslog::fetch_basic_logger("CU-CP-F1");
-  srs_cu_cp::cu_cp_f1c_handler* cu_f1c_handler = nullptr;
+  const f1c_cu_sctp_gateway_config cfg;
+  srslog::basic_logger&            logger         = srslog::fetch_basic_logger("CU-CP-F1");
+  srs_cu_cp::cu_cp_f1c_handler*    cu_f1c_handler = nullptr;
 };
 
 } // namespace
 
-std::unique_ptr<srs_cu_cp::f1c_connection_server> srsran::create_f1c_gateway_server(const f1c_cu_gateway_params& params)
+std::unique_ptr<srs_cu_cp::f1c_connection_server>
+srsran::create_f1c_gateway_server(const f1c_cu_sctp_gateway_config& cfg)
 {
-  return std::make_unique<f1c_sctp_server>(params);
+  return std::make_unique<f1c_sctp_server>(cfg);
 }
