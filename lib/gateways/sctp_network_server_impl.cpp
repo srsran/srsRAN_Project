@@ -17,7 +17,7 @@ using namespace srsran;
 // the stream number to use for sending
 const unsigned stream_no = 0;
 
-class sctp_network_server_impl::sctp_send_notifier : public sctp_association_pdu_notifier
+class sctp_network_server_impl::sctp_send_notifier : public sctp_association_sdu_notifier
 {
 public:
   sctp_send_notifier(sctp_network_server_impl&                                parent,
@@ -34,21 +34,21 @@ public:
 
   ~sctp_send_notifier() override { close(); }
 
-  bool on_new_pdu(byte_buffer pdu) override
+  bool on_new_sdu(byte_buffer sdu) override
   {
     if (assoc_shutdown_flag->load(std::memory_order_relaxed)) {
       // It has already been released.
       return false;
     }
-    if (pdu.length() > network_gateway_sctp_max_len) {
-      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), network_gateway_sctp_max_len);
+    if (sdu.length() > network_gateway_sctp_max_len) {
+      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", sdu.length(), network_gateway_sctp_max_len);
       return false;
     }
-    logger.debug("assoc={}: Sending PDU of {} bytes", assoc_id, pdu.length());
+    logger.debug("assoc={}: Sending PDU of {} bytes", assoc_id, sdu.length());
 
     // Note: each sender needs its own buffer to avoid race conditions with the recv.
     std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
-    span<const uint8_t>                               pdu_span = to_span(pdu, temp_send_buffer);
+    span<const uint8_t>                               pdu_span = to_span(sdu, temp_send_buffer);
 
     auto dest_addr  = client_addr.native();
     int  bytes_sent = sctp_sendmsg(fd,
@@ -209,7 +209,7 @@ void sctp_network_server_impl::handle_data(int assoc_id, span<const uint8_t> pay
   logger.debug("fd={} assoc={}: Received {} bytes", socket.fd().value(), assoc_id, payload.size());
 
   // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
-  assoc_it->second.sctp_data_recv_notifier->on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
+  assoc_it->second.sctp_data_recv_notifier->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
 void sctp_network_server_impl::handle_notification(span<const uint8_t>           payload,

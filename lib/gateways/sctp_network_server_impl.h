@@ -51,7 +51,7 @@ private:
     transport_layer_address            addr;
     std::shared_ptr<std::atomic<bool>> association_shutdown_received;
 
-    std::unique_ptr<sctp_association_pdu_notifier> sctp_data_recv_notifier;
+    std::unique_ptr<sctp_association_sdu_notifier> sctp_data_recv_notifier;
 
     sctp_associaton_context(int assoc_id);
   };

@@ -33,11 +33,11 @@ public:
   create(const std::string& client_name, const sctp_network_gateway_config& sctp_cfg, io_broker& broker);
 
   /// Connect to an SCTP server with the provided address.
-  std::unique_ptr<sctp_association_pdu_notifier>
+  std::unique_ptr<sctp_association_sdu_notifier>
   connect_to(const std::string&                             connection_name,
              const std::string&                             dest_addr,
              int                                            dest_port,
-             std::unique_ptr<sctp_association_pdu_notifier> recv_handler) override;
+             std::unique_ptr<sctp_association_sdu_notifier> recv_handler) override;
 
   int get_socket_fd() const override { return socket.fd().value(); }
 
@@ -60,7 +60,7 @@ private:
   // Temporary buffer where read data is saved.
   std::vector<uint8_t> temp_recv_buffer;
 
-  std::unique_ptr<sctp_association_pdu_notifier> recv_handler;
+  std::unique_ptr<sctp_association_sdu_notifier> recv_handler;
 
   // Shared state between client a notifier.
   std::shared_ptr<std::atomic<bool>> shutdown_received;

@@ -17,7 +17,7 @@ using namespace srsran;
 // the stream number to use for sending
 const unsigned stream_no = 0;
 
-class sctp_network_client_impl::sctp_send_notifier final : public sctp_association_pdu_notifier
+class sctp_network_client_impl::sctp_send_notifier final : public sctp_association_sdu_notifier
 {
 public:
   sctp_send_notifier(sctp_network_client_impl& parent_, const transport_layer_address& server_addr_) :
@@ -31,22 +31,22 @@ public:
   }
   ~sctp_send_notifier() override { close(); }
 
-  bool on_new_pdu(byte_buffer pdu) override
+  bool on_new_sdu(byte_buffer sdu) override
   {
     if (closed_flag->load(std::memory_order_relaxed)) {
       // Already closed.
       return false;
     }
 
-    if (pdu.length() > network_gateway_sctp_max_len) {
-      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", pdu.length(), network_gateway_sctp_max_len);
+    if (sdu.length() > network_gateway_sctp_max_len) {
+      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", sdu.length(), network_gateway_sctp_max_len);
       return false;
     }
-    logger.debug("Sending PDU of {} bytes", pdu.length());
+    logger.debug("Sending PDU of {} bytes", sdu.length());
 
     // Note: each sender needs its own buffer to avoid race conditions with the recv.
     std::array<uint8_t, network_gateway_sctp_max_len> temp_send_buffer;
-    span<const uint8_t>                               pdu_span = to_span(pdu, temp_send_buffer);
+    span<const uint8_t>                               pdu_span = to_span(sdu, temp_send_buffer);
 
     auto dest_addr  = server_addr.native();
     int  bytes_sent = sctp_sendmsg(fd,
@@ -146,11 +146,11 @@ sctp_network_client_impl::~sctp_network_client_impl()
   logger.info("{}: SCTP client closed", client_name);
 }
 
-std::unique_ptr<sctp_association_pdu_notifier>
+std::unique_ptr<sctp_association_sdu_notifier>
 sctp_network_client_impl::connect_to(const std::string&                             connection_name,
                                      const std::string&                             dest_addr,
                                      int                                            dest_port,
-                                     std::unique_ptr<sctp_association_pdu_notifier> recv_handler_)
+                                     std::unique_ptr<sctp_association_sdu_notifier> recv_handler_)
 {
   if (shutdown_received != nullptr and not shutdown_received->load(std::memory_order_relaxed)) {
     // If this is not the first connection.
@@ -320,7 +320,7 @@ void sctp_network_client_impl::handle_data(span<const uint8_t> payload)
   logger.debug("{}: Received {} bytes", client_name, payload.size());
 
   // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
-  recv_handler->on_new_pdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
+  recv_handler->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
 }
 
 void sctp_network_client_impl::handle_notification(span<const uint8_t>           payload,

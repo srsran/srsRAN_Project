@@ -22,8 +22,8 @@ public:
   virtual ~sctp_network_association_factory() = default;
 
   /// Called on every SCTP association notification, to create a new SCTP association handler.
-  virtual std::unique_ptr<sctp_association_pdu_notifier>
-  create(std::unique_ptr<sctp_association_pdu_notifier> sctp_send_notifier) = 0;
+  virtual std::unique_ptr<sctp_association_sdu_notifier>
+  create(std::unique_ptr<sctp_association_sdu_notifier> sctp_send_notifier) = 0;
 };
 
 /// SCTP network server interface, which will handle requests to start new SCTP associations.

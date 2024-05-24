@@ -75,17 +75,17 @@ protected:
   struct server_assoc_handler_factory : public sctp_network_association_factory {
     server_assoc_handler_factory(base_sctp_network_link_test& parent_) : parent(parent_) {}
 
-    std::unique_ptr<sctp_association_pdu_notifier>
-    create(std::unique_ptr<sctp_association_pdu_notifier> sctp_send_notifier) override
+    std::unique_ptr<sctp_association_sdu_notifier>
+    create(std::unique_ptr<sctp_association_sdu_notifier> sctp_send_notifier) override
     {
       // Note: Called from within io_broker execution context.
 
-      class server_recv_notifier : public sctp_association_pdu_notifier
+      class server_recv_notifier : public sctp_association_sdu_notifier
       {
       public:
         server_recv_notifier(sctp_server_association_context& parent_) : parent(parent_) {}
 
-        bool on_new_pdu(byte_buffer pdu) override { return parent.recv_data.try_push(std::move(pdu)); }
+        bool on_new_sdu(byte_buffer sdu) override { return parent.recv_data.try_push(std::move(sdu)); }
 
       private:
         sctp_server_association_context& parent;
@@ -119,7 +119,7 @@ protected:
         recv_data{1024};
 
     std::unique_ptr<sctp_network_client>           client;
-    std::unique_ptr<sctp_association_pdu_notifier> client_sender;
+    std::unique_ptr<sctp_association_sdu_notifier> client_sender;
   };
 
   struct sctp_server_association_context {
@@ -129,17 +129,17 @@ protected:
                      concurrent_queue_wait_policy::condition_variable>
         recv_data{1024};
 
-    std::unique_ptr<sctp_association_pdu_notifier> server_sender;
+    std::unique_ptr<sctp_association_sdu_notifier> server_sender;
   };
 
-  std::unique_ptr<sctp_association_pdu_notifier> create_client_receiver(unsigned key)
+  std::unique_ptr<sctp_association_sdu_notifier> create_client_receiver(unsigned key)
   {
-    class client_recv_notifier : public sctp_association_pdu_notifier
+    class client_recv_notifier : public sctp_association_sdu_notifier
     {
     public:
       client_recv_notifier(sctp_client_association_context& parent_) : parent(parent_) {}
 
-      bool on_new_pdu(byte_buffer pdu) override { return parent.recv_data.try_push(std::move(pdu)); }
+      bool on_new_sdu(byte_buffer sdu) override { return parent.recv_data.try_push(std::move(sdu)); }
 
     private:
       sctp_client_association_context& parent;
@@ -199,7 +199,7 @@ TEST_P(sctp_network_link_test, multi_client_recv_data)
   unsigned i = 0;
   for (auto& assoc : server_associations) {
     byte_buffer pdu = create_data(i * pdu_len, pdu_len);
-    ASSERT_TRUE(assoc.second->server_sender->on_new_pdu(std::move(pdu)));
+    ASSERT_TRUE(assoc.second->server_sender->on_new_sdu(std::move(pdu)));
   }
 
   // Check data received by client.
@@ -218,7 +218,7 @@ TEST_P(sctp_network_link_test, multi_client_send_data)
   unsigned i = 0;
   for (auto& assoc : client_associations) {
     byte_buffer pdu = create_data(i * pdu_len, pdu_len);
-    ASSERT_TRUE(assoc.second->client_sender->on_new_pdu(std::move(pdu)));
+    ASSERT_TRUE(assoc.second->client_sender->on_new_sdu(std::move(pdu)));
   }
 
   // Check data received by each server association.

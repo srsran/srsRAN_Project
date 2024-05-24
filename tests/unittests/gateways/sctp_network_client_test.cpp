@@ -21,17 +21,17 @@ class sctp_recv_notifier_factory
 {
 public:
   bool        destroyed = false;
-  byte_buffer last_pdu;
+  byte_buffer last_sdu;
 
-  class dummy_sctp_recv_notifier : public sctp_association_pdu_notifier
+  class dummy_sctp_recv_notifier : public sctp_association_sdu_notifier
   {
   public:
     dummy_sctp_recv_notifier(sctp_recv_notifier_factory& parent_) : parent(parent_) {}
     ~dummy_sctp_recv_notifier() { parent.destroyed = true; }
 
-    bool on_new_pdu(byte_buffer pdu) override
+    bool on_new_sdu(byte_buffer sdu) override
     {
-      parent.last_pdu = std::move(pdu);
+      parent.last_sdu = std::move(sdu);
       return true;
     }
 
@@ -39,7 +39,7 @@ public:
     sctp_recv_notifier_factory& parent;
   };
 
-  std::unique_ptr<sctp_association_pdu_notifier> create() { return std::make_unique<dummy_sctp_recv_notifier>(*this); }
+  std::unique_ptr<sctp_association_sdu_notifier> create() { return std::make_unique<dummy_sctp_recv_notifier>(*this); }
 };
 
 class dummy_sctp_server : public dummy_sctp_node
@@ -93,7 +93,7 @@ public:
 
   bool send_data(const std::vector<uint8_t>& data)
   {
-    return client_sender->on_new_pdu(byte_buffer::create(data).value());
+    return client_sender->on_new_sdu(byte_buffer::create(data).value());
   }
 
 protected:
@@ -106,7 +106,7 @@ protected:
 
   std::unique_ptr<sctp_network_client> client;
 
-  std::unique_ptr<sctp_association_pdu_notifier> client_sender;
+  std::unique_ptr<sctp_association_sdu_notifier> client_sender;
 };
 
 TEST_F(sctp_network_client_test, when_bind_address_is_valid_then_client_is_created_successfully)
@@ -221,9 +221,9 @@ TEST_F(sctp_network_client_test, when_server_sends_data_then_client_receives_it)
                                server_recv->msg_src_addrlen));
 
   // Client receives data.
-  ASSERT_TRUE(recv_notifier_factory.last_pdu.empty());
+  ASSERT_TRUE(recv_notifier_factory.last_sdu.empty());
   trigger_broker();
-  ASSERT_EQ(recv_notifier_factory.last_pdu, sent_data);
+  ASSERT_EQ(recv_notifier_factory.last_sdu, sent_data);
 }
 
 TEST_F(sctp_network_client_test, when_client_sender_is_destroyed_then_client_sends_eof)

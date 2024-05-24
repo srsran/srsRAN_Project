@@ -14,15 +14,15 @@
 
 namespace srsran {
 
-/// Unidirectional notifier of PDUs for a given SCTP association.
-class sctp_association_pdu_notifier
+/// Unidirectional notifier of SDUs for a given SCTP association.
+class sctp_association_sdu_notifier
 {
 public:
-  virtual ~sctp_association_pdu_notifier() = default;
+  virtual ~sctp_association_sdu_notifier() = default;
 
-  /// Forward a PDU.
-  /// \return True if the PDU was successfully forwarded, false otherwise.
-  virtual bool on_new_pdu(byte_buffer pdu) = 0;
+  /// Forward a SDU.
+  /// \return True if the SDU was successfully forwarded, false otherwise.
+  virtual bool on_new_sdu(byte_buffer pdu) = 0;
 };
 
 class sctp_network_gateway_info
@@ -41,11 +41,11 @@ public:
   virtual ~sctp_network_client() = default;
 
   /// \brief Connect to remote SCTP server.
-  [[nodiscard]] virtual std::unique_ptr<sctp_association_pdu_notifier>
+  [[nodiscard]] virtual std::unique_ptr<sctp_association_sdu_notifier>
   connect_to(const std::string&                             connection_name,
              const std::string&                             dest_addr,
              int                                            dest_port,
-             std::unique_ptr<sctp_association_pdu_notifier> recv_handler) = 0;
+             std::unique_ptr<sctp_association_sdu_notifier> recv_handler) = 0;
 };
 
 } // namespace srsran

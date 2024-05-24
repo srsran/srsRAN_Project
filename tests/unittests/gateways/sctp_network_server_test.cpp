@@ -21,12 +21,12 @@ namespace {
 class association_factory : public sctp_network_association_factory
 {
 public:
-  byte_buffer last_pdu;
+  byte_buffer last_sdu;
 
-  class dummy_sctp_recv_notifier : public sctp_association_pdu_notifier
+  class dummy_sctp_recv_notifier : public sctp_association_sdu_notifier
   {
   public:
-    dummy_sctp_recv_notifier(association_factory& parent_, sctp_association_pdu_notifier* send_notifier_) :
+    dummy_sctp_recv_notifier(association_factory& parent_, sctp_association_sdu_notifier* send_notifier_) :
       parent(parent_), send_notifier(send_notifier_)
     {
     }
@@ -41,23 +41,23 @@ public:
       parent.association_destroyed = true;
     }
 
-    bool on_new_pdu(byte_buffer pdu) override
+    bool on_new_sdu(byte_buffer sdu) override
     {
-      parent.last_pdu = std::move(pdu);
+      parent.last_sdu = std::move(sdu);
       return true;
     }
 
   private:
     association_factory&           parent;
-    sctp_association_pdu_notifier* send_notifier;
+    sctp_association_sdu_notifier* send_notifier;
   };
 
-  std::vector<std::unique_ptr<sctp_association_pdu_notifier>> association_senders;
+  std::vector<std::unique_ptr<sctp_association_sdu_notifier>> association_senders;
   bool                                                        association_created   = false;
   bool                                                        association_destroyed = false;
 
-  std::unique_ptr<sctp_association_pdu_notifier>
-  create(std::unique_ptr<sctp_association_pdu_notifier> send_notifier) override
+  std::unique_ptr<sctp_association_sdu_notifier>
+  create(std::unique_ptr<sctp_association_sdu_notifier> send_notifier) override
   {
     association_created = true;
     association_senders.push_back(std::move(send_notifier));
@@ -270,12 +270,12 @@ TEST_F(sctp_network_server_test, when_client_sends_sctp_message_then_message_is_
   ASSERT_TRUE(server->listen());
   ASSERT_TRUE(connect_client());
 
-  ASSERT_EQ(assoc_factory.last_pdu.length(), 0);
+  ASSERT_EQ(assoc_factory.last_sdu.length(), 0);
   std::vector<uint8_t> bytes = {0x01, 0x02, 0x03, 0x04};
   ASSERT_TRUE(send_data(bytes));
 
   // Ensure SCTP server forwarded the message to the association handler.
-  ASSERT_EQ(assoc_factory.last_pdu, bytes);
+  ASSERT_EQ(assoc_factory.last_sdu, bytes);
 }
 
 TEST_F(sctp_network_server_test,
@@ -289,9 +289,9 @@ TEST_F(sctp_network_server_test,
   ASSERT_TRUE(send_data(bytes, false));
   ASSERT_TRUE(close_client(false));
 
-  ASSERT_EQ(assoc_factory.last_pdu.length(), 0);
+  ASSERT_EQ(assoc_factory.last_sdu.length(), 0);
   trigger_broker(); // Should handle packet receive
-  ASSERT_EQ(assoc_factory.last_pdu, bytes);
+  ASSERT_EQ(assoc_factory.last_sdu, bytes);
   ASSERT_FALSE(assoc_factory.association_destroyed) << "Association Handler was destroyed too early";
   trigger_broker(); // Should close connection
   ASSERT_TRUE(assoc_factory.association_destroyed) << "Association Handler was not destroyed";
