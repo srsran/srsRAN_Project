@@ -30,7 +30,7 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&              up_resource_mng_,
                          const rrc_cell_context            cell_,
                          const rrc_ue_cfg_t&               cfg_,
                          const byte_buffer                 du_to_cu_container_,
-                         rrc_ue_task_scheduler&            task_sched_,
+                         ue_task_scheduler&                task_sched_,
                          optional<rrc_ue_transfer_context> rrc_context) :
   context(ue_index_, c_rnti_, cell_, cfg_, rrc_context),
   up_resource_mng(up_resource_mng_),

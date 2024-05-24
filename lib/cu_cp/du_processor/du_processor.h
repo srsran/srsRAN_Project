@@ -249,27 +249,6 @@ public:
   on_new_pdu_session_resource_setup_request(f1ap_ue_context_modification_request& msg) = 0;
 };
 
-/// \brief Schedules asynchronous tasks associated with an UE.
-class du_processor_ue_task_scheduler
-{
-public:
-  virtual ~du_processor_ue_task_scheduler()                                              = default;
-  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
-  virtual void           clear_pending_tasks(ue_index_t ue_index)                        = 0;
-  virtual unique_timer   make_unique_timer()                                             = 0;
-  virtual timer_manager& get_timer_manager()                                             = 0;
-};
-
-/// \brief Handles incoming task scheduling requests associated with an UE.
-class du_processor_ue_task_handler
-{
-public:
-  virtual ~du_processor_ue_task_handler()                                                   = default;
-  virtual void           handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                                = 0;
-  virtual timer_manager& get_timer_manager()                                                = 0;
-};
-
 /// Methods used by DU processor to notify about DU specific events.
 class du_processor_cu_cp_notifier
 {
@@ -353,7 +332,6 @@ public:
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
   virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
-  virtual du_processor_ue_task_handler&    get_ue_task_handler()    = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
   virtual du_processor_statistics_handler& get_statistics_handler() = 0;
   virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;

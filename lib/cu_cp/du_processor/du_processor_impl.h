@@ -31,7 +31,6 @@ class du_processor_impl : public du_processor,
                           public du_metrics_handler,
                           public du_processor_f1ap_interface,
                           public du_processor_ngap_interface,
-                          public du_processor_ue_task_handler,
                           public du_processor_paging_handler,
                           public du_processor_statistics_handler,
                           public du_processor_mobility_handler
@@ -44,8 +43,8 @@ public:
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                     common_task_scheduler&              common_task_sched_,
-                    du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
+                    timer_manager&                      timers_,
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
@@ -78,19 +77,10 @@ public:
   bool has_cell(pci_t pci) override;
   bool has_cell(nr_cell_global_id_t cgi) override;
 
-  void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
-  {
-    task_sched.schedule_async_task(ue_index, std::move(task));
-  }
-
   metrics_report::du_info handle_du_metrics_report_request() const override;
-
-  unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
-  timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
   du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
   du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
-  du_processor_ue_task_handler&          get_ue_task_handler() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
   du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
@@ -133,7 +123,6 @@ private:
   f1ap_message_notifier&               f1ap_pdu_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
-  du_processor_ue_task_scheduler&      task_sched;
   du_processor_ue_manager&             ue_manager;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;

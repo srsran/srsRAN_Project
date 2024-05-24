@@ -13,7 +13,6 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
-#include "../ue_manager/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
@@ -22,41 +21,6 @@
 
 namespace srsran {
 namespace srs_cu_cp {
-
-/// Adapter between DU processor and CU-CP task scheduler
-class du_processor_to_cu_cp_task_scheduler : public du_processor_ue_task_scheduler
-{
-public:
-  du_processor_to_cu_cp_task_scheduler() {}
-
-  void connect_cu_cp(ue_task_scheduler_manager& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
-
-  void schedule_async_task(ue_index_t ue_index, async_task<void> task) override
-  {
-    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
-  }
-
-  void clear_pending_tasks(ue_index_t ue_index) override
-  {
-    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    cu_cp_task_sched->clear_pending_tasks(ue_index);
-  }
-
-  unique_timer make_unique_timer() override
-  {
-    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    return cu_cp_task_sched->make_unique_timer();
-  }
-  timer_manager& get_timer_manager() override
-  {
-    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    return cu_cp_task_sched->get_timer_manager();
-  }
-
-private:
-  ue_task_scheduler_manager* cu_cp_task_sched = nullptr;
-};
 
 /// Adapter between DU processor and CU-CP
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier

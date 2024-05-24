@@ -8,7 +8,7 @@
  *
  */
 
-#include "ue_task_scheduler.h"
+#include "ue_task_scheduler_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
@@ -17,23 +17,23 @@ using namespace srs_cu_cp;
 /// Maximum number of pending procedures per UE.
 static const size_t number_of_pending_ue_procedures = 64;
 
-unique_timer ue_task_scheduler::create_timer()
+unique_timer ue_task_scheduler_impl::create_timer()
 {
   srsran_assert(parent != nullptr, "UE task scheduler not set");
   return parent->make_unique_timer();
 }
 
-timer_factory ue_task_scheduler::get_timer_factory()
+timer_factory ue_task_scheduler_impl::get_timer_factory()
 {
   return timer_factory{parent->timers, parent->exec};
 }
 
-task_executor& ue_task_scheduler::get_executor()
+task_executor& ue_task_scheduler_impl::get_executor()
 {
   return parent->exec;
 }
 
-void ue_task_scheduler::stop()
+void ue_task_scheduler_impl::stop()
 {
   if (parent != nullptr) {
     parent->rem_ue_task_loop(ue_sched->first);
@@ -58,14 +58,14 @@ void ue_task_scheduler_manager::stop()
   ues_to_rem.request_stop();
 }
 
-ue_task_scheduler ue_task_scheduler_manager::create_ue_task_sched(ue_index_t ue_idx)
+ue_task_scheduler_impl ue_task_scheduler_manager::create_ue_task_sched(ue_index_t ue_idx)
 {
   if (ue_ctrl_loop.find(ue_idx) != ue_ctrl_loop.end()) {
     logger.error("ue={}: UE task scheduler already exists", ue_idx);
     return {};
   }
   auto ret = ue_ctrl_loop.emplace(ue_idx, std::make_unique<fifo_async_task_scheduler>(number_of_pending_ue_procedures));
-  return ue_task_scheduler{*this, *ret.first};
+  return ue_task_scheduler_impl{*this, *ret.first};
 }
 
 void ue_task_scheduler_manager::clear_pending_tasks(ue_index_t ue_index)

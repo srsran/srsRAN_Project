@@ -35,7 +35,6 @@ struct du_repository_config {
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
   common_task_scheduler&                 common_task_sched;
-  du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;

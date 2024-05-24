@@ -50,8 +50,8 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                          cfg.ue_ngap_ctrl_notifier,
                                                          cfg.meas_config_notifier,
                                                          cfg.common_task_sched,
-                                                         cfg.ue_task_sched,
                                                          cfg.ue_manager,
+                                                         *cfg.cu_cp.timers,
                                                          *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");

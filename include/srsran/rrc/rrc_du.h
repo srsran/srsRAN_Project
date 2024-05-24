@@ -13,6 +13,7 @@
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ran/band_helper.h"
 
 namespace srsran {
@@ -40,7 +41,7 @@ struct rrc_ue_creation_message {
   rrc_ue_context_update_notifier*   rrc_ue_cu_cp_notifier;
   rrc_ue_measurement_notifier*      measurement_notifier;
   byte_buffer                       du_to_cu_container;
-  rrc_ue_task_scheduler*            ue_task_sched;
+  ue_task_scheduler*                ue_task_sched;
   optional<rrc_ue_transfer_context> rrc_context;
 };
 

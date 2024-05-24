@@ -35,19 +35,19 @@ using namespace srs_cu_cp;
 ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
                      ngap_cu_cp_notifier&               cu_cp_notifier_,
                      ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
-                     ngap_ue_task_scheduler&            task_sched_,
                      ngap_ue_manager&                   ue_manager_,
                      ngap_message_notifier&             ngap_notifier_,
+                     timer_manager&                     timers_,
                      task_executor&                     ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ue_ctxt_list(logger),
   cu_cp_notifier(cu_cp_notifier_),
   cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
-  task_sched(task_sched_),
   ue_manager(ue_manager_),
   tx_pdu_notifier(*this, ngap_notifier_),
+  timers(timers_),
   ctrl_exec(ctrl_exec_),
-  ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
+  ev_mng(timer_factory{timers, ctrl_exec})
 {
   context.gnb_id                    = ngap_cfg_.gnb_id;
   context.ran_node_name             = ngap_cfg_.ran_node_name;
@@ -92,13 +92,8 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_n
   auto& ng_setup_request = ngap_msg.pdu.init_msg().value.ng_setup_request();
   fill_asn1_ng_setup_request(ng_setup_request, request);
 
-  return launch_async<ng_setup_procedure>(context,
-                                          ngap_msg,
-                                          request.max_setup_retries,
-                                          tx_pdu_notifier,
-                                          ev_mng,
-                                          timer_factory{task_sched.get_timer_manager(), ctrl_exec},
-                                          logger);
+  return launch_async<ng_setup_procedure>(
+      context, ngap_msg, request.max_setup_retries, tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
 }
 
 async_task<void> ngap_impl::handle_ng_reset_message(const cu_cp_ng_reset& msg)
@@ -158,7 +153,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, task_sched.get_timer_manager(), ctrl_exec);
+  ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, timers, ctrl_exec);
 
   // Notify CU-CP about creation of NGAP UE
   if (!cu_cp_notifier.on_new_ngap_ue(msg.ue_index)) {
@@ -201,6 +196,13 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
+  auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
+  srsran_assert(ue != nullptr,
+                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                ue_ctxt.ue_ids.ue_index,
+                ue_ctxt.ue_ids.ran_ue_id,
+                ue_ctxt.ue_ids.amf_ue_id);
+
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping UlNasTransportMessage. UE is already scheduled for release");
     return;
@@ -224,11 +226,11 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
   fill_asn1_ul_nas_transport(ul_nas_transport_msg, msg);
 
   // Schedule transmission of UL NAS transport message to AMF
-  task_sched.schedule_async_task(msg.ue_index, launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
-                                   CORO_BEGIN(ctx);
-                                   tx_pdu_notifier.on_new_message(ngap_msg);
-                                   CORO_RETURN();
-                                 }));
+  ue->get_task_sched().schedule_async_task(launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    tx_pdu_notifier.on_new_message(ngap_msg);
+    CORO_RETURN();
+  }));
 }
 
 void ngap_impl::handle_message(const ngap_message& msg)
@@ -330,9 +332,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   }
 
   // start routine
-  task_sched.schedule_async_task(ue_ctxt.ue_ids.ue_index,
-                                 launch_async<ngap_dl_nas_message_transfer_procedure>(
-                                     msg->nas_pdu.copy(), ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
+  ue->get_task_sched().schedule_async_task(launch_async<ngap_dl_nas_message_transfer_procedure>(
+      msg->nas_pdu.copy(), ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
@@ -398,14 +399,14 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                            init_ctxt_setup_req.security_context.supported_enc_algos);
 
   // start routine
-  task_sched.schedule_async_task(ue_ctxt.ue_ids.ue_index,
-                                 launch_async<ngap_initial_context_setup_procedure>(init_ctxt_setup_req,
-                                                                                    ue_ctxt.ue_ids,
-                                                                                    ue->get_rrc_ue_control_notifier(),
-                                                                                    ue->get_rrc_ue_pdu_notifier(),
-                                                                                    cu_cp_notifier,
-                                                                                    tx_pdu_notifier,
-                                                                                    ue_ctxt.logger));
+  ue->get_task_sched().schedule_async_task(
+      launch_async<ngap_initial_context_setup_procedure>(init_ctxt_setup_req,
+                                                         ue_ctxt.ue_ids,
+                                                         ue->get_rrc_ue_control_notifier(),
+                                                         ue->get_rrc_ue_pdu_notifier(),
+                                                         cu_cp_notifier,
+                                                         tx_pdu_notifier,
+                                                         ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
@@ -462,14 +463,8 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   msg.ue_aggregate_maximum_bit_rate_dl = ue_ctxt.aggregate_maximum_bit_rate_dl;
 
   // start routine
-  task_sched.schedule_async_task(ue_ctxt.ue_ids.ue_index,
-                                 launch_async<ngap_pdu_session_resource_setup_procedure>(msg,
-                                                                                         request,
-                                                                                         ue_ctxt.ue_ids,
-                                                                                         ue->get_rrc_ue_pdu_notifier(),
-                                                                                         cu_cp_notifier,
-                                                                                         tx_pdu_notifier,
-                                                                                         ue_ctxt.logger));
+  ue->get_task_sched().schedule_async_task(launch_async<ngap_pdu_session_resource_setup_procedure>(
+      msg, request, ue_ctxt.ue_ids, ue->get_rrc_ue_pdu_notifier(), cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
@@ -524,8 +519,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   }
 
   // start routine
-  task_sched.schedule_async_task(
-      ue_ctxt.ue_ids.ue_index,
+  ue->get_task_sched().schedule_async_task(
       launch_async<ngap_pdu_session_resource_modify_procedure>(msg,
                                                                request,
                                                                ue_ctxt.ue_ids,
@@ -571,9 +565,8 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   fill_cu_cp_pdu_session_resource_release_command(msg, command);
 
   // start routine
-  task_sched.schedule_async_task(ue_ctxt.ue_ids.ue_index,
-                                 launch_async<ngap_pdu_session_resource_release_procedure>(
-                                     msg, ue_ctxt.ue_ids, cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
+  ue->get_task_sched().schedule_async_task(launch_async<ngap_pdu_session_resource_release_procedure>(
+      msg, ue_ctxt.ue_ids, cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)
@@ -650,10 +643,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   fill_cu_cp_ue_context_release_command(msg, cmd);
 
   // start routine
-  task_sched.schedule_async_task(
-      ue_ctxt.ue_ids.ue_index,
-      launch_async<ngap_ue_context_release_procedure>(
-          msg, ue_ctxt.ue_ids, stored_error_indications, cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
+  ue->get_task_sched().schedule_async_task(launch_async<ngap_ue_context_release_procedure>(
+      msg, ue_ctxt.ue_ids, stored_error_indications, cu_cp_notifier, tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
@@ -709,16 +700,21 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
     return;
   }
 
+  auto* ue = ue_manager.find_ue(ho_request.ue_index);
+  srsran_assert(ue != nullptr,
+                "ue={} amf_ue={}: UE for UE context doesn't exist",
+                ho_request.ue_index,
+                uint_to_amf_ue_id(msg->amf_ue_ngap_id));
+
   // start handover routine
-  task_sched.schedule_async_task(
-      ho_request.ue_index,
+  ue->get_task_sched().schedule_async_task(
       launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
                                                                 uint_to_amf_ue_id(msg->amf_ue_ngap_id),
                                                                 ue_ctxt_list,
                                                                 cu_cp_notifier,
                                                                 cu_cp_du_repository_notifier,
                                                                 tx_pdu_notifier,
-                                                                task_sched.get_timer_manager(),
+                                                                timers,
                                                                 ctrl_exec,
                                                                 logger));
 }
@@ -756,16 +752,24 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
     return;
   }
 
-  ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication{}",
-                                         msg_cause.empty() ? "" : ". Cause: " + msg_cause);
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+
+  ngap_ue* ue = ue_manager.find_ngap_ue(ue_index);
+  srsran_assert(ue != nullptr,
+                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                ue_ctxt.ue_ids.ue_index,
+                ue_ctxt.ue_ids.ran_ue_id,
+                ue_ctxt.ue_ids.amf_ue_id);
+
+  ue_ctxt.logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause: " + msg_cause);
 
   // Request UE release
-  task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-                                   CORO_BEGIN(ctx);
-                                   CORO_AWAIT(handle_ue_context_release_request(cu_cp_ue_context_release_request{
-                                       ue_index, {}, ngap_cause_radio_network_t::unspecified}));
-                                   CORO_RETURN();
-                                 }));
+  ue->get_task_sched().schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(handle_ue_context_release_request(
+        cu_cp_ue_context_release_request{ue_index, {}, ngap_cause_radio_network_t::unspecified}));
+    CORO_RETURN();
+  }));
 
   // TODO: handle error indication
 }
@@ -889,7 +893,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            cu_cp_notifier,
                                                            ue->get_up_resource_manager(),
                                                            ev_mng,
-                                                           timer_factory{task_sched.get_timer_manager(), ctrl_exec},
+                                                           timer_factory{timers, ctrl_exec},
                                                            ue_ctxt.logger);
 }
 
@@ -931,8 +935,14 @@ void ngap_impl::remove_ue_context(ue_index_t ue_index)
 
 void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, optional<amf_ue_id_t> amf_ue_id)
 {
-  task_sched.schedule_async_task(
-      ue_index, launch_async([this, ue_index, cause, amf_ue_id](coro_context<async_task<void>>& ctx) {
+  ngap_ue* ue = ue_manager.find_ngap_ue(ue_index);
+  srsran_assert(ue != nullptr,
+                "ue={} amf_ue={}: UE for UE context doesn't exist",
+                ue_index,
+                amf_ue_id.has_value() ? "" : fmt::format("amf_ue={} ", amf_ue_id.value()));
+
+  ue->get_task_sched().schedule_async_task(
+      launch_async([this, ue_index, cause, amf_ue_id](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         send_error_indication(tx_pdu_notifier, logger, ue_ctxt_list[ue_index].ue_ids.ran_ue_id, amf_ue_id, cause);
         CORO_RETURN();
@@ -944,35 +954,35 @@ void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
   if (ue_ctxt_list.contains(ue_index)) {
     ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
+    auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
+    srsran_assert(ue != nullptr,
+                  "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                  ue_ctxt.ue_ids.ue_index,
+                  ue_ctxt.ue_ids.ran_ue_id,
+                  ue_ctxt.ue_ids.amf_ue_id);
+
     if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
       // AMF never responded to InitialUEMessage, so we only remove the UE from the DU
       ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Releasing UE from DU",
                                  ue_ctxt.pdu_session_setup_timer.duration().count());
 
-      auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
-      srsran_assert(ue != nullptr,
-                    "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
-                    ue_ctxt.ue_ids.ue_index,
-                    ue_ctxt.ue_ids.ran_ue_id,
-                    ue_ctxt.ue_ids.amf_ue_id);
-
-      task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-                                       CORO_BEGIN(ctx);
-                                       CORO_AWAIT(cu_cp_notifier.on_new_ue_context_release_command(
-                                           {ue_index, ngap_cause_radio_network_t::unspecified}));
-                                       CORO_RETURN();
-                                     }));
+      ue->get_task_sched().schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(
+            cu_cp_notifier.on_new_ue_context_release_command({ue_index, ngap_cause_radio_network_t::unspecified}));
+        CORO_RETURN();
+      }));
     } else {
       ue_ctxt.logger.log_warning("PDU session setup timer expired after {}ms. Requesting UE release",
                                  ue_ctxt.pdu_session_setup_timer.duration().count());
 
       // Request UE release
-      task_sched.schedule_async_task(ue_index, launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-                                       CORO_BEGIN(ctx);
-                                       CORO_AWAIT(handle_ue_context_release_request(cu_cp_ue_context_release_request{
-                                           ue_index, {}, ngap_cause_radio_network_t::unspecified}));
-                                       CORO_RETURN();
-                                     }));
+      ue->get_task_sched().schedule_async_task(launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(handle_ue_context_release_request(
+            cu_cp_ue_context_release_request{ue_index, {}, ngap_cause_radio_network_t::unspecified}));
+        CORO_RETURN();
+      }));
     }
   } else {
     logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);

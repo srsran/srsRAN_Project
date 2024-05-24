@@ -37,28 +37,6 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
-struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
-public:
-  dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
-
-  void schedule_async_task(ue_index_t ue_index, async_task<void> task) override { ctrl_loop.schedule(std::move(task)); }
-
-  void clear_pending_tasks(ue_index_t ue_index) override { ctrl_loop.clear_pending_tasks(); }
-
-  size_t get_nof_pending_tasks() { return ctrl_loop.nof_pending_tasks(); }
-
-  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-
-  timer_manager& get_timer_manager() override { return timer_db; }
-
-  void tick_timer() { timer_db.tick(); }
-
-private:
-  fifo_async_task_scheduler ctrl_loop{16};
-  timer_manager&            timer_db;
-  task_executor&            exec;
-};
-
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
   explicit dummy_du_processor_cu_cp_notifier(ue_manager* ue_mng_ = nullptr) : ue_mng(ue_mng_) {}
@@ -103,20 +81,19 @@ public:
   {
     logger.info("ue={}: Received a UE removal request", ue_index);
 
-    if (ue_removal_handler != nullptr) {
-      ue_removal_handler->handle_ue_removal_request(ue_index);
-    } else {
-      if (ue_mng != nullptr) {
-        ue_mng->remove_ue(ue_index);
-      }
-
-      if (rrc_removal_handler != nullptr) {
-        rrc_removal_handler->remove_ue(ue_index);
-      }
-    }
-
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+    return launch_async([this, ue_index](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
+      if (ue_removal_handler != nullptr) {
+        ue_removal_handler->handle_ue_removal_request(ue_index);
+      } else {
+        if (ue_mng != nullptr) {
+          ue_mng->remove_ue(ue_index);
+        }
+
+        if (rrc_removal_handler != nullptr) {
+          rrc_removal_handler->remove_ue(ue_index);
+        }
+      }
       CORO_RETURN();
     });
   }
@@ -697,5 +674,21 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
+struct dummy_ue_task_scheduler : public ue_task_scheduler {
+public:
+  dummy_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
+  bool           schedule_async_task(async_task<void> task) override { return ctrl_loop.schedule(std::move(task)); }
+  unique_timer   create_timer() override { return timer_db.create_unique_timer(exec); }
+  timer_factory  get_timer_factory() override { return timer_factory{timer_db, exec}; }
+  task_executor& get_executor() override { return exec; }
+  void           stop() override { ctrl_loop.request_stop(); }
+
+  void tick_timer() { timer_db.tick(); }
+
+private:
+  fifo_async_task_scheduler ctrl_loop{16};
+  timer_manager&            timer_db;
+  task_executor&            exec;
+};
 } // namespace srs_cu_cp
 } // namespace srsran

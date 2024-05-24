@@ -31,8 +31,8 @@ std::unique_ptr<du_processor> create_du_processor(const du_processor_config_t&  
                                                   rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                                   rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                                   common_task_scheduler&              common_task_sched_,
-                                                  du_processor_ue_task_scheduler&     task_sched_,
                                                   du_processor_ue_manager&            ue_manager_,
+                                                  timer_manager&                      timers_,
                                                   task_executor&                      ctrl_exec_);
 
 } // namespace srs_cu_cp

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cu_cp/test_helpers.h"
 #include "lib/rrc/ue/rrc_ue_impl.h"
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
@@ -63,8 +64,6 @@ class rrc_ue_test_helper
 protected:
   void init()
   {
-    task_sched_handle = std::make_unique<dummy_ue_task_scheduler>(timers, ctrl_worker);
-
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
@@ -107,7 +106,7 @@ protected:
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
-                                           *task_sched_handle,
+                                           task_sched_handle,
                                            optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
@@ -272,7 +271,7 @@ protected:
   void tick_timer()
   {
     for (unsigned i = 0; i < rrc_procedure_timeout_ms; ++i) {
-      task_sched_handle->tick_timer();
+      task_sched_handle.tick_timer();
       ctrl_worker.run_pending_tasks();
     }
   }
@@ -411,17 +410,16 @@ protected:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
+  timer_manager                        timers;
+  manual_task_worker                   ctrl_worker{64};
   std::unique_ptr<up_resource_manager> up_resource_mng =
       create_up_resource_manager(up_resource_manager_cfg{cfg.drb_config});
-  dummy_rrc_f1ap_pdu_notifier              rrc_ue_f1ap_notifier;
-  dummy_rrc_ue_ngap_adapter                rrc_ue_ngap_notifier;
-  dummy_rrc_ue_cu_cp_adapter               rrc_ue_cu_cp_notifier;
-  timer_manager                            timers;
-  std::unique_ptr<dummy_ue_task_scheduler> task_sched_handle;
-  std::unique_ptr<rrc_ue_interface>        rrc_ue;
-  manual_task_worker                       ctrl_worker{64};
-
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
+  dummy_rrc_f1ap_pdu_notifier       rrc_ue_f1ap_notifier;
+  dummy_rrc_ue_ngap_adapter         rrc_ue_ngap_notifier;
+  dummy_rrc_ue_cu_cp_adapter        rrc_ue_cu_cp_notifier;
+  std::unique_ptr<rrc_ue_interface> rrc_ue;
+  srslog::basic_logger&             logger = srslog::fetch_basic_logger("TEST", false);
+  dummy_ue_task_scheduler           task_sched_handle{timers, ctrl_worker};
 
   const unsigned rrc_procedure_timeout_ms = 160;
 

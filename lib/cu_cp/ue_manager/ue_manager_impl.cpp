@@ -33,6 +33,14 @@ void ue_manager::stop()
 
 // generic_ue_manager
 
+common_ue* ue_manager::find_ue(ue_index_t ue_index)
+{
+  if (ues.find(ue_index) != ues.end()) {
+    return &ues.at(ue_index);
+  }
+  return nullptr;
+}
+
 ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
 {
   if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {
@@ -90,7 +98,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
   }
 
   // Create a dedicated task scheduler for the UE.
-  ue_task_scheduler ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
+  ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
 
   // Create UE object
   ues.emplace(std::piecewise_construct,
@@ -100,14 +108,6 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
   logger.info("ue={}: Created new CU-CP UE", new_ue_index);
 
   return new_ue_index;
-}
-
-du_ue* ue_manager::find_ue(ue_index_t ue_index)
-{
-  if (ues.find(ue_index) != ues.end()) {
-    return &ues.at(ue_index);
-  }
-  return nullptr;
 }
 
 du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)

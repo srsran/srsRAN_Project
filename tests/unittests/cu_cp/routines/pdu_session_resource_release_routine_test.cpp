@@ -34,7 +34,7 @@ protected:
                                                                 f1ap_ue_ctxt_mng,
                                                                 ngap_control_handler,
                                                                 rrc_ue_ctrl_notifier,
-                                                                *ue_task_sched,
+                                                                ue_task_sched,
                                                                 *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }

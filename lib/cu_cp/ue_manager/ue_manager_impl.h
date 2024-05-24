@@ -15,7 +15,7 @@
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
 #include "ue_metrics_handler.h"
-#include "ue_task_scheduler.h"
+#include "ue_task_scheduler_impl.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include <unordered_map>
 
@@ -33,12 +33,12 @@ struct ngap_ue_t {
   }
 };
 
-class cu_cp_ue final : public du_ue, public ngap_ue, public rrc_ue_task_scheduler
+class cu_cp_ue final : public du_ue, public ngap_ue
 {
 public:
   cu_cp_ue(const ue_index_t               ue_index_,
            const up_resource_manager_cfg& up_cfg,
-           ue_task_scheduler              task_sched_,
+           ue_task_scheduler_impl         task_sched_,
            const pci_t                    pci_    = INVALID_PCI,
            const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI) :
     ue_index(ue_index_),
@@ -68,16 +68,10 @@ public:
   /// \brief Get the UP resource manager of the UE.
   up_resource_manager& get_up_resource_manager() override { return *up_mng; }
 
-  // rrc ue task scheduler.
-  void          schedule_async_task(async_task<void> task) override { task_sched.schedule_async_task(std::move(task)); }
-  unique_timer  make_unique_timer() override { return task_sched.create_timer(); }
-  timer_factory get_timer_factory() override { return task_sched.get_timer_factory(); }
-  task_executor& get_executor() override { return task_sched.get_executor(); };
+  /// \brief Get the task scheduler of the UE.
+  ue_task_scheduler& get_task_sched() override { return task_sched; }
 
   // du_ue
-
-  /// \brief Get the task scheduler of the UE.
-  rrc_ue_task_scheduler& get_task_sched() override { return *this; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override
@@ -197,7 +191,7 @@ public:
 private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
-  ue_task_scheduler                    task_sched;
+  ue_task_scheduler_impl               task_sched;
   std::unique_ptr<up_resource_manager> up_mng;
 
   // du ue context
@@ -231,6 +225,11 @@ public:
 
   // common
 
+  /// \brief Find the UE with the given UE index.
+  /// \param[in] ue_index Index of the UE to be found.
+  /// \return Pointer to the UE if found, nullptr otherwise.
+  common_ue* find_ue(ue_index_t ue_index) override;
+
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   ue_configuration get_ue_config() override { return ue_config; }
@@ -254,11 +253,6 @@ public:
   ///
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
   ue_index_t add_ue(du_index_t du_index) override;
-
-  /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
-  /// \param[in] ue_index Index of the UE to be found.
-  /// \return Pointer to the UE if found, nullptr otherwise.
-  du_ue* find_ue(ue_index_t ue_index) override;
 
   du_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti) override;
 

@@ -154,9 +154,6 @@ private:
   // CU-CP to RRC DU adapters
   std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
 
-  // UE Task scheduler used by DU processors.
-  du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
-
   // DU repository to Node Manager adapter.
   du_processor_cu_cp_connection_adapter conn_notifier;
 
@@ -167,8 +164,7 @@ private:
   e1ap_cu_cp_adapter e1ap_ev_notifier;
 
   // NGAP to CU-CP adapters
-  ngap_to_cu_cp_task_scheduler ngap_task_sched;
-  ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
+  ngap_cu_cp_adapter ngap_cu_cp_ev_notifier;
 
   // Mobility manager to CU-CP adapter
   mobility_manager_adapter mobility_manager_ev_notifier;

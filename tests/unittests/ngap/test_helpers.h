@@ -23,24 +23,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct dummy_ngap_ue_task_scheduler : public ngap_ue_task_scheduler {
-public:
-  dummy_ngap_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
-  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
-  {
-    ctrl_loop.schedule(std::move(task));
-  }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-  timer_manager& get_timer_manager() override { return timer_db; }
-
-  void tick_timer() { timer_db.tick(); }
-
-private:
-  fifo_async_task_scheduler ctrl_loop{16};
-  timer_manager&            timer_db;
-  task_executor&            exec;
-};
-
 /// Reusable notifier class that a) stores the received msg for test inspection and b)
 /// calls the registered msg handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.

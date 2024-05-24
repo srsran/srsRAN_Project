@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
@@ -22,48 +23,49 @@ namespace srs_cu_cp {
 class ue_task_scheduler_manager;
 
 /// \brief Async FIFO task scheduler for a single UE managed by the CU-CP.
-class ue_task_scheduler
+class ue_task_scheduler_impl : public ue_task_scheduler
 {
   using ue_element = std::pair<const ue_index_t, std::unique_ptr<fifo_async_task_scheduler>>;
 
 public:
-  ue_task_scheduler() = default;
-  ue_task_scheduler(ue_task_scheduler_manager& parent_, ue_element& ue_sched_) : parent(&parent_), ue_sched(&ue_sched_)
+  ue_task_scheduler_impl() = default;
+  ue_task_scheduler_impl(ue_task_scheduler_manager& parent_, ue_element& ue_sched_) :
+    parent(&parent_), ue_sched(&ue_sched_)
   {
   }
-  ue_task_scheduler(ue_task_scheduler&& other) noexcept :
+  ue_task_scheduler_impl(ue_task_scheduler_impl&& other) noexcept :
     parent(std::exchange(other.parent, nullptr)), ue_sched(std::exchange(other.ue_sched, nullptr))
   {
   }
-  ue_task_scheduler& operator=(ue_task_scheduler&& other) noexcept
+  ue_task_scheduler_impl& operator=(ue_task_scheduler_impl&& other) noexcept
   {
     stop();
     parent   = std::exchange(other.parent, nullptr);
     ue_sched = std::exchange(other.ue_sched, nullptr);
     return *this;
   }
-  ~ue_task_scheduler() { stop(); }
+  ~ue_task_scheduler_impl() { stop(); }
 
   /// \brief Schedules an async task for the given UE. The task will run after the remaining tasks in the queue are
   /// completed.
   ///
   /// \param task Task to schedule
   /// \return true if the task was successfully enqueued. False, otherwise.
-  bool schedule_async_task(async_task<void> task)
+  bool schedule_async_task(async_task<void> task) override
   {
     srsran_assert(parent != nullptr, "UE task scheduler not set");
     return ue_sched->second->schedule(std::move(task));
   }
 
   /// Create a timer for the UE.
-  unique_timer create_timer();
+  unique_timer create_timer() override;
 
-  timer_factory get_timer_factory();
+  timer_factory get_timer_factory() override;
 
-  task_executor& get_executor();
+  task_executor& get_executor() override;
 
   /// \brief Stops the UE task scheduler and discards all the pending tasks that haven't started running yet.
-  void stop();
+  void stop() override;
 
 private:
   ue_task_scheduler_manager* parent   = nullptr;
@@ -78,7 +80,7 @@ public:
 
   void stop();
 
-  ue_task_scheduler create_ue_task_sched(ue_index_t ue_idx);
+  ue_task_scheduler_impl create_ue_task_sched(ue_index_t ue_idx);
 
   // UE task scheduler
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task);
@@ -91,7 +93,7 @@ public:
   timer_manager& get_timer_manager();
 
 private:
-  friend class ue_task_scheduler;
+  friend class ue_task_scheduler_impl;
 
   void rem_ue_task_loop(ue_index_t ue_idx);
 

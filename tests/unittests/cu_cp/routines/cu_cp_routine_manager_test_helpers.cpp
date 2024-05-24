@@ -20,9 +20,6 @@ cu_cp_routine_manager_test::cu_cp_routine_manager_test()
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
-
-  ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
-
   drb_cfg                                                    = {};
   drb_cfg.five_qi_config[uint_to_five_qi(9)]                 = {};
   drb_cfg.five_qi_config[uint_to_five_qi(9)].pdcp.tx.sn_size = pdcp_sn_size::size12bits;

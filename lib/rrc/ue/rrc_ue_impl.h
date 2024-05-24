@@ -14,6 +14,7 @@
 #include "rrc_ue_context.h"
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -34,7 +35,7 @@ public:
               const rrc_cell_context            cell_,
               const rrc_ue_cfg_t&               cfg_,
               const byte_buffer                 du_to_cu_container,
-              rrc_ue_task_scheduler&            task_sched,
+              ue_task_scheduler&                task_sched,
               optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl();
 
@@ -119,7 +120,7 @@ private:
   rrc_ue_context_update_notifier& cu_cp_notifier;       // notifier to the CU-CP
   rrc_ue_measurement_notifier&    measurement_notifier; // cell measurement notifier
   byte_buffer                     du_to_cu_container;   // initial RRC message from DU to CU
-  rrc_ue_task_scheduler&          task_sched;
+  ue_task_scheduler&              task_sched;
   rrc_ue_logger                   logger;
 
   // RRC procedures handling

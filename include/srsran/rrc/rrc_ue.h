@@ -149,25 +149,6 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Schedules asynchronous tasks associated with an UE.
-class rrc_ue_task_scheduler
-{
-public:
-  virtual ~rrc_ue_task_scheduler() = default;
-
-  /// \brief Schedule an asynchronous task for the UE.
-  virtual void schedule_async_task(async_task<void> task) = 0;
-
-  /// \brief Create a new timer for the UE.
-  virtual unique_timer make_unique_timer() = 0;
-
-  /// \brief Get UE timer factory.
-  virtual timer_factory get_timer_factory() = 0;
-
-  /// \brief Get executor.
-  virtual task_executor& get_executor() = 0;
-};
-
 /// Interface to notify about NAS messages.
 class rrc_ue_nas_notifier
 {

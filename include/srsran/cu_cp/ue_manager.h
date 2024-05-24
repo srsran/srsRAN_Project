@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ue_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
@@ -35,26 +36,26 @@ struct cu_cp_ue_context {
 };
 
 /// Common UE interface.
-class ue_base
+class common_ue
 {
 public:
-  virtual ~ue_base() = default;
+  virtual ~common_ue() = default;
 
   /// \brief Get the UE index of the UE.
   virtual ue_index_t get_ue_index() = 0;
 
   /// \brief Get the UP resource manager of the UE.
   virtual up_resource_manager& get_up_resource_manager() = 0;
+
+  /// \brief Get the task scheduler of the UE.
+  virtual ue_task_scheduler& get_task_sched() = 0;
 };
 
 /// Interface for DU UE.
-class du_ue : public ue_base
+class du_ue : virtual public common_ue
 {
 public:
   virtual ~du_ue() = default;
-
-  /// \brief Get the task scheduler of the UE.
-  virtual rrc_ue_task_scheduler& get_task_sched() = 0;
 
   /// \brief Get the RRC UE control message notifier of the UE.
   virtual du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() = 0;
@@ -112,6 +113,11 @@ class common_ue_manager
 public:
   virtual ~common_ue_manager() = default;
 
+  /// \brief Find the UE with the given UE index.
+  /// \param[in] ue_index Index of the UE to be found.
+  /// \return Pointer to the UE if found, nullptr otherwise.
+  virtual common_ue* find_ue(ue_index_t ue_index) = 0;
+
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   virtual ue_configuration get_ue_config() = 0;
@@ -139,11 +145,6 @@ class du_processor_ue_manager : public common_ue_manager
 public:
   virtual ~du_processor_ue_manager() = default;
 
-  /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
-  /// \param[in] ue_index Index of the UE to be found.
-  /// \return Pointer to the UE if found, nullptr otherwise.
-  virtual du_ue* find_ue(ue_index_t ue_index) = 0;
-
   /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE index
   /// was already setup, nulltpr is returned.
   /// \param[in] ue_index Index of the UE to add the notifiers to.
@@ -164,7 +165,7 @@ public:
 };
 
 /// Interface for NGAP UE.
-class ngap_ue : public ue_base
+class ngap_ue : virtual public common_ue
 {
 public:
   virtual ~ngap_ue() = default;
