@@ -12,7 +12,6 @@ add_executable(gnb
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
         adapters/e1ap_gateway_local_connector.cpp
-        adapters/f1c_gateway_local_connector.cpp
         adapters/e2_gateway_remote_connector.cpp
         adapters/ngap_adapter.cpp
         )
@@ -36,6 +35,7 @@ target_link_libraries(gnb
         srsran_version
         srsran_build_info
         srsran_flexible_du_ru_dynamic
+        srsran_f1c_gateway
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit
         )

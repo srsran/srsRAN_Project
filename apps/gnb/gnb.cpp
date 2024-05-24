@@ -28,7 +28,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 
 #include "adapters/e1ap_gateway_local_connector.h"
-#include "adapters/f1c_gateway_local_connector.h"
+#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
@@ -59,9 +59,9 @@
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
-#include "apps/units/cu_up//cu_up_unit_config_validator.h"
 #include "apps/units/cu_up/cu_up_logger_registrator.h"
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
+#include "apps/units/cu_up/cu_up_unit_config_validator.h"
 
 #include <atomic>
 
@@ -327,6 +327,10 @@ int main(int argc, char** argv)
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
+  // Create IO broker.
+  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
   std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
   std::unique_ptr<dlt_pcap>              f1ap_p =
@@ -339,7 +343,7 @@ int main(int argc, char** argv)
                                                                                       workers.get_executor("pcap_exec"))
                                                                    : create_null_dlt_pcap();
 
-  f1c_gateway_local_connector  f1c_gw{*f1ap_p};
+  std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
   e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]};
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
@@ -354,10 +358,6 @@ int main(int argc, char** argv)
 
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
-
-  // Create IO broker.
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
-  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
@@ -419,7 +419,7 @@ int main(int argc, char** argv)
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  f1c_gw.attach_cu_cp(cu_cp_obj->get_f1c_handler());
+  f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
@@ -518,7 +518,7 @@ int main(int argc, char** argv)
                                                                   workers,
                                                                   ru_dl_rg_adapt,
                                                                   ru_ul_request_adapt,
-                                                                  f1c_gw,
+                                                                  *f1c_gw,
                                                                   *f1u_conn->get_f1u_du_gateway(),
                                                                   app_timers,
                                                                   *mac_p,
