@@ -143,11 +143,8 @@ void cu_up::stop()
   }
   logger.debug("CU-UP stopping...");
 
-  // Start statistics report timer
+  // Start statistics report timer.
   statistics_report_timer.stop();
-
-  // CU-UP stops listening to new GTPU Rx PDUs.
-  ngu_session.reset();
 
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};
@@ -155,6 +152,9 @@ void cu_up::stop()
   auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
     if (main_loop.empty()) {
       // First call. Initiate shutdown operations.
+
+      // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
+      disconnect();
 
       // Stop main control loop and communicate back with the caller thread.
       main_loop = main_ctrl_loop.request_stop();
@@ -175,12 +175,22 @@ void cu_up::stop()
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
+  // CU-UP stops listening to new GTPU Rx PDUs.
+  ngu_session.reset();
+
   logger.info("CU-UP stopped successfully");
 }
 
 cu_up::~cu_up()
 {
   stop();
+}
+
+void cu_up::disconnect()
+{
+  gw_data_gtpu_demux_adapter.disconnect();
+  gtpu_gw_adapter.disconnect();
+  e1ap_cu_up_ev_notifier.disconnect();
 }
 
 void process_successful_pdu_resource_setup_mod_outcome(

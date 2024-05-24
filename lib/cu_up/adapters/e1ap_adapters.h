@@ -12,7 +12,6 @@
 
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -23,23 +22,31 @@ class e1ap_cu_up_adapter : public e1ap_cu_up_notifier
 public:
   void connect_cu_up(cu_up_e1ap_interface& cu_up_handler_) { cu_up_handler = &cu_up_handler_; }
 
+  void disconnect() { cu_up_handler = nullptr; }
+
   e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request& msg) override
   {
-    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    if (cu_up_handler == nullptr) {
+      return {}; // return failure to setup bearer context
+    }
     return cu_up_handler->handle_bearer_context_setup_request(msg);
   }
 
   e1ap_bearer_context_modification_response
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) override
   {
-    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    if (cu_up_handler == nullptr) {
+      return {}; // return failure to modify bearer context
+    }
     return cu_up_handler->handle_bearer_context_modification_request(msg);
   }
 
   void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
   {
-    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    if (cu_up_handler == nullptr) {
+      return;
+    }
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 

@@ -15,10 +15,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gtpu/gtpu_demux.h"
 
-#include <string>
-
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 /// Interface to notify about E1AP connections (from the CU-CP) to the CU-UP
 class cu_up_e1ap_connection_notifier
@@ -87,5 +84,4 @@ public:
   virtual optional<uint16_t> get_n3_bind_port() = 0;
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

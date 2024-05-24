@@ -60,6 +60,8 @@ public:
   gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override { return *ngu_demux; }
 
 private:
+  void disconnect();
+
   void on_statistics_report_timer_expired();
 
   cu_up_configuration cfg;
