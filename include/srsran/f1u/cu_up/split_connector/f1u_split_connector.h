@@ -14,8 +14,11 @@
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
+#include "srsran/gtpu/gtpu_tunnel_nru.h"
+#include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
 #include <unordered_map>
@@ -37,6 +40,27 @@ public:
   void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
 
   srs_cu_up::ngu_tnl_pdu_session* handler;
+};
+
+class gtpu_rx_f1u_adapter : public srsran::gtpu_tunnel_nru_rx_lower_layer_notifier
+{
+public:
+  /// \brief Interface for the GTP-U to pass a SDU (i.e. NR-U DL message) into the lower layer.
+  /// \param dl_message NR-U DL message with optional T-PDU.
+  void on_new_sdu(nru_dl_message dl_message) override {}
+
+  /// \brief Interface for the GTP-U to pass a SDU (i.e. NR-U UL message) into the lower layer.
+  /// \param ul_message NR-U UL message with optional T-PDU.
+  void on_new_sdu(nru_ul_message ul_message) override
+  {
+    if (handler != nullptr) {
+      handler->on_new_pdu(std::move(ul_message));
+    }
+  }
+
+  void connect(f1u_cu_up_gateway_bearer_rx_notifier& handler_) { handler = &handler_; }
+
+  f1u_cu_up_gateway_bearer_rx_notifier* handler;
 };
 
 /// Adapter between Network Gateway (Data) and GTP-U demux
@@ -73,13 +97,14 @@ public:
                               ngu_tnl_pdu_session&                  udp_session,
                               task_executor&                        ul_exec_,
                               srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
+    ul_exec(ul_exec_),
     logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info}),
     disconnector(disconnector_),
     ul_tnl_info(ul_tnl_info_),
-    cu_rx(cu_rx_),
-    ul_exec(ul_exec_)
+    cu_rx(cu_rx_)
   {
-    gtpu_network_adapter.connect(udp_session);
+    gtpu_to_network_adapter.connect(udp_session);
+    gtpu_to_f1u_adapter.connect(cu_rx);
   }
 
   ~f1u_split_gateway_cu_bearer() override { stop(); }
@@ -97,7 +122,16 @@ public:
 
   void attach_tunnel(std::unique_ptr<gtpu_tunnel_nru> tunnel_) { tunnel = std::move(tunnel_); }
 
-  gtpu_tx_udp_gw_adapter gtpu_network_adapter;
+  gtpu_tx_udp_gw_adapter gtpu_to_network_adapter;
+  gtpu_rx_f1u_adapter    gtpu_to_f1u_adapter;
+
+  gtpu_tunnel_common_rx_upper_layer_interface* get_tunnel_rx_interface()
+  {
+    return tunnel->get_rx_upper_layer_interface();
+  }
+
+  /// Holds the RX executor associated with the F1-U bearer.
+  task_executor& ul_exec;
 
 private:
   srs_cu_up::f1u_bearer_logger        logger;
@@ -111,9 +145,6 @@ public:
 
   /// Holds the DL UP TNL info associated with the F1-U bearer.
   optional<up_transport_layer_info> dl_tnl_info;
-
-  /// Holds the DL UP TNL info associated with the F1-U bearer.
-  task_executor& ul_exec;
 };
 
 /// \brief Object used to connect the DU and CU-UP F1-U bearers
@@ -124,10 +155,11 @@ public:
 class f1u_split_connector final : public f1u_cu_up_gateway
 {
 public:
-  f1u_split_connector(ngu_gateway* udp_gw_, dlt_pcap& gtpu_pcap_) :
-    logger_cu(srslog::fetch_basic_logger("CU-F1-U")), udp_gw(udp_gw_), gtpu_pcap(gtpu_pcap_)
+  f1u_split_connector(ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_) :
+    logger_cu(srslog::fetch_basic_logger("CU-F1-U")), udp_gw(udp_gw_), demux(demux_), gtpu_pcap(gtpu_pcap_)
   {
     udp_session = udp_gw->create(gw_data_gtpu_demux_adapter);
+    gw_data_gtpu_demux_adapter.connect_gtpu_demux(*demux);
   }
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
@@ -152,10 +184,10 @@ private:
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
-  network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
-  std::unique_ptr<gtpu_demux>             demux;
   ngu_gateway*                            udp_gw;
   std::unique_ptr<ngu_tnl_pdu_session>    udp_session;
+  gtpu_demux*                             demux;
+  network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
   dlt_pcap&                               gtpu_pcap;
 };
 

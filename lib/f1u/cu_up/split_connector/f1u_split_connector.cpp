@@ -59,13 +59,18 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   msg.cfg.tx.peer_addr                    = dl_up_tnl_info.tp_address.to_string();
   msg.cfg.tx.peer_port                    = GTPU_PORT;
   msg.gtpu_pcap                           = &gtpu_pcap;
-  msg.tx_upper                            = &cu_bearer->gtpu_network_adapter;
+  msg.tx_upper                            = &cu_bearer->gtpu_to_network_adapter;
+  msg.rx_lower                            = &cu_bearer->gtpu_to_f1u_adapter;
   std::unique_ptr<gtpu_tunnel_nru> tunnel = srsran::create_gtpu_tunnel_nru(msg);
 
   // attach it to the F1-U bearer
   cu_bearer->attach_tunnel(std::move(tunnel));
 
   // attach RX to DEMUX
+  if (!demux->add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
+    logger_cu.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
+    return;
+  }
 }
 
 void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info)
