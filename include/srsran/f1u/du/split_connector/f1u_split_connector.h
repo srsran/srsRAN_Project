@@ -16,6 +16,7 @@
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
+#include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
@@ -24,6 +25,23 @@
 #include <unordered_map>
 
 namespace srsran::srs_du {
+
+class gtpu_tx_udp_gw_adapter : public gtpu_tunnel_common_tx_upper_layer_notifier
+{
+public:
+  /// \brief Interface for the GTP-U to pass PDUs to the IO gateway
+  /// \param sdu PDU to be transmitted.
+  void on_new_pdu(byte_buffer buf, const sockaddr_storage& addr) override
+  {
+    if (handler != nullptr) {
+      handler->handle_pdu(std::move(buf), addr);
+    }
+  }
+
+  void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
+
+  srs_cu_up::ngu_tnl_pdu_session* handler;
+};
 
 /// Adapter between Network Gateway (Data) and GTP-U demux
 class network_gateway_data_gtpu_demux_adapter : public srsran::network_gateway_data_notifier_with_src_addr
@@ -57,13 +75,25 @@ public:
                               const up_transport_layer_info&             dl_tnl_info_,
                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_,
                               const up_transport_layer_info&             ul_up_tnl_info_,
-                              srs_du::f1u_bearer_disconnector&           disconnector_) :
+                              srs_du::f1u_bearer_disconnector&           disconnector_,
+                              dlt_pcap&                                  gtpu_pcap) :
     logger("DU-F1-U", {ue_index, drb_id, dl_tnl_info_}),
     disconnector(disconnector_),
     dl_tnl_info(dl_tnl_info_),
     ul_tnl_info(ul_up_tnl_info_),
     du_rx(du_rx_)
   {
+    gtpu_tunnel_nru_creation_message msg{};
+    // msg.ue_index                            = 0; TODO
+    msg.cfg.rx.local_teid = ul_tnl_info.gtp_teid;
+    msg.cfg.tx.peer_teid  = dl_tnl_info.gtp_teid;
+    msg.cfg.tx.peer_addr  = dl_tnl_info.tp_address.to_string();
+    msg.cfg.tx.peer_port  = GTPU_PORT;
+    msg.gtpu_pcap         = &gtpu_pcap;
+    msg.tx_upper          = &gtpu_to_network_adapter;
+    msg.rx_lower          = nullptr;
+
+    tunnel = srsran::create_gtpu_tunnel_nru(msg);
   }
 
   ~f1u_split_gateway_du_bearer() override { stop(); }
@@ -86,6 +116,8 @@ public:
 
   /// Holds the RX executor associated with the F1-U bearer.
   // task_executor& dl_exec;
+
+  gtpu_tx_udp_gw_adapter gtpu_to_network_adapter;
 
 private:
   f1u_bearer_logger                logger;

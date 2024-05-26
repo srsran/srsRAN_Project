@@ -10,6 +10,7 @@
  */
 
 #include "srsran/f1u/du/split_connector/f1u_split_connector.h"
+#include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/ran/lcid.h"
 
 using namespace srsran;
@@ -31,8 +32,10 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                 "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
                 ul_up_tnl_info);
 
-  std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer =
-      std::make_unique<f1u_split_gateway_du_bearer>(ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this);
+  std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer = std::make_unique<f1u_split_gateway_du_bearer>(
+      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this, gtpu_pcap);
+
+  du_bearer->gtpu_to_network_adapter.connect(*udp_session);
   du_map.insert({dl_up_tnl_info, du_bearer.get()});
   return du_bearer;
 }

@@ -23,8 +23,19 @@ using namespace srs_du;
 
 namespace {
 
-/// Fixture class for F1-U connector tests.
-/// It requires TEST_F() to create/spawn tests
+struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
+  void on_new_pdu(nru_dl_message msg) override
+  {
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
+    last_sdu = std::move(msg);
+  }
+  nru_dl_message last_sdu;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
+};
+
+/// Fixture class for F1-U DU connector tests.
 class f1u_du_split_connector_test : public ::testing::Test
 {
 public:
@@ -111,18 +122,16 @@ TEST_F(f1u_du_split_connector_test, create_new_connector)
 {
   EXPECT_NE(du_gw, nullptr);
 }
-/*
-TEST_F(f1u_cu_split_connector_test, send_sdu)
+
+TEST_F(f1u_du_split_connector_test, send_sdu)
 {
   // Setup GTP-U tunnel
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
-  dummy_f1u_cu_up_rx_notifier cu_rx;
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  auto du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create UDP tester and spawn RX thread
   udp_network_gateway_config server_config;
@@ -134,18 +143,22 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
   udp_tester = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
   ASSERT_NE(udp_tester, nullptr);
   ASSERT_TRUE(udp_tester->create_and_bind());
-  start_receive_thread();
+  // start_receive_thread();
 
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  expected<byte_buffer> du_buf = make_byte_buffer("abcd");
+  ASSERT_TRUE(du_buf.has_value());
+  nru_ul_message sdu                       = {};
+  auto           du_chain_buf              = byte_buffer_chain::create(du_buf.value().deep_copy().value());
+  sdu.t_pdu                                = std::move(du_chain_buf.value());
+  nru_dl_data_delivery_status deliv_status = {};
+  sdu.data_delivery_status.emplace(deliv_status);
 
-  nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
-  sdu.t_pdu          = cu_buf.deep_copy().value();
+  du_bearer->on_new_pdu(std::move(sdu));
 
-  cu_bearer->on_new_pdu(std::move(sdu));
   io_tx_executor.run_pending_tasks();
 }
 
+/*
 TEST_F(f1u_cu_split_connector_test, recv_sdu)
 {
   // Create UDP tester for sending PDU
