@@ -37,6 +37,13 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
 
   du_bearer->gtpu_to_network_adapter.connect(*udp_session);
   du_map.insert({dl_up_tnl_info, du_bearer.get()});
+
+  // attach RX to DEMUX
+  if (!demux->add_tunnel(dl_up_tnl_info.gtp_teid, ue_executor, du_bearer->get_tunnel_rx_interface())) {
+    logger_du.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
+    return nullptr;
+  }
+
   return du_bearer;
 }
 

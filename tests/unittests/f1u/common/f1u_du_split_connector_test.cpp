@@ -91,6 +91,28 @@ protected:
     }
   }
 
+  void send_to_server(byte_buffer pdu, const std::string& dest_addr, uint16_t port)
+  {
+    in_addr          inaddr_v4    = {};
+    in6_addr         inaddr_v6    = {};
+    sockaddr_storage addr_storage = {};
+
+    if (inet_pton(AF_INET, dest_addr.c_str(), &inaddr_v4) == 1) {
+      sockaddr_in* tmp = (sockaddr_in*)&addr_storage;
+      tmp->sin_family  = AF_INET;
+      tmp->sin_addr    = inaddr_v4;
+      tmp->sin_port    = htons(port);
+    } else if (inet_pton(AF_INET6, dest_addr.c_str(), &inaddr_v6) == 1) {
+      sockaddr_in6* tmp = (sockaddr_in6*)&addr_storage;
+      tmp->sin6_family  = AF_INET6;
+      tmp->sin6_addr    = inaddr_v6;
+      tmp->sin6_port    = htons(port);
+    } else {
+      FAIL();
+    }
+    udp_tester->handle_pdu(std::move(pdu), addr_storage);
+  }
+
   timer_manager                           timer_mng;
   manual_task_worker                      ue_worker{128};
   timer_factory                           timers;
@@ -135,9 +157,8 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
 
   // Create UDP tester and spawn RX thread
   udp_network_gateway_config server_config;
-  server_config.bind_address      = "127.0.0.2";
-  server_config.bind_port         = GTPU_PORT;
-  server_config.non_blocking_mode = true;
+  server_config.bind_address = "127.0.0.2";
+  server_config.bind_port    = GTPU_PORT;
 
   // create and bind gateways
   udp_tester = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
@@ -158,39 +179,35 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
   io_tx_executor.run_pending_tasks();
 }
 
-/*
-TEST_F(f1u_cu_split_connector_test, recv_sdu)
+TEST_F(f1u_du_split_connector_test, recv_sdu)
 {
   // Create UDP tester for sending PDU
   udp_network_gateway_config server_config;
-  server_config.bind_address      = "127.0.0.2";
-  server_config.bind_port         = GTPU_PORT;
-  server_config.non_blocking_mode = true;
+  server_config.bind_address = "127.0.0.2";
+  server_config.bind_port    = GTPU_PORT;
 
   udp_tester = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
   ASSERT_NE(udp_tester, nullptr);
   ASSERT_TRUE(udp_tester->create_and_bind());
 
   // Setup GTP-U tunnel
-  up_transport_layer_info     ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
-  up_transport_layer_info     dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
-  dummy_f1u_cu_up_rx_notifier cu_rx;
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
-  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+  auto du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Send SDU
-  byte_buffer du_buf = make_byte_buffer("34ff000e00000001000000840210000000000000abcd");
-  send_to_server(std::move(du_buf), "127.0.0.1", GTPU_PORT);
+  expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000001000000840210000000000000abcd");
+  ASSERT_TRUE(du_buf.has_value());
+  send_to_server(std::move(du_buf.value()), "127.0.0.1", GTPU_PORT);
 
   usleep(10000);
   ue_worker.run_pending_tasks();
 
   // Blocking waiting for RX
-  expected<nru_ul_message> rx_sdu = cu_rx.get_rx_pdu_blocking();
+  // expected<nru_ul_message> rx_sdu = du_rx.get_rx_pdu_blocking();
 }
-*/
 
 int main(int argc, char** argv)
 {
