@@ -55,7 +55,10 @@ TEST_F(io_timer_source_test, timer_gets_ticked_when_source_starts)
   ASSERT_GT(count, 1);
   fmt::print("Tick count: expected={} actual={}\n", run_duration / timer_period, count);
 
+  // Stop timer.
   stop();
+  worker.run_pending_tasks(); // ensures no pending tasks before we reset count
+
   count = 0;
   std::this_thread::sleep_for(std::chrono::milliseconds{10});
   worker.run_pending_tasks();
