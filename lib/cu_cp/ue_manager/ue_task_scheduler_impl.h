@@ -65,7 +65,7 @@ public:
   task_executor& get_executor() override;
 
   /// \brief Stops the UE task scheduler and discards all the pending tasks that haven't started running yet.
-  void stop() override;
+  void stop();
 
 private:
   ue_task_scheduler_manager* parent   = nullptr;

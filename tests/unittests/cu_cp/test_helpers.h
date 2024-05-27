@@ -681,7 +681,6 @@ public:
   unique_timer   create_timer() override { return timer_db.create_unique_timer(exec); }
   timer_factory  get_timer_factory() override { return timer_factory{timer_db, exec}; }
   task_executor& get_executor() override { return exec; }
-  void           stop() override { ctrl_loop.request_stop(); }
 
   void tick_timer() { timer_db.tick(); }
 

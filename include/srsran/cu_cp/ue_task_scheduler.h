@@ -22,8 +22,6 @@ namespace srs_cu_cp {
 /// \brief Async FIFO task scheduler for a single UE managed by the CU-CP.
 class ue_task_scheduler
 {
-  using ue_element = std::pair<const ue_index_t, std::unique_ptr<fifo_async_task_scheduler>>;
-
 public:
   virtual ~ue_task_scheduler() = default;
 
@@ -40,9 +38,6 @@ public:
   virtual timer_factory get_timer_factory() = 0;
 
   virtual task_executor& get_executor() = 0;
-
-  /// \brief Stops the UE task scheduler and discards all the pending tasks that haven't started running yet.
-  virtual void stop() = 0;
 };
 
 } // namespace srs_cu_cp
