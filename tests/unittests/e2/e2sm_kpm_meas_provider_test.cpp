@@ -9,11 +9,9 @@
  */
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
-#include "lib/e2/common/e2ap_asn1_utils.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
-#include "srsran/support/async/async_test_utils.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
