@@ -74,7 +74,7 @@ public:
 
   byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
   {
-    return make_byte_buffer("deadbeef");
+    return make_byte_buffer("deadbeef").value();
   }
 
   async_task<void> on_ue_removal_required(ue_index_t ue_index) override
@@ -460,7 +460,7 @@ public:
       CORO_BEGIN(ctx);
 
       res.success                          = ue_context_setup_outcome;
-      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
 
       CORO_RETURN(res);
     });
@@ -485,7 +485,7 @@ public:
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
-      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
       // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);

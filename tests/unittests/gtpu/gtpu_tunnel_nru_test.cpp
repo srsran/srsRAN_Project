@@ -238,7 +238,8 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_dl_msg_with_t_pdu)
   ASSERT_FALSE(tx_msg_copy.is_error());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
-  byte_buffer exp_pdu = make_byte_buffer("34ff001c00000002000000840404001122330244556677aabbccdd00800028b7e0c51048");
+  byte_buffer exp_pdu =
+      make_byte_buffer("34ff001c00000002000000840404001122330244556677aabbccdd00800028b7e0c51048").value();
   ASSERT_EQ(exp_pdu, gtpu_tx.last_tx);
 
   // RX
@@ -274,7 +275,8 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
   ASSERT_FALSE(tx_msg_copy.is_error());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
-  byte_buffer exp_pdu = make_byte_buffer("34ff001c000000020000008406110000ab4130021e84811e84894c4ba44c4c8100000000");
+  byte_buffer exp_pdu =
+      make_byte_buffer("34ff001c000000020000008406110000ab4130021e84811e84894c4ba44c4c8100000000").value();
   ASSERT_EQ(exp_pdu, gtpu_tx.last_tx);
 
   // RX
@@ -311,7 +313,8 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg_with_t_pdu)
   ASSERT_FALSE(tx_msg_copy.is_error());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
-  byte_buffer exp_pdu = make_byte_buffer("34ff001c00000002000000840411000154cbf7011e84811e84890000800028b7e0c51048");
+  byte_buffer exp_pdu =
+      make_byte_buffer("34ff001c00000002000000840411000154cbf7011e84811e84890000800028b7e0c51048").value();
   ASSERT_EQ(exp_pdu, gtpu_tx.last_tx);
 
   // RX

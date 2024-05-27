@@ -623,7 +623,7 @@ private:
 };
 
 /// Converts a string of hexadecimal digits (e.g. "01FA02") to a byte buffer.
-byte_buffer make_byte_buffer(const std::string& hex_str);
+expected<byte_buffer> make_byte_buffer(const std::string& hex_str);
 
 /// Performs a segment-wise copy of the byte_buffer into a span<uint8_t> object.
 /// The length is limited by the length of src and dst, whichever is smaller.

@@ -224,7 +224,7 @@ void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
       cu_ue_id,
       du_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000"));
+      make_byte_buffer("00013a0abf002b96882dac46355c4f34464ddaf7b43fde37ae8000000000").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject DL NAS Transport message (ue security mode command)
@@ -237,7 +237,8 @@ void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
       du_ue_id,
       srb_id_t::srb1,
       make_byte_buffer("00023a1cbf0243241cb5003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
-                       "c080080170170700c0080a980808000000000"));
+                       "c080080170170700c0080a980808000000000")
+          .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 }
 
@@ -252,8 +253,8 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
   cu_cp_obj->get_ngap_message_handler().handle_message(init_ctxt_setup_req);
 
   // Inject Security Mode Complete
-  f1ap_message ul_rrc_msg_transfer =
-      generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff"));
+  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 }
 
@@ -332,7 +333,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
 
   // Inject Registration Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00043a053f015362c51680bf00218003fe6db7"));
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00043a053f015362c51680bf00218003fe6db7").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject PDU Session Establishment Request
@@ -341,14 +342,15 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       du_ue_id,
       srb_id_t::srb1,
       make_byte_buffer("00053a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
-                       "00000800001800005000006000006800008800900c092838339b939b0b837002c98dcab"));
+                       "00000800001800005000006000006800008800900c092838339b939b0b837002c98dcab")
+          .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject Configuration Update Command
   ngap_message dl_nas_transport_msg = generate_downlink_nas_transport_message(
       amf_ue_id,
       ran_ue_id,
-      make_byte_buffer("7e0205545bfc027e0054430f90004f00700065006e00350047005346004732800131235200490100"));
+      make_byte_buffer("7e0205545bfc027e0054430f90004f00700065006e00350047005346004732800131235200490100").value());
   cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport_msg);
 
   // Inject PDU Session Resource Setup Request
@@ -368,7 +370,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       srb_id_t::srb1,
       make_byte_buffer("00064c821930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
                        "a071e439f0000240400e0300000000100186c0000700809df0000000000000103a0002000012cb2800281c50f000700"
-                       "0f00000004008010240a00126cc3c6"));
+                       "0f00000004008010240a00126cc3c6")
+          .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // check that the Bearer Context Setup was sent to the CU-UP
@@ -411,8 +414,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
 
   // Inject RRC Reconfiguration Complete
-  ul_rrc_msg_transfer =
-      generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5"));
+  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // check that the PDU Session Resource Setup Response was sent to the AMF

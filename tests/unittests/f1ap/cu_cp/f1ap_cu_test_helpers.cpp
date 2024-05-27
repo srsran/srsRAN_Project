@@ -107,9 +107,9 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
   req.serv_cell_idx = 1;
 
   // cu to du to rrc info
-  req.cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef");
-  req.cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef");
-  req.cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef");
+  req.cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef").value();
+  req.cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef").value();
+  req.cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef").value();
 
   // drx cycle
   f1ap_drx_cycle drx_cycle;

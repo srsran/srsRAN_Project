@@ -19,7 +19,7 @@ using namespace srsran::security;
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
 sec_key make_sec_key(std::string hex_str)
 {
-  byte_buffer key_buf = make_byte_buffer(hex_str);
+  byte_buffer key_buf = make_byte_buffer(hex_str).value();
   sec_key     key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
@@ -28,7 +28,7 @@ sec_key make_sec_key(std::string hex_str)
 /// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
 sec_128_key make_sec_128_key(std::string hex_str)
 {
-  byte_buffer key_buf = make_byte_buffer(hex_str);
+  byte_buffer key_buf = make_byte_buffer(hex_str).value();
   sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
@@ -65,8 +65,8 @@ TEST(security_nea1_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -97,8 +97,8 @@ TEST(security_nea1_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -124,8 +124,8 @@ TEST(security_nea1_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -155,8 +155,8 @@ TEST(security_nea1_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -188,8 +188,8 @@ TEST(security_nea1_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -233,8 +233,8 @@ TEST(security_nea1_test, testset6)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -258,8 +258,8 @@ TEST(security_nia1_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -284,8 +284,8 @@ TEST(security_nia1_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -311,8 +311,8 @@ TEST(security_nia1_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -339,8 +339,8 @@ TEST(security_nia1_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -366,8 +366,8 @@ TEST(security_nia1_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -398,8 +398,8 @@ TEST(security_nia1_test, testset6)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -461,8 +461,8 @@ TEST(security_nia1_test, testset7)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -487,8 +487,8 @@ TEST(security_nea2_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -516,8 +516,8 @@ TEST(security_nea2_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -541,8 +541,8 @@ TEST(security_nea2_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -570,8 +570,8 @@ TEST(security_nea2_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -601,8 +601,8 @@ TEST(security_nea2_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -644,8 +644,8 @@ TEST(security_nea2_test, testset6)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -672,8 +672,8 @@ TEST(security_nia2_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -698,8 +698,8 @@ TEST(security_nia2_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
@@ -739,8 +739,8 @@ TEST(security_nia2_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -769,8 +769,8 @@ TEST(security_nia2_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -797,8 +797,8 @@ TEST(security_nia2_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
@@ -839,8 +839,8 @@ TEST(security_nia2_test, testset6)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -874,8 +874,8 @@ TEST(security_nia2_test, testset7)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -937,8 +937,8 @@ TEST(security_nia2_test, testset8)
   // Pack hex strings into srsran types
   sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
-  byte_buffer        message  = make_byte_buffer(message_cstr);
-  byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
+  byte_buffer        message  = make_byte_buffer(message_cstr).value();
+  byte_buffer        mact_buf = make_byte_buffer(mact_cstr).value();
 
   // Apply integrity check
   {
@@ -977,8 +977,8 @@ TEST(security_nea3_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -1008,8 +1008,8 @@ TEST(security_nea3_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -1043,8 +1043,8 @@ TEST(security_nea3_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -1084,8 +1084,8 @@ TEST(security_nea3_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -1129,8 +1129,8 @@ TEST(security_nea3_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
+  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Apply ciphering and compare results
   byte_buffer_view plaintext_view{plaintext};
@@ -1156,8 +1156,8 @@ TEST(security_nia3_test, testset1)
   // Pack hex strings into srsran types
   sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
-  byte_buffer        message = make_byte_buffer(message_cstr);
-  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+  byte_buffer        message = make_byte_buffer(message_cstr).value();
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -1184,8 +1184,8 @@ TEST(security_nia3_test, testset2)
   // Pack hex strings into srsran types
   sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
-  byte_buffer        message = make_byte_buffer(message_cstr);
-  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+  byte_buffer        message = make_byte_buffer(message_cstr).value();
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -1213,8 +1213,8 @@ TEST(security_nia3_test, testset3)
   // Pack hex strings into srsran types
   sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
-  byte_buffer        message = make_byte_buffer(message_cstr);
-  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+  byte_buffer        message = make_byte_buffer(message_cstr).value();
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -1246,8 +1246,8 @@ TEST(security_nia3_test, testset4)
   // Pack hex strings into srsran types
   sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
-  byte_buffer        message = make_byte_buffer(message_cstr);
-  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+  byte_buffer        message = make_byte_buffer(message_cstr).value();
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};
@@ -1287,8 +1287,8 @@ TEST(security_nia3_test, testset5)
   // Pack hex strings into srsran types
   sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
-  byte_buffer        message = make_byte_buffer(message_cstr);
-  byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
+  byte_buffer        message = make_byte_buffer(message_cstr).value();
+  byte_buffer        mac_buf = make_byte_buffer(mac_cstr).value();
 
   // Apply integrity check
   byte_buffer_view message_view{message};

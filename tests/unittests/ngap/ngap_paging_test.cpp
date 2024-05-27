@@ -81,10 +81,10 @@ protected:
       return false;
     }
     if (cu_cp_paging_notifier.last_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr !=
-        make_byte_buffer("deadbeef")) {
+        make_byte_buffer("deadbeef").value()) {
       test_logger.error("UE radio cap for paging mismatch {} != {}",
                         cu_cp_paging_notifier.last_msg.ue_radio_cap_for_paging.value().ue_radio_cap_for_paging_of_nr,
-                        make_byte_buffer("deadbeef"));
+                        make_byte_buffer("deadbeef").value());
       return false;
     }
 

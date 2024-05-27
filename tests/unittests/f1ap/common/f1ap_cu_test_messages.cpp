@@ -182,22 +182,22 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // cu to du to rrc info
   f1ap_cu_to_du_rrc_info cu_to_du_rrc_info;
-  cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef");
-  cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef");
-  cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef");
+  cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef").value();
+  cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef").value();
+  cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef").value();
   msg.cu_to_du_rrc_info                       = cu_to_du_rrc_info;
 
   // tx action ind
   msg.tx_action_ind = f1ap_tx_action_ind::stop;
 
   // res coordination transfer container
-  msg.res_coordination_transfer_container = make_byte_buffer("deadbeef");
+  msg.res_coordination_transfer_container = make_byte_buffer("deadbeef").value();
 
   // rrc recfg complete ind
   msg.rrc_recfg_complete_ind = f1ap_rrc_recfg_complete_ind::true_value;
 
   // rrc container
-  msg.rrc_container = make_byte_buffer("deadbeef");
+  msg.rrc_container = make_byte_buffer("deadbeef").value();
 
   // scell to be setup mod list
   f1ap_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
@@ -364,7 +364,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.rlc_fail_ind            = rlc_fail_ind;
 
   // ul tx direct current list info
-  msg.ul_tx_direct_current_list_info = make_byte_buffer("deadbeef");
+  msg.ul_tx_direct_current_list_info = make_byte_buffer("deadbeef").value();
 
   // gnb du cfg query
   msg.gnb_du_cfg_query = true;
@@ -459,7 +459,7 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
 
   // add ue radio cap for paging
   cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
-  ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef");
+  ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef").value();
   paging_msg.ue_radio_cap_for_paging                    = ue_radio_cap_for_paging;
 
   // add paging origin

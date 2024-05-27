@@ -80,10 +80,10 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
 
   request.ue_index                                        = ue_index;
   request.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea0;
-  request.security_info.up_security_key.encryption_key    = make_byte_buffer("9950ab8083ed034257d900e9a6a06236");
-  request.ue_dl_aggregate_maximum_bit_rate                = 300000000;
-  request.serving_plmn                                    = "00101";
-  request.activity_notif_level                            = "ue";
+  request.security_info.up_security_key.encryption_key = make_byte_buffer("9950ab8083ed034257d900e9a6a06236").value();
+  request.ue_dl_aggregate_maximum_bit_rate             = 300000000;
+  request.serving_plmn                                 = "00101";
+  request.activity_notif_level                         = "ue";
 
   e1ap_pdu_session_res_to_setup_item res_to_setup_item;
   res_to_setup_item.pdu_session_id                              = uint_to_pdu_session_id(0);
