@@ -16,14 +16,12 @@
 
 using namespace srsran;
 
-io_timer_source::io_timer_source(timer_manager&            tick_sink_,
-                                 io_broker&                broker_,
-                                 std::chrono::milliseconds tick_period_) :
-  tick_sink(tick_sink_), broker(broker_), tick_period(tick_period_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
+io_timer_source::io_timer_source(timer_manager& tick_sink_, io_broker& broker, std::chrono::milliseconds tick_period) :
+  tick_sink(tick_sink_), logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {
   using namespace std::chrono;
 
-  timer_fd = unique_fd{timerfd_create(CLOCK_REALTIME, 0)};
+  timer_fd = unique_fd{::timerfd_create(CLOCK_REALTIME, 0)};
   if (not timer_fd.is_open()) {
     report_fatal_error_if_not("Failed to create timer source (errno={})", strerror(errno));
   }
@@ -32,7 +30,7 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
   auto              tnsecs    = duration_cast<nanoseconds>(tick_period) - duration_cast<nanoseconds>(tsecs);
   struct timespec   period    = {tsecs.count(), tnsecs.count()};
   struct itimerspec timerspec = {period, period};
-  timerfd_settime(timer_fd.value(), 0, &timerspec, nullptr);
+  ::timerfd_settime(timer_fd.value(), 0, &timerspec, nullptr);
 
   io_sub = broker.register_fd(
       timer_fd.value(), [this]() { read_time(); }, [this](io_broker::error_code ev) { io_sub.reset(); });
@@ -41,9 +39,9 @@ io_timer_source::io_timer_source(timer_manager&            tick_sink_,
 void io_timer_source::read_time()
 {
   char read_buffer[8];
-  int  n = read(timer_fd.value(), read_buffer, sizeof(read_buffer));
+  int  n = ::read(timer_fd.value(), read_buffer, sizeof(read_buffer));
   if (n < 0) {
-    logger.error("Failed to read timerfd (errno={})", strerror(errno));
+    logger.error("Failed to read timerfd (errno={})", ::strerror(errno));
     return;
   }
   if (n == 0) {

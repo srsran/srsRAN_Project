@@ -27,10 +27,8 @@ public:
 private:
   void read_time();
 
-  timer_manager&            tick_sink;
-  io_broker&                broker;
-  std::chrono::milliseconds tick_period;
-  srslog::basic_logger&     logger;
+  timer_manager&        tick_sink;
+  srslog::basic_logger& logger;
 
   unique_fd timer_fd;
 
