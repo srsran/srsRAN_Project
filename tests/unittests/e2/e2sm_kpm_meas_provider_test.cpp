@@ -203,7 +203,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcPacketDropRateDl");
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);
