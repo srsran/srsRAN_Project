@@ -136,8 +136,8 @@ protected:
   }
 
 private:
-  async_task<cu_cp_pdu_session_resource_modify_response>                   t;
-  optional<lazy_task_launcher<cu_cp_pdu_session_resource_modify_response>> t_launcher;
+  async_task<cu_cp_pdu_session_resource_modify_response>                        t;
+  std::optional<lazy_task_launcher<cu_cp_pdu_session_resource_modify_response>> t_launcher;
 };
 
 TEST_F(pdu_session_resource_modification_test,

@@ -28,7 +28,7 @@ public:
 class dummy_metrics_notifier : public metrics_report_notifier
 {
 public:
-  optional<metrics_report> last_metrics_report;
+  std::optional<metrics_report> last_metrics_report;
 
   void notify_metrics_report_request(const metrics_report& report) override { last_metrics_report = report; }
 };

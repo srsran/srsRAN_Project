@@ -70,7 +70,7 @@ public:
     return dl_rrc_msg.srb_id == 1;
   }
 
-  optional<f1ap_message> ue_sends_rrc_setup_request_and_waits_rrc_setup(gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+  std::optional<f1ap_message> ue_sends_rrc_setup_request_and_waits_rrc_setup(gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
   {
     ngap_message ngap_pdu;
     srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -85,7 +85,7 @@ public:
     // Wait for DL RRC message transfer (containing RRC Setup)
     bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
     if (not result) {
-      return nullopt;
+      return std::nullopt;
     }
 
     // Check if the DL RRC Message with Msg4 is valid.

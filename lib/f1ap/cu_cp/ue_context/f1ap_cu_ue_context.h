@@ -24,9 +24,9 @@ struct f1ap_ue_context {
   f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
   bool                       marked_for_release = false;
   /// Whether the old gNB-DU UE F1AP UE ID IE needs to be notified back to the DU, due to reestablishment.
-  optional<gnb_du_ue_f1ap_id_t> pending_old_ue_id;
-  f1ap_ue_transaction_manager   ev_mng;
-  f1ap_ue_logger                logger;
+  std::optional<gnb_du_ue_f1ap_id_t> pending_old_ue_id;
+  f1ap_ue_transaction_manager        ev_mng;
+  f1ap_ue_logger                     logger;
 
   f1ap_ue_context(ue_index_t ue_index_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_factory timers_) :
     ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_ids}, ": ")

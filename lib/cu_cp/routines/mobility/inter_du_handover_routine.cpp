@@ -237,8 +237,13 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   if (transfer_context.handover_preparation_info.empty()) {
     return false;
   }
+
   setup_request.cu_to_du_rrc_info.ie_exts.emplace();
-  setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info = transfer_context.handover_preparation_info;
+  auto buffer_copy = transfer_context.handover_preparation_info.deep_copy();
+  if (!buffer_copy) {
+    return false;
+  }
+  setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info = std::move(buffer_copy.value());
 
   for (const auto& srb_id : srbs) {
     f1ap_srbs_to_be_setup_mod_item srb_item;
@@ -255,7 +260,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
       drb_item.qos_info.drb_qos = drb_context.qos_params;
 
       // Add each QoS flow including QoS.
-      for (auto& flow : drb_context.qos_flows) {
+      for (const auto& flow : drb_context.qos_flows) {
         f1ap_flows_mapped_to_drb_item flow_item;
         flow_item.qos_flow_id               = flow.first;
         flow_item.qos_flow_level_qos_params = flow.second.qos_params;

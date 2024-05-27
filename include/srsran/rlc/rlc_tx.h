@@ -45,10 +45,10 @@ namespace srsran {
 /// so that RLC AM can notify the PDCP of ACKs, and PDCP can notify RLC AM/UM to discard PDCP PDUs
 struct rlc_sdu {
   byte_buffer                           buf = {};
-  optional<uint32_t>                    pdcp_sn;
+  std::optional<uint32_t>               pdcp_sn;
   std::chrono::system_clock::time_point time_of_arrival;
   rlc_sdu() = default;
-  rlc_sdu(byte_buffer buf_, optional<uint32_t> pdcp_sn_) : buf(std::move(buf_)), pdcp_sn(pdcp_sn_) {}
+  rlc_sdu(byte_buffer buf_, std::optional<uint32_t> pdcp_sn_) : buf(std::move(buf_)), pdcp_sn(pdcp_sn_) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.

@@ -307,7 +307,7 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_exp
       "Sets the cell CPU affinities configuration on a per cell basis");
 }
 
-static void configure_cli11_hal_args(CLI::App& app, optional<ru_ofh_unit_hal_config>& config)
+static void configure_cli11_hal_args(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& config)
 {
   config.emplace();
 
@@ -333,7 +333,7 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
 }
 
-static void manage_hal_optional(CLI::App& app, optional<ru_ofh_unit_hal_config>& hal_config)
+static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)
 {
   // Clean the HAL optional.
   if (app.get_subcommand("hal")->count_all() == 0) {

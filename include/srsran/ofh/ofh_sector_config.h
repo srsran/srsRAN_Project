@@ -106,7 +106,7 @@ struct sector_configuration {
   /// Indicates if DPDK should be used by the underlying implementation.
   bool uses_dpdk;
   /// Optional TDD configuration.
-  optional<tdd_ul_dl_config_common> tdd_config;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 /// Open Fronthaul sector dependencies.
@@ -122,9 +122,9 @@ struct sector_dependencies {
   /// User-Plane received symbol notifier.
   std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
   /// Optional Ethernet gateway.
-  optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
   /// Optional Ethernet receiver.
-  optional<std::unique_ptr<ether::receiver>> eth_receiver;
+  std::optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 } // namespace ofh

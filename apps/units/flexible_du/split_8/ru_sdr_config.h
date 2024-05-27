@@ -155,7 +155,7 @@ struct ru_sdr_unit_config {
   /// PRACH will also be detected earlier within the reception window. Negative values have the opposite effect, for
   /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
   /// PRACH to be detected 16.3 us later within the reception window.
-  optional<int> time_alignment_calibration;
+  std::optional<int> time_alignment_calibration;
   /// Synchronization source.
   std::string synch_source = "default";
   /// Clock source.

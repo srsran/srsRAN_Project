@@ -138,9 +138,9 @@ protected:
     }
   }
 
-  du_ue*                                                        test_ue = nullptr;
-  async_task<f1ap_ue_context_update_response>                   proc;
-  optional<lazy_task_launcher<f1ap_ue_context_update_response>> proc_launcher;
+  du_ue*                                                             test_ue = nullptr;
+  async_task<f1ap_ue_context_update_response>                        proc;
+  std::optional<lazy_task_launcher<f1ap_ue_context_update_response>> proc_launcher;
 };
 
 TEST_F(ue_config_tester, when_du_manager_receives_ue_config_request_then_mac_and_f1ap_get_request_to_reconfigure_ue)

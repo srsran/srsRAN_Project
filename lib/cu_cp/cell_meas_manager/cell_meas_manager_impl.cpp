@@ -28,11 +28,11 @@ cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
   log_cells(logger, cfg);
 }
 
-optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t             ue_index,
-                                                                 nr_cell_id_t           serving_nci,
-                                                                 optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t                  ue_index,
+                                                                      nr_cell_id_t                serving_nci,
+                                                                      std::optional<rrc_meas_cfg> current_meas_config)
 {
-  optional<rrc_meas_cfg> meas_cfg;
+  std::optional<rrc_meas_cfg> meas_cfg;
 
   // Find cell.
   if (cfg.cells.find(serving_nci) == cfg.cells.end()) {
@@ -127,9 +127,9 @@ optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t     
   return meas_cfg;
 }
 
-optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
+std::optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
 {
-  optional<cell_meas_config> cell_cfg;
+  std::optional<cell_meas_config> cell_cfg;
   if (cfg.cells.find(nci) != cfg.cells.end()) {
     cell_cfg = cfg.cells.at(nci);
   }
@@ -174,9 +174,9 @@ bool cell_meas_manager::update_cell_config(nr_cell_id_t nci, const serving_cell_
   return true;
 }
 
-optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
+std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 {
-  optional<uint8_t> rsrp;
+  std::optional<uint8_t> rsrp;
   if (meas_result.cell_results.results_ssb_cell.has_value()) {
     if (meas_result.cell_results.results_ssb_cell.value().rsrp.has_value()) {
       rsrp = meas_result.cell_results.results_ssb_cell.value().rsrp.value();
@@ -219,7 +219,7 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
   // Find strongest neighbor cell
   if (meas_results.meas_result_neigh_cells.has_value()) {
     // Find strongest neighbor here.
-    optional<uint8_t> serv_cell_rsrp;
+    std::optional<uint8_t> serv_cell_rsrp;
 
     // Extract RSRP of SSB for servCellId 0.
     if (meas_results.meas_result_serving_mo_list.contains(0)) {
@@ -227,11 +227,11 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
     }
 
     if (serv_cell_rsrp.has_value()) {
-      uint8_t         max_rsrp = serv_cell_rsrp.value();
-      optional<pci_t> strongest_neighbor;
+      uint8_t              max_rsrp = serv_cell_rsrp.value();
+      std::optional<pci_t> strongest_neighbor;
 
       for (const auto& report : meas_results.meas_result_neigh_cells.value().meas_result_list_nr) {
-        optional<uint8_t> neighbor_rsrp = get_ssb_rsrp(report);
+        std::optional<uint8_t> neighbor_rsrp = get_ssb_rsrp(report);
         if (neighbor_rsrp.has_value()) {
           if (neighbor_rsrp.value() > max_rsrp) {
             // Found stronger neighbor, take note of it's details.

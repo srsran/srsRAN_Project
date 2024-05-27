@@ -80,8 +80,8 @@ public:
 
   /// Notify F1AP to establish the UE context.
   virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                              optional<rrc_ue_transfer_context>    rrc_context) = 0;
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                              std::optional<rrc_ue_transfer_context> rrc_context) = 0;
 
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.
@@ -182,7 +182,7 @@ public:
   /// \brief (Re-)generate the RRC measurement config for the current serving cell of the UE.
   /// \params[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 
@@ -222,7 +222,7 @@ public:
   virtual ~du_processor_mobility_handler() = default;
 
   /// \brief Retrieve CGI for a given PCI of a DU.
-  virtual optional<nr_cell_global_id_t> get_cgi(pci_t pci) = 0;
+  virtual std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) = 0;
 
   /// \brief Retrieve the SIB1 for a given PCI of a DU.
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;

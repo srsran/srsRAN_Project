@@ -30,15 +30,15 @@ public:
 
   const scheduler_expert_config& expert_cfg;
 
-  const du_cell_index_t                   cell_index;
-  const du_cell_group_index_t             cell_group_index;
-  const pci_t                             pci;
-  const unsigned                          nof_dl_prbs;
-  const unsigned                          nof_ul_prbs;
-  const unsigned                          nof_slots_per_frame;
-  const dl_config_common                  dl_cfg_common;
-  const ul_config_common                  ul_cfg_common;
-  const optional<tdd_ul_dl_config_common> tdd_cfg_common;
+  const du_cell_index_t                        cell_index;
+  const du_cell_group_index_t                  cell_group_index;
+  const pci_t                                  pci;
+  const unsigned                               nof_dl_prbs;
+  const unsigned                               nof_ul_prbs;
+  const unsigned                               nof_slots_per_frame;
+  const dl_config_common                       dl_cfg_common;
+  const ul_config_common                       ul_cfg_common;
+  const std::optional<tdd_ul_dl_config_common> tdd_cfg_common;
 
   /// Imported from mac_cell_configuration.
   carrier_configuration   dl_carrier;

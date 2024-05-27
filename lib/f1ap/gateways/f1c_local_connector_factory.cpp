@@ -60,7 +60,7 @@ public:
 
   void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_cp_du_mng_) override { cu_cp_du_mng = &cu_cp_du_mng_; }
 
-  optional<uint16_t> get_listen_port() const override { return nullopt; }
+  std::optional<uint16_t> get_listen_port() const override { return std::nullopt; }
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_notifier) override
@@ -121,7 +121,7 @@ public:
     client = create_f1c_gateway_client(f1c_du_sctp_gateway_config{sctp_client, broker, *null_pcap_writer});
   }
 
-  optional<uint16_t> get_listen_port() const override { return server->get_listen_port(); }
+  std::optional<uint16_t> get_listen_port() const override { return server->get_listen_port(); }
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override

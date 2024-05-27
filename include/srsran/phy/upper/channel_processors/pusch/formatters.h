@@ -53,7 +53,7 @@ struct formatter<srsran::pusch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
+  auto format(const std::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);

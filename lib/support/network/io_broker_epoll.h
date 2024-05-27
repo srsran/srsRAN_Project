@@ -65,10 +65,10 @@ private:
                               std::promise<bool>*     complete_notifier);
 
   // Handle the deregistration of an existing file descriptor.
-  bool handle_fd_epoll_removal(int                  fd,
-                               bool                 io_broker_deregistration_required,
-                               optional<error_code> epoll_error,
-                               std::promise<bool>*  complete_notifier);
+  bool handle_fd_epoll_removal(int                       fd,
+                               bool                      io_broker_deregistration_required,
+                               std::optional<error_code> epoll_error,
+                               std::promise<bool>*       complete_notifier);
 
   void stop_impl();
 

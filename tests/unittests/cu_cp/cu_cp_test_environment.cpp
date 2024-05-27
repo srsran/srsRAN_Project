@@ -185,11 +185,11 @@ void cu_cp_test_environment::run_ng_setup()
                             "CU-CP did not setup the AMF connection");
 }
 
-optional<unsigned> cu_cp_test_environment::connect_new_du()
+std::optional<unsigned> cu_cp_test_environment::connect_new_du()
 {
   auto du_stub = create_mock_du({get_cu_cp().get_f1c_handler()});
   if (not du_stub) {
-    return nullopt;
+    return std::nullopt;
   }
   for (; dus.count(next_du_idx) != 0; ++next_du_idx) {
   }
@@ -216,11 +216,11 @@ bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
   return result;
 }
 
-optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
+std::optional<unsigned> cu_cp_test_environment::connect_new_cu_up()
 {
   auto cu_up_obj = create_mock_cu_up(get_cu_cp().get_e1_handler());
   if (not cu_up_obj) {
-    return nullopt;
+    return std::nullopt;
   }
   for (; cu_ups.count(next_cu_up_idx) != 0; ++next_cu_up_idx) {
   }

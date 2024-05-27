@@ -39,9 +39,9 @@ bool sctp_subscribe_to_events(const unique_fd& fd, srslog::basic_logger& logger)
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the maximum re-transmission timeout (rto_max).
 bool sctp_set_rto_opts(const unique_fd&      fd,
-                       optional<int>         rto_initial,
-                       optional<int>         rto_min,
-                       optional<int>         rto_max,
+                       std::optional<int>    rto_initial,
+                       std::optional<int>    rto_min,
+                       std::optional<int>    rto_max,
                        srslog::basic_logger& logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
@@ -87,8 +87,8 @@ bool sctp_set_rto_opts(const unique_fd&      fd,
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the SCTP_INITMSG parameters (to control the timeout of the connect() syscall)
 bool sctp_set_init_msg_opts(const unique_fd&      fd,
-                            optional<int>         init_max_attempts,
-                            optional<int>         max_init_timeo,
+                            std::optional<int>    init_max_attempts,
+                            std::optional<int>    max_init_timeo,
                             srslog::basic_logger& logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
@@ -130,7 +130,7 @@ bool sctp_set_init_msg_opts(const unique_fd&      fd,
 ///
 /// Note: If the local interface supports jumbo frames (MTU size > 1500) but not the receiver, then the receiver might
 /// discard big PDUs and the stream might get stuck.
-bool sctp_set_nodelay(const unique_fd& fd, optional<bool> nodelay, srslog::basic_logger& logger)
+bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay, srslog::basic_logger& logger)
 {
   if (not nodelay.has_value()) {
     // no need to change anything
@@ -322,7 +322,7 @@ bool sctp_socket::set_sockopts(const sctp_socket_params& params)
   return true;
 }
 
-optional<uint16_t> sctp_socket::get_listen_port() const
+std::optional<uint16_t> sctp_socket::get_listen_port() const
 {
   if (not sock_fd.is_open()) {
     logger.error("Socket of SCTP network gateway not created.");

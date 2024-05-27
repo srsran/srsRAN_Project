@@ -37,7 +37,7 @@ struct csi_report_pmi {
     /// PMI parameter \f$i_{1,1}\f$.
     unsigned i_1_1;
     /// PMI parameter \f$i_{1,3}\f$. Only available for \f$\upsilon \in \{2,3,4\}\f$.
-    optional<unsigned> i_1_3;
+    std::optional<unsigned> i_1_3;
     /// PMI parameter \f$i_2\f$.
     unsigned i_2;
   };
@@ -56,17 +56,17 @@ struct csi_report_data {
   using wideband_cqi_type = bounded_integer<uint8_t, 0, 15>;
 
   /// CSI-RS Resource Indicator (CRI) if reported.
-  optional<uint8_t> cri;
+  std::optional<uint8_t> cri;
   /// Rank Indicator (RI) if reported. The range is {1, ..., 8}.
-  optional<ri_type> ri;
+  std::optional<ri_type> ri;
   /// Layer Indicator (LI) if reported.
-  optional<li_type> li;
+  std::optional<li_type> li;
   /// PMI wideband information fields if reported.
-  optional<csi_report_pmi> pmi;
+  std::optional<csi_report_pmi> pmi;
   /// Wideband CQI for the first TB.
-  optional<wideband_cqi_type> first_tb_wideband_cqi;
+  std::optional<wideband_cqi_type> first_tb_wideband_cqi;
   /// Wideband CQI for the second TB.
-  optional<wideband_cqi_type> second_tb_wideband_cqi;
+  std::optional<wideband_cqi_type> second_tb_wideband_cqi;
 };
 
 } // namespace srsran

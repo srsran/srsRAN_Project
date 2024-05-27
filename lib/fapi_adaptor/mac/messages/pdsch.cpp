@@ -118,11 +118,11 @@ static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder, const tx_
                                        fapi::to_power_control_offset_ss(power_params.pwr_ctrl_offset_ss));
 }
 
-static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
-                                           const optional<pdsch_precoding_info>& mac_info,
-                                           const precoding_matrix_mapper&        pm_mapper,
-                                           unsigned                              nof_layers,
-                                           unsigned                              cell_nof_prbs)
+static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&                builder,
+                                           const std::optional<pdsch_precoding_info>& mac_info,
+                                           const precoding_matrix_mapper&             pm_mapper,
+                                           unsigned                                   nof_layers,
+                                           unsigned                                   cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   pm_bf_builder.set_basic_parameters((mac_info) ? mac_info->nof_rbs_per_prg : cell_nof_prbs, 0);

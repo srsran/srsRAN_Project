@@ -94,7 +94,7 @@ public:
     return false;
   }
 
-  optional<test_recv_data> receive()
+  std::optional<test_recv_data> receive()
   {
     constexpr static uint32_t network_gateway_sctp_max_len = 9100;
 
@@ -112,7 +112,7 @@ public:
       if (errno != EAGAIN) {
         logger.error("Recv error: {}", strerror(errno));
       }
-      return nullopt;
+      return std::nullopt;
     }
 
     data.data.assign(temp_buf.begin(), temp_buf.begin() + rx_bytes);

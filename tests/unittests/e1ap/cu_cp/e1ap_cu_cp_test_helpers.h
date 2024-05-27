@@ -85,9 +85,9 @@ class e1ap_cu_cp_test : public ::testing::Test
 {
 protected:
   struct test_ue {
-    ue_index_t                       ue_index;
-    optional<gnb_cu_cp_ue_e1ap_id_t> cu_cp_ue_e1ap_id;
-    optional<gnb_cu_up_ue_e1ap_id_t> cu_up_ue_e1ap_id;
+    ue_index_t                            ue_index;
+    std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_cp_ue_e1ap_id;
+    std::optional<gnb_cu_up_ue_e1ap_id_t> cu_up_ue_e1ap_id;
   };
 
   e1ap_cu_cp_test();

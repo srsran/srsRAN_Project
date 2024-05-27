@@ -384,7 +384,7 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 
 void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
 {
-  optional<uint8_t> transaction_id = get_transaction_id(outcome);
+  std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
   if (not transaction_id.has_value()) {
     logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
@@ -398,7 +398,7 @@ void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 
 void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
-  optional<uint8_t> transaction_id = get_transaction_id(outcome);
+  std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
   if (not transaction_id.has_value()) {
     logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
@@ -573,8 +573,8 @@ void f1ap_du_impl::log_pdu(bool is_rx, const f1ap_message& msg)
   }
 
   // Fetch UE index.
-  auto                    cu_ue_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
-  optional<du_ue_index_t> ue_idx;
+  auto                         cu_ue_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
+  std::optional<du_ue_index_t> ue_idx;
   if (cu_ue_id.has_value()) {
     auto* ue_ptr = ues.find(cu_ue_id.value());
     if (ue_ptr != nullptr and ue_ptr->context.ue_index != INVALID_DU_UE_INDEX) {

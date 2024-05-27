@@ -59,8 +59,8 @@ protected:
     return true;
   }
 
-  async_task<cu_cp_ue_context_release_complete>                   t;
-  optional<lazy_task_launcher<cu_cp_ue_context_release_complete>> t_launcher;
+  async_task<cu_cp_ue_context_release_complete>                        t;
+  std::optional<lazy_task_launcher<cu_cp_ue_context_release_complete>> t_launcher;
 };
 
 TEST_F(ue_context_release_test, when_ue_context_release_command_received_then_release_succeeds)

@@ -33,8 +33,8 @@ struct du_setup_request {
 };
 
 struct f1ap_cells_to_be_activ_list_item {
-  nr_cell_global_id_t nr_cgi;
-  optional<pci_t>     nr_pci;
+  nr_cell_global_id_t  nr_cgi;
+  std::optional<pci_t> nr_pci;
 };
 
 /// Result of a DU setup request operation.

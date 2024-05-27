@@ -86,8 +86,8 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 }
 
 async_task<f1ap_ue_context_setup_response>
-f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                              optional<rrc_ue_transfer_context>    rrc_context)
+f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                                              std::optional<rrc_ue_transfer_context> rrc_context)
 {
   return launch_async<ue_context_setup_procedure>(
       cfg, request, ue_ctxt_list, du_processor_notifier, tx_pdu_notifier, logger, rrc_context);
@@ -336,7 +336,7 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
 {
-  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
+  std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
   if (cu_ue_id.has_value()) {
     if (not ue_ctxt_list.contains(*cu_ue_id)) {
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
@@ -362,7 +362,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 
 void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
-  optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
+  std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id = get_gnb_cu_ue_f1ap_id(outcome);
   if (cu_ue_id.has_value()) {
     if (not ue_ctxt_list.contains(*cu_ue_id)) {
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
@@ -401,8 +401,8 @@ void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& msg)
   }
 
   // Fetch UE index.
-  auto                 cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
-  optional<ue_index_t> ue_idx;
+  auto                      cu_ue_id = get_gnb_cu_ue_f1ap_id(msg.pdu);
+  std::optional<ue_index_t> ue_idx;
   if (cu_ue_id.has_value()) {
     auto* ue_ptr = ue_ctxt_list.find(cu_ue_id.value());
     if (ue_ptr != nullptr and ue_ptr->ue_ids.ue_index != ue_index_t::invalid) {

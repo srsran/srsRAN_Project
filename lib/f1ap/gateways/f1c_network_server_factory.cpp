@@ -113,7 +113,7 @@ public:
     report_fatal_error_if_not(result, "Failed to start SCTP server.\n");
   }
 
-  optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }
+  std::optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }
 
   std::unique_ptr<sctp_association_sdu_notifier>
   create(std::unique_ptr<sctp_association_sdu_notifier> sctp_send_notifier) override

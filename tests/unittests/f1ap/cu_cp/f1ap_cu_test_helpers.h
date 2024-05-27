@@ -171,7 +171,7 @@ public:
   srs_cu_cp::du_setup_result  next_du_setup_resp;
 
   srs_cu_cp::ue_rrc_context_creation_request       last_ue_creation_msg;
-  optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
+  std::optional<srs_cu_cp::ue_index_t>             last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> f1ap_rrc_notifier =
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
@@ -189,9 +189,9 @@ class f1ap_cu_test : public ::testing::Test
 {
 protected:
   struct test_ue {
-    ue_index_t                    ue_index;
-    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    optional<gnb_du_ue_f1ap_id_t> du_ue_id;
+    ue_index_t                         ue_index;
+    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id;
   };
 
   f1ap_cu_test(const f1ap_configuration& f1ap_cfg = {});

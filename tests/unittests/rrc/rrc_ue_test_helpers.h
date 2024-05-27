@@ -107,7 +107,7 @@ protected:
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            task_sched_handle,
-                                           optional<rrc_ue_transfer_context>{});
+                                           std::optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
   }

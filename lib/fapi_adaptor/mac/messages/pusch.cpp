@@ -28,7 +28,7 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu&        
 
 /// Fill the optional UCI parameters.
 static void fill_optional_uci_parameters(fapi::ul_pusch_pdu_builder&      builder,
-                                         const optional<uci_info>&        uci,
+                                         const std::optional<uci_info>&   uci,
                                          uci_part2_correspondence_mapper& part2_mapper)
 {
   if (!uci) {

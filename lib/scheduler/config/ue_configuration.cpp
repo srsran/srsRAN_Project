@@ -88,19 +88,19 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                                            bool                         is_ue_configured_multiple_serving_cells,
                                            search_space_id              ss_id)
 {
-  const search_space_info&            ss_info                    = ue_cell_cfg.search_space(ss_id);
-  const bwp_info&                     init_bwp                   = ue_cell_cfg.bwp(to_bwp_id(0));
-  const bwp_info&                     active_bwp                 = *ss_info.bwp;
-  const bwp_downlink_common&          init_dl_bwp                = *init_bwp.dl_common;
-  const bwp_downlink_common&          active_dl_bwp_cmn          = *active_bwp.dl_common;
-  const bwp_configuration&            active_dl_bwp              = active_dl_bwp_cmn.generic_params;
-  const bwp_uplink_common&            init_ul_bwp                = *init_bwp.ul_common;
-  const bwp_configuration&            active_ul_bwp              = active_bwp.ul_common->generic_params;
-  const optional<rach_config_common>& opt_rach_cfg               = active_bwp.ul_common->rach_cfg_common;
-  const optional<csi_meas_config>&    opt_csi_meas_cfg           = ue_cell_cfg.cfg_dedicated().csi_meas_cfg;
-  const optional<uplink_config>&      opt_ul_cfg                 = ue_cell_cfg.cfg_dedicated().ul_config;
-  const auto&                         opt_pdsch_cfg              = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
-  const auto&                         opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
+  const search_space_info&                 ss_info           = ue_cell_cfg.search_space(ss_id);
+  const bwp_info&                          init_bwp          = ue_cell_cfg.bwp(to_bwp_id(0));
+  const bwp_info&                          active_bwp        = *ss_info.bwp;
+  const bwp_downlink_common&               init_dl_bwp       = *init_bwp.dl_common;
+  const bwp_downlink_common&               active_dl_bwp_cmn = *active_bwp.dl_common;
+  const bwp_configuration&                 active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+  const bwp_uplink_common&                 init_ul_bwp       = *init_bwp.ul_common;
+  const bwp_configuration&                 active_ul_bwp     = active_bwp.ul_common->generic_params;
+  const std::optional<rach_config_common>& opt_rach_cfg      = active_bwp.ul_common->rach_cfg_common;
+  const std::optional<csi_meas_config>&    opt_csi_meas_cfg  = ue_cell_cfg.cfg_dedicated().csi_meas_cfg;
+  const std::optional<uplink_config>&      opt_ul_cfg        = ue_cell_cfg.cfg_dedicated().ul_config;
+  const auto&                              opt_pdsch_cfg     = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
+  const auto&                              opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
 
   dci_size_config dci_sz_cfg = dci_size_config{
       is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.bwp_id, true),
@@ -130,9 +130,9 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.transform_precoding_enabled  = false;
   dci_sz_cfg.pusch_res_allocation_type    = resource_allocation::resource_allocation_type_1;
   if (opt_ul_cfg.has_value()) {
-    const optional<pusch_config>&              opt_pusch_cfg    = opt_ul_cfg.value().init_ul_bwp.pusch_cfg;
-    const optional<srs_config>&                opt_srs_cfg      = opt_ul_cfg.value().init_ul_bwp.srs_cfg;
-    const optional<pusch_serving_cell_config>& opt_pusch_sc_cfg = opt_ul_cfg.value().pusch_scell_cfg;
+    const std::optional<pusch_config>&              opt_pusch_cfg    = opt_ul_cfg.value().init_ul_bwp.pusch_cfg;
+    const std::optional<srs_config>&                opt_srs_cfg      = opt_ul_cfg.value().init_ul_bwp.srs_cfg;
+    const std::optional<pusch_serving_cell_config>& opt_pusch_sc_cfg = opt_ul_cfg.value().pusch_scell_cfg;
     if (opt_pusch_cfg.has_value()) {
       dci_sz_cfg.tx_config_non_codebook = opt_pusch_cfg.value().tx_cfg != pusch_config::tx_config::not_set and
                                           opt_pusch_cfg.value().tx_cfg == pusch_config::tx_config::non_codebook;

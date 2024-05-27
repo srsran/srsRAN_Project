@@ -128,10 +128,10 @@ public:
     });
   }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
-                                                       optional<rrc_meas_cfg> current_meas_config = {}) override
+  std::optional<rrc_meas_cfg>
+  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
-    optional<rrc_meas_cfg> meas_cfg;
+    std::optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;
   }
 

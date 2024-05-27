@@ -18,9 +18,9 @@
 namespace srsran {
 
 /// Generate an F1AP Error Indication message.
-f1ap_message generate_error_indication(uint8_t                              transaction_id,
-                                       const optional<gnb_du_ue_f1ap_id_t>& du_ue_id,
-                                       const optional<gnb_cu_ue_f1ap_id_t>& cu_ue_id,
-                                       const optional<asn1::f1ap::cause_c>& cause);
+f1ap_message generate_error_indication(uint8_t                                   transaction_id,
+                                       const std::optional<gnb_du_ue_f1ap_id_t>& du_ue_id,
+                                       const std::optional<gnb_cu_ue_f1ap_id_t>& cu_ue_id,
+                                       const std::optional<asn1::f1ap::cause_c>& cause);
 
 } // namespace srsran

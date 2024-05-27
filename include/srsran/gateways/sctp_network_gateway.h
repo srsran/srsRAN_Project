@@ -25,13 +25,13 @@ constexpr uint16_t E2_DU_PPID = 72; // E2-DU PPID assigned by IANA
 /// \brief Configuration for SCTP network gateway that is common to the server and client.
 struct sctp_network_gateway_config : public common_network_gateway_config {
   /// Payload Protocol Identifier
-  int               ppid = 0;
-  optional<int32_t> rto_initial;
-  optional<int32_t> rto_min;
-  optional<int32_t> rto_max;
-  optional<int32_t> init_max_attempts;
-  optional<int32_t> max_init_timeo;
-  optional<bool>    nodelay;
+  int                    ppid = 0;
+  std::optional<int32_t> rto_initial;
+  std::optional<int32_t> rto_min;
+  std::optional<int32_t> rto_max;
+  std::optional<int32_t> init_max_attempts;
+  std::optional<int32_t> max_init_timeo;
+  std::optional<bool>    nodelay;
 };
 
 /// \brief Configuration for SCTP network client
@@ -68,7 +68,7 @@ public:
   ///
   /// In case the gateway was configured to listen on port 0, i.e. the operating system shall pick a random free port,
   /// this function can be used to get the actual port number.
-  virtual optional<uint16_t> get_listen_port() = 0;
+  virtual std::optional<uint16_t> get_listen_port() = 0;
 };
 
 /// Interface to inform upper layers about connection establishment, drops, etc.

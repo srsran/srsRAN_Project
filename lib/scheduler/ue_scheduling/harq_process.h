@@ -253,7 +253,7 @@ struct dl_harq_sched_context {
   /// DCI format used to signal the PDSCH allocation.
   dci_dl_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
-  optional<sch_mcs_index> olla_mcs;
+  std::optional<sch_mcs_index> olla_mcs;
 };
 
 class dl_harq_process : public detail::harq_process<true>
@@ -271,16 +271,16 @@ public:
       sch_mcs_index   mcs;
       unsigned        tbs_bytes;
       /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
-      optional<sch_mcs_index> olla_mcs;
+      std::optional<sch_mcs_index> olla_mcs;
     };
 
-    dci_dl_rnti_config_type                                 dci_cfg_type;
-    vrb_alloc                                               rbs;
-    unsigned                                                nof_symbols;
-    std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
-    cqi_value                                               cqi;
-    unsigned                                                nof_layers;
-    bool                                                    is_fallback{false};
+    dci_dl_rnti_config_type                                      dci_cfg_type;
+    vrb_alloc                                                    rbs;
+    unsigned                                                     nof_symbols;
+    std::array<std::optional<tb_params>, base_type::MAX_NOF_TBS> tb;
+    cqi_value                                                    cqi;
+    unsigned                                                     nof_layers;
+    bool                                                         is_fallback{false};
   };
 
   struct dl_ack_info_result {
@@ -335,7 +335,7 @@ public:
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return The result of a HARQ receiving an HARQ-ACK bit.
-  status_update ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr);
+  status_update ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::optional<float> pucch_snr);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -351,7 +351,7 @@ private:
   /// Chosen ACK status for this HARQ process transmission, given one or more HARQ-ACK bits received.
   mac_harq_ack_report_status chosen_ack = mac_harq_ack_report_status::dtx;
   /// Stores the highest recorded PUCCH SNR for this HARQ process.
-  optional<float> last_pucch_snr;
+  std::optional<float> last_pucch_snr;
 };
 
 /// \brief Context of the scheduler during the current PUSCH allocation.
@@ -359,7 +359,7 @@ struct ul_harq_sched_context {
   /// DCI format used to signal the PUSCH allocation.
   dci_ul_rnti_config_type dci_cfg_type;
   /// MCS suggested by the OLLA.
-  optional<sch_mcs_index> olla_mcs;
+  std::optional<sch_mcs_index> olla_mcs;
 };
 
 class ul_harq_process : private detail::harq_process<false>
@@ -369,13 +369,13 @@ class ul_harq_process : private detail::harq_process<false>
 public:
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
-    dci_ul_rnti_config_type dci_cfg_type;
-    vrb_alloc               rbs;
-    pusch_mcs_table         mcs_table;
-    sch_mcs_index           mcs;
-    unsigned                tbs_bytes;
-    unsigned                nof_symbols;
-    optional<sch_mcs_index> olla_mcs;
+    dci_ul_rnti_config_type      dci_cfg_type;
+    vrb_alloc                    rbs;
+    pusch_mcs_table              mcs_table;
+    sch_mcs_index                mcs;
+    unsigned                     tbs_bytes;
+    unsigned                     nof_symbols;
+    std::optional<sch_mcs_index> olla_mcs;
   };
 
   using base_type::transport_block;
@@ -466,8 +466,10 @@ public:
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return struct containing the HARQ process ID, MCS, TBS and status update.
   /// ACK/NACK was directed was found.
-  optional<dl_harq_process::dl_ack_info_result>
-  dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
+  std::optional<dl_harq_process::dl_ack_info_result> dl_ack_info(slot_point                 uci_slot,
+                                                                 mac_harq_ack_report_status ack,
+                                                                 uint8_t                    harq_bit_idx,
+                                                                 std::optional<float>       pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.

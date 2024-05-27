@@ -58,12 +58,12 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   default_pucch_cfg(
       build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
                               user_defined_pucch_cfg)),
-  default_csi_report_cfg([&cell_cfg_list_]() -> optional<csi_report_config> {
+  default_csi_report_cfg([&cell_cfg_list_]() -> std::optional<csi_report_config> {
     const auto& csi_meas = cell_cfg_list_[0].ue_ded_serv_cell_cfg.csi_meas_cfg;
     if (csi_meas.has_value() and not csi_meas->csi_report_cfg_list.empty()) {
       return csi_meas->csi_report_cfg_list[0];
     }
-    return nullopt;
+    return std::nullopt;
   }()),
   // Leave 1 PUCCH grants for HARQ ACKs.
   max_pucch_grants_per_slot(max_pucch_grants_per_slot_ - 1U),
@@ -213,9 +213,9 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     return false;
   }
 
-  optional<std::pair<unsigned, unsigned>> sr_res_offset;
-  optional<std::pair<unsigned, unsigned>> csi_res_offset;
-  auto                                    sr_res_offset_it = free_sr_list.begin();
+  std::optional<std::pair<unsigned, unsigned>> sr_res_offset;
+  std::optional<std::pair<unsigned, unsigned>> csi_res_offset;
+  auto                                         sr_res_offset_it = free_sr_list.begin();
   // Iterate over the list of SR resource/offsets and find the first one that doesn't exceed the maximum number of PUCCH
   // grants.
   while (sr_res_offset_it != free_sr_list.end()) {

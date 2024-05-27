@@ -106,7 +106,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_FALSE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_FALSE(server_port.has_value());
 }
 
@@ -118,7 +118,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_FALSE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_FALSE(server_port.has_value());
 }
 
@@ -130,7 +130,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_TRUE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 }
@@ -143,7 +143,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succe
   config.reuse_addr   = true;
   create_server(config);
   ASSERT_TRUE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 }
@@ -186,7 +186,7 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 
@@ -234,7 +234,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 
@@ -282,7 +282,7 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 
   create_server(server_config);
   ASSERT_TRUE(bind_and_listen());
-  optional<uint16_t> server_port = server->get_listen_port();
+  std::optional<uint16_t> server_port = server->get_listen_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 

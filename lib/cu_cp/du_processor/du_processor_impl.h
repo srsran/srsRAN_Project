@@ -67,8 +67,8 @@ public:
   async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
 
   // du_processor_mobility_manager_interface
-  optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
-  byte_buffer                   get_packed_sib1(nr_cell_global_id_t cgi) override;
+  std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
+  byte_buffer                        get_packed_sib1(nr_cell_global_id_t cgi) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
@@ -90,11 +90,11 @@ public:
 private:
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
-  bool create_rrc_ue(du_ue&                            ue,
-                     rnti_t                            c_rnti,
-                     const nr_cell_global_id_t&        cgi,
-                     byte_buffer                       du_to_cu_rrc_container,
-                     optional<rrc_ue_transfer_context> rrc_context);
+  bool create_rrc_ue(du_ue&                                 ue,
+                     rnti_t                                 c_rnti,
+                     const nr_cell_global_id_t&             cgi,
+                     byte_buffer                            du_to_cu_rrc_container,
+                     std::optional<rrc_ue_transfer_context> rrc_context);
 
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.

@@ -167,7 +167,7 @@ bool ue_fallback_scheduler::schedule_dl_retx(cell_resource_allocator& res_alloc)
     auto* h_dl = next_ue_harq_retx.h_dl;
 
     if (h_dl->has_pending_retx()) {
-      optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+      std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
       dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, next_ue_harq_retx.is_srb0, h_dl, most_recent_tx_ack);
       // This is the case of the scheduler reaching the maximum number of sched attempts.
       if (outcome == dl_sched_outcome::stop_dl_scheduling) {
@@ -212,8 +212,8 @@ bool ue_fallback_scheduler::schedule_dl_new_tx_srb0(cell_resource_allocator& res
       continue;
     }
 
-    auto&                          u                  = ues[next_ue->ue_index];
-    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    auto&                               u                  = ues[next_ue->ue_index];
+    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
     if (not u.has_pending_dl_newtx_bytes(LCID_SRB0)) {
       ++next_ue;
       continue;
@@ -247,8 +247,8 @@ void ue_fallback_scheduler::schedule_dl_new_tx_srb1(cell_resource_allocator& res
       continue;
     }
 
-    auto&                          u                  = ues[next_ue->ue_index];
-    optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    auto&                               u                  = ues[next_ue->ue_index];
+    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
     // NOTE: Since SRB1 data can be segmented, it could happen that not all the SRB1 bytes are scheduled at once. The
     // scheduler will attempt to allocate those remaining bytes in the following slots. The policy we adopt in this
     // scheduler is to schedule first all possible grants to a given UE (to speed up the re-establishment and
@@ -294,11 +294,11 @@ static slot_point get_next_srb_slot(const cell_configuration& cell_cfg, slot_poi
 }
 
 ue_fallback_scheduler::dl_sched_outcome
-ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
-                                       ue&                            u,
-                                       bool                           is_srb0,
-                                       dl_harq_process*               h_dl_retx,
-                                       optional<most_recent_tx_slots> most_recent_tx_ack_slots)
+ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_alloc,
+                                       ue&                                 u,
+                                       bool                                is_srb0,
+                                       dl_harq_process*                    h_dl_retx,
+                                       std::optional<most_recent_tx_slots> most_recent_tx_ack_slots)
 {
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
   // Search valid PDSCH time domain resource.
@@ -351,7 +351,8 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&       res_alloc,
 
     // Instead of looping through all pdsch_time_res_idx values, pick the one with the largest number of symbols that
     // fits within the current DL slots.
-    optional<unsigned> time_res_idx = get_pdsch_time_res_idx(bwp_cfg_common.pdsch_common, pdsch_alloc.slot, h_dl_retx);
+    std::optional<unsigned> time_res_idx =
+        get_pdsch_time_res_idx(bwp_cfg_common.pdsch_common, pdsch_alloc.slot, h_dl_retx);
     if (not time_res_idx.has_value()) {
       continue;
     }
@@ -531,7 +532,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
   // Allocate PUCCH resources.
   unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
-  optional<unsigned> pucch_res_indicator;
+  std::optional<unsigned> pucch_res_indicator;
   for (const auto k1_candidate : dci_1_0_k1_values) {
     // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
@@ -685,7 +686,8 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
           cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.value(),
           ue_grant_crbs);
     }
-    optional<sch_mcs_tbs> mcs_tbs = compute_dl_mcs_tbs(pdsch_cfg, mcs_prbs_estimate.mcs, final_nof_prbs, contains_dc);
+    std::optional<sch_mcs_tbs> mcs_tbs =
+        compute_dl_mcs_tbs(pdsch_cfg, mcs_prbs_estimate.mcs, final_nof_prbs, contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
     if (not mcs_tbs.has_value()) {
@@ -710,8 +712,8 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
   // Allocate PUCCH resources.
   unsigned k1 = dci_1_0_k1_values.front();
   // Minimum k1 value supported is 4.
-  optional<unsigned> pucch_res_indicator;
-  const bool         allocate_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
+  std::optional<unsigned> pucch_res_indicator;
+  const bool              allocate_common_and_ded_pucch = dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 or is_retx;
   for (const auto k1_candidate : dci_1_0_k1_values) {
     // Skip the k1 values that would result in a PUCCH allocation that would overlap with the most recent ACK slot.
     if (pdsch_alloc.slot + k1_candidate <= most_recent_ack_slot) {
@@ -1112,7 +1114,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     bool contains_dc = dc_offset_helper::is_contained(
         cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, ue_grant_crbs);
 
-    optional<sch_mcs_tbs> mcs_tbs_info =
+    std::optional<sch_mcs_tbs> mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, nullptr, mcs, ue_grant_crbs.length(), contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
@@ -1219,11 +1221,11 @@ const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td
   return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
 }
 
-optional<unsigned> ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
-                                                                 slot_point                 sl_tx,
-                                                                 const dl_harq_process*     h_dl_retx) const
+std::optional<unsigned> ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
+                                                                      slot_point                 sl_tx,
+                                                                      const dl_harq_process*     h_dl_retx) const
 {
-  optional<unsigned> candidate_pdsch_time_res_idx;
+  std::optional<unsigned> candidate_pdsch_time_res_idx;
   for (unsigned time_res_idx = 0; time_res_idx != pdsch_cfg.pdsch_td_alloc_list.size(); ++time_res_idx) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
     // Check whether PDSCH time domain resource does not overlap with CORESET.
@@ -1254,10 +1256,10 @@ optional<unsigned> ue_fallback_scheduler::get_pdsch_time_res_idx(const pdsch_con
   return candidate_pdsch_time_res_idx;
 }
 
-optional<ue_fallback_scheduler::most_recent_tx_slots>
+std::optional<ue_fallback_scheduler::most_recent_tx_slots>
 ue_fallback_scheduler::get_most_recent_slot_tx(du_ue_index_t ue_idx) const
 {
-  optional<ue_fallback_scheduler::most_recent_tx_slots> most_recent_tx_ack_slot;
+  std::optional<ue_fallback_scheduler::most_recent_tx_slots> most_recent_tx_ack_slot;
   for (const auto& ue_proc : ongoing_ues_ack_retxs) {
     if (ue_proc.ue_index == ue_idx) {
       slot_point h_dl_slot_tx  = ue_proc.h_dl->slot_tx();

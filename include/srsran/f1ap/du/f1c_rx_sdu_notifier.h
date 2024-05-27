@@ -23,7 +23,7 @@ class f1c_rx_sdu_notifier
 public:
   virtual ~f1c_rx_sdu_notifier() = default;
 
-  virtual void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) = 0;
+  virtual void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) = 0;
 };
 
 } // namespace srs_du

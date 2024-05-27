@@ -430,7 +430,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
         unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
         // Build the PDSCH PDU configuration.
-        pdsch_processor::pdu_t config = {nullopt,
+        pdsch_processor::pdu_t config = {std::nullopt,
                                          slot_point(to_numerology_value(profile.scs), 0),
                                          1,
                                          nof_prb,

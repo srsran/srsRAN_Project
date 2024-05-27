@@ -41,10 +41,10 @@ public:
 };
 
 struct f1ap_ue_context_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  f1ap_cause_t       cause;
-  byte_buffer        rrc_release_pdu;
-  optional<srb_id_t> srb_id;
+  ue_index_t              ue_index = ue_index_t::invalid;
+  f1ap_cause_t            cause;
+  byte_buffer             rrc_release_pdu;
+  std::optional<srb_id_t> srb_id;
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
@@ -55,8 +55,8 @@ public:
 
   /// Establish the UE context in F1.
   virtual async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                  optional<rrc_ue_transfer_context>    rrc_context) = 0;
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                                  std::optional<rrc_ue_transfer_context> rrc_context) = 0;
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
@@ -104,11 +104,11 @@ public:
 /// This request should be made once the C-RNTI and cell of the UE is known. That generally corresponds to the moment
 /// a Initial UL RRC Message or a F1AP UE Context Setup Response are received.
 struct ue_rrc_context_creation_request {
-  ue_index_t                        ue_index;
-  rnti_t                            c_rnti;
-  nr_cell_global_id_t               cgi;
-  byte_buffer                       du_to_cu_rrc_container;
-  optional<rrc_ue_transfer_context> prev_context;
+  ue_index_t                             ue_index;
+  rnti_t                                 c_rnti;
+  nr_cell_global_id_t                    cgi;
+  byte_buffer                            du_to_cu_rrc_container;
+  std::optional<rrc_ue_transfer_context> prev_context;
 };
 
 /// \brief Response by CU-CP to F1AP-CU request to create UE RRC context.

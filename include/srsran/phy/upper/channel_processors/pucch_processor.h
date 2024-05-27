@@ -48,7 +48,7 @@ public:
   /// Collects PUCCH Format 1 parameters.
   struct format1_configuration {
     /// Context information.
-    optional<pucch_context> context;
+    std::optional<pucch_context> context;
     /// Slot and numerology.
     slot_point slot;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
@@ -65,7 +65,7 @@ public:
     ///
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
-    optional<unsigned> second_hop_prb;
+    std::optional<unsigned> second_hop_prb;
     /// \brief Parameter \f$n_{\textup{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
     ///
     /// It must be set to the higher layer parameter \e hoppingID given by TS38.331 Section 6.3.2, Information Element
@@ -89,7 +89,7 @@ public:
   /// Collects PUCCH Format 2 parameters.
   struct format2_configuration {
     /// Context information.
-    optional<pucch_context> context;
+    std::optional<pucch_context> context;
     /// Slot and numerology.
     slot_point slot;
     /// Cyclic prefix configuration for the slot.
@@ -108,7 +108,7 @@ public:
     ///
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
-    optional<unsigned> second_hop_prb;
+    std::optional<unsigned> second_hop_prb;
     /// \brief Number of PRB {1, ..., 16}.
     ///
     /// This parameter is equivalent to parameter \f$N^\textup{PUCCH, 2}_\textup{PRB}\f$ in TS38.212 Section 6.3.1.4,

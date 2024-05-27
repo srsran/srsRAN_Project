@@ -18,11 +18,11 @@ namespace srsran {
 
 struct control_config_params {
   // Sets the number of HARQ processes to be used.
-  optional<unsigned> num_harq_processes;
+  std::optional<unsigned> num_harq_processes;
   // Sets the number of HARQ retransmissions to be used.
-  optional<unsigned> num_harq_retransmissions;
+  std::optional<unsigned> num_harq_retransmissions;
   // Set the radio resource management policy.
-  optional<rrm_policy_ratio_group> rrm_policy_group;
+  std::optional<rrm_policy_ratio_group> rrm_policy_group;
 };
 
 struct du_mac_sched_control_config {

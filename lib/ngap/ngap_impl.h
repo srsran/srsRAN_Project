@@ -143,7 +143,7 @@ private:
   /// \param[in] ue_index The index of the related UE.
   /// \param[in] cause The cause of the Error Indication.
   /// \param[in] amf_ue_id The AMF UE ID.
-  void schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, optional<amf_ue_id_t> amf_ue_id = {});
+  void schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id = {});
 
   /// \brief Callback for the PDU Session Setup Timer expiration. Triggers the release of the UE.
   void on_pdu_session_setup_timer_expired(ue_index_t ue_index);

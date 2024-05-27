@@ -355,7 +355,7 @@ bool sctp_network_server_impl::listen()
   return true;
 }
 
-optional<uint16_t> sctp_network_server_impl::get_listen_port()
+std::optional<uint16_t> sctp_network_server_impl::get_listen_port()
 {
   return socket.get_listen_port();
 }

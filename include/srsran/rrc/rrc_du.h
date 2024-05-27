@@ -34,15 +34,15 @@ public:
 };
 
 struct rrc_ue_creation_message {
-  ue_index_t                        ue_index;
-  rnti_t                            c_rnti;
-  rrc_cell_context                  cell;
-  rrc_pdu_f1ap_notifier*            f1ap_pdu_notifier;
-  rrc_ue_context_update_notifier*   rrc_ue_cu_cp_notifier;
-  rrc_ue_measurement_notifier*      measurement_notifier;
-  byte_buffer                       du_to_cu_container;
-  ue_task_scheduler*                ue_task_sched;
-  optional<rrc_ue_transfer_context> rrc_context;
+  ue_index_t                             ue_index;
+  rnti_t                                 c_rnti;
+  rrc_cell_context                       cell;
+  rrc_pdu_f1ap_notifier*                 f1ap_pdu_notifier;
+  rrc_ue_context_update_notifier*        rrc_ue_cu_cp_notifier;
+  rrc_ue_measurement_notifier*           measurement_notifier;
+  byte_buffer                            du_to_cu_container;
+  ue_task_scheduler*                     ue_task_sched;
+  std::optional<rrc_ue_transfer_context> rrc_context;
 };
 
 /// \brief Interface class to the main RRC DU object to manage RRC UEs.
@@ -69,7 +69,6 @@ public:
   /// \brief Request to update the measurement related parameters for the given cell id.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
   virtual bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
 };
 

@@ -27,7 +27,7 @@ static bool validate_log_appconfig(const log_appconfig& config)
   return true;
 }
 
-static bool validate_hal_config(const optional<hal_appconfig>& config)
+static bool validate_hal_config(const std::optional<hal_appconfig>& config)
 {
 #ifdef DPDK_FOUND
   if (config && config->eal_args.empty()) {

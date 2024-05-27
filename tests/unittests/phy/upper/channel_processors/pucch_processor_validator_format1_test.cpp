@@ -32,7 +32,7 @@ static constexpr unsigned PUCCH_FORMAT1_MIN_NSYMB = 4;
 // Valid PUCCH Format 1 configuration.
 const pucch_processor::format1_configuration base_format_1_config = {
     // Context.
-    nullopt,
+    std::nullopt,
     // Slot.
     {0, 9},
     // BWP size.

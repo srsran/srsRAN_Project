@@ -388,13 +388,14 @@ public:
     second_e1ap_request.reset();
   }
 
-  optional<variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>> first_e1ap_request;
-  optional<e1ap_bearer_context_modification_request>                                             second_e1ap_request;
+  std::optional<variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>>
+                                                          first_e1ap_request;
+  std::optional<e1ap_bearer_context_modification_request> second_e1ap_request;
 
 private:
-  srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST");
-  optional<bearer_context_outcome_t> first_e1ap_response;
-  optional<bearer_context_outcome_t> second_e1ap_response;
+  srslog::basic_logger&                   logger = srslog::fetch_basic_logger("TEST");
+  std::optional<bearer_context_outcome_t> first_e1ap_response;
+  std::optional<bearer_context_outcome_t> second_e1ap_response;
 };
 
 struct dummy_ngap_control_message_handler : public ngap_control_message_handler {
@@ -449,8 +450,8 @@ public:
   void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
   async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                  optional<rrc_ue_transfer_context>    rrc_context) override
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                                  std::optional<rrc_ue_transfer_context> rrc_context) override
   {
     logger.info("Received a new UE context setup request");
 
@@ -576,9 +577,9 @@ public:
     return release_context;
   }
 
-  optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
+  std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
-    optional<rrc_meas_cfg> meas_config;
+    std::optional<rrc_meas_cfg> meas_config;
     return meas_config;
   }
 
@@ -601,7 +602,7 @@ public:
     return byte_buffer{};
   }
 
-  optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
+  std::optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
 
   void reset() { last_radio_bearer_cfg.reset(); }
 

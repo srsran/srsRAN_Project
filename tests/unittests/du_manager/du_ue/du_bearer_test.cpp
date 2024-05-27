@@ -75,7 +75,7 @@ protected:
                                         du_mng->params,
                                         rlf_notifier,
                                         qos_characteristics{},
-                                        nullopt,
+                                        std::nullopt,
                                         dummy_slice_info});
   }
 };
@@ -114,7 +114,7 @@ TEST_F(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_a
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
     bearers.add_drb(create_dummy_drb(drb_id, uint_to_lcid(lcids[i])));
   }
-  optional<lcid_t> found_lcid = bearers.allocate_lcid();
+  std::optional<lcid_t> found_lcid = bearers.allocate_lcid();
   ASSERT_TRUE(found_lcid.has_value());
   ASSERT_EQ(*found_lcid, lcid_hole);
 }

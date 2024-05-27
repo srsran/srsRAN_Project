@@ -71,14 +71,14 @@ private:
   std::set<unsigned> compute_sr_csi_pucch_offsets(unsigned sr_offset, unsigned csi_offset = 0);
 
   // Parameters for PUCCH configuration passed by the user.
-  const pucch_builder_params        user_defined_pucch_cfg;
-  const std::vector<pucch_resource> default_pucch_res_list;
-  const pucch_config                default_pucch_cfg;
-  const optional<csi_report_config> default_csi_report_cfg;
-  const unsigned                    max_pucch_grants_per_slot;
-  unsigned                          lcm_csi_sr_period;
-  unsigned                          sr_period_slots  = 0;
-  unsigned                          csi_period_slots = 0;
+  const pucch_builder_params             user_defined_pucch_cfg;
+  const std::vector<pucch_resource>      default_pucch_res_list;
+  const pucch_config                     default_pucch_cfg;
+  const std::optional<csi_report_config> default_csi_report_cfg;
+  const unsigned                         max_pucch_grants_per_slot;
+  unsigned                               lcm_csi_sr_period;
+  unsigned                               sr_period_slots  = 0;
+  unsigned                               csi_period_slots = 0;
 
   struct cell_resource_context {
     /// \brief Pool of PUCCH SR offsets currently available to be allocated to UEs. Each element is represented by a

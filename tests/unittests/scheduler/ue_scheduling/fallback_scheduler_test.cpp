@@ -50,7 +50,7 @@ static cell_config_builder_params test_builder_params(duplex_mode duplx_mode)
         builder_params.band.has_value() ? band_helper::get_freq_range(builder_params.band.value())
                                         : frequency_range::FR1);
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
         band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
                                                     *builder_params.band,
                                                     nof_crbs,
@@ -135,7 +135,7 @@ protected:
   srslog::basic_logger&      mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&      test_logger = srslog::fetch_basic_logger("TEST", true);
   scheduler_result_logger    result_logger{false, 0};
-  optional<test_bench>       bench;
+  std::optional<test_bench>  bench;
   duplex_mode                duplx_mode;
   cell_config_builder_params builder_params;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
@@ -216,7 +216,7 @@ protected:
   }
 
   sched_cell_configuration_request_message
-  create_custom_cell_config_request(unsigned k0, const optional<tdd_ul_dl_config_common>& tdd_cfg = {})
+  create_custom_cell_config_request(unsigned k0, const std::optional<tdd_ul_dl_config_common>& tdd_cfg = {})
   {
     if (duplx_mode == srsran::duplex_mode::TDD and tdd_cfg.has_value()) {
       builder_params.tdd_ul_dl_cfg_common = *tdd_cfg;
@@ -535,8 +535,11 @@ TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
   this->builder_params.csi_rs_enabled               = false;
   sched_cell_configuration_request_message cell_cfg = create_custom_cell_config_request(k0, tdd_cfg);
   // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
-  cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
-      cell_cfg.searchspace0, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cell_cfg.tdd_ul_dl_cfg_common);
+  cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+      config_helpers::make_pdsch_time_domain_resource(cell_cfg.searchspace0,
+                                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common,
+                                                      std::nullopt,
+                                                      cell_cfg.tdd_ul_dl_cfg_common);
   setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
 
   const unsigned MAX_TEST_RUN_SLOTS = 40;
@@ -1048,7 +1051,7 @@ protected:
     srslog::basic_logger&                 test_logger        = srslog::fetch_basic_logger("TEST");
     unsigned                              missing_retx       = 0;
     unsigned                              pending_srb1_bytes = 0;
-    optional<slot_point>                  latest_rlc_update_slot;
+    std::optional<slot_point>             latest_rlc_update_slot;
     const int                             max_rlc_update_delay = 40;
 
     using h_state = srsran::dl_harq_process::harq_process::transport_block::state_t;

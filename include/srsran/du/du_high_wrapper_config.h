@@ -23,9 +23,9 @@ class slot_last_message_notifier;
 
 /// FAPI configuration for the DU high wrapper.
 struct du_high_wrapper_fapi_config {
-  std::string              log_level;
-  unsigned                 l2_nof_slots_ahead;
-  optional<task_executor*> executor;
+  std::string                   log_level;
+  unsigned                      l2_nof_slots_ahead;
+  std::optional<task_executor*> executor;
 };
 
 /// Base DU high wrapper configuration.

@@ -38,7 +38,7 @@ bool sctp_network_gateway_impl::listen()
   return socket.listen();
 }
 
-optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
+std::optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
 {
   return socket.get_listen_port();
 }

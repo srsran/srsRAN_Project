@@ -100,7 +100,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
                                                 du_index_t target_du_index)
 {
   // Lookup CGI at target DU.
-  optional<nr_cell_global_id_t> cgi =
+  std::optional<nr_cell_global_id_t> cgi =
       du_db.get_du_processor(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
   if (!cgi.has_value()) {
     logger.warning(

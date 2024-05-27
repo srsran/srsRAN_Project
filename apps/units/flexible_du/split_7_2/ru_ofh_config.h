@@ -25,7 +25,7 @@ struct ru_ofh_unit_base_cell_config {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  std::optional<bs_channel_bandwidth_fr1> ru_operating_bw;
   /// T1a maximum parameter for downlink Control-Plane in microseconds.
   std::chrono::microseconds T1a_max_cp_dl{500};
   /// T1a minimum parameter for downlink Control-Plane in microseconds.
@@ -156,7 +156,7 @@ struct ru_ofh_unit_config {
   /// \note Add one cell by default.
   ru_ofh_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
-  optional<ru_ofh_unit_hal_config> hal_config;
+  std::optional<ru_ofh_unit_hal_config> hal_config;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

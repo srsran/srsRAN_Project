@@ -93,12 +93,12 @@ public:
 
   wait_manual_event_tester<f1_setup_response_message>            wait_f1_setup;
   wait_manual_event_tester<void>                                 wait_f1_removal;
-  optional<f1ap_ue_creation_request>                             last_ue_create;
+  std::optional<f1ap_ue_creation_request>                        last_ue_create;
   f1ap_ue_creation_response                                      next_ue_create_response;
-  optional<f1ap_ue_configuration_request>                        last_ue_config;
+  std::optional<f1ap_ue_configuration_request>                   last_ue_config;
   f1ap_ue_configuration_response                                 next_ue_config_response;
-  optional<du_ue_index_t>                                        last_ue_deleted;
-  optional<f1ap_ue_context_release_request>                      last_ue_release_req;
+  std::optional<du_ue_index_t>                                   last_ue_deleted;
+  std::optional<f1ap_ue_context_release_request>                 last_ue_release_req;
   wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
 
   bool connect_to_cu_cp() override { return true; }
@@ -150,7 +150,7 @@ class f1u_gw_bearer_dummy : public f1u_du_gateway_bearer
 public:
   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx;
 
-  optional<nru_ul_message> last_sdu;
+  std::optional<nru_ul_message> last_sdu;
 
   f1u_gw_bearer_dummy(srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_) : du_rx(du_rx_) {}
 
@@ -216,12 +216,12 @@ public:
 
   mac_cell_dummy mac_cell;
 
-  optional<mac_ue_create_request>                           last_ue_create_msg{};
-  optional<mac_ue_reconfiguration_request>                  last_ue_reconf_msg{};
-  optional<mac_ue_delete_request>                           last_ue_delete_msg{};
-  optional<mac_dl_buffer_state_indication_message>          last_dl_bs;
+  std::optional<mac_ue_create_request>                      last_ue_create_msg{};
+  std::optional<mac_ue_reconfiguration_request>             last_ue_reconf_msg{};
+  std::optional<mac_ue_delete_request>                      last_ue_delete_msg{};
+  std::optional<mac_dl_buffer_state_indication_message>     last_dl_bs;
   byte_buffer                                               last_pushed_ul_ccch_msg;
-  optional<du_ue_index_t>                                   last_ue_config_applied;
+  std::optional<du_ue_index_t>                              last_ue_config_applied;
   wait_manual_event_tester<mac_ue_create_response>          wait_ue_create;
   wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
@@ -278,8 +278,8 @@ public:
     dummy_ue_resource_configurator_factory& parent;
   };
 
-  optional<du_ue_index_t>                    last_ue_index;
-  optional<du_cell_index_t>                  last_ue_pcell;
+  std::optional<du_ue_index_t>               last_ue_index;
+  std::optional<du_cell_index_t>             last_ue_pcell;
   f1ap_ue_context_update_request             last_ue_ctx_upd;
   std::map<du_ue_index_t, cell_group_config> ue_resource_pool;
   cell_group_config                          next_context_update_result;

@@ -158,7 +158,7 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
                                  bool                              ue_with_srb_data_only,
                                  srslog::basic_logger&             logger,
                                  const scheduler_ue_expert_config& ue_expert_cfg,
-                                 optional<unsigned>                dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
+                                 std::optional<unsigned>           dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   if (not is_retx) {
     if (not u.has_pending_dl_newtx_bytes()) {
@@ -282,7 +282,7 @@ static alloc_outcome alloc_ul_ue(const ue&                         u,
                                  srslog::basic_logger&             logger,
                                  unsigned                          pusch_td_res_idx,
                                  const scheduler_ue_expert_config& ue_expert_cfg,
-                                 optional<unsigned>                ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
+                                 std::optional<unsigned>           ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
@@ -327,7 +327,7 @@ static alloc_outcome alloc_ul_ue(const ue&                         u,
       continue;
     }
 
-    optional<dci_ul_rnti_config_type> preferred_dci_rnti_type;
+    std::optional<dci_ul_rnti_config_type> preferred_dci_rnti_type;
     if (is_retx) {
       preferred_dci_rnti_type = h->last_tx_params().dci_cfg_type;
     }

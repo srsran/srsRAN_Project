@@ -486,9 +486,10 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   });
 }
 
-optional<rrc_meas_cfg> cu_cp_impl::handle_measurement_config_request(ue_index_t             ue_index,
-                                                                     nr_cell_id_t           nci,
-                                                                     optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg>
+cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,
+                                              nr_cell_id_t                nci,
+                                              std::optional<rrc_meas_cfg> current_meas_config)
 {
   return cell_meas_mng.get_measurement_config(ue_index, nci, current_meas_config);
 }

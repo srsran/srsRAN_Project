@@ -47,11 +47,11 @@ private:
                      unsigned                      tbs);
 
   // Configuration of the broadcast SI messages.
-  const scheduler_si_expert_config& expert_cfg;
-  const cell_configuration&         cell_cfg;
-  pdcch_resource_allocator&         pdcch_sch;
-  optional<si_scheduling_config>    si_sched_cfg;
-  srslog::basic_logger&             logger;
+  const scheduler_si_expert_config&   expert_cfg;
+  const cell_configuration&           cell_cfg;
+  pdcch_resource_allocator&           pdcch_sch;
+  std::optional<si_scheduling_config> si_sched_cfg;
+  srslog::basic_logger&               logger;
 
   std::vector<message_window_context> pending_messages;
 };

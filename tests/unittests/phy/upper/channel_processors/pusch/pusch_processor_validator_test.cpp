@@ -24,7 +24,7 @@ namespace {
 /// Maximum number of layers the PUSCH processor supports.
 static constexpr unsigned max_supported_nof_layers = 2;
 
-const pusch_processor::pdu_t base_pdu = {nullopt,
+const pusch_processor::pdu_t base_pdu = {std::nullopt,
                                          {0, 9},
                                          8323,
                                          25,

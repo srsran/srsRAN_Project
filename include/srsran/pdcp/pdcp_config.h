@@ -155,9 +155,9 @@ struct pdcp_config_common {
 };
 
 struct pdcp_tx_config : pdcp_config_common {
-  optional<pdcp_discard_timer> discard_timer;
-  bool                         status_report_required;
-  pdcp_custom_config_tx        custom;
+  std::optional<pdcp_discard_timer> discard_timer;
+  bool                              status_report_required;
+  pdcp_custom_config_tx             custom;
 };
 
 struct pdcp_rx_config : pdcp_config_common {
@@ -178,10 +178,10 @@ struct pdcp_config {
   bool          integrity_protection_required;
   bool          ciphering_required;
   struct {
-    pdcp_sn_size                 sn_size;
-    pdcp_security_direction      direction;
-    optional<pdcp_discard_timer> discard_timer;
-    bool                         status_report_required;
+    pdcp_sn_size                      sn_size;
+    pdcp_security_direction           direction;
+    std::optional<pdcp_discard_timer> discard_timer;
+    bool                              status_report_required;
   } tx;
   struct {
     pdcp_sn_size            sn_size;

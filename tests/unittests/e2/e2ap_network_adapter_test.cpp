@@ -139,7 +139,7 @@ protected:
     ric_e2_iface = std::make_unique<dummy_ric_e2>(*ric_net_adapter);
     ric_net_adapter->connect_e2ap(ric_e2_iface.get(), ric_e2_iface.get());
 
-    optional<uint16_t> ric_gw_port = ric_net_adapter->get_listen_port();
+    std::optional<uint16_t> ric_gw_port = ric_net_adapter->get_listen_port();
     ASSERT_TRUE(ric_gw_port.has_value());
     ASSERT_NE(ric_gw_port.value(), 0);
 

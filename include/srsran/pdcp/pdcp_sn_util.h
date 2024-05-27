@@ -26,7 +26,8 @@ namespace srsran {
 /// \param pdcp_pdu PDCP PDU (or RLC SDU) from which the PDCP SN shall be extracted.
 /// \param pdcp_sn_len The length of the PDCP SN (12 bit or 18 bit) in the PDU.
 /// \return The PDCP SN of the PDU in case of a data PDU; or no value in case of control PDU.
-inline optional<uint32_t> get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, srslog::basic_logger& logger)
+inline std::optional<uint32_t>
+get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, srslog::basic_logger& logger)
 {
   if (pdcp_pdu.empty()) {
     logger.error("Cannot get PDCP SN from empty PDU");

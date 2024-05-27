@@ -65,7 +65,7 @@ struct du_high_unit_ssb_config {
 /// Common uplink parameters of a cell.
 struct du_high_unit_ul_common_config {
   /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm.
-  optional<int> p_max;
+  std::optional<int> p_max;
   /// Maximum number of PUCCH grants per slot.
   unsigned max_pucchs_per_slot = 31U;
   /// Maximum number of PUSCH + PUCCH grants per slot.
@@ -236,7 +236,7 @@ struct du_high_unit_pucch_config {
   unsigned f2_max_nof_rbs = 1;
   /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
   /// Value -1 to unset. If this is set, \ref f2_max_nof_rbs is ignored.
-  optional<unsigned> max_payload_bits;
+  std::optional<unsigned> max_payload_bits;
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
@@ -254,7 +254,7 @@ struct du_high_unit_pucch_config {
 struct du_high_unit_phy_cell_group_config {
   /// \brief \c p-NR-FR1, part of \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  optional<int> p_nr_fr1;
+  std::optional<int> p_nr_fr1;
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
@@ -273,8 +273,8 @@ struct tdd_ul_dl_pattern_unit_config {
 
 /// TDD configuration. See TS 38.331, \c TDD-UL-DL-ConfigCommon.
 struct du_high_unit_tdd_ul_dl_config {
-  tdd_ul_dl_pattern_unit_config           pattern1;
-  optional<tdd_ul_dl_pattern_unit_config> pattern2;
+  tdd_ul_dl_pattern_unit_config                pattern1;
+  std::optional<tdd_ul_dl_pattern_unit_config> pattern2;
 };
 
 /// Paging related configuration. See TS 38.331, PCCH-Config.
@@ -294,24 +294,24 @@ struct du_high_unit_paging_config {
 /// PDCCH Common configuration.
 struct pdcch_common_unit_config {
   /// CORESET#0 index as per tables in TS 38.213, clause 13.
-  optional<unsigned> coreset0_index;
+  std::optional<unsigned> coreset0_index;
   /// Number of PDCCH candidates per aggregation level for SearchSpace#1. The aggregation level for the array element
   /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 1, 0, 0};
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
   /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
-  optional<uint8_t> max_coreset0_duration;
+  std::optional<uint8_t> max_coreset0_duration;
 };
 
 /// PDCCH Dedicated configuration.
 struct pdcch_dedicated_unit_config {
   /// Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0.
-  optional<unsigned> coreset1_rb_start;
+  std::optional<unsigned> coreset1_rb_start;
   /// Length of CORESET 1 in number of CRBs.
-  optional<unsigned> coreset1_l_crb;
+  std::optional<unsigned> coreset1_l_crb;
   /// Duration of CORESET 1 in number of OFDM symbols.
-  optional<unsigned> coreset1_duration;
+  std::optional<unsigned> coreset1_duration;
   /// Number of PDCCH candidates per aggregation level for SearchSpace#2. The aggregation level for the array element
   /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   /// NOTE: A value of {0, 0, 0, 0, 0} lets the gNB decide nof. candidates for SearchSpace#2.
@@ -382,13 +382,13 @@ struct du_high_unit_csi_config {
   unsigned csi_rs_period_msec = 20;
   /// \brief Slot offset for measurement CSI-RS resources. If not set, it is automatically derived to avoid collisions
   /// with SSB and SIB1.
-  optional<unsigned> meas_csi_slot_offset;
+  std::optional<unsigned> meas_csi_slot_offset;
   /// \brief Slot offset of the first CSI-RS resource used for tracking. If not set, it is automatically derived to
   /// avoid collisions with SSB and SIB1.
-  optional<unsigned> tracking_csi_slot_offset;
+  std::optional<unsigned> tracking_csi_slot_offset;
   /// \brief Slot offset for the zp-CSI-RS resources. If not set, it is automatically derived to avoid collisions with
   /// SSB and SIB1.
-  optional<unsigned> zp_csi_slot_offset;
+  std::optional<unsigned> zp_csi_slot_offset;
   /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
   int pwr_ctrl_offset = 0;
@@ -404,7 +404,7 @@ struct mac_bsr_unit_config {
   /// 2560, 5120, 10240}.
   unsigned retx_bsr_timer = 80;
   /// Logical Channel SR delay timer in nof. subframes. Values {20, 40, 64, 128, 512, 1024, 2560}.
-  optional<unsigned> lc_sr_delay_timer;
+  std::optional<unsigned> lc_sr_delay_timer;
 };
 
 /// MAC Power Headroom Reporting configuration.
@@ -418,7 +418,7 @@ struct mac_phr_unit_config {
 struct mac_sr_unit_config {
   /// \brief \c sr-ProhibitTimer, or timer for SR transmission on PUCCH.
   /// Values are in ms. Values: {1, 2, 4, 8, 16, 32, 64, 128}. When the field is absent, the UE applies the value 0.
-  optional<unsigned> sr_prohibit_timer;
+  std::optional<unsigned> sr_prohibit_timer;
   /// \brief \c sr-TransMax possible values, or maximum number of SR transmissions.
   /// Values: {4, 8, 16, 32, 64}.
   unsigned sr_trans_max = 64;
@@ -437,7 +437,7 @@ struct du_high_unit_mac_cell_group_config {
 /// PRACH application configuration.
 struct du_high_unit_prach_config {
   /// PRACH configuration index. If not specified, it is automatically derived to fit in an UL slot.
-  optional<unsigned> prach_config_index;
+  std::optional<unsigned> prach_config_index;
   /// PRACH root sequence index.
   unsigned prach_root_sequence_index = 1;
   /// Zero correlation zone
@@ -448,11 +448,11 @@ struct du_high_unit_prach_config {
   /// valid.
   int preamble_rx_target_pw = -100;
   /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
-  optional<unsigned> total_nof_ra_preambles;
+  std::optional<unsigned> total_nof_ra_preambles;
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
   /// with the PUCCH, the user should leave some guardband between the PUCCH CRBs and the PRACH PRBs.
   /// Possible values: {0,...,MAX_NOF_PRB - 1}.
-  optional<unsigned> prach_frequency_start;
+  std::optional<unsigned> prach_frequency_start;
   /// Max number of RA preamble transmissions performed before declaring a failure. Values {3, 4, 5, 6, 7, 8, 10, 20,
   /// 50, 100, 200}.
   uint8_t preamble_trans_max = 7;
@@ -479,7 +479,7 @@ struct du_high_unit_base_cell_config {
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// NR band.
-  optional<nr_band> band;
+  std::optional<nr_band> band;
   /// Channel bandwidth in MHz.
   bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
   /// Number of antennas in downlink.
@@ -515,7 +515,7 @@ struct du_high_unit_base_cell_config {
   /// MAC Cell Gropup parameters.
   du_high_unit_mac_cell_group_config mcg_cfg;
   /// TDD slot configuration.
-  optional<du_high_unit_tdd_ul_dl_config> tdd_ul_dl_cfg;
+  std::optional<du_high_unit_tdd_ul_dl_config> tdd_ul_dl_cfg;
   /// Paging configuration.
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
@@ -530,7 +530,7 @@ struct du_high_unit_test_mode_ue_config {
   /// \brief Delay, in slots, before the MAC test mode auto-generates the UCI/CRC indication to pass to the scheduler.
   /// This feature should be avoided if the OFH/UL PHY are operational, otherwise the auto-generated indications
   /// may interfere with the UL PHY HARQ handling.
-  optional<unsigned> auto_ack_indication_delay;
+  std::optional<unsigned> auto_ack_indication_delay;
   /// Whether PDSCH grants are automatically assigned to the test UE.
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
@@ -729,7 +729,7 @@ struct du_high_unit_config {
   /// Configuration for testing purposes.
   du_high_unit_test_mode_config test_mode_cfg = {};
   /// NTN configuration.
-  optional<ntn_config> ntn_cfg;
+  std::optional<ntn_config> ntn_cfg;
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.

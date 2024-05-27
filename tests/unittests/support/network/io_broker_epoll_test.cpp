@@ -89,7 +89,7 @@ protected:
     ASSERT_NE(ret, -1);
   }
 
-  optional<uint16_t> get_bind_port(int sock_fd)
+  std::optional<uint16_t> get_bind_port(int sock_fd)
   {
     if (sock_fd == -1) {
       return {};
@@ -139,7 +139,7 @@ protected:
     ASSERT_NE(ret, -1);
 
     // get bind port
-    optional<uint16_t> port = get_bind_port(socket_fd);
+    std::optional<uint16_t> port = get_bind_port(socket_fd);
     ASSERT_TRUE(port.has_value());
     ASSERT_NE(port.value(), 0);
     // update server address

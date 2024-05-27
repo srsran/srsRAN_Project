@@ -1285,11 +1285,11 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
       ->capture_default_str();
 }
 
-static void configure_cli11_ntn_args(CLI::App&              app,
-                                     optional<ntn_config>&  ntn,
-                                     epoch_time_t&          epoch_time,
-                                     orbital_coordinates_t& orbital_coordinates,
-                                     ecef_coordinates_t&    ecef_coordinates)
+static void configure_cli11_ntn_args(CLI::App&                  app,
+                                     std::optional<ntn_config>& ntn,
+                                     epoch_time_t&              epoch_time,
+                                     orbital_coordinates_t&     orbital_coordinates,
+                                     ecef_coordinates_t&        ecef_coordinates)
 {
   ntn_config& config = ntn.emplace();
 

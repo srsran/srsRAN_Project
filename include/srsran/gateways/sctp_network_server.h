@@ -36,7 +36,7 @@ public:
   virtual bool listen() = 0;
 
   /// \brief Get port to which server binded and is listening for connections.
-  virtual optional<uint16_t> get_listen_port() = 0;
+  virtual std::optional<uint16_t> get_listen_port() = 0;
 };
 
 } // namespace srsran

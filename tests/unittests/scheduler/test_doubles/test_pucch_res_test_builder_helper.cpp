@@ -24,11 +24,11 @@ protected:
     cell_cfg(config_helpers::make_default_scheduler_expert_config(),
              test_helpers::make_default_sched_cell_configuration_request()),
     cell_cfg_dedicated(config_helpers::create_default_initial_ue_spcell_cell_config()),
-    pucch_builder(GetParam() ? pucch_res_builder_test_helper(cell_cfg.ul_cfg_common.init_ul_bwp, nullopt)
+    pucch_builder(GetParam() ? pucch_res_builder_test_helper(cell_cfg.ul_cfg_common.init_ul_bwp, std::nullopt)
                              : pucch_res_builder_test_helper())
   {
     if (not GetParam()) {
-      pucch_builder.setup(cell_cfg.ul_cfg_common.init_ul_bwp, nullopt);
+      pucch_builder.setup(cell_cfg.ul_cfg_common.init_ul_bwp, std::nullopt);
     }
   }
 

@@ -32,7 +32,7 @@ constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 1706;
 // Valid PUCCH Format 2 configuration.
 const pucch_processor::format2_configuration base_format_2_config = {
     // Context.
-    nullopt,
+    std::nullopt,
     // Slot.
     {0, 9},
     // CP.

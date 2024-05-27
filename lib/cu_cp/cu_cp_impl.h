@@ -82,9 +82,10 @@ public:
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
 
   // cu_cp_measurement_handler
-  optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,
-                                                           nr_cell_id_t           nci,
-                                                           optional<rrc_meas_cfg> current_meas_config = {}) override;
+  std::optional<rrc_meas_cfg>
+       handle_measurement_config_request(ue_index_t                  ue_index,
+                                         nr_cell_id_t                nci,
+                                         std::optional<rrc_meas_cfg> current_meas_config = {}) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler

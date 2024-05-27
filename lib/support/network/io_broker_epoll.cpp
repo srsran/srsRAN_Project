@@ -162,7 +162,7 @@ void io_broker_epoll::handle_enqueued_events()
         break;
       case control_event::event_type::deregister_fd:
         // Deregister fd and event handler.
-        handle_fd_epoll_removal(ev.fd, true, nullopt, ev.completed);
+        handle_fd_epoll_removal(ev.fd, true, std::nullopt, ev.completed);
         break;
       case control_event::event_type::close_io_broker:
         // Close io broker.
@@ -207,10 +207,10 @@ bool io_broker_epoll::handle_fd_registration(int                     fd,
   return true;
 }
 
-bool io_broker_epoll::handle_fd_epoll_removal(int                  fd,
-                                              bool                 io_broker_deregistration_required,
-                                              optional<error_code> epoll_error,
-                                              std::promise<bool>*  complete_notifier)
+bool io_broker_epoll::handle_fd_epoll_removal(int                       fd,
+                                              bool                      io_broker_deregistration_required,
+                                              std::optional<error_code> epoll_error,
+                                              std::promise<bool>*       complete_notifier)
 {
   // The file descriptor must be already registered.
   auto ev_it = event_handler.find(fd);
@@ -317,7 +317,7 @@ bool io_broker_epoll::unregister_fd(int fd)
 
   if (std::this_thread::get_id() == thread.get_id()) {
     // Deregistration from within the epoll thread. No need to go through the event queue.
-    return handle_fd_epoll_removal(fd, true, nullopt, nullptr);
+    return handle_fd_epoll_removal(fd, true, std::nullopt, nullptr);
   }
 
   std::promise<bool> p;
@@ -342,7 +342,7 @@ void io_broker_epoll::stop_impl()
 
   // Start by deregistering all existing file descriptors.
   for (const auto& it : event_handler) {
-    handle_fd_epoll_removal(it.first, false, nullopt, nullptr);
+    handle_fd_epoll_removal(it.first, false, std::nullopt, nullptr);
   }
 
   // Clear event queue.

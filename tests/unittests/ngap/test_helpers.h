@@ -328,7 +328,7 @@ public:
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
-  optional<ue_index_t>                       last_created_ue_index;
+  std::optional<ue_index_t>                  last_created_ue_index;
 
 private:
   ngap_ue_manager&      ue_manager;

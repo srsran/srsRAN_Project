@@ -31,7 +31,7 @@ public:
   ///
   /// This method is useful in testing, where we don't want to use a specific port.
   /// \return The port number on which the F1-C Server is listening for new connections.
-  virtual optional<uint16_t> get_listen_port() const = 0;
+  virtual std::optional<uint16_t> get_listen_port() const = 0;
 };
 
 } // namespace srs_cu_cp

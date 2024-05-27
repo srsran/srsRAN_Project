@@ -42,7 +42,7 @@ public:
   bool listen() override;
 
   /// \brief Return the port on which the socket is listening.
-  optional<uint16_t> get_listen_port() override;
+  std::optional<uint16_t> get_listen_port() override;
 
   /// \brief Subscribe to IO broker for automatic IO Rx notifications.
   bool subscribe_to(io_broker& broker) override;

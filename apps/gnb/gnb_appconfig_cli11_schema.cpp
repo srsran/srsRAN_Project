@@ -164,7 +164,7 @@ static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfi
       ->capture_default_str();
 }
 
-static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& config)
+static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>& config)
 {
   config.emplace();
 
@@ -270,9 +270,9 @@ static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_ap
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
 {
-  auto parsing_isolated_cpus_fcn = [](optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
-                                      const std::string&                   value,
-                                      const std::string&                   property_name) {
+  auto parsing_isolated_cpus_fcn = [](std::optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
+                                      const std::string&                        value,
+                                      const std::string&                        property_name) {
     isolated_cpu_cfg.emplace();
     parse_affinity_mask(*isolated_cpu_cfg, value, property_name);
 

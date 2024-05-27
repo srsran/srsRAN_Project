@@ -254,7 +254,8 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   ASSERT_NE(manager, nullptr);
 }
 
-void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg, meas_obj_id_t meas_obj_id)
+void cell_meas_manager_test::check_default_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg,
+                                                    meas_obj_id_t                      meas_obj_id)
 {
   ASSERT_TRUE(meas_cfg.has_value());
   ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 2);
@@ -262,7 +263,7 @@ void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>
   // TODO: Add checks for more values
 }
 
-void cell_meas_manager_test::verify_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
+void cell_meas_manager_test::verify_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg)
 {
   // Performs sanity check on the config without making any assumptions.
   ASSERT_TRUE(meas_cfg.has_value());
@@ -302,7 +303,7 @@ void cell_meas_manager_test::verify_meas_cfg(const optional<rrc_meas_cfg>& meas_
   }
 }
 
-void cell_meas_manager_test::verify_empty_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
+void cell_meas_manager_test::verify_empty_meas_cfg(const std::optional<rrc_meas_cfg>& meas_cfg)
 {
   ASSERT_FALSE(meas_cfg.has_value());
 }

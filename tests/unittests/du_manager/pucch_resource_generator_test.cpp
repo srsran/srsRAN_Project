@@ -28,7 +28,7 @@ struct pucch_gen_params_opt1 {
   bool                             f1_intraslot_freq_hopping{false};
   bounded_integer<unsigned, 1, 2>  f2_nof_symbols{1};
   unsigned                         max_nof_rbs{1};
-  optional<unsigned>               max_payload_bits;
+  std::optional<unsigned>          max_payload_bits;
   max_pucch_code_rate              max_code_rate{max_pucch_code_rate::dot_25};
   bool                             f2_intraslot_freq_hopping{false};
 };
@@ -50,7 +50,7 @@ struct pucch_gen_params_opt2 {
   bool                             f1_intraslot_freq_hopping{false};
   bounded_integer<unsigned, 1, 2>  f2_nof_symbols{1};
   unsigned                         max_nof_rbs{1};
-  optional<unsigned>               max_payload_bits;
+  std::optional<unsigned>          max_payload_bits;
   max_pucch_code_rate              max_code_rate{max_pucch_code_rate::dot_25};
   bool                             f2_intraslot_freq_hopping{false};
 };

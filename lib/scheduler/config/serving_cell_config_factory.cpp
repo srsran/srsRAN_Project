@@ -56,7 +56,7 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
       report_error("The user either sets {controlResourceSetZero, offsetToPointA, kSSB} or just "
                    "{controlResourceSetZero}, or none of them.\n");
     }
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (coreset0_index.has_value()) {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(
           dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, coreset0_index.value());
@@ -271,7 +271,7 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
       make_ue_dedicated_pdcch_config(params),
       band_helper::get_duplex_mode(cfg.freq_info_dl.freq_band_list.back().band) == duplex_mode::TDD
              ? *params.tdd_ul_dl_cfg_common
-             : optional<tdd_ul_dl_config_common>{});
+             : std::optional<tdd_ul_dl_config_common>{});
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -353,7 +353,7 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::TDD) {
-    optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
+    std::optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
         params.scs_common,
         cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config,
         *params.tdd_ul_dl_cfg_common);
@@ -616,8 +616,8 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >>> SR Resources.
   // Use 40msec SR period by default.
-  const unsigned           sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
-  const optional<unsigned> sr_offset =
+  const unsigned                sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  const std::optional<unsigned> sr_offset =
       params.tdd_ul_dl_cfg_common.has_value() ? find_next_tdd_full_ul_slot(params.tdd_ul_dl_cfg_common.value()) : 0;
   const unsigned sr_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U;
   pucch_cfg.sr_res_list.push_back(
@@ -676,7 +676,8 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
     // Set a default CSI report slot offset that falls in an UL slot.
     const auto& tdd_pattern = *params.tdd_ul_dl_cfg_common;
 
-    if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params, nullopt, nullopt, nullopt, tdd_pattern)) {
+    if (not csi_helper::derive_valid_csi_rs_slot_offsets(
+            csi_params, std::nullopt, std::nullopt, std::nullopt, tdd_pattern)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
 
@@ -804,15 +805,15 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
 }
 
 std::vector<pdsch_time_domain_resource_allocation>
-srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                           ss0_idx,
-                                                        const pdcch_config_common&        common_pdcch_cfg,
-                                                        optional<pdcch_config>            ded_pdcch_cfg,
-                                                        optional<tdd_ul_dl_config_common> tdd_cfg)
+srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                                ss0_idx,
+                                                        const pdcch_config_common&             common_pdcch_cfg,
+                                                        std::optional<pdcch_config>            ded_pdcch_cfg,
+                                                        std::optional<tdd_ul_dl_config_common> tdd_cfg)
 {
-  const optional<coreset_configuration> coreset0                                = common_pdcch_cfg.coreset0;
-  const optional<coreset_configuration> common_coreset                          = common_pdcch_cfg.common_coreset;
-  unsigned                              pattern1_nof_dl_symbols_in_special_slot = 0;
-  unsigned                              pattern2_nof_dl_symbols_in_special_slot = 0;
+  const std::optional<coreset_configuration> coreset0                                = common_pdcch_cfg.coreset0;
+  const std::optional<coreset_configuration> common_coreset                          = common_pdcch_cfg.common_coreset;
+  unsigned                                   pattern1_nof_dl_symbols_in_special_slot = 0;
+  unsigned                                   pattern2_nof_dl_symbols_in_special_slot = 0;
   if (tdd_cfg.has_value()) {
     pattern1_nof_dl_symbols_in_special_slot = tdd_cfg->pattern1.nof_dl_symbols;
     if (tdd_cfg->pattern2.has_value()) {

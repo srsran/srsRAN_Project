@@ -104,7 +104,7 @@ struct buffer_pool_appconfig {
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// CPUs isolation.
-  optional<os_sched_affinity_bitmask> isolated_cpus;
+  std::optional<os_sched_affinity_bitmask> isolated_cpus;
   /// Low priority workers CPU affinity mask.
   os_sched_affinity_config low_priority_cpu_cfg = {sched_affinity_mask_types::low_priority,
                                                    {},
@@ -156,7 +156,7 @@ struct gnb_appconfig {
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// HAL configuration.
-  optional<hal_appconfig> hal_config;
+  std::optional<hal_appconfig> hal_config;
 };
 
 } // namespace srsran

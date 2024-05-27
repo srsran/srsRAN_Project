@@ -205,7 +205,7 @@ private:
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
   // ngap ue context
-  optional<ngap_ue_t> ngap_ue_context;
+  std::optional<ngap_ue_t> ngap_ue_context;
 
   // cu-cp ue context
   ngap_rrc_ue_adapter          ngap_rrc_ue_ev_notifier;

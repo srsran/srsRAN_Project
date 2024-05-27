@@ -197,7 +197,7 @@ void dl_harq_process::new_tx(slot_point pdsch_slot,
   prev_tx_params.tb[1].reset();
   pucch_ack_to_receive = 0;
   chosen_ack           = mac_harq_ack_report_status::dtx;
-  last_pucch_snr       = nullopt;
+  last_pucch_snr       = std::nullopt;
 }
 
 void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
@@ -206,7 +206,7 @@ void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_
   base_type::new_retx_tb_common(0, harq_bit_idx);
   pucch_ack_to_receive = 0;
   chosen_ack           = mac_harq_ack_report_status::dtx;
-  last_pucch_snr       = nullopt;
+  last_pucch_snr       = std::nullopt;
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
@@ -233,7 +233,7 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 }
 
 dl_harq_process::status_update
-dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr)
+dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::optional<float> pucch_snr)
 {
   if (not is_waiting_ack(tb_idx)) {
     // If the HARQ process is not expected an HARQ-ACK anymore, it means that it has already been ACKed/NACKed.
@@ -420,10 +420,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-optional<dl_harq_process::dl_ack_info_result> harq_entity::dl_ack_info(slot_point                 uci_slot,
-                                                                       mac_harq_ack_report_status ack,
-                                                                       uint8_t                    harq_bit_idx,
-                                                                       optional<float>            pucch_snr)
+std::optional<dl_harq_process::dl_ack_info_result> harq_entity::dl_ack_info(slot_point                 uci_slot,
+                                                                            mac_harq_ack_report_status ack,
+                                                                            uint8_t                    harq_bit_idx,
+                                                                            std::optional<float>       pucch_snr)
 {
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
@@ -434,12 +434,13 @@ optional<dl_harq_process::dl_ack_info_result> harq_entity::dl_ack_info(slot_poin
       // Update HARQ state.
       dl_harq_process::status_update status_upd = h_dl.ack_info(tb_index, ack, pucch_snr);
       return dl_harq_process::dl_ack_info_result{h_dl.id, *h_dl.last_alloc_params().tb[0], status_upd};
-    } else if (ntn_harq.active()) {
+    }
+    if (ntn_harq.active()) {
       return ntn_harq.pop_ack_info(uci_slot, ack);
     }
   }
   logger.warning("DL HARQ for rnti={}, uci slot={} not found.", rnti, uci_slot);
-  return nullopt;
+  return std::nullopt;
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
@@ -470,7 +471,7 @@ void harq_entity::dl_ack_info_cancelled(slot_point uci_slot)
       dl_harq_process::status_update ret = dl_harq_process::status_update::no_update;
       for (unsigned count = 0; count != MAX_ACKS_PER_HARQ and ret == dl_harq_process::status_update::no_update;
            ++count) {
-        ret = h_dl.ack_info(0, mac_harq_ack_report_status::dtx, nullopt);
+        ret = h_dl.ack_info(0, mac_harq_ack_report_status::dtx, std::nullopt);
       }
       if (ret == dl_harq_process::status_update::no_update) {
         dl_h_logger.warning(h_dl.id, "DL HARQ in an invalid state. Resetting it...");

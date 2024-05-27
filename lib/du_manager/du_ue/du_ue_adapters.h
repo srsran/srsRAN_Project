@@ -34,7 +34,7 @@ public:
 
   void disconnect();
 
-  void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) override
+  void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
 

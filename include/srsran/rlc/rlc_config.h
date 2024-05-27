@@ -667,7 +667,7 @@ struct rlc_rx_am_config {
 
   // Implementation-specific parameters that are not specified by 3GPP
   /// Maximum number of visited SNs in the RX window when building a status report.
-  optional<uint32_t> max_sn_per_status;
+  std::optional<uint32_t> max_sn_per_status;
 };
 
 /// \brief Configurable Tx parameters for RLC AM

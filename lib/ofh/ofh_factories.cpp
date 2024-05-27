@@ -122,11 +122,11 @@ create_socket_txrx(const sector_configuration& sector_cfg, task_executor& rx_exe
 }
 
 static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receiver>>
-create_txrx(const sector_configuration&                sector_cfg,
-            optional<std::unique_ptr<ether::gateway>>  eth_gateway,
-            optional<std::unique_ptr<ether::receiver>> eth_receiver,
-            task_executor&                             rx_executor,
-            srslog::basic_logger&                      logger)
+create_txrx(const sector_configuration&                     sector_cfg,
+            std::optional<std::unique_ptr<ether::gateway>>  eth_gateway,
+            std::optional<std::unique_ptr<ether::receiver>> eth_receiver,
+            task_executor&                                  rx_executor,
+            srslog::basic_logger&                           logger)
 {
   if (eth_gateway && eth_receiver) {
     // Do not proceed if both optionals are provided.

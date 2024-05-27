@@ -27,7 +27,7 @@ namespace srs_cu_up {
 struct ue_context_cfg {
   security::sec_as_config                          security_info;
   activity_notification_level_t                    activity_level;
-  optional<std::chrono::seconds>                   ue_inactivity_timeout;
+  std::optional<std::chrono::seconds>              ue_inactivity_timeout;
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
 };
 

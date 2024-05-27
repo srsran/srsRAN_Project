@@ -645,8 +645,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          ? status.ack_sn
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
-  optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
-  bool               recycle_bin_full  = false;
+  std::optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
+  bool                    recycle_bin_full  = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];

@@ -641,7 +641,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc =
           band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
@@ -882,12 +882,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot and/or dedicated PDCCH
     // configuration.
     out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
-        config_helpers::make_pdsch_time_domain_resource(
-            param.search_space0_index,
-            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
-            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-            band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD ? out_cell.tdd_ul_dl_cfg_common.value()
-                                                                                 : optional<tdd_ul_dl_config_common>{});
+        config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
+                                                        out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+                                                        out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+                                                        band_helper::get_duplex_mode(param.band.value()) ==
+                                                                duplex_mode::TDD
+                                                            ? out_cell.tdd_ul_dl_cfg_common.value()
+                                                            : std::optional<tdd_ul_dl_config_common>{});
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
@@ -987,11 +988,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                         base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
-    config_helpers::compute_nof_sr_csi_pucch_res(
-        du_pucch_cfg,
-        base_cell.ul_common_cfg.max_pucchs_per_slot,
-        base_cell.pucch_cfg.sr_period_msec,
-        base_cell.csi_cfg.csi_rs_enabled ? optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec} : nullopt);
+    config_helpers::compute_nof_sr_csi_pucch_res(du_pucch_cfg,
+                                                 base_cell.ul_common_cfg.max_pucchs_per_slot,
+                                                 base_cell.pucch_cfg.sr_period_msec,
+                                                 base_cell.csi_cfg.csi_rs_enabled
+                                                     ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
+                                                     : std::nullopt);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);

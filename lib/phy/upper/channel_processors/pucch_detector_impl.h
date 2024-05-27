@@ -66,7 +66,7 @@ private:
                                   const channel_estimate&                  estimates,
                                   unsigned                                 first_symbol,
                                   unsigned                                 first_prb,
-                                  optional<unsigned>                       second_prb,
+                                  std::optional<unsigned>                  second_prb,
                                   const static_vector<uint8_t, MAX_PORTS>& antenna_ports);
 
   /// \brief Marginalizes the spreading sequences out.

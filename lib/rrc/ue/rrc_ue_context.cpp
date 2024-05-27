@@ -14,11 +14,11 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-rrc_ue_context_t::rrc_ue_context_t(const ue_index_t                  ue_index_,
-                                   const rnti_t                      c_rnti_,
-                                   const rrc_cell_context&           cell_,
-                                   const rrc_ue_cfg_t&               cfg_,
-                                   optional<rrc_ue_transfer_context> rrc_context_) :
+rrc_ue_context_t::rrc_ue_context_t(const ue_index_t                       ue_index_,
+                                   const rnti_t                           c_rnti_,
+                                   const rrc_cell_context&                cell_,
+                                   const rrc_ue_cfg_t&                    cfg_,
+                                   std::optional<rrc_ue_transfer_context> rrc_context_) :
   ue_index(ue_index_),
   c_rnti(c_rnti_),
   cell(cell_),

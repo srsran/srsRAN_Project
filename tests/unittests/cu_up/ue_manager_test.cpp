@@ -35,7 +35,7 @@ protected:
 
     cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_pool>(&worker);
     // Create UE cfg
-    ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, 0};
+    ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, std::chrono::seconds(0)};
 
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,

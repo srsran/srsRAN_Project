@@ -201,9 +201,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  unsigned                 k1      = 0;
-  span<const uint8_t>      k1_list = ss_info->get_k1_candidates();
-  optional<uci_allocation> uci =
+  unsigned                      k1      = 0;
+  span<const uint8_t>           k1_list = ss_info->get_k1_candidates();
+  std::optional<uci_allocation> uci =
       get_uci_alloc(grant.cell_index)
           .alloc_uci_harq_ue(
               get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1_list, nullptr);
@@ -282,7 +282,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     adjusted_mcs = static_cast<sch_mcs_index>(std::min(adjusted_mcs.to_uint(), max_mcs_with_csi_rs));
   }
 
-  optional<sch_mcs_tbs> mcs_tbs_info;
+  std::optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
     // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c txDirectCurrentLocation)
@@ -672,7 +672,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   }
 
   // Compute MCS and TBS for this transmission.
-  optional<sch_mcs_tbs> mcs_tbs_info;
+  std::optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
     bool contains_dc = dc_offset_helper::is_contained(

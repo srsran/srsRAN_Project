@@ -190,13 +190,13 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
-  optional<float> sinr_dB = csi_info.get_sinr_dB();
+  std::optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
     sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
-  optional<int>           timing_advance_offset_ns;
-  optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
+  std::optional<int>           timing_advance_offset_ns;
+  std::optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
     timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
   }
@@ -267,20 +267,20 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   static constexpr float MAX_UL_RSRP_VALUE_DBFS = 0.0F;
 
   // Extract the SINR which is optional and clamp it if available.
-  optional<float> sinr_dB = result.csi.get_sinr_dB();
+  std::optional<float> sinr_dB = result.csi.get_sinr_dB();
   if (sinr_dB.has_value()) {
     sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
-  optional<int>           timing_advance_offset_ns;
-  optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
+  std::optional<int>           timing_advance_offset_ns;
+  std::optional<phy_time_unit> timing_advance = result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
     timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
   }
 
   // Extract the RSRP which is optional and clamp it if available.
-  optional<float> rsrp = result.csi.get_rsrp_dB();
+  std::optional<float> rsrp = result.csi.get_rsrp_dB();
   if (rsrp.has_value()) {
     rsrp = convert_to_dBFS(std::clamp(rsrp.value(), MIN_UL_RSRP_VALUE_DBFS, MAX_UL_RSRP_VALUE_DBFS),
                            dBFS_calibration_value);
@@ -288,7 +288,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
 
   builder.add_pdu(handle,
                   result.rnti,
-                  optional<uint8_t>(),
+                  std::optional<uint8_t>(),
                   result.harq_id,
                   result.decoder_result.tb_crc_ok,
                   num_cb,
@@ -387,14 +387,14 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
   // Extract the SINR which is optional and clamp it if available.
-  optional<float> sinr_dB = csi_info.get_sinr_dB();
+  std::optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
     sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
-  optional<int>           timing_advance_offset_ns;
-  optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
+  std::optional<int>           timing_advance_offset_ns;
+  std::optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
     timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
   }
@@ -493,14 +493,14 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
   // Extract the SINR which is optional and clamp it if available.
-  optional<float> sinr_dB = csi_info.get_sinr_dB();
+  std::optional<float> sinr_dB = csi_info.get_sinr_dB();
   if (sinr_dB.has_value()) {
     sinr_dB = std::clamp(sinr_dB.value(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE);
   }
 
   // Extract timing advance.
-  optional<int>           timing_advance_offset_ns;
-  optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
+  std::optional<int>           timing_advance_offset_ns;
+  std::optional<phy_time_unit> timing_advance = result.processor_result.csi.get_time_alignment();
   if (timing_advance.has_value()) {
     timing_advance_offset_ns = static_cast<int>(timing_advance.value().to_seconds() * 1e9);
   }

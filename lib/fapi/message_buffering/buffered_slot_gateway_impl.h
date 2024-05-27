@@ -79,18 +79,18 @@ private:
   /// \param pool Pool of messages.
   /// \param func Function to call to forward the messages
   template <typename T, typename Function>
-  void handle_message(const T& msg, span<optional<T>> pool, Function func);
+  void handle_message(const T& msg, span<std::optional<T>> pool, Function func);
 
 private:
-  const unsigned                                                              l2_nof_slots_ahead;
-  const subcarrier_spacing                                                    scs;
-  slot_message_gateway&                                                       gateway;
-  srslog::basic_logger&                                                       logger;
-  std::atomic<uint32_t>                                                       current_slot_count_val;
-  static_vector<optional<dl_tti_request_message>, MAX_NUM_BUFFERED_MESSAGES>  dl_tti_pool;
-  static_vector<optional<ul_tti_request_message>, MAX_NUM_BUFFERED_MESSAGES>  ul_tti_pool;
-  static_vector<optional<ul_dci_request_message>, MAX_NUM_BUFFERED_MESSAGES>  ul_dci_pool;
-  static_vector<optional<tx_data_request_message>, MAX_NUM_BUFFERED_MESSAGES> tx_data_pool;
+  const unsigned                                                                   l2_nof_slots_ahead;
+  const subcarrier_spacing                                                         scs;
+  slot_message_gateway&                                                            gateway;
+  srslog::basic_logger&                                                            logger;
+  std::atomic<uint32_t>                                                            current_slot_count_val;
+  static_vector<std::optional<dl_tti_request_message>, MAX_NUM_BUFFERED_MESSAGES>  dl_tti_pool;
+  static_vector<std::optional<ul_tti_request_message>, MAX_NUM_BUFFERED_MESSAGES>  ul_tti_pool;
+  static_vector<std::optional<ul_dci_request_message>, MAX_NUM_BUFFERED_MESSAGES>  ul_dci_pool;
+  static_vector<std::optional<tx_data_request_message>, MAX_NUM_BUFFERED_MESSAGES> tx_data_pool;
 };
 
 } // namespace fapi

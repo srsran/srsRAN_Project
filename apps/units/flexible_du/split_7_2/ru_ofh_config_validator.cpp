@@ -143,7 +143,7 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
   return true;
 }
 
-static bool validate_hal_config(const optional<ru_ofh_unit_hal_config>& config)
+static bool validate_hal_config(const std::optional<ru_ofh_unit_hal_config>& config)
 {
 #ifdef DPDK_FOUND
   if (config && config->eal_args.empty()) {

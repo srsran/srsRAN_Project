@@ -191,11 +191,11 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   return du_cell_index_t::invalid;
 }
 
-bool du_processor_impl::create_rrc_ue(du_ue&                            ue,
-                                      rnti_t                            c_rnti,
-                                      const nr_cell_global_id_t&        cgi,
-                                      byte_buffer                       du_to_cu_rrc_container,
-                                      optional<rrc_ue_transfer_context> rrc_context)
+bool du_processor_impl::create_rrc_ue(du_ue&                                 ue,
+                                      rnti_t                                 c_rnti,
+                                      const nr_cell_global_id_t&             cgi,
+                                      byte_buffer                            du_to_cu_rrc_container,
+                                      std::optional<rrc_ue_transfer_context> rrc_context)
 {
   // Create RRC UE to F1AP adapter
   rrc_ue_f1ap_adapters.emplace(std::piecewise_construct,
@@ -424,9 +424,9 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
   return std::any_of(cell_db.begin(), cell_db.end(), [cgi](const auto& cell) { return cell.second.cgi == cgi; });
 }
 
-optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
+std::optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
 {
-  optional<nr_cell_global_id_t> cgi;
+  std::optional<nr_cell_global_id_t> cgi;
   for (const auto& cell : cell_db) {
     if (cell.second.pci == pci) {
       return cell.second.cgi;

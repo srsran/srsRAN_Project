@@ -365,7 +365,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   ASSERT_EQ(expected_data, data);
 
   // Make sure SINR is normal.
-  optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
+  std::optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
   ASSERT_TRUE(sinr_dB.has_value());
   ASSERT_TRUE(std::isnormal(sinr_dB.value()));
 
@@ -448,7 +448,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
   ASSERT_FALSE(sch_entry.data.tb_crc_ok);
 
   // Make sure SINR is infinity.
-  optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
+  std::optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
   ASSERT_TRUE(sinr_dB.has_value());
   ASSERT_TRUE(std::isinf(sinr_dB.value()));
 

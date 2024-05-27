@@ -67,7 +67,7 @@ enum class t_hyst_normal { s30, s60, s120, s180, s240, spare3, spare2, spare1 };
 
 struct nr_ns_p_max_value {
   /// Used to limit the UE's uplink transmission power on a carrier frequency. See TS 38.101-1. Values {-30,...,33}.
-  optional<int8_t> additional_p_max;
+  std::optional<int8_t> additional_p_max;
   /// Indicates emission requirements to be fulfilled by the UE. See TS 38.101-1, clause 6.2.3, and TS 38.101-2,
   /// clause 6.2.3. Values {0,...,7}.
   uint8_t additional_spectrum_emission;
@@ -76,7 +76,7 @@ struct nr_ns_p_max_value {
 struct nr_multi_band_info {
   /// Provides an NR frequency band number as defined in TS 38.101-1 and TS 38.101-2, table 5.2-1.
   /// \remark This field is absent for SIB2 and is mandatory present in SIB4 and frequencyInfoDL-SIB.
-  optional<nr_band> freq_band_indicator_nr;
+  std::optional<nr_band> freq_band_indicator_nr;
   /// Maximum of 8 entries.
   std::vector<nr_ns_p_max_value> nr_ns_p_max_list;
 };
@@ -102,50 +102,50 @@ struct speed_state_reselection_params {
 struct sib2_info {
   /// Number of SS blocks to average for cell measurement derivation. If the field is absent the UE uses the measurement
   /// quantity as specified in TS 38.304.
-  optional<uint8_t> nof_ssbs_to_average;
+  std::optional<uint8_t> nof_ssbs_to_average;
   /// Threshold for consolidation of L1 measurements per RS index. If the \c abs_thres_ss_blocks_consolidation_rsrp, \c
   /// abs_thres_ss_blocks_consolidation_rsrq and \c abs_thres_ss_blocks_consolidation_sinr fields are absent, the UE
   /// uses the measurement quantity as specified in TS 38.304.
-  optional<uint8_t> abs_thres_ss_blocks_consolidation_rsrp;
-  optional<uint8_t> abs_thres_ss_blocks_consolidation_rsrq;
-  optional<uint8_t> abs_thres_ss_blocks_consolidation_sinr;
+  std::optional<uint8_t> abs_thres_ss_blocks_consolidation_rsrp;
+  std::optional<uint8_t> abs_thres_ss_blocks_consolidation_rsrq;
+  std::optional<uint8_t> abs_thres_ss_blocks_consolidation_sinr;
   /// Used to indicate a cell, beam or measurement object specific offset to be applied when evaluating candidates for
   /// cell re-selection. Values {-24,...,24}.
-  optional<int8_t> q_offset_range_to_best_cell_db;
+  std::optional<int8_t> q_offset_range_to_best_cell_db;
   /// Parameter "Qhyst" in TS 38.304. Values {0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24}.
-  uint8_t                                  q_hyst_db;
-  optional<speed_state_reselection_params> speed_state_resel_params;
+  uint8_t                                       q_hyst_db;
+  std::optional<speed_state_reselection_params> speed_state_resel_params;
 
   /// Parameter "SnonIntraSearchP" in TS 38.304. If this field is not present, the UE applies the (default) value of
   /// infinity. Values {0,...,31}.
-  optional<uint8_t> s_non_intra_search_p;
+  std::optional<uint8_t> s_non_intra_search_p;
   /// Parameter "SnonIntraSearchQ" in TS 38.304. If the field is not present, the UE applies the (default) value of 0
   /// dB. Values {0,...,31}.
-  optional<uint8_t> s_non_intra_search_q;
+  std::optional<uint8_t> s_non_intra_search_q;
   /// Parameter "ThreshServing, LowP" in TS 38.304. Values {0,...,31}.
   uint8_t thresh_serving_low_p;
   /// Parameter "ThreshServing, LowQ" in TS 38.304. Values {0,...,31}.
-  optional<uint8_t> thresh_serving_low_q;
+  std::optional<uint8_t> thresh_serving_low_q;
   /// Defines the absolute priority of the concerned carrier frequency, as used by the cell reselection procedure. Value
   /// 0 means: lowest priority. Values {0,...,7}.
   uint8_t cell_reselection_priority;
   /// Indicates a fractional value to be added to the value of \c cell_reselection_priority to obtain the absolute
   /// priority of the concerned carrier frequency for E-UTRA and NR.Values {0.2, 0.4, 0.6, 0.8}.
-  optional<float> cell_reselection_sub_priority;
+  std::optional<float> cell_reselection_sub_priority;
 
   /// Parameter "Qrxlevmin" in TS 38.304, applicable for intra-frequency neighbour cells. Values {-70,...,-22}.
   int8_t q_rx_lev_min;
   /// Parameter "QrxlevminSUL" in TS 38.304, applicable for intra-frequency neighbour cells. Values {-70,...,-22}.
-  optional<int8_t> q_rx_lev_min_sul;
+  std::optional<int8_t> q_rx_lev_min_sul;
   /// Parameter "Qqualmin" in TS 38.304, applicable for intra-frequency neighbour cells. If the field is not
   /// present, the UE applies the (default) value of negative infinity. Value {-43,...,-12}.
-  optional<int8_t> q_qual_min;
+  std::optional<int8_t> q_qual_min;
   /// Parameter "SIntraSearchP" in TS 38.304. If this field is not present, the UE applies the (default) value of
   /// infinity. Values {0,...,31}.
   uint8_t s_intra_search_p;
   /// Parameter "SIntraSearchQ2 in TS 38.304. If the field is not present, the UE applies the (default) value of 0
   /// dB. Values {0,...,31}.
-  optional<uint8_t> s_intra_search_q;
+  std::optional<uint8_t> s_intra_search_q;
   /// Parameter "TreselectionNR" in TS 38.304. Values {0,...,7}.
   uint8_t t_reselection_nr;
   /// Indicates the list of frequency bands for which the NR cell reselection parameters apply. Maximum of 8 entries.
@@ -153,18 +153,18 @@ struct sib2_info {
   /// Indicates the list of frequency bands for which the NR cell reselection parameters apply. Maximum of 8 entries.
   std::vector<nr_multi_band_info> freq_band_lst_sul;
   /// Used to limit the UE's uplink transmission power on a carrier frequency. See TS 38.101-1. Values {-30,...,33}.
-  optional<int8_t>              p_max;
-  optional<ssb_mtc>             smtc;
-  optional<ss_rssi_measurement> ss_rssi_meas;
-  optional<ssb_to_measure>      ssb_to_meas;
+  std::optional<int8_t>              p_max;
+  std::optional<ssb_mtc>             smtc;
+  std::optional<ss_rssi_measurement> ss_rssi_meas;
+  std::optional<ssb_to_measure>      ssb_to_meas;
   /// This field indicates whether the UE can utilize serving cell timing to derive the index of SS block transmitted by
   /// neighbour cell.
   bool derive_ssb_index_from_cell;
 };
 
 struct sib19_info {
-  optional<uint16_t>                                           distance_thres;
-  optional<std::string>                                        ref_location;
+  std::optional<uint16_t>                                      distance_thres;
+  std::optional<std::string>                                   ref_location;
   optional<uint16_t>                                           cell_specific_koffset;
   optional<variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
   optional<epoch_time_t>                                       epoch_time;

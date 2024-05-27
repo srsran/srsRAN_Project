@@ -74,7 +74,7 @@ public:
   /// For a valid PUSCH transmission the codeword, the UCI information or both must be present.
   struct pdu_t {
     /// Context information.
-    optional<pusch_context> context;
+    std::optional<pusch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.
@@ -88,7 +88,7 @@ public:
     /// Modulation and coding scheme.
     sch_mcs_description mcs_descr;
     /// Provides codeword description if present.
-    optional<codeword_description> codeword;
+    std::optional<codeword_description> codeword;
     /// Uplink control information parameters.
     uci_description uci;
     /// \brief Parameter \f$n_{ID}\f$ from TS 38.211 section 6.3.1.1.
@@ -136,7 +136,7 @@ public:
     ///
     /// Sets the direct current position relative to Point A.
     /// \remark An assertion is triggered if the DC position is not within the resource grid.
-    optional<unsigned> dc_position;
+    std::optional<unsigned> dc_position;
   };
 
   /// Default destructor.

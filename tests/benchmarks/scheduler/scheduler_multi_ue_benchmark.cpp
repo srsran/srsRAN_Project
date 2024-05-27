@@ -175,12 +175,13 @@ public:
             f2.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           if (pucch.csi_rep_cfg.has_value()) {
-            f2.csi = csi_report_data{nullopt,
-                                     4,
-                                     nullopt,
-                                     csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, nullopt, 0}},
-                                     15,
-                                     nullopt};
+            f2.csi =
+                csi_report_data{std::nullopt,
+                                4,
+                                std::nullopt,
+                                csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
+                                15,
+                                std::nullopt};
           }
           pdu.pdu = f2;
           ind.ucis.push_back(pdu);
@@ -196,12 +197,12 @@ public:
             pusch_pdu.harqs.resize(ul_grant.uci->harq.value().harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           pusch_pdu.csi =
-              csi_report_data{nullopt,
+              csi_report_data{std::nullopt,
                               4,
-                              nullopt,
-                              csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, nullopt, 0}},
+                              std::nullopt,
+                              csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
                               15,
-                              nullopt};
+                              std::nullopt};
           ind.ucis.push_back(pdu);
         }
       }

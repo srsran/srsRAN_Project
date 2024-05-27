@@ -46,7 +46,7 @@ struct srs_config {
       uint8_t aperiodic_srs_res_trigger;
       /// ID of CSI-RS resource associated with this SRS resource set.
       /// This field is optionally present, in case of non-codebook based transmission.
-      optional<nzp_csi_rs_res_id_t> csi_rs;
+      std::optional<nzp_csi_rs_res_id_t> csi_rs;
       /// An offset in number of slots between the triggering DCI and the actual transmission of this SRS-ResourceSet.
       /// If the field is absent the UE applies no offset (value 0). Values {1,..,32}.
       optional<unsigned> slot_offset;

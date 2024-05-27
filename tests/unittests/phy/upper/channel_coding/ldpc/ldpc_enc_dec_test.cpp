@@ -324,8 +324,8 @@ TEST_P(LDPCEncDecFixture, LDPCDecTestZeroLLR)
   // Check that a codeblock with all zero LLR returns message of all ones and an empty output.
   std::vector<log_likelihood_ratio> llrs(max_cb_length);
   srsvec::zero(llrs);
-  dynamic_bit_buffer decoded(msg_length);
-  optional<unsigned> n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
+  dynamic_bit_buffer      decoded(msg_length);
+  std::optional<unsigned> n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
   ASSERT_FALSE(n_iters.has_value()) << "Without CRC calculator, the decoder should not return a number of iteration.";
   ASSERT_TRUE(all_ones(decoded));
 }

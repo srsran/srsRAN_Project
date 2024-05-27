@@ -90,8 +90,8 @@ public:
   void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
 
   async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                              optional<rrc_ue_transfer_context>    rrc_context) override
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                              std::optional<rrc_ue_transfer_context> rrc_context) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_setup_request(request, rrc_context);
@@ -227,7 +227,7 @@ public:
     return rrc_ue_handler->get_transfer_context();
   }
 
-  optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config = {}) override
+  std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->generate_meas_config(current_meas_config);

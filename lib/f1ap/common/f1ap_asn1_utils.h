@@ -57,7 +57,7 @@ inline const char* get_message_type_str(const asn1::f1ap::f1ap_pdu_c& pdu)
 }
 
 /// Extracts transaction id of Initiating message.
-inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
+inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
 {
   using namespace asn1::f1ap;
   using init_types = f1ap_elem_procs_o::init_msg_c::types_opts;
@@ -79,7 +79,7 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
     case init_types::f1_removal_request: {
       const auto& list = *out.value.f1_removal_request();
       if (list.size() == 0) {
-        return nullopt;
+        return std::nullopt;
       }
       return list[0]->transaction_id();
     }
@@ -92,11 +92,11 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
 /// Extracts transaction id of Successful Outcome message.
-inline optional<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome_s& out)
+inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome_s& out)
 {
   using namespace asn1::f1ap;
   using success_types = f1ap_elem_procs_o::successful_outcome_c::types_opts;
@@ -121,11 +121,11 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
 /// Extracts transaction id of Unsuccessful Outcome message.
-inline optional<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outcome_s& out)
+inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outcome_s& out)
 {
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
@@ -141,11 +141,11 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outco
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
 /// Extracts transaction id of F1AP PDU.
-inline optional<uint8_t> get_transaction_id(const asn1::f1ap::f1ap_pdu_c& pdu)
+inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::f1ap_pdu_c& pdu)
 {
   using namespace asn1::f1ap;
   switch (pdu.type().value) {
@@ -158,10 +158,10 @@ inline optional<uint8_t> get_transaction_id(const asn1::f1ap::f1ap_pdu_c& pdu)
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
+inline std::optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
 {
   using init_msg_type = asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
@@ -169,7 +169,7 @@ inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::ini
       if (init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present) {
         return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id;
       }
-      return nullopt;
+      return std::nullopt;
     case init_msg_type::ue_context_release_cmd:
       return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_cmd()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_mod_request:
@@ -187,10 +187,10 @@ inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::ini
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::successful_outcome_s& success_outcome)
+inline std::optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::successful_outcome_s& success_outcome)
 {
   using namespace asn1::f1ap;
   using success_types = f1ap_elem_procs_o::successful_outcome_c::types_opts;
@@ -209,10 +209,10 @@ inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::suc
       break;
   }
 
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_du_ue_f1ap_id_t>
+inline std::optional<gnb_du_ue_f1ap_id_t>
 get_gnb_du_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccessful_outcome)
 {
   using namespace asn1::f1ap;
@@ -233,10 +233,10 @@ get_gnb_du_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccessful_out
       break;
   }
 
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1ap_pdu_c& pdu)
+inline std::optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1ap_pdu_c& pdu)
 {
   using namespace asn1::f1ap;
   switch (pdu.type().value) {
@@ -249,10 +249,10 @@ inline optional<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1a
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
+inline std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
 {
   using namespace asn1::f1ap;
   using init_msg_types = f1ap_elem_procs_o::init_msg_c::types_opts;
@@ -273,10 +273,10 @@ inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::ini
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::successful_outcome_s& success_outcome)
+inline std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::successful_outcome_s& success_outcome)
 {
   using namespace asn1::f1ap;
   using success_types = f1ap_elem_procs_o::successful_outcome_c::types_opts;
@@ -293,10 +293,11 @@ inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::suc
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccess_outcome)
+inline std::optional<gnb_cu_ue_f1ap_id_t>
+get_gnb_cu_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccess_outcome)
 {
   using namespace asn1::f1ap;
   using unsuccess_types = f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts;
@@ -311,10 +312,10 @@ inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::uns
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
-inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::f1ap_pdu_c& pdu)
+inline std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::f1ap_pdu_c& pdu)
 {
   using namespace asn1::f1ap;
   switch (pdu.type().value) {
@@ -327,7 +328,7 @@ inline optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap::f1a
     default:
       break;
   }
-  return nullopt;
+  return std::nullopt;
 }
 
 inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::paging_s& pdu)

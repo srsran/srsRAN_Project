@@ -86,9 +86,9 @@ struct nru_dl_user_data {
   /// DL discard NR PDCP PDU SN.
   /// This parameter indicates the downlink NR discard PDCP PDU sequence number up to and including which all the NR
   /// PDCP PDUs should be discarded.
-  optional<uint32_t> dl_discard_pdcp_sn;
+  std::optional<uint32_t> dl_discard_pdcp_sn;
   /// Container holding the DL discard NR PDCP PDU SN blocks.
-  optional<nru_pdcp_sn_discard_blocks> discard_blocks;
+  std::optional<nru_pdcp_sn_discard_blocks> discard_blocks;
 
   bool operator==(const nru_dl_user_data& other) const
   {
@@ -113,28 +113,28 @@ struct nru_dl_data_delivery_status {
   /// Desired Data Rate.
   /// This parameter indicates the amount of data desired to be received in bytes in a specific amount of time (1 s) for
   /// a specific data radio bearer established for the UE as specified in clause 5.4.2.1.
-  optional<uint32_t> desired_data_rate;
+  std::optional<uint32_t> desired_data_rate;
   /// Container holding the lost NR-U Sequence Number range
-  optional<nru_lost_nru_sn_ranges> lost_nru_sn_ranges;
+  std::optional<nru_lost_nru_sn_ranges> lost_nru_sn_ranges;
   /// Highest successfully delivered NR PDCP Sequence Number.
   /// This parameter indicates feedback about the in-sequence delivery status of NR PDCP PDUs at the corresponding node
   /// towards the UE.
-  optional<uint32_t> highest_delivered_pdcp_sn;
+  std::optional<uint32_t> highest_delivered_pdcp_sn;
   /// Highest transmitted NR PDCP Sequence Number.
   /// This parameter indicates the feedback about the transmitted status of NR PDCP PDU sequence at the corresponding
   /// node to the lower layers.
-  optional<uint32_t> highest_transmitted_pdcp_sn;
+  std::optional<uint32_t> highest_transmitted_pdcp_sn;
   /// Cause Value.
   /// This parameter indicates specific events reported by the corresponding node.
-  optional<uint8_t> cause_value;
+  std::optional<uint8_t> cause_value;
   /// Highest successfully delivered retransmitted NR PDCP Sequence Number.
   /// This parameter indicates feedback about the in-sequence delivery status of NR PDCP PDUs of the retransmission
   /// data at the corresponding node towards the UE.
-  optional<uint32_t> highest_delivered_retransmitted_pdcp_sn;
+  std::optional<uint32_t> highest_delivered_retransmitted_pdcp_sn;
   /// Highest retransmitted NR PDCP Sequence Number.
   /// This parameter indicates the feedback about the transmitted status of NR PDCP PDU of the retransmission data at
   /// the corresponding node to the lower layers.
-  optional<uint32_t> highest_retransmitted_pdcp_sn;
+  std::optional<uint32_t> highest_retransmitted_pdcp_sn;
 
   bool operator==(const nru_dl_data_delivery_status& other) const
   {
@@ -162,7 +162,7 @@ struct nru_dl_message {
   /// Transport PDU, e.g. PDCP PDU.
   byte_buffer t_pdu;
   /// PDCP Sequence Number of the t_pdu.
-  optional<uint32_t> pdcp_sn;
+  std::optional<uint32_t> pdcp_sn;
   /// NR-U DL User Data.
   nru_dl_user_data dl_user_data;
 
@@ -189,11 +189,11 @@ struct nru_dl_message {
 /// NR-U UL message exchanged from node the peer node (DU) to the node holding a PDCP entity (CU-UP).
 struct nru_ul_message {
   /// Transport PDU, e.g. PDCP PDU.
-  optional<byte_buffer_chain> t_pdu;
+  std::optional<byte_buffer_chain> t_pdu;
   /// NR-U DL Data Delivery Status.
-  optional<nru_dl_data_delivery_status> data_delivery_status;
+  std::optional<nru_dl_data_delivery_status> data_delivery_status;
   /// NR-U Assistance Information.
-  optional<nru_assistance_information> assistance_information;
+  std::optional<nru_assistance_information> assistance_information;
 
   expected<nru_ul_message> deep_copy()
   {

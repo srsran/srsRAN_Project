@@ -218,7 +218,7 @@ struct sib_test_bench {
         cell_cfg.scs_common,
         cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
         band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
                                                     *cell_cfg.band,
                                                     nof_crbs,
@@ -688,7 +688,7 @@ protected:
     msg.tdd_ul_dl_cfg_common = tdd_cfg;
     // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
-        msg.searchspace0, msg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, tdd_cfg);
+        msg.searchspace0, msg.dl_cfg_common.init_dl_bwp.pdcch_common, std::nullopt, tdd_cfg);
 
     sib_test_bench t_bench{msg, sib1_rtx_period};
 
@@ -704,8 +704,8 @@ protected:
     const unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.sl_tx.nof_slots_per_subframe();
 
     // NOTE: The function assumes that arguments provided results in SIB1 scheduler allocating SIB1 in partial slot.
-    const unsigned     sib1_allocation_slot_pattern1{tdd_cfg.pattern1.nof_dl_slots};
-    optional<unsigned> sib1_allocation_slot_pattern2;
+    const unsigned          sib1_allocation_slot_pattern1{tdd_cfg.pattern1.nof_dl_slots};
+    std::optional<unsigned> sib1_allocation_slot_pattern2;
     if (tdd_cfg.pattern2.has_value()) {
       sib1_allocation_slot_pattern2 = tdd_cfg.pattern2->nof_dl_slots;
     }

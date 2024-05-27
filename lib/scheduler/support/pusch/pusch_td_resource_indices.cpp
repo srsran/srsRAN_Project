@@ -23,8 +23,8 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
   // Compute list of PUSCH time domain resource index list relevant for the PUSCH slot.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list;
 
-  optional<unsigned> nof_full_ul_slots = nullopt;
-  optional<unsigned> nof_full_dl_slots = nullopt;
+  std::optional<unsigned> nof_full_ul_slots = std::nullopt;
+  std::optional<unsigned> nof_full_dl_slots = std::nullopt;
   if (cell_cfg.is_tdd()) {
     nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
     nof_full_dl_slots = nof_full_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());

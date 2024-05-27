@@ -41,13 +41,13 @@ static void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
 
 // ---- UE Context Setup Procedure ----
 
-ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_configuration&            f1ap_cfg_,
-                                                       const f1ap_ue_context_setup_request& request_,
-                                                       f1ap_ue_context_list&                ue_ctxt_list_,
-                                                       f1ap_du_processor_notifier&          du_processor_notifier_,
-                                                       f1ap_message_notifier&               f1ap_notif_,
-                                                       srslog::basic_logger&                logger_,
-                                                       optional<rrc_ue_transfer_context>    rrc_context_) :
+ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_configuration&              f1ap_cfg_,
+                                                       const f1ap_ue_context_setup_request&   request_,
+                                                       f1ap_ue_context_list&                  ue_ctxt_list_,
+                                                       f1ap_du_processor_notifier&            du_processor_notifier_,
+                                                       f1ap_message_notifier&                 f1ap_notif_,
+                                                       srslog::basic_logger&                  logger_,
+                                                       std::optional<rrc_ue_transfer_context> rrc_context_) :
   f1ap_cfg(f1ap_cfg_),
   request(request_),
   ue_ctxt_list(ue_ctxt_list_),

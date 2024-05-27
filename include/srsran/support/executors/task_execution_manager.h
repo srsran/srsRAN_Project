@@ -53,14 +53,14 @@ struct executor {
   std::vector<strand> strands;
   /// \brief Present if the executor works as a strand, serializing all the enqueued tasks. The value is the size of
   /// the strand queue size.
-  optional<unsigned> strand_queue_size;
+  std::optional<unsigned> strand_queue_size;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
 
   executor(const std::string&         name_,
            const std::vector<strand>& strands_           = {},
-           optional<unsigned>         strand_queue_size_ = nullopt,
+           std::optional<unsigned>    strand_queue_size_ = std::nullopt,
            bool                       synchronous_       = false) :
     name(name_), strands(strands_), strand_queue_size(strand_queue_size_), synchronous(synchronous_)
   {
@@ -68,7 +68,7 @@ struct executor {
   executor(const std::string&         name_,
            task_priority              priority_,
            const std::vector<strand>& strands_           = {},
-           optional<unsigned>         strand_queue_size_ = nullopt,
+           std::optional<unsigned>    strand_queue_size_ = std::nullopt,
            bool                       synchronous_       = false) :
     name(name_),
     priority(priority_),
@@ -89,7 +89,7 @@ struct single_worker {
   std::vector<executor> executors;
   /// \brief Wait time in microseconds, when task queue has no pending tasks. If not set, a condition variable is
   /// used to wake up the worker when a new task is pushed.
-  optional<std::chrono::microseconds> wait_sleep_time;
+  std::optional<std::chrono::microseconds> wait_sleep_time;
   /// OS priority of the worker thread.
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Bit mask to set worker cpu affinity.

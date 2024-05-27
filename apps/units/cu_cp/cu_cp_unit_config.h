@@ -23,14 +23,14 @@ namespace srsran {
 
 /// Report configuration, for now only supporting the A3 event.
 struct cu_cp_unit_report_config {
-  unsigned           report_cfg_id;
-  std::string        report_type;
-  optional<unsigned> report_interval_ms;
-  std::string        a3_report_type;
+  unsigned                report_cfg_id;
+  std::string             report_type;
+  std::optional<unsigned> report_interval_ms;
+  std::string             a3_report_type;
   /// [-30..30] Note the actual value is field value * 0.5 dB. E.g. putting a value of -6 here results in -3dB offset.
-  optional<int>      a3_offset_db;
-  optional<unsigned> a3_hysteresis_db;
-  optional<unsigned> a3_time_to_trigger_ms;
+  std::optional<int>      a3_offset_db;
+  std::optional<unsigned> a3_hysteresis_db;
+  std::optional<unsigned> a3_time_to_trigger_ms;
 };
 
 struct cu_cp_unit_neighbor_cell_config_item {
@@ -43,26 +43,26 @@ struct cu_cp_unit_neighbor_cell_config_item {
 /// Each item describes the relationship between one cell to all other cells.
 struct cu_cp_unit_cell_config_item {
   /// Cell id.
-  uint64_t           nr_cell_id;
-  optional<unsigned> periodic_report_cfg_id;
+  uint64_t                nr_cell_id;
+  std::optional<unsigned> periodic_report_cfg_id;
 
   // These parameters must only be set for external cells
   /// gNodeB identifier bit length.
-  optional<unsigned> gnb_id_bit_length;
+  std::optional<unsigned> gnb_id_bit_length;
   /// PCI.
-  optional<pci_t> pci;
+  std::optional<pci_t> pci;
   /// NR band.
-  optional<nr_band> band;
+  std::optional<nr_band> band;
   /// SSB ARFCN.
-  optional<unsigned> ssb_arfcn;
+  std::optional<unsigned> ssb_arfcn;
   /// SSB subcarrier spacing.
-  optional<unsigned> ssb_scs;
+  std::optional<unsigned> ssb_scs;
   /// SSB period.
-  optional<unsigned> ssb_period;
+  std::optional<unsigned> ssb_period;
   /// SSB offset.
-  optional<unsigned> ssb_offset;
+  std::optional<unsigned> ssb_offset;
   /// SSB duration.
-  optional<unsigned> ssb_duration;
+  std::optional<unsigned> ssb_duration;
   /// Vector of cells that are a neighbor of this cell.
   std::vector<cu_cp_unit_neighbor_cell_config_item> ncells;
   // TODO: Add optional SSB parameters.

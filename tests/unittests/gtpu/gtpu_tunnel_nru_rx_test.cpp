@@ -39,7 +39,7 @@ public:
         std::make_unique<gtpu_tunnel_nru_tx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
   }
 
-  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, uint32_t nru_sn, optional<uint16_t> gtpu_sn)
+  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, uint32_t nru_sn, std::optional<uint16_t> gtpu_sn)
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;

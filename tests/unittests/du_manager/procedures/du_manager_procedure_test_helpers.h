@@ -21,9 +21,9 @@ namespace srs_du {
 class du_ue_dummy : public du_ue, public mac_ue_radio_link_notifier, public rlc_tx_upper_layer_control_notifier
 {
 public:
-  bool                    ue_notifiers_disconnected = false;
-  optional<du_ue_index_t> last_rlf_ue_index;
-  optional<rlf_cause>     last_rlf_cause;
+  bool                         ue_notifiers_disconnected = false;
+  std::optional<du_ue_index_t> last_rlf_ue_index;
+  std::optional<rlf_cause>     last_rlf_cause;
 
   du_ue_dummy(const du_ue_context&         ctx_,
               ue_ran_resource_configurator resources_,

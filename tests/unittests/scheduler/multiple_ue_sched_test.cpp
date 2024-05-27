@@ -77,7 +77,7 @@ protected:
   slot_point                    current_slot{0, 0};
   srslog::basic_logger&         mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST", true);
-  optional<test_bench>          bench;
+  std::optional<test_bench>     bench;
   pucch_res_builder_test_helper pucch_cfg_builder;
 
   unsigned last_csi_report_offset = 0;
@@ -197,7 +197,7 @@ protected:
           cell_cfg.scs_common,
           cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+      std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
           band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
                                                       *cell_cfg.band,
                                                       nof_crbs,
@@ -319,7 +319,7 @@ protected:
 
   bool ue_is_allocated_pusch(const sched_test_ue& u) const { return find_ue_pusch(u) != nullptr; }
 
-  optional<slot_point> get_pusch_scheduled_slot(const sched_test_ue& u) const
+  std::optional<slot_point> get_pusch_scheduled_slot(const sched_test_ue& u) const
   {
     const pdcch_ul_information* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
                                                   bench->sched_res->dl.ul_pdcchs.end(),
@@ -345,7 +345,7 @@ protected:
     return {};
   }
 
-  optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
+  std::optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
   {
     const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                                   bench->sched_res->dl.dl_pdcchs.end(),
@@ -372,7 +372,7 @@ protected:
     return {};
   }
 
-  optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
+  std::optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
   {
     const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                                   bench->sched_res->dl.dl_pdcchs.end(),
@@ -523,7 +523,7 @@ protected:
     return pdu;
   }
 
-  optional<search_space_configuration> get_ss_cfg(const sched_test_ue& u, search_space_id ss_id)
+  std::optional<search_space_configuration> get_ss_cfg(const sched_test_ue& u, search_space_id ss_id)
   {
     auto it = std::find_if((*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.begin(),
                            (*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end(),
@@ -539,7 +539,7 @@ protected:
       return *it;
     }
 
-    return nullopt;
+    return std::nullopt;
   }
 };
 
@@ -563,8 +563,8 @@ protected:
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool>                 is_bsr_zero_sent;
-  std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
+  std::map<unsigned, bool>                      is_bsr_zero_sent;
+  std::map<unsigned, std::optional<slot_point>> pdsch_scheduled_slot_in_future;
 
   const lcid_t lcid = LCID_MIN_DRB;
 
@@ -651,8 +651,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool>                 is_bsr_zero_sent;
-  std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
+  std::map<unsigned, bool>                      is_bsr_zero_sent;
+  std::map<unsigned, std::optional<slot_point>> pusch_scheduled_slot_in_future;
 
   const lcg_id_t lcgid = uint_to_lcg_id(0);
 
@@ -749,7 +749,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
       builder_params.band.has_value() ? band_helper::get_freq_range(builder_params.band.value())
                                       : frequency_range::FR1);
 
-  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+  std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
       band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
                                                   *builder_params.band,
                                                   nof_crbs,
@@ -889,8 +889,8 @@ TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
 TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool>                 is_bsr_zero_sent;
-  std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
+  std::map<unsigned, bool>                      is_bsr_zero_sent;
+  std::map<unsigned, std::optional<slot_point>> pdsch_scheduled_slot_in_future;
 
   const lcid_t lcid = LCID_MIN_DRB;
 
@@ -1024,8 +1024,8 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
 TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool>                 is_bsr_zero_sent;
-  std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
+  std::map<unsigned, bool>                      is_bsr_zero_sent;
+  std::map<unsigned, std::optional<slot_point>> pusch_scheduled_slot_in_future;
 
   const lcg_id_t lcgid = uint_to_lcg_id(0);
 
@@ -1157,7 +1157,7 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
   setup_sched(create_expert_config(6), create_custom_cell_config_request(duplex_mode::FDD));
 
   // Keep track of ACKs to send.
-  optional<uci_indication> uci_ind_to_send;
+  std::optional<uci_indication> uci_ind_to_send;
 
   // Add UE(s) and notify UL BSR + DL Buffer status with 110 value.
   // Assumption: LCID is SRB0.
@@ -1207,7 +1207,7 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_present_fdd)
 {
   // Keep track of ACKs to send.
-  optional<uci_indication> uci_ind_to_send;
+  std::optional<uci_indication> uci_ind_to_send;
 
   setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::FDD));
   // Add UE.

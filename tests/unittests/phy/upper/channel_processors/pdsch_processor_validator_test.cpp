@@ -24,7 +24,7 @@ using namespace srsran;
 namespace {
 
 // Valid PDSCH configuration used as a base for the test cases.
-const pdsch_processor::pdu_t base_pdu = {nullopt,
+const pdsch_processor::pdu_t base_pdu = {std::nullopt,
                                          {0, 19},
                                          1,
                                          52,

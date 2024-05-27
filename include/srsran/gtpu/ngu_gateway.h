@@ -33,8 +33,8 @@ public:
 
   /// Get bind port currently being used by the NG-U TNL session for the reception of PDUs.
   /// \return If a UDP link is being used, returns the respective bind port. If the connection is local, it returns
-  /// nullopt.
-  virtual optional<uint16_t> get_bind_port() = 0;
+  /// std::nullopt.
+  virtual std::optional<uint16_t> get_bind_port() = 0;
 };
 
 /// \brief This class is called by the CU-UP to instantiate new NG-U TNL PDU sessions.

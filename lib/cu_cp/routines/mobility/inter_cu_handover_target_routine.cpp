@@ -225,10 +225,10 @@ bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_
   return ue_context_setup_resp.success;
 }
 
-optional<security::sec_as_config>
+std::optional<security::sec_as_config>
 inter_cu_handover_target_routine::generate_security_keys(security::security_context& sec_context)
 {
-  optional<security::sec_as_config> cfg;
+  std::optional<security::sec_as_config> cfg;
 
   // Select preferred integrity algorithm.
   security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,

@@ -58,8 +58,8 @@ protected:
   std::unique_ptr<common_task_scheduler> common_task_sched;
   std::unique_ptr<du_processor>          du_processor_obj;
 
-  async_task<ue_index_t>                   t;
-  optional<lazy_task_launcher<ue_index_t>> t_launcher;
+  async_task<ue_index_t>                        t;
+  std::optional<lazy_task_launcher<ue_index_t>> t_launcher;
 };
 
 } // namespace srs_cu_cp

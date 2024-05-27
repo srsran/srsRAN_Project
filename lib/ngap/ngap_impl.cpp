@@ -933,7 +933,7 @@ void ngap_impl::remove_ue_context(ue_index_t ue_index)
   ue_ctxt_list.remove_ue_context(ue_index);
 }
 
-void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, optional<amf_ue_id_t> amf_ue_id)
+void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id)
 {
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_index);
   srsran_assert(ue != nullptr,
@@ -1000,8 +1000,8 @@ static auto log_pdu_helper(srslog::basic_logger&         logger,
     return;
   }
 
-  optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
-  optional<ue_index_t>  ue_idx;
+  std::optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
+  std::optional<ue_index_t>  ue_idx;
   if (ran_ue_id.has_value()) {
     auto* ue = ue_ctxt_list.find(ran_ue_id.value());
     if (ue != nullptr) {

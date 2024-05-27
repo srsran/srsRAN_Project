@@ -87,9 +87,9 @@ struct rate_match_pattern {
     /// used as cell-level rate matching pattern, the bitmap identifies "common resource blocks (CRB)". If used as
     /// BWP-level rate matching pattern, the bitmap identifies "physical resource blocks" inside the BWP. The first/
     /// leftmost bit corresponds to resource block 0, and so on.
-    bounded_bitset<MAX_RB>            rb;
-    symbols_in_rb                     sym_in_rb;
-    optional<periodicity_and_pattern> repeat_pattern;
+    bounded_bitset<MAX_RB>                 rb;
+    symbols_in_rb                          sym_in_rb;
+    std::optional<periodicity_and_pattern> repeat_pattern;
 
     bool operator==(const bitmaps& rhs) const
     {
@@ -107,7 +107,7 @@ struct rate_match_pattern {
   /// The field is mandatory present if the RateMatchPattern is defined on cell level. The field is absent when the
   /// RateMatchPattern is defined on BWP level. If the RateMatchPattern is defined on BWP level, the UE applies the SCS
   /// of the BWP.
-  optional<subcarrier_spacing> scs;
+  std::optional<subcarrier_spacing> scs;
 
   // TODO: Remaining
 
