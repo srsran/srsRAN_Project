@@ -6,6 +6,10 @@
 # the distribution.
 #
 
+if (DPDK_FOUND)
+    add_definitions(-DDPDK_FOUND)
+endif (DPDK_FOUND)
+
 set(SOURCES
             ru_ofh_config_cli11_schema.cpp
             ru_ofh_factories.cpp
