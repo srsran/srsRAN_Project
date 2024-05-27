@@ -16,6 +16,7 @@ from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.public import MetricsSummary
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
@@ -23,6 +24,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
+from .steps.kpis import get_kpis
 from .steps.stub import (
     iperf_parallel,
     iperf_start,
@@ -56,6 +58,7 @@ def test_zmq_reestablishment_sequentially(
     ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -73,6 +76,7 @@ def test_zmq_reestablishment_sequentially(
         ue_array=ue_32,
         fivegc=fivegc,
         gnb=gnb,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -121,6 +125,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
     ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -140,6 +145,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
         ue_array=ue_8,
         fivegc=fivegc,
         gnb=gnb,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -169,70 +175,6 @@ def test_zmq_reestablishment_sequentially_full_rate(
             iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
 
 
-# pylint: disable=too-many-arguments,too-many-locals
-def _iterator_over_attached_ues(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_array: Sequence[UEStub],
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    sample_rate: Optional[int],
-    global_timing_advance: int,
-    time_alignment_calibration: Union[int, str],
-    always_download_artifacts: bool,
-    noise_spd: int,
-    warning_as_errors: bool = True,
-) -> Generator[Tuple[Dict[UEStub, UEAttachedInfo], Dict[UEStub, UEAttachedInfo]], None, None]:
-
-    logging.info("Reestablishment Test")
-
-    configure_test_parameters(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-        noise_spd=noise_spd,
-        enable_qos_reestablishment=True,
-    )
-
-    configure_artifacts(
-        retina_data=retina_data,
-        always_download_artifacts=always_download_artifacts,
-    )
-
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd="log --mac_level=debug --cu_level=debug")
-
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
-
-    # Reestablishment while traffic
-    for ue_stub in ue_array:
-        logging.info(
-            "Starting Reestablishment for UE [%s] (%s) + Traffic running in background for all UEs",
-            id(ue_stub),
-            ue_attach_info_dict[ue_stub].ipv4,
-        )
-        other_ue_attach_info_dict = dict(ue_attach_info_dict)
-        other_ue_attach_info_dict.pop(ue_stub)
-
-        yield {ue_stub: ue_attach_info_dict[ue_stub]}, other_ue_attach_info_dict
-
-    # Pings after reest
-    logging.info("Starting traffic after all reestablishments have been completed")
-    yield {}, ue_attach_info_dict
-
-    for ue_stub in ue_array:
-        ue_validate_no_reattaches(ue_stub)
-
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
-
-
 @mark.parametrize(
     "band, common_scs, bandwidth, noise_spd",
     (
@@ -251,6 +193,7 @@ def test_zmq_reestablishment_parallel(
     ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -262,12 +205,13 @@ def test_zmq_reestablishment_parallel(
     number_of_reestablishments = 10
     reestablishment_time = 10
 
-    with _parallel_reestablishments(
+    with _test_reestablishments(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_32,
         fivegc=fivegc,
         gnb=gnb,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -314,6 +258,7 @@ def test_zmq_reestablishment_parallel_full_rate(
     ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -327,12 +272,13 @@ def test_zmq_reestablishment_parallel_full_rate(
     number_of_reestablishments = 10
     reestablishment_time = 10
 
-    with _parallel_reestablishments(
+    with _test_reestablishments(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_8,
         fivegc=fivegc,
         gnb=gnb,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -366,13 +312,68 @@ def test_zmq_reestablishment_parallel_full_rate(
 
 
 # pylint: disable=too-many-arguments,too-many-locals
-@contextmanager
-def _parallel_reestablishments(
+def _iterator_over_attached_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    sample_rate: Optional[int],
+    global_timing_advance: int,
+    time_alignment_calibration: Union[int, str],
+    always_download_artifacts: bool,
+    noise_spd: int,
+    warning_as_errors: bool = True,
+) -> Generator[Tuple[Dict[UEStub, UEAttachedInfo], Dict[UEStub, UEAttachedInfo]], None, None]:
+
+    with _test_reestablishments(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_array,
+        fivegc=fivegc,
+        metrics_summary=metrics_summary,
+        gnb=gnb,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=sample_rate,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
+        always_download_artifacts=always_download_artifacts,
+        noise_spd=noise_spd,
+        warning_as_errors=warning_as_errors,
+    ) as ue_attach_info_dict:
+
+        # Reestablishment while traffic
+        for ue_stub in ue_array:
+            logging.info(
+                "Starting Reestablishment for UE [%s] (%s) + Traffic running in background for all UEs",
+                id(ue_stub),
+                ue_attach_info_dict[ue_stub].ipv4,
+            )
+            other_ue_attach_info_dict = dict(ue_attach_info_dict)
+            other_ue_attach_info_dict.pop(ue_stub)
+
+            yield {ue_stub: ue_attach_info_dict[ue_stub]}, other_ue_attach_info_dict
+
+        # Pings after reest
+        logging.info("Starting traffic after all reestablishments have been completed")
+        yield {}, ue_attach_info_dict
+
+
+# pylint: disable=too-many-arguments,too-many-locals
+@contextmanager
+def _test_reestablishments(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_array: Sequence[UEStub],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -408,9 +409,13 @@ def _parallel_reestablishments(
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
-    yield ue_attach_info_dict
+    try:
+        yield ue_attach_info_dict
 
-    for ue_stub in ue_array:
-        ue_validate_no_reattaches(ue_stub)
+        for ue_stub in ue_array:
+            ue_validate_no_reattaches(ue_stub)
 
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+
+    finally:
+        get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)

@@ -18,6 +18,7 @@ import pytest
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.public import MetricsSummary
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
@@ -25,6 +26,7 @@ from retina.protocol.ue_pb2 import UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
+from .steps.kpis import get_kpis
 from .steps.stub import (
     ping_start,
     ping_wait_until_finish,
@@ -55,6 +57,7 @@ def test_zmq_handover_sequentially(
     ue_8: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -69,6 +72,7 @@ def test_zmq_handover_sequentially(
         ue_array=ue_8,
         gnb=gnb,
         fivegc=fivegc,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -113,6 +117,7 @@ def test_zmq_handover_parallel(
     ue_8: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -127,6 +132,7 @@ def test_zmq_handover_parallel(
         ue_array=ue_8,
         gnb=gnb,
         fivegc=fivegc,
+        metrics_summary=metrics_summary,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -158,6 +164,7 @@ def _handover_multi_ues(
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    metrics_summary: MetricsSummary,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -206,26 +213,29 @@ def _handover_multi_ues(
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
-    # HO while pings
-    movement_duration = (movement_steps + 1) * sleep_between_movement_steps
-    movements: Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...] = (
-        (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
-        (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-        (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
-        (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
-    )
-    traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
+    try:
+        # HO while pings
+        movement_duration = (movement_steps + 1) * sleep_between_movement_steps
+        movements: Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...] = (
+            (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
+            (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
+            (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
+            (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
+        )
+        traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
 
-    yield ue_attach_info_dict, movements, traffic_seconds
+        yield ue_attach_info_dict, movements, traffic_seconds
 
-    # Pings after handover
-    logging.info("Starting Pings after all HO have been completed")
-    ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, movement_duration))
+        # Pings after handover
+        logging.info("Starting Pings after all HO have been completed")
+        ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, movement_duration))
 
-    for ue_stub in ue_array:
-        ue_validate_no_reattaches(ue_stub)
+        for ue_stub in ue_array:
+            ue_validate_no_reattaches(ue_stub)
 
-    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    finally:
+        get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
 
 
 def _do_ho(

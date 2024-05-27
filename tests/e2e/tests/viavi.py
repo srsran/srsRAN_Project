@@ -11,7 +11,7 @@ Launch tests in Viavi
 """
 import logging
 import operator
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -29,7 +29,8 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
-from .steps.stub import get_metrics, GNB_STARTUP_TIMEOUT, handle_start_error, Kpis, stop
+from .steps.kpis import get_kpis, KPIs
+from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _POD_ERROR = "Error creating the pod"
@@ -408,7 +409,7 @@ def check_metrics_criteria(
 
     # Check metrics
     viavi_failure_manager = viavi.get_test_failures()
-    kpis: Kpis = get_metrics(gnb, viavi_failure_manager)
+    kpis: KPIs = get_kpis(gnb, viavi_failure_manager=viavi_failure_manager, metrics_summary=metrics_summary)
 
     is_ok &= check_and_print_criteria(
         "DL bitrate", kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt
@@ -417,15 +418,9 @@ def check_metrics_criteria(
         "UL bitrate", kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt
     )
     is_ok &= (
-        check_and_print_criteria("Number of KOs and/or retrxs", kpis.total_nof_ko_aggregate, 0, operator.eq)
+        check_and_print_criteria("Number of KOs and/or retrxs", kpis.nof_ko_aggregate, 0, operator.eq)
         or not fail_if_kos
     )
-
-    # Save metrics
-    if metrics_summary is not None:
-        for field in fields(kpis):
-            field_value = getattr(kpis, field.name)
-            metrics_summary.write_metric(field.name, field_value)
 
     # Check procedure table
     viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)

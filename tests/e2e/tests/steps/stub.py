@@ -12,7 +12,6 @@ Steps related with stubs / resources
 import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
-from dataclasses import dataclass
 from time import sleep, time
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
@@ -41,34 +40,12 @@ from retina.protocol.ue_pb2 import (
     UEStartInfo,
 )
 from retina.protocol.ue_pb2_grpc import UEStub
-from retina.viavi.client import ViaviFailureManager
 
 RF_MAX_TIMEOUT: int = 5 * 60  # Time enough in RF when loading a new image in the sdr
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 2  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 90
-
-
-@dataclass
-# pylint: disable=too-many-instance-attributes
-class Kpis:
-    """
-    Metrics from a GNB
-    """
-
-    ul_brate_aggregate: float
-    dl_brate_aggregate: float
-    ul_brate_min: float
-    dl_brate_min: float
-    ul_brate_max: float
-    dl_brate_max: float
-    ul_nof_ko_aggregate: float
-    dl_nof_ko_aggregate: float
-    total_nof_ko_aggregate: float
-    ul_bler_aggregate: float
-    dl_bler_aggregate: float
-    nof_attach_failures: float = 0
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -741,62 +718,3 @@ def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str
                 return f"{name} has {nof_kos} KOs / retrxs"
 
     return ""
-
-
-def get_metrics(stub: RanStub, viavi_failure_manager: Optional[ViaviFailureManager]) -> Kpis:
-    """
-    Get metrics from a stub
-    """
-    with suppress(grpc.RpcError):
-        metrics: Metrics = stub.GetMetrics(Empty())
-
-        ul_brate_aggregate = 0
-        dl_brate_aggregate = 0
-        ul_brate_min = 0
-        dl_brate_min = 0
-        ul_brate_max = 0
-        dl_brate_max = 0
-        ul_nof_ok_aggregate = 0
-        dl_nof_ok_aggregate = 0
-        ul_nof_nok_aggregate = 0
-        dl_nof_nok_aggregate = 0
-
-        for ue_info in metrics.ue_array:
-            ul_brate_aggregate += ue_info.ul_bitrate
-            dl_brate_aggregate += ue_info.dl_bitrate
-
-            ul_brate_min = ue_info.ul_bitrate_min
-            dl_brate_min = ue_info.dl_bitrate_min
-
-            ul_brate_max = ue_info.ul_bitrate_max
-            dl_brate_max = ue_info.dl_bitrate_max
-
-            ul_nof_ok_aggregate += ue_info.ul_nof_ok
-            dl_nof_ok_aggregate += ue_info.dl_nof_ok
-
-            ul_nof_nok_aggregate += ue_info.ul_nof_ko
-            dl_nof_nok_aggregate += ue_info.dl_nof_ko
-
-    ul_bler_aggregate = ul_nof_nok_aggregate / (ul_nof_ok_aggregate + ul_nof_nok_aggregate)
-    dl_bler_aggregate = dl_nof_nok_aggregate / (dl_nof_ok_aggregate + dl_nof_nok_aggregate)
-
-    nof_attach_failures = 0
-    if viavi_failure_manager:
-        nof_failure = viavi_failure_manager.get_nof_failure_by_group_procedure("EMM_PROCEDURE", "attach")
-        if nof_failure:
-            nof_attach_failures = nof_failure
-
-    return Kpis(
-        ul_brate_aggregate=ul_brate_aggregate,
-        dl_brate_aggregate=dl_brate_aggregate,
-        ul_brate_min=ul_brate_min,
-        dl_brate_min=dl_brate_min,
-        ul_brate_max=ul_brate_max,
-        dl_brate_max=dl_brate_max,
-        ul_nof_ko_aggregate=ul_nof_nok_aggregate,
-        dl_nof_ko_aggregate=dl_nof_nok_aggregate,
-        ul_bler_aggregate=ul_bler_aggregate,
-        dl_bler_aggregate=dl_bler_aggregate,
-        total_nof_ko_aggregate=ul_nof_nok_aggregate + dl_nof_nok_aggregate,
-        nof_attach_failures=nof_attach_failures,
-    )
