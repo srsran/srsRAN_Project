@@ -57,7 +57,7 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   f1u_gateway_du_bearer* du_tun = du_map.at(dl_up_tnl_info);
   f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info);
   cu_tun->dl_tnl_info           = dl_up_tnl_info;
-  cu_tun->attach_du_handler(*du_tun->f1u_rx, dl_up_tnl_info);
+  cu_tun->attach_du_notifier(*du_tun->f1u_rx, dl_up_tnl_info);
 }
 
 void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info)
@@ -76,18 +76,17 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   if (cu_tun->dl_tnl_info.has_value()) {
     auto du_bearer_it = du_map.find(cu_tun->dl_tnl_info.value());
     if (du_bearer_it != du_map.end()) {
-      logger_cu.debug("Disconnecting DU F1-U bearer with DL GTP Tunnel={} from CU handler. UL GTP Tunnel={}",
-                      cu_tun->dl_tnl_info,
-                      ul_up_tnl_info);
-      du_bearer_it->second->detach_cu_handler();
+      logger_cu.debug(
+          "Disconnecting DU F1-U bearer with DL GTP Tunnel={}. UL GTP Tunnel={}", cu_tun->dl_tnl_info, ul_up_tnl_info);
+      du_bearer_it->second->detach_cu_notifier();
     } else {
       // Bearer could already been removed from DU.
-      logger_cu.info("Could not find DL GTP Tunnel={} at DU to disconnect DU F1-U bearer from CU handler. UL GTP "
+      logger_cu.info("Could not find DL GTP Tunnel={} at DU to disconnect DU F1-U bearer. UL GTP "
                      "Tunnel={}",
                      cu_tun->dl_tnl_info,
                      ul_up_tnl_info);
     }
-    cu_tun->detach_du_handler(cu_tun->dl_tnl_info.value());
+    cu_tun->detach_du_notifier(cu_tun->dl_tnl_info.value());
   } else {
     logger_cu.warning(
         "Could not find DU F1-U bearer from which to disconect CU bearer, no DL-TEID info present at CU bearer. "
@@ -123,7 +122,7 @@ f1u_local_connector::create_du_bearer(uint32_t                                  
   std::unique_ptr<f1u_gateway_du_bearer> du_bearer =
       std::make_unique<f1u_gateway_du_bearer>(ue_index, drb_id, dl_up_tnl_info, &du_rx, ul_up_tnl_info, *this);
 
-  du_bearer->attach_cu_handler(cu_tun->cu_rx);
+  du_bearer->attach_cu_notifier(cu_tun->cu_rx);
 
   du_map.insert({dl_up_tnl_info, du_bearer.get()});
   return du_bearer;
@@ -142,10 +141,10 @@ void f1u_local_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
 
   auto cu_bearer_it = cu_map.find(du_bearer_it->second->ul_up_tnl_info);
   if (cu_bearer_it != cu_map.end()) {
-    logger_du.debug("Detaching CU handler do to removal at DU. UL GTP Tunnel={}", du_bearer_it->second->ul_up_tnl_info);
-    cu_bearer_it->second->detach_du_handler(dl_up_tnl_info);
+    logger_du.debug("Detaching DU notifier to CU. UL GTP Tunnel={}", du_bearer_it->second->ul_up_tnl_info);
+    cu_bearer_it->second->detach_du_notifier(dl_up_tnl_info);
   }
 
-  du_bearer_it->second->detach_cu_handler();
+  du_bearer_it->second->detach_cu_notifier();
   du_map.erase(du_bearer_it);
 }

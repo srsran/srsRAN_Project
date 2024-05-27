@@ -47,17 +47,17 @@ public:
 
   void stop() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
 
-  void attach_du_handler(srs_du::f1u_du_gateway_bearer_rx_notifier& handler_,
-                         const up_transport_layer_info&             dl_tnl_info_)
+  void attach_du_notifier(srs_du::f1u_du_gateway_bearer_rx_notifier& notifier_,
+                          const up_transport_layer_info&             dl_tnl_info_)
   {
-    handler = &handler_;
+    notifier = &notifier_;
     dl_tnl_info.emplace(dl_tnl_info_);
   }
 
-  void detach_du_handler(const up_transport_layer_info& dl_tnl_info_)
+  void detach_du_notifier(const up_transport_layer_info& dl_tnl_info_)
   {
     if (dl_tnl_info == dl_tnl_info_) {
-      handler = nullptr;
+      notifier = nullptr;
       dl_tnl_info.reset();
     } else {
       logger.log_info("Cannot dettach DU bearer, DL-FTEID does not match. F-TEID={}, requested F-TEID={}",
@@ -66,20 +66,19 @@ public:
     }
   }
 
-  /// This should be handle_sdu...
   void on_new_pdu(nru_dl_message msg) override
   {
-    if (handler == nullptr) {
+    if (notifier == nullptr) {
       logger.log_info("Cannot handle F1-U GW DL message. F1-U DU GW bearer does not exist.");
       return;
     }
     logger.log_debug("Passing PDU to DU bearer. {}", dl_tnl_info);
-    handler->on_new_pdu(std::move(msg));
+    notifier->on_new_pdu(std::move(msg));
   }
 
 private:
   srs_cu_up::f1u_bearer_logger               logger;
-  srs_du::f1u_du_gateway_bearer_rx_notifier* handler = nullptr;
+  srs_du::f1u_du_gateway_bearer_rx_notifier* notifier = nullptr;
   srs_cu_up::f1u_bearer_disconnector&        disconnector;
   up_transport_layer_info                    ul_tnl_info;
 
@@ -115,26 +114,26 @@ public:
 
   void stop() override { disconnector.remove_du_bearer(dl_tnl_info); }
 
-  void attach_cu_handler(f1u_cu_up_gateway_bearer_rx_notifier& handler_)
+  void attach_cu_notifier(f1u_cu_up_gateway_bearer_rx_notifier& handler_)
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
-    handler = &handler_;
+    std::unique_lock<std::mutex> lock(notifier_mutex);
+    notifier = &handler_;
   }
 
-  void detach_cu_handler()
+  void detach_cu_notifier()
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
-    handler = nullptr;
+    std::unique_lock<std::mutex> lock(notifier_mutex);
+    notifier = nullptr;
   }
 
   void on_new_pdu(nru_ul_message msg) override
   {
-    std::unique_lock<std::mutex> lock(handler_mutex);
-    if (handler == nullptr) {
+    std::unique_lock<std::mutex> lock(notifier_mutex);
+    if (notifier == nullptr) {
       logger.log_info("Cannot handle NR-U UL message. CU-UP bearer does not exist.");
       return;
     }
-    handler->on_new_pdu(std::move(msg));
+    notifier->on_new_pdu(std::move(msg));
   };
 
   srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx = nullptr;
@@ -143,8 +142,8 @@ public:
 
   srs_du::f1u_bearer_logger logger;
 
-  f1u_cu_up_gateway_bearer_rx_notifier* handler = nullptr;
-  std::mutex                            handler_mutex;
+  f1u_cu_up_gateway_bearer_rx_notifier* notifier = nullptr;
+  std::mutex                            notifier_mutex;
   srs_du::f1u_bearer_disconnector&      disconnector;
 };
 
