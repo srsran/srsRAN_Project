@@ -227,6 +227,10 @@ struct cu_cp_unit_config {
   std::string ran_node_name = "cu_cp_01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
+  /// List of accepted PLMNs.
+  std::vector<std::string> plmns;
+  /// List of accepted TACs.
+  std::vector<unsigned> tacs;
   /// Maximum number of DUs.
   uint16_t max_nof_dus = 6;
   /// Maximum number of CU-UPs.

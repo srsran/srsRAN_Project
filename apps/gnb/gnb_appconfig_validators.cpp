@@ -9,11 +9,10 @@
  */
 
 #include "gnb_appconfig_validators.h"
-#include "srsran/adt/span.h"
+#include "apps/units/cu_cp/cu_cp_unit_config.h"
+#include "apps/units/flexible_du/du_high/du_high_config.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/nr_cgi_helpers.h"
-#include "srsran/ran/prach/prach_helper.h"
-#include "srsran/rlc/rlc_config.h"
 
 using namespace srsran;
 
@@ -51,6 +50,24 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
   if (!validate_hal_config(config.hal_config)) {
     return false;
+  }
+
+  return true;
+}
+
+bool srsran::validate_plmn_and_tacs(const du_high_unit_config& du_hi_cfg, const cu_cp_unit_config& cu_cp_cfg)
+{
+  for (const auto& cell : du_hi_cfg.cells_cfg) {
+    if (std::find(cu_cp_cfg.plmns.cbegin(), cu_cp_cfg.plmns.cend(), cell.cell.plmn) == cu_cp_cfg.plmns.cend()) {
+      fmt::print("Could not find cell PLMN '{}' in the CU-CP PLMN list", cell.cell.plmn);
+
+      return false;
+    }
+
+    if (std::find(cu_cp_cfg.tacs.cbegin(), cu_cp_cfg.tacs.cend(), cell.cell.tac) == cu_cp_cfg.tacs.cend()) {
+      fmt::print("Could not find cell TAC '{}' in the CU-CP TAC list", cell.cell.tac);
+      return false;
+    }
   }
 
   return true;

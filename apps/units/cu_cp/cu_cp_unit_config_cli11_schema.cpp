@@ -204,6 +204,21 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
+  add_option(app, "--plmns", cu_cp_params.plmns, "List of allowed PLMNs");
+  add_option(app, "--tacs", cu_cp_params.tacs, "List of allowed TACs")->check([](const std::string& value) {
+    std::stringstream ss(value);
+    unsigned          tac;
+    ss >> tac;
+
+    // Values 0 and 0xfffffe are reserved.
+    if (tac == 0U || tac == 0xfffffeU) {
+      return "TAC values 0 or 0xfffffe are reserved";
+    }
+
+    return (tac <= 0xffffffU) ? "" : "TAC value out of range";
+  });
+  ;
+
   add_option(app,
              "--pdu_session_setup_timeout",
              cu_cp_params.pdu_session_setup_timeout,
@@ -450,4 +465,38 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
     }
   };
   add_option_cell(app, "--slicing", slicing_lambda, "Network slicing configuration");
+}
+
+static std::vector<std::string> auto_generate_plmns()
+{
+  std::vector<std::string> out_cfg = {"00101"};
+
+  return out_cfg;
+}
+
+static std::vector<unsigned> auto_generate_tacs()
+{
+  std::vector<unsigned> out_cfg = {7};
+
+  return out_cfg;
+}
+
+void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App&                app,
+                                                       cu_cp_unit_config&       unit_cfg,
+                                                       std::vector<std::string> plmns,
+                                                       std::vector<unsigned>    tacs)
+{
+  auto cu_cp_app = app.get_subcommand_ptr("cu_cp");
+  // No PLMNs defined in the cu_cp section. Use the given ones.
+  if (cu_cp_app->count_all() == 0 || cu_cp_app->count("--plmns") == 0) {
+    srsran_assert(unit_cfg.plmns.empty(), "PLMN list is not empty");
+
+    unit_cfg.plmns = plmns.empty() ? auto_generate_plmns() : std::move(plmns);
+  }
+
+  if (cu_cp_app->count_all() == 0 || cu_cp_app->count("--tacs") == 0) {
+    srsran_assert(unit_cfg.tacs.empty(), "TAC list is not empty");
+
+    unit_cfg.tacs = tacs.empty() ? auto_generate_tacs() : std::move(tacs);
+  }
 }

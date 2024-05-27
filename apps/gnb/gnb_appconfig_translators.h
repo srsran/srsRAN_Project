@@ -36,18 +36,11 @@ struct gnb_appconfig;
 struct rlc_am_appconfig;
 struct mac_lc_appconfig;
 
-/// Converts and returns SSB periodicity, offset and duration into a valid SSB measurement and timing configuration.
-srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration);
-
 /// Converts and returns the subcarrier spacing.
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
 /// Converts and returns the given gnb application configuration to a NGAP Network Gateway configuration.
 srsran::sctp_network_connector_config generate_ngap_nw_config(const cu_cp_unit_amf_config& config);
-
-/// Converts and returns the given gnb application configuration to a CU-CP configuration.
-srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const du_high_unit_config& config,
-                                                     const cu_cp_unit_config&   cu_cfg);
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const du_high_unit_config& config);

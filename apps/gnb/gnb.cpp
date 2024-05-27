@@ -68,6 +68,7 @@
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
@@ -247,9 +248,19 @@ int main(int argc, char** argv)
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &gnb_cfg, &du_unit_cfg]() {
+  app.callback([&app, &gnb_cfg, &du_unit_cfg, &cu_cp_config]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
     autoderive_dynamic_du_parameters_after_parsing(app, du_unit_cfg);
+
+    // Create the PLMN and TAC list from the cells.
+    std::vector<std::string> plmns;
+    std::vector<unsigned>    tacs;
+    for (const auto& cell : du_unit_cfg.du_high_cfg.config.cells_cfg) {
+      plmns.push_back(cell.cell.plmn);
+      tacs.push_back(cell.cell.tac);
+    }
+
+    autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
   });
 
   // Parse arguments.
@@ -261,7 +272,8 @@ int main(int argc, char** argv)
       !validate_dynamic_du_unit_config(du_unit_cfg,
                                        (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                            ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
-                                           : os_sched_affinity_bitmask::available_cpus())) {
+                                           : os_sched_affinity_bitmask::available_cpus()) ||
+      !validate_plmn_and_tacs(du_unit_cfg.du_high_cfg.config, cu_cp_config)) {
     report_error("Invalid configuration detected.\n");
   }
 
@@ -395,14 +407,14 @@ int main(int argc, char** argv)
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
 
   // Create CU-CP config.
-  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(du_unit_cfg.du_high_cfg.config, cu_cp_config);
-  cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec;
-  cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec;
-  cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
-  cu_cp_cfg.timers                         = cu_timers;
+  cu_cp_build_dependencies cu_cp_dependencies;
+  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.ngap_notifier  = ngap_adapter.get();
+  cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = create_cu_cp(cu_cp_cfg);
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
 
   // Create console helper object for commands and metrics printing.
   console_helper console(
