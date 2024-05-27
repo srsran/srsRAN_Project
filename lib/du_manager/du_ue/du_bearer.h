@@ -100,7 +100,7 @@ struct du_ue_drb {
   rlc_config                                   rlc_cfg;
   mac_lc_config                                mac_cfg;
   f1u_config                                   f1u_cfg;
-  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> f1u_gw_bearer;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> f1u_tx_notifier;
   std::unique_ptr<f1u_bearer>                  drb_f1u;
   std::unique_ptr<rlc_entity>                  rlc_bearer;
   du_drb_connector                             connector;

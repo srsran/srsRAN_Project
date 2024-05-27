@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsran/pdcp/pdcp_rx.h"
@@ -50,6 +51,25 @@ public:
 private:
   pdcp_rx_lower_interface* pdcp_rx_handler = nullptr;
   pdcp_tx_lower_interface* pdcp_tx_handler = nullptr;
+};
+
+/// Adapter between NR-U and F1-U gateway adapter
+class f1u_gateway_rx_nru_adapter : public f1u_cu_up_gateway_bearer_rx_notifier
+{
+public:
+  f1u_gateway_rx_nru_adapter()           = default;
+  ~f1u_gateway_rx_nru_adapter() override = default;
+
+  void connect_nru_bearer(f1u_rx_pdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
+
+  void on_new_pdu(nru_ul_message msg) override
+  {
+    srsran_assert(f1u_handler != nullptr, "GTP-U handler must not be nullptr");
+    f1u_handler->handle_pdu(std::move(msg));
+  }
+
+private:
+  f1u_rx_pdu_handler* f1u_handler = nullptr;
 };
 
 } // namespace srs_cu_up
