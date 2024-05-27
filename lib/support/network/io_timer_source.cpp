@@ -21,7 +21,7 @@ io_timer_source::io_timer_source(timer_manager& tick_sink_, io_broker& broker, s
 {
   using namespace std::chrono;
 
-  timer_fd = unique_fd{::timerfd_create(CLOCK_REALTIME, 0)};
+  timer_fd = unique_fd{::timerfd_create(CLOCK_MONOTONIC, 0)};
   if (not timer_fd.is_open()) {
     report_fatal_error_if_not("Failed to create timer source (errno={})", strerror(errno));
   }
