@@ -553,13 +553,11 @@ smoke dpdk cached:
         - lib/phy/**/*
         - tests/unittests/phy/**/*
 
-smoke avx512 cached:
+smoke avx512:
   extends: .smoke avx512
   stage: manual
   timeout: 45 min
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
         <<: *instruction_set_changes
@@ -568,9 +566,6 @@ smoke avx512 cached:
         <<: *instruction_set_changes
       when: manual
       allow_failure: false
-  cache:
-    - !reference [.fetch_src_cache, cache]
-    - *cache_build_get
 
 smoke arm cached:
   extends: .smoke arm
@@ -636,13 +631,6 @@ smoke dpdk clean:
   extends: .smoke dpdk
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-
-smoke avx512 clean:
-  extends: .smoke avx512
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      changes:
-        <<: *instruction_set_changes
 
 smoke arm clean:
   extends: .smoke arm
@@ -837,18 +825,6 @@ smoke valgrind update cache:
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
-
-smoke avx512 update cache:
-  extends: .smoke avx512
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: delayed
-      start_in: 30 minutes
-  retry: 2
-  interruptible: false
-  cache:
-    - !reference [.fetch_src_cache, cache]
-    - *cache_build_set
 
 smoke arm update cache:
   extends: .smoke arm
