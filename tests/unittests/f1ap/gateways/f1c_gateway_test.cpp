@@ -115,6 +115,8 @@ protected:
 
     // Wait for server to receive connection.
     std::future<void> connection_completed = connection_complete_signal.get_future();
+    connection_completed.wait();
+    logger.info("DU connection to CU-CP is complete");
   }
 
   std::promise<void> connection_complete_signal;

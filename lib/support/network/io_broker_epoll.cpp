@@ -88,8 +88,8 @@ void io_broker_epoll::thread_loop()
 
     // handle event
     if (nof_events == -1) {
+      // Note: "Interrupted system call" can happen while debugging.
       logger.error("epoll_wait(): {}", strerror(errno));
-      /// TODO: shall we raise a fatal error here?
       continue;
     }
     if (nof_events == 0) {
