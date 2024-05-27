@@ -45,7 +45,13 @@ public:
 
   ~f1u_gateway_cu_bearer() override { stop(); }
 
-  void stop() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
+  void stop() override
+  {
+    if (not stopped) {
+      disconnector.disconnect_cu_bearer(ul_tnl_info);
+    }
+    stopped = true;
+  }
 
   void attach_du_notifier(srs_du::f1u_du_gateway_bearer_rx_notifier& notifier_,
                           const up_transport_layer_info&             dl_tnl_info_)
@@ -77,6 +83,7 @@ public:
   }
 
 private:
+  bool                                       stopped = false;
   srs_cu_up::f1u_bearer_logger               logger;
   srs_du::f1u_du_gateway_bearer_rx_notifier* notifier = nullptr;
   srs_cu_up::f1u_bearer_disconnector&        disconnector;
@@ -112,7 +119,13 @@ public:
 
   ~f1u_gateway_du_bearer() override { disconnector.remove_du_bearer(dl_tnl_info); }
 
-  void stop() override { disconnector.remove_du_bearer(dl_tnl_info); }
+  void stop() override
+  {
+    if (not stopped) {
+      disconnector.remove_du_bearer(dl_tnl_info);
+    }
+    stopped = true;
+  }
 
   void attach_cu_notifier(f1u_cu_up_gateway_bearer_rx_notifier& handler_)
   {
@@ -135,8 +148,8 @@ public:
     }
     notifier->on_new_pdu(std::move(msg));
   };
-
-  srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx = nullptr;
+  bool                                       stopped = false;
+  srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx  = nullptr;
   up_transport_layer_info                    ul_up_tnl_info;
   up_transport_layer_info                    dl_tnl_info;
 
