@@ -700,14 +700,14 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
     return;
   }
 
-  auto* ue = ue_manager.find_ue(ho_request.ue_index);
-  srsran_assert(ue != nullptr,
+  auto* ue_task_sched = ue_manager.find_ue_task_scheduler(ho_request.ue_index);
+  srsran_assert(ue_task_sched != nullptr,
                 "ue={} amf_ue={}: UE for UE context doesn't exist",
                 ho_request.ue_index,
                 uint_to_amf_ue_id(msg->amf_ue_ngap_id));
 
   // start handover routine
-  ue->get_task_sched().schedule_async_task(
+  ue_task_sched->schedule_async_task(
       launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
                                                                 uint_to_amf_ue_id(msg->amf_ue_ngap_id),
                                                                 ue_ctxt_list,

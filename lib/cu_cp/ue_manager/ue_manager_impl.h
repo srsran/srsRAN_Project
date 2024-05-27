@@ -33,7 +33,7 @@ struct ngap_ue_t {
   }
 };
 
-class cu_cp_ue final : public du_ue, public ngap_ue
+class cu_cp_ue final : public common_ue, public du_ue, public ngap_ue
 {
 public:
   cu_cp_ue(const ue_index_t               ue_index_,
@@ -93,12 +93,12 @@ public:
   rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
 
   /// \brief Get the PCI of the UE.
-  pci_t get_pci() const override { return pci; };
+  [[nodiscard]] pci_t get_pci() const override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() const override { return ue_ctxt.crnti; }
+  [[nodiscard]] rnti_t get_c_rnti() const override { return ue_ctxt.crnti; }
 
-  gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
+  [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
   du_index_t get_du_index() override { return ue_ctxt.du_idx; }
@@ -106,8 +106,8 @@ public:
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
-  cu_cp_ue_context&       get_ue_context() override { return ue_ctxt; }
-  const cu_cp_ue_context& get_ue_context() const override { return ue_ctxt; }
+  cu_cp_ue_context&                     get_ue_context() override { return ue_ctxt; }
+  [[nodiscard]] const cu_cp_ue_context& get_ue_context() const override { return ue_ctxt; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
   void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
@@ -144,6 +144,8 @@ public:
   {
     rrc_ue_srb_notifier = &rrc_ue_srb_notifier_;
   }
+
+  [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
 
   // ngap_ue
 
@@ -212,7 +214,10 @@ private:
   cell_meas_manager_ue_context meas_context;
 };
 
-class ue_manager : public du_processor_ue_manager, public ngap_ue_manager, public ue_metrics_handler
+class ue_manager : public common_ue_manager,
+                   public du_processor_ue_manager,
+                   public ngap_ue_manager,
+                   public ue_metrics_handler
 {
 public:
   explicit ue_manager(const ue_configuration&        ue_config_,
@@ -232,6 +237,14 @@ public:
   /// \param[in] c_rnti The RNTI of the UE.
   ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti);
 
+  /// \brief Get the CU-CP UE configuration stored in the UE manager.
+  /// \return The CU-CP UE configuration.
+  ue_configuration get_ue_config() { return ue_config; }
+
+  /// \brief Get the number of UEs.
+  /// \return Number of UEs.
+  size_t get_nof_ues() const { return ues.size(); }
+
   // common
 
   /// \brief Find the UE with the given UE index.
@@ -239,13 +252,10 @@ public:
   /// \return Pointer to the UE if found, nullptr otherwise.
   common_ue* find_ue(ue_index_t ue_index) override;
 
-  /// \brief Get the CU-CP UE configuration stored in the UE manager.
-  /// \return The CU-CP UE configuration.
-  ue_configuration get_ue_config() override { return ue_config; }
-
-  /// \brief Get the number of UEs.
-  /// \return Number of UEs.
-  size_t get_nof_ues() const override { return ues.size(); }
+  /// \brief Get the UE task scheduler of the specified UE, even if the DU UE context is not created.
+  /// \param[in] ue_index Index of the UE.
+  /// \return Pointer to the UE task scheduler if found, nullptr otherwise.
+  ue_task_scheduler* find_ue_task_scheduler(ue_index_t ue_index) override;
 
   // du_processor_ue_manager
 

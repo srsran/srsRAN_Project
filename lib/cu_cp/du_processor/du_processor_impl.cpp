@@ -245,11 +245,10 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(req.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    srsran_assert(ue_manager.find_ue(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
+    srsran_assert(ue_manager.find_ue_task_scheduler(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
     logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
-    ue_manager.find_ue(req.ue_index)
-        ->get_task_sched()
-        .schedule_async_task(cu_cp_notifier.on_ue_removal_required(req.ue_index));
+    ue_manager.find_ue_task_scheduler(req.ue_index)
+        ->schedule_async_task(cu_cp_notifier.on_ue_removal_required(req.ue_index));
     return {};
   }
   const pci_t pci = cell_db.at(pcell_index).pci;

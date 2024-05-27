@@ -108,6 +108,14 @@ common_ue* ue_manager::find_ue(ue_index_t ue_index)
   return nullptr;
 }
 
+ue_task_scheduler* ue_manager::find_ue_task_scheduler(ue_index_t ue_index)
+{
+  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).du_ue_created()) {
+    return &ues.at(ue_index).get_task_sched();
+  }
+  return nullptr;
+}
+
 // du_processor_ue_manager
 
 du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
@@ -141,7 +149,7 @@ du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci
 
 du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
-  if (ues.find(ue_index) != ues.end()) {
+  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).du_ue_created()) {
     return &ues.at(ue_index);
   }
   return nullptr;
