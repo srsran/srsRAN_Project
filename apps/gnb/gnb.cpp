@@ -68,6 +68,7 @@
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
@@ -430,34 +431,15 @@ int main(int argc, char** argv)
     report_error("CU-CP failed to connect to AMF");
   }
 
-  // Create CU-UP config.
-  srsran::srs_cu_up::cu_up_configuration cu_up_cfg = generate_cu_up_config(cu_up_config);
-  cu_up_cfg.ctrl_executor                          = workers.cu_up_ctrl_exec;
-  cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
-  cu_up_cfg.ue_exec_pool                           = workers.cu_up_exec_mapper.get();
-  cu_up_cfg.io_ul_executor        = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
-  cu_up_cfg.e1ap.e1ap_conn_client = &e1ap_gw;
-  cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.gtpu_pcap             = cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get();
-  cu_up_cfg.timers                = cu_timers;
-  cu_up_cfg.qos                   = generate_cu_up_qos_config(cu_up_config, du_unit_cfg.du_high_cfg.config);
-
-  // Create NG-U gateway.
-  std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not cu_up_config.amf_cfg.no_core) {
-    udp_network_gateway_config ngu_gw_config = {};
-    ngu_gw_config.bind_address               = cu_up_cfg.net_cfg.n3_bind_addr;
-    ngu_gw_config.bind_port                  = cu_up_cfg.net_cfg.n3_bind_port;
-    ngu_gw_config.bind_interface             = cu_up_cfg.net_cfg.n3_bind_interface;
-    ngu_gw_config.rx_max_mmsg                = cu_up_cfg.net_cfg.n3_rx_max_mmsg;
-    ngu_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
-  } else {
-    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
-  }
-  cu_up_cfg.ngu_gw = ngu_gw.get();
-
-  // create and start CU-UP
-  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
+  // Create and start CU-UP
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj =
+      build_cu_up(cu_up_config,
+                  workers,
+                  e1ap_gw,
+                  *f1u_conn->get_f1u_cu_up_gateway(),
+                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get(),
+                  *cu_timers,
+                  *epoll_broker);
   cu_up_obj->start();
 
   std::vector<du_cell_config> du_cells = generate_du_cell_config(du_unit_cfg.du_high_cfg.config);
@@ -532,7 +514,7 @@ int main(int argc, char** argv)
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
     auto& du    = du_inst[sector_id];
-    auto& upper = du->get_du_low_wrapper().get_du_low().get_upper_phy(sector_id);
+    auto& upper = du->get_du_low_wrapper().get_du_low().get_upper_phy(0);
 
     // Make connections between DU and RU.
     ru_ul_adapt.map_handler(sector_id, upper.get_rx_symbol_handler());

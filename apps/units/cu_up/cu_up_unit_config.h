@@ -35,7 +35,9 @@ struct cu_up_unit_upf_config {
 
 /// QoS configuration.
 struct cu_up_unit_qos_config {
-  five_qi_t five_qi = uint_to_five_qi(9);
+  five_qi_t   five_qi       = uint_to_five_qi(9);
+  std::string mode          = "am";
+  unsigned    rlc_sdu_queue = 4096;
 };
 
 /// CU-UP application unit configuration.
@@ -44,7 +46,7 @@ struct cu_up_unit_config {
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;
   /// UPF configuration.
-  cu_up_unit_upf_config amf_cfg;
+  cu_up_unit_upf_config upf_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.

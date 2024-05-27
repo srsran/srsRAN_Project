@@ -49,15 +49,8 @@ srsran::sctp_network_connector_config generate_ngap_nw_config(const cu_cp_unit_a
 srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const du_high_unit_config& config,
                                                      const cu_cp_unit_config&   cu_cfg);
 
-/// Converts and returns the given gnb application configuration to a CU-UP configuration.
-srs_cu_up::cu_up_configuration generate_cu_up_config(const cu_up_unit_config& config);
-
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application QoS configuration to a CU-UP configuration.
-std::map<five_qi_t, srs_cu_up::cu_up_qos_config> generate_cu_up_qos_config(const cu_up_unit_config&   cu_up_config,
-                                                                           const du_high_unit_config& du_cfg);
 
 /// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const du_high_unit_config& config);

@@ -64,29 +64,58 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
       ->capture_default_str();
 }
 
-static void configure_cli11_amf_args(CLI::App& app, cu_up_unit_upf_config& amf_params)
+static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
 {
   add_option(app,
              "--bind_addr",
-             amf_params.bind_addr,
+             upf_params.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
-  add_option(app, "--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
+  add_option(app, "--n3_bind_addr", upf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4);
-  add_option(app, "--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
+  add_option(app, "--n3_bind_interface", upf_params.n3_bind_interface, "Network device to bind for N3 interface")
       ->capture_default_str();
   add_option(app,
              "--n3_ext_addr",
-             amf_params.n3_ext_addr,
+             upf_params.n3_ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4);
-  add_option(app, "--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  add_option(app, "--no_core", amf_params.no_core, "Allow gNB to run without a core");
+  add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+  add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
+}
+
+static void configure_cli11_rlc_am_args(CLI::App& app, uint32_t& queue_size)
+{
+  CLI::App* tx_subcmd = app.add_subcommand("tx", "AM TX parameters");
+  add_option(*tx_subcmd, "--queue-size", queue_size, "RLC AM TX SDU queue size")->capture_default_str();
+}
+
+static void configure_cli11_rlc_um_args(CLI::App& app, uint32_t& queue_size)
+{
+  CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
+  rlc_tx_um_subcmd->add_option("--queue-size", queue_size, "RLC UM TX SDU queue size")->capture_default_str();
+}
+
+static void configure_cli11_rlc_args(CLI::App& app, cu_up_unit_qos_config& qos_params)
+{
+  add_option(app, "--mode", qos_params.mode, "RLC mode")->capture_default_str();
+
+  // UM section.
+  CLI::App* rlc_um_subcmd = app.add_subcommand("um-bidir", "UM parameters");
+  configure_cli11_rlc_um_args(*rlc_um_subcmd, qos_params.rlc_sdu_queue);
+
+  // AM section.
+  CLI::App* rlc_am_subcmd = app.add_subcommand("am", "AM parameters");
+  configure_cli11_rlc_am_args(*rlc_am_subcmd, qos_params.rlc_sdu_queue);
 }
 
 static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_params)
 {
   add_option(app, "--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
+
+  // RLC section.
+  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
+  configure_cli11_rlc_args(*rlc_subcmd, qos_params);
 }
 
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
@@ -105,7 +134,7 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
 
   // AMF section.
   CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF parameters")->configurable();
-  configure_cli11_amf_args(*amf_subcmd, unit_cfg.amf_cfg);
+  configure_cli11_upf_args(*amf_subcmd, unit_cfg.upf_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

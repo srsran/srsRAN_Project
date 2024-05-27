@@ -407,25 +407,6 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const du_high_unit_
   return out_cfg;
 }
 
-srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_config& config)
-{
-  srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
-
-  if (config.amf_cfg.n3_bind_addr == "auto") {
-    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
-  } else {
-    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
-  }
-  out_cfg.net_cfg.n3_ext_addr       = config.amf_cfg.n3_ext_addr;
-  out_cfg.net_cfg.n3_bind_interface = config.amf_cfg.n3_bind_interface;
-  out_cfg.net_cfg.n3_rx_max_mmsg    = config.amf_cfg.udp_rx_max_msgs;
-  out_cfg.net_cfg.f1u_bind_addr = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
-  return out_cfg;
-}
-
 static pcch_config generate_pcch_config(const du_high_unit_base_cell_config& cell)
 {
   pcch_config cfg{};
@@ -1021,52 +1002,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     ++cell_id;
   }
 
-  return out_cfg;
-}
-
-std::map<five_qi_t, srs_cu_up::cu_up_qos_config>
-srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config, const du_high_unit_config& du_cfg)
-{
-  std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
-  if (cu_up_config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(
-        cu_up_config.warn_on_drop, timer_duration(cu_up_config.metrics.pdcp.report_period));
-    return out_cfg;
-  }
-
-  // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
-  std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(du_cfg);
-
-  for (const auto& qos : cu_up_config.qos_cfg) {
-    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
-    }
-    if (du_qos.find(qos.five_qi) == du_qos.end()) {
-      report_error("Cannot create CU-UP config: No entry for {} in DU QoS config\n", qos.five_qi);
-    }
-    // Convert PDCP custom config
-    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.tx.warn_on_drop     = cu_up_config.warn_on_drop;
-    out_pdcp_custom.metrics_period      = timer_duration(cu_up_config.metrics.pdcp.report_period);
-
-    // Obtain RLC config parameters from the respective RLC mode
-    const auto& du_five_qi = du_qos[qos.five_qi];
-    if (du_five_qi.rlc.mode == rlc_mode::um_bidir) {
-      // Take from UM config
-      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.um.tx.queue_size;
-    } else if (du_five_qi.rlc.mode == rlc_mode::am) {
-      // Take from AM config
-      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.am.tx.queue_size;
-    } else {
-      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for {} in DU QoS config\n.",
-                   du_five_qi.rlc.mode,
-                   qos.five_qi);
-    }
-
-    // Convert F1-U config
-    srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
-    f1u_cfg.warn_on_drop           = cu_up_config.warn_on_drop;
-  }
   return out_cfg;
 }
 
