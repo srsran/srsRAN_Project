@@ -9,10 +9,14 @@
 set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(srsran_du_config_validators STATIC ${SOURCES})
 
-add_library(srsran_du STATIC
-        du_wrapper_impl.cpp
-        du_wrapper_factory.cpp
+add_library(srsran_du_high_wrapper STATIC
         du_high_wrapper_factory.cpp
         du_high_wrapper_impl.cpp
         adapters/fapi_factory.cpp)
-target_link_libraries(srsran_du PUBLIC srsran_du_config_validators srsran_du_high srsran_du_low)
+target_link_libraries(srsran_du_high_wrapper PUBLIC srsran_du_config_validators srsran_du_high srsran_mac_fapi_adaptor srsran_fapi)
+
+
+add_library(srsran_du_wrapper STATIC
+        du_wrapper_impl.cpp
+        du_wrapper_factory.cpp)
+target_link_libraries(srsran_du_wrapper PUBLIC srsran_du_high_wrapper srsran_du_low_wrapper)

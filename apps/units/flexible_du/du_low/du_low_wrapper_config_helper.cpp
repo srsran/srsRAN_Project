@@ -57,7 +57,6 @@ void srsran::make_du_low_wrapper_config_and_dependencies(
   out_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
   generate_du_low_wrapper_config(out_cfg, du_low_unit_cfg, std::move(prach_ports), du_cells, max_puschs_per_slot);
-  out_cfg.prach_ports = std::move(prach_ports);
 
   // Fill the workers information.
   for (unsigned i = 0, e = out_cfg.du_low_cfg.cells.size(); i != e; ++i) {

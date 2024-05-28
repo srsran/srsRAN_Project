@@ -12,4 +12,5 @@ set(SOURCES
         du_low_wrapper_factory.cpp
         du_low_wrapper_impl.cpp)
 
-add_library(srsran_du_low STATIC ${SOURCES})
+add_library(srsran_du_low_wrapper STATIC ${SOURCES})
+target_link_libraries(srsran_du_low_wrapper srsran_phy_fapi_adaptor srsran_upper_phy srsran_channel_precoder)

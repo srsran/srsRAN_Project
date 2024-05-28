@@ -17,5 +17,5 @@ set(SOURCES
             ru_ofh_config_validator.cpp)
 
 add_library(srsran_split_7_2_app_unit_helpers STATIC ${SOURCES})
-target_link_libraries(srsran_split_7_2_app_unit_helpers srsran_flexible_du_helpers)
+target_link_libraries(srsran_split_7_2_app_unit_helpers srsran_ru_ofh srsran_flexible_du_helpers)
 target_include_directories(srsran_split_7_2_app_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})

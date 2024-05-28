@@ -20,6 +20,44 @@
 
 using namespace srsran;
 
+void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
+                                       console_helper&              console_helper,
+                                       metrics_log_helper&          metrics_logger,
+                                       e2_metric_connector_manager& e2_metric_connectors,
+                                       metrics_hub&                 metrics_hub)
+{
+  // Generate DU cells.
+  auto cells = generate_du_cell_config(du_high_unit_cfg);
+
+  // DU cell config
+  console_helper.set_cells(cells);
+
+  // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
+  for (unsigned i = 0; i != cells.size(); i++) {
+    std::string source_name = "DU " + std::to_string(i);
+    auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
+
+    // Connect Console Aggregator to DU Scheduler UE metrics.
+    source->add_subscriber(console_helper.get_stdout_metrics_notifier());
+
+    if (metrics_logger.is_enabled()) {
+      source->add_subscriber(metrics_logger);
+    }
+
+    // Connect JSON metrics reporter to DU Scheduler UE metrics.
+    if (du_high_unit_cfg.metrics.enable_json_metrics) {
+      source->add_subscriber(console_helper.get_json_metrics_notifier());
+    }
+
+    // Connect E2 agent to DU Scheduler UE metrics.
+    if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
+      source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
+    }
+
+    metrics_hub.add_source(std::move(source));
+  }
+}
+
 void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                          const du_high_unit_config&     du_high_unit_cfg,
                                          unsigned                       du_id,
@@ -29,51 +67,15 @@ void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                          timer_manager&                 timer_mng,
                                          mac_pcap&                      mac_p,
                                          rlc_pcap&                      rlc_p,
-                                         console_helper&                console_helper,
                                          metrics_log_helper&            metrics_logger,
                                          e2_connection_client&          e2_client_handler,
                                          e2_metric_connector_manager&   e2_metric_connectors,
                                          rlc_metrics_notifier&          rlc_json_metrics,
                                          metrics_hub&                   metrics_hub)
 {
-  // Generate DU cells.
-  out_cfg.du_hi.cells = generate_du_cell_config(du_high_unit_cfg);
-
-  // DU cell config
-  console_helper.set_cells(out_cfg.du_hi.cells);
-
-  // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
-  for (unsigned i = 0; i < out_cfg.du_hi.cells.size(); i++) {
-    std::string source_name = "DU " + std::to_string(i + du_id);
-    auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
-    metrics_hub.add_source(std::move(source));
-
-    // Get DU Scheduler UE metrics source pointer.
-    scheduler_ue_metrics_source* sched_source = metrics_hub.get_scheduler_ue_metrics_source(source_name);
-    if (sched_source == nullptr) {
-      continue;
-    }
-
-    // Connect Console Aggregator to DU Scheduler UE metrics.
-    sched_source->add_subscriber(console_helper.get_stdout_metrics_notifier());
-
-    if (metrics_logger.is_enabled()) {
-      sched_source->add_subscriber(metrics_logger);
-    }
-
-    // Connect JSON metrics reporter to DU Scheduler UE metrics.
-    if (du_high_unit_cfg.metrics.enable_json_metrics) {
-      sched_source->add_subscriber(console_helper.get_json_metrics_notifier());
-    }
-
-    // Connect E2 agent to DU Scheduler UE metrics.
-    if (du_high_unit_cfg.e2_cfg.enable_du_e2) {
-      sched_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
-    }
-  }
-
   // DU-high configuration.
   srs_du::du_high_configuration& du_hi_cfg = out_cfg.du_hi;
+  du_hi_cfg.cells                          = generate_du_cell_config(du_high_unit_cfg);
   du_hi_cfg.exec_mapper                    = &execution_mapper;
   du_hi_cfg.f1c_client                     = &f1c_client_handler;
   du_hi_cfg.f1u_gw                         = &f1u_gw;

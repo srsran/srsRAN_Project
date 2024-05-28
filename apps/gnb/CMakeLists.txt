@@ -33,7 +33,7 @@ target_link_libraries(gnb
         srsran_support
         srsran_version
         srsran_build_info
-        srsran_flexible_du_ru_dynamic
+        srsran_flexible_du_dynamic
         srsran_f1c_gateway
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit

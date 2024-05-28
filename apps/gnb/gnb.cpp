@@ -47,11 +47,6 @@
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
-#include "srsran/ru/ru_adapters.h"
-#include "srsran/ru/ru_dummy_factory.h"
-#include "srsran/ru/ru_generic_factory.h"
-#include "srsran/ru/ru_ofh_factory.h"
-
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
 #include "srsran/support/sysinfo.h"
@@ -73,11 +68,6 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
-
-#include "srsran/du/du_high_wrapper.h"
-#include "srsran/du/du_wrapper.h"
-#include "srsran/du_low/du_low.h"
-#include "srsran/du_low/du_low_wrapper.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -111,72 +101,6 @@ static void populate_cli11_generic_args(CLI::App& app)
 static void local_signal_handler()
 {
   is_running = false;
-}
-
-/// Resolves the generic Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_generic_executors_and_notifiers(ru_generic_configuration&           config,
-                                                         const std::string&                  phy_log_level,
-                                                         worker_manager&                     workers,
-                                                         ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                         ru_timing_notifier&                 timing_notifier)
-{
-  config.rf_logger                   = &srslog::fetch_basic_logger("RF");
-  config.radio_exec                  = workers.radio_exec;
-  config.statistics_printer_executor = workers.ru_printer_exec;
-  config.timing_notifier             = &timing_notifier;
-  config.symbol_notifier             = &symbol_notifier;
-
-  for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
-    lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];
-    low_phy_cfg.logger                   = &srslog::fetch_basic_logger("PHY");
-    low_phy_cfg.tx_task_executor         = workers.lower_phy_tx_exec[i];
-    low_phy_cfg.rx_task_executor         = workers.lower_phy_rx_exec[i];
-    low_phy_cfg.dl_task_executor         = workers.lower_phy_dl_exec[i];
-    low_phy_cfg.ul_task_executor         = workers.lower_phy_ul_exec[i];
-    low_phy_cfg.prach_async_executor     = workers.lower_prach_exec[i];
-
-    low_phy_cfg.logger->set_level(srslog::str_to_basic_level(phy_log_level));
-  }
-}
-
-/// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
-                                                     ru_ofh_dependencies&                dependencies,
-                                                     const log_appconfig&                log_cfg,
-                                                     worker_manager&                     workers,
-                                                     ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                     ru_timing_notifier&                 timing_notifier,
-                                                     ru_error_notifier&                  error_notifier)
-{
-  dependencies.logger             = &srslog::fetch_basic_logger("OFH");
-  dependencies.rt_timing_executor = workers.ru_timing_exec;
-  dependencies.timing_notifier    = &timing_notifier;
-  dependencies.rx_symbol_notifier = &symbol_notifier;
-  dependencies.error_notifier     = &error_notifier;
-
-  // Configure sector.
-  for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
-    dependencies.sector_dependencies.emplace_back();
-    ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
-    sector_deps.logger                      = dependencies.logger;
-    sector_deps.receiver_executor           = workers.ru_rx_exec[i];
-    sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
-    sector_deps.downlink_executor           = workers.ru_dl_exec[i];
-  }
-}
-
-/// Resolves the Dummy Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_dummy_executors_and_notifiers(ru_dummy_configuration&             config,
-                                                       ru_dummy_dependencies&              dependencies,
-                                                       const log_appconfig&                log_cfg,
-                                                       worker_manager&                     workers,
-                                                       ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                       ru_timing_notifier&                 timing_notifier)
-{
-  dependencies.logger          = &srslog::fetch_basic_logger("RU");
-  dependencies.executor        = workers.radio_exec;
-  dependencies.timing_notifier = &timing_notifier;
-  dependencies.symbol_notifier = &symbol_notifier;
 }
 
 static void initialize_log(const std::string& filename)
@@ -454,88 +378,21 @@ int main(int argc, char** argv)
                   *epoll_broker);
   cu_up_obj->start();
 
-  std::vector<du_cell_config> du_cells = generate_du_cell_config(du_unit_cfg.du_high_cfg.config);
 
-  // Radio Unit instantiation block.
-  ru_configuration ru_cfg = generate_ru_config(gnb_cfg, du_cells, du_unit_cfg);
-
-  upper_ru_ul_adapter     ru_ul_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
-  upper_ru_timing_adapter ru_timing_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
-  upper_ru_error_adapter  ru_error_adapt(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
-
-  std::unique_ptr<radio_unit> ru_object;
-  if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
-    ru_ofh_dependencies ru_dependencies;
-    configure_ru_ofh_executors_and_notifiers(variant_get<ru_ofh_configuration>(ru_cfg.config),
-                                             ru_dependencies,
-                                             gnb_cfg.log_cfg,
-                                             workers,
-                                             ru_ul_adapt,
-                                             ru_timing_adapt,
-                                             ru_error_adapt);
-
-    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
-  } else if (variant_holds_alternative<ru_generic_configuration>(ru_cfg.config)) {
-    configure_ru_generic_executors_and_notifiers(variant_get<ru_generic_configuration>(ru_cfg.config),
-                                                 du_unit_cfg.du_low_cfg.loggers.phy_level,
-                                                 workers,
-                                                 ru_ul_adapt,
-                                                 ru_timing_adapt);
-
-    ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
-
-    // Set the generic RU controller for the GNB console.
-    console.set_ru_controller(ru_object->get_controller());
-  } else {
-    ru_dummy_dependencies ru_dependencies;
-    configure_ru_dummy_executors_and_notifiers(variant_get<ru_dummy_configuration>(ru_cfg.config),
-                                               ru_dependencies,
-                                               gnb_cfg.log_cfg,
-                                               workers,
-                                               ru_ul_adapt,
-                                               ru_timing_adapt);
-
-    ru_object = create_dummy_ru(variant_get<ru_dummy_configuration>(ru_cfg.config), ru_dependencies);
-  }
-  report_error_if_not(ru_object, "Unable to create Radio Unit.");
-  gnb_logger.info("Radio Unit created successfully");
-
-  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
-  upper_ru_ul_request_adapter ru_ul_request_adapt;
-  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
-  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
-
-  // Instantiate one DU per cell.
-  std::vector<std::unique_ptr<du_wrapper>> du_inst = make_gnb_dus(gnb_cfg,
-                                                                  du_unit_cfg,
-                                                                  du_cells,
-                                                                  workers,
-                                                                  ru_dl_rg_adapt,
-                                                                  ru_ul_request_adapt,
-                                                                  *f1c_gw,
-                                                                  *f1u_conn->get_f1u_du_gateway(),
-                                                                  app_timers,
-                                                                  *mac_p,
-                                                                  *rlc_p,
-                                                                  console,
-                                                                  metrics_logger,
-                                                                  e2_gw,
-                                                                  e2_metric_connectors,
-                                                                  rlc_json_plotter,
-                                                                  *hub);
-
-  for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
-    auto& du    = du_inst[sector_id];
-    auto& upper = du->get_du_low_wrapper().get_du_low().get_upper_phy(0);
-
-    // Make connections between DU and RU.
-    ru_ul_adapt.map_handler(sector_id, upper.get_rx_symbol_handler());
-    ru_timing_adapt.map_handler(sector_id, upper.get_timing_handler());
-    ru_error_adapt.map_handler(sector_id, upper.get_error_handler());
-
-    // Start DU execution.
-    du->start();
-  }
+  // Instantiate one DU.
+  std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
+                                          workers,
+                                          *f1c_gw,
+                                          *f1u_conn->get_f1u_du_gateway(),
+                                          app_timers,
+                                          *mac_p,
+                                          *rlc_p,
+                                          console,
+                                          metrics_logger,
+                                          e2_gw,
+                                          e2_metric_connectors,
+                                          rlc_json_plotter,
+                                          *hub);
 
   // Move all the DLT PCAPs to a container.
   std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
@@ -544,10 +401,7 @@ int main(int argc, char** argv)
   dlt_pcaps.push_back(std::move(e2ap_p));
 
   // Start processing.
-  gnb_logger.info("Starting Radio Unit...");
-  ru_object->get_controller().start();
-  gnb_logger.info("Radio Unit started successfully");
-
+  du_inst->start();
   console.on_app_running();
 
   while (is_running) {
@@ -556,14 +410,8 @@ int main(int argc, char** argv)
 
   console.on_app_stopping();
 
-  gnb_logger.info("Stopping Radio Unit...");
-  ru_object->get_controller().stop();
-  gnb_logger.info("Radio Unit notify_stop successfully");
-
   // Stop DU activity.
-  for (auto& du : du_inst) {
-    du->stop();
-  }
+  du_inst->stop();
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
