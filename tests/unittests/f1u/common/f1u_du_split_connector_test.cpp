@@ -91,7 +91,7 @@ protected:
     // Create UDP tester
     udp_network_gateway_config tester_config;
     tester_config.bind_address      = "127.0.0.1";
-    tester_config.bind_port         = GTPU_PORT;
+    tester_config.bind_port         = 0;
     tester_config.non_blocking_mode = true;
     udp_tester                      = create_udp_network_gateway({tester_config, server_data_notifier, io_tx_executor});
     ASSERT_TRUE(udp_tester->create_and_bind());
@@ -107,10 +107,12 @@ protected:
     // create f1-u connector
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = "127.0.0.2";
-    ngu_gw_config.bind_port                  = GTPU_PORT;
+    ngu_gw_config.bind_port                  = 0;
     ngu_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, io_tx_executor);
-    du_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap);
+    du_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value());
+    du_gw_bind_port = du_gw->get_bind_port();
+    ASSERT_TRUE(du_gw_bind_port.has_value());
 
     timers = timer_factory{timer_mng, ue_worker};
 
@@ -189,6 +191,7 @@ protected:
 
   f1u_config                           f1u_du_cfg;
   std::unique_ptr<f1u_split_connector> du_gw;
+  std::optional<uint16_t>              du_gw_bind_port = 0;
 
   srslog::basic_logger& logger         = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger& f1u_logger_du  = srslog::fetch_basic_logger("CU-F1-U", false);
@@ -238,7 +241,7 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
 TEST_F(f1u_du_split_connector_test, recv_sdu)
 {
   ASSERT_NE(udp_tester, nullptr);
-  // ASSERT_TRUE(du_gw_bind_port.has_value());
+  ASSERT_TRUE(du_gw_bind_port.has_value());
 
   // Setup GTP-U tunnel
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -250,7 +253,7 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   // Send SDU
   expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
   ASSERT_TRUE(du_buf.has_value());
-  send_to_server(std::move(du_buf.value()), "127.0.0.2", GTPU_PORT);
+  send_to_server(std::move(du_buf.value()), "127.0.0.2", du_gw_bind_port.value());
 
   // Blocking waiting for RX
   expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);

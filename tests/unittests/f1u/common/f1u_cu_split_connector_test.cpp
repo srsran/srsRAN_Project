@@ -249,12 +249,6 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
 
 TEST_F(f1u_cu_split_connector_test, recv_sdu)
 {
-  // Create UDP tester for sending PDU
-  udp_network_gateway_config server_config;
-  server_config.bind_address      = "127.0.0.2";
-  server_config.bind_port         = GTPU_PORT;
-  server_config.non_blocking_mode = true;
-
   ASSERT_NE(udp_tester, nullptr);
   ASSERT_TRUE(cu_gw_bind_port.has_value());
 

@@ -101,7 +101,8 @@ public:
                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_,
                               const up_transport_layer_info&             ul_up_tnl_info_,
                               srs_du::f1u_bearer_disconnector&           disconnector_,
-                              dlt_pcap&                                  gtpu_pcap) :
+                              dlt_pcap&                                  gtpu_pcap,
+                              uint16_t                                   peer_port) :
     logger("DU-F1-U", {ue_index, drb_id, dl_tnl_info_}),
     disconnector(disconnector_),
     dl_tnl_info(dl_tnl_info_),
@@ -115,7 +116,7 @@ public:
     msg.cfg.rx.local_teid = dl_tnl_info.gtp_teid;
     msg.cfg.tx.peer_teid  = ul_tnl_info.gtp_teid;
     msg.cfg.tx.peer_addr  = ul_tnl_info.tp_address.to_string();
-    msg.cfg.tx.peer_port  = GTPU_PORT;
+    msg.cfg.tx.peer_port  = peer_port;
     msg.gtpu_pcap         = &gtpu_pcap;
     msg.tx_upper          = &gtpu_to_network_adapter;
     msg.rx_lower          = &gtpu_to_f1u_adapter;
@@ -167,14 +168,23 @@ public:
 class f1u_split_connector final : public f1u_du_gateway
 {
 public:
-  f1u_split_connector(srs_cu_up::ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_) :
-    logger_du(srslog::fetch_basic_logger("DU-F1-U")), udp_gw(udp_gw_), demux(demux_), gtpu_pcap(gtpu_pcap_)
+  f1u_split_connector(srs_cu_up::ngu_gateway* udp_gw_,
+                      gtpu_demux*             demux_,
+                      dlt_pcap&               gtpu_pcap_,
+                      uint16_t                peer_port_ = GTPU_PORT) :
+    logger_du(srslog::fetch_basic_logger("DU-F1-U")),
+    udp_gw(udp_gw_),
+    demux(demux_),
+    gtpu_pcap(gtpu_pcap_),
+    peer_port(peer_port_)
   {
     udp_session = udp_gw->create(gw_data_gtpu_demux_adapter);
     gw_data_gtpu_demux_adapter.connect_gtpu_demux(*demux);
   }
 
   f1u_du_gateway* get_f1u_du_gateway() { return this; }
+
+  std::optional<uint16_t> get_bind_port() { return udp_session->get_bind_port(); }
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
@@ -198,6 +208,8 @@ private:
   gtpu_demux*                                     demux;
   network_gateway_data_gtpu_demux_adapter         gw_data_gtpu_demux_adapter;
   dlt_pcap&                                       gtpu_pcap;
+
+  uint16_t peer_port;
 };
 
 } // namespace srsran::srs_du

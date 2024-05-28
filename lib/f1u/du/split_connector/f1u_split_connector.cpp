@@ -34,7 +34,7 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                 ul_up_tnl_info);
 
   std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer = std::make_unique<f1u_split_gateway_du_bearer>(
-      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this, gtpu_pcap);
+      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this, gtpu_pcap, peer_port);
 
   du_bearer->gtpu_to_network_adapter.connect(*udp_session);
   du_map.insert({dl_up_tnl_info, du_bearer.get()});
