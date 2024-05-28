@@ -40,6 +40,8 @@ public:
 
   void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
 
+  void disconnect() { handler = nullptr; }
+
   srs_cu_up::ngu_tnl_pdu_session* handler;
 };
 
@@ -60,6 +62,8 @@ public:
   void on_new_sdu(nru_ul_message ul_message) override {}
 
   void connect(f1u_du_gateway_bearer_rx_notifier& handler_) { handler = &handler_; }
+
+  void disconnect() { handler = nullptr; }
 
   f1u_du_gateway_bearer_rx_notifier* handler;
 };

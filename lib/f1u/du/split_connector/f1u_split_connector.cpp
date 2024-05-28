@@ -51,8 +51,21 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
 void f1u_split_connector::remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
-  // TODO
+
+  if (du_map.find(dl_up_tnl_info) == du_map.end()) {
+    logger_du.warning("Could not find UL GTP Tunnel at CU-CP to disconnect", dl_up_tnl_info);
+    return;
+  }
+  f1u_split_gateway_du_bearer* du_bearer = du_map.at(dl_up_tnl_info);
+
+  // disconnect adapters
+  du_bearer->gtpu_to_network_adapter.disconnect();
+  du_bearer->gtpu_to_f1u_adapter.disconnect();
+
+  // Remove UL from GTP-U demux
+  demux->remove_tunnel(dl_up_tnl_info.gtp_teid);
+
   // Remove DL path
-  // cu_map.erase(bearer_it);
+  du_map.erase(dl_up_tnl_info);
   logger_du.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", dl_up_tnl_info);
 }
