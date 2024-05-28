@@ -190,7 +190,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload =
-      byte_buffer::create({test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))}).value();
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, 0, test_rgen::uniform_int<unsigned>(3, 100));
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}));
