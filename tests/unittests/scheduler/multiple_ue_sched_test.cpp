@@ -1181,13 +1181,12 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
     const auto* grant   = find_ue_pdsch(test_ue);
     // Re-transmission scenario.
     if (grant != nullptr && grant->context.nof_retxs > 0) {
-      // Must be Type3-PDCCH CSS.
+      // Must be Typ1-PDCCH CSS.
       // See 3GPP TS 38.213, clause 10.1,
       // A UE monitors PDCCH candidates in one or more of the following search spaces sets
-      //  - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for
-      //    DCI formats with CRC scrambled by INT-RNTI, SFI-RNTI, TPC-PUSCH-RNTI, TPC-PUCCH-RNTI, or TPC-
-      //    SRS-RNTI and, only for the primary cell, C-RNTI, MCS-C-RNTI, or CS-RNTI(s),
-      ASSERT_EQ(grant->pdsch_cfg.ss_set_type, search_space_set_type::type3);
+      //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+      //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+      ASSERT_EQ(grant->pdsch_cfg.ss_set_type, search_space_set_type::type1);
       successfully_schedule_srb0_retransmission = true;
       break;
     }

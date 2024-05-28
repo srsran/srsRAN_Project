@@ -55,12 +55,6 @@ public:
   void run_slot(cell_resource_allocator& res_alloc);
 
 private:
-  /// Represents type of payload to be scheduled.
-  /// conres_ce => Only Contention Resolution CE
-  /// srb0_data => SRB0 data + other MAC CEs
-  /// srb1_data => SRB1 data + other MAC CEs
-  enum class dl_sched_payload_type { srb0_data, srb1_data, conres_ce };
-
   /// Helper that schedules DL SRB0 and SRB1 retx. Returns false if the DL fallback schedule should stop the DL
   /// allocation, true otherwise.
   bool schedule_dl_retx(cell_resource_allocator& res_alloc);
@@ -68,7 +62,8 @@ private:
   /// Helper that schedules new UL SRB1 tx.
   void schedule_ul_new_tx_and_retx(cell_resource_allocator& res_alloc);
 
-  /// Helper that schedules new DL ConRes CE. Returns false if the DL fallback schedule should exit, true otherwise.
+  /// Helper that schedules new DL ConRes CE when Msg4 over SRB has not yet been received. Returns false if the DL
+  /// fallback schedule should exit, true otherwise.
   bool schedule_dl_conres_new_tx(cell_resource_allocator& res_alloc);
 
   /// Helper that schedules new DL SRB0 tx. Returns false if the DL fallback schedule should exit, true otherwise.
@@ -90,15 +85,16 @@ private:
     slot_point most_recent_ack_slot;
   };
 
-  enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling };
+  /// \remark srb_pending => Only ConRes was scheduled and Msg4 is yet to be scheduled.
+  enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling, srb_pending };
 
-  /// \brief Tries to schedule DL SRB0/SRB1 message or ConRes CE only for a UE, iterating over several PDSCH slots
+  /// \brief Tries to schedule DL SRB0/SRB1 message and/or ConRes CE only for a UE, iterating over several PDSCH slots
   /// ahead of the current reference slot.
   dl_sched_outcome schedule_dl_srb(cell_resource_allocator&            res_alloc,
                                    ue&                                 u,
-                                   dl_sched_payload_type               payload_type,
                                    dl_harq_process*                    h_dl_retx,
-                                   std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = std::nullopt);
+                                   std::optional<most_recent_tx_slots> most_recent_tx_ack_slots = std::nullopt,
+                                   std::optional<bool>                 is_srb0                  = std::nullopt);
 
   enum class ul_srb_sched_outcome { next_ue, next_slot, stop_ul_scheduling };
 
@@ -108,6 +104,8 @@ private:
 
   struct sched_srb_results {
     dl_harq_process* h_dl = nullptr;
+    // This field represents whether SRB data was scheduled along with ConRes CE or only ConRes CE was scheduled.
+    bool is_srb_data_pending = false;
     // This is only meaningful for SRB1, and represents the number of LCID-1 bytes (excluding any overhead) that have
     // been scheduled for transmission.
     unsigned nof_srb1_scheduled_bytes = 0;
@@ -159,7 +157,7 @@ private:
                              const pdsch_config_params& pdsch_params,
                              unsigned                   tbs_bytes,
                              bool                       is_retx,
-                             dl_sched_payload_type      payload_type);
+                             optional<bool>             is_srb0 = nullopt);
 
   void fill_ul_srb_grant(ue&                        u,
                          slot_point                 pdcch_slot,
@@ -182,21 +180,19 @@ private:
                                                  slot_point                 sl_tx,
                                                  const dl_harq_process*     h_dl_retx) const;
 
-  /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1 TX.
-  struct srb_ue {
-    du_ue_index_t ue_index;
-    bool          is_srb0;
+  /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1/ConRes CE TX.
+  struct fallback_ue {
+    du_ue_index_t       ue_index;
+    std::optional<bool> is_srb0;
+    bool                is_conres_pending;
     // Represents the number of LCID-1 bytes (excluding any overhead) that are pending for this UE.
     // This is only meaningful for SRB1 and gets updated every time an RLC buffer state update is received or when we
     // schedule a new PDSCH TX for this UE.
     unsigned pending_srb1_buffer_bytes = 0;
   };
 
-  /// List of UE's DU Indexes for which SRB0 ConRes CE needs to be scheduled.
-  std::vector<du_ue_index_t> pending_dl_ue_conres_new_tx;
-
   /// List of UE's DU Indexes for which SRB0 and SRB1 messages needs to be scheduled.
-  std::vector<srb_ue> pending_dl_ues_new_tx;
+  std::vector<fallback_ue> pending_dl_ues_new_tx;
 
   /// List of UE's DU Indexes that are pending for new TX or RE-TX.
   std::vector<du_ue_index_t> pending_ul_ues;
@@ -205,12 +201,12 @@ private:
   class ack_and_retx_tracker
   {
   public:
-    explicit ack_and_retx_tracker(du_ue_index_t         ue_idx,
-                                  dl_harq_process*      h_dl_,
-                                  dl_sched_payload_type payload_type_,
-                                  ue_repository&        ues_,
-                                  unsigned              srb_payload_bytes_) :
-      ue_index(ue_idx), payload_type(payload_type_), h_dl(h_dl_), srb1_payload_bytes(srb_payload_bytes_)
+    explicit ack_and_retx_tracker(du_ue_index_t       ue_idx,
+                                  dl_harq_process*    h_dl_,
+                                  ue_repository&      ues_,
+                                  unsigned            srb_payload_bytes_,
+                                  std::optional<bool> is_srb0_ = std::nullopt) :
+      ue_index(ue_idx), is_srb0(is_srb0_), h_dl(h_dl_), srb1_payload_bytes(srb_payload_bytes_)
     {
     }
     explicit ack_and_retx_tracker(const ack_and_retx_tracker& other) = default;
@@ -220,18 +216,19 @@ private:
       return ue_index == ue_idx_ and h_dl == h_dl_;
     }
 
-    du_ue_index_t         ue_index;
-    dl_sched_payload_type payload_type;
-    dl_harq_process*      h_dl;
+    du_ue_index_t ue_index;
+    // This field is empty if HARQ is used to schedule ConRes CE only.
+    std::optional<bool> is_srb0;
+    dl_harq_process*    h_dl;
     // Represents the number of LCID-1 bytes (excluding any overhead) that have been allocated for this TX.
     // This is only meaningful for SRB1,
     unsigned srb1_payload_bytes = 0;
   };
 
-  void store_harq_tx(du_ue_index_t         ue_index,
-                     dl_harq_process*      h_dl,
-                     dl_sched_payload_type msg_type,
-                     unsigned              srb_payload_bytes);
+  void store_harq_tx(du_ue_index_t       ue_index,
+                     dl_harq_process*    h_dl,
+                     unsigned            srb_payload_bytes,
+                     std::optional<bool> is_srb0 = std::nullopt);
 
   // If there are any pending SRB0, SRB1 transmissions or ConRes CE for the UE, the function returns the most recent
   // slot with PDSCH for SRB0/SRB1/ConRes CE allocation and the most recent slot with the corresponding PUCCH.
