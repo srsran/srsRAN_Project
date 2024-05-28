@@ -108,9 +108,9 @@ public:
 
     gtpu_tunnel_nru_creation_message msg{};
     // msg.ue_index                            = 0; TODO
-    msg.cfg.rx.local_teid = ul_tnl_info.gtp_teid;
-    msg.cfg.tx.peer_teid  = dl_tnl_info.gtp_teid;
-    msg.cfg.tx.peer_addr  = dl_tnl_info.tp_address.to_string();
+    msg.cfg.rx.local_teid = dl_tnl_info.gtp_teid;
+    msg.cfg.tx.peer_teid  = ul_tnl_info.gtp_teid;
+    msg.cfg.tx.peer_addr  = ul_tnl_info.tp_address.to_string();
     msg.cfg.tx.peer_port  = GTPU_PORT;
     msg.gtpu_pcap         = &gtpu_pcap;
     msg.tx_upper          = &gtpu_to_network_adapter;

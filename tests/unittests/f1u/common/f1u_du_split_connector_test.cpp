@@ -228,7 +228,7 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   auto du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Send SDU
-  expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000001000000840210000000000000abcd");
+  expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
   ASSERT_TRUE(du_buf.has_value());
   send_to_server(std::move(du_buf.value()), "127.0.0.1", GTPU_PORT);
 
@@ -238,6 +238,11 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   // Blocking waiting for RX
   expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);
   ASSERT_FALSE(rx_sdu.is_error());
+
+  expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
+  ASSERT_TRUE(exp_buf.has_value());
+  ASSERT_EQ(rx_sdu.value().t_pdu.length(), exp_buf.value().length());
+  ASSERT_EQ(rx_sdu.value().t_pdu, exp_buf.value());
 }
 
 int main(int argc, char** argv)
