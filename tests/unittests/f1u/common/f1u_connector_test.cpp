@@ -391,11 +391,11 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("DEAD").value();
+  byte_buffer cu_buf = make_byte_buffer("DDDD").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("BEEF").value();
+  byte_buffer du_buf = make_byte_buffer("BBBB").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Disconnect DU bearer without destryoing it from connector
