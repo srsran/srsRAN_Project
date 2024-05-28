@@ -1,0 +1,127 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+// This file was generated using the following MATLAB class on 22-05-2024 (seed 0):
+//   + "srsPUCCHProcessorFormat0Unittest.m"
+
+#include "../../support/resource_grid_test_doubles.h"
+#include "srsran/phy/upper/channel_processors/pucch_processor.h"
+#include "srsran/support/file_vector.h"
+
+namespace srsran {
+
+struct pucch_entry {
+  pucch_processor::format0_configuration config;
+  std::vector<uint8_t>                   ack_bits;
+  optional<uint8_t>                      sr;
+};
+struct test_case_t {
+  pucch_entry                                             entry;
+  file_vector<resource_grid_reader_spy::expected_entry_t> grid;
+};
+
+static const std::vector<test_case_t> pucch_processor_format0_test_data = {
+    // clang-format off
+  {{{nullopt, {0, 999}, cyclic_prefix::NORMAL, 51, 1, 6, {}, 12, 1, 7, 821, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols0.dat"}},
+  {{{nullopt, {0, 4307}, cyclic_prefix::NORMAL, 51, 1, 32, {}, 13, 1, 3, 256, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols1.dat"}},
+  {{{nullopt, {0, 4717}, cyclic_prefix::NORMAL, 51, 1, 35, {}, 10, 1, 3, 5, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols2.dat"}},
+  {{{nullopt, {0, 7750}, cyclic_prefix::NORMAL, 51, 1, 16, {}, 3, 1, 8, 214, 1, 1, {0,}}, {0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols3.dat"}},
+  {{{nullopt, {0, 1757}, cyclic_prefix::NORMAL, 51, 1, 44, {}, 7, 1, 0, 993, 1, 1, {0,1,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols4.dat"}},
+  {{{nullopt, {0, 4302}, cyclic_prefix::NORMAL, 51, 1, 22, {}, 12, 1, 1, 596, 1, 1, {0,1,2,3,}}, {1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols5.dat"}},
+  {{{nullopt, {0, 4847}, cyclic_prefix::NORMAL, 51, 1, 0, {}, 11, 1, 8, 379, 2, 1, {0,}}, {1, 1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols6.dat"}},
+  {{{nullopt, {0, 6635}, cyclic_prefix::NORMAL, 51, 1, 16, {}, 8, 1, 7, 627, 2, 1, {0,1,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols7.dat"}},
+  {{{nullopt, {0, 4521}, cyclic_prefix::NORMAL, 51, 1, 27, {}, 1, 1, 5, 836, 2, 1, {0,1,2,3,}}, {1, 1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols8.dat"}},
+  {{{nullopt, {0, 9573}, cyclic_prefix::NORMAL, 51, 1, 11, {}, 3, 1, 1, 727, 1, 0, {0,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols9.dat"}},
+  {{{nullopt, {0, 3370}, cyclic_prefix::NORMAL, 51, 1, 25, {}, 12, 1, 0, 425, 1, 0, {0,1,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols10.dat"}},
+  {{{nullopt, {0, 154}, cyclic_prefix::NORMAL, 51, 1, 7, {}, 4, 1, 3, 272, 1, 0, {0,1,2,3,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols11.dat"}},
+  {{{nullopt, {0, 7636}, cyclic_prefix::NORMAL, 51, 1, 45, {}, 0, 1, 0, 152, 2, 0, {0,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols12.dat"}},
+  {{{nullopt, {0, 2333}, cyclic_prefix::NORMAL, 51, 1, 18, {}, 10, 1, 9, 816, 2, 0, {0,1,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols13.dat"}},
+  {{{nullopt, {0, 7914}, cyclic_prefix::NORMAL, 51, 1, 8, {}, 8, 1, 6, 646, 2, 0, {0,1,2,3,}}, {1, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols14.dat"}},
+  {{{nullopt, {0, 9634}, cyclic_prefix::NORMAL, 51, 1, 32, {}, 6, 2, 9, 631, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols15.dat"}},
+  {{{nullopt, {0, 1489}, cyclic_prefix::NORMAL, 51, 1, 50, {}, 11, 2, 8, 527, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols16.dat"}},
+  {{{nullopt, {0, 8182}, cyclic_prefix::NORMAL, 51, 1, 40, {}, 3, 2, 2, 1007, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols17.dat"}},
+  {{{nullopt, {0, 4745}, cyclic_prefix::NORMAL, 51, 1, 1, {}, 0, 2, 9, 525, 1, 1, {0,}}, {1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols18.dat"}},
+  {{{nullopt, {0, 3781}, cyclic_prefix::NORMAL, 51, 1, 2, {}, 8, 2, 4, 38, 1, 1, {0,1,}}, {1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols19.dat"}},
+  {{{nullopt, {0, 2014}, cyclic_prefix::NORMAL, 51, 1, 47, {}, 8, 2, 10, 938, 1, 1, {0,1,2,3,}}, {1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols20.dat"}},
+  {{{nullopt, {0, 2900}, cyclic_prefix::NORMAL, 51, 1, 12, {}, 2, 2, 9, 624, 2, 1, {0,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols21.dat"}},
+  {{{nullopt, {0, 5526}, cyclic_prefix::NORMAL, 51, 1, 27, {}, 7, 2, 10, 46, 2, 1, {0,1,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols22.dat"}},
+  {{{nullopt, {0, 5982}, cyclic_prefix::NORMAL, 51, 1, 28, {}, 3, 2, 4, 226, 2, 1, {0,1,2,3,}}, {1, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols23.dat"}},
+  {{{nullopt, {0, 967}, cyclic_prefix::NORMAL, 51, 1, 20, {}, 10, 2, 4, 746, 1, 0, {0,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols24.dat"}},
+  {{{nullopt, {0, 3223}, cyclic_prefix::NORMAL, 51, 1, 15, {}, 4, 2, 5, 887, 1, 0, {0,1,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols25.dat"}},
+  {{{nullopt, {0, 5384}, cyclic_prefix::NORMAL, 51, 1, 3, {}, 12, 2, 0, 63, 1, 0, {0,1,2,3,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols26.dat"}},
+  {{{nullopt, {0, 3801}, cyclic_prefix::NORMAL, 51, 1, 50, {}, 10, 2, 9, 84, 2, 0, {0,}}, {1, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols27.dat"}},
+  {{{nullopt, {0, 1080}, cyclic_prefix::NORMAL, 51, 1, 43, {}, 0, 2, 7, 447, 2, 0, {0,1,}}, {0, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols28.dat"}},
+  {{{nullopt, {0, 1704}, cyclic_prefix::NORMAL, 51, 1, 37, {}, 3, 2, 7, 691, 2, 0, {0,1,2,3,}}, {0, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols29.dat"}},
+  {{{nullopt, {0, 2838}, cyclic_prefix::NORMAL, 51, 1, 38, {41}, 7, 2, 9, 195, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols30.dat"}},
+  {{{nullopt, {0, 4643}, cyclic_prefix::NORMAL, 51, 1, 20, {28}, 5, 2, 3, 984, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols31.dat"}},
+  {{{nullopt, {0, 7840}, cyclic_prefix::NORMAL, 51, 1, 0, {47}, 10, 2, 1, 719, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols32.dat"}},
+  {{{nullopt, {0, 379}, cyclic_prefix::NORMAL, 51, 1, 3, {50}, 9, 2, 2, 394, 1, 1, {0,}}, {0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols33.dat"}},
+  {{{nullopt, {0, 9807}, cyclic_prefix::NORMAL, 51, 1, 22, {13}, 3, 2, 5, 811, 1, 1, {0,1,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols34.dat"}},
+  {{{nullopt, {0, 8793}, cyclic_prefix::NORMAL, 51, 1, 15, {35}, 8, 2, 4, 638, 1, 1, {0,1,2,3,}}, {1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols35.dat"}},
+  {{{nullopt, {0, 2375}, cyclic_prefix::NORMAL, 51, 1, 49, {25}, 8, 2, 4, 390, 2, 1, {0,}}, {0, 1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols36.dat"}},
+  {{{nullopt, {0, 3654}, cyclic_prefix::NORMAL, 51, 1, 18, {37}, 9, 2, 11, 200, 2, 1, {0,1,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols37.dat"}},
+  {{{nullopt, {0, 2807}, cyclic_prefix::NORMAL, 51, 1, 44, {43}, 11, 2, 3, 379, 2, 1, {0,1,2,3,}}, {0, 1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols38.dat"}},
+  {{{nullopt, {0, 1443}, cyclic_prefix::NORMAL, 51, 1, 45, {21}, 0, 2, 10, 105, 1, 0, {0,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols39.dat"}},
+  {{{nullopt, {0, 9501}, cyclic_prefix::NORMAL, 51, 1, 11, {9}, 1, 2, 10, 188, 1, 0, {0,1,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols40.dat"}},
+  {{{nullopt, {0, 2234}, cyclic_prefix::NORMAL, 51, 1, 31, {18}, 9, 2, 1, 483, 1, 0, {0,1,2,3,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols41.dat"}},
+  {{{nullopt, {0, 6443}, cyclic_prefix::NORMAL, 51, 1, 35, {8}, 10, 2, 8, 768, 2, 0, {0,}}, {0, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols42.dat"}},
+  {{{nullopt, {0, 6690}, cyclic_prefix::NORMAL, 51, 1, 49, {14}, 10, 2, 10, 747, 2, 0, {0,1,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols43.dat"}},
+  {{{nullopt, {0, 6257}, cyclic_prefix::NORMAL, 51, 1, 28, {36}, 7, 2, 5, 385, 2, 0, {0,1,2,3,}}, {1, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols44.dat"}},
+  {{{nullopt, {1, 17146}, cyclic_prefix::NORMAL, 51, 1, 49, {}, 4, 1, 0, 798, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols45.dat"}},
+  {{{nullopt, {1, 18241}, cyclic_prefix::NORMAL, 51, 1, 2, {}, 12, 1, 10, 709, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols46.dat"}},
+  {{{nullopt, {1, 861}, cyclic_prefix::NORMAL, 51, 1, 8, {}, 9, 1, 2, 847, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols47.dat"}},
+  {{{nullopt, {1, 12746}, cyclic_prefix::NORMAL, 51, 1, 49, {}, 11, 1, 8, 622, 1, 1, {0,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols48.dat"}},
+  {{{nullopt, {1, 15747}, cyclic_prefix::NORMAL, 51, 1, 2, {}, 2, 1, 0, 641, 1, 1, {0,1,}}, {1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols49.dat"}},
+  {{{nullopt, {1, 3093}, cyclic_prefix::NORMAL, 51, 1, 4, {}, 4, 1, 1, 209, 1, 1, {0,1,2,3,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols50.dat"}},
+  {{{nullopt, {1, 10210}, cyclic_prefix::NORMAL, 51, 1, 41, {}, 0, 1, 7, 91, 2, 1, {0,}}, {1, 1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols51.dat"}},
+  {{{nullopt, {1, 19008}, cyclic_prefix::NORMAL, 51, 1, 49, {}, 9, 1, 6, 977, 2, 1, {0,1,}}, {0, 0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols52.dat"}},
+  {{{nullopt, {1, 10774}, cyclic_prefix::NORMAL, 51, 1, 44, {}, 9, 1, 0, 655, 2, 1, {0,1,2,3,}}, {0, 0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols53.dat"}},
+  {{{nullopt, {1, 2319}, cyclic_prefix::NORMAL, 51, 1, 42, {}, 8, 1, 4, 2, 1, 0, {0,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols54.dat"}},
+  {{{nullopt, {1, 5068}, cyclic_prefix::NORMAL, 51, 1, 40, {}, 12, 1, 7, 643, 1, 0, {0,1,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols55.dat"}},
+  {{{nullopt, {1, 2865}, cyclic_prefix::NORMAL, 51, 1, 3, {}, 1, 1, 4, 653, 1, 0, {0,1,2,3,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols56.dat"}},
+  {{{nullopt, {1, 10312}, cyclic_prefix::NORMAL, 51, 1, 16, {}, 9, 1, 6, 450, 2, 0, {0,}}, {0, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols57.dat"}},
+  {{{nullopt, {1, 16333}, cyclic_prefix::NORMAL, 51, 1, 49, {}, 1, 1, 10, 217, 2, 0, {0,1,}}, {1, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols58.dat"}},
+  {{{nullopt, {1, 7225}, cyclic_prefix::NORMAL, 51, 1, 16, {}, 10, 1, 10, 451, 2, 0, {0,1,2,3,}}, {0, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols59.dat"}},
+  {{{nullopt, {1, 4932}, cyclic_prefix::NORMAL, 51, 1, 17, {}, 2, 2, 1, 526, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols60.dat"}},
+  {{{nullopt, {1, 6922}, cyclic_prefix::NORMAL, 51, 1, 31, {}, 5, 2, 5, 676, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols61.dat"}},
+  {{{nullopt, {1, 6630}, cyclic_prefix::NORMAL, 51, 1, 31, {}, 3, 2, 11, 447, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols62.dat"}},
+  {{{nullopt, {1, 18420}, cyclic_prefix::NORMAL, 51, 1, 40, {}, 6, 2, 7, 381, 1, 1, {0,}}, {1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols63.dat"}},
+  {{{nullopt, {1, 9510}, cyclic_prefix::NORMAL, 51, 1, 27, {}, 9, 2, 7, 498, 1, 1, {0,1,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols64.dat"}},
+  {{{nullopt, {1, 19269}, cyclic_prefix::NORMAL, 51, 1, 28, {}, 3, 2, 0, 819, 1, 1, {0,1,2,3,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols65.dat"}},
+  {{{nullopt, {1, 11524}, cyclic_prefix::NORMAL, 51, 1, 23, {}, 10, 2, 9, 474, 2, 1, {0,}}, {0, 0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols66.dat"}},
+  {{{nullopt, {1, 3786}, cyclic_prefix::NORMAL, 51, 1, 32, {}, 6, 2, 3, 570, 2, 1, {0,1,}}, {0, 1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols67.dat"}},
+  {{{nullopt, {1, 8986}, cyclic_prefix::NORMAL, 51, 1, 26, {}, 1, 2, 3, 862, 2, 1, {0,1,2,3,}}, {0, 0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols68.dat"}},
+  {{{nullopt, {1, 15387}, cyclic_prefix::NORMAL, 51, 1, 46, {}, 8, 2, 2, 822, 1, 0, {0,}}, {1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols69.dat"}},
+  {{{nullopt, {1, 17097}, cyclic_prefix::NORMAL, 51, 1, 5, {}, 4, 2, 5, 662, 1, 0, {0,1,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols70.dat"}},
+  {{{nullopt, {1, 4473}, cyclic_prefix::NORMAL, 51, 1, 46, {}, 7, 2, 9, 35, 1, 0, {0,1,2,3,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols71.dat"}},
+  {{{nullopt, {1, 14792}, cyclic_prefix::NORMAL, 51, 1, 22, {}, 6, 2, 0, 451, 2, 0, {0,}}, {0, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols72.dat"}},
+  {{{nullopt, {1, 16115}, cyclic_prefix::NORMAL, 51, 1, 4, {}, 12, 2, 6, 31, 2, 0, {0,1,}}, {0, 1}, {}}, {"test_data/pucch_processor_format0_test_input_symbols73.dat"}},
+  {{{nullopt, {1, 4329}, cyclic_prefix::NORMAL, 51, 1, 44, {}, 0, 2, 9, 795, 2, 0, {0,1,2,3,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols74.dat"}},
+  {{{nullopt, {1, 12202}, cyclic_prefix::NORMAL, 51, 1, 28, {11}, 1, 2, 7, 344, 0, 1, {0,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols75.dat"}},
+  {{{nullopt, {1, 5694}, cyclic_prefix::NORMAL, 51, 1, 7, {18}, 9, 2, 10, 261, 0, 1, {0,1,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols76.dat"}},
+  {{{nullopt, {1, 19064}, cyclic_prefix::NORMAL, 51, 1, 20, {30}, 1, 2, 5, 456, 0, 1, {0,1,2,3,}}, {}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols77.dat"}},
+  {{{nullopt, {1, 19137}, cyclic_prefix::NORMAL, 51, 1, 28, {49}, 0, 2, 11, 23, 1, 1, {0,}}, {0}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols78.dat"}},
+  {{{nullopt, {1, 18417}, cyclic_prefix::NORMAL, 51, 1, 11, {37}, 0, 2, 2, 603, 1, 1, {0,1,}}, {0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols79.dat"}},
+  {{{nullopt, {1, 8608}, cyclic_prefix::NORMAL, 51, 1, 10, {32}, 1, 2, 11, 943, 1, 1, {0,1,2,3,}}, {1}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols80.dat"}},
+  {{{nullopt, {1, 136}, cyclic_prefix::NORMAL, 51, 1, 9, {10}, 4, 2, 4, 82, 2, 1, {0,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols81.dat"}},
+  {{{nullopt, {1, 11273}, cyclic_prefix::NORMAL, 51, 1, 32, {12}, 5, 2, 1, 806, 2, 1, {0,1,}}, {0, 0}, {1}}, {"test_data/pucch_processor_format0_test_input_symbols82.dat"}},
+  {{{nullopt, {1, 17130}, cyclic_prefix::NORMAL, 51, 1, 31, {23}, 1, 2, 2, 376, 2, 1, {0,1,2,3,}}, {0, 1}, {0}}, {"test_data/pucch_processor_format0_test_input_symbols83.dat"}},
+  {{{nullopt, {1, 3841}, cyclic_prefix::NORMAL, 51, 1, 36, {33}, 11, 2, 3, 359, 1, 0, {0,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols84.dat"}},
+  {{{nullopt, {1, 15557}, cyclic_prefix::NORMAL, 51, 1, 42, {23}, 1, 2, 5, 79, 1, 0, {0,1,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols85.dat"}},
+  {{{nullopt, {1, 19928}, cyclic_prefix::NORMAL, 51, 1, 0, {36}, 8, 2, 3, 98, 1, 0, {0,1,2,3,}}, {0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols86.dat"}},
+  {{{nullopt, {1, 13669}, cyclic_prefix::NORMAL, 51, 1, 29, {16}, 9, 2, 10, 96, 2, 0, {0,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols87.dat"}},
+  {{{nullopt, {1, 14472}, cyclic_prefix::NORMAL, 51, 1, 19, {9}, 10, 2, 5, 237, 2, 0, {0,1,}}, {1, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols88.dat"}},
+  {{{nullopt, {1, 3181}, cyclic_prefix::NORMAL, 51, 1, 33, {32}, 4, 2, 1, 21, 2, 0, {0,1,2,3,}}, {0, 0}, {}}, {"test_data/pucch_processor_format0_test_input_symbols89.dat"}},
+    // clang-format on
+};
+
+} // namespace srsran

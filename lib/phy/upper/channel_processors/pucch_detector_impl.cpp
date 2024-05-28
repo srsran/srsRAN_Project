@@ -12,7 +12,6 @@
 /// \brief PUCCH detector definition for Formats 0 and 1.
 
 #include "pucch_detector_impl.h"
-#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/mean.h"
 
@@ -193,6 +192,13 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
     out_bits[1] = ((bits >> 1U) & 1U);
   }
   return (std::norm(detected_symbol) / eq_noise_var);
+}
+
+std::pair<pucch_uci_message, channel_state_information>
+pucch_detector_impl::detect(const srsran::resource_grid_reader&                  grid,
+                            const srsran::pucch_detector::format0_configuration& config)
+{
+  return detector_format0->detect(grid, config);
 }
 
 pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resource_grid_reader&  grid,

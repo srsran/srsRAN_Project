@@ -225,7 +225,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
         },
     }};
 
-class PucchProcessorFixture : public ::testing::TestWithParam<test_case_t>
+class PucchProcessorFormat2Fixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   static std::unique_ptr<pucch_processor>     pucch_proc;
@@ -315,10 +315,10 @@ protected:
   }
 };
 
-std::unique_ptr<pucch_processor>     PucchProcessorFixture::pucch_proc;
-std::unique_ptr<pucch_pdu_validator> PucchProcessorFixture::pucch_validator;
+std::unique_ptr<pucch_processor>     PucchProcessorFormat2Fixture::pucch_proc;
+std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat2Fixture::pucch_validator;
 
-TEST_P(PucchProcessorFixture, PucchProcessorValidatortest)
+TEST_P(PucchProcessorFormat2Fixture, PucchProcessorValidatortest)
 {
   ASSERT_NE(pucch_proc, nullptr) << "PUCCH processor not created.";
   ASSERT_NE(pucch_validator, nullptr) << "PUCCH validator not created.";
@@ -339,7 +339,7 @@ TEST_P(PucchProcessorFixture, PucchProcessorValidatortest)
 
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PucchProcessorValidatortest,
-                         PucchProcessorFixture,
+                         PucchProcessorFormat2Fixture,
                          ::testing::ValuesIn(pucch_processor_validator_test_data));
 
 } // namespace

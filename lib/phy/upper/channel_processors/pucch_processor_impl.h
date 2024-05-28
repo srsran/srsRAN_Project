@@ -35,7 +35,7 @@ public:
   }
 
   // See interface for documentation.
-  bool is_valid(const pucch_processor::format0_configuration& config) const override { return true; };
+  bool is_valid(const pucch_processor::format0_configuration& config) const override;
   bool is_valid(const pucch_processor::format1_configuration& config) const override;
   bool is_valid(const pucch_processor::format2_configuration& config) const override;
   bool is_valid(const pucch_processor::format3_configuration& config) const override { return true; }
@@ -54,17 +54,7 @@ public:
   static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 1706;
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
-  {
-    pucch_detector::format0_configuration                   detector_config;
-    std::pair<pucch_uci_message, channel_state_information> detection_result = detector->detect(grid, detector_config);
-
-    pucch_processor_result result;
-    result.message = detection_result.first;
-    result.csi     = detection_result.second;
-
-    return result;
-  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override;
 
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override;
@@ -109,6 +99,8 @@ public:
   }
 
 private:
+  /// Validates PUCCH Format 0 configuration.
+  void assert_format0_config(const pucch_processor::format0_configuration& config);
   /// Validates PUCCH Format 1 configuration.
   void assert_format1_config(const pucch_processor::format1_configuration& config);
   /// Validates PUCCH Format 2 configuration.

@@ -20,49 +20,44 @@ using namespace srsran;
 
 namespace {
 
-// Maximum channel dimensions used to construct the PUCCH processor.
-static channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
-                                                                       MAX_NSYMB_PER_SLOT - 1,
-                                                                       1,
-                                                                       pucch_constants::MAX_LAYERS};
+// Maximum channel dimensions used to construct the PUCCH processor. It is irrelevant for Format 0.
+static channel_estimate::channel_estimate_dimensions max_dimensions = {1, 1, 1, 1};
 
-/// Minimum number of symbols (including DM-RS) that NR-PUCCH Format 1 can transmit.
-static constexpr unsigned PUCCH_FORMAT1_MIN_NSYMB = 4;
-
-// Valid PUCCH Format 1 configuration.
-const pucch_processor::format1_configuration base_format_1_config = {
+// Valid PUCCH Format 0 configuration.
+const pucch_processor::format0_configuration base_format_0_config = {
     // Context.
-    std::nullopt,
+    nullopt,
     // Slot.
     {0, 9},
+    // CP.
+    cyclic_prefix::NORMAL,
     // BWP size.
     50,
     // BWP start.
     10,
-    // CP.
-    cyclic_prefix::NORMAL,
     // Starting PRB.
     1,
     // Second hop PRB.
     {},
+    // Start symbol index.
+    3,
+    // Number of OFDM symbols.
+    1,
+    // Initial cyclic shift.
+    0,
     // N_ID
     0,
     // Number of HARQ-ACK bits.
     1,
+    // SR opportunity.
+    false,
     // Rx Ports.
     {0},
-    // Initial cyclic shift.
-    0,
-    // Number of OFDM symbols.
-    1,
-    // Start symbol index.
-    3,
-    // Time domain OCC.
-    0};
+};
 
 // Test case parameters structure.
 struct test_params {
-  pucch_processor::format1_configuration config;
+  pucch_processor::format0_configuration config;
   std::string                            assert_message;
 };
 
@@ -76,13 +71,13 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
-// Test cases are implemented as lambda functions that generate and return an invalid PUCCH Format 1 configuration,
+// Test cases are implemented as lambda functions that generate and return an invalid PUCCH Format 0 configuration,
 // along with the expected assert message.
 const std::vector<test_case_t> pucch_processor_validator_test_data = {
     {
         [] {
           test_params entry         = {};
-          entry.config              = base_format_1_config;
+          entry.config              = base_format_0_config;
           entry.config.bwp_start_rb = 10;
           entry.config.bwp_size_rb  = MAX_RB - entry.config.bwp_start_rb + 1;
           entry.assert_message      = fmt::format(
@@ -95,7 +90,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     {
         [] {
           test_params entry         = {};
-          entry.config              = base_format_1_config;
+          entry.config              = base_format_0_config;
           entry.config.starting_prb = entry.config.bwp_size_rb;
           entry.assert_message =
               fmt::format(R"(PRB allocation within the BWP goes up to PRB {}\, exceeding BWP size\, i\.e\.\, {}\.)",
@@ -107,7 +102,7 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     {
         [] {
           test_params entry           = {};
-          entry.config                = base_format_1_config;
+          entry.config                = base_format_0_config;
           entry.config.second_hop_prb = entry.config.bwp_size_rb;
           entry.assert_message        = fmt::format(
               R"(Second hop PRB allocation within the BWP goes up to PRB {}\, exceeding BWP size\, i\.e\.\, {}\.)",
@@ -119,10 +114,10 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     {
         [] {
           test_params entry               = {};
-          entry.config                    = base_format_1_config;
+          entry.config                    = base_format_0_config;
           entry.config.slot               = slot_point(2, 0);
           entry.config.cp                 = cyclic_prefix::EXTENDED;
-          entry.config.nof_symbols        = PUCCH_FORMAT1_MIN_NSYMB;
+          entry.config.nof_symbols        = pucch_constants::format0_nof_symbols_range.start();
           entry.config.start_symbol_index = get_nsymb_per_slot(entry.config.cp) - entry.config.nof_symbols + 1;
           entry.assert_message            = fmt::format(
               R"(OFDM symbol allocation goes up to symbol {}\, exceeding the number of symbols in the given slot with {} CP\, i\.e\.\, {}\.)",
@@ -134,42 +129,63 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     },
     {
         [] {
-          test_params entry               = {};
-          entry.config                    = base_format_1_config;
-          entry.config.cp                 = cyclic_prefix::NORMAL;
-          entry.config.nof_symbols        = PUCCH_FORMAT1_MIN_NSYMB;
-          entry.config.start_symbol_index = max_dimensions.nof_symbols - PUCCH_FORMAT1_MIN_NSYMB + 1;
-          entry.assert_message            = fmt::format(
-              R"(OFDM symbol allocation goes up to symbol {}\, exceeding the configured maximum number of slot symbols\, i\.e\.\, {}\.)",
-              entry.config.start_symbol_index + entry.config.nof_symbols,
-              max_dimensions.nof_symbols);
+          test_params entry        = {};
+          entry.config             = base_format_0_config;
+          entry.config.nof_symbols = pucch_constants::format0_nof_symbols_range.stop() + 1;
+          entry.assert_message     = R"(Number of symbols \(i\.e\., 3\) is out of the range \[1\.\.2\]\.)";
+          return entry;
+        },
+    },
+    {
+        [] {
+          test_params entry                 = {};
+          entry.config                      = base_format_0_config;
+          entry.config.initial_cyclic_shift = pucch_constants::format0_initial_cyclic_shift_range.stop() + 1;
+          entry.assert_message = R"(The initial cyclic shift \(i\.e\., 13\) is out of the range \[0\.\.12\)\.)";
+          return entry;
+        },
+    },
+    {
+        [] {
+          test_params entry = {};
+          entry.config      = base_format_0_config;
+          entry.config.n_id = pucch_constants::n_id_range.stop() + 1;
+          entry.assert_message =
+              R"(The sequence hopping identifier \(i\.e\., 1025\) is out of the range \[0\.\.1024\)\.)";
+          return entry;
+        },
+    },
+    {
+        [] {
+          test_params entry         = {};
+          entry.config              = base_format_0_config;
+          entry.config.nof_harq_ack = pucch_constants::format0_nof_harq_ack_range.stop() + 1;
+          entry.assert_message      = R"(The number of HARQ-ACK bits \(i\.e\., 3\) is out of the range \[0\.\.2\]\.)";
+          return entry;
+        },
+    },
+    {
+        [] {
+          test_params entry           = {};
+          entry.config                = base_format_0_config;
+          entry.config.nof_harq_ack   = 0;
+          entry.config.sr_opportunity = false;
+          entry.assert_message        = R"(No payload\.)";
           return entry;
         },
     },
     {
         [] {
           test_params entry    = {};
-          entry.config         = base_format_1_config;
+          entry.config         = base_format_0_config;
           entry.config.ports   = {};
-          entry.assert_message = fmt::format(R"(The number of receive ports cannot be zero\.)");
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry    = {};
-          entry.config         = base_format_1_config;
-          entry.config.ports   = {0, 1};
-          entry.assert_message = fmt::format(
-              R"(The number of receive ports\, i\.e\. {}\, exceeds the configured maximum number of receive ports\, i\.e\.\, {}\.)",
-              entry.config.ports.size(),
-              max_dimensions.nof_rx_ports);
+          entry.assert_message = R"(The number of receive ports cannot be zero\.)";
           return entry;
         },
     },
 };
 
-class PucchProcessorFormat1Fixture : public ::testing::TestWithParam<test_case_t>
+class PucchProcessorFormat0Fixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   static std::unique_ptr<pucch_processor>     pucch_proc;
@@ -259,10 +275,10 @@ protected:
   }
 };
 
-std::unique_ptr<pucch_processor>     PucchProcessorFormat1Fixture::pucch_proc;
-std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat1Fixture::pucch_validator;
+std::unique_ptr<pucch_processor>     PucchProcessorFormat0Fixture::pucch_proc;
+std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat0Fixture::pucch_validator;
 
-TEST_P(PucchProcessorFormat1Fixture, PucchProcessorValidatortest)
+TEST_P(PucchProcessorFormat0Fixture, PucchProcessorValidatortest)
 {
   ASSERT_NE(pucch_proc, nullptr) << "PUCCH processor not created.";
   ASSERT_NE(pucch_validator, nullptr) << "PUCCH validator not created.";
@@ -283,7 +299,7 @@ TEST_P(PucchProcessorFormat1Fixture, PucchProcessorValidatortest)
 
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PucchProcessorValidatortest,
-                         PucchProcessorFormat1Fixture,
+                         PucchProcessorFormat0Fixture,
                          ::testing::ValuesIn(pucch_processor_validator_test_data));
 
 } // namespace

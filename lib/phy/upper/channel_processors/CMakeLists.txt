@@ -24,7 +24,7 @@ target_link_libraries(srsran_pdcch_modulator srsvec)
 add_library(srsran_pdcch_processor STATIC pdcch_processor_impl.cpp)
 target_link_libraries(srsran_pdcch_processor srsran_ran)
 
-add_library(srsran_pdsch_encoder STATIC 
+add_library(srsran_pdsch_encoder STATIC
         pdsch_encoder_impl.cpp
         pdsch_encoder_hw_impl.cpp)
 target_link_libraries(srsran_pdsch_encoder srsran_channel_coding)
@@ -48,7 +48,9 @@ target_link_libraries(srsran_prach_detector srsran_ran srsvec)
 
 add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)
 
-add_library(srsran_pucch_detector STATIC pucch_detector_impl.cpp)
+add_library(srsran_pucch_detector STATIC
+        pucch_detector_format0.cpp
+        pucch_detector_impl.cpp)
 
 add_library(srsran_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsran_ssb_processor srsran_sequence_generators srsran_signal_processors)
