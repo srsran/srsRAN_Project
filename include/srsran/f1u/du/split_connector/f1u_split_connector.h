@@ -43,6 +43,27 @@ public:
   srs_cu_up::ngu_tnl_pdu_session* handler;
 };
 
+class gtpu_rx_f1u_adapter : public srsran::gtpu_tunnel_nru_rx_lower_layer_notifier
+{
+public:
+  /// \brief Interface for the GTP-U to pass a SDU (i.e. NR-U DL message) into the lower layer.
+  /// \param dl_message NR-U DL message with optional T-PDU.
+  void on_new_sdu(nru_dl_message dl_message) override
+  {
+    if (handler != nullptr) {
+      handler->on_new_pdu(std::move(dl_message));
+    }
+  }
+
+  /// \brief Interface for the GTP-U to pass a SDU (i.e. NR-U UL message) into the lower layer.
+  /// \param ul_message NR-U UL message with optional T-PDU.
+  void on_new_sdu(nru_ul_message ul_message) override {}
+
+  void connect(f1u_du_gateway_bearer_rx_notifier& handler_) { handler = &handler_; }
+
+  f1u_du_gateway_bearer_rx_notifier* handler;
+};
+
 /// Adapter between Network Gateway (Data) and GTP-U demux
 class network_gateway_data_gtpu_demux_adapter : public srsran::network_gateway_data_notifier_with_src_addr
 {
@@ -83,6 +104,8 @@ public:
     ul_tnl_info(ul_up_tnl_info_),
     du_rx(du_rx_)
   {
+    gtpu_to_f1u_adapter.connect(du_rx);
+
     gtpu_tunnel_nru_creation_message msg{};
     // msg.ue_index                            = 0; TODO
     msg.cfg.rx.local_teid = ul_tnl_info.gtp_teid;
@@ -91,7 +114,7 @@ public:
     msg.cfg.tx.peer_port  = GTPU_PORT;
     msg.gtpu_pcap         = &gtpu_pcap;
     msg.tx_upper          = &gtpu_to_network_adapter;
-    msg.rx_lower          = nullptr;
+    msg.rx_lower          = &gtpu_to_f1u_adapter;
 
     tunnel = srsran::create_gtpu_tunnel_nru(msg);
   }
@@ -118,6 +141,7 @@ public:
   // task_executor& dl_exec;
 
   gtpu_tx_udp_gw_adapter gtpu_to_network_adapter;
+  gtpu_rx_f1u_adapter    gtpu_to_f1u_adapter;
 
 private:
   f1u_bearer_logger                logger;
