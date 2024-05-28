@@ -577,7 +577,21 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory                                   = create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
-  pusch_proc_factory = create_pusch_processor_pool(std::move(pusch_proc_factory), nof_threads, true);
+  pusch_proc_factory_config.decoder_factory =
+      create_pusch_decoder_empty_factory(MAX_RB, pusch_constants::MAX_NOF_LAYERS);
+  TESTASSERT(pusch_proc_factory_config.decoder_factory);
+  std::shared_ptr<pusch_processor_factory> uci_proc_factory =
+      create_pusch_processor_factory_sw(pusch_proc_factory_config);
+  TESTASSERT(uci_proc_factory);
+
+  pusch_processor_pool_factory_config pusch_proc_pool_config;
+  pusch_proc_pool_config.factory                = pusch_proc_factory;
+  pusch_proc_pool_config.uci_factory            = uci_proc_factory;
+  pusch_proc_pool_config.nof_regular_processors = nof_threads;
+  pusch_proc_pool_config.nof_uci_processors     = nof_threads;
+  pusch_proc_pool_config.blocking               = true;
+
+  pusch_proc_factory = create_pusch_processor_pool(pusch_proc_pool_config);
   TESTASSERT(pusch_proc_factory);
 
   return *pusch_proc_factory;

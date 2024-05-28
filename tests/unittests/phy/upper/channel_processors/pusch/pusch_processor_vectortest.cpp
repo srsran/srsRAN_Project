@@ -171,6 +171,10 @@ private:
   create_pusch_decoder_factory(std::shared_ptr<crc_calculator_factory> crc_calculator_factory,
                                const std::string&                      decoder_type)
   {
+    if (decoder_type == "empty") {
+      return create_pusch_decoder_empty_factory(MAX_RB, pusch_constants::MAX_NOF_LAYERS);
+    }
+
     if (decoder_type == "generic") {
       return create_generic_pusch_decoder_factory(crc_calculator_factory);
     }
@@ -329,10 +333,11 @@ protected:
 
 TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
 {
-  const PuschProcessorParams&   param     = GetParam();
-  const test_case_t&            test_case = std::get<1>(param);
-  const test_case_context&      context   = test_case.context;
-  const pusch_processor::pdu_t& config    = context.config;
+  const PuschProcessorParams&   param        = GetParam();
+  const std::string&            decoder_type = std::get<0>(param);
+  const test_case_t&            test_case    = std::get<1>(param);
+  const test_case_context&      context      = test_case.context;
+  const pusch_processor::pdu_t& config       = context.config;
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;
@@ -357,15 +362,22 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   pusch_processor_result_notifier_spy results_notifier;
   pusch_proc->process(data, std::move(rm_buffer), results_notifier, grid, config);
 
+  // The CRC must be KO if the decoder is empty.
+  bool expected_tb_crc_ok = true;
+  if (decoder_type == "empty") {
+    expected_tb_crc_ok = false;
+    srsvec::zero(expected_data);
+  }
+
   // Verify UL-SCH decode results.
   const auto& sch_entries = results_notifier.get_sch_entries();
   ASSERT_FALSE(sch_entries.empty());
   const auto& sch_entry = sch_entries.front();
-  ASSERT_TRUE(sch_entry.data.tb_crc_ok);
+  ASSERT_EQ(expected_tb_crc_ok, sch_entry.data.tb_crc_ok);
   ASSERT_EQ(expected_data, data);
 
   // Make sure SINR is normal.
-  std::optional<float> sinr_dB = results_notifier.get_sch_entries().front().csi.get_sinr_dB();
+  std::optional<float> sinr_dB = sch_entries.front().csi.get_sinr_dB();
   ASSERT_TRUE(sinr_dB.has_value());
   ASSERT_TRUE(std::isnormal(sinr_dB.value()));
 
@@ -491,9 +503,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortestZero)
 INSTANTIATE_TEST_SUITE_P(PuschProcessorVectortest,
                          PuschProcessorFixture,
 #ifdef HWACC_PUSCH_ENABLED
-                         testing::Combine(testing::Values("generic", "acc100"),
+                         testing::Combine(testing::Values("generic", "empty", "acc100"),
 #else  // HWACC_PUSCH_ENABLED
-                         testing::Combine(testing::Values("generic"),
+                         testing::Combine(testing::Values("generic", "empty"),
 #endif // HWACC_PUSCH_ENABLED
                                           ::testing::ValuesIn(pusch_processor_test_data)));
 } // namespace
