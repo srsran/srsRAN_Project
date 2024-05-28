@@ -21,7 +21,7 @@ namespace srsran {
 class gtpu_teid_pool_impl final : public gtpu_teid_pool
 {
 public:
-  explicit gtpu_teid_pool_impl(uint32_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
+  explicit gtpu_teid_pool_impl(uint32_t max_nof_teids_) : max_nof_teids(max_nof_teids_), teid_pool(max_nof_teids_) {}
 
   SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
   {
@@ -33,13 +33,13 @@ public:
     }
 
     // Find a free teid
-    bool     found = false;
-    uint16_t tmp   = next_teid;
-    for (uint16_t n = 0; n < max_teids; n++) {
-      tmp = (next_teid + n) % max_teids;
-      if (not teid_pool[tmp]) {
-        teid_pool[tmp] = true;
-        found          = true;
+    bool     found   = false;
+    uint16_t tmp_idx = next_teid_idx;
+    for (uint16_t n = 0; n < max_nof_teids; n++) {
+      tmp_idx = (next_teid_idx + n) % max_nof_teids;
+      if (not teid_pool[tmp_idx]) {
+        teid_pool[tmp_idx] = true;
+        found              = true;
         break;
       }
     }
@@ -47,31 +47,32 @@ public:
     if (not found) {
       return teid;
     }
-    next_teid = (tmp + 1) % max_teids;
-    teid      = gtpu_teid_t{tmp};
+    next_teid_idx = (tmp_idx + 1) % max_nof_teids;
+    teid          = gtpu_teid_t{tmp_idx + GTPU_TEID_MIN.value()};
     nof_teids++;
     return teid;
   }
 
   SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override
   {
-    if (not teid_pool[teid.value()]) {
+    uint32_t teid_idx = teid.value() - GTPU_TEID_MIN.value();
+    if (not teid_pool[teid_idx]) {
       // trying to free non-allocated TEID
       return false;
     }
-    teid_pool[teid.value()] = false;
+    teid_pool[teid_idx] = false;
     nof_teids--;
     return true;
   }
 
-  bool full() const override { return nof_teids >= max_teids; }
+  bool full() const override { return nof_teids >= max_nof_teids; }
 
-  uint32_t get_max_teids() override { return max_teids; }
+  uint32_t get_max_nof_teids() override { return max_nof_teids; }
 
 private:
-  uint32_t       next_teid = 0;
-  uint32_t       nof_teids = 0;
-  const uint32_t max_teids;
+  uint32_t       next_teid_idx = 0;
+  uint32_t       nof_teids     = 0;
+  const uint32_t max_nof_teids;
 
   std::vector<bool> teid_pool;
 };

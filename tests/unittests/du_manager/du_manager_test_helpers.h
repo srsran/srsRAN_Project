@@ -34,7 +34,7 @@ public:
 
   bool full() const override { return false; }
 
-  uint32_t get_max_teids() override { return std::numeric_limits<uint32_t>::max(); }
+  uint32_t get_max_nof_teids() override { return std::numeric_limits<uint32_t>::max(); }
 
 private:
   uint32_t next_gtpu_teid = 0;

@@ -104,7 +104,7 @@ public:
 
   bool full() const override { return true; };
 
-  uint32_t get_max_teids() override { return UINT32_MAX; }
+  uint32_t get_max_nof_teids() override { return UINT32_MAX; }
 
   uint32_t next_teid = 0;
 };
