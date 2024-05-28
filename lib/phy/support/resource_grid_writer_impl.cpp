@@ -29,37 +29,6 @@ unsigned resource_grid_writer_impl::get_nof_symbols() const
   return data.get_dimension_size(resource_grid_dimensions::symbol);
 }
 
-void resource_grid_writer_impl::put(unsigned                             port,
-                                    span<const resource_grid_coordinate> coordinates,
-                                    span<const cf_t>                     symbols)
-{
-  srsran_assert(coordinates.size() == symbols.size(),
-                "The number of coordinates {} is not equal to the number of symbols {}.",
-                coordinates.size(),
-                symbols.size());
-
-  srsran_assert(port < get_nof_ports(), "The port index {} is out of range (max {}).", port, get_nof_ports() - 1);
-
-  unsigned count = 0;
-  for (const resource_grid_coordinate& coordinate : coordinates) {
-    srsran_assert(coordinate.symbol < get_nof_symbols(),
-                  "Symbol index {} is out of range (max {}).",
-                  coordinate.symbol,
-                  get_nof_symbols());
-    srsran_assert(coordinate.subcarrier < get_nof_subc(),
-                  "Subcarrier index {} is out of range (max {}).",
-                  coordinate.subcarrier,
-                  get_nof_subc());
-
-    // Select destination OFDM symbol from the resource grid.
-    span<cf_t> rg_symbol = data.get_view({coordinate.symbol, port});
-
-    // Write into the desired resource element.
-    rg_symbol[coordinate.subcarrier] = symbols[count++];
-  }
-  clear_empty(port);
-}
-
 span<const cf_t> resource_grid_writer_impl::put(unsigned         port,
                                                 unsigned         l,
                                                 unsigned         k_init,

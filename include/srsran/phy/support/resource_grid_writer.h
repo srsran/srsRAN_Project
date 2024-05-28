@@ -17,34 +17,6 @@
 
 namespace srsran {
 
-/// Describes a resource grid coordinate as symbol index and carrier.
-struct resource_grid_coordinate {
-  /// Symbol index (0...13).
-  uint8_t symbol = 0;
-  /// Subcarrier index (0...3299).
-  uint16_t subcarrier = 0;
-
-  /// Default destructor
-  resource_grid_coordinate() = default;
-
-  /// \brief Constructor from \c unsigned values.
-  /// \param[in] symbol_     Provides the \c symbol value.
-  /// \param[in] subcarrier_ Provides the \c subcarrier value.
-  resource_grid_coordinate(unsigned symbol_, unsigned subcarrier_) :
-    symbol(static_cast<uint8_t>(symbol_)), subcarrier(static_cast<uint16_t>(subcarrier_))
-  {
-  }
-
-  /// \brief Overloads equal comparison operator.
-  ///
-  /// Two resource grid coordinates are equal when symbol and subcarrier indexes are equal.
-  /// \param[in] other The comparing coordinate.
-  bool operator==(const resource_grid_coordinate& other) const
-  {
-    return (other.symbol == symbol) && (subcarrier == other.subcarrier);
-  }
-};
-
 /// \brief Resource grid writer interface.
 ///
 /// Contains the necessary functions to write resource elements in a resource grid.
@@ -55,14 +27,6 @@ class resource_grid_writer : public resource_grid_base
 public:
   /// Default destructor
   virtual ~resource_grid_writer() = default;
-
-  /// \brief Puts a number of elements in the grid for a given port according to a list of coordinates.
-  ///
-  /// \param[in] port        Port index.
-  /// \param[in] coordinates List of grid symbol&ndash;subcarrier coordinates.
-  /// \param[in] symbols     List of symbols to written at the specified coordinates.
-  /// \note The number of elements in \c coordinates and \c symbols shall be the same.
-  virtual void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) = 0;
 
   /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a mask to
   /// indicate which subcarriers are allocated and which are not.

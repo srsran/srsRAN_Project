@@ -96,7 +96,6 @@ class resource_grid_dummy : public resource_grid
     unsigned get_nof_ports() const override { return 1; }
     unsigned get_nof_subc() const override { return 1; }
     unsigned get_nof_symbols() const override { return 1; }
-    void     put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
     span<const cf_t>
     put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
     {

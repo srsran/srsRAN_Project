@@ -69,11 +69,6 @@ public:
   unsigned get_nof_ports() const override { return 1; };
   unsigned get_nof_subc() const override { return 51 * NOF_SUBCARRIERS_PER_RB; };
   unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; };
-  void     put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
-  {
-    grid_written = true;
-    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
-  }
 
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
