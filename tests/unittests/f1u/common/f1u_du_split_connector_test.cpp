@@ -27,12 +27,42 @@ struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_ga
   void on_new_pdu(nru_dl_message msg) override
   {
     logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
-    last_sdu = std::move(msg);
+    std::lock_guard<std::mutex> lock(rx_mutex);
+    rx_bytes += msg.t_pdu.length();
+    msg_queue.push(std::move(msg));
+    rx_cvar.notify_one();
   }
-  nru_dl_message last_sdu;
+
+  expected<nru_dl_message> get_rx_pdu_blocking(manual_task_worker&       ue_worker,
+                                               std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(10))
+  {
+    // wait until at least one PDU is received
+    std::unique_lock<std::mutex> lock(rx_mutex);
+    for (int i = 0; i < 100; i++) {
+      if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return !msg_queue.empty(); })) {
+        if (not msg_queue.empty()) {
+          break;
+        }
+        rx_mutex.unlock();
+        ue_worker.run_pending_tasks(); // unlock so we can push into the message queue
+        rx_mutex.lock();
+      }
+    }
+    if (msg_queue.empty()) {
+      return default_error_t{};
+    }
+    nru_dl_message pdu = std::move(msg_queue.front());
+    msg_queue.pop();
+    return pdu;
+  }
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
+  srslog::basic_logger&      logger = srslog::fetch_basic_logger("CU-F1-U", false);
+  std::queue<nru_dl_message> msg_queue;
+  std::mutex                 rx_mutex;
+  std::condition_variable    rx_cvar;
+
+  unsigned rx_bytes = 0;
 };
 
 /// Fixture class for F1-U DU connector tests.
@@ -206,7 +236,8 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   ue_worker.run_pending_tasks();
 
   // Blocking waiting for RX
-  // expected<nru_ul_message> rx_sdu = du_rx.get_rx_pdu_blocking();
+  expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);
+  ASSERT_FALSE(rx_sdu.is_error());
 }
 
 int main(int argc, char** argv)
