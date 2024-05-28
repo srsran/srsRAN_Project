@@ -102,8 +102,18 @@ protected:
     udp_logger_cu.set_hex_dump_max_size(100);
 
     logger.info("Creating F1-U connector");
+
+    // Create UDP tester and spawn RX thread
+    udp_network_gateway_config tester_config;
+    tester_config.bind_address      = "127.0.0.2";
+    tester_config.bind_port         = 0;
+    tester_config.non_blocking_mode = true;
+    udp_tester                      = create_udp_network_gateway({tester_config, server_data_notifier, io_tx_executor});
+    ASSERT_TRUE(udp_tester->create_and_bind());
+    std::optional<uint16_t> tester_bind_port = udp_tester->get_bind_port();
+    ASSERT_TRUE(tester_bind_port.has_value());
+
     // create GTP-U dmux
-    //
     gtpu_demux_creation_request msg = {};
     msg.cfg.warn_on_drop            = true;
     msg.gtpu_pcap                   = &dummy_pcap;
@@ -112,10 +122,12 @@ protected:
     // create f1-u connector
     udp_network_gateway_config ngu_gw_config = {};
     ngu_gw_config.bind_address               = "127.0.0.1";
-    ngu_gw_config.bind_port                  = GTPU_PORT;
+    ngu_gw_config.bind_port                  = 0;
     ngu_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, io_tx_executor);
-    cu_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap);
+    cu_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value());
+    cu_gw_bind_port = cu_gw->get_bind_port();
+    ASSERT_TRUE(cu_gw_bind_port.has_value());
 
     timers = timer_factory{timer_mng, ue_worker};
 
@@ -134,6 +146,9 @@ protected:
     if (rx_thread.joinable()) {
       rx_thread.join();
     }
+    cu_gw.reset();
+    udp_gw.reset();
+    udp_tester.reset();
   }
 
   // spawn a thread to receive data
@@ -190,6 +205,7 @@ protected:
 
   srs_cu_up::f1u_config                f1u_cu_up_cfg;
   std::unique_ptr<f1u_split_connector> cu_gw;
+  std::optional<uint16_t>              cu_gw_bind_port = 0;
 
   srslog::basic_logger& logger         = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger& f1u_logger_cu  = srslog::fetch_basic_logger("CU-F1-U", false);
@@ -216,16 +232,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
       cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
-  // Create UDP tester and spawn RX thread
-  udp_network_gateway_config server_config;
-  server_config.bind_address      = "127.0.0.2";
-  server_config.bind_port         = GTPU_PORT;
-  server_config.non_blocking_mode = true;
-
-  // create and bind gateways
-  udp_tester = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
   ASSERT_NE(udp_tester, nullptr);
-  ASSERT_TRUE(udp_tester->create_and_bind());
   start_receive_thread();
 
   expected<byte_buffer> cu_buf = make_byte_buffer("ABCD");
@@ -247,9 +254,8 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu)
   server_config.bind_port         = GTPU_PORT;
   server_config.non_blocking_mode = true;
 
-  udp_tester = create_udp_network_gateway({server_config, server_data_notifier, io_tx_executor});
   ASSERT_NE(udp_tester, nullptr);
-  ASSERT_TRUE(udp_tester->create_and_bind());
+  ASSERT_TRUE(cu_gw_bind_port.has_value());
 
   // Setup GTP-U tunnel
   up_transport_layer_info     ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
@@ -263,7 +269,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu)
   // Send SDU
   expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000001000000840210000000000000abcd");
   ASSERT_TRUE(du_buf.has_value());
-  send_to_server(std::move(du_buf.value()), "127.0.0.1", GTPU_PORT);
+  send_to_server(std::move(du_buf.value()), "127.0.0.1", cu_gw_bind_port.value());
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu = cu_rx.get_rx_pdu_blocking(ue_worker);

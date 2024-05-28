@@ -53,11 +53,11 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   // create GTP-U tunnel
   // TODO create RX earlier
   gtpu_tunnel_nru_creation_message msg{};
-  // msg.ue_index                            = 0; TODO
+  msg.ue_index                            = int_to_ue_index(cu_bearer->ue_index);
   msg.cfg.rx.local_teid                   = ul_up_tnl_info.gtp_teid;
   msg.cfg.tx.peer_teid                    = dl_up_tnl_info.gtp_teid;
   msg.cfg.tx.peer_addr                    = dl_up_tnl_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                    = GTPU_PORT;
+  msg.cfg.tx.peer_port                    = peer_port;
   msg.gtpu_pcap                           = &gtpu_pcap;
   msg.tx_upper                            = &cu_bearer->gtpu_to_network_adapter;
   msg.rx_lower                            = &cu_bearer->gtpu_to_f1u_adapter;
@@ -76,8 +76,20 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
 void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
-  // TODO
+  if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
+    logger_cu.warning("Could not find UL GTP Tunnel at CU-CP to disconnect", ul_up_tnl_info);
+    return;
+  }
+  f1u_split_gateway_cu_bearer* cu_bearer = cu_map.at(ul_up_tnl_info);
+
+  // disconnect adapters
+  cu_bearer->gtpu_to_network_adapter.disconnect();
+  cu_bearer->gtpu_to_f1u_adapter.disconnect();
+
+  // Remove UL from GTP-U demux
+  demux->remove_tunnel(ul_up_tnl_info.gtp_teid);
+
   // Remove DL path
-  // cu_map.erase(bearer_it);
+  cu_map.erase(ul_up_tnl_info);
   logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
 }

@@ -13,6 +13,7 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
@@ -39,6 +40,8 @@ public:
 
   void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
 
+  void disconnect() { handler = nullptr; }
+
   srs_cu_up::ngu_tnl_pdu_session* handler;
 };
 
@@ -59,6 +62,8 @@ public:
   }
 
   void connect(f1u_cu_up_gateway_bearer_rx_notifier& handler_) { handler = &handler_; }
+
+  void disconnect() { handler = nullptr; }
 
   f1u_cu_up_gateway_bearer_rx_notifier* handler;
 };
@@ -90,7 +95,7 @@ private:
 class f1u_split_gateway_cu_bearer : public f1u_cu_up_gateway_bearer
 {
 public:
-  f1u_split_gateway_cu_bearer(uint32_t                              ue_index,
+  f1u_split_gateway_cu_bearer(uint32_t                              ue_index_,
                               drb_id_t                              drb_id,
                               const up_transport_layer_info&        ul_tnl_info_,
                               f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
@@ -98,7 +103,8 @@ public:
                               task_executor&                        ul_exec_,
                               srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
     ul_exec(ul_exec_),
-    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info}),
+    ue_index(ue_index_),
+    logger("CU-F1-U", {ue_index_, drb_id, ul_tnl_info_}),
     disconnector(disconnector_),
     ul_tnl_info(ul_tnl_info_),
     cu_rx(cu_rx_)
@@ -109,7 +115,13 @@ public:
 
   ~f1u_split_gateway_cu_bearer() override { stop(); }
 
-  void stop() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
+  void stop() override
+  {
+    if (not stopped) {
+      disconnector.disconnect_cu_bearer(ul_tnl_info);
+    }
+    stopped = true;
+  }
 
   void on_new_pdu(nru_dl_message msg) override
   {
@@ -132,8 +144,10 @@ public:
 
   /// Holds the RX executor associated with the F1-U bearer.
   task_executor& ul_exec;
+  uint32_t       ue_index;
 
 private:
+  bool                                stopped = false;
   srs_cu_up::f1u_bearer_logger        logger;
   srs_cu_up::f1u_bearer_disconnector& disconnector;
   up_transport_layer_info             ul_tnl_info;
@@ -155,14 +169,20 @@ public:
 class f1u_split_connector final : public f1u_cu_up_gateway
 {
 public:
-  f1u_split_connector(ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_) :
-    logger_cu(srslog::fetch_basic_logger("CU-F1-U")), udp_gw(udp_gw_), demux(demux_), gtpu_pcap(gtpu_pcap_)
+  f1u_split_connector(ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_, uint16_t peer_port_ = GTPU_PORT) :
+    logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
+    peer_port(peer_port_),
+    udp_gw(udp_gw_),
+    demux(demux_),
+    gtpu_pcap(gtpu_pcap_)
   {
     udp_session = udp_gw->create(gw_data_gtpu_demux_adapter);
     gw_data_gtpu_demux_adapter.connect_gtpu_demux(*demux);
   }
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
+
+  std::optional<uint16_t> get_bind_port() { return udp_session->get_bind_port(); }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
@@ -184,6 +204,7 @@ private:
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_cu_bearer*> cu_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
+  uint16_t                                peer_port;
   ngu_gateway*                            udp_gw;
   std::unique_ptr<ngu_tnl_pdu_session>    udp_session;
   gtpu_demux*                             demux;
