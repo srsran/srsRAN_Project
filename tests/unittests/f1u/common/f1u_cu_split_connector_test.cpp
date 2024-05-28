@@ -103,7 +103,7 @@ protected:
 
     logger.info("Creating F1-U connector");
 
-    // Create UDP tester and spawn RX thread
+    // Create UDP tester
     udp_network_gateway_config tester_config;
     tester_config.bind_address      = "127.0.0.2";
     tester_config.bind_port         = 0;
@@ -244,6 +244,14 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
 
   cu_bearer->on_new_pdu(std::move(sdu));
   io_tx_executor.run_pending_tasks();
+
+  expected<byte_buffer> exp_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
+  ASSERT_TRUE(exp_buf.has_value());
+
+  expected<byte_buffer> du_rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+  ASSERT_TRUE(du_rx_pdu.has_value());
+  ASSERT_EQ(du_rx_pdu.value().length(), exp_buf.value().length());
+  ASSERT_EQ(du_rx_pdu.value(), exp_buf.value());
 }
 
 TEST_F(f1u_cu_split_connector_test, recv_sdu)
