@@ -12,6 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/rrm.h"
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/scheduler/config/logical_channel_group.h"
 
@@ -26,6 +27,7 @@ struct logical_channel_config {
   std::optional<scheduling_request_id> sr_id;
   bool                                 lc_sr_mask;
   bool                                 lc_sr_delay_timer_applied;
+  rrm_policy_member                    rrm_policy;
 };
 
 } // namespace srsran

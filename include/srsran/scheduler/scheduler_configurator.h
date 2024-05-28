@@ -31,6 +31,7 @@
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/config/cell_rrm_policy_config.h"
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -90,6 +91,9 @@ struct sched_cell_configuration_request_message {
 
   /// List of nzp-CSI-RS resources common to all UEs.
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
+
+  /// List of RAN slices to support in the scheduler.
+  std::vector<cell_rrm_policy_config> rrm_policy_members;
 
   unsigned ntn_cs_koffset = 0;
 };

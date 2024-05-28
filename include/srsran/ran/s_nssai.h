@@ -20,6 +20,8 @@ struct s_nssai_t {
   uint8_t sst = 0;
   /// Slice Differentiator (max 24bits).
   std::optional<uint32_t> sd;
+
+  bool operator==(const s_nssai_t& other) const { return sst == other.sst && sd == other.sd; }
 };
 
 } // namespace srsran

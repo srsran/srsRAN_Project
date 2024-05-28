@@ -37,6 +37,8 @@ set(SOURCES
         support/dci_builder.cpp
         support/sch_pdu_builder.cpp
         support/csi_report_helpers.cpp
+        slicing/slice_scheduler.cpp
+        slicing/ran_slice_instance.cpp
         cell_scheduler.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp
