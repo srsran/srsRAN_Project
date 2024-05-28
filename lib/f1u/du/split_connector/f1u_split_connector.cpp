@@ -26,10 +26,11 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                                       timer_factory                              timers,
                                       task_executor&                             ue_executor)
 {
-  logger_du.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
+  logger_du.info(
+      "Creating DU gateway local bearer with UL GTP Tunnel={} DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(du_map.find(ul_up_tnl_info) == du_map.end(),
-                "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
+                "Cannot create DU gateway local bearer with already existing UL GTP Tunnel={}",
                 ul_up_tnl_info);
 
   std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer = std::make_unique<f1u_split_gateway_du_bearer>(
