@@ -40,13 +40,6 @@ public:
   bool is_empty() const override { return true; }
 
   // See interface for documentation.
-  span<cf_t> get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/, span<const bool> /**/) const override
-  {
-    srsvec::zero(symbols);
-    return {};
-  }
-
-  // See interface for documentation.
   span<cf_t> get(span<cf_t> symbols,
                  unsigned /**/,
                  unsigned /**/,

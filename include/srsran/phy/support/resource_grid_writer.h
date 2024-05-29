@@ -28,21 +28,6 @@ public:
   /// Default destructor
   virtual ~resource_grid_writer() = default;
 
-  /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a mask to
-  /// indicate which subcarriers are allocated and which are not.
-  ///
-  /// \param[in] port    Port index.
-  /// \param[in] l       Symbol index.
-  /// \param[in] k_init  Initial subcarrier index.
-  /// \param[in] mask    Boolean mask denoting the subcarriers to be written (if \c true), starting from \c k_init.
-  /// \param[in] symbols Symbols to be written into the resource grid.
-  /// \return A view to the unused entries of \c symbols.
-  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
-  /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
-  /// \c mask.
-  virtual span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) = 0;
-
   /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
   /// to indicate which subcarriers are allocated and which are not.
   ///

@@ -29,39 +29,6 @@ unsigned resource_grid_writer_impl::get_nof_symbols() const
   return data.get_dimension_size(resource_grid_dimensions::symbol);
 }
 
-span<const cf_t> resource_grid_writer_impl::put(unsigned         port,
-                                                unsigned         l,
-                                                unsigned         k_init,
-                                                span<const bool> mask,
-                                                span<const cf_t> symbol_buffer)
-{
-  interval<unsigned>       i_symbol_range(0, get_nof_symbols());
-  interval<unsigned, true> mask_size_range(1, get_nof_subc());
-  interval<unsigned>       i_port_range(0, get_nof_ports());
-  srsran_assert(i_symbol_range.contains(l), "Symbol index (i.e., {}) is out-of-range range {}.", l, i_symbol_range);
-  srsran_assert(mask_size_range.contains(mask.size()),
-                "The mask size (i.e., {}) is out-of-range range {}.",
-                mask.size(),
-                i_symbol_range);
-  srsran_assert(
-      i_port_range.contains(port), "The port identifier (i.e., {}) is out-of-range range {}.", port, i_port_range);
-
-  // Select destination OFDM symbol from the resource grid.
-  span<cf_t> rg_symbol = data.get_view({l, port});
-
-  // Iterate mask using AVX2 intrinsics and preset groups of 4 subcarriers.
-  for (unsigned i_subc = 0, i_subc_end = mask.size(); i_subc < i_subc_end; ++i_subc) {
-    if (mask[i_subc]) {
-      rg_symbol[i_subc + k_init] = symbol_buffer.front();
-      symbol_buffer              = symbol_buffer.last(symbol_buffer.size() - 1);
-    }
-  }
-  clear_empty(port);
-
-  // Update symbol buffer
-  return symbol_buffer;
-}
-
 span<const cf_t> resource_grid_writer_impl::put(unsigned                            port,
                                                 unsigned                            l,
                                                 unsigned                            k_init,

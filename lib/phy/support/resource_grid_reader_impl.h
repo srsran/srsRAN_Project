@@ -41,9 +41,6 @@ public:
   bool is_empty() const override;
 
   // See interface for documentation.
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override;
-
-  // See interface for documentation.
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,
                  unsigned                            l,
