@@ -193,7 +193,7 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   {
     std::unique_lock<std::mutex> lock(map_mutex);
     if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
-      logger_cu.warning("Could not find UL GTP Tunnel at CU-CP to disconnect", ul_up_tnl_info);
+      logger_cu.warning("Could not disconnect CU F1-U bearer with unknown UL GTP Tunnel={}", ul_up_tnl_info);
       return;
     }
     cu_bearer = cu_map.at(ul_up_tnl_info);
