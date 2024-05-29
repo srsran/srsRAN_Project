@@ -516,7 +516,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Create PUSCH param candidate search object.
   ue_pusch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_ul, is_retx, pdcch_alloc.slot};
-  if (candidates.search_spaces().empty()) {
+  if (candidates.is_empty()) {
     // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return alloc_outcome::skip_ue;
   }
