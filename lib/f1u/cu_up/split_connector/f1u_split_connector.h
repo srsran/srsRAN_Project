@@ -100,7 +100,7 @@ public:
 ///
 /// Note that CU and DU bearer creation and removal can be performed from different threads and are therefore
 /// protected by a common mutex.
-class f1u_split_connector final : public f1u_cu_up_gateway
+class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
   f1u_split_connector(ngu_gateway* udp_gw_, gtpu_demux* demux_, dlt_pcap& gtpu_pcap_, uint16_t peer_port_ = GTPU_PORT);
@@ -108,7 +108,7 @@ public:
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
 
-  std::optional<uint16_t> get_bind_port() { return udp_session->get_bind_port(); }
+  std::optional<uint16_t> get_bind_port() override { return udp_session->get_bind_port(); }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,

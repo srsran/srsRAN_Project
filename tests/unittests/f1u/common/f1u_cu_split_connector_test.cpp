@@ -9,7 +9,7 @@
  */
 
 #include "tests/unittests/gateways/test_helpers.h"
-#include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
+#include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/srslog/srslog.h"
@@ -129,7 +129,9 @@ protected:
     nru_gw_config.bind_port                  = 0;
     nru_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
-    cu_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value());
+
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value()};
+    cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
 
@@ -200,9 +202,9 @@ protected:
   std::atomic<bool>                                 stop_token = {false};
   dummy_network_gateway_data_notifier_with_src_addr server_data_notifier;
 
-  srs_cu_up::f1u_config                f1u_cu_up_cfg;
-  std::unique_ptr<f1u_split_connector> cu_gw;
-  std::optional<uint16_t>              cu_gw_bind_port = 0;
+  srs_cu_up::f1u_config                  f1u_cu_up_cfg;
+  std::unique_ptr<f1u_cu_up_udp_gateway> cu_gw;
+  std::optional<uint16_t>                cu_gw_bind_port = 0;
 
   srslog::basic_logger& logger         = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger& f1u_logger_cu  = srslog::fetch_basic_logger("CU-F1-U", false);

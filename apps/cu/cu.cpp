@@ -11,7 +11,7 @@
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
-#include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
+#include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
@@ -277,8 +277,8 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
       srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
-  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn =
-      std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_dlt_pcaps.f1u);
+  std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
+      srs_cu_up::create_split_f1u_gw({cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
@@ -374,7 +374,7 @@ int main(int argc, char** argv)
                                                                           workers,
                                                                           cu_cfg.f1u_cfg.f1u_bind_addr,
                                                                           *e1_gw,
-                                                                          *cu_f1u_conn->get_f1u_cu_up_gateway(),
+                                                                          *cu_f1u_conn,
                                                                           *cu_up_dlt_pcaps.n3,
                                                                           *cu_timers,
                                                                           *epoll_broker);

@@ -9,7 +9,7 @@
  *
  */
 
-#include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
+#include "f1u_split_connector.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/ran/lcid.h"
 
