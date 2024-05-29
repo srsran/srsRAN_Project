@@ -20,6 +20,26 @@
 
 using namespace srsran;
 
+/// Helper function to find minimum k2 to use for scheduling next PUSCH for a particular UE.
+static unsigned get_min_k2_to_schedule_next_pusch(const cell_resource_allocator& res_alloc,
+                                                  rnti_t                         rnti,
+                                                  unsigned                       min_k2,
+                                                  unsigned                       max_k2)
+{
+  srsran_assert(min_k2 <= max_k2, "Minimum k2 value must be greater than maximum k2 value");
+  for (int sl_inc = max_k2; sl_inc >= (int)min_k2; --sl_inc) {
+    const cell_slot_resource_allocator& pusch_alloc = res_alloc[sl_inc];
+    const ul_sched_info*                pusch_exist_it =
+        std::find_if(pusch_alloc.result.ul.puschs.begin(),
+                     pusch_alloc.result.ul.puschs.end(),
+                     [rnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
+    if (pusch_exist_it != pusch_alloc.result.ul.puschs.end()) {
+      return sl_inc;
+    }
+  }
+  return min_k2;
+}
+
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                                                ue_repository&                    ues_,
                                                srslog::basic_logger&             logger_) :
@@ -559,6 +579,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     }
 
     // Verify only one PUSCH exists for a RNTI.
+    // See TS 38.214, clause 6.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to
+    // transmit a PUSCH that overlaps in time with another PUSCH".
     const ul_sched_info* pusch_exists_it =
         std::find_if(pusch_alloc.result.ul.puschs.begin(),
                      pusch_alloc.result.ul.puschs.end(),
@@ -577,6 +599,19 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                    u.crnti,
                    pusch_alloc.slot);
       // Try next candidate.
+      continue;
+    }
+
+    // See TS 38.214, clause 6.1, "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to
+    // start a first PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
+    // scheduled to transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than
+    // symbol i".
+    const unsigned min_k2_for_next_pusch = get_min_k2_to_schedule_next_pusch(get_res_alloc(grant.cell_index),
+                                                                             u.crnti,
+                                                                             ss_info.pusch_time_domain_list.front().k2,
+                                                                             ss_info.pusch_time_domain_list.back().k2);
+    if (pusch_td_cfg.k2 < min_k2_for_next_pusch) {
+      // Try next k2.
       continue;
     }
 
