@@ -887,8 +887,8 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
       rohc_params.rohc     = rohc;
       pdcp_cfg.rohc_params = rohc_params;
     } else if (asn1_pdcp_cfg.rohc_params.type().value == asn1::e1ap::rohc_params_c::types_opts::ul_only_rohc) {
-      e1ap_rohc_params rohc_params = {};
-      e1ap_rohc        ul_only_rohc;
+      e1ap_rohc_params rohc_params  = {};
+      e1ap_rohc        ul_only_rohc = {};
 
       ul_only_rohc.max_cid       = asn1_pdcp_cfg.rohc_params.ul_only_rohc().max_c_id;
       ul_only_rohc.rohc_profiles = asn1_pdcp_cfg.rohc_params.ul_only_rohc().rohc_profiles;
