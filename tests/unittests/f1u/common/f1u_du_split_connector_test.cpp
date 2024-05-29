@@ -11,7 +11,6 @@
 #include "../..//gateways/test_helpers.h"
 #include "srsran/f1u/du/split_connector/f1u_split_connector.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
-#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -105,11 +104,11 @@ protected:
     demux                           = create_gtpu_demux(msg);
 
     // create f1-u connector
-    udp_network_gateway_config ngu_gw_config = {};
-    ngu_gw_config.bind_address               = "127.0.0.2";
-    ngu_gw_config.bind_port                  = 0;
-    ngu_gw_config.reuse_addr                 = true;
-    udp_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, io_tx_executor);
+    udp_network_gateway_config nru_gw_config = {};
+    nru_gw_config.bind_address               = "127.0.0.2";
+    nru_gw_config.bind_port                  = 0;
+    nru_gw_config.reuse_addr                 = true;
+    udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
     du_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value());
     du_gw_bind_port = du_gw->get_bind_port();
     ASSERT_TRUE(du_gw_bind_port.has_value());
@@ -263,6 +262,106 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   ASSERT_TRUE(exp_buf.has_value());
   ASSERT_EQ(rx_sdu.value().t_pdu.length(), exp_buf.value().length());
   ASSERT_EQ(rx_sdu.value().t_pdu, exp_buf.value());
+}
+
+TEST_F(f1u_du_split_connector_test, disconnect_stops_tx)
+{
+  // Setup GTP-U tunnel
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
+
+  auto du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+  ASSERT_NE(udp_tester, nullptr);
+  start_receive_thread();
+
+  // Disconnect incorrect tunnel (no effect expected)
+  du_gw->remove_du_bearer(
+      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{7}});
+
+  expected<byte_buffer> du_buf1 = make_byte_buffer("abcd");
+  ASSERT_TRUE(du_buf1.has_value());
+  nru_ul_message sdu1                       = {};
+  auto           du_chain_buf1              = byte_buffer_chain::create(du_buf1.value().deep_copy().value());
+  sdu1.t_pdu                                = std::move(du_chain_buf1.value());
+  nru_dl_data_delivery_status deliv_status1 = {};
+  sdu1.data_delivery_status.emplace(deliv_status1);
+
+  du_bearer->on_new_pdu(std::move(sdu1));
+  io_tx_executor.run_pending_tasks();
+
+  expected<byte_buffer> exp_buf = make_byte_buffer("34ff000e00000001000000840210000000000000abcd");
+  ASSERT_TRUE(exp_buf.has_value());
+
+  expected<byte_buffer> cu_rx_pdu = server_data_notifier.get_rx_pdu_blocking();
+  ASSERT_TRUE(cu_rx_pdu.has_value());
+  ASSERT_EQ(cu_rx_pdu.value().length(), exp_buf.value().length());
+  ASSERT_EQ(cu_rx_pdu.value(), exp_buf.value());
+
+  // Disconnect correct tunnel explicitly (not via deleting du_bearer because we need it to handle sdu2)
+  du_gw->remove_du_bearer(dl_tnl);
+
+  // Send another SDU
+  expected<byte_buffer> du_buf2 = make_byte_buffer("bcde");
+  ASSERT_TRUE(du_buf2.has_value());
+  nru_ul_message sdu2                       = {};
+  auto           du_chain_buf2              = byte_buffer_chain::create(du_buf2.value().deep_copy().value());
+  sdu2.t_pdu                                = std::move(du_chain_buf2.value());
+  nru_dl_data_delivery_status deliv_status2 = {};
+  sdu2.data_delivery_status.emplace(deliv_status2);
+
+  du_bearer->on_new_pdu(std::move(sdu2));
+  io_tx_executor.run_pending_tasks();
+
+  // No PDU expected
+  expected<byte_buffer> cu_rx_pdu2 = server_data_notifier.get_rx_pdu_blocking();
+  ASSERT_FALSE(cu_rx_pdu2.has_value());
+
+  // Destructor of du_bearer tries to disconnect tunnel again, hence we see a warning.
+}
+
+TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
+{
+  ASSERT_NE(udp_tester, nullptr);
+  ASSERT_TRUE(du_gw_bind_port.has_value());
+
+  // Setup GTP-U tunnel
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+  dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
+
+  auto du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+
+  // Disconnect incorrect tunnel (no effect expected)
+  du_gw->remove_du_bearer(
+      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{7}});
+
+  // Send SDU
+  expected<byte_buffer> du_buf1 = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
+  ASSERT_TRUE(du_buf1.has_value());
+  send_to_server(std::move(du_buf1.value()), "127.0.0.2", du_gw_bind_port.value());
+
+  // Blocking waiting for RX
+  expected<nru_dl_message> rx_sdu1 = du_rx.get_rx_pdu_blocking(ue_worker);
+  ASSERT_FALSE(rx_sdu1.is_error());
+
+  expected<byte_buffer> exp_buf1 = make_byte_buffer("abcd");
+  ASSERT_TRUE(exp_buf1.has_value());
+  ASSERT_EQ(rx_sdu1.value().t_pdu.length(), exp_buf1.value().length());
+  ASSERT_EQ(rx_sdu1.value().t_pdu, exp_buf1.value());
+
+  // Disconnect correct tunnel by deleting the du_bearer (which should deregister from connector upon destruction)
+  du_bearer.reset();
+
+  // Send another SDU
+  expected<byte_buffer> du_buf2 = make_byte_buffer("34ff000e00000002000000840200000000000000bcde");
+  ASSERT_TRUE(du_buf2.has_value());
+  send_to_server(std::move(du_buf2.value()), "127.0.0.2", du_gw_bind_port.value());
+
+  // Blocking waiting for RX
+  expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);
+  ASSERT_TRUE(rx_sdu.is_error());
 }
 
 int main(int argc, char** argv)
