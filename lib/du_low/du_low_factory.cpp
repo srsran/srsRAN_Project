@@ -10,6 +10,8 @@
 
 #include "srsran/du_low/du_low_factory.h"
 #include "du_low_impl.h"
+#include "srsran/du_low/du_low_config.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

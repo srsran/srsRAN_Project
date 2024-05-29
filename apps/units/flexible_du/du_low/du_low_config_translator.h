@@ -23,6 +23,7 @@ void generate_du_low_wrapper_config(du_low_wrapper_config&              out_conf
                                     const du_low_unit_config&           du_low_unit_cfg,
                                     std::vector<cell_prach_ports_entry> prach_ports,
                                     span<const du_cell_config>          du_cells,
-                                    span<const unsigned>                max_puschs_per_slot);
+                                    span<const unsigned>                max_puschs_per_slot,
+                                    unsigned                            du_id);
 
 } // namespace srsran

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
+
 namespace srsran {
 
 class upper_phy;
@@ -26,6 +28,9 @@ public:
 
   /// Returns the upper PHY for the given cell of this DU low.
   virtual upper_phy& get_upper_phy(unsigned cell_id) = 0;
+
+  /// Returns a span of the upper PHYs managed by this DU low.
+  virtual span<upper_phy*> get_all_upper_phys() = 0;
 };
 
 } // namespace srsran

@@ -11,8 +11,6 @@
 #pragma once
 
 #include "srsran/du_low/du_low.h"
-#include "srsran/du_low/du_low_config.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/phy/upper/upper_phy.h"
 
 namespace srsran {
@@ -29,8 +27,12 @@ public:
   // See interface for documentation.
   void stop() override;
 
+  // See interface for documentation.
+  span<upper_phy*> get_all_upper_phys() override;
+
 private:
   std::vector<std::unique_ptr<upper_phy>> upper;
+  std::vector<upper_phy*>                 upper_ptrs;
 };
 
 } // namespace srsran

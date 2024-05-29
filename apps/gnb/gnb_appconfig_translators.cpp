@@ -59,7 +59,6 @@ srsran::sctp_network_connector_config srsran::generate_ngap_nw_config(const cu_c
   return out_cfg;
 }
 
-
 srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
 {
   srsran::sctp_network_connector_config out_cfg;

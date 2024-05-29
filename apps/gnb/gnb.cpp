@@ -378,7 +378,6 @@ int main(int argc, char** argv)
                   *epoll_broker);
   cu_up_obj->start();
 
-
   // Instantiate one DU.
   std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
                                           workers,

@@ -101,6 +101,9 @@ public:
   explicit upper_phy_impl(upper_phy_impl_config&& config);
 
   // See interface for documentation.
+  unsigned get_sector_id() const override { return sector_id; }
+
+  // See interface for documentation.
   upper_phy_error_handler& get_error_handler() override;
 
   // See interface for documentation.

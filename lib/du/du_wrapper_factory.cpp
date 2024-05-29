@@ -24,7 +24,7 @@ std::unique_ptr<du_wrapper> srsran::make_du_wrapper(const du_wrapper_config& du_
 
   // Create DU high wrapper.
   du_high_wrapper_dependencies high_wrapper_dependencies;
-  for (unsigned i = 0, e = du_cfg.du_low_cfg.prach_ports.size(); i != e; ++i) {
+  for (unsigned i = 0, e = du_cfg.du_low_cfg.du_low_cfg.cells.size(); i != e; ++i) {
     high_wrapper_dependencies.sectors.push_back(
         {&dependencies.du_lo->get_slot_message_gateway(i), &dependencies.du_lo->get_slot_last_message_notifier(i)});
   }
