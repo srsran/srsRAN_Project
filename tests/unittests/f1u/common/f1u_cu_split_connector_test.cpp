@@ -228,7 +228,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
-  expected<byte_buffer> cu_buf = make_byte_buffer("ABCD");
+  expected<byte_buffer> cu_buf = make_byte_buffer("abcd");
   ASSERT_TRUE(cu_buf.has_value());
 
   nru_dl_message sdu = {};
@@ -278,7 +278,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu)
   ASSERT_TRUE(rx_sdu.value().t_pdu.has_value());
 
   expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
-  ASSERT_TRUE(du_buf.has_value());
+  ASSERT_FALSE(exp_buf.is_error());
   ASSERT_EQ(rx_sdu.value().t_pdu->length(), exp_buf.value().length());
   ASSERT_EQ(rx_sdu.value().t_pdu.value(), exp_buf.value());
 }
