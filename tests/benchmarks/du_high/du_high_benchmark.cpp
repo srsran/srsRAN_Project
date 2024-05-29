@@ -275,6 +275,8 @@ private:
       case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
         // Send UE Context Modification to create DRB1.
         f1ap_message msg2 = generate_ue_context_modification_request({drb_id_t::drb1});
+        // Do not send RRC container.
+        msg2.pdu.init_msg().value.ue_context_mod_request()->rrc_container_present = false;
         // Note: Use UM because AM requires status PDUs.
         auto& drb1 = msg2.pdu.init_msg()
                          .value.ue_context_mod_request()
@@ -710,12 +712,12 @@ public:
     using namespace std::chrono_literals;
 
     // Wait until it's a full UL slot to send Msg3.
-    auto next_msg3_opportunity_condition = [this]() {
+    auto next_ul_slot = [this]() {
       return not cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
              not is_tdd_full_ul_slot(cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
                                      slot_point(next_sl_tx - tx_rx_delay - 1).slot_index());
     };
-    run_slot_until(next_msg3_opportunity_condition);
+    run_slot_until(next_ul_slot);
 
     // Received Msg3 with UL-CCCH message.
     mac_rx_data_indication rx_ind;
@@ -888,15 +890,18 @@ public:
 
       // 1 Byte for LCID and other fields and 1/2 Byte(s) for payload length.
       static const uint8_t mac_header_size = payload_len > 255 ? 3 : 2;
-      // Early return.
+
+      // Early return - the TB is too small.
       if (pusch.pusch_cfg.tb_size_bytes <= mac_header_size + bsr_mac_subpdu.length()) {
         return;
       }
-      // Prepare MAC PDU for LCID 4.
-      payload_len -= mac_header_size + bsr_mac_subpdu.length();
+
+      // Prepare MAC SDU for LCID 4.
       static const lcid_t drb_lcid = uint_to_lcid(4);
       mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
       // Pack header and payload length.
+      // Subtract BSR length.
+      payload_len -= mac_header_size + bsr_mac_subpdu.length();
       if (payload_len > 255) {
         report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
         report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
@@ -1120,7 +1125,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
         bench.run_slot();
       },
       [&bench]() {
-        // Push DL PDUs and UL PDUs.
+        // Push DL PDUs.
         bench.push_pdcp_pdus();
 
         // Advance slot
@@ -1180,13 +1185,15 @@ int main(int argc, char** argv)
   static const std::size_t byte_buffer_segment_size = 2048;
 
   // Set DU-high logging.
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::warning);
+  auto test_log_level = srslog::basic_levels::warning;
+  srslog::fetch_basic_logger("TEST").set_level(test_log_level);
+  srslog::fetch_basic_logger("RLC").set_level(test_log_level);
+  srslog::fetch_basic_logger("MAC", true).set_level(test_log_level);
+  srslog::fetch_basic_logger("SCHED", true).set_level(test_log_level);
+  srslog::fetch_basic_logger("DU-F1").set_level(test_log_level);
+  srslog::fetch_basic_logger("DU-F1-U").set_level(test_log_level);
+  srslog::fetch_basic_logger("UE-MNG").set_level(test_log_level);
+  srslog::fetch_basic_logger("DU-MNG").set_level(test_log_level);
   srslog::init();
 
   std::string tracing_filename = "";
