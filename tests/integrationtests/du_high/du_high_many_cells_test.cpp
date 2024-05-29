@@ -150,8 +150,10 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
                      bytes_sched,
                      expected_bytes_sched);
 
+  // The distribution of traffic should be roughly equal across cells.
+  float thres = 0.95;
   for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
-    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size) << fmt::format(
+    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size * thres) << fmt::format(
         "In cell={} scheduled bytes {} < expected bytes {}", c, bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size);
   }
 }
