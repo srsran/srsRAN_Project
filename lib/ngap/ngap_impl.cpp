@@ -383,9 +383,6 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     return;
   }
 
-  // Store guami
-  context.current_guami = init_ctxt_setup_req.guami;
-
   // Store UE Aggregate Maximum Bitrate
   if (init_ctxt_setup_req.ue_aggr_max_bit_rate.has_value()) {
     ue_ctxt.aggregate_maximum_bit_rate_dl = init_ctxt_setup_req.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;

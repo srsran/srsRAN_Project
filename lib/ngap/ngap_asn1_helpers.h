@@ -184,9 +184,10 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
   asn1_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
 
   if (msg.five_g_s_tmsi.has_value()) {
+    // TS 23.003 - 5G-S-TMSI contains AMF Set ID, AMF Pointer and 5G TMSI.
     asn1_msg->five_g_s_tmsi_present = true;
-    asn1_msg->five_g_s_tmsi.amf_set_id.from_number(context.current_guami.amf_set_id);
-    asn1_msg->five_g_s_tmsi.amf_pointer.from_number(context.current_guami.amf_pointer);
+    asn1_msg->five_g_s_tmsi.amf_set_id.from_number(msg.five_g_s_tmsi.value().amf_set_id);
+    asn1_msg->five_g_s_tmsi.amf_pointer.from_number(msg.five_g_s_tmsi.value().amf_pointer);
     asn1_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
   }
 
