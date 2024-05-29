@@ -120,6 +120,11 @@ public:
       // So, we need to move to the next SearchSpace and reset time resource to 0.
       if (current.time_res >= (*current.ss_it)->pdsch_time_domain_list.size()) {
         current.time_res = 0;
+        ++current.ss_it;
+        if (current.ss_it == parent->ss_candidate_list.end()) {
+          // Iteration finished.
+          return *this;
+        }
       }
       parent->iterate_until_valid_candidate_found(current);
       return *this;
@@ -158,11 +163,8 @@ public:
   iterator begin() { return iterator{*this, ss_candidate_list.begin(), 0}; }
   iterator end() { return iterator{*this, ss_candidate_list.end(), 0}; }
 
-  /// List of SearchSpace candidates.
-  const static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>& search_spaces()
-  {
-    return ss_candidate_list;
-  }
+  /// Returns whether there are candidates or not.
+  bool is_empty() { return ss_candidate_list.empty(); }
 
 private:
   // Generate Search Space candidates for a given HARQ.
@@ -229,31 +231,23 @@ private:
   // Iterate over the list of candidates until a valid one is found.
   void iterate_until_valid_candidate_found(candidate& current)
   {
-    for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
+    if (current.ss_it != ss_candidate_list.end()) {
       // NOTE: At this point UE is no longer in fallback mode.
-      if ((*current.ss_it)
-              ->get_pdcch_candidates(
-                  ue_cc->get_aggregation_level(
-                      ue_cc->link_adaptation_controller().get_effective_cqi(), **current.ss_it, true),
-                  pdcch_slot)
-              .empty()) {
-        // Skip SearchSpaces without PDCCH candidates to be monitored in this slot.
-        continue;
-      }
-
-      for (; current.time_res < (*current.ss_it)->pdsch_time_domain_list.size(); ++current.time_res) {
-        if (is_candidate_valid(current)) {
-          // Valid candidate found.
-          return;
+      // Skip SearchSpaces without PDCCH candidates to be monitored in this slot.
+      if (not(*current.ss_it)
+                 ->get_pdcch_candidates(
+                     ue_cc->get_aggregation_level(
+                         ue_cc->link_adaptation_controller().get_effective_cqi(), **current.ss_it, true),
+                     pdcch_slot)
+                 .empty()) {
+        for (; current.time_res < (*current.ss_it)->pdsch_time_domain_list.size(); ++current.time_res) {
+          if (is_candidate_valid(current)) {
+            // Valid candidate found.
+            return;
+          }
         }
       }
-      current.time_res = 0;
     }
-
-    // Iteration finished.
-    ss_candidate_list.clear();
-    current.ss_it    = nullptr;
-    current.time_res = 0;
   }
 
   // UE being allocated.

@@ -125,7 +125,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
   // Create PDSCH param candidate search object.
   ue_pdsch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_dl, is_retx, pdcch_alloc.slot};
-  if (candidates.search_spaces().empty()) {
+  if (candidates.is_empty()) {
     // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return alloc_outcome::skip_ue;
   }
@@ -147,8 +147,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                    u.ue_index,
                    u.crnti,
                    expert_cfg.max_pdschs_per_slot);
-      // Try next k0.
-      continue;
+      return alloc_outcome::skip_slot;
     }
 
     // Verify there is space in PDSCH and PDCCH result lists for new allocations.
@@ -156,8 +155,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
                    u.ue_index,
                    u.crnti);
-      // Try next k0.
-      continue;
+      return alloc_outcome::skip_slot;
     }
 
     if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
@@ -165,8 +163,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                    u.ue_index,
                    u.crnti,
                    pdsch_alloc.slot);
-      // Try next k0.
-      continue;
+      return alloc_outcome::skip_slot;
     }
 
     // Verify only one PDSCH exists for a RNTI.
@@ -177,16 +174,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                      pdsch_alloc.result.dl.ue_grants.end(),
                      [crnti = u.crnti](const dl_msg_alloc& pdsch) { return pdsch.pdsch_cfg.rnti == crnti; });
     if (pdsch_present_it != pdsch_alloc.result.dl.ue_grants.end()) {
-      // Try next k0.
-      continue;
+      return alloc_outcome::skip_ue;
     }
 
     // Apply RB allocation limits.
     const unsigned start_rb = std::max(expert_cfg.pdsch_crb_limits.start(), ss_info.dl_crb_lims.start());
     const unsigned end_rb   = std::min(expert_cfg.pdsch_crb_limits.stop(), ss_info.dl_crb_lims.stop());
     if (start_rb >= end_rb) {
-      // Invalid RB allocation range. Try next SearchSpace.
-      continue;
+      // Invalid RB allocation range.
+      return alloc_outcome::skip_slot;
     }
 
     const crb_interval dl_crb_lims = {start_rb, end_rb};
@@ -197,8 +193,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                    u.ue_index,
                    u.crnti,
                    pdsch_alloc.slot);
-      // Try next k0.
-      continue;
+      return alloc_outcome::skip_slot;
     }
 
     grant_prbs_mcs mcs_prbs =
@@ -245,8 +240,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                                       .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), aggr_lvl);
     if (pdcch == nullptr) {
       logger.info("ue={} rnti={}: Failed to allocate PDSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
-      // Try next candidate.
-      continue;
+      return alloc_outcome::skip_ue;
     }
 
     // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
@@ -262,8 +256,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     } else {
       logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: UCI allocation failed.", u.ue_index, u.crnti);
       get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
-      // Try next candidate.
-      continue;
+      return alloc_outcome::skip_ue;
     }
 
     // Fetch UL resource allocator.
@@ -285,7 +278,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
           u.ue_index,
           u.crnti);
       get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
-      // TODO: Could try next candidate. But we need to remove UCI allocated already.
+      // TODO: Remove UCI allocated?
       return alloc_outcome::invalid_params;
     }
 
@@ -341,8 +334,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       logger.warning(
           "ue={} rnti={}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.", u.ue_index, u.crnti);
       get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
-      // TODO: Could try next candidate. But we need to remove UCI allocated already.
-      return alloc_outcome::invalid_params;
+      return alloc_outcome::skip_ue;
     }
 
     // Mark resources as occupied in the ResourceGrid.
