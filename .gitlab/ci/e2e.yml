@@ -503,6 +503,7 @@ android n300:
 viavi:
   stage: rf
   extends: .e2e-run
+  timeout: 8h
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"
