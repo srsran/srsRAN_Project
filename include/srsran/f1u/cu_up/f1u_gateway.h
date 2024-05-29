@@ -15,7 +15,7 @@
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
