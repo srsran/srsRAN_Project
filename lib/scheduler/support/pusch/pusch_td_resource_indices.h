@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../config/ue_configuration.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/slot_point.h"
@@ -22,11 +23,14 @@ class ue_cell_configuration;
 
 /// \brief Fetches a list of PUSCH Time Domain resource indexes based on cell, UE configuration and nof. symbols in
 /// PUSCH slot.
-/// \param[in] ue_cfg User's dedicated configuration.
+/// \param[in] cell_cfg Cell configuration.
+/// \param[in] ss_info SearchSpace information.
 /// \param[in] pdcch_slot Slot at which the PDCCH is supposed to be scheduled.
 /// \return List of PUSCH Time Domain resource indexes.
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-get_pusch_td_resource_indices(const ue_cell_configuration& ue_cfg, slot_point pdcch_slot);
+get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
+                              const search_space_info*  ss_info,
+                              slot_point                pdcch_slot);
 
 /// \brief Fetches a list of PUSCH Time Domain resource indexes based on cell, UE configuration and nof. symbols in
 /// PUSCH slot.
