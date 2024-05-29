@@ -10,18 +10,20 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_ies.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cause/e1ap_cause.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/s_nssai.h"
+#include "srsran/sdap/sdap_config.h"
+#include "srsran/security/security.h"
 #include "srsran/support/error_handling.h"
 #include <string>
-#include <vector>
 
 namespace srsran {
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
