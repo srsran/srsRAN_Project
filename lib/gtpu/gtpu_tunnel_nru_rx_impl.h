@@ -72,12 +72,10 @@ protected:
       }
     }
     if (!have_nr_ran_container) {
-      logger.log_warning("Incomplete PDU at F1-U interface: missing or invalid NR RAN container. pdu_len={} teid={}",
-                         pdu.buf.length(),
-                         teid);
       // As per TS 29.281 Sec. 5.2.2.6 the (...) NR RAN Container (...) may be transmitted in a G-PDU over the
       // X2-U, Xn-U and F1-U user plane interfaces (...).
-      return;
+      logger.log_info("T-PDU without NR RAN container. Assuming UL. pdu_len={} teid={}", pdu.buf.length(), teid);
+      nru_msg = {nru_dl_data_delivery_status{}}; // set to UL
     }
 
     logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={}", pdu.buf.length());
