@@ -197,8 +197,9 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
     // Step 1: Check for validity of the UCI slot and other restrictions.
 
     // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
-    // NOTE: The reason for having this logic is due to fact that COTS UE sends an invalid ACK bits if newly scheduled
-    // PDSCH has its UCI HARQ ACK slot before the (in time) UCI HARQ ACK slot of the previously scheduled PDSCH.
+    // See TS 38.214, clause 5.1, "In a given scheduled cell, the UE is not expected to receive a first PDSCH in slot i,
+    // with the corresponding HARQ-ACK assigned to be transmitted in slot j, and a second PDSCH starting later than the
+    // first PDSCH with its corresponding HARQ-ACK assigned to be transmitted in a slot before slot j".
     if (k1_candidate < min_pdsch_to_ack_slot_distance) {
       continue;
     }
