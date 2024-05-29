@@ -22,9 +22,7 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
                                       const srs_cu_up::f1u_config&          config,
                                       const up_transport_layer_info&        ul_up_tnl_info,
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                      task_executor&                        ul_exec,
-                                      timer_factory                         ue_dl_timer_factory,
-                                      unique_timer&                         ue_inactivity_timer)
+                                      task_executor&                        ul_exec)
 {
   logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
   std::unique_lock<std::mutex> lock(map_mutex);

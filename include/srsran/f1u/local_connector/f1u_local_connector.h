@@ -181,9 +181,7 @@ public:
                                                              const srs_cu_up::f1u_config&          config,
                                                              const up_transport_layer_info&        ul_up_tnl_info,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                             task_executor&                        ul_exec,
-                                                             timer_factory                         ue_dl_timer_factory,
-                                                             unique_timer& ue_inactivity_timer) override;
+                                                             task_executor&                        ul_exec) override;
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                       const up_transport_layer_info& dl_up_tnl_info) override;

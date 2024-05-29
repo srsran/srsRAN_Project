@@ -8,7 +8,7 @@
  *
  */
 
-#include "../..//gateways/test_helpers.h"
+#include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_config.h"
@@ -129,10 +129,6 @@ protected:
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
 
-    timers = timer_factory{timer_mng, ue_worker};
-
-    ue_inactivity_timer = timers.create_timer();
-
     // prepare F1-U CU-UP bearer config
     f1u_cu_up_cfg.warn_on_drop = false;
   }
@@ -187,10 +183,7 @@ protected:
     udp_tester->handle_pdu(std::move(pdu), addr_storage);
   }
 
-  timer_manager                timer_mng;
   manual_task_worker           ue_worker{128};
-  timer_factory                timers;
-  unique_timer                 ue_inactivity_timer;
   std::unique_ptr<io_broker>   epoll_broker;
   manual_task_worker           io_tx_executor{128};
   std::unique_ptr<gtpu_demux>  demux;
@@ -229,7 +222,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -271,7 +264,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Send SDU

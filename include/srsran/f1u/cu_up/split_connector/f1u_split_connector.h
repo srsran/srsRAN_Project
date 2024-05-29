@@ -42,7 +42,7 @@ public:
 
   void disconnect() { handler = nullptr; }
 
-  srs_cu_up::ngu_tnl_pdu_session* handler;
+  srs_cu_up::ngu_tnl_pdu_session* handler = nullptr;
 };
 
 class gtpu_rx_f1u_adapter : public srsran::gtpu_tunnel_nru_rx_lower_layer_notifier
@@ -65,7 +65,7 @@ public:
 
   void disconnect() { handler = nullptr; }
 
-  f1u_cu_up_gateway_bearer_rx_notifier* handler;
+  f1u_cu_up_gateway_bearer_rx_notifier* handler = nullptr;
 };
 
 /// Adapter between Network Gateway (Data) and GTP-U demux
@@ -189,9 +189,7 @@ public:
                                                              const srs_cu_up::f1u_config&          config,
                                                              const up_transport_layer_info&        ul_up_tnl_info,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                             task_executor&                        ul_exec,
-                                                             timer_factory                         ue_dl_timer_factory,
-                                                             unique_timer& ue_inactivity_timer) override;
+                                                             task_executor&                        ul_exec) override;
 
   void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                       const up_transport_layer_info& dl_up_tnl_info) override;

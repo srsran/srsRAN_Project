@@ -77,10 +77,6 @@ protected:
     // create f1-u connector
     f1u_conn = std::make_unique<f1u_local_connector>();
 
-    timers = timer_factory{timer_mng, ue_worker};
-
-    ue_inactivity_timer = timers.create_timer();
-
     // prepare F1-U DU bearer config
     f1u_du_config.t_notify     = 10;
     f1u_du_config.warn_on_drop = true;
@@ -229,7 +225,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -261,7 +257,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -300,7 +296,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -342,7 +338,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -380,7 +376,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -423,7 +419,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx1;
