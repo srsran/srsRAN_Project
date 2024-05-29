@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../support/pusch/pusch_td_resource_indices.h"
 #include "ue.h"
 
 namespace srsran {
@@ -235,7 +236,15 @@ private:
         continue;
       }
 
+      // Generate list of valid PUSCH Time Domain Resource indices.
+      const auto pusch_td_res_indices =
+          get_pusch_td_resource_indices(ue_cc->cfg().cell_cfg_common, *current.ss_it, pdcch_slot);
+
       for (; current.time_res < (*current.ss_it)->pusch_time_domain_list.size(); ++current.time_res) {
+        if (std::find(pusch_td_res_indices.begin(), pusch_td_res_indices.end(), current.time_res) ==
+            pusch_td_res_indices.end()) {
+          continue;
+        }
         if (is_candidate_valid(current)) {
           // Valid candidate found.
           return;
