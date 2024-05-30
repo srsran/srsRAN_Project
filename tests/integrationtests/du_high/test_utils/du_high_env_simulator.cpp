@@ -139,6 +139,7 @@ static void init_loggers()
   srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("DU-F1-U").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -409,10 +410,13 @@ bool du_high_env_simulator::force_ue_fallback(rnti_t rnti)
 
 void du_high_env_simulator::run_slot()
 {
+  // Dispatch a slot indication to all cells in the L2.
   for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
-    // Signal slot indication to l2.
     du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
+  }
 
+  // Wait for all cell results for the provided slot indication.
+  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).
     const unsigned MAX_COUNT = 100000;
