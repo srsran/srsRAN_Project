@@ -511,10 +511,23 @@ viavi:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     RETINA_ARGS: "gnb.all.metrics_enable=True gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "30G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "30G"
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "fading and 32UE",
+            "fading and 1UE",
+            "ideal and 32UE",
+            "ideal and 1UE",
+            "birth-death and 32UE",
+            "birth-death and 1UE",
+          ]
 
 viavi-debug:
   stage: rf
