@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/build_info/build_info.h"
@@ -16,7 +17,7 @@
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/version/version.h"
 
-#include "srsran/f1u/du/split_connector/f1u_split_connector.h"
+#include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 
 #include "srsran/support/io/io_broker_factory.h"
@@ -267,8 +268,8 @@ int main(int argc, char** argv)
       du_f1u_gw_config,
       *epoll_broker,
       workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
-  std::unique_ptr<srs_du::f1u_split_connector> du_f1u_conn =
-      std::make_unique<srs_du::f1u_split_connector>(du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_dlt_pcaps.f1u);
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
+      srs_du::create_split_f1u_gw({du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_dlt_pcaps.f1u, GTPU_PORT});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =

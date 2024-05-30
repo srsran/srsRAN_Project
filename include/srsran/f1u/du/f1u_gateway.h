@@ -61,4 +61,19 @@ public:
   virtual expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) = 0;
 };
 
+/// This class will be used to provide the interfaces to
+/// the CU-UP to create and manage F1-U bearers.
+class f1u_du_udp_gateway : public f1u_du_gateway
+{
+public:
+  f1u_du_udp_gateway()                                     = default;
+  ~f1u_du_udp_gateway() override                           = default;
+  f1u_du_udp_gateway(const f1u_du_udp_gateway&)            = default;
+  f1u_du_udp_gateway& operator=(const f1u_du_udp_gateway&) = default;
+  f1u_du_udp_gateway(f1u_du_udp_gateway&&)                 = default;
+  f1u_du_udp_gateway& operator=(f1u_du_udp_gateway&&)      = default;
+
+  virtual std::optional<uint16_t> get_bind_port() = 0;
+};
+
 } // namespace srsran::srs_du
