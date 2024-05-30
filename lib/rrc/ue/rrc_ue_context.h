@@ -49,8 +49,8 @@ public:
   std::optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
   std::optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
   std::optional<rrc_ue_transfer_context> transfer_context; // Context of old UE when created through mobility.
-  bool                              reestablishment_ongoing = false;
-  srslog::basic_logger&             logger;
+  bool                                   reestablishment_ongoing = false;
+  srslog::basic_logger&                  logger;
 };
 
 } // namespace srs_cu_cp
