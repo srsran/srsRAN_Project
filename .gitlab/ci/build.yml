@@ -116,6 +116,8 @@ variables:
     ENABLE_WERROR: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
+    # TEST
+    CTEST_TIMEOUT: 0
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_CPU_REQUEST: 6
@@ -272,7 +274,10 @@ variables:
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
-        $CTEST_CMD && ret=0 || ret=1
+
+        status_file=$(mktemp)
+        timeout ${CTEST_TIMEOUT} bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" || exit 124
+        ret=$(cat ${status_file})
 
         if [[ $TEST_MODE = "coverage" ]]; then 
           common_options="-j${KUBERNETES_CPU_REQUEST} \
@@ -683,17 +688,19 @@ intermediate commits:
 valgrind changed tests:
   extends: .smoke valgrind
   stage: manual
+  allow_failure:
+    exit_codes: 124 # timeout command's exit code when the time is reached
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
-      allow_failure: true
-  timeout: 1h
+      allow_failure: true    
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
+    CTEST_TIMEOUT: 20m
     SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
@@ -820,11 +827,6 @@ smoke valgrind update cache:
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
-  variables:
-    SAVE_ARTIFACTS: "True" # Valgrind generates extra files
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
 
 smoke arm update cache:
   extends: .smoke arm
