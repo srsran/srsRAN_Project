@@ -119,6 +119,7 @@ bool cu_cp_test_environment::tick_until(std::chrono::milliseconds timeout, const
     }
 
     // Push to CU-CP worker task taht checks the state of the condition.
+    done = false;
     cu_cp_workers->worker.push_task_blocking([&]() {
       // Need to tick the clock.
       tick();
