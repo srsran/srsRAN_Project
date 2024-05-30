@@ -281,6 +281,18 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
     return false;
   }
 
+  unsigned max_ue_mcs = 28;
+  if (config.mcs_table == pdsch_mcs_table::qam256) {
+    max_ue_mcs = 27;
+  }
+
+  if (config.min_ue_mcs > max_ue_mcs) {
+    fmt::print("Invalid PDSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}).\n",
+               config.min_ue_mcs,
+               (config.mcs_table == pdsch_mcs_table::qam256) ? "qam256" : "qam64");
+    return false;
+  }
+
   if (not validate_rv_sequence(config.rv_sequence)) {
     return false;
   }
@@ -321,6 +333,18 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
                config.min_ue_mcs,
                config.max_ue_mcs);
+    return false;
+  }
+
+  unsigned max_ue_mcs = 28;
+  if (config.mcs_table == pusch_mcs_table::qam256) {
+    max_ue_mcs = 27;
+  }
+
+  if (config.min_ue_mcs > max_ue_mcs) {
+    fmt::print("Invalid PUSCH min_ue_mcs (i.e., {}) for the selected MCS table (i.e., {}).\n",
+               config.min_ue_mcs,
+               (config.mcs_table == pusch_mcs_table::qam256) ? "qam256" : "qam64");
     return false;
   }
 
