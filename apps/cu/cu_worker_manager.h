@@ -1,0 +1,87 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "apps/services/os_sched_affinity_manager.h"
+#include "cu_appconfig.h"
+#include "srsran/cu_up/cu_up_executor_pool.h"
+#include "srsran/support/executors/task_execution_manager.h"
+#include "srsran/support/executors/task_executor.h"
+
+namespace srsran {
+
+/// Manages the workers of the app.
+struct cu_worker_manager {
+  cu_worker_manager(const cu_appconfig& appcfg, unsigned gtpu_queue_size);
+
+  void stop();
+
+  /// cu-cp ctrl exec points to general ctrl_worker
+  /// cu-up ue exec points to the general ue_worker
+  ///
+  /// The handler side is responsible for executor dispatching:
+  /// - ngap::handle_message calls cu-cp ctrl exec
+  /// - f1ap_cu::handle_message calls cu-cp ctrl exec
+  /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
+  /// - e1ap_cu_up::handle_message calls cu-up ue exec
+
+  task_executor* cu_cp_exec       = nullptr;
+  task_executor* cu_up_ctrl_exec  = nullptr; ///< CU-UP executor for control
+  task_executor* cu_up_io_ul_exec = nullptr; ///< CU-UP executor for UL socket transmission
+  task_executor* cu_cp_e2_exec    = nullptr;
+  task_executor* cu_up_e2_exec    = nullptr;
+  task_executor* metrics_hub_exec = nullptr;
+
+  std::unique_ptr<srs_cu_up::cu_up_executor_pool> cu_up_exec_mapper;
+
+  // Gets the DU-low downlink executors.
+  void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
+
+  /// Get executor based on the name.
+  task_executor* find_executor(const std::string& name) const
+  {
+    auto it = exec_mng.executors().find(name);
+    return it != exec_mng.executors().end() ? it->second : nullptr;
+  }
+  task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
+
+private:
+  static const unsigned nof_cu_up_ue_strands = 16;
+
+  /// Manager of execution contexts and respective executors instantiated by the application.
+  task_execution_manager exec_mng;
+
+  os_sched_affinity_manager low_prio_affinity_mng;
+
+  /// CPU affinity bitmask manager per cell.
+  std::vector<os_sched_affinity_manager> affinity_mng;
+
+  /// Helper method to create workers with non zero priority.
+  void create_prio_worker(const std::string&                                    name,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
+                          const os_sched_affinity_bitmask&                      mask,
+                          os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
+
+  /// Helper method to create worker pool.
+  void create_worker_pool(const std::string&                                    name,
+                          unsigned                                              nof_workers,
+                          unsigned                                              queue_size,
+                          const std::vector<execution_config_helper::executor>& execs,
+                          os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
+                          span<const os_sched_affinity_bitmask> cpu_masks = {});
+
+  execution_config_helper::worker_pool create_low_prio_workers(const cu_appconfig& appcfg);
+  void                                 create_low_prio_executors(const cu_appconfig& appcfg, unsigned gtpu_queue_size);
+  void                                 associate_low_prio_executors();
+};
+
+} // namespace srsran

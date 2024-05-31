@@ -9,6 +9,7 @@
 add_executable(cu
         cu.cpp
 	cu_appconfig_cli11_schema.cpp
+	cu_worker_manager.cpp
         )
 
 install(TARGETS cu

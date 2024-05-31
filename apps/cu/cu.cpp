@@ -19,6 +19,7 @@
 #include "srsran/support/version/version.h"
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
+#include "apps/cu/cu_worker_manager.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
@@ -194,8 +195,8 @@ int main(int argc, char** argv)
   check_cpu_governor(cu_logger);
   check_drm_kms_polling(cu_logger);
 
-  // worker_manager workers{gnb_cfg, cu_up_config.gtpu_queue_size};
-  // TODO worker_manager
+  // Create worker manager.
+  cu_worker_manager workers{cu_cfg, cu_up_config.gtpu_queue_size};
 
   // Set layer-specific pcap options.
   // TODO pcaps
