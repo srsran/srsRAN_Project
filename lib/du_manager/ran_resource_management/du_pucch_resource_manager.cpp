@@ -288,6 +288,15 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         .report_slot_offset = csi_res_offset.value().second;
   }
 
+  // Update the PUCCH max payload.
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
+      pucch_format::FORMAT_1)] = 2U;
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
+      pucch_format::FORMAT_2)] =
+      get_pucch_format2_max_payload(user_defined_pucch_cfg.f2_params.max_nof_rbs,
+                                    user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
+                                    to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate));
+
   ++cells[0].ue_idx;
   return true;
 }

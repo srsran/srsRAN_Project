@@ -17,6 +17,7 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
@@ -644,6 +645,12 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     // TDD
     pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(*params.tdd_ul_dl_cfg_common, params.min_k1);
   }
+
+  // Compute the max UCI payload per format.
+  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = 2U;
+  const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
+  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
+      res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());

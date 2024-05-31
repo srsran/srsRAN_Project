@@ -43,7 +43,12 @@ enum class pucch_format_4_sf { sf2, sf4 };
 struct pucch_resources {
   prb_interval      prbs;
   ofdm_symbol_range symbols;
-  prb_interval      second_hop_prbs;
+  prb_interval      second_hop_prbs{0U, 0U};
+
+  bool operator==(const pucch_resources& rhs) const
+  {
+    return prbs != rhs.prbs && symbols == rhs.symbols && second_hop_prbs == rhs.second_hop_prbs;
+  }
 };
 
 /// Scheduler output for PUCCH Format 0.

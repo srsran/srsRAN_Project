@@ -25,7 +25,12 @@ enum class pucch_group_hopping {
 };
 
 /// \brief PUCCH Formats as described in TS38.213 Section 9.2.
-enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
+enum class pucch_format : uint8_t { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
+
+inline uint8_t pucch_format_to_uint(pucch_format format)
+{
+  return static_cast<uint8_t>(format);
+}
 
 /// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, refer to
 /// TS38.213, Section 9.2.6.
