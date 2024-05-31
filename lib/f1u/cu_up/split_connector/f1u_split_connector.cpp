@@ -143,6 +143,24 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
                 "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
                 ul_up_tnl_info);
   cu_map.insert({ul_up_tnl_info, cu_bearer.get()});
+
+  // create GTP-U tunnel rx
+  gtpu_tunnel_nru_rx_creation_message msg{};
+  msg.ue_index          = int_to_ue_index(ue_index);
+  msg.rx_cfg.local_teid = ul_up_tnl_info.gtp_teid;
+  msg.rx_lower          = cu_bearer->gtpu_to_f1u_adapter.get();
+
+  std::unique_ptr<gtpu_tunnel_common_rx_upper_layer_interface> tunnel_rx = srsran::create_gtpu_tunnel_nru_rx(msg);
+
+  // attach it to the F1-U bearer
+  cu_bearer->attach_tunnel_rx(std::move(tunnel_rx));
+
+  // attach tunnel rx to DEMUX
+  if (!demux->add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
+    logger_cu.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
+    // continue here; but the new tunnel won't be able to rx any data because the TEID was already registered at demux
+  }
+
   return cu_bearer;
 }
 
@@ -162,27 +180,20 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
     cu_bearer = cu_map.at(ul_up_tnl_info);
   }
 
-  // create GTP-U tunnel
-  // TODO create RX earlier
-  gtpu_tunnel_nru_creation_message msg{};
-  msg.ue_index                            = int_to_ue_index(cu_bearer->ue_index);
-  msg.cfg.rx.local_teid                   = ul_up_tnl_info.gtp_teid;
-  msg.cfg.tx.peer_teid                    = dl_up_tnl_info.gtp_teid;
-  msg.cfg.tx.peer_addr                    = dl_up_tnl_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                    = peer_port;
-  msg.gtpu_pcap                           = &gtpu_pcap;
-  msg.tx_upper                            = cu_bearer->gtpu_to_network_adapter.get();
-  msg.rx_lower                            = cu_bearer->gtpu_to_f1u_adapter.get();
-  std::unique_ptr<gtpu_tunnel_nru> tunnel = srsran::create_gtpu_tunnel_nru(msg);
+  // create GTP-U tunnel tx
+  gtpu_tunnel_nru_tx_creation_message msg{};
+  msg.ue_index         = int_to_ue_index(cu_bearer->ue_index);
+  msg.tx_cfg.peer_teid = dl_up_tnl_info.gtp_teid;
+  msg.tx_cfg.peer_addr = dl_up_tnl_info.tp_address.to_string();
+  msg.tx_cfg.peer_port = peer_port;
+  msg.gtpu_pcap        = &gtpu_pcap;
+  msg.tx_upper         = cu_bearer->gtpu_to_network_adapter.get();
+
+  std::unique_ptr<gtpu_tunnel_nru_tx_lower_layer_interface> tunnel_tx = srsran::create_gtpu_tunnel_nru_tx(msg);
 
   // attach it to the F1-U bearer
-  cu_bearer->attach_tunnel(std::move(tunnel));
+  cu_bearer->attach_tunnel_tx(std::move(tunnel_tx));
 
-  // attach RX to DEMUX
-  if (!demux->add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
-    logger_cu.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
-    return;
-  }
   logger_cu.info(
       "Connected CU bearer to DU bearer. UL GTP Tunnel={}, DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
 }

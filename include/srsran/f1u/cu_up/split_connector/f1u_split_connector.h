@@ -53,33 +53,39 @@ public:
 
   void on_new_pdu(nru_dl_message msg) override
   {
-    if (tunnel == nullptr) {
+    if (tunnel_tx == nullptr) {
       logger.log_debug("DL GTPU tunnel not connected. Discarding SDU.");
       return;
     }
-    tunnel->get_tx_lower_layer_interface()->handle_sdu(std::move(msg));
+    tunnel_tx->handle_sdu(std::move(msg));
   }
 
-  void attach_tunnel(std::unique_ptr<gtpu_tunnel_nru> tunnel_) { tunnel = std::move(tunnel_); }
+  void attach_tunnel_rx(std::unique_ptr<gtpu_tunnel_common_rx_upper_layer_interface> tunnel_rx_)
+  {
+    tunnel_rx = std::move(tunnel_rx_);
+  }
+
+  void attach_tunnel_tx(std::unique_ptr<gtpu_tunnel_nru_tx_lower_layer_interface> tunnel_tx_)
+  {
+    tunnel_tx = std::move(tunnel_tx_);
+  }
 
   std::unique_ptr<gtpu_tx_udp_gw_adapter> gtpu_to_network_adapter;
   std::unique_ptr<gtpu_rx_f1u_adapter>    gtpu_to_f1u_adapter;
 
-  gtpu_tunnel_common_rx_upper_layer_interface* get_tunnel_rx_interface()
-  {
-    return tunnel->get_rx_upper_layer_interface();
-  }
+  gtpu_tunnel_common_rx_upper_layer_interface* get_tunnel_rx_interface() { return tunnel_rx.get(); }
 
   /// Holds the RX executor associated with the F1-U bearer.
   task_executor& ul_exec;
   uint32_t       ue_index;
 
 private:
-  bool                                stopped = false;
-  srs_cu_up::f1u_bearer_logger        logger;
-  srs_cu_up::f1u_bearer_disconnector& disconnector;
-  up_transport_layer_info             ul_tnl_info;
-  std::unique_ptr<gtpu_tunnel_nru>    tunnel;
+  bool                                                         stopped = false;
+  srs_cu_up::f1u_bearer_logger                                 logger;
+  srs_cu_up::f1u_bearer_disconnector&                          disconnector;
+  up_transport_layer_info                                      ul_tnl_info;
+  std::unique_ptr<gtpu_tunnel_common_rx_upper_layer_interface> tunnel_rx;
+  std::unique_ptr<gtpu_tunnel_nru_tx_lower_layer_interface>    tunnel_tx;
 
 public:
   /// Holds notifier that will point to NR-U bearer on the UL path

@@ -332,8 +332,13 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_without_dl_teid_attached)
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu = cu_rx.get_rx_pdu_blocking(ue_worker);
-  // No UL PDU expected, because current implementation creates+registers UL path later on attach of DL TEID...
-  ASSERT_TRUE(rx_sdu.is_error());
+  ASSERT_FALSE(rx_sdu.is_error());
+  ASSERT_TRUE(rx_sdu.value().t_pdu.has_value());
+
+  expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
+  ASSERT_FALSE(exp_buf.is_error());
+  ASSERT_EQ(rx_sdu.value().t_pdu->length(), exp_buf.value().length());
+  ASSERT_EQ(rx_sdu.value().t_pdu.value(), exp_buf.value());
 }
 
 TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
