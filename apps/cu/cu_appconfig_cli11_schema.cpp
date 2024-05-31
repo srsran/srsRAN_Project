@@ -10,10 +10,12 @@
 
 #include "cu_appconfig_cli11_schema.h"
 #include "cu_appconfig.h"
+#include "srsran/support/cli11_utils.h"
 #include "CLI/CLI11.hpp"
 
 using namespace srsran;
 
+// TODO this is common between DU and CU.
 static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
 {
   auto level_check = [](const std::string& value) -> std::string {
@@ -81,6 +83,25 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   });
 }
 
+// TODO this is common between DU and CU.
+static void configure_cli11_cu_cp_pcap_args(CLI::App& app, cu_cp_pcap_appconfig& pcap_params)
+{
+  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "NGAP PCAP file output path")->capture_default_str();
+  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable NGAP packet capture")->always_capture_default();
+  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
+  add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
+  add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
+}
+
+static void configure_cli11_cu_up_pcap_args(CLI::App& app, cu_up_pcap_appconfig& pcap_params)
+{
+  add_option(app, "--gtpu_filename", pcap_params.gtpu.filename, "GTP-U PCAP file output path")->capture_default_str();
+  add_option(app, "--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
+}
+
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_parsed_cfg)
 {
   cu_appconfig& cu_cfg = cu_parsed_cfg;
@@ -88,4 +109,9 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
   // Logging section.
   CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, cu_cfg.log_cfg);
+
+  // PCAP section.
+  CLI::App* pcap_subcmd = app.add_subcommand("pcap", "PCAP configuration")->configurable();
+  configure_cli11_cu_up_pcap_args(*pcap_subcmd, cu_cfg.cu_up_pcap_cfg);
+  configure_cli11_cu_cp_pcap_args(*pcap_subcmd, cu_cfg.cu_cp_pcap_cfg);
 }
