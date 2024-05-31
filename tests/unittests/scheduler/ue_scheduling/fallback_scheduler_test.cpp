@@ -905,11 +905,11 @@ protected:
     void ack_harq_process(slot_point sl)
     {
       // Ack the HARQ processes that are waiting for ACK, otherwise the scheduler runs out of empty HARQs.
-      const unsigned            bit_index_1_harq_only = 0U;
-      static constexpr unsigned tb_idx                = 0U;
+      const unsigned   bit_index_1_harq_only = 0U;
       dl_harq_process* dl_harq = test_ue.get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl, bit_index_1_harq_only);
       if (dl_harq != nullptr) {
         srsran_assert(dl_harq->id == ongoing_h_id, "HARQ process mismatch");
+        static constexpr unsigned tb_idx = 0U;
         dl_harq->ack_info(tb_idx, ack_outcome ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack, {});
       }
     }

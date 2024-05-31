@@ -256,13 +256,13 @@ bool ue_fallback_scheduler::schedule_dl_conres_new_tx(cell_resource_allocator& r
       continue;
     }
 
-    auto&                               u                  = ues[next_ue->ue_index];
-    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
+    auto& u = ues[next_ue->ue_index];
     if (not u.is_conres_ce_pending()) {
       ++next_ue;
       continue;
     }
 
+    std::optional<most_recent_tx_slots> most_recent_tx_ack = get_most_recent_slot_tx(u.ue_index);
     dl_sched_outcome outcome = schedule_dl_srb(res_alloc, u, nullptr, most_recent_tx_ack, next_ue->is_srb0);
     if (outcome == dl_sched_outcome::success) {
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
@@ -416,12 +416,9 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
   // is scheduled for an earlier slot than the PDSCH of the first part of the SRB1.
   // NOTE: The \c most_recent_tx_slot is not necessarily more recent than sched_ref_slot; hence we need to check that
   // most_recent_tx_ack_slots.value().most_recent_tx_slot >= sched_ref_slot.
-  // NOTE: The \c most_recent_tx_slot + 1 slot is considered as starting slot because we don't want to schedule DCI
-  // scrambled by C-RNTI for sending Msg4 be scheduled in the same slot as DCI scrambled by TC-RNTI for sending ConRes
-  // CE for a UE since UE has yet to set C-RNTI as TC-RNTI as per TS 38.321, 5.1.5.
   slot_point starting_slot =
-      most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().most_recent_tx_slot >= sched_ref_slot
-          ? most_recent_tx_ack_slots.value().most_recent_tx_slot + 1
+      most_recent_tx_ack_slots.has_value() and most_recent_tx_ack_slots.value().most_recent_tx_slot > sched_ref_slot
+          ? most_recent_tx_ack_slots.value().most_recent_tx_slot
           : sched_ref_slot;
 
   for (slot_point next_slot = starting_slot; next_slot <= sched_ref_slot + max_dl_slots_ahead_sched;
@@ -455,7 +452,8 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
     srsran_sanity_check(pdsch_td_cfg.k0 == 0, "Fallback scheduler only supports k0=0");
 
     // We do not support multiplexing of PDSCH for SRB0 and SRB1 when in fallback with CSI-RS.
-    const bool is_csi_rs_slot = csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot);
+    const bool is_csi_rs_slot = next_slot == sched_ref_slot ? not pdsch_alloc.result.dl.csi_rs.empty()
+                                                            : csi_helper::is_csi_rs_slot(cell_cfg, pdsch_alloc.slot);
     if (is_csi_rs_slot) {
       continue;
     }
@@ -589,7 +587,7 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
       return {};
     }
 
-    // Try to find least MCS to fit SRB0 message.
+    // Try to find least MCS to fit ConRes CE.
     while (mcs_idx <= expert_cfg.max_msg4_mcs) {
       // As per TS 38.214, clause 5.1.3.1, if the PDSCH is scheduled by a PDCCH with CRC scrambled by TC-RNTI, the UE
       // use "Table 5.1.3.1-1: MCS index table 1" for MCS mapping. This is not stated explicitly, but can be inferred
@@ -752,7 +750,11 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     prbs_tbs.nof_prbs  = h_dl->last_alloc_params().rbs.type1().length();
     prbs_tbs.tbs_bytes = h_dl->last_alloc_params().tb[0].value().tbs_bytes;
   } else {
-    sch_prbs_tbs            only_conres_prbs_tbs{};
+    // Required PRBs and TBS information for scheduling only ConRes CE in case PDSCH does not have enough space to
+    // accommodate ConRes CE + SRB0.
+    sch_prbs_tbs only_conres_prbs_tbs{};
+    // MCS index to use for scheduling only ConRes CE in case PDSCH does not have enough space to accommodate ConRes CE
+    // + SRB0.
     optional<sch_mcs_index> only_conres_mcs_idx;
 
     // Fetch the pending bytes.
@@ -787,7 +789,10 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
                                                          pdsch_cfg.nof_oh_prb,
                                                          mcs_config,
                                                          pdsch_cfg.nof_layers});
-      if (not only_conres_mcs_idx.has_value()) {
+      // If MCS index to use to schedule only ConRes CE is not set compute required PRBs and TBS information.
+      // NOTE: The \c only_conres_prbs_tbs and \c only_conres_mcs_idx is used in case PDSCH does not have enough space
+      // to accommodate ConRes CE + SRB0.
+      if (u.is_conres_ce_pending() and not only_conres_mcs_idx.has_value()) {
         only_conres_prbs_tbs =
             get_nof_prbs(prbs_calculator_sch_config{only_conres_pending_bytes,
                                                     static_cast<unsigned>(pdsch_cfg.symbols.length()),
@@ -809,9 +814,8 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
 
     // Check whether SRB0 can be scheduled along with ConRes CE or not.
-    if (u.is_conres_ce_pending() and
-        (prbs_tbs.tbs_bytes < pending_bytes or mcs_idx > expert_cfg.max_msg4_mcs or
-         prbs_tbs.tbs_bytes < pending_bytes or ue_grant_crbs.length() < prbs_tbs.nof_prbs)) {
+    if (u.is_conres_ce_pending() and (prbs_tbs.tbs_bytes < pending_bytes or mcs_idx > expert_cfg.max_msg4_mcs or
+                                      ue_grant_crbs.length() < prbs_tbs.nof_prbs)) {
       // Schedule only ConRes CE.
       result.is_srb_data_pending = true;
       prbs_tbs                   = only_conres_prbs_tbs;
@@ -1025,6 +1029,18 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
           "ue={} rnti={}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.", u.ue_index, u.crnti);
       return {};
     }
+
+    // If ConRes CE is pending then ensure that there is enough RBs/TBS such that ConRes CE is not segmented.
+    if (u.is_conres_ce_pending()) {
+      const unsigned only_conres_ce_pending_bytes = u.pending_conres_ce_bytes();
+      grant_prbs_mcs only_conres_mcs_prbs_estimate =
+          ue_pcell.required_dl_prbs(pdsch_td_cfg, only_conres_ce_pending_bytes, dci_dl_rnti_config_type::tc_rnti_f1_0);
+      if ((mcs_prbs_estimate.n_prbs < only_conres_mcs_prbs_estimate.n_prbs) or
+          (mcs_tbs->tbs < (only_conres_ce_pending_bytes + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE))) {
+        return {};
+      }
+    }
+
     final_mcs_tbs = mcs_tbs.value();
   }
 
@@ -1746,8 +1762,6 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
     // For SRB1, due to segmentation and to pre-allocation, the scheduler might not be able to estimate precisely when
     // the UE has received the SRB1 full buffer; we assume the UE has received the full SRB1 buffer data if UE exits
     // fallback mode. This is not needed for SRB0, which doesn't allow segmentation.
-    // NOTE: There is a drawback to this, which is false positive detection of CSI or SRs. This can stop the scheduling
-    // even before it has completed the SRB1 allocation.
     if ((it_ue_harq->is_srb0.has_value() and not it_ue_harq->is_srb0.value()) and
         (not ues[it_ue_harq->ue_index].get_pcell().is_in_fallback_mode())) {
       const unsigned tb_index = 0U;
