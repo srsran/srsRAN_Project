@@ -410,13 +410,10 @@ bool du_high_env_simulator::force_ue_fallback(rnti_t rnti)
 
 void du_high_env_simulator::run_slot()
 {
-  // Dispatch a slot indication to all cells in the L2.
   for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
+    // Dispatch a slot indication to each cell in the L2.
     du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
-  }
 
-  // Wait for all cell results for the provided slot indication.
-  for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).
     const unsigned MAX_COUNT = 100000;
