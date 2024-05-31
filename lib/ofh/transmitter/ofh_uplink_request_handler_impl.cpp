@@ -82,7 +82,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
         static_cast<double>(SUBFRAME_DURATION_MSEC) /
         static_cast<double>(get_nof_slots_per_subframe(context.pusch_scs) * nof_symbols_per_slot);
 
-    double   len_msecs   = (preamble_info.cp_length.to_seconds() + preamble_info.symbol_length.to_seconds()) * 1000;
+    double   len_msecs   = (preamble_info.cp_length.to_seconds() + preamble_info.symbol_length().to_seconds()) * 1000;
     unsigned nof_symbols = std::ceil(len_msecs / symbol_duration_msec);
 
     unsigned prach_length_slots =
