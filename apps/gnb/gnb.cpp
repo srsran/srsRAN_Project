@@ -259,7 +259,7 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
-  worker_manager workers{gnb_cfg, du_unit_cfg, cu_up_config.gtpu_queue_size};
+  worker_manager workers{du_unit_cfg, gnb_cfg.expert_execution_cfg, gnb_cfg.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;

@@ -42,10 +42,11 @@ build_affinity_manager_dependencies(const du_high_unit_cpu_affinities_cell_confi
   return out;
 }
 
-worker_manager::worker_manager(const gnb_appconfig&          appcfg,
-                               const dynamic_du_unit_config& du_cfg,
-                               unsigned                      gtpu_queue_size) :
-  low_prio_affinity_mng({appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg})
+worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
+                               const expert_execution_appconfig& expert_appcfg,
+                               pcap_appconfig&                   pcap_cfg,
+                               unsigned                          gtpu_queue_size) :
+  low_prio_affinity_mng({expert_appcfg.affinities.low_priority_cpu_cfg})
 {
   const unsigned nof_cells = du_cfg.du_high_cfg.config.expert_execution_cfg.cell_affinities.size();
   for (unsigned i = 0, e = nof_cells; i != e; ++i) {
@@ -67,8 +68,11 @@ worker_manager::worker_manager(const gnb_appconfig&          appcfg,
                                             ru));
   }
 
-  create_low_prio_executors(
-      appcfg, du_cfg.du_high_cfg.config.pcaps, du_cfg.du_high_cfg.config.cells_cfg.size(), gtpu_queue_size);
+  create_low_prio_executors(expert_appcfg,
+                            pcap_cfg,
+                            du_cfg.du_high_cfg.config.pcaps,
+                            du_cfg.du_high_cfg.config.cells_cfg.size(),
+                            gtpu_queue_size);
   associate_low_prio_executors();
 
   // Determine whether the gnb app is running in realtime or in simulated environment.
@@ -273,33 +277,35 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
                           nof_cells);
 }
 
-execution_config_helper::worker_pool worker_manager::create_low_prio_workers(const gnb_appconfig& appcfg)
+execution_config_helper::worker_pool
+worker_manager::create_low_prio_workers(const expert_execution_appconfig& expert_appcfg)
 {
   using namespace execution_config_helper;
 
   // Configure non-RT worker pool.
   worker_pool non_rt_pool{
       "non_rt_pool",
-      appcfg.expert_execution_cfg.threads.non_rt_threads.nof_non_rt_threads,
+      expert_appcfg.threads.non_rt_threads.nof_non_rt_threads,
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}, // two task priority levels.
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
       // Left empty, is filled later.
       {},
       std::chrono::microseconds{100},
       os_thread_realtime_priority::no_realtime(),
-      std::vector<os_sched_affinity_bitmask>{appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask}};
+      std::vector<os_sched_affinity_bitmask>{expert_appcfg.affinities.low_priority_cpu_cfg.mask}};
 
   return non_rt_pool;
 }
 
-void worker_manager::create_low_prio_executors(const gnb_appconfig&            appcfg,
-                                               const du_high_unit_pcap_config& du_pcaps,
-                                               unsigned                        nof_cells,
-                                               unsigned                        gtpu_queue_size)
+void worker_manager::create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
+                                               const pcap_appconfig&             pcap_cfg,
+                                               const du_high_unit_pcap_config&   du_pcaps,
+                                               unsigned                          nof_cells,
+                                               unsigned                          gtpu_queue_size)
 {
   using namespace execution_config_helper;
   // TODO: split executor creation and association to workers
-  worker_pool non_rt_pool = create_low_prio_workers(appcfg);
+  worker_pool non_rt_pool = create_low_prio_workers(expert_appcfg);
 
   // Associate executors to the worker pool.
   // Used for PCAP writing.
@@ -317,7 +323,7 @@ void worker_manager::create_low_prio_executors(const gnb_appconfig&            a
   std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  append_pcap_strands(low_prio_strands, appcfg.pcap_cfg, du_pcaps);
+  append_pcap_strands(low_prio_strands, pcap_cfg, du_pcaps);
 
   // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
   // support two priority levels, the highest being for timer management.

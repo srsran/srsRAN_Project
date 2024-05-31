@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../du/du_appconfig.h"
 #include "../gnb/gnb_appconfig.h"
 #include "../units/flexible_du/split_dynamic/dynamic_du_unit_config.h"
 #include "os_sched_affinity_manager.h"
@@ -24,7 +25,10 @@ namespace srsran {
 
 /// Manages the workers of the app.
 struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg, const dynamic_du_unit_config& du_cfg, unsigned gtpu_queue_size);
+  worker_manager(const dynamic_du_unit_config&     du_cfg,
+                 const expert_execution_appconfig& expert_appcfg,
+                 pcap_appconfig&                   pcap_cfg,
+                 unsigned                          gtpu_queue_size);
 
   void stop();
 
@@ -111,11 +115,12 @@ private:
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
-  execution_config_helper::worker_pool create_low_prio_workers(const gnb_appconfig& appcfg);
-  void                                 create_low_prio_executors(const gnb_appconfig&            appcfg,
-                                                                 const du_high_unit_pcap_config& du_pcaps,
-                                                                 unsigned                        nof_cells,
-                                                                 unsigned                        gtpu_queue_size);
+  execution_config_helper::worker_pool create_low_prio_workers(const expert_execution_appconfig& expert_appcfg);
+  void                                 create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
+                                                                 const pcap_appconfig&             pcap_cfg,
+                                                                 const du_high_unit_pcap_config&   du_pcaps,
+                                                                 unsigned                          nof_cells,
+                                                                 unsigned                          gtpu_queue_size);
   void                                 associate_low_prio_executors();
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
