@@ -107,17 +107,22 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   }
   unsigned cp_length = preamble_info.cp_length.to_samples(ref_srate_Hz);
 
-  // Determine the last symbol that starts right at or before the PRACH preamble (after the cyclic prefix).
+  // Determine startSymbolId as the last symbol that starts right at or before the PRACH preamble (after the cyclic
+  // prefix). According to O-RAN.WG4.CUS.0.R003 section 4.4.3 if the SCS value provided by "frameStructure" is less than
+  // 15 kHz (e.g. for long preamble PRACH formats), then the symbol timing used to determine startSymbolId is based on
+  // the numerology of 15 kHz SCS.
+  subcarrier_spacing scs = is_short_preamble(context.format) ? static_cast<subcarrier_spacing>(preamble_info.scs)
+                                                             : subcarrier_spacing::kHz15;
+
   unsigned pusch_symbol_duration =
-      phy_time_unit::from_units_of_kappa((144U + 2048U) >> to_numerology_value(context.pusch_scs))
-          .to_samples(ref_srate_Hz);
+      phy_time_unit::from_units_of_kappa((144U + 2048U) >> to_numerology_value(scs)).to_samples(ref_srate_Hz);
   unsigned prach_start_symbol = context.start_symbol + (cp_length / pusch_symbol_duration);
 
   unsigned K = (1000 * scs_to_khz(context.pusch_scs)) / ra_scs_to_Hz(preamble_info.scs);
 
   data_flow_cplane_scheduling_prach_context cp_prach_context;
   cp_prach_context.slot            = context.slot;
-  cp_prach_context.nof_repetitions = get_preamble_duration(context.format);
+  cp_prach_context.nof_repetitions = preamble_info.nof_symbols;
   cp_prach_context.start_symbol    = prach_start_symbol;
   cp_prach_context.prach_scs       = preamble_info.scs;
   cp_prach_context.scs             = context.pusch_scs;
