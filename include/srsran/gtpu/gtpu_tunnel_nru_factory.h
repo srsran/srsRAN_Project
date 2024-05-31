@@ -30,7 +30,28 @@ struct gtpu_tunnel_nru_creation_message {
   gtpu_tunnel_common_tx_upper_layer_notifier* tx_upper;
 };
 
-/// Creates an instance of a GTP-U entity.
+/// Creates an instance of a GTP-U entity at DU.
 std::unique_ptr<gtpu_tunnel_nru> create_gtpu_tunnel_nru(gtpu_tunnel_nru_creation_message& msg);
+
+struct gtpu_tunnel_nru_rx_creation_message {
+  srs_cu_up::ue_index_t                             ue_index;
+  gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config rx_cfg;
+  gtpu_tunnel_nru_rx_lower_layer_notifier*          rx_lower;
+};
+
+/// Create an instance of a GTP-U Rx entity at CU-UP.
+std::unique_ptr<gtpu_tunnel_common_rx_upper_layer_interface>
+create_gtpu_tunnel_nru_rx(gtpu_tunnel_nru_rx_creation_message& msg);
+
+struct gtpu_tunnel_nru_tx_creation_message {
+  srs_cu_up::ue_index_t                             ue_index;
+  gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config tx_cfg;
+  dlt_pcap*                                         gtpu_pcap;
+  gtpu_tunnel_common_tx_upper_layer_notifier*       tx_upper;
+};
+
+/// Create an instance of a GTP-U Tx entity at CU-UP.
+std::unique_ptr<gtpu_tunnel_nru_tx_lower_layer_interface>
+create_gtpu_tunnel_nru_tx(gtpu_tunnel_nru_tx_creation_message& msg);
 
 } // namespace srsran
