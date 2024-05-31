@@ -389,13 +389,6 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
 
   const bool is_retx = h_dl_retx != nullptr;
 
-  fmt::memory_buffer fmtbuf;
-  if (not is_srb0.has_value()) {
-    fmt::format_to(fmtbuf, "Failed to allocate PDSCH for ConRes CE");
-  } else {
-    fmt::format_to(fmtbuf, "Failed to allocate PDSCH for {}", is_srb0.value() ? "SRB0" : "SRB1");
-  }
-
   // \ref sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
   // slot_indication().
   // NOTE: we guarantee that \ref sched_ref_slot is a DL slot in the caller.
@@ -462,7 +455,9 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
     if (pdcch_alloc.result.dl.dl_pdcchs.full() or pdsch_alloc.result.dl.ue_grants.full()) {
       logger.debug("rnti={}: Failed to allocate PDSCH for {}. Cause: No space available in scheduler output list",
                    u.crnti,
-                   to_c_str(fmtbuf));
+                   not is_srb0.has_value() ? "ConRes CE"
+                   : *is_srb0              ? "SRB0 PDU"
+                                           : "SRB1 PDU");
       slots_with_no_pdxch_space[next_slot.to_uint() % FALLBACK_SCHED_RING_BUFFER_SIZE] = true;
       continue;
     }
@@ -525,7 +520,9 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&            res_a
   slot_point pdcch_slot = res_alloc[0].slot;
   logger.debug("rnti={}: Skipped {} allocation in slots:[{},{}). Cause: no PDCCH/PDSCH/PUCCH resources available",
                u.crnti,
-               to_c_str(fmtbuf),
+               not is_srb0.has_value() ? "ConRes CE"
+               : *is_srb0              ? "SRB0 PDU"
+                                       : "SRB1 PDU",
                pdcch_slot,
                pdcch_slot + max_dl_slots_ahead_sched + 1);
   return dl_sched_outcome::next_ue;
@@ -1037,6 +1034,10 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb1
           ue_pcell.required_dl_prbs(pdsch_td_cfg, only_conres_ce_pending_bytes, dci_dl_rnti_config_type::tc_rnti_f1_0);
       if ((mcs_prbs_estimate.n_prbs < only_conres_mcs_prbs_estimate.n_prbs) or
           (mcs_tbs->tbs < (only_conres_ce_pending_bytes + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE))) {
+        logger.debug("ue={} rnti={}: Postponed SRB1 PDU scheduling for slot={}. Cause: Grant is too small to fit even "
+                     "ConRes CE.",
+                     u.ue_index,
+                     u.crnti);
         return {};
       }
     }

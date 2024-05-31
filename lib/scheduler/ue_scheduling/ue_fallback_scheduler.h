@@ -68,20 +68,20 @@ private:
   /// fallback schedule should exit, true otherwise.
   /// \remark This function handles the following scenarios:
   ///     - Schedules ConRes CE only if ConRes indication is received from MAC but no buffer status update is received
-  ///       for SRB0/SRB1
+  ///       for SRB0/SRB1.
   bool schedule_dl_conres_new_tx(cell_resource_allocator& res_alloc);
 
   /// Helper that schedules new DL SRB0 tx. Returns false if the DL fallback schedule should exit, true otherwise.
   /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB0 only (not empty) if ConRes CE has already sent
-  ///     - Schedules SRB0 (not empty) + ConRes CE (if pending) if there is enough space in PDSCH resource grid
+  ///     - Schedules SRB0 only (not empty) if ConRes CE has already sent.
+  ///     - Schedules SRB0 (not empty) + ConRes CE (if pending) if there is enough space in PDSCH resource grid.
   ///     - Schedules ConRes CE only (if pending) if there is not enough space in PDSCH resource grid to fit SRB0 (not
-  ///       empty) + ConRes CE
+  ///       empty) + ConRes CE.
   bool schedule_dl_new_tx_srb0(cell_resource_allocator& res_alloc);
 
   /// Helper that schedules new DL SRB1 tx.
   /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB1 (not empty) + ConRes CE (if pending)
+  ///     - Schedules SRB1 (not empty) + ConRes CE (if pending).
   void schedule_dl_new_tx_srb1(cell_resource_allocator& res_alloc);
 
   /// Size of the ring buffer used to store the slots where the scheduler has found no PDCCH/PDSCH resources.
@@ -127,7 +127,7 @@ private:
   /// \brief Tries to schedule DL ConRes CE for a UE and for a specific PDSCH slot.
   /// \remark This function handles the following scenarios:
   ///     - Schedules ConRes CE only if ConRes indication is received from MAC but no buffer status update is received
-  ///       for SRB0/SRB1
+  ///       for SRB0/SRB1.
   sched_srb_results schedule_dl_conres_ce(ue&                      u,
                                           cell_resource_allocator& res_alloc,
                                           unsigned                 pdsch_time_res,
@@ -137,10 +137,10 @@ private:
 
   /// \brief Tries to schedule DL SRB0 message for a UE and for a specific PDSCH slot.
   /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB0 only (not empty) if ConRes CE has already sent
-  ///     - Schedules SRB0 (not empty) + ConRes CE (if pending) if there is enough space in PDSCH resource grid
+  ///     - Schedules SRB0 only (not empty) if ConRes CE has already sent.
+  ///     - Schedules SRB0 (not empty) + ConRes CE (if pending) if there is enough space in PDSCH resource grid.
   ///     - Schedules ConRes CE only (if pending) if there is not enough space in PDSCH resource grid to fit SRB0 (not
-  ///       empty) + ConRes CE
+  ///       empty) + ConRes CE.
   sched_srb_results schedule_dl_srb0(ue&                      u,
                                      cell_resource_allocator& res_alloc,
                                      unsigned                 pdsch_time_res,
@@ -150,7 +150,7 @@ private:
 
   /// \brief Tries to schedule DL SRB1 message for a UE and for a specific PDSCH slot.
   /// \remark This function handles the following scenarios:
-  ///     - Schedules SRB1 (not empty) + ConRes CE (if pending)
+  ///     - Schedules SRB1 (not empty) + ConRes CE (if pending).
   sched_srb_results schedule_dl_srb1(ue&                      u,
                                      slot_point               sched_ref_slot,
                                      cell_resource_allocator& res_alloc,
