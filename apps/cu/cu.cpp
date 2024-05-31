@@ -8,6 +8,12 @@
  *
  */
 
+#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
+#include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
+#include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/build_info/build_info.h"
@@ -19,6 +25,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/sysinfo.h"
+#include "srsran/support/timers.h"
 #include "srsran/support/version/version.h"
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
@@ -221,18 +228,32 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  // TODO F1-U and F1-C connectors
+  // Create F1-C GW (TODO pass actual arguments for F1AP IPs)
+  f1c_local_sctp_connector_config      f1c_conn_cfg({*ngap_p, *epoll_broker});
+  std::unique_ptr<f1c_local_connector> cu_f1c_conn = srsran::create_f1c_local_connector(f1c_conn_cfg);
 
-  // Create manager of timers for
-  // CU-CP and CU-UP, which will be
-  // driven by the system timer slot
-  // ticks.
-  // TODO timer_manager
+  // Create F1-U GW (TODO factory and cleanup).
+  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
+  cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_pcaps[1].get(); // FIXME use right enum
+  std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
+  udp_network_gateway_config  cu_f1u_gw_config  = {};
+  cu_f1u_gw_config.bind_address                 = "127.0.2.1";
+  cu_f1u_gw_config.bind_port                    = GTPU_PORT;
+  cu_f1u_gw_config.reuse_addr                   = true;
+  std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
+      srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
+  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn =
+      std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[1].get());
 
-  // Set up the JSON log channel
-  // used by metrics.
-  // TODO metrics. Do we have any
-  // CU-CP or CU-UP metrics?
+  // Create manager of timers for CU-CP and CU-UP, which will be
+  // driven by the system timer slot ticks.
+  // TODO revisit how to use the system timer timer source.
+  timer_manager app_timers{256};
+  // timer_manager* cu_timers = &app_timers;
+
+  // Set up the JSON log channel used by metrics.
+  // TODO metrics. Do we have any CU-CP or CU-UP JSON metrics?
 
   // Create NGAP Gateway.
   // TODO create NGAP gateway

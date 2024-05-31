@@ -22,6 +22,8 @@ target_link_libraries(cu
         srsran_build_info
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit
+        srsran_f1c_gateway
+        srsgnb_app_f1u_cu_up_split_connector
         srsran_pcap
         )
 
