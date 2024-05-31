@@ -8,6 +8,8 @@
  *
  */
 
+#include "srsran/cu_up/cu_up.h"
+#include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
 #include "srsran/gateways/udp_network_gateway.h"
@@ -37,9 +39,11 @@
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
 #include "apps/units/cu_cp/cu_cp_unit_logger_config.h"
+#include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/cu_up/cu_up_logger_registrator.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
+#include "apps/units/cu_up/cu_up_unit_config_translators.h"
 #include "apps/units/cu_up/cu_up_unit_config_validator.h"
 
 // TODO remove apps/gnb/*.h
@@ -48,6 +52,7 @@
 #include "apps/gnb/adapters/ngap_adapter.h"
 #include "apps/gnb/gnb_appconfig_translators.h"
 
+#include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -121,6 +126,16 @@ static void register_app_logs(const log_appconfig&            log_cfg,
   register_cu_cp_loggers(cu_cp_loggers);
   register_cu_up_loggers(cu_up_loggers);
 }
+
+// Temporary helper to create CU-UP.
+// TODO remove
+std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&           unit_cfg,
+                                                            cu_worker_manager&                 workers,
+                                                            srs_cu_up::e1ap_connection_client& e1ap_conn_client,
+                                                            f1u_cu_up_gateway&                 f1u_gateway,
+                                                            dlt_pcap&                          gtpu_pcap,
+                                                            timer_manager&                     timers,
+                                                            io_broker&                         io_brk);
 
 int main(int argc, char** argv)
 {
@@ -329,13 +344,28 @@ int main(int argc, char** argv)
   cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
-  // TODO
+  if (not cu_cp_obj->get_ng_handler().amf_is_connected()) {
+    report_error("CU-CP failed to connect to AMF");
+  }
 
   // Create and start CU-UP
-  // TODO cu_up
+  // TODO right now build_cu_up() depends on the worker_manager, but the worker manager
+  // depends on multiple configurations of the DU/RU. As such, temporarly we avoid the
+  // function and create things direclty here.
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
+                                                                          workers,
+                                                                          e1ap_gw,
+                                                                          *cu_f1u_conn->get_f1u_cu_up_gateway(),
+                                                                          *cu_up_pcaps[1].get(),
+                                                                          *cu_timers,
+                                                                          *epoll_broker);
+  cu_up_obj->start();
 
   // Move all the DLT PCAPs to a container.
-  // TODO
+  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
+  dlt_pcaps.push_back(std::move(f1ap_p));
+  dlt_pcaps.push_back(std::move(ngap_p));
+  dlt_pcaps.push_back(std::move(e2ap_p));
 
   // Start processing.
   // TODO console.on_app_running()
@@ -348,19 +378,27 @@ int main(int argc, char** argv)
   // TODO
 
   // Stop CU-UP activity.
-  // TODO
+  cu_up_obj->stop();
 
   // Stop CU-CP activity.
-  // TODO
+  cu_cp_obj->stop();
 
   // Close network connections
-  // TODO
+  cu_logger.info("Closing network connections...");
+  ngap_adapter->disconnect();
+  cu_logger.info("Network connections closed successfully");
 
   // Close PCAPs
-  // TODO
+  cu_logger.info("Closing PCAP files...");
+  for (auto& pcap : dlt_pcaps) {
+    pcap->close();
+  }
+  cu_logger.info("PCAP files successfully closed.");
 
   // Stop workers
-  // TODO
+  cu_logger.info("Stopping executors...");
+  workers.stop();
+  cu_logger.info("Executors closed successfully.");
 
   srslog::flush();
 
@@ -376,4 +414,41 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// Temporary helper to create CU-UP.
+// TODO remove
+std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&           unit_cfg,
+                                                            cu_worker_manager&                 workers,
+                                                            srs_cu_up::e1ap_connection_client& e1ap_conn_client,
+                                                            f1u_cu_up_gateway&                 f1u_gateway,
+                                                            dlt_pcap&                          gtpu_pcap,
+                                                            timer_manager&                     timers,
+                                                            io_broker&                         io_brk)
+{
+  srs_cu_up::cu_up_configuration config = generate_cu_up_config(unit_cfg);
+  config.ctrl_executor                  = workers.cu_up_ctrl_exec;
+  config.cu_up_e2_exec                  = workers.cu_up_e2_exec;
+  config.ue_exec_pool                   = workers.cu_up_exec_mapper.get();
+  config.io_ul_executor                 = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
+  config.e1ap.e1ap_conn_client          = &e1ap_conn_client;
+  config.f1u_gateway                    = &f1u_gateway;
+  config.gtpu_pcap                      = &gtpu_pcap;
+  config.timers                         = &timers;
+  config.qos                            = generate_cu_up_qos_config(unit_cfg);
+
+  // Create NG-U gateway.
+  std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
+  if (not unit_cfg.upf_cfg.no_core) {
+    udp_network_gateway_config ngu_gw_config = {};
+    ngu_gw_config.bind_address               = config.net_cfg.n3_bind_addr;
+    ngu_gw_config.bind_port                  = config.net_cfg.n3_bind_port;
+    ngu_gw_config.bind_interface             = config.net_cfg.n3_bind_interface;
+    ngu_gw_config.rx_max_mmsg                = config.net_cfg.n3_rx_max_mmsg;
+    ngu_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, io_brk, *workers.cu_up_io_ul_exec);
+  } else {
+    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
+  }
+  config.ngu_gw = ngu_gw.get();
+
+  return std::make_unique<cu_up_wrapper>(std::move(ngu_gw), create_cu_up(config));
+}
 /// \endcond
