@@ -10,6 +10,8 @@ add_executable(cu
         cu.cpp
 	cu_appconfig_cli11_schema.cpp
 	cu_worker_manager.cpp
+	../gnb/adapters/e1ap_gateway_local_connector.cpp
+	../gnb/adapters/ngap_adapter.cpp
         )
 
 install(TARGETS cu
@@ -22,9 +24,11 @@ target_link_libraries(cu
         srsran_build_info
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit
+        srsran_ngap
         srsran_f1c_gateway
         srsgnb_app_f1u_cu_up_split_connector
         srsran_pcap
+        ngap_asn1
         )
 
 add_backward(cu)

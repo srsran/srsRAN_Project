@@ -30,6 +30,8 @@
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
+#include "apps/services/metrics_log_helper.h"
+#include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
@@ -39,6 +41,12 @@
 #include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
 #include "apps/units/cu_up/cu_up_unit_config_validator.h"
+
+// TODO remove apps/gnb/*.h
+#include "apps/gnb/adapters/e1ap_gateway_local_connector.h"
+#include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "apps/gnb/adapters/ngap_adapter.h"
+#include "apps/gnb/gnb_appconfig_translators.h"
 
 #include "cu_appconfig.h"
 
@@ -230,7 +238,7 @@ int main(int argc, char** argv)
 
   // Create F1-C GW (TODO pass actual arguments for F1AP IPs)
   f1c_local_sctp_connector_config      f1c_conn_cfg({*ngap_p, *epoll_broker});
-  std::unique_ptr<f1c_local_connector> cu_f1c_conn = srsran::create_f1c_local_connector(f1c_conn_cfg);
+  std::unique_ptr<f1c_local_connector> cu_f1c_gw = srsran::create_f1c_local_connector(f1c_conn_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
   gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
@@ -246,41 +254,79 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn =
       std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[1].get());
 
+  // Create E1AP local connector
+  e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[0]};
+
   // Create manager of timers for CU-CP and CU-UP, which will be
   // driven by the system timer slot ticks.
   // TODO revisit how to use the system timer timer source.
-  timer_manager app_timers{256};
-  // timer_manager* cu_timers = &app_timers;
+  timer_manager  app_timers{256};
+  timer_manager* cu_timers = &app_timers;
 
   // Set up the JSON log channel used by metrics.
   // TODO metrics. Do we have any CU-CP or CU-UP JSON metrics?
 
   // Create NGAP Gateway.
-  // TODO create NGAP gateway
+  // TODO had to include gnb
+  std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
+  {
+    using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
+    using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
+    using ngap_mode_t    = variant<no_core_mode_t, network_mode_t>;
+
+    // TODO generate network config in helper function, not in apps/gnb
+    srsran::sctp_network_connector_config n2_nw_cfg;
+    n2_nw_cfg.connection_name = "AMF";
+    n2_nw_cfg.connect_address = cu_cp_config.amf_cfg.ip_addr;
+    n2_nw_cfg.connect_port    = cu_cp_config.amf_cfg.port;
+    if (cu_cp_config.amf_cfg.n2_bind_addr == "auto") {
+      n2_nw_cfg.bind_address = cu_cp_config.amf_cfg.bind_addr;
+    } else {
+      n2_nw_cfg.bind_address = cu_cp_config.amf_cfg.n2_bind_addr;
+    }
+    n2_nw_cfg.bind_interface = cu_cp_config.amf_cfg.n2_bind_interface;
+    n2_nw_cfg.ppid           = NGAP_PPID;
+
+    ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
+        *ngap_p,
+        cu_cp_config.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
+                                     : ngap_mode_t{network_mode_t{*epoll_broker, n2_nw_cfg}}});
+  }
 
   // E2AP configuration.
-  // TODO E2AP config and connector
+  // Create E2AP GW remote connector.
+  // TODO This seems to be used in the DU only?
 
   // Create CU-CP config.
-  // TODO cu_cp
+  cu_cp_build_dependencies cu_cp_dependencies;
+  cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
+  cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
+  cu_cp_dependencies.ngap_notifier  = ngap_adapter.get();
+  cu_cp_dependencies.timers         = cu_timers;
+
+  // create CU-CP.
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
 
   // Create console helper object for commands and metrics printing.
   // TODO console helper
 
   // Create metrics log helper.
-  // TODO metrics log helper
+  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  // TODO
+  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
+                              cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
-  // TODO
+  e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  // TODO
+  cu_f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
 
   // start CU-CP
-  // TODO start cu-cp
+  cu_logger.info("Starting CU-CP...");
+  cu_cp_obj->start();
+  cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
   // TODO
