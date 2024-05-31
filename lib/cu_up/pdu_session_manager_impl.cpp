@@ -385,17 +385,15 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
     auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
-      if (not f1u_teid_allocator.release_teid(drb->f1u_ul_teid)) {
-        logger.log_error("Could not free old ul_teid={}", drb->f1u_ul_teid);
-      }
-
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
       if (not ret.has_value()) {
-        logger.log_error("Could not allocate ul_teid");
+        logger.log_error("Could not allocate ul_teid for F1-U tunnel");
         continue;
       }
-      drb->f1u_ul_teid = ret.value();
+      gtpu_teid_t old_f1u_ul_teid = drb->f1u_ul_teid; // Release old UL TEID later after disconnected from F1-U gateway
+      drb->f1u_ul_teid            = ret.value();
+      logger.log_info("Replacing F1-U tunnel. old_ul_teid={} new_ul_teid={}", old_f1u_ul_teid, drb->f1u_ul_teid);
 
       // Create UL UP TNL address.
       up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
@@ -419,10 +417,18 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+
+      // Release old UL TEID of DRB after F1-U bearer disconnected from F1-U gateway
+      if (not f1u_teid_allocator.release_teid(old_f1u_ul_teid)) {
+        logger.log_error("Could not free old F1-U ul_teid={}", old_f1u_ul_teid);
+      }
     }
 
     // F1-U apply modification
     if (!drb_to_mod.dl_up_params.empty()) {
+      logger.log_info("Attaching dl_teid={} to F1-U tunnel with ul_teid={}",
+                      drb_to_mod.dl_up_params[0].up_tnl_info,
+                      drb_iter->second->f1u_ul_teid);
       f1u_gw.attach_dl_teid(
           up_transport_layer_info(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
                                   drb_iter->second->f1u_ul_teid),
