@@ -276,8 +276,9 @@ variables:
         echo "============================================================================================="
 
         status_file=$(mktemp)
-        timeout ${CTEST_TIMEOUT} bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" || exit 124
-        ret=$(cat ${status_file})
+        timeout ${CTEST_TIMEOUT} \
+          bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" \
+          && ret=$(cat ${status_file}) || ret=124
 
         if [[ $TEST_MODE = "coverage" ]]; then 
           common_options="-j${KUBERNETES_CPU_REQUEST} \
@@ -306,6 +307,11 @@ variables:
           maxsize=$((10*1204*1024))
           (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
         fi
+
+        if [ $ret -eq 124 ]; then
+          echo "The test execution exceeded the maximum allowed time !!!!"
+        fi
+
         exit $ret
       }
   script:
@@ -696,7 +702,7 @@ valgrind changed tests:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
-      allow_failure: true    
+      allow_failure: true
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
@@ -720,6 +726,7 @@ valgrind changed tests:
       echo "##################################################"
       git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
       build_srsgnb
+    - echo "This test execution has a timeout of ${CTEST_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
