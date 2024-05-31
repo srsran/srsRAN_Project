@@ -98,6 +98,13 @@ private:
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
 
+  /// Delete RARs that are out of the RAR window.
+  void update_pending_rars(slot_point pdcch_slot);
+
+  bool is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_res_alloc);
+
+  void schedule_pending_rars(cell_resource_allocator& res_alloc, slot_point pdcch_slot);
+
   /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.
   unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc);
