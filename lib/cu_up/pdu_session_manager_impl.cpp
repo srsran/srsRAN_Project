@@ -418,6 +418,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 
+      // Connect F1-U GW bearer RX adapter to NR-U bearer
+      drb_iter->second->f1u_gateway_rx_to_nru_adapter.connect_nru_bearer(drb_iter->second->f1u->get_rx_pdu_handler());
+
+      // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
+      drb_iter->second->f1u_to_pdcp_adapter.connect_pdcp(drb_iter->second->pdcp->get_rx_lower_interface(),
+                                                         drb_iter->second->pdcp->get_tx_lower_interface());
+
       // Release old UL TEID of DRB after F1-U bearer disconnected from F1-U gateway
       if (not f1u_teid_allocator.release_teid(old_f1u_ul_teid)) {
         logger.log_error("Could not free old F1-U ul_teid={}", old_f1u_ul_teid);
