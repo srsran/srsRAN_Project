@@ -127,7 +127,7 @@ public:
     // If the current number of codeblocks is less than required, reserve the remaining codeblocks.
     while (codeblock_ids.size() < nof_codeblocks) {
       // Reserve codeblock.
-      optional<unsigned> cb_id = codeblock_pool.reserve();
+      std::optional<unsigned> cb_id = codeblock_pool.reserve();
 
       // Free the entire buffer if one codeblock cannot be reserved.
       if (!cb_id.has_value()) {

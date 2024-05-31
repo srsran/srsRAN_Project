@@ -32,14 +32,14 @@ void pusch_codeblock_decoder::rate_match(span<log_likelihood_ratio>       rm_buf
   dematcher->rate_dematch(rm_buffer, cb_llrs, new_data, metadata);
 }
 
-optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer                       cb_data,
-                                                   span<log_likelihood_ratio>       rm_buffer,
-                                                   span<const log_likelihood_ratio> cb_llrs,
-                                                   bool                             new_data,
-                                                   srsran::crc_generator_poly       crc_poly,
-                                                   bool                             use_early_stop,
-                                                   unsigned                         nof_ldpc_iterations,
-                                                   const codeblock_metadata&        metadata)
+std::optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer                       cb_data,
+                                                        span<log_likelihood_ratio>       rm_buffer,
+                                                        span<const log_likelihood_ratio> cb_llrs,
+                                                        bool                             new_data,
+                                                        srsran::crc_generator_poly       crc_poly,
+                                                        bool                             use_early_stop,
+                                                        unsigned                         nof_ldpc_iterations,
+                                                        const codeblock_metadata&        metadata)
 {
   rate_match(rm_buffer, cb_llrs, new_data, metadata);
 
@@ -67,5 +67,5 @@ optional<unsigned> pusch_codeblock_decoder::decode(bit_buffer                   
     return nof_ldpc_iterations;
   }
 
-  return nullopt;
+  return std::nullopt;
 }

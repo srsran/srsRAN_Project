@@ -74,8 +74,8 @@ protected:
     return !t.get().success;
   }
 
-  async_task<f1ap_ue_context_setup_response>                   t;
-  optional<lazy_task_launcher<f1ap_ue_context_setup_response>> t_launcher;
+  async_task<f1ap_ue_context_setup_response>                        t;
+  std::optional<lazy_task_launcher<f1ap_ue_context_setup_response>> t_launcher;
 };
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_request_sent_then_procedure_waits_for_response)

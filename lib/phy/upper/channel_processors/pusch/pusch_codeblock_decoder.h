@@ -113,15 +113,15 @@ public:
   /// \param[in] use_early_stop      Set to true to allow the LDPC decoder to stop decoding when the CRC matches.
   /// \param[in] nof_ldpc_iterations Number of LDPC decoder iterations.
   /// \param[in] metadata            Code block metadata.
-  /// \return The number of iterations if the CRC matches after the LDPC decoder. Otherwise, \c nullopt.
-  optional<unsigned> decode(bit_buffer                       cb_data,
-                            span<log_likelihood_ratio>       rm_buffer,
-                            span<const log_likelihood_ratio> cb_llrs,
-                            bool                             new_data,
-                            srsran::crc_generator_poly       crc_poly,
-                            bool                             use_early_stop,
-                            unsigned                         nof_ldpc_iterations,
-                            const codeblock_metadata&        metadata);
+  /// \return The number of iterations if the CRC matches after the LDPC decoder. Otherwise, \c std::nullopt.
+  std::optional<unsigned> decode(bit_buffer                       cb_data,
+                                 span<log_likelihood_ratio>       rm_buffer,
+                                 span<const log_likelihood_ratio> cb_llrs,
+                                 bool                             new_data,
+                                 srsran::crc_generator_poly       crc_poly,
+                                 bool                             use_early_stop,
+                                 unsigned                         nof_ldpc_iterations,
+                                 const codeblock_metadata&        metadata);
 
 private:
   /// Pointer to an LDPC rate-dematcher.

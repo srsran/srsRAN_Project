@@ -65,13 +65,13 @@ struct pdcch_config {
   /// (including UE-specific and common Search Spaces).
   std::vector<search_space_configuration> search_spaces;
   /// Configuration of downlink preemption indications to be monitored in this cell.
-  optional<downlink_preemption> dl_preemption;
+  std::optional<downlink_preemption> dl_preemption;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for PUSCH from a group-TPC messages on DCI.
-  optional<pusch_tpc_command_config> pusch_tpc_cmd_cfg;
+  std::optional<pusch_tpc_command_config> pusch_tpc_cmd_cfg;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for PUCCH from a group-TPC messages on DCI.
-  optional<pucch_tpc_command_config> pucch_tpc_cmd_cfg;
+  std::optional<pucch_tpc_command_config> pucch_tpc_cmd_cfg;
   /// TPC Commands Configuration to configure UE for extracting TPC commands for SRS from a group-TPC messages on DCI.
-  optional<srs_tpc_command_config> srs_tpc_cmd_cfg;
+  std::optional<srs_tpc_command_config> srs_tpc_cmd_cfg;
   // TODO: add remaining fields.
 
   bool operator==(const pdcch_config& rhs) const
@@ -101,23 +101,23 @@ struct pdsch_config {
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
   /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
-  optional<uint16_t> data_scrambling_id_pdsch;
+  std::optional<uint16_t> data_scrambling_id_pdsch;
   /// DMRS configuration for PDSCH transmissions using PDSCH mapping type A (chosen dynamically via
   /// PDSCH-TimeDomainResourceAllocation).
-  optional<dmrs_downlink_config> pdsch_mapping_type_a_dmrs;
+  std::optional<dmrs_downlink_config> pdsch_mapping_type_a_dmrs;
   /// DMRS configuration for PDSCH transmissions using PDSCH mapping type B (chosen dynamically via
   /// PDSCH-TimeDomainResourceAllocation).
-  optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
+  std::optional<dmrs_downlink_config> pdsch_mapping_type_b_dmrs;
   /// Interleaving unit. If field is absent, the UE performs non-interleaved VRB-to-PRB mapping. The field
   /// vrb-ToPRB-Interleaver applies to DCI format 1_1.
-  optional<vrb_to_prb_interleaver> vrb_to_prb_itlvr;
+  std::optional<vrb_to_prb_interleaver> vrb_to_prb_itlvr;
   /// A list of Transmission Configuration Indicator (TCI) states indicating a transmission configuration which includes
   /// QCL-relationships between the DL RSs in one RS set and the PDSCH DMRS ports (see TS 38.214, clause 5.1.5).
   static_vector<tci_state, MAX_NOF_TCI_STATES> tci_states;
   /// Configuration of resource allocation type 0 and resource allocation type 1 for non-fallback DCI.
   resource_allocation res_alloc;
   /// Number of repetitions for data. When the field is absent the UE applies the value 1.
-  optional<pdsch_aggregation_factor> aggr_factor;
+  std::optional<pdsch_aggregation_factor> aggr_factor;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
   /// Resources patterns which the UE should rate match PDSCH around. The UE rate matches around the union of all
@@ -143,7 +143,7 @@ struct pdsch_config {
   /// \brief List of zp-CSI-RS-Resources. Maximum size: 32.
   std::vector<zp_csi_rs_resource> zp_csi_rs_res_list;
   /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
-  optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
+  std::optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 
   // TODO: Remaining.
 
@@ -163,24 +163,24 @@ struct pdsch_config {
 
 /// "BWP-DownlinkDedicated" as per TS 38.331.
 struct bwp_downlink_dedicated {
-  optional<pdcch_config> pdcch_cfg;
-  optional<pdsch_config> pdsch_cfg;
+  std::optional<pdcch_config> pdcch_cfg;
+  std::optional<pdsch_config> pdsch_cfg;
   // TODO: Remaining
 };
 
 /// "BWP-Downlink" as per TS 38.331.
 struct bwp_downlink {
-  bwp_id_t                         bwp_id;
-  optional<bwp_downlink_common>    bwp_dl_common;
-  optional<bwp_downlink_dedicated> bwp_dl_ded;
+  bwp_id_t                              bwp_id;
+  std::optional<bwp_downlink_common>    bwp_dl_common;
+  std::optional<bwp_downlink_dedicated> bwp_dl_ded;
 };
 
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
-  optional<pucch_config> pucch_cfg;
-  optional<pusch_config> pusch_cfg;
-  optional<srs_config>   srs_cfg;
+  std::optional<pucch_config> pucch_cfg;
+  std::optional<pusch_config> pusch_cfg;
+  std::optional<srs_config>   srs_cfg;
 };
 
 /// \brief Used to configure UE specific PUSCH parameters that are common across the UE's BWPs of one serving cell.
@@ -193,14 +193,14 @@ struct pusch_serving_cell_config {
     max_code_block_groups_per_transport_block max_cgb_per_tb;
   };
 
-  optional<pusch_code_block_group_transmission> cbg_tx;
-  x_overhead                                    x_ov_head{x_overhead::not_set};
+  std::optional<pusch_code_block_group_transmission> cbg_tx;
+  x_overhead                                         x_ov_head{x_overhead::not_set};
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
 struct uplink_config {
-  bwp_uplink_dedicated                init_ul_bwp;
-  optional<pusch_serving_cell_config> pusch_scell_cfg;
+  bwp_uplink_dedicated                     init_ul_bwp;
+  std::optional<pusch_serving_cell_config> pusch_scell_cfg;
   // TODO: add remaining fields.
 };
 
@@ -226,14 +226,14 @@ struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
   enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16 };
 
-  optional<pdsch_code_block_group_transmission> code_block_group_tx;
-  x_overhead                                    x_ov_head{x_overhead::not_set};
+  std::optional<pdsch_code_block_group_transmission> code_block_group_tx;
+  x_overhead                                         x_ov_head{x_overhead::not_set};
   /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
-  nof_harq_proc_for_pdsch     nof_harq_proc{nof_harq_proc_for_pdsch::n16};
-  optional<serv_cell_index_t> pucch_cell;
+  nof_harq_proc_for_pdsch          nof_harq_proc{nof_harq_proc_for_pdsch::n16};
+  std::optional<serv_cell_index_t> pucch_cell;
   /// Values {1,...,8};
-  unsigned       max_mimo_layers;
-  optional<bool> processing_type_2_enabled;
+  unsigned            max_mimo_layers;
+  std::optional<bool> processing_type_2_enabled;
 
   bool operator==(const pdsch_serving_cell_config& rhs) const
   {
@@ -253,11 +253,11 @@ struct serving_cell_config {
   /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
   static_vector<bwp_downlink, MAX_NOF_BWPS> dl_bwps;
   /// \c uplinkConfig, containing the UL configuration.
-  optional<uplink_config> ul_config;
+  std::optional<uplink_config> ul_config;
   /// \c pdsch-ServingCellConfig.
-  optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
+  std::optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
   /// \c CSI-MeasConfig.
-  optional<csi_meas_config> csi_meas_cfg;
+  std::optional<csi_meas_config> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
   tag_id_t tag_id;
 };

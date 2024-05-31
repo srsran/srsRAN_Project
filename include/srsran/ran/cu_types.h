@@ -101,20 +101,20 @@ struct packet_error_rate_t {
 };
 
 struct dyn_5qi_descriptor_t {
-  qos_prio_level_t      qos_prio_level;
-  uint16_t              packet_delay_budget;
-  packet_error_rate_t   packet_error_rate;
-  optional<five_qi_t>   five_qi;
-  optional<std::string> delay_crit;
-  optional<uint16_t>    averaging_win;
-  optional<uint16_t>    max_data_burst_volume;
+  qos_prio_level_t           qos_prio_level;
+  uint16_t                   packet_delay_budget;
+  packet_error_rate_t        packet_error_rate;
+  std::optional<five_qi_t>   five_qi;
+  std::optional<std::string> delay_crit;
+  std::optional<uint16_t>    averaging_win;
+  std::optional<uint16_t>    max_data_burst_volume;
 };
 
 struct non_dyn_5qi_descriptor_t {
-  five_qi_t                  five_qi;
-  optional<qos_prio_level_t> qos_prio_level;
-  optional<uint16_t>         averaging_win;
-  optional<uint16_t>         max_data_burst_volume;
+  five_qi_t                       five_qi;
+  std::optional<qos_prio_level_t> qos_prio_level;
+  std::optional<uint16_t>         averaging_win;
+  std::optional<uint16_t>         max_data_burst_volume;
 };
 
 struct qos_characteristics_t {
@@ -132,8 +132,8 @@ struct qos_characteristics_t {
     return five_qi_t::invalid;
   }
 
-  optional<dyn_5qi_descriptor_t>     dyn_5qi;
-  optional<non_dyn_5qi_descriptor_t> non_dyn_5qi;
+  std::optional<dyn_5qi_descriptor_t>     dyn_5qi;
+  std::optional<non_dyn_5qi_descriptor_t> non_dyn_5qi;
 };
 
 struct ng_ran_qos_support_item_t {

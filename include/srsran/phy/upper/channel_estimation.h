@@ -192,7 +192,7 @@ public:
   }
 
   /// Returns the carrier frequency offset in hertz estimated for the given Rx port and Tx layer.
-  optional<float> get_cfo_Hz(unsigned rx_port, unsigned tx_layer = 0) const
+  std::optional<float> get_cfo_Hz(unsigned rx_port, unsigned tx_layer = 0) const
   {
     return cfo[path_to_index(rx_port, tx_layer)];
   }
@@ -262,7 +262,7 @@ public:
     csi.set_time_alignment(get_time_alignment(best_rx_port, 0));
 
     // Use the CFO of the channel path with best SNR.
-    optional<float> cfo_help = get_cfo_Hz(best_rx_port, 0);
+    std::optional<float> cfo_help = get_cfo_Hz(best_rx_port, 0);
     if (cfo_help.has_value()) {
       csi.set_cfo(cfo_help.value());
     }
@@ -307,7 +307,7 @@ public:
   }
 
   /// Sets the estimated carrier frequency offset in hertz for the path between the given Rx port and Tx layer.
-  void set_cfo_Hz(optional<float> new_cfo, unsigned rx_port, unsigned tx_layer = 0)
+  void set_cfo_Hz(std::optional<float> new_cfo, unsigned rx_port, unsigned tx_layer = 0)
   {
     cfo[path_to_index(rx_port, tx_layer)] = new_cfo;
   }
@@ -397,7 +397,7 @@ private:
   std::vector<phy_time_unit> time_alignment;
 
   /// Estimated CFO.
-  std::vector<optional<float>> cfo;
+  std::vector<std::optional<float>> cfo;
   ///@}
 
   /// \brief Container for channel estimates.

@@ -395,7 +395,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
           config.start_symbol_index          = 0;
           config.nof_symbols                 = profile.nof_symbols;
-          config.tbs_lbrm_bytes              = ldpc::MAX_CODEBLOCK_SIZE / 8;
+          config.tbs_lbrm                    = tbs_lbrm_default;
 
           test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
         }

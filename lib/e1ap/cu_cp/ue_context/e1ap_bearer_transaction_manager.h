@@ -39,6 +39,13 @@ public:
   {
   }
 
+  void cancel_all()
+  {
+    context_setup_outcome.stop();
+    context_modification_outcome.stop();
+    context_release_complete.stop();
+  }
+
   /// E1AP Bearer Context Setup Response/Failure Event Source.
   protocol_transaction_event_source<asn1::e1ap::bearer_context_setup_resp_s, asn1::e1ap::bearer_context_setup_fail_s>
       context_setup_outcome;

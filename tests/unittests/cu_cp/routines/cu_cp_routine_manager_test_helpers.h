@@ -48,19 +48,19 @@ protected:
   security_indication_t           default_security_indication = {};
   up_resource_manager_cfg         drb_cfg;
 
-  timer_manager                                         timers;
-  manual_task_worker                                    ctrl_worker{128};
-  dummy_e1ap_bearer_context_manager                     e1ap_bearer_ctxt_mng;
-  dummy_f1ap_ue_context_manager                         f1ap_ue_ctxt_mng;
-  dummy_ngap_control_message_handler                    ngap_control_handler;
-  std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
-  ue_manager                                            ue_mng{ue_config, drb_cfg, timers, ctrl_worker};
-  dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;
-  dummy_du_processor_rrc_ue_srb_control_notifier        rrc_ue_srb_ctrl_notifier;
-  dummy_ngap_ue_context_removal_handler                 ngap_ue_removal_handler;
-  dummy_cu_cp_ue_removal_handler                        ue_removal_handler{&ue_mng};
-  std::unique_ptr<up_resource_manager_impl>             rrc_ue_up_resource_manager;
-  std::unique_ptr<cu_cp_routine_manager>                routine_mng;
+  timer_manager                                      timers;
+  manual_task_worker                                 ctrl_worker{128};
+  dummy_e1ap_bearer_context_manager                  e1ap_bearer_ctxt_mng;
+  dummy_f1ap_ue_context_manager                      f1ap_ue_ctxt_mng;
+  dummy_ngap_control_message_handler                 ngap_control_handler;
+  dummy_ue_task_scheduler                            ue_task_sched{timers, ctrl_worker};
+  ue_manager                                         ue_mng{ue_config, drb_cfg, timers, ctrl_worker};
+  dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
+  dummy_du_processor_rrc_ue_srb_control_notifier     rrc_ue_srb_ctrl_notifier;
+  dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;
+  dummy_cu_cp_ue_removal_handler                     ue_removal_handler{&ue_mng};
+  std::unique_ptr<up_resource_manager_impl>          rrc_ue_up_resource_manager;
+  std::unique_ptr<cu_cp_routine_manager>             routine_mng;
 };
 
 } // namespace srs_cu_cp

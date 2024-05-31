@@ -53,8 +53,8 @@ struct ngap_ng_setup_request {
 };
 
 struct ngap_served_guami_item {
-  guami_t               guami;
-  optional<std::string> backup_amf_name;
+  guami_t                    guami;
+  std::optional<std::string> backup_amf_name;
 };
 
 struct ngap_plmn_support_item {
@@ -67,15 +67,15 @@ struct ngap_ng_setup_response {
   std::vector<ngap_served_guami_item> served_guami_list;
   uint16_t                            relative_amf_capacity;
   std::vector<ngap_plmn_support_item> plmn_support_list;
-  optional<crit_diagnostics_t>        crit_diagnostics;
+  std::optional<crit_diagnostics_t>   crit_diagnostics;
   // TODO: Add optional ue_retention_info;
   // TODO: Add optional iab_supported;
   // TODO: Add optional extended_amf_name;
 };
 
 struct ngap_ng_setup_failure {
-  ngap_cause_t                 cause;
-  optional<crit_diagnostics_t> crit_diagnostics;
+  ngap_cause_t                      cause;
+  std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 using ngap_ng_setup_result = variant<ngap_ng_setup_response, ngap_ng_setup_failure>;

@@ -36,22 +36,22 @@ namespace {
 class f1c_rx_channel final : public f1ap_message_notifier
 {
 public:
-  f1c_rx_channel(f1ap_message_handler& msg_handler_, f1ap_event_handler& ev_handler_) :
-    msg_handler(msg_handler_), ev_handler(ev_handler_)
+  f1c_rx_channel(f1ap_message_handler& msg_handler_, std::function<void()> on_connection_loss_) :
+    msg_handler(msg_handler_), on_connection_loss(on_connection_loss_)
   {
   }
 
   ~f1c_rx_channel() override
   {
     // Signal back that the Rx path was taken down.
-    ev_handler.handle_connection_loss();
+    on_connection_loss();
   }
 
   void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
 
 private:
   f1ap_message_handler& msg_handler;
-  f1ap_event_handler&   ev_handler;
+  std::function<void()> on_connection_loss;
 };
 
 /// Adapter to forward F1AP PDUs to the F1-C GW that also manages the lifetime of the TNL connection.
@@ -116,7 +116,7 @@ SRSRAN_NODISCARD std::unique_ptr<f1ap_message_notifier> f1ap_du_connection_handl
 
   // Create F1AP Rx PDU notifier.
   rx_path_disconnected.reset();
-  auto rx_notifier = std::make_unique<f1c_rx_channel>(f1ap_pdu_handler, *this);
+  auto rx_notifier = std::make_unique<f1c_rx_channel>(f1ap_pdu_handler, [this]() { handle_connection_loss(); });
 
   // Start F1-C TNL association and get F1AP Tx PDU notifier.
   tx_pdu_notifier = f1c_client_handler.handle_du_connection_request(std::move(rx_notifier));

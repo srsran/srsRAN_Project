@@ -60,7 +60,8 @@ SRSRAN_NODISCARD bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_pe
   return std::find(csi_options.begin(), csi_options.end(), csi_rs_period) != csi_options.end();
 }
 
-optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg)
+std::optional<csi_resource_periodicity>
+srsran::csi_helper::find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg)
 {
   const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
 
@@ -75,7 +76,7 @@ optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(
     return static_cast<unsigned>(period) % tdd_period == 0;
   });
   if (found_rit == csi_options.rend()) {
-    return nullopt;
+    return std::nullopt;
   }
   return *rit;
 }
@@ -94,9 +95,9 @@ static bool is_csi_slot_offset_valid(unsigned slot_offset, const tdd_ul_dl_confi
 }
 
 bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&            csi_params,
-                                                          const optional<unsigned>&      meas_csi_slot_offset,
-                                                          const optional<unsigned>&      tracking_csi_slot_offset,
-                                                          const optional<unsigned>&      zp_csi_slot_offset,
+                                                          const std::optional<unsigned>& meas_csi_slot_offset,
+                                                          const std::optional<unsigned>& tracking_csi_slot_offset,
+                                                          const std::optional<unsigned>& zp_csi_slot_offset,
                                                           const tdd_ul_dl_config_common& tdd_cfg)
 {
   srsran_assert(is_csi_rs_period_valid(csi_params.csi_rs_period, tdd_cfg),

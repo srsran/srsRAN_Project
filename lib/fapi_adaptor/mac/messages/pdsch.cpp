@@ -24,6 +24,8 @@
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/ran/sch/sch_constants.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include <numeric>
 
 using namespace srsran;
@@ -64,7 +66,7 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch
                                     units::bytes{cw.tb_size_bytes});
   }
 
-  const units::bytes    tb_size_lbrm_bytes           = units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes();
+  const units::bytes    tb_size_lbrm_bytes           = tbs_lbrm_default;
   const pdsch_codeword& cw                           = codewords.front();
   static const bool     is_tb_crc_first_tb_required  = false;
   static const bool     is_tb_crc_second_tb_required = false;
@@ -128,11 +130,11 @@ static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder, const tx_
                                        fapi::to_power_control_offset_ss(power_params.pwr_ctrl_offset_ss));
 }
 
-static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
-                                           const optional<pdsch_precoding_info>& mac_info,
-                                           const precoding_matrix_mapper&        pm_mapper,
-                                           unsigned                              nof_layers,
-                                           unsigned                              cell_nof_prbs)
+static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&                builder,
+                                           const std::optional<pdsch_precoding_info>& mac_info,
+                                           const precoding_matrix_mapper&             pm_mapper,
+                                           unsigned                                   nof_layers,
+                                           unsigned                                   cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   pm_bf_builder.set_basic_parameters((mac_info) ? mac_info->nof_rbs_per_prg : cell_nof_prbs, 0);

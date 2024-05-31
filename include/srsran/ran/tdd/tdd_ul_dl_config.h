@@ -47,9 +47,9 @@ struct tdd_ul_dl_pattern {
 struct tdd_ul_dl_config_common {
   /// Reference SCS used to determine the time domain boundaries in the UL-DL pattern. The network ensures that
   /// this value is not larger than any SCS of configured BWPs for the serving cell.
-  subcarrier_spacing          ref_scs;
-  tdd_ul_dl_pattern           pattern1;
-  optional<tdd_ul_dl_pattern> pattern2;
+  subcarrier_spacing               ref_scs;
+  tdd_ul_dl_pattern                pattern1;
+  std::optional<tdd_ul_dl_pattern> pattern2;
 };
 
 /// \brief Calculates number of slots, using TDD reference SCS, of the TDD UL-DL configuration.
@@ -92,21 +92,21 @@ ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, 
 /// \brief Finds the next TDD slot index with DL symbols within the TDD period, starting from the given slot index.
 /// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
 /// start_slot_index being past the last DL slot within the period.
-optional<unsigned> find_next_tdd_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+std::optional<unsigned> find_next_tdd_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
 /// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
 /// start_slot_index being past the last full DL slot within the period.
-optional<unsigned> find_next_tdd_full_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+std::optional<unsigned> find_next_tdd_full_dl_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
 /// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
 /// start_slot_index being >= TDD period in slots.
-optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+std::optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 /// \brief Finds the next TDD slot index with all UL symbols, starting from the given slot index.
 /// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
 /// start_slot_index being >= TDD period in slots.
-optional<unsigned> find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+std::optional<unsigned> find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
 
 } // namespace srsran

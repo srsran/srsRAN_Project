@@ -319,40 +319,30 @@ private:
 };
 
 /// \brief Dummy F1-U bearer for the purpose of benchmark.
-class f1u_dummy_bearer : public f1u_bearer,
-                         public f1u_rx_pdu_handler,
-                         public f1u_tx_delivery_handler,
-                         public f1u_tx_sdu_handler
+class f1u_gw_dummy_bearer : public f1u_du_gateway_bearer
 {
 public:
-  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
-  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
-  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
-  void                     stop() override {}
-
-  void handle_pdu(nru_dl_message msg) override {}
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_chain sdu) override {}
+  void on_new_pdu(nru_ul_message msg) override {}
+  void stop() override {}
 };
 
 /// \brief Simulator of the CU-UP from the perspective of the DU.
 class cu_up_simulator : public f1u_du_gateway
 {
 public:
-  static_vector<f1u_dummy_bearer*, MAX_NOF_DU_UES>            bearer_list;
-  static_vector<srs_du::f1u_rx_sdu_notifier*, MAX_NOF_DU_UES> du_notif_list;
+  static_vector<f1u_gw_dummy_bearer*, MAX_NOF_DU_UES>                       bearer_list;
+  static_vector<srs_du::f1u_du_gateway_bearer_rx_notifier*, MAX_NOF_DU_UES> du_notif_list;
 
-  std::unique_ptr<f1u_bearer> create_du_bearer(uint32_t                       ue_index,
-                                               drb_id_t                       drb_id,
-                                               srs_du::f1u_config             config,
-                                               const up_transport_layer_info& dl_tnl,
-                                               const up_transport_layer_info& ul_tnl,
-                                               srs_du::f1u_rx_sdu_notifier&   du_rx,
-                                               timer_factory                  timers,
-                                               task_executor&                 ue_executor) override
+  std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
+                                                          drb_id_t                                   drb_id,
+                                                          srs_du::f1u_config                         config,
+                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const up_transport_layer_info&             ul_up_tnl_info,
+                                                          srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                          timer_factory                              timers,
+                                                          task_executor& ue_executor) override
   {
-    auto f1u_bearer = std::make_unique<f1u_dummy_bearer>();
+    auto f1u_bearer = std::make_unique<f1u_gw_dummy_bearer>();
     du_notif_list.push_back(&du_rx);
     bearer_list.push_back(f1u_bearer.get());
     return f1u_bearer;
@@ -804,7 +794,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdu_copy.value().length(), std::memory_order_relaxed);
-        du_notif->on_new_sdu(pdcp_tx_pdu{.buf = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
+        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
       }
     })) {
       // keep trying to push new PDUs.
@@ -1076,8 +1066,8 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
       dplx_mode == duplex_mode::FDD ? srsran::bs_channel_bandwidth_fr1::MHz20 : bs_channel_bandwidth_fr1::MHz100;
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-  static const uint8_t                              ss0_idx = 0;
-  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+  static const uint8_t                                   ss0_idx = 0;
+  std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
       band_helper::get_ssb_coreset0_freq_location(params.dl_arfcn,
                                                   *params.band,
                                                   nof_crbs,

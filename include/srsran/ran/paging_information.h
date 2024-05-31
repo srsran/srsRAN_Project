@@ -41,10 +41,10 @@ struct paging_information {
   /// \remark See TS 38.304, clause 7.1.
   unsigned ue_identity_index_value;
   /// Paging DRX cycle in radio frames.
-  optional<unsigned> paging_drx;
+  std::optional<unsigned> paging_drx;
   /// Values {1,...,8}. Lower value indicates higher priority.
-  optional<unsigned> paging_priority;
-  bool               is_paging_origin_non_3gpp_access{false};
+  std::optional<unsigned> paging_priority;
+  bool                    is_paging_origin_non_3gpp_access{false};
 };
 
 } // namespace srsran

@@ -28,6 +28,7 @@
 #include "procedures/e1ap_transaction_manager.h"
 #include "ue_context/e1ap_cu_cp_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
@@ -44,6 +45,7 @@ public:
   e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                  common_ue_manager&             ue_mng_,
                   timer_manager&                 timers_,
                   task_executor&                 ctrl_exec_,
                   unsigned                       max_nof_supported_ues_);
@@ -64,6 +66,7 @@ public:
   void handle_connection_loss() override {}
 
   // e1ap_ue_handler functions
+  void cancel_ue_tasks(ue_index_t ue_index) override;
   void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
   // e1ap_bearer_context_removal_handler functions
@@ -111,6 +114,7 @@ private:
   e1ap_message_notifier_with_logging pdu_notifier;
   e1ap_cu_up_processor_notifier&     cu_up_processor_notifier;
   e1ap_cu_cp_notifier&               cu_cp_notifier;
+  common_ue_manager&                 ue_mng;
   task_executor&                     ctrl_exec;
 
   timer_factory timers;

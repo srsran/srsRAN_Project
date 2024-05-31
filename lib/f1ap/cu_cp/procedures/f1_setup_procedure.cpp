@@ -28,6 +28,7 @@
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 
 using namespace srsran;

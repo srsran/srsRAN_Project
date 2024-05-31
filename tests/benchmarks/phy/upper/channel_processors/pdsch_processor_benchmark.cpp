@@ -442,7 +442,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
         unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
         // Build the PDSCH PDU configuration.
-        pdsch_processor::pdu_t config = {nullopt,
+        pdsch_processor::pdu_t config = {std::nullopt,
                                          slot_point(to_numerology_value(profile.scs), 0),
                                          1,
                                          nof_prb,
@@ -460,7 +460,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          profile.start_symbol,
                                          profile.nof_symbols,
                                          get_ldpc_base_graph(mcs.get_normalised_target_code_rate(), units::bits(tbs)),
-                                         ldpc::MAX_CODEBLOCK_SIZE / 8,
+                                         units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
                                          {},
                                          0.0,
                                          0.0,

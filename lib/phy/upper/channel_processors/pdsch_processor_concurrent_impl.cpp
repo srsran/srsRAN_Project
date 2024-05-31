@@ -113,12 +113,15 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   units::bits cw_length           = units::bits(nof_re_pdsch * nof_layers * bits_per_symbol);
   zero_pad                        = (cb_info_bits + nof_cb_crc_bits) * nof_cb - nof_tb_bits_out;
 
+  // Calculate rate match buffer size.
+  units::bits Nref = ldpc::compute_N_ref(config.tbs_lbrm, nof_cb);
+
   // Prepare codeblock metadata.
   cb_metadata.tb_common.base_graph        = config.ldpc_base_graph;
   cb_metadata.tb_common.lifting_size      = static_cast<ldpc::lifting_size_t>(lifting_size);
   cb_metadata.tb_common.rv                = config.codewords.front().rv;
   cb_metadata.tb_common.mod               = modulation;
-  cb_metadata.tb_common.Nref              = units::bytes(config.tbs_lbrm_bytes).to_bits().value();
+  cb_metadata.tb_common.Nref              = Nref.value();
   cb_metadata.tb_common.cw_length         = cw_length.value();
   cb_metadata.cb_specific.full_length     = full_codeblock_size.value();
   cb_metadata.cb_specific.rm_length       = 0;

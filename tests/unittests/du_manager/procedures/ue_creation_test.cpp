@@ -96,8 +96,8 @@ protected:
         .offset = sr_offset;
   }
 
-  async_task<void>                   proc;
-  optional<lazy_task_launcher<void>> proc_launcher;
+  async_task<void>                        proc;
+  std::optional<lazy_task_launcher<void>> proc_launcher;
 };
 
 TEST_F(du_manager_ue_creation_tester,

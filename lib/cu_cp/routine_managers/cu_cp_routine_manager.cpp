@@ -88,7 +88,7 @@ cu_cp_routine_manager::start_pdu_session_resource_release_routine(
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng,
     ngap_control_message_handler&                     ngap_handler,
     du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
-    du_processor_ue_task_scheduler&                   task_sched,
+    ue_task_scheduler&                                task_sched,
     up_resource_manager&                              rrc_ue_up_resource_manager)
 {
   return launch_async<pdu_session_resource_release_routine>(release_cmd,
@@ -113,13 +113,14 @@ cu_cp_routine_manager::start_ue_context_release_routine(const cu_cp_ue_context_r
 
 async_task<bool> cu_cp_routine_manager::start_reestablishment_context_modification_routine(
     ue_index_t                                    ue_index,
+    const security::sec_as_config&                up_sec,
     e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng,
     f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng,
     du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
     up_resource_manager&                          ue_up_resource_manager)
 {
   return launch_async<reestablishment_context_modification_routine>(
-      ue_index, e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, rrc_ue_ctrl_notifier, ue_up_resource_manager, logger);
+      ue_index, up_sec, e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, rrc_ue_ctrl_notifier, ue_up_resource_manager, logger);
 }
 
 async_task<cu_cp_inter_du_handover_response>

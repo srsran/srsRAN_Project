@@ -219,7 +219,7 @@ struct coro_frame : public base_coro_frame<detail::promise_of<FunT>> {
   void on_return() final { get_impl()->~FunT(); }
 
 private:
-  FunT* get_impl() { return SRSRAN_LAUNDER(reinterpret_cast<FunT*>(&task_storage)); }
+  FunT* get_impl() { return std::launder(reinterpret_cast<FunT*>(&task_storage)); }
   void  cancel()
   {
     if (this->state_index < 0) {

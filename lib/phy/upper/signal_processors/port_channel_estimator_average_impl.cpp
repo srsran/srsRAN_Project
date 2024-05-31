@@ -175,7 +175,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
                             const subcarrier_spacing&                 scs,
-                            optional<float>                           cfo,
+                            std::optional<float>                      cfo,
                             span<const float>                         symbol_start_epochs,
                             bool                                      compensate_cfo,
                             unsigned                                  first_hop_symbol,
@@ -232,7 +232,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     epre             = 0;
     noise_var        = 0;
     time_alignment_s = 0;
-    cfo_normalized   = nullopt;
+    cfo_normalized   = std::nullopt;
 
     // compute_layer_hop updates rsrp, epre, niose_var, time_alignment_s, and cfo_normalized.
     compute_layer_hop(estimate, grid, port, pilots, cfg, /*hop=*/0, i_layer);
@@ -259,10 +259,11 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     estimate.set_rsrp(rsrp, port, i_layer);
     estimate.set_epre(epre, port, i_layer);
     estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, i_layer);
-    estimate.set_cfo_Hz(
-        cfo_normalized.has_value() ? optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000) : nullopt,
-        port,
-        i_layer);
+    estimate.set_cfo_Hz(cfo_normalized.has_value()
+                            ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
+                            : std::nullopt,
+                        port,
+                        i_layer);
 
     noise_var /= static_cast<float>(nof_dmrs_pilots - 1);
 
@@ -316,10 +317,10 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
 
   // Preprocess the pilots and compute hop contributions to the EPRE (first ouput) and to the CFO (second output, if it
   // can be estimated). Recall that this method updates pilot_products and pilots_lse.
-  std::pair<float, optional<float>> hop_results =
+  std::pair<float, std::optional<float>> hop_results =
       preprocess_pilots_and_cfo(pilots, pattern.symbols, cfg.scs, first_symbol, last_symbol, hop_offset, i_layer);
   epre += hop_results.first;
-  optional<float> cfo_hop = hop_results.second;
+  std::optional<float> cfo_hop = hop_results.second;
   if (cfo_hop.has_value()) {
     if (cfo_normalized.has_value()) {
       cfo_normalized = (cfo_normalized.value() + cfo_hop.value()) / 2;
@@ -445,7 +446,7 @@ void port_channel_estimator_average_impl::initialize_symbol_start_epochs(cyclic_
   }
 }
 
-std::pair<float, optional<float>>
+std::pair<float, std::optional<float>>
 port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
                                                                const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
                                                                const subcarrier_spacing&                 scs,
@@ -462,7 +463,7 @@ port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol
   float epre_hop = srsvec::average_power(rx_pilots.get_symbol(0, i_layer)) * rx_pilots.get_symbol(0, i_layer).size();
 
   if (nof_dmrs_symbols == 1) {
-    return {epre_hop, nullopt};
+    return {epre_hop, std::nullopt};
   }
 
   // Match received and transmitted pilots in the second DM-RS symbol and compute EPRE contribution.
@@ -511,7 +512,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             float                                     beta,
                             const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
                             const subcarrier_spacing&                 scs,
-                            optional<float>                           cfo,
+                            std::optional<float>                      cfo,
                             span<const float>                         symbol_start_epochs,
                             bool                                      compensate_cfo,
                             unsigned                                  first_hop_symbol,

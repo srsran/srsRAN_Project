@@ -275,7 +275,7 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
   return ss_ref;
 }
 
-optional<unsigned> srsran::band_helper::get_gscn_from_ss_ref(double ss_ref_hz)
+std::optional<unsigned> srsran::band_helper::get_gscn_from_ss_ref(double ss_ref_hz)
 {
   // The following is based on Table 5.4.3.1-1, TS 38.104.
   if (ss_ref_hz < N_REF_OFFSET_3_GHZ_24_5_GHZ) {
@@ -307,5 +307,5 @@ optional<unsigned> srsran::band_helper::get_gscn_from_ss_ref(double ss_ref_hz)
     }
   }
 
-  return nullopt;
+  return std::nullopt;
 }

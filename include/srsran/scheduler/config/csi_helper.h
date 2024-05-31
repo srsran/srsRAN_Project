@@ -58,7 +58,7 @@ SRSRAN_NODISCARD bool is_csi_rs_period_valid(csi_resource_periodicity       csi_
                                              const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Searches for a valid CSI-RS periodicity, while constrained by TDD pattern periodicity.
-optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg);
+std::optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Search for valid CSI-RS slot offsets for measurement, tracking and interference management.
 /// \remark TODO: This function assumes that the SSB and SIB1 configs are hardcoded to slot offsets 0 and 1.
@@ -73,9 +73,9 @@ optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_conf
 /// If passed as non-empty, the function will check whether the value is valid.
 /// \param tdd_cfg [in] TDD pattern.
 SRSRAN_NODISCARD bool derive_valid_csi_rs_slot_offsets(csi_builder_params&            csi_params,
-                                                       const optional<unsigned>&      meas_csi_slot_offset,
-                                                       const optional<unsigned>&      tracking_csi_slot_offset,
-                                                       const optional<unsigned>&      zp_csi_slot_offset,
+                                                       const std::optional<unsigned>& meas_csi_slot_offset,
+                                                       const std::optional<unsigned>& tracking_csi_slot_offset,
+                                                       const std::optional<unsigned>& zp_csi_slot_offset,
                                                        const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Generate list of zp-CSI-RS Resources.

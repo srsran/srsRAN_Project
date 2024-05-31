@@ -55,7 +55,7 @@ protected:
   srslog::basic_logger&                    logger;
   asn1::e2sm::e2sm_kpm_action_definition_s action_def_generic;
   uint32_t                                 granul_period  = 0;
-  optional<asn1::e2sm::cgi_c>              cell_global_id = {};
+  std::optional<asn1::e2sm::cgi_c>         cell_global_id = {};
 
   e2sm_kpm_meas_provider&        meas_provider;
   asn1::e2sm::e2sm_kpm_ind_hdr_s ric_ind_header_generic;

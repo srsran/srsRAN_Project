@@ -30,12 +30,14 @@ using namespace asn1::rrc_nr;
 
 reestablishment_context_modification_routine::reestablishment_context_modification_routine(
     ue_index_t                                    ue_index_,
+    const srsran::security::sec_as_config&        security_cfg_,
     e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
     du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
     up_resource_manager&                          rrc_ue_up_resource_manager_,
     srslog::basic_logger&                         logger_) :
   ue_index(ue_index_),
+  security_cfg(security_cfg_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   rrc_ue_notifier(rrc_ue_notifier_),
@@ -230,7 +232,8 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         }
 
         // Add rlc mode
-        drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+        drb_setup_mod_item.rlc_mod     = drb_up_context.rlc_mod;
+        drb_setup_mod_item.pdcp_sn_len = drb_up_context.pdcp_cfg.tx.sn_size;
 
         // fill QoS info
         drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
@@ -272,7 +275,26 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     return false;
   }
 
-  // Start with empty message.
+  // Fill security info
+  bearer_ctxt_mod_req.security_info.emplace();
+  bearer_ctxt_mod_req.security_info->security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
+  bearer_ctxt_mod_req.security_info->security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
+  auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
+  if (k_enc_buffer.is_error()) {
+    logger.warning("Unable to allocate byte_buffer");
+    return false;
+  }
+  bearer_ctxt_mod_req.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
+  if (security_cfg.k_int.has_value()) {
+    auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
+    if (k_int_buffer.is_error()) {
+      logger.warning("Unable to allocate byte_buffer");
+      return false;
+    }
+    bearer_ctxt_mod_req.security_info->up_security_key.integrity_protection_key = std::move(k_int_buffer.value());
+  }
+
+  // Fill NG-RAN specific info.
   e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
       bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.emplace();
 

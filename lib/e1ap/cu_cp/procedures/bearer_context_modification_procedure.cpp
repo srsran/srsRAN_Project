@@ -44,7 +44,7 @@ void bearer_context_modification_procedure::operator()(
   logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ev_mng.context_modification_outcome);
+  transaction_sink.subscribe_to(ev_mng.context_modification_outcome, std::chrono::milliseconds{1000});
 
   // Send command to CU-UP.
   send_bearer_context_modification_request();
@@ -76,12 +76,15 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
     fill_e1ap_bearer_context_modification_response(res, fail);
 
-    logger.log_error("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed", name());
   } else {
-    logger.log_warning("BearerContextModificationResponse timeout");
     res.success = false;
 
-    logger.log_error("\"{}\" failed", name());
+    if (transaction_sink.timeout_expired()) {
+      logger.log_warning("BearerContextModificationResponse timeout");
+    } else {
+      logger.log_warning("BearerContextModificationResponse cancelled");
+    }
   }
   return res;
 }

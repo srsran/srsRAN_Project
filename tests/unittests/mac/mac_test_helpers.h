@@ -136,10 +136,10 @@ public:
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
 {
 public:
-  optional<mac_dl_sched_result> last_sched_res;
-  optional<mac_dl_data_result>  last_dl_data_res;
-  optional<mac_ul_sched_result> last_ul_res;
-  bool                          is_complete = false;
+  std::optional<mac_dl_sched_result> last_sched_res;
+  std::optional<mac_dl_data_result>  last_dl_data_res;
+  std::optional<mac_ul_sched_result> last_ul_res;
+  bool                               is_complete = false;
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { last_sched_res = dl_res; }
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override { last_dl_data_res = dl_data; }

@@ -39,7 +39,7 @@ namespace srs_cu_up {
 struct ue_context_cfg {
   security::sec_as_config                          security_info;
   activity_notification_level_t                    activity_level;
-  optional<std::chrono::seconds>                   ue_inactivity_timeout;
+  std::optional<std::chrono::seconds>              ue_inactivity_timeout;
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
 };
 
@@ -109,6 +109,9 @@ public:
     return ue_exec_mapper->stop();
   }
 
+  // security management
+  void set_security_config(const security::sec_as_config& security_info) { cfg.security_info = security_info; }
+
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
   {
@@ -125,14 +128,13 @@ public:
   }
   size_t get_nof_pdu_sessions() override { return pdu_session_manager.get_nof_pdu_sessions(); }
 
-  ue_index_t get_index() const { return index; };
+  [[nodiscard]] ue_index_t get_index() const { return index; };
 
-  const cu_up_ue_logger& get_logger() const { return logger; };
+  [[nodiscard]] const cu_up_ue_logger& get_logger() const { return logger; };
 
 private:
-  ue_index_t     index;
-  ue_context_cfg cfg;
-
+  ue_index_t      index;
+  ue_context_cfg  cfg;
   cu_up_ue_logger logger;
 
   e1ap_control_message_handler& e1ap;

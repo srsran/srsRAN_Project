@@ -381,6 +381,31 @@ static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
       ->check(CLI::Range(0, 0xffffff));
 }
 
+static void configure_cli11_amf_args(CLI::App& app, cu_cp_unit_amf_config& amf_params)
+{
+  add_option(app, "--addr", amf_params.ip_addr, "AMF IP address");
+  add_option(app, "--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app,
+             "--bind_addr",
+             amf_params.bind_addr,
+             "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
+      ->capture_default_str();
+  add_option(app, "--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
+  add_option(app, "--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
+  add_option(app, "--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
+  add_option(app, "--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
+  add_option(app, "--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
+  add_option(app,
+             "--sctp_nodelay",
+             amf_params.sctp_nodelay,
+             "Send SCTP messages as soon as possible without any Nagle-like algorithm");
+  add_option(app, "--no_core", amf_params.no_core, "Allow gNB to run without a core");
+}
+
 void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)
 {
   add_option(app, "--gnb_id", unit_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -388,6 +413,9 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
   add_option(app, "--ran_node_name", unit_cfg.ran_node_name, "RAN node name")->capture_default_str();
+  // AMF section.
+  CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF parameters")->configurable();
+  configure_cli11_amf_args(*amf_subcmd, unit_cfg.amf_cfg);
 
   // CU-CP section
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-CP parameters")->configurable();

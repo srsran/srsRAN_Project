@@ -22,22 +22,25 @@
 
 #include "cu_up_unit_config_validator.h"
 #include "cu_up_unit_config.h"
+#include "srsran/adt/span.h"
 
 using namespace srsran;
 
-/// Validates the given AMF configuration. Returns true on success, otherwise false.
-static bool validate_amf_appconfig(const cu_up_unit_amf_config& config)
+/// Validates the given QoS configuration. Returns true on success, otherwise false.
+static bool validate_qos_appconfig(span<const cu_up_unit_qos_config> config)
 {
-  // only check for non-empty AMF address and default port
-  if (config.ip_addr.empty() or config.port != 38412) {
-    return false;
+  for (const auto& qos : config) {
+    if (qos.mode != "am" && qos.mode != "um-bidir") {
+      fmt::print("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}\n", qos.five_qi, qos.mode);
+      return false;
+    }
   }
   return true;
 }
 
 bool srsran::validate_cu_up_unit_config(const cu_up_unit_config& config)
 {
-  if (!validate_amf_appconfig(config.amf_cfg)) {
+  if (!validate_qos_appconfig(config.qos_cfg)) {
     return false;
   }
 

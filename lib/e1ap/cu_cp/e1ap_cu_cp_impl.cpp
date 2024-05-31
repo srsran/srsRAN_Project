@@ -25,6 +25,7 @@
 #include "../common/log_helpers.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 
 using namespace srsran;
@@ -36,6 +37,7 @@ using namespace srs_cu_cp;
 e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                                 common_ue_manager&             ue_mng_,
                                  timer_manager&                 timers_,
                                  task_executor&                 ctrl_exec_,
                                  unsigned                       max_nof_supported_ues_) :
@@ -43,6 +45,7 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifie
   pdu_notifier(e1ap_message_notifier_with_logging(*this, e1ap_pdu_notifier_)),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
+  ue_mng(ue_mng_),
   ctrl_exec(ctrl_exec_),
   timers(timer_factory{timers_, ctrl_exec_}),
   ue_ctxt_list(timers, max_nof_supported_ues_, logger),
@@ -221,8 +224,6 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
 void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
     const asn1::e1ap::bearer_context_inactivity_notif_s& msg)
 {
-  cu_cp_inactivity_notification inactivity_notification;
-
   if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id))) {
     logger.warning(
         "cu_cp_ue_e1ap_id={} cu_up_ue_e1ap_id={}: Dropping InactivityNotification. UE context does not exist",
@@ -234,6 +235,13 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
   // Get UE context
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
 
+  auto* ue = ue_mng.find_ue(ue_ctxt.ue_ids.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping InactivityNotification. UE does not exist", ue_ctxt.ue_ids.ue_index);
+    return;
+  }
+
+  cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index = ue_ctxt.ue_ids.ue_index;
 
   switch (msg->activity_info.type()) {
@@ -278,14 +286,19 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
       return;
   }
 
-  // forward notification
-  cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);
+  // schedule forwarding of notification
+  ue->get_task_sched().schedule_async_task(
+      launch_async([this, inactivity_notification](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);
+        CORO_RETURN();
+      }));
 };
 
 void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
-  using successful_types                    = asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts;
-  optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
+  using successful_types                         = asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts;
+  std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
   switch (outcome.value.type().value) {
     case successful_types::bearer_context_setup_resp: {
       ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
@@ -299,7 +312,7 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
     } break;
     default:
       // Handle successful outcomes with transaction id
-      optional<uint8_t> transaction_id = get_transaction_id(outcome);
+      std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
         return;
@@ -314,8 +327,8 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 
 void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
-  using unsuccessful_types                  = asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts;
-  optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
+  using unsuccessful_types                       = asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts;
+  std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
   switch (outcome.value.type().value) {
     case unsuccessful_types::bearer_context_setup_fail: {
       ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
@@ -325,7 +338,7 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
     } break;
     default:
       // Handle unsuccessful outcomes with transaction id
-      optional<uint8_t> transaction_id = get_transaction_id(outcome);
+      std::optional<uint8_t> transaction_id = get_transaction_id(outcome);
       if (not transaction_id.has_value()) {
         logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
         return;
@@ -336,6 +349,17 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
         logger.warning("Ignoring message. Cause: Transaction with id={} has already completed", transaction_id.value());
       }
   }
+}
+
+void e1ap_cu_cp_impl::cancel_ue_tasks(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.info("ue={}: UE does not exist in the CU-CP", ue_index);
+    return;
+  }
+
+  auto& u = ue_ctxt_list[ue_index];
+  u.bearer_ev_mng.cancel_all();
 }
 
 void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index)
@@ -369,8 +393,8 @@ void e1ap_cu_cp_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
   }
 
   // Fetch UE index.
-  auto                 cp_ue_id = get_gnb_cu_cp_ue_e1ap_id(e1ap_pdu.pdu);
-  optional<ue_index_t> ue_idx;
+  auto                      cp_ue_id = get_gnb_cu_cp_ue_e1ap_id(e1ap_pdu.pdu);
+  std::optional<ue_index_t> ue_idx;
   if (cp_ue_id.has_value()) {
     auto* ue_ptr = ue_ctxt_list.find_ue(cp_ue_id.value());
     if (ue_ptr != nullptr and ue_ptr->ue_ids.ue_index != ue_index_t::invalid) {

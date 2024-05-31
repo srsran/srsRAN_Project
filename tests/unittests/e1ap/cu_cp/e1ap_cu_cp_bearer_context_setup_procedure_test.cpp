@@ -71,8 +71,8 @@ protected:
     return t.get().success;
   }
 
-  async_task<e1ap_bearer_context_setup_response>                   t;
-  optional<lazy_task_launcher<e1ap_bearer_context_setup_response>> t_launcher;
+  async_task<e1ap_bearer_context_setup_response>                        t;
+  std::optional<lazy_task_launcher<e1ap_bearer_context_setup_response>> t_launcher;
 };
 
 TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_request_sent_then_procedure_waits_for_response)

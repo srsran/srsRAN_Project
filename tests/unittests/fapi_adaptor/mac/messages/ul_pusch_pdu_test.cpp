@@ -86,8 +86,7 @@ TEST(mac_to_fapi_pusch_pdu_test, valid_pusch_pdu_shoul_pass)
   ASSERT_EQ(pusch_cfg.symbols.length(), fapi_pdu.nr_of_symbols);
 
   // Maintenance v3.
-  ASSERT_EQ(units::bits(ldpc::MAX_CODEBLOCK_SIZE).truncate_to_bytes(),
-            fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes);
+  ASSERT_EQ(units::bytes(159749), fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes);
   ASSERT_EQ(pusch_cfg.pusch_second_hop_prb, fapi_pdu.pusch_maintenance_v3.pusch_second_hop_prb);
   ASSERT_EQ(get_ldpc_base_graph(pusch_cfg.mcs_descr.get_normalised_target_code_rate(),
                                 units::bytes(pusch_cfg.tb_size_bytes).to_bits()),

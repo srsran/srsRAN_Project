@@ -57,10 +57,10 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   specific_init();
 }
 
-optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      output,
-                                             span<const log_likelihood_ratio> input,
-                                             crc_calculator*                  crc,
-                                             const configuration&             cfg)
+std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      output,
+                                                  span<const log_likelihood_ratio> input,
+                                                  crc_calculator*                  crc,
+                                                  const configuration&             cfg)
 {
   init(cfg);
 
@@ -90,7 +90,7 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
     if (crc == nullptr) {
       output.one();
     }
-    return nullopt;
+    return std::nullopt;
   }
 
   // Ensure check-to-variable messages are not initialized.

@@ -36,13 +36,13 @@ namespace srs_cu_cp {
 class ue_context_setup_procedure
 {
 public:
-  ue_context_setup_procedure(const f1ap_configuration&            f1ap_cfg,
-                             const f1ap_ue_context_setup_request& request_,
-                             f1ap_ue_context_list&                ue_ctxt_list_,
-                             f1ap_du_processor_notifier&          du_processor_notifier_,
-                             f1ap_message_notifier&               f1ap_notif_,
-                             srslog::basic_logger&                logger_,
-                             optional<rrc_ue_transfer_context>    rrc_context);
+  ue_context_setup_procedure(const f1ap_configuration&              f1ap_cfg,
+                             const f1ap_ue_context_setup_request&   request_,
+                             f1ap_ue_context_list&                  ue_ctxt_list_,
+                             f1ap_du_processor_notifier&            du_processor_notifier_,
+                             f1ap_message_notifier&                 f1ap_notif_,
+                             srslog::basic_logger&                  logger_,
+                             std::optional<rrc_ue_transfer_context> rrc_context);
 
   void operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx);
 
@@ -59,13 +59,13 @@ private:
   /// Creates procedure result to send back to procedure caller.
   f1ap_ue_context_setup_response handle_procedure_result();
 
-  const f1ap_configuration&           f1ap_cfg;
-  const f1ap_ue_context_setup_request request;
-  f1ap_ue_context_list&               ue_ctxt_list;
-  f1ap_du_processor_notifier&         du_processor_notifier;
-  f1ap_message_notifier&              f1ap_notifier;
-  srslog::basic_logger&               logger;
-  optional<rrc_ue_transfer_context>   rrc_context; // Initialize new RRC with existing context.
+  const f1ap_configuration&              f1ap_cfg;
+  const f1ap_ue_context_setup_request    request;
+  f1ap_ue_context_list&                  ue_ctxt_list;
+  f1ap_du_processor_notifier&            du_processor_notifier;
+  f1ap_message_notifier&                 f1ap_notifier;
+  srslog::basic_logger&                  logger;
+  std::optional<rrc_ue_transfer_context> rrc_context; // Initialize new RRC with existing context.
 
   // Context of the created UE.
   f1ap_ue_context* ue_ctxt = nullptr;

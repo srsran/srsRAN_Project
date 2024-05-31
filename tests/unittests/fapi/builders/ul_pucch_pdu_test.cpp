@@ -203,8 +203,8 @@ TEST(ul_pucch_pdu_builder, valid_bit_length_parameters_passes)
 
 TEST(ul_pucch_pdu_builder, valid_maintenance_v3_basic_parameters_passes)
 {
-  optional<unsigned> max_code_rate;
-  optional<unsigned> ul_bwp_id;
+  std::optional<unsigned> max_code_rate;
+  std::optional<unsigned> ul_bwp_id;
 
   for (unsigned i = 0, e = 2; i != e; ++i) {
     if (i) {

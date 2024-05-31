@@ -42,12 +42,12 @@ struct baseband_gateway_transmitter_metadata {
   ///
   /// If present, the number of samples at the start of the baseband buffer that do not contain any baseband samples.
   /// Otherwise, the baseband buffer starts with transmit signal from the first sample.
-  optional<unsigned> tx_start;
+  std::optional<unsigned> tx_start;
   /// \brief Transmission end in samples.
   ///
   /// If present, it is the sample index in which there is no signal until the end of the buffer. Otherwise, the
   /// baseband buffer contains transmit signal until the last sample.
-  optional<unsigned> tx_end;
+  std::optional<unsigned> tx_end;
 };
 
 } // namespace srsran

@@ -84,11 +84,13 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   rlc_config rlc_cnfg = get_rlc_config_from_args(args_);
   switch (rlc_cnfg.mode) {
     case rlc_mode::am:
-      rlc_cnfg.am.tx.queue_size = rlc_sdu_queue;
+      rlc_cnfg.am.tx.queue_size  = rlc_sdu_queue;
+      rlc_cnfg.am.tx.pdcp_sn_len = pdcp_msg.config.tx.sn_size;
       break;
     case rlc_mode::um_bidir:
     case rlc_mode::um_unidir_dl:
-      rlc_cnfg.um.tx.queue_size = rlc_sdu_queue;
+      rlc_cnfg.um.tx.queue_size  = rlc_sdu_queue;
+      rlc_cnfg.um.tx.pdcp_sn_len = pdcp_msg.config.tx.sn_size;
       break;
     default:
       report_fatal_error("Invalid RLC mode.");

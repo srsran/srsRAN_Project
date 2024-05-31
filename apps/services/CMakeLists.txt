@@ -20,6 +20,7 @@
 
 set(SOURCES
         console_helper.cpp
+        metrics_log_helper.cpp
         e2_metric_connector_manager.cpp
         metrics_hub.cpp
         metrics_plotter_json.cpp

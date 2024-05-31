@@ -35,7 +35,7 @@ struct lower_phy_baseband_metrics {
   /// \brief Clipping event counters.
   ///
   /// It comprises of the number of clipped samples and the total number of processed samples.
-  optional<std::pair<uint64_t, uint64_t>> clipping;
+  std::optional<std::pair<uint64_t, uint64_t>> clipping;
 };
 
 } // namespace srsran

@@ -193,7 +193,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
   }
 
   unsigned aligned_offset = divide_ceil(offset, 8) * 8;
-  if (packed.size() != aligned_offset) {
+  if (!unpacked.empty() && (packed.size() != aligned_offset)) {
     const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
     bit_unpack(unpacked, aligned_packed);
   }
@@ -305,7 +305,7 @@ void srsran::srsvec::bit_pack(srsran::bit_buffer& packed, unsigned offset, span<
   }
 
   unsigned aligned_offset = divide_ceil(offset, 8) * 8;
-  if (packed.size() != aligned_offset) {
+  if (!unpacked.empty() && (packed.size() != aligned_offset)) {
     bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
     bit_pack(aligned_packed, unpacked);
   }

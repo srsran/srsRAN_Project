@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include "srsran/fapi/slot_message_gateway.h"
-#include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/fapi/buffered_decorator.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <memory>
 
@@ -33,19 +32,13 @@ class task_executor;
 
 namespace fapi {
 
-/// Buffered decorator modules.
-struct buffered_decorator_modules {
-  std::unique_ptr<slot_message_gateway>       gateway;
-  std::unique_ptr<slot_time_message_notifier> notifier;
-};
+class slot_message_gateway;
 
-/// Creates the buffered decorator modules.
-std::unique_ptr<buffered_decorator_modules>
-create_buffered_decorator_modules(unsigned                    l2_nof_slots_ahead,
-                                  subcarrier_spacing          scs,
-                                  slot_message_gateway&       gateway,
-                                  task_executor&              executor,
-                                  slot_time_message_notifier& delayed_notifier);
+/// Creates a buffered decorator.
+std::unique_ptr<buffered_decorator> create_buffered_decorator(unsigned              l2_nof_slots_ahead,
+                                                              subcarrier_spacing    scs,
+                                                              slot_message_gateway& gateway,
+                                                              task_executor&        executor);
 
 } // namespace fapi
 } // namespace srsran

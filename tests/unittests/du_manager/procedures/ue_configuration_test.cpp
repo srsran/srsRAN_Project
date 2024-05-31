@@ -25,6 +25,7 @@
 
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_config_helpers.h"
@@ -149,9 +150,9 @@ protected:
     }
   }
 
-  du_ue*                                                        test_ue = nullptr;
-  async_task<f1ap_ue_context_update_response>                   proc;
-  optional<lazy_task_launcher<f1ap_ue_context_update_response>> proc_launcher;
+  du_ue*                                                             test_ue = nullptr;
+  async_task<f1ap_ue_context_update_response>                        proc;
+  std::optional<lazy_task_launcher<f1ap_ue_context_update_response>> proc_launcher;
 };
 
 TEST_F(ue_config_tester, when_du_manager_receives_ue_config_request_then_mac_and_f1ap_get_request_to_reconfigure_ue)
@@ -201,7 +202,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload =
-      byte_buffer::create({test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))}).value();
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, 0, test_rgen::uniform_int<unsigned>(3, 100));
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}));
@@ -234,11 +235,11 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
   byte_buffer                         test_payload =
-      byte_buffer::create(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))).value();
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, 0, test_rgen::uniform_int<unsigned>(3, 100));
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {drb_id_t::drb1}));
-  srs_du::f1u_bearer_dummy* bearer = f1u_gw.f1u_bearers.begin()->second.begin()->second;
+  srs_du::f1u_gw_bearer_dummy* bearer = f1u_gw.f1u_bearers.begin()->second.begin()->second;
 
   // Forward MAC Rx SDU through DRB1 (UL).
   // > Add dummy RLC data header.
@@ -248,15 +249,17 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
   // > Check arrival of F1-U Tx SDU to F1-U bearer.
-  ASSERT_EQ(test_payload, bearer->last_sdu);
+  auto last_sdu = bearer->last_sdu->t_pdu->deep_copy().value();
+  ASSERT_EQ(test_payload, last_sdu);
 
   // Forward F1-U Rx SDU through DRB1 (DL).
   // > Create data buffer.
-  pdcp_tx_pdu rx_sdu;
-  rx_sdu.buf     = test_payload.copy();
+  nru_dl_message rx_sdu;
+  rx_sdu.t_pdu   = test_payload.copy();
   rx_sdu.pdcp_sn = 0;
   // > Push F1-U Rx SDU through F1-U bearer Rx SDU notifier.
-  bearer->du_rx.on_new_sdu(std::move(rx_sdu));
+  bearer->du_rx.on_new_pdu(std::move(rx_sdu));
+
   // > Check arrival of MAC Tx SDU to MAC logical channel.
   std::vector<uint8_t> mac_tx_sdu(test_payload.length() + dummy_rlc_header.size());
   unsigned             nwritten = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(mac_tx_sdu);

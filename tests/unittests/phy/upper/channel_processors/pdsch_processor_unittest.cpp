@@ -166,7 +166,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   pdu.start_symbol_index          = dist_start_symb(rgen);
   pdu.nof_symbols                 = get_nsymb_per_slot(cp) - pdu.start_symbol_index;
   pdu.ldpc_base_graph             = static_cast<ldpc_base_graph_type>(dist_bool(rgen));
-  pdu.tbs_lbrm_bytes              = ldpc::MAX_CODEBLOCK_SIZE / 8;
+  pdu.tbs_lbrm                    = units::bytes(50);
   pdu.reserved                    = {};
   pdu.ratio_pdsch_dmrs_to_sss_dB  = get_power();
   pdu.ratio_pdsch_data_to_sss_dB  = get_power();
@@ -224,6 +224,10 @@ TEST_P(PdschProcessorFixture, UnitTest)
 
   // Validate encoder.
   {
+    // Calculate rate match buffer size.
+    units::bits Nref = ldpc::compute_N_ref(
+        pdu.tbs_lbrm, ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), pdu.ldpc_base_graph));
+
     ASSERT_EQ(encoder_spy->get_nof_entries(), nof_codewords);
     const auto& entries = encoder_spy->get_entries();
     for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
@@ -231,7 +235,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.base_graph, pdu.ldpc_base_graph);
       ASSERT_EQ(entry.config.rv, pdu.codewords[codeword].rv);
       ASSERT_EQ(entry.config.mod, pdu.codewords[codeword].modulation);
-      ASSERT_EQ(entry.config.Nref, pdu.tbs_lbrm_bytes * 8);
+      ASSERT_EQ(entry.config.Nref, Nref.value());
       ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
       ASSERT_EQ(entry.config.nof_ch_symbols, Nre * entry.config.nof_layers);
       ASSERT_EQ(span<const uint8_t>(entry.transport_block), span<const uint8_t>(data[codeword]));

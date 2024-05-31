@@ -59,12 +59,23 @@ target_link_libraries(scheduler_test
 gtest_discover_tests(scheduler_test)
 add_test(scheduler_test scheduler_test)
 
+add_executable(scheduler_test_doubles_test test_doubles/test_pucch_res_test_builder_helper.cpp)
+target_link_libraries(scheduler_test_doubles_test
+        srsran_sched
+        sched_config
+        scheduler_test_suite
+        sched_test_doubles
+        gtest
+        gtest_main)
+gtest_discover_tests(scheduler_test_doubles_test)
+
 add_executable(multiple_ue_sched_test multiple_ue_sched_test.cpp)
 target_link_libraries(multiple_ue_sched_test
         srsran_sched
         sched_config
         scheduler_test_suite
         mac_configuration_helpers
+        sched_test_doubles
         gtest
         gtest_main)
 gtest_discover_tests(multiple_ue_sched_test)

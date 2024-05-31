@@ -34,9 +34,9 @@ class dlt_pcap;
 class e2_gateway_remote_connector final : public e2_connection_client
 {
 public:
-  explicit e2_gateway_remote_connector(io_broker&                   broker_,
-                                       sctp_network_gateway_config& net_gw_config_,
-                                       dlt_pcap&                    e2ap_pcap_writer_);
+  explicit e2_gateway_remote_connector(io_broker&                     broker_,
+                                       sctp_network_connector_config& net_gw_config_,
+                                       dlt_pcap&                      e2ap_pcap_writer_);
 
   // E2 Agent interface.
   std::unique_ptr<e2_message_notifier> handle_connection_request() override;
@@ -50,7 +50,7 @@ public:
 private:
   srslog::basic_logger&             logger;
   io_broker&                        broker;
-  sctp_network_gateway_config&      net_gw_config;
+  sctp_network_connector_config&    net_gw_config;
   dlt_pcap&                         e2ap_pcap_writer;
   std::vector<e2_message_notifier*> e2ap_notifiers;
 };

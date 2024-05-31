@@ -32,7 +32,7 @@ namespace srsran {
 class gtpu_tunnel_log_prefix
 {
 public:
-  gtpu_tunnel_log_prefix(optional<srs_cu_up::ue_index_t> ue_index, gtpu_teid_t teid, const char* dir)
+  gtpu_tunnel_log_prefix(std::optional<srs_cu_up::ue_index_t> ue_index, gtpu_teid_t teid, const char* dir)
   {
     fmt::memory_buffer buffer;
     if (ue_index.has_value()) {

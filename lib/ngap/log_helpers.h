@@ -29,11 +29,11 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Log Received/Transmitted NGAP PDU.
-void log_ngap_pdu(srslog::basic_logger&         logger,
-                  bool                          json_log,
-                  bool                          is_rx,
-                  const optional<ue_index_t>&   ue_idx,
-                  const asn1::ngap::ngap_pdu_c& pdu);
+void log_ngap_pdu(srslog::basic_logger&            logger,
+                  bool                             json_log,
+                  bool                             is_rx,
+                  const std::optional<ue_index_t>& ue_idx,
+                  const asn1::ngap::ngap_pdu_c&    pdu);
 
 } // namespace srs_cu_cp
 } // namespace srsran

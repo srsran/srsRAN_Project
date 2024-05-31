@@ -30,6 +30,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
+constexpr std::chrono::milliseconds bearer_context_mod_response_timeout{1000};
+
 ue_context_modification_procedure::ue_context_modification_procedure(
     const f1ap_ue_context_modification_request& request_,
     f1ap_ue_context&                            ue_ctxt_,
@@ -45,7 +47,7 @@ void ue_context_modification_procedure::operator()(coro_context<async_task<f1ap_
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome, bearer_context_mod_response_timeout);
 
   // Send command to DU.
   send_ue_context_modification_request();

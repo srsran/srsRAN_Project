@@ -24,6 +24,7 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/five_qi.h"
@@ -170,7 +171,7 @@ inline void fill_e1ap_drb_to_setup_item(e1ap_drb_to_setup_item_ng_ran&          
 
   // drb inactivity timer
   if (asn1_drb_to_setup_item.drb_inactivity_timer_present) {
-    drb_to_setup_item.drb_inactivity_timer = asn1_drb_to_setup_item.drb_inactivity_timer;
+    drb_to_setup_item.drb_inactivity_timer = std::chrono::seconds(asn1_drb_to_setup_item.drb_inactivity_timer);
   }
 
   // pdcp sn status info
@@ -207,7 +208,7 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   // activity notification level
   request.activity_notif_level = asn1_to_activity_notification_level(asn1_request->activity_notif_level.value);
   if (request.activity_notif_level == activity_notification_level_t::ue) {
-    request.ue_inactivity_timer = asn1_request->ue_inactivity_timer;
+    request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
 
   // pdu session resource to setup list
@@ -263,7 +264,8 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
 
       // pdu session inactivity timer
       if (asn1_pdu_session_res_item.pdu_session_inactivity_timer_present) {
-        pdu_session_res_item.pdu_session_inactivity_timer = asn1_pdu_session_res_item.pdu_session_inactivity_timer;
+        pdu_session_res_item.pdu_session_inactivity_timer =
+            std::chrono::seconds(asn1_pdu_session_res_item.pdu_session_inactivity_timer);
       }
 
       // existing allocated ng dl up tnl info
@@ -288,7 +290,7 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
 
   // ue inactivity timer
   if (asn1_request->ue_inactivity_timer_present) {
-    request.ue_inactivity_timer = asn1_request->ue_inactivity_timer;
+    request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
 
   // bearer context status change
@@ -419,7 +421,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
   // ue inactivity timer
   if (asn1_request->ue_inactivity_timer_present) {
-    request.ue_inactivity_timer = asn1_request->ue_inactivity_timer;
+    request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
 
   // data discard required
@@ -485,7 +487,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
         // pdu session inactivity timer
         if (asn1_res_to_setup_mod_item.pdu_session_inactivity_timer_present) {
           pdu_session_res_to_setup_mod_item.pdu_session_inactivity_timer =
-              asn1_res_to_setup_mod_item.pdu_session_inactivity_timer;
+              std::chrono::seconds(asn1_res_to_setup_mod_item.pdu_session_inactivity_timer);
         }
 
         // drb to setup mod list ng ran
@@ -517,7 +519,8 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
           // drb inactivity timer
           if (asn1_drb_to_setup_mod_item_ng_ran.drb_inactivity_timer_present) {
-            drb_to_setup_mod_item_ng_ran.drb_inactivity_timer = asn1_drb_to_setup_mod_item_ng_ran.drb_inactivity_timer;
+            drb_to_setup_mod_item_ng_ran.drb_inactivity_timer =
+                std::chrono::seconds(asn1_drb_to_setup_mod_item_ng_ran.drb_inactivity_timer);
           }
 
           // pdcp sn status info

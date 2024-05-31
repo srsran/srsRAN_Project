@@ -537,10 +537,10 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
   static const unsigned pdsch_mapping_typeA_min_L_value = 3;
 
-  const pdcch_config_common&             common_pdcch_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common;
-  const pdcch_config&                    ded_pdcch_cfg    = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg.value();
-  const optional<coreset_configuration>& coreset0         = common_pdcch_cfg.coreset0;
-  const optional<coreset_configuration>& common_coreset   = common_pdcch_cfg.common_coreset;
+  const pdcch_config_common& common_pdcch_cfg          = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common;
+  const pdcch_config&        ded_pdcch_cfg             = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg.value();
+  const std::optional<coreset_configuration>& coreset0 = common_pdcch_cfg.coreset0;
+  const std::optional<coreset_configuration>& common_coreset = common_pdcch_cfg.common_coreset;
   CHECK_TRUE(coreset0.has_value(), "CORESET#0 not configured");
 
   const pdcch_type0_css_occasion_pattern1_description ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
@@ -578,8 +578,8 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   // duration for PDSCH allocation in partial slot. Otherwise, it can be used only for PDCCH allocations.
   // NOTE2: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
   // TODO: Consider SearchSpace periodicity while validating DL symbols in special slots.
-  optional<unsigned> cs_duration;
-  unsigned           ss_start_symbol_idx;
+  std::optional<unsigned> cs_duration;
+  unsigned                ss_start_symbol_idx;
   // SearchSpaces in Common PDCCH configuration.
   for (const search_space_configuration& ss_cfg : common_pdcch_cfg.search_spaces) {
     cs_duration         = {};

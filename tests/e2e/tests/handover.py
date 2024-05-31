@@ -22,19 +22,18 @@
 Handover Tests
 """
 import logging
-from contextlib import suppress
+from contextlib import contextmanager
 from time import sleep
-from typing import Optional, Sequence, Tuple, Union
+from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
 import pytest
-from _pytest.outcomes import Failed
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import HandoverInfo
+from retina.protocol.ue_pb2 import UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
@@ -60,9 +59,9 @@ from .steps.stub import (
     ),
 )
 @mark.zmq
-# @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments
-def test_zmq_handover(
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+# pylint: disable=too-many-arguments,too-many-locals
+def test_zmq_handover_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_8: UEStub,
@@ -76,7 +75,7 @@ def test_zmq_handover(
     """
     ZMQ Handover tests
     """
-    _handover_multi_ues(
+    with _handover_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_8,
@@ -91,10 +90,80 @@ def test_zmq_handover(
         always_download_artifacts=True,
         noise_spd=noise_spd,
         warning_as_errors=True,
-    )
+    ) as (ue_attach_info_dict, movements, traffic_seconds):
+
+        for ue_stub, ue_attach_info in ue_attach_info_dict.items():
+            logging.info(
+                "Zigzag HO for UE [%s] (%s) + Pings running in background for all UEs",
+                id(ue_stub),
+                ue_attach_info.ipv4,
+            )
+
+            ping_task_array = ping_start(ue_attach_info_dict, fivegc, traffic_seconds)
+
+            for from_position, to_position, movement_steps, sleep_between_movement_steps in movements:
+                _do_ho((ue_stub,), from_position, to_position, movement_steps, sleep_between_movement_steps)
+
+            ping_wait_until_finish(ping_task_array)
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth, noise_spd",
+    (
+        param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        param(41, 30, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(3, 15, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+        # param(41, 30, 50, -74, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),
+    ),
+)
+@mark.zmq
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+# pylint: disable=too-many-arguments,too-many-locals
+def test_zmq_handover_parallel(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_8: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    noise_spd: int,
+):
+    """
+    ZMQ Handover tests
+    """
+    with _handover_multi_ues(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_8,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        noise_spd=noise_spd,
+        warning_as_errors=True,
+    ) as (ue_attach_info_dict, movements, traffic_seconds):
+
+        logging.info(
+            "Zigzag HO for all UEs + Pings running in background for all UEs",
+        )
+
+        ping_task_array = ping_start(ue_attach_info_dict, fivegc, traffic_seconds)
+
+        for from_position, to_position, movement_steps, sleep_between_movement_steps in movements:
+            _do_ho(ue_8, from_position, to_position, movement_steps, sleep_between_movement_steps)
+
+        ping_wait_until_finish(ping_task_array)
 
 
 # pylint: disable=too-many-arguments,too-many-locals
+@contextmanager
 def _handover_multi_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -113,7 +182,15 @@ def _handover_multi_ues(
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
-):
+) -> Generator[
+    Tuple[
+        Dict[UEStub, UEAttachedInfo],
+        Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...],
+        int,
+    ],
+    None,
+    None,
+]:
     logging.info("Hanover Test")
 
     original_position = (0, 0, 0)
@@ -143,34 +220,17 @@ def _handover_multi_ues(
 
     # HO while pings
     movement_duration = (movement_steps + 1) * sleep_between_movement_steps
-    movements = (
-        (original_position, cell_position_offset),
-        (cell_position_offset, original_position),
-        (original_position, cell_position_offset),
-        (cell_position_offset, original_position),
+    movements: Tuple[Tuple[Tuple[float, float, float], Tuple[float, float, float], int, int], ...] = (
+        (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
+        (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
+        (original_position, cell_position_offset, movement_steps, sleep_between_movement_steps),
+        (cell_position_offset, original_position, movement_steps, sleep_between_movement_steps),
     )
     traffic_seconds = (len(movements) * movement_duration) + len(ue_array)
 
-    for ue_stub in ue_array:
-        logging.info(
-            "Zigzag HO for UE [%s] (%s) + Pings running in background for all UEs",
-            id(ue_stub),
-            ue_attach_info_dict[ue_stub].ipv4,
-        )
-        other_ue_attach_info_dict = dict(ue_attach_info_dict)
-        other_ue_attach_info_dict.pop(ue_stub)
+    yield ue_attach_info_dict, movements, traffic_seconds
 
-        ping_task_array_other = ping_start(other_ue_attach_info_dict, fivegc, traffic_seconds)
-        ping_task_array_handover = ping_start({ue_stub: ue_attach_info_dict[ue_stub]}, fivegc, traffic_seconds)
-
-        for from_position, to_position in movements:
-            _do_ho(ue_stub, from_position, to_position, movement_steps, sleep_between_movement_steps)
-
-        ping_wait_until_finish(ping_task_array_other)
-        with suppress(Failed):
-            ping_wait_until_finish(ping_task_array_handover)
-
-    # Pings after reest
+    # Pings after handover
     logging.info("Starting Pings after all HO have been completed")
     ping_wait_until_finish(ping_start(ue_attach_info_dict, fivegc, movement_duration))
 
@@ -181,26 +241,27 @@ def _handover_multi_ues(
 
 
 def _do_ho(
-    ue_stub: UEStub,
+    ue_array: Tuple[UEStub, ...],
     from_position: Tuple[float, float, float],
     to_position: Tuple[float, float, float],
     steps: int,
     sleep_between_steps: int,
 ):
-    logging.info("Moving UE [%s] from %s to %s", id(ue_stub), from_position, to_position)
+    for ue_stub in ue_array:
+        logging.info("Moving UE [%s] from %s to %s", id(ue_stub), from_position, to_position)
 
-    ho_task = ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps))
+    ho_task_array = [ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps)) for ue_stub in ue_array]
 
     for i in range(steps + 1):
-        ue_move(
-            ue_stub,
-            (int(round(from_position[0] + (i * (to_position[0] - from_position[0]) / steps)))),
-            (int(round(from_position[1] + (i * (to_position[1] - from_position[1]) / steps)))),
-            (int(round(from_position[2] + (i * (to_position[2] - from_position[2]) / steps)))),
-        )
+        for ue_stub in ue_array:
+            ue_move(
+                ue_stub,
+                (int(round(from_position[0] + (i * (to_position[0] - from_position[0]) / steps)))),
+                (int(round(from_position[1] + (i * (to_position[1] - from_position[1]) / steps)))),
+                (int(round(from_position[2] + (i * (to_position[2] - from_position[2]) / steps)))),
+            )
         sleep(sleep_between_steps)
 
     # We check again the future's result here so it can raise an exception if the HO failed
-    result: HandoverInfo = ho_task.result()
-    if not result.status:
+    if not all((task.result().status for task in ho_task_array)):
         pytest.fail("Handover UE failed")

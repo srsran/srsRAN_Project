@@ -37,14 +37,6 @@ public:
   virtual void handle_message(const f1ap_message& msg) = 0;
 };
 
-/// Interface used by F1 to inform about events.
-class f1ap_event_handler
-{
-public:
-  virtual ~f1ap_event_handler()         = default;
-  virtual void handle_connection_loss() = 0;
-};
-
 /// Notifier interface used to forward F1AP PDUs to either the CU-CP or DU.
 class f1ap_message_notifier
 {

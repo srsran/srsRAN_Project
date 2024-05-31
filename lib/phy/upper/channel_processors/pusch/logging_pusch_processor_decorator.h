@@ -29,8 +29,8 @@
 namespace fmt {
 
 struct pusch_results_wrapper {
-  srsran::optional<srsran::pusch_processor_result_control> uci;
-  srsran::optional<srsran::pusch_processor_result_data>    sch;
+  std::optional<srsran::pusch_processor_result_control> uci;
+  std::optional<srsran::pusch_processor_result_data>    sch;
 };
 
 /// \brief Custom formatter for \c pusch_results_wrapper.

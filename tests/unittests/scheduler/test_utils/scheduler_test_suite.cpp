@@ -279,8 +279,8 @@ static void test_pdcch_common_consistency(const cell_configuration&        cell_
   const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
   for (const pdcch_dl_information& pdcch : dl_pdcchs) {
     span<const pdsch_time_domain_resource_allocation> pdsch_td_list;
-    optional<unsigned>                                time_res;
-    optional<unsigned>                                k1;
+    std::optional<unsigned>                           time_res;
+    std::optional<unsigned>                           k1;
     switch (pdcch.dci.type) {
       case dci_dl_rnti_config_type::si_f1_0:
         pdsch_td_list = get_si_rnti_pdsch_time_domain_list(init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);

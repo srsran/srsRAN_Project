@@ -55,8 +55,8 @@ protected:
     return req->gnb_du_ue_f1ap_id == (unsigned)du_ue_id;
   }
 
-  async_task<f1ap_ue_context_modification_response>                   t;
-  optional<lazy_task_launcher<f1ap_ue_context_modification_response>> t_launcher;
+  async_task<f1ap_ue_context_modification_response>                        t;
+  std::optional<lazy_task_launcher<f1ap_ue_context_modification_response>> t_launcher;
 };
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_procedure_completes)

@@ -249,10 +249,10 @@ void calculate_addmodremlist_diff(toAddModList&       add_diff_list,
 /// \tparam ConvertElem Function to convert element of \c OptionalElem to element of \c Asn1Type.
 /// \return Whether changes were made to Setup/Release ASN.1 object.
 template <typename Asn1Type, typename OptionalElem, typename ConvertElem>
-bool calculate_setup_release(asn1::setup_release_c<Asn1Type>& setup_rel,
-                             const optional<OptionalElem>&    prev,
-                             const optional<OptionalElem>&    next,
-                             const ConvertElem&               convert_func)
+bool calculate_setup_release(asn1::setup_release_c<Asn1Type>&   setup_rel,
+                             const std::optional<OptionalElem>& prev,
+                             const std::optional<OptionalElem>& next,
+                             const ConvertElem&                 convert_func)
 {
   if (next.has_value()) {
     if (not prev.has_value() or *prev != *next) {

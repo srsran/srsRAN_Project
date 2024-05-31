@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/support/executors/task_worker.h"
 #include <chrono>
 #include <utility>
 
@@ -64,7 +65,7 @@ cu_cp_test::cu_cp_test()
   cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
   cfg.cu_cp_executor      = &ctrl_worker;
   cfg.ngap_notifier       = &ngap_amf_notifier;
-  cfg.timers              = timers.get();
+  cfg.timers              = &timers;
 
   // NGAP config
   cfg.ngap_config.gnb_id        = {411, 32};
@@ -186,9 +187,21 @@ cu_cp_test::cu_cp_test()
 
 cu_cp_test::~cu_cp_test()
 {
+  std::promise<void> p;
+  std::future<void>  f = p.get_future();
+
+  // cu_cp->stop() should not be called from same execution context as of the CU-CP executor.
+  task_worker stop_worker{"stop_worker", 128};
+  bool        res = stop_worker.push_task([this, &p]() {
+    cu_cp_obj->stop();
+    p.set_value();
+  });
+  report_fatal_error_if_not(res, "Task was not dispatched");
+
+  start_auto_tick(f);
+
   // flush logger after each test
   srslog::flush();
-  cu_cp_obj->stop();
 }
 
 void cu_cp_test::attach_ue(gnb_du_ue_f1ap_id_t du_ue_id,
@@ -506,4 +519,12 @@ bool cu_cp_test::check_paging_result()
   }
 
   return true;
+}
+
+void cu_cp_test::start_auto_tick(const std::future<void>& stop_signal)
+{
+  do {
+    timers.tick();
+    ctrl_worker.run_pending_tasks();
+  } while (stop_signal.wait_for(std::chrono::milliseconds{1}) != std::future_status::ready);
 }

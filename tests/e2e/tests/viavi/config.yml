@@ -27,7 +27,7 @@ cell_cfg:
     zero_correlation_zone: 0
     prach_frequency_start: 12
   pucch:
-    sr_period_ms: 10
+    sr_period_ms: 40
     f1_nof_cell_res_sr: 30
     min_k1: 2
   csi:

@@ -39,33 +39,33 @@ namespace srs_cu_cp {
 /// Arguments for the RRC Reconfiguration procedure.
 
 struct rrc_srb_to_add_mod {
-  bool                  reestablish_pdcp_present = false;
-  bool                  discard_on_pdcp_present  = false;
-  srb_id_t              srb_id                   = srb_id_t::nulltype;
-  optional<pdcp_config> pdcp_cfg;
+  bool                       reestablish_pdcp_present = false;
+  bool                       discard_on_pdcp_present  = false;
+  srb_id_t                   srb_id                   = srb_id_t::nulltype;
+  std::optional<pdcp_config> pdcp_cfg;
 };
 
 struct rrc_cn_assoc {
-  optional<uint8_t>       eps_bearer_id;
-  optional<sdap_config_t> sdap_cfg;
+  std::optional<uint8_t>       eps_bearer_id;
+  std::optional<sdap_config_t> sdap_cfg;
 };
 
 struct rrc_drb_to_add_mod {
-  bool                   reestablish_pdcp_present = false;
-  bool                   recover_pdcp_present     = false;
-  optional<rrc_cn_assoc> cn_assoc;
-  drb_id_t               drb_id = drb_id_t::invalid;
-  optional<pdcp_config>  pdcp_cfg;
+  bool                        reestablish_pdcp_present = false;
+  bool                        recover_pdcp_present     = false;
+  std::optional<rrc_cn_assoc> cn_assoc;
+  drb_id_t                    drb_id = drb_id_t::invalid;
+  std::optional<pdcp_config>  pdcp_cfg;
 };
 
 struct rrc_security_algorithm_config {
-  security::ciphering_algorithm           ciphering_algorithm;
-  optional<security::integrity_algorithm> integrity_prot_algorithm;
+  security::ciphering_algorithm                ciphering_algorithm;
+  std::optional<security::integrity_algorithm> integrity_prot_algorithm;
 };
 
 struct rrc_security_config {
-  optional<rrc_security_algorithm_config> security_algorithm_cfg;
-  optional<std::string>                   key_to_use;
+  std::optional<rrc_security_algorithm_config> security_algorithm_cfg;
+  std::optional<std::string>                   key_to_use;
 };
 
 struct rrc_radio_bearer_config {
@@ -78,7 +78,7 @@ struct rrc_radio_bearer_config {
   slotted_id_vector<srb_id_t, rrc_srb_to_add_mod> srb_to_add_mod_list;
   slotted_id_vector<drb_id_t, rrc_drb_to_add_mod> drb_to_add_mod_list;
   std::vector<drb_id_t>                           drb_to_release_list;
-  optional<rrc_security_config>                   security_cfg;
+  std::optional<rrc_security_config>              security_cfg;
   bool                                            srb3_to_release_present = false;
 };
 
@@ -94,27 +94,27 @@ struct rrc_delay_budget_report_cfg {
 };
 
 struct rrc_other_cfg {
-  optional<rrc_delay_budget_report_cfg> delay_budget_report_cfg;
+  std::optional<rrc_delay_budget_report_cfg> delay_budget_report_cfg;
 };
 
 struct rrc_recfg_v1530_ies {
-  bool                         full_cfg_present = false;
-  byte_buffer                  master_cell_group;
-  std::vector<byte_buffer>     ded_nas_msg_list;
-  optional<rrc_master_key_upd> master_key_upd;
-  byte_buffer                  ded_sib1_delivery;
-  byte_buffer                  ded_sys_info_delivery;
-  optional<rrc_other_cfg>      other_cfg;
+  bool                              full_cfg_present = false;
+  byte_buffer                       master_cell_group;
+  std::vector<byte_buffer>          ded_nas_msg_list;
+  std::optional<rrc_master_key_upd> master_key_upd;
+  byte_buffer                       ded_sib1_delivery;
+  byte_buffer                       ded_sys_info_delivery;
+  std::optional<rrc_other_cfg>      other_cfg;
 
   // TODO: Add rrc_recfg_v1540_ies_s
-  // optional<rrc_recfg_v1540_ies> non_crit_ext;
+  // std::optional<rrc_recfg_v1540_ies> non_crit_ext;
 };
 
 struct rrc_reconfiguration_procedure_request {
-  optional<rrc_radio_bearer_config> radio_bearer_cfg;
-  byte_buffer                       secondary_cell_group;
-  optional<rrc_meas_cfg>            meas_cfg;
-  optional<rrc_recfg_v1530_ies>     non_crit_ext;
+  std::optional<rrc_radio_bearer_config> radio_bearer_cfg;
+  byte_buffer                            secondary_cell_group;
+  std::optional<rrc_meas_cfg>            meas_cfg;
+  std::optional<rrc_recfg_v1530_ies>     non_crit_ext;
 };
 
 struct rrc_ue_capability_transfer_request {

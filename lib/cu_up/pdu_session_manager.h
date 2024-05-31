@@ -49,12 +49,12 @@ struct drb_setup_result {
 
 // Final result when creating a PDU session with all DRBs and QoS flow results.
 struct pdu_session_setup_result {
-  bool                          success        = false;                     // True if PDU session could be set up.
-  pdu_session_id_t              pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
-  e1ap_cause_t                  cause;                                      // Cause if setup was unsuccessful.
-  up_transport_layer_info       gtp_tunnel;
-  optional<security_result_t>   security_result;
-  std::vector<drb_setup_result> drb_setup_results;
+  bool                             success        = false;                     // True if PDU session could be set up.
+  pdu_session_id_t                 pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
+  e1ap_cause_t                     cause;                                      // Cause if setup was unsuccessful.
+  up_transport_layer_info          gtp_tunnel;
+  std::optional<security_result_t> security_result;
+  std::vector<drb_setup_result>    drb_setup_results;
 };
 
 // Final result when modifying a PDU session with all DRBs and QoS flow results.

@@ -103,16 +103,21 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
                                                const pdu_t&        pdu)
 {
   // Select codeword specific parameters.
-  unsigned          rv           = pdu.codewords[codeword_id].rv;
-  modulation_scheme modulation   = pdu.codewords[codeword_id].modulation;
-  span<uint8_t>     tmp_codeword = temp_unpacked_codeword;
+  unsigned          rv         = pdu.codewords[codeword_id].rv;
+  modulation_scheme modulation = pdu.codewords[codeword_id].modulation;
+
+  span<uint8_t> tmp_codeword = temp_unpacked_codeword;
+
+  // Calculate rate match buffer size.
+  units::bits Nref = ldpc::compute_N_ref(
+      pdu.tbs_lbrm, ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), pdu.ldpc_base_graph));
 
   // Prepare encoder configuration.
   pdsch_encoder::configuration encoder_config;
   encoder_config.base_graph     = pdu.ldpc_base_graph;
   encoder_config.rv             = rv;
   encoder_config.mod            = modulation;
-  encoder_config.Nref           = pdu.tbs_lbrm_bytes * 8;
+  encoder_config.Nref           = Nref.value();
   encoder_config.nof_layers     = nof_layers;
   encoder_config.nof_ch_symbols = Nre * nof_layers;
 

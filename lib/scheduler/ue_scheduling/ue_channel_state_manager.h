@@ -37,7 +37,7 @@ class ue_channel_state_manager
 public:
   ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg_, unsigned nof_dl_ports_);
 
-  const optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
+  const std::optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
 
   void update_pusch_snr(float snr_db) { pusch_snr_db = snr_db; }
 
@@ -53,10 +53,10 @@ public:
   unsigned get_nof_ul_layers() const { return 1; }
 
   /// \brief Fetches the precoding codebook to be used in DL based on reported PMI and the chosen nof layers.
-  optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, prb_interval pdsch_prbs) const
+  std::optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, prb_interval pdsch_prbs) const
   {
     srsran_assert(chosen_nof_layers <= nof_dl_ports, "Invalid number of layers chosen");
-    optional<pdsch_precoding_info> precoding_info;
+    std::optional<pdsch_precoding_info> precoding_info;
     if (nof_dl_ports <= 1) {
       // In case of 1 DL port, no precoding is used.
       return precoding_info;
@@ -96,10 +96,10 @@ private:
   static_vector<pdsch_precoding_info::prg_info, NOF_LAYER_CHOICES> recommended_prg_info;
 
   /// Latest CSI report received from the UE.
-  optional<csi_report_data> latest_csi_report;
+  std::optional<csi_report_data> latest_csi_report;
 
   /// Latest PHR received from the UE.
-  optional<cell_ph_report> latest_phr;
+  std::optional<cell_ph_report> latest_phr;
 };
 
 } // namespace srsran

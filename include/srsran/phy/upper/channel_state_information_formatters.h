@@ -73,11 +73,11 @@ struct formatter<srsran::channel_state_information> {
       }
 
       // Extract CSI measurements. It could be some of them are not available.
-      srsran::optional<float>                 epre_dB       = csi.get_epre_dB();
-      srsran::optional<float>                 rsrp_dB       = csi.get_rsrp_dB();
-      srsran::optional<float>                 sinr_dB       = csi.get_sinr_dB();
-      srsran::optional<srsran::phy_time_unit> time_aligment = csi.get_time_alignment();
-      srsran::optional<float>                 cfo_Hz        = csi.get_cfo_Hz();
+      std::optional<float>                 epre_dB       = csi.get_epre_dB();
+      std::optional<float>                 rsrp_dB       = csi.get_rsrp_dB();
+      std::optional<float>                 sinr_dB       = csi.get_sinr_dB();
+      std::optional<srsran::phy_time_unit> time_aligment = csi.get_time_alignment();
+      std::optional<float>                 cfo_Hz        = csi.get_cfo_Hz();
 
       // Print the measurements that are present.
       if (epre_dB.has_value()) {
@@ -107,7 +107,7 @@ struct formatter<srsran::channel_state_information> {
       }
     } else {
       // Short representation only prints the SINR selected for CSI reporting to higher layers.
-      srsran::optional<float> sinr_dB = csi.get_sinr_dB();
+      std::optional<float> sinr_dB = csi.get_sinr_dB();
       if (sinr_dB.has_value()) {
         helper.format_always(ctx, "sinr={:.1f}dB", sinr_dB.value());
       } else {

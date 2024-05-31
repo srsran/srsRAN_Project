@@ -84,7 +84,7 @@ private:
   metrics_plotter_stdout            metrics_plotter;
   metrics_plotter_json              metrics_json;
   std::vector<du_cell_config>       cells;
-  optional<ru_controller*>          radio_controller;
+  std::optional<ru_controller*>     radio_controller;
   srs_cu_cp::cu_cp_command_handler& cu_cp;
   bool                              autostart_stdout_metrics = false;
 

@@ -25,9 +25,9 @@ add_subdirectory(up_resource_manager)
 set(SOURCES
       cu_cp_factory.cpp
       cu_cp_impl.cpp
-      cu_cp_controller/cu_cp_controller_factory.cpp
       cu_cp_controller/cu_cp_controller.cpp
       cu_cp_controller/amf_connection_manager.cpp
+      cu_cp_controller/du_connection_manager.cpp
       cu_up_processor/cu_up_processor_impl.cpp
       cu_up_processor/cu_up_processor_factory.cpp
       cu_up_processor/cu_up_processor_repository.cpp
@@ -50,7 +50,7 @@ set(SOURCES
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
       metrics_handler/metrics_handler_impl.cpp
-        ue_manager/ue_task_scheduler.cpp
+        ue_manager/ue_task_scheduler_impl.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
         ue_manager/ue_manager_impl.cpp
@@ -58,4 +58,14 @@ set(SOURCES
 
 add_library(srsran_cu_cp STATIC ${SOURCES})
 
-target_link_libraries(srsran_cu_cp srsran_cu_cp_cell_meas_manager srsran_cu_cp_mobility_manager srsran_e1ap srsran_f1ap_cu srsran_ngap srsran_rrc srsran_ran srslog srsran_support srsran_security)
+target_link_libraries(srsran_cu_cp
+        srsran_cu_cp_cell_meas_manager
+        srsran_cu_cp_mobility_manager
+        srsran_e1ap_cu_cp
+        srsran_f1ap_cu
+        srsran_ngap
+        srsran_rrc
+        srsran_ran
+        srslog
+        srsran_support
+        srsran_security)

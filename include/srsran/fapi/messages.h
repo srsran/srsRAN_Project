@@ -161,7 +161,7 @@ struct dl_dci_pdu {
   int8_t                           power_control_offset_ss_profile_nr;
   dci_payload                      payload;
   // Vendor specific parameters.
-  optional<pdcch_context> context;
+  std::optional<pdcch_context> context;
 };
 
 /// CORESET CCE to REG mapping type.
@@ -339,7 +339,7 @@ struct dl_pdsch_pdu {
   // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
   /// Vendor specific parameters.
-  optional<pdsch_context> context;
+  std::optional<pdsch_context> context;
 };
 
 /// CSI-RS maintenance parameters added in FAPIv3.
@@ -642,7 +642,7 @@ struct ul_pusch_pdu {
   ul_pusch_params_v4                   pusch_params_v4;
   uci_part1_to_part2_correspondence_v3 uci_correspondence;
   // Vendor specific parameters.
-  optional<pusch_context> context;
+  std::optional<pusch_context> context;
 };
 
 /// PUCCH PDU maintenance information added in FAPIv3.

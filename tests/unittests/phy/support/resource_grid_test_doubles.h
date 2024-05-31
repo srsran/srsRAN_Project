@@ -81,18 +81,6 @@ public:
   unsigned get_nof_symbols() const override { return max_symb; }
 
   // See interface for documentation.
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
-  {
-    std::unique_lock<std::mutex> lock(entries_mutex);
-    ++count;
-    const cf_t* symbol_ptr = symbols.begin();
-    for (const resource_grid_coordinate& coordinate : coordinates) {
-      put(port, coordinate.symbol, coordinate.subcarrier, *(symbol_ptr++));
-    }
-    fmt::print("entries.size()={}\n", entries.size());
-  }
-
-  // See interface for documentation.
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {

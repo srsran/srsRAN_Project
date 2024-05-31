@@ -131,7 +131,7 @@ public:
     // Store suspending coroutine.
     suspended_handle = c;
   }
-  const optional<Data>& await_resume() { return data; }
+  const std::optional<Data>& await_resume() { return data; }
 
 private:
   friend class event_sender<Data>;
@@ -158,9 +158,9 @@ private:
     }
   }
 
-  state_t        state = state_t::uninit;
-  coro_handle<>  suspended_handle;
-  optional<Data> data;
+  state_t             state = state_t::uninit;
+  coro_handle<>       suspended_handle;
+  std::optional<Data> data;
 };
 
 template <>

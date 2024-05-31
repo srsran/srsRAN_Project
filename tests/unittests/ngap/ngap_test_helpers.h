@@ -44,9 +44,9 @@ protected:
   public:
     test_ue(ue_index_t ue_index_) : ue_index(ue_index_) {}
 
-    ue_index_t            ue_index = ue_index_t::invalid;
-    optional<amf_ue_id_t> amf_ue_id;
-    optional<ran_ue_id_t> ran_ue_id;
+    ue_index_t                 ue_index = ue_index_t::invalid;
+    std::optional<amf_ue_id_t> amf_ue_id;
+    std::optional<ran_ue_id_t> ran_ue_id;
 
     dummy_ngap_rrc_ue_notifier rrc_ue_notifier;
   };
@@ -93,7 +93,6 @@ protected:
   dummy_ngap_amf_notifier          msg_notifier;
   dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
-  dummy_ngap_ue_task_scheduler     ngap_ue_task_scheduler;
   std::unique_ptr<ngap_interface>  ngap;
 };
 

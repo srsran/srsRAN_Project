@@ -23,7 +23,6 @@ target_include_directories(cu_cp_routine_manager_test_helpers PRIVATE ${CMAKE_SO
 target_link_libraries(cu_cp_routine_manager_test_helpers
         cu_cp_test_helpers
         srsran_cu_cp
-        srsran_e1ap
         e1ap_test_helpers
         f1ap_test_helpers
         ngap_test_helpers

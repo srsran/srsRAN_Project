@@ -42,7 +42,7 @@ struct uplink_request_handler_impl_config {
   /// Uplink data eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
   /// Optional TDD configuration.
-  optional<tdd_ul_dl_config_common> tdd_config;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Cyclic prefix.
   cyclic_prefix cp;
 };
@@ -78,7 +78,7 @@ private:
   srslog::basic_logger&                                 logger;
   const bool                                            is_prach_cp_enabled;
   const cyclic_prefix                                   cp;
-  const optional<tdd_ul_dl_config_common>               tdd_config;
+  const std::optional<tdd_ul_dl_config_common>          tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   std::shared_ptr<uplink_context_repository>            ul_slot_repo;

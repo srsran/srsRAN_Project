@@ -47,7 +47,7 @@ struct pusch_config {
       p0_pusch_alphaset_id id;
       /// P0 value for PUSCH with grant (except msg3) in steps of 1dB. When the field is absent the UE applies the value
       /// 0. See TS 38.213, clause 7.1. Values {-16,..,15}.
-      optional<int8_t> p0;
+      std::optional<int8_t> p0;
       /// alpha value for PUSCH with grant (except msg3). When the field is not set the UE applies the value 1. See
       /// TS 38.213, clause 7.1.
       alpha p0_pusch_alpha{alpha::not_set};

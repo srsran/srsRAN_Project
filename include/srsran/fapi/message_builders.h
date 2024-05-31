@@ -237,8 +237,9 @@ public:
   }
 
   /// Sets the PDCCH context as vendor specific.
-  dl_dci_pdu_builder
-  set_context_vendor_specific(search_space_id ss_id, const char* dci_format, optional<unsigned> harq_feedback_timing)
+  dl_dci_pdu_builder set_context_vendor_specific(search_space_id         ss_id,
+                                                 const char*             dci_format,
+                                                 std::optional<unsigned> harq_feedback_timing)
   {
     pdu.context = pdcch_context(ss_id, dci_format, harq_feedback_timing);
     return *this;
@@ -1007,19 +1008,19 @@ public:
 
   /// Adds a CRC.indication PDU to the message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.8 in table CRC.indication message body.
-  crc_indication_message_builder& add_pdu(uint32_t            handle,
-                                          rnti_t              rnti,
-                                          optional<uint8_t>   rapid,
-                                          uint8_t             harq_id,
-                                          bool                tb_crc_status_ok,
-                                          uint16_t            num_cb,
-                                          span<const uint8_t> cb_crc_status,
-                                          optional<float>     ul_sinr_dB,
-                                          optional<unsigned>  timing_advance_offset,
-                                          optional<int>       timing_advance_offset_in_ns,
-                                          optional<float>     rssi_dB,
-                                          optional<float>     rsrp,
-                                          bool                rsrp_use_dBm = false)
+  crc_indication_message_builder& add_pdu(uint32_t                handle,
+                                          rnti_t                  rnti,
+                                          std::optional<uint8_t>  rapid,
+                                          uint8_t                 harq_id,
+                                          bool                    tb_crc_status_ok,
+                                          uint16_t                num_cb,
+                                          span<const uint8_t>     cb_crc_status,
+                                          std::optional<float>    ul_sinr_dB,
+                                          std::optional<unsigned> timing_advance_offset,
+                                          std::optional<int>      timing_advance_offset_in_ns,
+                                          std::optional<float>    rssi_dB,
+                                          std::optional<float>    rsrp,
+                                          bool                    rsrp_use_dBm = false)
   {
     auto& pdu = msg.pdus.emplace_back();
 
@@ -1082,14 +1083,14 @@ public:
 
   /// Sets the basic parameters of the RACH.indication PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
-  rach_indication_pdu_builder& set_basic_params(uint16_t        handle,
-                                                uint8_t         symbol_index,
-                                                uint8_t         slot_index,
-                                                uint8_t         ra_index,
-                                                optional<float> avg_rssi_dB,
-                                                optional<float> rsrp,
-                                                optional<float> avg_snr_dB,
-                                                bool            rsrp_use_dBm = false)
+  rach_indication_pdu_builder& set_basic_params(uint16_t             handle,
+                                                uint8_t              symbol_index,
+                                                uint8_t              slot_index,
+                                                uint8_t              ra_index,
+                                                std::optional<float> avg_rssi_dB,
+                                                std::optional<float> rsrp,
+                                                std::optional<float> avg_snr_dB,
+                                                bool                 rsrp_use_dBm = false)
 
   {
     pdu.handle       = handle;
@@ -1126,11 +1127,11 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
   /// \note Units for timing advace offset parameter are specified in SCF-222 v4.0 section 3.4.11 in table
   /// RACH.indication message body, and this function expect this units.
-  rach_indication_pdu_builder& add_preamble(unsigned           preamble_index,
-                                            optional<unsigned> timing_advance_offset,
-                                            optional<uint32_t> timing_advance_offset_ns,
-                                            optional<float>    preamble_power,
-                                            optional<float>    preamble_snr)
+  rach_indication_pdu_builder& add_preamble(unsigned                preamble_index,
+                                            std::optional<unsigned> timing_advance_offset,
+                                            std::optional<uint32_t> timing_advance_offset_ns,
+                                            std::optional<float>    preamble_power,
+                                            std::optional<float>    preamble_snr)
 
   {
     auto& preamble = pdu.preambles.emplace_back();
@@ -1180,14 +1181,14 @@ public:
 
   /// Adds a PDU to the RACH.indication message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
-  rach_indication_pdu_builder add_pdu(uint16_t        handle,
-                                      uint8_t         symbol_index,
-                                      uint8_t         slot_index,
-                                      uint8_t         ra_index,
-                                      optional<float> avg_rssi,
-                                      optional<float> rsrp,
-                                      optional<float> avg_snr,
-                                      bool            rsrp_use_dBm = false)
+  rach_indication_pdu_builder add_pdu(uint16_t             handle,
+                                      uint8_t              symbol_index,
+                                      uint8_t              slot_index,
+                                      uint8_t              ra_index,
+                                      std::optional<float> avg_rssi,
+                                      std::optional<float> rsrp,
+                                      std::optional<float> avg_snr,
+                                      bool                 rsrp_use_dBm = false)
   {
     auto& pdu = msg.pdus.emplace_back();
 
@@ -1219,12 +1220,12 @@ public:
 
   /// \brief Sets the UCI PUSCH PDU metrics parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.1 in Table UCI PUSCH PDU.
-  uci_pusch_pdu_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
-                                                optional<unsigned> timing_advance_offset,
-                                                optional<int>      timing_advance_offset_ns,
-                                                optional<float>    rssi,
-                                                optional<float>    rsrp,
-                                                bool               rsrp_use_dBm = false)
+  uci_pusch_pdu_builder& set_metrics_parameters(std::optional<float>    ul_sinr_metric,
+                                                std::optional<unsigned> timing_advance_offset,
+                                                std::optional<int>      timing_advance_offset_ns,
+                                                std::optional<float>    rssi,
+                                                std::optional<float>    rsrp,
+                                                bool                    rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1356,12 +1357,12 @@ public:
 
   /// \brief Sets the UCI PUCCH PDU Format 0 and Format 1 metrics parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table UCI PUCCH Format 0 or Format 1 PDU.
-  uci_pucch_pdu_format_0_1_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
-                                                           optional<unsigned> timing_advance_offset,
-                                                           optional<int>      timing_advance_offset_ns,
-                                                           optional<float>    rssi,
-                                                           optional<float>    rsrp,
-                                                           bool               rsrp_use_dBm = false)
+  uci_pucch_pdu_format_0_1_builder& set_metrics_parameters(std::optional<float>    ul_sinr_metric,
+                                                           std::optional<unsigned> timing_advance_offset,
+                                                           std::optional<int>      timing_advance_offset_ns,
+                                                           std::optional<float>    rssi,
+                                                           std::optional<float>    rsrp,
+                                                           bool                    rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1411,7 +1412,7 @@ public:
 
   /// \brief Sets the SR PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table SR PDU for Format 0 or Format 1 PDU.
-  uci_pucch_pdu_format_0_1_builder& set_sr_parameters(bool detected, optional<unsigned> confidence_level)
+  uci_pucch_pdu_format_0_1_builder& set_sr_parameters(bool detected, std::optional<unsigned> confidence_level)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::SR_BIT);
 
@@ -1427,7 +1428,7 @@ public:
   /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.2 in Table HARQ PDU for Format 0 or Format 1
   /// PDU.
-  uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned>                         confidence_level,
+  uci_pucch_pdu_format_0_1_builder& set_harq_parameters(std::optional<unsigned>                    confidence_level,
                                                         span<const uci_pucch_f0_or_f1_harq_values> value)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
@@ -1478,12 +1479,12 @@ public:
   /// builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format
   /// 3 or Format 4 PDU.
-  uci_pucch_pdu_format_2_3_4_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
-                                                             optional<unsigned> timing_advance_offset,
-                                                             optional<int>      timing_advance_offset_ns,
-                                                             optional<float>    rssi,
-                                                             optional<float>    rsrp,
-                                                             bool               rsrp_use_dBm = false)
+  uci_pucch_pdu_format_2_3_4_builder& set_metrics_parameters(std::optional<float>    ul_sinr_metric,
+                                                             std::optional<unsigned> timing_advance_offset,
+                                                             std::optional<int>      timing_advance_offset_ns,
+                                                             std::optional<float>    rssi,
+                                                             std::optional<float>    rsrp,
+                                                             bool                    rsrp_use_dBm = false)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1621,8 +1622,8 @@ public:
 
   /// \brief Sets the SRS indication PDU metrics parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.10.
-  srs_indication_pdu_builder& set_metrics_parameters(optional<unsigned> timing_advance_offset,
-                                                     optional<int>      timing_advance_offset_ns)
+  srs_indication_pdu_builder& set_metrics_parameters(std::optional<unsigned> timing_advance_offset,
+                                                     std::optional<int>      timing_advance_offset_ns)
   {
     pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
                                                            : std::numeric_limits<uint16_t>::max();
@@ -1887,7 +1888,7 @@ public:
   /// Adds a PDU to the message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.7 in table Rx_Data.indication message body.
   rx_data_indication_message_builder&
-  add_custom_pdu(uint32_t handle, rnti_t rnti, optional<unsigned> rapid, uint8_t harq_id, span<const uint8_t> data)
+  add_custom_pdu(uint32_t handle, rnti_t rnti, std::optional<unsigned> rapid, uint8_t harq_id, span<const uint8_t> data)
   {
     auto& pdu = msg.pdus.emplace_back();
 
@@ -1940,7 +1941,7 @@ public:
                                                             prach_config_scope_type prach_config_scope,
                                                             uint16_t                prach_res_config_index,
                                                             uint8_t                 num_fd_ra,
-                                                            optional<uint8_t>       start_preamble_index,
+                                                            std::optional<uint8_t>  start_preamble_index,
                                                             uint8_t                 num_preambles_indices)
   {
     auto& v3                  = pdu.maintenance_v3;
@@ -2111,8 +2112,8 @@ public:
 
   /// Sets the PUCCH PDU maintenance v3 basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH basic extension for FAPIv3.
-  ul_pucch_pdu_builder& set_maintenance_v3_basic_parameters(optional<unsigned> max_code_rate,
-                                                            optional<unsigned> ul_bwp_id)
+  ul_pucch_pdu_builder& set_maintenance_v3_basic_parameters(std::optional<unsigned> max_code_rate,
+                                                            std::optional<unsigned> ul_bwp_id)
   {
     pdu.pucch_maintenance_v3.max_code_rate =
         (max_code_rate) ? static_cast<unsigned>(max_code_rate.value()) : std::numeric_limits<uint8_t>::max();

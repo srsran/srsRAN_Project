@@ -488,11 +488,11 @@ TEST_F(test_tdd_uci_allocator, when_tdd_cfg_then_harq_bit_index_increases_with_n
 {
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(t_bench.k1)};
   for (unsigned i = 0; i != DAI_MOD * 2; ++i) {
-    optional<uci_allocation> alloc = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                                                         t_bench.get_main_ue().crnti,
-                                                                         t_bench.get_main_ue().get_pcell().cfg(),
-                                                                         t_bench.k0,
-                                                                         k1_candidates);
+    std::optional<uci_allocation> alloc = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                                                              t_bench.get_main_ue().crnti,
+                                                                              t_bench.get_main_ue().get_pcell().cfg(),
+                                                                              t_bench.k0,
+                                                                              k1_candidates);
 
     if (alloc.has_value()) {
       ASSERT_EQ(alloc.value().harq_bit_idx, i);

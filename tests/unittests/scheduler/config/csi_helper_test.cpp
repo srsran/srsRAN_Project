@@ -42,8 +42,9 @@ class csi_rs_slot_derivation_test : public ::testing::TestWithParam<tdd_ul_dl_co
 protected:
   csi_rs_slot_derivation_test()
   {
-    srsran_assert(csi_helper::derive_valid_csi_rs_slot_offsets(result, nullopt, nullopt, nullopt, tdd_cfg),
-                  "Derivation failed");
+    srsran_assert(
+        csi_helper::derive_valid_csi_rs_slot_offsets(result, std::nullopt, std::nullopt, std::nullopt, tdd_cfg),
+        "Derivation failed");
   }
 
   tdd_ul_dl_config_common        tdd_cfg = GetParam();
@@ -86,7 +87,7 @@ INSTANTIATE_TEST_SUITE_P(
     csi_helper_test,
     csi_rs_slot_derivation_test,
     // clang-format off
-    ::testing::Values(tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}, nullopt},
-                      tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 6, 9, 3, 0}, nullopt},
-                      tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 7, 9, 2, 0}, nullopt}));
+    ::testing::Values(tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}, std::nullopt},
+                      tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 6, 9, 3, 0}, std::nullopt},
+                      tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 7, 9, 2, 0}, std::nullopt}));
 // clang-format on

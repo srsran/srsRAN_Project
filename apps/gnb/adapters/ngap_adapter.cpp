@@ -128,7 +128,7 @@ class ngap_sctp_gateway_adapter : public ngap_gateway_connector,
                                   public network_gateway_data_notifier
 {
 public:
-  ngap_sctp_gateway_adapter(io_broker& broker_, const sctp_network_gateway_config& sctp_, dlt_pcap& pcap_) :
+  ngap_sctp_gateway_adapter(io_broker& broker_, const sctp_network_connector_config& sctp_, dlt_pcap& pcap_) :
     broker(broker_), sctp_cfg(sctp_), pcap_writer(pcap_)
   {
     // Create SCTP network adapter.
@@ -200,12 +200,12 @@ public:
   }
 
 private:
-  io_broker&                        broker;
-  const sctp_network_gateway_config sctp_cfg;
-  dlt_pcap&                         pcap_writer;
-  ngap_message_handler*             msg_handler = nullptr;
-  ngap_event_handler*               ev_handler  = nullptr;
-  srslog::basic_logger&             logger      = srslog::fetch_basic_logger("GNB");
+  io_broker&                          broker;
+  const sctp_network_connector_config sctp_cfg;
+  dlt_pcap&                           pcap_writer;
+  ngap_message_handler*               msg_handler = nullptr;
+  ngap_event_handler*                 ev_handler  = nullptr;
+  srslog::basic_logger&               logger      = srslog::fetch_basic_logger("GNB");
 
   // SCTP network adapter
   std::unique_ptr<sctp_network_gateway> sctp_gateway;

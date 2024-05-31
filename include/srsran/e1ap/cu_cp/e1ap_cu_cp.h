@@ -112,6 +112,9 @@ public:
 
   /// \brief Update the context of an UE.
   virtual void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// Cancel pending tasks for a UE.
+  virtual void cancel_ue_tasks(ue_index_t ue_index) = 0;
 };
 
 /// \brief Interface to query statistics from the E1AP interface.

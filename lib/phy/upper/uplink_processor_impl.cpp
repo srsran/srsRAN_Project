@@ -91,7 +91,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
 {
   trace_point tp = l1_tracer.now();
   // Pop an adaptor identifier.
-  optional<unsigned> adaptor_id = free_pusch_adaptors.try_pop();
+  std::optional<unsigned> adaptor_id = free_pusch_adaptors.try_pop();
   if (!adaptor_id.has_value()) {
     logger.warning(pdu.pdu.slot.sfn(),
                    pdu.pdu.slot.slot_index(),

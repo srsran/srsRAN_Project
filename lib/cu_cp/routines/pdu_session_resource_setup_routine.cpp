@@ -227,7 +227,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
                                   next_config.initial_context_creation ? rrc_ue_notifier.generate_meas_config()
-                                                                       : optional<rrc_meas_cfg>{},
+                                                                       : std::optional<rrc_meas_cfg>{},
                                   false,
                                   false,
                                   false,

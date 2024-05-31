@@ -126,7 +126,7 @@ TEST_P(PuschTpmiSelectFixture, VectorTest)
   unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
 
   // Only one layer is currently supported.
-  if (max_nof_layers > 1) {
+  if (max_nof_layers > 2) {
     GTEST_SKIP();
   }
 

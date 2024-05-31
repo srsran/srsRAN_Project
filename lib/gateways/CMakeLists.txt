@@ -21,9 +21,14 @@
 find_package(SCTP REQUIRED)
 
 add_library(srsran_gateway
-              sctp_network_gateway_impl.cpp
-              udp_network_gateway_impl.cpp
-              sctp_network_gateway_factory.cpp
-              udp_network_gateway_factory.cpp
-            )
+        sctp_network_gateway_common_impl.cpp
+        sctp_network_client_impl.cpp
+        sctp_network_server_impl.cpp
+        sctp_network_gateway_impl.cpp
+        udp_network_gateway_impl.cpp
+        sctp_network_gateway_factory.cpp
+        sctp_network_client_factory.cpp
+        sctp_network_server_factory.cpp
+        udp_network_gateway_factory.cpp
+)
 target_link_libraries(srsran_gateway srsran_support srslog ${SCTP_LIBRARIES})

@@ -46,8 +46,8 @@ struct dmrs_downlink_config {
   bool is_max_length_len2{false};
   /// DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).
   /// When the field is absent the UE applies the value Physical cell ID (physCellId) configured for this serving cell.
-  optional<uint16_t> scrambling_id0;
-  optional<uint16_t> scrambling_id1;
+  std::optional<uint16_t> scrambling_id0;
+  std::optional<uint16_t> scrambling_id1;
   // TODO: Remaining
 
   bool operator==(const dmrs_downlink_config& rhs) const
@@ -66,8 +66,8 @@ struct dmrs_uplink_config {
   struct transform_precoder_disabled {
     /// UL DMRS scrambling initialization for CP-OFDM. When the field is absent the UE applies the value Physical cell
     /// ID. See TS 38.211, clause 6.4.1.1.1.1.
-    optional<uint16_t> scrambling_id0;
-    optional<uint16_t> scrambling_id1;
+    std::optional<uint16_t> scrambling_id0;
+    std::optional<uint16_t> scrambling_id1;
 
     bool operator==(const transform_precoder_disabled& rhs) const
     {
@@ -79,7 +79,7 @@ struct dmrs_uplink_config {
   /// \brief DMRS related parameters for DFT-s-OFDM (Transform Precoding).
   struct transform_precoder_enabled {
     /// Values {0..1007}.
-    optional<uint16_t> n_pusch_id;
+    std::optional<uint16_t> n_pusch_id;
     /// For DMRS transmission with transform precoder the NW may configure group hopping by the cell-specific parameter
     /// groupHoppingEnabledTransformPrecoding in PUSCH-ConfigCommon. In this case, the NW may include this UE specific
     /// field to disable group hopping for PUSCH transmission except for Msg3.
@@ -110,14 +110,14 @@ struct dmrs_uplink_config {
   /// value pos2.
   dmrs_additional_positions additional_positions{dmrs_additional_positions::pos2};
   /// Configures uplink PTRS.
-  optional<ptrs_uplink_config> ptrs;
+  std::optional<ptrs_uplink_config> ptrs;
   /// The maximum number of OFDM symbols for UL front loaded DMRS.
   /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value len2 to UE. If false, the field
   /// is absent in NR RRC and the UE applies value len1.
   /// If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
-  bool                                  is_max_length_len2{false};
-  optional<transform_precoder_disabled> trans_precoder_disabled;
-  optional<transform_precoder_enabled>  trans_precoder_enabled;
+  bool                                       is_max_length_len2{false};
+  std::optional<transform_precoder_disabled> trans_precoder_disabled;
+  std::optional<transform_precoder_enabled>  trans_precoder_enabled;
   // TODO: Remaining
 
   bool operator==(const dmrs_uplink_config& rhs) const

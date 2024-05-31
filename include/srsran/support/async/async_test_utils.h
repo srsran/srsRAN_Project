@@ -79,7 +79,7 @@ struct lazy_task_launcher : public eager_async_task<R> {
     });
   }
 
-  optional<R> result;
+  std::optional<R> result;
 
 private:
   async_task<R>& t;

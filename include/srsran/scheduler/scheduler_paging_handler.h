@@ -39,7 +39,7 @@ struct sched_paging_information {
   /// \remark See TS 38.304, clause 7.1.
   unsigned ue_identity_index_value;
   /// Paging DRX cycle in radio frames.
-  optional<unsigned> paging_drx;
+  std::optional<unsigned> paging_drx;
 };
 
 /// Scheduler interface to handle paging a UE.

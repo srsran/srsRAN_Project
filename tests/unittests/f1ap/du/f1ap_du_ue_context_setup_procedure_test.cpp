@@ -109,6 +109,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notif
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
   ASSERT_FALSE(req.drbs_to_setup[0].lcid.has_value());
+  ASSERT_EQ(req.drbs_to_setup[0].mode, drb_rlc_mode::am);
+  ASSERT_EQ(req.drbs_to_setup[0].pdcp_sn_len, pdcp_sn_size::size12bits);
 }
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_responds_back_with_ue_context_setup_response)
@@ -193,6 +195,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_
   ASSERT_EQ(test_ue->ue_index, request_to_du.ue_index);
   ASSERT_EQ(request_to_du.drbs_to_setup.size(), 1);
   ASSERT_EQ(request_to_du.drbs_to_setup[0].drb_id, drb_id_t::drb1);
+  ASSERT_EQ(request_to_du.drbs_to_setup[0].mode, drb_rlc_mode::am);
+  ASSERT_EQ(request_to_du.drbs_to_setup[0].pdcp_sn_len, pdcp_sn_size::size12bits);
 }
 
 TEST_F(

@@ -34,7 +34,7 @@ e1ap_cu_cp_test::e1ap_cu_cp_test()
   srslog::init();
 
   e1ap = create_e1ap(
-      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, timers, ctrl_worker, max_nof_supported_ues);
+      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, ue_mng, timers, ctrl_worker, max_nof_supported_ues);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()
@@ -71,8 +71,8 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
 
 e1ap_cu_cp_test::test_ue& e1ap_cu_cp_test::create_ue()
 {
-  auto request = generate_bearer_context_setup_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  auto       request  = generate_bearer_context_setup_request(ue_index);
 
   run_bearer_context_setup(request.ue_index,
                            int_to_gnb_cu_up_ue_e1ap_id(test_rgen::uniform_int<uint64_t>(

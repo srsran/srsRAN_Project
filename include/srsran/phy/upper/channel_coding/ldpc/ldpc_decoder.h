@@ -70,7 +70,7 @@ public:
   ///         value is returned.
   /// \note A codeblock of all zero-valued log-likelihood ratios will automatically will return an empty value (i.e.,
   /// failed CRC) and set all the output bits to one.
-  virtual optional<unsigned>
+  virtual std::optional<unsigned>
   decode(bit_buffer& output, span<const log_likelihood_ratio> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
 

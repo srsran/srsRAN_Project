@@ -34,7 +34,7 @@ ssb_pattern_case srsran::ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigne
   return band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
 }
 
-uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn, optional<nr_band> band)
+uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn, std::optional<nr_band> band)
 {
   uint8_t L_max = 0;
 

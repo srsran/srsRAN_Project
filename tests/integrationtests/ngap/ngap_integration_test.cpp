@@ -47,7 +47,7 @@ class ngap_network_adapter : public ngap_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(const sctp_network_gateway_config& nw_config_) :
+  ngap_network_adapter(const sctp_network_connector_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
@@ -78,7 +78,7 @@ private:
   void on_connection_established() override { test_logger.info("on_connection_established"); }
 
   /// We require a network gateway and a packer
-  const sctp_network_gateway_config&    nw_config;
+  const sctp_network_connector_config&  nw_config;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
   ngap_asn1_packer                      packer;
@@ -104,7 +104,7 @@ protected:
     slice_cfg.sst = 1;
     cfg.slice_configurations.push_back(slice_cfg);
 
-    sctp_network_gateway_config nw_config;
+    sctp_network_connector_config nw_config;
     nw_config.connection_name   = "AMF";
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;
@@ -113,24 +113,20 @@ protected:
     nw_config.non_blocking_mode = true;
     adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
 
-    ngap_ue_task_scheduler = std::make_unique<dummy_ngap_ue_task_scheduler>(timers, ctrl_worker);
-
-    ngap =
-        create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, *ngap_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
+    ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, ue_mng, *adapter, timers, ctrl_worker);
     adapter->connect_ngap(ngap.get());
   }
 
-  ngap_configuration                            cfg;
-  ue_configuration                              ue_config;
-  up_resource_manager_cfg                       up_config;
-  timer_manager                                 timers;
-  manual_task_worker                            ctrl_worker{128};
-  ue_manager                                    ue_mng{ue_config, up_config, timers, ctrl_worker};
-  dummy_ngap_cu_cp_notifier                     cu_cp_notifier{ue_mng};
-  dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
-  std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;
-  std::unique_ptr<ngap_network_adapter>         adapter;
-  std::unique_ptr<ngap_interface>               ngap;
+  ngap_configuration                    cfg;
+  ue_configuration                      ue_config;
+  up_resource_manager_cfg               up_config;
+  timer_manager                         timers;
+  manual_task_worker                    ctrl_worker{128};
+  ue_manager                            ue_mng{ue_config, up_config, timers, ctrl_worker};
+  dummy_ngap_cu_cp_notifier             cu_cp_notifier{ue_mng};
+  dummy_ngap_cu_cp_paging_notifier      cu_cp_paging_notifier;
+  std::unique_ptr<ngap_network_adapter> adapter;
+  std::unique_ptr<ngap_interface>       ngap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

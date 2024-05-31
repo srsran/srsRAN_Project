@@ -72,8 +72,8 @@ protected:
     return true;
   }
 
-  async_task<void>                   t;
-  optional<lazy_task_launcher<void>> t_launcher;
+  async_task<void>                        t;
+  std::optional<lazy_task_launcher<void>> t_launcher;
 };
 
 TEST_F(e1ap_cu_cp_bearer_context_release_test, when_command_sent_then_procedure_waits_for_response)

@@ -39,25 +39,25 @@ TEST(crc_indication_builder, valid_indication_passes)
 
     uint32_t                                                      handle = 34U;
     rnti_t                                                        rnti   = to_rnti(10);
-    optional<uint8_t>                                             rapid;
+    std::optional<uint8_t>                                        rapid;
     uint8_t                                                       harq_id       = 0;
     uint8_t                                                       tb_crc_status = 0;
     unsigned                                                      num_cb        = 32;
     static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
 
-    optional<float> ul_sinr_dB;
+    std::optional<float> ul_sinr_dB;
     ul_sinr_dB.emplace(-65);
 
-    optional<unsigned> timing_advance_offset;
+    std::optional<unsigned> timing_advance_offset;
     timing_advance_offset.emplace(30);
 
-    optional<int> timing_advance_offset_in_ns;
+    std::optional<int> timing_advance_offset_in_ns;
     timing_advance_offset_in_ns.emplace(-12345);
 
-    optional<float> rssi_dB;
+    std::optional<float> rssi_dB;
     rssi_dB.emplace(-64);
 
-    optional<float> rsrp_dB;
+    std::optional<float> rsrp_dB;
     rsrp_dB.emplace(-100);
     bool use_dB = i;
 
@@ -108,17 +108,17 @@ TEST(crc_indication_builder, valid_indication_with_no_metrics_passes)
 
   uint32_t                                                      handle = 34U;
   rnti_t                                                        rnti   = to_rnti(10);
-  optional<uint8_t>                                             rapid;
+  std::optional<uint8_t>                                        rapid;
   uint8_t                                                       harq_id       = 0;
   uint8_t                                                       tb_crc_status = 0;
   uint16_t                                                      num_cb        = 21;
   static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
 
-  optional<float>    ul_sinr_dB;
-  optional<unsigned> timing_advance_offset;
-  optional<int>      timing_advance_offset_in_ns;
-  optional<float>    rssi_dB;
-  optional<float>    rsrp_dB;
+  std::optional<float>    ul_sinr_dB;
+  std::optional<unsigned> timing_advance_offset;
+  std::optional<int>      timing_advance_offset_in_ns;
+  std::optional<float>    rssi_dB;
+  std::optional<float>    rsrp_dB;
 
   builder.add_pdu(handle,
                   rnti,

@@ -52,13 +52,25 @@ async_task<void> f1ap_stop_procedure::handle_transaction_info_loss()
   f1_ue_transaction_info_loss_event ev;
   ev.ues_lost.reserve(ue_ctxt_list.size());
 
+  // Add DU UEs to the list of UEs with transaction information lost.
+  ev.ues_lost.reserve(ue_ctxt_list.size());
   for (auto& ue : ue_ctxt_list) {
-    // No more F1AP Rx PDUs are expected. Cancel running UE F1AP transactions.
-    ue.second.ev_mng.cancel_all();
-
-    // Add UE to the list of UEs with transaction information lost.
     ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
   }
+
+  // After receiving an F1 Removal Request, no more F1AP Rx PDUs are expected. Cancel running UE F1AP transactions.
+  // Note: size of ue_list may change during this operation (e.g. if a concurrent UE context release was being
+  // processed and got cancelled). Therefore, we leverage the list ev.ues_lost for the iteration.
+  for (ue_index_t ue_idx : ev.ues_lost) {
+    auto* u = ue_ctxt_list.find(ue_idx);
+    if (u != nullptr) {
+      u->ev_mng.cancel_all();
+    }
+  }
+  ev.ues_lost.erase(std::remove_if(ev.ues_lost.begin(),
+                                   ev.ues_lost.end(),
+                                   [this](ue_index_t ue_idx) { return ue_ctxt_list.find(ue_idx) == nullptr; }),
+                    ev.ues_lost.end());
 
   return cu_cp_notifier.on_transaction_info_loss(std::move(ev));
 }

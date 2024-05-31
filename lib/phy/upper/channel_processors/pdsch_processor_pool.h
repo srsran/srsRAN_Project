@@ -116,7 +116,7 @@ public:
                const pdu_t&                                                 pdu) override
   {
     // Try to get a worker.
-    optional<unsigned> index;
+    std::optional<unsigned> index;
 
     do {
       index = free_list.try_pop();

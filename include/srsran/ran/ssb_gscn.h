@@ -61,7 +61,7 @@ double get_ss_ref_from_gscn(unsigned gscn);
 /// \brief Returns GSCN from the \f$SS_{ref}\f$, as per Section 5.4.3.1, TS 38.104.
 /// \param[in] ss_ref_hz \f$SS_{ref}\f$ value in Hz, as defined in TS 38.104, Section 5.4.3.1.
 /// \return The GSCN, if the \f$SS_{ref}\f$ is a valid value. Else, it returns an empty object.
-optional<unsigned> get_gscn_from_ss_ref(double ss_ref_hz);
+std::optional<unsigned> get_gscn_from_ss_ref(double ss_ref_hz);
 
 } // namespace band_helper
 

@@ -103,13 +103,13 @@ private:
   /// DM-RS.
   ///
   /// \warning This method updates the content of the buffers \c pilots_lse and \c pilot_products.
-  std::pair<float, optional<float>> preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
-                                                              const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                                                              const subcarrier_spacing&                 scs,
-                                                              unsigned first_hop_symbol,
-                                                              unsigned last_hop_symbol,
-                                                              unsigned hop_offset,
-                                                              unsigned i_layer);
+  std::pair<float, std::optional<float>> preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
+                                                                   const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
+                                                                   const subcarrier_spacing&                 scs,
+                                                                   unsigned first_hop_symbol,
+                                                                   unsigned last_hop_symbol,
+                                                                   unsigned hop_offset,
+                                                                   unsigned i_layer);
 
   /// \brief Computes the starting time of the symbols inside a slot for the given subcarrier spacing.
   ///
@@ -167,7 +167,7 @@ private:
   float time_alignment_s = 0;
 
   /// Estimated CFO, normalized with respect to the subcarrier spacing.
-  optional<float> cfo_normalized = nullopt;
+  std::optional<float> cfo_normalized = std::nullopt;
 };
 
 } // namespace srsran

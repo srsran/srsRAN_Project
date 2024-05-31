@@ -184,7 +184,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);
     helper.format_if_verbose(ctx, "ncgwd={}", pdu.nof_cdm_groups_without_data);
     helper.format_if_verbose(ctx, "bg={}", (pdu.ldpc_base_graph == srsran::ldpc_base_graph_type::BG1) ? "BG1" : "BG2");
-    helper.format_if_verbose(ctx, "lbrm={}bytes", pdu.tbs_lbrm_bytes);
+    helper.format_if_verbose(ctx, "tbs_lbrm={}bytes", pdu.tbs_lbrm);
     helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", -pdu.ratio_pdsch_dmrs_to_sss_dB);
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.ratio_pdsch_data_to_sss_dB);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);

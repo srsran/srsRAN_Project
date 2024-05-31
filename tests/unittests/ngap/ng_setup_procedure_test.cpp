@@ -156,8 +156,9 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
 
   // Action 2: NG setup failure received.
   ngap_message ng_setup_response_msg = generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_opts::v10s);
+  ngap->handle_message(ng_setup_response_msg);
 
-  for (unsigned i = 0; i < request_msg.max_setup_retries + 1; i++) {
+  for (unsigned i = 0; i < request_msg.max_setup_retries; i++) {
     // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
     for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
       ASSERT_FALSE(t.ready());

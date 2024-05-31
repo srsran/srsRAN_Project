@@ -48,9 +48,9 @@ protected:
     proc_launcher.emplace(proc);
   }
 
-  du_ue*                             test_ue = nullptr;
-  async_task<void>                   proc;
-  optional<lazy_task_launcher<void>> proc_launcher;
+  du_ue*                                  test_ue = nullptr;
+  async_task<void>                        proc;
+  std::optional<lazy_task_launcher<void>> proc_launcher;
 };
 
 TEST_F(ue_deletion_tester, when_du_manager_receives_ue_delete_request_then_f1ap_and_mac_get_request_to_delete_ue)

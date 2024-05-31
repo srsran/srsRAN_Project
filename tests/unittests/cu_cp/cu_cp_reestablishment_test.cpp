@@ -82,7 +82,7 @@ public:
     return dl_rrc_msg.srb_id == 1;
   }
 
-  optional<f1ap_message> ue_sends_rrc_setup_request_and_waits_rrc_setup(gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+  std::optional<f1ap_message> ue_sends_rrc_setup_request_and_waits_rrc_setup(gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
   {
     ngap_message ngap_pdu;
     srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -97,7 +97,7 @@ public:
     // Wait for DL RRC message transfer (containing RRC Setup)
     bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000});
     if (not result) {
-      return nullopt;
+      return std::nullopt;
     }
 
     // Check if the DL RRC Message with Msg4 is valid.
@@ -300,4 +300,25 @@ TEST_F(cu_cp_reestablishment_test,
   // Check UE is deleted.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0);
+}
+
+TEST_F(cu_cp_reestablishment_test,
+       when_reestablishment_request_for_same_ue_is_received_twice_then_second_reestablishment_fails)
+{
+  // Attach UE 0x4601.
+  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+
+  // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
+  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti    = to_rnti(0x4602);
+  ASSERT_TRUE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+
+  // old UE should not be removed at this stage.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
+
+  // Run second Reestablishment. This should fail.
+  new_du_ue_id = int_to_gnb_du_ue_f1ap_id(2);
+  new_crnti    = to_rnti(0x4603);
+  ASSERT_FALSE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
 }

@@ -36,7 +36,7 @@ using namespace srsran;
 namespace {
 
 // Valid PDSCH configuration used as a base for the test cases.
-const pdsch_processor::pdu_t base_pdu = {nullopt,
+const pdsch_processor::pdu_t base_pdu = {std::nullopt,
                                          {0, 19},
                                          1,
                                          52,
@@ -54,7 +54,7 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          2,
                                          12,
                                          ldpc_base_graph_type::BG1,
-                                         3168,
+                                         units::bytes(3168),
                                          {},
                                          0,
                                          0,
@@ -135,10 +135,10 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(Only contiguous allocation is currently supported\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.tbs_lbrm_bytes         = 0;
+       pdu.tbs_lbrm               = units::bytes(0);
        return pdu;
      },
-     R"(Invalid LBRM size \(0 bytes\)\. It must be non-zero, less than or equal to 3168 bytes\.)"},
+     R"(Invalid LBRM size \(0 bytes\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.codewords.clear();

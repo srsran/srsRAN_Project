@@ -21,6 +21,7 @@
  */
 
 #include "asn1_helpers.h"
+#include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran;
 
@@ -41,4 +42,28 @@ nr_cell_global_id_t srsran::cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi)
   cgi.nci = asn1_cgi.nr_cell_id.to_number();
 
   return cgi;
+}
+
+pdcp_sn_size srsran::pdcp_sn_size_from_f1ap_asn1(const asn1::f1ap::pdcp_sn_len_e& asn1_pdcp_sn_size)
+{
+  switch (asn1_pdcp_sn_size) {
+    case asn1::f1ap::pdcp_sn_len_opts::twelve_bits:
+      return pdcp_sn_size::size12bits;
+    case asn1::f1ap::pdcp_sn_len_opts::eighteen_bits:
+      return pdcp_sn_size::size18bits;
+    default:
+      return pdcp_sn_size::invalid;
+  }
+}
+
+asn1::f1ap::pdcp_sn_len_e srsran::pdcp_sn_size_to_f1ap_asn1(pdcp_sn_size sn_size)
+{
+  switch (sn_size) {
+    case pdcp_sn_size::size12bits:
+      return asn1::f1ap::pdcp_sn_len_opts::twelve_bits;
+    case pdcp_sn_size::size18bits:
+      return asn1::f1ap::pdcp_sn_len_opts::eighteen_bits;
+    default:
+      return asn1::f1ap::pdcp_sn_len_opts::nulltype;
+  }
 }

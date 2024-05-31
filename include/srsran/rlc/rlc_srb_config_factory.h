@@ -42,6 +42,7 @@ inline rlc_config make_default_srb_rlc_config()
   rlc_config cfg              = {};
   cfg.mode                    = rlc_mode::am;
   cfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
+  cfg.am.tx.pdcp_sn_len       = pdcp_sn_size::size12bits;
   cfg.am.tx.t_poll_retx       = 45;
   cfg.am.tx.poll_pdu          = -1;
   cfg.am.tx.poll_byte         = -1;

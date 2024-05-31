@@ -39,7 +39,7 @@ static constexpr unsigned get_sequence_length(unsigned m_srs_b, srs_resource_con
 srs_information srsran::get_srs_information(const srs_resource_configuration& resource, unsigned i_antenna_port)
 {
   // Select BW configuration.
-  optional<srs_configuration> srs_bw_config =
+  std::optional<srs_configuration> srs_bw_config =
       srs_configuration_get(resource.configuration_index.value(), resource.bandwidth_index.value());
   srsran_assert(srs_bw_config.has_value(),
                 "Invalid combination of c-SRS (i.e., {}) and b-SRS (i.e., {})",
@@ -82,7 +82,7 @@ srs_information srsran::get_srs_information(const srs_resource_configuration& re
   unsigned k0_bar = resource.freq_shift.value() * N_RB_SC + k_tc;
   unsigned sum    = 0;
   for (unsigned b = 0; b <= resource.bandwidth_index; ++b) {
-    optional<srs_configuration> bw_config = srs_configuration_get(resource.configuration_index.value(), b);
+    std::optional<srs_configuration> bw_config = srs_configuration_get(resource.configuration_index.value(), b);
     srsran_assert(bw_config, "Invalid configuration.");
 
     unsigned M_srs = get_sequence_length(bw_config->m_srs, resource.comb_size);

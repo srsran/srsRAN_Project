@@ -127,12 +127,13 @@ unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch
   return min_k1;
 }
 
-optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
-                                                                      rnti_t                       crnti,
-                                                                      const ue_cell_configuration& ue_cell_cfg,
-                                                                      unsigned                     k0,
-                                                                      unsigned                     k1,
-                                                                      const pdcch_dl_information*  fallback_dci_info)
+std::optional<uci_allocation>
+uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
+                                             rnti_t                       crnti,
+                                             const ue_cell_configuration& ue_cell_cfg,
+                                             unsigned                     k0,
+                                             unsigned                     k1,
+                                             const pdcch_dl_information*  fallback_dci_info)
 {
   cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
@@ -150,7 +151,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
 
   const bool fallback_mode = fallback_dci_info != nullptr;
 
-  optional<unsigned> pucch_res_indicator;
+  std::optional<unsigned> pucch_res_indicator;
   if (fallback_mode) {
     const auto* pucch_harq_grant_it = std::find_if(
         slot_alloc.result.ul.pucchs.begin(), slot_alloc.result.ul.pucchs.end(), [crnti](const pucch_info& pucch_grant) {
@@ -173,8 +174,8 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
     pucch_res_indicator = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
   }
   return pucch_res_indicator.has_value()
-             ? optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
-             : nullopt;
+             ? std::optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
+             : std::nullopt;
 }
 
 ////////////    Public functions    ////////////
@@ -185,12 +186,12 @@ void uci_allocator_impl::slot_indication(slot_point sl_tx)
   uci_alloc_grid[(sl_tx - 1).to_uint()].ucis.clear();
 }
 
-optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                                               rnti_t                       crnti,
-                                                               const ue_cell_configuration& ue_cell_cfg,
-                                                               unsigned                     k0,
-                                                               span<const uint8_t>          k1_list,
-                                                               const pdcch_dl_information*  fallback_dci_info)
+std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
+                                                                    rnti_t                       crnti,
+                                                                    const ue_cell_configuration& ue_cell_cfg,
+                                                                    unsigned                     k0,
+                                                                    span<const uint8_t>          k1_list,
+                                                                    const pdcch_dl_information*  fallback_dci_info)
 {
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
@@ -241,7 +242,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resource_all
     }
 
     // Step 2: Try to allocate UCI HARQ ACK for UE, either on PUSCH or PUCCH.
-    optional<uci_allocation> uci_output =
+    std::optional<uci_allocation> uci_output =
         alloc_uci_harq_ue_helper(res_alloc, crnti, ue_cell_cfg, k0, k1_candidate, fallback_dci_info);
 
     // Register new UCI allocation in the respective grid slot entry and derive DAI.
@@ -281,11 +282,11 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
   if (pucch_uci.csi_part1_bits != 0) {
     // The number of bits is computed based on the CSI report configuration.
-    add_csi_to_uci_on_pusch(uci.csi.emplace(), ue_cell_cfg);
+    add_csi_to_uci_on_pusch(uci.csi.emplace(uci_info::csi_info()), ue_cell_cfg);
   }
 
   if (pucch_uci.harq_ack_nof_bits != 0) {
-    uci.harq.emplace();
+    uci.harq.emplace(uci_info::harq_info());
     uci.harq.value().harq_ack_nof_bits = pucch_uci.harq_ack_nof_bits;
     update_uci_on_pusch_harq_offsets(
         uci.harq.value(), ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value());
@@ -334,7 +335,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
     existing_pusch->uci.value().alpha =
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
 
-    add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(), ue_cell_cfg);
+    add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(uci_info::csi_info()), ue_cell_cfg);
     return;
   }
 

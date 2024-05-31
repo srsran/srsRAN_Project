@@ -57,13 +57,13 @@ public:
     rnti_t        rnti;
   };
   struct crc_event {
-    du_ue_index_t   ue_index;
-    rnti_t          rnti;
-    du_cell_index_t cell_index;
-    slot_point      sl_rx;
-    harq_id_t       h_id;
-    bool            crc;
-    optional<float> ul_sinr_db;
+    du_ue_index_t        ue_index;
+    rnti_t               rnti;
+    du_cell_index_t      cell_index;
+    slot_point           sl_rx;
+    harq_id_t            h_id;
+    bool                 crc;
+    std::optional<float> ul_sinr_db;
   };
   struct harq_ack_event {
     du_ue_index_t              ue_index;
@@ -91,11 +91,11 @@ public:
     units::bytes           tot_ul_pending_bytes;
   };
   struct phr_event {
-    du_ue_index_t              ue_index;
-    rnti_t                     rnti;
-    du_cell_index_t            cell_index;
-    ph_db_range                ph;
-    optional<p_cmax_dbm_range> p_cmax;
+    du_ue_index_t                   ue_index;
+    rnti_t                          rnti;
+    du_cell_index_t                 cell_index;
+    ph_db_range                     ph;
+    std::optional<p_cmax_dbm_range> p_cmax;
   };
   struct error_indication_event {
     slot_point                            sl_tx;

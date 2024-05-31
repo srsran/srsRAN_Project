@@ -64,8 +64,8 @@ struct pucch_f2_params {
   unsigned                        max_nof_rbs{1};
   /// Maximum payload in bits that can be carried by PUCCH Format 2. When this field is set, \c max_nof_rbs is ignored
   /// and the maximum number of RBs is computed according to \ref get_pucch_format2_max_nof_prbs.
-  optional<unsigned>  max_payload_bits;
-  max_pucch_code_rate max_code_rate{max_pucch_code_rate::dot_25};
+  std::optional<unsigned> max_payload_bits;
+  max_pucch_code_rate     max_code_rate{max_pucch_code_rate::dot_25};
   /// For intraslot-freq-hopping, \c nof_symbols must be set to 2.
   bool intraslot_freq_hopping{false};
 };
@@ -99,17 +99,17 @@ struct pucch_builder_params {
 struct phy_cell_group_params {
   /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  optional<bounded_integer<int, -30, 33>> p_nr_fr1;
+  std::optional<bounded_integer<int, -30, 33>> p_nr_fr1;
 };
 
 /// Parameters that are used to initialize or build the \c MAC-CellGroupConfig, TS 38.331.
 struct mac_cell_group_params {
-  periodic_bsr_timer                       periodic_timer = periodic_bsr_timer::sf10;
-  retx_bsr_timer                           retx_timer     = retx_bsr_timer::sf80;
-  optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
-  optional<sr_prohib_timer>                sr_prohibit_timer;
-  sr_max_tx                                max_tx           = sr_max_tx::n64;
-  phr_prohibit_timer                       phr_prohib_timer = phr_prohibit_timer::sf10;
+  periodic_bsr_timer                            periodic_timer = periodic_bsr_timer::sf10;
+  retx_bsr_timer                                retx_timer     = retx_bsr_timer::sf80;
+  std::optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
+  std::optional<sr_prohib_timer>                sr_prohibit_timer;
+  sr_max_tx                                     max_tx           = sr_max_tx::n64;
+  phr_prohibit_timer                            phr_prohib_timer = phr_prohibit_timer::sf10;
 };
 
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
@@ -144,7 +144,7 @@ struct du_cell_config {
   cell_selection_info cell_sel_info;
 
   /// Content and scheduling information of SI-messages.
-  optional<si_scheduling_info_config> si_config;
+  std::optional<si_scheduling_info_config> si_config;
 
   /// \c ueTimersAndConstants, sent in \c SIB1, as per TS 38.331.
   ue_timers_and_constants_config ue_timers_and_constants;
@@ -154,7 +154,7 @@ struct du_cell_config {
   ul_config_common ul_cfg_common;
 
   /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
-  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+  std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
 
   /// UE-dedicated serving cell configuration.
   serving_cell_config ue_ded_serv_cell_cfg;

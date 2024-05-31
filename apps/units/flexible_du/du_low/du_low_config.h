@@ -65,7 +65,7 @@ struct du_low_unit_logger_config {
   /// Set to a valid file path to print the received symbols.
   std::string phy_rx_symbols_filename;
   /// Set to a valid Rx port number or empty for all ports.
-  optional<unsigned> phy_rx_symbols_port = 0;
+  std::optional<unsigned> phy_rx_symbols_port = 0;
   /// If true, prints the PRACH frequency-domain symbols.
   bool phy_rx_symbols_prach = false;
 };

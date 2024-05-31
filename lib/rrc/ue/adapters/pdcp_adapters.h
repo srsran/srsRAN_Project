@@ -66,8 +66,8 @@ public:
   }
 
 private:
-  std::vector<byte_buffer> rrc_pdus;
-  optional<ngap_cause_t>   cause;
+  std::vector<byte_buffer>    rrc_pdus;
+  std::optional<ngap_cause_t> cause;
 };
 
 /// Adapter between PDCP and RRC UE for DL PDUs

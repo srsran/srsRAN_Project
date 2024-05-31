@@ -105,9 +105,9 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
   return {};
 }
 
-optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing pusch_scs,
-                                                                      uint8_t            zero_correlation_zone,
-                                                                      const tdd_ul_dl_config_common& tdd_cfg)
+std::optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing pusch_scs,
+                                                                           uint8_t            zero_correlation_zone,
+                                                                           const tdd_ul_dl_config_common& tdd_cfg)
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
 
@@ -119,7 +119,7 @@ optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier
       return prach_cfg_idx;
     }
   }
-  return nullopt;
+  return std::nullopt;
 }
 
 error_type<std::string>

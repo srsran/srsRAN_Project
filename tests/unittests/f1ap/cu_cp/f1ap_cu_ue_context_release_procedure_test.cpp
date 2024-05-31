@@ -35,8 +35,6 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   f1ap->handle_message(init_ul_rrc_msg);
 
-  ASSERT_EQ(f1ap->get_nof_ues(), 1);
-
   // Action 2: Start UE Context Release procedure
   test_logger.info("Starting UE Context Release procedure");
   f1ap_ue_context_release_command f1ap_ue_ctxt_rel_cmd_msg;

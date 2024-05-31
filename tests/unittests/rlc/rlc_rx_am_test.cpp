@@ -21,7 +21,7 @@
  */
 
 #include "lib/rlc/rlc_rx_am_entity.h"
-#include "rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
@@ -80,9 +80,7 @@ public:
 
 /// Fixture class for RLC AM Rx tests.
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each config
-class rlc_rx_am_test : public ::testing::Test,
-                       public ::testing::WithParamInterface<rlc_rx_am_config>,
-                       public rlc_trx_test
+class rlc_rx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_rx_am_config>
 {
 protected:
   void SetUp() override
@@ -155,7 +153,8 @@ protected:
     ASSERT_GT(sdu_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU";
     ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
 
-    sdu = create_sdu(sdu_size, first_byte);
+    sdu = test_helpers::create_pdcp_pdu(
+        pdcp_sn_size::size12bits, sn, sdu_size, first_byte); // 12-bit PDCP SN allows smaller SDUs
     pdu_list.clear();
     byte_buffer_view rest = {sdu};
 
@@ -592,7 +591,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = 0;
-  uint32_t sdu_size = 1;
+  uint32_t sdu_size = 4;
 
   // Create SDU and PDU with full SDU
   std::list<std::vector<uint8_t>> pdu_list = {};
@@ -625,7 +624,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = window_size(to_number(sn_size)); // out-of-window SN
-  uint32_t sdu_size = 1;
+  uint32_t sdu_size = 4;
 
   // Create SDU and PDU with full SDU
   std::list<std::vector<uint8_t>> pdu_list = {};
@@ -655,7 +654,7 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = 1; // further incremented SN to prevent that reception will advance rx_window
-  uint32_t sdu_size = 1;
+  uint32_t sdu_size = 4;
 
   // Create SDU and PDU with full SDU
   std::list<std::vector<uint8_t>> pdu_list = {};
@@ -838,7 +837,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   EXPECT_EQ(tester->status_trigger_counter, 0);
 
   uint32_t sn_state = 0;
-  uint32_t sdu_size = 1;
+  uint32_t sdu_size = 4;
 
   {
     // check status report, reset status_prohibit_timer
@@ -1014,8 +1013,8 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
 TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer_triggered)
 {
   uint32_t sn_state     = 0;
-  uint32_t sdu_size     = 1;
-  uint32_t segment_size = 1;
+  uint32_t sdu_size     = 4;
+  uint32_t segment_size = 4;
   uint32_t n_sdus       = 10;
 
   // Create SDU and PDUs with SDU segments
@@ -1369,7 +1368,7 @@ TEST_P(rlc_rx_am_test, rx_without_segmentation)
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_full_sdus(sn, n_sdus, 1, /* reverse_sdus = */ false);
+  rx_full_sdus(sn, n_sdus, 4, /* reverse_sdus = */ false);
   rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ false);
 }
 
@@ -1380,51 +1379,51 @@ TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_full_sdus(sn, n_sdus, 1, /* reverse_sdus = */ true);
+  rx_full_sdus(sn, n_sdus, 4, /* reverse_sdus = */ true);
   rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ true);
 }
 
 /// Verify in-order Rx of SDU segments
-/// Example: [0 0:0][0 1:1][1 0:0][1 1:1][2 0:0][2 1:1][3 0:0][3 1:1][4 0:0][4 1:1]
+/// Example: [0 0:1][0 2:3][1 0:1][1 2:3][2 0:1][2 2:3][3 0:1][3 2:3][4 0:1][4 2:3]
 TEST_P(rlc_rx_am_test, rx_with_segmentation)
 {
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ false, /* reverse_segments = */ false);
+  rx_sdu_segments(sn, n_sdus, 4, 2, /* reverse_sdus = */ false, /* reverse_segments = */ false);
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ false);
 }
 
 /// Verify reverse-order Rx of SDU segments but the segments of each SDU are transmitted in order
-/// Example: [4 0:0][4 1:1][3 0:0][3 1:1][2 0:0][2 1:1][1 0:0][1 1:1][0 0:0][0 1:1]
+/// Example: [4 0:1][4 2:3][3 0:1][3 2:3][2 0:1][2 2:3][1 0:1][1 2:3][0 0:1][0 2:3]
 TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
 {
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ true, /* reverse_segments = */ false);
+  rx_sdu_segments(sn, n_sdus, 4, 2, /* reverse_sdus = */ true, /* reverse_segments = */ false);
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ false);
 }
 
 /// Verify in-order Rx of SDU segments but the segments of each SDU are transmitted in reverse order
-/// Example: [0 1:1][0 0:0][1 1:1][1 0:0][2 1:1][2 0:0][3 0:0][3 1:1][3 0:0][4 1:1][4 0:0]
+/// Example: [0 2:3][0 0:1][1 2:3][1 0:1][2 2:3][2 0:1][3 2:3][3 0:1][4 2:3][4 0:1]
 TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
 {
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ false, /* reverse_segments = */ true);
+  rx_sdu_segments(sn, n_sdus, 4, 2, /* reverse_sdus = */ false, /* reverse_segments = */ true);
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ true);
 }
 
 /// Verify reverse-order Rx of SDU segments and the segments of each SDU are transmitted in reverse order
-/// Example: [4 1:1][4 0:0][3 0:0][3 1:1][3 0:0][2 1:1][2 0:0][1 1:1][1 0:0][0 1:1][0 0:0]
+/// Example: [4 2:3][4 0:1][3 2:3][3 0:1][2 2:3][2 0:1][1 2:3][1 0:1][0 2:3][0 0:1]
 TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
 {
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ true, /* reverse_segments = */ true);
+  rx_sdu_segments(sn, n_sdus, 4, 3, /* reverse_sdus = */ true, /* reverse_segments = */ true);
   rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ true);
 }
 

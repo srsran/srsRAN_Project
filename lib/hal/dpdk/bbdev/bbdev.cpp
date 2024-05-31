@@ -35,7 +35,15 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
   // Setup the required queues.
   unsigned nof_queues = cfg.nof_ldpc_enc_lcores + cfg.nof_ldpc_dec_lcores + cfg.nof_fft_lcores;
   if (::rte_bbdev_setup_queues(cfg.id, nof_queues, info.socket_id) < 0) {
-    logger.error("[bbdev] queues for device {} not setup properly.", cfg.id);
+    logger.error("[bbdev] queues for device {} not setup properly (requested: ldpc_enc={}, ldpc_dec={}, fft={}, "
+                 "available: ldpc_enc={}, ldpc_dec={}, fft={}).",
+                 cfg.id,
+                 cfg.nof_ldpc_enc_lcores,
+                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_ENC],
+                 cfg.nof_ldpc_dec_lcores,
+                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_DEC],
+                 cfg.nof_fft_lcores,
+                 info.drv.num_queues[RTE_BBDEV_OP_FFT]);
     return default_error_t{};
   }
 
@@ -74,32 +82,58 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
   unsigned               queue_id   = 0;
   queue_conf.socket                 = info.socket_id;
   queue_conf.queue_size             = info.drv.queue_size_lim;
-  queue_conf.priority               = 0;
   if (cfg.nof_ldpc_enc_lcores > 0) {
-    queue_conf.op_type = RTE_BBDEV_OP_LDPC_ENC;
+    // Queue configuration starts from the highest priority level supported.
+    queue_conf.priority = 0;
+    queue_conf.op_type  = RTE_BBDEV_OP_LDPC_ENC;
     for (unsigned qid = 0, lastq = cfg.nof_ldpc_enc_lcores; qid != lastq; ++qid) {
+      // A maximum of 16 queues is supported per priority level.
+      if (qid > 0 && qid % 16 == 0) {
+        ++queue_conf.priority;
+      }
       if (::rte_bbdev_queue_configure(cfg.id, queue_id, &queue_conf) < 0) {
-        logger.error("[bbdev] device {} queue {} (ldpc encoder) not configured properly.", cfg.id, queue_id);
+        logger.error("[bbdev] device {} queue {} (ldpc encoder) not configured properly (priority = {}).",
+                     cfg.id,
+                     queue_id,
+                     queue_conf.priority);
         return default_error_t{};
       }
       ++queue_id;
     }
   }
   if (cfg.nof_ldpc_dec_lcores > 0) {
-    queue_conf.op_type = RTE_BBDEV_OP_LDPC_DEC;
+    // Queue configuration starts from the highest priority level supported.
+    queue_conf.priority = 0;
+    queue_conf.op_type  = RTE_BBDEV_OP_LDPC_DEC;
     for (unsigned qid = 0, lastq = cfg.nof_ldpc_dec_lcores; qid != lastq; ++qid) {
+      // A maximum of 16 queues is supported per priority level.
+      if (qid > 0 && qid % 16 == 0) {
+        ++queue_conf.priority;
+      }
       if (::rte_bbdev_queue_configure(cfg.id, queue_id, &queue_conf) < 0) {
-        logger.error("[bbdev] device {} queue {} (ldpc decoder) not configured properly.", cfg.id, queue_id);
+        logger.error("[bbdev] device {} queue {} (ldpc decoder) not configured properly (priority = {}).",
+                     cfg.id,
+                     queue_id,
+                     queue_conf.priority);
         return default_error_t{};
       }
       ++queue_id;
     }
   }
   if (cfg.nof_fft_lcores > 0) {
-    queue_conf.op_type = RTE_BBDEV_OP_FFT;
+    // Queue configuration starts from the highest priority level supported.
+    queue_conf.priority = 0;
+    queue_conf.op_type  = RTE_BBDEV_OP_FFT;
     for (unsigned qid = 0, lastq = cfg.nof_fft_lcores; qid != lastq; ++qid) {
+      // A maximum of 16 queues is supported per priority level.
+      if (qid > 0 && qid % 16 == 0) {
+        ++queue_conf.priority;
+      }
       if (::rte_bbdev_queue_configure(cfg.id, queue_id, &queue_conf) < 0) {
-        logger.error("[bbdev] device {} queue {} (fft) not configured properly.", cfg.id, queue_id);
+        logger.error("[bbdev] device {} queue {} (fft) not configured properly (priority = {}).",
+                     cfg.id,
+                     queue_id,
+                     queue_conf.priority);
         return default_error_t{};
       }
       ++queue_id;

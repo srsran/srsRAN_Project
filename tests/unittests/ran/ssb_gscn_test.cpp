@@ -39,7 +39,7 @@ TEST(test_get_ss_ref_from_gscn, mixed_bands)
 
 TEST(test_get_gscn_from_ss_ref, mixed_bands)
 {
-  optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(2373750e3);
+  std::optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(2373750e3);
   ASSERT_TRUE(gscn.has_value());
   ASSERT_EQ(5934U, gscn.value());
 

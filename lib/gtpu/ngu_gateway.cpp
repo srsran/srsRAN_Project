@@ -80,7 +80,7 @@ public:
     data_notifier.on_new_pdu(std::move(pdu), src_addr);
   }
 
-  optional<uint16_t> get_bind_port() override { return udp_gw->get_bind_port(); }
+  std::optional<uint16_t> get_bind_port() override { return udp_gw->get_bind_port(); }
 
 private:
   network_gateway_data_notifier_with_src_addr& data_notifier;
@@ -136,7 +136,7 @@ public:
     // Do nothing.
   }
 
-  optional<uint16_t> get_bind_port() override { return nullopt; }
+  std::optional<uint16_t> get_bind_port() override { return std::nullopt; }
 };
 
 /// Implementation of the NG-U gateway for the case a local UPF stub is used.

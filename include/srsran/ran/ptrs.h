@@ -86,8 +86,8 @@ struct ptrs_uplink_config {
     bool operator!=(const transform_precoder_enabled& rhs) const { return !(rhs == *this); }
   };
 
-  optional<transform_precoder_disabled> trans_precoder_disabled;
-  optional<transform_precoder_enabled>  trans_precoder_enabled;
+  std::optional<transform_precoder_disabled> trans_precoder_disabled;
+  std::optional<transform_precoder_enabled>  trans_precoder_enabled;
 
   bool operator==(const ptrs_uplink_config& rhs) const
   {

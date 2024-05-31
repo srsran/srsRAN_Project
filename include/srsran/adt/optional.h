@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/srsran_assert.h"
+#include <optional>
 #include <type_traits>
 
 namespace srsran {
@@ -404,6 +405,24 @@ struct formatter<srsran::optional<T>> {
 
   template <typename FormatContext>
   auto format(const srsran::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (!optval.has_value()) {
+      return format_to(ctx.out(), "{{na}}");
+    }
+    return format_to(ctx.out(), "{}", optval.value());
+  }
+};
+
+template <typename T>
+struct formatter<std::optional<T>> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const std::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (!optval.has_value()) {
       return format_to(ctx.out(), "{{na}}");

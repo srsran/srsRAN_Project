@@ -34,16 +34,16 @@ namespace srs_du {
 
 /// \brief Served cell configuration that will be passed to CU-CP.
 struct f1_cell_setup_params {
-  nr_cell_global_id_t             nr_cgi;
-  pci_t                           pci;
-  uint32_t                        tac;
-  duplex_mode                     duplx_mode;
-  subcarrier_spacing              scs_common;
-  carrier_configuration           dl_carrier;
-  optional<carrier_configuration> ul_carrier;
-  byte_buffer                     packed_meas_time_cfg;
-  byte_buffer                     packed_mib;
-  byte_buffer                     packed_sib1;
+  nr_cell_global_id_t                  nr_cgi;
+  pci_t                                pci;
+  uint32_t                             tac;
+  duplex_mode                          duplx_mode;
+  subcarrier_spacing                   scs_common;
+  carrier_configuration                dl_carrier;
+  std::optional<carrier_configuration> ul_carrier;
+  byte_buffer                          packed_meas_time_cfg;
+  byte_buffer                          packed_mib;
+  byte_buffer                          packed_sib1;
 };
 
 /// \brief Message that initiates a F1 Setup procedure.

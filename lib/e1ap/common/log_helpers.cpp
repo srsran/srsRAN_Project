@@ -58,26 +58,26 @@ static void log_common_message(srslog::basic_logger& logger,
 }
 
 template <typename UeIndex>
-void srsran::log_e1ap_pdu(srslog::basic_logger&    logger,
-                          bool                     is_rx,
-                          const optional<UeIndex>& ue_id,
-                          const e1ap_message&      e1ap_msg,
-                          bool                     json_enabled)
+void srsran::log_e1ap_pdu(srslog::basic_logger&         logger,
+                          bool                          is_rx,
+                          const std::optional<UeIndex>& ue_id,
+                          const e1ap_message&           e1ap_msg,
+                          bool                          json_enabled)
 {
   if (not logger.info.enabled()) {
     return;
   }
 
   // Determine if it is a UE-dedicated message or common message.
-  optional<uint8_t> transaction_id = get_transaction_id(e1ap_msg.pdu);
+  std::optional<uint8_t> transaction_id = get_transaction_id(e1ap_msg.pdu);
   if (transaction_id.has_value()) {
     log_common_message(logger, is_rx, transaction_id.value(), e1ap_msg, json_enabled);
     return;
   }
 
-  optional<gnb_cu_cp_ue_e1ap_id_t> cp_ue_id = get_gnb_cu_cp_ue_e1ap_id(e1ap_msg.pdu);
-  optional<gnb_cu_up_ue_e1ap_id_t> up_ue_id = get_gnb_cu_up_ue_e1ap_id(e1ap_msg.pdu);
-  const char*                      msg_name = get_message_type_str(e1ap_msg.pdu);
+  std::optional<gnb_cu_cp_ue_e1ap_id_t> cp_ue_id = get_gnb_cu_cp_ue_e1ap_id(e1ap_msg.pdu);
+  std::optional<gnb_cu_up_ue_e1ap_id_t> up_ue_id = get_gnb_cu_up_ue_e1ap_id(e1ap_msg.pdu);
+  const char*                           msg_name = get_message_type_str(e1ap_msg.pdu);
 
   // Create PDU formatter that runs in log backend.
   // Note: msg_name is a string literal and therefore it is ok to pass by pointer.
@@ -98,13 +98,13 @@ void srsran::log_e1ap_pdu(srslog::basic_logger&    logger,
   }
 }
 
-template void srsran::log_e1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
-                                                          bool                                   is_rx,
-                                                          const optional<srs_cu_cp::ue_index_t>& ue_id,
-                                                          const e1ap_message&                    e1ap_msg,
-                                                          bool                                   json_enabled);
-template void srsran::log_e1ap_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                  logger,
-                                                          bool                                   is_rx,
-                                                          const optional<srs_cu_up::ue_index_t>& ue_id,
-                                                          const e1ap_message&                    e1ap_msg,
-                                                          bool                                   json_enabled);
+template void srsran::log_e1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                       logger,
+                                                          bool                                        is_rx,
+                                                          const std::optional<srs_cu_cp::ue_index_t>& ue_id,
+                                                          const e1ap_message&                         e1ap_msg,
+                                                          bool                                        json_enabled);
+template void srsran::log_e1ap_pdu<srs_cu_up::ue_index_t>(srslog::basic_logger&                       logger,
+                                                          bool                                        is_rx,
+                                                          const std::optional<srs_cu_up::ue_index_t>& ue_id,
+                                                          const e1ap_message&                         e1ap_msg,
+                                                          bool                                        json_enabled);

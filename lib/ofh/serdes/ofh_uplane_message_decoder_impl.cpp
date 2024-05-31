@@ -313,7 +313,11 @@ uplane_message_decoder_impl::decode_section_header(decoder_uplane_section_params
 
   unsigned& nof_prb = results.nof_prbs;
   nof_prb           = deserializer.read<uint8_t>();
-  nof_prb           = (nof_prb == 0) ? ru_nof_prbs : nof_prb;
+  if (nof_prb == 0) {
+    nof_prb = ru_nof_prbs;
+    // Ignore received value and treat as 0 according to O-RAN.WG4.CUS.0-R003-v11.00 document section 8.3.3.12.
+    start_prb = 0;
+  }
 
   return decoded_section_status::ok;
 }

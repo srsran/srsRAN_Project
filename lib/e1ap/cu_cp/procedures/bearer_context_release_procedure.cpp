@@ -28,6 +28,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
+constexpr std::chrono::milliseconds bearer_context_release_response_timeout{5000};
+
 bearer_context_release_procedure::bearer_context_release_procedure(const e1ap_message&              command_,
                                                                    e1ap_bearer_transaction_manager& ev_mng_,
                                                                    e1ap_message_notifier&           e1ap_notif_,
@@ -43,7 +45,7 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
   logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
-  transaction_sink.subscribe_to(ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ev_mng.context_release_complete, bearer_context_release_response_timeout);
 
   // Send command to CU-UP.
   send_bearer_context_release_command();

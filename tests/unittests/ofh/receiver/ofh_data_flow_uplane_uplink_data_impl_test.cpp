@@ -125,7 +125,7 @@ public:
     section.nof_prbs                  = nof_prbs;
     section.use_current_symbol_number = true;
     section.is_every_rb_used          = true;
-    section.iq_samples.resize(MAX_NOF_PRBS * NRE);
+    section.iq_samples.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
 
     return deco_results;
   }

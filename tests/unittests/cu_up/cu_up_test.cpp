@@ -26,7 +26,6 @@
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
-#include "srsran/support/test_utils.h"
 #include <arpa/inet.h>
 #include <chrono>
 #include <fcntl.h>
@@ -102,6 +101,7 @@ protected:
     srslog::init();
 
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
     // create worker thread and executer
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
@@ -246,12 +246,12 @@ TEST_F(cu_up_test, dl_data_flow)
   close(sock_fd);
 
   // check reception of message 1
-  pdcp_tx_pdu sdu1 = f1u_bearer.wait_tx_sdu();
+  nru_dl_message sdu1 = f1u_bearer.wait_tx_sdu();
   ASSERT_TRUE(sdu1.pdcp_sn.has_value());
   EXPECT_EQ(sdu1.pdcp_sn.value(), 0);
 
   // check reception of message 2
-  pdcp_tx_pdu sdu2 = f1u_bearer.wait_tx_sdu();
+  nru_dl_message sdu2 = f1u_bearer.wait_tx_sdu();
   ASSERT_TRUE(sdu2.pdcp_sn.has_value());
   EXPECT_EQ(sdu2.pdcp_sn.value(), 1);
 
@@ -305,6 +305,7 @@ TEST_F(cu_up_test, ul_data_flow)
   byte_buffer         t_pdu_buf1  = byte_buffer::create(t_pdu_span1).value();
   nru_ul_message      nru_msg1    = {};
   nru_msg1.t_pdu                  = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
+
   f1u_bearer.handle_pdu(std::move(nru_msg1));
 
   // send message 2
@@ -318,6 +319,7 @@ TEST_F(cu_up_test, ul_data_flow)
   byte_buffer         t_pdu_buf2  = byte_buffer::create(t_pdu_span2).value();
   nru_ul_message      nru_msg2    = {};
   nru_msg2.t_pdu                  = byte_buffer_chain::create(std::move(t_pdu_buf2)).value();
+
   f1u_bearer.handle_pdu(std::move(nru_msg2));
 
   std::array<uint8_t, 128> rx_buf;

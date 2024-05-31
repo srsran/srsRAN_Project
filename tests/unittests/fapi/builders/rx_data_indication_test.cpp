@@ -46,10 +46,10 @@ TEST(rx_data_indication_builder, add_custom_pdu_passes)
 {
   static_vector<uint8_t, 18> data = {1, 2, 3, 4, 5};
 
-  unsigned           handle = 765;
-  rnti_t             rnti   = to_rnti(29);
-  optional<unsigned> rapid;
-  unsigned           harq = 14;
+  unsigned                handle = 765;
+  rnti_t                  rnti   = to_rnti(29);
+  std::optional<unsigned> rapid;
+  unsigned                harq = 14;
 
   rx_data_indication_message         msg;
   rx_data_indication_message_builder builder(msg);

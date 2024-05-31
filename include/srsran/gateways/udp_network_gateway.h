@@ -67,7 +67,7 @@ public:
   ///
   /// In case the gateway was configured to bind to port 0, i.e. the operating system shall pick a random free port,
   /// this function can be used to get the actual port number.
-  virtual optional<uint16_t> get_bind_port() = 0;
+  virtual std::optional<uint16_t> get_bind_port() = 0;
 
   /// \brief Return the address to which the socket is bound.
   ///

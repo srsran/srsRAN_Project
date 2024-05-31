@@ -37,11 +37,11 @@ using namespace test_helpers;
 class dummy_sched_ce_info_handler : public mac_scheduler_ce_info_handler
 {
 public:
-  optional<mac_phr_ce_info>           last_phr_msg;
-  optional<mac_bsr_ce_info>           last_bsr_msg;
-  optional<mac_ul_scheduling_command> last_sched_cmd;
-  optional<mac_ce_scheduling_command> last_ce_cmd;
-  optional<du_ue_index_t>             last_crnti_ce;
+  std::optional<mac_phr_ce_info>           last_phr_msg;
+  std::optional<mac_bsr_ce_info>           last_bsr_msg;
+  std::optional<mac_ul_scheduling_command> last_sched_cmd;
+  std::optional<mac_ce_scheduling_command> last_ce_cmd;
+  std::optional<du_ue_index_t>             last_crnti_ce;
 
   /// \brief Forward to scheduler any decoded UL BSRs for a given UE.
   void handle_ul_bsr_indication(const mac_bsr_ce_info& bsr) override { last_bsr_msg = bsr; }

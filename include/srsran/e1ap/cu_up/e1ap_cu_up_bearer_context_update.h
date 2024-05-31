@@ -34,12 +34,12 @@ struct e1ap_bearer_context_setup_request {
   uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
   std::string                                                             serving_plmn;
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
-  optional<uint64_t>                                                      ue_dl_maximum_integrity_protected_data_rate;
+  std::optional<uint64_t>                                                 ue_dl_maximum_integrity_protected_data_rate;
   activity_notification_level_t                                           activity_notif_level;
-  optional<std::chrono::seconds>                                          ue_inactivity_timer;
-  optional<std::string>                                                   bearer_context_status_change;
-  optional<ran_ue_id_t>                                                   ran_ue_id;
-  optional<uint64_t>                                                      gnb_du_id;
+  std::optional<std::chrono::seconds>                                     ue_inactivity_timer;
+  std::optional<std::string>                                              bearer_context_status_change;
+  std::optional<ran_ue_id_t>                                              ran_ue_id;
+  std::optional<uint64_t>                                                 gnb_du_id;
 };
 
 /// \brief Response to a bearer context setup request including UE index for E1AP map.
@@ -52,26 +52,26 @@ struct e1ap_bearer_context_setup_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_list;
 
   // Bearer Context Setup Failure
-  optional<e1ap_cause_t> cause;
+  std::optional<e1ap_cause_t> cause;
 
   // Common
-  optional<e1ap_crit_diagnostics> crit_diagnostics;
+  std::optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
 /// \brief Request to modify a bearer context.
 struct e1ap_bearer_context_modification_request {
-  ue_index_t                                       ue_index = INVALID_UE_INDEX;
-  optional<e1ap_security_info>                     security_info;
-  optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
-  optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
-  optional<std::string>                            bearer_context_status_change;
-  optional<std::string>                            new_ul_tnl_info_required;
-  optional<std::chrono::seconds>                   ue_inactivity_timer;
-  optional<std::string>                            data_discard_required;
-  optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
-  optional<ran_ue_id_t>                            ran_ue_id;
-  optional<uint64_t>                               gnb_du_id;
-  optional<std::string>                            activity_notif_level;
+  ue_index_t                                            ue_index = INVALID_UE_INDEX;
+  std::optional<e1ap_security_info>                     security_info;
+  std::optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
+  std::optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
+  std::optional<std::string>                            bearer_context_status_change;
+  std::optional<std::string>                            new_ul_tnl_info_required;
+  std::optional<std::chrono::seconds>                   ue_inactivity_timer;
+  std::optional<std::string>                            data_discard_required;
+  std::optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
+  std::optional<ran_ue_id_t>                            ran_ue_id;
+  std::optional<uint64_t>                               gnb_du_id;
+  std::optional<std::string>                            activity_notif_level;
 };
 
 /// \brief Response to a bearer context modification request including UE index for E1AP map.
@@ -87,10 +87,10 @@ struct e1ap_bearer_context_modification_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_to_modify_list;
 
   // Bearer Context Modification Failure
-  optional<e1ap_cause_t> cause;
+  std::optional<e1ap_cause_t> cause;
 
   // Common
-  optional<e1ap_crit_diagnostics> crit_diagnostics;
+  std::optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
 /// \brief Request to release a bearer context.

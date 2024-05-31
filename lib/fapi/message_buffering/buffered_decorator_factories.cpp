@@ -21,26 +21,15 @@
  */
 
 #include "srsran/fapi/buffered_decorator_factories.h"
-#include "buffered_slot_gateway_task_dispatcher.h"
-#include "buffered_slot_time_notifier_decorator.h"
+#include "buffered_decorator_impl.h"
 
 using namespace srsran;
 using namespace fapi;
 
-std::unique_ptr<buffered_decorator_modules>
-srsran::fapi::create_buffered_decorator_modules(unsigned int                l2_nof_slots_ahead,
-                                                subcarrier_spacing          scs,
-                                                slot_message_gateway&       gateway,
-                                                task_executor&              executor,
-                                                slot_time_message_notifier& delayed_notifier)
+std::unique_ptr<buffered_decorator> srsran::fapi::create_buffered_decorator(unsigned              l2_nof_slots_ahead,
+                                                                            subcarrier_spacing    scs,
+                                                                            slot_message_gateway& gateway,
+                                                                            task_executor&        executor)
 {
-  auto modules = std::make_unique<buffered_decorator_modules>();
-
-  auto slot_gateway =
-      std::make_unique<buffered_slot_gateway_task_dispatcher>(l2_nof_slots_ahead, scs, gateway, executor);
-  modules->notifier =
-      std::make_unique<buffered_slot_time_notifier_decorator>(l2_nof_slots_ahead, scs, *slot_gateway, delayed_notifier);
-  modules->gateway = std::move(slot_gateway);
-
-  return modules;
+  return std::make_unique<buffered_decorator_impl>(l2_nof_slots_ahead, scs, gateway, executor);
 }

@@ -31,14 +31,15 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
-#include "srsran/f1ap/du/f1c_connection_client.h"
+#include "srsran/f1ap/gateways/f1c_connection_client.h"
+#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/pdcp/pdcp_tx_pdu.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 /// \brief Generate a random gnb_du_ue_f1ap_id
 gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
@@ -63,18 +64,18 @@ public:
   f1ap_du*                  f1ap;
 
   // DU manager -> F1AP.
-  f1ap_ue_creation_request                 next_ue_creation_req;
-  optional<f1ap_ue_creation_response>      last_ue_creation_response;
-  f1ap_ue_configuration_request            next_ue_cfg_req;
-  optional<f1ap_ue_configuration_response> last_ue_cfg_response;
+  f1ap_ue_creation_request                      next_ue_creation_req;
+  std::optional<f1ap_ue_creation_response>      last_ue_creation_response;
+  f1ap_ue_configuration_request                 next_ue_cfg_req;
+  std::optional<f1ap_ue_configuration_response> last_ue_cfg_response;
 
   // F1AP procedures.
-  optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
-  f1ap_ue_context_creation_response          next_ue_context_creation_response;
-  optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
-  f1ap_ue_context_update_response            next_ue_context_update_response;
-  optional<f1ap_ue_delete_request>           last_ue_delete_req;
-  optional<du_ue_index_t>                    last_ue_cfg_applied;
+  std::optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
+  f1ap_ue_context_creation_response               next_ue_context_creation_response;
+  std::optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
+  f1ap_ue_context_update_response                 next_ue_context_update_response;
+  std::optional<f1ap_ue_delete_request>           last_ue_delete_req;
+  std::optional<du_ue_index_t>                    last_ue_cfg_applied;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -183,15 +184,15 @@ class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 public:
   byte_buffer last_pdu;
 
-  void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) override { last_pdu = std::move(pdu); }
+  void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) override { last_pdu = std::move(pdu); }
 };
 
 class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
-  byte_buffer        last_pdu;
-  optional<uint32_t> last_pdu_sn;
-  optional<uint32_t> last_discard_sn;
+  byte_buffer             last_pdu;
+  std::optional<uint32_t> last_pdu_sn;
+  std::optional<uint32_t> last_discard_sn;
 
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
@@ -230,8 +231,8 @@ protected:
   struct ue_test_context {
     du_ue_index_t                                ue_index;
     rnti_t                                       crnti;
-    optional<gnb_du_ue_f1ap_id_t>                gnb_du_ue_f1ap_id;
-    optional<gnb_cu_ue_f1ap_id_t>                gnb_cu_ue_f1ap_id;
+    std::optional<gnb_du_ue_f1ap_id_t>           gnb_du_ue_f1ap_id;
+    std::optional<gnb_cu_ue_f1ap_id_t>           gnb_cu_ue_f1ap_id;
     slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
     slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
   };
@@ -273,5 +274,4 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du

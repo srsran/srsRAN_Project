@@ -95,11 +95,11 @@ static const std::array<double, 28> ul_snr_256qam_mcs_table = {
     // clang-format on
 };
 
-optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
+std::optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
 {
-  optional<sch_mcs_index> mcs;
+  std::optional<sch_mcs_index> mcs;
   if (cqi == 0 or cqi >= CQI_TABLE_SIZE) {
-    return nullopt;
+    return std::nullopt;
   }
 
   switch (mcs_table) {

@@ -107,6 +107,9 @@ public:
   // See interface for documentation.
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) override;
 
+  // See interface for documentation.
+  fapi::slot_last_message_notifier& get_slot_last_message_notifier() override;
+
 private:
   /// PHY-to-FAPI uplink results events translator.
   phy_to_fapi_results_event_translator results_translator;

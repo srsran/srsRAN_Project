@@ -78,7 +78,7 @@ bool fill_rrc_reconfig_args(
     const std::vector<drb_id_t>&                                       drb_to_remove,
     const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::vector<byte_buffer>&                                    nas_pdus,
-    const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
+    const std::optional<rrc_meas_cfg>                                  rrc_meas_cfg,
     bool                                                               reestablish_srbs,
     bool                                                               reestablish_drbs,
     bool                                                               update_keys,

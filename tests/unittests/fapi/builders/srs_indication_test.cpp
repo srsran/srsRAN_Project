@@ -39,9 +39,9 @@ TEST(srs_indication_builder, valid_srs_indication_passes)
   rnti_t   rnti        = to_rnti(3);
   auto     pdu_builder = builder.add_srs_pdu(handle, rnti);
 
-  optional<unsigned> timing    = 0;
-  optional<int32_t>  timing_ns = 0;
-  srs_usage_mode     srs_usage = srs_usage_mode::codebook;
+  std::optional<unsigned> timing    = 0;
+  std::optional<int32_t>  timing_ns = 0;
+  srs_usage_mode          srs_usage = srs_usage_mode::codebook;
 
   pdu_builder.set_metrics_parameters(timing, timing_ns);
 

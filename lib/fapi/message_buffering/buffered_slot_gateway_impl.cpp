@@ -46,7 +46,7 @@ buffered_slot_gateway_impl::buffered_slot_gateway_impl(unsigned int          l2_
 }
 
 template <typename T, typename Function>
-void buffered_slot_gateway_impl::handle_message(const T& msg, span<optional<T>> pool, Function func)
+void buffered_slot_gateway_impl::handle_message(const T& msg, span<std::optional<T>> pool, Function func)
 {
   slot_point msg_slot(scs, msg.sfn, msg.slot);
   slot_point current_slot = get_current_slot();
@@ -69,7 +69,7 @@ void buffered_slot_gateway_impl::handle_message(const T& msg, span<optional<T>> 
     return;
   }
 
-  optional<T>& msg_pool_entry = pool[msg_slot.system_slot() % pool.size()];
+  std::optional<T>& msg_pool_entry = pool[msg_slot.system_slot() % pool.size()];
 
   if (msg_pool_entry) {
     logger.warning("Detected unsent cached FAPI message type '{}' for slot '{}'",
@@ -83,13 +83,13 @@ void buffered_slot_gateway_impl::handle_message(const T& msg, span<optional<T>> 
 /// Sends the message cached in the given pool for the given slot using the given function and clears the pool
 /// entry.
 template <typename T, typename Function>
-static void send_message(slot_point            slot,
-                         subcarrier_spacing    scs,
-                         srslog::basic_logger& logger,
-                         span<optional<T>>     pool,
-                         Function              func)
+static void send_message(slot_point             slot,
+                         subcarrier_spacing     scs,
+                         srslog::basic_logger&  logger,
+                         span<std::optional<T>> pool,
+                         Function               func)
 {
-  optional<T>& pool_entry = pool[slot.system_slot() % pool.size()];
+  std::optional<T>& pool_entry = pool[slot.system_slot() % pool.size()];
   if (!pool_entry) {
     return;
   }
@@ -123,27 +123,27 @@ void buffered_slot_gateway_impl::forward_cached_messages(slot_point slot)
 void buffered_slot_gateway_impl::handle_dl_tti_request(const dl_tti_request_message& msg)
 {
   handle_message(msg,
-                 span<optional<dl_tti_request_message>>(dl_tti_pool),
+                 span<std::optional<dl_tti_request_message>>(dl_tti_pool),
                  [this](const dl_tti_request_message& message) { gateway.dl_tti_request(message); });
 }
 
 void buffered_slot_gateway_impl::handle_ul_tti_request(const ul_tti_request_message& msg)
 {
   handle_message(msg,
-                 span<optional<ul_tti_request_message>>(ul_tti_pool),
+                 span<std::optional<ul_tti_request_message>>(ul_tti_pool),
                  [this](const ul_tti_request_message& message) { gateway.ul_tti_request(message); });
 }
 
 void buffered_slot_gateway_impl::handle_ul_dci_request(const ul_dci_request_message& msg)
 {
   handle_message(msg,
-                 span<optional<ul_dci_request_message>>(ul_dci_pool),
+                 span<std::optional<ul_dci_request_message>>(ul_dci_pool),
                  [this](const ul_dci_request_message& message) { gateway.ul_dci_request(message); });
 }
 
 void buffered_slot_gateway_impl::handle_tx_data_request(const tx_data_request_message& msg)
 {
   handle_message(msg,
-                 span<optional<tx_data_request_message>>(tx_data_pool),
+                 span<std::optional<tx_data_request_message>>(tx_data_pool),
                  [this](const tx_data_request_message& message) { gateway.tx_data_request(message); });
 }

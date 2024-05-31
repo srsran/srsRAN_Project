@@ -89,11 +89,11 @@ struct ul_pusch_results_control {
   /// Channel state information.
   channel_state_information csi;
   /// HARQ ACK results.
-  optional<pusch_uci_field> harq_ack;
+  std::optional<pusch_uci_field> harq_ack;
   /// CSI Part 1 results.
-  optional<pusch_uci_field> csi1;
+  std::optional<pusch_uci_field> csi1;
   /// CSI Part 2 results.
-  optional<pusch_uci_field> csi2;
+  std::optional<pusch_uci_field> csi2;
 
   /// \brief Creates a control-related result produced from a discarded transmission.
   /// \param rnti_        Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
@@ -108,8 +108,8 @@ struct ul_pusch_results_control {
     ret.slot = slot_;
     ret.csi  = channel_state_information();
     ret.harq_ack.emplace(pusch_uci_field{uci_payload_type(nof_harq_ack), uci_status::unknown});
-    ret.csi1 = nullopt;
-    ret.csi2 = nullopt;
+    ret.csi1 = std::nullopt;
+    ret.csi2 = std::nullopt;
     return ret;
   }
 };
@@ -133,7 +133,7 @@ struct ul_pucch_results {
     ret.processor_result.csi     = channel_state_information();
     ret.processor_result.message = pucch_uci_message({0, nof_harq_ack, 0, 0});
     ret.processor_result.message.set_status(uci_status::unknown);
-    ret.processor_result.detection_metric = nullopt;
+    ret.processor_result.detection_metric = std::nullopt;
     return ret;
   }
 };

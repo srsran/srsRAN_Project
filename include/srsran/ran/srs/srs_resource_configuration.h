@@ -131,7 +131,7 @@ struct srs_resource_configuration {
   /// \brief Set if frequency hopping is enabled and the SRS resource is either periodic or semi-persistent.
   ///
   /// The periodicity and offset are given by the higher layer parameter \e resourceType.
-  optional<periodicity_and_offset> periodicity;
+  std::optional<periodicity_and_offset> periodicity;
 
   /// \brief Determines if frequency hopping is enabled.
   ///

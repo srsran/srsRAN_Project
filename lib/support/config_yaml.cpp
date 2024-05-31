@@ -91,6 +91,9 @@ std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also
   }
 
   for (const CLI::App* subcom : app->get_subcommands({})) {
+    if (!default_also and !subcom->count()) {
+      continue;
+    }
     config[subcom->get_name()] = YAML::Load(to_config(subcom, default_also, false, ""));
   }
 

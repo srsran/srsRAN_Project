@@ -32,9 +32,9 @@ public:
   /// Collects PUSCH demodulation statistics.
   struct demodulation_stats {
     /// Estimated Signal-to-Interference-plus-Noise Ratio (SINR) at the output of the equalizer.
-    optional<float> sinr_dB;
+    std::optional<float> sinr_dB;
     /// Measured EVM.
-    optional<float> evm;
+    std::optional<float> evm;
   };
 
   /// Default destructor.

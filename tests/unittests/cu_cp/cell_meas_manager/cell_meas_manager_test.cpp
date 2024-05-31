@@ -58,9 +58,9 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
-  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
-  nr_cell_id_t           nci      = 0x19b0;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+  ue_index_t                  ue_index = ue_mng.add_ue(uint_to_du_index(0));
+  nr_cell_id_t                nci      = 0x19b0;
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -70,9 +70,9 @@ TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are
 {
   create_default_manager();
 
-  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
-  nr_cell_id_t           nci      = 0x19b5;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+  ue_index_t                  ue_index = ue_mng.add_ue(uint_to_du_index(0));
+  nr_cell_id_t                nci      = 0x19b5;
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -85,7 +85,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
   ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
 
   for (unsigned nci = 0x19b0; nci < 0x19b2; ++nci) {
-    optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+    std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
     check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
     verify_meas_cfg(meas_cfg);
   }
@@ -99,7 +99,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
   const nr_cell_id_t nci      = 0x19b1;
 
   // get current config
-  optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
+  std::optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
   ASSERT_TRUE(cell_cfg.has_value());
 
   // update config for cell 3
@@ -111,7 +111,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
 
   // Make sure meas_cfg is created.
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
   check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
   verify_meas_cfg(meas_cfg);
 }
@@ -124,7 +124,7 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
   const nr_cell_id_t nci      = 0x19b1;
 
   // get current config
-  optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
+  std::optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
   ASSERT_TRUE(cell_cfg.has_value());
 
   // update config for cell 1
@@ -134,7 +134,7 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
 
   // Make sure meas_cfg is created.
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
   check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
   verify_meas_cfg(meas_cfg);
 }
@@ -144,9 +144,9 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_n
   // Create a manager without ncells and without report config.
   create_manager_without_ncells_and_periodic_report();
 
-  ue_index_t             ue_index = ue_mng.add_ue(uint_to_du_index(0));
-  nr_cell_id_t           nci      = 0x19b0;
-  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
+  ue_index_t                  ue_index = ue_mng.add_ue(uint_to_du_index(0));
+  nr_cell_id_t                nci      = 0x19b0;
+  std::optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(ue_index, nci);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -160,12 +160,12 @@ TEST_F(cell_meas_manager_test, when_old_meas_config_is_provided_old_ids_are_remo
   const nr_cell_id_t initial_nci = 0x19b0;
 
   // Make sure meas_cfg is created (no previous meas config provided)
-  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
+  std::optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
   check_default_meas_cfg(initial_meas_cfg, meas_obj_id_t::min);
   verify_meas_cfg(initial_meas_cfg);
 
-  const nr_cell_id_t     target_nci      = 0x19b1;
-  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
+  const nr_cell_id_t          target_nci      = 0x19b1;
+  std::optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
 
   // Make sure initial IDs are release again.
   ASSERT_EQ(target_meas_cfg.value().meas_obj_to_rem_list.at(0),
@@ -217,7 +217,7 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   ASSERT_TRUE(manager->update_cell_config(target_nci, serving_cell_cfg));
 
   // Make sure meas_cfg is created and contains measurement objects to add mod
-  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
+  std::optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
   ASSERT_TRUE(initial_meas_cfg.has_value());
   ASSERT_EQ(initial_meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
   ASSERT_TRUE(initial_meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_nr.has_value());
@@ -225,7 +225,7 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
             serving_cell_cfg.ssb_arfcn);
   ASSERT_EQ(initial_meas_cfg.value().report_cfg_to_add_mod_list.size(), 1);
 
-  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
+  std::optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
   ASSERT_TRUE(target_meas_cfg.has_value());
   ASSERT_EQ(target_meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
   ASSERT_TRUE(target_meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_nr.has_value());
@@ -271,11 +271,11 @@ TEST_F(cell_meas_manager_test, when_invalid_cell_config_update_received_then_con
   ASSERT_FALSE(manager->update_cell_config(target_nci, serving_cell_cfg));
 
   // Make sure meas_cfg is created for cell 1 and contains measurement objects to add mod
-  optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
+  std::optional<rrc_meas_cfg> initial_meas_cfg = manager->get_measurement_config(ue_index, initial_nci);
   ASSERT_TRUE(initial_meas_cfg.has_value());
   ASSERT_TRUE(initial_meas_cfg.value().meas_obj_to_add_mod_list.empty());
   ASSERT_TRUE(initial_meas_cfg.value().report_cfg_to_add_mod_list.empty());
 
-  optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
+  std::optional<rrc_meas_cfg> target_meas_cfg = manager->get_measurement_config(ue_index, target_nci, initial_meas_cfg);
   ASSERT_FALSE(target_meas_cfg.has_value());
 }

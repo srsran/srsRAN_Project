@@ -56,7 +56,7 @@ struct rach_config_generic {
 struct rach_config_common {
   rach_config_generic rach_cfg_generic;
   /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
-  optional<unsigned> total_nof_ra_preambles;
+  std::optional<unsigned> total_nof_ra_preambles;
   /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.
   /// We use \c true for l839, while \c false for l139.
   bool is_prach_root_seq_index_l839;

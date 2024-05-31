@@ -217,6 +217,16 @@ inline units::bits compute_full_codeblock_size(ldpc_base_graph_type base_graph, 
   return codeblock_size * inverse_rate;
 }
 
+/// \brief Computes the parameter \f$N_{ref}\f$ according to TS38.212 Section 5.4.2.1.
+///
+/// \param[in] tbs_lbrm       Transport block size for limited buffer rate match, parameter \f$TBS_{LBRM}\f$.
+/// \param[in] nof_codeblocks Number of codeblocks for the transport block, parameter \f$C\f$.
+/// \return The minimum between the computed \f$N_{ref}\f$ and the maximum full codeblock size.
+inline units::bits compute_N_ref(units::bytes tbs_lbrm, unsigned nof_codeblocks)
+{
+  return std::min(units::bits(tbs_lbrm.to_bits().value() * 3 / (2 * nof_codeblocks)), units::bits(MAX_CODEBLOCK_SIZE));
+}
+
 } // namespace ldpc
 
 } // namespace srsran

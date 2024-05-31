@@ -40,6 +40,8 @@ static bool check_dmrs_and_reserved_collision(const pdsch_processor::pdu_t& conf
 
 void pdsch_processor_validator_impl::assert_pdu(const pdsch_processor::pdu_t& pdu)
 {
+  using namespace units::literals;
+
   // Recover parameters from the PDU.
   unsigned         nof_layers       = pdu.precoding.get_nof_layers();
   unsigned         nof_codewords    = (nof_layers > 4) ? 2 : 1;
@@ -87,10 +89,8 @@ void pdsch_processor_validator_impl::assert_pdu(const pdsch_processor::pdu_t& pd
                 nof_codewords,
                 pdu.codewords.size(),
                 nof_layers);
-  srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
-                pdu.tbs_lbrm_bytes,
-                ldpc::MAX_CODEBLOCK_SIZE / 8);
+
+  srsran_assert(pdu.tbs_lbrm > 0_bytes, "Invalid LBRM size (0 bytes).");
 
   srsran_assert(!check_dmrs_and_reserved_collision(pdu),
                 "The DM-RS symbol mask must not collide with reserved elements.");
@@ -98,6 +98,8 @@ void pdsch_processor_validator_impl::assert_pdu(const pdsch_processor::pdu_t& pd
 
 bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu) const
 {
+  using namespace units::literals;
+
   unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
   dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
 
@@ -165,8 +167,8 @@ bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu)
     return false;
   }
 
-  // The limited buffer for rate matching size must be within limits.
-  if ((pdu.tbs_lbrm_bytes == 0) || (pdu.tbs_lbrm_bytes > ldpc::MAX_CODEBLOCK_SIZE / 8)) {
+  // The limited buffer for rate matching size must not be zero.
+  if (pdu.tbs_lbrm == 0_bytes) {
     return false;
   }
 

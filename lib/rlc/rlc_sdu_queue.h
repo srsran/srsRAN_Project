@@ -55,7 +55,7 @@ public:
   {
     // The SDU byte_buffer might be empty, due to having been discarded.
     // We try to read the next one if that is the case.
-    optional<rlc_sdu> popped_elem =
+    std::optional<rlc_sdu> popped_elem =
         queue.pop_and_discard_until([](const rlc_sdu& elem) { return not elem.buf.empty(); });
     if (popped_elem.has_value()) {
       sdu = std::move(*popped_elem);

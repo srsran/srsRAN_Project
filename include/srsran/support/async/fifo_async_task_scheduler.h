@@ -157,8 +157,8 @@ async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sc
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<not std::is_same<ReturnType, void>::value, int> = 0>
-async_task<optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
-                                                              Callback&&                 task_to_run)
+async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
+                                                                   Callback&&                 task_to_run)
 {
   struct task_offloader {
     task_offloader(fifo_async_task_scheduler& task_sched_, Callback&& callback_) :
@@ -166,13 +166,13 @@ async_task<optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_sc
     {
     }
 
-    void operator()(coro_context<async_task<optional<ReturnType>>>& ctx)
+    void operator()(coro_context<async_task<std::optional<ReturnType>>>& ctx)
     {
       CORO_BEGIN(ctx);
 
       task_sched.schedule(dispatched_task());
 
-      CORO_AWAIT_VALUE(optional<ReturnType> result, rx);
+      CORO_AWAIT_VALUE(std::optional<ReturnType> result, rx);
 
       CORO_RETURN(result);
     }

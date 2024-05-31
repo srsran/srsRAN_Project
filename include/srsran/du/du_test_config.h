@@ -30,21 +30,21 @@ namespace srs_du {
 /// \brief Configuration that enable DU modes operation for testing purposes.
 struct du_test_config {
   struct test_ue_config {
-    rnti_t             rnti;
-    uint16_t           nof_ues;
-    optional<unsigned> auto_ack_indication_delay;
-    bool               pdsch_active;
-    bool               pusch_active;
-    unsigned           cqi;
-    unsigned           ri;
-    unsigned           pmi;
-    unsigned           i_1_1;
-    optional<unsigned> i_1_3;
-    unsigned           i_2;
+    rnti_t                  rnti;
+    uint16_t                nof_ues;
+    std::optional<unsigned> auto_ack_indication_delay;
+    bool                    pdsch_active;
+    bool                    pusch_active;
+    unsigned                cqi;
+    unsigned                ri;
+    unsigned                pmi;
+    unsigned                i_1_1;
+    std::optional<unsigned> i_1_3;
+    unsigned                i_2;
   };
 
   /// \brief Creation of a phantom UE for testing purposes.
-  optional<test_ue_config> test_ue;
+  std::optional<test_ue_config> test_ue;
 };
 
 } // namespace srs_du

@@ -32,12 +32,12 @@ TEST(uci_indication_builder, valid_pusch_pdu_metrics_passes)
     uci_pusch_pdu         pdu;
     uci_pusch_pdu_builder builder(pdu);
 
-    optional<float>    ul_sinr_metric;
-    optional<unsigned> timing_advance_offset;
-    optional<int>      timing_advance_offset_ns;
-    optional<float>    rssi;
-    optional<float>    rsrp;
-    bool               rsrp_use_dB = i;
+    std::optional<float>    ul_sinr_metric;
+    std::optional<unsigned> timing_advance_offset;
+    std::optional<int>      timing_advance_offset_ns;
+    std::optional<float>    rssi;
+    std::optional<float>    rsrp;
+    bool                    rsrp_use_dB = i;
 
     if (i) {
       ul_sinr_metric.emplace(-30.1F);
@@ -119,12 +119,12 @@ TEST(uci_indication_builder, valid_pucch_f01_pdu_metrics_passes)
     uci_pucch_pdu_format_0_1         pdu;
     uci_pucch_pdu_format_0_1_builder builder(pdu);
 
-    optional<float>    ul_sinr_metric;
-    optional<unsigned> timing_advance_offset;
-    optional<int>      timing_advance_offset_ns;
-    optional<float>    rssi;
-    optional<float>    rsrp;
-    bool               rsrp_use_dB = i;
+    std::optional<float>    ul_sinr_metric;
+    std::optional<unsigned> timing_advance_offset;
+    std::optional<int>      timing_advance_offset_ns;
+    std::optional<float>    rssi;
+    std::optional<float>    rsrp;
+    bool                    rsrp_use_dB = i;
 
     if (i) {
       ul_sinr_metric.emplace(-30.1F);
@@ -152,7 +152,7 @@ TEST(uci_indication_builder, valid_pucch_f01_pdu_sr_passes)
     uci_pucch_pdu_format_0_1         pdu;
     uci_pucch_pdu_format_0_1_builder builder(pdu);
 
-    optional<unsigned> confidence;
+    std::optional<unsigned> confidence;
     if (i) {
       confidence.emplace(i);
     }
@@ -172,7 +172,7 @@ TEST(uci_indication_builder, valid_pucch_f01_pdu_harq_passes)
     uci_pucch_pdu_format_0_1         pdu;
     uci_pucch_pdu_format_0_1_builder builder(pdu);
 
-    optional<unsigned> confidence;
+    std::optional<unsigned> confidence;
     if (i) {
       confidence.emplace(i);
     }
@@ -195,12 +195,12 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_metrics_passes)
     uci_pucch_pdu_format_2_3_4         pdu;
     uci_pucch_pdu_format_2_3_4_builder builder(pdu);
 
-    optional<float>    ul_sinr_metric;
-    optional<unsigned> timing_advance_offset;
-    optional<int>      timing_advance_offset_ns;
-    optional<float>    rssi;
-    optional<float>    rsrp;
-    bool               rsrp_use_dB = i;
+    std::optional<float>    ul_sinr_metric;
+    std::optional<unsigned> timing_advance_offset;
+    std::optional<int>      timing_advance_offset_ns;
+    std::optional<float>    rssi;
+    std::optional<float>    rsrp;
+    bool                    rsrp_use_dB = i;
 
     if (i) {
       ul_sinr_metric.emplace(-30.1F);

@@ -26,6 +26,7 @@
 
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
+#include "srsran/f1u/cu_up/f1u_bearer_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
@@ -97,7 +98,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // get DRB from list and create context
   new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
-  auto& new_drb = new_session.drbs.at(drb_to_setup.drb_id);
+  drb_context* new_drb = new_session.drbs.at(drb_to_setup.drb_id).get();
 
   // Create Qos Flows
   uint32_t nof_flow_success = 0;
@@ -212,17 +213,31 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
                                              f1u_ul_teid);
 
-  new_drb->f1u          = f1u_gw.create_cu_bearer(ue_index,
-                                         drb_to_setup.drb_id,
-                                         new_drb->f1u_cfg,
-                                         f1u_ul_tunnel_addr,
-                                         new_drb->f1u_to_pdcp_adapter,
-                                         new_drb->f1u_to_pdcp_adapter,
-                                         ue_ul_exec,
-                                         ue_dl_timer_factory,
-                                         ue_inactivity_timer);
+  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb_to_setup.drb_id,
+                                                   new_drb->f1u_cfg,
+                                                   f1u_ul_tunnel_addr,
+                                                   new_drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec,
+                                                   ue_dl_timer_factory,
+                                                   ue_inactivity_timer);
+
+  new_drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
+                                              new_drb->drb_id,
+                                              f1u_ul_tunnel_addr,
+                                              new_drb->f1u_cfg,
+                                              *new_drb->f1u_gw_bearer,
+                                              new_drb->f1u_to_pdcp_adapter,
+                                              new_drb->f1u_to_pdcp_adapter,
+                                              ue_dl_timer_factory,
+                                              ue_inactivity_timer,
+                                              ue_ul_exec);
+
   new_drb->f1u_ul_teid  = f1u_ul_teid;
   drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+
+  // Connect F1-U GW bearer RX adapter to NR-U bearer
+  new_drb->f1u_gateway_rx_to_nru_adapter.connect_nru_bearer(new_drb->f1u->get_rx_pdu_handler());
 
   // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
   new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
@@ -401,15 +416,26 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                                  drb->f1u_ul_teid);
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
-      drb->f1u = f1u_gw.create_cu_bearer(ue_index,
-                                         drb->drb_id,
-                                         drb->f1u_cfg, // reuse previous F1-U config
-                                         f1u_ul_tunnel_addr,
-                                         drb->f1u_to_pdcp_adapter,
-                                         drb->f1u_to_pdcp_adapter,
-                                         ue_dl_exec,
-                                         ue_dl_timer_factory,
-                                         ue_inactivity_timer);
+      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb->drb_id,
+                                                   drb->f1u_cfg,
+                                                   f1u_ul_tunnel_addr,
+                                                   drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec,
+                                                   ue_dl_timer_factory,
+                                                   ue_inactivity_timer);
+
+      drb->f1u = srs_cu_up::create_f1u_bearer(ue_index,
+                                              drb->drb_id,
+                                              f1u_ul_tunnel_addr,
+                                              drb->f1u_cfg,
+                                              *drb->f1u_gw_bearer,
+                                              drb->f1u_to_pdcp_adapter,
+                                              drb->f1u_to_pdcp_adapter,
+                                              ue_dl_timer_factory,
+                                              ue_inactivity_timer,
+                                              ue_ul_exec);
+
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;

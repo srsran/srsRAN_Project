@@ -25,20 +25,34 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <net/if.h>
-#include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 using namespace srsran;
 
+bool srsran::getnameinfo(struct sockaddr&              ai_addr,
+                         const socklen_t&              ai_addrlen,
+                         std::array<char, NI_MAXHOST>& ip_address,
+                         int&                          port)
+{
+  char port_nr[NI_MAXSERV];
+  if (getnameinfo(
+          &ai_addr, ai_addrlen, ip_address.data(), NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV) !=
+      0) {
+    return false;
+  }
+  port = std::stoi(port_nr);
+  return true;
+}
+
 socket_name_info srsran::get_nameinfo(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
 {
-  char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-  if (getnameinfo(&ai_addr, ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV) !=
-      0) {
+  std::array<char, NI_MAXHOST> ip_addr;
+  int                          port;
+  if (not getnameinfo(ai_addr, ai_addrlen, ip_addr, port)) {
     return {std::string(""), -1};
   }
-  return socket_name_info{std::string(ip_addr), std::stoi(port_nr)};
+  return socket_name_info{std::string(ip_addr.data()), port};
 }
 
 bool srsran::set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger)
@@ -59,12 +73,15 @@ bool srsran::bind_to_interface(const unique_fd& fd, const std::string& interface
     return true;
   }
 
-  ifreq ifr;
+  ifreq ifr{};
   std::strncpy(ifr.ifr_ifrn.ifrn_name, interface.c_str(), IFNAMSIZ);
   ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0; // ensure null termination in case input exceeds maximum length
 
   if (setsockopt(fd.value(), SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0) {
-    logger.error("Could not bind socket to interface. interface={} error={}", ifr.ifr_ifrn.ifrn_name, strerror(errno));
+    logger.error("fd={}: Could not bind socket to interface \"{}\". errno=\"{}\"",
+                 fd.value(),
+                 ifr.ifr_ifrn.ifrn_name,
+                 strerror(errno));
     return false;
   }
   return true;
@@ -75,12 +92,12 @@ bool srsran::sockaddr_to_ip_str(const sockaddr* addr, std::string& ip_address, s
   char addr_str[INET6_ADDRSTRLEN] = {};
   if (addr->sa_family == AF_INET) {
     if (inet_ntop(AF_INET, &((sockaddr_in*)addr)->sin_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in to string. errno={}", strerror(errno));
+      logger.error("Could not convert sockaddr_in to string. errno=\"{}\"", strerror(errno));
       return false;
     }
   } else if (addr->sa_family == AF_INET6) {
     if (inet_ntop(AF_INET6, &((sockaddr_in6*)addr)->sin6_addr, addr_str, INET6_ADDRSTRLEN) == nullptr) {
-      logger.error("Could not convert sockaddr_in6 to string. errno={}", strerror(errno));
+      logger.error("Could not convert sockaddr_in6 to string. errno=\"{}\"", strerror(errno));
       return false;
     }
   } else {

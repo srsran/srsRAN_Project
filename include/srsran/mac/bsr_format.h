@@ -203,9 +203,9 @@ inline logical_channel_sr_delay_timer to_lc_sr_delay_timer(unsigned timer_value)
 
 /// \c BSR-Config, TS 38.331.
 struct bsr_config {
-  periodic_bsr_timer                       periodic_timer;
-  retx_bsr_timer                           retx_timer;
-  optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
+  periodic_bsr_timer                            periodic_timer;
+  retx_bsr_timer                                retx_timer;
+  std::optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
 };
 
 } // namespace srsran

@@ -29,10 +29,10 @@ namespace {
 
 /// \brief Structure used to provide a logging prefix for the UE PDU/subPDU.
 struct pdu_log_prefix {
-  const char*             type;
-  rnti_t                  rnti;
-  du_ue_index_t           ue_index;
-  optional<lcid_ul_sch_t> lcid;
+  const char*                  type;
+  rnti_t                       rnti;
+  du_ue_index_t                ue_index;
+  std::optional<lcid_ul_sch_t> lcid;
 };
 
 pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu)

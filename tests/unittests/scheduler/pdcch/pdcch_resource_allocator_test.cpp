@@ -195,10 +195,10 @@ protected:
     return false;
   }
 
-  optional<unsigned> find_available_ncce(const bwp_configuration&          bwp_cfg,
-                                         const coreset_configuration&      cs_cfg,
-                                         const search_space_configuration& ss_cfg,
-                                         aggregation_level                 aggr_lvl)
+  std::optional<unsigned> find_available_ncce(const bwp_configuration&          bwp_cfg,
+                                              const coreset_configuration&      cs_cfg,
+                                              const search_space_configuration& ss_cfg,
+                                              aggregation_level                 aggr_lvl)
   {
     auto ncce_candidates = this->get_common_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
     for (auto ncce : ncce_candidates) {
@@ -215,7 +215,7 @@ protected:
         return ncce;
       }
     }
-    return nullopt;
+    return std::nullopt;
   }
 
   void print_cfg()
@@ -262,7 +262,7 @@ class common_pdcch_allocator_tester : public base_pdcch_resource_allocator_teste
 struct test_scrambling_params {
   search_space_id                    ss_id;
   search_space_configuration::type_t ss2_type;
-  optional<unsigned>                 cs1_pdcch_dmrs_scrambling_id;
+  std::optional<unsigned>            cs1_pdcch_dmrs_scrambling_id;
 };
 
 // Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
@@ -352,7 +352,7 @@ protected:
   sched_ue_creation_request_message
   create_ue_cfg(rnti_t                             rnti,
                 search_space_configuration::type_t ss2_type      = search_space_configuration::type_t::ue_dedicated,
-                optional<unsigned>                 cs1_n_id_dmrs = {})
+                std::optional<unsigned>            cs1_n_id_dmrs = {})
   {
     auto ue_creation_req = base_pdcch_resource_allocator_tester::create_ue_cfg(rnti);
     (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].pdcch_dmrs_scrambling_id =
@@ -490,16 +490,16 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
 
 struct multi_alloc_test_params {
   struct alloc {
-    alloc_type         type;
-    rnti_t             rnti;
-    aggregation_level  aggr_lvl;
-    search_space_id    ss_id; // C-RNTI only
-    optional<unsigned> expected_ncce;
+    alloc_type              type;
+    rnti_t                  rnti;
+    aggregation_level       aggr_lvl;
+    search_space_id         ss_id; // C-RNTI only
+    std::optional<unsigned> expected_ncce;
   };
 
-  bs_channel_bandwidth_fr1         cell_bw;
-  optional<std::array<uint8_t, 5>> ss2_nof_candidates;
-  std::vector<alloc>               allocs;
+  bs_channel_bandwidth_fr1              cell_bw;
+  std::optional<std::array<uint8_t, 5>> ss2_nof_candidates;
+  std::vector<alloc>                    allocs;
 };
 
 template <>
@@ -666,16 +666,16 @@ INSTANTIATE_TEST_SUITE_P(n_id_scrambling_derivation_test,
                          ue_pdcch_resource_allocator_scrambling_tester,
                          testing::Values(test_scrambling_params{.ss_id    = to_search_space_id(0),
                                                                 .ss2_type = search_space_type::common,
-                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                                                .cs1_pdcch_dmrs_scrambling_id = std::nullopt},
                                          test_scrambling_params{.ss_id    = to_search_space_id(2),
                                                                 .ss2_type = search_space_type::common,
-                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                                                .cs1_pdcch_dmrs_scrambling_id = std::nullopt},
                                          test_scrambling_params{.ss_id    = to_search_space_id(2),
                                                                 .ss2_type = search_space_type::common,
                                                                 .cs1_pdcch_dmrs_scrambling_id = 5},
                                          test_scrambling_params{.ss_id    = to_search_space_id(2),
                                                                 .ss2_type = search_space_type::ue_dedicated,
-                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                                                .cs1_pdcch_dmrs_scrambling_id = std::nullopt},
                                          test_scrambling_params{.ss_id    = to_search_space_id(2),
                                                                 .ss2_type = search_space_type::ue_dedicated,
                                                                 .cs1_pdcch_dmrs_scrambling_id = 5}));
@@ -686,18 +686,18 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
   //    allocation type        RNTI            aggregation level      search space        expected NCCE (nullopt=no alloc)
-  multi_alloc_test_params{cell_bw::MHz10, nullopt,
+  multi_alloc_test_params{cell_bw::MHz10, std::nullopt,
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0}}},
-  multi_alloc_test_params{cell_bw::MHz10, nullopt,
+  multi_alloc_test_params{cell_bw::MHz10, std::nullopt,
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
-  multi_alloc_test_params{cell_bw::MHz10, nullopt,
+  multi_alloc_test_params{cell_bw::MHz10, std::nullopt,
     {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
-     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), nullopt}}},
-  multi_alloc_test_params{cell_bw::MHz10, nullopt,
+     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), std::nullopt}}},
+  multi_alloc_test_params{cell_bw::MHz10, std::nullopt,
     {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
-  multi_alloc_test_params{cell_bw::MHz20, nullopt,
+  multi_alloc_test_params{cell_bw::MHz20, std::nullopt,
     {{alloc_type::si_rnti,  rnti_t::SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 8}}},
   multi_alloc_test_params{cell_bw::MHz10, std::array<uint8_t, 5>{0,5,0,0,0},

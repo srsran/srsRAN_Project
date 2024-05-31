@@ -345,11 +345,11 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 void ue_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits,
-                                       optional<float>                        pucch_snr)
+                                       std::optional<float>                   pucch_snr)
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
-    optional<dl_harq_process::dl_ack_info_result> result =
+    std::optional<dl_harq_process::dl_ack_info_result> result =
         ue_cc.handle_dl_ack_info(uci_sl, harq_bits[harq_idx], harq_idx, pucch_snr);
     if (result.has_value()) {
       // Respective HARQ was found.
@@ -417,7 +417,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, nullopt);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, std::nullopt);
             }
 
             // Process CSI.

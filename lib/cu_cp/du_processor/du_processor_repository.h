@@ -47,26 +47,16 @@ struct du_repository_config {
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
   common_task_scheduler&                 common_task_sched;
-  du_processor_ue_task_scheduler&        ue_task_sched;
   du_processor_ue_manager&               ue_manager;
   rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public cu_cp_f1c_handler,
-                                public du_repository_ngap_handler,
-                                public du_repository_metrics_handler
+class du_processor_repository : public du_repository_ngap_handler, public du_repository_metrics_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
-
-  void stop();
-
-  // F1-C interface
-  std::unique_ptr<f1ap_message_notifier>
-       handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
-  void handle_du_remove_request(du_index_t du_index) override;
 
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
   /// \param[out] The index of the DU serving the given PCI.
@@ -81,6 +71,15 @@ public:
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   size_t get_nof_f1ap_ues();
+
+  /// \brief Adds a DU processor object to the CU-CP.
+  /// \return The DU index of the added DU processor object.
+  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
+
+  /// \brief Launches task that removes the specified DU processor object from the CU-CP.
+  /// \param[in] du_index The index of the DU processor to delete.
+  /// \return asynchronous task for the DU processor removal.
+  async_task<void> remove_du(du_index_t du_idx);
 
 private:
   struct du_context {
@@ -98,16 +97,6 @@ private:
   /// \return The DU processor object.
   du_processor& find_du(du_index_t du_index);
 
-  /// \brief Adds a DU processor object to the CU-CP.
-  /// \return The DU index of the added DU processor object.
-  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
-
-  /// \brief Removes the specified DU processor object from the CU-CP.
-  ///
-  /// Note: This function assumes that the caller is in the CU-CP execution context.
-  /// \param[in] du_index The index of the DU processor to delete.
-  void remove_du_impl(du_index_t du_index);
-
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
   du_index_t get_next_du_index();
@@ -115,15 +104,7 @@ private:
   du_repository_config  cfg;
   srslog::basic_logger& logger;
 
-  // F1AP to DU repository adapter.
-  f1ap_du_repository_adapter f1ap_ev_notifier;
-
   std::map<du_index_t, du_context> du_db;
-
-  // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
-  std::map<du_index_t, du_context> removed_du_db;
-
-  std::atomic<bool> running{true};
 };
 
 } // namespace srs_cu_cp

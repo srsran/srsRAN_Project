@@ -320,20 +320,23 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
         sib1.si_sched_info_present = true;
         bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
         srsran_assert(ret, "Invalid SI window length");
-        sib1.si_sched_info.sched_info_list.resize(du_cfg.si_config->si_sched_info.size());
-        for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
-          const auto& cfg_si                = du_cfg.si_config->si_sched_info[i];
-          auto&       asn1_si               = sib1.si_sched_info.sched_info_list[i];
+        for (const auto& cfg_si : du_cfg.si_config->si_sched_info) {
+          sched_info_s asn1_si;
           asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
           ret = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
-          asn1_si.sib_map_info.resize(cfg_si.sib_mapping_info.size());
-          for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
-            const uint8_t sib_id                      = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
-            ret                                       = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
-            asn1_si.sib_map_info[j].value_tag_present = true;
-            asn1_si.sib_map_info[j].value_tag         = 0;
-            srsran_assert(ret, "Invalid SIB id {}", sib_id);
+          for (auto mapping_info : cfg_si.sib_mapping_info) {
+            sib_type_info_s type_info;
+            const uint8_t   sib_id      = static_cast<uint8_t>(mapping_info);
+            ret                         = asn1::number_to_enum(type_info.type, sib_id);
+            type_info.value_tag_present = true;
+            type_info.value_tag         = 0;
+            if (ret) {
+              asn1_si.sib_map_info.push_back(type_info);
+            }
+          }
+          if (asn1_si.sib_map_info.size() > 0) {
+            sib1.si_sched_info.sched_info_list.push_back(asn1_si);
           }
         }
       } else if (variant_holds_alternative<sib19_info>(sib)) {
@@ -345,19 +348,22 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
         sib1.non_crit_ext.non_crit_ext.non_crit_ext.cell_barred_ntn_r17 =
             sib1_v1700_ies_s::cell_barred_ntn_r17_opts::not_barred;
         auto& si_sched_info_r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext.si_sched_info_v1700;
-        si_sched_info_r17.sched_info_list2_r17.resize(du_cfg.si_config->si_sched_info.size());
-        for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
-          auto&       asn1_si_r17                   = si_sched_info_r17.sched_info_list2_r17[0];
-          const auto& cfg_si                        = du_cfg.si_config->si_sched_info[i];
+        for (const auto& cfg_si : du_cfg.si_config->si_sched_info) {
+          sched_info2_r17_s asn1_si_r17;
           asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
           bool ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
-          asn1_si_r17.sib_map_info_r17.resize(cfg_si.sib_mapping_info.size());
-          for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
-            const uint8_t sib_id_r17 = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
-            asn1_si_r17.sib_map_info_r17[j].sib_type_r17.set_type1_r17();
-            ret = asn1::number_to_enum(asn1_si_r17.sib_map_info_r17[j].sib_type_r17.type1_r17(), sib_id_r17);
-            srsran_assert(ret, "Invalid SIB id {}", sib_id_r17);
+          for (auto mapping_info : cfg_si.sib_mapping_info) {
+            sib_type_info_v1700_s type_info;
+            const uint8_t         sib_id_r17 = static_cast<uint8_t>(mapping_info);
+            type_info.sib_type_r17.set_type1_r17();
+            ret = asn1::number_to_enum(type_info.sib_type_r17.type1_r17(), sib_id_r17);
+            if (ret) {
+              asn1_si_r17.sib_map_info_r17.push_back(type_info);
+            }
+          }
+          if (asn1_si_r17.sib_map_info_r17.size() > 0) {
+            si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
           }
         }
       }

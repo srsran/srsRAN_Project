@@ -68,6 +68,11 @@ void f1c_rx_sdu_rlc_adapter::disconnect()
   connect(null_rlc_bearer);
 }
 
+void f1u_gateway_nru_rx_adapter::disconnect()
+{
+  connect(null_f1u_bearer);
+}
+
 void f1u_rx_rlc_sdu_adapter::disconnect()
 {
   connect(null_rlc_bearer);

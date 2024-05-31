@@ -247,7 +247,7 @@ def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
         )
 
 
-def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 1):
+def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 0):
     """
     Ping command between an UE and a 5GC
     """
@@ -256,7 +256,7 @@ def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, 
 
 
 def ping_start(
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 1
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 0
 ) -> List[grpc.Future]:
     """
     Ping command between an UE and a 5GC
@@ -514,13 +514,44 @@ def ue_reestablishment(
     Reestablishment one UE from already running gnb and 5gc
     """
     t_before = time()
-    result: ReestablishmentInfo = ue_stub.Reestablishment(UInt32Value(value=reestablishment_interval))
-    log_fn = logging.info if result.status else logging.error
-    log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    task = _ue_reestablishment_future(ue_stub, reestablishment_interval)
+    result: ReestablishmentInfo = task.result()
     if not result.status:
         pytest.fail("Reestablishment failed")
     with suppress(ValueError):
         sleep(reestablishment_interval - (time() - t_before))
+
+
+def ue_reestablishment_parallel(
+    ue_array: Tuple[UEStub, ...],
+    reestablishment_interval: int,
+):
+    """
+    Reestablishment multiple UEs in from already running gnb and 5gc
+    """
+
+    reest_task_array = [_ue_reestablishment_future(ue_stub, reestablishment_interval) for ue_stub in ue_array]
+    if not all((task.result().status for task in reest_task_array)):
+        pytest.fail("Reestablishment failed.")
+
+
+def _ue_reestablishment_future(
+    ue_stub: UEStub,
+    reestablishment_interval: int,
+) -> grpc.Future:
+
+    reest_future: grpc.Future = ue_stub.Reestablishment.future(UInt32Value(value=reestablishment_interval))
+    reest_future.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_reestablishment(_task, _ue_stub))
+    return reest_future
+
+
+def _log_reestablishment(future: grpc.Future, ue_stub: UEStub):
+    try:
+        result: ReestablishmentInfo = future.result()
+        log_fn = logging.info if result.status else logging.error
+        log_fn("Reestablishment UE [%s]:\n%s", id(ue_stub), MessageToString(result, indent=2))
+    except grpc.RpcError as err:
+        logging.error("Reestablishment UE [%s] failed: %s", id(ue_stub), ErrorReportedByAgent(err))
 
 
 def ue_move(ue_stub: UEStub, x_coordinate: float, y_coordinate: float = 0, z_coordinate: float = 0):
@@ -702,11 +733,13 @@ def _stop_stub(
 def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:
     if fail_if_kos:
         with suppress(grpc.RpcError):
-            metrics = stub.GetMetrics(Empty())
+            metrics: Metrics = stub.GetMetrics(Empty())
 
+            nof_kos = 0
             for ue_info in metrics.ue_array:
-                if ue_info.nof_kos or ue_info.nof_retx:
-                    return f"{name} has KOs and/or retrxs"
+                nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
+            if nof_kos:
+                return f"{name} has {nof_kos} KOs / retrxs"
 
     return ""
 
@@ -727,7 +760,8 @@ def get_metrics(stub: RanStub) -> GnbMetrics:
                 ul_brate_aggregate += ue_info.ul_bitrate
             if ue_info.dl_bitrate:
                 dl_brate_aggregate += ue_info.dl_bitrate
-            if ue_info.nof_kos or ue_info.nof_retx:
-                nof_kos_aggregate += ue_info.nof_kos
+            nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
+            if nof_kos:
+                nof_kos_aggregate += nof_kos
 
     return GnbMetrics(ul_brate_aggregate, dl_brate_aggregate, nof_kos_aggregate)

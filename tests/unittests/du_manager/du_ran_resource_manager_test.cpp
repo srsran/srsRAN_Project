@@ -117,7 +117,7 @@ protected:
     return nof_offsets * 2;
   }
 
-  bool verify_pucch_cfg(const pucch_config& pucch_cfg, optional<unsigned> csi_pucch_res)
+  bool verify_pucch_cfg(const pucch_config& pucch_cfg, std::optional<unsigned> csi_pucch_res)
   {
     const du_cell_config& du_cfg                = cell_cfg_list[0];
     const unsigned        nof_sr_f1_res_per_ue  = 1U;
@@ -232,7 +232,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
 
     // Check if PUCCH config is correctly updated.
     const serving_cell_config serving_cell_cfg = ue_res->cells[0].serv_cell_cfg;
-    optional<unsigned>        csi_pucch_res{};
+    std::optional<unsigned>   csi_pucch_res{};
     const bool                has_csi_cfg =
         serving_cell_cfg.csi_meas_cfg.has_value() and
         not serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and

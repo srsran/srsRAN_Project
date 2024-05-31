@@ -64,8 +64,8 @@ private:
 
   f1ap_du_ue* ue = nullptr;
 
-  optional<f1ap_ue_context_creation_response> du_ue_create_response;
-  f1ap_ue_context_update_response             du_ue_cfg_response;
+  std::optional<f1ap_ue_context_creation_response> du_ue_create_response;
+  f1ap_ue_context_update_response                  du_ue_cfg_response;
 };
 } // namespace srs_du
 } // namespace srsran

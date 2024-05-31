@@ -68,11 +68,11 @@ struct coreset_configuration {
 
   coreset_id id;
   /// Duration in number of symbols. Values: (1..maxCORESETDuration).
-  unsigned                           duration;
-  optional<interleaved_mapping_type> interleaved;
-  precoder_granularity_type          precoder_granurality;
+  unsigned                                duration;
+  std::optional<interleaved_mapping_type> interleaved;
+  precoder_granularity_type               precoder_granurality;
   /// PDCCH DMRS scrambling initialization. Values: (0..65535).
-  optional<unsigned> pdcch_dmrs_scrambling_id;
+  std::optional<unsigned> pdcch_dmrs_scrambling_id;
 
   void set_coreset0_crbs(crb_interval crbs)
   {

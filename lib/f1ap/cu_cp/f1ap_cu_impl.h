@@ -36,12 +36,11 @@ namespace srs_cu_cp {
 class f1ap_cu_impl final : public f1ap_cu
 {
 public:
-  f1ap_cu_impl(const f1ap_configuration&    f1ap_cfg_,
-               f1ap_message_notifier&       tx_pdu_notifier_,
-               f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
-               f1ap_du_management_notifier& f1ap_du_management_notifier_,
-               timer_manager&               timers_,
-               task_executor&               ctrl_exec_);
+  f1ap_cu_impl(const f1ap_configuration&   f1ap_cfg_,
+               f1ap_message_notifier&      tx_pdu_notifier_,
+               f1ap_du_processor_notifier& f1ap_du_processor_notifier_,
+               timer_manager&              timers_,
+               task_executor&              ctrl_exec_);
   ~f1ap_cu_impl();
 
   async_task<void> stop() override;
@@ -51,8 +50,8 @@ public:
 
   // f1ap ue context manager functions
   async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                  optional<rrc_ue_transfer_context>    rrc_context) override;
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                                  std::optional<rrc_ue_transfer_context> rrc_context) override;
 
   async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) override;
 
@@ -67,8 +66,6 @@ public:
   // f1ap message handler functions
   void handle_message(const f1ap_message& msg) override;
 
-  void handle_connection_loss() override {}
-
   // f1ap statistics
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
 
@@ -77,7 +74,6 @@ public:
 
   // f1ap_cu_interface
   f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }
-  f1ap_event_handler&              get_event_handler() override { return *this; }
   f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler() override { return *this; }
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *this; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *this; }

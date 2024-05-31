@@ -20,7 +20,7 @@
 
 add_library(cu_up_processor_test_helpers cu_up_processor_test_helpers.cpp)
 target_include_directories(cu_up_processor_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(cu_up_processor_test_helpers cu_cp_test_helpers srsran_cu_cp srsran_e1ap e1ap_test_helpers f1ap_test_helpers rrc_ue_test_helpers srsran_support f1ap_asn1 srslog)
+target_link_libraries(cu_up_processor_test_helpers cu_cp_test_helpers srsran_cu_cp e1ap_test_helpers f1ap_test_helpers rrc_ue_test_helpers srsran_support f1ap_asn1 srslog)
 
 set(SOURCES
         cu_up_processor_test.cpp

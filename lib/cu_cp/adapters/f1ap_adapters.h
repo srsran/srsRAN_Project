@@ -22,33 +22,15 @@
 
 #pragma once
 
-#include "../../f1ap/common/asn1_helpers.h"
 #include "../cu_cp_controller/common_task_scheduler.h"
-#include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../du_processor/du_setup_handler.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/pdcp/pdcp_rx.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between F1AP and DU repository, to handle DU specific procedure outcomes (e.g. F1 Remove)
-class f1ap_du_repository_adapter : public f1ap_du_management_notifier
-{
-public:
-  void connect_du_repository(cu_cp_f1c_handler& du_handler_) { du_handler = &du_handler_; }
-
-  void on_du_remove_request_received(du_index_t du_index) override
-  {
-    srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
-    du_handler->handle_du_remove_request(du_index);
-  }
-
-private:
-  cu_cp_f1c_handler* du_handler = nullptr;
-};
+class cu_cp_controller;
 
 /// Adapter between F1AP and DU processor
 class f1ap_du_processor_adapter : public f1ap_du_processor_notifier
@@ -66,8 +48,6 @@ public:
     srsran_assert(du_setup_hdlr != nullptr, "F1AP handler must not be nullptr");
     return du_setup_hdlr->handle_du_setup_request(msg);
   }
-
-  du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
   ue_index_t on_new_cu_cp_ue_required() override
   {

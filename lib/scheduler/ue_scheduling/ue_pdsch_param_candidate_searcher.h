@@ -210,7 +210,7 @@ private:
     harq_of_ss_list    = *current_harq_it;
 
     // Check which RNTI Type is preferred for this UE and HARQ.
-    optional<dci_dl_rnti_config_type> preferred_rnti_type;
+    std::optional<dci_dl_rnti_config_type> preferred_rnti_type;
     // NOTE: At this point UE is no longer in fallback mode.
     if (is_retx) {
       preferred_rnti_type = harq_of_ss_list->last_alloc_params().dci_cfg_type;
@@ -303,7 +303,7 @@ private:
   // HARQ candidate for which the Search Space candidate list was generated.
   const dl_harq_process* harq_of_ss_list = nullptr;
   // RNTI type used to generate ss_candidate_list.
-  optional<dci_dl_rnti_config_type> current_rnti_type;
+  std::optional<dci_dl_rnti_config_type> current_rnti_type;
 
   // PDCCH slot point used to verify if the PDSCH fits a DL slot.
   slot_point pdcch_slot;

@@ -34,7 +34,8 @@ ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_con
   } else if (nof_dl_ports == 4) {
     recommended_prg_info.resize(
         4,
-        pdsch_precoding_info::prg_info{pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, nullopt, 0}});
+        pdsch_precoding_info::prg_info{
+            pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}});
   }
 }
 

@@ -34,10 +34,10 @@ struct logical_channel_config {
   lcid_t  lcid;
   uint8_t priority;
   // TODO: add remaining fields;
-  lcg_id_t                        lc_group;
-  optional<scheduling_request_id> sr_id;
-  bool                            lc_sr_mask;
-  bool                            lc_sr_delay_timer_applied;
+  lcg_id_t                             lc_group;
+  std::optional<scheduling_request_id> sr_id;
+  bool                                 lc_sr_mask;
+  bool                                 lc_sr_delay_timer_applied;
 };
 
 } // namespace srsran

@@ -32,8 +32,16 @@ namespace srsran {
 class dmrs_pbch_processor_impl : public dmrs_pbch_processor
 {
 private:
-  /// DMRS PBCH Sequence length in the SSB
-  static const unsigned NOF_RE = 144;
+  /// PBCH DM-RS stride within a resource block.
+  static constexpr unsigned stride = 4U;
+  /// Number of PBCH DM-RS per resource block.
+  static constexpr unsigned nof_dmrs_prb = NRE / stride;
+  /// Number of PBCH DM-RS contained in a full SS/PBCH block OFDM symbol.
+  static constexpr unsigned nof_dmrs_full_symbol = SSB_BW_RB * nof_dmrs_prb;
+  /// Number of PBCH DM-RS contained in one edge SS/PBCH block OFDM symbol.
+  static constexpr unsigned nof_dmrs_edge_symbol = 4 * nof_dmrs_prb;
+  /// Total number of resource elements for PBCH DM-RS in a SS/PBCH block.
+  static constexpr unsigned NOF_RE = 2 * nof_dmrs_full_symbol + 2 * nof_dmrs_edge_symbol;
 
   std::unique_ptr<pseudo_random_generator> prg;
 

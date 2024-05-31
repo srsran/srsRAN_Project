@@ -463,10 +463,10 @@ ul_sched_info_test_helper unittests::build_valid_pusch_pdu()
   // UCI.
   uci_info& uci             = info.uci.emplace();
   uci.alpha                 = alpha_scaling_opt::f0p5;
-  auto& harq                = uci.harq.emplace();
+  auto& harq                = uci.harq.emplace(uci_info::harq_info());
   harq.harq_ack_nof_bits    = 1;
   harq.beta_offset_harq_ack = 4;
-  auto& csi                 = uci.csi.emplace();
+  auto& csi                 = uci.csi.emplace(uci_info::csi_info());
   csi.csi_part1_nof_bits    = 2;
   csi.beta_offset_csi_1     = 13;
   csi.beta_offset_csi_2.emplace(6);

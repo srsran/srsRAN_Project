@@ -65,7 +65,7 @@ struct formatter<srsran::pusch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
+  auto format(const std::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);
@@ -159,7 +159,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);
     helper.format_if_verbose(ctx, "n_cdm_g_wd={}", pdu.nof_cdm_groups_without_data);
     helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsran::dmrs_type::TYPE1) ? 1 : 2);
-    helper.format_if_verbose(ctx, "lbrm={}bytes", pdu.tbs_lbrm_bytes);
+    helper.format_if_verbose(ctx, "tbs_lbrm={}bytes", pdu.tbs_lbrm);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);

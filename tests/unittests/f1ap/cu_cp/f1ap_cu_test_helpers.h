@@ -127,8 +127,6 @@ class dummy_f1ap_du_processor_notifier : public srs_cu_cp::f1ap_du_processor_not
 public:
   dummy_f1ap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
-
   du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
   {
     logger.info("Received F1SetupRequest");
@@ -185,7 +183,7 @@ public:
   srs_cu_cp::du_setup_result  next_du_setup_resp;
 
   srs_cu_cp::ue_rrc_context_creation_request       last_ue_creation_msg;
-  optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
+  std::optional<srs_cu_cp::ue_index_t>             last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> f1ap_rrc_notifier =
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
@@ -193,32 +191,6 @@ private:
   srslog::basic_logger&     logger;
   uint16_t                  ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
   fifo_async_task_scheduler task_sched{16};
-};
-
-/// Reusable notifier class that a) stores the received du_index for test inspection and b)
-/// calls the registered DU handler (if any). The handler can be added upon construction
-/// or later via the attach_handler() method.
-class dummy_f1ap_du_management_notifier : public f1ap_du_management_notifier
-{
-public:
-  void attach_handler(cu_cp_f1c_handler* handler_) { handler = handler_; };
-
-  void on_du_remove_request_received(du_index_t idx) override
-  {
-    logger.info("Received a DU remove request for du={}", idx);
-    last_du_idx = idx; // store idx
-
-    if (handler != nullptr) {
-      logger.info("Forwarding remove request");
-      handler->handle_du_remove_request(idx);
-    }
-  }
-
-  optional<du_index_t> last_du_idx;
-
-private:
-  srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
-  cu_cp_f1c_handler*    handler = nullptr;
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
@@ -229,9 +201,9 @@ class f1ap_cu_test : public ::testing::Test
 {
 protected:
   struct test_ue {
-    ue_index_t                    ue_index;
-    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    optional<gnb_du_ue_f1ap_id_t> du_ue_id;
+    ue_index_t                         ue_index;
+    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id;
   };
 
   f1ap_cu_test(const f1ap_configuration& f1ap_cfg = {});
@@ -250,12 +222,11 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
-  dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
-  dummy_f1ap_du_processor_notifier  du_processor_notifier;
-  dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
-  timer_manager                     timers;
-  manual_task_worker                ctrl_worker{128};
-  std::unique_ptr<f1ap_cu>          f1ap;
+  dummy_f1ap_pdu_notifier          f1ap_pdu_notifier;
+  dummy_f1ap_du_processor_notifier du_processor_notifier;
+  timer_manager                    timers;
+  manual_task_worker               ctrl_worker{128};
+  std::unique_ptr<f1ap_cu>         f1ap;
 };
 
 } // namespace srs_cu_cp

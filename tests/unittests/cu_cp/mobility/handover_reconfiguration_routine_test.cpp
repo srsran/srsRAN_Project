@@ -86,8 +86,8 @@ private:
   dummy_du_processor_rrc_ue_control_message_notifier target_rrc_ue_notifier;
   du_ue*                                             target_ue = nullptr;
 
-  async_task<bool>                   t;
-  optional<lazy_task_launcher<bool>> t_launcher;
+  async_task<bool>                        t;
+  std::optional<lazy_task_launcher<bool>> t_launcher;
 };
 
 TEST_F(handover_reconfiguration_routine_test, when_reconfiguration_successful_then_return_true)

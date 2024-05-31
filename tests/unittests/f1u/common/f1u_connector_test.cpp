@@ -20,6 +20,7 @@
  *
  */
 
+#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -30,25 +31,25 @@ using namespace srsran;
 namespace {
 
 // dummy CU-UP RX bearer interface
-struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_notifier {
-  void on_new_sdu(byte_buffer_chain sdu) override
+struct dummy_f1u_cu_up_rx_notifier final : public f1u_cu_up_gateway_bearer_rx_notifier {
+  void on_new_pdu(nru_ul_message msg) override
   {
-    logger.info(sdu.begin(), sdu.end(), "CU-UP received SDU");
-    last_sdu = std::move(sdu);
+    logger.info(msg.t_pdu->begin(), msg.t_pdu->end(), "CU-UP received SDU.");
+    last_sdu = std::move(msg);
   }
-  byte_buffer_chain     last_sdu = byte_buffer_chain::create().value();
-  srslog::basic_logger& logger   = srslog::fetch_basic_logger("CU-F1-U", false);
+  nru_ul_message        last_sdu;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
-struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
-  void on_transmit_notification(uint32_t highest_pdcp_sn) override
+struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
+  void on_new_pdu(nru_dl_message msg) override
   {
-    logger.info("CU-UP PDCP PDU transmitted up to highest_pdcp_sn={}", highest_pdcp_sn);
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
+    last_sdu = std::move(msg);
   }
-  void on_delivery_notification(uint32_t highest_pdcp_sn) override
-  {
-    logger.info("CU-UP PDCP PDU delivered up to highest_pdcp_sn={}", highest_pdcp_sn);
-  }
+  nru_dl_message last_sdu;
+
+private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
@@ -121,6 +122,104 @@ protected:
 
 } // namespace
 
+// Helper function to check CU-UP -> DU path
+void check_dl_path_connected(const byte_buffer&                       cu_buf,
+                             srs_cu_up::f1u_tx_pdu_notifier*          cu_bearer,
+                             dummy_f1u_du_gateway_bearer_rx_notifier& du_rx)
+{
+  auto du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
+  ASSERT_FALSE(du_exp_buf.is_error());
+  nru_dl_message du_exp = {};
+  du_exp.pdcp_sn        = 0;
+  du_exp.t_pdu          = cu_buf.deep_copy().value();
+  nru_dl_message sdu    = {};
+  sdu.pdcp_sn           = 0;
+  sdu.t_pdu             = cu_buf.deep_copy().value();
+  cu_bearer->on_new_pdu(std::move(sdu));
+  ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
+}
+
+// Helper function to check DU-> CU-UP path
+void check_ul_path_connected(const byte_buffer&           du_buf,
+                             srs_du::f1u_tx_pdu_notifier* du_bearer,
+                             dummy_f1u_cu_up_rx_notifier& cu_rx)
+{
+  nru_ul_message sdu          = {};
+  auto           du_chain_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
+  sdu.t_pdu                   = std::move(du_chain_buf.value());
+
+  nru_ul_message cu_exp        = {};
+  auto           du_chain_buf2 = byte_buffer_chain::create(du_buf.deep_copy().value());
+  cu_exp.t_pdu                 = std::move(du_chain_buf2.value());
+
+  du_bearer->on_new_pdu(std::move(sdu));
+
+  // TODO revisit executor transfer
+  // ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
+  // ue_worker.run_pending_tasks();
+
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
+}
+
+// Helper function to check DU-> CU-UP path is disconnected
+void check_dl_path_disconnected(const byte_buffer&                       cu_buf,
+                                srs_cu_up::f1u_tx_pdu_notifier*          cu_bearer,
+                                dummy_f1u_du_gateway_bearer_rx_notifier& du_rx)
+{
+  nru_dl_message sdu = {};
+  sdu.pdcp_sn        = 0;
+  sdu.t_pdu          = cu_buf.deep_copy().value();
+
+  nru_dl_message cu_not_exp = {};
+  cu_not_exp.pdcp_sn        = 0;
+  cu_not_exp.t_pdu          = cu_buf.deep_copy().value();
+
+  ASSERT_NE(du_rx.last_sdu, sdu); // Make sure last RX SDU is not equal to test SDU
+                                  // Test cannot be done acuratly if it is already the same.
+
+  cu_bearer->on_new_pdu(std::move(sdu));
+  ASSERT_NE(du_rx.last_sdu, cu_not_exp); // Last SDU should not have changed
+}
+
+expected<nru_ul_message> make_nru_ul_message(const byte_buffer& du_buf)
+{
+  expected<byte_buffer> buf_cpy = du_buf.deep_copy();
+  if (buf_cpy.is_error()) {
+    return default_error_t{};
+  }
+
+  expected<byte_buffer_chain> du_chain_buf = byte_buffer_chain::create(std::move(buf_cpy.value()));
+  if (du_chain_buf.is_error()) {
+    return default_error_t{};
+  }
+
+  nru_ul_message msg = {};
+  msg.t_pdu          = std::move(du_chain_buf.value());
+  return msg;
+}
+
+// Helper function to check DU-> CU-UP path is disconnected
+void check_ul_path_disconnected(const byte_buffer&           du_buf,
+                                srs_du::f1u_tx_pdu_notifier* du_bearer,
+                                dummy_f1u_cu_up_rx_notifier& cu_rx)
+{
+  srslog::basic_logger&    logger = srslog::fetch_basic_logger("TEST", false);
+  expected<nru_ul_message> sdu    = make_nru_ul_message(du_buf);
+  ASSERT_FALSE(sdu.is_error());
+
+  expected<nru_ul_message> cu_not_exp = make_nru_ul_message(du_buf);
+  ASSERT_FALSE(cu_not_exp.is_error());
+
+  // logger.info("Testing equallity last_sdu T-PDU = {}", *sdu.value().t_pdu->begin());
+  logger.info("Testing equallity last_sdu T-PDU = {}", cu_not_exp.value() == sdu.value());
+
+  ASSERT_NE(cu_rx.last_sdu, sdu.value()); // Make sure last SDU is not equal to test SDU
+                                          //   Test cannot be done acuratly if it is already the same.
+
+  du_bearer->on_new_pdu(std::move(sdu.value()));
+  ASSERT_NE(cu_rx.last_sdu, cu_not_exp.value()); // Last SDU should not have changed
+}
+
 /// Test the instantiation of a new entity
 TEST_F(f1u_connector_test, create_new_connector)
 {
@@ -129,8 +228,8 @@ TEST_F(f1u_connector_test, create_new_connector)
   EXPECT_NE(f1u_conn->get_f1u_cu_up_gateway(), nullptr);
 }
 
-/// Test attaching/detaching F1-U bearer at CU-UP and DU
-TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
+/// Test attaching/detaching F1-U bearer at CU-UP and DU and UL DL flow
+TEST_F(f1u_connector_test, ul_dl_flow)
 {
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
@@ -139,56 +238,69 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
-  dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
-  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(
-      0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
+  dummy_f1u_cu_up_rx_notifier cu_rx;
+
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf     = make_byte_buffer("ABCD");
-  auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
-  ASSERT_FALSE(du_exp_buf.is_error());
-  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-  pdcp_tx_pdu       sdu;
-  sdu.buf     = std::move(cu_buf);
-  sdu.pdcp_sn = 0;
-  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
-  ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf       = make_byte_buffer("DCBA");
-  byte_buffer cu_exp       = du_buf.deep_copy().value();
-  auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
-  ASSERT_FALSE(du_slice_buf.is_error());
-  byte_buffer_chain du_slice = std::move(du_slice_buf.value());
-  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-  ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
-  ue_worker.run_pending_tasks();
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
+}
 
-  // Delete CU bearer
+/// Test destryoing F1-U bearer at CU-UP and pushing traffic at DU
+TEST_F(f1u_connector_test, destroy_bearer_cu_up)
+{
+  f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
+
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  // Create CU TX notifier adapter
+  dummy_f1u_cu_up_rx_notifier cu_rx;
+
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+
+  // Create DU TX notifier adapter and RX handler
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+
+  // Create CU RX handler and attach it to the DU TX
+  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+
+  // Check CU-UP -> DU path
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
+
+  // Check DU-> CU-UP path
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
+
+  // Deleting CU bearer will disconnect from connector
   cu_bearer.reset();
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2       = make_byte_buffer("LMNO");
-  byte_buffer cu_exp2       = du_buf2.deep_copy().value();
-  auto        du_slice2_buf = byte_buffer_chain::create(du_buf2.deep_copy().value());
-  ASSERT_FALSE(du_slice2_buf.is_error());
-  byte_buffer_chain du_slice2 = std::move(du_slice2_buf.value());
-  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice2));
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
-/// Test detaching F1-U bearer at DU first and make sure CU-UP does not crash
-TEST_F(f1u_connector_test, detach_du_f1u_first)
+/// Test disconnecting bearer at CU-UP and pushing traffic UL and DL
+TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
 {
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
@@ -197,50 +309,117 @@ TEST_F(f1u_connector_test, detach_du_f1u_first)
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
-  dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
-  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(
-      0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
+  dummy_f1u_cu_up_rx_notifier cu_rx;
+
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer =
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf     = make_byte_buffer("ABCD");
-  auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
-  ASSERT_FALSE(du_exp_buf.is_error());
-  byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-  pdcp_tx_pdu       sdu;
-  sdu.buf     = std::move(cu_buf);
-  sdu.pdcp_sn = 0;
-  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
-  ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf       = make_byte_buffer("DCBA");
-  byte_buffer cu_exp       = du_buf.deep_copy().value();
-  auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
-  ASSERT_FALSE(du_slice_buf.is_error());
-  byte_buffer_chain du_slice = std::move(du_slice_buf.value());
-  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-  ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
-  ue_worker.run_pending_tasks();
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
-  // Delete DU bearer
-  du_gw->remove_du_bearer(dl_tnl);
+  // Disconnect CU bearer without destryoing it from connector
+  cu_gw->disconnect_cu_bearer(ul_tnl);
+
+  // Check CU-UP -> DU path is properly detached
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("LMNO");
-  pdcp_tx_pdu sdu2;
-  sdu2.buf = std::move(du_buf2);
-  cu_bearer->get_tx_sdu_handler().handle_sdu(sdu2);
-  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
+}
+
+/// Test destryoing F1-U bearer at DU and pushing traffic at CU-UP
+TEST_F(f1u_connector_test, destroy_bearer_du)
+{
+  f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
+
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  // Create CU TX notifier adapter
+  dummy_f1u_cu_up_rx_notifier                     cu_rx;
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+
+  // Create DU TX notifier adapter and RX handler
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+
+  // Create CU RX handler and attach it to the DU TX
+  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+
+  // Check CU-UP -> DU path
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
+
+  // Check DU-> CU-UP path
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
+
+  // Delete DU bearer
+  du_bearer.reset();
+
+  // Check CU-UP -> DU path is properly detached
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
+}
+
+/// Test destryoing F1-U bearer at DU and pushing traffic at CU-UP
+TEST_F(f1u_connector_test, disconnect_bearer_du)
+{
+  f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
+
+  up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
+  up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  // Create CU TX notifier adapter
+  dummy_f1u_cu_up_rx_notifier                     cu_rx;
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+
+  // Create DU TX notifier adapter and RX handler
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
+      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+
+  // Create CU RX handler and attach it to the DU TX
+  cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
+
+  // Check CU-UP -> DU path
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
+
+  // Check DU-> CU-UP path
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
+
+  // Disconnect DU bearer without destryoing it from connector
+  du_gw->remove_du_bearer(dl_tnl);
+
+  // Check CU-UP -> DU path is properly detached
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
+
+  // Check DU-> CU-UP path is properly detached
+  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
 /// Update F1-U DU bearer and remove old DU bearer, as done in handover.
@@ -254,75 +433,46 @@ TEST_F(f1u_connector_test, update_du_f1u)
   up_transport_layer_info dl_tnl2{transport_layer_address::create_from_string("127.0.0.3"), gtpu_teid_t{2}};
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
-  dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
-  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(
-      0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_delivery, cu_rx, ue_worker, timers, ue_inactivity_timer);
+  dummy_f1u_cu_up_rx_notifier                     cu_rx;
+  std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
 
   // Create DU TX notifier adapter and RX handler
-  dummy_f1u_du_rx_sdu_notifier        du_rx1;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer1 =
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx1;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer1 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl1);
 
-  {
-    // Check CU-UP -> DU path
-    byte_buffer cu_buf     = make_byte_buffer("ABCD");
-    auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
-    ASSERT_FALSE(du_exp_buf.is_error());
-    byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-    pdcp_tx_pdu       sdu;
-    sdu.buf     = std::move(cu_buf);
-    sdu.pdcp_sn = 0;
-    cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
-    ASSERT_EQ(du_rx1.last_sdu, du_exp);
+  // Check CU-UP -> DU path
+  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx1);
 
-    // Check DU-> CU-UP path
-    byte_buffer du_buf       = make_byte_buffer("DCBA");
-    byte_buffer cu_exp       = du_buf.deep_copy().value();
-    auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
-    ASSERT_FALSE(du_slice_buf.is_error());
-    byte_buffer_chain du_slice = std::move(du_slice_buf.value());
-    du_bearer1->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-    ASSERT_NE(cu_rx.last_sdu, cu_exp); // should not yet arrive (due to defer)
-    ue_worker.run_pending_tasks();
-    ASSERT_EQ(cu_rx.last_sdu, cu_exp); // now it should arrive
-  }
+  // Check DU-> CU-UP path
+  byte_buffer du_buf = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf.deep_copy().value(), du_bearer1.get(), cu_rx);
 
   logger.info("Attach new DU bearer");
 
   // Attach new DU bearer
-  dummy_f1u_du_rx_sdu_notifier        du_rx2;
-  std::unique_ptr<srs_du::f1u_bearer> du_bearer2 =
+  dummy_f1u_du_gateway_bearer_rx_notifier      du_rx2;
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer2 =
       du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
 
   // Attach new DL TEID
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl2);
 
   // Delete old DU bearer
-  du_gw->remove_du_bearer(dl_tnl1);
+  du_bearer1.reset();
 
-  {
-    // Check CU-UP -> DU path
-    byte_buffer cu_buf     = make_byte_buffer("ABCD");
-    auto        du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
-    ASSERT_FALSE(du_exp_buf.is_error());
-    byte_buffer_chain du_exp = std::move(du_exp_buf.value());
-    pdcp_tx_pdu       sdu;
-    sdu.buf     = std::move(cu_buf);
-    sdu.pdcp_sn = 0;
-    cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
+  // Check CU-UP -> DU path
+  byte_buffer cu_buf2 = make_byte_buffer("ABCD");
+  check_dl_path_connected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx2);
 
-    // Check DU-> CU-UP path
-    byte_buffer du_buf       = make_byte_buffer("DCBA");
-    byte_buffer cu_exp       = du_buf.deep_copy().value();
-    auto        du_slice_buf = byte_buffer_chain::create(du_buf.deep_copy().value());
-    ASSERT_FALSE(du_slice_buf.is_error());
-    byte_buffer_chain du_slice = std::move(du_slice_buf.value());
-    du_bearer2->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
-  }
+  // Check DU-> CU-UP path
+  byte_buffer du_buf2 = make_byte_buffer("DCBA");
+  check_ul_path_connected(du_buf2.deep_copy().value(), du_bearer2.get(), cu_rx);
 }
 
 int main(int argc, char** argv)

@@ -22,7 +22,6 @@
 
 #include "sctp_network_gateway_impl.h"
 #include "srsran/gateways/addr_info.h"
-#include "srsran/support/error_handling.h"
 #include "srsran/support/io/sockets.h"
 #include <netdb.h>
 #include <netinet/sctp.h>
@@ -31,127 +30,19 @@
 
 using namespace srsran;
 
-constexpr uint32_t network_gateway_sctp_max_len = 9100;
-
-namespace {
-
-/// Helper generator class that traverses a list of SCTP sockaddr param candidates (ipv4, ipv6, hostnames).
-class sockaddr_searcher
-{
-public:
-  sockaddr_searcher(const std::string& address, int port, srslog::basic_logger& logger)
-  {
-    struct addrinfo hints {};
-    // support ipv4, ipv6 and hostnames
-    hints.ai_family    = AF_UNSPEC;
-    hints.ai_socktype  = SOCK_SEQPACKET;
-    hints.ai_flags     = 0;
-    hints.ai_protocol  = IPPROTO_SCTP;
-    hints.ai_canonname = nullptr;
-    hints.ai_addr      = nullptr;
-    hints.ai_next      = nullptr;
-
-    std::string port_str = std::to_string(port);
-    int         ret      = getaddrinfo(address.c_str(), port_str.c_str(), &hints, &results);
-    if (ret != 0) {
-      logger.error("Getaddrinfo error: {} - {}", address, gai_strerror(ret));
-      results = nullptr;
-      return;
-    }
-    next_result = results;
-  }
-  sockaddr_searcher(const sockaddr_searcher&) = delete;
-  sockaddr_searcher(sockaddr_searcher&&)      = delete;
-  ~sockaddr_searcher() { freeaddrinfo(results); }
-
-  /// Get next candidate or nullptr of search has ended.
-  struct addrinfo* next()
-  {
-    struct addrinfo* ret = next_result;
-    if (next_result != nullptr) {
-      next_result = next_result->ai_next;
-    }
-    return ret;
-  }
-
-private:
-  struct addrinfo* results     = nullptr;
-  struct addrinfo* next_result = nullptr;
-};
-
-} // namespace
-
-// Gateway Client.
-
-sctp_network_gateway_impl::sctp_network_gateway_impl(sctp_network_gateway_config            config_,
+sctp_network_gateway_impl::sctp_network_gateway_impl(const sctp_network_connector_config&   config_,
                                                      sctp_network_gateway_control_notifier& ctrl_notfier_,
                                                      network_gateway_data_notifier&         data_notifier_) :
-  config(std::move(config_)),
+  sctp_network_gateway_common_impl(config_),
+  config(config_),
   ctrl_notifier(ctrl_notfier_),
-  data_notifier(data_notifier_),
-  logger(srslog::fetch_basic_logger("SCTP-GW"))
+  data_notifier(data_notifier_)
 {
 }
 
-sctp_network_gateway_impl::~sctp_network_gateway_impl()
-{
-  close_socket();
-}
-
-expected<sctp_socket> sctp_network_gateway_impl::create_socket(int ai_family, int ai_socktype, int ai_protocol) const
-{
-  sctp_socket_params params;
-  params.ai_family         = ai_family;
-  params.ai_socktype       = ai_socktype;
-  params.ai_protocol       = ai_protocol;
-  params.reuse_addr        = config.reuse_addr;
-  params.non_blocking_mode = config.non_blocking_mode;
-  params.rx_timeout        = std::chrono::seconds(config.rx_timeout_sec);
-  params.rto_initial       = config.rto_initial;
-  params.rto_min           = config.rto_min;
-  params.rto_max           = config.rto_max;
-  params.init_max_attempts = config.init_max_attempts;
-  params.max_init_timeo    = config.max_init_timeo;
-  params.nodelay           = config.nodelay;
-  return sctp_socket::create(params);
-}
-
-/// \brief Create and bind socket to given address.
 bool sctp_network_gateway_impl::create_and_bind()
 {
-  sockaddr_searcher searcher{config.bind_address, config.bind_port, logger};
-  struct addrinfo*  result = nullptr;
-  for (result = searcher.next(); result != nullptr; result = searcher.next()) {
-    // create SCTP socket
-    auto outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (outcome.is_error()) {
-      if (errno == ESOCKTNOSUPPORT) {
-        // Stop search.
-        break;
-      }
-      continue;
-    }
-    sctp_socket& candidate = outcome.value();
-
-    if (not candidate.bind(*result->ai_addr, result->ai_addrlen, config.bind_interface)) {
-      // Bind failed. Try next candidate
-      continue;
-    }
-
-    // Save socket.
-    socket = std::move(candidate);
-    break;
-  }
-
-  if (not socket.is_open()) {
-    fmt::print("Failed to bind SCTP socket to {}:{}. {}\n", config.bind_address, config.bind_port, strerror(errno));
-    logger.error("Failed to bind SCTP socket to {}:{}. {}", config.bind_address, config.bind_port, strerror(errno));
-    return false;
-  }
-
-  logger.debug("Binding successful");
-
-  return true;
+  return this->create_and_bind_common();
 }
 
 bool sctp_network_gateway_impl::listen()
@@ -159,7 +50,7 @@ bool sctp_network_gateway_impl::listen()
   return socket.listen();
 }
 
-optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
+std::optional<uint16_t> sctp_network_gateway_impl::get_listen_port()
 {
   return socket.get_listen_port();
 }
@@ -185,7 +76,7 @@ bool sctp_network_gateway_impl::create_and_connect()
   for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // Create SCTP socket only if not created in create_and_bind function.
     if (not socket.is_open()) {
-      expected<sctp_socket> outcome = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+      expected<sctp_socket> outcome = create_socket(result->ai_family, result->ai_socktype);
       if (outcome.is_error()) {
         if (errno == ESOCKTNOSUPPORT) {
           break;
@@ -232,16 +123,6 @@ bool sctp_network_gateway_impl::create_and_connect()
   return true;
 }
 
-/// Close socket handle and set FD to -1
-bool sctp_network_gateway_impl::close_socket()
-{
-  // Stop listening to new IO Rx events.
-  io_sub.reset();
-
-  // Close SCTP socket.
-  return socket.close();
-}
-
 void sctp_network_gateway_impl::receive()
 {
   struct sctp_sndrcvinfo sri       = {};
@@ -275,11 +156,6 @@ void sctp_network_gateway_impl::receive()
       handle_data(payload);
     }
   }
-}
-
-int sctp_network_gateway_impl::get_socket_fd()
-{
-  return socket.fd().value();
 }
 
 void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> payload)

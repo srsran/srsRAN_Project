@@ -32,11 +32,11 @@ namespace srsran {
 class sdap_session_trx_log_prefix
 {
 public:
-  sdap_session_trx_log_prefix(uint32_t                ue_index,
-                              pdu_session_id_t        psi,
-                              optional<qos_flow_id_t> qfi,
-                              drb_id_t                drb_id,
-                              const char*             dir)
+  sdap_session_trx_log_prefix(uint32_t                     ue_index,
+                              pdu_session_id_t             psi,
+                              std::optional<qos_flow_id_t> qfi,
+                              drb_id_t                     drb_id,
+                              const char*                  dir)
   {
     fmt::memory_buffer buffer;
     if (qfi.has_value()) {

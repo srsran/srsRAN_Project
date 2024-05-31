@@ -48,11 +48,11 @@ struct qos_characteristics {
   double packet_error_rate;
   /// Each GBR QoS Flow shall be associated with an Averaging window. The Averaging window represents the duration over
   /// which the GFBR and MFBR shall be calculated (e.g. in the (R)AN, UPF, UE). See TS 23.501, clause 5.7.3.6.
-  optional<unsigned> average_window_ms;
+  std::optional<unsigned> average_window_ms;
   /// Each GBR QoS Flow with Delay-critical resource type shall be associated with a Maximum Data Burst Volume (MDBV).
   /// MDBV denotes the largest amount of data that the 5G-AN is required to serve within a period of 5G-AN PDB (i.e.
   /// 5G-AN part of the PDB). See TS 23.501, clause 5.7.3.7.
-  optional<unsigned> max_data_burst_volume_bytes;
+  std::optional<unsigned> max_data_burst_volume_bytes;
 };
 
 /// \brief Returns the standardized 5QI to QoS characteristics mapping from TS 23.501, table 5.7.4-1 based on given 5QI.

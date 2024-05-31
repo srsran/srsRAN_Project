@@ -35,8 +35,7 @@ std::unique_ptr<f1u_bearer> srsran::srs_cu_up::create_f1u_bearer(uint32_t       
                                                                  f1u_rx_sdu_notifier&           rx_sdu_notifier,
                                                                  timer_factory                  ue_dl_timer_factory,
                                                                  unique_timer&                  ue_inactivity_timer,
-                                                                 task_executor&                 ul_exec,
-                                                                 f1u_bearer_disconnector&       disconnector)
+                                                                 task_executor&                 ul_exec)
 {
   auto bearer = std::make_unique<f1u_bearer_impl>(ue_index,
                                                   drb_id,
@@ -47,7 +46,6 @@ std::unique_ptr<f1u_bearer> srsran::srs_cu_up::create_f1u_bearer(uint32_t       
                                                   rx_sdu_notifier,
                                                   ue_dl_timer_factory,
                                                   ue_inactivity_timer,
-                                                  ul_exec,
-                                                  disconnector);
+                                                  ul_exec);
   return bearer;
 }

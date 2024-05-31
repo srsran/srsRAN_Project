@@ -23,12 +23,9 @@
 #include "cu_up_impl.h"
 #include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/support/io/io_broker.h"
-#include <condition_variable>
 #include <future>
 
 using namespace srsran;
@@ -158,11 +155,8 @@ void cu_up::stop()
   }
   logger.debug("CU-UP stopping...");
 
-  // Start statistics report timer
+  // Start statistics report timer.
   statistics_report_timer.stop();
-
-  // CU-UP stops listening to new GTPU Rx PDUs.
-  ngu_session.reset();
 
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};
@@ -170,6 +164,9 @@ void cu_up::stop()
   auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
     if (main_loop.empty()) {
       // First call. Initiate shutdown operations.
+
+      // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
+      disconnect();
 
       // Stop main control loop and communicate back with the caller thread.
       main_loop = main_ctrl_loop.request_stop();
@@ -190,12 +187,22 @@ void cu_up::stop()
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
+  // CU-UP stops listening to new GTPU Rx PDUs.
+  ngu_session.reset();
+
   logger.info("CU-UP stopped successfully");
 }
 
 cu_up::~cu_up()
 {
   stop();
+}
+
+void cu_up::disconnect()
+{
+  gw_data_gtpu_demux_adapter.disconnect();
+  gtpu_gw_adapter.disconnect();
+  e1ap_cu_up_ev_notifier.disconnect();
 }
 
 void process_successful_pdu_resource_setup_mod_outcome(
@@ -364,6 +371,12 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   response.success                                   = true;
 
   bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
+
+  if (msg.security_info.has_value()) {
+    security::sec_as_config security_info;
+    fill_sec_as_config(security_info, msg.security_info.value());
+    ue_ctxt->set_security_config(security_info);
+  }
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified

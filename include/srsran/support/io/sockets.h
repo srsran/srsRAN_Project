@@ -25,9 +25,16 @@
 #include "srsran/srslog/logger.h"
 #include "srsran/support/io/unique_fd.h"
 #include <chrono>
+#include <netdb.h>
 #include <sys/socket.h>
 
 namespace srsran {
+
+/// Get the IP address and port from sockaddr structure.
+bool getnameinfo(struct sockaddr&              ai_addr,
+                 const socklen_t&              ai_addrlen,
+                 std::array<char, NI_MAXHOST>& ip_address,
+                 int&                          port);
 
 /// Get the IP address and port from sockaddr structure.
 struct socket_name_info {

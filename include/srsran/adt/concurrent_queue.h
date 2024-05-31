@@ -110,9 +110,9 @@ public:
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
   /// If the queue is empty, the call returns an empty optional.
-  optional<T> try_pop()
+  std::optional<T> try_pop()
   {
-    optional<T> ret;
+    std::optional<T> ret;
     ret.emplace();
     if (not queue.try_pop(ret.value())) {
       ret.reset();
@@ -124,9 +124,9 @@ public:
   bool pop_blocking(T& elem) { return queue.pop_blocking(elem); }
 
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
-  optional<T> pop_blocking() noexcept
+  std::optional<T> pop_blocking() noexcept
   {
-    optional<T> ret;
+    std::optional<T> ret;
     ret.emplace();
     if (not queue.pop_blocking(ret.value())) {
       ret.reset();

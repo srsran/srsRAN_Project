@@ -45,9 +45,6 @@ public:
   unsigned get_nof_symbols() const override;
 
   // See interface for documentation.
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override;
-
-  // See interface for documentation.
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override;
 

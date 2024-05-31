@@ -95,7 +95,7 @@ protected:
   // Procedure objects.
   async_task<mac_ue_create_response> proc;
 
-  optional<lazy_task_launcher<mac_ue_create_response>> proc_launcher;
+  std::optional<lazy_task_launcher<mac_ue_create_response>> proc_launcher;
 };
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_requests_and_awaits_mac_ul_configurator_result)

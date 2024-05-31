@@ -56,7 +56,7 @@ public:
                                              f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng,
                                              ngap_control_message_handler&                     ngap_handler,
                                              du_processor_rrc_ue_control_message_notifier&     rrc_ue_ctrl_notifier,
-                                             du_processor_ue_task_scheduler&                   task_sched,
+                                             ue_task_scheduler&                                task_sched,
                                              up_resource_manager& rrc_ue_up_resource_manager);
 
   async_task<cu_cp_pdu_session_resource_modify_response>
@@ -74,6 +74,7 @@ public:
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
+                                                     const srsran::security::sec_as_config&        up_security_cfg,
                                                      e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng,
                                                      f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng,
                                                      du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,

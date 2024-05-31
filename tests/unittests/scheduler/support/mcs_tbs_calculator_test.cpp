@@ -74,7 +74,7 @@ TEST_P(dl_mcs_tbs_calculator_test_bench, test_values)
   mcs_test_entry test_entry{.max_mcs = GetParam().max_mcs, .nof_prbs = GetParam().nof_prbs};
 
   // Run test function.
-  optional<sch_mcs_tbs> test =
+  std::optional<sch_mcs_tbs> test =
       compute_dl_mcs_tbs(pdsch_cfg, sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -125,7 +125,7 @@ TEST_P(ul_mcs_tbs_prbs_calculator_test_bench, test_values)
   mcs_test_entry test_entry{.max_mcs = GetParam().max_mcs, .nof_prbs = GetParam().nof_prbs};
 
   // Run test function.
-  optional<sch_mcs_tbs> test =
+  std::optional<sch_mcs_tbs> test =
       compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -178,7 +178,7 @@ TEST_P(ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench, test_values_with_uci)
   mcs_test_entry test_entry{.max_mcs = GetParam().max_mcs, .nof_prbs = GetParam().nof_prbs};
 
   // Run test function.
-  optional<sch_mcs_tbs> test =
+  std::optional<sch_mcs_tbs> test =
       compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -235,7 +235,7 @@ TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)
   mcs_test_entry test_1_prb{.final_mcs = 5, .tbs_bytes = 12, .max_mcs = 5, .nof_prbs = 1};
 
   // Run test function.
-  optional<sch_mcs_tbs> test =
+  std::optional<sch_mcs_tbs> test =
       compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, sch_mcs_index(test_1_prb.max_mcs), test_1_prb.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -299,7 +299,7 @@ TEST_F(ul_mcs_tbs_prbs_calculator_with_harq_ack, test_values_with_2_harq_bits)
   mcs_test_entry test_1_prb{.final_mcs = 27, .tbs_bytes = 88, .max_mcs = 28, .nof_prbs = 1};
 
   // Run test function.
-  optional<sch_mcs_tbs> test =
+  std::optional<sch_mcs_tbs> test =
       compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, sch_mcs_index(test_1_prb.max_mcs), test_1_prb.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());

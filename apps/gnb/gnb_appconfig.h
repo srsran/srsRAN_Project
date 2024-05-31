@@ -32,25 +32,6 @@
 
 namespace srsran {
 
-struct amf_appconfig {
-  std::string ip_addr                = "127.0.0.1";
-  uint16_t    port                   = 38412;
-  std::string bind_addr              = "127.0.0.1";
-  std::string n2_bind_addr           = "auto";
-  std::string n2_bind_interface      = "auto";
-  std::string n3_bind_addr           = "auto";
-  std::string n3_bind_interface      = "auto";
-  std::string n3_ext_addr            = "auto";
-  int         sctp_rto_initial       = 120;
-  int         sctp_rto_min           = 120;
-  int         sctp_rto_max           = 500;
-  int         sctp_init_max_attempts = 3;
-  int         sctp_max_init_timeo    = 500;
-  bool        sctp_nodelay           = false;
-  int         udp_rx_max_msgs        = 256;
-  bool        no_core                = false;
-};
-
 /// E2 Agent configuration
 struct e2_appconfig {
   bool        enable_du_e2           = false;       ///< Whether to enable DU E2 agent
@@ -79,8 +60,10 @@ struct log_appconfig {
   /// Default log level for all layers.
   std::string all_level = "warning";
   /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level  = "warning";
-  std::string e2ap_level = "warning";
+  std::string lib_level     = "warning";
+  std::string e2ap_level    = "warning";
+  std::string config_level  = "none";
+  std::string metrics_level = "none";
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
   /// Set to true to log broadcasting messages and all PRACH opportunities.
@@ -133,7 +116,7 @@ struct buffer_pool_appconfig {
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// CPUs isolation.
-  optional<os_sched_affinity_bitmask> isolated_cpus;
+  std::optional<os_sched_affinity_bitmask> isolated_cpus;
   /// Low priority workers CPU affinity mask.
   os_sched_affinity_config low_priority_cpu_cfg = {sched_affinity_mask_types::low_priority,
                                                    {},
@@ -178,16 +161,14 @@ struct gnb_appconfig {
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
-  /// AMF configuration.
-  amf_appconfig amf_cfg;
-  /// \brief E2 configuration.
+  /// E2 configuration.
   e2_appconfig e2_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// HAL configuration.
-  optional<hal_appconfig> hal_config;
+  std::optional<hal_appconfig> hal_config;
 };
 
 } // namespace srsran

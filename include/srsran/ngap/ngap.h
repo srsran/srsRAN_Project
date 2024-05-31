@@ -24,6 +24,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
@@ -73,6 +74,10 @@ public:
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
   /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
   virtual async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) = 0;
+
+  /// \brief Initiates NG Reset procedure as per TS 38.413 section 8.7.4.2.2.
+  /// \param[in] msg The ng reset message to transmit.
+  virtual async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) = 0;
 };
 
 /// Handle ue context removal
@@ -220,16 +225,6 @@ public:
   /// \param[in] old_ue_index The old index of the UE.
   /// \returns True if the update was successful, false otherwise.
   virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
-};
-
-/// \brief Schedules asynchronous tasks associated with an UE.
-class ngap_ue_task_scheduler
-{
-public:
-  virtual ~ngap_ue_task_scheduler()                                                        = default;
-  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                               = 0;
-  virtual timer_manager& get_timer_manager()                                               = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

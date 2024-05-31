@@ -130,7 +130,7 @@ public:
   /// Collects the PDCCH parameters for a transmission.
   struct pdu_t {
     /// Context information.
-    optional<pdcch_context> context;
+    std::optional<pdcch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Cyclic prefix type.

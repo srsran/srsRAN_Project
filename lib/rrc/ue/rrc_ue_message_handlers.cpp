@@ -401,7 +401,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
   return release_context;
 }
 
-optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(optional<rrc_meas_cfg> current_meas_config)
+std::optional<rrc_meas_cfg> rrc_ue_impl::generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config)
 {
   // (Re-)generate measurement config and return result.
   context.meas_cfg = measurement_notifier.on_measurement_config_request(context.cell.cgi.nci, current_meas_config);

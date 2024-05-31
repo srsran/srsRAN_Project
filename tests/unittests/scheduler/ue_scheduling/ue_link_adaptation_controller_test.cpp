@@ -31,9 +31,9 @@ using namespace srsran;
 class base_ue_link_adaptation_controller_test
 {
 public:
-  base_ue_link_adaptation_controller_test(optional<float> olla_cqi_inc   = nullopt,
-                                          optional<float> max_cqi_offset = nullopt,
-                                          optional<float> target_bler    = nullopt) :
+  base_ue_link_adaptation_controller_test(std::optional<float> olla_cqi_inc   = std::nullopt,
+                                          std::optional<float> max_cqi_offset = std::nullopt,
+                                          std::optional<float> target_bler    = std::nullopt) :
     sched_cfg([&]() {
       scheduler_expert_config cfg = config_helpers::make_default_scheduler_expert_config();
       if (olla_cqi_inc.has_value()) {
@@ -97,7 +97,7 @@ TEST_F(ue_link_adaptation_controller_test, cqi_0_reports_empty_mcs)
   csi.first_tb_wideband_cqi = cqi_value{0};
   ue_channel_state.handle_csi_report(csi);
 
-  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
+  std::optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
   ASSERT_FALSE(mcs.has_value());
 }
 
@@ -110,7 +110,7 @@ TEST_F(ue_link_adaptation_controller_test, cqi_positive_reports_non_empty_mcs)
   csi.first_tb_wideband_cqi = cqi_value{test_rgen::uniform_int<uint8_t>(1, 15)};
   ue_channel_state.handle_csi_report(csi);
 
-  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
+  std::optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
   ASSERT_TRUE(mcs.has_value());
 }
 

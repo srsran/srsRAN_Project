@@ -41,7 +41,7 @@ struct promise_data : public Base {
   ~promise_data()
   {
     if (Base::has_value) {
-      SRSRAN_LAUNDER(reinterpret_cast<R*>(&mem))->~R();
+      std::launder(reinterpret_cast<R*>(&mem))->~R();
     }
   }
 
@@ -58,12 +58,12 @@ struct promise_data : public Base {
   const R& get() const&
   {
     srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
-    return *SRSRAN_LAUNDER(reinterpret_cast<const R*>(&mem));
+    return *std::launder(reinterpret_cast<const R*>(&mem));
   }
   R get() &&
   {
     srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
-    return std::move(*SRSRAN_LAUNDER(reinterpret_cast<R*>(&mem)));
+    return std::move(*std::launder(reinterpret_cast<R*>(&mem)));
   }
 
 private:

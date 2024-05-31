@@ -30,6 +30,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
+constexpr std::chrono::milliseconds ue_context_release_response_timeout{1000};
+
 ue_context_release_procedure::ue_context_release_procedure(const f1ap_ue_context_release_command& cmd_,
                                                            f1ap_ue_context&                       ue_ctxt_,
                                                            f1ap_message_notifier&                 f1ap_notif_) :
@@ -55,7 +57,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 
   logger.debug("{}: Procedure started...", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
 
-  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete, ue_context_release_response_timeout);
 
   ue_ctxt.marked_for_release = true;
 

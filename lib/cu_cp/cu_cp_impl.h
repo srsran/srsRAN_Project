@@ -94,9 +94,10 @@ public:
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
 
   // cu_cp_measurement_handler
-  optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,
-                                                           nr_cell_id_t           nci,
-                                                           optional<rrc_meas_cfg> current_meas_config = {}) override;
+  std::optional<rrc_meas_cfg>
+       handle_measurement_config_request(ue_index_t                  ue_index,
+                                         nr_cell_id_t                nci,
+                                         std::optional<rrc_meas_cfg> current_meas_config = {}) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler
@@ -116,7 +117,7 @@ public:
   metrics_handler&                get_metrics_handler() override { return *metrics_hdlr; }
 
   // cu_cp public interface
-  cu_cp_f1c_handler&                     get_f1c_handler() override { return du_db; }
+  cu_cp_f1c_handler&                     get_f1c_handler() override { return controller->get_f1c_handler(); }
   cu_cp_e1_handler&                      get_e1_handler() override { return cu_up_db; }
   cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
@@ -166,9 +167,6 @@ private:
   // CU-CP to RRC DU adapters
   std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
 
-  // UE Task scheduler used by DU processors.
-  du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
-
   // DU repository to Node Manager adapter.
   du_processor_cu_cp_connection_adapter conn_notifier;
 
@@ -179,8 +177,7 @@ private:
   e1ap_cu_cp_adapter e1ap_ev_notifier;
 
   // NGAP to CU-CP adapters
-  ngap_to_cu_cp_task_scheduler ngap_task_sched;
-  ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
+  ngap_cu_cp_adapter ngap_cu_cp_ev_notifier;
 
   // Mobility manager to CU-CP adapter
   mobility_manager_adapter mobility_manager_ev_notifier;

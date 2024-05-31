@@ -48,9 +48,9 @@ struct gtpu_rx_state {
 };
 
 struct gtpu_rx_sdu_info {
-  byte_buffer        sdu         = {};
-  qos_flow_id_t      qos_flow_id = qos_flow_id_t::invalid;
-  optional<uint16_t> sn          = {};
+  byte_buffer             sdu         = {};
+  qos_flow_id_t           qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<uint16_t> sn          = {};
 };
 
 /// Class used for receiving GTP-U NGU bearers, e.g. on N3 interface.

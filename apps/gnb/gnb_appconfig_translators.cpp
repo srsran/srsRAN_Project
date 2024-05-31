@@ -209,36 +209,36 @@ srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned of
   return ssb_mtc;
 }
 
-srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_appconfig& config)
+srsran::sctp_network_connector_config srsran::generate_ngap_nw_config(const cu_cp_unit_amf_config& config)
 {
-  srsran::sctp_network_gateway_config out_cfg;
+  srsran::sctp_network_connector_config out_cfg;
   out_cfg.connection_name = "AMF";
-  out_cfg.connect_address = config.amf_cfg.ip_addr;
-  out_cfg.connect_port    = config.amf_cfg.port;
-  if (config.amf_cfg.n2_bind_addr == "auto") {
-    out_cfg.bind_address = config.amf_cfg.bind_addr;
+  out_cfg.connect_address = config.ip_addr;
+  out_cfg.connect_port    = config.port;
+  if (config.n2_bind_addr == "auto") {
+    out_cfg.bind_address = config.bind_addr;
   } else {
-    out_cfg.bind_address = config.amf_cfg.n2_bind_addr;
+    out_cfg.bind_address = config.n2_bind_addr;
   }
-  out_cfg.bind_interface = config.amf_cfg.n2_bind_interface;
+  out_cfg.bind_interface = config.n2_bind_interface;
   out_cfg.ppid           = NGAP_PPID;
 
-  if (config.amf_cfg.sctp_rto_initial >= 0) {
-    out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;
+  if (config.sctp_rto_initial >= 0) {
+    out_cfg.rto_initial = config.sctp_rto_initial;
   }
-  if (config.amf_cfg.sctp_rto_min >= 0) {
-    out_cfg.rto_min = config.amf_cfg.sctp_rto_min;
+  if (config.sctp_rto_min >= 0) {
+    out_cfg.rto_min = config.sctp_rto_min;
   }
-  if (config.amf_cfg.sctp_rto_max >= 0) {
-    out_cfg.rto_max = config.amf_cfg.sctp_rto_max;
+  if (config.sctp_rto_max >= 0) {
+    out_cfg.rto_max = config.sctp_rto_max;
   }
-  if (config.amf_cfg.sctp_init_max_attempts >= 0) {
-    out_cfg.init_max_attempts = config.amf_cfg.sctp_init_max_attempts;
+  if (config.sctp_init_max_attempts >= 0) {
+    out_cfg.init_max_attempts = config.sctp_init_max_attempts;
   }
-  if (config.amf_cfg.sctp_max_init_timeo >= 0) {
-    out_cfg.max_init_timeo = config.amf_cfg.sctp_max_init_timeo;
+  if (config.sctp_max_init_timeo >= 0) {
+    out_cfg.max_init_timeo = config.sctp_max_init_timeo;
   }
-  out_cfg.nodelay = config.amf_cfg.sctp_nodelay;
+  out_cfg.nodelay = config.sctp_nodelay;
 
   return out_cfg;
 }
@@ -416,25 +416,6 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const du_high_unit_
     report_error("Invalid CU-CP configuration.\n");
   }
 
-  return out_cfg;
-}
-
-srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_config& config)
-{
-  srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
-
-  if (config.amf_cfg.n3_bind_addr == "auto") {
-    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.bind_addr;
-  } else {
-    out_cfg.net_cfg.n3_bind_addr = config.amf_cfg.n3_bind_addr;
-  }
-  out_cfg.net_cfg.n3_ext_addr       = config.amf_cfg.n3_ext_addr;
-  out_cfg.net_cfg.n3_bind_interface = config.amf_cfg.n3_bind_interface;
-  out_cfg.net_cfg.n3_rx_max_mmsg    = config.amf_cfg.udp_rx_max_msgs;
-  out_cfg.net_cfg.f1u_bind_addr = config.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
   return out_cfg;
 }
 
@@ -653,7 +634,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc =
           band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
@@ -894,12 +875,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot and/or dedicated PDCCH
     // configuration.
     out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
-        config_helpers::make_pdsch_time_domain_resource(
-            param.search_space0_index,
-            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
-            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-            band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD ? out_cell.tdd_ul_dl_cfg_common.value()
-                                                                                 : optional<tdd_ul_dl_config_common>{});
+        config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
+                                                        out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+                                                        out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+                                                        band_helper::get_duplex_mode(param.band.value()) ==
+                                                                duplex_mode::TDD
+                                                            ? out_cell.tdd_ul_dl_cfg_common.value()
+                                                            : std::optional<tdd_ul_dl_config_common>{});
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.cells_cfg.front().cell.pdsch_cfg.nof_harqs;
@@ -999,11 +981,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
                                                         base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
-    config_helpers::compute_nof_sr_csi_pucch_res(
-        du_pucch_cfg,
-        base_cell.ul_common_cfg.max_pucchs_per_slot,
-        base_cell.pucch_cfg.sr_period_msec,
-        base_cell.csi_cfg.csi_rs_enabled ? optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec} : nullopt);
+    config_helpers::compute_nof_sr_csi_pucch_res(du_pucch_cfg,
+                                                 base_cell.ul_common_cfg.max_pucchs_per_slot,
+                                                 base_cell.pucch_cfg.sr_period_msec,
+                                                 base_cell.csi_cfg.csi_rs_enabled
+                                                     ? std::optional<unsigned>{base_cell.csi_cfg.csi_rs_period_msec}
+                                                     : std::nullopt);
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
@@ -1031,52 +1014,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     ++cell_id;
   }
 
-  return out_cfg;
-}
-
-std::map<five_qi_t, srs_cu_up::cu_up_qos_config>
-srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config, const du_high_unit_config& du_cfg)
-{
-  std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
-  if (cu_up_config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(
-        cu_up_config.warn_on_drop, timer_duration(cu_up_config.metrics.pdcp.report_period));
-    return out_cfg;
-  }
-
-  // Generate a temporary DU QoS config to obtain custom config parameters from the RLC counterpart
-  std::map<five_qi_t, du_qos_config> du_qos = generate_du_qos_config(du_cfg);
-
-  for (const auto& qos : cu_up_config.qos_cfg) {
-    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
-    }
-    if (du_qos.find(qos.five_qi) == du_qos.end()) {
-      report_error("Cannot create CU-UP config: No entry for {} in DU QoS config\n", qos.five_qi);
-    }
-    // Convert PDCP custom config
-    pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.tx.warn_on_drop     = cu_up_config.warn_on_drop;
-    out_pdcp_custom.metrics_period      = timer_duration(cu_up_config.metrics.pdcp.report_period);
-
-    // Obtain RLC config parameters from the respective RLC mode
-    const auto& du_five_qi = du_qos[qos.five_qi];
-    if (du_five_qi.rlc.mode == rlc_mode::um_bidir) {
-      // Take from UM config
-      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.um.tx.queue_size;
-    } else if (du_five_qi.rlc.mode == rlc_mode::am) {
-      // Take from AM config
-      out_pdcp_custom.tx.rlc_sdu_queue = du_five_qi.rlc.am.tx.queue_size;
-    } else {
-      report_error("Cannot create CU-UP config: Unsupported rlc_mode={} for {} in DU QoS config\n.",
-                   du_five_qi.rlc.mode,
-                   qos.five_qi);
-    }
-
-    // Convert F1-U config
-    srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
-    f1u_cfg.warn_on_drop           = cu_up_config.warn_on_drop;
-  }
   return out_cfg;
 }
 
@@ -1637,141 +1574,134 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig&          config
   return out_cfg;
 }
 
-std::vector<upper_phy_config> srsran::generate_du_low_config(const du_high_unit_config& config,
-                                                             const du_low_unit_config&  du_low)
+upper_phy_config srsran::generate_du_low_config(const du_high_unit_cell_config& config,
+                                                const du_low_unit_config&       du_low,
+                                                unsigned                        sector_id)
 {
-  std::vector<upper_phy_config> out_cfg;
-  out_cfg.reserve(config.cells_cfg.size());
+  const du_high_unit_base_cell_config& cell = config.cell;
+  upper_phy_config                     cfg;
 
-  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
-    const du_high_unit_base_cell_config& cell = config.cells_cfg[i].cell;
-    upper_phy_config                     cfg;
+  // Get band, frequency range and duplex mode from the band.
+  nr_band               band       = cell.band.value();
+  const frequency_range freq_range = band_helper::get_freq_range(band);
+  const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
 
-    // Get band, frequency range and duplex mode from the band.
-    nr_band               band       = cell.band.value();
-    const frequency_range freq_range = band_helper::get_freq_range(band);
-    const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
+  // Get bandwidth in PRB.
+  const unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, freq_range);
+  // Deduce the number of slots per subframe.
+  const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
+  // Deduce the number of slots per frame.
+  unsigned nof_slots_per_frame = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
+  // Number of slots per system frame.
+  unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
+  // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
+  unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
 
-    // Get bandwidth in PRB.
-    const unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, freq_range);
-    // Deduce the number of slots per subframe.
-    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
-    // Deduce the number of slots per frame.
-    unsigned nof_slots_per_frame = nof_slots_per_subframe * NOF_SUBFRAMES_PER_FRAME;
-    // Number of slots per system frame.
-    unsigned nof_slots_per_system_frame = NOF_SFNS * nof_slots_per_frame;
-    // PUSCH HARQ process lifetime in slots. It assumes the maximum lifetime is 100ms.
-    unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
-
-    // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
-    unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
-    unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
-    if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg.has_value()) {
-      const tdd_ul_dl_pattern_unit_config& pattern1     = cell.tdd_ul_dl_cfg->pattern1;
-      unsigned                             period_slots = pattern1.dl_ul_period_slots;
-      unsigned nof_ul_slots = pattern1.nof_ul_slots + ((pattern1.nof_ul_symbols != 0) ? 1 : 0);
-      if (cell.tdd_ul_dl_cfg->pattern2.has_value()) {
-        const tdd_ul_dl_pattern_unit_config& pattern2 = cell.tdd_ul_dl_cfg->pattern2.value();
-        period_slots += pattern2.dl_ul_period_slots;
-        nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
-      }
-      nof_ul_slots_per_frame        = divide_ceil(nof_slots_per_frame, period_slots) * nof_ul_slots;
-      nof_ul_slots_in_harq_lifetime = divide_ceil(expire_pusch_harq_timeout_slots, period_slots) * nof_ul_slots;
+  // Calculate the number of UL slots in a frame and in a PUSCH HARQ process lifetime.
+  unsigned nof_ul_slots_in_harq_lifetime = expire_pusch_harq_timeout_slots;
+  unsigned nof_ul_slots_per_frame        = nof_slots_per_frame;
+  if (duplex == duplex_mode::TDD && cell.tdd_ul_dl_cfg.has_value()) {
+    const tdd_ul_dl_pattern_unit_config& pattern1     = cell.tdd_ul_dl_cfg->pattern1;
+    unsigned                             period_slots = pattern1.dl_ul_period_slots;
+    unsigned nof_ul_slots = pattern1.nof_ul_slots + ((pattern1.nof_ul_symbols != 0) ? 1 : 0);
+    if (cell.tdd_ul_dl_cfg->pattern2.has_value()) {
+      const tdd_ul_dl_pattern_unit_config& pattern2 = cell.tdd_ul_dl_cfg->pattern2.value();
+      period_slots += pattern2.dl_ul_period_slots;
+      nof_ul_slots += pattern2.nof_ul_slots + ((pattern2.nof_ul_symbols != 0) ? 1 : 0);
     }
-
-    // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot assuming:
-    // - The maximum number of resource elements used for data for each scheduled resource block;
-    // - the cell bandwidth;
-    // - the highest modulation order possible; and
-    // - the maximum coding rate.
-    const unsigned max_nof_pusch_cb_slot =
-        divide_ceil(pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256),
-                    ldpc::MAX_MESSAGE_SIZE);
-
-    // Calculate the maximum number of active PUSCH HARQ processes from:
-    // - the maximum number of users per slot; and
-    // - the number of PUSCH occasions in a HARQ process lifetime.
-    const unsigned nof_buffers = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_in_harq_lifetime;
-
-    // Calculate the maximum number of receive codeblocks. It is equal to the product of:
-    // - the maximum number of codeblocks that can be scheduled in one slot; and
-    // - the number of PUSCH occasions in a HARQ process lifetime.
-    const unsigned max_rx_nof_codeblocks = nof_ul_slots_in_harq_lifetime * max_nof_pusch_cb_slot;
-
-    // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
-    // depths.
-    unsigned dl_pipeline_depth = 4 * du_low.expert_phy_cfg.max_processing_delay_slots;
-    while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
-      ++dl_pipeline_depth;
-    }
-    unsigned ul_pipeline_depth = std::max(dl_pipeline_depth, 8U);
-
-    static constexpr unsigned prach_pipeline_depth = 1;
-
-    const prach_configuration prach_cfg =
-        prach_configuration_get(freq_range, duplex, cell.prach_cfg.prach_config_index.value());
-    srsran_assert(prach_cfg.format != prach_format_type::invalid,
-                  "Unsupported PRACH configuration index (i.e., {}) for the given frequency range (i.e., {}) and "
-                  "duplex mode (i.e., {}).",
-                  cell.prach_cfg.prach_config_index.value(),
-                  to_string(freq_range),
-                  to_string(duplex));
-
-    // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
-    // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
-    // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
-    unsigned max_pusch_concurrency = 1;
-    if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
-      max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_per_frame;
-    }
-
-    cfg.nof_slots_request_headroom = du_low.expert_phy_cfg.nof_slots_request_headroom;
-    cfg.log_level                  = srslog::str_to_basic_level(du_low.loggers.phy_level);
-    cfg.enable_logging_broadcast   = du_low.loggers.broadcast_enabled;
-    cfg.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;
-    cfg.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
-    cfg.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
-    cfg.logger_max_hex_size        = du_low.loggers.hex_max_size;
-    cfg.sector_id                  = i;
-    cfg.nof_tx_ports               = cell.nof_antennas_dl;
-    cfg.nof_rx_ports               = cell.nof_antennas_ul;
-    cfg.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
-    cfg.ldpc_decoder_early_stop    = du_low.expert_phy_cfg.pusch_decoder_early_stop;
-    cfg.nof_dl_rg                  = dl_pipeline_depth + 2;
-    cfg.dl_rg_expire_timeout_slots = dl_pipeline_depth;
-    cfg.nof_dl_processors          = dl_pipeline_depth;
-    cfg.nof_ul_rg                  = ul_pipeline_depth;
-    cfg.max_ul_thread_concurrency  = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
-    cfg.max_pusch_concurrency      = max_pusch_concurrency;
-    cfg.nof_pusch_decoder_threads  = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
-                                    du_low.expert_execution_cfg.threads.nof_ul_threads;
-    cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
-    cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
-    cfg.max_nof_fd_prach_occasions = 1;
-    cfg.is_prach_long_format       = is_long_preamble(prach_cfg.format);
-    cfg.pusch_sinr_calc_method =
-        channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
-
-    cfg.active_scs                                                                = {};
-    cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;
-
-    cfg.dl_bw_rb = bw_rb;
-    cfg.ul_bw_rb = bw_rb;
-
-    cfg.rx_buffer_config.nof_buffers          = nof_buffers;
-    cfg.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;
-    cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
-    cfg.rx_buffer_config.external_soft_bits   = false;
-
-    if (!is_valid_upper_phy_config(cfg)) {
-      report_error("Invalid upper PHY configuration.\n");
-    }
-
-    out_cfg.push_back(cfg);
+    nof_ul_slots_per_frame        = divide_ceil(nof_slots_per_frame, period_slots) * nof_ul_slots;
+    nof_ul_slots_in_harq_lifetime = divide_ceil(expire_pusch_harq_timeout_slots, period_slots) * nof_ul_slots;
   }
 
-  return out_cfg;
+  // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot assuming:
+  // - The maximum number of resource elements used for data for each scheduled resource block;
+  // - the cell bandwidth;
+  // - the highest modulation order possible; and
+  // - the maximum coding rate.
+  const unsigned max_nof_pusch_cb_slot = divide_ceil(
+      pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256), ldpc::MAX_MESSAGE_SIZE);
+
+  // Calculate the maximum number of active PUSCH HARQ processes from:
+  // - the maximum number of users per slot; and
+  // - the number of PUSCH occasions in a HARQ process lifetime.
+  const unsigned nof_buffers = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_in_harq_lifetime;
+
+  // Calculate the maximum number of receive codeblocks. It is equal to the product of:
+  // - the maximum number of codeblocks that can be scheduled in one slot; and
+  // - the number of PUSCH occasions in a HARQ process lifetime.
+  const unsigned max_rx_nof_codeblocks = nof_ul_slots_in_harq_lifetime * max_nof_pusch_cb_slot;
+
+  // Determine processing pipelines depth. Make sure the number of slots per system frame is divisible by the pipeline
+  // depths.
+  unsigned dl_pipeline_depth = 4 * du_low.expert_phy_cfg.max_processing_delay_slots;
+  while (nof_slots_per_system_frame % dl_pipeline_depth != 0) {
+    ++dl_pipeline_depth;
+  }
+  unsigned ul_pipeline_depth = std::max(dl_pipeline_depth, 8U);
+
+  static constexpr unsigned prach_pipeline_depth = 1;
+
+  const prach_configuration prach_cfg =
+      prach_configuration_get(freq_range, duplex, cell.prach_cfg.prach_config_index.value());
+  srsran_assert(prach_cfg.format != prach_format_type::invalid,
+                "Unsupported PRACH configuration index (i.e., {}) for the given frequency range (i.e., {}) and "
+                "duplex mode (i.e., {}).",
+                cell.prach_cfg.prach_config_index.value(),
+                to_string(freq_range),
+                to_string(duplex));
+
+  // Maximum number of concurrent PUSCH transmissions. It is the maximum number of PUSCH transmissions that can be
+  // processed simultaneously. If there are no dedicated threads for PUSCH decoding, it sets the queue size to one.
+  // Otherwise, it is set to the maximum number of PUSCH transmissions that can be scheduled in one frame.
+  unsigned max_pusch_concurrency = 1;
+  if (du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads > 0) {
+    max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * nof_ul_slots_per_frame;
+  }
+
+  cfg.nof_slots_request_headroom = du_low.expert_phy_cfg.nof_slots_request_headroom;
+  cfg.log_level                  = srslog::str_to_basic_level(du_low.loggers.phy_level);
+  cfg.enable_logging_broadcast   = du_low.loggers.broadcast_enabled;
+  cfg.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;
+  cfg.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
+  cfg.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
+  cfg.logger_max_hex_size        = du_low.loggers.hex_max_size;
+  cfg.sector_id                  = sector_id;
+  cfg.nof_tx_ports               = cell.nof_antennas_dl;
+  cfg.nof_rx_ports               = cell.nof_antennas_ul;
+  cfg.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
+  cfg.ldpc_decoder_early_stop    = du_low.expert_phy_cfg.pusch_decoder_early_stop;
+  cfg.nof_dl_rg                  = dl_pipeline_depth + 2;
+  cfg.dl_rg_expire_timeout_slots = dl_pipeline_depth;
+  cfg.nof_dl_processors          = dl_pipeline_depth;
+  cfg.nof_ul_rg                  = ul_pipeline_depth;
+  cfg.max_ul_thread_concurrency  = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
+  cfg.max_pusch_concurrency      = max_pusch_concurrency;
+  cfg.nof_pusch_decoder_threads  = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
+                                  du_low.expert_execution_cfg.threads.nof_ul_threads;
+  cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
+  cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
+  cfg.max_nof_fd_prach_occasions = 1;
+  cfg.is_prach_long_format       = is_long_preamble(prach_cfg.format);
+  cfg.pusch_sinr_calc_method =
+      channel_state_information::sinr_type_from_string(du_low.expert_phy_cfg.pusch_sinr_calc_method);
+
+  cfg.active_scs                                       = {};
+  cfg.active_scs[to_numerology_value(cell.common_scs)] = true;
+
+  cfg.dl_bw_rb = bw_rb;
+  cfg.ul_bw_rb = bw_rb;
+
+  cfg.rx_buffer_config.nof_buffers          = nof_buffers;
+  cfg.rx_buffer_config.nof_codeblocks       = max_rx_nof_codeblocks;
+  cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+  cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
+  cfg.rx_buffer_config.external_soft_bits   = false;
+
+  if (!is_valid_upper_phy_config(cfg)) {
+    report_error("Invalid upper PHY configuration.\n");
+  }
+
+  return cfg;
 }
 
 mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& config)
@@ -1847,9 +1777,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   return out_cfg;
 }
 
-srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
+srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
 {
-  srsran::sctp_network_gateway_config out_cfg;
+  srsran::sctp_network_connector_config out_cfg;
   out_cfg.connection_name = "NearRT-RIC";
   out_cfg.connect_address = config.e2_cfg.ip_addr;
   out_cfg.connect_port    = config.e2_cfg.port;
@@ -1875,14 +1805,14 @@ srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_ap
   return out_cfg;
 }
 
-e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config, const du_high_unit_config& du_high)
+e2ap_configuration srsran::generate_e2_config(const du_high_unit_config& du_high)
 {
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
-  out_cfg.gnb_id             = config.gnb_id;
-  out_cfg.ran_node_name      = config.ran_node_name;
+  out_cfg.gnb_id             = du_high.gnb_id;
+  out_cfg.ran_node_name      = du_high.ran_node_name;
   out_cfg.plmn               = du_high.cells_cfg.front().cell.plmn;
-  out_cfg.e2sm_kpm_enabled   = config.e2_cfg.e2sm_kpm_enabled;
-  out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
+  out_cfg.e2sm_kpm_enabled   = du_high.e2_cfg.e2sm_kpm_enabled;
+  out_cfg.e2sm_rc_enabled    = du_high.e2_cfg.e2sm_rc_enabled;
 
   return out_cfg;
 }

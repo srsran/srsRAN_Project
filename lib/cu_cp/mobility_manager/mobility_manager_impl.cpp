@@ -112,7 +112,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
                                                 du_index_t target_du_index)
 {
   // Lookup CGI at target DU.
-  optional<nr_cell_global_id_t> cgi =
+  std::optional<nr_cell_global_id_t> cgi =
       du_db.get_du_processor(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
   if (!cgi.has_value()) {
     logger.warning(
@@ -126,7 +126,11 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
 
-  du_processor_ue_task_handler& ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
+  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  if (u == nullptr) {
+    logger.error("ue={}: Couldn't find UE", source_ue_index);
+    return;
+  }
 
   // Trigger Inter DU handover routine on the DU processor of the source DU.
   auto ho_trigger = [this, request, response = cu_cp_inter_du_handover_response{}, &source_du_index, &target_du_index](
@@ -135,7 +139,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
     CORO_AWAIT_VALUE(response, cu_cp_notifier.on_inter_du_handover_required(request, source_du_index, target_du_index));
     CORO_RETURN();
   };
-  ue_task.handle_ue_async_task(request.source_ue_index, launch_async(std::move(ho_trigger)));
+  u->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }
 
 void mobility_manager::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
@@ -147,9 +151,11 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
                                                 gnb_id_t     target_gnb_id,
                                                 nr_cell_id_t target_nci)
 {
-  du_index_t source_du_index = ue_mng.find_du_ue(source_ue_index)->get_du_index();
-
-  du_processor_ue_task_handler& ue_task = du_db.get_du_processor(source_du_index).get_ue_task_handler();
+  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  if (u == nullptr) {
+    logger.error("ue={}: Couldn't find UE", source_ue_index);
+    return;
+  }
 
   ngap_handover_preparation_request request = {};
   request.ue_index                          = source_ue_index;
@@ -163,5 +169,5 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
         CORO_AWAIT_VALUE(response, ngap_handler.handle_handover_preparation_request(request));
         CORO_RETURN();
       };
-  ue_task.handle_ue_async_task(request.ue_index, launch_async(std::move(ho_trigger)));
+  u->get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }

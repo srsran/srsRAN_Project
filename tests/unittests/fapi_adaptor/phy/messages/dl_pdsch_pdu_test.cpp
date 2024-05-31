@@ -279,7 +279,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                       ASSERT_TRUE(freq_allocation == proc_pdu.freq_alloc);
 
                       ASSERT_EQ(ldpc_graph, proc_pdu.ldpc_base_graph);
-                      ASSERT_EQ(tb_size_lbrm_bytes.value(), proc_pdu.tbs_lbrm_bytes);
+                      ASSERT_EQ(tb_size_lbrm_bytes, proc_pdu.tbs_lbrm);
 
                       // :TODO: re_pattern.
                     }

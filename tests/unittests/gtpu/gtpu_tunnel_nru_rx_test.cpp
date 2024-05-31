@@ -51,7 +51,7 @@ public:
         std::make_unique<gtpu_tunnel_nru_tx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
   }
 
-  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, uint32_t nru_sn, optional<uint16_t> gtpu_sn)
+  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, uint32_t nru_sn, std::optional<uint16_t> gtpu_sn)
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -104,12 +104,23 @@ public:
 
 class gtpu_tunnel_rx_lower_dummy : public gtpu_tunnel_nru_rx_lower_layer_notifier
 {
-  void on_new_sdu(nru_dl_message dl_message) final { rx_sdus.push_back(std::move(dl_message.t_pdu)); }
+  void on_new_sdu(nru_dl_message dl_message) final { rx_dl_sdus.push_back(std::move(dl_message.t_pdu)); }
+  void on_new_sdu(nru_ul_message ul_message) final
+  {
+    if (ul_message.t_pdu.has_value()) {
+      rx_ul_sdus.push_back(std::move(ul_message.t_pdu.value()));
+    }
+  }
 
 public:
-  void clear() { rx_sdus.clear(); }
+  void clear()
+  {
+    rx_dl_sdus.clear();
+    rx_ul_sdus.clear();
+  }
 
-  std::vector<byte_buffer> rx_sdus;
+  std::vector<byte_buffer>       rx_dl_sdus;
+  std::vector<byte_buffer_chain> rx_ul_sdus;
 };
 
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_common_rx_upper_layer_interface
@@ -215,8 +226,8 @@ TEST_F(gtpu_tunnel_nru_rx_test, rx_no_sn)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
-    ASSERT_EQ(rx_lower.rx_sdus.size(), i + 1);
-    EXPECT_EQ(rx_lower.rx_sdus[i], sdu);
+    ASSERT_EQ(rx_lower.rx_dl_sdus.size(), i + 1);
+    EXPECT_EQ(rx_lower.rx_dl_sdus[i], sdu);
   }
 };
 

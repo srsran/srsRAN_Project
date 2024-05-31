@@ -131,7 +131,7 @@ void worker_manager::create_prio_worker(const std::string&                      
   using namespace execution_config_helper;
 
   const single_worker worker_desc{
-      name, {concurrent_queue_policy::locking_mpsc, queue_size}, execs, nullopt, prio, mask};
+      name, {concurrent_queue_policy::locking_mpsc, queue_size}, execs, std::nullopt, prio, mask};
   if (not exec_mng.add_execution_context(create_execution_context(worker_desc))) {
     report_fatal_error("Failed to instantiate {} execution context", worker_desc.name);
   }
@@ -249,7 +249,7 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
 
     slot_workers[cell_id].executors.emplace_back("cell_exec#" + cell_id_str, task_priority::max - 1);
     slot_workers[cell_id].executors.push_back(
-        {"slot_exec#" + cell_id_str, task_priority::max, {}, nullopt, is_blocking_mode_active});
+        {"slot_exec#" + cell_id_str, task_priority::max, {}, std::nullopt, is_blocking_mode_active});
 
     if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
       report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);

@@ -107,16 +107,16 @@ private:
 class dummy_uci_allocator : public uci_allocator
 {
 public:
-  optional<uci_allocation> next_uci_allocation;
+  std::optional<uci_allocation> next_uci_allocation;
 
   void slot_indication(slot_point sl_tx) override { next_uci_allocation.reset(); }
 
-  optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                             rnti_t                       crnti,
-                                             const ue_cell_configuration& ue_cell_cfg,
-                                             unsigned                     k0,
-                                             span<const uint8_t>          k1_list,
-                                             const pdcch_dl_information*  fallback_dci_info = nullptr) override
+  std::optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
+                                                  rnti_t                       crnti,
+                                                  const ue_cell_configuration& ue_cell_cfg,
+                                                  unsigned                     k0,
+                                                  span<const uint8_t>          k1_list,
+                                                  const pdcch_dl_information*  fallback_dci_info = nullptr) override
   {
     return next_uci_allocation;
   }
@@ -151,8 +151,8 @@ public:
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {
 public:
-  optional<du_ue_index_t> last_ue_index_cfg;
-  optional<du_ue_index_t> last_ue_index_deleted;
+  std::optional<du_ue_index_t> last_ue_index_cfg;
+  std::optional<du_ue_index_t> last_ue_index_deleted;
 
   void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override { last_ue_index_cfg = ue_index; }
   void on_ue_delete_response(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }

@@ -161,25 +161,6 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-/// Schedules asynchronous tasks associated with an UE.
-class rrc_ue_task_scheduler
-{
-public:
-  virtual ~rrc_ue_task_scheduler() = default;
-
-  /// \brief Schedule an asynchronous task for the UE.
-  virtual void schedule_async_task(async_task<void> task) = 0;
-
-  /// \brief Create a new timer for the UE.
-  virtual unique_timer make_unique_timer() = 0;
-
-  /// \brief Get UE timer factory.
-  virtual timer_factory get_timer_factory() = 0;
-
-  /// \brief Get executor.
-  virtual task_executor& get_executor() = 0;
-};
-
 /// Interface to notify about NAS messages.
 class rrc_ue_nas_notifier
 {
@@ -261,7 +242,7 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \params[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config) = 0;
+  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) = 0;
 
   /// \brief Handle the reception of a new security context.
   /// \return True if the security context was applied successfully, false otherwise
@@ -306,11 +287,11 @@ public:
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
 struct rrc_ue_reestablishment_context_response {
-  ue_index_t                          ue_index = ue_index_t::invalid;
-  security::security_context          sec_context;
-  optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
-  up_context                          up_ctx;
-  bool                                old_ue_fully_attached = false;
+  ue_index_t                               ue_index = ue_index_t::invalid;
+  security::security_context               sec_context;
+  std::optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
+  up_context                               up_ctx;
+  bool                                     old_ue_fully_attached = false;
 };
 
 /// Interface to notify about UE context updates.
@@ -362,8 +343,8 @@ public:
   /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
-  virtual optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
-                                                               optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  virtual std::optional<rrc_meas_cfg>
+  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void on_measurement_report(const rrc_meas_results& meas_results) = 0;

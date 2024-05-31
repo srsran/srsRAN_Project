@@ -38,7 +38,7 @@ namespace dpdk {
 /// bbdev initialization.
 /// \param[in]  cfg    Configuration of the bbdev-based hardware-accelerator.
 /// \param[in]  logger SRS logger.
-/// \return BBDEV device information if successful, otherwise \c nullopt.
+/// \return BBDEV device information if successful, otherwise \c std::nullopt.
 expected<::rte_bbdev_info> bbdev_start(const bbdev_acc_configuration& cfg, srslog::basic_logger& logger);
 
 /// bbdev shutdown management.

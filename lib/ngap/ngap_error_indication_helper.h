@@ -33,9 +33,9 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct error_indication_request_t {
-  ngap_cause_t          cause;
-  optional<ran_ue_id_t> ran_ue_id;
-  optional<amf_ue_id_t> amf_ue_id;
+  ngap_cause_t               cause;
+  std::optional<ran_ue_id_t> ran_ue_id;
+  std::optional<amf_ue_id_t> amf_ue_id;
 };
 
 /// \brief Send an Error Indication message to the AMF.
@@ -45,11 +45,11 @@ struct error_indication_request_t {
 /// \param[in] amf_ue_id The AMF UE ID (optional).
 /// \param[in] cause The cause of the Error Indication (optional).
 
-inline void send_error_indication(ngap_message_notifier& ngap_notifier,
-                                  srslog::basic_logger&  logger,
-                                  optional<ran_ue_id_t>  ran_ue_id = {},
-                                  optional<amf_ue_id_t>  amf_ue_id = {},
-                                  optional<ngap_cause_t> cause     = {})
+inline void send_error_indication(ngap_message_notifier&      ngap_notifier,
+                                  srslog::basic_logger&       logger,
+                                  std::optional<ran_ue_id_t>  ran_ue_id = {},
+                                  std::optional<amf_ue_id_t>  amf_ue_id = {},
+                                  std::optional<ngap_cause_t> cause     = {})
 {
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();

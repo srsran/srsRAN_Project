@@ -38,10 +38,10 @@ namespace {
 
 /// Parameters used by FDD and TDD tests.
 struct test_params {
-  subcarrier_spacing                scs;
-  uint8_t                           k0;
-  std::vector<uint8_t>              k2s;
-  optional<tdd_ul_dl_config_common> tdd_config;
+  subcarrier_spacing                     scs;
+  uint8_t                                k0;
+  std::vector<uint8_t>                   k2s;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 std::ostream& operator<<(std::ostream& out, const test_params& params)
@@ -124,7 +124,7 @@ protected:
     }
 
     req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
-        req.searchspace0, req.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, t_params.tdd_config);
+        req.searchspace0, req.dl_cfg_common.init_dl_bwp.pdcch_common, std::nullopt, t_params.tdd_config);
 
     for (auto& pdsch_td_alloc : req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
       pdsch_td_alloc.k0 = t_params.k0;

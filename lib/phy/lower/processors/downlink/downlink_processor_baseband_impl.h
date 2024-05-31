@@ -231,7 +231,7 @@ private:
   /// Temporal storage of baseband samples.
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.
-  optional<slot_point> last_notified_slot;
+  std::optional<slot_point> last_notified_slot;
 };
 
 } // namespace srsran

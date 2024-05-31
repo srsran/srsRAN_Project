@@ -94,7 +94,7 @@ struct transmitter_config {
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
   /// Optional TDD configuration.
-  optional<tdd_ul_dl_config_common> tdd_config;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Indicates if DPDK should be used by the underlying implementation.
   bool uses_dpdk;
 };

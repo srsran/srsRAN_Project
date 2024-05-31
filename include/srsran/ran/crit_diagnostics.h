@@ -34,10 +34,10 @@ struct crit_diagnostics_item {
 
 struct crit_diagnostics_t {
   std::vector<crit_diagnostics_item> ies_crit_diagnostics = {};
-  optional<uint16_t>                 proc_code;
-  optional<std::string>              trigger_msg;
-  optional<std::string>              proc_crit;
-  optional<uint16_t>                 transaction_id;
+  std::optional<uint16_t>            proc_code;
+  std::optional<std::string>         trigger_msg;
+  std::optional<std::string>         proc_crit;
+  std::optional<uint16_t>            transaction_id;
 };
 
 } // namespace srsran

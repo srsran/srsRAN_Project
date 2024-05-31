@@ -24,10 +24,10 @@
 #include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
-#include <set>
 
 using namespace srsran;
 
@@ -61,6 +61,14 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
+  // check PDCP SN length
+  srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
+                "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
+                config.pdcp_sn_len,
+                du_index,
+                ue_index,
+                rb_id);
+
   // check timer t_poll_retransmission timer
   srsran_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
 
@@ -77,7 +85,10 @@ rlc_tx_am_entity::rlc_tx_am_entity(uint32_t                             du_index
 void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 {
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
-  size_t sdu_length   = sdu.buf.length();
+
+  sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+
+  size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(sdu.buf.begin(),
                     sdu.buf.end(),
@@ -646,8 +657,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          ? status.ack_sn
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
-  optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
-  bool               recycle_bin_full  = false;
+  std::optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
+  bool                    recycle_bin_full  = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];

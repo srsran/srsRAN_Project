@@ -295,7 +295,8 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
 
   // rlc mode
-  drbs_to_be_setup_mod_item.rlc_mod = rlc_mode::am;
+  drbs_to_be_setup_mod_item.rlc_mod     = rlc_mode::am;
+  drbs_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size::size12bits;
 
   // ul cfg
   f1ap_ul_cfg ul_cfg;

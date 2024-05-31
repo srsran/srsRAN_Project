@@ -85,15 +85,15 @@ struct psup_dl_pdu_session_information {
   /// Paging Policy Indicator (PPI).
   /// When present, the Paging Policy Indicator is used for paging policy differentiation (see 3GPP TS 23.501). This
   /// field applies to PDU sessions of IP type.
-  optional<psup_ppi> ppi;
+  std::optional<psup_ppi> ppi;
   /// DL Received Time Stamp.
   /// This field indicates the time when the UPF sends the DL PDU Session Information frame with the QMP field set to 1.
   /// It is used only in the downlink direction and encoded in the same format as the 64 - bit timestamp format as
   /// defined in Section 6 of IETF RFC 5905 [6].
-  optional<uint64_t> dl_sending_time_stamp;
+  std::optional<uint64_t> dl_sending_time_stamp;
   /// DL QFI Sequence Number.
   /// This parameter indicates the sequence number as assigned by the UPF/ NG-RAN node associated with a given QoS flow.
-  optional<uint32_t> dl_qfi_sn;
+  std::optional<uint32_t> dl_qfi_sn;
 
   bool operator==(const psup_dl_pdu_session_information& other) const
   {
@@ -120,33 +120,33 @@ struct psup_ul_pdu_session_information {
   /// direction and encoded in the same format as the 64-bit timestamp format as defined in Section 6 of IETF RFC 5905
   /// [6]. The UPF shall, if supported, use this information to calculate DL or RTT delay between the NG-RAN and the UPF
   /// as specified in [5].
-  optional<uint64_t> dl_sending_time_stamp_repeated;
+  std::optional<uint64_t> dl_sending_time_stamp_repeated;
   /// DL Received Time Stamp.
   /// This field indicates the time when the NG-RAN node receives the DL PDU Session Information frame with the QMP
   /// field set to 1 for the involved QoS flow. It is used only in the uplink direction and encoded in the same format
   /// as the 64-bit timestamp format as defined in Section 6 of IETF RFC 5905 [6]. The UPF shall, if supported, use
   /// this information to calculate DL or RTT delay between the NG-RAN and the UPF as specified in [5].
-  optional<uint64_t> dl_received_time_stamp;
+  std::optional<uint64_t> dl_received_time_stamp;
   /// DL Sending Time Stamp.
   /// This field indicates the time when the UPF sends the DL PDU Session Information frame with the QMP field set
   /// to 1. It is used only in the downlink direction and encoded in the same format as the 64-bit timestamp format as
   /// defined in Section 6 of IETF RFC 5905 [6].
-  optional<uint64_t> ul_sending_time_stamp;
+  std::optional<uint64_t> ul_sending_time_stamp;
   /// DL Delay Result.
   /// This field indicates the downlink delay measurement result which is the sum of the delay incurred in NG-RAN
   /// (including the delay at gNB-CU-UP, on F1-U and on gNB-DU) and the delay over Uu interface in milliseconds for the
   /// involved QoS flow. It is used only in the uplink direction and encoded as an Unsigned32 binary integer value. The
   /// UPF shall, if supported, use this information to calculate DL or RTT delay as specified in [5].
-  optional<uint32_t> dl_delay_result;
+  std::optional<uint32_t> dl_delay_result;
   /// UL Delay Result.
   /// This field indicates the uplnk delay measurement result which is the sum of the delay incurred in NG-RAN
   /// (including the delay at gNB-CU-UP, on F1-U and on gNB-DU) and the delay over Uu interface in milliseconds for the
   /// involved QoS flow. It is used only in the uplink direction and encoded as an Unsigned32 binary integer value. The
   /// UPF shall, if supported, use this information to calculate UL or RTT delay as specified in [5].
-  optional<uint32_t> ul_delay_result;
+  std::optional<uint32_t> ul_delay_result;
   /// UL QFI Sequence Number.
   /// This parameter indicates the sequence number as assigned by the NG-RAN node associated with a given QoS flow.
-  optional<uint32_t> ul_qfi_sn;
+  std::optional<uint32_t> ul_qfi_sn;
 };
 
 } // namespace srsran

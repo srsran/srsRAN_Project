@@ -50,35 +50,39 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
   unsigned rg_port = std::distance(ul_eaxc.begin(), std::find(ul_eaxc.begin(), ul_eaxc.end(), eaxc));
   srsran_assert(rg_port < ul_eaxc.size(), "Invalid resource grid port value '{}'", rg_port);
 
-  unsigned du_ul_nof_prbs = ul_context.get_grid_nof_prbs();
-  for (const auto& sect : results.sections) {
-    // Section PRBs are above the last PRB of the DU. Do not copy.
-    if (sect.start_prb >= du_ul_nof_prbs) {
+  // The DU cell bandwidth may be narrower than the operating bandwidth of the RU.
+  unsigned du_nof_prbs = ul_context.get_grid_nof_prbs();
+  for (const auto& section : results.sections) {
+    // Drop the whole section when all PRBs are outside the range of the DU bandwidth and the operating bandwidth of the
+    // RU is larger.
+    if (section.start_prb >= du_nof_prbs) {
       continue;
     }
 
-    // By default, try to copy all the expected PRBs.
-    unsigned nof_prbs_to_write = du_ul_nof_prbs - sect.start_prb;
+    // At this point, we have to care about the following cases:
+    //   a) The last PRB of the section falls outside the range of the DU cell bandwidth.
+    //   b) The last PRB of the section falls inside the range of the DU cell bandwidth.
 
-    // Section contains less PRBs than the grid. Copy the whole section.
-    if (sect.start_prb + sect.nof_prbs < du_ul_nof_prbs) {
-      nof_prbs_to_write = sect.nof_prbs;
+    // Take care of case (a), takes the first N PRBs inside the section.
+    unsigned nof_prbs_to_write = du_nof_prbs - section.start_prb;
+    // Take care of case (b), takes all the PRBs inside the section.
+    if (section.start_prb + section.nof_prbs < du_nof_prbs) {
+      nof_prbs_to_write = section.nof_prbs;
     }
+
     trace_point write_rg_tp = ofh_tracer.now();
 
-    ul_context_repo->write_grid(
-        slot,
-        rg_port,
-        symbol,
-        sect.start_prb * NOF_SUBCARRIERS_PER_RB,
-        span<const cf_t>(sect.iq_samples)
-            .subspan(sect.start_prb * NOF_SUBCARRIERS_PER_RB, nof_prbs_to_write * NOF_SUBCARRIERS_PER_RB));
+    ul_context_repo->write_grid(slot,
+                                rg_port,
+                                symbol,
+                                section.start_prb * NOF_SUBCARRIERS_PER_RB,
+                                span<const cf_t>(section.iq_samples).first(nof_prbs_to_write * NOF_SUBCARRIERS_PER_RB));
 
     ofh_tracer << trace_event("ofh_receiver_write_rg", write_rg_tp);
 
     logger.debug("Written IQ data into UL resource grid PRB range [{},{}), for slot '{}', symbol '{}' and port '{}'",
-                 sect.start_prb,
-                 sect.start_prb + nof_prbs_to_write,
+                 section.start_prb,
+                 section.start_prb + nof_prbs_to_write,
                  slot,
                  symbol,
                  rg_port);

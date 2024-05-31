@@ -97,7 +97,7 @@ void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_me
     output.write<metric_dl_nof_nok>(ue.dl_nof_nok);
     output.write<metric_dl_bs>(ue.dl_bs);
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
-      output.write<metric_pusch_snr_db>(clamp(ue.pusch_snr_db, -99.9f, 99.9f));
+      output.write<metric_pusch_snr_db>(std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     }
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);

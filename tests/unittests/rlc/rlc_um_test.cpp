@@ -21,7 +21,7 @@
  */
 
 #include "lib/rlc/rlc_um_entity.h"
-#include "tests/unittests/rlc/rlc_test_helpers.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -93,6 +93,7 @@ protected:
 
     // Set Tx config
     config.tx.sn_field_length = sn_size;
+    config.tx.pdcp_sn_len     = pdcp_sn_size::size12bits;
     config.tx.queue_size      = 4096;
 
     // Create RLC entities
@@ -341,15 +342,12 @@ TEST_P(rlc_um_test, tx_without_segmentation)
 {
   const uint32_t num_sdus = 5;
   const uint32_t num_pdus = 5;
-  const uint32_t sdu_size = 1;
+  const uint32_t sdu_size = 3;
 
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      ASSERT_TRUE(sdu_bufs[i].append(i + k));
-    }
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i + 13, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(), i + 13}; // no std::move - keep local copy for later comparison
@@ -419,11 +417,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    // Write the index into the buffer
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      ASSERT_TRUE(sdu_bufs[i].append(i + k));
-    }
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(), i}; // no std::move - keep local copy for later comparison
@@ -504,15 +498,12 @@ TEST_P(rlc_um_test, tx_with_segmentation)
 TEST_P(rlc_um_test, sdu_discard)
 {
   const uint32_t num_sdus = 6;
-  const uint32_t sdu_size = 1;
+  const uint32_t sdu_size = 3;
 
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      ASSERT_TRUE(sdu_bufs[i].append(i + k));
-    }
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(), i}; // no std::move - keep local copy for later comparison
@@ -606,18 +597,15 @@ TEST_P(rlc_um_test, sdu_discard)
 TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
 {
   const uint32_t num_sdus = 6;
-  const uint32_t sdu_size = 1;
+  const uint32_t sdu_size = 3;
 
-  const uint32_t pdcp_sn_start = 4092;
   const uint32_t pdcp_sn_mod   = 4096;
+  const uint32_t pdcp_sn_start = pdcp_sn_mod - 4;
 
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      ASSERT_TRUE(sdu_bufs[i].append(i + k));
-    }
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, (pdcp_sn_start + i) % pdcp_sn_mod, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(),
@@ -715,11 +703,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = byte_buffer();
-    // Write the index into the buffer
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      ASSERT_TRUE(sdu_bufs[i].append(i + k));
-    }
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy().value(), i}; // no std::move - keep local copy for later comparison

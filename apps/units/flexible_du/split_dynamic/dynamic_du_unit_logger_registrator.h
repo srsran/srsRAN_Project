@@ -23,7 +23,7 @@
 #pragma once
 
 #include "apps/units/flexible_du/du_high/du_high_logger_registrator.h"
-#include "apps/units/flexible_du/du_low//du_low_logger_registrator.h"
+#include "apps/units/flexible_du/du_low/du_low_logger_registrator.h"
 #include "apps/units/flexible_du/fapi/fapi_logger_registrator.h"
 #include "apps/units/flexible_du/split_7_2/ru_ofh_logger_registrator.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_logger_registrator.h"

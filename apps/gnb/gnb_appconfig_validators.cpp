@@ -29,16 +29,6 @@
 
 using namespace srsran;
 
-/// Validates the given AMF configuration. Returns true on success, otherwise false.
-static bool validate_amf_appconfig(const amf_appconfig& config)
-{
-  // only check for non-empty AMF address and default port
-  if (config.ip_addr.empty() or config.port != 38412) {
-    return false;
-  }
-  return true;
-}
-
 /// Validates the given logging configuration. Returns true on success, otherwise false.
 static bool validate_log_appconfig(const log_appconfig& config)
 {
@@ -49,7 +39,7 @@ static bool validate_log_appconfig(const log_appconfig& config)
   return true;
 }
 
-static bool validate_hal_config(const optional<hal_appconfig>& config)
+static bool validate_hal_config(const std::optional<hal_appconfig>& config)
 {
 #ifdef DPDK_FOUND
   if (config && config->eal_args.empty()) {
@@ -68,10 +58,6 @@ static bool validate_hal_config(const optional<hal_appconfig>& config)
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
-    return false;
-  }
-
-  if (!validate_amf_appconfig(config.amf_cfg)) {
     return false;
   }
 

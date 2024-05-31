@@ -60,9 +60,9 @@ protected:
 
   void test_power_values(float value)
   {
-    rssi  = clamp<float>(value, -140.F, 30.F);
-    power = clamp<float>(value, -140.F, 30.F);
-    snr   = clamp<float>(value, -64.F, 63.F);
+    rssi  = std::clamp(value, -140.F, 30.F);
+    power = std::clamp(value, -140.F, 30.F);
+    snr   = std::clamp(value, -64.F, 63.F);
     test_pdu();
   }
 

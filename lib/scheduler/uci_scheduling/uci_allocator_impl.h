@@ -38,12 +38,12 @@ public:
 
   ~uci_allocator_impl() override;
 
-  optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                             rnti_t                       crnti,
-                                             const ue_cell_configuration& ue_cell_cfg,
-                                             unsigned                     k0,
-                                             span<const uint8_t>          k1_list,
-                                             const pdcch_dl_information*  fallback_dci_info = nullptr) override;
+  std::optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
+                                                  rnti_t                       crnti,
+                                                  const ue_cell_configuration& ue_cell_cfg,
+                                                  unsigned                     k0,
+                                                  span<const uint8_t>          k1_list,
+                                                  const pdcch_dl_information*  fallback_dci_info = nullptr) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
@@ -79,12 +79,12 @@ private:
   // \brief Helper function that allocates the UCI for HARQ-ACK either on the PUSCH or PUCCH.
   // In the case of UCI allocation on the PUCCH, the function decides weather to allocate the grant on common or
   // dedicated resources. Refer to \ref alloc_uci_harq_ue for the inputs and output args.
-  optional<uci_allocation> alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
-                                                    rnti_t                       crnti,
-                                                    const ue_cell_configuration& ue_cell_cfg,
-                                                    unsigned                     k0,
-                                                    unsigned                     k1,
-                                                    const pdcch_dl_information*  fallback_dci_info = nullptr);
+  std::optional<uci_allocation> alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
+                                                         rnti_t                       crnti,
+                                                         const ue_cell_configuration& ue_cell_cfg,
+                                                         unsigned                     k0,
+                                                         unsigned                     k1,
+                                                         const pdcch_dl_information*  fallback_dci_info = nullptr);
 
   // \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
   // \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params,

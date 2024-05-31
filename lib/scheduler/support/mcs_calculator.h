@@ -36,7 +36,7 @@ namespace srsran {
 /// \param[in] cqi CQI reported by the UE.
 /// \param[in] mcs_table MCS table to be used for the mapping.
 /// \return The MCS corresponding to map.
-optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
+std::optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
 
 /// \brief Maps the (PUSCH) SNR to a given MCS for PUSCH.
 ///

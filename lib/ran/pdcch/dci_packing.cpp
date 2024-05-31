@@ -154,9 +154,9 @@ static unsigned bwp_indicator_size(unsigned nof_bwp_rrc)
 }
 
 // Determines the size of the frequency domain resource assignment field for DCI formats 0_1 and 1_1.
-static unsigned freq_resource_assignment_size(resource_allocation res_allocation_type,
-                                              optional<unsigned>  nof_rb_groups,
-                                              unsigned            nof_prb_bwp)
+static unsigned freq_resource_assignment_size(resource_allocation     res_allocation_type,
+                                              std::optional<unsigned> nof_rb_groups,
+                                              unsigned                nof_prb_bwp)
 {
   unsigned freq_resource_size = 0;
   switch (res_allocation_type) {
@@ -234,11 +234,11 @@ static unsigned dl_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length d
 }
 
 // Computes the antenna ports field size for DCI format 0_1.
-static units::bits ul_ports_size(optional<dmrs_config_type> dmrs_A_type,
-                                 optional<dmrs_max_length>  dmrs_A_max_len,
-                                 optional<dmrs_config_type> dmrs_B_type,
-                                 optional<dmrs_max_length>  dmrs_B_max_len,
-                                 bool                       transform_precoding_enabled)
+static units::bits ul_ports_size(std::optional<dmrs_config_type> dmrs_A_type,
+                                 std::optional<dmrs_max_length>  dmrs_A_max_len,
+                                 std::optional<dmrs_config_type> dmrs_B_type,
+                                 std::optional<dmrs_max_length>  dmrs_B_max_len,
+                                 bool                            transform_precoding_enabled)
 {
   bool mapping_type_A_configured = dmrs_A_type.has_value() && dmrs_A_max_len.has_value();
   bool mapping_type_B_configured = dmrs_B_type.has_value() && dmrs_B_max_len.has_value();
@@ -257,10 +257,10 @@ static units::bits ul_ports_size(optional<dmrs_config_type> dmrs_A_type,
 }
 
 // Computes the antenna ports field size for DCI format 1_1.
-static units::bits dl_ports_size(optional<dmrs_config_type> dmrs_A_type,
-                                 optional<dmrs_max_length>  dmrs_A_max_len,
-                                 optional<dmrs_config_type> dmrs_B_type,
-                                 optional<dmrs_max_length>  dmrs_B_max_len)
+static units::bits dl_ports_size(std::optional<dmrs_config_type> dmrs_A_type,
+                                 std::optional<dmrs_max_length>  dmrs_A_max_len,
+                                 std::optional<dmrs_config_type> dmrs_B_type,
+                                 std::optional<dmrs_max_length>  dmrs_B_max_len)
 {
   bool mapping_type_A_configured = dmrs_A_type.has_value() && dmrs_A_max_len.has_value();
   bool mapping_type_B_configured = dmrs_B_type.has_value() && dmrs_B_max_len.has_value();

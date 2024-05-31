@@ -40,7 +40,7 @@ struct pdcp_tx_pdu {
   /// This value shall be properly set for data PDUs on DRBs.
   /// For control PDUs on DRBs and for any PDU on SRBs the value is unset and shall be ignored.
   /// Ref: TS 38.323 Sec. 6.2.2, 6.2.3, 6.3.7
-  optional<uint32_t> pdcp_sn;
+  std::optional<uint32_t> pdcp_sn;
 };
 
 } // namespace srsran

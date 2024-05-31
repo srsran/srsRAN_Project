@@ -61,7 +61,7 @@ static const std::array<srs_configuration, 64> table3 = {
      {4, 1},  {4, 10}, {4, 5}, {4, 4}, {4, 7}, {4, 11}, {4, 1}, {4, 12}, {4, 6},  {4, 4},  {4, 2},  {4, 13}, {4, 9},
      {4, 14}, {4, 15}, {4, 5}, {8, 2}, {4, 3}, {4, 16}, {4, 8}, {4, 2},  {4, 11}, {4, 17}, {4, 1},  {4, 2}}};
 
-optional<srs_configuration> srsran::srs_configuration_get(uint8_t c_srs, uint8_t b_srs)
+std::optional<srs_configuration> srsran::srs_configuration_get(uint8_t c_srs, uint8_t b_srs)
 {
   span<const srs_configuration> table;
 
@@ -83,5 +83,5 @@ optional<srs_configuration> srsran::srs_configuration_get(uint8_t c_srs, uint8_t
     return table[c_srs];
   }
 
-  return nullopt;
+  return std::nullopt;
 }

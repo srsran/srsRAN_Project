@@ -22,19 +22,23 @@
 
 #pragma once
 
+#include "sockets.h"
 #include "fmt/format.h"
-#include <netdb.h>
 #include <string>
-#include <sys/socket.h>
 
 namespace srsran {
 
 /// \brief Representation of an Transport Layer Address.
 class transport_layer_address
 {
+  using storage_type = ::sockaddr_storage;
+
 public:
   /// Underlying native type used to store a transport layer address.
-  using native_type = ::sockaddr_storage;
+  struct native_type {
+    struct sockaddr* addr;
+    socklen_t        addrlen;
+  };
 
   transport_layer_address() = default;
 
@@ -45,6 +49,11 @@ public:
   /// Creates a transport_layer_address object from a string of bits (each character is base 2).
   static transport_layer_address create_from_bitstring(const std::string& bit_str);
 
+  static transport_layer_address create_from_sockaddr(const struct sockaddr& sockaddr, socklen_t addr_len);
+  static transport_layer_address create_from_sockaddr(native_type addr);
+
+  bool empty() const { return addrlen == 0; }
+
   /// Converts the transport_layer_address to an IPv4 or IPv6 string.
   std::string to_string() const { return fmt::format("{}", *this); }
 
@@ -52,8 +61,7 @@ public:
   std::string to_bitstring() const;
 
   /// Extracts the POSIX representation of the transport layer address.
-  const native_type& native() const { return addr; }
-  native_type&       native() { return addr; }
+  native_type native() const { return {(struct sockaddr*)&addr_storage, addrlen}; }
 
   /// Compares two transport_layer_addresses.
   bool operator==(const transport_layer_address& other) const;
@@ -67,10 +75,10 @@ public:
   bool operator>(const transport_layer_address& other) const { return not(*this <= other); }
 
 private:
-  explicit transport_layer_address(const native_type& addr_) : addr(addr_) {}
+  explicit transport_layer_address(const struct sockaddr& addr_, socklen_t socklen);
 
-private:
-  native_type addr;
+  storage_type addr_storage;
+  socklen_t    addrlen = 0;
 };
 
 } // namespace srsran
@@ -90,18 +98,16 @@ struct formatter<srsran::transport_layer_address> : public formatter<std::string
   auto format(const srsran::transport_layer_address& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    char ip_addr[NI_MAXHOST];
-    if (::getnameinfo(reinterpret_cast<const sockaddr*>(&s.native()),
-                      sizeof(srsran::transport_layer_address::native_type),
-                      ip_addr,
-                      sizeof(ip_addr),
-                      nullptr,
-                      0,
-                      NI_NUMERICHOST) != 0) {
-      return format_to(ctx.out(), "invalid_addr");
+    std::array<char, NI_MAXHOST> ip_addr;
+    int                          port;
+    auto                         native_repr = s.native();
+    if (not srsran::getnameinfo(*native_repr.addr, native_repr.addrlen, ip_addr, port)) {
+      return format_to(ctx.out(), "invalid");
     }
-
-    return format_to(ctx.out(), "{}", ip_addr);
+    if (port != 0) {
+      return format_to(ctx.out(), "{}:{}", ip_addr.data(), port);
+    }
+    return format_to(ctx.out(), "{}", ip_addr.data());
   }
 };
 

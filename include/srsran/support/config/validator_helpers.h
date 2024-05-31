@@ -95,7 +95,7 @@ template <typename RangeSet,
           typename ValueType    = typename Range::value_type,
           typename IdType,
           typename IdList>
-optional<IdType>
+std::optional<IdType>
 find_disconnected_id(const RangeSet& set, const Range& r, IdList SetValueType::*id_set_list, IdType ValueType::*idfield)
 {
   for (const auto& es : set) {

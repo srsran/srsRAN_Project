@@ -127,8 +127,8 @@ struct non_trivial_storage {
     }
   }
 
-  T*       data() noexcept { return SRSRAN_LAUNDER(reinterpret_cast<T*>(array.data())); }
-  const T* data() const noexcept { return SRSRAN_LAUNDER(reinterpret_cast<const T*>(array.data())); }
+  T*       data() noexcept { return std::launder(reinterpret_cast<T*>(array.data())); }
+  const T* data() const noexcept { return std::launder(reinterpret_cast<const T*>(array.data())); }
   T&       operator[](size_t i) noexcept
   {
     srsran_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);

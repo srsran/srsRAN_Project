@@ -231,7 +231,7 @@ struct upper_phy_config {
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
   /// Receive port the UL symbols are dumped from. Leave emtpy for all ports.
-  optional<unsigned> rx_symbol_printer_port;
+  std::optional<unsigned> rx_symbol_printer_port;
   /// Boolean flag for dumping PRACH symbols when set to true.
   bool rx_symbol_printer_prach;
   /// \brief LDPC decoder type.
@@ -305,7 +305,7 @@ struct upper_phy_config {
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.
-  span<task_executor*> dl_executors;
+  std::vector<task_executor*> dl_executors;
   /// PUCCH task executor.
   task_executor* pucch_executor;
   /// PUSCH task executor.

@@ -43,39 +43,62 @@ public:
 
 } // namespace
 
-std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
+class du_ue_bearer_manager_test : public ::testing::Test
 {
-  static auto du_mng = std::make_unique<du_manager_test_bench>(
+protected:
+  du_ue_bearer_manager_test()
+  {
+    du_mng = std::make_unique<du_manager_test_bench>(
+        std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
+    dummy_slice_info = s_nssai_t{.sst = 1};
+  }
+
+  void SetUp() override
+  {
+    // init test's logger
+    srslog::init();
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  std::unique_ptr<du_manager_test_bench> du_mng = std::make_unique<du_manager_test_bench>(
       std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
-  static dummy_teid_pool        teid_pool;
-  static dummy_rlc_rlf_notifier rlf_notifier;
-  static s_nssai_t              dummy_slice_info = s_nssai_t{.sst = 1};
+  dummy_teid_pool        teid_pool;
+  dummy_rlc_rlf_notifier rlf_notifier;
+  s_nssai_t              dummy_slice_info = s_nssai_t{.sst = 1};
 
-  std::array<up_transport_layer_info, 1> ul_tnls = {
-      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{0}}};
-  return create_drb(drb_creation_info{to_du_ue_index(0),
-                                      to_du_cell_index(0),
-                                      drb_id,
-                                      lcid,
-                                      rlc_config{},
-                                      mac_lc_config{},
-                                      f1u_config{},
-                                      ul_tnls,
-                                      teid_pool,
-                                      du_mng->params,
-                                      rlf_notifier,
-                                      qos_characteristics{},
-                                      nullopt,
-                                      dummy_slice_info});
-}
+  std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
+  {
+    std::array<up_transport_layer_info, 1> ul_tnls = {
+        up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{0}}};
+    return create_drb(drb_creation_info{to_du_ue_index(0),
+                                        to_du_cell_index(0),
+                                        drb_id,
+                                        lcid,
+                                        rlc_config{},
+                                        mac_lc_config{},
+                                        f1u_config{},
+                                        ul_tnls,
+                                        teid_pool,
+                                        du_mng->params,
+                                        rlf_notifier,
+                                        qos_characteristics{},
+                                        std::nullopt,
+                                        dummy_slice_info});
+  }
+};
 
-TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)
+TEST_F(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)
 {
   du_ue_bearer_manager bearers;
   ASSERT_EQ(bearers.allocate_lcid(), LCID_MIN_DRB);
 }
 
-TEST(du_ue_bearer_manager_test, when_all_drbs_are_allocated_then_no_lcid_is_available)
+TEST_F(du_ue_bearer_manager_test, when_all_drbs_are_allocated_then_no_lcid_is_available)
 {
   std::vector<unsigned> lcids(MAX_NOF_DRBS);
   std::iota(lcids.begin(), lcids.end(), (unsigned)LCID_MIN_DRB);
@@ -89,7 +112,7 @@ TEST(du_ue_bearer_manager_test, when_all_drbs_are_allocated_then_no_lcid_is_avai
   ASSERT_FALSE(bearers.allocate_lcid().has_value());
 }
 
-TEST(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_allocate_lcid_method_finds_it)
+TEST_F(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_allocate_lcid_method_finds_it)
 {
   std::vector<unsigned> lcids(MAX_NOF_DRBS);
   std::iota(lcids.begin(), lcids.end(), (unsigned)LCID_MIN_DRB);
@@ -103,7 +126,7 @@ TEST(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_all
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
     bearers.add_drb(create_dummy_drb(drb_id, uint_to_lcid(lcids[i])));
   }
-  optional<lcid_t> found_lcid = bearers.allocate_lcid();
+  std::optional<lcid_t> found_lcid = bearers.allocate_lcid();
   ASSERT_TRUE(found_lcid.has_value());
   ASSERT_EQ(*found_lcid, lcid_hole);
 }

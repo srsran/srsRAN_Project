@@ -66,7 +66,7 @@ public:
 
         gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(rrcmsg->gnb_du_ue_f1ap_id);
         report_fatal_error_if_not(
-            ue_contexts.insert(std::make_pair(du_ue_id, ue_context{du_ue_id, nullopt, {0, 0, 0}})).second,
+            ue_contexts.insert(std::make_pair(du_ue_id, ue_context{du_ue_id, std::nullopt, {0, 0, 0}})).second,
             "DU UE ID already exists");
       } else if (msg.pdu.init_msg().value.type().value ==
                  asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer) {
@@ -99,8 +99,8 @@ public:
     }
 
     // Update gNB-CU-UE-F1AP-ID in the UE context.
-    optional<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
-    optional<gnb_cu_ue_f1ap_id_t> gnb_cu_ue_f1ap_id = srsran::get_gnb_cu_ue_f1ap_id(msg.pdu);
+    std::optional<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
+    std::optional<gnb_cu_ue_f1ap_id_t> gnb_cu_ue_f1ap_id = srsran::get_gnb_cu_ue_f1ap_id(msg.pdu);
     if (gnb_du_ue_f1ap_id.has_value()) {
       auto& ue_ctx = ue_contexts.at(gnb_du_ue_f1ap_id.value());
       if (gnb_cu_ue_f1ap_id.has_value()) {
@@ -133,9 +133,9 @@ private:
   };
 
   struct ue_context {
-    gnb_du_ue_f1ap_id_t           du_ue_id;
-    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    std::array<uint32_t, 3>       srb_ul_pdcp_sn{0, 0, 0};
+    gnb_du_ue_f1ap_id_t                du_ue_id;
+    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    std::array<uint32_t, 3>            srb_ul_pdcp_sn{0, 0, 0};
   };
 
   void handle_rx_pdu(const f1ap_message& msg)

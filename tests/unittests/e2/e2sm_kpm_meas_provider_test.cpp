@@ -21,11 +21,9 @@
  */
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
-#include "lib/e2/common/e2ap_asn1_utils.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
-#include "srsran/support/async/async_test_utils.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -215,7 +213,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   meas_info_item_s meas_info_item;
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcPacketDropRateDl");
-  label_info_item_s label_info_item;
+  label_info_item_s label_info_item{};
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
   meas_info_item.label_info_list.push_back(label_info_item);

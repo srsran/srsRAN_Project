@@ -23,12 +23,11 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <cstdint>
-#include <memory>
-#include <string>
 
 namespace srsran {
 
@@ -37,27 +36,6 @@ enum class pdcp_rb_type { srb, drb };
 
 /// PDCP NR RLC mode information.
 enum class pdcp_rlc_mode { um, am };
-
-/// PDCP NR sequence number field.
-enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18 };
-inline bool pdcp_sn_size_from_uint(pdcp_sn_size& sn_size, uint16_t num)
-{
-  if (num == 12) {
-    sn_size = pdcp_sn_size::size12bits;
-    return true;
-  }
-  if (num == 18) {
-    sn_size = pdcp_sn_size::size18bits;
-    return true;
-  }
-  return false;
-}
-
-/// \brief Convert PDCP SN size from enum to unsigned integer.
-constexpr uint8_t pdcp_sn_size_to_uint(pdcp_sn_size sn_size)
-{
-  return static_cast<uint8_t>(sn_size);
-}
 
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
@@ -189,9 +167,9 @@ struct pdcp_config_common {
 };
 
 struct pdcp_tx_config : pdcp_config_common {
-  optional<pdcp_discard_timer> discard_timer;
-  bool                         status_report_required;
-  pdcp_custom_config_tx        custom;
+  std::optional<pdcp_discard_timer> discard_timer;
+  bool                              status_report_required;
+  pdcp_custom_config_tx             custom;
 };
 
 struct pdcp_rx_config : pdcp_config_common {
@@ -212,10 +190,10 @@ struct pdcp_config {
   bool          integrity_protection_required;
   bool          ciphering_required;
   struct {
-    pdcp_sn_size                 sn_size;
-    pdcp_security_direction      direction;
-    optional<pdcp_discard_timer> discard_timer;
-    bool                         status_report_required;
+    pdcp_sn_size                      sn_size;
+    pdcp_security_direction           direction;
+    std::optional<pdcp_discard_timer> discard_timer;
+    bool                              status_report_required;
   } tx;
   struct {
     pdcp_sn_size            sn_size;
@@ -287,22 +265,6 @@ inline pdcp_config pdcp_make_default_srb_config()
 // Formatters
 //
 namespace fmt {
-
-// SN size
-template <>
-struct formatter<srsran::pdcp_sn_size> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "{}", pdcp_sn_size_to_uint(sn_size));
-  }
-};
 
 // RB type
 template <>

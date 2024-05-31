@@ -31,24 +31,24 @@ TEST(rach_indication_builder, valid_basic_parameters_passes)
   rach_indication_message         msg;
   rach_indication_message_builder builder(msg);
 
-  unsigned        slot    = 12;
-  unsigned        sfn     = 13;
-  unsigned        handle  = 14;
-  unsigned        symb_id = 3;
-  unsigned        slot_id = 45;
-  unsigned        ra_id_d = 4;
-  unsigned        index   = 32;
-  optional<float> rssi;
-  optional<float> rsrp = 0;
-  optional<float> snr  = 10;
+  unsigned             slot    = 12;
+  unsigned             sfn     = 13;
+  unsigned             handle  = 14;
+  unsigned             symb_id = 3;
+  unsigned             slot_id = 45;
+  unsigned             ra_id_d = 4;
+  unsigned             index   = 32;
+  std::optional<float> rssi;
+  std::optional<float> rsrp = 0;
+  std::optional<float> snr  = 10;
 
   builder.set_basic_parameters(sfn, slot);
   auto pdu_builder = builder.add_pdu(handle, symb_id, slot_id, ra_id_d, rssi, rsrp, snr);
 
-  optional<unsigned> timing         = 0;
-  optional<uint32_t> timing_ns      = 0;
-  optional<float>    preamble_power = 0;
-  optional<float>    preamble_snr;
+  std::optional<unsigned> timing         = 0;
+  std::optional<uint32_t> timing_ns      = 0;
+  std::optional<float>    preamble_power = 0;
+  std::optional<float>    preamble_snr;
 
   pdu_builder.add_preamble(index, timing, timing_ns, preamble_power, preamble_snr);
 

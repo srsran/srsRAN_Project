@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "cameron314/concurrentqueue.h"
+#include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/unique_fd.h"
@@ -77,10 +77,10 @@ private:
                               std::promise<bool>*     complete_notifier);
 
   // Handle the deregistration of an existing file descriptor.
-  bool handle_fd_epoll_removal(int                  fd,
-                               bool                 io_broker_deregistration_required,
-                               optional<error_code> epoll_error,
-                               std::promise<bool>*  complete_notifier);
+  bool handle_fd_epoll_removal(int                       fd,
+                               bool                      io_broker_deregistration_required,
+                               std::optional<error_code> epoll_error,
+                               std::promise<bool>*       complete_notifier);
 
   void stop_impl();
 
@@ -96,7 +96,7 @@ private:
   std::unordered_map<int, fd_handler> event_handler;
 
   // Queue used to communicate commands to the epoll broker.
-  moodycamel::ConcurrentQueue<control_event> event_queue;
+  blocking_queue<control_event> event_queue;
 
   std::atomic<bool> running{true};
   unique_thread     thread;

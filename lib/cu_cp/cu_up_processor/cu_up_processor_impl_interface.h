@@ -38,6 +38,9 @@ class cu_up_processor_e1ap_interface
 public:
   virtual ~cu_up_processor_e1ap_interface() = default;
 
+  /// Cancel pending tasks for a given UE, so it can be safely removed.
+  virtual void stop(ue_index_t ue_index) = 0;
+
   /// \brief Get the CU-UP index.
   /// \return The CU-UP index.
   virtual cu_up_index_t get_cu_up_index() = 0;

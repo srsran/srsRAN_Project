@@ -41,18 +41,18 @@ struct formatter<asn1::ngap::ngap_pdu_c> : public basic_fmt_parser {
 
 } // namespace fmt
 
-void srsran::srs_cu_cp::log_ngap_pdu(srslog::basic_logger&         logger,
-                                     bool                          json_log,
-                                     bool                          is_rx,
-                                     const optional<ue_index_t>&   ue_idx,
-                                     const asn1::ngap::ngap_pdu_c& pdu)
+void srsran::srs_cu_cp::log_ngap_pdu(srslog::basic_logger&            logger,
+                                     bool                             json_log,
+                                     bool                             is_rx,
+                                     const std::optional<ue_index_t>& ue_idx,
+                                     const asn1::ngap::ngap_pdu_c&    pdu)
 {
   if (not logger.info.enabled()) {
     return;
   }
 
-  optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
-  optional<amf_ue_id_t> amf_ue_id = get_amf_ue_id(pdu);
+  std::optional<ran_ue_id_t> ran_ue_id = get_ran_ue_id(pdu);
+  std::optional<amf_ue_id_t> amf_ue_id = get_amf_ue_id(pdu);
 
   // Custom formattable object whose formatting function will run in the log backend.
   auto pdu_log_entry =

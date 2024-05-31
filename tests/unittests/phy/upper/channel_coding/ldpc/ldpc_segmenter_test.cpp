@@ -141,7 +141,7 @@ TEST_P(LDPCSegmenterFixture, LDPCSegmenterTest)
 
   std::vector<log_likelihood_ratio> cw_llrs(segments[0].get_metadata().tb_common.cw_length);
   std::generate(cw_llrs.begin(), cw_llrs.end(), [n = static_cast<int8_t>(-127)]() mutable {
-    int8_t r = clamp(n, LLR_MIN.to_value_type(), LLR_MAX.to_value_type());
+    int8_t r = std::clamp(n, LLR_MIN.to_value_type(), LLR_MAX.to_value_type());
     ++n;
     return log_likelihood_ratio(r);
   });

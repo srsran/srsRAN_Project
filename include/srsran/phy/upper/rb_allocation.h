@@ -87,8 +87,8 @@ public:
   /// \param[in] vrb_bitmap VRB allocation bitmap in which each entry represents an active RB.
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
   /// \return An RB allocation instance.
-  static rb_allocation make_type0(const bounded_bitset<MAX_RB>&      vrb_bitmap,
-                                  const optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
+  static rb_allocation make_type0(const bounded_bitset<MAX_RB>&           vrb_bitmap,
+                                  const std::optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
   /// \brief Creates a Type 1 RB allocation object.
   ///
@@ -99,7 +99,7 @@ public:
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
   /// \return An RB allocation instance.
   static rb_allocation
-  make_type1(unsigned rb_start, unsigned rb_count, const optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
+  make_type1(unsigned rb_start, unsigned rb_count, const std::optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
   /// \brief Creates a custom allocation object using a list of VRB indexes.
   ///
@@ -111,8 +111,8 @@ public:
   /// \param[in] vrb_indexes Provides the VRB indexes.
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
   /// \return An RB allocation instance.
-  static rb_allocation make_custom(std::initializer_list<const unsigned> vrb_indexes,
-                                   const optional<vrb_to_prb_mapper>&    vrb_to_prb_map_ = {});
+  static rb_allocation make_custom(std::initializer_list<const unsigned>   vrb_indexes,
+                                   const std::optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
   /// \brief Compares two frequency domain allocations.
   ///

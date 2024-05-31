@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../../common/asn1_helpers.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
@@ -42,11 +43,36 @@ srb_id_t make_srb_id(const Asn1Type& srb_item)
   return static_cast<srb_id_t>(srb_item.srb_id);
 }
 
+/// \brief Convert extension fields of F1AP ASN.1 drb to be setup item to common type struct.
+/// \param[out] drb_to_be_setup_item The drb to be setup item common type struct.
+/// \param[in] ie_exts The ASN.1 struct with DRB-specific parameters to be setup.
+inline void
+f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(f1ap_drb_to_setup& drb_to_be_setup_mod_item,
+                                               const asn1::f1ap::drbs_to_be_setup_item_ext_ies_container& ie_exts)
+{
+  drb_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size_from_f1ap_asn1(ie_exts.dl_pdcp_sn_len);
+}
+
+/// \brief Convert extension fields of F1AP ASN.1 drb to be setup mod item to common type struct.
+/// \param[out] drb_to_be_setup_mod_item The drb to be setup item common type struct.
+/// \param[in] ie_exts The ASN.1 struct with DRB-specific parameters to be setup.
+inline void
+f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(f1ap_drb_to_setup& drb_to_be_setup_mod_item,
+                                               const asn1::f1ap::drbs_to_be_setup_mod_item_ext_ies_container& ie_exts)
+{
+  if (ie_exts.dl_pdcp_sn_len_present) {
+    drb_to_be_setup_mod_item.pdcp_sn_len = pdcp_sn_size_from_f1ap_asn1(ie_exts.dl_pdcp_sn_len);
+  }
+}
+
 /// \brief Creates a \c f1ap_drb_to_setup from ASN.1 type.
 ///
 /// This function is used by the following procedures:
 /// - f1ap_du_ue_context_setup_procedure
 /// - f1ap_du_ue_context_modification_procedure
+///
+/// This is as shared function for \c drbs_to_be_setup_item_s and \c drbs_to_be_setup_item_s, because of identical
+/// items. Since the \c ie_exts are different, the reading from these extensions is delegated to respective overloads.
 ///
 /// \param drb_item ASN.1 item with DRB-specific parameters to be setup.
 /// \return f1ap_drb_to_setup object.
@@ -57,6 +83,11 @@ f1ap_drb_to_setup make_drb_to_setup(const Asn1Type& drb_item)
 
   drb_obj.drb_id = static_cast<drb_id_t>(drb_item.drb_id);
   drb_obj.mode   = static_cast<drb_rlc_mode>(static_cast<unsigned>(drb_item.rlc_mode));
+
+  if (drb_item.ie_exts_present) {
+    f1ap_drbs_to_be_setup_mod_item_ext_ies_to_asn1(drb_obj, drb_item.ie_exts);
+  }
+
   drb_obj.uluptnl_info_list.reserve(drb_item.ul_up_tnl_info_to_be_setup_list.size());
   for (const auto& tnl_info : drb_item.ul_up_tnl_info_to_be_setup_list) {
     drb_obj.uluptnl_info_list.push_back(asn1_to_up_transport_layer_info(tnl_info.ul_up_tnl_info));

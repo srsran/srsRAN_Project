@@ -48,10 +48,10 @@ public:
   ldpc_decoder_impl() = default;
 
   // See interface for the documentation.
-  optional<unsigned> decode(bit_buffer&                      output,
-                            span<const log_likelihood_ratio> input,
-                            crc_calculator*                  crc,
-                            const configuration&             cfg) override;
+  std::optional<unsigned> decode(bit_buffer&                      output,
+                                 span<const log_likelihood_ratio> input,
+                                 crc_calculator*                  crc,
+                                 const configuration&             cfg) override;
 
 private:
   /// Initializes the decoder inner variables.

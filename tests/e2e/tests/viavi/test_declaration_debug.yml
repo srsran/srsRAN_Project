@@ -23,7 +23,7 @@ tests:
   - campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH.xml"
     test_name: "32UE static DL + UL UDP - Dell"
     test_timeout: 2700  # 45 * 60
-    gnb_extra_commands: "log --mac_level=info"
+    gnb_extra_commands: "log --phy_level=info"
     id: "32UE Bidirectional UDP - Debug"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 1

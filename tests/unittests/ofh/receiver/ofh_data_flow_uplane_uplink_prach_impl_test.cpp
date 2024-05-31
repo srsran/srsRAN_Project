@@ -97,7 +97,7 @@ public:
     results.uplane_results.params.symbol_id = 0;
     results.eaxc                            = 4;
     auto& section                           = results.uplane_results.sections.emplace_back();
-    section.iq_samples.resize(MAX_NOF_PRBS * NRE);
+    section.iq_samples.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
 
     ul_cplane_context context;
     context.prb_start              = 0;
@@ -156,7 +156,7 @@ public:
     section.nof_prbs                  = 273;
     section.use_current_symbol_number = true;
     section.is_every_rb_used          = true;
-    section.iq_samples.resize(MAX_NOF_PRBS * NRE);
+    section.iq_samples.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
 
     return deco_results;
   }

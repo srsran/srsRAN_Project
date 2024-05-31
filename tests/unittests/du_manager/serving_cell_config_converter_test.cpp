@@ -601,7 +601,8 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
   auto& dest_pusch_cfg = dest_cell_grp_cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value();
   // Add new/remove configurations.
   dest_pusch_cfg.pusch_mapping_type_a_dmrs.emplace();
-  dest_pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.emplace();
+  dest_pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.emplace(
+      dmrs_uplink_config::transform_precoder_enabled());
   dest_pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.value().is_seq_hopping_enabled = true;
   // Release.
   dest_pusch_cfg.pusch_mapping_type_b_dmrs.reset();

@@ -27,6 +27,7 @@
 #include "../task_schedulers/cu_up_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
 #include <unordered_map>
 
@@ -38,6 +39,7 @@ struct cu_cp_configuration;
 struct cu_up_repository_config {
   const cu_cp_configuration& cu_cp;
   e1ap_cu_cp_notifier&       e1ap_ev_notifier;
+  common_ue_manager&         ue_mng;
   srslog::basic_logger&      logger;
 };
 

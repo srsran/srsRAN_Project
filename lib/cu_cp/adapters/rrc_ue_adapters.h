@@ -56,51 +56,6 @@ private:
   const ue_index_t          ue_index;
 };
 
-/// Adapter between RRC UE and UE Task Scheduler
-class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
-{
-public:
-  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, task_executor& ue_exec_) : ue_index(ue_index_), ue_exec(&ue_exec_)
-  {
-  }
-
-  void connect_du_processor(du_processor_ue_task_handler& du_processor_task_handler_)
-  {
-    du_processor_task_handler = &du_processor_task_handler_;
-    timers                    = timer_factory{du_processor_task_handler->get_timer_manager(), *ue_exec};
-  }
-
-  void schedule_async_task(async_task<void> task) override
-  {
-    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
-    du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));
-  }
-
-  unique_timer make_unique_timer() override
-  {
-    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
-    return du_processor_task_handler->make_unique_timer();
-  }
-  timer_factory get_timer_factory() override
-  {
-    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
-    return timers;
-  }
-
-  task_executor& get_executor() override
-  {
-    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
-    srsran_assert(ue_exec != nullptr, "UE executor must not be nullptr");
-    return *ue_exec;
-  }
-
-private:
-  ue_index_t                    ue_index;
-  task_executor*                ue_exec = nullptr;
-  timer_factory                 timers;
-  du_processor_ue_task_handler* du_processor_task_handler = nullptr;
-};
-
 // Adapter between RRC UE and NGAP
 class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
@@ -203,8 +158,8 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
   }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
-                                                       optional<rrc_meas_cfg> current_meas_config = {}) override
+  std::optional<rrc_meas_cfg>
+  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
     return meas_handler->handle_measurement_config_request(ue_index, nci, current_meas_config);

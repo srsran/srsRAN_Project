@@ -20,6 +20,7 @@
 
 set(SOURCES
         buffered_decorator_factories.cpp
+        buffered_decorator_impl.cpp
         buffered_slot_gateway_impl.cpp
         buffered_slot_gateway_task_dispatcher.cpp
         buffered_slot_time_notifier_decorator.cpp)

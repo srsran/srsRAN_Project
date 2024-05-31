@@ -33,24 +33,24 @@ namespace srsran {
 
 /// \brief Helper for logging Rx/Tx F1AP PDUs for the CU-CP and DU.
 template <typename UeIndex>
-void log_f1ap_pdu(srslog::basic_logger&    logger,
-                  bool                     is_rx,
-                  gnb_du_id_t              du_id,
-                  const optional<UeIndex>& ue_id,
-                  const f1ap_message&      msg,
-                  bool                     json_enabled);
+void log_f1ap_pdu(srslog::basic_logger&         logger,
+                  bool                          is_rx,
+                  gnb_du_id_t                   du_id,
+                  const std::optional<UeIndex>& ue_id,
+                  const f1ap_message&           msg,
+                  bool                          json_enabled);
 
-extern template void log_f1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                  logger,
-                                                         bool                                   is_rx,
-                                                         gnb_du_id_t                            du_id,
-                                                         const optional<srs_cu_cp::ue_index_t>& ue_id,
-                                                         const f1ap_message&                    msg,
-                                                         bool                                   json_enabled);
-extern template void log_f1ap_pdu<du_ue_index_t>(srslog::basic_logger&          logger,
-                                                 bool                           is_rx,
-                                                 gnb_du_id_t                    du_id,
-                                                 const optional<du_ue_index_t>& ue_id,
-                                                 const f1ap_message&            msg,
-                                                 bool                           json_enabled);
+extern template void log_f1ap_pdu<srs_cu_cp::ue_index_t>(srslog::basic_logger&                       logger,
+                                                         bool                                        is_rx,
+                                                         gnb_du_id_t                                 du_id,
+                                                         const std::optional<srs_cu_cp::ue_index_t>& ue_id,
+                                                         const f1ap_message&                         msg,
+                                                         bool                                        json_enabled);
+extern template void log_f1ap_pdu<du_ue_index_t>(srslog::basic_logger&               logger,
+                                                 bool                                is_rx,
+                                                 gnb_du_id_t                         du_id,
+                                                 const std::optional<du_ue_index_t>& ue_id,
+                                                 const f1ap_message&                 msg,
+                                                 bool                                json_enabled);
 
 } // namespace srsran

@@ -152,7 +152,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
   ASSERT_EQ(server_address, "127.0.0.1");
-  optional<uint16_t> server_port = server->get_bind_port();
+  std::optional<uint16_t> server_port = server->get_bind_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 }
@@ -168,7 +168,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
   ASSERT_EQ(server_address, "::1");
-  optional<uint16_t> server_port = server->get_bind_port();
+  std::optional<uint16_t> server_port = server->get_bind_port();
   ASSERT_TRUE(server_port.has_value());
   ASSERT_NE(server_port.value(), 0);
 }
@@ -197,7 +197,7 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  optional<uint16_t> server_port = server->get_bind_port();
+  std::optional<uint16_t> server_port = server->get_bind_port();
   ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small.copy(), server_address_v4, server_port.value());
@@ -244,7 +244,7 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  optional<uint16_t> server_port = server->get_bind_port();
+  std::optional<uint16_t> server_port = server->get_bind_port();
   ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small.copy(), server_address_v6, server_port.value());
@@ -291,7 +291,7 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 
   std::string server_address = {};
   ASSERT_TRUE(server->get_bind_address(server_address));
-  optional<uint16_t> server_port = server->get_bind_port();
+  std::optional<uint16_t> server_port = server->get_bind_port();
   ASSERT_TRUE(server_port.has_value());
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small.copy(), server_address, server_port.value());

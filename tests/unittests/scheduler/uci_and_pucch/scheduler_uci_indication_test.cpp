@@ -148,7 +148,7 @@ protected:
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   const scheduler_expert_config       sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  optional<cell_configuration>        cell_cfg;
+  std::optional<cell_configuration>   cell_cfg;
   std::unique_ptr<mac_scheduler>      sched;
 
   slot_point          next_slot;

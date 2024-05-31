@@ -48,8 +48,8 @@ protected:
     params.channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         params.channel_bw_mhz, params.scs_common, band_helper::get_freq_range(*params.band));
-    static const uint8_t                              ss0_idx = 0;
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+    static const uint8_t                                   ss0_idx = 0;
+    std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
         band_helper::get_ssb_coreset0_freq_location(params.dl_arfcn,
                                                     *params.band,
                                                     nof_crbs,
@@ -182,7 +182,7 @@ protected:
     return uci_ind;
   }
 
-  optional<pucch_info> get_pucch_sr_scheduled(uint16_t cell_idx, uint16_t ue_idx)
+  std::optional<pucch_info> get_pucch_sr_scheduled(uint16_t cell_idx, uint16_t ue_idx)
   {
     if (last_sched_res_list[cell_idx] == nullptr) {
       return {};
@@ -196,15 +196,15 @@ protected:
     }
     switch (pucch_res->format) {
       case srsran::pucch_format::FORMAT_0:
-        return pucch_res->format_0.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : optional<pucch_info>{};
+        return pucch_res->format_0.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
       case srsran::pucch_format::FORMAT_1:
-        return pucch_res->format_1.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : optional<pucch_info>{};
+        return pucch_res->format_1.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
       case srsran::pucch_format::FORMAT_2:
-        return pucch_res->format_2.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : optional<pucch_info>{};
+        return pucch_res->format_2.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
       case srsran::pucch_format::FORMAT_3:
-        return pucch_res->format_3.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : optional<pucch_info>{};
+        return pucch_res->format_3.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
       case srsran::pucch_format::FORMAT_4:
-        return pucch_res->format_4.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : optional<pucch_info>{};
+        return pucch_res->format_4.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
       default:
         return {};
     }

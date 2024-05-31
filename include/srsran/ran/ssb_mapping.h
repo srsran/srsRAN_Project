@@ -179,7 +179,7 @@ ssb_pattern_case ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arf
 /// \param dl_arfcn DL ARFCN.
 /// \param band NR band. If not provided, it will be derived from the DL-ARFCN.
 /// \return L_max value.
-uint8_t ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn, optional<nr_band> band = {});
+uint8_t ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn, std::optional<nr_band> band = {});
 
 /// \brief Calculate the CRBs (with reference to SCS common grid) where the SSB is allocated.
 /// \param[in] ssb_scs      is the SSB Sub-Carrier Spacing, as per TS 38.213, Section 4.1.

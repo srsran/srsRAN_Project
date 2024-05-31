@@ -58,8 +58,6 @@ public:
   // F1AP message handler functions
   void handle_message(const f1ap_message& msg) override;
 
-  f1ap_event_handler& get_f1c_connection_handler() override { return connection_handler; }
-
   // F1AP UE configuration functions
   f1ap_ue_creation_response      handle_ue_creation_request(const f1ap_ue_creation_request& msg) override;
   f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) override;

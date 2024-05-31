@@ -140,10 +140,10 @@ public:
     });
   }
 
-  optional<rrc_meas_cfg> on_measurement_config_request(nr_cell_id_t           nci,
-                                                       optional<rrc_meas_cfg> current_meas_config = {}) override
+  std::optional<rrc_meas_cfg>
+  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
-    optional<rrc_meas_cfg> meas_cfg;
+    std::optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;
   }
 
@@ -163,22 +163,6 @@ public:
   {
     return true;
   }
-};
-
-struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
-public:
-  dummy_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
-  void           schedule_async_task(async_task<void> task) override { ctrl_loop.schedule(std::move(task)); }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-  timer_factory  get_timer_factory() override { return timer_factory{timer_db, exec}; }
-  task_executor& get_executor() override { return exec; }
-
-  void tick_timer() { timer_db.tick(); }
-
-private:
-  fifo_async_task_scheduler ctrl_loop{16};
-  timer_manager&            timer_db;
-  task_executor&            exec;
 };
 
 } // namespace srs_cu_cp

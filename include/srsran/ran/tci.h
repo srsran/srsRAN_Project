@@ -70,11 +70,11 @@ struct qcl_info {
   /// The UE's serving cell in which the referenceSignal is configured. If the field is absent, it applies to the
   /// serving cell in which the TCI-State is configured. The RS can be located on a serving cell other than the serving
   /// cell in which the TCI-State is configured only if the qcl-Type is configured as typeC or typeD.
-  optional<du_cell_index_t> cell;
+  std::optional<du_cell_index_t> cell;
   /// The DL BWP which the RS is located in. This field is mandatory present if csi-rs is included, absent otherwise.
-  optional<bwp_id_t> bwp_id;
-  reference_signal   ref_sig;
-  qcl_type           qcl_type;
+  std::optional<bwp_id_t> bwp_id;
+  reference_signal        ref_sig;
+  qcl_type                qcl_type;
 
   bool operator==(const qcl_info& rhs) const
   {
@@ -86,9 +86,9 @@ struct qcl_info {
 /// \brief Associates one or two DL reference signals with a corresponding quasi-colocation (QCL) type.
 /// \remark See TS 38.331, TCI-State.
 struct tci_state {
-  tci_state_id_t     state_id;
-  qcl_info           qcl_type1;
-  optional<qcl_info> qcl_type2;
+  tci_state_id_t          state_id;
+  qcl_info                qcl_type1;
+  std::optional<qcl_info> qcl_type2;
 
   bool operator==(const tci_state& rhs) const
   {

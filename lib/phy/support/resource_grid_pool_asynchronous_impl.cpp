@@ -107,7 +107,7 @@ resource_grid& resource_grid_pool_asynchronous_impl::get_resource_grid(const res
   trace_point tp = l1_tracer.now();
 
   // Pop first available grid.
-  optional<unsigned> grid = available.pop_blocking();
+  std::optional<unsigned> grid = available.pop_blocking();
   srsran_assert(grid.has_value(), "Failed to pop grid.");
 
   // Prepare reserved grid and enqueue.

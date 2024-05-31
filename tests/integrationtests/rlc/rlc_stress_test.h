@@ -27,7 +27,6 @@
 #include "rlc_stress_test_mac.h"
 #include "rlc_stress_test_rrc.h"
 #include "rlc_stress_test_traffic.h"
-#include "tests/unittests/rlc/rlc_test_helpers.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/rlc/rlc_entity.h"
@@ -35,7 +34,6 @@
 #include "srsran/support/executors/task_worker.h"
 #include <condition_variable>
 #include <mutex>
-#include <random>
 #include <unistd.h>
 
 namespace srsran {

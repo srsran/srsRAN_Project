@@ -35,10 +35,10 @@ namespace srsran {
 namespace srs_du {
 
 struct rlc_bearer_config {
-  lcid_t             lcid;
-  optional<drb_id_t> drb_id;
-  rlc_config         rlc_cfg;
-  mac_lc_config      mac_cfg;
+  lcid_t                  lcid;
+  std::optional<drb_id_t> drb_id;
+  rlc_config              rlc_cfg;
+  mac_lc_config           mac_cfg;
 
   bool operator==(const rlc_bearer_config& rhs) const
   {

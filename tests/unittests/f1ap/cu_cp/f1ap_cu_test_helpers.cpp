@@ -47,7 +47,7 @@ f1ap_cu_test::f1ap_cu_test(const f1ap_configuration& f1ap_cfg)
   f1ap_configuration tmp = f1ap_cfg;
   tmp.json_log_enabled   = true;
 
-  f1ap = create_f1ap(tmp, f1ap_pdu_notifier, du_processor_notifier, f1ap_du_mgmt_notifier, timers, ctrl_worker);
+  f1ap = create_f1ap(tmp, f1ap_pdu_notifier, du_processor_notifier, timers, ctrl_worker);
 }
 
 f1ap_cu_test::~f1ap_cu_test()
@@ -140,6 +140,7 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
     drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not_pre_emptable";
     drb_item.qos_info.s_nssai.sst                                                = 1;
     drb_item.rlc_mod                                                             = rlc_mode::am;
+    drb_item.pdcp_sn_len                                                         = pdcp_sn_size::size12bits;
 
     req.drbs_to_be_setup_list.emplace(drb, drb_item);
   }

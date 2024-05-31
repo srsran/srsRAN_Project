@@ -37,6 +37,7 @@ class reestablishment_context_modification_routine
 {
 public:
   reestablishment_context_modification_routine(ue_index_t                                    ue_index_,
+                                               const srsran::security::sec_as_config&        security_cfg_,
                                                e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
                                                f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
                                                du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
@@ -61,6 +62,7 @@ private:
                                             bool                                         reestablish_pdcp);
 
   ue_index_t                                    ue_index = ue_index_t::invalid;
+  security::sec_as_config                       security_cfg;
   e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng;       // to trigger bearer context setup at CU-UP
   f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng;           // to trigger UE context modification at DU
   du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;            // to trigger RRC Reconfiguration at UE

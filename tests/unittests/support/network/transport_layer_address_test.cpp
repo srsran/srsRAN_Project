@@ -49,7 +49,7 @@ std::string create_random_ipv6_string()
 TEST(transport_layer_address_test, empty_address)
 {
   transport_layer_address addr{}, addr2{};
-  ASSERT_EQ(fmt::format("{}", addr), "invalid_addr");
+  ASSERT_EQ(fmt::format("{}", addr), "invalid");
   ASSERT_EQ(addr, addr2);
 }
 

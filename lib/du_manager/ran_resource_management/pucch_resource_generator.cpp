@@ -27,11 +27,11 @@ using namespace srsran;
 using namespace srs_du;
 
 struct pucch_grant {
-  pucch_format           format;
-  ofdm_symbol_range      symbols;
-  prb_interval           prbs;
-  optional<prb_interval> freq_hop_grant;
-  optional<unsigned>     occ_cs_idx;
+  pucch_format                format;
+  ofdm_symbol_range           symbols;
+  prb_interval                prbs;
+  std::optional<prb_interval> freq_hop_grant;
+  std::optional<unsigned>     occ_cs_idx;
 };
 
 // Returns the number of possible spreading factors which is a function of the number of symbols.

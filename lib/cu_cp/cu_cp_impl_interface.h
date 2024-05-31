@@ -241,9 +241,10 @@ public:
   /// \param[in] ue_index The index of the UE to update the measurement config for.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
-  virtual optional<rrc_meas_cfg> handle_measurement_config_request(ue_index_t             ue_index,
-                                                                   nr_cell_id_t           nci,
-                                                                   optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  virtual std::optional<rrc_meas_cfg>
+  handle_measurement_config_request(ue_index_t                  ue_index,
+                                    nr_cell_id_t                nci,
+                                    std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Handle a measurement report for given UE.
   virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;

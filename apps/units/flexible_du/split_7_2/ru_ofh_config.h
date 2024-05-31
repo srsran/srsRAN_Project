@@ -37,7 +37,7 @@ struct ru_ofh_unit_base_cell_config {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  std::optional<bs_channel_bandwidth_fr1> ru_operating_bw;
   /// T1a maximum parameter for downlink Control-Plane in microseconds.
   std::chrono::microseconds T1a_max_cp_dl{500};
   /// T1a minimum parameter for downlink Control-Plane in microseconds.
@@ -123,7 +123,7 @@ struct ru_ofh_unit_cpu_affinities_cell_config {
   os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
 };
 
-/// Expert threads configuration of the gNB app.
+/// Expert threads configuration.
 struct ru_ofh_unit_expert_threads_config {
   ru_ofh_unit_expert_threads_config()
   {
@@ -131,16 +131,22 @@ struct ru_ofh_unit_expert_threads_config {
     is_downlink_parallelized = nof_threads > 3;
   }
 
-  /// Open Fronthaul thread configuration of the gNB app.
+  /// Open Fronthaul thread configuration.
   bool is_downlink_parallelized = true;
 };
 
-/// Expert configuration of the gNB app.
+/// Expert configuration.
 struct ru_ofh_unit_expert_execution_config {
   /// Expert thread configuration of the Open Fronthaul Radio Unit.
   ru_ofh_unit_expert_threads_config threads;
-  /// CPU affinities per cell of the gNB app.
+  /// CPU affinities per cell.
   std::vector<ru_ofh_unit_cpu_affinities_cell_config> cell_affinities = {{}};
+};
+
+/// HAL configuration.
+struct ru_ofh_unit_hal_config {
+  /// EAL configuration arguments.
+  std::string eal_args;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.
@@ -161,6 +167,8 @@ struct ru_ofh_unit_config {
   ///
   /// \note Add one cell by default.
   ru_ofh_unit_expert_execution_config expert_execution_cfg;
+  /// HAL configuration.
+  std::optional<ru_ofh_unit_hal_config> hal_config;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

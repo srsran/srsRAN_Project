@@ -49,8 +49,8 @@ struct ngap_handover_preparation_response {
 enum class ngap_handov_type { intra5gs = 0, fivegs_to_eps, eps_to_5gs, fivegs_to_utran };
 
 struct ngap_qos_flow_info_item {
-  qos_flow_id_t  qos_flow_id = qos_flow_id_t::invalid;
-  optional<bool> dl_forwarding;
+  qos_flow_id_t       qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<bool> dl_forwarding;
 };
 
 struct ngap_drbs_to_qos_flows_map_item {
@@ -65,8 +65,8 @@ struct ngap_pdu_session_res_info_item {
 };
 
 struct ngap_erab_info_item {
-  uint8_t        erab_id;
-  optional<bool> dl_forwarding;
+  uint8_t             erab_id;
+  std::optional<bool> dl_forwarding;
 };
 
 enum class ngap_cell_size { verysmall = 0, small, medium, large };
@@ -76,11 +76,11 @@ struct ngap_cell_type {
 };
 
 struct ngap_last_visited_ngran_cell_info {
-  nr_cell_global_id_t    global_cell_id;
-  ngap_cell_type         cell_type;
-  uint16_t               time_ue_stayed_in_cell;
-  optional<uint16_t>     time_ue_stayed_in_cell_enhanced_granularity;
-  optional<ngap_cause_t> ho_cause_value;
+  nr_cell_global_id_t         global_cell_id;
+  ngap_cell_type              cell_type;
+  uint16_t                    time_ue_stayed_in_cell;
+  std::optional<uint16_t>     time_ue_stayed_in_cell_enhanced_granularity;
+  std::optional<ngap_cause_t> ho_cause_value;
 };
 
 struct ngap_last_visited_cell_item {
@@ -92,7 +92,7 @@ struct ngap_source_ngran_node_to_target_ngran_node_transparent_container {
   std::vector<ngap_pdu_session_res_info_item> pdu_session_res_info_list;
   std::vector<ngap_erab_info_item>            erab_info_list;
   nr_cell_global_id_t                         target_cell_id;
-  optional<uint16_t>                          idx_to_rfsp;
+  std::optional<uint16_t>                     idx_to_rfsp;
   std::vector<ngap_last_visited_cell_item>    ue_history_info;
 };
 
@@ -103,12 +103,12 @@ struct ngap_handover_request {
   ngap_ue_aggr_max_bit_rate ue_aggr_max_bit_rate;
   // TODO: Add optional core_network_assist_info_for_inactive
   security::security_context                                            security_context;
-  optional<bool>                                                        new_security_context_ind;
+  std::optional<bool>                                                   new_security_context_ind;
   byte_buffer                                                           nasc;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_list_ho_req;
   std::vector<s_nssai_t>                                                allowed_nssai;
   // TODO: Add optional trace_activation
-  optional<uint64_t>                                                masked_imeisv;
+  std::optional<uint64_t>                                           masked_imeisv;
   ngap_source_ngran_node_to_target_ngran_node_transparent_container source_to_target_transparent_container;
   // TODO: Add optional mob_restrict_list
   // TODO: Add optional location_report_request_type
@@ -119,20 +119,20 @@ struct ngap_handover_request {
 };
 
 struct ngap_qos_flow_item_with_data_forwarding {
-  qos_flow_id_t  qos_flow_id = qos_flow_id_t::invalid;
-  optional<bool> data_forwarding_accepted;
+  qos_flow_id_t       qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<bool> data_forwarding_accepted;
 };
 
 struct ngap_data_forwarding_resp_drb_item {
-  drb_id_t                          drb_id = drb_id_t::invalid;
-  optional<up_transport_layer_info> dl_forwarding_up_tnl_info;
-  optional<up_transport_layer_info> ul_forwarding_up_tnl_info;
+  drb_id_t                               drb_id = drb_id_t::invalid;
+  std::optional<up_transport_layer_info> dl_forwarding_up_tnl_info;
+  std::optional<up_transport_layer_info> ul_forwarding_up_tnl_info;
 };
 
 struct ngap_ho_request_ack_transfer {
   up_transport_layer_info                              dl_ngu_up_tnl_info;
-  optional<up_transport_layer_info>                    dl_forwarding_up_tnl_info;
-  optional<security_result_t>                          security_result;
+  std::optional<up_transport_layer_info>               dl_forwarding_up_tnl_info;
+  std::optional<security_result_t>                     security_result;
   std::vector<ngap_qos_flow_item_with_data_forwarding> qos_flow_setup_resp_list;
   std::vector<cu_cp_qos_flow_with_cause_item>          qos_flow_failed_to_setup_list;
   std::vector<ngap_data_forwarding_resp_drb_item>      data_forwarding_resp_drb_list;
@@ -161,7 +161,7 @@ struct ngap_handover_resource_allocation_response {
   ngap_cause_t cause;
 
   // common
-  optional<crit_diagnostics_t> crit_diagnostics;
+  std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 } // namespace srs_cu_cp

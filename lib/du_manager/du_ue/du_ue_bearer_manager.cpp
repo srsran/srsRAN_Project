@@ -26,7 +26,7 @@ using namespace srsran;
 using namespace srs_du;
 
 du_ue_srb&
-du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg, optional<const mac_lc_config> mac_cfg)
+du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg, std::optional<const mac_lc_config> mac_cfg)
 {
   srsran_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
   srbs_.emplace(srb_id);
@@ -52,7 +52,7 @@ std::unique_ptr<du_ue_drb> du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
   return drb;
 }
 
-optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
+std::optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
 {
   static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
   for (const auto& drb : drbs()) {

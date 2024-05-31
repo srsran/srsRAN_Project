@@ -70,10 +70,10 @@ constexpr inline gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx
 }
 
 struct e1ap_cell_group_info_item {
-  uint8_t               cell_group_id = 0;
-  optional<std::string> ul_cfg;
-  optional<std::string> dl_tx_stop;
-  optional<std::string> rat_type;
+  uint8_t                    cell_group_id = 0;
+  std::optional<std::string> ul_cfg;
+  std::optional<std::string> dl_tx_stop;
+  std::optional<std::string> rat_type;
 };
 
 struct e1ap_ng_ran_alloc_and_retention_prio {
@@ -83,33 +83,33 @@ struct e1ap_ng_ran_alloc_and_retention_prio {
 };
 
 struct e1ap_gbr_qos_flow_info {
-  uint64_t           max_flow_bit_rate_dl;
-  uint64_t           max_flow_bit_rate_ul;
-  uint64_t           guaranteed_flow_bit_rate_dl;
-  uint64_t           guaranteed_flow_bit_rate_ul;
-  optional<uint16_t> max_packet_loss_rate_dl;
-  optional<uint16_t> max_packet_loss_rate_ul;
+  uint64_t                max_flow_bit_rate_dl;
+  uint64_t                max_flow_bit_rate_ul;
+  uint64_t                guaranteed_flow_bit_rate_dl;
+  uint64_t                guaranteed_flow_bit_rate_ul;
+  std::optional<uint16_t> max_packet_loss_rate_dl;
+  std::optional<uint16_t> max_packet_loss_rate_ul;
 };
 
 struct e1ap_qos_flow_level_qos_params {
-  qos_characteristics_t                qos_characteristics;
-  e1ap_ng_ran_alloc_and_retention_prio ng_ran_alloc_retention_prio;
-  optional<e1ap_gbr_qos_flow_info>     gbr_qos_flow_info;
-  optional<bool>                       reflective_qos_attribute;
-  optional<bool>                       add_qos_info;
-  optional<uint8_t>                    paging_policy_ind;
-  optional<bool>                       reflective_qos_ind;
+  qos_characteristics_t                 qos_characteristics;
+  e1ap_ng_ran_alloc_and_retention_prio  ng_ran_alloc_retention_prio;
+  std::optional<e1ap_gbr_qos_flow_info> gbr_qos_flow_info;
+  std::optional<bool>                   reflective_qos_attribute;
+  std::optional<bool>                   add_qos_info;
+  std::optional<uint8_t>                paging_policy_ind;
+  std::optional<bool>                   reflective_qos_ind;
 };
 
 struct e1ap_qos_flow_qos_param_item {
   qos_flow_id_t                  qos_flow_id = qos_flow_id_t::invalid;
   e1ap_qos_flow_level_qos_params qos_flow_level_qos_params;
-  optional<std::string>          qos_flow_map_ind;
+  std::optional<std::string>     qos_flow_map_ind;
 };
 
 struct e1ap_qos_flow_map_item {
-  qos_flow_id_t         qos_flow_id = qos_flow_id_t::invalid;
-  optional<std::string> qos_flow_map_ind;
+  qos_flow_id_t              qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<std::string> qos_flow_map_ind;
 };
 
 struct e1ap_data_forwarding_info_request {
@@ -123,8 +123,8 @@ struct e1ap_pdcp_count {
 };
 
 struct e1ap_drb_status_transfer {
-  e1ap_pdcp_count    count_value;
-  optional<uint64_t> receive_status_of_pdcp_sdu;
+  e1ap_pdcp_count         count_value;
+  std::optional<uint64_t> receive_status_of_pdcp_sdu;
 };
 
 struct e1ap_pdcp_sn_status_info {
@@ -133,29 +133,29 @@ struct e1ap_pdcp_sn_status_info {
 };
 
 struct e1ap_rohc {
-  uint16_t       max_cid;
-  uint16_t       rohc_profiles;
-  optional<bool> continue_rohc;
+  uint16_t            max_cid;
+  uint16_t            rohc_profiles;
+  std::optional<bool> continue_rohc;
 };
 
 struct e1ap_rohc_params {
-  optional<e1ap_rohc> rohc;
-  optional<e1ap_rohc> ul_only_rohc;
+  std::optional<e1ap_rohc> rohc;
+  std::optional<e1ap_rohc> ul_only_rohc;
 };
 
 struct e1ap_pdcp_config {
-  pdcp_sn_size                 pdcp_sn_size_ul;
-  pdcp_sn_size                 pdcp_sn_size_dl;
-  srsran::pdcp_rlc_mode        rlc_mod;
-  optional<e1ap_rohc_params>   rohc_params;
-  optional<pdcp_t_reordering>  t_reordering_timer;
-  optional<pdcp_discard_timer> discard_timer;
-  optional<int32_t>            ul_data_split_thres;
-  optional<bool>               pdcp_dupl;
-  optional<bool>               pdcp_reest;
-  optional<bool>               pdcp_data_recovery;
-  optional<std::string>        dupl_activation;
-  optional<bool>               out_of_order_delivery;
+  pdcp_sn_size                      pdcp_sn_size_ul;
+  pdcp_sn_size                      pdcp_sn_size_dl;
+  srsran::pdcp_rlc_mode             rlc_mod;
+  std::optional<e1ap_rohc_params>   rohc_params;
+  std::optional<pdcp_t_reordering>  t_reordering_timer;
+  std::optional<pdcp_discard_timer> discard_timer;
+  std::optional<int32_t>            ul_data_split_thres;
+  std::optional<bool>               pdcp_dupl;
+  std::optional<bool>               pdcp_reest;
+  std::optional<bool>               pdcp_data_recovery;
+  std::optional<std::string>        dupl_activation;
+  std::optional<bool>               out_of_order_delivery;
 };
 
 struct e1ap_drb_to_setup_item_ng_ran {
@@ -164,9 +164,9 @@ struct e1ap_drb_to_setup_item_ng_ran {
   e1ap_pdcp_config                                               pdcp_cfg;
   std::vector<e1ap_cell_group_info_item>                         cell_group_info;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> qos_flow_info_to_be_setup;
-  optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
-  optional<std::chrono::seconds>                                 drb_inactivity_timer;
-  optional<e1ap_pdcp_sn_status_info>                             pdcp_sn_status_info;
+  std::optional<e1ap_data_forwarding_info_request>               drb_data_forwarding_info_request;
+  std::optional<std::chrono::seconds>                            drb_inactivity_timer;
+  std::optional<e1ap_pdcp_sn_status_info>                        pdcp_sn_status_info;
 };
 
 struct e1ap_pdu_session_res_to_setup_item {
@@ -177,16 +177,16 @@ struct e1ap_pdu_session_res_to_setup_item {
   security_indication_t                                      security_ind;
   slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
 
-  optional<uint64_t>                          pdu_session_res_dl_ambr;
-  optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
-  optional<std::chrono::seconds>              pdu_session_inactivity_timer;
-  optional<up_transport_layer_info>           existing_allocated_ng_dl_up_tnl_info;
-  optional<uint16_t>                          network_instance;
+  std::optional<uint64_t>                          pdu_session_res_dl_ambr;
+  std::optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
+  std::optional<std::chrono::seconds>              pdu_session_inactivity_timer;
+  std::optional<up_transport_layer_info>           existing_allocated_ng_dl_up_tnl_info;
+  std::optional<uint16_t>                          network_instance;
 };
 
 struct e1ap_security_algorithm {
-  srsran::security::ciphering_algorithm           ciphering_algo;
-  optional<srsran::security::integrity_algorithm> integrity_protection_algorithm; // Optional, TS 38.463 Sec. 9.4.5
+  srsran::security::ciphering_algorithm                ciphering_algo;
+  std::optional<srsran::security::integrity_algorithm> integrity_protection_algorithm; // Optional, TS 38.463 Sec. 9.4.5
 };
 
 struct e1ap_up_security_key {
@@ -220,8 +220,8 @@ struct e1ap_qos_flow_failed_item {
 };
 
 struct e1ap_data_forwarding_info {
-  optional<up_transport_layer_info> ul_data_forwarding;
-  optional<up_transport_layer_info> dl_data_forwarding;
+  std::optional<up_transport_layer_info> ul_data_forwarding;
+  std::optional<up_transport_layer_info> dl_data_forwarding;
 };
 
 struct e1ap_drb_setup_item_ng_ran {
@@ -229,7 +229,7 @@ struct e1ap_drb_setup_item_ng_ran {
   std::vector<e1ap_up_params_item>                            ul_up_transport_params;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_item>        flow_setup_list;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_failed_item> flow_failed_list;
-  optional<e1ap_data_forwarding_info>                         drb_data_forwarding_info_resp;
+  std::optional<e1ap_data_forwarding_info>                    drb_data_forwarding_info_resp;
 };
 
 struct e1ap_drb_failed_item_ng_ran {
@@ -242,9 +242,9 @@ struct e1ap_pdu_session_resource_setup_modification_item {
   up_transport_layer_info                                  ng_dl_up_tnl_info;
   slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
-  optional<security_result_t>                              security_result;
-  optional<e1ap_data_forwarding_info>                      pdu_session_data_forwarding_info_resp;
-  optional<bool>                                           ng_dl_up_unchanged;
+  std::optional<security_result_t>                         security_result;
+  std::optional<e1ap_data_forwarding_info>                 pdu_session_data_forwarding_info_resp;
+  std::optional<bool>                                      ng_dl_up_unchanged;
 };
 
 struct e1ap_pdu_session_resource_failed_item {
@@ -260,10 +260,10 @@ struct e1ap_crit_diagnostics_item {
 
 struct e1ap_crit_diagnostics {
   std::vector<e1ap_crit_diagnostics_item> ies_crit_diagnostics;
-  optional<uint16_t>                      proc_code;
-  optional<std::string>                   trigger_msg;
-  optional<std::string>                   proc_crit;
-  optional<uint16_t>                      transaction_id;
+  std::optional<uint16_t>                 proc_code;
+  std::optional<std::string>              trigger_msg;
+  std::optional<std::string>              proc_crit;
+  std::optional<uint16_t>                 transaction_id;
 };
 
 struct e1ap_drb_to_setup_mod_item_ng_ran {
@@ -272,30 +272,30 @@ struct e1ap_drb_to_setup_mod_item_ng_ran {
   e1ap_pdcp_config                                               pdcp_cfg;
   std::vector<e1ap_cell_group_info_item>                         cell_group_info;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> flow_map_info;
-  optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
-  optional<uint16_t>                                             drb_inactivity_timer;
-  optional<e1ap_pdcp_sn_status_info>                             pdcp_sn_status_info;
+  std::optional<e1ap_data_forwarding_info_request>               drb_data_forwarding_info_request;
+  std::optional<uint16_t>                                        drb_inactivity_timer;
+  std::optional<e1ap_pdcp_sn_status_info>                        pdcp_sn_status_info;
 };
 
 struct e1ap_drb_to_modify_item_ng_ran {
   drb_id_t                                                       drb_id = drb_id_t::invalid;
-  optional<sdap_config_t>                                        sdap_cfg;
-  optional<e1ap_pdcp_config>                                     pdcp_cfg;
-  optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
-  optional<bool>                                                 pdcp_sn_status_request;
+  std::optional<sdap_config_t>                                   sdap_cfg;
+  std::optional<e1ap_pdcp_config>                                pdcp_cfg;
+  std::optional<e1ap_data_forwarding_info>                       drb_data_forwarding_info;
+  std::optional<bool>                                            pdcp_sn_status_request;
   std::vector<e1ap_up_params_item>                               dl_up_params;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_add;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_modify;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_rem;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> flow_map_info;
-  optional<uint16_t>                                             drb_inactivity_timer;
+  std::optional<uint16_t>                                        drb_inactivity_timer;
 };
 
 struct e1ap_pdu_session_res_to_modify_item {
   pdu_session_id_t                                            pdu_session_id = pdu_session_id_t::invalid;
-  optional<security_indication_t>                             security_ind;
-  optional<uint64_t>                                          pdu_session_res_dl_ambr;
-  optional<up_transport_layer_info>                           ng_ul_up_tnl_info;
+  std::optional<security_indication_t>                        security_ind;
+  std::optional<uint64_t>                                     pdu_session_res_dl_ambr;
+  std::optional<up_transport_layer_info>                      ng_ul_up_tnl_info;
   optional<e1ap_data_forwarding_info_request>                 pdu_session_data_forwarding_info_request;
   optional<e1ap_data_forwarding_info>                         pdu_session_data_forwarding_info;
   optional<uint16_t>                                          pdu_session_inactivity_timer;

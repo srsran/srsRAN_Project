@@ -277,7 +277,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
 bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c&               meas_type,
                                                    const asn1::e2sm::label_info_list_l          label_info_list,
                                                    const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                                   const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                                   const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                    std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   metric_meas_getter_func_ptr metric_meas_getter_func;
@@ -293,7 +293,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c
 
 bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l          label_info_list,
                                              const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                             const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                             const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -309,7 +309,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l
 
 bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm::label_info_list_l          label_info_list,
                                               const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                              const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                              const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                               std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -325,7 +325,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm::label_info_list_
 
 bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm::label_info_list_l          label_info_list,
                                               const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                              const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                              const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                               std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -340,7 +340,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm::label_info_list_
 }
 bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_info_list_l          label_info_list,
                                                       const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                                      const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                                      const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -360,7 +360,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
 
 bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_info_list_l          label_info_list,
                                                       const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                                      const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                                      const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                       std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -380,7 +380,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
 
 bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label_info_list_l          label_info_list,
                                                          const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                                         const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                                         const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                          std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -400,7 +400,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label
 
 bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label_info_list_l          label_info_list,
                                                          const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                                                         const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+                                                         const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                          std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool                 meas_collected = false;
@@ -424,11 +424,10 @@ float e2sm_kpm_du_meas_provider_impl::bytes_to_kbits(float value)
   return (nof_bits_per_byte * value / 1e3);
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(
-    const asn1::e2sm::label_info_list_l          label_info_list,
-    const std::vector<asn1::e2sm::ue_id_c>&      ues,
-    const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
-    std::vector<asn1::e2sm::meas_record_item_c>& items)
+bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                                const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                                const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
+                                                                std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
   if ((label_info_list.size() > 1 or
@@ -487,11 +486,10 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(
   return meas_collected;
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(
-    const asn1::e2sm::label_info_list_l          label_info_list,
-    const std::vector<asn1::e2sm::ue_id_c>&      ues,
-    const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
-    std::vector<asn1::e2sm::meas_record_item_c>& items)
+bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                                const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                                const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
+                                                                std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
   if ((label_info_list.size() > 1 or
@@ -535,9 +533,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(
   return meas_collected;
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::label_info_list_l       label_info_list,
-                                                             const std::vector<asn1::e2sm::ue_id_c>&   ues,
-                                                             const srsran::optional<asn1::e2sm::cgi_c> cell_global_id,
+bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                             const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                             const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
                                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
@@ -596,7 +594,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(const asn1::e2sm::l
 bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
     const asn1::e2sm::label_info_list_l          label_info_list,
     const std::vector<asn1::e2sm::ue_id_c>&      ues,
-    const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
@@ -658,7 +656,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
 bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
     const asn1::e2sm::label_info_list_l          label_info_list,
     const std::vector<asn1::e2sm::ue_id_c>&      ues,
-    const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
@@ -706,7 +704,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
 bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
     const asn1::e2sm::label_info_list_l          label_info_list,
     const std::vector<asn1::e2sm::ue_id_c>&      ues,
-    const srsran::optional<asn1::e2sm::cgi_c>    cell_global_id,
+    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
     std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
@@ -751,9 +749,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
   return meas_collected;
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(const asn1::e2sm::label_info_list_l       label_info_list,
-                                                             const std::vector<asn1::e2sm::ue_id_c>&   ues,
-                                                             const srsran::optional<asn1::e2sm::cgi_c> cell_global_id,
+bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                             const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                             const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
                                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;

@@ -75,7 +75,7 @@ protected:
                             search_space_set_type::ue_specific,
                             dci_dl_format::f1_1,
                             harq_id,
-                            nullopt};
+                            std::nullopt};
 
     ue_cc->harqs.dl_harq(harq_id).new_tx(next_slot, k1, 4, 0, 15, 1);
     ue_cc->harqs.dl_harq(harq_id).save_alloc_params(dl_harq_sched_context{dci_dl_rnti_config_type::c_rnti_f1_1}, pdsch);
@@ -86,7 +86,7 @@ protected:
   cell_common_configuration_list       cell_cfg_list;
   const cell_configuration&            cell_cfg;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
-  optional<ue_configuration>           ue_ded_cfg;
+  std::optional<ue_configuration>      ue_ded_cfg;
 
   srslog::basic_logger& logger;
 
@@ -150,7 +150,7 @@ TEST_F(ue_pdsch_param_candidate_searcher_test, when_harqs_with_pending_retx_exis
 
   // Action: NACK the HARQs.
   for (unsigned hid : harq_ids) {
-    ue_cc->harqs.dl_harq(to_harq_id(hid)).ack_info(0, srsran::mac_harq_ack_report_status::nack, nullopt);
+    ue_cc->harqs.dl_harq(to_harq_id(hid)).ack_info(0, srsran::mac_harq_ack_report_status::nack, std::nullopt);
     EXPECT_TRUE(ue_cc->harqs.dl_harq(to_harq_id(hid)).has_pending_retx());
   }
 

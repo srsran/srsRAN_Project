@@ -43,9 +43,9 @@ public:
   ngap_impl(ngap_configuration&                ngap_cfg_,
             ngap_cu_cp_notifier&               cu_cp_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
-            ngap_ue_task_scheduler&            task_sched_,
             ngap_ue_manager&                   ue_manager_,
             ngap_message_notifier&             ngap_notifier_,
+            timer_manager&                     timers_,
             task_executor&                     ctrl_exec_);
   ~ngap_impl();
 
@@ -53,6 +53,8 @@ public:
 
   // ngap connection manager functions
   async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
+
+  async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
 
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
 
@@ -153,7 +155,7 @@ private:
   /// \param[in] ue_index The index of the related UE.
   /// \param[in] cause The cause of the Error Indication.
   /// \param[in] amf_ue_id The AMF UE ID.
-  void schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, optional<amf_ue_id_t> amf_ue_id = {});
+  void schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id = {});
 
   /// \brief Callback for the PDU Session Setup Timer expiration. Triggers the release of the UE.
   void on_pdu_session_setup_timer_expired(ue_index_t ue_index);
@@ -172,9 +174,9 @@ private:
 
   ngap_cu_cp_notifier&               cu_cp_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
-  ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;
   tx_pdu_notifier_with_logging       tx_pdu_notifier;
+  timer_manager&                     timers;
   task_executor&                     ctrl_exec;
 
   ngap_transaction_manager ev_mng;

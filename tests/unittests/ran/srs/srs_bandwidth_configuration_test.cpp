@@ -34,7 +34,7 @@ TEST(SRSConfiguration, Bsrs_0)
                  192, 192, 208, 216, 224, 240, 240, 240, 240, 256, 256, 256, 264, 272, 272, 272};
 
   for (unsigned Csrs = 0; Csrs != 64; ++Csrs) {
-    optional<srs_configuration> config = srs_configuration_get(Csrs, 0);
+    std::optional<srs_configuration> config = srs_configuration_get(Csrs, 0);
 
     // Assert format.
     ASSERT_EQ(config->N, 1);
@@ -52,7 +52,7 @@ TEST(SRSConfiguration, Bsrs_1)
              8, 3, 2, 2, 3, 3, 9, 2, 2, 2, 5, 2, 2, 2, 2,  2, 3, 8, 2, 2, 2,  2, 3, 5, 10, 2, 2, 16, 2, 2, 4, 17};
 
   for (unsigned Csrs = 0; Csrs != 64; ++Csrs) {
-    optional<srs_configuration> config = srs_configuration_get(Csrs, 1);
+    std::optional<srs_configuration> config = srs_configuration_get(Csrs, 1);
 
     // Assert format.
     ASSERT_EQ(config->N, N[Csrs]);
@@ -70,7 +70,7 @@ TEST(SRSConfiguration, Bsrs_2)
              2, 11, 17, 2, 2, 3, 2, 19, 2, 4, 2, 3, 2, 23, 2, 4, 4, 3, 2, 3, 2, 2, 4,  3, 2, 2,  4, 2, 3, 2, 17, 2};
 
   for (unsigned Csrs = 0; Csrs != 64; ++Csrs) {
-    optional<srs_configuration> config = srs_configuration_get(Csrs, 2);
+    std::optional<srs_configuration> config = srs_configuration_get(Csrs, 2);
 
     // Assert format.
     ASSERT_EQ(config->N, N[Csrs]);
@@ -87,7 +87,7 @@ TEST(SRSConfiguration, Bsrs_3)
              2, 1, 1, 9, 2, 4, 2, 1, 10, 5, 4, 7, 11, 1, 12, 6, 4, 2, 13, 9, 14, 15, 5, 2, 3, 16, 8, 2, 11, 17, 1, 2};
 
   for (unsigned Csrs = 0; Csrs != 64; ++Csrs) {
-    optional<srs_configuration> config = srs_configuration_get(Csrs, 3);
+    std::optional<srs_configuration> config = srs_configuration_get(Csrs, 3);
 
     // Assert format.
     ASSERT_EQ(config->N, N[Csrs]);
@@ -102,14 +102,14 @@ TEST(SRSConfiguration, InvalidParams)
 
   // Test invalid b_srs;
   for (unsigned c_srs = 0; c_srs != 64; ++c_srs) {
-    optional<srs_configuration> config = srs_configuration_get(c_srs, invalid_b_srs);
+    std::optional<srs_configuration> config = srs_configuration_get(c_srs, invalid_b_srs);
 
     ASSERT_FALSE(config.has_value());
   }
 
   // Test invalid c_srs;
   for (unsigned b_srs = 0; b_srs != 4; ++b_srs) {
-    optional<srs_configuration> config = srs_configuration_get(invalid_c_srs, b_srs);
+    std::optional<srs_configuration> config = srs_configuration_get(invalid_c_srs, b_srs);
 
     ASSERT_FALSE(config.has_value());
   }

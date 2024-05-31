@@ -56,8 +56,8 @@ protected:
 
   mac_controller mac_ctrl{maccfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter};
 
-  async_task<mac_ue_create_response>                   t;
-  optional<lazy_task_launcher<mac_ue_create_response>> t_launcher;
+  async_task<mac_ue_create_response>                        t;
+  std::optional<lazy_task_launcher<mac_ue_create_response>> t_launcher;
 };
 
 TEST_F(mac_controller_test, ue_procedures)

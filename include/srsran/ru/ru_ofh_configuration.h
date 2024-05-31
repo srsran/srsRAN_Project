@@ -44,7 +44,7 @@ struct ru_ofh_sector_configuration {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  std::optional<bs_channel_bandwidth_fr1> ru_operating_bw;
 
   /// DU transmission window timing parameters.
   ofh::tx_window_timing_parameters tx_window_timing_params;
@@ -100,7 +100,7 @@ struct ru_ofh_sector_configuration {
   /// Number of reception antennas.
   unsigned nof_antennas_ul;
   /// Optional TDD configuration.
-  optional<tdd_ul_dl_config_common> tdd_config;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.
@@ -134,9 +134,9 @@ struct ru_ofh_sector_dependencies {
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
   /// Optional Ethernet gateway.
-  optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
   /// Optional Ethernet receiver.
-  optional<std::unique_ptr<ether::receiver>> eth_receiver;
+  std::optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 /// Radio Unit dependencies for the Open Fronthaul implementation.

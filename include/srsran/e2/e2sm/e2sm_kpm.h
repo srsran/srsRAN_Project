@@ -130,7 +130,7 @@ public:
   virtual bool get_meas_data(const asn1::e2sm::meas_type_c&               meas_type,
                              const asn1::e2sm::label_info_list_l          label_info_list,
                              const std::vector<asn1::e2sm::ue_id_c>&      ues,
-                             const optional<asn1::e2sm::cgi_c>            cell_global_id,
+                             const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                              std::vector<asn1::e2sm::meas_record_item_c>& items) = 0;
 };
 

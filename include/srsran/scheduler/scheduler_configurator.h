@@ -75,7 +75,7 @@ struct sched_cell_configuration_request_message {
   ul_config_common ul_cfg_common;
 
   /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
-  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+  std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
 
   /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).
   subcarrier_spacing    scs_common;
@@ -92,7 +92,7 @@ struct sched_cell_configuration_request_message {
   unsigned sib1_payload_size;
 
   /// Scheduling of SI messages.
-  optional<si_scheduling_config> si_scheduling;
+  std::optional<si_scheduling_config> si_scheduling;
 
   /// List of PUCCH guardbands.
   std::vector<sched_grid_resource> pucch_guardbands;
@@ -133,19 +133,19 @@ struct sched_drb_info {
   /// QoS characteristics associated with the logical channel.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
-  optional<gbr_qos_info_t> gbr_qos_info;
+  std::optional<gbr_qos_info_t> gbr_qos_info;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
-  optional<std::vector<logical_channel_config>> lc_config_list;
+  std::optional<std::vector<logical_channel_config>> lc_config_list;
   /// List of configured Scheduling Request resources. See \c schedulingRequestConfig, TS38.331.
-  optional<std::vector<scheduling_request_to_addmod>> sched_request_config_list;
+  std::optional<std::vector<scheduling_request_to_addmod>> sched_request_config_list;
   /// UE-dedicated configuration for the PCell and SCells.
-  optional<std::vector<cell_config_dedicated>> cells;
+  std::optional<std::vector<cell_config_dedicated>> cells;
   /// Resource allocation configuration for the given UE.
-  optional<sched_ue_resource_alloc_config> res_alloc_cfg;
+  std::optional<sched_ue_resource_alloc_config> res_alloc_cfg;
   /// List of QoS and slicing information for DRBs.
   std::vector<sched_drb_info> drb_info_list;
 };

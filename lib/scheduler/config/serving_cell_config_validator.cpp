@@ -278,8 +278,8 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 }
 
 validator_result
-srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>          nzp_csi_rs_res_list,
-                                                    const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
+srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>               nzp_csi_rs_res_list,
+                                                    const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common)
 {
   // Check: NZP-CSI-RS Resource List ID uniqueness
   VERIFY(has_unique_ids(nzp_csi_rs_res_list, &nzp_csi_rs_resource::res_id), "Duplication of NZP-CSI-RS-ResourceId");
@@ -379,8 +379,8 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
 }
 
 validator_result
-srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&               ue_cell_cfg,
-                                                 const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
+srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&                    ue_cell_cfg,
+                                                 const std::optional<tdd_ul_dl_config_common>& tdd_cfg_common)
 {
   if (not ue_cell_cfg.csi_meas_cfg.has_value()) {
     return {};
@@ -393,10 +393,10 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
   // > NZP-CSI-RS ResourceSet
   VERIFY(has_unique_ids(csi_meas_cfg.nzp_csi_rs_res_set_list, &nzp_csi_rs_resource_set::res_set_id),
          "Duplication of NZP-CSI-RS-ResourceSetId");
-  optional<nzp_csi_rs_res_id_t> nzp_id = find_disconnected_id(csi_meas_cfg.nzp_csi_rs_res_set_list,
-                                                              csi_meas_cfg.nzp_csi_rs_res_list,
-                                                              &nzp_csi_rs_resource_set::nzp_csi_rs_res,
-                                                              &nzp_csi_rs_resource::res_id);
+  std::optional<nzp_csi_rs_res_id_t> nzp_id = find_disconnected_id(csi_meas_cfg.nzp_csi_rs_res_set_list,
+                                                                   csi_meas_cfg.nzp_csi_rs_res_list,
+                                                                   &nzp_csi_rs_resource_set::nzp_csi_rs_res,
+                                                                   &nzp_csi_rs_resource::res_id);
   VERIFY(
       not nzp_id.has_value(), "ResourceId={} in NZP-CSI-RS-ResourceSet has no associated NZP-CSI-RS-Resource", *nzp_id);
   // > CSI-IM-ResourceList
@@ -404,10 +404,10 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
   // > CSI-IM-ResourceSetList.
   VERIFY(has_unique_ids(csi_meas_cfg.csi_im_res_set_list, &csi_im_resource_set::res_set_id),
          "Duplication of CSI-IM-ResourceSetId");
-  optional<csi_im_res_id_t> im_id = find_disconnected_id(csi_meas_cfg.csi_im_res_set_list,
-                                                         csi_meas_cfg.csi_im_res_list,
-                                                         &csi_im_resource_set::csi_ims_resources,
-                                                         &csi_im_resource::res_id);
+  std::optional<csi_im_res_id_t> im_id = find_disconnected_id(csi_meas_cfg.csi_im_res_set_list,
+                                                              csi_meas_cfg.csi_im_res_list,
+                                                              &csi_im_resource_set::csi_ims_resources,
+                                                              &csi_im_resource::res_id);
   VERIFY(not im_id.has_value(), "ResourceId={} in CSI-IM-ResourceSet has no associated CSI-IM-Resource", *im_id);
   VERIFY(has_unique_ids(csi_meas_cfg.csi_ssb_res_set_list, &csi_ssb_resource_set::res_set_id),
          "Duplication of CSI-SSB-ResourceSetId");

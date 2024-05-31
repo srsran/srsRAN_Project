@@ -39,9 +39,9 @@ struct mac_rach_indication {
     /// Timing advance between the observed arrival time (for the considered UE) and the reference uplink time.
     phy_time_unit time_advance;
     /// Preamble received power in dBFS.
-    optional<float> pwr_dBFS;
+    std::optional<float> pwr_dBFS;
     /// Average SNR value in dB.
-    optional<float> snr_dB;
+    std::optional<float> snr_dB;
   };
 
   /// Describes a single RACH occasion.
@@ -54,7 +54,7 @@ struct mac_rach_indication {
     /// The index of the received PRACH frequency domain occasion.
     unsigned frequency_index;
     /// Average value of RSSI in dBFS.
-    optional<float> rssi_dBFS;
+    std::optional<float> rssi_dBFS;
     /// List of detected preambles in this RACH occasion.
     static_vector<rach_preamble, MAX_PREAMBLES_PER_PRACH_OCCASION> preambles;
   };

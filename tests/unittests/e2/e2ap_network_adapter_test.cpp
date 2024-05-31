@@ -20,7 +20,6 @@
  *
  */
 
-#include "../gateways/test_helpers.h"
 #include "apps/gnb/adapters/e2ap_adapter.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -30,7 +29,6 @@
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
-#include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
@@ -141,7 +139,7 @@ protected:
     epoll_broker = create_io_broker(io_broker_type::epoll);
 
     // simulate RIC side
-    sctp_network_gateway_config ric_config;
+    sctp_network_connector_config ric_config;
     ric_config.bind_address = "127.0.0.1";
     ric_config.bind_port    = 0;
     ric_config.reuse_addr   = true;
@@ -153,12 +151,12 @@ protected:
     ric_e2_iface = std::make_unique<dummy_ric_e2>(*ric_net_adapter);
     ric_net_adapter->connect_e2ap(ric_e2_iface.get(), ric_e2_iface.get());
 
-    optional<uint16_t> ric_gw_port = ric_net_adapter->get_listen_port();
+    std::optional<uint16_t> ric_gw_port = ric_net_adapter->get_listen_port();
     ASSERT_TRUE(ric_gw_port.has_value());
     ASSERT_NE(ric_gw_port.value(), 0);
 
     // create E2 agent
-    sctp_network_gateway_config e2agent_config;
+    sctp_network_connector_config e2agent_config;
     e2agent_config.connect_address = ric_config.bind_address;
     e2agent_config.connect_port    = ric_gw_port.value();
     e2agent_config.bind_address    = "127.0.0.101";

@@ -77,8 +77,8 @@ public:
   }
 
   /// \brief Reserves a codeblock buffer.
-  /// \return The codeblock identifier in the pool if it is reserved successfully. Otherwise, \c nullopt
-  optional<unsigned> reserve()
+  /// \return The codeblock identifier in the pool if it is reserved successfully. Otherwise, \c std::nullopt
+  std::optional<unsigned> reserve()
   {
     // Try to get an available codeblock.
     return free_list.try_pop();

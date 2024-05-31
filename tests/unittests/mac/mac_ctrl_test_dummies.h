@@ -45,13 +45,13 @@ public:
 class mac_ul_dummy_configurer final : public mac_ul_configurator
 {
 public:
-  bool                                                                        expected_result   = true;
-  bool                                                                        ul_ccch_forwarded = false;
-  manual_event_flag                                                           ue_created_ev;
-  optional<mac_ue_create_request>                                             last_ue_create_request;
-  optional<mac_ue_delete_request>                                             last_ue_delete_request;
-  optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
-  optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
+  bool                                                                             expected_result   = true;
+  bool                                                                             ul_ccch_forwarded = false;
+  manual_event_flag                                                                ue_created_ev;
+  std::optional<mac_ue_create_request>                                             last_ue_create_request;
+  std::optional<mac_ue_delete_request>                                             last_ue_delete_request;
+  std::optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
+  std::optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
 
   async_task<bool> add_ue(const mac_ue_create_request& msg) override;
   async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
@@ -75,13 +75,13 @@ public:
 class mac_dl_dummy_configurer final : public mac_dl_configurator
 {
 public:
-  bool                                                                        expected_result = true;
-  manual_event_flag                                                           ue_created_ev;
-  optional<mac_ue_create_request>                                             last_ue_create_request;
-  optional<mac_ue_delete_request>                                             last_ue_delete_request;
-  optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
-  optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
-  mac_cell_dummy_controller                                                   cell_ctrl;
+  bool                                                                             expected_result = true;
+  manual_event_flag                                                                ue_created_ev;
+  std::optional<mac_ue_create_request>                                             last_ue_create_request;
+  std::optional<mac_ue_delete_request>                                             last_ue_delete_request;
+  std::optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
+  std::optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
+  mac_cell_dummy_controller                                                        cell_ctrl;
 
   async_task<bool> add_ue(const mac_ue_create_request& msg) override;
   async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
@@ -123,7 +123,7 @@ public:
 class dummy_mac_event_indicator : public mac_ul_ccch_notifier
 {
 public:
-  optional<ul_ccch_indication_message> last_ccch_ind;
+  std::optional<ul_ccch_indication_message> last_ccch_ind;
 
   void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
 
@@ -161,8 +161,8 @@ public:
 class mac_scheduler_dummy_adapter : public mac_scheduler_configurator
 {
 public:
-  manual_event<bool>              ue_created_ev;
-  optional<mac_ue_create_request> last_ue_create_request;
+  manual_event<bool>                   ue_created_ev;
+  std::optional<mac_ue_create_request> last_ue_create_request;
 
   void add_cell(const mac_cell_creation_request& msg) override {}
 

@@ -24,6 +24,7 @@
 
 #include "srsran/adt/optional.h"
 #include "fmt/format.h"
+#include <optional>
 
 namespace srsran {
 
@@ -192,7 +193,7 @@ public:
   }
   /// \brief Returns \c true if the verbose representation is selected, \c false otherwise.
   /// \remark it must be called after \ref parse.
-  bool is_verbose() { return verbose; }
+  bool is_verbose() const { return verbose; }
 
 private:
   /// Internal method used to format with any formatting options.
@@ -289,10 +290,10 @@ namespace detail {
 /// not logged.
 template <typename T>
 struct optional_prefix_formatter {
-  optional_prefix_formatter(const char* label_, const optional<T>& value_) : prefix(label_), value(value_) {}
-  optional_prefix_formatter(const char* label_, optional<T>&& value_) : prefix(label_), value(std::move(value_)) {}
-  const char* prefix;
-  optional<T> value;
+  optional_prefix_formatter(const char* label_, const std::optional<T>& value_) : prefix(label_), value(value_) {}
+  optional_prefix_formatter(const char* label_, std::optional<T>&& value_) : prefix(label_), value(std::move(value_)) {}
+  const char*      prefix;
+  std::optional<T> value;
 };
 
 } // namespace detail
@@ -302,12 +303,12 @@ struct optional_prefix_formatter {
 /// This is useful to defer the formatting logic to the point where the format is actually needed (e.g. logging
 /// backend).
 template <typename T>
-detail::optional_prefix_formatter<T> add_prefix_if_set(const char* prefix, const optional<T>& value)
+detail::optional_prefix_formatter<T> add_prefix_if_set(const char* prefix, const std::optional<T>& value)
 {
   return detail::optional_prefix_formatter<T>(prefix, value);
 }
 template <typename T>
-detail::optional_prefix_formatter<T> add_prefix_if_set(const char* prefix, optional<T>&& value)
+detail::optional_prefix_formatter<T> add_prefix_if_set(const char* prefix, std::optional<T>&& value)
 {
   return detail::optional_prefix_formatter<T>(prefix, std::move(value));
 }
@@ -335,7 +336,7 @@ public:
 };
 
 template <typename T>
-struct formatter<srsran::detail::optional_prefix_formatter<T>> : public formatter<srsran::optional<T>> {
+struct formatter<srsran::detail::optional_prefix_formatter<T>> : public formatter<std::optional<T>> {
   template <typename FormatContext>
   auto format(const srsran::detail::optional_prefix_formatter<T>& f, FormatContext& ctx)
   {

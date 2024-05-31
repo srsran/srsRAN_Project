@@ -43,7 +43,7 @@ struct downlink_handler_broadcast_impl_config {
   /// Downlink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Optional TDD configuration.
-  optional<tdd_ul_dl_config_common> tdd_config;
+  std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Subcarrier spacing.
@@ -88,7 +88,7 @@ private:
   const unsigned                                        sector_id;
   srslog::basic_logger&                                 logger;
   const cyclic_prefix                                   cp;
-  const optional<tdd_ul_dl_config_common>               tdd_config;
+  const std::optional<tdd_ul_dl_config_common>          tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;

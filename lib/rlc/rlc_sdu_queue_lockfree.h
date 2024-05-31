@@ -74,8 +74,8 @@ public:
   bool write(rlc_sdu sdu)
   {
     // if the SDU has a PDCP SN, first check the slot is available
-    optional<uint32_t> pdcp_sn  = sdu.pdcp_sn;
-    const size_t       sdu_size = sdu.buf.length();
+    std::optional<uint32_t> pdcp_sn  = sdu.pdcp_sn;
+    const size_t            sdu_size = sdu.buf.length();
     if (pdcp_sn.has_value()) {
       const uint32_t pdcp_sn_value = sdu.pdcp_sn.value();
       // load slot state (memory_order_acquire ensures sdu_size is written after this)

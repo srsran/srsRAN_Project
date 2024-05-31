@@ -58,7 +58,7 @@ TEST(ul_prach_pdu_builder, valid_maintenance_v3_basic_parameters_passes)
     uint16_t                prach_res_config_index = 1023;
     uint8_t                 num_fd_ra              = 23;
     uint8_t                 num_preambles_indices  = 13;
-    optional<uint8_t>       start_preamble_index;
+    std::optional<uint8_t>  start_preamble_index;
     if (i) {
       start_preamble_index.emplace(12);
     }

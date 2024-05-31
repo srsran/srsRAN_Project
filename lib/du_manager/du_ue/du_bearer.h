@@ -72,11 +72,13 @@ struct du_drb_connector {
   rlc_f1u_tx_data_notifier        rlc_tx_data_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1u_rx_rlc_sdu_adapter          f1u_rx_sdu_notif;
+  f1u_gateway_nru_rx_adapter      f1u_gateway_nru_rx_notif;
 
   /// \brief Connect MAC, RLC and F1AP layers if bearer is a DRB.
   void connect(du_ue_index_t                       ue_index,
                drb_id_t                            drb_id,
                lcid_t                              lcid,
+               f1u_tx_pdu_notifier&                f1_gw_bearer,
                f1u_bearer&                         f1_bearer,
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);
@@ -103,22 +105,23 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t                             drb_id;
-  lcid_t                               lcid;
-  std::vector<up_transport_layer_info> uluptnl_info_list;
-  std::vector<up_transport_layer_info> dluptnl_info_list;
-  rlc_config                           rlc_cfg;
-  std::unique_ptr<rlc_entity>          rlc_bearer;
-  mac_lc_config                        mac_cfg;
-  f1u_config                           f1u_cfg;
-  std::unique_ptr<f1u_bearer>          drb_f1u;
-  du_drb_connector                     connector;
+  drb_id_t                               drb_id;
+  lcid_t                                 lcid;
+  std::vector<up_transport_layer_info>   uluptnl_info_list;
+  std::vector<up_transport_layer_info>   dluptnl_info_list;
+  rlc_config                             rlc_cfg;
+  mac_lc_config                          mac_cfg;
+  f1u_config                             f1u_cfg;
+  std::unique_ptr<f1u_du_gateway_bearer> f1u_gw_bearer;
+  std::unique_ptr<f1u_bearer>            drb_f1u;
+  std::unique_ptr<rlc_entity>            rlc_bearer;
+  du_drb_connector                       connector;
   /// Single Network Slice Selection Assistance Information (S-NSSAI).
   s_nssai_t s_nssai;
   /// QoS characteristics to be met by the DRB.
   qos_characteristics qos_info;
   /// QoS information present only for GBR QoS flows.
-  optional<gbr_qos_info_t> gbr_qos_info;
+  std::optional<gbr_qos_info_t> gbr_qos_info;
 
   /// \brief Stops DRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
   void stop();
@@ -138,7 +141,7 @@ struct drb_creation_info {
   const du_manager_params&             du_params;
   rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier;
   const qos_characteristics&           qos_info;
-  optional<gbr_qos_info_t>             gbr_qos_info;
+  std::optional<gbr_qos_info_t>        gbr_qos_info;
   s_nssai_t                            s_nssai;
 };
 

@@ -39,7 +39,7 @@ namespace srsran {
 struct rlc_tx_am_sdu_info {
   byte_buffer                           sdu = {};
   std::chrono::system_clock::time_point time_of_arrival;
-  optional<uint32_t>                    pdcp_sn;
+  std::optional<uint32_t>               pdcp_sn;
   uint32_t                              next_so    = 0;
   uint32_t                              retx_count = RETX_COUNT_NOT_STARTED;
 };

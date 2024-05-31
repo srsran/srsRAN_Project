@@ -207,7 +207,7 @@ protected:
     pdu.freq_alloc                  = rb_allocation::make_type1(rb_alloc_start, rb_alloc_count);
     pdu.start_symbol_index          = start_symbol_index_dist(rgen);
     pdu.nof_symbols                 = nof_symbols_slot - pdu.start_symbol_index;
-    pdu.tbs_lbrm_bytes              = tbs_lbrm_bytes_dist(rgen);
+    pdu.tbs_lbrm                    = units::bytes(tbs_lbrm_bytes_dist(rgen));
     pdu.dmrs_symbol_mask            = symbol_slot_mask(nof_symbols_slot);
 
     for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
@@ -438,6 +438,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
   // Assert decoder inputs only if the codeword is present.
   if (pdu.codeword.has_value()) {
+    unsigned    nof_cb        = ldpc::compute_nof_codeblocks(ulsch_config.tbs, pdu.codeword->ldpc_base_graph);
+    units::bits expected_Nref = ldpc::compute_N_ref(pdu.tbs_lbrm, nof_cb);
+
     ASSERT_EQ(1, decoder_spy->get_entries().size());
     const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
     ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
@@ -446,7 +449,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.sch_data), decoder_entry.input.get_data());
     ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
     ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
-    ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.Nref);
+    ASSERT_EQ(expected_Nref.value(), decoder_entry.config.Nref);
     ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.nof_layers);
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);

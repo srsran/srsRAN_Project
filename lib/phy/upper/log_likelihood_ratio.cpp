@@ -36,7 +36,7 @@ using namespace srsran;
 
 // Computes the sum when at least one of the summands is plus/minus infinity.
 // Note that also the indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
-static optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ratio val_a, log_likelihood_ratio val_b)
+static std::optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ratio val_a, log_likelihood_ratio val_b)
 {
   if (val_a == -val_b) {
     return log_likelihood_ratio(0);

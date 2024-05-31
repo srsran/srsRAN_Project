@@ -40,9 +40,9 @@ public:
   bool try_push(const T& elem) { return queue.try_push(elem); }
   bool try_push(T&& elem) { return not queue.try_push(std::move(elem)).is_error(); }
 
-  optional<T> try_pop()
+  std::optional<T> try_pop()
   {
-    optional<T> t;
+    std::optional<T> t;
     t.emplace();
     if (not queue.try_pop(t.value())) {
       t.reset();

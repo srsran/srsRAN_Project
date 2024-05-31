@@ -72,7 +72,7 @@ void inter_cu_handover_target_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
-  ue = ue_mng.find_ue(request.ue_index);
+  ue = ue_mng.find_du_ue(request.ue_index);
 
   // Perform initial sanity checks on incoming message.
   if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
@@ -237,10 +237,10 @@ bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_
   return ue_context_setup_resp.success;
 }
 
-optional<security::sec_as_config>
+std::optional<security::sec_as_config>
 inter_cu_handover_target_routine::generate_security_keys(security::security_context& sec_context)
 {
-  optional<security::sec_as_config> cfg;
+  std::optional<security::sec_as_config> cfg;
 
   // Select preferred integrity algorithm.
   security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,

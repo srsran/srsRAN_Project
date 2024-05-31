@@ -40,7 +40,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 
 #include "adapters/e1ap_gateway_local_connector.h"
-#include "adapters/f1c_gateway_local_connector.h"
+#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
@@ -54,6 +54,7 @@
 
 #include "apps/services/console_helper.h"
 #include "apps/services/metrics_hub.h"
+#include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
@@ -70,18 +71,24 @@
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
-#include "apps/units/cu_up//cu_up_unit_config_validator.h"
 #include "apps/units/cu_up/cu_up_logger_registrator.h"
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
+#include "apps/units/cu_up/cu_up_unit_config_validator.h"
 
 #include <atomic>
 
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
+
+#include "srsran/du/du_high_wrapper.h"
+#include "srsran/du/du_wrapper.h"
+#include "srsran/du_low/du_low.h"
+#include "srsran/du_low/du_low_wrapper.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -205,6 +212,14 @@ static void register_app_logs(const log_appconfig&            log_cfg,
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
 
+  auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
+  config_logger.set_level(srslog::str_to_basic_level(log_cfg.config_level));
+  config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
+  metrics_logger.set_level(srslog::str_to_basic_level(log_cfg.metrics_level));
+  metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
   e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -266,6 +281,14 @@ int main(int argc, char** argv)
   initialize_log(gnb_cfg.log_cfg.filename);
   register_app_logs(gnb_cfg.log_cfg, cu_cp_config.loggers, cu_up_config.loggers, du_unit_cfg);
 
+  // Log input configuration.
+  srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
+  if (config_logger.debug.enabled()) {
+    config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
+  } else {
+    config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
+  }
+
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
     gnb_logger.info("Opening event tracer...");
@@ -317,6 +340,10 @@ int main(int argc, char** argv)
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
 
+  // Create IO broker.
+  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
+
   std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
   std::unique_ptr<dlt_pcap>              f1ap_p =
@@ -329,7 +356,7 @@ int main(int argc, char** argv)
                                                                                       workers.get_executor("pcap_exec"))
                                                                    : create_null_dlt_pcap();
 
-  f1c_gateway_local_connector  f1c_gw{*f1ap_p};
+  std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
   e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]};
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
@@ -344,10 +371,6 @@ int main(int argc, char** argv)
 
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
-
-  // Create IO broker.
-  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
-  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
@@ -372,12 +395,13 @@ int main(int argc, char** argv)
 
     ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
         *ngap_p,
-        gnb_cfg.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
-                                : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(gnb_cfg)}}});
+        cu_cp_config.amf_cfg.no_core
+            ? ngap_mode_t{no_core_mode_t{}}
+            : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(cu_cp_config.amf_cfg)}}});
   }
 
   // E2AP configuration.
-  srsran::sctp_network_gateway_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
+  srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
@@ -397,6 +421,9 @@ int main(int argc, char** argv)
       *epoll_broker, json_channel, cu_cp_obj->get_command_handler(), gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
 
+  // Create metrics log helper.
+  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
+
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
                               cu_cp_obj->get_ng_handler().get_ngap_event_handler());
@@ -405,7 +432,7 @@ int main(int argc, char** argv)
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  f1c_gw.attach_cu_cp(cu_cp_obj->get_f1c_handler());
+  f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
@@ -416,34 +443,15 @@ int main(int argc, char** argv)
     report_error("CU-CP failed to connect to AMF");
   }
 
-  // Create CU-UP config.
-  srsran::srs_cu_up::cu_up_configuration cu_up_cfg = generate_cu_up_config(cu_up_config);
-  cu_up_cfg.ctrl_executor                          = workers.cu_up_ctrl_exec;
-  cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
-  cu_up_cfg.ue_exec_pool                           = workers.cu_up_exec_mapper.get();
-  cu_up_cfg.io_ul_executor        = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
-  cu_up_cfg.e1ap.e1ap_conn_client = &e1ap_gw;
-  cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.gtpu_pcap             = cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get();
-  cu_up_cfg.timers                = cu_timers;
-  cu_up_cfg.qos                   = generate_cu_up_qos_config(cu_up_config, du_unit_cfg.du_high_cfg.config);
-
-  // Create NG-U gateway.
-  std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not gnb_cfg.amf_cfg.no_core) {
-    udp_network_gateway_config ngu_gw_config = {};
-    ngu_gw_config.bind_address               = cu_up_cfg.net_cfg.n3_bind_addr;
-    ngu_gw_config.bind_port                  = cu_up_cfg.net_cfg.n3_bind_port;
-    ngu_gw_config.bind_interface             = cu_up_cfg.net_cfg.n3_bind_interface;
-    ngu_gw_config.rx_max_mmsg                = cu_up_cfg.net_cfg.n3_rx_max_mmsg;
-    ngu_gw = srs_cu_up::create_udp_ngu_gateway(ngu_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
-  } else {
-    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
-  }
-  cu_up_cfg.ngu_gw = ngu_gw.get();
-
-  // create and start CU-UP
-  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
+  // Create and start CU-UP
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj =
+      build_cu_up(cu_up_config,
+                  workers,
+                  e1ap_gw,
+                  *f1u_conn->get_f1u_cu_up_gateway(),
+                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get(),
+                  *cu_timers,
+                  *epoll_broker);
   cu_up_obj->start();
 
   std::vector<du_cell_config> du_cells = generate_du_cell_config(du_unit_cfg.du_high_cfg.config);
@@ -498,30 +506,32 @@ int main(int argc, char** argv)
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
   // Instantiate one DU per cell.
-  std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
-                                                          du_unit_cfg,
-                                                          du_cells,
-                                                          workers,
-                                                          ru_dl_rg_adapt,
-                                                          ru_ul_request_adapt,
-                                                          f1c_gw,
-                                                          *f1u_conn->get_f1u_du_gateway(),
-                                                          app_timers,
-                                                          *mac_p,
-                                                          *rlc_p,
-                                                          console,
-                                                          e2_gw,
-                                                          e2_metric_connectors,
-                                                          rlc_json_plotter,
-                                                          *hub);
+  std::vector<std::unique_ptr<du_wrapper>> du_inst = make_gnb_dus(gnb_cfg,
+                                                                  du_unit_cfg,
+                                                                  du_cells,
+                                                                  workers,
+                                                                  ru_dl_rg_adapt,
+                                                                  ru_ul_request_adapt,
+                                                                  *f1c_gw,
+                                                                  *f1u_conn->get_f1u_du_gateway(),
+                                                                  app_timers,
+                                                                  *mac_p,
+                                                                  *rlc_p,
+                                                                  console,
+                                                                  metrics_logger,
+                                                                  e2_gw,
+                                                                  e2_metric_connectors,
+                                                                  rlc_json_plotter,
+                                                                  *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
-    auto& du = du_inst[sector_id];
+    auto& du    = du_inst[sector_id];
+    auto& upper = du->get_du_low_wrapper().get_du_low().get_upper_phy(0);
 
     // Make connections between DU and RU.
-    ru_ul_adapt.map_handler(sector_id, du->get_rx_symbol_handler());
-    ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
-    ru_error_adapt.map_handler(sector_id, du->get_error_handler());
+    ru_ul_adapt.map_handler(sector_id, upper.get_rx_symbol_handler());
+    ru_timing_adapt.map_handler(sector_id, upper.get_timing_handler());
+    ru_error_adapt.map_handler(sector_id, upper.get_error_handler());
 
     // Start DU execution.
     du->start();

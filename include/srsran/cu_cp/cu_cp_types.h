@@ -146,9 +146,9 @@ struct cu_cp_tai {
 };
 
 struct cu_cp_user_location_info_nr {
-  nr_cell_global_id_t nr_cgi;
-  cu_cp_tai           tai;
-  optional<uint64_t>  time_stamp;
+  nr_cell_global_id_t     nr_cgi;
+  cu_cp_tai               tai;
+  std::optional<uint64_t> time_stamp;
 };
 
 /// <AMF Identifier> = <AMF Region ID><AMF Set ID><AMF Pointer>
@@ -166,12 +166,12 @@ struct cu_cp_five_g_s_tmsi {
 };
 
 struct cu_cp_initial_ue_message {
-  ue_index_t                    ue_index = ue_index_t::invalid;
-  byte_buffer                   nas_pdu;
-  establishment_cause_t         establishment_cause;
-  cu_cp_user_location_info_nr   user_location_info;
-  optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
-  optional<uint16_t>            amf_set_id;
+  ue_index_t                         ue_index = ue_index_t::invalid;
+  byte_buffer                        nas_pdu;
+  establishment_cause_t              establishment_cause;
+  cu_cp_user_location_info_nr        user_location_info;
+  std::optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
+  std::optional<uint16_t>            amf_set_id;
 };
 
 struct cu_cp_ul_nas_transport {
@@ -201,7 +201,7 @@ struct cu_cp_freq_band_nr_item {
 
 struct cu_cp_nr_freq_info {
   uint32_t                             nr_arfcn;
-  optional<cu_cp_sul_info>             sul_info;
+  std::optional<cu_cp_sul_info>        sul_info;
   std::vector<cu_cp_freq_band_nr_item> freq_band_list_nr;
 };
 
@@ -219,15 +219,15 @@ struct cu_cp_tdd_info {
 
 struct cu_cp_nr_mode_info {
   // choice
-  optional<cu_cp_fdd_info> fdd;
-  optional<cu_cp_tdd_info> tdd;
+  std::optional<cu_cp_fdd_info> fdd;
+  std::optional<cu_cp_tdd_info> tdd;
 };
 
 struct cu_cp_served_cell_info {
   nr_cell_global_id_t      nr_cgi;
   pci_t                    nr_pci;
-  optional<uint32_t>       five_gs_tac;
-  optional<uint32_t>       cfg_eps_tac;
+  std::optional<uint32_t>  five_gs_tac;
+  std::optional<uint32_t>  cfg_eps_tac;
   std::vector<std::string> served_plmns;
   cu_cp_nr_mode_info       nr_mode_info;
   byte_buffer              meas_timing_cfg;
@@ -275,8 +275,8 @@ struct cu_cp_gnb_du_sys_info {
 };
 
 struct cu_cp_du_served_cells_item {
-  cu_cp_served_cell_info          served_cell_info;
-  optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
+  cu_cp_served_cell_info               served_cell_info;
+  std::optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
 };
 
 struct cu_cp_alloc_and_retention_prio {
@@ -286,38 +286,38 @@ struct cu_cp_alloc_and_retention_prio {
 };
 
 struct cu_cp_gbr_qos_info {
-  uint64_t              max_flow_bit_rate_dl;
-  uint64_t              max_flow_bit_rate_ul;
-  uint64_t              guaranteed_flow_bit_rate_dl;
-  uint64_t              guaranteed_flow_bit_rate_ul;
-  optional<std::string> notif_ctrl;
-  optional<uint16_t>    max_packet_loss_rate_dl;
-  optional<uint16_t>    max_packet_loss_rate_ul;
+  uint64_t                   max_flow_bit_rate_dl;
+  uint64_t                   max_flow_bit_rate_ul;
+  uint64_t                   guaranteed_flow_bit_rate_dl;
+  uint64_t                   guaranteed_flow_bit_rate_ul;
+  std::optional<std::string> notif_ctrl;
+  std::optional<uint16_t>    max_packet_loss_rate_dl;
+  std::optional<uint16_t>    max_packet_loss_rate_ul;
 };
 
 struct cu_cp_qos_flow_level_qos_params {
-  qos_characteristics_t          qos_characteristics;
-  cu_cp_alloc_and_retention_prio alloc_and_retention_prio;
-  optional<cu_cp_gbr_qos_info>   gbr_qos_info;
-  optional<bool>                 add_qos_flow_info;
-  optional<bool>                 reflective_qos_attribute;
+  qos_characteristics_t             qos_characteristics;
+  cu_cp_alloc_and_retention_prio    alloc_and_retention_prio;
+  std::optional<cu_cp_gbr_qos_info> gbr_qos_info;
+  std::optional<bool>               add_qos_flow_info;
+  std::optional<bool>               reflective_qos_attribute;
 };
 
 struct qos_flow_setup_request_item {
   qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
   cu_cp_qos_flow_level_qos_params qos_flow_level_qos_params;
-  optional<uint8_t>               erab_id;
+  std::optional<uint8_t>          erab_id;
 };
 
 struct cu_cp_pdu_session_res_setup_item {
   pdu_session_id_t                                              pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                                                   pdu_session_nas_pdu;
   s_nssai_t                                                     s_nssai;
-  optional<uint64_t>                                            pdu_session_aggregate_maximum_bit_rate_dl;
-  optional<uint64_t>                                            pdu_session_aggregate_maximum_bit_rate_ul;
+  std::optional<uint64_t>                                       pdu_session_aggregate_maximum_bit_rate_dl;
+  std::optional<uint64_t>                                       pdu_session_aggregate_maximum_bit_rate_ul;
   up_transport_layer_info                                       ul_ngu_up_tnl_info;
   std::string                                                   pdu_session_type;
-  optional<security_indication_t>                               security_ind;
+  std::optional<security_indication_t>                          security_ind;
   slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
 
@@ -331,8 +331,8 @@ struct cu_cp_pdu_session_resource_setup_request {
 enum class cu_cp_qos_flow_map_ind { ul = 0, dl };
 
 struct cu_cp_associated_qos_flow {
-  qos_flow_id_t                    qos_flow_id = qos_flow_id_t::invalid;
-  optional<cu_cp_qos_flow_map_ind> qos_flow_map_ind;
+  qos_flow_id_t                         qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<cu_cp_qos_flow_map_ind> qos_flow_map_ind;
 };
 struct cu_cp_qos_flow_with_cause_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
@@ -351,7 +351,7 @@ struct cu_cp_pdu_session_resource_setup_response_transfer {
   cu_cp_qos_flow_per_tnl_information                                    dlqos_flow_per_tnl_info;
   slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>           associated_qos_flow_list;
   slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
-  optional<security_result_t>                                           security_result;
+  std::optional<security_result_t>                                      security_result;
 };
 
 struct cu_cp_pdu_session_res_setup_response_item {
@@ -360,8 +360,8 @@ struct cu_cp_pdu_session_res_setup_response_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  ngap_cause_t                 cause;
-  optional<crit_diagnostics_t> crit_diagnostics;
+  ngap_cause_t                      cause;
+  std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 struct cu_cp_pdu_session_res_setup_failed_item {
@@ -372,7 +372,7 @@ struct cu_cp_pdu_session_res_setup_failed_item {
 struct cu_cp_pdu_session_resource_setup_response {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
-  optional<crit_diagnostics_t>                                                   crit_diagnostics;
+  std::optional<crit_diagnostics_t>                                              crit_diagnostics;
 };
 
 struct cu_cp_pdu_session_res_release_cmd_transfer {
@@ -385,9 +385,9 @@ struct cu_cp_pdu_session_res_to_release_item_rel_cmd {
 };
 
 struct cu_cp_pdu_session_resource_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  optional<uint16_t> ran_paging_prio;
-  byte_buffer        nas_pdu;
+  ue_index_t              ue_index = ue_index_t::invalid;
+  std::optional<uint16_t> ran_paging_prio;
+  byte_buffer             nas_pdu;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_to_release_item_rel_cmd>
       pdu_session_res_to_release_list_rel_cmd;
 };
@@ -411,12 +411,12 @@ struct cu_cp_qos_flows_usage_report_item {
 };
 
 struct cu_cp_secondary_rat_usage_info {
-  optional<cu_cp_pdu_session_usage_report>                            pdu_session_usage_report;
+  std::optional<cu_cp_pdu_session_usage_report>                       pdu_session_usage_report;
   slotted_id_vector<qos_flow_id_t, cu_cp_qos_flows_usage_report_item> qos_flows_usage_report_list;
 };
 
 struct cu_cp_pdu_session_res_release_resp_transfer {
-  optional<cu_cp_secondary_rat_usage_info> secondary_rat_usage_info;
+  std::optional<cu_cp_secondary_rat_usage_info> secondary_rat_usage_info;
 };
 
 struct cu_cp_pdu_session_res_released_item_rel_res {
@@ -426,8 +426,8 @@ struct cu_cp_pdu_session_res_released_item_rel_res {
 
 struct cu_cp_pdu_session_resource_release_response {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_released_item_rel_res> released_pdu_sessions;
-  optional<cu_cp_user_location_info_nr>                                            user_location_info;
-  optional<crit_diagnostics_t>                                                     crit_diagnostics;
+  std::optional<cu_cp_user_location_info_nr>                                       user_location_info;
+  std::optional<crit_diagnostics_t>                                                crit_diagnostics;
 };
 
 using cu_cp_qos_flow_add_or_mod_item = qos_flow_setup_request_item;
@@ -465,8 +465,9 @@ struct qos_flow_add_or_mod_response_item {
 };
 
 struct cu_cp_pdu_session_res_modify_response_transfer {
-  std::vector<cu_cp_qos_flow_per_tnl_information>                               add_dl_qos_flow_per_tnl_info;
-  optional<slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_response_item>> qos_flow_add_or_modify_response_list;
+  std::vector<cu_cp_qos_flow_per_tnl_information> add_dl_qos_flow_per_tnl_info;
+  std::optional<slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_response_item>>
+      qos_flow_add_or_modify_response_list;
 };
 
 struct cu_cp_pdu_session_resource_modify_response_item {
@@ -498,8 +499,8 @@ struct cu_cp_ue_context_release_request {
 };
 
 struct cu_cp_recommended_cell_item {
-  nr_cell_global_id_t ngran_cgi;
-  optional<uint16_t>  time_stayed_in_cell;
+  nr_cell_global_id_t     ngran_cgi;
+  std::optional<uint16_t> time_stayed_in_cell;
 };
 
 struct cu_cp_recommended_cells_for_paging {
@@ -512,10 +513,10 @@ struct cu_cp_global_gnb_id {
 };
 
 struct cu_cp_amf_paging_target {
-  bool                          is_global_ran_node_id;
-  bool                          is_tai;
-  optional<cu_cp_global_gnb_id> global_ran_node_id;
-  optional<cu_cp_tai>           tai;
+  bool                               is_global_ran_node_id;
+  bool                               is_tai;
+  std::optional<cu_cp_global_gnb_id> global_ran_node_id;
+  std::optional<cu_cp_tai>           tai;
 };
 
 struct cu_cp_recommended_ran_node_item {
@@ -532,11 +533,12 @@ struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
 };
 
 struct cu_cp_ue_context_release_complete {
-  ue_index_t                                                         ue_index = ue_index_t::invalid;
-  optional<cu_cp_user_location_info_nr>                              user_location_info;
-  optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
-  std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;
-  optional<crit_diagnostics_t>                                       crit_diagnostics;
+  ue_index_t                                 ue_index = ue_index_t::invalid;
+  std::optional<cu_cp_user_location_info_nr> user_location_info;
+  std::optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging>
+                                    info_on_recommended_cells_and_ran_nodes_for_paging;
+  std::vector<pdu_session_id_t>     pdu_session_res_list_cxt_rel_cpl;
+  std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 struct cu_cp_tai_list_for_paging_item {
@@ -552,24 +554,24 @@ struct cu_cp_assist_data_for_recommended_cells {
 };
 
 struct cu_cp_paging_attempt_info {
-  uint8_t               paging_attempt_count;
-  uint8_t               intended_nof_paging_attempts;
-  optional<std::string> next_paging_area_scope;
+  uint8_t                    paging_attempt_count;
+  uint8_t                    intended_nof_paging_attempts;
+  std::optional<std::string> next_paging_area_scope;
 };
 
 struct cu_cp_assist_data_for_paging {
-  optional<cu_cp_assist_data_for_recommended_cells> assist_data_for_recommended_cells;
-  optional<cu_cp_paging_attempt_info>               paging_attempt_info;
+  std::optional<cu_cp_assist_data_for_recommended_cells> assist_data_for_recommended_cells;
+  std::optional<cu_cp_paging_attempt_info>               paging_attempt_info;
 };
 
 struct cu_cp_paging_message {
-  cu_cp_five_g_s_tmsi                         ue_paging_id;
-  optional<uint16_t>                          paging_drx;
-  std::vector<cu_cp_tai_list_for_paging_item> tai_list_for_paging;
-  optional<uint8_t>                           paging_prio;
-  optional<cu_cp_ue_radio_cap_for_paging>     ue_radio_cap_for_paging;
-  optional<bool>                              paging_origin;
-  optional<cu_cp_assist_data_for_paging>      assist_data_for_paging;
+  cu_cp_five_g_s_tmsi                          ue_paging_id;
+  std::optional<uint16_t>                      paging_drx;
+  std::vector<cu_cp_tai_list_for_paging_item>  tai_list_for_paging;
+  std::optional<uint8_t>                       paging_prio;
+  std::optional<cu_cp_ue_radio_cap_for_paging> ue_radio_cap_for_paging;
+  std::optional<bool>                          paging_origin;
+  std::optional<cu_cp_assist_data_for_paging>  assist_data_for_paging;
 };
 
 struct cu_cp_inactivity_notification {

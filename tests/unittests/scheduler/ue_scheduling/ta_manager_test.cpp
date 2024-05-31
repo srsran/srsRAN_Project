@@ -55,7 +55,7 @@ protected:
     ta_mgr.slot_indication(current_sl);
   }
 
-  optional<dl_msg_lc_info> fetch_ta_cmd_mac_ce_allocation()
+  std::optional<dl_msg_lc_info> fetch_ta_cmd_mac_ce_allocation()
   {
     static const lcid_dl_sch_t lcid            = lcid_dl_sch_t::TA_CMD;
     static const unsigned      remaining_bytes = lcid.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + 3;
@@ -99,7 +99,7 @@ TEST_P(ta_manager_tester, ta_cmd_is_successfully_triggered)
   static const float ul_sinr    = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold + 10;
   ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
 
-  optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
+  std::optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
   for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
     run_slot();
     ta_cmd_mac_ce_alloc = fetch_ta_cmd_mac_ce_allocation();
@@ -127,7 +127,7 @@ TEST_P(ta_manager_tester, verify_computed_new_ta_cmd_based_on_multiple_n_ta_diff
     ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(ta), ul_sinr);
   }
 
-  optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
+  std::optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
   for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 4; ++count) {
     run_slot();
     ta_cmd_mac_ce_alloc = fetch_ta_cmd_mac_ce_allocation();

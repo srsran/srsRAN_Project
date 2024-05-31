@@ -199,9 +199,9 @@ public:
 
   /// \brief Keeps popping and discarding elements until the \c stop_condition returns true.
   /// \param[in] stop_condition Callable with signature "bool(const T&)" that checks if the discarding can be halted.
-  /// \return The element for which \c stop_condition returned true if it exists. Nullopt otherwise.
+  /// \return The element for which \c stop_condition returned true if it exists. std::nullopt otherwise.
   template <typename StopCondition>
-  optional<T> pop_and_discard_until(const StopCondition& stop_condition)
+  std::optional<T> pop_and_discard_until(const StopCondition& stop_condition)
   {
     return pop_and_discard_until_(stop_condition);
   }
@@ -425,9 +425,9 @@ protected:
   }
 
   template <typename StopCondition>
-  optional<T> pop_and_discard_until_(const StopCondition& cond)
+  std::optional<T> pop_and_discard_until_(const StopCondition& cond)
   {
-    optional<T>                  ret{};
+    std::optional<T>             ret{};
     bool                         notify_needed = false;
     std::unique_lock<std::mutex> lock(mutex);
     while (wait_pop_possible(lock, non_blocking_tag{})) {

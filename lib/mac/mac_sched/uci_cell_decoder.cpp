@@ -62,15 +62,15 @@ static csi_report_data decode_csi(const bounded_bitset<uci_constants::MAX_NOF_CS
   return csi_report_unpack_pucch(csi_bits, csi_rep_cfg);
 }
 
-static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
-                                                 const csi_report_configuration&               csi_rep_cfg)
+static std::optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
+                                                      const csi_report_configuration&               csi_rep_cfg)
 {
   // TODO: Handle CSI part 2.
   return decode_csi(pucch.csi_part1_info->payload, csi_rep_cfg);
 }
 
-static optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pusch_type&  pusch,
-                                                 const csi_report_configuration& csi_rep_cfg)
+static std::optional<csi_report_data> decode_csi_bits(const mac_uci_pdu::pusch_type&  pusch,
+                                                      const csi_report_configuration& csi_rep_cfg)
 {
   // TODO: Revisit this logic since its valid only for periodic CSI reporting and for both Type I and Type II reports
   //  configured for PUCCH but transmitted on PUSCH"

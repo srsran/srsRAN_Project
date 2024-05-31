@@ -145,7 +145,7 @@ public:
     /// Indicates the event type.
     event_type type = event_type::UNDEFINED;
     /// Optional - Event timestamp.
-    optional<uint64_t> timestamp;
+    std::optional<uint64_t> timestamp;
   };
 
   /// Notifies a new event that affected the real-time operation of the radio.

@@ -189,7 +189,7 @@ private:
   /// Enqueues code block decoder statistics.
   concurrent_queue<unsigned, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep> cb_stats;
   /// Number of UL-SCH codeword softbits. If set, the decoder will start decoding codeblocks as they become available.
-  optional<units::bits> nof_ulsch_softbits;
+  std::optional<units::bits> nof_ulsch_softbits;
   /// Number of codeblocks in the current codeword.
   unsigned nof_codeblocks;
   /// CRC calculator for inner codeblock checks.

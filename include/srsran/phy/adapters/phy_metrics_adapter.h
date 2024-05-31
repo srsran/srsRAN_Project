@@ -125,14 +125,14 @@ public:
   }
 
 private:
-  std::mutex                              tx_mutex;
-  sample_statistics<float>                tx_avg_power;
-  sample_statistics<float>                tx_peak_power;
-  optional<std::pair<uint64_t, uint64_t>> tx_clipping;
-  std::mutex                              rx_mutex;
-  sample_statistics<float>                rx_avg_power;
-  sample_statistics<float>                rx_peak_power;
-  optional<std::pair<uint64_t, uint64_t>> rx_clipping;
+  std::mutex                                   tx_mutex;
+  sample_statistics<float>                     tx_avg_power;
+  sample_statistics<float>                     tx_peak_power;
+  std::optional<std::pair<uint64_t, uint64_t>> tx_clipping;
+  std::mutex                                   rx_mutex;
+  sample_statistics<float>                     rx_avg_power;
+  sample_statistics<float>                     rx_peak_power;
+  std::optional<std::pair<uint64_t, uint64_t>> rx_clipping;
 };
 
 } // namespace srsran

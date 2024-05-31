@@ -35,7 +35,7 @@ struct pucch_processor_result {
   /// UCI message.
   pucch_uci_message message;
   /// Detection metric normalized with respect to the detection threshold (if applicable).
-  optional<float> detection_metric;
+  std::optional<float> detection_metric;
 };
 
 } // namespace srsran

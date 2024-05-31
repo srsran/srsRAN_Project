@@ -48,9 +48,6 @@ du_processor_test::du_processor_test() : common_task_sched(std::make_unique<dumm
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  // create ue task scheduler
-  ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
-
   // create and start DU processor
   du_processor_config_t du_cfg = {};
   du_cfg.du_index              = uint_to_du_index(0);
@@ -58,14 +55,13 @@ du_processor_test::du_processor_test() : common_task_sched(std::make_unique<dumm
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          cu_cp_notifier,
-                                         f1ap_du_mgmt_notifier,
                                          f1ap_pdu_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_du_cu_cp_notifier,
                                          *common_task_sched,
-                                         *ue_task_sched,
                                          ue_mng,
+                                         timers,
                                          ctrl_worker);
 }
 

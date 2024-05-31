@@ -44,14 +44,14 @@ namespace srsran {
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"
 struct pdcch_config_common {
   /// Contains Coreset#0.
-  optional<coreset_configuration> coreset0;
+  std::optional<coreset_configuration> coreset0;
   /// Contains common Coreset.
-  optional<coreset_configuration> common_coreset;
+  std::optional<coreset_configuration> common_coreset;
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
   std::vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
-  optional<search_space_id>               other_si_search_space_id;
-  optional<search_space_id>               paging_search_space_id;
+  std::optional<search_space_id>          other_si_search_space_id;
+  std::optional<search_space_id>          paging_search_space_id;
   /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
   search_space_id ra_search_space_id;
 };
@@ -157,7 +157,7 @@ struct pucch_config_common {
   uint8_t             pucch_resource_common;
   pucch_group_hopping group_hopping;
   /// Values: {0, ..., 1023}.
-  optional<unsigned> hopping_id;
+  std::optional<unsigned> hopping_id;
   /// Values: {-202, ..., 24}
   int p0_nominal;
 };
@@ -165,10 +165,10 @@ struct pucch_config_common {
 /// Used to configure the common, cell-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkCommon.
 struct bwp_uplink_common {
-  bwp_configuration             generic_params;
-  optional<rach_config_common>  rach_cfg_common;
-  optional<pusch_config_common> pusch_cfg_common;
-  optional<pucch_config_common> pucch_cfg_common;
+  bwp_configuration                  generic_params;
+  std::optional<rach_config_common>  rach_cfg_common;
+  std::optional<pusch_config_common> pusch_cfg_common;
+  std::optional<pucch_config_common> pucch_cfg_common;
 };
 
 /// \brief It provides parameters determining the location and width of the actual carrier.
@@ -183,7 +183,7 @@ struct scs_specific_carrier {
   /// Indicates the downlink Tx Direct Current location for the carrier. A value in the range 0..3299 indicates the
   /// subcarrier index within the carrier. The values in the value range 3301..4095 are reserved and ignored by the UE.
   /// If this field is absent, the UE assumes the default value of 3300 (i.e. "Outside the carrier").
-  optional<unsigned> tx_direct_current_location;
+  std::optional<unsigned> tx_direct_current_location;
 };
 
 /// \brief Used to indicate a frequency band
@@ -225,7 +225,7 @@ struct frequency_info_ul {
   bool                              freq_shift_7p5khz_present;
   /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm. See TS 38.331, \c p-Max under \c
   /// FrequencyInfoUL.
-  optional<bounded_integer<int, -30, 33>> p_max;
+  std::optional<bounded_integer<int, -30, 33>> p_max;
 
   /// Set of frequency bands.
   std::vector<freq_band_indicator> freq_band_list;

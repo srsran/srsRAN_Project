@@ -86,7 +86,7 @@ public:
   /// For a valid PUSCH transmission the codeword, the UCI information or both must be present.
   struct pdu_t {
     /// Context information.
-    optional<pusch_context> context;
+    std::optional<pusch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.
@@ -100,7 +100,7 @@ public:
     /// Modulation and coding scheme.
     sch_mcs_description mcs_descr;
     /// Provides codeword description if present.
-    optional<codeword_description> codeword;
+    std::optional<codeword_description> codeword;
     /// Uplink control information parameters.
     uci_description uci;
     /// \brief Parameter \f$n_{ID}\f$ from TS 38.211 section 6.3.1.1.
@@ -138,17 +138,17 @@ public:
     unsigned start_symbol_index;
     /// Time domain allocation number of symbols (1...14).
     unsigned nof_symbols;
-    /// \brief Limits codeblock encoding circular buffer in bytes.
+    /// \brief Transport block size for limited buffer rate match.
     ///
-    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS 38.212 section 5.4.2.1, for computing the size of the circular buffer.
-    /// \remark Use <tt> ldpc::MAX_CODEBLOCK_SIZE / 8 </tt> for maximum length.
+    /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS38.212 section 5.4.2.1, for computing the size of the circular buffer.
+    /// \remark Use <tt> tbs_lbrm_default </tt> for maximum length.
     /// \remark Zero is reserved.
-    unsigned tbs_lbrm_bytes;
+    units::bytes tbs_lbrm;
     /// \brief Direct current position.
     ///
     /// Sets the direct current position relative to Point A.
     /// \remark An assertion is triggered if the DC position is not within the resource grid.
-    optional<unsigned> dc_position;
+    std::optional<unsigned> dc_position;
   };
 
   /// Default destructor.

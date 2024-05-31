@@ -105,7 +105,7 @@ error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  ba
 /// \param[in] dl_arfcn The DL ARFCN.
 /// \param[in] band     NR Band. If not given, the band is derived from the dl_arfcn.
 /// \return uint32_t the UL ARFCN.
-uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, optional<nr_band> band);
+uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, std::optional<nr_band> band);
 
 /// \brief Return frequency of given NR-ARFCN in Hz as per TS38.104 5.4.2.1.
 /// \param[in] nr_arfcn Given NR-ARFCN.
@@ -247,13 +247,13 @@ struct ssb_coreset0_freq_location {
 /// \param[in] max_coreset0_duration Maximum CORESET#0 duration to consider while choosing CORESET#0 index.
 /// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
 /// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
-optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                                    nr_band            band,
-                                                                    unsigned           n_rbs,
-                                                                    subcarrier_spacing scs_common,
-                                                                    subcarrier_spacing scs_ssb,
-                                                                    uint8_t            ss0_idx,
-                                                                    uint8_t            max_coreset0_duration);
+std::optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                         nr_band            band,
+                                                                         unsigned           n_rbs,
+                                                                         subcarrier_spacing scs_common,
+                                                                         subcarrier_spacing scs_ssb,
+                                                                         uint8_t            ss0_idx,
+                                                                         uint8_t            max_coreset0_duration);
 
 /// \brief Fetches parameters defining the position of the SSB within the band for a given Coreset0 and SS0 indices.
 ///
@@ -265,14 +265,15 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned    
 /// \param[in] ss0_idx SearchSpace#0 index.
 /// \param[in] cset0_idx CORESET#0 index.
 /// \return The parameters defining the position of the SSB within the band for Table 13-[1-6] and Table 13-11,
-/// respectively, in TS 38.213 if CORESET#0 RBs does not completely intersect with the SSB. Returns nullopt otherwise.
-optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location_for_cset0_idx(unsigned           dl_arfcn,
-                                                                                  nr_band            band,
-                                                                                  unsigned           n_rbs,
-                                                                                  subcarrier_spacing scs_common,
-                                                                                  subcarrier_spacing scs_ssb,
-                                                                                  uint8_t            ss0_idx,
-                                                                                  unsigned           cset0_idx);
+/// respectively, in TS 38.213 if CORESET#0 RBs does not completely intersect with the SSB. Returns std::nullopt
+/// otherwise.
+std::optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location_for_cset0_idx(unsigned           dl_arfcn,
+                                                                                       nr_band            band,
+                                                                                       unsigned           n_rbs,
+                                                                                       subcarrier_spacing scs_common,
+                                                                                       subcarrier_spacing scs_ssb,
+                                                                                       uint8_t            ss0_idx,
+                                                                                       unsigned           cset0_idx);
 
 /// \brief Searches the CORESET#0 index that maximizes the number of CORESET#0 RBs that do not intersect with the SSB,
 /// given an SSB configuration and the following restrictions:
@@ -290,15 +291,15 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location_for_cset0_id
 /// \param[in] ss0_idx SearchSpace#0 index.
 /// \param[in] nof_coreset0_symb Number of symbols required for returned CORESET#0, if defined.
 /// \return CORESET#0 index if a valid candidate was found. Empty optional otherwise.
-optional<unsigned> get_coreset0_index(nr_band               band,
-                                      unsigned              n_rbs,
-                                      subcarrier_spacing    scs_common,
-                                      subcarrier_spacing    scs_ssb,
-                                      ssb_offset_to_pointA  offset_to_point_A,
-                                      ssb_subcarrier_offset k_ssb,
-                                      uint8_t               ssb_first_symbol,
-                                      uint8_t               ss0_idx,
-                                      optional<unsigned>    nof_coreset0_symb = {});
+std::optional<unsigned> get_coreset0_index(nr_band                 band,
+                                           unsigned                n_rbs,
+                                           subcarrier_spacing      scs_common,
+                                           subcarrier_spacing      scs_ssb,
+                                           ssb_offset_to_pointA    offset_to_point_A,
+                                           ssb_subcarrier_offset   k_ssb,
+                                           uint8_t                 ssb_first_symbol,
+                                           uint8_t                 ss0_idx,
+                                           std::optional<unsigned> nof_coreset0_symb = {});
 
 /// \brief Compute the number of CORESET#0 CRBs that do not intersect with the SSB CRBs.
 unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_idx,
@@ -321,14 +322,14 @@ n_ta_offset get_ta_offset(nr_band band);
 /// \param[in] scs_ssb is ssb subcarrier spacing.
 /// \param[in] offset_to_point_A SSB Offset to PointA.
 /// \param[in] k_ssb Subcarrier offset of SSB.
-/// \return SSB ARFCN if cell configuration is valid, nullopt otherwise.
-optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
-                                 nr_band               band,
-                                 unsigned              n_rbs,
-                                 subcarrier_spacing    scs_common,
-                                 subcarrier_spacing    scs_ssb,
-                                 ssb_offset_to_pointA  offset_to_point_A,
-                                 ssb_subcarrier_offset k_ssb);
+/// \return SSB ARFCN if cell configuration is valid, std::nullopt otherwise.
+std::optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
+                                      nr_band               band,
+                                      unsigned              n_rbs,
+                                      subcarrier_spacing    scs_common,
+                                      subcarrier_spacing    scs_ssb,
+                                      ssb_offset_to_pointA  offset_to_point_A,
+                                      ssb_subcarrier_offset k_ssb);
 
 /// \brief Validate the SSB ARFCN for a given band.
 ///

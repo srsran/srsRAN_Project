@@ -26,20 +26,34 @@
 
 using namespace srsran;
 
+transport_layer_address::transport_layer_address(const struct sockaddr& addr_, socklen_t socklen) : addrlen(socklen)
+{
+  memcpy((struct sockaddr*)&addr_storage, &addr_, addrlen);
+}
+
+transport_layer_address transport_layer_address::create_from_sockaddr(const struct sockaddr& sockaddr,
+                                                                      socklen_t              addr_len)
+{
+  return transport_layer_address(sockaddr, addr_len);
+}
+
+transport_layer_address transport_layer_address::create_from_sockaddr(native_type addr)
+{
+  return transport_layer_address(*addr.addr, addr.addrlen);
+}
+
 transport_layer_address transport_layer_address::create_from_string(const std::string& ip_str)
 {
   ::addrinfo* results;
-  native_type addr;
 
   int err = ::getaddrinfo(ip_str.c_str(), nullptr, nullptr, &results);
   srsran_assert(err == 0, "Getaddrinfo error: {} - {}", ip_str, ::gai_strerror(err));
 
-  // Store address.
-  std::memcpy(&addr, results->ai_addr, results->ai_addrlen);
+  transport_layer_address res(*results->ai_addr, results->ai_addrlen);
 
   ::freeaddrinfo(results);
 
-  return transport_layer_address(addr);
+  return res;
 }
 
 transport_layer_address transport_layer_address::create_from_bitstring(const std::string& bit_str)
@@ -80,8 +94,8 @@ transport_layer_address transport_layer_address::create_from_bitstring(const std
 std::string transport_layer_address::to_bitstring() const
 {
   char        ip_addr[NI_MAXHOST];
-  const auto* saddr = reinterpret_cast<const sockaddr*>(&addr);
-  ::getnameinfo(saddr, sizeof(addr), ip_addr, sizeof(ip_addr), nullptr, 0, NI_NUMERICHOST);
+  const auto* saddr = reinterpret_cast<const sockaddr*>(&addr_storage);
+  ::getnameinfo(saddr, addrlen, ip_addr, sizeof(ip_addr), nullptr, 0, NI_NUMERICHOST);
   std::string ip_str = ip_addr;
 
   if (saddr->sa_family == AF_INET) {
@@ -115,24 +129,16 @@ std::string transport_layer_address::to_bitstring() const
 
 bool transport_layer_address::operator==(const transport_layer_address& other) const
 {
-  const auto* saddr = reinterpret_cast<const sockaddr*>(&addr);
-  for (unsigned i = 0; i != sizeof(saddr->sa_data); ++i) {
-    if (saddr->sa_data[i] != reinterpret_cast<const sockaddr*>(&other)->sa_data[i]) {
-      return false;
-    }
+  if (addrlen != other.addrlen) {
+    return false;
   }
-
-  return true;
+  return memcmp(&addr_storage, &other.addr_storage, addrlen) == 0;
 }
 
 bool transport_layer_address::operator<(const transport_layer_address& other) const
 {
-  const auto* saddr = reinterpret_cast<const sockaddr*>(&addr);
-  for (unsigned i = 0; i != sizeof(saddr->sa_data); ++i) {
-    if (saddr->sa_data[i] < reinterpret_cast<const sockaddr*>(&other)->sa_data[i]) {
-      return true;
-    }
+  if (addrlen != other.addrlen) {
+    return addrlen < other.addrlen;
   }
-
-  return false;
+  return memcmp(&addr_storage, &other.addrlen, addrlen) < 0;
 }

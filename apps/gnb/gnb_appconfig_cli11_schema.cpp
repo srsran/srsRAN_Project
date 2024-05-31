@@ -52,12 +52,25 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     return "Log level value not supported. Accepted values [info,debug,warning,error]";
   };
 
+  auto metric_level_check = [](const std::string& value) -> std::string {
+    if (value == "none" || value == "info" || value == "debug") {
+      return {};
+    }
+    return "Log level value not supported. Accepted values [none,info,debug]";
+  };
+
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
   app.add_option(
          "--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU")
       ->capture_default_str()
       ->check(level_check);
   app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
+  app.add_option("--config_level", log_params.config_level, "Config log level")
+      ->capture_default_str()
+      ->check(metric_level_check);
+  app.add_option("--metrics_level", log_params.metrics_level, "Metrics log level")
+      ->capture_default_str()
+      ->check(metric_level_check);
   app.add_option(
          "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
@@ -88,6 +101,14 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
         continue;
       }
 
+      // Config and metrics loggers have only subset of levels.
+      if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
+        if (log_params.all_level == "error") {
+          option->default_val<std::string>("none");
+          continue;
+        }
+      }
+
       option->default_val<std::string>(log_params.all_level);
     }
   });
@@ -112,7 +133,7 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
       ->capture_default_str();
 
-  app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 
   app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
@@ -131,52 +152,20 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
       ->capture_default_str();
 }
 
-static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
-{
-  app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
-  app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr",
-                 amf_params.bind_addr,
-                 "Default local IP address interfaces bind to, unless a specific bind address is specified")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n3_bind_addr", amf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--n3_bind_interface", amf_params.n3_bind_interface, "Network device to bind for N3 interface")
-      ->capture_default_str();
-  app.add_option("--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
-      ->capture_default_str();
-  app.add_option("--n3_ext_addr",
-                 amf_params.n3_ext_addr,
-                 "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
-      ->check(CLI::ValidIPV4);
-  app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
-  app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
-  app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
-  app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
-  app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
-  app.add_option("--sctp_nodelay",
-                 amf_params.sctp_nodelay,
-                 "Send SCTP messages as soon as possible without any Nagle-like algorithm");
-  app.add_option("--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
-}
-
 static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
 {
-  app.add_option("--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
-  app.add_option("--addr", e2_params.ip_addr, "RIC IP address");
-  app.add_option("--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
-  app.add_option("--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
+  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address");
+  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
       ->check(CLI::ValidIPV4);
-  app.add_option("--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
-  app.add_option("--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
-  app.add_option("--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
-  app.add_option("--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
-  app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
-  app.add_option("--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
-  app.add_option("--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
+  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
+  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
+  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
+  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
+  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
+  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
+  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
 }
 
 static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
@@ -187,11 +176,11 @@ static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfi
       ->capture_default_str();
 }
 
-static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& config)
+static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>& config)
 {
   config.emplace();
 
-  app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
+  add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
@@ -293,9 +282,9 @@ static void configure_cli11_non_rt_threads_args(CLI::App& app, non_rt_threads_ap
 
 static void configure_cli11_cpu_affinities_args(CLI::App& app, cpu_affinities_appconfig& config)
 {
-  auto parsing_isolated_cpus_fcn = [](optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
-                                      const std::string&                   value,
-                                      const std::string&                   property_name) {
+  auto parsing_isolated_cpus_fcn = [](std::optional<os_sched_affinity_bitmask>& isolated_cpu_cfg,
+                                      const std::string&                        value,
+                                      const std::string&                        property_name) {
     isolated_cpu_cfg.emplace();
     parse_affinity_mask(*isolated_cpu_cfg, value, property_name);
 
@@ -376,12 +365,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
 
-  // AMF section.
-  CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
-  configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
-
   // E2 section.
-  CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();
+  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, gnb_cfg.e2_cfg);
 
   // Buffer pool section.
@@ -393,7 +378,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_expert_execution_args(*expert_subcmd, gnb_cfg.expert_execution_cfg);
 
   // HAL section.
-  CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
+  CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 }
 

@@ -72,10 +72,10 @@ class base_paging_sched_tester
 public:
   using five_g_s_tmsi = uint64_t;
 
-  slot_point                        current_slot{0, 0};
-  srslog::basic_logger&             mac_logger  = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger&             test_logger = srslog::fetch_basic_logger("TEST", true);
-  optional<paging_sched_test_bench> bench;
+  slot_point                             current_slot{0, 0};
+  srslog::basic_logger&                  mac_logger  = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&                  test_logger = srslog::fetch_basic_logger("TEST", true);
+  std::optional<paging_sched_test_bench> bench;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned                max_k_value = 0;
   scheduler_result_logger sched_res_logger{false, 0};
@@ -377,7 +377,7 @@ TEST_F(paging_sched_partial_slot_tester, successfully_allocated_paging_grant_ss_
   cell_cfg_request.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
       config_helpers::make_pdsch_time_domain_resource(cell_cfg_request.searchspace0,
                                                       cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common,
-                                                      nullopt,
+                                                      std::nullopt,
                                                       cell_cfg_request.tdd_ul_dl_cfg_common);
 
   // Set Paging configuration to a particular value in order to derive the 5G-S-TMSI, such that Paging Occasion

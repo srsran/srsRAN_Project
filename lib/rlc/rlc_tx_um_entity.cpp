@@ -22,6 +22,7 @@
 
 #include "rlc_tx_um_entity.h"
 #include "rlc_um_pdu.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 
 using namespace srsran;
@@ -48,14 +49,25 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
 {
   metrics.metrics_set_mode(rlc_mode::um_bidir);
 
+  // check PDCP SN length
+  srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
+                "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
+                config.pdcp_sn_len,
+                du_index,
+                ue_index,
+                rb_id);
+
   logger.log_info("RLC UM configured. {}", cfg);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
 {
-  size_t sdu_length    = sdu_.buf.length();
   sdu_.time_of_arrival = std::chrono::high_resolution_clock::now();
+
+  sdu_.pdcp_sn = get_pdcp_sn(sdu_.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+
+  size_t sdu_length = sdu_.buf.length();
   if (sdu_queue.write(sdu_)) {
     logger.log_info(sdu_.buf.begin(),
                     sdu_.buf.end(),

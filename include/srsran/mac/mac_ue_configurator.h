@@ -93,13 +93,13 @@ struct mac_ue_create_response {
 
 /// Input parameters used to reconfigure a UE in the scheduler.
 struct mac_ue_reconfiguration_request {
-  du_ue_index_t                           ue_index;
-  du_cell_index_t                         pcell_index;
-  rnti_t                                  crnti;
-  std::vector<mac_logical_channel_config> bearers_to_addmod;
-  std::vector<lcid_t>                     bearers_to_rem;
-  optional<mac_cell_group_config>         mac_cell_group_cfg;
-  optional<physical_cell_group_config>    phy_cell_group_cfg;
+  du_ue_index_t                             ue_index;
+  du_cell_index_t                           pcell_index;
+  rnti_t                                    crnti;
+  std::vector<mac_logical_channel_config>   bearers_to_addmod;
+  std::vector<lcid_t>                       bearers_to_rem;
+  std::optional<mac_cell_group_config>      mac_cell_group_cfg;
+  std::optional<physical_cell_group_config> phy_cell_group_cfg;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

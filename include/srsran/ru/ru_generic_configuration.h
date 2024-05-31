@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/ru/ru_timing_notifier.h"

@@ -27,6 +27,7 @@ namespace srsran {
 namespace fapi {
 class slot_data_message_notifier;
 class slot_error_message_notifier;
+class slot_last_message_notifier;
 class slot_message_gateway;
 class slot_time_message_notifier;
 } // namespace fapi
@@ -59,6 +60,9 @@ public:
 
   /// Returns a reference to the slot-based message gateway used by the adaptor.
   virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
+
+  /// Returns a reference to the slot-based last message notifier used by the adaptor.
+  virtual fapi::slot_last_message_notifier& get_slot_last_message_notifier() = 0;
 
   /// Configures the slot-based, time-specific message notifier to the given one.
   virtual void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;

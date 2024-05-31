@@ -36,7 +36,7 @@ inline unsigned compute_interval_idx(float value, float interval_width, unsigned
   int nof_intervals_int = static_cast<int>(nof_intervals);
   int idx               = static_cast<int>(std::floor(value / interval_width)) + nof_intervals_int / 2;
 
-  return clamp(idx, 0, nof_intervals_int - 1);
+  return std::clamp(idx, 0, nof_intervals_int - 1);
 }
 
 /// \brief Applies an interval function.

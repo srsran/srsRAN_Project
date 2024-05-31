@@ -53,10 +53,10 @@ public:
 };
 
 struct f1ap_ue_context_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  f1ap_cause_t       cause;
-  byte_buffer        rrc_release_pdu;
-  optional<srb_id_t> srb_id;
+  ue_index_t              ue_index = ue_index_t::invalid;
+  f1ap_cause_t            cause;
+  byte_buffer             rrc_release_pdu;
+  std::optional<srb_id_t> srb_id;
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
@@ -67,8 +67,8 @@ public:
 
   /// Establish the UE context in F1.
   virtual async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
-                                  optional<rrc_ue_transfer_context>    rrc_context) = 0;
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
+                                  std::optional<rrc_ue_transfer_context> rrc_context) = 0;
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
@@ -116,11 +116,11 @@ public:
 /// This request should be made once the C-RNTI and cell of the UE is known. That generally corresponds to the moment
 /// a Initial UL RRC Message or a F1AP UE Context Setup Response are received.
 struct ue_rrc_context_creation_request {
-  ue_index_t                        ue_index;
-  rnti_t                            c_rnti;
-  nr_cell_global_id_t               cgi;
-  byte_buffer                       du_to_cu_rrc_container;
-  optional<rrc_ue_transfer_context> prev_context;
+  ue_index_t                             ue_index;
+  rnti_t                                 c_rnti;
+  nr_cell_global_id_t                    cgi;
+  byte_buffer                            du_to_cu_rrc_container;
+  std::optional<rrc_ue_transfer_context> prev_context;
 };
 
 /// \brief Response by CU-CP to F1AP-CU request to create UE RRC context.
@@ -132,20 +132,6 @@ struct ue_rrc_context_creation_response {
 /// Notification from the F1AP that the loss of transaction reference information for some UEs has been lost.
 struct f1_ue_transaction_info_loss_event {
   std::vector<ue_index_t> ues_lost;
-};
-
-struct ue_update_message {
-  ue_index_t          ue_index = ue_index_t::invalid;
-  nr_cell_global_id_t cgi;
-  rnti_t              c_rnti = rnti_t::INVALID_RNTI;
-  byte_buffer         cell_group_cfg;
-  byte_buffer         meas_gap_cfg;
-  byte_buffer         requested_p_max_fr1;
-};
-
-struct ue_update_complete_message {
-  ue_index_t                 ue_index          = ue_index_t::invalid;
-  f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
 /// Scheduler of F1AP async tasks using common signalling.
@@ -177,22 +163,6 @@ public:
 
   /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
   virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
-
-  /// \brief Get the DU index.
-  /// \return The DU index.
-  virtual du_index_t get_du_index() = 0;
-};
-
-/// Methods used by F1AP to notify about DU specific events.
-class f1ap_du_management_notifier
-{
-public:
-  virtual ~f1ap_du_management_notifier() = default;
-
-  /// \brief Notifies about a successful F1 Removal procedure.
-  /// The corresponding DU processor will be removed now.
-  /// \param[in] du_index The index of the DU processor to delete.
-  virtual void on_du_remove_request_received(du_index_t du_index) = 0;
 };
 
 /// Methods to get statistics of the F1AP.
@@ -219,7 +189,6 @@ public:
 
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
-                public f1ap_event_handler,
                 public f1ap_rrc_message_handler,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
@@ -232,7 +201,6 @@ public:
   virtual async_task<void> stop() = 0;
 
   virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
-  virtual f1ap_event_handler&              get_event_handler()                   = 0;
   virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
   virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
   virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;

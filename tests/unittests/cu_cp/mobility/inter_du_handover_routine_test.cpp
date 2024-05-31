@@ -150,7 +150,7 @@ protected:
   }
 
   /// \brief Inject RRC Reconfiguration Complete.
-  void inject_rrc_reconfig_complete(optional<unsigned> transaction_id = {})
+  void inject_rrc_reconfig_complete(std::optional<unsigned> transaction_id = {})
   {
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
         int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));

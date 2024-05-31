@@ -47,10 +47,10 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
   }
 }
 
-void ue_link_adaptation_controller::handle_dl_ack_info(bool                    ack_value,
-                                                       sch_mcs_index           used_mcs,
-                                                       pdsch_mcs_table         mcs_table,
-                                                       optional<sch_mcs_index> olla_mcs)
+void ue_link_adaptation_controller::handle_dl_ack_info(bool                         ack_value,
+                                                       sch_mcs_index                used_mcs,
+                                                       pdsch_mcs_table              mcs_table,
+                                                       std::optional<sch_mcs_index> olla_mcs)
 {
   if (not dl_olla.has_value()) {
     // DL OLLA is disabled.
@@ -69,10 +69,10 @@ void ue_link_adaptation_controller::handle_dl_ack_info(bool                    a
   dl_olla->update(ack_value, used_mcs, dl_mcs_lims);
 }
 
-void ue_link_adaptation_controller::handle_ul_crc_info(bool                    crc,
-                                                       sch_mcs_index           used_mcs,
-                                                       pusch_mcs_table         mcs_table,
-                                                       optional<sch_mcs_index> olla_mcs)
+void ue_link_adaptation_controller::handle_ul_crc_info(bool                         crc,
+                                                       sch_mcs_index                used_mcs,
+                                                       pusch_mcs_table              mcs_table,
+                                                       std::optional<sch_mcs_index> olla_mcs)
 {
   if (not ul_olla.has_value()) {
     // UL OLLA is disabled.
@@ -113,7 +113,7 @@ float ue_link_adaptation_controller::get_effective_snr() const
   return ue_ch_st.get_pusch_snr() + (ul_olla.has_value() ? ul_olla.value().offset_db() : 0.0f);
 }
 
-optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mcs_table mcs_table) const
+std::optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mcs_table mcs_table) const
 {
   if (cell_cfg.expert_cfg.ue.dl_mcs.length() == 0) {
     // Fixed MCS.
@@ -124,7 +124,7 @@ optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mc
   const float eff_cqi = get_effective_cqi();
   if (eff_cqi == 0.0F) {
     // Special case, where reported CQI==0.
-    return nullopt;
+    return std::nullopt;
   }
 
   // There are fewer CQIs than MCS values, so we perform a linear interpolation.

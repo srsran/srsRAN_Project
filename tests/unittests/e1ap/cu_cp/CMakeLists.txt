@@ -20,7 +20,7 @@
 
 add_library(e1ap_cu_cp_test_helpers e1ap_cu_cp_test_helpers.cpp)
 target_include_directories(e1ap_cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(e1ap_cu_cp_test_helpers e1ap_test_helpers srsran_e1ap srsran_pcap srsran_support e1ap_asn1 srslog)
+target_link_libraries(e1ap_cu_cp_test_helpers e1ap_test_helpers srsran_e1ap_cu_cp srsran_pcap srsran_support e1ap_asn1 srslog)
 
 set(SOURCES
         e1ap_cu_cp_ue_context_test.cpp
@@ -35,7 +35,7 @@ set_target_properties(e1ap_cu_cp_test PROPERTIES UNITY_BUILD ON)
 target_include_directories(e1ap_cu_cp_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(e1ap_cu_cp_test
         e1ap_cu_cp_test_helpers
-        srsran_e1ap
+        e1ap_test_helpers
         srsran_pcap
         srsran_support
         srslog

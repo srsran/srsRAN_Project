@@ -42,15 +42,16 @@ struct decoder_uplane_section_params {
   bool use_current_symbol_number;
   /// Start PRB.
   unsigned start_prb;
-  /// Number of PRBs.
+  /// Number of PRBs (though a value of 0 signals more than 255 PRBs in the OFH specification, this field always
+  /// contains the real amount of PRBs).
   unsigned nof_prbs;
   /// User data compression header.
   ru_compression_params ud_comp_hdr;
   /// User data compression length.
-  optional<unsigned> ud_comp_len;
+  std::optional<unsigned> ud_comp_len;
   /// User data compression parameter.
   /// \note For simplicity, all the PRBs use the same compression parameters.
-  optional<unsigned> ud_comp_param;
+  std::optional<unsigned> ud_comp_param;
 };
 
 /// Open Fronthaul User-Plane message decoder implementation.

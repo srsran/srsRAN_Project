@@ -39,7 +39,6 @@ std::unique_ptr<f1u_bearer> srsran::srs_du::create_f1u_bearer(const f1u_bearer_c
                                                   *msg.rx_sdu_notifier,
                                                   *msg.tx_pdu_notifier,
                                                   msg.timers,
-                                                  *msg.ue_executor,
-                                                  *msg.disconnector);
+                                                  *msg.ue_executor);
   return bearer;
 }

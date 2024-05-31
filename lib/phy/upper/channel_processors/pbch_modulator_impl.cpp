@@ -51,48 +51,42 @@ void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)
 
 void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config)
 {
-  unsigned count = 0;
-  unsigned l0    = config.ssb_first_symbol;
-  unsigned k0    = config.ssb_first_subcarrier;
+  unsigned l0 = config.ssb_first_symbol;
+  unsigned k0 = config.ssb_first_subcarrier;
 
-  // Calculate DMRS index shift
+  // Calculate DM-RS index shift.
   uint32_t v = config.phys_cell_id % 4;
 
-  // Create resource grid coordinates
-  std::array<resource_grid_coordinate, M_symb> coordinates;
+  // Resource element mask within each resource block. Remove DM-RS from the mask.
+  bounded_bitset<NRE> re_mask = ~bounded_bitset<NRE>(NRE);
+  re_mask.reset(v);
+  re_mask.reset(v + 4);
+  re_mask.reset(v + 8);
 
-  // Put sequence in symbol 1 (0, 1, ..., 239) not reserved for PBCH DM-RS
-  for (uint32_t k = 0; k < SSB_BW_RE; ++k) {
-    if (k % 4 != v) {
-      coordinates[count++] = {l0 + 1, k0 + k};
-    }
-  }
+  // Full SS/PBCH block bandwidth resource blocks.
+  bounded_bitset<MAX_RB>      rb_full_mask = ~bounded_bitset<MAX_RB>(SSB_BW_RB);
+  bounded_bitset<NRE* MAX_RB> full_mask    = rb_full_mask.kronecker_product<NRE>(re_mask);
 
-  // Put sequence in symbol 2, lower section (0 + v , 4 + v , 8 + v ,..., 44 + v) not reserved for PBCH DM-RS
-  for (uint32_t k = 0; k < 48; ++k) {
-    if (k % 4 != v) {
-      coordinates[count++] = {l0 + 2, k0 + k};
-    }
-  }
+  // Edges SS/PBCH block bandwidth resource blocks.
+  bounded_bitset<MAX_RB> rb_edge_mask = bounded_bitset<MAX_RB>(SSB_BW_RB);
+  rb_edge_mask.fill(0, 4);
+  rb_edge_mask.fill(16, 20);
+  bounded_bitset<NRE* MAX_RB> edge_mask = rb_edge_mask.kronecker_product<NRE>(re_mask);
 
-  // Put sequence in symbol 2, upper section (192 + v , 196 + v ,..., 236 + v) not reserved for PBCH DM-RS
-  for (uint32_t k = 192; k < SSB_BW_RE; ++k) {
-    if (k % 4 != v) {
-      coordinates[count++] = {l0 + 2, k0 + k};
-    }
-  }
-
-  // Put sequence in symbol 3 (0, 1, ..., 239) not reserved for PBCH DM-RS
-  for (uint32_t k = 0; k < SSB_BW_RE; ++k) {
-    if (k % 4 != v) {
-      coordinates[count++] = {l0 + 3, k0 + k};
-    }
-  }
-
-  // For each port
+  // Map symbols for each of the ports.
   for (unsigned port : config.ports) {
-    // write data in grid
-    grid.put(port, coordinates, d_pbch);
+    span<const cf_t> symbols = d_pbch;
+
+    // Put sequence in symbol 1 (0, 1, ..., 239), skip the subcarriers reserved for PBCH DM-RS.
+    symbols = grid.put(port, l0 + 1, k0, full_mask, symbols);
+
+    // Put sequence in symbol 2 (0, 1, ..., 41) and (192, 193, ..., 239), skip the subcarriers reserved for PBCH DM-RS.
+    symbols = grid.put(port, l0 + 2, k0, edge_mask, symbols);
+
+    // Put sequence in symbol 3 (0, 1, ..., 239), skip the subcarriers reserved for PBCH DM-RS.
+    symbols = grid.put(port, l0 + 3, k0, full_mask, symbols);
+
+    srsran_assert(symbols.empty(), "Symbols must be empty.");
   }
 }
 

@@ -89,8 +89,8 @@ protected:
   }
 
 private:
-  async_task<cu_cp_pdu_session_resource_setup_response>                   t;
-  optional<lazy_task_launcher<cu_cp_pdu_session_resource_setup_response>> t_launcher;
+  async_task<cu_cp_pdu_session_resource_setup_response>                        t;
+  std::optional<lazy_task_launcher<cu_cp_pdu_session_resource_setup_response>> t_launcher;
 };
 
 TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unconfigured_fiveqi_received_setup_fails)

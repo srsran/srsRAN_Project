@@ -61,22 +61,22 @@ struct epoch_time_t {
 struct ntn_config {
   // SIB 19 values
   /// Reference location of the serving cell provided via NTN quasi-Earth fixed system. (TS 38.304)
-  optional<std::string> reference_location;
+  std::optional<std::string> reference_location;
   /// Distance from the serving cell reference location, as defined in TS 38.304. Each step represents 50m.
-  optional<unsigned> distance_threshold;
+  std::optional<unsigned> distance_threshold;
   // NTN-config values
   /// Indicate the epoch time for the NTN assistance information.
-  optional<epoch_time_t> epoch_time;
+  std::optional<epoch_time_t> epoch_time;
   /// Scheduling offset used for the timing relationships that are modified for NTN (see TS 38.213). The unit of the
   /// field K_offset is number of slots for a given subcarrier spacing of 15 kHz.
   unsigned cell_specific_koffset;
   /// Scheduling offset provided by network if downlink and uplink frame timing are not aligned at gNB.
-  optional<unsigned> k_mac;
+  std::optional<unsigned> k_mac;
   /// This field provides satellite ephemeris either in format of position and velocity state vector or in format of
   /// orbital parameters.
   variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
-  optional<ta_common_t> ta_info;
+  std::optional<ta_common_t> ta_info;
 };
 } // namespace srsran

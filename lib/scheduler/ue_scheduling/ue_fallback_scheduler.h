@@ -95,11 +95,11 @@ private:
 
   /// \brief Tries to schedule DL SRB0/SRB1 message for a UE, iterating over several PDSCH slots ahead of the current
   /// reference slot.
-  dl_sched_outcome schedule_dl_srb(cell_resource_allocator&       res_alloc,
-                                   ue&                            u,
-                                   bool                           is_srb0,
-                                   dl_harq_process*               h_dl_retx,
-                                   optional<most_recent_tx_slots> most_recent_tx_ack_slots);
+  dl_sched_outcome schedule_dl_srb(cell_resource_allocator&            res_alloc,
+                                   ue&                                 u,
+                                   bool                                is_srb0,
+                                   dl_harq_process*                    h_dl_retx,
+                                   std::optional<most_recent_tx_slots> most_recent_tx_ack_slots);
 
   enum class ul_srb_sched_outcome { next_ue, next_slot, stop_ul_scheduling };
 
@@ -171,9 +171,9 @@ private:
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 
   // Returns the PDSCH time resource index that is suitable for a given PDSCH configuration.
-  optional<unsigned> get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
-                                            slot_point                 sl_tx,
-                                            const dl_harq_process*     h_dl_retx) const;
+  std::optional<unsigned> get_pdsch_time_res_idx(const pdsch_config_common& pdsch_cfg,
+                                                 slot_point                 sl_tx,
+                                                 const dl_harq_process*     h_dl_retx) const;
 
   /// Defines the information that is needed to track the DL UEs that are pending for new SRB0/SRB1 TX.
   struct srb_ue {
@@ -222,7 +222,7 @@ private:
 
   // If there are any pending SRB0 or SRB1 transmissions for the UE, the function returns the most recent slot with
   // PDSCH for SRB0/SRB1 and the most recent slot with the corresponding PUCCH.
-  optional<most_recent_tx_slots> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
+  std::optional<most_recent_tx_slots> get_most_recent_slot_tx(du_ue_index_t ue_idx) const;
 
   // Returns the total number of bytes pending for SRB1 for a given UE, including MAC CE and MAC subheaders.
   unsigned get_srb1_pending_tot_bytes(du_ue_index_t ue_idx) const;

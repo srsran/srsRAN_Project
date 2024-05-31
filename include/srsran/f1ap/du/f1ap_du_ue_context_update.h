@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
@@ -53,14 +54,15 @@ struct f1ap_ue_context_creation_response {
 
 /// \brief DRB to be setup in the UE context.
 struct f1ap_drb_to_setup {
-  drb_id_t         drb_id;
-  optional<lcid_t> lcid;
-  drb_rlc_mode     mode;
-  five_qi_t        five_qi;
-  uint8_t          arp_priority_level;
-  s_nssai_t        s_nssai;
+  drb_id_t              drb_id;
+  std::optional<lcid_t> lcid;
+  drb_rlc_mode          mode;
+  pdcp_sn_size          pdcp_sn_len = pdcp_sn_size::invalid;
+  five_qi_t             five_qi;
+  uint8_t               arp_priority_level;
+  s_nssai_t             s_nssai;
   /// GBR flow information is present only for GBR QoS flows. See TS 38.473, clause 9.3.1.45.
-  optional<gbr_qos_info_t>             gbr_flow_info;
+  std::optional<gbr_qos_info_t>        gbr_flow_info;
   std::vector<up_transport_layer_info> uluptnl_info_list;
 };
 
@@ -73,7 +75,7 @@ struct f1ap_scell_to_setup {
 /// \brief DRB that was setup successfully in the F1AP UE context.
 struct f1ap_drb_setup {
   drb_id_t                             drb_id;
-  optional<lcid_t>                     lcid;
+  std::optional<lcid_t>                lcid;
   std::vector<up_transport_layer_info> dluptnl_info_list;
 };
 

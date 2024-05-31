@@ -23,6 +23,7 @@
 #pragma once
 
 #include "adapters/f1u_adapters.h"
+#include "adapters/gw_adapters.h"
 #include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
 #include "srsran/f1u/cu_up/f1u_config.h"
@@ -37,14 +38,19 @@ namespace srs_cu_up {
 struct drb_context {
   drb_context(const drb_id_t& drb_id_) : drb_id(drb_id_){};
 
-  void stop() { f1u->stop(); }
+  void stop()
+  {
+    f1u->stop();
+    f1u_gw_bearer->stop();
+  }
 
   drb_id_t    drb_id;
   gtpu_teid_t f1u_ul_teid;
   f1u_config  f1u_cfg;
 
-  std::unique_ptr<f1u_bearer>  f1u;
-  std::unique_ptr<pdcp_entity> pdcp;
+  std::unique_ptr<f1u_cu_up_gateway_bearer> f1u_gw_bearer;
+  std::unique_ptr<f1u_bearer>               f1u;
+  std::unique_ptr<pdcp_entity>              pdcp;
 
   // Adapter PDCP->SDAP
   // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
@@ -55,6 +61,9 @@ struct drb_context {
   // Adapter PDCP->E1AP
   pdcp_rx_e1ap_adapter pdcp_rx_to_e1ap_adapter;
   pdcp_tx_e1ap_adapter pdcp_tx_to_e1ap_adapter;
+
+  // Adapter F1-U gateway -> NR-U
+  f1u_gateway_rx_nru_adapter f1u_gateway_rx_to_nru_adapter;
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 

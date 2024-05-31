@@ -163,7 +163,7 @@ struct pucch_format_4_cfg {
 struct pucch_resource {
   pucch_res_id_t                                                                            res_id = {0, 0};
   unsigned                                                                                  starting_prb;
-  optional<unsigned>                                                                        second_hop_prb;
+  std::optional<unsigned>                                                                   second_hop_prb;
   pucch_format                                                                              format;
   variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
 

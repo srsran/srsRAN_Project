@@ -210,7 +210,8 @@ TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_
   ss_list.back().set_non_ss0_nof_candidates({0, 2, 0, 0, 0});
   ue& u = add_ue(ue_req);
   // Note: set CQI=15 to use low aggregation level.
-  u.get_pcell().handle_csi_report(csi_report_data{nullopt, nullopt, nullopt, nullopt, cqi_value{15U}});
+  u.get_pcell().handle_csi_report(
+      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}});
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
   run_slot();
@@ -332,7 +333,7 @@ protected:
           builder_params.band.has_value() ? band_helper::get_freq_range(builder_params.band.value())
                                           : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+      std::optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
           band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
                                                       *builder_params.band,
                                                       nof_crbs,
@@ -354,7 +355,7 @@ protected:
       cfg.tdd_ul_dl_cfg_common = tdd_cfg;
       // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
       cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
-          cfg.searchspace0, cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cfg.tdd_ul_dl_cfg_common);
+          cfg.searchspace0, cfg.dl_cfg_common.init_dl_bwp.pdcch_common, std::nullopt, cfg.tdd_ul_dl_cfg_common);
 
       return cfg;
     }())

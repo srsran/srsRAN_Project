@@ -60,7 +60,7 @@ public:
     /// Boolean mask to specify the resource blocks carrying DM-RS after the frequency hop.
     bounded_bitset<MAX_RB> rb_mask2;
     /// Symbol index within the slot in which the first hop occurs if it has a value.
-    optional<unsigned> hopping_symbol_index;
+    std::optional<unsigned> hopping_symbol_index;
     /// Boolean mask to specify the resource elements within the resource blocks carrying DM-RS symbols.
     bounded_bitset<NRE> re_pattern;
   };

@@ -42,7 +42,7 @@ struct srs_configuration {
 /// Section 6.3.2, Information Element \e SRS-Config).
 /// \param[in] b_srs Parameter \f$B_{SRS}\f$ contained in the higher-layer parameter \e freqHopping (see TS38.331
 /// Section 6.3.2, Information Element \e SRS-Config).
-/// \return A valid SRS configuration if the provided arguments are valid, otherwise \c nullopt.
-optional<srs_configuration> srs_configuration_get(uint8_t c_srs, uint8_t b_srs);
+/// \return A valid SRS configuration if the provided arguments are valid, otherwise \c std::nullopt.
+std::optional<srs_configuration> srs_configuration_get(uint8_t c_srs, uint8_t b_srs);
 
 } // namespace srsran

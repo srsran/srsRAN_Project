@@ -97,10 +97,10 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
   return prach_f_start + pucch_to_prach_guardband;
 }
 
-void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params& user_params,
-                                                          unsigned              max_pucch_grants_per_slot,
-                                                          unsigned              sr_period_msec,
-                                                          optional<unsigned>    csi_period_msec)
+void srsran::config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
+                                                          unsigned                max_pucch_grants_per_slot,
+                                                          unsigned                sr_period_msec,
+                                                          std::optional<unsigned> csi_period_msec)
 {
   // [Implementation-defined] In the following, we compute the estimated number of PUCCH resources that are needed for
   // SR and CSI; we assume we cannot allocate more than max_pucch_grants_per_slot - 1U (1 is reserved for HARQ-ACK)

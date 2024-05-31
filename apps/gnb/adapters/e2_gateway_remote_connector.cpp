@@ -28,9 +28,9 @@
 
 namespace srsran {
 
-e2_gateway_remote_connector::e2_gateway_remote_connector(io_broker&                   broker_,
-                                                         sctp_network_gateway_config& net_gw_config_,
-                                                         dlt_pcap&                    e2ap_pcap_writer_) :
+e2_gateway_remote_connector::e2_gateway_remote_connector(io_broker&                     broker_,
+                                                         sctp_network_connector_config& net_gw_config_,
+                                                         dlt_pcap&                      e2ap_pcap_writer_) :
   logger(srslog::fetch_basic_logger("E2AP")),
   broker(broker_),
   net_gw_config(net_gw_config_),

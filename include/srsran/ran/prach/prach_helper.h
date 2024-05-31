@@ -50,9 +50,9 @@ error_type<interval<uint8_t>>
 prach_fits_in_tdd_pattern(subcarrier_spacing pusch_scs, uint8_t prach_cfg_idx, const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Finds a PRACH configuration index that ensures that PRACH falls in an TDD UL slot.
-optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
-                                                uint8_t                        zero_correlation_zone,
-                                                const tdd_ul_dl_config_common& tdd_cfg);
+std::optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
+                                                     uint8_t                        zero_correlation_zone,
+                                                     const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Checks whether the nof. SSB per RACH occasion and nof. contention based preambles per SSB is valid.
 /// \return In case config is not supported, a string with an error message is returned.

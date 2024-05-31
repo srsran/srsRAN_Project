@@ -69,8 +69,8 @@ protected:
     return t.get().success;
   }
 
-  async_task<e1ap_bearer_context_modification_response>                   t;
-  optional<lazy_task_launcher<e1ap_bearer_context_modification_response>> t_launcher;
+  async_task<e1ap_bearer_context_modification_response>                        t;
+  std::optional<lazy_task_launcher<e1ap_bearer_context_modification_response>> t_launcher;
 };
 
 /// Test the successful bearer context modification procedure (CU-CP initiated)

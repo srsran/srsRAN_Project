@@ -437,8 +437,8 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, du_high_unit_tdd_ul_dl
   // do nothing (this will cause that the cell pattern 2 value equals than the common cell TDD pattern 2). CLI11 needs
   // that the life of the variable last longer than the call of callback function. Therefore, the pattern2_cfg variable
   // needs to be static.
-  tdd_ul_dl_pattern_unit_config pattern2_cfg;
-  CLI::App*                     pattern2_sub_cmd =
+  static tdd_ul_dl_pattern_unit_config pattern2_cfg;
+  CLI::App*                            pattern2_sub_cmd =
       add_subcommand(app, "pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
   configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, pattern2_cfg);
   auto tdd_pattern2_verify_callback = [&]() {
@@ -1242,6 +1242,9 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
   add_option(app, "--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
       ->always_capture_default();
 
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
+
   add_option(app,
              "--stdout_metrics_period",
              metrics_params.stdout_metrics_period,
@@ -1294,11 +1297,11 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
       ->capture_default_str();
 }
 
-static void configure_cli11_ntn_args(CLI::App&              app,
-                                     optional<ntn_config>&  ntn,
-                                     epoch_time_t&          epoch_time,
-                                     orbital_coordinates_t& orbital_coordinates,
-                                     ecef_coordinates_t&    ecef_coordinates)
+static void configure_cli11_ntn_args(CLI::App&                  app,
+                                     std::optional<ntn_config>& ntn,
+                                     epoch_time_t&              epoch_time,
+                                     orbital_coordinates_t&     orbital_coordinates,
+                                     ecef_coordinates_t&        ecef_coordinates)
 {
   ntn_config& config = ntn.emplace();
 
@@ -1379,12 +1382,29 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(mac_subcmd);
 }
 
+static void configure_cli11_e2_args(CLI::App& app, du_high_unit_e2_config& e2_params)
+{
+  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
+  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address");
+  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
+  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
+  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
+  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
+  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
+  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
+  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
+}
+
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
   add_option(app, "--gnb_id_bit_length", parsed_cfg.config.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
+  add_option(app, "--ran_node_name", parsed_cfg.config.ran_node_name, "RAN node name")->capture_default_str();
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
@@ -1486,6 +1506,10 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, parsed_cfg.config.test_mode_cfg);
+
+  // E2 section.
+  CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
+  configure_cli11_e2_args(*e2_subcmd, parsed_cfg.config.e2_cfg);
 }
 
 static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)

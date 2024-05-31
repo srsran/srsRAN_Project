@@ -36,10 +36,10 @@ struct gbr_qos_info_t {
   uint64_t guaranteed_flow_ul_bitrate;
   /// Indicates the maximum rate for lost packets that can be tolerated in the DL. Expressed in ratio of lost packets
   /// per number of packets sent, expressed in tenth of percent.Values {0,...,1000}.
-  optional<uint16_t> max_packet_loss_rate_dl;
+  std::optional<uint16_t> max_packet_loss_rate_dl;
   /// Indicates the maximum rate for lost packets that can be tolerated in the UL. Expressed in ratio of lost packets
   /// per number of packets sent, expressed in tenth of percent.Values {0,...,1000}.
-  optional<uint16_t> max_packet_loss_rate_ul;
+  std::optional<uint16_t> max_packet_loss_rate_ul;
 };
 
 } // namespace srsran

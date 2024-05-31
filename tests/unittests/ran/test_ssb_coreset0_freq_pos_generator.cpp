@@ -420,19 +420,19 @@ TEST(ssb_freq_position_generation_test, band_46_bw_40mhz)
 namespace ssb_coreset0_gen {
 
 struct cset0_test_params {
-  optional<unsigned> expected_cset0_idx;
+  std::optional<unsigned> expected_cset0_idx;
 
-  nr_band               band;
-  unsigned              n_rbs;
-  subcarrier_spacing    scs_common;
-  subcarrier_spacing    scs_ssb;
-  ssb_offset_to_pointA  offset_to_point_A;
-  ssb_subcarrier_offset k_ssb;
-  uint8_t               ssb_first_symbol;
-  uint8_t               ss0_idx;
-  optional<unsigned>    nof_coreset0_symb;
+  nr_band                 band;
+  unsigned                n_rbs;
+  subcarrier_spacing      scs_common;
+  subcarrier_spacing      scs_ssb;
+  ssb_offset_to_pointA    offset_to_point_A;
+  ssb_subcarrier_offset   k_ssb;
+  uint8_t                 ssb_first_symbol;
+  uint8_t                 ss0_idx;
+  std::optional<unsigned> nof_coreset0_symb;
 
-  optional<unsigned> get_coreset0_index()
+  std::optional<unsigned> get_coreset0_index()
   {
     return band_helper::get_coreset0_index(
         band, n_rbs, scs_common, scs_ssb, offset_to_point_A, k_ssb, ssb_first_symbol, ss0_idx, nof_coreset0_symb);
@@ -455,7 +455,7 @@ struct cfg_gen_input_params {
   uint8_t            ss0_idx;
   uint8_t            max_coreset0_duration = 2;
 
-  optional<band_helper::ssb_coreset0_freq_location> const generate_ssb_coreset0_location()
+  std::optional<band_helper::ssb_coreset0_freq_location> const generate_ssb_coreset0_location()
   {
     return band_helper::get_ssb_coreset0_freq_location(
         dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx, max_coreset0_duration);
@@ -470,8 +470,8 @@ void PrintTo(const cfg_gen_input_params& value, ::std::ostream* os)
 }
 
 struct test_params {
-  optional<band_helper::ssb_coreset0_freq_location> expected_result;
-  cfg_gen_input_params                              input_params;
+  std::optional<band_helper::ssb_coreset0_freq_location> expected_result;
+  cfg_gen_input_params                                   input_params;
 };
 
 // Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
@@ -490,8 +490,8 @@ class coreset0_index_generation_test : public ::testing::TestWithParam<cset0_tes
 
 TEST_P(coreset0_index_generation_test, coreset0_params_are_valid)
 {
-  cset0_test_params        params    = GetParam();
-  const optional<unsigned> cset0_idx = params.get_coreset0_index();
+  cset0_test_params             params    = GetParam();
+  const std::optional<unsigned> cset0_idx = params.get_coreset0_index();
   ASSERT_EQ(params.expected_cset0_idx, cset0_idx);
 }
 
@@ -524,8 +524,8 @@ protected:
 // Test whether the position of SSB and Coreset0/SS0 indices are correctly generated.
 TEST_P(ssb_coreset0_param_generator_test, test_du_ssb_coreset0_idx)
 {
-  test_params                                             params = GetParam();
-  const optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
+  test_params                                                  params = GetParam();
+  const std::optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
       params.input_params.generate_ssb_coreset0_location();
   ASSERT_EQ(params.expected_result, ssb_coreset0_alloc);
 }
@@ -578,8 +578,9 @@ protected:
 // Test whether the SSB f_ref correspond to sync raster and Coreset0 is within the band.
 TEST_P(ssb_coreset0_compatibility_with_raster_and_band, test_ssb_raster_and_cset0_band)
 {
-  cfg_gen_input_params                              input_params       = GetParam();
-  optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc = input_params.generate_ssb_coreset0_location();
+  cfg_gen_input_params                                   input_params = GetParam();
+  std::optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
+      input_params.generate_ssb_coreset0_location();
 
   // This function test the SSB and CORESET0 allocation consitency.
   test_ssb_coreset0_allocation(input_params.dl_arfcn,

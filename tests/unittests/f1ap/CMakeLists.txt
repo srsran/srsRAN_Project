@@ -25,4 +25,5 @@ include_directories(../../..)
 add_subdirectory(common)
 add_subdirectory(du)
 add_subdirectory(cu_cp)
+add_subdirectory(gateways)
 
