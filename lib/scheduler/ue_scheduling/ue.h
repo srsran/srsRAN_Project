@@ -151,9 +151,7 @@ public:
   /// SRB0 or for SRB1 in fallback mode.
   /// It includes the UE Contention Resolution Identity CE if it is pending.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  /// \remark If \c is_srb0 is empty then only UE Contention Resolution Identity CE subPDU is defined.
-  unsigned
-  build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, optional<bool> is_srb0);
+  unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
   /// Expert config parameters used for UE scheduler.

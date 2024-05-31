@@ -153,14 +153,14 @@ unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_
   return total_subpdu_bytes;
 }
 
-unsigned
-ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, optional<bool> is_srb0)
+unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  if (is_srb0.has_value()) {
-    total_subpdu_bytes += allocate_mac_sdus(
-        tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, is_srb0.value() ? LCID_SRB0 : LCID_SRB1);
+  // Since SRB0 PDU cannot be segmented, skip SRB0 if remaining TB size is not enough to fit entire PDU.
+  if ((tb_size_bytes - total_subpdu_bytes) >= dl_lc_ch_mgr.pending_bytes(LCID_SRB0)) {
+    total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB0);
   }
+  total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
   return total_subpdu_bytes;
 }

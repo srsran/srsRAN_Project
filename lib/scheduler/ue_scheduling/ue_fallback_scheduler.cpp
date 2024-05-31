@@ -1193,8 +1193,7 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
 
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
-        u.build_dl_fallback_transport_block_info(
-            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, is_srb0);
+        u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
         if (is_srb0.has_value() and not is_srb0.value()) {
           auto* msg_lcid_it =
               std::find_if(msg.tb_list.back().lc_chs_to_sched.begin(),
@@ -1222,8 +1221,7 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
                               not is_retx);
       // Set MAC logical channels to schedule in this PDU.
       if (not is_retx) {
-        u.build_dl_fallback_transport_block_info(
-            msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, is_srb0);
+        u.build_dl_fallback_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
         if (is_srb0.has_value() and not is_srb0.value()) {
           auto* mcs_lcid_it =
               std::find_if(msg.tb_list.back().lc_chs_to_sched.begin(),
