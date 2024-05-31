@@ -55,7 +55,7 @@ target_link_libraries(pucch_processor_validators_test
         srsran_upper_phy_support
         gtest
         gtest_main)
-gtest_discover_tests(pucch_processor_validators_test)
+add_test(pucch_processor_validators_test pucch_processor_validators_test)
 
 add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
 target_link_libraries(ssb_processor_unittest srsran_channel_processors srslog)
