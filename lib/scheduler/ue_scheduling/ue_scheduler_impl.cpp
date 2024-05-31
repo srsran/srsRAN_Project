@@ -15,13 +15,12 @@ using namespace srsran;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
                                      sched_configuration_notifier&     mac_notif,
-                                     scheduler_metrics_handler&        metric_handler,
-                                     scheduler_event_logger&           sched_ev_logger) :
+                                     scheduler_metrics_handler&        metric_handler) :
   expert_cfg(expert_cfg_),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("SCHED")},
                                            expert_cfg)),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
-  event_mng(ue_db, metric_handler, sched_ev_logger),
+  event_mng(ue_db, metric_handler),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -30,8 +29,10 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   ue_res_grid_view.add_cell(*params.cell_res_alloc);
   cells[params.cell_index] = std::make_unique<cell>(expert_cfg, params, ue_db);
-  event_mng.add_cell(
-      *params.cell_res_alloc, cells[params.cell_index]->fallback_sched, cells[params.cell_index]->uci_sched);
+  event_mng.add_cell(*params.cell_res_alloc,
+                     cells[params.cell_index]->fallback_sched,
+                     cells[params.cell_index]->uci_sched,
+                     *params.ev_logger);
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 

@@ -45,7 +45,9 @@ protected:
   static constexpr unsigned tx_rx_delay = 2U;
 
   base_ra_scheduler_test(duplex_mode dplx_mode) :
-    params(GetParam()), cell_cfg(sched_cfg, get_sched_req(dplx_mode, params))
+    params(GetParam()),
+    cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)),
+    ev_logger(to_du_cell_index(0), cell_cfg.pci)
   {
     mac_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_level(srslog::basic_levels::info);
