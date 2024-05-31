@@ -8,12 +8,15 @@
  *
  */
 
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/event_tracing.h"
+#include "srsran/support/io/io_broker.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/version/version.h"
@@ -198,19 +201,38 @@ int main(int argc, char** argv)
   // Create worker manager.
   cu_worker_manager workers{cu_cfg, cu_up_config.gtpu_queue_size};
 
-  // Set layer-specific pcap options.
-  // TODO pcaps
+  // Create layer specific PCAPs.
+  // TODO:
+  // 1. modules::...create_pcap does not use the custom cu_worker.
+  // 2. modules::flexible_du... for creating F1AP pcap.
+  // Initializing PCAPs direclty.
+  std::unique_ptr<dlt_pcap>              ngap_p = create_null_dlt_pcap();
+  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps(2);
+  cu_up_pcaps[0]                   = create_null_dlt_pcap();
+  cu_up_pcaps[1]                   = create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> e2ap_p =
+      cu_cfg.cu_cp_pcap_cfg.e2ap.enabled
+          ? create_e2ap_pcap(cu_cfg.cu_cp_pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
+          : create_null_dlt_pcap();
 
   // Create IO broker.
-  // TODO io_broker
+  const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
+  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // TODO F1-U and F1-C connectors
 
-  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
+  // Create manager of timers for
+  // CU-CP and CU-UP, which will be
+  // driven by the system timer slot
+  // ticks.
   // TODO timer_manager
 
-  // Set up the JSON log channel used by metrics.
-  // TODO metrics. Do we have any CU-CP or CU-UP metrics?
+  // Set up the JSON log channel
+  // used by metrics.
+  // TODO metrics. Do we have any
+  // CU-CP or CU-UP metrics?
 
   // Create NGAP Gateway.
   // TODO create NGAP gateway

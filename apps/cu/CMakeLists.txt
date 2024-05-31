@@ -22,6 +22,7 @@ target_link_libraries(cu
         srsran_build_info
         srsran_cu_cp_app_unit
         srsran_cu_up_app_unit
+        srsran_pcap
         )
 
 add_backward(cu)
