@@ -14,6 +14,7 @@
 using namespace srsran;
 using namespace std::chrono_literals;
 
+// TODO: refactor.
 srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const du_appconfig& config, int ppid)
 {
   srsran::sctp_network_connector_config out_cfg;

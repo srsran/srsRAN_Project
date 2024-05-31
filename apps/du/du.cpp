@@ -236,6 +236,7 @@ int main(int argc, char** argv)
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  // TODO: Remove GTPU pcap
   std::unique_ptr<dlt_pcap> gtpu_p =
       modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<dlt_pcap> e2ap_p =
