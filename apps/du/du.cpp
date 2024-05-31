@@ -22,7 +22,7 @@
 
 #include "srsran/support/io/io_broker_factory.h"
 
-#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
+#include "srsran/f1ap/gateways/f1c_network_client_factory.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 
@@ -242,7 +242,14 @@ int main(int argc, char** argv)
       du_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(du_cfg.pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
                                    : create_null_dlt_pcap();
 
-  std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
+  sctp_network_connector_config f1c_sctp{};
+  f1c_sctp.connection_name = "F1-C";
+  f1c_sctp.connect_address = "127.0.0.2";
+  f1c_sctp.connect_port    = 38471;
+  f1c_sctp.ppid            = F1AP_PPID;
+  f1c_sctp.bind_address    = "127.0.0.1";
+  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
+      create_f1c_gateway_client(f1c_du_sctp_gateway_config{f1c_sctp, *epoll_broker, *f1ap_p});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
