@@ -10,7 +10,6 @@ Rebaser:
   cron: "*/10 6-22 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
-  active: true
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
@@ -25,7 +24,6 @@ Nightly Build Unit Tests:
   cron: "45 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
-  active: true
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
@@ -44,7 +42,6 @@ Nightly E2E Tests:
   cron: "00 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
-  active: true
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
@@ -63,7 +60,6 @@ Weekly:
   cron: "00 13 * * 6"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
-  active: true
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
@@ -82,7 +78,6 @@ Alternative OSs:
   cron: "00 10 * * 6"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
-  active: true
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
