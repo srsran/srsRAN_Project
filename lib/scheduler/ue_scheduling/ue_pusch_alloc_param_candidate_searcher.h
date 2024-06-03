@@ -222,7 +222,7 @@ private:
   // Check if a candidate has valid parameters for an allocation.
   bool is_candidate_valid(const candidate& current) const
   {
-    // Check whether SeachSpace is valid.
+    // Check whether SearchSpace is valid.
     if (current.ss_it == nullptr or current.ss_it == ss_candidate_list.end()) {
       return false;
     }

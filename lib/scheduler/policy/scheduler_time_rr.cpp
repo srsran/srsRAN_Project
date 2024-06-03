@@ -120,11 +120,14 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
 
   const ue_cell& ue_cc = ue_ref.get_cell(cell_index);
+  if (ue_cc.is_in_fallback_mode()) {
+    return dl_harq_candidates;
+  }
   if (is_retx) {
     // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
     for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
       const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-      if (h.has_pending_retx() and (not h.last_alloc_params().is_fallback)) {
+      if (h.has_pending_retx()) {
         dl_harq_candidates.push_back(&h);
       }
     }
@@ -133,7 +136,7 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
               [](const dl_harq_process* lhs, const dl_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
   } else if (ue_cc.is_active()) {
     // If there are no pending new Tx bytes or UE in fallback, return.
-    if (ue_cc.is_in_fallback_mode() or (not ue_ref.has_pending_dl_newtx_bytes())) {
+    if (not ue_ref.has_pending_dl_newtx_bytes()) {
       return dl_harq_candidates;
     }
 
