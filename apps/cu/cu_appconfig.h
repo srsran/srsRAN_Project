@@ -20,7 +20,7 @@ namespace srsran {
 /// Configuration of logging functionalities.
 struct log_appconfig {
   /// Path to log file or "stdout" to print to console.
-  std::string filename = "/tmp/gnb.log";
+  std::string filename = "/tmp/cu.log";
   /// Default log level for all layers.
   std::string all_level = "warning";
   /// Generic log level assigned to library components without layer-specific level.
@@ -37,30 +37,30 @@ struct log_appconfig {
 /// Configuration of packet captures.
 struct cu_cp_pcap_appconfig {
   struct {
-    std::string filename = "/tmp/gnb_ngap.pcap";
+    std::string filename = "/tmp/cu_ngap.pcap";
     bool        enabled  = false;
   } ngap;
   struct {
-    std::string filename = "/tmp/gnb_e1ap.pcap";
+    std::string filename = "/tmp/cu_e1ap.pcap";
     bool        enabled  = false;
   } e1ap;
   struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
+    std::string filename = "/tmp/cu_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;
   struct {
-    std::string filename = "/tmp/gnb_e2ap.pcap";
+    std::string filename = "/tmp/cu_e2ap.pcap";
     bool        enabled  = false;
   } e2ap;
   struct {
-    std::string filename = "/tmp/gnb_gtpu.pcap";
+    std::string filename = "/tmp/cu_gtpu.pcap";
     bool        enabled  = false;
   } gtpu;
 };
 
 struct cu_up_pcap_appconfig {
   struct {
-    std::string filename = "/tmp/gnb_gtpu.pcap";
+    std::string filename = "/tmp/cu_gtpu.pcap";
     bool        enabled  = false;
   } gtpu;
 };
