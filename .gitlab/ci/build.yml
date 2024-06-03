@@ -1297,7 +1297,6 @@ debian 11 amd64 avx512:
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
-        SAVE_ARTIFACTS: "True"
 
 sanitizers amd64 no isa:
   extends: .weekly sanitizers
