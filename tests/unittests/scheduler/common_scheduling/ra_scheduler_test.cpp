@@ -39,15 +39,13 @@ std::ostream& operator<<(std::ostream& out, const test_params& params)
 }
 
 /// Common tester class used by FDD and TDD unit tests for the RA scheduler.
-class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
+class base_ra_scheduler_test
 {
 protected:
   static constexpr unsigned tx_rx_delay = 2U;
 
-  base_ra_scheduler_test(duplex_mode dplx_mode) :
-    params(GetParam()),
-    cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)),
-    ev_logger(to_du_cell_index(0), cell_cfg.pci)
+  base_ra_scheduler_test(duplex_mode dplx_mode, const test_params& params_) :
+    params(params_), cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)), ev_logger(to_du_cell_index(0), cell_cfg.pci)
   {
     mac_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_level(srslog::basic_levels::info);
@@ -68,7 +66,7 @@ protected:
     }
   }
 
-  ~base_ra_scheduler_test() override
+  ~base_ra_scheduler_test()
   {
     // Log pending allocations before finishing test.
     for (unsigned i = 0; i != max_k_value; ++i) {
@@ -443,25 +441,25 @@ protected:
   unsigned max_k_value = 0;
 };
 
-class fdd_test : public base_ra_scheduler_test
+class ra_scheduler_fdd_test : public base_ra_scheduler_test, public ::testing::TestWithParam<test_params>
 {
 protected:
-  fdd_test() : base_ra_scheduler_test(duplex_mode::FDD) {}
+  ra_scheduler_fdd_test() : base_ra_scheduler_test(duplex_mode::FDD, GetParam()) {}
 };
 
-class tdd_test : public base_ra_scheduler_test
+class ra_scheduler_tdd_test : public base_ra_scheduler_test, public ::testing::TestWithParam<test_params>
 {
 protected:
-  tdd_test() : base_ra_scheduler_test(duplex_mode::TDD) {}
+  ra_scheduler_tdd_test() : base_ra_scheduler_test(duplex_mode::TDD, GetParam()) {}
 };
 
 /// This test verifies that the cell resource grid remains empty when no RACH indications arrive to the RA scheduler.
-TEST_P(fdd_test, when_no_rach_indication_received_then_no_rar_allocated)
+TEST_P(ra_scheduler_fdd_test, when_no_rach_indication_received_then_no_rar_allocated)
 {
   run_slot();
   ASSERT_TRUE(no_rar_grants_scheduled());
 }
-TEST_P(tdd_test, when_no_rach_indication_received_then_no_rar_allocated)
+TEST_P(ra_scheduler_tdd_test, when_no_rach_indication_received_then_no_rar_allocated)
 {
   run_slot();
   ASSERT_TRUE(no_rar_grants_scheduled());
@@ -470,7 +468,7 @@ TEST_P(tdd_test, when_no_rach_indication_received_then_no_rar_allocated)
 /// This test verifies the correct scheduling of a RAR and Msg3s in an FDD frame, when multiple RACH preambles
 /// are received for the same PRACH occasion.
 /// The scheduler is expected to allocate one RAR and multiple MSG3 grants.
-TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach_occasion)
+TEST_P(ra_scheduler_fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach_occasion)
 {
   // Forward single RACH occasion with multiple preambles.
   rach_indication_message one_rach =
@@ -516,7 +514,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
 /// This test verifies the correct scheduling of a RAR and Msg3 in an FDD frame, when multiple RACH Preambles are
 /// received, each in a different PRACH occasion.
 /// The scheduler is expected to allocate several RARs (with different RA-RNTIs), each composed by one Msg3.
-TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
+TEST_P(ra_scheduler_fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
 {
   // Forward multiple RACH occasions with one preamble.
   unsigned                nof_occasions = test_rgen::uniform_int<unsigned>(1, MAX_PRACH_OCCASIONS_PER_SLOT);
@@ -556,7 +554,7 @@ TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
 /// scheduling opportunities where the RAR PDCCH and PDSCH fall in a DL slot and the Msg3 falls in an UL slot.
 /// The scheduler will need to search in the PUSCH-TimeDomainResourceList provided in the cell config for a k2
 /// value that allows it to fit the Msg3 in an UL slot.
-TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
+TEST_P(ra_scheduler_tdd_test, schedules_rar_in_valid_slots_when_tdd)
 {
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
@@ -588,7 +586,7 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
   }
 }
 
-TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
+TEST_P(ra_scheduler_tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
 {
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
@@ -621,7 +619,7 @@ TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
 }
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
-                         fdd_test,
+                         ra_scheduler_fdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2}},
@@ -630,7 +628,7 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2}}));
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
-                         tdd_test,
+                         ra_scheduler_tdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
