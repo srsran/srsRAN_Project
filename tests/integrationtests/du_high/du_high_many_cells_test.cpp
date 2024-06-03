@@ -147,7 +147,11 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
             << fmt::format("c-rnti={} scheduled in the wrong cell={}", ue_grant.pdsch_cfg.rnti, c);
 
         // Update the total number of bytes scheduled.
-        if (ue_grant.pdsch_cfg.codewords[0].new_data) {
+        if (ue_grant.pdsch_cfg.codewords[0].new_data and
+            std::any_of(ue_grant.tb_list[0].lc_chs_to_sched.begin(),
+                        ue_grant.tb_list[0].lc_chs_to_sched.end(),
+                        // is DRB data
+                        [](const dl_msg_lc_info& lc) { return lc.lcid.is_sdu() and lc.lcid.to_lcid() >= LCID_SRB3; })) {
           unsigned pdu_size = phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
           bytes_sched_per_cell[c] += pdu_size;
           largest_pdu_per_cell[c] = std::max(largest_pdu_per_cell[c], pdu_size);

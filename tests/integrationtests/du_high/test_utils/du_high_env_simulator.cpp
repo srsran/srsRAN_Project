@@ -237,6 +237,7 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
 {
   auto it = ues.find(rnti);
   if (it == ues.end()) {
+    test_logger.error("rnti={}: Failed to run RRC Setup procedure. Cause: UE not found", rnti);
     return false;
   }
   const ue_sim_context& u        = it->second;
@@ -263,6 +264,7 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
     return false;
   });
   if (not ret) {
+    test_logger.error("rnti={}: Contention Resolution not sent to the PHY", rnti);
     return false;
   }
 
@@ -278,6 +280,7 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
       test_helpers::create_pdu_with_sdu(next_slot, rnti, lcid_t::LCID_SRB1));
   ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   if (not ret or not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), srb_id_t::srb1)) {
+    test_logger.error("rnti={}: F1AP UL RRC Message (containing rrcSetupComplete) not sent or is invalid", rnti);
     return false;
   }
   return true;
@@ -453,6 +456,13 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
     if (not ul_res.pucchs.empty()) {
       mac_uci_indication_message uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.pucchs);
       this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind);
+    }
+
+    if (not ul_res.puschs.empty()) {
+      std::optional<mac_uci_indication_message> uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.puschs);
+      if (uci_ind.has_value()) {
+        this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind.value());
+      }
     }
   }
 }
