@@ -104,4 +104,6 @@ inline const pucch_info* find_ue_pucch_with_csi(rnti_t rnti, span<const pucch_in
   return nullptr;
 }
 
+const csi_report_configuration* find_ue_uci_with_csi(rnti_t rnti, const ul_sched_result& ul_res);
+
 } // namespace srsran

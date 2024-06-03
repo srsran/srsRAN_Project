@@ -71,7 +71,6 @@ TEST_F(du_high_tester, when_ue_context_setup_completes_then_drb_is_active)
   rnti_t rnti = to_rnti(0x4601);
   ASSERT_TRUE(add_ue(rnti));
   ASSERT_TRUE(run_rrc_setup(rnti));
-  ASSERT_TRUE(force_ue_fallback(rnti));
   ASSERT_TRUE(run_ue_context_setup(rnti));
 
   // Ensure DU<->CU-UP tunnel was created.

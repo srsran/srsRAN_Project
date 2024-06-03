@@ -46,6 +46,20 @@ mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_poin
                                     .crcs  = {mac_crc_pdu{.rnti = rnti, .harq_id = h_id, .tb_crc_success = true}}};
 }
 
+mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_point                sl_rx,
+                                                                       span<const ul_sched_info> puschs)
+{
+  mac_crc_indication_message crc_ind;
+  crc_ind.sl_rx = sl_rx;
+  crc_ind.crcs.resize(puschs.size());
+  for (unsigned i = 0; i != puschs.size(); ++i) {
+    crc_ind.crcs[i].rnti           = puschs[i].pusch_cfg.rnti;
+    crc_ind.crcs[i].harq_id        = puschs[i].pusch_cfg.harq_id;
+    crc_ind.crcs[i].tb_crc_success = true;
+  }
+  return crc_ind;
+}
+
 mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
 {
   mac_uci_pdu pdu{};

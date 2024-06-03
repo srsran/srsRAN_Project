@@ -40,5 +40,7 @@ std::optional<mac_uci_indication_message> create_uci_indication(slot_point sl_rx
 
 mac_crc_indication_message create_crc_indication(slot_point sl_rx, rnti_t rnti, harq_id_t h_id);
 
+mac_crc_indication_message create_crc_indication(slot_point sl_rx, span<const ul_sched_info> puschs);
+
 } // namespace test_helpers
 } // namespace srsran

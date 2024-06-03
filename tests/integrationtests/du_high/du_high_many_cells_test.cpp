@@ -11,6 +11,7 @@
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
@@ -37,6 +38,16 @@ class du_high_many_cells_tester : public du_high_env_simulator, public testing::
 {
 public:
   du_high_many_cells_tester() : du_high_env_simulator(du_high_env_sim_params{GetParam().nof_cells}) {}
+
+  bool run_until_csi(du_cell_index_t cell_idx, rnti_t rnti)
+  {
+    return run_until([this, cell_idx, rnti]() {
+      if (phy.cells[cell_idx].last_ul_res.has_value()) {
+        return find_ue_uci_with_csi(rnti, *phy.cells[cell_idx].last_ul_res.value().ul_res) != nullptr;
+      }
+      return false;
+    });
+  }
 };
 
 TEST_P(du_high_many_cells_tester, when_du_high_initiated_then_f1_setup_is_sent_with_correct_number_of_cells)
@@ -92,8 +103,9 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
     rnti_t rnti = to_rnti(0x4601 + i);
     ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
     ASSERT_TRUE(run_rrc_setup(rnti));
-    ASSERT_TRUE(force_ue_fallback(rnti));
     ASSERT_TRUE(run_ue_context_setup(rnti));
+    // Wait for a CSI to be sent, otherwise the TBs will be small.
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
 
     // Ensure DU<->CU-UP tunnel was created.
     ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
