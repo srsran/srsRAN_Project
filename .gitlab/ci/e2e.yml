@@ -304,7 +304,6 @@ amari 32UE:
 
 amari 32UE beta:
   extends: amari 32UE
-  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: ["reestablishment", "handover"]
