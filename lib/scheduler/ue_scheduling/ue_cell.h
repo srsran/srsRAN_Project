@@ -51,6 +51,11 @@ public:
 
   harq_entity harqs;
 
+  // Slot at which PDSCH was allocated in the past for this UE in this cell.
+  slot_point last_pdsch_allocated_slot;
+  // Slot at which PUSCH was allocated in the past for this UE in this cell.
+  slot_point last_pusch_allocated_slot;
+
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }

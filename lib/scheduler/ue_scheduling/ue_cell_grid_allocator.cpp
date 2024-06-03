@@ -20,26 +20,6 @@
 
 using namespace srsran;
 
-/// Helper function to find minimum k2 to use for scheduling next PUSCH for a particular UE.
-static unsigned get_min_k2_to_schedule_next_pusch(const cell_resource_allocator& res_alloc,
-                                                  rnti_t                         rnti,
-                                                  unsigned                       min_k2,
-                                                  unsigned                       max_k2)
-{
-  srsran_assert(min_k2 <= max_k2, "Minimum k2 value must be greater than maximum k2 value");
-  for (int sl_inc = max_k2; sl_inc >= (int)min_k2; --sl_inc) {
-    const cell_slot_resource_allocator& pusch_alloc = res_alloc[sl_inc];
-    const ul_sched_info*                pusch_exist_it =
-        std::find_if(pusch_alloc.result.ul.puschs.begin(),
-                     pusch_alloc.result.ul.puschs.end(),
-                     [rnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
-    if (pusch_exist_it != pusch_alloc.result.ul.puschs.end()) {
-      return sl_inc;
-    }
-  }
-  return min_k2;
-}
-
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                                                ue_repository&                    ues_,
                                                srslog::basic_logger&             logger_) :
@@ -123,6 +103,17 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     return alloc_outcome::invalid_params;
   }
 
+  // [Implementation-defined]
+  // If there is large gap between two PDSCHs scheduled for a UE, \c last_pdsch_allocated_slot could be having an old
+  // slot value and the condition pdsch_alloc.slot (e.g. 47.0) <= ue_cc->last_pdsch_allocated_slot (e.g. 989.0) maybe be
+  // true for long time and UE may not get scheduled.
+  // This scenario can be prevented by resetting \c last_pdsch_allocated_slot when its behind current PDCCH slot by
+  // SCHEDULER_MAX_K0 number of slots.
+  if (ue_cc->last_pdsch_allocated_slot.valid() and
+      std::abs(pdcch_alloc.slot - ue_cc->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
+    ue_cc->last_pdsch_allocated_slot.clear();
+  }
+
   // Create PDSCH param candidate search object.
   ue_pdsch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_dl, is_retx, pdcch_alloc.slot};
   if (candidates.is_empty()) {
@@ -139,6 +130,14 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
 
     // Fetch PDSCH resource grid allocator.
     cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
+
+    // Verify only one PDSCH exists for a RNTI.
+    // See TS 38.214, clause 5.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not
+    // expected to receive a PDSCH that overlaps in time with another PDSCH".
+    if (ue_cc->last_pdsch_allocated_slot.valid() and pdsch_alloc.slot <= ue_cc->last_pdsch_allocated_slot) {
+      // Try next candidate.
+      continue;
+    }
 
     if (pdsch_alloc.result.dl.bc.sibs.size() + pdsch_alloc.result.dl.paging_grants.size() +
             pdsch_alloc.result.dl.rar_grants.size() + pdsch_alloc.result.dl.ue_grants.size() >=
@@ -164,17 +163,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                    u.crnti,
                    pdsch_alloc.slot);
       return alloc_outcome::skip_slot;
-    }
-
-    // Verify only one PDSCH exists for a RNTI.
-    // See TS 38.214, release 15.8.0, clause 5.1. For any HARQ process ID(s) in a given scheduled cell, the UE is not
-    // expected to receive a PDSCH that overlaps in time with another PDSCH.
-    const auto* pdsch_present_it =
-        std::find_if(pdsch_alloc.result.dl.ue_grants.begin(),
-                     pdsch_alloc.result.dl.ue_grants.end(),
-                     [crnti = u.crnti](const dl_msg_alloc& pdsch) { return pdsch.pdsch_cfg.rnti == crnti; });
-    if (pdsch_present_it != pdsch_alloc.result.dl.ue_grants.end()) {
-      return alloc_outcome::skip_ue;
     }
 
     // Apply RB allocation limits.
@@ -456,6 +444,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     if (is_new_data) {
       pdsch_sched_ctx.olla_mcs =
           ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
+      ue_cc->last_pdsch_allocated_slot = pdsch_alloc.slot;
     }
     h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
@@ -542,6 +531,18 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     return alloc_outcome::invalid_params;
   }
 
+  // [Implementation-defined]
+  // If there is large gap between two PUSCHs scheduled for a UE, \c last_pusch_allocated_slot could be having an old
+  // slot value and the condition pusch_alloc.slot (e.g. 47.3) <= ue_cc->last_pusch_allocated_slot (e.g. 989.3) maybe be
+  // true for long time and UE may not get scheduled even after receiving maximum nof. SR indication configured to UE
+  // and eventually UE PRACHes.
+  // This scenario can be prevented by resetting \c last_pusch_allocated_slot when its behind current PDCCH slot by
+  // SCHEDULER_MAX_K2 number of slots.
+  if (ue_cc->last_pusch_allocated_slot.valid() and
+      std::abs(pdcch_alloc.slot - ue_cc->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
+    ue_cc->last_pusch_allocated_slot.clear();
+  }
+
   // Create PUSCH param candidate search object.
   ue_pusch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_ul, is_retx, pdcch_alloc.slot};
   if (candidates.is_empty()) {
@@ -559,11 +560,20 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
     const unsigned                               final_k2     = pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset;
 
-    const aggregation_level aggr_lvl =
-        ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), ss_info, false);
-
     // Fetch PUSCH resource grid allocators.
     cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + final_k2];
+
+    // Verify only one PUSCH exists for a RNTI.
+    // See TS 38.214, clause 6.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to
+    // transmit a PUSCH that overlaps in time with another PUSCH".
+    // "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first PUSCH
+    // transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
+    // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
+    if (ue_cc->last_pusch_allocated_slot.valid() and pusch_alloc.slot <= ue_cc->last_pusch_allocated_slot) {
+      // Try next candidate.
+      continue;
+    }
+
     if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
       logger.warning(
           "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
@@ -598,18 +608,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       continue;
     }
 
-    // Verify only one PUSCH exists for a RNTI.
-    // See TS 38.214, clause 6.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to
-    // transmit a PUSCH that overlaps in time with another PUSCH".
-    const ul_sched_info* pusch_exists_it =
-        std::find_if(pusch_alloc.result.ul.puschs.begin(),
-                     pusch_alloc.result.ul.puschs.end(),
-                     [rnti = u.crnti](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == rnti; });
-    if (pusch_exists_it != pusch_alloc.result.ul.puschs.end()) {
-      // Try next candidate.
-      continue;
-    }
-
     // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
     // PUCCH resources.
     if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
@@ -618,20 +616,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                    u.ue_index,
                    u.crnti,
                    pusch_alloc.slot);
-      // Try next candidate.
-      continue;
-    }
-
-    // See TS 38.214, clause 6.1, "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to
-    // start a first PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
-    // scheduled to transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than
-    // symbol i".
-    const unsigned min_k2_for_next_pusch =
-        get_min_k2_to_schedule_next_pusch(get_res_alloc(grant.cell_index),
-                                          u.crnti,
-                                          ss_info.pusch_time_domain_list.front().k2 + cell_cfg.ntn_cs_koffset,
-                                          ss_info.pusch_time_domain_list.back().k2 + cell_cfg.ntn_cs_koffset);
-    if (final_k2 < min_k2_for_next_pusch) {
       // Try next candidate.
       continue;
     }
@@ -756,6 +740,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       // Try next candidate.
       continue;
     }
+
+    const aggregation_level aggr_lvl =
+        ue_cc->get_aggregation_level(ue_cc->link_adaptation_controller().get_effective_cqi(), ss_info, false);
 
     // Allocate PDCCH position.
     pdcch_ul_information* pdcch = get_pdcch_sched(grant.cell_index)
@@ -960,7 +947,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     ul_harq_sched_context pusch_sched_ctx;
     pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
     if (is_new_data) {
-      pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
+      pusch_sched_ctx.olla_mcs         = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
+      ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
     }
     h_ul.save_alloc_params(pusch_sched_ctx, msg.pusch_cfg);
 
