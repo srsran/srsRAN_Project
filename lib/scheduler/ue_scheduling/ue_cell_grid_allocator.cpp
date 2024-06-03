@@ -35,10 +35,27 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
   cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &uci_alloc, &cell_alloc});
 }
 
-void ue_cell_grid_allocator::slot_indication()
+void ue_cell_grid_allocator::slot_indication(slot_point sl)
 {
   dl_attempts_count = 0;
   ul_attempts_count = 0;
+  // Clear slots which are in the past relative to current slot indication.
+  auto* pdsch_slot = slots_with_no_pdsch_space.begin();
+  while (pdsch_slot != slots_with_no_pdsch_space.end()) {
+    if (*pdsch_slot < sl) {
+      pdsch_slot = slots_with_no_pdsch_space.erase(pdsch_slot);
+      continue;
+    }
+    ++pdsch_slot;
+  }
+  auto* pusch_slot = slots_with_no_pusch_space.begin();
+  while (pusch_slot != slots_with_no_pusch_space.end()) {
+    if (*pusch_slot < sl) {
+      pusch_slot = slots_with_no_pusch_space.erase(pusch_slot);
+      continue;
+    }
+    ++pusch_slot;
+  }
 }
 
 alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
@@ -139,6 +156,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       continue;
     }
 
+    // Check if there is space in PDSCH resource grid.
+    const bool is_pdsch_full =
+        std::find(slots_with_no_pdsch_space.begin(), slots_with_no_pdsch_space.end(), pdsch_alloc.slot) !=
+        slots_with_no_pdsch_space.end();
+    if (is_pdsch_full) {
+      // Try next candidate.
+      continue;
+    }
+
     if (pdsch_alloc.result.dl.bc.sibs.size() + pdsch_alloc.result.dl.paging_grants.size() +
             pdsch_alloc.result.dl.rar_grants.size() + pdsch_alloc.result.dl.ue_grants.size() >=
         expert_cfg.max_pdschs_per_slot) {
@@ -177,10 +203,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     const crb_bitmap   used_crbs =
         pdsch_alloc.dl_res_grid.used_crbs(bwp_dl_cmn.generic_params.scs, dl_crb_lims, pdsch_td_cfg.symbols);
     if (used_crbs.all()) {
-      logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: No more RBs available at slot={}",
-                   u.ue_index,
-                   u.crnti,
-                   pdsch_alloc.slot);
+      slots_with_no_pdsch_space.push_back(pdsch_alloc.slot);
       return alloc_outcome::skip_slot;
     }
 
@@ -574,6 +597,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
       continue;
     }
 
+    // Check if there is space in PUSCH resource grid.
+    const bool is_pusch_full =
+        std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_alloc.slot) !=
+        slots_with_no_pusch_space.end();
+    if (is_pusch_full) {
+      // Try next candidate.
+      continue;
+    }
+
     if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
       logger.warning(
           "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
@@ -650,10 +682,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     const crb_interval ul_crb_lims = {start_rb, end_rb};
     const prb_bitmap   used_crbs   = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
     if (used_crbs.all()) {
-      logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: No more RBs available",
-                   u.ue_index,
-                   u.crnti,
-                   pusch_alloc.slot);
+      slots_with_no_pusch_space.push_back(pusch_alloc.slot);
       // Try next candidate.
       continue;
     }

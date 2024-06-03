@@ -56,7 +56,7 @@ protected:
 
   void run_slot()
   {
-    grid_alloc.slot_indication();
+    grid_alloc.slot_indication(next_slot);
 
     res_grid.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);

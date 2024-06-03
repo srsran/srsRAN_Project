@@ -151,7 +151,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   event_mng.run(slot_tx, cell_index);
 
   // Mark the start of a new slot in the UE grid allocator.
-  ue_alloc.slot_indication();
+  ue_alloc.slot_indication(slot_tx);
 
   // Schedule periodic UCI (SR and CSI) before any UL grants.
   cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc);
