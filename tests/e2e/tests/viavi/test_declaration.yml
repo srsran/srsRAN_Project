@@ -1,3 +1,11 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 # campaign_filename: path to Viavi campaign file
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
@@ -21,7 +29,7 @@ expected_ul_bitrate_low: &expected_ul_bitrate_low 1000
 tests:
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal UDP bidirectional"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE ideal UDP bidirectional"
     max_pdschs_per_slot: 8
@@ -35,7 +43,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional"
     max_pdschs_per_slot: 1
@@ -49,7 +57,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading UDP uplink"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading UDP uplink"
     max_pdschs_per_slot: 8
@@ -63,7 +71,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading,noise UDP uplink"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading,noise UDP uplink"
     max_pdschs_per_slot: 8
@@ -77,7 +85,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal TCP downlink"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE ideal TCP downlink"
     max_pdschs_per_slot: 8
@@ -91,7 +99,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal TCP downlink"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal TCP downlink"
     max_pdschs_per_slot: 1
@@ -105,7 +113,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading TCP downlink"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading TCP downlink"
     max_pdschs_per_slot: 8
@@ -119,7 +127,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE fading TCP bidirectional"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE fading TCP bidirectional"
     max_pdschs_per_slot: 1
@@ -133,7 +141,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
@@ -147,7 +155,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE fading UDP attach-detach with traffic"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE fading UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
@@ -161,7 +169,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE birth-death UDP bidirectional"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE birth-death UDP bidirectional"
     max_pdschs_per_slot: 8
@@ -175,7 +183,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE birth-death UDP bidirectional"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE birth-death UDP bidirectional"
     max_pdschs_per_slot: 1
@@ -189,7 +197,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping"
     max_pdschs_per_slot: 1
@@ -203,7 +211,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping with traffic"
-    test_timeout: 2700  # 45 * 60
+    test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping with traffic"
     max_pdschs_per_slot: 1

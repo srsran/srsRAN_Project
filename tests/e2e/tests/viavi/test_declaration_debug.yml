@@ -1,3 +1,11 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 # campaign_filename: path to Viavi campaign file
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
@@ -11,18 +19,22 @@
 # fail_if_kos: fail if KPIs are out of spec
 # warning_as_errors: treat warnings as errors
 
-tests:
+campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
+gnb_extra_commands: &gnb_extra_commands ""
+expected_dl_bitrate_high: &expected_dl_bitrate_high 80000000
+expected_ul_bitrate_high: &expected_ul_bitrate_high 80000000
 
-  - campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH.xml"
-    test_name: "32UE static DL + UL UDP - Dell"
-    test_timeout: 2700  # 45 * 60
-    gnb_extra_commands: ""
-    id: "32UE Bidirectional UDP - Debug"
+tests:
+  - campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP bidirectional"
+    test_timeout: 2700 # 45 * 60
+    gnb_extra_commands: *gnb_extra_commands
+    id: "32UE ideal UDP bidirectional - Debug"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 1
     enable_qos_viavi: false
     # test/fail criteria
-    expected_dl_bitrate: 80000000
-    expected_ul_bitrate: 80000000
+    expected_dl_bitrate: *expected_dl_bitrate_high
+    expected_ul_bitrate: *expected_ul_bitrate_high
     fail_if_kos: false
     warning_as_errors: false
