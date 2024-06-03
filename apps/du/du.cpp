@@ -22,7 +22,7 @@
 
 #include "srsran/support/io/io_broker_factory.h"
 
-#include "srsran/f1ap/gateways/f1c_network_client_factory.h"
+#include "adapters/f1_gateways.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 
@@ -220,8 +220,7 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
-  unsigned       f1u_queue_size = 2048; // TODO: Add it to the DU configuration.
-  worker_manager workers{du_unit_cfg, du_cfg.expert_execution_cfg, du_cfg.pcap_cfg, f1u_queue_size};
+  worker_manager workers{du_unit_cfg, du_cfg.expert_execution_cfg, du_cfg.pcap_cfg, du_cfg.f1u_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -243,22 +242,12 @@ int main(int argc, char** argv)
       du_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(du_cfg.pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
                                    : create_null_dlt_pcap();
 
-  sctp_network_connector_config f1c_sctp{};
-  f1c_sctp.connection_name = "F1-C";
-  f1c_sctp.connect_address = "127.0.0.2";
-  f1c_sctp.connect_port    = 38471;
-  f1c_sctp.ppid            = F1AP_PPID;
-  f1c_sctp.bind_address    = "127.0.0.1";
+  // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
-      create_f1c_gateway_client(f1c_du_sctp_gateway_config{f1c_sctp, *epoll_broker, *f1ap_p});
+      create_f1c_client_gateway(du_cfg.f1c_cfg.cu_cp_address, du_cfg.f1c_cfg.bind_address, *epoll_broker, *f1ap_p);
 
-  // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
-  timer_manager                  app_timers{256};
-  std::unique_ptr<timer_manager> dummy_timers;
-  if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
-    // In case test mode is enabled, we pass dummy timers to the upper layers.
-    dummy_timers = std::make_unique<timer_manager>(256);
-  }
+  // Create manager of timers for DU, which will be driven by the PHY slot ticks.
+  timer_manager app_timers{256};
 
   // Create F1-U connector
   // TODO: Simplify this and use factory.
@@ -267,7 +256,7 @@ int main(int argc, char** argv)
   du_f1u_gtpu_msg.gtpu_pcap                         = gtpu_p.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config      = {};
-  du_f1u_gw_config.bind_address                     = "127.0.0.1"; // TODO: Parameterize.
+  du_f1u_gw_config.bind_address                     = du_cfg.f1u_cfg.bind_address;
   du_f1u_gw_config.bind_port                        = GTPU_PORT;
   du_f1u_gw_config.reuse_addr                       = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> du_f1u_gw = srs_cu_up::create_udp_ngu_gateway(

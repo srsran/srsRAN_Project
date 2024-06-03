@@ -10,17 +10,8 @@
 
 #include "gnb_appconfig_translators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
-#include "apps/units/cu_up/cu_up_unit_config.h"
 #include "gnb_appconfig.h"
-#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
-#include "srsran/cu_up/cu_up_configuration_helpers.h"
-#include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/rlc/rlc_srb_config_factory.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
-#include <algorithm>
-#include <map>
 
 using namespace srsran;
 using namespace std::chrono_literals;

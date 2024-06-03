@@ -17,6 +17,23 @@
 #include <optional>
 
 namespace srsran {
+namespace srs_du {
+
+/// Configuration of the F1-C interface of the DU.
+struct f1c_appconfig {
+  /// CU-CP F1-C address the DU will connect to.
+  std::string cu_cp_address = "127.0.0.1";
+  /// DU F1-C bind address.
+  std::string bind_address;
+};
+
+struct f1u_appconfig {
+  unsigned pdu_queue_size = 2048;
+  /// IP address to bind the F1-U interface to.
+  std::string bind_address;
+};
+
+} // namespace srs_du
 
 /// DU application configuration.
 struct du_appconfig {
@@ -28,6 +45,10 @@ struct du_appconfig {
   metrics_appconfig metrics_cfg;
   /// E2 configuration.
   e2_appconfig e2_cfg;
+  /// F1-C configuration.
+  srs_du::f1c_appconfig f1c_cfg;
+  /// F1-U configuration.
+  srs_du::f1u_appconfig f1u_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.
