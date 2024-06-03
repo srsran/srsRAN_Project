@@ -188,35 +188,35 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
   ue_creation_req.crnti    = to_rnti(0x4602);
   const ue& u2             = add_ue(ue_creation_req);
 
-  const crb_interval   grant1_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
-                                      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start() + 2};
-  const ue_pusch_grant grant1{.user       = &u1,
-                              .cell_index = to_du_cell_index(0),
-                              .h_id       = to_harq_id(0),
-                              .crbs       = grant1_crbs,
-                              .ss_id      = to_search_space_id(2),
-                              .mcs        = sch_mcs_index{24}};
+  const unsigned recommended_nof_bytes_to_schedule = 200U;
+  const unsigned max_nof_rbs_to_schedule           = 10U;
+
+  const crb_interval   cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
+                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
 
   // Successfully allocates RBs corresponding to the grant.
   ASSERT_EQ(alloc.allocate_ul_grant(grant1), alloc_outcome::success);
   unsigned k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
                     ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
                     .k2;
-  ASSERT_EQ(res_grid[k2].result.ul.puschs.back().pusch_cfg.rbs.type1().length(), grant1_crbs.length());
 
-  const crb_interval   grant2_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start() + 2,
-                                      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start() + 4};
-  const ue_pusch_grant grant2{.user       = &u2,
-                              .cell_index = to_du_cell_index(0),
-                              .h_id       = to_harq_id(0),
-                              .crbs       = grant1_crbs,
-                              .ss_id      = to_search_space_id(2),
-                              .mcs        = sch_mcs_index{24}};
+  const unsigned remaining_crbs =
+      cell_crbs.length() - res_grid[k2].result.ul.puschs.back().pusch_cfg.rbs.type1().length();
+  const ue_pusch_grant grant2{.user                  = &u2,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
 
   // Allocates all remaining RBs to UE2.
   ASSERT_EQ(alloc.allocate_ul_grant(grant2), alloc_outcome::success);
   k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
            ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
            .k2;
-  ASSERT_GT(res_grid[k2].result.ul.puschs.back().pusch_cfg.rbs.type1().length(), grant2_crbs.length());
+  ASSERT_EQ(res_grid[k2].result.ul.puschs.back().pusch_cfg.rbs.type1().length(), remaining_crbs);
 }

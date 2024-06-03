@@ -101,6 +101,11 @@ public:
       }
 
       parent->iterate_until_valid_candidate_found(current);
+      if (not parent->is_candidate_valid(current)) {
+        // No valid candidates found and iteration finished.
+        current.ss_it    = parent->ss_candidate_list.end();
+        current.time_res = 0;
+      }
     }
 
     candidate&       operator*() { return current; }
@@ -131,6 +136,11 @@ public:
         }
       }
       parent->iterate_until_valid_candidate_found(current);
+      if (not parent->is_candidate_valid(current)) {
+        // No valid candidates found and iteration finished.
+        current.ss_it    = parent->ss_candidate_list.end();
+        current.time_res = 0;
+      }
       return *this;
     }
 
@@ -174,7 +184,7 @@ public:
   iterator end() { return iterator{*this, ss_candidate_list.end(), 0}; }
 
   /// Returns whether there are candidates or not.
-  bool is_empty() { return ss_candidate_list.empty(); }
+  bool is_empty() { return ss_candidate_list.empty() or valid_ss_pusch_td_res_indices.empty(); }
 
 private:
   // Generate Search Space candidates for a given HARQ.
@@ -212,6 +222,16 @@ private:
   // Check if a candidate has valid parameters for an allocation.
   bool is_candidate_valid(const candidate& current) const
   {
+    // Check whether SeachSpace is valid.
+    if (current.ss_it == nullptr or current.ss_it == ss_candidate_list.end()) {
+      return false;
+    }
+
+    // Check whether PUSCH Time Domain resource index is valid.
+    if (current.time_res >= (*current.ss_it)->pusch_time_domain_list.size()) {
+      return false;
+    }
+
     // Check whether PUSCH slot is UL enabled.
     if (not ue_cc->cfg().cell_cfg_common.is_ul_enabled(pdcch_slot + current.pusch_td_res().k2)) {
       return false;
@@ -235,7 +255,7 @@ private:
   // Iterate over the list of candidates until a valid one is found.
   void iterate_until_valid_candidate_found(candidate& current)
   {
-    if (current.ss_it != ss_candidate_list.end()) {
+    for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
       // NOTE: At this point UE is no longer in fallback mode.
       // Skip SearchSpaces without PDCCH candidates to be monitored in this slot.
       if (not(*current.ss_it)
