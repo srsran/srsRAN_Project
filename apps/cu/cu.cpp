@@ -10,7 +10,7 @@
 
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_factory.h"
-#include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
+#include "srsran/f1ap/gateways/f1c_network_server_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
@@ -252,8 +252,11 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create F1-C GW (TODO pass actual arguments for F1AP IPs)
-  f1c_local_sctp_connector_config      f1c_conn_cfg({*ngap_p, *epoll_broker});
-  std::unique_ptr<f1c_local_connector> cu_f1c_gw = srsran::create_f1c_local_connector(f1c_conn_cfg);
+  sctp_network_gateway_config f1c_sctp_cfg = {};
+  f1c_sctp_cfg.bind_address                = "127.0.0.2";
+  f1c_sctp_cfg.bind_port                   = 38471;
+  f1c_cu_sctp_gateway_config                        f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *ngap_p});
+  std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
   gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
