@@ -332,7 +332,8 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
       schedule_pending_rars(res_alloc, res_alloc.slot_tx() + n);
     }
 
-    // Save last slot when the RAR was attempted to be scheduled.
+    // For the RARs that were not scheduled, save the last slot when an allocation was attempted. This avoids redundant
+    // scheduling attempts.
     for (pending_rar_t& rar : pending_rars) {
       rar.last_sched_try_slot = res_alloc.slot_tx() + max_dl_slots_ahead_sched - 1;
     }
@@ -385,7 +386,7 @@ bool ra_scheduler::is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_
     return false;
   }
 
-  // Check for space in PDCCH and PDSCH result lists.
+  // Check for space in PDCCH result list. We check for space in PDSCH later, once the k0 is known.
   if (slot_res_alloc.result.dl.dl_pdcchs.full()) {
     log_postponed_rar(pending_rars.front(), "No PDCCH space for RAR.");
     return false;
