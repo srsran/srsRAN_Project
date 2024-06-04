@@ -84,6 +84,16 @@ static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_p
   add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
 }
 
+static void configure_cli11_f1u_args(CLI::App& app, struct cu_up_unit_f1u_config& f1u_cfg)
+{
+  add_option(app,
+             "--f1u_bind_addr",
+             f1u_cfg.f1u_bind_addr,
+             "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--udp_max_rx_msgs", f1u_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+}
+
 static void configure_cli11_rlc_am_args(CLI::App& app, uint32_t& queue_size)
 {
   CLI::App* tx_subcmd = app.add_subcommand("tx", "AM TX parameters");
@@ -135,6 +145,10 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // AMF section.
   CLI::App* amf_subcmd = add_subcommand(app, "amf", "AMF parameters")->configurable();
   configure_cli11_upf_args(*amf_subcmd, unit_cfg.upf_cfg);
+
+  // F1-U section.
+  CLI::App* f1u_subcmd = add_subcommand(app, "f1u", "F1-U parameters")->configurable();
+  configure_cli11_f1u_args(*f1u_subcmd, unit_cfg.f1u_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

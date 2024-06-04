@@ -33,6 +33,11 @@ struct cu_up_unit_upf_config {
   bool        no_core           = false;
 };
 
+struct cu_up_unit_f1u_config {
+  std::string f1u_bind_addr   = "127.0.10.1";
+  int         udp_rx_max_msgs = 256;
+};
+
 /// QoS configuration.
 struct cu_up_unit_qos_config {
   five_qi_t   five_qi       = uint_to_five_qi(9);
@@ -47,6 +52,8 @@ struct cu_up_unit_config {
   bool     warn_on_drop             = false;
   /// UPF configuration.
   cu_up_unit_upf_config upf_cfg;
+  /// F1-U configuration.
+  struct cu_up_unit_f1u_config f1u_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.
