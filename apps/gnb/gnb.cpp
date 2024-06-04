@@ -24,7 +24,7 @@
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
-#include "adapters/ngap_adapter.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 #include "srsran/support/io/io_broker_factory.h"
 
 #include "adapters/e1ap_gateway_local_connector.h"
@@ -311,13 +311,13 @@ int main(int argc, char** argv)
   e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   // Create NGAP Gateway.
-  std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
+  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
   {
-    using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
-    using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
+    using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
+    using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
     using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
-    ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
+    n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
         *ngap_p,
         cu_cp_config.amf_cfg.no_core
             ? ngap_mode_t{no_core_mode_t{}}
@@ -334,7 +334,7 @@ int main(int argc, char** argv)
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.ngap_notifier  = ngap_adapter.get();
+  cu_cp_dependencies.ngap_notifier  = n2_client.get();
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
@@ -349,8 +349,8 @@ int main(int argc, char** argv)
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
-                              cu_cp_obj->get_ng_handler().get_ngap_event_handler());
+  n2_client->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
+                           cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
@@ -419,7 +419,7 @@ int main(int argc, char** argv)
   cu_cp_obj->stop();
 
   gnb_logger.info("Closing network connections...");
-  ngap_adapter->disconnect();
+  n2_client->disconnect();
   gnb_logger.info("Network connections closed successfully");
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
