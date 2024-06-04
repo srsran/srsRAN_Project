@@ -87,7 +87,7 @@ void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
   du_hi_cfg.rlc_p                          = &rlc_p;
   du_hi_cfg.gnb_du_id                      = du_id + 1;
   du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
-  du_hi_cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id));
+  du_hi_cfg.du_bind_addr = transport_layer_address::create_from_string(du_high_unit_cfg.f1u_bind_address);
   du_hi_cfg.mac_cfg      = generate_mac_expert_config(du_high_unit_cfg);
   // Assign different initial C-RNTIs to different DUs.
   du_hi_cfg.mac_cfg.initial_crnti     = to_rnti(0x4601 + (0x1000 * du_id));

@@ -251,6 +251,8 @@ int main(int argc, char** argv)
 
   // Create F1-U connector
   // TODO: Simplify this and use factory.
+  du_unit_cfg.du_high_cfg.config.f1u_bind_address =
+      du_cfg.f1u_cfg.bind_address; // TODO simplify and get address directly from GW
   gtpu_demux_creation_request du_f1u_gtpu_msg       = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop                  = true;
   du_f1u_gtpu_msg.gtpu_pcap                         = gtpu_p.get();

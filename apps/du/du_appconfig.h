@@ -24,13 +24,13 @@ struct f1c_appconfig {
   /// CU-CP F1-C address the DU will connect to.
   std::string cu_cp_address = "127.0.0.1";
   /// DU F1-C bind address.
-  std::string bind_address;
+  std::string bind_address = "127.0.0.2";
 };
 
 struct f1u_appconfig {
   unsigned pdu_queue_size = 2048;
   /// IP address to bind the F1-U interface to.
-  std::string bind_address;
+  std::string bind_address = "127.0.10.2";
 };
 
 } // namespace srs_du

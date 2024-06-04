@@ -253,8 +253,9 @@ int main(int argc, char** argv)
 
   // Create F1-C GW (TODO pass actual arguments for F1AP IPs)
   sctp_network_gateway_config f1c_sctp_cfg = {};
-  f1c_sctp_cfg.bind_address                = "127.0.0.2";
+  f1c_sctp_cfg.bind_address                = cu_up_config.upf_cfg.bind_addr; // TODO add independent config to F1-C
   f1c_sctp_cfg.bind_port                   = 38471;
+  f1c_sctp_cfg.ppid                        = F1AP_PPID;
   f1c_cu_sctp_gateway_config                        f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *ngap_p});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
