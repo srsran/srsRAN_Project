@@ -64,6 +64,9 @@ protected:
         max_k_value                       = pusch.k2 + max_msg3_delta;
       }
     }
+
+    // Run slot once so that the resource grid gets initialized with the initial slot.
+    run_slot();
   }
 
   ~base_ra_scheduler_test()
@@ -315,13 +318,13 @@ protected:
 
   /// \brief For a slot to be valid for RAR in TDD mode, the RAR PDCCH, RAR PDSCH and Msg3 PUSCH must fall in DL, DL
   /// and UL slots, respectively.
-  bool is_slot_valid_for_rar_pdcch() const
+  bool is_slot_valid_for_rar_pdcch(unsigned delay = 0) const
   {
     if (not cell_cfg.is_tdd()) {
       // FDD case.
       return true;
     }
-    slot_point pdcch_slot = res_grid[0].slot;
+    slot_point pdcch_slot = res_grid[delay].slot;
 
     if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
@@ -398,7 +401,7 @@ protected:
     return true;
   }
 
-  bool is_in_rar_window(slot_point rach_slot_rx) const
+  slot_interval get_rar_window(slot_point rach_slot_rx) const
   {
     slot_point rar_win_start;
     for (unsigned i = 1; i != rach_slot_rx.nof_slots_per_frame(); ++i) {
@@ -407,9 +410,13 @@ protected:
         break;
       }
     }
-    slot_interval rar_win = {rar_win_start,
-                             rar_win_start +
-                                 cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window};
+    return {rar_win_start,
+            rar_win_start + cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window};
+  }
+
+  bool is_in_rar_window(slot_point rach_slot_rx) const
+  {
+    slot_interval rar_win = get_rar_window(rach_slot_rx);
     return rar_win.contains(result_slot_tx());
   }
 
@@ -616,6 +623,57 @@ TEST_P(ra_scheduler_tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
   }
 
   ASSERT_GT(msg3_retx_count, 0);
+}
+
+TEST_P(ra_scheduler_tdd_test, when_no_rbs_are_available_then_rar_is_scheduled_in_following_slot)
+{
+  // Forward RACH indication to scheduler.
+  run_slot_until_next_rach_opportunity();
+  rach_indication_message rach_ind = create_rach_indication(1);
+  handle_rach_indication(rach_ind);
+  slot_interval rar_win = get_rar_window(rach_ind.slot_rx);
+
+  // Forbid PDCCH alloc in the next slot.
+  this->pdcch_sch.fail_pdcch_alloc_cond = [next_sl = res_grid[1].slot](slot_point pdcch_slot) {
+    return pdcch_slot == next_sl;
+  };
+
+  // Process slot and schedule RAR in a future slot.
+  run_slot();
+
+  // Given that the resource grid was already filled for this slot, no RAR should be scheduled.
+  ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
+
+  int      td_res = -1;
+  unsigned n      = 1;
+  for (; rar_win.contains(res_grid[0].slot + n); ++n) {
+    if (not is_slot_valid_for_rar_pdcch(n)) {
+      ASSERT_TRUE(scheduled_dl_pdcchs().empty())
+          << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
+      continue;
+    }
+
+    // RAR PDCCH scheduled.
+    ASSERT_EQ(res_grid[n].result.dl.dl_pdcchs.size(), 1);
+    td_res = res_grid[n].result.dl.dl_pdcchs[0].dci.ra_f1_0.time_resource;
+    break;
+  }
+
+  ASSERT_GE(td_res, 0) << "RAR PDCCH not found";
+  for (unsigned i = 0; i != n; ++i) {
+    // Update current slot to the slot when PDCCH was scheduled.
+    run_slot();
+  }
+  // RAR PDSCH allocated.
+  span<const rar_information> rars = scheduled_rars(td_res);
+  ASSERT_EQ(rars.size(), 1);
+  unsigned nof_grants = 0;
+  ASSERT_TRUE(rars_consistent_with_rach_indication(rars, rach_ind, nof_grants));
+  ASSERT_EQ(nof_grants, 1);
+  ASSERT_EQ(nof_grants, rars[0].grants.size()) << "All scheduled RAR grants must be for the provided occasion";
+  // Msg3 scheduled.
+  ASSERT_EQ(scheduled_msg3_newtxs(rars[0].grants[0].time_resource_assignment).size(), nof_grants)
+      << "Number of Msg3 PUSCHs must match number of RARs";
 }
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
