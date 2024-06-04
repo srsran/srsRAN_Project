@@ -25,7 +25,7 @@ namespace {
 struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
   void on_new_pdu(nru_dl_message msg) override
   {
-    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. sdu_len={}", msg.t_pdu.length());
     std::lock_guard<std::mutex> lock(rx_mutex);
     rx_bytes += msg.t_pdu.length();
     msg_queue.push(std::move(msg));

@@ -167,18 +167,15 @@ TEST_F(f1u_du_test, rx_discard)
 TEST_F(f1u_du_test, rx_pdcp_pdus)
 {
   constexpr uint32_t pdu_size = 10;
-  constexpr uint32_t pdcp_sn  = 123;
 
-  byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
+  byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, 0);
   nru_dl_message msg1         = {};
   msg1.t_pdu                  = rx_pdcp_pdu1.deep_copy().value();
-  msg1.pdcp_sn                = pdcp_sn;
   f1u->handle_pdu(std::move(msg1));
 
-  byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
+  byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, 1);
   nru_dl_message msg2         = {};
   msg2.t_pdu                  = rx_pdcp_pdu2.deep_copy().value();
-  msg2.pdcp_sn                = pdcp_sn + 1;
   f1u->handle_pdu(std::move(msg2));
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());

@@ -32,7 +32,7 @@ struct dummy_f1u_cu_up_rx_notifier final : public f1u_cu_up_gateway_bearer_rx_no
 struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_gateway_bearer_rx_notifier {
   void on_new_pdu(nru_dl_message msg) override
   {
-    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. pdcp_sn={}", msg.pdcp_sn);
+    logger.info(msg.t_pdu.begin(), msg.t_pdu.end(), "DU received SDU. sdu_len={}", msg.t_pdu.length());
     last_sdu = std::move(msg);
   }
   nru_dl_message last_sdu;
@@ -114,10 +114,8 @@ void check_dl_path_connected(const byte_buffer&                       cu_buf,
   auto du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
   ASSERT_FALSE(du_exp_buf.is_error());
   nru_dl_message du_exp = {};
-  du_exp.pdcp_sn        = 0;
   du_exp.t_pdu          = cu_buf.deep_copy().value();
   nru_dl_message sdu    = {};
-  sdu.pdcp_sn           = 0;
   sdu.t_pdu             = cu_buf.deep_copy().value();
   cu_bearer->on_new_pdu(std::move(sdu));
   ASSERT_EQ(du_rx.last_sdu, du_exp); // should arrive immediately
@@ -151,11 +149,9 @@ void check_dl_path_disconnected(const byte_buffer&                       cu_buf,
                                 dummy_f1u_du_gateway_bearer_rx_notifier& du_rx)
 {
   nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
   sdu.t_pdu          = cu_buf.deep_copy().value();
 
   nru_dl_message cu_not_exp = {};
-  cu_not_exp.pdcp_sn        = 0;
   cu_not_exp.t_pdu          = cu_buf.deep_copy().value();
 
   ASSERT_NE(du_rx.last_sdu, sdu); // Make sure last RX SDU is not equal to test SDU

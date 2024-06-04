@@ -787,7 +787,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdu_copy.value().length(), std::memory_order_relaxed);
-        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
+        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value())});
       }
     })) {
       // keep trying to push new PDUs.

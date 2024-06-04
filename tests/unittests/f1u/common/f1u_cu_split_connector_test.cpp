@@ -238,7 +238,6 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_with_dl_teid_attached)
   ASSERT_TRUE(cu_buf.has_value());
 
   nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
   sdu.t_pdu          = cu_buf.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu));
@@ -272,7 +271,6 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
   ASSERT_TRUE(cu_buf.has_value());
 
   nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
   sdu.t_pdu          = cu_buf.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu));
@@ -366,7 +364,6 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   ASSERT_TRUE(cu_buf1.has_value());
 
   nru_dl_message sdu1 = {};
-  sdu1.pdcp_sn        = 0;
   sdu1.t_pdu          = cu_buf1.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu1));
@@ -388,7 +385,6 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   ASSERT_TRUE(cu_buf2.has_value());
 
   nru_dl_message sdu2 = {};
-  sdu2.pdcp_sn        = 0;
   sdu2.t_pdu          = cu_buf2.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu2));

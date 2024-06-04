@@ -115,7 +115,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
   for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
     for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
-      nru_dl_message f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
+      nru_dl_message f1u_pdu{.t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i)};
       cu_up_sim.created_du_notifs[c]->on_new_pdu(f1u_pdu);
     }
   }
