@@ -6,8 +6,8 @@
 # the distribution.
 #
 
-set_directory_properties(PROPERTIES LABELS "io_broker")
+set_directory_properties(PROPERTIES LABELS "io_broker;tsan")
 
 add_executable(network_test transport_layer_address_test.cpp io_broker_epoll_test.cpp io_timer_source_test.cpp)
 target_link_libraries(network_test srsran_network srsran_support srslog gtest gtest_main)
-gtest_discover_tests(network_test)
+add_test(network_test network_test)
