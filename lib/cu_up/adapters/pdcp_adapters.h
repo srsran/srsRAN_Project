@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/f1u/cu_up/f1u_bearer.h"
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/sdap/sdap.h"

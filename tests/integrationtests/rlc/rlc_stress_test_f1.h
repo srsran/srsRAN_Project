@@ -15,7 +15,6 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
-#include <random>
 
 namespace srsran {
 class f1ap_dummy : public pdcp_tx_lower_notifier,

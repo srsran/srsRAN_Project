@@ -10,12 +10,10 @@
 
 #include "pdcp_tx_status_report_test.h"
 #include "pdcp_test_vectors.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <list>
 #include <queue>
 
 using namespace srsran;

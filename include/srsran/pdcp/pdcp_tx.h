@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/security/security.h"
 
 /*
