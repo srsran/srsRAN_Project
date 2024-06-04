@@ -12,6 +12,21 @@
 
 using namespace srsran;
 
+const dl_msg_alloc* srsran::find_ue_pdsch_with_lcid(rnti_t rnti, lcid_dl_sch_t lcid, span<const dl_msg_alloc> dlgrants)
+{
+  auto it = std::find_if(dlgrants.begin(), dlgrants.end(), [rnti, lcid](const dl_msg_alloc& pdsch) {
+    return pdsch.pdsch_cfg.rnti == rnti and std::any_of(pdsch.tb_list[0].lc_chs_to_sched.begin(),
+                                                        pdsch.tb_list[0].lc_chs_to_sched.end(),
+                                                        [lcid](const dl_msg_lc_info& t) { return t.lcid == lcid; });
+  });
+  return it != dlgrants.end() ? &*it : nullptr;
+}
+
+const dl_msg_alloc* srsran::find_ue_pdsch_with_lcid(rnti_t rnti, lcid_t lcid, span<const dl_msg_alloc> dlgrants)
+{
+  return find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t{lcid}, dlgrants);
+}
+
 const csi_report_configuration* srsran::find_ue_uci_with_csi(rnti_t rnti, const ul_sched_result& ul_res)
 {
   if (ul_res.nof_ul_symbols == 0) {

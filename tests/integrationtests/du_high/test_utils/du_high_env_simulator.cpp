@@ -140,7 +140,7 @@ static void init_loggers()
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("DU-F1-U").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
@@ -218,19 +218,43 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
   // Send UL-CCCH message.
   du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti, cell_index));
 
-  // Wait for Init UL RRC Message to come out of the F1AP.
-  bool ret =
-      run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 1000 * (next_slot.numerology() + 1));
-  if (not ret or not test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti)) {
+  // Wait for Init UL RRC Message to come out of the F1AP and ConRes CE to be scheduled.
+  // Note: These events are concurrent.
+  bool conres_sent = false, init_ul_rrc_msg_flag = false;
+  auto init_ul_rrc_msg_sent = [this, rnti, &init_ul_rrc_msg_flag]() {
+    if (not init_ul_rrc_msg_flag and not cu_notifier.last_f1ap_msgs.empty()) {
+      EXPECT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti));
+      init_ul_rrc_msg_flag = true;
+      return true;
+    }
     return false;
-  }
+  };
+  auto con_res_ce_sent = [this, rnti, cell_index, &conres_sent]() {
+    auto& phy_cell = phy.cells[cell_index];
+    if (phy_cell.last_dl_res.has_value()) {
+      auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
+      if (find_ue_pdsch(rnti, dl_res.ue_grants) != nullptr) {
+        EXPECT_TRUE(find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, dl_res.ue_grants) != nullptr);
+        EXPECT_FALSE(conres_sent);
+        conres_sent = true;
+        return true;
+      }
+    }
+    return false;
+  };
+  do {
+    if (not run_until([&]() { return init_ul_rrc_msg_sent() or con_res_ce_sent(); })) {
+      test_logger.error("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
+      return false;
+    }
+  } while (not init_ul_rrc_msg_flag or not conres_sent);
 
   gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
       cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
   gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(next_cu_ue_id++);
   EXPECT_TRUE(ues.insert(std::make_pair(rnti, ue_sim_context{rnti, du_ue_id, cu_ue_id, cell_index})).second);
 
-  return ret;
+  return true;
 }
 
 bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
@@ -248,23 +272,16 @@ bool du_high_env_simulator::run_rrc_setup(rnti_t rnti)
       *u.du_ue_id, *u.cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
   du_hi->get_f1ap_message_handler().handle_message(msg);
 
-  // Wait for contention resolution to be sent to the PHY.
+  // Wait for Msg4 to be sent to the PHY.
   bool ret = run_until([&]() {
     if (phy_cell.last_dl_res.has_value() and phy_cell.last_dl_res.value().dl_res != nullptr) {
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
-      for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-        if (grant.pdsch_cfg.rnti == rnti and
-            std::any_of(grant.tb_list[0].lc_chs_to_sched.begin(),
-                        grant.tb_list[0].lc_chs_to_sched.end(),
-                        [](const dl_msg_lc_info& lc_grant) { return lc_grant.lcid == lcid_dl_sch_t::UE_CON_RES_ID; })) {
-          return true;
-        }
-      }
+      return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, dl_res.ue_grants) != nullptr;
     }
     return false;
   });
   if (not ret) {
-    test_logger.error("rnti={}: Contention Resolution not sent to the PHY", rnti);
+    test_logger.error("rnti={}: Msg4 not sent to the PHY", rnti);
     return false;
   }
 
