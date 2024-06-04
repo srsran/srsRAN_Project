@@ -327,7 +327,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
                                      ? pending_rars.front().last_sched_try_slot + 1 - res_alloc.slot_tx()
                                      : 0;
 
-    for (unsigned n = sched_start_delay; n != max_dl_slots_ahead_sched and not pending_rars.empty(); ++n) {
+    for (unsigned n = sched_start_delay; n <= max_dl_slots_ahead_sched and not pending_rars.empty(); ++n) {
       // Schedule RARs for the given PDCCH slot.
       schedule_pending_rars(res_alloc, res_alloc.slot_tx() + n);
     }
@@ -335,7 +335,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     // For the RARs that were not scheduled, save the last slot when an allocation was attempted. This avoids redundant
     // scheduling attempts.
     for (pending_rar_t& rar : pending_rars) {
-      rar.last_sched_try_slot = res_alloc.slot_tx() + max_dl_slots_ahead_sched - 1;
+      rar.last_sched_try_slot = res_alloc.slot_tx() + max_dl_slots_ahead_sched;
     }
   }
 }
