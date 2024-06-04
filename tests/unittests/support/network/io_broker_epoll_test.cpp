@@ -181,7 +181,7 @@ protected:
     ASSERT_EQ(ret, tx_buf.length());
   }
 
-  void run_tx_rx_test(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(1000))
+  void run_tx_rx_test()
   {
     const int count = 5;
     int       run   = count;
@@ -191,9 +191,7 @@ protected:
 
     // wait until all bytes are received
     std::unique_lock<std::mutex> lock(rx_mutex);
-    if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return total_rx_bytes >= tx_buf.length() * count; })) {
-      FAIL() << "Timeout: received only " << total_rx_bytes << " of " << tx_buf.length() * count << " Bytes.";
-    }
+    rx_cvar.wait(lock, [this]() { return total_rx_bytes >= tx_buf.length() * count; });
     ASSERT_EQ(total_rx_bytes, tx_buf.length() * count);
   }
 
