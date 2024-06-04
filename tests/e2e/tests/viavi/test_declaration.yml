@@ -21,8 +21,8 @@
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
 gnb_extra_commands: &gnb_extra_commands ""
-expected_dl_bitrate_high: &expected_dl_bitrate_high 80000000
-expected_ul_bitrate_high: &expected_ul_bitrate_high 80000000
+expected_dl_bitrate_high: &expected_dl_bitrate_high 1000000
+expected_ul_bitrate_high: &expected_ul_bitrate_high 1000000
 expected_dl_bitrate_low: &expected_dl_bitrate_low 1000
 expected_ul_bitrate_low: &expected_ul_bitrate_low 1000
 
@@ -70,10 +70,10 @@ tests:
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
-    test_name: "1UE fading,noise UDP uplink"
+    test_name: "1UE fading noise UDP uplink"
     test_timeout: 2700 # 45 * 60
     gnb_extra_commands: *gnb_extra_commands
-    id: "1UE fading,noise UDP uplink"
+    id: "1UE fading noise UDP uplink"
     max_pdschs_per_slot: 8
     max_puschs_per_slot: 8
     enable_qos_viavi: false

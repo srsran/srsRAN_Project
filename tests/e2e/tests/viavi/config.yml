@@ -23,12 +23,18 @@ cell_cfg:
   pdsch:
     mcs_table: qam256
     max_alloc_attempts: 8
+    olla_target_bler: 0.1
+    olla_cqi_inc_step: 0.05
+    olla_max_cqi_offset: 10
   ul_common:
     max_ul_grants_per_slot: 16
     max_pucchs_per_slot: 14
   pusch:
     mcs_table: qam256
     min_k2: 2
+    olla_target_bler: 0.1
+    olla_snr_inc_step: 0.05
+    olla_max_snr_offset: 20
   tdd_ul_dl_cfg:
     nof_dl_symbols: 7
     nof_dl_slots: 7
