@@ -49,8 +49,8 @@
 // TODO remove apps/gnb/*.h
 #include "apps/gnb/adapters/e1ap_gateway_local_connector.h"
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "apps/gnb/adapters/ngap_adapter.h"
 #include "apps/gnb/gnb_appconfig_translators.h"
+#include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
@@ -286,10 +286,10 @@ int main(int argc, char** argv)
 
   // Create NGAP Gateway.
   // TODO had to include gnb
-  std::unique_ptr<srs_cu_cp::ngap_gateway_connector> ngap_adapter;
+  std::unique_ptr<srs_cu_cp::n2_connection_client> ngap_adapter;
   {
-    using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
-    using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
+    using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
+    using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
     using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
     // TODO generate network config in helper function, not in apps/gnb
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
     n2_nw_cfg.bind_interface = cu_cp_config.amf_cfg.n2_bind_interface;
     n2_nw_cfg.ppid           = NGAP_PPID;
 
-    ngap_adapter = srs_cu_cp::create_ngap_gateway(srs_cu_cp::ngap_gateway_params{
+    ngap_adapter = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
         *ngap_p,
         cu_cp_config.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
                                      : ngap_mode_t{network_mode_t{*epoll_broker, n2_nw_cfg}}});

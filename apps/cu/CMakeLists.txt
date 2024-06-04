@@ -11,8 +11,7 @@ add_executable(srscu
 	cu_appconfig_cli11_schema.cpp
 	cu_worker_manager.cpp
 	../gnb/adapters/e1ap_gateway_local_connector.cpp
-	../gnb/adapters/ngap_adapter.cpp
-        )
+)
 
 install(TARGETS srscu
         RUNTIME)
