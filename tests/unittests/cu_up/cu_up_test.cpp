@@ -12,6 +12,7 @@
 #include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_up/cu_up_factory.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
@@ -234,14 +235,16 @@ TEST_F(cu_up_test, dl_data_flow)
   close(sock_fd);
 
   // check reception of message 1
-  nru_dl_message sdu1 = f1u_bearer.wait_tx_sdu();
-  ASSERT_TRUE(sdu1.pdcp_sn.has_value());
-  EXPECT_EQ(sdu1.pdcp_sn.value(), 0);
+  nru_dl_message          sdu1         = f1u_bearer.wait_tx_sdu();
+  std::optional<uint32_t> sdu1_pdcp_sn = get_pdcp_sn(sdu1.t_pdu, pdcp_sn_size::size18bits, test_logger);
+  ASSERT_TRUE(sdu1_pdcp_sn.has_value());
+  EXPECT_EQ(sdu1_pdcp_sn.value(), 0);
 
   // check reception of message 2
-  nru_dl_message sdu2 = f1u_bearer.wait_tx_sdu();
-  ASSERT_TRUE(sdu2.pdcp_sn.has_value());
-  EXPECT_EQ(sdu2.pdcp_sn.value(), 1);
+  nru_dl_message          sdu2         = f1u_bearer.wait_tx_sdu();
+  std::optional<uint32_t> sdu2_pdcp_sn = get_pdcp_sn(sdu2.t_pdu, pdcp_sn_size::size18bits, test_logger);
+  ASSERT_TRUE(sdu2_pdcp_sn.has_value());
+  EXPECT_EQ(sdu2_pdcp_sn.value(), 1);
 
   // check nothing else was received
   EXPECT_FALSE(f1u_bearer.have_tx_sdu());

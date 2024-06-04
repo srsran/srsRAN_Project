@@ -43,10 +43,10 @@ private:
 
 // dummy DU RX bearer interface
 struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
-  void on_new_sdu(pdcp_tx_pdu sdu) override
+  void on_new_sdu(byte_buffer sdu) override
   {
-    logger.info(sdu.buf.begin(), sdu.buf.end(), "DU received SDU. pdcp_sn={}", sdu.pdcp_sn);
-    last_sdu = std::move(sdu.buf);
+    logger.info(sdu.begin(), sdu.end(), "DU received SDU. sdu_len={}", sdu.length());
+    last_sdu = std::move(sdu);
   }
   void        on_discard_sdu(uint32_t pdcp_sn) override {}
   byte_buffer last_sdu;

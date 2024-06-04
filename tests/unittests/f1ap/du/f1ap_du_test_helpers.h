@@ -21,7 +21,6 @@
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
-#include "srsran/pdcp/pdcp_tx_pdu.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -179,14 +178,9 @@ class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
   byte_buffer             last_pdu;
-  std::optional<uint32_t> last_pdu_sn;
   std::optional<uint32_t> last_discard_sn;
 
-  void on_new_sdu(pdcp_tx_pdu sdu) override
-  {
-    last_pdu    = std::move(sdu.buf);
-    last_pdu_sn = sdu.pdcp_sn;
-  }
+  void on_new_sdu(byte_buffer sdu) override { last_pdu = std::move(sdu); }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { last_discard_sn = pdcp_sn; }
 };

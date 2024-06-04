@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "srsran/pdcp/pdcp_tx_pdu.h"
+#include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
 namespace srs_du {
@@ -24,7 +24,7 @@ class f1u_rx_sdu_notifier
 public:
   virtual ~f1u_rx_sdu_notifier() = default;
 
-  virtual void on_new_sdu(pdcp_tx_pdu sdu)      = 0;
+  virtual void on_new_sdu(byte_buffer sdu)      = 0;
   virtual void on_discard_sdu(uint32_t pdcp_sn) = 0;
 };
 

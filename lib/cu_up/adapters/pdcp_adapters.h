@@ -81,7 +81,7 @@ public:
     if (f1u_handler == nullptr) {
       srslog::fetch_basic_logger("PDCP").info("Dropped DL PDU. F1-U handler is not connected");
     } else {
-      f1u_handler->handle_sdu(std::move(pdu));
+      f1u_handler->handle_sdu(std::move(pdu.buf));
     }
   }
 

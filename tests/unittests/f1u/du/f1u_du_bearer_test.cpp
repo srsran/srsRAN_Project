@@ -23,12 +23,12 @@ namespace {
 class f1u_du_test_frame : public f1u_rx_sdu_notifier, public f1u_tx_pdu_notifier
 {
 public:
-  std::list<pdcp_tx_pdu>    rx_sdu_list;
+  std::list<byte_buffer>    rx_sdu_list;
   std::list<uint32_t>       rx_discard_sdu_list;
   std::list<nru_ul_message> tx_msg_list;
 
   // f1u_rx_sdu_notifier interface
-  void on_new_sdu(pdcp_tx_pdu sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
+  void on_new_sdu(byte_buffer sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
   void on_discard_sdu(uint32_t pdcp_sn) override { rx_discard_sdu_list.push_back(pdcp_sn); }
 
   // f1u_tx_pdu_notifier interface
@@ -185,14 +185,12 @@ TEST_F(f1u_du_test, rx_pdcp_pdus)
   EXPECT_TRUE(tester->tx_msg_list.empty());
 
   ASSERT_FALSE(tester->rx_sdu_list.empty());
-  EXPECT_EQ(tester->rx_sdu_list.front().buf, rx_pdcp_pdu1);
-  EXPECT_EQ(tester->rx_sdu_list.front().pdcp_sn, pdcp_sn);
+  EXPECT_EQ(tester->rx_sdu_list.front(), rx_pdcp_pdu1);
 
   tester->rx_sdu_list.pop_front();
 
   ASSERT_FALSE(tester->rx_sdu_list.empty());
-  EXPECT_EQ(tester->rx_sdu_list.front().buf, rx_pdcp_pdu2);
-  EXPECT_EQ(tester->rx_sdu_list.front().pdcp_sn, pdcp_sn + 1);
+  EXPECT_EQ(tester->rx_sdu_list.front(), rx_pdcp_pdu2);
 
   tester->rx_sdu_list.pop_front();
 
