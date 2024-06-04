@@ -12,10 +12,8 @@
 
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
-#include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
-#include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/mac/mac_sdu_handler.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
 #include "srsran/rlc/rlc_rx.h"
