@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/support/bit_encoding.h"
 #include <cstdint>
+#include <optional>
 
 namespace srsran {
 
