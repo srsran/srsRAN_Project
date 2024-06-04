@@ -10,6 +10,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/io/unique_fd.h"
 #include <condition_variable>
 #include <future>
 #include <gtest/gtest.h>
@@ -33,11 +34,11 @@ protected:
 
   void data_receive_callback()
   {
-    std::lock_guard<std::mutex> lock(rx_mutex);
     // receive data on provided fd
     char rx_buf[1024];
-    int  bytes = read(socket_fd, rx_buf, sizeof(rx_buf));
+    int  bytes = read(socket_fd.value(), rx_buf, sizeof(rx_buf));
 
+    std::lock_guard<std::mutex> lock(rx_mutex);
     total_rx_bytes += bytes;
 
     if (socket_type == SOCK_DGRAM) {
@@ -62,9 +63,9 @@ protected:
     }
 
     // create server socket
-    socket_fd   = socket(AF_UNIX, SOCK_DGRAM, 0);
+    socket_fd   = unique_fd{socket(AF_UNIX, SOCK_DGRAM, 0)};
     socket_type = SOCK_DGRAM;
-    ASSERT_NE(socket_fd, -1);
+    ASSERT_TRUE(socket_fd.is_open());
 
     // prepare server address
     // memset(&server_addr, 0, sizeof(struct sockaddr_un));
@@ -72,7 +73,7 @@ protected:
     strncpy(server_addr_un.sun_path, socket_filename.c_str(), socket_filename.length());
 
     // bind server
-    ret = bind(socket_fd, (struct sockaddr*)&server_addr_un, sizeof(server_addr_un));
+    ret = bind(socket_fd.value(), (struct sockaddr*)&server_addr_un, sizeof(server_addr_un));
     ASSERT_NE(ret, -1);
 
     // listen+accept?
@@ -84,7 +85,7 @@ protected:
     strncpy(client_addr_un.sun_path, socket_filename.c_str(), socket_filename.length());
 
     // connect client to server_filename
-    ret = connect(socket_fd, (struct sockaddr*)&client_addr_un, sizeof(client_addr_un));
+    ret = connect(socket_fd.value(), (struct sockaddr*)&client_addr_un, sizeof(client_addr_un));
     // perror("socket failed");
     ASSERT_NE(ret, -1);
   }
@@ -119,13 +120,13 @@ protected:
   void create_af_init_sockets(int type)
   {
     // create server socket
-    socket_fd   = socket(AF_INET, type, 0);
+    socket_fd   = unique_fd{socket(AF_INET, type, 0)};
     socket_type = type;
-    ASSERT_NE(socket_fd, -1);
+    ASSERT_TRUE(socket_fd.is_open());
 
     // configure socket as reusable to allow multiple runs
     int enable = 1;
-    ASSERT_NE(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)), -1);
+    ASSERT_NE(setsockopt(socket_fd.value(), SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)), -1);
 
     // prepare server address
     memset(&server_addr_in, 0, sizeof(struct sockaddr_in));
@@ -134,12 +135,12 @@ protected:
     server_addr_in.sin_port        = htons(0);
 
     // bind server
-    int ret = bind(socket_fd, (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
+    int ret = bind(socket_fd.value(), (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
     // perror("socket failed");
     ASSERT_NE(ret, -1);
 
     // get bind port
-    std::optional<uint16_t> port = get_bind_port(socket_fd);
+    std::optional<uint16_t> port = get_bind_port(socket_fd.value());
     ASSERT_TRUE(port.has_value());
     ASSERT_NE(port.value(), 0);
     // update server address
@@ -152,30 +153,31 @@ protected:
     client_addr_in.sin_port        = htons(port.value());
 
     // connect client to server
-    ret = connect(socket_fd, (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
+    ret = connect(socket_fd.value(), (struct sockaddr*)&server_addr_in, sizeof(server_addr_in));
     ASSERT_NE(ret, -1);
   }
 
   void add_socket_to_epoll()
   {
     fd_handle = epoll_broker->register_fd(
-        socket_fd, [this]() { data_receive_callback(); }, [this](io_broker::error_code code) { error_callback(code); });
+        socket_fd.value(),
+        [this]() { data_receive_callback(); },
+        [this](io_broker::error_code code) { error_callback(code); });
     ASSERT_TRUE(fd_handle.registered());
   }
 
   void rem_socket_from_epoll()
   {
-    if (socket_fd >= 0) {
+    if (socket_fd.is_open()) {
       EXPECT_TRUE(fd_handle.reset());
-      EXPECT_NE(close(socket_fd), -1);
-      socket_fd = -1;
+      ASSERT_TRUE(socket_fd.close());
     }
   }
 
   void send_on_socket() const
   {
     // send text
-    int ret = send(socket_fd, tx_buf.c_str(), tx_buf.length(), 0);
+    int ret = send(socket_fd.value(), tx_buf.c_str(), tx_buf.length(), 0);
     ASSERT_EQ(ret, tx_buf.length());
   }
 
@@ -196,7 +198,7 @@ protected:
   }
 
   std::unique_ptr<io_broker> epoll_broker;
-  int                        socket_fd   = 0;
+  unique_fd                  socket_fd;
   int                        socket_type = 0;
 
   io_broker::subscriber fd_handle;
@@ -249,7 +251,7 @@ TEST_F(io_broker_epoll, reentrant_handle_and_deregistration)
   std::future<bool>     fut = p.get_future();
   io_broker::subscriber handle;
 
-  handle = this->epoll_broker->register_fd(socket_fd, [&]() {
+  handle = this->epoll_broker->register_fd(socket_fd.value(), [&]() {
     auto* p_copy = &p;
     bool  ret    = handle.reset();
     p_copy->set_value(ret);
