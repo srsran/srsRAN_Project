@@ -11,13 +11,13 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
 #include "avx2_helpers.h"
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
 #include "neon_helpers.h"
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
 using namespace srsran;
 
@@ -142,7 +142,7 @@ const std::array<float, NOF_INTERVALS_67> SLOPE_67          = {4 * M_SQRT1_170,
 const std::array<float, NOF_INTERVALS_67> INTERCEPT_67 =
     {28.0F / 85, -20.0F / 85, 12.0F / 85, -4.0F / 85, -4.0F / 85, 12.0F / 85, -20.0F / 85, 28.0F / 85};
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
 static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
   // Load symbols.
@@ -192,9 +192,9 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(llr),
                       mm256::quantize_ps(l_value_0_, l_value_1_, l_value_2_, l_value_3_, RANGE_LIMIT_FLOAT));
 }
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
 static void demod_QAM256_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
   // Load symbols.
@@ -261,7 +261,7 @@ static void demod_QAM256_neon(log_likelihood_ratio* llr, const cf_t* symbol, con
   vst1q_s8(reinterpret_cast<int8_t*>(llr + 16),
            neon::quantize_f32(l_value_4, l_value_5, l_value_6, l_value_7, RANGE_LIMIT_FLOAT));
 }
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
 static log_likelihood_ratio demod_256QAM_symbol_01(float value, float rcp_noise_var)
 {
@@ -296,7 +296,7 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
   log_likelihood_ratio* llr_it       = llrs.begin();
   std::size_t           symbol_index = 0;
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 4 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 4) * 4; symbol_index != symbol_index_end; symbol_index += 4) {
     demod_QAM256_avx2(llr_it, symbols_it, noise_it);
@@ -305,9 +305,9 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
     symbols_it += 4;
     noise_it += 4;
   }
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
   // For NEON, it generates 32 LLRs simultaneously. The input is read in batches of 4 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 4) * 4; symbol_index != symbol_index_end; symbol_index += 4) {
     demod_QAM256_neon(llr_it, symbols_it, noise_it);
@@ -316,7 +316,7 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
     symbols_it += 4;
     noise_it += 4;
   }
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     //  Set all LLR to zero if the symbol is near zero.

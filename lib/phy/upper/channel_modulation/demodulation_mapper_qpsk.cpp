@@ -9,20 +9,20 @@
  */
 #include "demodulation_mapper_qpsk.h"
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
 #include "avx2_helpers.h"
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
 #include "neon_helpers.h"
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
 using namespace srsran;
 
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
 static constexpr float RANGE_LIMIT_FLOAT = 24;
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
 
 static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
@@ -64,9 +64,9 @@ static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const
                       mm256::quantize_ps(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
 }
 
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
 
 static void demod_QPSK_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
@@ -104,7 +104,7 @@ static void demod_QPSK_neon(log_likelihood_ratio* llr, const cf_t* symbol, const
            neon::quantize_f32(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
 }
 
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
 static log_likelihood_ratio demod_QPSK_symbol(float x, float noise_var)
 {
@@ -125,7 +125,7 @@ void srsran::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
   log_likelihood_ratio* llr_it       = llrs.begin();
   std::size_t           symbol_index = 0;
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 16 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 16) * 16; symbol_index != symbol_index_end;
        symbol_index += 16) {
@@ -135,9 +135,9 @@ void srsran::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
     symbols_it += 16;
     noise_it += 16;
   }
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
   // For NEON, it generates 16 LLRs simultaneously. The input is read in batches of 8 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
     demod_QPSK_neon(llr_it, symbols_it, noise_it);
@@ -146,7 +146,7 @@ void srsran::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
     symbols_it += 8;
     noise_it += 8;
   }
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
 
   // Process remainder symbols with the generic algorithm.
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {

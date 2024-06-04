@@ -174,18 +174,18 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
 INSTANTIATE_TEST_SUITE_P(OFHCompressionTestSuite,
                          OFHCompressionFixture,
                          ::testing::Combine(::testing::Values("generic"
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
                                                               ,
                                                               "avx2"
-#endif // HAVE_AVX2
-#ifdef HAVE_AVX512
+#endif // __AVX2__
+#ifdef __AVX512F__
                                                               ,
                                                               "avx512"
-#endif // HAVE_AVX512
-#ifdef HAVE_NEON
+#endif // __AVX512F__
+#ifdef __ARM_NEON__
                                                               ,
                                                               "neon"
-#endif // HAVE_NEON
+#endif // __ARM_NEON__
                                                               ),
                                             ::testing::ValuesIn(ofh_compression_test_data)));
 
