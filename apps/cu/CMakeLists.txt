@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_executable(cu
+add_executable(srscu
         cu.cpp
 	cu_appconfig_cli11_schema.cpp
 	cu_worker_manager.cpp
@@ -14,10 +14,10 @@ add_executable(cu
 	../gnb/adapters/ngap_adapter.cpp
         )
 
-install(TARGETS cu
+install(TARGETS srscu
         RUNTIME)
 
-target_link_libraries(cu
+target_link_libraries(srscu
         srsran_app_services
         srsran_support
         srsran_version
@@ -31,7 +31,7 @@ target_link_libraries(cu
         ngap_asn1
         )
 
-add_backward(cu)
+add_backward(srscu)
 
-target_include_directories(cu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
+target_include_directories(srscu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
 

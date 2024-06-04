@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_executable(du
+add_executable(srsdu
     du.cpp
     du_appconfig_cli11_schema.cpp
     du_appconfig_validators.cpp
@@ -14,10 +14,10 @@ add_executable(du
     ../gnb/adapters/e2_gateway_remote_connector.cpp # TODO: Delete
 )
 
-install(TARGETS du
+install(TARGETS srsdu
         RUNTIME)
 
-target_link_libraries(du
+target_link_libraries(srsdu
         srsran_app_services
         srsgnb_app_f1u_du_split_connector
         srsran_cu_cp
@@ -35,9 +35,9 @@ target_link_libraries(du
 
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)
-    target_link_libraries(du hal_dpdk)
+    target_link_libraries(srsdu hal_dpdk)
 endif (DPDK_FOUND)
 
-add_backward(du)
+add_backward(srsdu)
 
-target_include_directories(du PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
+target_include_directories(srsdu PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/external)
