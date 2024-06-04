@@ -199,22 +199,14 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
   logger.log_info(
       buf.begin(), buf.end(), "TX PDU. type=data pdu_len={} sn={} count={}", buf.length(), SN(count), count);
   metrics_add_pdus(1, buf.length());
-  pdcp_tx_pdu tx_pdu = {};
-  tx_pdu.buf         = std::move(buf);
-  if (is_drb()) {
-    tx_pdu.pdcp_sn = SN(count); // Set only for data PDUs on DRBs.
-  }
-  lower_dn.on_new_pdu(std::move(tx_pdu));
+  lower_dn.on_new_pdu(std::move(buf));
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
   logger.log_info(buf.begin(), buf.end(), "TX PDU. type=ctrl pdu_len={}", buf.length());
   metrics_add_pdus(1, buf.length());
-  pdcp_tx_pdu tx_pdu = {};
-  tx_pdu.buf         = std::move(buf);
-  // tx_pdu.pdcp_sn is not set for control PDUs
-  lower_dn.on_new_pdu(std::move(tx_pdu));
+  lower_dn.on_new_pdu(std::move(buf));
 }
 
 void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)

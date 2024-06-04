@@ -32,7 +32,7 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_list.push_back(byte_buffer_chain::create(std::move(pdu.buf)).value()); }
+  void on_new_pdu(byte_buffer pdu) final { pdu_list.push_back(byte_buffer_chain::create(std::move(pdu)).value()); }
   void on_discard_pdu(uint32_t pdcp_sn) final {}
   std::vector<byte_buffer_chain> pdu_list;
 };

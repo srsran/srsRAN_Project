@@ -28,7 +28,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     // clear queue from previous runs
     test_frame.sdu_discard_queue   = {};
     unsigned                n_sdus = 5;
-    std::queue<pdcp_tx_pdu> exp_pdu_list;
+    std::queue<byte_buffer> exp_pdu_list;
     pdcp_tx_state           st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg);
@@ -122,7 +122,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
   init(GetParam());
   auto test_with_count = [this](uint32_t tx_next) {
     unsigned                n_sdus = 5;
-    std::queue<pdcp_tx_pdu> exp_pdu_list;
+    std::queue<byte_buffer> exp_pdu_list;
     pdcp_tx_state           st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg);
@@ -144,21 +144,21 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
 
     // read the status report
     {
-      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
       byte_buffer exp_pdu = test_frame.compile_status_report();
-      ASSERT_EQ(pdu.buf.length(), exp_pdu.length());
-      ASSERT_EQ(pdu.buf, exp_pdu);
+      ASSERT_EQ(pdu.length(), exp_pdu.length());
+      ASSERT_EQ(pdu, exp_pdu);
     }
 
     // read data PDUs
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
-      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
-      pdcp_tx_pdu exp_pdu = std::move(exp_pdu_list.front());
+      byte_buffer exp_pdu = std::move(exp_pdu_list.front());
       exp_pdu_list.pop();
-      ASSERT_EQ(pdu.buf.length(), exp_pdu.buf.length());
-      ASSERT_EQ(pdu.buf, exp_pdu.buf);
+      ASSERT_EQ(pdu.length(), exp_pdu.length());
+      ASSERT_EQ(pdu, exp_pdu);
     }
 
     while (not test_frame.pdu_queue.empty()) {

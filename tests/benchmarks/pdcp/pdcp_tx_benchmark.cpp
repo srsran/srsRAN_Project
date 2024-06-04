@@ -29,7 +29,7 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(pdcp_tx_pdu pdu) final {}
+  void on_new_pdu(byte_buffer pdu) final {}
   void on_discard_pdu(uint32_t pdcp_sn) final {}
 };
 
