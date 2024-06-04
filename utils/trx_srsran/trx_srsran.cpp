@@ -153,7 +153,7 @@ struct trx_srsran_session_context {
   std::array<double, TRX_MAX_RF_PORT> rx_port_channel_gain;
   unsigned                            tx_samples_per_packet;
   // Transmit noise spectral density in dB/Hz if present. Otherwise, noise generator is disabled.
-  optional<float> noise_spd = nullopt;
+  std::optional<float> noise_spd = std::nullopt;
   // Random generator.
   std::mt19937 rgen;
   // Random distribution for AWGN.

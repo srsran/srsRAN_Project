@@ -205,13 +205,24 @@ private:
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
+public:
+  ~f1ap_du_test();
+
 protected:
   struct f1c_test_bearer {
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    f1c_test_bearer() {}
+
     srb_id_t                  srb_id = srb_id_t::nulltype;
     dummy_f1c_rx_sdu_notifier rx_sdu_notifier;
     f1c_bearer*               bearer = nullptr;
   };
   struct f1u_test_bearer {
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    f1u_test_bearer() {}
+
     drb_id_t                  drb_id = drb_id_t::invalid;
     dummy_f1u_rx_sdu_notifier rx_sdu_notifier;
     f1u_bearer*               bearer = nullptr;
@@ -226,7 +237,6 @@ protected:
   };
 
   f1ap_du_test();
-  ~f1ap_du_test();
 
   /// \brief Run F1 Setup Procedure to completion.
   void run_f1_setup_procedure();

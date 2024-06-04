@@ -92,7 +92,7 @@ public:
   f1u_cu_up_gateway_bearer_rx_notifier& cu_rx;
 
   /// Holds the DL UP TNL info associated with the F1-U bearer.
-  optional<up_transport_layer_info> dl_tnl_info;
+  std::optional<up_transport_layer_info> dl_tnl_info;
 };
 
 /// \brief Object used to connect the DU and CU-UP F1-U bearers

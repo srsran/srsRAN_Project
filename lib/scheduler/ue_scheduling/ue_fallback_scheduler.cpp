@@ -688,7 +688,7 @@ ue_fallback_scheduler::schedule_dl_conres_ce(ue&                      u,
                     pdsch_cfg,
                     prbs_tbs.tbs_bytes,
                     is_retx,
-                    nullopt);
+                    std::nullopt);
 
   // No need to pass the nof SRB scheduled bytes.
   return sched_srb_results{.h_dl = h_dl};
@@ -752,7 +752,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
     sch_prbs_tbs only_conres_prbs_tbs{};
     // MCS index to use for scheduling only ConRes CE in case PDSCH does not have enough space to accommodate ConRes CE
     // + SRB0.
-    optional<sch_mcs_index> only_conres_mcs_idx;
+    std::optional<sch_mcs_index> only_conres_mcs_idx;
 
     // Fetch the pending bytes.
     const unsigned only_conres_pending_bytes = u.pending_conres_ce_bytes();
@@ -886,7 +886,7 @@ ue_fallback_scheduler::sched_srb_results ue_fallback_scheduler::schedule_dl_srb0
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, ue_grant_crbs});
 
-  optional<bool> is_srb0;
+  std::optional<bool> is_srb0;
   if (not result.is_srb_data_pending) {
     is_srb0 = true;
   }
@@ -1120,7 +1120,7 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
                                                   const pdsch_config_params& pdsch_params,
                                                   unsigned                   tbs_bytes,
                                                   bool                       is_retx,
-                                                  optional<bool>             is_srb0)
+                                                  std::optional<bool>        is_srb0)
 {
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.

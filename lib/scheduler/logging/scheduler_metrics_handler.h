@@ -26,6 +26,59 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
 
+  struct ue_metric_context {
+    /// \brief In this struct we store all the metadata that is reset at every report.
+    struct non_persistent_data {
+      unsigned count_uci_harq_acks    = 0;
+      unsigned count_uci_harqs        = 0;
+      unsigned count_crc_acks         = 0;
+      unsigned count_crc_pdus         = 0;
+      unsigned dl_mcs                 = 0;
+      unsigned nof_dl_cws             = 0;
+      unsigned ul_mcs                 = 0;
+      unsigned nof_puschs             = 0;
+      uint64_t sum_dl_tb_bytes        = 0;
+      uint64_t sum_ul_tb_bytes        = 0;
+      double   sum_pusch_snrs         = 0;
+      double   sum_pucch_snrs         = 0;
+      double   sum_pusch_rsrp         = 0;
+      unsigned nof_pucch_snr_reports  = 0;
+      unsigned nof_pusch_snr_reports  = 0;
+      unsigned nof_pusch_rsrp_reports = 0;
+      unsigned dl_prbs_used           = 0;
+      unsigned ul_prbs_used           = 0;
+    };
+
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    ue_metric_context() {}
+
+    pci_t                                  pci;
+    unsigned                               nof_prbs;
+    du_ue_index_t                          ue_index;
+    rnti_t                                 rnti;
+    uint8_t                                last_cqi = 0;
+    uint8_t                                last_ri  = 1;
+    unsigned                               last_bsr = 0;
+    std::optional<int>                     last_phr;
+    double                                 last_ta = -1;
+    std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
+    non_persistent_data                    data;
+
+    scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
+    void                 reset();
+  };
+
+  scheduler_ue_metrics_notifier&  notifier;
+  const std::chrono::milliseconds report_period;
+  /// Derived value.
+  unsigned report_period_slots = 0;
+  /// \brief This type is used so that multiple threads can access different positions concurrently.
+  slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
+  std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
+  /// \brief Counter of number of slots elapsed since the last report.
+  unsigned slot_counter = 0;
+
 public:
   /// \brief Creates a scheduler UE metrics handler. In case the metrics_report_period is zero, no metrics are reported.
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_ue_metrics_notifier& notifier);
@@ -64,63 +117,10 @@ public:
   bool connected() const { return report_period != std::chrono::nanoseconds{0}; }
 
 private:
-  struct ue_metric_context {
-    /// \brief In this struct we store all the metadata that is reset at every report.
-    struct non_persistent_data {
-      unsigned count_uci_harq_acks    = 0;
-      unsigned count_uci_harqs        = 0;
-      unsigned count_crc_acks         = 0;
-      unsigned count_crc_pdus         = 0;
-      unsigned dl_mcs                 = 0;
-      unsigned nof_dl_cws             = 0;
-      unsigned ul_mcs                 = 0;
-      unsigned nof_puschs             = 0;
-      uint64_t sum_dl_tb_bytes        = 0;
-      uint64_t sum_ul_tb_bytes        = 0;
-      double   sum_pusch_snrs         = 0;
-      double   sum_pucch_snrs         = 0;
-      double   sum_pusch_rsrp         = 0;
-      unsigned nof_pucch_snr_reports  = 0;
-      unsigned nof_pusch_snr_reports  = 0;
-      unsigned nof_pusch_rsrp_reports = 0;
-      unsigned dl_prbs_used           = 0;
-      unsigned ul_prbs_used           = 0;
-    };
-    pci_t                                  pci;
-    unsigned                               nof_prbs;
-    du_ue_index_t                          ue_index;
-    rnti_t                                 rnti;
-    uint8_t                                last_cqi = 0;
-    uint8_t                                last_ri  = 1;
-    unsigned                               last_bsr = 0;
-    std::optional<int>                     last_phr;
-    double                                 last_ta = -1;
-    std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
-    non_persistent_data                    data;
-
-    scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
-
-    void reset();
-  };
-
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
-
   void report_metrics();
   void handle_slot_result(const sched_result& slot_result);
-
-  scheduler_ue_metrics_notifier&  notifier;
-  const std::chrono::milliseconds report_period;
-
-  // derived.
-  unsigned report_period_slots = 0;
-
-  /// \brief This type is used so that multiple threads can access different positions concurrently.
-  slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
-  std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
-
-  // \brief Counter of number of slots elapsed since the last report.
-  unsigned slot_counter = 0;
 };
 
 } // namespace srsran

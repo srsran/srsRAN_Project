@@ -102,7 +102,7 @@ struct pusch_config {
     alpha msg3_alpha{alpha::not_set};
     /// P0 value for UL grant-free/SPS based PUSCH. Value in dBm. Only even values (step size 2) allowed. See TS 38.213,
     /// clause 7.1. Values {-202,..,24}.
-    optional<int16_t> p0_nominal_without_grant;
+    std::optional<int16_t> p0_nominal_without_grant;
     /// Configuration {p0-pusch, alpha} sets for PUSCH (except msg3), i.e. { {p0,alpha,index1}, {p0,alpha,index2},...}.
     /// When no set is configured, the UE uses the P0-nominal for msg3 PUSCH, P0-UE is set to 0 and alpha is set
     /// according to msg3-Alpha configured for msg3 PUSCH.
@@ -144,17 +144,17 @@ struct pusch_config {
 
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the
   /// physical cell ID. See TS 38.211, clause 6.3.1.1.
-  optional<uint16_t> data_scrambling_id_pusch;
+  std::optional<uint16_t> data_scrambling_id_pusch;
   /// UE uses codebook based or non-codebook based transmission (see TS 38.214, clause 6.1.1). If the field is
   /// not set, the UE transmits PUSCH on one antenna port.
   tx_config tx_cfg{tx_config::not_set};
   /// DMRS configuration for PUSCH transmissions using PUSCH (chosen dynamically via
   /// PUSCH-TimeDomainResourceAllocation). Only the fields dmrs-Type, dmrs-AdditionalPosition and maxLength may be set
   /// differently for mapping type A and B. The field dmrs-UplinkForPUSCH-MappingTypeA applies to DCI format 0_1.
-  optional<dmrs_uplink_config>  pusch_mapping_type_a_dmrs;
-  optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
-  optional<pusch_power_control> pusch_pwr_ctrl;
-  resource_allocation           res_alloc;
+  std::optional<dmrs_uplink_config>  pusch_mapping_type_a_dmrs;
+  std::optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
+  std::optional<pusch_power_control> pusch_pwr_ctrl;
+  resource_allocation                res_alloc;
   /// PUSCH time domain resource allocations. Size: (0..maxNrofUL-Allocations=16).
   std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
   /// Indicates which MCS table the UE shall use for PUSCH.
@@ -166,10 +166,10 @@ struct pusch_config {
   codebook_subset cb_subset{codebook_subset::not_set};
   /// Subset of PMIs addressed by TRIs from 1 to ULmaxRank. The field maxRank applies to DCI format 0_1.
   /// The field is mandatory present if txConfig is set to codebook and absent otherwise. Values {1,..,4}.
-  optional<uint8_t> max_rank;
+  std::optional<uint8_t> max_rank;
 
   /// \c uci-OnPUSCH.
-  optional<uci_on_pusch> uci_cfg;
+  std::optional<uci_on_pusch> uci_cfg;
 
   bool operator==(const pusch_config& rhs) const
   {

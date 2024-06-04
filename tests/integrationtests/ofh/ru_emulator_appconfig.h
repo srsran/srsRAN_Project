@@ -58,7 +58,7 @@ struct ru_emulator_appconfig {
   /// Individual RU emulators configurations.
   std::vector<ru_emulator_ofh_appconfig> ru_cfg = {{}};
   /// DPDK configuration.
-  optional<ru_emulator_dpdk_appconfig> dpdk_config;
+  std::optional<ru_emulator_dpdk_appconfig> dpdk_config;
 };
 
 } // namespace srsran

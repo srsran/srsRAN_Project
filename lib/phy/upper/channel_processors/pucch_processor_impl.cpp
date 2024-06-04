@@ -20,7 +20,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   assert_format0_config(config);
 
   // Calculate actual PRB.
-  optional<unsigned> second_hop_prb;
+  std::optional<unsigned> second_hop_prb;
   if (config.second_hop_prb.has_value()) {
     second_hop_prb.emplace(config.second_hop_prb.value() + config.bwp_start_rb);
   }

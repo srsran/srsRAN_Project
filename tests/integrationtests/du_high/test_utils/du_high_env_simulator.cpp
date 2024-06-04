@@ -390,7 +390,7 @@ void du_high_env_simulator::run_slot()
         << fmt::format("Slot={} failed to be processed (last processed slot={}). Is there a deadlock?",
                        next_slot,
                        phy.cells[i].last_slot_res);
-    const optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
+    const std::optional<mac_dl_sched_result>& dl_result = phy.cells[i].last_dl_res;
     if (dl_result.has_value()) {
       EXPECT_TRUE(dl_result->slot == next_slot);
     }

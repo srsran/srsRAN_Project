@@ -30,13 +30,13 @@ namespace srsran {
 constexpr static uint64_t MAX_NOF_CU_CP_E1AP_UES = ((uint64_t)1 << 32);
 enum class gnb_cu_cp_ue_e1ap_id_t : uint64_t { min = 0, max = MAX_NOF_CU_CP_E1AP_UES - 1, invalid = 0x1ffffffff };
 
-constexpr inline uint64_t gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t id)
+constexpr uint64_t gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t id)
 {
   return static_cast<uint64_t>(id);
 }
 
 /// Convert integer to GNB-CU-CP-UE-E1AP-ID type.
-constexpr inline gnb_cu_cp_ue_e1ap_id_t int_to_gnb_cu_cp_ue_e1ap_id(uint64_t idx)
+constexpr gnb_cu_cp_ue_e1ap_id_t int_to_gnb_cu_cp_ue_e1ap_id(uint64_t idx)
 {
   return static_cast<gnb_cu_cp_ue_e1ap_id_t>(idx);
 }
@@ -46,13 +46,13 @@ constexpr inline gnb_cu_cp_ue_e1ap_id_t int_to_gnb_cu_cp_ue_e1ap_id(uint64_t idx
 constexpr static uint64_t MAX_NOF_CU_UP_E1AP_UES = ((uint64_t)1 << 32);
 enum class gnb_cu_up_ue_e1ap_id_t : uint64_t { min = 0, max = MAX_NOF_CU_CP_E1AP_UES - 1, invalid = 0x1ffffffff };
 
-constexpr inline uint64_t gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t id)
+constexpr uint64_t gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t id)
 {
   return static_cast<uint64_t>(id);
 }
 
 /// Convert integer to GNB-DU-UE-E1AP-ID type.
-constexpr inline gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx)
+constexpr gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx)
 {
   return static_cast<gnb_cu_up_ue_e1ap_id_t>(idx);
 }
@@ -284,10 +284,10 @@ struct e1ap_pdu_session_res_to_modify_item {
   std::optional<security_indication_t>                        security_ind;
   std::optional<uint64_t>                                     pdu_session_res_dl_ambr;
   std::optional<up_transport_layer_info>                      ng_ul_up_tnl_info;
-  optional<e1ap_data_forwarding_info_request>                 pdu_session_data_forwarding_info_request;
-  optional<e1ap_data_forwarding_info>                         pdu_session_data_forwarding_info;
-  optional<uint16_t>                                          pdu_session_inactivity_timer;
-  optional<uint16_t>                                          network_instance;
+  std::optional<e1ap_data_forwarding_info_request>            pdu_session_data_forwarding_info_request;
+  std::optional<e1ap_data_forwarding_info>                    pdu_session_data_forwarding_info;
+  std::optional<uint16_t>                                     pdu_session_inactivity_timer;
+  std::optional<uint16_t>                                     network_instance;
   slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>  drb_to_setup_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_to_modify_item_ng_ran> drb_to_modify_list_ng_ran;
   std::vector<drb_id_t>                                       drb_to_rem_list_ng_ran;
@@ -306,18 +306,18 @@ struct e1ap_drb_modified_item_ng_ran {
   std::vector<e1ap_up_params_item>                            ul_up_transport_params;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_item>        flow_setup_list;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_failed_item> flow_failed_list;
-  optional<e1ap_pdcp_sn_status_info>                          pdcp_sn_status_info;
+  std::optional<e1ap_pdcp_sn_status_info>                     pdcp_sn_status_info;
 };
 
 struct e1ap_pdu_session_resource_modified_item {
   pdu_session_id_t                                           pdu_session_id = pdu_session_id_t::invalid;
-  optional<up_transport_layer_info>                          ng_dl_up_tnl_info;
+  std::optional<up_transport_layer_info>                     ng_dl_up_tnl_info;
   slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_modified_item_ng_ran> drb_modified_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>   drb_failed_to_modify_list_ng_ran;
-  optional<security_result_t>                                security_result;
-  optional<e1ap_data_forwarding_info>                        pdu_session_data_forwarding_info_resp;
+  std::optional<security_result_t>                           security_result;
+  std::optional<e1ap_data_forwarding_info>                   pdu_session_data_forwarding_info_resp;
 };
 
 } // namespace srsran

@@ -166,14 +166,14 @@ struct sib2_info {
 
 struct sib19_info {
   // TODO: cpp17 transition workaround for a clang compiler issue
-  char                                                              dummy;
-  std::optional<uint16_t>                                           distance_thres;
-  std::optional<std::string>                                        ref_location;
-  optional<uint16_t>                                                cell_specific_koffset;
-  optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
-  optional<epoch_time_t>                                            epoch_time;
-  optional<uint16_t>                                                k_mac;
-  optional<ta_common_t>                                             ta_info;
+  char                                                                   dummy;
+  std::optional<uint16_t>                                                distance_thres;
+  std::optional<std::string>                                             ref_location;
+  std::optional<uint16_t>                                                cell_specific_koffset;
+  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  std::optional<epoch_time_t>                                            epoch_time;
+  std::optional<uint16_t>                                                k_mac;
+  std::optional<ta_common_t>                                             ta_info;
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.

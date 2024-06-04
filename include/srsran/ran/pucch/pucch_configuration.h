@@ -172,7 +172,7 @@ struct pucch_resource_set {
   /// \c resourceList.
   static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
   /// \c maxPayloadSize.
-  optional<unsigned> max_payload_size;
+  std::optional<unsigned> max_payload_size;
 
   bool operator==(const pucch_resource_set& rhs) const
   {
@@ -190,10 +190,10 @@ struct pucch_config {
   /// List of \c PUCCH-Resource.
   static_vector<pucch_resource, MAX_NOF_PUCCH_RESOURCES> pucch_res_list;
   /// \c format1 .. \c format4, which contain the parameters that are common to a given PUCCH Format.
-  optional<pucch_common_all_formats> format_1_common_param;
-  optional<pucch_common_all_formats> format_2_common_param;
-  optional<pucch_common_all_formats> format_3_common_param;
-  optional<pucch_common_all_formats> format_4_common_param;
+  std::optional<pucch_common_all_formats> format_1_common_param;
+  std::optional<pucch_common_all_formats> format_2_common_param;
+  std::optional<pucch_common_all_formats> format_3_common_param;
+  std::optional<pucch_common_all_formats> format_4_common_param;
 
   /// List of \c SchedulingRequestResourceConfig.
   static_vector<scheduling_request_resource_config, MAX_NOF_SR_RESOURCES> sr_res_list;

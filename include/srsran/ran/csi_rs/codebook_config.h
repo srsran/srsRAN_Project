@@ -152,7 +152,7 @@ struct codebook_config {
     struct typeii_port_selection {
       char dummy;
       /// The size of the port selection codebook (parameter d). See TS 38.214 clause 5.2.2.2.6. Values {1, 2, 3, 4}.
-      optional<unsigned> port_selection_sampling_size;
+      std::optional<unsigned> port_selection_sampling_size;
       /// Restriction for RI for TypeII-PortSelection-RI-Restriction.
       bounded_bitset<2> typeii_port_selection_ri_restriction;
 

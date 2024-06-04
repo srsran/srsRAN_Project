@@ -41,7 +41,7 @@ public:
     ///
     /// Index of the PRB posterior to frequency hopping as per TS38.213 Section 9.2.1, if intra-slot frequency hopping
     /// is enabled, empty otherwise.
-    optional<unsigned> second_hop_prb;
+    std::optional<unsigned> second_hop_prb;
     /// Index of the first OFDM symbol allocated to the PUCCH {0, ..., 13}.
     unsigned start_symbol_index;
     /// Number of OFDM symbols allocated to the PUCCH {1, 2}.

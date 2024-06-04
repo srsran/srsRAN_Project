@@ -26,10 +26,10 @@ struct pusch_tpc_command_config {
   std::optional<uint8_t> tpc_index;
   /// An index determining the position of the first bit of TPC command inside the DCI format 2-2 payload.
   /// Values {1..15}. Present only if serving cell is configured with a supplementary uplink (SUL).
-  optional<uint8_t> tpc_index_sul;
+  std::optional<uint8_t> tpc_index_sul;
   /// The serving cell to which the acquired power control commands are applicable. If the value is absent, the UE
   /// applies the TPC commands to the serving cell on which the command has been received.
-  optional<du_cell_index_t> target_cell;
+  std::optional<du_cell_index_t> target_cell;
 
   bool operator==(const pusch_tpc_command_config& rhs) const
   {

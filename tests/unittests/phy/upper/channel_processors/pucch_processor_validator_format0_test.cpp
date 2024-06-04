@@ -26,7 +26,7 @@ static channel_estimate::channel_estimate_dimensions max_dimensions = {1, 1, 1, 
 // Valid PUCCH Format 0 configuration.
 const pucch_processor::format0_configuration base_format_0_config = {
     // Context.
-    nullopt,
+    std::nullopt,
     // Slot.
     {0, 9},
     // CP.

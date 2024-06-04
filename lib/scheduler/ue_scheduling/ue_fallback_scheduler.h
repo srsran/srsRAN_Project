@@ -180,7 +180,7 @@ private:
                              const pdsch_config_params& pdsch_params,
                              unsigned                   tbs_bytes,
                              bool                       is_retx,
-                             optional<bool>             is_srb0 = nullopt);
+                             std::optional<bool>        is_srb0 = std::nullopt);
 
   void fill_ul_srb_grant(ue&                        u,
                          slot_point                 pdcch_slot,

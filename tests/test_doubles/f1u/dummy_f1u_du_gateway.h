@@ -38,8 +38,8 @@ public:
   std::vector<srs_du::f1u_du_gateway_bearer_rx_notifier*> created_du_notifs;
   std::vector<up_transport_layer_info>                    registered_dl_tnls;
 
-  optional<uint32_t> last_ue_idx;
-  optional<drb_id_t> last_drb_id;
+  std::optional<uint32_t> last_ue_idx;
+  std::optional<drb_id_t> last_drb_id;
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,

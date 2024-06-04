@@ -49,7 +49,7 @@ struct srs_config {
       std::optional<nzp_csi_rs_res_id_t> csi_rs;
       /// An offset in number of slots between the triggering DCI and the actual transmission of this SRS-ResourceSet.
       /// If the field is absent the UE applies no offset (value 0). Values {1,..,32}.
-      optional<unsigned> slot_offset;
+      std::optional<unsigned> slot_offset;
       /// An additional list of DCI "code points" upon which the UE shall transmit SRS according to this SRS resource
       /// set configuration. Values {1,..,maxNrofSRS-TriggerStates-1}, \c max_nof_srs_trigger_states_minus_1.
       static_vector<uint8_t, max_nof_srs_trigger_states_minus_2> aperiodic_srs_res_trigger_list;
@@ -66,7 +66,7 @@ struct srs_config {
       // TODO: cpp17 transition workaround for a clang compiler issue
       char dummy;
       /// This field is optionally present, in case of non-codebook based transmission.
-      optional<nzp_csi_rs_res_id_t> associated_csi_rs;
+      std::optional<nzp_csi_rs_res_id_t> associated_csi_rs;
 
       bool operator==(const semi_persistent_resource_type& rhs) const
       {
@@ -79,7 +79,7 @@ struct srs_config {
       // TODO: cpp17 transition workaround for a clang compiler issue
       char dummy;
       /// This field is optionally present, in case of non-codebook based transmission.
-      optional<nzp_csi_rs_res_id_t> associated_csi_rs;
+      std::optional<nzp_csi_rs_res_id_t> associated_csi_rs;
 
       bool operator==(const periodic_resource_type& rhs) const { return associated_csi_rs == rhs.associated_csi_rs; }
       bool operator!=(const periodic_resource_type& rhs) const { return !(rhs == *this); }
@@ -109,13 +109,13 @@ struct srs_config {
     /// P0 value for SRS power control. The value is in dBm. Only even values (step size 2) are allowed. Values
     /// {-202,..,24}. This field is mandatory present upon configuration of SRS-ResourceSet or SRS-Resource and
     /// optionally present otherwise.
-    optional<int16_t> p0;
+    std::optional<int16_t> p0;
     /// Indicates whether hsrs,c(i) = fc(i,1) or hsrs,c(i) = fc(i,2) (if twoPUSCH-PC-AdjustmentStates are configured) or
     /// separate close loop is configured for SRS. This parameter is applicable only for Uls on which UE also transmits
     /// PUSCH. If not set, the UE applies the value sameAs-Fci1.
     srs_pwr_ctrl_adjustment_states pwr_ctrl_adj_states{srs_pwr_ctrl_adjustment_states::not_set};
     /// A reference signal (e.g. a CSI-RS config or a SS block) to be used for SRS path loss estimation.
-    optional<std::variant<ssb_id_t, nzp_csi_rs_res_id_t>> pathloss_ref_rs;
+    std::optional<std::variant<ssb_id_t, nzp_csi_rs_res_id_t>> pathloss_ref_rs;
 
     bool operator==(const srs_resource_set& rhs) const
     {
@@ -206,7 +206,7 @@ struct srs_config {
 
     /// \brief Configuration of the spatial relation between a reference RS and the target SRS.
     struct srs_spatial_relation_info {
-      optional<du_cell_index_t> serv_cell_id;
+      std::optional<du_cell_index_t> serv_cell_id;
 
       struct srs_ref_signal {
         srs_res_id res_id;
@@ -251,8 +251,8 @@ struct srs_config {
     /// Set/Valid only if resource type is periodic.
     srs_periodicity_and_offset per_res_type_periodicity_and_offset;
     /// Sequence ID used to initialize pseudo random group and sequence hopping. Values {0,...,1023}.
-    uint16_t                            sequence_id;
-    optional<srs_spatial_relation_info> spatial_relation_info;
+    uint16_t                                 sequence_id;
+    std::optional<srs_spatial_relation_info> spatial_relation_info;
 
     bool operator==(const srs_resource& rhs) const
     {

@@ -19,12 +19,12 @@
 using namespace srsran;
 
 struct mac_event_interceptor {
-  optional<mac_ul_sched_result> next_ul_sched_res;
+  std::optional<mac_ul_sched_result> next_ul_sched_res;
 
-  optional<mac_ue_create_request> last_ue_created;
+  std::optional<mac_ue_create_request> last_ue_created;
 
-  optional<mac_uci_indication_message> last_uci;
-  optional<mac_crc_indication_message> last_crc;
+  std::optional<mac_uci_indication_message> last_uci;
+  std::optional<mac_crc_indication_message> last_crc;
 };
 
 class phy_dummy : public mac_result_notifier, public mac_cell_result_notifier

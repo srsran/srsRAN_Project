@@ -163,9 +163,9 @@ static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
   return drb;
 }
 
-f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t           cu_ue_id,
-                                                                   optional<gnb_du_ue_f1ap_id_t> du_ue_id,
-                                                                   const std::vector<drb_id_t>&  drbs_to_setup)
+f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
+                                                                   std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
+                                                                   const std::vector<drb_id_t>&       drbs_to_setup)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;

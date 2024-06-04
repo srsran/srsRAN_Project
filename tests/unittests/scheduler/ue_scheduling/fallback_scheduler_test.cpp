@@ -452,9 +452,9 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
   push_buffer_state_to_dl_ue(to_du_ue_index(0), current_slot, ue1_mac_srb0_sdu_size, true);
 
   // ConRes and Msg4 are scheduled separately.
-  const auto&          test_ue = get_ue(to_du_ue_index(0));
-  optional<slot_point> conres_pdcch;
-  optional<slot_point> msg4_pdcch;
+  const auto&               test_ue = get_ue(to_du_ue_index(0));
+  std::optional<slot_point> conres_pdcch;
+  std::optional<slot_point> msg4_pdcch;
   for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     const pdcch_dl_information* pdcch_it = get_ue_allocated_pdcch(test_ue);

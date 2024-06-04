@@ -82,10 +82,10 @@ public:
 
 private:
   struct ue_sim_context {
-    rnti_t                        rnti = rnti_t::INVALID_RNTI;
-    optional<gnb_du_ue_f1ap_id_t> du_ue_id;
-    optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    du_cell_index_t               pcell_index;
+    rnti_t                             rnti = rnti_t::INVALID_RNTI;
+    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id;
+    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
+    du_cell_index_t                    pcell_index;
   };
 
   std::unordered_map<rnti_t, ue_sim_context> ues;
