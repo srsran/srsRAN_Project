@@ -1,0 +1,11 @@
+# Enable test mode operation to automatically create one or more UEs in RRC connected state
+# and run downlink and/or uplink MAC traffic to/from the UE.
+# Note that this mode is not a full E2E benchmark as it mainly stimulates PHY and MAC.
+test_mode:
+  test_ue:
+    rnti: 0x44
+    ri: 1 # Set to 2 or 4 for 2 layer or 4 layer MIMO operation
+    cqi: 15
+    nof_ues: 1
+    pusch_active: true
+    pdsch_active: true
