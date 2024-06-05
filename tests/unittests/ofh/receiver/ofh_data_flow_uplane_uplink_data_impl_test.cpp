@@ -68,7 +68,7 @@ public:
 
     // Fill the contexts
     ul_cplane_context_repo_ptr->add(slot, eaxc, context);
-    ul_context_repo->add({slot, sector}, grid);
+    ul_context_repo->add({slot, sector}, grid, {context.radio_hdr.start_symbol, context.nof_symbols});
   }
 
   data_flow_uplane_uplink_data_impl_config get_config()

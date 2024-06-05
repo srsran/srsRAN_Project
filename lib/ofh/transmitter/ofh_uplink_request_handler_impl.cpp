@@ -145,15 +145,15 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
 
   frame_pool->clear_uplink_slot(context.slot, logger);
 
-  // Store the context in the repository.
-  ul_slot_repo->add(context, grid);
-
   data_flow_cplane_type_1_context df_context;
   df_context.slot         = context.slot;
   df_context.filter_type  = filter_index_type::standard_channel_filter;
   df_context.direction    = data_direction::uplink;
   df_context.symbol_range = tdd_config ? get_active_tdd_ul_symbols(tdd_config.value(), context.slot.slot_index(), cp)
                                        : ofdm_symbol_range(0, get_nsymb_per_slot(cp));
+
+  // Store the context in the repository.
+  ul_slot_repo->add(context, grid, df_context.symbol_range);
 
   for (auto eaxc : ul_eaxc) {
     df_context.eaxc = eaxc;

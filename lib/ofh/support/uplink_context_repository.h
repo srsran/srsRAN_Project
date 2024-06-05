@@ -13,12 +13,12 @@
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
-#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
 #include <mutex>
 
@@ -144,21 +144,29 @@ public:
   }
 
   /// Adds the given entry to the repository at slot.
-  void add(const resource_grid_context& context, resource_grid& grid)
+  void add(const resource_grid_context& context, resource_grid& grid, const ofdm_symbol_range& symbol_range)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    for (unsigned symbol_id = 0, symbol_end = grid.get_reader().get_nof_symbols(); symbol_id != symbol_end;
-         ++symbol_id) {
-      if (logger) {
-        if (!entry(context.slot, symbol_id).empty()) {
-          const resource_grid_context& previous_context = entry(context.slot, symbol_id).get_grid_context();
+
+    // For logging purposes, check every symbol of the grid looking for existing contexts.
+    if (logger) {
+      for (unsigned symbol_id = 0, symbol_end = grid.get_reader().get_nof_symbols(); symbol_id != symbol_end;
+           ++symbol_id) {
+        if (auto& symbol_info = entry(context.slot, symbol_id); !symbol_info.empty()) {
+          const resource_grid_context& previous_context = symbol_info.get_grid_context();
           logger->warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
                           previous_context.slot,
                           symbol_id,
                           previous_context.sector);
+
+          // Clear the stored context.
+          symbol_info = {};
         }
       }
+    }
 
+    for (unsigned symbol_id = symbol_range.start(), symbol_end = symbol_range.stop(); symbol_id != symbol_end;
+         ++symbol_id) {
       entry(context.slot, symbol_id) = uplink_context(symbol_id, context, grid);
     }
   }

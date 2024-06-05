@@ -95,7 +95,7 @@ class resource_grid_dummy : public resource_grid
   public:
     unsigned get_nof_ports() const override { return 1; }
     unsigned get_nof_subc() const override { return 1; }
-    unsigned get_nof_symbols() const override { return 1; }
+    unsigned get_nof_symbols() const override { return 14; }
 
     span<const cf_t> put(unsigned                            port,
                          unsigned                            l,
@@ -115,7 +115,7 @@ class resource_grid_dummy : public resource_grid
   public:
     unsigned   get_nof_ports() const override { return 1; }
     unsigned   get_nof_subc() const override { return 1; }
-    unsigned   get_nof_symbols() const override { return 1; }
+    unsigned   get_nof_symbols() const override { return 14; }
     bool       is_empty(unsigned port) const override { return true; }
     bool       is_empty() const override { return true; }
     span<cf_t> get(span<cf_t>                          symbols,
@@ -149,6 +149,8 @@ public:
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
+  const cyclic_prefix                        cp          = {cyclic_prefix::NORMAL};
+  const tdd_ul_dl_config_common              ttd_pattern = {subcarrier_spacing::kHz30, {10, 6, 6, 3, 3}, {}};
   uplink_request_handler_impl_config         cfg;
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   std::shared_ptr<prach_context_repository>  ul_prach_repo;
@@ -200,6 +202,7 @@ protected:
     config.ul_data_eaxc        = eaxc;
     config.is_prach_cp_enabled = false;
     config.cp                  = cyclic_prefix::NORMAL;
+    config.tdd_config.emplace(ttd_pattern);
 
     return config;
   }
@@ -264,7 +267,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
 {
   resource_grid_dummy   rg;
   resource_grid_context rg_context;
-  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.slot   = slot_point(1, 1, 7);
   rg_context.sector = 1;
 
   handler.handle_new_uplink_slot(rg_context, rg);
@@ -275,4 +278,41 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_EQ(rg_context.slot, info.slot);
   ASSERT_EQ(eaxc[0], info.eaxc);
   ASSERT_EQ(data_direction::uplink, info.direction);
+
+  const ofdm_symbol_range symbol_range = get_active_tdd_ul_symbols(ttd_pattern, rg_context.slot.slot_index(), cp);
+  for (unsigned i = 0, e = rg.get_writer().get_nof_symbols(); i != e; ++i) {
+    ASSERT_FALSE(ul_slot_repo->get(rg_context.slot, i).empty());
+  }
+
+  // Assert that the symbol range equals the number of symbols of the grid.
+  ASSERT_EQ(0, symbol_range.start());
+  ASSERT_EQ(rg.get_writer().get_nof_symbols(), symbol_range.stop());
+}
+
+TEST_F(ofh_uplink_request_handler_impl_fixture,
+       handle_uplink_in_special_slot_generates_cplane_message_with_valid_symbols)
+{
+  resource_grid_dummy   rg;
+  resource_grid_context rg_context;
+  // Use special slot.
+  rg_context.slot   = slot_point(1, 1, 6);
+  rg_context.sector = 1;
+
+  handler.handle_new_uplink_slot(rg_context, rg);
+
+  // Assert data flow.
+  ASSERT_TRUE(data_flow->has_enqueue_section_type_1_method_been_called());
+  const data_flow_cplane_scheduling_commands_spy::spy_info& info = data_flow->get_spy_info();
+  ASSERT_EQ(rg_context.slot, info.slot);
+  ASSERT_EQ(eaxc[0], info.eaxc);
+  ASSERT_EQ(data_direction::uplink, info.direction);
+
+  const ofdm_symbol_range symbol_range = get_active_tdd_ul_symbols(ttd_pattern, rg_context.slot.slot_index(), cp);
+  for (unsigned i = 0, e = rg.get_writer().get_nof_symbols(); i != e; ++i) {
+    if (i >= symbol_range.start() && i < symbol_range.stop()) {
+      ASSERT_FALSE(ul_slot_repo->get(rg_context.slot, i).empty());
+    } else {
+      ASSERT_TRUE(ul_slot_repo->get(rg_context.slot, i).empty());
+    }
+  }
 }
