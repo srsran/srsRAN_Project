@@ -86,9 +86,6 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-    net_adapter->disconnect_gateway();
-    ric_net_adapter->disconnect_gateway();
   }
 
   class dummy_ric_e2 : public e2_message_handler, public e2_event_handler
@@ -104,9 +101,9 @@ protected:
     void handle_message(const e2_message& msg) override
     {
       logger.info("RIC received msg.");
-      last_e2_msg  = msg;
-      msg_received = true;
+      last_e2_msg = msg;
       std::unique_lock<std::mutex> lock(parent.mutex);
+      msg_received = true;
       parent.cvar.notify_one();
     };
 
@@ -173,10 +170,10 @@ protected:
     void handle_message(const e2_message& msg) override
     {
       logger.info("E2 received msg.");
-      last_e2_msg  = msg;
-      msg_received = true;
+      last_e2_msg = msg;
       decorated_e2_mgs_handler.handle_message(msg);
       std::unique_lock<std::mutex> lock(parent.mutex);
+      msg_received = true;
       parent.cvar.notify_one();
     };
 
