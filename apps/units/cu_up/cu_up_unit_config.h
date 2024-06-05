@@ -34,8 +34,8 @@ struct cu_up_unit_upf_config {
 };
 
 struct cu_up_unit_f1u_config {
-  std::string f1u_bind_addr   = "127.0.10.1";
-  int         udp_rx_max_msgs = 256;
+  std::string f1u_bind_addr   = "127.0.10.1"; // Bind address used by the F1-U interface
+  int         udp_rx_max_msgs = 256; // Max number of UDP packets received by a single syscall on the F1-U interface.
 };
 
 /// QoS configuration.
@@ -53,7 +53,7 @@ struct cu_up_unit_config {
   /// UPF configuration.
   cu_up_unit_upf_config upf_cfg;
   /// F1-U configuration.
-  struct cu_up_unit_f1u_config f1u_cfg;
+  cu_up_unit_f1u_config f1u_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.

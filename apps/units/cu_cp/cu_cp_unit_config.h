@@ -98,6 +98,8 @@ struct cu_cp_unit_security_config {
 struct cu_cp_unit_f1ap_config {
   /// Timeout for the UE context setup procedure in milliseconds.
   unsigned ue_context_setup_timeout = 1000;
+  /// F1-C bind address
+  std::string f1c_bind_address = "127.0.10.1";
 };
 
 /// RLC UM TX configuration

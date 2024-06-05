@@ -188,6 +188,7 @@ static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1a
              f1ap_params.ue_context_setup_timeout,
              "UE context setup timeout in milliseconds")
       ->capture_default_str();
+  add_option(app, "--f1c_bind_address", f1ap_params.f1c_bind_address, "F1-C bind address")->capture_default_str();
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_params)
