@@ -20,7 +20,7 @@ class io_broker;
 
 namespace srs_cu_up {
 
-/// Interface used by the CU-UP to establish a new connection with a CU-CP.
+/// Interface used by the CU-UP to establish a new connection with a CU-CP via the E1 interface.
 class e1_connection_client
 {
 public:

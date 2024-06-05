@@ -15,8 +15,8 @@ namespace srs_cu_cp {
 
 class cu_cp_e1_handler;
 
-/// Connection server responsible for handling new connection requests/drops coming from DUs via the E1 interface
-/// and converting them CU-CP commands.
+/// Connection server responsible for handling new connection requests/drops coming from CU-UPs via the E1 interface
+/// and converting them into CU-CP commands.
 class e1_connection_server
 {
 public:

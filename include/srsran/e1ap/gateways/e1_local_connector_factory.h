@@ -26,8 +26,8 @@ struct e1_local_connector_config {
   dlt_pcap& pcap;
 };
 
-/// Creates a local connector between CU-CP and DU F1-C interfaces, avoiding the need to pack/unpack the exchanged
-/// F1AP PDUs or any socket send/recv.
+/// Creates a local connector between CU-CP and CU-UP E1 interfaces, avoiding the need to pack/unpack the exchanged
+/// E1AP PDUs or any socket send/recv.
 std::unique_ptr<e1_local_connector> create_e1_local_connector(const e1_local_connector_config& cfg);
 
 } // namespace srsran
