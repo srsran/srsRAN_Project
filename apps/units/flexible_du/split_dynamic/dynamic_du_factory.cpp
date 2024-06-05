@@ -176,14 +176,20 @@ std::unique_ptr<du> srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");
   }
 
-  du_impl->add_ru(create_radio_unit(dyn_du_cfg.ru_cfg,
-                                    workers,
-                                    du_cells,
-                                    du_impl->get_upper_ru_ul_adapter(),
-                                    du_impl->get_upper_ru_timing_adapter(),
-                                    du_impl->get_upper_ru_error_adapter(),
-                                    du_lo.expert_phy_cfg.max_processing_delay_slots,
-                                    du_hi.cells_cfg.front().cell.prach_cfg.ports.size()));
+  std::unique_ptr<radio_unit> ru = create_radio_unit(dyn_du_cfg.ru_cfg,
+                                                     workers,
+                                                     du_cells,
+                                                     du_impl->get_upper_ru_ul_adapter(),
+                                                     du_impl->get_upper_ru_timing_adapter(),
+                                                     du_impl->get_upper_ru_error_adapter(),
+                                                     du_lo.expert_phy_cfg.max_processing_delay_slots,
+                                                     du_hi.cells_cfg.front().cell.prach_cfg.ports.size());
+
+  srsran_assert(ru, "Invalid Radio Unit");
+
+  console_helper.set_ru_controller(ru->get_controller());
+
+  du_impl->add_ru(std::move(ru));
 
   du_impl->add_dus(std::move(du_insts));
 
