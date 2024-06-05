@@ -242,7 +242,6 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
     }
     phy_cell_test_dummy& phy_cell = phy.cells[cell_index];
     if (phy_cell.last_dl_res.has_value()) {
-      fmt::print("-- here2\n");
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
       if (find_ue_pdsch(rnti, dl_res.ue_grants) != nullptr) {
         report_fatal_error_if_not(find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, dl_res.ue_grants) !=
