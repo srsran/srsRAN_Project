@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "srsran/adt/optional.h"
 
 namespace srsran {
@@ -25,9 +27,7 @@ public:
   /// Attach a CU-CP handler to the E1 connection server.
   virtual void attach_cu_cp(cu_cp_e1_handler& cu_e1_handler_) = 0;
 
-  /// Get port on which the E1 Server is listening for new connections.
-  ///
-  /// This method is useful in testing, where we don't want to use a specific port.
+  /// \brief Get port on which the E1 Server is listening for new connections.
   /// \return The port number on which the E1 Server is listening for new connections.
   virtual std::optional<uint16_t> get_listen_port() const = 0;
 };
