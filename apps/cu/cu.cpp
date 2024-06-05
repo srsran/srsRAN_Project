@@ -47,9 +47,9 @@
 #include "apps/units/cu_up/cu_up_unit_config_validator.h"
 
 // TODO remove apps/gnb/*.h
-#include "apps/gnb/adapters/e1ap_gateway_local_connector.h"
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/gnb/gnb_appconfig_translators.h"
+#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "apps/units/cu_up/cu_up_wrapper.h"
@@ -129,13 +129,13 @@ static void register_app_logs(const log_appconfig&            log_cfg,
 
 // Temporary helper to create CU-UP.
 // TODO remove
-std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&           unit_cfg,
-                                                            cu_worker_manager&                 workers,
-                                                            srs_cu_up::e1ap_connection_client& e1ap_conn_client,
-                                                            f1u_cu_up_gateway&                 f1u_gateway,
-                                                            dlt_pcap&                          gtpu_pcap,
-                                                            timer_manager&                     timers,
-                                                            io_broker&                         io_brk);
+std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
+                                                            cu_worker_manager&               workers,
+                                                            srs_cu_up::e1_connection_client& e1ap_conn_client,
+                                                            f1u_cu_up_gateway&               f1u_gateway,
+                                                            dlt_pcap&                        gtpu_pcap,
+                                                            timer_manager&                   timers,
+                                                            io_broker&                       io_brk);
 
 int main(int argc, char** argv)
 {
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
       std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[1].get());
 
   // Create E1AP local connector
-  e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[0]};
+  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps[0]});
 
   // Create manager of timers for CU-CP and CU-UP, which will be
   // driven by the system timer slot ticks.
@@ -336,7 +336,7 @@ int main(int argc, char** argv)
                               cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
-  e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
   cu_f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
@@ -357,7 +357,7 @@ int main(int argc, char** argv)
   // function and create things direclty here.
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
                                                                           workers,
-                                                                          e1ap_gw,
+                                                                          *e1_gw,
                                                                           *cu_f1u_conn->get_f1u_cu_up_gateway(),
                                                                           *cu_up_pcaps[1].get(),
                                                                           *cu_timers,
@@ -419,20 +419,20 @@ int main(int argc, char** argv)
 
 // Temporary helper to create CU-UP.
 // TODO remove
-std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&           unit_cfg,
-                                                            cu_worker_manager&                 workers,
-                                                            srs_cu_up::e1ap_connection_client& e1ap_conn_client,
-                                                            f1u_cu_up_gateway&                 f1u_gateway,
-                                                            dlt_pcap&                          gtpu_pcap,
-                                                            timer_manager&                     timers,
-                                                            io_broker&                         io_brk)
+std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
+                                                            cu_worker_manager&               workers,
+                                                            srs_cu_up::e1_connection_client& e1_conn_client,
+                                                            f1u_cu_up_gateway&               f1u_gateway,
+                                                            dlt_pcap&                        gtpu_pcap,
+                                                            timer_manager&                   timers,
+                                                            io_broker&                       io_brk)
 {
   srs_cu_up::cu_up_configuration config = generate_cu_up_config(unit_cfg);
   config.ctrl_executor                  = workers.cu_up_ctrl_exec;
   config.cu_up_e2_exec                  = workers.cu_up_e2_exec;
   config.ue_exec_pool                   = workers.cu_up_exec_mapper.get();
   config.io_ul_executor                 = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
-  config.e1ap.e1ap_conn_client          = &e1ap_conn_client;
+  config.e1ap.e1_conn_client            = &e1_conn_client;
   config.f1u_gateway                    = &f1u_gateway;
   config.gtpu_pcap                      = &gtpu_pcap;
   config.timers                         = &timers;

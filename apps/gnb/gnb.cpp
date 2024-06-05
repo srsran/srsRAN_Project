@@ -27,7 +27,7 @@
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 #include "srsran/support/io/io_broker_factory.h"
 
-#include "adapters/e1ap_gateway_local_connector.h"
+#include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/support/backtrace.h"
@@ -281,7 +281,8 @@ int main(int argc, char** argv)
                                                                    : create_null_dlt_pcap();
 
   std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
-  e1ap_gateway_local_connector e1ap_gw{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]};
+  std::unique_ptr<e1_local_connector>  e1_gw  = create_e1_local_connector(
+      e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -353,7 +354,7 @@ int main(int argc, char** argv)
                            cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
-  e1ap_gw.attach_cu_cp(cu_cp_obj->get_e1_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
 
   // Connect F1-C to CU-CP.
   f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
@@ -371,7 +372,7 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj =
       build_cu_up(cu_up_config,
                   workers,
-                  e1ap_gw,
+                  *e1_gw,
                   *f1u_conn->get_f1u_cu_up_gateway(),
                   *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get(),
                   *cu_timers,

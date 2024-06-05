@@ -10,7 +10,6 @@ add_executable(srscu
         cu.cpp
 	cu_appconfig_cli11_schema.cpp
 	cu_worker_manager.cpp
-	../gnb/adapters/e1ap_gateway_local_connector.cpp
 )
 
 install(TARGETS srscu
@@ -25,6 +24,7 @@ target_link_libraries(srscu
         srsran_cu_up_app_unit
         srsran_ngap
         srsran_f1c_gateway
+		srsran_e1_gateway
         srsgnb_app_f1u_cu_up_split_connector
         srsran_pcap
         ngap_asn1

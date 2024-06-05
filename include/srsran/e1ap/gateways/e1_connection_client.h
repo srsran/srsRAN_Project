@@ -14,13 +14,17 @@
 #include <memory>
 
 namespace srsran {
+
+class dlt_pcap;
+class io_broker;
+
 namespace srs_cu_up {
 
 /// Interface used by the CU-UP to establish a new connection with a CU-CP.
-class e1ap_connection_client
+class e1_connection_client
 {
 public:
-  virtual ~e1ap_connection_client() = default;
+  virtual ~e1_connection_client() = default;
 
   /// Establish a new connection with a CU-CP.
   ///

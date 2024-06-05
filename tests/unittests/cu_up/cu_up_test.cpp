@@ -28,7 +28,7 @@ using namespace asn1::e1ap;
 
 /// This implementation returns back to the E1 interface a dummy CU-UP E1 Setup Response message upon the receival of
 /// the CU-UP E1 Setup Request message.
-class dummy_cu_cp_handler : public e1ap_connection_client
+class dummy_cu_cp_handler : public e1_connection_client
 {
 public:
   std::unique_ptr<e1ap_message_notifier>
@@ -109,7 +109,7 @@ protected:
     cfg.ctrl_executor                = executor.get();
     cfg.ue_exec_pool                 = exec_pool.get();
     cfg.io_ul_executor               = executor.get();
-    cfg.e1ap.e1ap_conn_client        = &e1ap_client;
+    cfg.e1ap.e1_conn_client          = &e1ap_client;
     cfg.f1u_gateway                  = f1u_gw.get();
     cfg.ngu_gw                       = ngu_gw.get();
     cfg.timers                       = app_timers.get();

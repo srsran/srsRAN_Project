@@ -6,7 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(common)
-add_subdirectory(cu_cp)
-add_subdirectory(cu_up)
-add_subdirectory(gateways)
+add_library(srsran_e1_gateway e1_local_connector_factory.cpp)
+target_link_libraries(srsran_e1_gateway srsran_support srsran_e1ap_common e1ap_asn1)

@@ -14,7 +14,6 @@
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/timers.h"
 #include <memory>
@@ -39,15 +38,15 @@ private:
 
 } // namespace
 
-e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_connection_client& e1ap_client_handler_,
-                                 e1ap_cu_up_notifier&    cu_up_notifier_,
-                                 timer_manager&          timers_,
-                                 task_executor&          cu_up_exec_) :
+e1ap_cu_up_impl::e1ap_cu_up_impl(e1_connection_client& e1_client_handler_,
+                                 e1ap_cu_up_notifier&  cu_up_notifier_,
+                                 timer_manager&        timers_,
+                                 task_executor&        cu_up_exec_) :
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),
   cu_up_exec(cu_up_exec_),
-  connection_handler(e1ap_client_handler_, *this),
+  connection_handler(e1_client_handler_, *this),
   ue_ctxt_list(logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec}))
 {

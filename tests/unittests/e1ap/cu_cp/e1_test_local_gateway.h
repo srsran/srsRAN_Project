@@ -12,7 +12,7 @@
 
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/e1ap/cu_up/e1ap_connection_client.h"
+#include "srsran/e1ap/gateways/e1_connection_client.h"
 
 namespace srsran {
 
@@ -51,13 +51,11 @@ private:
 
 /// \brief Test helper class that creates an E1AP gateway for co-located setups (CU-CP and CU-UP in the same process),
 /// and stores the messages received by the CU-CP and CU-UP for testing purposes.
-class e1ap_test_local_gateway : public srs_cu_up::e1ap_connection_client
+class e1_test_local_gateway : public srs_cu_up::e1_connection_client
 {
 public:
-  e1ap_test_local_gateway() = default;
-  explicit e1ap_test_local_gateway(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_) : cu_cp_cu_up_mng(&cu_cp_cu_up_mng_)
-  {
-  }
+  e1_test_local_gateway() = default;
+  explicit e1_test_local_gateway(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_) : cu_cp_cu_up_mng(&cu_cp_cu_up_mng_) {}
 
   void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_cp_e1_handler& cu_cp_cu_up_mng_) { cu_cp_cu_up_mng = &cu_cp_cu_up_mng_; }
 
