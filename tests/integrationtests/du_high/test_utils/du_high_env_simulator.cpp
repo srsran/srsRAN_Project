@@ -17,6 +17,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
+#include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -220,34 +221,43 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
 
   // Wait for Init UL RRC Message to come out of the F1AP and ConRes CE to be scheduled.
   // Note: These events are concurrent.
-  bool conres_sent = false, init_ul_rrc_msg_flag = false;
+  bool init_ul_rrc_msg_flag = false;
   auto init_ul_rrc_msg_sent = [this, rnti, &init_ul_rrc_msg_flag]() {
-    if (not init_ul_rrc_msg_flag and not cu_notifier.last_f1ap_msgs.empty()) {
-      EXPECT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti));
+    if (init_ul_rrc_msg_flag) {
+      return true;
+    }
+    if (not cu_notifier.last_f1ap_msgs.empty()) {
+      report_fatal_error_if_not(
+          test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti),
+          "Init UL RRC Message is not valid");
       init_ul_rrc_msg_flag = true;
       return true;
     }
     return false;
   };
+  bool conres_sent     = false;
   auto con_res_ce_sent = [this, rnti, cell_index, &conres_sent]() {
-    auto& phy_cell = phy.cells[cell_index];
+    if (conres_sent) {
+      return true;
+    }
+    phy_cell_test_dummy& phy_cell = phy.cells[cell_index];
     if (phy_cell.last_dl_res.has_value()) {
+      fmt::print("-- here2\n");
       auto& dl_res = *phy_cell.last_dl_res.value().dl_res;
       if (find_ue_pdsch(rnti, dl_res.ue_grants) != nullptr) {
-        EXPECT_TRUE(find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, dl_res.ue_grants) != nullptr);
-        EXPECT_FALSE(conres_sent);
+        report_fatal_error_if_not(find_ue_pdsch_with_lcid(rnti, lcid_dl_sch_t::UE_CON_RES_ID, dl_res.ue_grants) !=
+                                      nullptr,
+                                  "UE ConRes not scheduled");
         conres_sent = true;
         return true;
       }
     }
     return false;
   };
-  do {
-    if (not run_until([&]() { return init_ul_rrc_msg_sent() or con_res_ce_sent(); })) {
-      test_logger.error("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
-      return false;
-    }
-  } while (not init_ul_rrc_msg_flag or not conres_sent);
+  if (not run_until([&]() { return init_ul_rrc_msg_sent() and con_res_ce_sent(); })) {
+    test_logger.error("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
+    return false;
+  }
 
   gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
       cu_notifier.last_f1ap_msgs.back().pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
