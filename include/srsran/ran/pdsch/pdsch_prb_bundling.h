@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
+#include <variant>
 
 namespace srsran {
 

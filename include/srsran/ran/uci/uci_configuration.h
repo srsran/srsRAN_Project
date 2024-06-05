@@ -12,8 +12,8 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tiny_optional.h"
-#include "srsran/adt/variant.h"
 #include <cstdint>
+#include <variant>
 
 namespace srsran {
 

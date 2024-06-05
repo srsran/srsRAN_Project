@@ -18,25 +18,25 @@ using namespace srsran;
 static const uint32_t task_worker_queue_size = 2048;
 
 static std::vector<os_sched_affinity_config>
-build_affinity_manager_dependencies(const du_high_unit_cpu_affinities_cell_config&           du_high_affinities,
-                                    const du_low_unit_cpu_affinities_cell_config&            du_low_affinities,
-                                    const variant<ru_sdr_unit_cpu_affinities_cell_config,
-                                                  ru_ofh_unit_cpu_affinities_cell_config,
-                                                  ru_dummy_cpu_affinities_cell_unit_config>& ru_affinities)
+build_affinity_manager_dependencies(const du_high_unit_cpu_affinities_cell_config&                du_high_affinities,
+                                    const du_low_unit_cpu_affinities_cell_config&                 du_low_affinities,
+                                    const std::variant<ru_sdr_unit_cpu_affinities_cell_config,
+                                                       ru_ofh_unit_cpu_affinities_cell_config,
+                                                       ru_dummy_cpu_affinities_cell_unit_config>& ru_affinities)
 {
   std::vector<os_sched_affinity_config> out;
   out.push_back(du_low_affinities.l1_ul_cpu_cfg);
   out.push_back(du_low_affinities.l1_dl_cpu_cfg);
   out.push_back(du_high_affinities.l2_cell_cpu_cfg);
 
-  if (variant_holds_alternative<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities)) {
-    out.push_back(variant_get<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
+  if (std::holds_alternative<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities)) {
+    out.push_back(std::get<ru_sdr_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
   }
 
-  else if (variant_holds_alternative<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities)) {
-    out.push_back(variant_get<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
+  else if (std::holds_alternative<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities)) {
+    out.push_back(std::get<ru_ofh_unit_cpu_affinities_cell_config>(ru_affinities).ru_cpu_cfg);
   } else {
-    out.push_back(variant_get<ru_dummy_cpu_affinities_cell_unit_config>(ru_affinities).ru_cpu_cfg);
+    out.push_back(std::get<ru_dummy_cpu_affinities_cell_unit_config>(ru_affinities).ru_cpu_cfg);
   }
 
   return out;
@@ -50,16 +50,16 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
 {
   const unsigned nof_cells = du_cfg.du_high_cfg.config.expert_execution_cfg.cell_affinities.size();
   for (unsigned i = 0, e = nof_cells; i != e; ++i) {
-    variant<ru_sdr_unit_cpu_affinities_cell_config,
-            ru_ofh_unit_cpu_affinities_cell_config,
-            ru_dummy_cpu_affinities_cell_unit_config>
+    std::variant<ru_sdr_unit_cpu_affinities_cell_config,
+                 ru_ofh_unit_cpu_affinities_cell_config,
+                 ru_dummy_cpu_affinities_cell_unit_config>
         ru;
-    if (variant_holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
-      ru = variant_get<ru_sdr_unit_config>(du_cfg.ru_cfg).expert_execution_cfg.cell_affinities[i];
-    } else if (variant_holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
-      ru = variant_get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg.cell_affinities[i];
+    if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
+      ru = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg).expert_execution_cfg.cell_affinities[i];
+    } else if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
+      ru = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg.cell_affinities[i];
     } else {
-      ru = variant_get<ru_dummy_unit_config>(du_cfg.ru_cfg).cell_affinities[i];
+      ru = std::get<ru_dummy_unit_config>(du_cfg.ru_cfg).cell_affinities[i];
     }
 
     affinity_mng.emplace_back(
@@ -77,8 +77,8 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
 
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
-  if (variant_holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
-    const auto& sdr_cfg     = variant_get<ru_sdr_unit_config>(du_cfg.ru_cfg);
+  if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
+    const auto& sdr_cfg     = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg);
     is_blocking_mode_active = sdr_cfg.device_driver == "zmq";
   }
 
@@ -715,22 +715,22 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
 }
 
 void worker_manager::create_ru_executors(
-    const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-    const du_high_unit_config&                                                          du_high)
+    const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
+    const du_high_unit_config&                                                               du_high)
 {
-  if (variant_holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
     std::vector<unsigned> cell_antennas_dl;
     for (const auto& cell : du_high.cells_cfg) {
       cell_antennas_dl.push_back(cell.cell.nof_antennas_dl);
     }
 
-    create_ofh_executors(variant_get<ru_ofh_unit_parsed_config>(ru_cfg).config.expert_execution_cfg, cell_antennas_dl);
+    create_ofh_executors(std::get<ru_ofh_unit_parsed_config>(ru_cfg).config.expert_execution_cfg, cell_antennas_dl);
 
     return;
   }
 
-  if (variant_holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
-    const ru_sdr_unit_config& sdr_cfg = variant_get<ru_sdr_unit_config>(ru_cfg);
+  if (std::holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
+    const ru_sdr_unit_config& sdr_cfg = std::get<ru_sdr_unit_config>(ru_cfg);
     std::string               driver  = sdr_cfg.device_driver;
 
     create_lower_phy_executors((driver != "zmq") ? sdr_cfg.expert_execution_cfg.threads.execution_profile

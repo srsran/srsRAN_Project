@@ -15,7 +15,7 @@
 #include "apps/units/flexible_du/fapi/fapi_config.h"
 #include "apps/units/flexible_du/split_7_2/ru_ofh_config.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_config.h"
-#include "srsran/adt/variant.h"
+#include <variant>
 
 namespace srsran {
 
@@ -47,7 +47,7 @@ struct dynamic_du_unit_config {
   /// FAPI configuration.
   fapi_unit_config fapi_cfg;
   /// Radio Unit configuration.
-  variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config> ru_cfg = {ru_sdr_unit_config{}};
+  std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config> ru_cfg = {ru_sdr_unit_config{}};
 };
 
 } // namespace srsran

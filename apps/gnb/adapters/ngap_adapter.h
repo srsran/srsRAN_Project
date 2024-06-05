@@ -41,7 +41,7 @@ struct ngap_gateway_params {
   dlt_pcap& pcap;
 
   /// Mode of operation.
-  variant<no_core, network> mode;
+  std::variant<no_core, network> mode;
 };
 
 std::unique_ptr<ngap_gateway_connector> create_ngap_gateway(const ngap_gateway_params& params);

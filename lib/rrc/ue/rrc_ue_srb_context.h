@@ -17,25 +17,25 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct pdcp_tx_result {
-  variant<byte_buffer, ngap_cause_t> result;
+  std::variant<byte_buffer, ngap_cause_t> result;
 
   /// Whether the packing was successful.
-  bool is_successful() const { return variant_holds_alternative<byte_buffer>(result); }
+  bool is_successful() const { return std::holds_alternative<byte_buffer>(result); }
 
-  ngap_cause_t get_failure_cause() const { return variant_get<ngap_cause_t>(result); }
+  ngap_cause_t get_failure_cause() const { return std::get<ngap_cause_t>(result); }
 
-  byte_buffer pop_pdu() { return std::move(variant_get<byte_buffer>(result)); }
+  byte_buffer pop_pdu() { return std::move(std::get<byte_buffer>(result)); }
 };
 
 struct pdcp_rx_result {
-  variant<std::vector<byte_buffer>, ngap_cause_t> result;
+  std::variant<std::vector<byte_buffer>, ngap_cause_t> result;
 
   /// Whether the unpacking was successful.
-  bool is_successful() const { return variant_holds_alternative<std::vector<byte_buffer>>(result); }
+  bool is_successful() const { return std::holds_alternative<std::vector<byte_buffer>>(result); }
 
-  ngap_cause_t get_failure_cause() const { return variant_get<ngap_cause_t>(result); }
+  ngap_cause_t get_failure_cause() const { return std::get<ngap_cause_t>(result); }
 
-  std::vector<byte_buffer> pop_pdus() { return std::move(variant_get<std::vector<byte_buffer>>(result)); }
+  std::vector<byte_buffer> pop_pdus() { return std::move(std::get<std::vector<byte_buffer>>(result)); }
 };
 
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
@@ -145,7 +145,7 @@ public:
 
     // Return unpacked PDCP PDUs or error with cause.
     // Note: List of byte_buffers (in case of success) can be empty if the PDCP Rx PDU is out-of-order.
-    variant<std::vector<byte_buffer>, ngap_cause_t> unpacked_pdus = pdcp_context.rrc_rx_data_notifier.pop_result();
+    std::variant<std::vector<byte_buffer>, ngap_cause_t> unpacked_pdus = pdcp_context.rrc_rx_data_notifier.pop_result();
     return pdcp_rx_result{unpacked_pdus};
   }
 

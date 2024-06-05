@@ -205,12 +205,12 @@ private:
 
 std::unique_ptr<ngap_gateway_connector> srsran::srs_cu_cp::create_ngap_gateway(const ngap_gateway_params& params)
 {
-  if (variant_holds_alternative<ngap_gateway_params::no_core>(params.mode)) {
+  if (std::holds_alternative<ngap_gateway_params::no_core>(params.mode)) {
     // Connection to local AMF stub.
     return std::make_unique<ngap_gateway_local_stub>(params.pcap);
   }
 
   // Connection to AMF through SCTP.
-  const auto& nw_mode = variant_get<ngap_gateway_params::network>(params.mode);
+  const auto& nw_mode = std::get<ngap_gateway_params::network>(params.mode);
   return std::make_unique<ngap_sctp_gateway_adapter>(nw_mode.broker, nw_mode.sctp, params.pcap);
 }

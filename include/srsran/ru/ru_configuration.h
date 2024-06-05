@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
 #include "srsran/ru/ru_dummy_configuration.h"
 #include "srsran/ru/ru_generic_configuration.h"
 #include "srsran/ru/ru_ofh_configuration.h"
+#include <variant>
 
 namespace srsran {
 

@@ -166,11 +166,11 @@ bool gtpu_read_ie_gtpu_peer_address(gtpu_ie_gtpu_peer_address& ie, bit_decoder& 
   switch (length) {
     case 4:
       ie.gtpu_peer_address = gtpu_ie_gtpu_peer_address::ipv4_addr_t{};
-      read_ok &= dec.unpack_bytes(variant_get<gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address));
+      read_ok &= dec.unpack_bytes(std::get<gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address));
       break;
     case 16:
       ie.gtpu_peer_address = gtpu_ie_gtpu_peer_address::ipv6_addr_t{};
-      read_ok &= dec.unpack_bytes(variant_get<gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address));
+      read_ok &= dec.unpack_bytes(std::get<gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address));
       break;
     default:
       logger.warning("Failed to read IE GTP-U peer address: Invalid length={}.", length);

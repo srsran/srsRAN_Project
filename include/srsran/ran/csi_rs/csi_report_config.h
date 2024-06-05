@@ -13,9 +13,9 @@
 #include "codebook_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_constants.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include <variant>
 
 namespace srsran {
 

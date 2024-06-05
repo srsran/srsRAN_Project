@@ -212,8 +212,7 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
   start_procedure(request);
 
   // Verify validity of Bearer context setup.
-  is_valid_e1ap_message(
-      variant_get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
+  is_valid_e1ap_message(std::get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
 
   // Verify content of UE context modification which should include the setup of DRB1.
   const auto& ue_ctxt_mod_req = f1ap_ue_ctxt_mng.get_ctxt_mod_request();
@@ -318,9 +317,9 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos
 
   // Verify Bearer Context Setup request for two DRBs with one QoS flow each.
   ASSERT_TRUE(
-      variant_holds_alternative<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
+      std::holds_alternative<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
   const auto& context_setup_req =
-      variant_get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
+      std::get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
   ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.size(), 1);
   ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()->drb_to_setup_list_ng_ran.size(), 2);
   ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()
@@ -419,8 +418,7 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
 
     // Verify generated messages can be packed into valid ASN.1 encoded messages
-    is_valid_e1ap_message(
-        variant_get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
+    is_valid_e1ap_message(std::get<e1ap_bearer_context_setup_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
     is_valid_e1ap_message(e1ap_bearer_ctxt_mng.second_e1ap_request.value());
   }
 
@@ -453,10 +451,10 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     ASSERT_TRUE(procedure_ready());
 
     // Verify content of first bearer context modifications which should be the setup of a new PDU session.
-    ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+    ASSERT_TRUE(std::holds_alternative<e1ap_bearer_context_modification_request>(
         e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
     const auto& context_mod_req =
-        variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value())
+        std::get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value())
             .ng_ran_bearer_context_mod_request;
     ASSERT_TRUE(context_mod_req.has_value());
     ASSERT_EQ(context_mod_req.value().pdu_session_res_to_setup_mod_list.size(), 1);
@@ -464,7 +462,7 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
 
     // Verify generated messages can be packed into valid ASN.1 encoded messages
     is_valid_e1ap_message(
-        variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
+        std::get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
 
     // Verify content of UE context modification which should include the setup of DRB2.
     const auto& ue_ctxt_mod_req = f1ap_ue_ctxt_mng.get_ctxt_mod_request();

@@ -43,7 +43,7 @@ public:
     cause = cause_protocol_t::unspecified;
   }
 
-  variant<std::vector<byte_buffer>, ngap_cause_t> pop_result()
+  std::variant<std::vector<byte_buffer>, ngap_cause_t> pop_result()
   {
     if (cause.has_value()) {
       auto ret = *cause;

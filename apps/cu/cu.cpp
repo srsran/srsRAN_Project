@@ -290,7 +290,7 @@ int main(int argc, char** argv)
   {
     using no_core_mode_t = srs_cu_cp::ngap_gateway_params::no_core;
     using network_mode_t = srs_cu_cp::ngap_gateway_params::network;
-    using ngap_mode_t    = variant<no_core_mode_t, network_mode_t>;
+    using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
     // TODO generate network config in helper function, not in apps/gnb
     srsran::sctp_network_connector_config n2_nw_cfg;

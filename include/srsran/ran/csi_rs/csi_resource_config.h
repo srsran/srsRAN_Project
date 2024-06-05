@@ -13,8 +13,8 @@
 #include "csi_rs_constants.h"
 #include "csi_rs_id.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/adt/variant.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include <variant>
 
 namespace srsran {
 

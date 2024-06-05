@@ -11,7 +11,6 @@
 #pragma once
 
 #include "ngap_asn1_utils.h"
-#include "srsran/adt/variant.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
@@ -21,6 +20,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/srslog/srslog.h"
+#include <variant>
 
 namespace srsran {
 namespace srs_cu_cp {

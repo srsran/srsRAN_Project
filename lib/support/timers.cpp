@@ -90,15 +90,15 @@ void timer_manager::tick()
   }
 
   // Process new commands coming from the front-end.
-  for (variant<cmd_t, std::unique_ptr<timer_frontend>>& event : cmds_to_process) {
-    if (variant_holds_alternative<std::unique_ptr<timer_frontend>>(event)) {
+  for (std::variant<cmd_t, std::unique_ptr<timer_frontend>>& event : cmds_to_process) {
+    if (std::holds_alternative<std::unique_ptr<timer_frontend>>(event)) {
       // New timer was created in the frontend.
-      create_timer_handle(std::move(variant_get<std::unique_ptr<timer_frontend>>(event)));
+      create_timer_handle(std::move(std::get<std::unique_ptr<timer_frontend>>(event)));
       continue;
     }
 
     // Existing timer.
-    const cmd_t&  cmd   = variant_get<cmd_t>(event);
+    const cmd_t&  cmd   = std::get<cmd_t>(event);
     timer_handle& timer = timer_list[static_cast<unsigned>(cmd.id)];
 
     // Update the timer backend cmd_id to match frontend.

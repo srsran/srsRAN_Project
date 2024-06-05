@@ -47,18 +47,18 @@ static std::unique_ptr<radio_unit> create_dummy_radio_unit(const ru_dummy_unit_c
 }
 
 static std::unique_ptr<radio_unit>
-create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-                  worker_manager&                                                                     workers,
-                  span<const du_cell_config>                                                          du_cells,
-                  ru_uplink_plane_rx_symbol_notifier&                                                 symbol_notifier,
-                  ru_timing_notifier&                                                                 timing_notifier,
-                  ru_error_notifier&                                                                  error_notifier,
-                  unsigned max_processing_delay,
-                  unsigned prach_nof_ports)
+create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
+                  worker_manager&                                                                          workers,
+                  span<const du_cell_config>                                                               du_cells,
+                  ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                  ru_timing_notifier&                 timing_notifier,
+                  ru_error_notifier&                  error_notifier,
+                  unsigned                            max_processing_delay,
+                  unsigned                            prach_nof_ports)
 {
-  if (variant_holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(ru_cfg)) {
     ru_ofh_factory_config config;
-    config.ru_cfg                     = variant_get<ru_ofh_unit_parsed_config>(ru_cfg).config;
+    config.ru_cfg                     = std::get<ru_ofh_unit_parsed_config>(ru_cfg).config;
     config.max_processing_delay_slots = max_processing_delay;
     config.du_cells                   = du_cells;
 
@@ -71,10 +71,10 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
     return create_ofh_radio_unit(config, dependencies);
   }
 
-  if (variant_holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
+  if (std::holds_alternative<ru_sdr_unit_config>(ru_cfg)) {
     ru_sdr_factory_config config;
     config.du_cells                   = du_cells;
-    config.ru_cfg                     = variant_get<ru_sdr_unit_config>(ru_cfg);
+    config.ru_cfg                     = std::get<ru_sdr_unit_config>(ru_cfg);
     config.max_processing_delay_slots = max_processing_delay;
 
     ru_sdr_factory_dependencies dependencies;
@@ -86,7 +86,7 @@ create_radio_unit(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, r
     return create_sdr_radio_unit(config, dependencies);
   }
 
-  return create_dummy_radio_unit(variant_get<ru_dummy_unit_config>(ru_cfg),
+  return create_dummy_radio_unit(std::get<ru_dummy_unit_config>(ru_cfg),
                                  max_processing_delay,
                                  prach_nof_ports,
                                  workers,

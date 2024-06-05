@@ -127,18 +127,18 @@ bool srsran::validate_dynamic_du_unit_config(const dynamic_du_unit_config&    co
     return false;
   }
 
-  if (variant_holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
     auto ru_ofh_dependencies = get_ru_ofh_validation_dependencies(config.du_high_cfg.config);
     return validate_ru_ofh_config(
-        variant_get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
+        std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config, ru_ofh_dependencies, available_cpus);
   }
 
-  if (variant_holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
+  if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config.du_high_cfg.config);
-    return validate_ru_sdr_config(variant_get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
+    return validate_ru_sdr_config(std::get<ru_sdr_unit_config>(config.ru_cfg), ru_sdr_dependencies, available_cpus);
   }
 
-  if (!validate_expert_execution_unit_config(variant_get<ru_dummy_unit_config>(config.ru_cfg), available_cpus)) {
+  if (!validate_expert_execution_unit_config(std::get<ru_dummy_unit_config>(config.ru_cfg), available_cpus)) {
     return false;
   }
 

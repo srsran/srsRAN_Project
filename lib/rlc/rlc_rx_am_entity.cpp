@@ -368,11 +368,11 @@ bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
 {
   // Section 5.2.3.2.2, discard segments with overlapping bytes
 
-  if (!variant_holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data)) {
+  if (!std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data)) {
     // put an empty set
     sdu_info.sdu_data = rlc_rx_am_sdu_info::segment_set_t{};
   }
-  rlc_rx_am_sdu_info::segment_set_t& segments    = variant_get<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data);
+  rlc_rx_am_sdu_info::segment_set_t& segments    = std::get<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data);
   auto                               cur_segment = segments.begin();
   while (cur_segment != segments.end()) {
     uint32_t cur_last_byte = cur_segment->so + cur_segment->payload.length() - 1;
@@ -448,9 +448,9 @@ bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
 
 void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const
 {
-  srsran_assert(variant_holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(rx_sdu.sdu_data),
+  srsran_assert(std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(rx_sdu.sdu_data),
                 "Invalid sdu_data variant for update of segment inventory");
-  rlc_rx_am_sdu_info::segment_set_t& segments = variant_get<rlc_rx_am_sdu_info::segment_set_t>(rx_sdu.sdu_data);
+  rlc_rx_am_sdu_info::segment_set_t& segments = std::get<rlc_rx_am_sdu_info::segment_set_t>(rx_sdu.sdu_data);
   if (segments.empty()) {
     rx_sdu.fully_received = false;
     rx_sdu.has_gap        = false;
@@ -493,15 +493,15 @@ expected<byte_buffer_chain> rlc_rx_am_entity::reassemble_sdu(rlc_rx_am_sdu_info&
     return {default_error_t{}};
   }
 
-  if (variant_holds_alternative<byte_buffer_slice>(sdu_info.sdu_data)) {
+  if (std::holds_alternative<byte_buffer_slice>(sdu_info.sdu_data)) {
     // Handling for full SDU
-    byte_buffer_slice& payload = variant_get<byte_buffer_slice>(sdu_info.sdu_data);
+    byte_buffer_slice& payload = std::get<byte_buffer_slice>(sdu_info.sdu_data);
     if (!sdu.value().append(std::move(payload))) {
       logger.log_error("Failed to append segment in SDU buffer. sn={} {}", sn, sdu_info);
       return {default_error_t{}};
     }
-  } else if (variant_holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data)) {
-    rlc_rx_am_sdu_info::segment_set_t& segments = variant_get<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data);
+  } else if (std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data)) {
+    rlc_rx_am_sdu_info::segment_set_t& segments = std::get<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data);
     for (const rlc_rx_am_sdu_segment& segm : segments) {
       logger.log_debug("Chaining segment. sn={} so={} len={}", sn, segm.so, segm.payload.length());
       if (!sdu.value().append(segm.payload.copy())) {
@@ -549,11 +549,11 @@ void rlc_rx_am_entity::refresh_status_report()
         logger.log_debug("Adding nack={}.", nack);
         status_builder->push_nack(nack);
       } else if (not(*rx_window)[i].fully_received) {
-        srsran_assert(variant_holds_alternative<rlc_rx_am_sdu_info::segment_set_t>((*rx_window)[i].sdu_data),
+        srsran_assert(std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>((*rx_window)[i].sdu_data),
                       "Invalid sdu_data variant of incomplete SDU in rx_window. sn={}",
                       i);
         rlc_rx_am_sdu_info::segment_set_t& segments =
-            variant_get<rlc_rx_am_sdu_info::segment_set_t>((*rx_window)[i].sdu_data);
+            std::get<rlc_rx_am_sdu_info::segment_set_t>((*rx_window)[i].sdu_data);
         // Some segments were received, but not all.
         // NACK non consecutive missing bytes
         uint32_t last_so           = 0;

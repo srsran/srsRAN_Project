@@ -16,9 +16,9 @@
 #include "pucch_mapping.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/sr_configuration.h"
 #include <cstdint>
+#include <variant>
 #include <vector>
 
 namespace srsran {

@@ -141,8 +141,9 @@ private:
                                unsigned nof_cells);
 
   /// Helper method that creates the Radio Unit executors.
-  void create_ru_executors(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-                           const du_high_unit_config&                                                          du_high);
+  void
+  create_ru_executors(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
+                      const du_high_unit_config&                                                               du_high);
 
   /// Helper method that creates the lower PHY executors.
   void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells);

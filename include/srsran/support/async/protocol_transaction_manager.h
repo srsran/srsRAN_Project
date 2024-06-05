@@ -13,11 +13,11 @@
 #include "async_event_source.h"
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
-#include "srsran/adt/variant.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/timers.h"
 #include <array>
 #include <unordered_map>
+#include <variant>
 
 namespace srsran {
 
@@ -341,8 +341,8 @@ public:
 private:
   friend class protocol_transaction_outcome_observer<SuccessResp, FailureResp>;
 
-  bool                                                                                stopped = false;
-  async_event_source<variant<SuccessResp, FailureResp, protocol_transaction_failure>> ev_source;
+  bool                                                                                     stopped = false;
+  async_event_source<std::variant<SuccessResp, FailureResp, protocol_transaction_failure>> ev_source;
 };
 
 /// \brief Observer of application protocol transaction outcome.
@@ -352,7 +352,8 @@ class protocol_transaction_outcome_observer
   static_assert(not std::is_same<SuccessResp, protocol_transaction_failure>::value, "Invalid Success Response");
   static_assert(not std::is_same<FailureResp, protocol_transaction_failure>::value, "Invalid Success Response");
 
-  using observer_type = async_single_event_observer<variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
+  using observer_type =
+      async_single_event_observer<std::variant<SuccessResp, FailureResp, protocol_transaction_failure>>;
 
 public:
   using success_response_type = SuccessResp;
@@ -378,35 +379,35 @@ public:
   bool complete() const { return observer.complete(); }
 
   /// \brief Checks whether the result of transaction was successful.
-  bool successful() const { return complete() and variant_holds_alternative<success_response_type>(observer.result()); }
+  bool successful() const { return complete() and std::holds_alternative<success_response_type>(observer.result()); }
 
   /// \brief Checks whether the result of the transaction was a failure message.
-  bool failed() const { return complete() and variant_holds_alternative<failure_response_type>(observer.result()); }
+  bool failed() const { return complete() and std::holds_alternative<failure_response_type>(observer.result()); }
 
   /// \brief Checks if the protocol transaction could not be completed, due to abnormal conditions, cancellations or
   /// timeout.
   bool protocol_transaction_failed() const
   {
-    return complete() and variant_holds_alternative<protocol_transaction_failure>(observer.result());
+    return complete() and std::holds_alternative<protocol_transaction_failure>(observer.result());
   }
 
   /// \brief Checks whether there was a transaction timeout.
   bool timeout_expired() const
   {
     return protocol_transaction_failed() and
-           variant_get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::timeout;
+           std::get<protocol_transaction_failure>(observer.result()) == protocol_transaction_failure::timeout;
   }
 
   /// \brief Result set by event source.
   const success_response_type& response() const
   {
     srsran_assert(successful(), "Trying to fetch incorrect transaction result");
-    return variant_get<success_response_type>(observer.result());
+    return std::get<success_response_type>(observer.result());
   }
   const failure_response_type& failure() const
   {
     srsran_assert(failed(), "Trying to fetch incorrect transaction result");
-    return variant_get<failure_response_type>(observer.result());
+    return std::get<failure_response_type>(observer.result());
   }
 
   /// Awaiter interface.

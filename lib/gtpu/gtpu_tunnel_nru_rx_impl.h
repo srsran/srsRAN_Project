@@ -37,9 +37,9 @@ protected:
   // domain-specific PDU handler
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
-    gtpu_teid_t                                            teid = pdu.hdr.teid;
-    variant<nru_dl_user_data, nru_dl_data_delivery_status> nru_msg;
-    bool                                                   have_nr_ran_container = false;
+    gtpu_teid_t                                                 teid = pdu.hdr.teid;
+    std::variant<nru_dl_user_data, nru_dl_data_delivery_status> nru_msg;
+    bool                                                        have_nr_ran_container = false;
     for (auto ext_hdr : pdu.hdr.ext_list) {
       switch (ext_hdr.extension_header_type) {
         case gtpu_extension_header_type::nr_ran_container:
@@ -48,12 +48,12 @@ protected:
             switch (pdu_type) {
               case nru_pdu_type::dl_user_data:
                 nru_msg               = {nru_dl_user_data{}};
-                have_nr_ran_container = packer.unpack(variant_get<nru_dl_user_data>(nru_msg), ext_hdr.container);
+                have_nr_ran_container = packer.unpack(std::get<nru_dl_user_data>(nru_msg), ext_hdr.container);
                 break;
               case nru_pdu_type::dl_data_delivery_status:
                 nru_msg = {nru_dl_data_delivery_status{}};
                 have_nr_ran_container =
-                    packer.unpack(variant_get<nru_dl_data_delivery_status>(nru_msg), ext_hdr.container);
+                    packer.unpack(std::get<nru_dl_data_delivery_status>(nru_msg), ext_hdr.container);
                 break;
               default:
                 logger.log_warning("Unsupported PDU type in NR RAN container. pdu_type={}", pdu_type);
@@ -80,10 +80,10 @@ protected:
 
     logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={}", pdu.buf.length());
 
-    if (variant_holds_alternative<nru_dl_user_data>(nru_msg)) {
+    if (std::holds_alternative<nru_dl_user_data>(nru_msg)) {
       nru_dl_message dl_message = {};
       dl_message.t_pdu          = gtpu_extract_msg(std::move(pdu)); // header is invalidated after extraction;
-      dl_message.dl_user_data   = std::move(variant_get<nru_dl_user_data>(nru_msg));
+      dl_message.dl_user_data   = std::move(std::get<nru_dl_user_data>(nru_msg));
 
       logger.log_info(
           dl_message.t_pdu.begin(), dl_message.t_pdu.end(), "RX DL user data. t_pdu_len={}", dl_message.t_pdu.length());
@@ -91,7 +91,7 @@ protected:
       return;
     }
 
-    if (variant_holds_alternative<nru_dl_data_delivery_status>(nru_msg)) {
+    if (std::holds_alternative<nru_dl_data_delivery_status>(nru_msg)) {
       nru_ul_message              ul_message = {};
       expected<byte_buffer_chain> buf =
           byte_buffer_chain::create(gtpu_extract_msg(std::move(pdu))); // header is invalidated after extraction;
@@ -102,7 +102,7 @@ protected:
       if (!buf.value().empty()) {
         ul_message.t_pdu = std::move(buf.value());
       }
-      ul_message.data_delivery_status = std::move(variant_get<nru_dl_data_delivery_status>(nru_msg));
+      ul_message.data_delivery_status = std::move(std::get<nru_dl_data_delivery_status>(nru_msg));
 
       if (ul_message.t_pdu.has_value()) {
         logger.log_info(ul_message.t_pdu.value().begin(),

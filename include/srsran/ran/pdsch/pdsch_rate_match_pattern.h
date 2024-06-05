@@ -103,7 +103,7 @@ struct rate_match_pattern {
   /// In frequency domain, the resource is determined by the frequency domain resource of the CORESET with the
   /// corresponding CORESET ID. Time domain resource is determined by the parameters of the associated search space of
   /// the CORESET.
-  variant<bitmaps, coreset_id> pattern_type;
+  std::variant<bitmaps, coreset_id> pattern_type;
   /// The field is mandatory present if the RateMatchPattern is defined on cell level. The field is absent when the
   /// RateMatchPattern is defined on BWP level. If the RateMatchPattern is defined on BWP level, the UE applies the SCS
   /// of the BWP.
