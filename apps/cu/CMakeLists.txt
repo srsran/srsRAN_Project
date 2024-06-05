@@ -7,7 +7,7 @@
 #
 
 add_executable(srscu
-        cu.cpp
+    cu.cpp
 	cu_appconfig_cli11_schema.cpp
 	cu_worker_manager.cpp
 )

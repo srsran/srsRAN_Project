@@ -16,7 +16,6 @@
 namespace srsran {
 
 class dlt_pcap;
-class io_broker;
 
 class e1_local_connector : public srs_cu_up::e1_connection_client, public srs_cu_cp::e1_connection_server
 {};
