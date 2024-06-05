@@ -61,7 +61,7 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
     uint8_t                                last_ri  = 1;
     unsigned                               last_bsr = 0;
     std::optional<int>                     last_phr;
-    double                                 last_ta = -1;
+    std::optional<phy_time_unit>           last_ta;
     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
     non_persistent_data                    data;
 

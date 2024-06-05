@@ -57,7 +57,7 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
       u.data.sum_ul_tb_bytes += tbs.value();
     }
     if (crc_pdu.time_advance_offset.has_value()) {
-      u.last_ta = crc_pdu.time_advance_offset->to_seconds();
+      u.last_ta = crc_pdu.time_advance_offset;
     }
   }
 }
@@ -113,7 +113,7 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
       }
 
       if (f1->time_advance_offset.has_value()) {
-        u.last_ta = f1->time_advance_offset.value().to_seconds();
+        u.last_ta = f1->time_advance_offset;
       }
     } else if (const auto* f2 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
       if (f2->ul_sinr_dB.has_value()) {
@@ -125,7 +125,7 @@ void scheduler_metrics_handler::handle_uci_pdu_indication(const uci_indication::
       }
 
       if (f2->time_advance_offset.has_value()) {
-        u.last_ta = f2->time_advance_offset.value().to_seconds();
+        u.last_ta = f2->time_advance_offset;
       }
     } else {
       // PUSCH case.
@@ -278,8 +278,8 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  if (last_ta >= 0) {
-    ret.last_ta = std::chrono::microseconds{static_cast<unsigned>(last_ta * 1e6)};
+  if (last_ta.has_value()) {
+    ret.last_ta = last_ta;
   }
   ret.last_phr = last_phr;
 

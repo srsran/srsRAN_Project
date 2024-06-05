@@ -40,14 +40,6 @@ static std::string scaled_fmt_integer(uint64_t num)
   return "Invalid number";
 }
 
-static std::string scaled_time(std::chrono::microseconds t)
-{
-  if (t.count() < 1000) {
-    return fmt::format("{}us", t.count());
-  }
-  return fmt::format("{}ms", std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
-}
-
 static std::string float_to_string(float f, int digits, int field_width)
 {
   std::ostringstream os;
@@ -174,7 +166,7 @@ void metrics_log_helper::report_metrics(span<const scheduler_ue_metrics> ue_metr
     }
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr));
     if (ue.last_ta.has_value()) {
-      fmt::format_to(buffer, " last_ta={}", scaled_time(ue.last_ta.value()));
+      fmt::format_to(buffer, " last_ta={}s", float_to_eng_string(ue.last_ta->to_seconds<float>(), 0));
     } else {
       fmt::format_to(buffer, " last_ta=n/a");
     }
