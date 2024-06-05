@@ -32,6 +32,7 @@
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
+#include "apps/services/console_helper.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
@@ -327,8 +328,15 @@ int main(int argc, char** argv)
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
 
+  // TODO: Remove JSON sink and refactor console_helper to not require it upon construction
+  // Set up the JSON log channel used by metrics.
+  srslog::sink&        json_sink    = srslog::fetch_udp_sink("127.0.9.9", 61234, srslog::create_json_formatter());
+  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
+  json_channel.set_enabled(false);
+
   // Create console helper object for commands and metrics printing.
-  // TODO console helper
+  console_helper console(*epoll_broker, json_channel, cu_cp_obj->get_command_handler());
+  console.on_app_starting();
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
@@ -374,14 +382,14 @@ int main(int argc, char** argv)
   dlt_pcaps.push_back(std::move(e2ap_p));
 
   // Start processing.
-  // TODO console.on_app_running()
+  console.on_app_running();
 
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   // Console helper print stop
-  // TODO
+  console.on_app_stopping();
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
