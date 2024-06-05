@@ -222,9 +222,13 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)
 {
   // convert asn1 to common type
-  rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
-  // send measurement results to cell measurement manager
-  measurement_notifier.on_measurement_report(meas_results);
+  rrc_meas_results meas_results =
+      asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results, srslog::fetch_basic_logger("RRC"));
+  // Send measurement results to cell measurement manager only measurements are not empty.
+  if (meas_results.meas_result_neigh_cells.has_value() and
+      not meas_results.meas_result_neigh_cells->meas_result_list_nr.empty()) {
+    measurement_notifier.on_measurement_report(meas_results);
+  }
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
