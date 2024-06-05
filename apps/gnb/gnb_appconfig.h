@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -62,25 +63,10 @@ struct log_appconfig {
 
 struct pcap_appconfig {
   struct {
-    std::string filename = "/tmp/gnb_ngap.pcap";
-    bool        enabled  = false;
-  } ngap;
-  struct {
-    std::string filename = "/tmp/gnb_e1ap.pcap";
-    bool        enabled  = false;
-  } e1ap;
-  struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
-    bool        enabled  = false;
-  } f1ap;
-  struct {
     std::string filename = "/tmp/gnb_e2ap.pcap";
     bool        enabled  = false;
   } e2ap;
-  struct {
-    std::string filename = "/tmp/gnb_gtpu.pcap";
-    bool        enabled  = false;
-  } gtpu;
+  cu_up_unit_pcap_config cu_up_pcaps;
 };
 
 /// Metrics report configuration.

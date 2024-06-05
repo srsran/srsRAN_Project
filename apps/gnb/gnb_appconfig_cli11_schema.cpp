@@ -104,16 +104,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
 
 static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params)
 {
-  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "NGAP PCAP file output path")->capture_default_str();
-  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable NGAP packet capture")->always_capture_default();
-  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
-  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
-  add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
-  add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
-  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
-  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
-  add_option(app, "--gtpu_filename", pcap_params.gtpu.filename, "GTP-U PCAP file output path")->capture_default_str();
-  add_option(app, "--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
+  // todo check if still needed
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)

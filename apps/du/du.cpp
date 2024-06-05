@@ -228,7 +228,14 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
-  worker_manager workers{du_unit_cfg, du_cfg.expert_execution_cfg, du_cfg.pcap_cfg, du_cfg.f1u_cfg.pdu_queue_size};
+  cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
+  cu_up_unit_pcap_config dummy_cu_up_pcap{};
+  worker_manager         workers{du_unit_cfg,
+                         du_cfg.expert_execution_cfg,
+                         du_cfg.pcap_cfg,
+                         dummy_cu_cp_pcap,
+                         dummy_cu_up_pcap,
+                         du_cfg.f1u_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;

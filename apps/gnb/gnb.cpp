@@ -267,7 +267,12 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
-  worker_manager workers{du_unit_cfg, gnb_cfg.expert_execution_cfg, gnb_cfg.pcap_cfg, cu_up_config.gtpu_queue_size};
+  worker_manager workers{du_unit_cfg,
+                         gnb_cfg.expert_execution_cfg,
+                         gnb_cfg.pcap_cfg,
+                         cu_cp_config.pcap_cfg,
+                         cu_up_config.pcap_cfg,
+                         cu_up_config.gtpu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -277,8 +282,9 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
-  std::unique_ptr<dlt_pcap>              f1ap_p =
+  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(
+      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("gtpu_pcap_exec"));
+  std::unique_ptr<dlt_pcap> f1ap_p =
       modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);

@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "../../gnb/gnb_appconfig.h"
-#include "../../services/worker_manager.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 
 namespace srsran {
@@ -28,17 +27,17 @@ inline unsigned to_value(pcap_type value)
 }
 
 /// Creates the DLT PCAPs of the CU-UP.
-inline std::vector<std::unique_ptr<dlt_pcap>> create_dlt_pcaps(const pcap_appconfig& pcap_cfg, worker_manager& workers)
+inline std::vector<std::unique_ptr<dlt_pcap>> create_dlt_pcaps(const cu_up_unit_pcap_config& pcap_cfg,
+                                                               task_executor&                ctrl_plane_pcap_exec,
+                                                               task_executor&                usr_plane_pcap_exec)
 {
   std::vector<std::unique_ptr<dlt_pcap>> pcaps(to_value(pcap_type::last));
 
-  pcaps[to_value(pcap_type::E1_AP)] = pcap_cfg.e1ap.enabled
-                                          ? create_e1ap_pcap(pcap_cfg.e1ap.filename, workers.get_executor("pcap_exec"))
-                                          : create_null_dlt_pcap();
+  pcaps[to_value(pcap_type::E1_AP)] =
+      pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, ctrl_plane_pcap_exec) : create_null_dlt_pcap();
 
-  pcaps[to_value(pcap_type::GTPU)] = pcap_cfg.gtpu.enabled
-                                         ? create_gtpu_pcap(pcap_cfg.gtpu.filename, workers.get_executor("pcap_exec"))
-                                         : create_null_dlt_pcap();
+  pcaps[to_value(pcap_type::GTPU)] =
+      pcap_cfg.n3.enabled ? create_gtpu_pcap(pcap_cfg.n3.filename, usr_plane_pcap_exec) : create_null_dlt_pcap();
 
   return pcaps;
 }

@@ -55,6 +55,7 @@
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "apps/units/cu_up/cu_up_wrapper.h"
+#include "apps/units/cu_up/pcap_factory.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -247,8 +248,9 @@ int main(int argc, char** argv)
   // 1. modules::...create_pcap does not use the custom cu_worker.
   // 2. modules::flexible_du... for creating F1AP pcap.
   // Initializing PCAPs direclty.
-  std::unique_ptr<dlt_pcap>              ngap_p = create_null_dlt_pcap();
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps(2);
+  std::unique_ptr<dlt_pcap>              ngap_p      = create_null_dlt_pcap();
+  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(
+      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("gtpu_pcap_exec"));
   cu_up_pcaps[0]                   = create_null_dlt_pcap();
   cu_up_pcaps[1]                   = create_null_dlt_pcap();
   std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();

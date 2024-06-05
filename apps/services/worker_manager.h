@@ -13,6 +13,8 @@
 #include "../du/du_appconfig.h"
 #include "../gnb/gnb_appconfig.h"
 #include "../units/flexible_du/split_dynamic/dynamic_du_unit_config.h"
+#include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
 #include "srsran/cu_up/cu_up_executor_pool.h"
@@ -28,6 +30,8 @@ struct worker_manager {
   worker_manager(const dynamic_du_unit_config&     du_cfg,
                  const expert_execution_appconfig& expert_appcfg,
                  pcap_appconfig&                   pcap_cfg,
+                 cu_cp_unit_pcap_config&           cu_cp_pcap_cfg,
+                 cu_up_unit_pcap_config&           cu_up_pcap_cfg,
                  unsigned                          gtpu_queue_size);
 
   void stop();
@@ -118,6 +122,8 @@ private:
   execution_config_helper::worker_pool create_low_prio_workers(const expert_execution_appconfig& expert_appcfg);
   void                                 create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
                                                                  const pcap_appconfig&             pcap_cfg,
+                                                                 const cu_cp_unit_pcap_config&     cu_cp_pcaps,
+                                                                 const cu_up_unit_pcap_config&     cu_up_pcaps,
                                                                  const du_high_unit_pcap_config&   du_pcaps,
                                                                  unsigned                          nof_cells,
                                                                  unsigned                          gtpu_queue_size);
