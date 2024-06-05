@@ -190,7 +190,7 @@ private:
           return ss.is_common_search_space();
         });
     // Filter out any SearchSpace configured which belong to common configuration only if there is no Common
-    // SearchSpace (CSS) configured in UE dedicated configuration. If there is atleast one CSS configured in UE
+    // SearchSpace (CSS) configured in UE dedicated configuration. If there is at least one CSS configured in UE
     // dedicated configuration then we need to consider also the SearchSpaces configured in common configuration as they
     // have higher priority due to lower SearchSpace index.
     if (not is_css_in_ue_dedicated_cfg) {

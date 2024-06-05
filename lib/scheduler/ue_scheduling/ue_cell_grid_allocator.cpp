@@ -148,7 +148,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     // Fetch PDSCH resource grid allocator.
     cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
 
-    // Verify only one PDSCH exists for a RNTI.
+    // Verify only one PDSCH exists for an RNTI.
     // See TS 38.214, clause 5.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not
     // expected to receive a PDSCH that overlaps in time with another PDSCH".
     if (ue_cc->last_pdsch_allocated_slot.valid() and pdsch_alloc.slot <= ue_cc->last_pdsch_allocated_slot) {
@@ -586,7 +586,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     // Fetch PUSCH resource grid allocators.
     cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + final_k2];
 
-    // Verify only one PUSCH exists for a RNTI.
+    // Verify only one PUSCH exists for an RNTI.
     // See TS 38.214, clause 6.1, "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to
     // transmit a PUSCH that overlaps in time with another PUSCH".
     // "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first PUSCH

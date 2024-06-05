@@ -58,22 +58,15 @@ compute_pusch_td_resource_indices(span<const pusch_time_domain_resource_allocati
 
 static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
 srsran::get_pusch_td_resource_indices(const cell_configuration& cell_cfg,
-                                      const search_space_info*  ss_info,
-                                      slot_point                pdcch_slot)
+                                      slot_point                pdcch_slot,
+                                      const search_space_info*  ss_info)
 {
-  if (ss_info == nullptr) {
-    return {};
+  unsigned                                          min_k1 = cell_cfg.expert_cfg.ue.min_k1;
+  span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
+      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+  if (ss_info != nullptr) {
+    min_k1                 = *std::min(ss_info->get_k1_candidates().begin(), ss_info->get_k1_candidates().end());
+    pusch_time_domain_list = ss_info->pusch_time_domain_list;
   }
-  const unsigned min_k1 = *std::min(ss_info->get_k1_candidates().begin(), ss_info->get_k1_candidates().end());
-  return compute_pusch_td_resource_indices(ss_info->pusch_time_domain_list, cell_cfg, pdcch_slot, min_k1);
-}
-
-static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS>
-srsran::get_pusch_td_res_indices_common(const cell_configuration& cell_cfg, slot_point pdcch_slot)
-{
-  return compute_pusch_td_resource_indices(
-      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list,
-      cell_cfg,
-      pdcch_slot,
-      cell_cfg.expert_cfg.ue.min_k1);
+  return compute_pusch_td_resource_indices(pusch_time_domain_list, cell_cfg, pdcch_slot, min_k1);
 }

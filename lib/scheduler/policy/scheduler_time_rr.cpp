@@ -140,7 +140,7 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
       return dl_harq_candidates;
     }
 
-    // Find empty HARQ. Create a list with a single position.
+    // Find empty HARQ. If any, add to the list.
     const dl_harq_process* h = ue_cc.harqs.find_empty_dl_harq();
     if (h != nullptr) {
       dl_harq_candidates.push_back(h);
@@ -193,7 +193,7 @@ get_ue_ul_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
       return ul_harq_candidates;
     }
 
-    // Find empty HARQ. Create a list with a single position.
+    // Find empty HARQ. If any, add to the list.
     const ul_harq_process* h = ue_cc.harqs.find_empty_ul_harq();
     if (h != nullptr) {
       ul_harq_candidates.push_back(h);
@@ -298,19 +298,15 @@ static alloc_outcome alloc_dl_ue(const ue&                         u,
 
     // Iterate through allocation parameter candidates.
     for (const dl_harq_process* h_dl : harq_candidates) {
-      if (is_retx) {
-        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u, ue_cc.cell_index, h_dl->id});
-        // If the allocation failed due to invalid parameters, we continue iteration.
-        if (result != alloc_outcome::invalid_params) {
-          return result;
-        }
-      } else {
-        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
-            &u, ue_cc.cell_index, h_dl->id, u.pending_dl_newtx_bytes(), dl_new_tx_max_nof_rbs_per_ue_per_slot});
-        // If the allocation failed due to invalid parameters, we continue iteration.
-        if (result != alloc_outcome::invalid_params) {
-          return result;
-        }
+      ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id};
+      if (not is_retx) {
+        grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
+        grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
+      }
+      const alloc_outcome result = pdsch_alloc.allocate_dl_grant(grant);
+      // If the allocation failed due to invalid parameters, we continue iteration.
+      if (result != alloc_outcome::invalid_params) {
+        return result;
       }
     }
   }
@@ -354,19 +350,15 @@ static alloc_outcome alloc_ul_ue(const ue&                    u,
 
     // Iterate through allocation parameter candidates.
     for (const ul_harq_process* h_ul : harq_candidates) {
-      if (is_retx) {
-        const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u, ue_cc.cell_index, h_ul->id});
-        // If the allocation failed due to invalid parameters, we continue iteration.
-        if (result != alloc_outcome::invalid_params) {
-          return result;
-        }
-      } else {
-        const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
-            &u, ue_cc.cell_index, h_ul->id, u.pending_ul_newtx_bytes(), ul_new_tx_max_nof_rbs_per_ue_per_slot});
-        // If the allocation failed due to invalid parameters, we continue iteration.
-        if (result != alloc_outcome::invalid_params) {
-          return result;
-        }
+      ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
+      if (not is_retx) {
+        grant.recommended_nof_bytes = u.pending_ul_newtx_bytes();
+        grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
+      }
+      const alloc_outcome result = pusch_alloc.allocate_ul_grant(grant);
+      // If the allocation failed due to invalid parameters, we continue iteration.
+      if (result != alloc_outcome::invalid_params) {
+        return result;
       }
     }
   }

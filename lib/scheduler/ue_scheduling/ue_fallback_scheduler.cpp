@@ -1255,7 +1255,7 @@ ue_fallback_scheduler::schedule_ul_ue(cell_resource_allocator& res_alloc, ue& u,
 
   // Fetch applicable PUSCH Time Domain resource index list.
   static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> pusch_td_res_index_list =
-      get_pusch_td_res_indices_common(cell_cfg, pdcch_slot);
+      get_pusch_td_resource_indices(cell_cfg, pdcch_slot);
 
   bool is_retx = h_ul_retx != nullptr;
 

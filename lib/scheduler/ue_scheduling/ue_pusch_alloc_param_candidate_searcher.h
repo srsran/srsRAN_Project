@@ -129,7 +129,7 @@ public:
         ++current.ss_it;
         if (current.ss_it != parent->ss_candidate_list.end()) {
           parent->valid_ss_pusch_td_res_indices =
-              get_pusch_td_resource_indices(parent->ue_cc->cfg().cell_cfg_common, *current.ss_it, parent->pdcch_slot);
+              get_pusch_td_resource_indices(parent->ue_cc->cfg().cell_cfg_common, parent->pdcch_slot, *current.ss_it);
         } else {
           // Iteration finished.
           return *this;
@@ -175,7 +175,7 @@ public:
     // Generate valid PUSCH Time Domain Resource Indices for first SearchSpace in the SS candidate list.
     if (not ss_candidate_list.empty()) {
       valid_ss_pusch_td_res_indices =
-          get_pusch_td_resource_indices(ue_cc->cfg().cell_cfg_common, *ss_candidate_list.begin(), pdcch_slot);
+          get_pusch_td_resource_indices(ue_cc->cfg().cell_cfg_common, pdcch_slot, *ss_candidate_list.begin());
     }
   }
 
@@ -200,7 +200,7 @@ private:
           return ss.is_common_search_space();
         });
     // Filter out any SearchSpace configured which belong to common configuration only if there is no Common
-    // SearchSpace (CSS) configured in UE dedicated configuration. If there is atleast one CSS configured in UE
+    // SearchSpace (CSS) configured in UE dedicated configuration. If there is at least one CSS configured in UE
     // dedicated configuration then we need to consider also the SearchSpaces configured in common configuration as they
     // have higher priority due to lower SearchSpace index.
     if (not is_css_in_ue_dedicated_cfg) {
