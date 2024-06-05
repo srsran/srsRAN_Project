@@ -156,9 +156,12 @@ public:
   ue_pusch_alloc_param_candidate_searcher(const ue&        ue_ref_,
                                           du_cell_index_t  cell_index,
                                           ul_harq_process& ul_harq_,
-                                          bool             is_retx_,
                                           slot_point       pdcch_slot_) :
-    ue_ref(ue_ref_), ue_cc(ue_ref.find_cell(cell_index)), is_retx(is_retx_), ul_harq(ul_harq_), pdcch_slot(pdcch_slot_)
+    ue_ref(ue_ref_),
+    ue_cc(ue_ref.find_cell(cell_index)),
+    ul_harq(ul_harq_),
+    is_retx(not ul_harq.empty()),
+    pdcch_slot(pdcch_slot_)
   {
     // Cell is not part of UE configured cells.
     if (ue_cc == nullptr) {
@@ -282,11 +285,11 @@ private:
   const ue& ue_ref;
   // UE cell being allocated.
   const ue_cell* ue_cc;
-  // Whether the current search is for a newTx or a reTx.
-  const bool is_retx;
 
   // UL HARQ considered for allocation.
   const ul_harq_process& ul_harq;
+  // Whether the current search is for a newTx or a reTx.
+  const bool is_retx;
   // List of SearchSpace candidates for the UL HARQ considered for allocation.
   search_space_candidate_list ss_candidate_list;
   // Valid PUSCH time domain resource indices for current SearchSpace.

@@ -132,7 +132,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
 
   // Create PDSCH param candidate search object.
-  ue_pdsch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_dl, is_retx, pdcch_alloc.slot};
+  ue_pdsch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_dl, pdcch_alloc.slot};
   if (candidates.is_empty()) {
     // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return alloc_outcome::skip_ue;
@@ -567,7 +567,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   }
 
   // Create PUSCH param candidate search object.
-  ue_pusch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_ul, is_retx, pdcch_alloc.slot};
+  ue_pusch_alloc_param_candidate_searcher candidates{u, grant.cell_index, h_ul, pdcch_alloc.slot};
   if (candidates.is_empty()) {
     // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return alloc_outcome::skip_ue;
