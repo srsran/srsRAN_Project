@@ -10,7 +10,6 @@
 #include "scheduler_time_rr.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
-#include "../ue_scheduling/ue_pdsch_param_candidate_searcher.h"
 
 using namespace srsran;
 
