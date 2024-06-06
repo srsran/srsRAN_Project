@@ -116,14 +116,19 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                                     cfg.sched_cfg,
                                     cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier},
                          cfg.test_cfg);
-  f1ap       = create_du_high_f1ap(*cfg.f1c_client,
+  f1ap = create_du_high_f1ap(*cfg.f1c_client,
                              adapters->f1_to_du_notifier,
                              cfg.exec_mapper->du_control_executor(),
                              cfg.exec_mapper->ue_mapper(),
                              adapters->f1ap_paging_notifier,
                              cfg.test_cfg);
+
+  expected<std::string> f1u_bind_string = config_.f1u_gw->get_du_bind_address(cfg.gnb_du_id);
+  assert(f1u_bind_string.has_value());
+  transport_layer_address f1u_bind_addr = transport_layer_address::create_from_string(f1u_bind_string.value());
+
   du_manager = create_du_manager(du_manager_params{
-      {cfg.gnb_du_name, cfg.gnb_du_id, 1, cfg.du_bind_addr, cfg.cells, cfg.srbs, cfg.qos},
+      {cfg.gnb_du_name, cfg.gnb_du_id, 1, f1u_bind_addr, cfg.cells, cfg.srbs, cfg.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},

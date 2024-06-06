@@ -197,7 +197,7 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override;
 
-  expected<std::string> get_du_bind_address(uint32_t du_index) override;
+  expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) override;
 
 private:
   srslog::basic_logger& logger_du;

@@ -76,6 +76,7 @@ protected:
     srsran::srs_du::du_high_configuration du_cfg{};
     du_cfg.exec_mapper = &workers.exec_mapper;
     du_cfg.f1c_client  = &f1c_gw;
+    du_cfg.f1u_gw      = &f1u_gw;
     du_cfg.phy_adapter = &phy;
     du_cfg.timers      = &timers;
     du_cfg.cells       = {config_helpers::make_default_du_cell_config()};
@@ -94,6 +95,7 @@ public:
   timer_manager          timers;
   srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
   f1c_test_local_gateway f1c_gw{};
+  f1u_test_local_gateway f1u_gw{};
 
   std::unique_ptr<srs_cu_cp::mock_amf> amf{srs_cu_cp::create_mock_amf()};
   std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_obj;

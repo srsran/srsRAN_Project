@@ -13,6 +13,7 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
@@ -57,7 +58,7 @@ public:
                                                                   timer_factory                              timers,
                                                                   task_executor& ue_executor) = 0;
 
-  virtual expected<std::string> get_du_bind_address(uint32_t du_index) = 0;
+  virtual expected<std::string> get_du_bind_address(gnb_du_id_t gnb_du_id) = 0;
 };
 
 } // namespace srsran::srs_du

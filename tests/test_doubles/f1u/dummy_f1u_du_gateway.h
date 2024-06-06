@@ -69,7 +69,7 @@ public:
     }
   }
 
-  expected<std::string> get_du_bind_address(uint32_t du_index) override { return std::string("127.0.0.1"); }
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
 };
 
 } // namespace srs_du
