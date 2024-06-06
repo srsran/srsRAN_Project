@@ -283,7 +283,7 @@ int main(int argc, char** argv)
 
   std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(
-      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("gtpu_pcap_exec"));
+      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("pcap_exec"));
   std::unique_ptr<dlt_pcap> f1ap_p =
       modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =

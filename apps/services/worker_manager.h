@@ -10,23 +10,21 @@
 
 #pragma once
 
-#include "../du/du_appconfig.h"
 #include "../gnb/gnb_appconfig.h"
 #include "../units/flexible_du/split_dynamic/dynamic_du_unit_config.h"
+#include "apps/services/worker_manager_worker_getter.h"
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "os_sched_affinity_manager.h"
-#include "srsran/adt/expected.h"
 #include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include <unordered_map>
 
 namespace srsran {
 
 /// Manages the workers of the app.
-struct worker_manager {
+struct worker_manager : public worker_manager_executor_getter {
   worker_manager(const dynamic_du_unit_config&     du_cfg,
                  const expert_execution_appconfig& expert_appcfg,
                  pcap_appconfig&                   pcap_cfg,
@@ -85,7 +83,10 @@ struct worker_manager {
     auto it = exec_mng.executors().find(name);
     return it != exec_mng.executors().end() ? it->second : nullptr;
   }
-  task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
+
+  task_executor& get_executor(const std::string& name) const override { return *exec_mng.executors().at(name); }
+
+  worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
   static const unsigned nof_cu_up_ue_strands = 16;

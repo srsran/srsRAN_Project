@@ -250,7 +250,7 @@ int main(int argc, char** argv)
   // Initializing PCAPs direclty.
   std::unique_ptr<dlt_pcap>              ngap_p      = create_null_dlt_pcap();
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(
-      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("gtpu_pcap_exec"));
+      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("pcap_exec"));
   cu_up_pcaps[0]                   = create_null_dlt_pcap();
   cu_up_pcaps[1]                   = create_null_dlt_pcap();
   std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
