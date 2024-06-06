@@ -33,7 +33,6 @@
 
 #include "apps/services/worker_manager.h"
 
-#include "apps/services/console_helper.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
@@ -46,6 +45,9 @@
 #include <atomic>
 
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/services/metrics_plotter_json.h"
+#include "apps/services/metrics_plotter_stdout.h"
+#include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
@@ -121,16 +123,10 @@ static void register_app_logs(const log_appconfig& log_cfg, const dynamic_du_uni
   register_dynamic_du_loggers(du_loggers);
 }
 
-// TODO: Remove.
-class null_command_handler : public srs_cu_cp::cu_cp_command_handler, public srs_cu_cp::cu_cp_mobility_command_handler
-{
-public:
-  srs_cu_cp::cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *this; }
-  void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override {}
-};
-
 int main(int argc, char** argv)
 {
+  fmt::print("\n--== srsRAN DU (commit {}) ==--\n\n", get_build_hash());
+
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
   register_cleanup_signal_handler(cleanup_signal_handler);
@@ -301,47 +297,50 @@ int main(int argc, char** argv)
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
 
-  // Create console helper object for commands and metrics printing.
-  // TODO: Remove cu_cp handler dependency.
-  null_command_handler cmd_handler;
-  console_helper       console(*epoll_broker, json_channel, cmd_handler, du_cfg.metrics_cfg.autostart_stdout_metrics);
-  console.on_app_starting();
-
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Instantiate one DU.
-  std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
-                                          workers,
-                                          *f1c_gw,
-                                          *du_f1u_conn,
-                                          app_timers,
-                                          *mac_p,
-                                          *rlc_p,
-                                          console,
-                                          metrics_logger,
-                                          e2_gw,
-                                          e2_metric_connectors,
-                                          rlc_json_plotter,
-                                          *hub);
+  metrics_plotter_stdout metrics_stdout(false);
+  metrics_plotter_json   metrics_json(json_channel);
+  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
+                                    workers,
+                                    *f1c_gw,
+                                    *du_f1u_conn,
+                                    app_timers,
+                                    *mac_p,
+                                    *rlc_p,
+                                    metrics_stdout,
+                                    metrics_json,
+                                    metrics_logger,
+                                    e2_gw,
+                                    e2_metric_connectors,
+                                    rlc_json_plotter,
+                                    *hub);
 
+  du& du_inst = *du_inst_and_cmds.unit;
   // Move all the DLT PCAPs to a container.
   std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps;
   dlt_pcaps.push_back(std::move(f1ap_p));
   dlt_pcaps.push_back(std::move(e2ap_p));
 
+  // Register the commands.
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);
+
   // Start processing.
-  du_inst->start();
-  console.on_app_running();
+  du_inst.start();
+
+  fmt::print("==== DU started ===\n");
+  fmt::print("Type <t> to view trace\n");
 
   while (is_app_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 
-  console.on_app_stopping();
+  fmt::print("Stopping ..\n");
 
   // Stop DU activity.
-  du_inst->stop();
+  du_inst.stop();
 
   if (du_cfg.e2_cfg.enable_du_e2) {
     du_logger.info("Closing E2 network connections...");

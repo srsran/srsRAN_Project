@@ -9,11 +9,11 @@
  */
 
 #include "du_high_wrapper_config_helper.h"
-
-#include "apps/services/console_helper.h"
 #include "apps/services/e2_metric_connector_manager.h"
 #include "apps/services/metrics_hub.h"
 #include "apps/services/metrics_log_helper.h"
+#include "apps/services/metrics_plotter_json.h"
+#include "apps/services/metrics_plotter_stdout.h"
 #include "du_high_config.h"
 #include "du_high_config_translators.h"
 #include "srsran/du/du_high_wrapper_factory.h"
@@ -21,7 +21,8 @@
 using namespace srsran;
 
 void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
-                                       console_helper&              console_helper,
+                                       metrics_plotter_stdout&      metrics_stdout,
+                                       metrics_plotter_json&        metrics_json,
                                        metrics_log_helper&          metrics_logger,
                                        e2_metric_connector_manager& e2_metric_connectors,
                                        metrics_hub&                 metrics_hub)
@@ -29,8 +30,19 @@ void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit
   // Generate DU cells.
   auto cells = generate_du_cell_config(du_high_unit_cfg);
 
-  // DU cell config
-  console_helper.set_cells(cells);
+  for (const auto& cell : cells) {
+    fmt::print("Cell pci={}, bw={} MHz, {}T{}R, dl_arfcn={} (n{}), dl_freq={} MHz, dl_ssb_arfcn={}, ul_freq={} MHz\n",
+               cell.pci,
+               cell.dl_carrier.carrier_bw_mhz,
+               cell.dl_carrier.nof_ant,
+               cell.ul_carrier.nof_ant,
+               cell.dl_carrier.arfcn,
+               srsran::nr_band_to_uint(cell.dl_carrier.band),
+               srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
+               cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
+               srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
+  }
+  fmt::print("\n");
 
   // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
   for (unsigned i = 0; i != cells.size(); i++) {
@@ -38,7 +50,7 @@ void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit
     auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
 
     // Connect Console Aggregator to DU Scheduler UE metrics.
-    source->add_subscriber(console_helper.get_stdout_metrics_notifier());
+    source->add_subscriber(metrics_stdout);
 
     if (metrics_logger.is_enabled()) {
       source->add_subscriber(metrics_logger);
@@ -46,7 +58,7 @@ void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit
 
     // Connect JSON metrics reporter to DU Scheduler UE metrics.
     if (du_high_unit_cfg.metrics.enable_json_metrics) {
-      source->add_subscriber(console_helper.get_json_metrics_notifier());
+      source->add_subscriber(metrics_json);
     }
 
     // Connect E2 agent to DU Scheduler UE metrics.

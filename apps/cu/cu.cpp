@@ -33,7 +33,6 @@
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
-#include "apps/services/console_helper.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
@@ -57,6 +56,8 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
+#include "apps/services/stdin_command_dispatcher.h"
+#include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -147,6 +148,8 @@ std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_con
 
 int main(int argc, char** argv)
 {
+  fmt::print("\n--== srsRAN CU (commit {}) ==--\n\n", get_build_hash());
+
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
   register_cleanup_signal_handler(cleanup_signal_handler);
@@ -335,7 +338,8 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  auto              cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
 
   // TODO: Remove JSON sink and refactor console_helper to not require it upon construction
   // Set up the JSON log channel used by metrics.
@@ -344,25 +348,24 @@ int main(int argc, char** argv)
   json_channel.set_enabled(false);
 
   // Create console helper object for commands and metrics printing.
-  console_helper console(*epoll_broker, json_channel, cu_cp_obj->get_command_handler());
-  console.on_app_starting();
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect E1AP to CU-CP.
-  e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  cu_f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
+  cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // start CU-CP
   cu_logger.info("Starting CU-CP...");
-  cu_cp_obj->start();
+  cu_cp_obj.start();
   cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
-  if (not cu_cp_obj->get_ng_handler().amf_is_connected()) {
+  if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 
@@ -385,21 +388,20 @@ int main(int argc, char** argv)
   dlt_pcaps.push_back(std::move(f1ap_p));
   dlt_pcaps.push_back(std::move(ngap_p));
 
-  // Start processing.
-  console.on_app_running();
+  fmt::print("==== CU started ===\n");
+  fmt::print("Type <h> to view help\n");
 
   while (is_app_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 
-  // Console helper print stop
-  console.on_app_stopping();
+  fmt::print("Stopping ..\n");
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
 
   // Stop CU-CP activity.
-  cu_cp_obj->stop();
+  cu_cp_obj.stop();
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");

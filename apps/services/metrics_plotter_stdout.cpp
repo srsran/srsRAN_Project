@@ -201,11 +201,6 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
   }
 }
 
-void metrics_plotter_stdout::enable_print()
-{
-  print_metrics = true;
-}
-
 void metrics_plotter_stdout::toggle_print()
 {
   print_metrics = !print_metrics;

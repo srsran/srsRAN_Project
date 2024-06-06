@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/services/application_command.h"
 #include "srsran/cu_cp/cu_cp.h"
 
 namespace srsran {
@@ -29,8 +30,13 @@ struct cu_cp_build_dependencies {
   timer_manager*                   timers         = nullptr;
 };
 
+/// Wraps the CU-CP and its supported application commands.
+struct cu_cp_unit {
+  std::unique_ptr<srs_cu_cp::cu_cp>                               unit;
+  std::vector<std::unique_ptr<app_services::application_command>> commands;
+};
+
 /// Builds a CU-CP object with the given configuration.
-std::unique_ptr<srs_cu_cp::cu_cp> build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
-                                              cu_cp_build_dependencies& dependencies);
+cu_cp_unit build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies);
 
 } // namespace srsran

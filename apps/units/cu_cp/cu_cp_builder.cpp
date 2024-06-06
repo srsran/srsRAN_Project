@@ -10,13 +10,13 @@
 
 #include "cu_cp_builder.h"
 #include "apps/services/worker_manager.h"
+#include "cu_cp_commands.h"
 #include "cu_cp_config_translators.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 
 using namespace srsran;
 
-std::unique_ptr<srs_cu_cp::cu_cp> srsran::build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
-                                                      cu_cp_build_dependencies& dependencies)
+cu_cp_unit srsran::build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies)
 {
   srsran_assert(dependencies.cu_cp_executor, "Invalid CU-CP executor");
   srsran_assert(dependencies.cu_cp_e2_exec, "Invalid E2 executor");
@@ -28,5 +28,11 @@ std::unique_ptr<srs_cu_cp::cu_cp> srsran::build_cu_cp(const cu_cp_unit_config&  
   cu_cp_cfg.n2_gw                          = dependencies.n2_client;
   cu_cp_cfg.timers                         = dependencies.timers;
 
-  return create_cu_cp(cu_cp_cfg);
+  cu_cp_unit cu_cmd_wrapper;
+  cu_cmd_wrapper.unit = create_cu_cp(cu_cp_cfg);
+
+  // Add the commands;
+  cu_cmd_wrapper.commands.push_back(std::make_unique<handover_app_command>(cu_cmd_wrapper.unit->get_command_handler()));
+
+  return cu_cmd_wrapper;
 }

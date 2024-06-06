@@ -34,10 +34,10 @@
 
 #include "apps/services/worker_manager.h"
 
-#include "apps/services/console_helper.h"
 #include "apps/services/metrics_hub.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
+#include "apps/services/stdin_command_dispatcher.h"
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
@@ -57,6 +57,8 @@
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/services/metrics_plotter_json.h"
+#include "apps/services/metrics_plotter_stdout.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
@@ -146,6 +148,8 @@ static void register_app_logs(const log_appconfig&            log_cfg,
 
 int main(int argc, char** argv)
 {
+  fmt::print("\n--== srsRAN gNB (commit {}) ==--\n\n", get_build_hash());
+
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
   register_cleanup_signal_handler(cleanup_signal_handler);
@@ -350,28 +354,25 @@ int main(int argc, char** argv)
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  auto cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
 
-  // Create console helper object for commands and metrics printing.
-  console_helper console(
-      *epoll_broker, json_channel, cu_cp_obj->get_command_handler(), gnb_cfg.metrics_cfg.autostart_stdout_metrics);
-  console.on_app_starting();
+  srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect E1AP to CU-CP.
-  e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
 
   // Connect F1-C to CU-CP.
-  f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
+  f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
-  cu_cp_obj->start();
+  cu_cp_obj.start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->get_ng_handler().amf_is_connected()) {
+  if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 
@@ -387,19 +388,24 @@ int main(int argc, char** argv)
   cu_up_obj->start();
 
   // Instantiate one DU.
-  std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
-                                          workers,
-                                          *f1c_gw,
-                                          *f1u_conn->get_f1u_du_gateway(),
-                                          app_timers,
-                                          *mac_p,
-                                          *rlc_p,
-                                          console,
-                                          metrics_logger,
-                                          e2_gw,
-                                          e2_metric_connectors,
-                                          rlc_json_plotter,
-                                          *hub);
+  metrics_plotter_stdout metrics_stdout(gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  metrics_plotter_json   metrics_json(json_channel);
+  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
+                                    workers,
+                                    *f1c_gw,
+                                    *f1u_conn->get_f1u_du_gateway(),
+                                    app_timers,
+                                    *mac_p,
+                                    *rlc_p,
+                                    metrics_stdout,
+                                    metrics_json,
+                                    metrics_logger,
+                                    e2_gw,
+                                    e2_metric_connectors,
+                                    rlc_json_plotter,
+                                    *hub);
+
+  du& du_inst = *du_inst_and_cmds.unit;
 
   // Move all the DLT PCAPs to a container.
   std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
@@ -407,24 +413,36 @@ int main(int argc, char** argv)
   dlt_pcaps.push_back(std::move(ngap_p));
   dlt_pcaps.push_back(std::move(e2ap_p));
 
+  std::vector<std::unique_ptr<app_services::application_command>> commands;
+  for (auto& cmd : cu_cp_obj_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
+  }
+  for (auto& cmd : du_inst_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
+  }
+
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
+
   // Start processing.
-  du_inst->start();
-  console.on_app_running();
+  du_inst.start();
+
+  fmt::print("==== gNodeB started ===\n");
+  fmt::print("Type <t> to view trace\n");
 
   while (is_app_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 
-  console.on_app_stopping();
+  fmt::print("Stopping ..\n");
 
   // Stop DU activity.
-  du_inst->stop();
+  du_inst.stop();
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
 
   // Stop CU-CP activity.
-  cu_cp_obj->stop();
+  cu_cp_obj.stop();
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
     gnb_logger.info("Closing E2 network connections...");

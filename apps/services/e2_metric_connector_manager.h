@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../gnb/gnb_appconfig.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 
 namespace srsran {
