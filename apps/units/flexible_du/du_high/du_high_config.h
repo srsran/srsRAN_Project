@@ -748,8 +748,6 @@ struct du_high_unit_config {
   std::map<srb_id_t, du_high_unit_srb_config> srb_cfg;
   /// E2 configuration.
   du_high_unit_e2_config e2_cfg;
-  /// F1-U bind address (TODO obtain directly from gateway)
-  std::string f1u_bind_address = "127.0.10.2";
 };
 
 /// DU high configuration.
