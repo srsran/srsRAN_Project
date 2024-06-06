@@ -224,21 +224,20 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
   bool init_ul_rrc_msg_flag = false;
   auto init_ul_rrc_msg_sent = [this, rnti, &init_ul_rrc_msg_flag]() {
     if (init_ul_rrc_msg_flag) {
-      return true;
+      return;
     }
     if (not cu_notifier.last_f1ap_msgs.empty()) {
       report_fatal_error_if_not(
           test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti),
           "Init UL RRC Message is not valid");
       init_ul_rrc_msg_flag = true;
-      return true;
+      return;
     }
-    return false;
   };
   bool conres_sent     = false;
   auto con_res_ce_sent = [this, rnti, cell_index, &conres_sent]() {
     if (conres_sent) {
-      return true;
+      return;
     }
     phy_cell_test_dummy& phy_cell = phy.cells[cell_index];
     if (phy_cell.last_dl_res.has_value()) {
@@ -248,12 +247,15 @@ bool du_high_env_simulator::add_ue(rnti_t rnti, du_cell_index_t cell_index)
                                       nullptr,
                                   "UE ConRes not scheduled");
         conres_sent = true;
-        return true;
+        return;
       }
     }
-    return false;
   };
-  if (not run_until([&]() { return init_ul_rrc_msg_sent() and con_res_ce_sent(); })) {
+  if (not run_until([&]() {
+        init_ul_rrc_msg_sent();
+        con_res_ce_sent();
+        return conres_sent and init_ul_rrc_msg_flag;
+      })) {
     test_logger.error("rnti={}: Unable to add UE. Timeout waiting for Init UL RRC Message or ConRes CE", rnti);
     return false;
   }
