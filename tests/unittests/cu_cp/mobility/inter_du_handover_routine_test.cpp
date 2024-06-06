@@ -250,6 +250,12 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();
 
+  // Make sure Bearer Context Modification contains security info
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+  ASSERT_TRUE(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.bearer_context_mod_request()->security_info_present);
+
   // Inject Bearer Context Modification Response
   inject_bearer_context_modification_response();
 
