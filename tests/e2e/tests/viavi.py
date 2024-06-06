@@ -412,13 +412,13 @@ def check_metrics_criteria(
     kpis: KPIs = get_kpis(gnb, viavi_failure_manager=viavi_failure_manager, metrics_summary=metrics_summary)
 
     is_ok &= check_and_print_criteria(
-        "DL bitrate", kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt
+        "DL bitrate", kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt, False
     )
     is_ok &= check_and_print_criteria(
-        "UL bitrate", kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt
+        "UL bitrate", kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt, False
     )
     is_ok &= (
-        check_and_print_criteria("Number of KOs and/or retrxs", kpis.nof_ko_aggregate, 0, operator.eq)
+        check_and_print_criteria("Number of KOs and/or retrxs", kpis.nof_ko_aggregate, 0, operator.eq, not fail_if_kos)
         or not fail_if_kos
     )
 
@@ -431,13 +431,19 @@ def check_metrics_criteria(
 
 
 def check_and_print_criteria(
-    name: str, current: float, expected: float, operator_method: Callable[[float, float], bool]
+    name: str,
+    current: float,
+    expected: float,
+    operator_method: Callable[[float, float], bool],
+    force_log_info: bool = False,
 ) -> bool:
     """
     Check and print criteria
     """
     is_ok = operator_method(current, expected)
-    (logging.info if is_ok else logging.error)(f"{name} expected: {expected}, actual: {current}")
+    (logging.info if is_ok or force_log_info else logging.error)(
+        f"{name} expected: {expected:.2e}, actual: {current:.2e}"
+    )
     return is_ok
 
 
