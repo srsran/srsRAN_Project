@@ -95,6 +95,11 @@ struct expert_execution_appconfig {
   expert_threads_appconfig threads;
 };
 
+struct cu_up_f1u_appconfig {
+  std::string f1u_bind_addr   = "127.0.10.1"; // Bind address used by the F1-U interface
+  int         udp_rx_max_msgs = 256; // Max number of UDP packets received by a single syscall on the F1-U interface.
+};
+
 /// Monolithic gnb application configuration.
 struct cu_appconfig {
   /// Logging configuration.
@@ -104,8 +109,12 @@ struct cu_appconfig {
   cu_cp_pcap_appconfig cu_cp_pcap_cfg;
   cu_up_pcap_appconfig cu_up_pcap_cfg;
 
+  /// F1-U split configuration.
+  cu_up_f1u_appconfig f1u_cfg;
+
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
+
   /// TODO fill in the rest of the configuration
 };
 

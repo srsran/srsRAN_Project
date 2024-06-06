@@ -131,7 +131,8 @@ static void register_app_logs(const log_appconfig&            log_cfg,
 // TODO remove
 std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
                                                             cu_worker_manager&               workers,
-                                                            srs_cu_up::e1_connection_client& e1ap_conn_client,
+                                                            const std::string&               f1u_bind_addr,
+                                                            srs_cu_up::e1_connection_client& e1_conn_client,
                                                             f1u_cu_up_gateway&               f1u_gateway,
                                                             dlt_pcap&                        gtpu_pcap,
                                                             timer_manager&                   timers,
@@ -265,7 +266,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_pcaps[1].get(); // FIXME use right enum
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   udp_network_gateway_config  cu_f1u_gw_config  = {};
-  cu_f1u_gw_config.bind_address                 = cu_up_config.f1u_cfg.f1u_bind_addr;
+  cu_f1u_gw_config.bind_address                 = cu_cfg.f1u_cfg.f1u_bind_addr;
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
@@ -358,6 +359,7 @@ int main(int argc, char** argv)
   // function and create things direclty here.
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
                                                                           workers,
+                                                                          cu_cfg.f1u_cfg.f1u_bind_addr,
                                                                           *e1_gw,
                                                                           *cu_f1u_conn->get_f1u_cu_up_gateway(),
                                                                           *cu_up_pcaps[1].get(),
@@ -422,6 +424,7 @@ int main(int argc, char** argv)
 // TODO remove
 std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_config&         unit_cfg,
                                                             cu_worker_manager&               workers,
+                                                            const std::string&               f1u_bind_address,
                                                             srs_cu_up::e1_connection_client& e1_conn_client,
                                                             f1u_cu_up_gateway&               f1u_gateway,
                                                             dlt_pcap&                        gtpu_pcap,
@@ -438,6 +441,9 @@ std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_con
   config.gtpu_pcap                      = &gtpu_pcap;
   config.timers                         = &timers;
   config.qos                            = generate_cu_up_qos_config(unit_cfg);
+
+  config.net_cfg.f1u_bind_addr = f1u_bind_address; // TODO remove this parameter and make sure that the CU-UP gets the
+                                                   // bind address directly from the gateway.
 
   // Create NG-U gateway.
   std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
