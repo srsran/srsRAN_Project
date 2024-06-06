@@ -296,7 +296,7 @@ int main(int argc, char** argv)
 
   std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
   std::unique_ptr<e1_local_connector>  e1_gw  = create_e1_local_connector(
-      e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]});
+      e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1AP)]});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -384,7 +384,7 @@ int main(int argc, char** argv)
                   workers,
                   *e1_gw,
                   *f1u_conn->get_f1u_cu_up_gateway(),
-                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get(),
+                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::N3)].get(),
                   *cu_timers,
                   *epoll_broker);
   cu_up_obj->start();

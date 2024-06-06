@@ -271,9 +271,9 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
-  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
-  cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
-  cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_pcaps[1].get(); // FIXME use right enum
+  gtpu_demux_creation_request cu_f1u_gtpu_msg = {};
+  cu_f1u_gtpu_msg.cfg.warn_on_drop            = true;
+  cu_f1u_gtpu_msg.gtpu_pcap = cu_up_pcaps[to_value(modules::cu_up::pcap_type::F1U)].get(); // FIXME use right enum
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   udp_network_gateway_config  cu_f1u_gw_config  = {};
   cu_f1u_gw_config.bind_address                 = cu_cfg.f1u_cfg.f1u_bind_addr;
@@ -281,11 +281,12 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
       srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
-  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn =
-      std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[1].get());
+  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn = std::make_unique<srs_cu_up::f1u_split_connector>(
+      cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[to_value(modules::cu_up::pcap_type::F1U)].get());
 
   // Create E1AP local connector
-  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps[0]});
+  std::unique_ptr<e1_local_connector> e1_gw =
+      create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps[to_value(modules::cu_up::pcap_type::E1AP)]});
 
   // Create manager of timers for CU-CP and CU-UP, which will be
   // driven by the system timer slot ticks.

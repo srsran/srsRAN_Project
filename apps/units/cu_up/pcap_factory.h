@@ -14,12 +14,10 @@
 #include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 
-namespace srsran {
-namespace modules {
-namespace cu_up {
+namespace srsran::modules::cu_up {
 
 /// Types of PCAPs in the CU-UP
-enum class pcap_type { E1_AP, GTPU, last };
+enum class pcap_type { E1AP, N3, F1U, last };
 
 /// Converts the given PCAP type to an unsigned.
 inline unsigned to_value(pcap_type value)
@@ -33,17 +31,19 @@ inline std::vector<std::unique_ptr<dlt_pcap>> create_dlt_pcaps(const cu_up_unit_
 {
   std::vector<std::unique_ptr<dlt_pcap>> pcaps(to_value(pcap_type::last));
 
-  pcaps[to_value(pcap_type::E1_AP)] =
+  pcaps[to_value(pcap_type::E1AP)] =
       pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, exec_getter->get_executor("pcap_exec"))
                             : create_null_dlt_pcap();
 
-  pcaps[to_value(pcap_type::GTPU)] =
-      pcap_cfg.n3.enabled ? create_gtpu_pcap(pcap_cfg.n3.filename, exec_getter->get_executor("gtpu_pcap_exec"))
+  pcaps[to_value(pcap_type::N3)] =
+      pcap_cfg.n3.enabled ? create_gtpu_pcap(pcap_cfg.n3.filename, exec_getter->get_executor("n3_pcap_exec"))
                           : create_null_dlt_pcap();
+
+  pcaps[to_value(pcap_type::F1U)] =
+      pcap_cfg.f1u.enabled ? create_gtpu_pcap(pcap_cfg.f1u.filename, exec_getter->get_executor("f1u_pcap_exec"))
+                           : create_null_dlt_pcap();
 
   return pcaps;
 }
 
-} // namespace cu_up
-} // namespace modules
-} // namespace srsran
+} // namespace srsran::modules::cu_up

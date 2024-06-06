@@ -83,7 +83,12 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
   }
 
   if (up_pcaps.n3.enabled) {
-    base_strand_cfg.queues[0].name = "gtpu_pcap_exec";
+    base_strand_cfg.queues[0].name = "n3_pcap_exec";
+    strand_list.emplace_back(base_strand_cfg);
+  }
+
+  if (up_pcaps.f1u.enabled) {
+    base_strand_cfg.queues[0].name = "f1u_pcap_exec";
     strand_list.emplace_back(base_strand_cfg);
   }
 }
