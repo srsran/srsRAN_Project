@@ -56,6 +56,8 @@ public:
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,
                                                                   task_executor& ue_executor) = 0;
+
+  virtual expected<std::string> get_du_bind_address(uint32_t du_index) = 0;
 };
 
 } // namespace srsran::srs_du

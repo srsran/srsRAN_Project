@@ -197,6 +197,8 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override;
 
+  expected<std::string> get_du_bind_address(uint32_t du_index) override;
+
 private:
   srslog::basic_logger& logger_du;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)

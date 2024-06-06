@@ -74,3 +74,12 @@ void f1u_split_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
   }
   logger_du.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", dl_up_tnl_info);
 }
+
+expected<std::string> f1u_split_connector::get_du_bind_address(uint32_t du_index)
+{
+  std::string ip_address;
+  if (not udp_session->get_bind_address(ip_address)) {
+    return default_error_t{};
+  }
+  return ip_address;
+}
