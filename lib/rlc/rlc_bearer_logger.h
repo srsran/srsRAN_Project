@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
@@ -19,10 +20,10 @@ namespace srsran {
 class rlc_bearer_log_prefix
 {
 public:
-  rlc_bearer_log_prefix(uint32_t du_index, uint32_t ue_index, rb_id_t rb_id, const char* dir)
+  rlc_bearer_log_prefix(gnb_du_id_t gnb_du_id, uint32_t ue_index, rb_id_t rb_id, const char* dir)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "du={} ue={} {} {}: ", du_index, ue_index, rb_id, dir);
+    fmt::format_to(buffer, "du={} ue={} {} {}: ", gnb_du_id, ue_index, rb_id, dir);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }

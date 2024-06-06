@@ -573,7 +573,7 @@ public:
     report_fatal_error_if_not(bsr_mac_subpdu.append(lbsr_buff_sz), "Failed to allocate PDU");
 
     // Instantiate a DU-high object.
-    cfg.gnb_du_id    = 1;
+    cfg.gnb_du_id    = (gnb_du_id_t)1;
     cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
     cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", cfg.gnb_du_id));
     cfg.exec_mapper  = &workers.du_high_exec_mapper;

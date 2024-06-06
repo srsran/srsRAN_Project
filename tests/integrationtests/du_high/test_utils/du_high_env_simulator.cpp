@@ -159,7 +159,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     cfg.f1u_gw       = &cu_up_sim;
     cfg.phy_adapter  = &phy;
     cfg.timers       = &timers;
-    cfg.gnb_du_id    = 0;
+    cfg.gnb_du_id    = gnb_du_id_t::min;
     cfg.gnb_du_name  = "srsdu";
     cfg.du_bind_addr = transport_layer_address::create_from_string("127.0.0.1");
 

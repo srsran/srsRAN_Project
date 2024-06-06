@@ -70,7 +70,7 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
 void f1ap_du_setup_procedure::send_f1_setup_request()
 {
   // Save the gNB-DU-Id before the F1 Setup is completed for the purpose of logging.
-  du_ctxt.du_id = int_to_gnb_du_id(request.gnb_du_id);
+  du_ctxt.du_id = request.gnb_du_id;
 
   f1ap_message msg = {};
   // set F1AP PDU contents
@@ -81,7 +81,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   setup_req->transaction_id = transaction.id();
 
   // DU-global parameters.
-  setup_req->gnb_du_id           = request.gnb_du_id;
+  setup_req->gnb_du_id           = static_cast<uint64_t>(request.gnb_du_id);
   setup_req->gnb_du_name_present = not request.gnb_du_name.empty();
   if (setup_req->gnb_du_name_present) {
     setup_req->gnb_du_name.from_string(request.gnb_du_name);
@@ -208,7 +208,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     res.success = true;
 
     // Update F1 DU Context (taking values from request).
-    du_ctxt.du_id       = int_to_gnb_du_id(request.gnb_du_id);
+    du_ctxt.du_id       = request.gnb_du_id;
     du_ctxt.gnb_du_name = request.gnb_du_name;
     du_ctxt.served_cells.resize(request.served_cells.size());
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {

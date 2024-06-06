@@ -1397,6 +1397,9 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
   add_option(app, "--ran_node_name", parsed_cfg.config.ran_node_name, "RAN node name")->capture_default_str();
+  add_option(app, "--gnb_du_id", parsed_cfg.config.gnb_du_id, "gNB-DU Id")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
 
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();

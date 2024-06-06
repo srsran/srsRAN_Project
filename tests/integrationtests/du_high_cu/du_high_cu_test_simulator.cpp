@@ -156,7 +156,7 @@ void du_high_cu_test_simulator::start_dus()
     // Instantiate DU-high.
     srs_du::du_high_configuration& du_hi_cfg = du_ctxt.du_high_cfg;
     du_hi_cfg.gnb_du_name                    = fmt::format("srsgnb{}", du_idx + 1);
-    du_hi_cfg.gnb_du_id                      = du_idx + 1;
+    du_hi_cfg.gnb_du_id                      = (gnb_du_id_t)(du_idx + 1);
     du_hi_cfg.du_bind_addr = transport_layer_address::create_from_string(fmt::format("127.0.0.{}", du_idx + 1));
     du_hi_cfg.exec_mapper  = workers.du_hi_exec_mappers[du_idx].get();
     du_hi_cfg.f1c_client   = &f1c_gw;

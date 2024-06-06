@@ -16,6 +16,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
@@ -723,6 +724,8 @@ struct du_high_unit_config {
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
+  /// DU identifier.
+  gnb_du_id_t gnb_du_id = gnb_du_id_t::min;
   /// PCAPs.
   du_high_unit_pcap_config pcaps;
   /// Metrics.

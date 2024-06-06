@@ -108,7 +108,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
 
   // Run benchmark
   auto context = [&rlc, &tester, config, &timers, &pcell_worker, &ue_worker, &pcap]() {
-    rlc = std::make_unique<rlc_tx_am_entity>(0,
+    rlc = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,
                                              du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
                                              config,

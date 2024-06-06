@@ -36,7 +36,7 @@ private:
   std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
 
 public:
-  rlc_tx_tm_entity(uint32_t                             du_index,
+  rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                    du_ue_index_t                        ue_index,
                    rb_id_t                              rb_id,
                    const rlc_tx_tm_config&              config,

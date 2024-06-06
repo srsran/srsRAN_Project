@@ -26,7 +26,7 @@ class rlc_tx_entity : public rlc_tx_upper_layer_data_interface,
                       public rlc_tx_metrics
 {
 protected:
-  rlc_tx_entity(uint32_t                             du_index,
+  rlc_tx_entity(gnb_du_id_t                          gnb_du_id,
                 du_ue_index_t                        ue_index,
                 rb_id_t                              rb_id,
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
@@ -34,7 +34,7 @@ protected:
                 rlc_tx_lower_layer_notifier&         lower_dn_,
                 bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_) :
-    logger("RLC", {du_index, ue_index, rb_id, "DL"}),
+    logger("RLC", {gnb_du_id, ue_index, rb_id, "DL"}),
     metrics(metrics_enabled),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),

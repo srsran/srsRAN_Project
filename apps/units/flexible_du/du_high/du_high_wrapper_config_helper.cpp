@@ -60,7 +60,7 @@ void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit
 
 void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                          const du_high_unit_config&     du_high_unit_cfg,
-                                         unsigned                       du_id,
+                                         unsigned                       du_idx,
                                          du_high_executor_mapper&       execution_mapper,
                                          srs_du::f1c_connection_client& f1c_client_handler,
                                          srs_du::f1u_du_gateway&        f1u_gw,
@@ -85,19 +85,19 @@ void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
   du_hi_cfg.qos                            = generate_du_qos_config(du_high_unit_cfg);
   du_hi_cfg.mac_p                          = &mac_p;
   du_hi_cfg.rlc_p                          = &rlc_p;
-  du_hi_cfg.gnb_du_id                      = du_id + 1;
+  du_hi_cfg.gnb_du_id                      = (gnb_du_id_t)((unsigned)du_high_unit_cfg.gnb_du_id + du_idx);
   du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
   du_hi_cfg.du_bind_addr = transport_layer_address::create_from_string(du_high_unit_cfg.f1u_bind_address);
   du_hi_cfg.mac_cfg      = generate_mac_expert_config(du_high_unit_cfg);
   // Assign different initial C-RNTIs to different DUs.
-  du_hi_cfg.mac_cfg.initial_crnti     = to_rnti(0x4601 + (0x1000 * du_id));
-  du_hi_cfg.sched_ue_metrics_notifier = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(du_id));
+  du_hi_cfg.mac_cfg.initial_crnti     = to_rnti(0x4601 + (0x1000 * du_idx));
+  du_hi_cfg.sched_ue_metrics_notifier = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(du_idx));
   du_hi_cfg.sched_cfg                 = generate_scheduler_expert_config(du_high_unit_cfg);
 
   // Connect RLC metrics to sinks, if required
   if (du_high_unit_cfg.metrics.rlc.json_enabled || du_high_unit_cfg.e2_cfg.enable_du_e2) {
     // This source aggregates the RLC metrics from all DRBs in a single DU.
-    std::string source_name = "rlc_metric_aggr_du_" + std::to_string(du_id);
+    std::string source_name = "rlc_metric_aggr_du_" + std::to_string(du_idx);
     auto        rlc_source  = std::make_unique<rlc_metrics_source>(source_name);
 
     if (du_high_unit_cfg.metrics.rlc.json_enabled) {
@@ -111,8 +111,8 @@ void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
       // Connect E2 agent to RLC metric source.
       du_hi_cfg.e2_client          = &e2_client_handler;
       du_hi_cfg.e2ap_config        = generate_e2_config(du_high_unit_cfg);
-      du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(du_id));
-      rlc_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(du_id));
+      du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(du_idx));
+      rlc_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(du_idx));
     }
     // Pass RLC metric source to the DU high.
     metrics_hub.add_source(std::move(rlc_source));

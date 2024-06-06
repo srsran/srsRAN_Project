@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/support/async/async_task.h"
@@ -36,7 +37,7 @@ struct f1_cell_setup_params {
 
 /// \brief Message that initiates a F1 Setup procedure.
 struct f1_setup_request_message {
-  uint64_t                          gnb_du_id;
+  gnb_du_id_t                       gnb_du_id;
   std::string                       gnb_du_name;
   uint8_t                           rrc_version;
   std::vector<f1_cell_setup_params> served_cells;

@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index,
+rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id,
                                    const rlc_tx_um_config&              config,
@@ -25,7 +25,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
                                    task_executor&                       pcell_executor_,
                                    bool                                 metrics_enabled,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled, pcap_),
+  rlc_tx_entity(du_id, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
   mod(cardinality(to_number(cfg.sn_field_length))),
@@ -41,7 +41,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(uint32_t                             du_index
   srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
                 "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
                 config.pdcp_sn_len,
-                du_index,
+                du_id,
                 ue_index,
                 rb_id);
 

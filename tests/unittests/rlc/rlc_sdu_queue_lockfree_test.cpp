@@ -18,8 +18,8 @@ namespace srsran {
 
 void queue_unqueue_test()
 {
-  rlc_bearer_logger      logger("RLC", {0, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
-  test_delimit_logger    delimiter{"RLC SDU queue unqueue test"};
+  rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
+  test_delimit_logger delimiter{"RLC SDU queue unqueue test"};
   rlc_sdu_queue_lockfree tx_queue(4096, logger);
 
   // Write 1 SDU
@@ -50,9 +50,9 @@ void queue_unqueue_test()
 
 void full_capacity_test()
 {
-  rlc_bearer_logger      logger("RLC", {0, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
-  test_delimit_logger    delimiter{"RLC SDU capacity test"};
-  unsigned               capacity = 5;
+  rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
+  test_delimit_logger delimiter{"RLC SDU capacity test"};
+  unsigned            capacity = 5;
   rlc_sdu_queue_lockfree tx_queue(capacity, logger);
 
   // Write Capacity + 1 SDUs
@@ -92,10 +92,10 @@ void full_capacity_test()
 
 void discard_test()
 {
-  rlc_bearer_logger      logger("RLC", {0, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
-  test_delimit_logger    delimiter{"RLC SDU discard test"};
-  unsigned               capacity = 10;
-  unsigned               n_sdus   = capacity;
+  rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
+  test_delimit_logger delimiter{"RLC SDU discard test"};
+  unsigned            capacity = 10;
+  unsigned            n_sdus   = capacity;
   rlc_sdu_queue_lockfree tx_queue(capacity, logger);
 
   // Fill SDU queue with SDUs
@@ -135,10 +135,10 @@ void discard_test()
 
 void discard_all_test()
 {
-  rlc_bearer_logger      logger("RLC", {0, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
-  test_delimit_logger    delimiter{"RLC SDU discard all test"};
-  unsigned               capacity = 10;
-  unsigned               n_sdus   = capacity / 2;
+  rlc_bearer_logger   logger("RLC", {gnb_du_id_t::min, du_ue_index_t::MIN_DU_UE_INDEX, rb_id_t(drb_id_t::drb1), "DL"});
+  test_delimit_logger delimiter{"RLC SDU discard all test"};
+  unsigned            capacity = 10;
+  unsigned            n_sdus   = capacity / 2;
   rlc_sdu_queue_lockfree tx_queue(capacity, logger);
 
   // Fill SDU queue with SDUs

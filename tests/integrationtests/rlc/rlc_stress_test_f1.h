@@ -29,7 +29,7 @@ class f1ap_dummy : public pdcp_tx_lower_notifier,
   pdcp_rx_lower_interface*           pdcp_rx_lower = nullptr;
 
 public:
-  f1ap_dummy(uint32_t id) : logger("F1AP", {0, id, drb_id_t::drb1, "DL"}) {}
+  f1ap_dummy(uint32_t id) : logger("F1AP", {gnb_du_id_t::min, id, drb_id_t::drb1, "DL"}) {}
 
   // PDCP -> F1 -> RLC
   void on_new_pdu(pdcp_tx_pdu pdu) final
