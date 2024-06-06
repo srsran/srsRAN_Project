@@ -11,6 +11,8 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
+#include "apps/services/worker_manager_worker_getter.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_appconfig.h"
 #include "srsran/cu_up/cu_up_executor_pool.h"
 #include "srsran/support/executors/task_execution_manager.h"
@@ -19,8 +21,8 @@
 namespace srsran {
 
 /// Manages the workers of the app.
-struct cu_worker_manager {
-  cu_worker_manager(const cu_appconfig& appcfg, unsigned gtpu_queue_size);
+struct cu_worker_manager : public worker_manager_executor_getter {
+  cu_worker_manager(const cu_appconfig& appcfg, cu_up_unit_pcap_config cu_up_pcap_cfg, unsigned gtpu_queue_size);
 
   void stop();
 
@@ -51,7 +53,10 @@ struct cu_worker_manager {
     auto it = exec_mng.executors().find(name);
     return it != exec_mng.executors().end() ? it->second : nullptr;
   }
-  task_executor& get_executor(const std::string& name) const { return *exec_mng.executors().at(name); }
+
+  task_executor& get_executor(const std::string& name) const override { return *exec_mng.executors().at(name); }
+
+  worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
   static const unsigned nof_cu_up_ue_strands = 16;
@@ -80,7 +85,9 @@ private:
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
   execution_config_helper::worker_pool create_low_prio_workers(const cu_appconfig& appcfg);
-  void                                 create_low_prio_executors(const cu_appconfig& appcfg, unsigned gtpu_queue_size);
+  void                                 create_low_prio_executors(const cu_appconfig&           appcfg,
+                                                                 const cu_up_unit_pcap_config& cu_up_pcap_cfg,
+                                                                 unsigned                      gtpu_queue_size);
   void                                 associate_low_prio_executors();
 };
 

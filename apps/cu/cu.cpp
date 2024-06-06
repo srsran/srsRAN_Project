@@ -241,18 +241,16 @@ int main(int argc, char** argv)
   check_drm_kms_polling(cu_logger);
 
   // Create worker manager.
-  cu_worker_manager workers{cu_cfg, cu_up_config.gtpu_queue_size};
+  cu_worker_manager workers{cu_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Create layer specific PCAPs.
   // TODO:
   // 1. modules::...create_pcap does not use the custom cu_worker.
   // 2. modules::flexible_du... for creating F1AP pcap.
   // Initializing PCAPs direclty.
-  std::unique_ptr<dlt_pcap>              ngap_p      = create_null_dlt_pcap();
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(
-      cu_up_config.pcap_cfg, workers.get_executor("pcap_exec"), workers.get_executor("pcap_exec"));
-  cu_up_pcaps[0]                   = create_null_dlt_pcap();
-  cu_up_pcaps[1]                   = create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap>              ngap_p = create_null_dlt_pcap();
+  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
+      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
   std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
   std::unique_ptr<dlt_pcap> e2ap_p =
       cu_cfg.cu_cp_pcap_cfg.e2ap.enabled
