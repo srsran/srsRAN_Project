@@ -70,6 +70,7 @@ public:
 
   async_task<cu_cp_inter_du_handover_response>
   start_inter_du_handover_routine(const cu_cp_inter_du_handover_request& request,
+                                  const security::sec_as_config&         up_sec,
                                   const byte_buffer&                     target_cell_sib1,
                                   e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng,
                                   f1ap_ue_context_manager&               source_f1ap_ue_ctxt_mng,

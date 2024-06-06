@@ -24,6 +24,7 @@ class inter_du_handover_routine
 {
 public:
   inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
+                            const srsran::security::sec_as_config& source_security_cfg_,
                             const byte_buffer&                     target_cell_sib1_,
                             e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                             f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
@@ -45,6 +46,7 @@ private:
   void create_srb(du_ue* ue, srb_id_t srb_id);
 
   const cu_cp_inter_du_handover_request request;
+  const srsran::security::sec_as_config source_security_cfg;
   const byte_buffer                     target_cell_sib1;
 
   du_ue* source_ue = nullptr; // Pointer to UE in the source DU

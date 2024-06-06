@@ -517,10 +517,16 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
   du_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
 
+  rrc_ue_interface* rrc_ue =
+      rrc_du_adapters.at(get_du_index_from_ue_index(request.source_ue_index)).find_rrc_ue(request.source_ue_index);
+  security::security_context sec_ctx = rrc_ue->get_rrc_ue_security_context();
+  security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
+
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
   return routine_mng.start_inter_du_handover_routine(
       request,
+      up_sec,
       std::move(sib1),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(source_du_index).get_f1ap_interface().get_f1ap_ue_context_manager(),

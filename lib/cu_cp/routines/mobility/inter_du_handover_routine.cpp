@@ -46,6 +46,7 @@ bool verify_ho_request(const cu_cp_inter_du_handover_request& request,
 }
 
 inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
+                                                     const srsran::security::sec_as_config& source_security_cfg_,
                                                      const byte_buffer&                     target_cell_sib1_,
                                                      e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                                                      f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
@@ -56,6 +57,7 @@ inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handov
                                                      ue_manager&                            ue_mng_,
                                                      srslog::basic_logger&                  logger_) :
   request(request_),
+  source_security_cfg(source_security_cfg_),
   target_cell_sib1(target_cell_sib1_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   source_du_f1ap_ue_ctxt_mng(source_du_f1ap_ue_ctxt_mng_),
@@ -110,6 +112,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     if (!handle_context_setup_response(response_msg,
                                        bearer_context_modification_request,
                                        target_ue_context_setup_response,
+                                       source_security_cfg,
                                        next_config,
                                        logger,
                                        true)) {
@@ -133,7 +136,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   // Inform CU-UP about new DL tunnels.
   {
-    //  prepare Bearer Context Release Command and call E1AP notifier
+    //  prepare Bearer Context Modification Request and call E1AP notifier
     bearer_context_modification_request.ue_index = request.source_ue_index;
 
     // call E1AP procedure and wait for BearerContextModificationResponse
