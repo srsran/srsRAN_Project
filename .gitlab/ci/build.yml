@@ -18,7 +18,6 @@ variables:
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
 
-  AMD64_LIB_BUILDER_TAG: on-prem-amd64
   AMD64_VIAVI_BUILDER_TAG: on-prem-amd64-avx2-avx512
 
   INFRASTRUCTURE_TAG:
@@ -921,7 +920,8 @@ package:
     KUBERNETES_MEMORY_LIMIT: 12Gi
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+    extraopts: -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
@@ -938,7 +938,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   script:
     - gnb --version
   parallel:
@@ -1916,7 +1916,7 @@ basic package:
   variables:
     <<: *package_variables
     OS_VERSION: "24.04"
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   needs: []
 
 basic tsan:
