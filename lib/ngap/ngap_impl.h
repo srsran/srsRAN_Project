@@ -43,6 +43,7 @@ public:
 
   // ngap connection manager functions
   bool                             handle_amf_tnl_connection_request() override;
+  async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
 
   async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) override;

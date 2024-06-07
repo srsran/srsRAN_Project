@@ -61,7 +61,6 @@ protected:
     cu_cp_obj = create_cu_cp(cu_cfg);
 
     // Create AMF response to NG Setup.
-    amf->attach_cu_cp_pdu_handler(cu_cp_obj->get_ng_handler().get_ngap_message_handler());
     amf->enqueue_next_tx_pdu(srs_cu_cp::generate_ng_setup_response());
 
     // Start CU-CP.

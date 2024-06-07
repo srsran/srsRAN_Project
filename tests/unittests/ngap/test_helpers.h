@@ -41,6 +41,7 @@ public:
     {
     public:
       dummy_ngap_message_notifier(dummy_n2_gateway& parent_) : parent(parent_) {}
+      ~dummy_ngap_message_notifier() { parent.rx_pdu_notifier.reset(); }
 
       void on_new_message(const ngap_message& msg) override
       {

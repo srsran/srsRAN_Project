@@ -57,10 +57,12 @@ private:
   const cu_cp_configuration&        cfg;
   ue_manager&                       ue_mng;
   const cu_up_processor_repository& cu_ups;
+  cu_cp_routine_manager&            routine_mng;
+  task_executor&                    ctrl_exec;
+  srslog::basic_logger&             logger;
 
   amf_connection_manager amf_mng;
-
-  du_connection_manager du_mng;
+  du_connection_manager  du_mng;
 };
 
 } // namespace srs_cu_cp

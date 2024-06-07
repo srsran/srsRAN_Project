@@ -92,6 +92,11 @@ bool ngap_impl::handle_amf_tnl_connection_request()
   return true;
 }
 
+async_task<void> ngap_impl::handle_amf_disconnection_request()
+{
+  return conn_handler.handle_tnl_association_removal();
+}
+
 async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(const ngap_ng_setup_request& request)
 {
   logger.info("Sending NgSetupRequest");

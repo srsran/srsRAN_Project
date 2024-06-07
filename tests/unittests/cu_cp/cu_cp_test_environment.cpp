@@ -85,9 +85,6 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
-
-  // Pass CU-CP PDU handler to AMF.
-  amf_stub->attach_cu_cp_pdu_handler(cu_cp_inst->get_ng_handler().get_ngap_message_handler());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()

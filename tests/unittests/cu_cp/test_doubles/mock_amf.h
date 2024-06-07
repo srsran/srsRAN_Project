@@ -20,8 +20,6 @@ namespace srs_cu_cp {
 class mock_amf : public n2_connection_client
 {
 public:
-  virtual void attach_cu_cp_pdu_handler(ngap_message_handler& cu_cp_) = 0;
-
   /// Pop PDU sent by CU-CP and received by AMF.
   virtual bool try_pop_rx_pdu(ngap_message& pdu) = 0;
 

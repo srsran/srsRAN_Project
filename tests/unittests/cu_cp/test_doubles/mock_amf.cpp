@@ -16,14 +16,12 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-/// \brief Mock class for the interface between DU and CU-CP that accounts for the fact that the CU-CP may push PDUs
+/// \brief Mock class for the interface between CU-CP and AMF that accounts for the fact that the CU-CP may push PDUs
 /// from different threads.
-class synchronized_mock_du : public mock_amf
+class synchronized_mock_amf : public mock_amf
 {
 public:
-  explicit synchronized_mock_du() : rx_pdus(1024), pending_tx_pdus(16) {}
-
-  void attach_cu_cp_pdu_handler(ngap_message_handler& cu_cp_) override { cu_cp_pdu_handler = &cu_cp_; }
+  explicit synchronized_mock_amf() : rx_pdus(1024), pending_tx_pdus(16) {}
 
   std::unique_ptr<ngap_message_notifier>
   handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
@@ -31,7 +29,8 @@ public:
     class sync_mock_pdu_notifier : public ngap_message_notifier
     {
     public:
-      sync_mock_pdu_notifier(synchronized_mock_du& parent_) : parent(parent_) {}
+      sync_mock_pdu_notifier(synchronized_mock_amf& parent_) : parent(parent_) {}
+      ~sync_mock_pdu_notifier() override { parent.rx_pdu_notifier.reset(); }
 
       void on_new_message(const ngap_message& msg) override
       {
@@ -39,7 +38,7 @@ public:
         if (not parent.pending_tx_pdus.empty()) {
           ngap_message tx_pdu;
           parent.pending_tx_pdus.try_pop(tx_pdu);
-          parent.cu_cp_pdu_handler->handle_message(tx_pdu);
+          parent.push_tx_pdu(tx_pdu);
         }
 
         bool success = parent.rx_pdus.push_blocking(msg);
@@ -47,15 +46,16 @@ public:
       }
 
     private:
-      synchronized_mock_du& parent;
+      synchronized_mock_amf& parent;
     };
 
+    rx_pdu_notifier = std::move(cu_cp_rx_pdu_notifier);
     return std::make_unique<sync_mock_pdu_notifier>(*this);
   }
 
   bool try_pop_rx_pdu(ngap_message& pdu) override { return rx_pdus.try_pop(pdu); }
 
-  void push_tx_pdu(const ngap_message& pdu) override { cu_cp_pdu_handler->handle_message(pdu); }
+  void push_tx_pdu(const ngap_message& pdu) override { rx_pdu_notifier->on_new_message(pdu); }
 
   void enqueue_next_tx_pdu(const ngap_message& pdu) override { pending_tx_pdus.push_blocking(pdu); }
 
@@ -66,7 +66,7 @@ private:
 
   ngap_pdu_queue rx_pdus;
 
-  ngap_message_handler* cu_cp_pdu_handler = nullptr;
+  std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
 
   // Tx PDUs to send once the NG connection is set up.
   ngap_pdu_queue pending_tx_pdus;
@@ -74,5 +74,5 @@ private:
 
 std::unique_ptr<mock_amf> srsran::srs_cu_cp::create_mock_amf()
 {
-  return std::make_unique<synchronized_mock_du>();
+  return std::make_unique<synchronized_mock_amf>();
 }

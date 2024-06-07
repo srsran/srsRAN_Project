@@ -59,6 +59,9 @@ public:
   /// \brief Request a new TNL association to the AMF.
   virtual bool handle_amf_tnl_connection_request() = 0;
 
+  /// \brief Request the NGAP handler to disconnect from the AMF.
+  virtual async_task<void> handle_amf_disconnection_request() = 0;
+
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
   /// \return Returns a ngap_ng_setup_result struct.
