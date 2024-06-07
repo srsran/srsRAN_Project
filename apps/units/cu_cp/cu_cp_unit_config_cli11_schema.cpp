@@ -15,6 +15,41 @@
 
 using namespace srsran;
 
+static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& log_params)
+{
+  auto level_check = [](const std::string& value) -> std::string {
+    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
+      return {};
+    }
+    return "Log level value not supported. Accepted values [info,debug,warning,error]";
+  };
+
+  add_option(app, "--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
+  add_option(app, "--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
+  add_option(app, "--ngap_level", log_params.ngap_level, "NGAP log level")->capture_default_str()->check(level_check);
+  add_option(app, "--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
+  add_option(app, "--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
+  add_option(app, "--sec_level", log_params.sec_level, "Security functions log level")
+      ->capture_default_str()
+      ->check(level_check);
+
+  add_option(
+      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1024));
+
+  add_option(app, "--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
+      ->always_capture_default();
+}
+
+static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pcap_params)
+{
+  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "N3 GTP-U PCAP file output path")
+      ->capture_default_str();
+  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable N3 GTP-U packet capture")
+      ->always_capture_default();
+}
+
 static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config& report_params)
 {
   add_option(app, "--report_cfg_id", report_params.report_cfg_id, "Report configuration id to be configured")
@@ -240,33 +275,6 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
   configure_cli11_f1ap_args(*f1ap_subcmd, cu_cp_params.f1ap_config);
 }
 
-static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& log_params)
-{
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
-  add_option(app, "--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
-  add_option(app, "--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
-  add_option(app, "--ngap_level", log_params.ngap_level, "NGAP log level")->capture_default_str()->check(level_check);
-  add_option(app, "--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
-  add_option(app, "--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
-  add_option(app, "--sec_level", log_params.sec_level, "Security functions log level")
-      ->capture_default_str()
-      ->check(level_check);
-
-  add_option(
-      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
-
-  add_option(app, "--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
-      ->always_capture_default();
-}
-
 static void configure_cli11_rlc_um_args(CLI::App& app, cu_cp_unit_rlc_um_config& rlc_um_params)
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
@@ -428,6 +436,10 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, unit_cfg.loggers);
+
+  // PCAP section.
+  CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "PCAP configuration")->configurable();
+  configure_cli11_pcap_args(*pcap_subcmd, unit_cfg.pcap_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();

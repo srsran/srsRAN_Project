@@ -8,20 +8,14 @@
  *
  */
 
-#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handling.h"
-#include "srsran/support/tsan_options.h"
 #include "srsran/support/version/version.h"
 
-#include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_factory.h"
-
-#include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
@@ -171,6 +165,7 @@ int main(int argc, char** argv)
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   cu_cp_unit_config cu_cp_config;
+  cu_cp_config.pcap_cfg.set_prefix("/tmp/gnb");
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
 
   cu_up_unit_config cu_up_config;
@@ -282,7 +277,8 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  std::unique_ptr<dlt_pcap>              ngap_p = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
+  std::unique_ptr<dlt_pcap> ngap_p =
+      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
   std::unique_ptr<dlt_pcap> f1ap_p =

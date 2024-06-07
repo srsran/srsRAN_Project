@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "fmt/core.h"
 #include <string>
 
 namespace srsran {
@@ -17,16 +18,24 @@ namespace srsran {
 /// Configuration of packet capture functionalities.
 struct cu_cp_unit_pcap_config {
   struct {
-    std::string filename = "/tmp/gnb_ngap.pcap";
+    std::string filename = "/tmp/cu_ngap.pcap";
     bool        enabled  = false;
   } ngap;
   struct {
-    std::string filename = "/tmp/gnb_e1ap.pcap";
+    std::string filename = "/tmp/cu_e1ap.pcap";
     bool        enabled  = false;
   } e1ap;
   struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
+    std::string filename = "/tmp/cu_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;
+
+  /// helper method to set the filename prefix for different apps.
+  void set_prefix(std::string prefix)
+  {
+    ngap.filename = fmt::format("{}_ngap.pcap", prefix);
+    e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
+    f1ap.filename = fmt::format("{}_f1u.pcap", prefix);
+  }
 };
 } // namespace srsran

@@ -10,22 +10,18 @@
 
 #pragma once
 
-#include "../../gnb/gnb_appconfig.h"
-#include "../../services/worker_manager.h"
+#include "apps/services/worker_manager_worker_getter.h"
+#include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 
-namespace srsran {
-namespace modules {
-namespace cu_cp {
+namespace srsran::modules::cu_cp {
 
 /// Creates the DLT PCAP of the CU-CP.
-inline std::unique_ptr<dlt_pcap> create_dlt_pcap(const pcap_appconfig& pcap_cfg, worker_manager& workers)
+inline std::unique_ptr<dlt_pcap> create_dlt_pcap(const cu_cp_unit_pcap_config&   pcap_cfg,
+                                                 worker_manager_executor_getter* exec_getter)
 {
-  // return pcap_cfg.ngap.enabled ? create_ngap_pcap(pcap_cfg.ngap.filename, workers.get_executor("pcap_exec"))
-  //                              : create_null_dlt_pcap();
-  return create_null_dlt_pcap();
+  return pcap_cfg.ngap.enabled ? create_ngap_pcap(pcap_cfg.ngap.filename, exec_getter->get_executor("pcap_exec"))
+                               : create_null_dlt_pcap();
 }
 
-} // namespace cu_cp
-} // namespace modules
-} // namespace srsran
+} // namespace srsran::modules::cu_cp

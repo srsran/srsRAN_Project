@@ -30,7 +30,7 @@ struct cu_up_unit_pcap_config {
     bool        enabled  = false;
   } e1ap;
 
-  /// helper method to set the prefix for different apps.
+  /// helper method to set the filename prefix for different apps.
   void set_prefix(std::string prefix)
   {
     n3.filename   = fmt::format("{}_n3.pcap", prefix);

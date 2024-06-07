@@ -41,12 +41,15 @@
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
 #include "apps/units/cu_cp/cu_cp_unit_logger_config.h"
+#include "apps/units/cu_cp/pcap_factory.h"
 #include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/cu_up/cu_up_logger_registrator.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
 #include "apps/units/cu_up/cu_up_unit_config_cli11_schema.h"
 #include "apps/units/cu_up/cu_up_unit_config_translators.h"
 #include "apps/units/cu_up/cu_up_unit_config_validator.h"
+#include "apps/units/cu_up/cu_up_wrapper.h"
+#include "apps/units/cu_up/pcap_factory.h"
 
 // TODO remove apps/gnb/*.h
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
@@ -54,8 +57,6 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
-#include "apps/units/cu_up/cu_up_wrapper.h"
-#include "apps/units/cu_up/pcap_factory.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -248,7 +249,8 @@ int main(int argc, char** argv)
   // 1. modules::...create_pcap does not use the custom cu_worker.
   // 2. modules::flexible_du... for creating F1AP pcap.
   // Initializing PCAPs direclty.
-  std::unique_ptr<dlt_pcap>              ngap_p = create_null_dlt_pcap();
+  std::unique_ptr<dlt_pcap> ngap_p =
+      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
   std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
