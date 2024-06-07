@@ -17,9 +17,7 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
-
-  AMD64_VIAVI_BUILDER_TAG: on-prem-amd64-avx2-avx512
-
+  
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
@@ -1977,8 +1975,8 @@ basic avx512 dpdk:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     DPDK_VERSION: "23.11"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "True"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v4"
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
     SAVE_ARTIFACTS: "True"
@@ -1986,7 +1984,7 @@ basic avx512 dpdk:
     KUBERNETES_CPU_LIMIT: 14
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
-  tags: ["${AMD64_VIAVI_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX512_TAG}"]
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
