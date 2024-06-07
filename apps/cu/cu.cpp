@@ -129,10 +129,6 @@ static void register_app_logs(const log_appconfig&            log_cfg,
   metrics_logger.set_level(srslog::str_to_basic_level(log_cfg.metrics_level));
   metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
-  auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
-  e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
-  e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
-
   // Register units logs.
   register_cu_cp_loggers(cu_cp_loggers);
   register_cu_up_loggers(cu_up_loggers);
@@ -256,10 +252,6 @@ int main(int argc, char** argv)
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
   std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
-  std::unique_ptr<dlt_pcap> e2ap_p =
-      cu_cfg.cu_cp_pcap_cfg.e2ap.enabled
-          ? create_e2ap_pcap(cu_cfg.cu_cp_pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
-          : create_null_dlt_pcap();
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -392,7 +384,6 @@ int main(int argc, char** argv)
   std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
   dlt_pcaps.push_back(std::move(f1ap_p));
   dlt_pcaps.push_back(std::move(ngap_p));
-  dlt_pcaps.push_back(std::move(e2ap_p));
 
   // Start processing.
   console.on_app_running();

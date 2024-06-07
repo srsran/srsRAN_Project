@@ -34,21 +34,6 @@ struct log_appconfig {
   std::string tracing_filename;
 };
 
-/// Configuration of packet captures.
-struct cu_cp_pcap_appconfig {
-  struct {
-    std::string filename = "/tmp/cu_e2ap.pcap";
-    bool        enabled  = false;
-  } e2ap;
-};
-
-struct cu_up_pcap_appconfig {
-  struct {
-    std::string filename = "/tmp/cu_gtpu.pcap";
-    bool        enabled  = false;
-  } gtpu;
-};
-
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// CPUs isolation.
@@ -88,10 +73,6 @@ struct cu_up_f1u_appconfig {
 struct cu_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
-
-  /// PCAP configuration.
-  cu_cp_pcap_appconfig cu_cp_pcap_cfg;
-  cu_up_pcap_appconfig cu_up_pcap_cfg;
 
   /// F1-U split configuration.
   cu_up_f1u_appconfig f1u_cfg;

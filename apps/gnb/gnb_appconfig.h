@@ -66,7 +66,6 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_e2ap.pcap";
     bool        enabled  = false;
   } e2ap;
-  cu_up_unit_pcap_config cu_up_pcaps;
 };
 
 /// Metrics report configuration.
