@@ -60,6 +60,8 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pca
   add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U GTP-U PCAP file output path")
       ->capture_default_str();
   add_option(app, "--f1u_enable", pcap_params.f1u.enabled, "F1-U GTP-U PCAP")->always_capture_default();
+  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "E1AP PCAP")->always_capture_default();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_config& metrics_params)

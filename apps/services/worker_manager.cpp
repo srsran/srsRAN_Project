@@ -147,7 +147,7 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
   // These layers have very low throughput, so no point in instantiating more than one strand.
   // This means that there is no parallelization in pcap writing across these layers.
   if (pcap_cfg.e2ap.enabled or cu_cp_pcap_cfg.f1ap.enabled or cu_cp_pcap_cfg.ngap.enabled or
-      cu_cp_pcap_cfg.e1ap.enabled) {
+      cu_cp_pcap_cfg.e1ap.enabled or cu_up_pcap_cfg.e1ap.enabled) {
     strand_list.emplace_back(base_strand_cfg);
   }
 
