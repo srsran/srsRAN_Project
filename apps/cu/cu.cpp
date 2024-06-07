@@ -252,7 +252,7 @@ int main(int argc, char** argv)
   // 1. modules::...create_pcap does not use the custom cu_worker.
   // 2. modules::flexible_du... for creating F1AP pcap.
   // Initializing PCAPs direclty.
-  std::unique_ptr<dlt_pcap> ngap_p =
+  srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
@@ -268,7 +268,7 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_address                = cu_cp_config.f1ap_config.f1c_bind_address;
   f1c_sctp_cfg.bind_port                   = 38471;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
-  f1c_cu_sctp_gateway_config                        f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *ngap_p});
+  f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.ngap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
     n2_nw_cfg.ppid           = NGAP_PPID;
 
     n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
-        *ngap_p,
+        *cu_cp_dlt_pcaps.ngap,
         cu_cp_config.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
                                      : ngap_mode_t{network_mode_t{*epoll_broker, n2_nw_cfg}}});
   }
@@ -388,7 +388,6 @@ int main(int argc, char** argv)
   // Move all the DLT PCAPs to a container.
   std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
   dlt_pcaps.push_back(std::move(f1ap_p));
-  dlt_pcaps.push_back(std::move(ngap_p));
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -409,6 +408,7 @@ int main(int argc, char** argv)
   for (auto& pcap : dlt_pcaps) {
     pcap->close();
   }
+  cu_cp_dlt_pcaps.close();
   cu_logger.info("PCAP files successfully closed.");
 
   // Stop workers

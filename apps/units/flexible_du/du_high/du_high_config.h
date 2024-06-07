@@ -607,6 +607,13 @@ struct du_high_unit_pcap_config {
     rlc.filename  = fmt::format("{}_rlc.pcap", prefix);
     mac.filename  = fmt::format("{}_mac.pcap", prefix);
   }
+  /// When using the gNB app, there is no point in instantiating
+  /// F1 pcaps twice. This force disables them.
+  void disable_f1_pcaps()
+  {
+    f1u.enabled  = false;
+    f1ap.enabled = false;
+  }
 };
 
 /// CPU affinities configuration for the cell.

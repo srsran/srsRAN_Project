@@ -283,11 +283,17 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  std::unique_ptr<dlt_pcap> ngap_p =
+  // fmt::print("cu_f1ap = {} du_f1ap={}\n", cu_cp_config.pcap_cfg.f1ap_enable);
+  srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
 
+  fmt::print(
+      "cu_f1u = {} du_f1u={}\n", cu_up_config.pcap_cfg.f1u.enabled, du_unit_cfg.du_high_cfg.config.pcaps.f1u.enabled);
+  du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps(); // in gNB app only CU pcaps of F1-U are required.
+  fmt::print(
+      "cu_f1u = {} du_f1u={}\n", cu_up_config.pcap_cfg.f1u.enabled, du_unit_cfg.du_high_cfg.config.pcaps.f1u.enabled);
   srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
       modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
@@ -335,7 +341,7 @@ int main(int argc, char** argv)
     using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
     n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
-        *ngap_p,
+        *cu_cp_dlt_pcaps.ngap,
         cu_cp_config.amf_cfg.no_core
             ? ngap_mode_t{no_core_mode_t{}}
             : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(cu_cp_config.amf_cfg)}}});
@@ -447,6 +453,7 @@ int main(int argc, char** argv)
   gnb_logger.info("Closing PCAP files...");
   mac_p->close();
   rlc_p->close();
+  cu_cp_dlt_pcaps.close();
   du_dlt_pcaps.close();
   gnb_logger.info("PCAP files successfully closed.");
 
