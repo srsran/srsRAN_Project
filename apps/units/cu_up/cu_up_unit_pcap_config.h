@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "fmt/core.h"
 #include <string>
 
 namespace srsran {
@@ -28,6 +29,14 @@ struct cu_up_unit_pcap_config {
     std::string filename = "/tmp/cu_e1ap.pcap";
     bool        enabled  = false;
   } e1ap;
+
+  /// helper method to set the prefix for different apps.
+  void set_prefix(std::string prefix)
+  {
+    n3.filename   = fmt::format("{}_n3.pcap", prefix);
+    f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
+    e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
+  }
 };
 
 } // namespace srsran

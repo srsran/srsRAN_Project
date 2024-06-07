@@ -174,6 +174,7 @@ int main(int argc, char** argv)
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
 
   cu_up_unit_config cu_up_config;
+  cu_up_config.pcap_cfg.set_prefix("/tmp/gnb");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   dynamic_du_unit_config du_unit_cfg;
