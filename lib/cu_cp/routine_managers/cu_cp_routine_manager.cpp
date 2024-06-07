@@ -113,7 +113,6 @@ async_task<bool> cu_cp_routine_manager::start_reestablishment_context_modificati
 
 async_task<cu_cp_inter_du_handover_response>
 cu_cp_routine_manager::start_inter_du_handover_routine(const cu_cp_inter_du_handover_request& request,
-                                                       const security::sec_as_config&         up_sec,
                                                        const byte_buffer&                     target_cell_sib1,
                                                        e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng,
                                                        f1ap_ue_context_manager&               source_f1ap_ue_ctxt_mng,
@@ -123,7 +122,6 @@ cu_cp_routine_manager::start_inter_du_handover_routine(const cu_cp_inter_du_hand
                                                        cu_cp_ue_context_manipulation_handler& cu_cp_handler)
 {
   return launch_async<inter_du_handover_routine>(request,
-                                                 up_sec,
                                                  target_cell_sib1,
                                                  e1ap_bearer_ctxt_mng,
                                                  source_f1ap_ue_ctxt_mng,

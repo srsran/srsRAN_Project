@@ -18,7 +18,6 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
     cu_cp_inter_du_handover_response&         response_msg,
     e1ap_bearer_context_modification_request& bearer_context_modification_request,
     const f1ap_ue_context_setup_response&     target_ue_context_setup_response,
-    const srsran::security::sec_as_config&    security_cfg,
     up_config_update&                         next_config,
     const srslog::basic_logger&               logger,
     bool                                      reestablish_pdcp)
@@ -44,27 +43,6 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
   if (!target_ue_context_setup_response.c_rnti.has_value()) {
     logger.warning("No C-RNTI present in UE context setup");
     return false;
-  }
-
-  // Fill security info
-  bearer_context_modification_request.security_info.emplace();
-  bearer_context_modification_request.security_info->security_algorithm.ciphering_algo = security_cfg.cipher_algo;
-  bearer_context_modification_request.security_info->security_algorithm.integrity_protection_algorithm =
-      security_cfg.integ_algo;
-  auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
-  if (k_enc_buffer.is_error()) {
-    logger.warning("Unable to allocate byte_buffer");
-    return false;
-  }
-  bearer_context_modification_request.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
-  if (security_cfg.k_int.has_value()) {
-    auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
-    if (k_int_buffer.is_error()) {
-      logger.warning("Unable to allocate byte_buffer");
-      return false;
-    }
-    bearer_context_modification_request.security_info->up_security_key.integrity_protection_key =
-        std::move(k_int_buffer.value());
   }
 
   // Create bearer context mod request.

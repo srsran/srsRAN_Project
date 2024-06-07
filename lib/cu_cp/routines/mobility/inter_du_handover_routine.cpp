@@ -46,7 +46,6 @@ bool verify_ho_request(const cu_cp_inter_du_handover_request& request,
 }
 
 inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handover_request& request_,
-                                                     const srsran::security::sec_as_config& source_security_cfg_,
                                                      const byte_buffer&                     target_cell_sib1_,
                                                      e1ap_bearer_context_manager&           e1ap_bearer_ctxt_mng_,
                                                      f1ap_ue_context_manager&               source_du_f1ap_ue_ctxt_mng_,
@@ -57,7 +56,6 @@ inter_du_handover_routine::inter_du_handover_routine(const cu_cp_inter_du_handov
                                                      ue_manager&                            ue_mng_,
                                                      srslog::basic_logger&                  logger_) :
   request(request_),
-  source_security_cfg(source_security_cfg_),
   target_cell_sib1(target_cell_sib1_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   source_du_f1ap_ue_ctxt_mng(source_du_f1ap_ue_ctxt_mng_),
@@ -112,7 +110,6 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     if (!handle_context_setup_response(response_msg,
                                        bearer_context_modification_request,
                                        target_ue_context_setup_response,
-                                       source_security_cfg,
                                        next_config,
                                        logger,
                                        true)) {
@@ -136,7 +133,16 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   // Inform CU-UP about new DL tunnels.
   {
-    //  prepare Bearer Context Modification Request and call E1AP notifier
+    // get securtiy context of target UE
+    if (!add_security_context_to_bearer_context_modification(
+            target_ue->get_security_context().get_as_config(security::sec_domain::up))) {
+      logger.warning("ue={}: \"{}\" failed to create UE context at target DU", request.source_ue_index, name());
+      CORO_AWAIT(ue_removal_handler.handle_ue_removal_request(target_ue_context_setup_request.ue_index));
+      // Note: From this point the UE is removed and only the stored context can be accessed.
+      CORO_EARLY_RETURN(response_msg);
+    }
+
+    // prepare Bearer Context Modification Request and call E1AP notifier
     bearer_context_modification_request.ue_index = request.source_ue_index;
 
     // call E1AP procedure and wait for BearerContextModificationResponse
@@ -288,4 +294,31 @@ void inter_du_handover_routine::create_srb(du_ue* ue, srb_id_t srb_id)
   srb_msg.enable_security = true;
   // TODO: add support for non-default PDCP config.
   ue->get_rrc_ue_srb_notifier().create_srb(srb_msg);
+}
+
+bool inter_du_handover_routine::add_security_context_to_bearer_context_modification(
+    const srsran::security::sec_as_config& security_cfg)
+{
+  // Fill security info
+  bearer_context_modification_request.security_info.emplace();
+  bearer_context_modification_request.security_info->security_algorithm.ciphering_algo = security_cfg.cipher_algo;
+  bearer_context_modification_request.security_info->security_algorithm.integrity_protection_algorithm =
+      security_cfg.integ_algo;
+  auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
+  if (k_enc_buffer.is_error()) {
+    logger.warning("Unable to allocate byte_buffer");
+    return false;
+  }
+  bearer_context_modification_request.security_info->up_security_key.encryption_key = std::move(k_enc_buffer.value());
+  if (security_cfg.k_int.has_value()) {
+    auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
+    if (k_int_buffer.is_error()) {
+      logger.warning("Unable to allocate byte_buffer");
+      return false;
+    }
+    bearer_context_modification_request.security_info->up_security_key.integrity_protection_key =
+        std::move(k_int_buffer.value());
+  }
+
+  return true;
 }

@@ -22,7 +22,6 @@ namespace srs_cu_cp {
 bool handle_context_setup_response(cu_cp_inter_du_handover_response&         response_msg,
                                    e1ap_bearer_context_modification_request& bearer_context_modification_request,
                                    const f1ap_ue_context_setup_response&     target_ue_context_setup_response,
-                                   const srsran::security::sec_as_config&    security_cfg,
                                    up_config_update&                         next_config,
                                    const srslog::basic_logger&               logger,
                                    bool                                      reestablish_pdcp);
