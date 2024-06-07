@@ -27,7 +27,6 @@ namespace srsran {
 struct worker_manager : public worker_manager_executor_getter {
   worker_manager(const dynamic_du_unit_config&     du_cfg,
                  const expert_execution_appconfig& expert_appcfg,
-                 pcap_appconfig&                   pcap_cfg,
                  cu_cp_unit_pcap_config&           cu_cp_pcap_cfg,
                  cu_up_unit_pcap_config&           cu_up_pcap_cfg,
                  unsigned                          gtpu_queue_size);
@@ -122,7 +121,6 @@ private:
 
   execution_config_helper::worker_pool create_low_prio_workers(const expert_execution_appconfig& expert_appcfg);
   void                                 create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
-                                                                 const pcap_appconfig&             pcap_cfg,
                                                                  const cu_cp_unit_pcap_config&     cu_cp_pcaps,
                                                                  const cu_up_unit_pcap_config&     cu_up_pcaps,
                                                                  const du_high_unit_pcap_config&   du_pcaps,

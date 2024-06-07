@@ -61,13 +61,6 @@ struct log_appconfig {
   std::string tracing_filename;
 };
 
-struct pcap_appconfig {
-  struct {
-    std::string filename = "/tmp/gnb_e2ap.pcap";
-    bool        enabled  = false;
-  } e2ap;
-};
-
 /// Metrics report configuration.
 struct metrics_appconfig {
   struct pdcp_metrics {
@@ -126,8 +119,6 @@ struct hal_appconfig {
 struct gnb_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
-  /// PCAP configuration.
-  pcap_appconfig pcap_cfg;
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// gNodeB identifier.

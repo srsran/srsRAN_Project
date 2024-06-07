@@ -272,7 +272,6 @@ int main(int argc, char** argv)
 
   worker_manager workers{du_unit_cfg,
                          gnb_cfg.expert_execution_cfg,
-                         gnb_cfg.pcap_cfg,
                          cu_cp_config.pcap_cfg,
                          cu_up_config.pcap_cfg,
                          cu_up_config.gtpu_queue_size};
@@ -288,18 +287,17 @@ int main(int argc, char** argv)
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
   std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
-  std::unique_ptr<dlt_pcap> f1ap_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+
+  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
+      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<dlt_pcap> e2ap_p = gnb_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(gnb_cfg.pcap_cfg.e2ap.filename,
-                                                                                      workers.get_executor("pcap_exec"))
-                                                                   : create_null_dlt_pcap();
 
-  std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
-  std::unique_ptr<e1_local_connector>  e1_gw  = create_e1_local_connector(
+  std::unique_ptr<f1c_local_connector> f1c_gw =
+      create_f1c_local_connector(f1c_local_connector_config{*du_dlt_pcaps.f1ap});
+  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(
       e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1AP)]});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
@@ -347,7 +345,7 @@ int main(int argc, char** argv)
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
 
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
@@ -410,12 +408,6 @@ int main(int argc, char** argv)
 
   du& du_inst = *du_inst_and_cmds.unit;
 
-  // Move all the DLT PCAPs to a container.
-  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
-  dlt_pcaps.push_back(std::move(f1ap_p));
-  dlt_pcaps.push_back(std::move(ngap_p));
-  dlt_pcaps.push_back(std::move(e2ap_p));
-
   std::vector<std::unique_ptr<app_services::application_command>> commands;
   for (auto& cmd : cu_cp_obj_and_cmds.commands) {
     commands.push_back(std::move(cmd));
@@ -455,9 +447,7 @@ int main(int argc, char** argv)
   gnb_logger.info("Closing PCAP files...");
   mac_p->close();
   rlc_p->close();
-  for (auto& pcap : dlt_pcaps) {
-    pcap->close();
-  }
+  du_dlt_pcaps.close();
   gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");

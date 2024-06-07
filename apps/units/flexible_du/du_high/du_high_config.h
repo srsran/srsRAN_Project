@@ -577,7 +577,15 @@ struct du_high_unit_pcap_config {
   struct {
     std::string filename;
     bool        enabled = false;
+  } e2ap;
+  struct {
+    std::string filename;
+    bool        enabled = false;
   } f1ap;
+  struct {
+    std::string filename;
+    bool        enabled = false;
+  } f1u;
   struct {
     std::string filename;
     std::string rb_type = "all";
@@ -593,7 +601,9 @@ struct du_high_unit_pcap_config {
   /// e.g.: "/tmp/gnb_f1ap.pcap", "/tmp/cu_f1ap.pcap" or "/tmp/du_f1ap.pcap"
   void set_default_filename(std::string prefix)
   {
+    e2ap.filename = fmt::format("{}_e2ap.pcap", prefix);
     f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
+    f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
     rlc.filename  = fmt::format("{}_rlc.pcap", prefix);
     mac.filename  = fmt::format("{}_mac.pcap", prefix);
   }

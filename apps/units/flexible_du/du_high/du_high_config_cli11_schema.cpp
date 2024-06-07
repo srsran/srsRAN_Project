@@ -1153,8 +1153,12 @@ static void configure_cli11_test_mode_args(CLI::App& app, du_high_unit_test_mode
 
 static void configure_cli11_pcap_args(CLI::App& app, du_high_unit_pcap_config& pcap_params)
 {
+  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U PCAP file output path")->capture_default_str();
+  add_option(app, "--f1u_enable", pcap_params.f1u.enabled, "Enable F1-U packet capture")->always_capture_default();
   add_option(app, "--rlc_filename", pcap_params.rlc.filename, "RLC PCAP file output path")->capture_default_str();
   add_option(app, "--rlc_rb_type", pcap_params.rlc.rb_type, "RLC PCAP RB type (all, srb, drb)")->capture_default_str();
   add_option(app, "--rlc_enable", pcap_params.rlc.enabled, "Enable RLC packet capture")->always_capture_default();

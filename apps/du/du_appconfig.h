@@ -39,8 +39,6 @@ struct f1u_appconfig {
 struct du_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
-  /// PCAP configuration.
-  pcap_appconfig pcap_cfg;
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// E2 configuration.

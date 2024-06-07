@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../../../gnb/gnb_appconfig.h"
 #include "../../../services/worker_manager.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
@@ -20,11 +19,39 @@ namespace srsran {
 namespace modules {
 namespace flexible_du {
 
+struct du_dlt_pcaps {
+  std::unique_ptr<dlt_pcap> f1ap;
+  std::unique_ptr<dlt_pcap> f1u;
+  std::unique_ptr<dlt_pcap> e2ap;
+  void                      close() const
+  {
+    if (f1ap != nullptr) {
+      f1ap->close();
+    }
+    if (f1u != nullptr) {
+      f1u->close();
+    }
+    if (e2ap != nullptr) {
+      e2ap->close();
+    }
+  }
+};
+
 /// Creates the DLT PCAP of the DU.
-inline std::unique_ptr<dlt_pcap> create_dlt_pcap(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
+inline du_dlt_pcaps create_dlt_pcaps(const du_high_unit_pcap_config& pcap_cfg, worker_manager& workers)
 {
-  return pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_executor("pcap_exec"))
-                               : create_null_dlt_pcap();
+  du_dlt_pcaps pcaps;
+
+  pcaps.f1ap = pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, workers.get_executor("pcap_exec"))
+                                     : create_null_dlt_pcap();
+
+  pcaps.f1u = pcap_cfg.f1u.enabled ? create_gtpu_pcap(pcap_cfg.f1u.filename, workers.get_executor("f1u_pcap_exec"))
+                                   : create_null_dlt_pcap();
+
+  pcaps.e2ap = pcap_cfg.e2ap.enabled ? create_e2ap_pcap(pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
+                                     : create_null_dlt_pcap();
+
+  return pcaps;
 }
 
 /// Creates the MAC PCAP of the DU.

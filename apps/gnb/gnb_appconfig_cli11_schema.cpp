@@ -102,11 +102,6 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   });
 }
 
-static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params)
-{
-  // todo check if still needed
-}
-
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
   app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
@@ -335,10 +330,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Logging section.
   CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, gnb_cfg.log_cfg);
-
-  // PCAP section.
-  CLI::App* pcap_subcmd = app.add_subcommand("pcap", "PCAP configuration")->configurable();
-  configure_cli11_pcap_args(*pcap_subcmd, gnb_cfg.pcap_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();

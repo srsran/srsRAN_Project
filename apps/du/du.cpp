@@ -228,12 +228,8 @@ int main(int argc, char** argv)
 
   cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
   cu_up_unit_pcap_config dummy_cu_up_pcap{};
-  worker_manager         workers{du_unit_cfg,
-                         du_cfg.expert_execution_cfg,
-                         du_cfg.pcap_cfg,
-                         dummy_cu_cp_pcap,
-                         dummy_cu_up_pcap,
-                         du_cfg.f1u_cfg.pdu_queue_size};
+  worker_manager         workers{
+      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.f1u_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -242,21 +238,16 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  std::unique_ptr<dlt_pcap> f1ap_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
+      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  // TODO: Remove GTPU pcap
-  std::unique_ptr<dlt_pcap> gtpu_p = create_null_dlt_pcap();
-  std::unique_ptr<dlt_pcap> e2ap_p =
-      du_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(du_cfg.pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
-                                   : create_null_dlt_pcap();
 
   // Instantiate F1-C client gateway.
-  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
-      create_f1c_client_gateway(du_cfg.f1c_cfg.cu_cp_address, du_cfg.f1c_cfg.bind_address, *epoll_broker, *f1ap_p);
+  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
+      du_cfg.f1c_cfg.cu_cp_address, du_cfg.f1c_cfg.bind_address, *epoll_broker, *du_dlt_pcaps.f1ap);
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -265,7 +256,7 @@ int main(int argc, char** argv)
   // TODO: Simplify this and use factory.
   gtpu_demux_creation_request du_f1u_gtpu_msg       = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop                  = true;
-  du_f1u_gtpu_msg.gtpu_pcap                         = gtpu_p.get();
+  du_f1u_gtpu_msg.gtpu_pcap                         = du_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config      = {};
   du_f1u_gw_config.bind_address                     = du_cfg.f1u_cfg.bind_address;
@@ -276,7 +267,7 @@ int main(int argc, char** argv)
       *epoll_broker,
       workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
   std::unique_ptr<srs_du::f1u_split_connector> du_f1u_conn =
-      std::make_unique<srs_du::f1u_split_connector>(du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *gtpu_p);
+      std::make_unique<srs_du::f1u_split_connector>(du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_dlt_pcaps.f1u);
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
@@ -296,7 +287,7 @@ int main(int argc, char** argv)
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
@@ -320,17 +311,12 @@ int main(int argc, char** argv)
                                     *hub);
 
   du& du_inst = *du_inst_and_cmds.unit;
-  // Move all the DLT PCAPs to a container.
-  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps;
-  dlt_pcaps.push_back(std::move(f1ap_p));
-  dlt_pcaps.push_back(std::move(e2ap_p));
 
   // Register the commands.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);
 
   // Start processing.
   du_inst.start();
-
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -351,9 +337,7 @@ int main(int argc, char** argv)
   du_logger.info("Closing PCAP files...");
   mac_p->close();
   rlc_p->close();
-  for (auto& pcap : dlt_pcaps) {
-    pcap->close();
-  }
+  du_dlt_pcaps.close();
   du_logger.info("PCAP files successfully closed.");
 
   du_logger.info("Stopping executors...");
