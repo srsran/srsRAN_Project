@@ -14,7 +14,7 @@
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
-#include "srsran/support/signal_handler.h"
+#include "srsran/support/signal_handling.h"
 #include "srsran/support/version/version.h"
 
 #include "srsran/f1u/du/split_connector/f1u_split_connector.h"
@@ -58,13 +58,13 @@ using namespace srsran;
 
 /// \file
 /// \brief Application of a distributed unit (DU) that is split from the CU-CP and CU-UP via the F1 interface.
-///
-/// \cond
 
 static std::string config_file;
 
-static std::atomic<bool> is_running = {true};
-const int                MAX_CONFIG_FILES(10);
+/// Flag that indicates if the application is running or being shutdown.
+static std::atomic<bool> is_app_running = {true};
+/// Maximum number of configuration files allowed to be concatenated in the command line.
+static constexpr unsigned MAX_CONFIG_FILES = 10;
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
@@ -74,9 +74,16 @@ static void populate_cli11_generic_args(CLI::App& app)
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
 
-static void local_signal_handler()
+/// Function to call when the application is interrupted.
+static void interrupt_signal_handler()
 {
-  is_running = false;
+  is_app_running = false;
+}
+
+/// Function to call when the application is going to be forcefully shutdown.
+static void cleanup_signal_handler()
+{
+  srslog::flush();
 }
 
 static void initialize_log(const std::string& filename)
@@ -124,8 +131,9 @@ public:
 
 int main(int argc, char** argv)
 {
-  // Set signal handler.
-  register_signal_handler(local_signal_handler);
+  // Set interrupt and cleanup signal handlers.
+  register_interrupt_signal_handler(interrupt_signal_handler);
+  register_cleanup_signal_handler(cleanup_signal_handler);
 
   // Enable backtrace.
   enable_backtrace();
@@ -319,8 +327,8 @@ int main(int argc, char** argv)
   du_inst->start();
   console.on_app_running();
 
-  while (is_running) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  while (is_app_running) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 
   console.on_app_stopping();

@@ -22,7 +22,7 @@ set(SOURCES
         timers.cpp
         bit_encoding.cpp
         config_yaml.cpp
-        signal_handler.cpp
+        signal_handling.cpp
         event_tracing.cpp
         sysinfo.cpp
         byte_buffer.cpp

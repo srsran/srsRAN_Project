@@ -25,7 +25,7 @@
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/format_utils.h"
-#include "srsran/support/signal_handler.h"
+#include "srsran/support/signal_handling.h"
 #include "fmt/chrono.h"
 #include <arpa/inet.h>
 #include <random>
@@ -409,18 +409,28 @@ struct worker_manager {
 
 static std::string config_file;
 
-const int                MAX_CONFIG_FILES(6);
-static std::atomic<bool> is_running = {true};
+/// Flag that indicates if the application is running or being shutdown.
+static std::atomic<bool> is_app_running = {true};
+/// Maximum number of configuration files allowed to be concatenated in the command line.
+static constexpr unsigned MAX_CONFIG_FILES = 6;
 
-static void local_signal_handler()
+/// Function to call when the application is interrupted.
+static void interrupt_signal_handler()
 {
-  is_running = false;
+  is_app_running = false;
+}
+
+/// Function to call when the application is going to be forcefully shutdown.
+static void cleanup_signal_handler()
+{
+  srslog::flush();
 }
 
 int main(int argc, char** argv)
 {
-  // Set signal handler.
-  register_signal_handler(local_signal_handler);
+  // Set interrupt and cleanup signal handlers.
+  register_interrupt_signal_handler(interrupt_signal_handler);
+  register_cleanup_signal_handler(cleanup_signal_handler);
 
   // Setup and configure config parsing.
   CLI::App app("RU emulator application");
@@ -518,7 +528,7 @@ int main(int argc, char** argv)
   }
   fmt::print("Running. Waiting for incoming packets...\n");
 
-  while (is_running) {
+  while (is_app_running) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     auto    now          = std::chrono::system_clock::now();
