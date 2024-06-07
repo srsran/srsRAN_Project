@@ -457,7 +457,6 @@ variables:
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     AUTO_DETECT_ISA: "False"
-    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=armv8.2-a"
   tags: ["${ARM64_TAG}"]
 
 .smoke arm neon:
