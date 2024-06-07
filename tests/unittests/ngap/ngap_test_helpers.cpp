@@ -39,6 +39,9 @@ ngap_test::ngap_test()
   ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, ue_mng, n2_gw, timers, ctrl_worker);
 
   cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());
+
+  // Initiate N2 TNL association to AMF.
+  report_fatal_error_if_not(ngap->handle_amf_tnl_connection_request(), "Unable to establish connection to AMF");
 }
 
 ngap_test::~ngap_test()

@@ -54,6 +54,8 @@ public:
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
 
 private:
+  void stop_impl();
+
   const cu_cp_configuration&        cfg;
   ue_manager&                       ue_mng;
   const cu_up_processor_repository& cu_ups;
@@ -63,6 +65,10 @@ private:
 
   amf_connection_manager amf_mng;
   du_connection_manager  du_mng;
+
+  std::mutex              mutex;
+  std::condition_variable cvar;
+  bool                    running = true;
 };
 
 } // namespace srs_cu_cp
