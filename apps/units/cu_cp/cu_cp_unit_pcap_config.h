@@ -37,7 +37,7 @@ struct cu_cp_unit_pcap_config {
   {
     ngap.filename = fmt::format("{}_ngap.pcap", prefix);
     e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
-    f1ap.filename = fmt::format("{}_f1u.pcap", prefix);
+    f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
   }
 };
 } // namespace srsran

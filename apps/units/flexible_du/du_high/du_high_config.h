@@ -608,7 +608,7 @@ struct du_high_unit_pcap_config {
     mac.filename  = fmt::format("{}_mac.pcap", prefix);
   }
   /// When using the gNB app, there is no point in instantiating
-  /// F1 pcaps twice. This force disables them.
+  /// F1 pcaps twice. This function force disables them.
   void disable_f1_pcaps()
   {
     f1u.enabled  = false;

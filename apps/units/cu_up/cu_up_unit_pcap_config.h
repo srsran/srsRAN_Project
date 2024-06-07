@@ -39,6 +39,9 @@ struct cu_up_unit_pcap_config {
     f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
     e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);
   }
+  /// When using the gNB app, there is no point in instantiating
+  /// E1 pcaps twice. This function force disables them in the CU-UP.
+  void disable_e1_pcaps() { e1ap.enabled = false; }
 };
 
 } // namespace srsran

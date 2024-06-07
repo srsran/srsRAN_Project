@@ -283,17 +283,16 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  // fmt::print("cu_f1ap = {} du_f1ap={}\n", cu_cp_config.pcap_cfg.f1ap_enable);
+  // Create layer specific PCAPs.
+  // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
+  // We disable one accordingly.
+  cu_up_config.pcap_cfg.disable_e1_pcaps();
+  du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps();
   srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
-  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_pcaps =
+  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
 
-  fmt::print(
-      "cu_f1u = {} du_f1u={}\n", cu_up_config.pcap_cfg.f1u.enabled, du_unit_cfg.du_high_cfg.config.pcaps.f1u.enabled);
-  du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps(); // in gNB app only CU pcaps of F1-U are required.
-  fmt::print(
-      "cu_f1u = {} du_f1u={}\n", cu_up_config.pcap_cfg.f1u.enabled, du_unit_cfg.du_high_cfg.config.pcaps.f1u.enabled);
   srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
       modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
@@ -302,8 +301,9 @@ int main(int argc, char** argv)
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
-      create_f1c_local_connector(f1c_local_connector_config{*du_dlt_pcaps.f1ap});
-  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps.e1ap});
+      create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
+  std::unique_ptr<e1_local_connector> e1_gw =
+      create_e1_local_connector(e1_local_connector_config{*cu_cp_dlt_pcaps.e1ap});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -383,8 +383,13 @@ int main(int argc, char** argv)
   }
 
   // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(
-      cu_up_config, workers, *e1_gw, *f1u_conn->get_f1u_cu_up_gateway(), *cu_up_pcaps.n3, *cu_timers, *epoll_broker);
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
+                                                                      workers,
+                                                                      *e1_gw,
+                                                                      *f1u_conn->get_f1u_cu_up_gateway(),
+                                                                      *cu_up_dlt_pcaps.n3,
+                                                                      *cu_timers,
+                                                                      *epoll_broker);
   cu_up_obj->start();
 
   // Instantiate one DU.
@@ -447,6 +452,7 @@ int main(int argc, char** argv)
   mac_p->close();
   rlc_p->close();
   cu_cp_dlt_pcaps.close();
+  cu_up_dlt_pcaps.close();
   du_dlt_pcaps.close();
   gnb_logger.info("PCAP files successfully closed.");
 
