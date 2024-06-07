@@ -16,11 +16,12 @@ using namespace srsran;
 static const uint32_t task_worker_queue_size = 2048;
 
 cu_worker_manager::cu_worker_manager(const cu_appconfig&    appcfg,
+                                     cu_cp_unit_pcap_config cu_cp_pcap_cfg,
                                      cu_up_unit_pcap_config cu_up_pcap_cfg,
                                      unsigned               gtpu_queue_size) :
   low_prio_affinity_mng({appcfg.expert_execution_cfg.affinities.low_priority_cpu_cfg})
 {
-  create_low_prio_executors(appcfg, cu_up_pcap_cfg, gtpu_queue_size);
+  create_low_prio_executors(appcfg, cu_cp_pcap_cfg, cu_up_pcap_cfg, gtpu_queue_size);
   associate_low_prio_executors();
 }
 
@@ -68,7 +69,7 @@ void cu_worker_manager::create_prio_worker(const std::string&                   
 }
 
 void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_list,
-                         const cu_cp_pcap_appconfig&                   cp_pcaps,
+                         const cu_cp_unit_pcap_config&                 cp_pcaps,
                          const cu_up_unit_pcap_config&                 up_pcaps)
 {
   using namespace execution_config_helper;
@@ -78,7 +79,7 @@ void append_pcap_strands(std::vector<execution_config_helper::strand>& strand_li
 
   // These layers have very low throughput, so no point in instantiating more than one strand.
   // This means that there is no parallelization in pcap writing across these layers.
-  if (cp_pcaps.e2ap.enabled or cp_pcaps.f1ap.enabled or cp_pcaps.ngap.enabled or cp_pcaps.e1ap.enabled) {
+  if (cp_pcaps.f1ap.enabled or cp_pcaps.ngap.enabled or cp_pcaps.e1ap.enabled) {
     strand_list.emplace_back(base_strand_cfg);
   }
 
@@ -113,6 +114,7 @@ execution_config_helper::worker_pool cu_worker_manager::create_low_prio_workers(
 }
 
 void cu_worker_manager::create_low_prio_executors(const cu_appconfig&           appcfg,
+                                                  const cu_cp_unit_pcap_config& cu_cp_pcap_cfg,
                                                   const cu_up_unit_pcap_config& cu_up_pcap_cfg,
                                                   unsigned                      gtpu_queue_size)
 {
@@ -136,7 +138,7 @@ void cu_worker_manager::create_low_prio_executors(const cu_appconfig&           
   std::vector<strand>& cu_up_strands     = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
-  append_pcap_strands(low_prio_strands, appcfg.cu_cp_pcap_cfg, cu_up_pcap_cfg);
+  append_pcap_strands(low_prio_strands, cu_cp_pcap_cfg, cu_up_pcap_cfg);
 
   // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
   // support two priority levels, the highest being for timer management.

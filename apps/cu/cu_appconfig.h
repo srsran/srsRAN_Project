@@ -37,25 +37,9 @@ struct log_appconfig {
 /// Configuration of packet captures.
 struct cu_cp_pcap_appconfig {
   struct {
-    std::string filename = "/tmp/cu_ngap.pcap";
-    bool        enabled  = false;
-  } ngap;
-  struct {
-    std::string filename = "/tmp/cu_e1ap.pcap";
-    bool        enabled  = false;
-  } e1ap;
-  struct {
-    std::string filename = "/tmp/cu_f1ap.pcap";
-    bool        enabled  = false;
-  } f1ap;
-  struct {
     std::string filename = "/tmp/cu_e2ap.pcap";
     bool        enabled  = false;
   } e2ap;
-  struct {
-    std::string filename = "/tmp/cu_gtpu.pcap";
-    bool        enabled  = false;
-  } gtpu;
 };
 
 struct cu_up_pcap_appconfig {

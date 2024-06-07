@@ -242,7 +242,7 @@ int main(int argc, char** argv)
   check_drm_kms_polling(cu_logger);
 
   // Create worker manager.
-  cu_worker_manager workers{cu_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
+  cu_worker_manager workers{cu_cfg, cu_cp_config.pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Create layer specific PCAPs.
   // TODO:
