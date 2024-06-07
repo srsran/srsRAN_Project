@@ -179,6 +179,7 @@ int main(int argc, char** argv)
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   dynamic_du_unit_config du_unit_cfg;
+  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/gnb");
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.

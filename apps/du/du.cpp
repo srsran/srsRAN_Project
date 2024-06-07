@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/build_info/build_info.h"
@@ -148,6 +147,7 @@ int main(int argc, char** argv)
   configure_cli11_with_du_appconfig_schema(app, du_cfg);
 
   dynamic_du_unit_config du_unit_cfg;
+  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/du");
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.

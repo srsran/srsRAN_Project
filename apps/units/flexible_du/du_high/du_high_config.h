@@ -575,19 +575,28 @@ struct du_high_unit_metrics_config {
 
 struct du_high_unit_pcap_config {
   struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
   } f1ap;
   struct {
-    std::string filename = "/tmp/gnb_rlc.pcap";
-    std::string rb_type  = "all";
-    bool        enabled  = false;
+    std::string filename;
+    std::string rb_type = "all";
+    bool        enabled = false;
   } rlc;
   struct {
-    std::string filename = "/tmp/gnb_mac.pcap";
-    std::string type     = "udp";
-    bool        enabled  = false;
+    std::string filename;
+    std::string type    = "udp";
+    bool        enabled = false;
   } mac;
+  /// helper method to set the filename prefix for different apps.
+  /// This is used to provide different defaults depending on the app,
+  /// e.g.: "/tmp/gnb_f1ap.pcap", "/tmp/cu_f1ap.pcap" or "/tmp/du_f1ap.pcap"
+  void set_default_filename(std::string prefix)
+  {
+    f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
+    rlc.filename  = fmt::format("{}_rlc.pcap", prefix);
+    mac.filename  = fmt::format("{}_mac.pcap", prefix);
+  }
 };
 
 /// CPU affinities configuration for the cell.
