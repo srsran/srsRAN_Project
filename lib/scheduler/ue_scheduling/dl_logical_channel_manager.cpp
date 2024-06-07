@@ -72,11 +72,13 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
   }
 
   // Account for available space and MAC subheader to decide the number of bytes to allocate.
-  unsigned alloc_bytes = std::min(rem_bytes, lch_bytes);
+  unsigned alloc_bytes = std::min(rem_bytes, get_mac_sdu_required_bytes(lch_bytes));
 
-  // If it is last PDU of the TBS, allocate all leftover bytes.
+  // Allocate all leftover bytes in following cases:
+  //  - If it is last PDU of the TBS.
+  //  - [Implementation-defined] If \c leftover_bytes is < 5 bytes, as it results in small SDU size.
   unsigned leftover_bytes = rem_bytes - alloc_bytes;
-  if (leftover_bytes > 0 and (leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE or pending_bytes() == 0)) {
+  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or pending_bytes() == 0)) {
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {
