@@ -12,6 +12,7 @@
 #include "../ngap_asn1_packer.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
+#include "srsran/gateways/sctp_network_client_factory.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/pcap/dlt_pcap.h"
@@ -20,6 +21,81 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 namespace {
+
+/// Notifier for converting packed NGAP PDUs coming from the N2 GW into unpacked NGAP PDUs and forward them to the
+/// CU-CP.
+class sctp_to_n2_pdu_notifier final : public sctp_association_sdu_notifier
+{
+public:
+  sctp_to_n2_pdu_notifier(std::unique_ptr<ngap_message_notifier> du_rx_pdu_notifier_,
+                          dlt_pcap&                              pcap_writer_,
+                          srslog::basic_logger&                  logger_) :
+    du_rx_pdu_notifier(std::move(du_rx_pdu_notifier_)), pcap_writer(pcap_writer_), logger(logger_)
+  {
+  }
+
+  bool on_new_sdu(byte_buffer sdu) override
+  {
+    // Unpack F1AP PDU.
+    asn1::cbit_ref bref(sdu);
+    ngap_message   msg;
+    if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+      logger.error("Couldn't unpack F1AP PDU");
+      return false;
+    }
+
+    // Forward Rx PDU to pcap, if enabled.
+    if (pcap_writer.is_write_enabled()) {
+      pcap_writer.push_pdu(sdu.copy());
+    }
+
+    // Forward unpacked Rx PDU to the DU.
+    du_rx_pdu_notifier->on_new_message(msg);
+
+    return true;
+  }
+
+private:
+  std::unique_ptr<ngap_message_notifier> du_rx_pdu_notifier;
+  dlt_pcap&                              pcap_writer;
+  srslog::basic_logger&                  logger;
+};
+
+/// Notifier for converting unpacked NGAP PDUs coming from the DU into packed NGAP PDUs and forward them to the N2 GW.
+class n2_to_sctp_pdu_notifier final : public ngap_message_notifier
+{
+public:
+  n2_to_sctp_pdu_notifier(std::unique_ptr<sctp_association_sdu_notifier> sctp_rx_pdu_notifier_,
+                          dlt_pcap&                                      pcap_writer_,
+                          srslog::basic_logger&                          logger_) :
+    sctp_rx_pdu_notifier(std::move(sctp_rx_pdu_notifier_)), pcap_writer(pcap_writer_), logger(logger_)
+  {
+  }
+
+  void on_new_message(const ngap_message& msg) override
+  {
+    // pack F1AP PDU into SCTP SDU.
+    byte_buffer   tx_sdu{byte_buffer::fallback_allocation_tag{}};
+    asn1::bit_ref bref(tx_sdu);
+    if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+      logger.error("Failed to pack F1AP PDU");
+      return;
+    }
+
+    // Push Tx PDU to pcap.
+    if (pcap_writer.is_write_enabled()) {
+      pcap_writer.push_pdu(tx_sdu.copy());
+    }
+
+    // Forward packed Tx PDU to SCTP gateway.
+    sctp_rx_pdu_notifier->on_new_sdu(std::move(tx_sdu));
+  }
+
+private:
+  std::unique_ptr<sctp_association_sdu_notifier> sctp_rx_pdu_notifier;
+  dlt_pcap&                                      pcap_writer;
+  srslog::basic_logger&                          logger;
+};
 
 /// Stub for the operation of the CU-CP without a core.
 class ngap_gateway_local_stub final : public n2_connection_client
@@ -113,27 +189,22 @@ private:
 };
 
 /// \brief NGAP bridge that uses the IO broker to handle the SCTP connection
-class ngap_sctp_gateway_adapter : public n2_connection_client,
-                                  public sctp_network_gateway_control_notifier,
-                                  public network_gateway_data_notifier
+class ngap_sctp_gateway_adapter : public n2_connection_client
 {
 public:
   ngap_sctp_gateway_adapter(io_broker& broker_, const sctp_network_connector_config& sctp_, dlt_pcap& pcap_) :
     broker(broker_), sctp_cfg(sctp_), pcap_writer(pcap_)
   {
     // Create SCTP network adapter.
-    sctp_gateway = create_sctp_network_gateway(sctp_network_gateway_creation_message{sctp_cfg, *this, *this});
-    if (sctp_gateway == nullptr) {
-      report_error("Failed to create SCTP gateway.\n");
-    }
+    sctp_gateway = create_sctp_network_client(sctp_network_client_config{"AMF", sctp_cfg, broker});
+    report_error_if_not(sctp_gateway != nullptr, "Failed to create SCTP gateway client.\n");
   }
 
   ~ngap_sctp_gateway_adapter() override { disconnect(); }
 
   void disconnect() override
   {
-    // Delete the packer.
-    packer.reset();
+    tx_notifier.reset();
 
     // Stop new IO events.
     sctp_gateway.reset();
@@ -141,52 +212,48 @@ public:
 
   void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
   {
-    msg_handler = &msg_handler_;
-    ev_handler  = &ev_handler_;
+    class cu_cp_rx_pdu_notifier final : public ngap_message_notifier
+    {
+    public:
+      cu_cp_rx_pdu_notifier(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) :
+        msg_handler(msg_handler_), ev_handler(ev_handler_)
+      {
+      }
+      ~cu_cp_rx_pdu_notifier() override { ev_handler.handle_connection_loss(); }
+      void on_new_message(const ngap_message& msg) override { msg_handler.handle_message(msg); }
 
-    // Create NGAP ASN1 packer.
-    packer = std::make_unique<ngap_asn1_packer>(*sctp_gateway, *this, *msg_handler, pcap_writer);
+    private:
+      ngap_message_handler& msg_handler;
+      ngap_event_handler&   ev_handler;
+    };
+
+    msg_handler   = &msg_handler_;
+    ev_handler    = &ev_handler_;
+    auto rx_notif = std::make_unique<cu_cp_rx_pdu_notifier>(*msg_handler, *ev_handler);
 
     // Establish SCTP connection and register SCTP Rx message handler.
     logger.debug("Establishing TNL connection to AMF ({}:{})...", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    if (not sctp_gateway->create_and_connect()) {
-      report_error("Failed to create SCTP gateway.\n");
+    std::unique_ptr<sctp_association_sdu_notifier> sctp_sender =
+        sctp_gateway->connect_to("N2",
+                                 sctp_cfg.connect_address,
+                                 sctp_cfg.connect_port,
+                                 std::make_unique<sctp_to_n2_pdu_notifier>(std::move(rx_notif), pcap_writer, logger));
+    if (sctp_sender == nullptr) {
+      logger.error(
+          "Failed to establish N2 TNL connection to AMF on {}:{}.\n", sctp_cfg.connect_address, sctp_cfg.connect_port);
       return;
     }
-    logger.info("TNL connection to AMF ({}:{}) established", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    if (!sctp_gateway->subscribe_to(broker)) {
-      report_fatal_error("Failed to register N2 (SCTP) network gateway at IO broker.");
-    }
+    logger.info("N2 TNL connection to AMF on {}:{} established", sctp_cfg.connect_address, sctp_cfg.connect_port);
+
+    // Return the Tx PDU notifier to the CU-CP.
+    tx_notifier = std::make_unique<n2_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);
   }
 
   // Called by CU-CP for each new Tx PDU.
   void on_new_message(const ngap_message& msg) override
   {
-    srsran_assert(packer != nullptr, "Adapter is disconnected");
-    packer->handle_message(msg);
-  }
-
-  // Called by io-broker for each Rx PDU.
-  void on_new_pdu(byte_buffer pdu) override
-  {
-    // Note: on_new_pdu could be dispatched right before disconnect() is called.
-    if (packer == nullptr) {
-      logger.warning("Dropping NGAP PDU. Cause: Received PDU while packer is not ready or disconnected");
-      return;
-    }
-    packer->handle_packed_pdu(pdu);
-  }
-
-  void on_connection_established() override
-  {
-    srsran_assert(ev_handler != nullptr, "Adapter is disconnected");
-    // TODO: Extend interface for connection reestablishments.
-  }
-
-  void on_connection_loss() override
-  {
-    srsran_assert(ev_handler != nullptr, "Adapter is disconnected");
-    ev_handler->handle_connection_loss();
+    srsran_assert(tx_notifier != nullptr, "Adapter is disconnected");
+    tx_notifier->on_new_message(msg);
   }
 
 private:
@@ -198,9 +265,9 @@ private:
   srslog::basic_logger&               logger      = srslog::fetch_basic_logger("GNB");
 
   // SCTP network adapter
-  std::unique_ptr<sctp_network_gateway> sctp_gateway;
+  std::unique_ptr<sctp_network_client> sctp_gateway;
 
-  std::unique_ptr<ngap_asn1_packer> packer;
+  std::unique_ptr<ngap_message_notifier> tx_notifier;
 };
 
 } // namespace
