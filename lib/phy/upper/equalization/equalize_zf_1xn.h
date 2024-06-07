@@ -14,20 +14,19 @@
 #pragma once
 
 #include "../../../srsvec/simd.h"
-#include "channel_equalizer_zf_impl.h"
 #include "srsran/srsvec/fill.h"
 #include "srsran/srsvec/zero.h"
 
 namespace srsran {
 
 /// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
-/// \tparam RX_PORTS         Number of receive antenna ports.
-/// \param[out] eq_symbols   Resultant equalized symbols.
-/// \param[out] noise_vars   Noise variances after equalization.
-/// \param[in]  ch_symbols   Channel symbols, i.e., complex samples from the receive ports.
-/// \param[in]  ch_estimates Channel estimation coefficients.
-/// \param[in]  noise_var_est Estimated noise variance. It is assumed to be the same for each receive port.
-/// \param[in]  tx_scaling   Transmission gain scaling factor.
+/// \tparam RX_PORTS          Number of receive antenna ports.
+/// \param[out] eq_symbols    Resultant equalized symbols.
+/// \param[out] noise_vars    Noise variances after equalization.
+/// \param[in]  ch_symbols    Channel symbols, i.e., complex samples from the receive ports.
+/// \param[in]  ch_estimates  Channel estimation coefficients.
+/// \param[in]  noise_var_est Estimated noise variance for each port.
+/// \param[in]  tx_scaling    Transmission gain scaling factor.
 template <unsigned RX_PORTS>
 void equalize_zf_1xn(span<cf_t>                            symbols_out,
                      span<float>                           nvars_out,

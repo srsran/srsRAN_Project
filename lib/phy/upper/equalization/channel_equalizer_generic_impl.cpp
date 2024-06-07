@@ -9,9 +9,10 @@
  */
 
 /// \file
-/// \brief Zero Forcing equalization function implementation.
+/// \brief Channel equalizer implementation for the Zero Forcing and the Minimum Mean Square Error.
 
-#include "channel_equalizer_zf_impl.h"
+#include "channel_equalizer_generic_impl.h"
+#include "equalize_mmse_1xn.h"
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2xn.h"
 #include "srsran/adt/interval.h"
@@ -115,12 +116,46 @@ void equalize_zf_single_tx_layer<1>(unsigned /**/,
   equalize_zf_1xn<1>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
 }
 
-void channel_equalizer_zf_impl::equalize(span<cf_t>         eq_symbols,
-                                         span<float>        eq_noise_vars,
-                                         const re_list&     ch_symbols,
-                                         const ch_est_list& ch_estimates,
-                                         span<const float>  noise_var_estimates,
-                                         float              tx_scaling)
+/// Calls the equalizer function for receive spatial diversity with the appropriate number of receive ports.
+template <unsigned NOF_PORTS>
+void equalize_mmse_single_tx_layer(unsigned                              nof_ports,
+                                   span<cf_t>                            eq_symbols,
+                                   span<float>                           eq_noise_vars,
+                                   const channel_equalizer::re_list&     ch_symbols,
+                                   const channel_equalizer::ch_est_list& ch_estimates,
+                                   span<const float>                     noise_var,
+                                   float                                 tx_scaling)
+{
+  if (NOF_PORTS != nof_ports) {
+    // Recursive call.
+    return equalize_mmse_single_tx_layer<NOF_PORTS - 1>(
+        nof_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+  }
+
+  // Perform equalization.
+  equalize_mmse_1xn<NOF_PORTS>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+}
+
+/// Specialization for a single receive port.
+template <>
+void equalize_mmse_single_tx_layer<1>(unsigned /**/,
+                                      span<cf_t>                            eq_symbols,
+                                      span<float>                           eq_noise_vars,
+                                      const channel_equalizer::re_list&     ch_symbols,
+                                      const channel_equalizer::ch_est_list& ch_estimates,
+                                      span<const float>                     noise_var,
+                                      float                                 tx_scaling)
+{
+  // Perform equalization.
+  equalize_mmse_1xn<1>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+}
+
+void channel_equalizer_generic_impl::equalize(span<cf_t>         eq_symbols,
+                                              span<float>        eq_noise_vars,
+                                              const re_list&     ch_symbols,
+                                              const ch_est_list& ch_estimates,
+                                              span<const float>  noise_var_estimates,
+                                              float              tx_scaling)
 {
   // Make sure that the input and output symbol lists and channel estimate dimensions are valid.
   assert_sizes(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates);
@@ -134,26 +169,41 @@ void channel_equalizer_zf_impl::equalize(span<cf_t>         eq_symbols,
   // Select the most pessimistic noise variance.
   float noise_var = *std::max_element(noise_var_estimates.begin(), noise_var_estimates.end());
 
-  // Single transmit layer and any number of receive ports.
-  if (nof_tx_layers == 1) {
-    equalize_zf_single_tx_layer<MAX_PORTS>(
-        nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
-    return;
+  // Zero Forcing algorithm.
+  if (type == channel_equalizer_algorithm_type::zf) {
+    // Single transmit layer and any number of receive ports.
+    if (nof_tx_layers == 1) {
+      equalize_zf_single_tx_layer<MAX_PORTS>(
+          nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
+      return;
+    }
+
+    // Two transmit layers and two receive ports.
+    if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
+      equalize_zf_2xn<2>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      return;
+    }
+
+    // Two transmit layers and four receive ports.
+    if ((nof_rx_ports == 4) && (nof_tx_layers == 2)) {
+      equalize_zf_2xn<4>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
+      return;
+    }
   }
 
-  // Two transmit layers and two receive ports.
-  if ((nof_rx_ports == 2) && (nof_tx_layers == 2)) {
-    equalize_zf_2xn<2>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-    return;
+  // Minimum Mean Square Error algorithm.
+  if (type == channel_equalizer_algorithm_type::mmse) {
+    // Single transmit layer and any number of receive ports.
+    if (nof_tx_layers == 1) {
+      equalize_mmse_single_tx_layer<MAX_PORTS>(
+          nof_rx_ports, eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
+      return;
+    }
   }
 
-  // Two transmit layers and four receive ports.
-  if ((nof_rx_ports == 4) && (nof_tx_layers == 2)) {
-    equalize_zf_2xn<4>(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var, tx_scaling);
-    return;
-  }
-
-  srsran_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
-                           ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
-                           ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
+  srsran_assertion_failure(
+      "Invalid combination of channel spatial topology (i.e., {} Rx ports, {} Tx layers) and algorithm (i.e., {}).",
+      ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
+      ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer),
+      to_string(type));
 }

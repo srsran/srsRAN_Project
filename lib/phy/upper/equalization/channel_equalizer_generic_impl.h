@@ -9,20 +9,21 @@
  */
 
 /// \file
-/// \brief Channel equalizer implementation using the Zero Forcing method.
+/// \brief Channel equalizer implementation for the Zero Forcing and the Minimum Mean Square Error methods.
 
 #pragma once
 
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/equalization/channel_equalizer_algorithm_type.h"
 
 namespace srsran {
 
-/// Channel equalizer implementation using the Zero Forcing algorithm.
-class channel_equalizer_zf_impl : public channel_equalizer
+/// Channel equalizer implementation for the Zero Forcing and the MMSE algorithms.
+class channel_equalizer_generic_impl : public channel_equalizer
 {
 public:
   /// Default constructor.
-  explicit channel_equalizer_zf_impl() = default;
+  explicit channel_equalizer_generic_impl(channel_equalizer_algorithm_type type_) : type(type_) {}
 
   // See interface for documentation.
   void equalize(span<cf_t>         eq_symbols,
@@ -31,6 +32,9 @@ public:
                 const ch_est_list& ch_estimates,
                 span<const float>  noise_var_estimates,
                 float              tx_scaling) override;
+
+private:
+  channel_equalizer_algorithm_type type;
 };
 
 } // namespace srsran

@@ -93,26 +93,38 @@ protected:
 
   std::vector<float> test_noise_vars;
 
-  static std::shared_ptr<channel_equalizer_factory> equalizer_factory;
-  static std::unique_ptr<channel_equalizer>         test_equalizer;
+  std::shared_ptr<channel_equalizer_factory> equalizer_factory;
+  std::unique_ptr<channel_equalizer>         test_equalizer;
 
-  static void SetUpTestSuite()
+  void SetUp() override
   {
-    // Create channel equalizer factory.
-    if (!equalizer_factory) {
-      equalizer_factory = create_channel_equalizer_factory_zf();
-      ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory";
+    const test_case_t& t_case         = GetParam();
+    const std::string& equalizer_type = t_case.context.equalizer_type;
+
+    // For now, check only Zero Forcing equalizer or MMSE equalizer with one layer - multi-layer MMSE not implemented
+    // yet.
+    if ((t_case.context.equalizer_type == "MMSE") && (t_case.context.nof_layers > 1)) {
+      GTEST_SKIP();
     }
+
+    // Read test case data.
+    ReadData(t_case);
+
+    // Create channel equalizer factory.
+    channel_equalizer_algorithm_type algorithm_type = channel_equalizer_algorithm_type::zf;
+    if (equalizer_type == "MMSE") {
+      algorithm_type = channel_equalizer_algorithm_type::mmse;
+    }
+
+    equalizer_factory = create_channel_equalizer_generic_factory(algorithm_type);
+    ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory";
 
     // Create channel equalizer.
     if (!test_equalizer) {
       test_equalizer = equalizer_factory->create();
       ASSERT_NE(test_equalizer, nullptr) << "Cannot create channel equalizer";
     }
-  }
 
-  void SetUp() override
-  {
     ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory";
     ASSERT_NE(test_equalizer, nullptr) << "Cannot create channel equalizer";
   }
@@ -145,19 +157,10 @@ protected:
   }
 };
 
-std::shared_ptr<channel_equalizer_factory> ChannelEqualizerFixture::equalizer_factory = nullptr;
-std::unique_ptr<channel_equalizer>         ChannelEqualizerFixture::test_equalizer    = nullptr;
-
 TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
 
   // Equalize the symbols coming from the Rx ports.
   test_equalizer->equalize(
@@ -172,14 +175,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force noise variances set to zero.
   srsvec::zero(test_noise_vars);
@@ -201,14 +196,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force some channel estimates to zero and recalculate their expected output.
   {
@@ -241,14 +228,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force noise variances set to infinity.
   std::fill(test_noise_vars.begin(), test_noise_vars.end(), std::numeric_limits<float>::infinity());
@@ -270,14 +249,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force some channel estimates to zero and recalculate their expected output.
   {
@@ -310,14 +281,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force noise variances set to NaN.
   std::fill(test_noise_vars.begin(), test_noise_vars.end(), std::numeric_limits<float>::quiet_NaN());
@@ -339,14 +302,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force some channel estimates to zero and recalculate their expected output.
   {
@@ -379,14 +334,6 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNegNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
-  ReadData(t_case);
-
-  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
-  if (t_case.context.equalizer_type != "ZF") {
-    GTEST_SKIP();
-  }
-
-  ReadData(t_case);
 
   // Force noise variances set to negative values.
   std::fill(test_noise_vars.begin(), test_noise_vars.end(), -1.0F);

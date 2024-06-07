@@ -526,7 +526,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   TESTASSERT(dmrs_pusch_chan_estimator_factory);
 
   // Create channel equalizer factory.
-  std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_factory_zf();
+  std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_generic_factory();
   TESTASSERT(eq_factory);
 
   // Create PUSCH demodulator factory.

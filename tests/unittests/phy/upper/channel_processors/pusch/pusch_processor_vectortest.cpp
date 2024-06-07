@@ -242,7 +242,7 @@ private:
     }
 
     // Create channel equalizer factory.
-    std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_factory_zf();
+    std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_generic_factory();
     if (!eq_factory) {
       return nullptr;
     }

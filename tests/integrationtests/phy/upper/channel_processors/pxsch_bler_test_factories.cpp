@@ -98,7 +98,8 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
       create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory, chan_estimator_factory);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
-  std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_factory_zf();
+  std::shared_ptr<channel_equalizer_factory> eq_factory =
+      create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type::zf);
   report_fatal_error_if_not(eq_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_modulation_factory> chan_mod_factory = create_channel_modulation_sw_factory();
