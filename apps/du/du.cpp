@@ -249,8 +249,7 @@ int main(int argc, char** argv)
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   // TODO: Remove GTPU pcap
-  std::unique_ptr<dlt_pcap> gtpu_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  std::unique_ptr<dlt_pcap> gtpu_p = create_null_dlt_pcap();
   std::unique_ptr<dlt_pcap> e2ap_p =
       du_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(du_cfg.pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
                                    : create_null_dlt_pcap();
