@@ -25,6 +25,7 @@
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/io_broker_factory.h"
+#include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
@@ -283,6 +284,9 @@ int main(int argc, char** argv)
   // TODO revisit how to use the system timer timer source.
   timer_manager  app_timers{256};
   timer_manager* cu_timers = &app_timers;
+
+  // Create time source that ticks the timers
+  io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
   // Set up the JSON log channel used by metrics.
   // TODO metrics. Do we have any CU-CP or CU-UP JSON metrics?
