@@ -18,20 +18,22 @@ namespace srsran {
 /// Configuration of packet capture functionalities.
 struct cu_up_unit_pcap_config {
   struct {
-    std::string filename = "/tmp/cu_n3.pcap";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
   } n3;
   struct {
-    std::string filename = "/tmp/cu_f1u.pcap";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
   } f1u;
   struct {
-    std::string filename = "/tmp/cu_e1ap.pcap";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
   } e1ap;
 
   /// helper method to set the filename prefix for different apps.
-  void set_prefix(std::string prefix)
+  /// This is used to provide different defaults depending on the app,
+  /// e.g.: "/tmp/gnb_e1ap.pcap" or "/tmp/cu_e1ap.pcap"
+  void set_default_filename(std::string prefix)
   {
     n3.filename   = fmt::format("{}_n3.pcap", prefix);
     f1u.filename  = fmt::format("{}_f1u.pcap", prefix);

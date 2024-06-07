@@ -170,9 +170,11 @@ int main(int argc, char** argv)
   configure_cli11_with_cu_appconfig_schema(app, cu_cfg);
 
   cu_cp_unit_config cu_cp_config;
+  cu_cp_config.pcap_cfg.set_default_filename("/tmp/cu");
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
 
   cu_up_unit_config cu_up_config;
+  cu_up_config.pcap_cfg.set_default_filename("/tmp/cu");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   // Set the callback for the app calling all the autoderivation functions.

@@ -31,7 +31,9 @@ struct cu_cp_unit_pcap_config {
   } f1ap;
 
   /// helper method to set the filename prefix for different apps.
-  void set_prefix(std::string prefix)
+  /// This is used to provide different defaults depending on the app,
+  /// e.g.: "/tmp/gnb_e1ap.pcap" or "/tmp/cu_e1ap.pcap"
+  void set_default_filename(std::string prefix)
   {
     ngap.filename = fmt::format("{}_ngap.pcap", prefix);
     e1ap.filename = fmt::format("{}_e1ap.pcap", prefix);

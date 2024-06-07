@@ -165,11 +165,11 @@ int main(int argc, char** argv)
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   cu_cp_unit_config cu_cp_config;
-  cu_cp_config.pcap_cfg.set_prefix("/tmp/gnb");
+  cu_cp_config.pcap_cfg.set_default_filename("/tmp/gnb");
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
 
   cu_up_unit_config cu_up_config;
-  cu_up_config.pcap_cfg.set_prefix("/tmp/gnb");
+  cu_up_config.pcap_cfg.set_default_filename("/tmp/gnb");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   dynamic_du_unit_config du_unit_cfg;
