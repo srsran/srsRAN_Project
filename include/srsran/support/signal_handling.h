@@ -16,12 +16,15 @@ namespace srsran {
 
 using srsran_signal_handler = void (*)();
 
-/// Registers the specified function to be called when the user interrupts the program execution (eg: via Ctrl+C).
+/// \brief Registers the specified function to be called when the user interrupts the program execution (eg: via
+/// Ctrl+C).
+///
 /// Passing a null function pointer disables the current installed handler.
 void register_interrupt_signal_handler(srsran_signal_handler handler);
 
-/// Registers the specified function to be called when the application is about to be forcefully shutdown by an alarm
-/// signal.
+/// \brief Registers the specified function to be called when the application is about to be forcefully shutdown by an
+/// alarm signal.
+///
 /// Passing a null function pointer disables the current installed handler.
 void register_cleanup_signal_handler(srsran_signal_handler handler);
 
