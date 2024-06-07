@@ -53,7 +53,6 @@ public:
   rrc_ue_srb_handler&                   get_rrc_ue_srb_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
   rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
 

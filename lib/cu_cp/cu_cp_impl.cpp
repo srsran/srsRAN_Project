@@ -219,8 +219,7 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  rrc_ue_interface*          rrc_ue  = rrc_du_adapters.at(get_du_index_from_ue_index(ue_index)).find_rrc_ue(ue_index);
-  security::security_context sec_ctx = rrc_ue->get_rrc_ue_security_context();
+  security::security_context sec_ctx = ue->get_security_context();
   security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
 
   return routine_mng.start_reestablishment_context_modification_routine(
@@ -361,13 +360,9 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  rrc_ue_interface* rrc_ue =
-      rrc_du_adapters.at(get_du_index_from_ue_index(request.ue_index)).find_rrc_ue(request.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
-
   return routine_mng.start_pdu_session_resource_setup_routine(
       request,
-      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::up),
+      ue->get_security_context().get_as_config(security::sec_domain::up),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
           .get_f1ap_interface()
@@ -517,9 +512,7 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
   du_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
 
-  rrc_ue_interface* rrc_ue =
-      rrc_du_adapters.at(get_du_index_from_ue_index(request.source_ue_index)).find_rrc_ue(request.source_ue_index);
-  security::security_context sec_ctx = rrc_ue->get_rrc_ue_security_context();
+  security::security_context sec_ctx = ue->get_security_context();
   security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
 
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
