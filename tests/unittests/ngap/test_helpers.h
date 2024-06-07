@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
+#include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -23,31 +24,48 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Reusable notifier class that a) stores the received msg for test inspection and b)
+/// Reusable class that a) stores the messages sent to the AMF for test inspection and b)
 /// calls the registered msg handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_ngap_amf_notifier : public ngap_message_notifier
+class dummy_n2_gateway : public n2_connection_client
 {
 public:
-  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_n2_gateway() : logger(srslog::fetch_basic_logger("TEST")) {}
 
   void attach_handler(ngap_message_handler* handler_) { handler = handler_; }
 
-  void on_new_message(const ngap_message& msg) override
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
   {
-    logger.info("Received message");
+    class dummy_ngap_message_notifier : public ngap_message_notifier
+    {
+    public:
+      dummy_ngap_message_notifier(dummy_n2_gateway& parent_) : parent(parent_) {}
 
-    // Verify correct packing of outbound PDU.
-    byte_buffer   pack_buffer;
-    asn1::bit_ref bref(pack_buffer);
-    ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
+      void on_new_message(const ngap_message& msg) override
+      {
+        parent.logger.info("Received message");
 
-    last_ngap_msgs.push_back(msg);
+        // Verify correct packing of outbound PDU.
+        byte_buffer   pack_buffer;
+        asn1::bit_ref bref(pack_buffer);
+        ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
 
-    if (handler != nullptr) {
-      logger.info("Forwarding PDU");
-      handler->handle_message(msg);
-    }
+        parent.last_ngap_msgs.push_back(msg);
+
+        if (parent.handler != nullptr) {
+          parent.logger.info("Forwarding PDU");
+          parent.handler->handle_message(msg);
+        }
+      }
+
+    private:
+      dummy_n2_gateway& parent;
+    };
+
+    rx_pdu_notifier = std::move(cu_cp_rx_pdu_notifier);
+
+    return std::make_unique<dummy_ngap_message_notifier>(*this);
   }
 
   std::vector<ngap_message> last_ngap_msgs = {};
@@ -55,13 +73,15 @@ public:
 private:
   srslog::basic_logger& logger;
   ngap_message_handler* handler = nullptr;
+
+  std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
 };
 
 /// Dummy handler storing and printing the received PDU.
 class dummy_ngap_message_notifier : public ngap_message_notifier
 {
 public:
-  dummy_ngap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
   void on_new_message(const ngap_message& msg) override
   {
     last_msg = msg;
@@ -308,6 +328,8 @@ public:
       CORO_RETURN(true);
     });
   }
+
+  void on_n2_disconnection() override {}
 
   cu_cp_ue_context_release_command last_command;
   byte_buffer                      last_handover_command;

@@ -80,6 +80,7 @@ public:
   async_task<ngap_handover_resource_allocation_response>
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
+  void             handle_n2_disconnection() override;
 
   // cu_cp_measurement_handler
   std::optional<rrc_meas_cfg>

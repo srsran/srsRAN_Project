@@ -12,6 +12,7 @@ set(SOURCES
         log_helpers.cpp
         ngap_factory.cpp
         ngap_impl.cpp
+        ngap_connection_handler.cpp
         ngap_validators/ngap_validators.cpp
         gateways/n2_connection_client_factory.cpp
         procedures/ng_setup_procedure.cpp

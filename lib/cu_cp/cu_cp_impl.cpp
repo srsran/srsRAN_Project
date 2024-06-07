@@ -30,7 +30,7 @@ using namespace srs_cu_cp;
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
+  srsran_assert(cfg.n2_gw != nullptr, "Invalid N2 GW client handler");
   srsran_assert(cfg.timers != nullptr, "Invalid timers");
 
   report_error_if_not(cfg.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
@@ -69,7 +69,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                             ngap_cu_cp_ev_notifier,
                             ngap_cu_cp_ev_notifier,
                             ue_mng,
-                            *cfg.ngap_notifier,
+                            *cfg.n2_gw,
                             *cfg.timers,
                             *cfg.cu_cp_executor);
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
@@ -484,6 +484,11 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
 
     CORO_RETURN(ue_context_mod_response.success);
   });
+}
+
+void cu_cp_impl::handle_n2_disconnection()
+{
+  // TODO
 }
 
 std::optional<rrc_meas_cfg>

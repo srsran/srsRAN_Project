@@ -50,11 +50,11 @@ protected:
   bool was_pdu_session_resource_setup_request_valid() const
   {
     // Check that AMF notifier was called with right type
-    bool test_1 = msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
+    bool test_1 = n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp;
 
     // Check that response contains PDU Session Resource Setup List
-    bool test_2 = msg_notifier.last_ngap_msgs.back()
+    bool test_2 = n2_gw.last_ngap_msgs.back()
                       .pdu.successful_outcome()
                       .value.pdu_session_res_setup_resp()
                       ->pdu_session_res_setup_list_su_res_present;
@@ -65,17 +65,17 @@ protected:
   bool was_pdu_session_resource_setup_request_invalid() const
   {
     // Check that AMF notifier was called with right type.
-    bool test_1 = msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
+    bool test_1 = n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp;
 
     // Check that response doesn't contain PDU Session Resource Setup List
-    bool test_2 = !msg_notifier.last_ngap_msgs.back()
+    bool test_2 = !n2_gw.last_ngap_msgs.back()
                        .pdu.successful_outcome()
                        .value.pdu_session_res_setup_resp()
                        ->pdu_session_res_setup_list_su_res_present;
 
     // Check that response contains PDU Session Resource Failed to Setup List
-    bool test_3 = msg_notifier.last_ngap_msgs.back()
+    bool test_3 = n2_gw.last_ngap_msgs.back()
                       .pdu.successful_outcome()
                       .value.pdu_session_res_setup_resp()
                       ->pdu_session_res_failed_to_setup_list_su_res_present;
@@ -85,7 +85,7 @@ protected:
 
   bool was_error_indication_sent() const
   {
-    return msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
   }
 };
@@ -100,9 +100,8 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   this->start_procedure();
 
   // check that initial context setup request was received to the AMF and that UE object has been created
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value,
-            asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type(),
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type(),
             asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp);
   ASSERT_EQ(ngap->get_nof_ues(), 1);
 
@@ -113,7 +112,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   }
 
   // check that UE release was requested
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type(),
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type(),
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
 }
 

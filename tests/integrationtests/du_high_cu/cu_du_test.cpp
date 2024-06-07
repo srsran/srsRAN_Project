@@ -51,7 +51,7 @@ protected:
     cu_cfg.ngap_config.gnb_id              = {411, 32};
     cu_cfg.ngap_config.tac                 = 7;
     cu_cfg.cu_cp_executor                  = &workers.ctrl_exec;
-    cu_cfg.ngap_notifier                   = &*amf;
+    cu_cfg.n2_gw                           = &*amf;
     cu_cfg.timers                          = &timers;
     cu_cfg.statistics_report_period        = std::chrono::seconds(1);
     cu_cfg.ue_config.max_nof_supported_ues = cu_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;

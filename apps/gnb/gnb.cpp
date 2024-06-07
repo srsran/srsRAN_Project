@@ -319,7 +319,7 @@ int main(int argc, char** argv)
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
-  // Create NGAP Gateway.
+  // Create N2 Gateway.
   std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
   {
     using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.ngap_notifier  = n2_client.get();
+  cu_cp_dependencies.n2_client      = n2_client.get();
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
@@ -356,10 +356,6 @@ int main(int argc, char** argv)
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
-
-  // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  n2_client->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
-                           cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
@@ -426,10 +422,6 @@ int main(int argc, char** argv)
 
   // Stop CU-CP activity.
   cu_cp_obj->stop();
-
-  gnb_logger.info("Closing network connections...");
-  n2_client->disconnect();
-  gnb_logger.info("Network connections closed successfully");
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
     gnb_logger.info("Closing E2 network connections...");

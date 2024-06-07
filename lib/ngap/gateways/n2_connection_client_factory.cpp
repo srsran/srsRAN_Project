@@ -103,20 +103,36 @@ class ngap_gateway_local_stub final : public n2_connection_client
 public:
   ngap_gateway_local_stub(dlt_pcap& pcap_) : pcap_writer(pcap_) {}
 
-  void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
   {
-    msg_handler = &msg_handler_;
-    ev_handler  = &ev_handler_;
+    class cu_cp_tx_pdu_notifier final : public ngap_message_notifier
+    {
+    public:
+      cu_cp_tx_pdu_notifier(ngap_gateway_local_stub& parent_) : parent(parent_) {}
+      ~cu_cp_tx_pdu_notifier() { parent.disconnect(); }
 
-    logger.info("Bypassing AMF connection");
+      void on_new_message(const ngap_message& msg) override { parent.handle_tx_message(msg); }
+
+    private:
+      ngap_gateway_local_stub& parent;
+    };
+
+    // Store Rx PDU notifier
+    cu_cp_rx_notifier = std::move(cu_cp_rx_pdu_notifier);
+
+    return std::make_unique<cu_cp_tx_pdu_notifier>(*this);
   }
 
-  void disconnect() override {}
+private:
+  void disconnect() { cu_cp_rx_notifier.reset(); }
 
-  void on_new_message(const ngap_message& msg) override
+  // Handle message sent by CU-CP.
+  void handle_tx_message(const ngap_message& msg)
   {
-    srsran_assert(msg_handler != nullptr, "Adapter is disconnected");
+    using namespace asn1::ngap;
 
+    // Save message to pcap.
     if (pcap_writer.is_write_enabled()) {
       byte_buffer   packed_pdu;
       asn1::bit_ref bref{packed_pdu};
@@ -127,9 +143,8 @@ public:
       }
     }
 
-    if (msg.pdu.type().value == asn1::ngap::ngap_pdu_c::types_opts::init_msg and
-        msg.pdu.init_msg().value.type().value ==
-            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request) {
+    if (msg.pdu.type().value == ngap_pdu_c::types_opts::init_msg and
+        msg.pdu.init_msg().value.type().value == ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request) {
       // CU-CP is requesting an NG Setup. Automatically reply with NG Setup Response.
 
       const auto& req = msg.pdu.init_msg().value.ng_setup_request();
@@ -163,9 +178,11 @@ public:
     }
   }
 
-private:
+  // Forward NGAP message to CU-CP.
   void send_rx_pdu_to_cu_cp(const ngap_message& msg)
   {
+    srsran_assert(cu_cp_rx_notifier != nullptr, "Adapter is disconnected");
+
     if (pcap_writer.is_write_enabled()) {
       // PCAP writer is enabled. Encode ASN.1 message and send to PCAP.
       byte_buffer       bytes;
@@ -179,20 +196,20 @@ private:
     }
 
     // Push message to CU-CP.
-    msg_handler->handle_message(msg);
+    cu_cp_rx_notifier->on_new_message(msg);
   }
 
   dlt_pcap&             pcap_writer;
-  ngap_message_handler* msg_handler = nullptr;
-  ngap_event_handler*   ev_handler  = nullptr;
-  srslog::basic_logger& logger      = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+
+  std::unique_ptr<ngap_message_notifier> cu_cp_rx_notifier;
 };
 
 /// \brief NGAP bridge that uses the IO broker to handle the SCTP connection
-class ngap_sctp_gateway_adapter : public n2_connection_client
+class n2_sctp_gateway_client : public n2_connection_client
 {
 public:
-  ngap_sctp_gateway_adapter(io_broker& broker_, const sctp_network_connector_config& sctp_, dlt_pcap& pcap_) :
+  n2_sctp_gateway_client(io_broker& broker_, const sctp_network_connector_config& sctp_, dlt_pcap& pcap_) :
     broker(broker_), sctp_cfg(sctp_), pcap_writer(pcap_)
   {
     // Create SCTP network adapter.
@@ -200,74 +217,37 @@ public:
     report_error_if_not(sctp_gateway != nullptr, "Failed to create SCTP gateway client.\n");
   }
 
-  ~ngap_sctp_gateway_adapter() override { disconnect(); }
-
-  void disconnect() override
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
   {
-    tx_notifier.reset();
-
-    // Stop new IO events.
-    sctp_gateway.reset();
-  }
-
-  void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) override
-  {
-    class cu_cp_rx_pdu_notifier final : public ngap_message_notifier
-    {
-    public:
-      cu_cp_rx_pdu_notifier(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) :
-        msg_handler(msg_handler_), ev_handler(ev_handler_)
-      {
-      }
-      ~cu_cp_rx_pdu_notifier() override { ev_handler.handle_connection_loss(); }
-      void on_new_message(const ngap_message& msg) override { msg_handler.handle_message(msg); }
-
-    private:
-      ngap_message_handler& msg_handler;
-      ngap_event_handler&   ev_handler;
-    };
-
-    msg_handler   = &msg_handler_;
-    ev_handler    = &ev_handler_;
-    auto rx_notif = std::make_unique<cu_cp_rx_pdu_notifier>(*msg_handler, *ev_handler);
+    srsran_assert(cu_cp_rx_pdu_notifier != nullptr, "CU-CP Rx PDU notifier is null");
 
     // Establish SCTP connection and register SCTP Rx message handler.
     logger.debug("Establishing TNL connection to AMF ({}:{})...", sctp_cfg.connect_address, sctp_cfg.connect_port);
-    std::unique_ptr<sctp_association_sdu_notifier> sctp_sender =
-        sctp_gateway->connect_to("N2",
-                                 sctp_cfg.connect_address,
-                                 sctp_cfg.connect_port,
-                                 std::make_unique<sctp_to_n2_pdu_notifier>(std::move(rx_notif), pcap_writer, logger));
+    std::unique_ptr<sctp_association_sdu_notifier> sctp_sender = sctp_gateway->connect_to(
+        "N2",
+        sctp_cfg.connect_address,
+        sctp_cfg.connect_port,
+        std::make_unique<sctp_to_n2_pdu_notifier>(std::move(cu_cp_rx_pdu_notifier), pcap_writer, logger));
     if (sctp_sender == nullptr) {
       logger.error(
           "Failed to establish N2 TNL connection to AMF on {}:{}.\n", sctp_cfg.connect_address, sctp_cfg.connect_port);
-      return;
+      return nullptr;
     }
     logger.info("N2 TNL connection to AMF on {}:{} established", sctp_cfg.connect_address, sctp_cfg.connect_port);
 
     // Return the Tx PDU notifier to the CU-CP.
-    tx_notifier = std::make_unique<n2_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);
-  }
-
-  // Called by CU-CP for each new Tx PDU.
-  void on_new_message(const ngap_message& msg) override
-  {
-    srsran_assert(tx_notifier != nullptr, "Adapter is disconnected");
-    tx_notifier->on_new_message(msg);
+    return std::make_unique<n2_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);
   }
 
 private:
   io_broker&                          broker;
   const sctp_network_connector_config sctp_cfg;
   dlt_pcap&                           pcap_writer;
-  ngap_message_handler*               msg_handler = nullptr;
-  ngap_event_handler*                 ev_handler  = nullptr;
-  srslog::basic_logger&               logger      = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("GNB");
 
   // SCTP network adapter
   std::unique_ptr<sctp_network_client> sctp_gateway;
-
-  std::unique_ptr<ngap_message_notifier> tx_notifier;
 };
 
 } // namespace
@@ -282,5 +262,5 @@ srsran::srs_cu_cp::create_n2_connection_client(const n2_connection_client_config
 
   // Connection to AMF through SCTP.
   const auto& nw_mode = std::get<n2_connection_client_config::network>(params.mode);
-  return std::make_unique<ngap_sctp_gateway_adapter>(nw_mode.broker, nw_mode.sctp, params.pcap);
+  return std::make_unique<n2_sctp_gateway_client>(nw_mode.broker, nw_mode.sctp, params.pcap);
 }

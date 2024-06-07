@@ -73,6 +73,9 @@ public:
   /// \param[in] command The received Handover Command.
   /// \returns True if the Handover Command was successfully handled, false otherwise.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
+
+  /// \brief Handle N2 AMF connection drop.
+  virtual void handle_n2_disconnection() = 0;
 };
 
 /// Handler of E1AP-CU-CP events.

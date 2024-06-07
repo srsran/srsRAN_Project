@@ -65,7 +65,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // create CU-CP config
   cu_cp_cfg                                 = config_helpers::make_default_cu_cp_config();
   cu_cp_cfg.cu_cp_executor                  = cu_cp_workers->exec.get();
-  cu_cp_cfg.ngap_notifier                   = &*amf_stub;
+  cu_cp_cfg.n2_gw                           = &*amf_stub;
   cu_cp_cfg.timers                          = &timers;
   cu_cp_cfg.ngap_config                     = config_helpers::make_default_ngap_config();
   cu_cp_cfg.max_nof_dus                     = params.max_nof_dus;

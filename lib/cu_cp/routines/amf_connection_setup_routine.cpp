@@ -24,6 +24,10 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
 {
   CORO_BEGIN(ctx);
 
+  if (not ngap_conn_mng.handle_amf_tnl_connection_request()) {
+    CORO_EARLY_RETURN(false);
+  }
+
   // Initiate NG Setup.
   CORO_AWAIT_VALUE(result_msg, send_ng_setup_request());
 

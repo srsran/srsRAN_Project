@@ -23,6 +23,8 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+class n2_connection_client;
+
 struct mobility_configuration {
   cell_meas_manager_cfg meas_manager_config;
   mobility_manager_cfg  mobility_manager_config;
@@ -30,10 +32,10 @@ struct mobility_configuration {
 
 /// Configuration passed to CU-CP.
 struct cu_cp_configuration {
-  task_executor*         cu_cp_executor = nullptr;
-  task_executor*         cu_cp_e2_exec  = nullptr;
-  ngap_message_notifier* ngap_notifier  = nullptr; ///> Callback for outgoing NGAP messages.
-  timer_manager*         timers         = nullptr;
+  task_executor*        cu_cp_executor = nullptr;
+  task_executor*        cu_cp_e2_exec  = nullptr;
+  n2_connection_client* n2_gw          = nullptr;
+  timer_manager*        timers         = nullptr;
   /// Maximum number of DU connections that the CU-CP may accept.
   unsigned max_nof_dus = 6;
   /// Maximum number of CU-UP connections that the CU-CP may accept.

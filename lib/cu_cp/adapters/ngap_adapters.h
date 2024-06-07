@@ -90,6 +90,12 @@ public:
     return cu_cp_handler->handle_new_handover_command(ue_index, std::move(command));
   }
 
+  void on_n2_disconnection() override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    cu_cp_handler->handle_n2_disconnection();
+  }
+
 private:
   du_repository_ngap_handler* du_repository_handler = nullptr;
   cu_cp_ngap_handler*         cu_cp_handler         = nullptr;

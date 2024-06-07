@@ -52,7 +52,7 @@ cu_cp_test::cu_cp_test()
   // create CU-CP config
   cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
   cfg.cu_cp_executor      = &ctrl_worker;
-  cfg.ngap_notifier       = &ngap_amf_notifier;
+  cfg.n2_gw               = &n2_gw;
   cfg.timers              = &timers;
 
   // NGAP config
@@ -161,7 +161,7 @@ cu_cp_test::cu_cp_test()
 
   // Connect CU-CP to AMF stub.
   dummy_amf = std::make_unique<amf_test_stub>(cu_cp_obj->get_ngap_message_handler());
-  ngap_amf_notifier.attach_handler(dummy_amf.get());
+  n2_gw.attach_handler(dummy_amf.get());
 
   // Start CU-CP.
   cu_cp_obj->start();
@@ -419,9 +419,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // check that the PDU Session Resource Setup Response was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
-            asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type().value,
             asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp);
 }
 

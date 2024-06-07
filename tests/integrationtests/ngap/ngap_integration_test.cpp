@@ -11,6 +11,7 @@
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_asn1_packer.h"
+#include "lib/ngap/ngap_error_indication_helper.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
@@ -18,7 +19,6 @@
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
-#include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
@@ -29,8 +29,7 @@ using namespace srs_cu_cp;
 /// * NGAP (including ASN1 packer and NG setup procedure)
 /// * SCTP network gateway
 /// * IO broker
-class ngap_network_adapter : public ngap_message_notifier,
-                             public ngap_message_handler,
+class ngap_network_adapter : public n2_connection_client,
                              public sctp_network_gateway_control_notifier,
                              public network_gateway_data_notifier
 {
@@ -38,8 +37,7 @@ public:
   ngap_network_adapter(const sctp_network_connector_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
-    gw(create_sctp_network_gateway({nw_config, *this, *this})),
-    packer(*gw, *this, *this, pcap)
+    gw(create_sctp_network_gateway({nw_config, *this, *this}))
   {
     report_fatal_error_if_not(gw->create_and_connect(), "Failed to connect NGAP GW");
     if (!gw->subscribe_to(*epoll_broker)) {
@@ -47,19 +45,49 @@ public:
     }
   }
 
-  ~ngap_network_adapter() {}
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
+  {
+    class dummy_ngap_pdu_notifier : public ngap_message_notifier
+    {
+    public:
+      dummy_ngap_pdu_notifier(ngap_network_adapter& parent_) : parent(parent_) {}
 
-  void connect_ngap(ngap_interface* ngap_) { ngap = ngap_; }
+      void on_new_message(const ngap_message& msg) override
+      {
+        byte_buffer pdu;
+        {
+          asn1::bit_ref bref{pdu};
+          if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+            parent.test_logger.error("Failed to pack PDU");
+            return;
+          }
+        }
+        parent.gw->handle_pdu(std::move(pdu));
+      }
+
+    private:
+      ngap_network_adapter& parent;
+    };
+
+    rx_pdu_notifier = std::move(cu_cp_rx_pdu_notifier);
+    return std::make_unique<dummy_ngap_pdu_notifier>(*this);
+  }
 
 private:
-  // NGAP calls interface to send (unpacked) NGAP PDUs
-  void on_new_message(const ngap_message& msg) override { packer.handle_message(msg); }
-
   // SCTP network gateway calls interface to inject received PDUs (ASN1 packed)
-  void on_new_pdu(byte_buffer pdu) override { packer.handle_packed_pdu(pdu); }
-
-  // The packer calls this interface to inject unpacked NGAP PDUs
-  void handle_message(const ngap_message& msg) override { ngap->handle_message(msg); }
+  void on_new_pdu(byte_buffer pdu) override
+  {
+    ngap_message msg;
+    {
+      asn1::cbit_ref bref{pdu};
+      if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+        test_logger.error("Sending Error Indication. Cause: Could not unpack Rx PDU");
+        send_error_indication(*rx_pdu_notifier, test_logger);
+      }
+    }
+    rx_pdu_notifier->on_new_message(msg);
+  }
 
   /// \brief Simply log those events for now
   void on_connection_loss() override { test_logger.info("on_connection_loss"); }
@@ -69,11 +97,10 @@ private:
   const sctp_network_connector_config&  nw_config;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
-  ngap_asn1_packer                      packer;
-  ngap_interface*                       ngap = nullptr;
-  null_dlt_pcap                         pcap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
+  std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
 };
 
 class ngap_integration_test : public ::testing::Test
@@ -102,7 +129,6 @@ protected:
     adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
 
     ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, ue_mng, *adapter, timers, ctrl_worker);
-    adapter->connect_ngap(ngap.get());
   }
 
   ngap_configuration                    cfg;

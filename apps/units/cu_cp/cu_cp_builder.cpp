@@ -25,7 +25,7 @@ std::unique_ptr<srs_cu_cp::cu_cp> srsran::build_cu_cp(const cu_cp_unit_config&  
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(cu_cp_unit_cfg);
   cu_cp_cfg.cu_cp_executor                 = dependencies.cu_cp_executor;
   cu_cp_cfg.cu_cp_e2_exec                  = dependencies.cu_cp_e2_exec;
-  cu_cp_cfg.ngap_notifier                  = dependencies.ngap_notifier;
+  cu_cp_cfg.n2_gw                          = dependencies.n2_client;
   cu_cp_cfg.timers                         = dependencies.timers;
 
   return create_cu_cp(cu_cp_cfg);

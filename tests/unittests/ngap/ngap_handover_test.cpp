@@ -36,7 +36,7 @@ TEST_F(ngap_test, when_ue_missing_then_handover_preparation_procedure_fails)
   ASSERT_FALSE(t.get().success);
 
   // Make sure no NGAP pdu was sent
-  ASSERT_TRUE(msg_notifier.last_ngap_msgs.empty());
+  ASSERT_TRUE(n2_gw.last_ngap_msgs.empty());
 }
 
 /// Test successful handover preparation procedure
@@ -63,8 +63,8 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   lazy_task_launcher<ngap_handover_preparation_response> t_launcher(t);
 
   // Status: AMF received Handover Required.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ho_required);
 
   ASSERT_FALSE(t.ready());

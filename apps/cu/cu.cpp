@@ -301,7 +301,7 @@ int main(int argc, char** argv)
 
   // Create NGAP Gateway.
   // TODO had to include gnb
-  std::unique_ptr<srs_cu_cp::n2_connection_client> ngap_adapter;
+  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
   {
     using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
     using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
@@ -320,7 +320,7 @@ int main(int argc, char** argv)
     n2_nw_cfg.bind_interface = cu_cp_config.amf_cfg.n2_bind_interface;
     n2_nw_cfg.ppid           = NGAP_PPID;
 
-    ngap_adapter = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
+    n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
         *ngap_p,
         cu_cp_config.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
                                      : ngap_mode_t{network_mode_t{*epoll_broker, n2_nw_cfg}}});
@@ -334,7 +334,7 @@ int main(int argc, char** argv)
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.ngap_notifier  = ngap_adapter.get();
+  cu_cp_dependencies.n2_client      = n2_client.get();
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
@@ -352,10 +352,6 @@ int main(int argc, char** argv)
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
-
-  // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  ngap_adapter->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
-                              cu_cp_obj->get_ng_handler().get_ngap_event_handler());
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
@@ -408,11 +404,6 @@ int main(int argc, char** argv)
 
   // Stop CU-CP activity.
   cu_cp_obj->stop();
-
-  // Close network connections
-  cu_logger.info("Closing network connections...");
-  ngap_adapter->disconnect();
-  cu_logger.info("Network connections closed successfully");
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");

@@ -19,14 +19,17 @@ class ngap_message_handler;
 class ngap_event_handler;
 
 /// Handler of N2 connection between CU-CP and AMF.
-class n2_connection_client : public ngap_message_notifier
+class n2_connection_client
 {
 public:
-  /// \brief Connect the CU-CP to the N2 connection client.
-  virtual void connect_cu_cp(ngap_message_handler& msg_handler_, ngap_event_handler& ev_handler_) = 0;
+  virtual ~n2_connection_client() = default;
 
-  /// \brief Disconnect the CU-CP from the N2 connection client.
-  virtual void disconnect() = 0;
+  /// Establish a new TNL association with an AMF.
+  ///
+  /// \param cu_cp_rx_pdu_notifier Notifier that will be used to forward the NGAP PDUs sent by the AMF to the CU-CP.
+  /// \return Notifier that the CU-CP can use to send NGAP Tx PDUs to the AMF it connected to.
+  virtual std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) = 0;
 };
 
 } // namespace srs_cu_cp

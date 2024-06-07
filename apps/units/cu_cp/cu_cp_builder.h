@@ -9,6 +9,7 @@
  */
 
 #pragma once
+
 #include "srsran/cu_cp/cu_cp.h"
 
 namespace srsran {
@@ -16,12 +17,16 @@ namespace srsran {
 struct cu_cp_unit_config;
 struct worker_manager;
 
+namespace srs_cu_cp {
+class n2_connection_client;
+}
+
 /// CU-CP build dependencies.
 struct cu_cp_build_dependencies {
-  task_executor*                    cu_cp_executor = nullptr;
-  task_executor*                    cu_cp_e2_exec  = nullptr;
-  srs_cu_cp::ngap_message_notifier* ngap_notifier  = nullptr;
-  timer_manager*                    timers         = nullptr;
+  task_executor*                   cu_cp_executor = nullptr;
+  task_executor*                   cu_cp_e2_exec  = nullptr;
+  srs_cu_cp::n2_connection_client* n2_client      = nullptr;
+  timer_manager*                   timers         = nullptr;
 };
 
 /// Builds a CU-CP object with the given configuration.

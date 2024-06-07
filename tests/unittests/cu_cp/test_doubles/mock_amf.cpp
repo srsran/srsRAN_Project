@@ -25,17 +25,32 @@ public:
 
   void attach_cu_cp_pdu_handler(ngap_message_handler& cu_cp_) override { cu_cp_pdu_handler = &cu_cp_; }
 
-  void on_new_message(const ngap_message& msg) override
+  std::unique_ptr<ngap_message_notifier>
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
   {
-    // If a PDU response has been previously enqueued, we send it now.
-    if (not pending_tx_pdus.empty()) {
-      ngap_message tx_pdu;
-      pending_tx_pdus.try_pop(tx_pdu);
-      cu_cp_pdu_handler->handle_message(tx_pdu);
-    }
+    class sync_mock_pdu_notifier : public ngap_message_notifier
+    {
+    public:
+      sync_mock_pdu_notifier(synchronized_mock_du& parent_) : parent(parent_) {}
 
-    bool success = rx_pdus.push_blocking(msg);
-    report_error_if_not(success, "Queue is full");
+      void on_new_message(const ngap_message& msg) override
+      {
+        // If a PDU response has been previously enqueued, we send it now.
+        if (not parent.pending_tx_pdus.empty()) {
+          ngap_message tx_pdu;
+          parent.pending_tx_pdus.try_pop(tx_pdu);
+          parent.cu_cp_pdu_handler->handle_message(tx_pdu);
+        }
+
+        bool success = parent.rx_pdus.push_blocking(msg);
+        report_error_if_not(success, "Queue is full");
+      }
+
+    private:
+      synchronized_mock_du& parent;
+    };
+
+    return std::make_unique<sync_mock_pdu_notifier>(*this);
   }
 
   bool try_pop_rx_pdu(ngap_message& pdu) override { return rx_pdus.try_pop(pdu); }
