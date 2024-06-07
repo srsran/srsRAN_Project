@@ -182,10 +182,10 @@ INSTANTIATE_TEST_SUITE_P(OFHCompressionTestSuite,
                                                               ,
                                                               "avx512"
 #endif // __AVX512F__
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
                                                               ,
                                                               "neon"
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
                                                               ),
                                             ::testing::ValuesIn(ofh_compression_test_data)));
 

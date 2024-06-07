@@ -28,9 +28,9 @@
 #endif // __clang__
 #endif // __SSE4_1__
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 #include <arm_neon.h>
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
 
 namespace srsran {
 
@@ -114,7 +114,7 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define SRSRAN_SIMD_C16_SIZE 8
 
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 
 #define SRSRAN_SIMD_F_SIZE 4
 #define SRSRAN_SIMD_CF_SIZE 4
@@ -124,7 +124,7 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define SRSRAN_SIMD_S_SIZE 8
 #define SRSRAN_SIMD_C16_SIZE 8
 
-#else /* __ARM_NEON__ */
+#else /* __ARM_NEON */
 #define SRSRAN_SIMD_F_SIZE 0
 #define SRSRAN_SIMD_CF_SIZE 0
 
@@ -133,7 +133,7 @@ inline bool        SIMD_IS_ALIGNED(const void* ptr)
 #define SRSRAN_SIMD_S_SIZE 0
 #define SRSRAN_SIMD_C16_SIZE 0
 
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -157,10 +157,10 @@ using simd_f_t = __m256;
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
 using simd_f_t = __m128;
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
 using simd_f_t = float32x4_t;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -180,9 +180,9 @@ inline simd_f_t srsran_simd_f_load(const float* ptr)
 #ifdef __SSE4_1__
   return _mm_load_ps(ptr);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_f32(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -199,9 +199,9 @@ inline simd_f_t srsran_simd_f_loadu(const float* ptr)
 #ifdef __SSE4_1__
   return _mm_loadu_ps(ptr);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_f32(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -218,9 +218,9 @@ inline void srsran_simd_f_store(float* ptr, simd_f_t simdreg)
 #ifdef __SSE4_1__
   _mm_store_ps(ptr, simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_f32(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -237,9 +237,9 @@ inline void srsran_simd_f_storeu(float* ptr, simd_f_t simdreg)
 #ifdef __SSE4_1__
   _mm_storeu_ps(ptr, simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_f32(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -256,9 +256,9 @@ inline simd_f_t srsran_simd_f_set1(float x)
 #ifdef __SSE4_1__
   return _mm_set1_ps(x);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vdupq_n_f32(x);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -275,9 +275,9 @@ inline simd_f_t srsran_simd_f_mul(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return _mm_mul_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vmulq_f32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -294,9 +294,9 @@ inline simd_f_t srsran_simd_f_rcp(simd_f_t a)
 #ifdef __SSE4_1__
   return _mm_rcp_ps(a);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vmulq_f32(vrecpeq_f32(a), vrecpsq_f32(vrecpeq_f32(a), a));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -313,8 +313,8 @@ inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
   return _mm_addsub_ps(a, b);
-#else               /* __SSE4_1__ */
-#ifdef __ARM_NEON__ // CURRENTLY USES GENERIC IMPLEMENTATION FOR NEON
+#else             /* __SSE4_1__ */
+#ifdef __ARM_NEON // CURRENTLY USES GENERIC IMPLEMENTATION FOR NEON
   const float* a_ptr = reinterpret_cast<const float*>(&a);
   const float* b_ptr = reinterpret_cast<const float*>(&b);
   simd_f_t     ret;
@@ -327,10 +327,10 @@ inline simd_f_t srsran_simd_f_addsub(simd_f_t a, simd_f_t b)
     }
   }
   return ret;
-#endif              /* __ARM_NEON__ */
-#endif              /* __SSE4_1__ */
-#endif              /* __AVX2__ */
-#endif              /* __AVX512F__ */
+#endif            /* __ARM_NEON */
+#endif            /* __SSE4_1__ */
+#endif            /* __AVX2__ */
+#endif            /* __AVX512F__ */
 }
 
 inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
@@ -344,9 +344,9 @@ inline simd_f_t srsran_simd_f_sub(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return _mm_sub_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vsubq_f32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -363,9 +363,9 @@ inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return _mm_add_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vaddq_f32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -382,9 +382,9 @@ inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return _mm_fmadd_ps(a, b, acc);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vmlaq_f32(acc, a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -401,9 +401,9 @@ inline simd_f_t srsran_simd_f_zero()
 #ifdef __SSE4_1__
   return _mm_setzero_ps();
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vdupq_n_f32(0);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -420,9 +420,9 @@ inline simd_f_t srsran_simd_f_swap(simd_f_t a)
 #ifdef __SSE4_1__
   return _mm_shuffle_ps(a, a, 0b10110001);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vcombine_f32(vrev64_f32(vget_low_f32(a)), vrev64_f32(vget_high_f32(a)));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -461,9 +461,9 @@ inline simd_f_t srsran_simd_f_hadd(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return _mm_hadd_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)), vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -480,7 +480,7 @@ inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
 #ifdef __SSE4_1__
   return _mm_sqrt_ps(a);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   float32x4_t sqrt_reciprocal = vrsqrteq_f32(a);
   sqrt_reciprocal    = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
   float32x4_t result = vmulq_f32(a, sqrt_reciprocal);
@@ -492,7 +492,7 @@ inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
   uint32x4_t mask = vceqq_f32(a, zeros);
   // Force zero results and return.
   return vbslq_f32(mask, zeros, result);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -509,9 +509,9 @@ inline simd_f_t srsran_simd_f_neg(simd_f_t a)
 #ifdef __SSE4_1__
   return _mm_xor_ps(_mm_set1_ps(-0.0f), a);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vnegq_f32(a);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -528,9 +528,9 @@ inline simd_f_t srsran_simd_f_neg_mask(simd_f_t a, simd_f_t mask)
 #ifdef __SSE4_1__
   return _mm_xor_ps(mask, a);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return (float32x4_t)veorq_s32((int32x4_t)a, (int32x4_t)mask);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -547,9 +547,9 @@ inline simd_f_t srsran_simd_f_abs(simd_f_t a)
 #ifdef __SSE4_1__
   return _mm_andnot_ps(_mm_set1_ps(-0.0f), a);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vabsq_f32(a);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -614,7 +614,7 @@ inline void srsran_simd_f_fprintf(std::FILE* stream, simd_f_t a)
 
 #if SRSRAN_SIMD_CF_SIZE
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 using simd_cf_t = float32x4x2_t;
 #else
 struct simd_cf_t {
@@ -654,9 +654,9 @@ inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
   ret.re    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(2, 0, 2, 0));
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -690,9 +690,9 @@ inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
   ret.re    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(2, 0, 2, 0));
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -713,11 +713,11 @@ inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
 #ifdef __SSE4_1__
   ret.re    = _mm_load_ps(re);
   ret.im    = _mm_load_ps(im);
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   ret.val[0] = vld1q_f32(re);
   ret.val[1] = vld1q_f32(im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -738,11 +738,11 @@ inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
 #ifdef __SSE4_1__
   ret.re    = _mm_loadu_ps(re);
   ret.im    = _mm_loadu_ps(im);
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   ret.val[0] = vld1q_f32(re);
   ret.val[1] = vld1q_f32(im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -772,10 +772,10 @@ inline void srsran_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
 #ifdef __SSE4_1__
   _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
   _mm_store_ps(reinterpret_cast<float*>(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst2q_f32(reinterpret_cast<float*>(ptr), simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -804,10 +804,10 @@ inline void srsran_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
 #ifdef __SSE4_1__
   _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_unpacklo_ps(simdreg.re, simdreg.im));
   _mm_storeu_ps(reinterpret_cast<float*>(ptr + 2), _mm_unpackhi_ps(simdreg.re, simdreg.im));
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst2q_f32(reinterpret_cast<float*>(ptr), simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -826,11 +826,11 @@ inline void srsran_simd_cf_store(float* re, float* im, simd_cf_t simdreg)
 #ifdef __SSE4_1__
   _mm_store_ps(re, simdreg.re);
   _mm_store_ps(im, simdreg.im);
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst1q_f32(re, simdreg.val[0]);
   vst1q_f32(im, simdreg.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -849,11 +849,11 @@ inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg)
 #ifdef __SSE4_1__
   _mm_storeu_ps(re, simdreg.re);
   _mm_storeu_ps(im, simdreg.im);
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst1q_f32(re, simdreg.val[0]);
   vst1q_f32(im, simdreg.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -861,11 +861,11 @@ inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg)
 
 inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
 {
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   simd_f_t out = in.val[0];
 #else
   simd_f_t out      = in.re;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #ifndef __AVX512F__
 #ifdef __AVX2__
   // Permute for AVX registers (reorders data across 128-bit registers).
@@ -878,11 +878,11 @@ inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
 
 inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
 {
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   simd_f_t out = in.val[1];
 #else
   simd_f_t out      = in.im;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #ifndef __AVX512F__
 #ifdef __AVX2__
   // Permute for AVX registers (reorders data across 128-bit registers).
@@ -907,11 +907,11 @@ inline simd_cf_t srsran_simd_cf_set1(cf_t x)
 #ifdef __SSE4_1__
   ret.re            = _mm_set1_ps(x.real());
   ret.im            = _mm_set1_ps(x.imag());
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   ret.val[0]        = vdupq_n_f32(x.real());
   ret.val[1]        = vdupq_n_f32(x.imag());
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -938,10 +938,10 @@ inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
   ret.re            = _mm_sub_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
   ret.im            = _mm_add_ps(_mm_mul_ps(a.re, b.im), _mm_mul_ps(a.im, b.re));
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vsubq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
   ret.val[1]        = vaddq_f32(vmulq_f32(a.val[0], b.val[1]), vmulq_f32(a.val[1], b.val[0]));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -963,10 +963,10 @@ inline simd_cf_t srsran_simd_cf_conjprod(simd_cf_t a, simd_cf_t b)
   ret.re            = _mm_add_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
   ret.im            = _mm_sub_ps(_mm_mul_ps(a.im, b.re), _mm_mul_ps(a.re, b.im));
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vaddq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
   ret.val[1]        = vsubq_f32(vmulq_f32(a.val[1], b.val[0]), vmulq_f32(a.val[0], b.val[1]));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -988,10 +988,10 @@ inline simd_cf_t srsran_simd_cf_add(simd_cf_t a, simd_cf_t b)
   ret.re            = _mm_add_ps(a.re, b.re);
   ret.im            = _mm_add_ps(a.im, b.im);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vaddq_f32(a.val[0], b.val[0]);
   ret.val[1]        = vaddq_f32(a.val[1], b.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1013,10 +1013,10 @@ inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
   ret.re            = _mm_sub_ps(a.re, b.re);
   ret.im            = _mm_sub_ps(a.im, b.im);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vsubq_f32(a.val[0], b.val[0]);
   ret.val[1]        = vsubq_f32(a.val[1], b.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1045,10 +1045,10 @@ inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
   ret.re            = _mm_mul_ps(a.re, b);
   ret.im            = _mm_mul_ps(a.im, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vmulq_f32(a.val[0], b);
   ret.val[1]        = vmulq_f32(a.val[1], b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1085,7 +1085,7 @@ inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
   ret.re            = _mm_mul_ps(a.re, rcp);
   ret.im            = _mm_mul_ps(neg_a_im, rcp);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   simd_f_t a2re     = vmulq_f32(a.val[0], a.val[0]);
   simd_f_t a2im     = vmulq_f32(a.val[1], a.val[1]);
   simd_f_t mod2     = vaddq_f32(a2re, a2im);
@@ -1093,7 +1093,7 @@ inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
   simd_f_t neg_a_im = vnegq_f32(a.val[1]);
   ret.val[0]        = vmulq_f32(a.val[0], rcp);
   ret.val[1]        = vmulq_f32(neg_a_im, rcp);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1103,13 +1103,13 @@ inline simd_cf_t srsran_simd_cf_rcp(simd_cf_t a)
 inline simd_cf_t srsran_simd_cf_neg(simd_cf_t a)
 {
   simd_cf_t ret;
-#if __ARM_NEON__
+#if __ARM_NEON
   ret.val[0] = srsran_simd_f_neg(a.val[0]);
   ret.val[1] = srsran_simd_f_neg(a.val[1]);
-#else  /* __ARM_NEON__ */
+#else  /* __ARM_NEON */
   ret.re            = srsran_simd_f_neg(a.re);
   ret.im            = srsran_simd_f_neg(a.im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
   return ret;
 }
 
@@ -1121,39 +1121,39 @@ inline simd_cf_t srsran_simd_cf_neg_mask(simd_cf_t a, simd_f_t mask)
   mask = _mm256_permutevar8x32_ps(mask, _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7));
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
-#if __ARM_NEON__
+#if __ARM_NEON
   ret.val[0] = srsran_simd_f_neg_mask(a.val[0], mask);
   ret.val[1] = srsran_simd_f_neg_mask(a.val[1], mask);
-#else  /* __ARM_NEON__ */
+#else  /* __ARM_NEON */
   ret.re            = srsran_simd_f_neg_mask(a.re, mask);
   ret.im            = srsran_simd_f_neg_mask(a.im, mask);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
   return ret;
 }
 
 inline simd_cf_t srsran_simd_cf_conj(simd_cf_t a)
 {
   simd_cf_t ret;
-#if __ARM_NEON__
+#if __ARM_NEON
   ret.val[0] = a.val[0];
   ret.val[1] = srsran_simd_f_neg(a.val[1]);
-#else  /* __ARM_NEON__ */
+#else  /* __ARM_NEON */
   ret.re            = a.re;
   ret.im            = srsran_simd_f_neg(a.im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
   return ret;
 }
 
 inline simd_cf_t srsran_simd_cf_mulj(simd_cf_t a)
 {
   simd_cf_t ret;
-#if __ARM_NEON__
+#if __ARM_NEON
   ret.val[0] = srsran_simd_f_neg(a.val[1]);
   ret.val[1] = a.val[0];
-#else  /* __ARM_NEON__ */
+#else  /* __ARM_NEON */
   ret.re            = srsran_simd_f_neg(a.im);
   ret.im            = a.re;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
   return ret;
 }
 
@@ -1172,10 +1172,10 @@ inline simd_cf_t srsran_simd_cf_zero()
   ret.re            = _mm_setzero_ps();
   ret.im            = _mm_setzero_ps();
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0]        = vdupq_n_f32(0);
   ret.val[1]        = vdupq_n_f32(0);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1222,7 +1222,7 @@ inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
   ret.re     = _mm256_unpacklo_ps(in1, in2);
   ret.im     = _mm256_unpackhi_ps(in1, in2);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   cf_t reg_a[SRSRAN_SIMD_CF_SIZE], reg_b[SRSRAN_SIMD_CF_SIZE], reg_ret[SRSRAN_SIMD_CF_SIZE];
   srsran_simd_cfi_storeu(reg_a, a);
   srsran_simd_cfi_storeu(reg_b, b);
@@ -1233,7 +1233,7 @@ inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
   }
 
   ret = srsran_simd_cfi_loadu(reg_ret);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX512F__ */
   return ret;
@@ -1279,7 +1279,7 @@ inline simd_cf_t srsran_simd_cf_interleave_high(simd_cf_t a, simd_cf_t b)
   ret.re     = _mm256_unpacklo_ps(in1, in2);
   ret.im     = _mm256_unpackhi_ps(in1, in2);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   cf_t reg_a[SRSRAN_SIMD_CF_SIZE], reg_b[SRSRAN_SIMD_CF_SIZE], reg_ret[SRSRAN_SIMD_CF_SIZE];
   srsran_simd_cfi_storeu(reg_a, a);
   srsran_simd_cfi_storeu(reg_b, b);
@@ -1290,7 +1290,7 @@ inline simd_cf_t srsran_simd_cf_interleave_high(simd_cf_t a, simd_cf_t b)
   }
 
   ret = srsran_simd_cfi_loadu(reg_ret);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX512F__ */
   return ret;
@@ -1325,10 +1325,10 @@ using simd_sel_t = __m256;
 using simd_i_t   = __m128i;
 using simd_sel_t = __m128;
 #else /* __AVX2__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 using simd_i_t   = int32x4_t;
 using simd_sel_t = uint32x4_t;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1344,9 +1344,9 @@ inline simd_i_t srsran_simd_i_load(const int32_t* x)
 #ifdef __SSE4_1__
   return _mm_load_si128(reinterpret_cast<const __m128i*>(x));
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_s32(reinterpret_cast<const int*>(x));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1363,9 +1363,9 @@ inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 #ifdef __SSE4_1__
   _mm_store_si128(reinterpret_cast<__m128i*>(x), reg);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s32(reinterpret_cast<int*>(x), reg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1382,9 +1382,9 @@ inline simd_i_t srsran_simd_i_set1(int x)
 #ifdef __SSE4_1__
   return _mm_set1_epi32(x);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vdupq_n_s32(x);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1401,9 +1401,9 @@ inline simd_i_t srsran_simd_i_add(simd_i_t a, simd_i_t b)
 #ifdef __SSE4_1__
   return _mm_add_epi32(a, b);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vaddq_s32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1420,9 +1420,9 @@ inline simd_i_t srsran_simd_i_mul(simd_i_t a, simd_i_t b)
 #ifdef __SSE4_1__
   return _mm_mul_epi32(a, b);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vmulq_s32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1439,9 +1439,9 @@ inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 #ifdef __SSE4_1__
   return _mm_and_si128(a, b);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vandq_s32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1458,9 +1458,9 @@ inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
 #ifdef __SSE4_1__
   return _mm_and_ps(a, b);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vandq_u32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1477,9 +1477,9 @@ inline simd_sel_t srsran_simd_f_max(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return (simd_sel_t)_mm_cmpgt_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vcgtq_f32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1496,9 +1496,9 @@ inline simd_sel_t srsran_simd_f_min(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   return (simd_sel_t)_mm_cmplt_ps(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vcltq_f32(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1515,9 +1515,9 @@ inline simd_f_t srsran_simd_f_select(simd_f_t a, simd_f_t b, simd_sel_t selector
 #ifdef __SSE4_1__
   return _mm_blendv_ps(a, b, selector);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vbslq_f32(selector, b, a);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1540,10 +1540,10 @@ inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel_t sele
   ret.re = _mm_blendv_ps(a.re, b.re, selector);
   ret.im = _mm_blendv_ps(a.im, b.im, selector);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.val[0] = vbslq_f32(selector, b.val[0], a.val[0]);
   ret.val[1] = vbslq_f32(selector, b.val[1], a.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1571,9 +1571,9 @@ inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector
 #ifdef __SSE4_1__
   return (__m128i)_mm_blendv_ps((__m128)a, (__m128)b, selector);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vbslq_s32(selector, b, a);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1592,9 +1592,9 @@ using simd_s_t = __m256i;
 #ifdef __SSE4_1__
 using simd_s_t = __m128i;
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 using simd_s_t = int16x8_t;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1610,9 +1610,9 @@ inline simd_s_t srsran_simd_s_load(const int16_t* ptr)
 #ifdef __SSE4_1__
   return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_s16(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1629,9 +1629,9 @@ inline simd_s_t srsran_simd_s_loadu(const int16_t* ptr)
 #ifdef __SSE4_1__
   return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_s16(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1648,9 +1648,9 @@ inline void srsran_simd_s_store(int16_t* ptr, simd_s_t simdreg)
 #ifdef __SSE4_1__
   _mm_store_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s16(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1667,9 +1667,9 @@ inline void srsran_simd_s_storeu(int16_t* ptr, simd_s_t simdreg)
 #ifdef __SSE4_1__
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s16(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1685,9 +1685,9 @@ inline simd_s_t srsran_simd_s_zero()
 #ifdef __SSE4_1__
   return _mm_setzero_si128();
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vdupq_n_s16(0);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1704,9 +1704,9 @@ inline simd_s_t srsran_simd_s_mul(simd_s_t a, simd_s_t b)
 #ifdef __SSE4_1__
   return _mm_mullo_epi16(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vmulq_s16(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1729,7 +1729,7 @@ inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
 #ifdef __SSE4_1__
   return _mm_sign_epi16(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   // Taken and modified from sse2neon.h licensed under MIT.
   // Source: https://github.com/DLTcollab/sse2neon
   int16x8_t zero = vdupq_n_s16(0);
@@ -1745,7 +1745,7 @@ inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
   // res = masked & (~zeroMask)
   int16x8_t res = vbicq_s16(masked, zeroMask);
   return res;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1762,9 +1762,9 @@ inline simd_s_t srsran_simd_s_add(simd_s_t a, simd_s_t b)
 #ifdef __SSE4_1__
   return _mm_add_epi16(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vaddq_s16(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1781,9 +1781,9 @@ inline simd_s_t srsran_simd_s_sub(simd_s_t a, simd_s_t b)
 #ifdef __SSE4_1__
   return _mm_sub_epi16(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vsubq_s16(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1811,11 +1811,11 @@ struct simd_c16_t {
   __m128i im;
 };
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 struct simd_c16_t {
   int16x8x2_t m128;
 };
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1849,9 +1849,9 @@ inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
   ret.re      = _mm_blend_epi16(in1, _mm_shufflelo_epi16(_mm_shufflehi_epi16(in2, 0b10100000), 0b10100000), 0b10101010);
   ret.im      = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* __SSE4_1__*/
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.m128     = vld2q_s16(reinterpret_cast<const int16_t*>(ptr));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -1869,10 +1869,10 @@ inline simd_c16_t srsran_simd_c16_load(const int16_t* re, const int16_t* im)
   ret.re        = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
   ret.im        = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
 #else /* __SSE4_1__*/
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.m128.val[0] = vld1q_s16(re);
   ret.m128.val[1] = vld1q_s16(im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
   return ret;
@@ -1889,10 +1889,10 @@ inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
   ret.re        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
   ret.im        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
 #else /* __SSE4_1__*/
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.m128.val[0] = vld1q_s16(re);
   ret.m128.val[1] = vld1q_s16(im);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
   return ret;
@@ -1911,10 +1911,10 @@ inline void srsran_simd_c16i_store(c16_t* ptr, simd_c16_t simdreg)
   __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
   _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
   _mm_store_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 }
@@ -1932,10 +1932,10 @@ inline void srsran_simd_c16i_storeu(c16_t* ptr, simd_c16_t simdreg)
   __m128i im_sw = _mm_shufflelo_epi16(_mm_shufflehi_epi16(simdreg.im, 0b10110001), 0b10110001);
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), _mm_blend_epi16(simdreg.re, im_sw, 0b10101010));
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr + 8), _mm_blend_epi16(re_sw, simdreg.im, 0b10101010));
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
   vst2q_s16(reinterpret_cast<int16_t*>(ptr), simdreg.m128);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 }
@@ -1950,10 +1950,10 @@ inline void srsran_simd_c16_store(int16_t* re, int16_t* im, simd_c16_t simdreg)
   _mm_store_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
   _mm_store_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s16(re, simdreg.m128.val[0]);
   vst1q_s16(im, simdreg.m128.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 }
@@ -1968,10 +1968,10 @@ inline void srsran_simd_c16_storeu(int16_t* re, int16_t* im, simd_c16_t simdreg)
   _mm_storeu_si128(reinterpret_cast<__m128i*>(re), simdreg.re);
   _mm_storeu_si128(reinterpret_cast<__m128i*>(im), simdreg.im);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s16(re, simdreg.m128.val[0]);
   vst1q_s16(im, simdreg.m128.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 }
@@ -2006,10 +2006,10 @@ inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
   ret.re     = _mm_add_epi16(a.re, b.re);
   ret.im     = _mm_add_epi16(a.im, b.im);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.m128.val[0] = vaddq_s16(a.m128.val[0], a.m128.val[0]);
   ret.m128.val[1] = vaddq_s16(a.m128.val[1], a.m128.val[1]);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
   return ret;
@@ -2026,10 +2026,10 @@ inline simd_c16_t srsran_simd_c16_zero()
   ret.re     = _mm_setzero_si128();
   ret.im     = _mm_setzero_si128();
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   ret.m128.val[0] = vdupq_n_s16(0);
   ret.m128.val[1] = vdupq_n_s16(0);
-#endif /* __ARM_NEON__    */
+#endif /* __ARM_NEON    */
 #endif /* __SSE4_1__  */
 #endif /* __AVX2__ */
   return ret;
@@ -2068,11 +2068,11 @@ inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
   __m128i bi      = _mm_cvtps_epi32(bb);
   return _mm_packs_epi32(ai, bi);
 #else
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   int32x4_t ai = vcvtnq_s32_f32(a);
   int32x4_t bi = vcvtnq_s32_f32(b);
   return (simd_s_t)vcombine_s16(vqmovn_s32(ai), vqmovn_s32(bi));
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2094,10 +2094,10 @@ using simd_b_t = __m256i;
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
 using simd_b_t = __m128i;
-#else /* __ARM_NEON__ */
-#ifdef __ARM_NEON__
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
 using simd_b_t = int8x16_t;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2113,9 +2113,9 @@ inline simd_b_t srsran_simd_b_load(const int8_t* ptr)
 #ifdef __SSE4_1__
   return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_s8(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2132,9 +2132,9 @@ inline simd_b_t srsran_simd_b_loadu(const int8_t* ptr)
 #ifdef __SSE4_1__
   return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vld1q_s8(ptr);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2151,9 +2151,9 @@ inline void srsran_simd_b_store(int8_t* ptr, simd_b_t simdreg)
 #ifdef __SSE4_1__
   _mm_store_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s8(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2170,9 +2170,9 @@ inline void srsran_simd_b_storeu(int8_t* ptr, simd_b_t simdreg)
 #ifdef __SSE4_1__
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), simdreg);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   vst1q_s8(ptr, simdreg);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2189,9 +2189,9 @@ inline simd_b_t srsran_simd_b_xor(simd_b_t a, simd_b_t b)
 #ifdef __SSE4_1__
   return _mm_xor_si128(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return veorq_s8(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2208,9 +2208,9 @@ inline simd_b_t srsran_simd_b_add(simd_b_t a, simd_b_t b)
 #ifdef __SSE4_1__
   return _mm_adds_epi8(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vqaddq_s8(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2227,9 +2227,9 @@ inline simd_b_t srsran_simd_b_sub(simd_b_t a, simd_b_t b)
 #ifdef __SSE4_1__
   return _mm_subs_epi8(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   return vqsubq_s8(a, b);
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
@@ -2252,7 +2252,7 @@ inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
 #ifdef __SSE4_1__
   return _mm_sign_epi8(a, b);
 #else /* __SSE4_1__ */
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   // Taken and modified from sse2neon.h licensed under MIT.
   // Source: https://github.com/DLTcollab/sse2neon
   int8x16_t zero = vdupq_n_s8(0);
@@ -2268,7 +2268,7 @@ inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
   // res = masked & (~zeroMask)
   int8x16_t res = vbicq_s8(masked, zeroMask);
   return res;
-#endif /* __ARM_NEON__ */
+#endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */

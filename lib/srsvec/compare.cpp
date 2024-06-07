@@ -38,7 +38,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
   }
 #endif // __AVX2__
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   bool found = false;
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 16.
   for (unsigned simd_index_end = 16 * (input.size() / 16); index != simd_index_end; index += 16) {
@@ -63,7 +63,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
       break;
     }
   }
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
 
   // Keeps iterating from the current index to the end.
   for (; index != input.size(); ++index) {

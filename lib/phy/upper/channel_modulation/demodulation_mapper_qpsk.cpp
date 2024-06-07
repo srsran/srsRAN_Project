@@ -13,9 +13,9 @@
 #include "avx2_helpers.h"
 #endif // __AVX2__
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 #include "neon_helpers.h"
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
 
 using namespace srsran;
 
@@ -66,7 +66,7 @@ static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const
 
 #endif // __AVX2__
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 
 static void demod_QPSK_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
@@ -104,7 +104,7 @@ static void demod_QPSK_neon(log_likelihood_ratio* llr, const cf_t* symbol, const
            neon::quantize_f32(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
 }
 
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
 
 static log_likelihood_ratio demod_QPSK_symbol(float x, float noise_var)
 {
@@ -137,7 +137,7 @@ void srsran::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
   }
 #endif // __AVX2__
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
   // For NEON, it generates 16 LLRs simultaneously. The input is read in batches of 8 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
     demod_QPSK_neon(llr_it, symbols_it, noise_it);
@@ -146,7 +146,7 @@ void srsran::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
     symbols_it += 8;
     noise_it += 8;
   }
-#endif // __ARM_NEON__
+#endif // __ARM_NEON
 
   // Process remainder symbols with the generic algorithm.
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
