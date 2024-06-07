@@ -496,6 +496,245 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
   pucch_common_alloc_grid[(sl_tx - 1).to_uint()].clear();
 }
 
+//////////////     Sub-class definitions       //////////////
+
+ofdm_symbol_range pucch_allocator_impl::pucch_grant::get_symbols() const
+{
+  if (pucch_res_cfg == nullptr) {
+    return ofdm_symbol_range{NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1};
+  }
+
+  switch (format) {
+    case pucch_format::FORMAT_0: {
+      const auto& f0 = std::get<pucch_format_0_cfg>(pucch_res_cfg->format_params);
+      return ofdm_symbol_range{f0.starting_sym_idx, f0.starting_sym_idx + f0.nof_symbols};
+    }
+    case pucch_format::FORMAT_1: {
+      const auto& f1 = std::get<pucch_format_1_cfg>(pucch_res_cfg->format_params);
+      return ofdm_symbol_range{f1.starting_sym_idx, f1.starting_sym_idx + f1.nof_symbols};
+    }
+    case pucch_format::FORMAT_2: {
+      const auto& f2 = std::get<pucch_format_2_3_cfg>(pucch_res_cfg->format_params);
+      return ofdm_symbol_range{f2.starting_sym_idx, f2.starting_sym_idx + f2.nof_symbols};
+    }
+    default:
+      return ofdm_symbol_range{NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1};
+  }
+}
+
+pucch_allocator_impl::uci_bits pucch_allocator_impl::pucch_grant_list::get_uci_bits() const
+{
+  uci_bits bits;
+  if (sr_resource.has_value()) {
+    bits.sr_bits = sr_resource->bits.sr_bits;
+  } else if (harq_resource.has_value()) {
+    bits.sr_bits = harq_resource->bits.sr_bits;
+  } else if (csi_resource.has_value()) {
+    bits.sr_bits = csi_resource->bits.sr_bits;
+  }
+
+  if (csi_resource.has_value()) {
+    bits.csi_part1_bits = csi_resource.value().bits.csi_part1_bits;
+  } else if (harq_resource.has_value()) {
+    bits.csi_part1_bits = harq_resource.value().bits.csi_part1_bits;
+  }
+
+  if (harq_resource.has_value()) {
+    bits.harq_ack_bits = harq_resource.value().bits.harq_ack_bits;
+  } else if (sr_resource.has_value()) {
+    bits.harq_ack_bits = sr_resource.value().bits.harq_ack_bits;
+  }
+  if (csi_resource.has_value()) {
+    bits.harq_ack_bits = csi_resource.value().bits.harq_ack_bits;
+  }
+  return bits;
+}
+
+// Contains the existing PUCCH grants currently allocated to a given UE.
+class existing_pucch_pdus_handler
+{
+public:
+  existing_pucch_pdus_handler(rnti_t crnti, span<pucch_info> pucchs, const pucch_resource* pucch_res_cfg);
+
+  bool        sr_id_match(const pucch_resource& pucch_res_cfg_lhs, const pucch_info& rhs) const;
+  bool        is_empty() const { return pdus_cnt == 0; }
+  pucch_info* get_next_grant();
+  void        update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits);
+  void        update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits);
+  void        update_harq_pdu_bits(unsigned harq_ack_bits, sr_nof_bits sr_bits, unsigned csi_part1_bits);
+
+  pucch_info* sr_pdu{nullptr};
+  pucch_info* harq_pdu{nullptr};
+  pucch_info* csi_pdu{nullptr};
+  unsigned    pdus_cnt = 0;
+};
+
+existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                crnti,
+                                                         span<pucch_info>      pucchs,
+                                                         const pucch_resource* pucch_res_cfg)
+{
+  for (auto& pucch : pucchs) {
+    if (pucch.crnti == crnti) {
+      if (pucch.format == srsran::pucch_format::FORMAT_0) {
+        // With Format 0, when there are both HARQ bits and SR bits, we only use the HARQ-ACK resource; the only
+        // case when the SR PUCCH F0 is used is when there are only SR bits.
+        if (pucch.format_0.sr_bits != sr_nof_bits::one and pucch.format_0.harq_ack_nof_bits == 0U) {
+          sr_pdu = &pucch;
+          ++pdus_cnt;
+        } else if (pucch.format_0.harq_ack_nof_bits != 0U and pucch.format_0.harq_ack_nof_bits <= 2U) {
+          harq_pdu = &pucch;
+          ++pdus_cnt;
+        } else {
+          srsran_assertion_failure("Invalid HARQ/SR bits for PUCCH Format 0");
+        }
+      }
+
+      else if (pucch.format == srsran::pucch_format::FORMAT_1) {
+        if (pucch.format_1.sr_bits == sr_nof_bits::one and pucch_res_cfg != nullptr and
+            sr_id_match(*pucch_res_cfg, pucch)) {
+          sr_pdu = &pucch;
+        } else {
+          harq_pdu = &pucch;
+        }
+        ++pdus_cnt;
+      }
+
+      else if (pucch.format == srsran::pucch_format::FORMAT_2) {
+        if (pucch.format_2.csi_part1_bits != 0U and pucch.format_2.harq_ack_nof_bits == 0U) {
+          csi_pdu = &pucch;
+        } else {
+          harq_pdu = &pucch;
+        }
+        ++pdus_cnt;
+      }
+    }
+  }
+}
+
+bool existing_pucch_pdus_handler::sr_id_match(const pucch_resource& pucch_res_cfg_lhs, const pucch_info& rhs) const
+{
+  const auto& f1_cfg    = std::get<pucch_format_1_cfg>(pucch_res_cfg_lhs.format_params);
+  const bool  prb_match = pucch_res_cfg_lhs.starting_prb == rhs.resources.prbs.start() and
+                         ((not pucch_res_cfg_lhs.second_hop_prb.has_value() and rhs.resources.prbs.empty()) or
+                          (pucch_res_cfg_lhs.second_hop_prb.has_value() and pucch_res_cfg_lhs.second_hop_prb.value() and
+                           rhs.resources.second_hop_prbs.start()));
+  const bool symb_match =
+      f1_cfg.starting_sym_idx == rhs.resources.symbols.start() and f1_cfg.nof_symbols == rhs.resources.symbols.length();
+  return prb_match && symb_match && f1_cfg.initial_cyclic_shift == rhs.format_1.initial_cyclic_shift &&
+         f1_cfg.time_domain_occ == rhs.format_1.time_domain_occ;
+}
+
+pucch_info* existing_pucch_pdus_handler::get_next_grant()
+{
+  if (is_empty()) {
+    return nullptr;
+  }
+  pucch_info* ret_grant = nullptr;
+  if (csi_pdu != nullptr) {
+    ret_grant = csi_pdu;
+    --pdus_cnt;
+  } else if (sr_pdu != nullptr) {
+    ret_grant = sr_pdu;
+    --pdus_cnt;
+  } else if (harq_pdu != nullptr) {
+    ret_grant = harq_pdu;
+    --pdus_cnt;
+  }
+  return ret_grant;
+}
+
+void existing_pucch_pdus_handler::update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits)
+{
+  if (sr_pdu == nullptr) {
+    return;
+  }
+  if (sr_pdu->format == pucch_format::FORMAT_0) {
+    sr_pdu->format_0.sr_bits           = sr_bits;
+    sr_pdu->format_0.harq_ack_nof_bits = harq_ack_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    sr_pdu = nullptr;
+    --pdus_cnt;
+  } else if (sr_pdu->format == pucch_format::FORMAT_1) {
+    sr_pdu->format_1.sr_bits           = sr_bits;
+    sr_pdu->format_1.harq_ack_nof_bits = harq_ack_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    sr_pdu = nullptr;
+    --pdus_cnt;
+  } else {
+    srsran_assertion_failure("Only PUCCH Format 0 or 1 can be used for SR grant");
+  }
+}
+
+void existing_pucch_pdus_handler::update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits)
+{
+  if (csi_pdu->format == pucch_format::FORMAT_2) {
+    csi_pdu->format_2.csi_part1_bits = csi_part1_bits;
+    csi_pdu->format_2.sr_bits        = sr_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    csi_pdu = nullptr;
+    --pdus_cnt;
+  } else {
+    srsran_assertion_failure("Only PUCCH Format 2 currently supported for CSI grant");
+  }
+}
+
+void existing_pucch_pdus_handler::update_harq_pdu_bits(unsigned    harq_ack_bits,
+                                                       sr_nof_bits sr_bits,
+                                                       unsigned    csi_part1_bits)
+{
+  if (harq_pdu->format == pucch_format::FORMAT_0) {
+    harq_pdu->format_0.harq_ack_nof_bits = harq_ack_bits;
+    harq_pdu->format_0.sr_bits           = sr_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    harq_pdu = nullptr;
+    --pdus_cnt;
+  } else if (harq_pdu->format == pucch_format::FORMAT_1) {
+    harq_pdu->format_1.harq_ack_nof_bits = harq_ack_bits;
+    harq_pdu->format_1.sr_bits           = sr_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    harq_pdu = nullptr;
+    --pdus_cnt;
+  } else if (harq_pdu->format == pucch_format::FORMAT_2) {
+    harq_pdu->format_2.harq_ack_nof_bits = harq_ack_bits;
+    harq_pdu->format_2.sr_bits           = sr_bits;
+    harq_pdu->format_2.csi_part1_bits    = csi_part1_bits;
+    // Once the grant is updated, set the pointer to null, as we don't want to process this again.
+    harq_pdu = nullptr;
+    --pdus_cnt;
+  } else {
+    srsran_assertion_failure("Only PUCCH Format 0, 1, and 2 currently supported");
+  }
+}
+
+void pucch_allocator_impl::res_manager_garbage_collector::reset()
+{
+  harq_set_0 = false;
+  harq_set_1 = false;
+  csi        = false;
+  sr         = false;
+}
+
+void pucch_allocator_impl::res_manager_garbage_collector::release_resource(slot_point                   slot_tx,
+                                                                           rnti_t                       crnti,
+                                                                           const ue_cell_configuration& ue_cell_cfg)
+{
+  if (harq_set_0) {
+    res_manager.release_harq_f1_resource(
+        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (harq_set_1) {
+    res_manager.release_harq_f2_resource(
+        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (sr) {
+    res_manager.release_sr_resource(
+        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (csi) {
+    res_manager.release_csi_resource(slot_tx, crnti, ue_cell_cfg);
+  }
+}
+
 //////////////    Private functions       //////////////
 
 // The function returns an available common PUCCH resource (i.e., not used by other UEs); it returns a null optional
@@ -1861,7 +2100,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
 
   // Check if we can fit the new PUCCH PDUs in the output results.
   // TODO: Check if this is correct, or we need to add +/-1.
-  if (pucch_slot_alloc.result.ul.pucchs.size() + (grants_to_tx.nof_grants - existing_pdus.grants_cnt) >=
+  if (pucch_slot_alloc.result.ul.pucchs.size() + (grants_to_tx.nof_grants - existing_pdus.pdus_cnt) >=
       get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
     logger.info(
         "rnti={}: PUCCH allocation for slot={} skipped. Cause: UL grants reached", crnti, pucch_slot_alloc.slot);
