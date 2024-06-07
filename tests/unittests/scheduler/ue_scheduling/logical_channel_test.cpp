@@ -271,3 +271,27 @@ TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_u
   ul_lch_mng2.set_status(lcg_id, false);
   ASSERT_EQ(ul_lch_mng2.pending_bytes(), 0);
 }
+
+TEST(dl_logical_channel_test, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_less_than_five_bytes)
+{
+  const unsigned tb_size = 309;
+
+  dl_logical_channel_manager lch_mng;
+  lcid_dl_sch_t              ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
+  const unsigned             dummy_ce_payload = 0;
+  lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
+  lch_mng.set_status(LCID_SRB0, true);
+  lch_mng.set_status(LCID_SRB1, true);
+  lch_mng.handle_dl_buffer_status_indication(LCID_SRB0, 295);
+  lch_mng.handle_dl_buffer_status_indication(LCID_SRB1, 10000);
+
+  dl_msg_lc_info subpdu;
+
+  unsigned allocated_bytes = 0;
+  // ConRes occupies 7 bytes => 6 bytes ConRes CE + 1 bytes header.
+  allocated_bytes += lch_mng.allocate_ue_con_res_id_mac_ce(subpdu, tb_size);
+  // SRB0 SDU requires at least 298 bytes => 295 payload size + 3 bytes MAC header. Leftover bytes = 4 bytes.
+  allocated_bytes += lch_mng.allocate_mac_sdu(subpdu, tb_size - allocated_bytes, LCID_SRB0);
+  // Verify leftover bytes are assigned to the last SDU.
+  ASSERT_EQ(allocated_bytes, tb_size);
+}
