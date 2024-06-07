@@ -16,32 +16,38 @@
 
 namespace srsran::modules::cu_up {
 
-/// Types of PCAPs in the CU-UP
-enum class pcap_type { E1AP, N3, F1U, last };
-
-/// Converts the given PCAP type to an unsigned.
-inline unsigned to_value(pcap_type value)
-{
-  return static_cast<unsigned>(value);
-}
+struct cu_up_dlt_pcaps {
+  std::unique_ptr<dlt_pcap> n3;
+  std::unique_ptr<dlt_pcap> f1u;
+  std::unique_ptr<dlt_pcap> e1ap;
+  void                      close() const
+  {
+    if (n3 != nullptr) {
+      n3->close();
+    }
+    if (f1u != nullptr) {
+      f1u->close();
+    }
+    if (e1ap != nullptr) {
+      e1ap->close();
+    }
+  }
+};
 
 /// Creates the DLT PCAPs of the CU-UP.
-inline std::vector<std::unique_ptr<dlt_pcap>> create_dlt_pcaps(const cu_up_unit_pcap_config&   pcap_cfg,
-                                                               worker_manager_executor_getter* exec_getter)
+inline cu_up_dlt_pcaps create_dlt_pcaps(const cu_up_unit_pcap_config&   pcap_cfg,
+                                        worker_manager_executor_getter* exec_getter)
 {
-  std::vector<std::unique_ptr<dlt_pcap>> pcaps(to_value(pcap_type::last));
+  cu_up_dlt_pcaps pcaps;
 
-  pcaps[to_value(pcap_type::E1AP)] =
-      pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, exec_getter->get_executor("pcap_exec"))
-                            : create_null_dlt_pcap();
+  pcaps.e1ap = pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, exec_getter->get_executor("pcap_exec"))
+                                     : create_null_dlt_pcap();
 
-  pcaps[to_value(pcap_type::N3)] =
-      pcap_cfg.n3.enabled ? create_gtpu_pcap(pcap_cfg.n3.filename, exec_getter->get_executor("n3_pcap_exec"))
-                          : create_null_dlt_pcap();
+  pcaps.n3 = pcap_cfg.n3.enabled ? create_gtpu_pcap(pcap_cfg.n3.filename, exec_getter->get_executor("n3_pcap_exec"))
+                                 : create_null_dlt_pcap();
 
-  pcaps[to_value(pcap_type::F1U)] =
-      pcap_cfg.f1u.enabled ? create_gtpu_pcap(pcap_cfg.f1u.filename, exec_getter->get_executor("f1u_pcap_exec"))
-                           : create_null_dlt_pcap();
+  pcaps.f1u = pcap_cfg.f1u.enabled ? create_gtpu_pcap(pcap_cfg.f1u.filename, exec_getter->get_executor("f1u_pcap_exec"))
+                                   : create_null_dlt_pcap();
 
   return pcaps;
 }

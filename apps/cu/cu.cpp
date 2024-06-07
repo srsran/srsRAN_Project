@@ -248,15 +248,10 @@ int main(int argc, char** argv)
   cu_worker_manager workers{cu_cfg, cu_cp_config.pcap_cfg, cu_up_config.pcap_cfg, cu_up_config.gtpu_queue_size};
 
   // Create layer specific PCAPs.
-  // TODO:
-  // 1. modules::...create_pcap does not use the custom cu_worker.
-  // 2. modules::flexible_du... for creating F1AP pcap.
-  // Initializing PCAPs direclty.
   srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
+  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
-  std::unique_ptr<dlt_pcap> f1ap_p = create_null_dlt_pcap();
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -272,9 +267,9 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
-  gtpu_demux_creation_request cu_f1u_gtpu_msg = {};
-  cu_f1u_gtpu_msg.cfg.warn_on_drop            = true;
-  cu_f1u_gtpu_msg.gtpu_pcap = cu_up_pcaps[to_value(modules::cu_up::pcap_type::F1U)].get(); // FIXME use right enum
+  gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
+  cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   udp_network_gateway_config  cu_f1u_gw_config  = {};
   cu_f1u_gw_config.bind_address                 = cu_cfg.f1u_cfg.f1u_bind_addr;
@@ -282,12 +277,12 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
       srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, *workers.cu_up_io_ul_exec);
-  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn = std::make_unique<srs_cu_up::f1u_split_connector>(
-      cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_pcaps[to_value(modules::cu_up::pcap_type::F1U)].get());
+  std::unique_ptr<srs_cu_up::f1u_split_connector> cu_f1u_conn =
+      std::make_unique<srs_cu_up::f1u_split_connector>(cu_f1u_gw.get(), cu_f1u_gtpu_demux.get(), *cu_up_dlt_pcaps.f1u);
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
-      create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps[to_value(modules::cu_up::pcap_type::E1AP)]});
+      create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
 
   // Create manager of timers for CU-CP and CU-UP, which will be
   // driven by the system timer slot ticks.
@@ -380,14 +375,10 @@ int main(int argc, char** argv)
                                                                           cu_cfg.f1u_cfg.f1u_bind_addr,
                                                                           *e1_gw,
                                                                           *cu_f1u_conn->get_f1u_cu_up_gateway(),
-                                                                          *cu_up_pcaps[1].get(),
+                                                                          *cu_up_dlt_pcaps.n3,
                                                                           *cu_timers,
                                                                           *epoll_broker);
   cu_up_obj->start();
-
-  // Move all the DLT PCAPs to a container.
-  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
-  dlt_pcaps.push_back(std::move(f1ap_p));
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -405,10 +396,8 @@ int main(int argc, char** argv)
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");
-  for (auto& pcap : dlt_pcaps) {
-    pcap->close();
-  }
   cu_cp_dlt_pcaps.close();
+  cu_up_dlt_pcaps.close();
   cu_logger.info("PCAP files successfully closed.");
 
   // Stop workers

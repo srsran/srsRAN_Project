@@ -286,7 +286,7 @@ int main(int argc, char** argv)
   // fmt::print("cu_f1ap = {} du_f1ap={}\n", cu_cp_config.pcap_cfg.f1ap_enable);
   srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps =
+  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
 
   fmt::print(
@@ -303,8 +303,7 @@ int main(int argc, char** argv)
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*du_dlt_pcaps.f1ap});
-  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(
-      e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1AP)]});
+  std::unique_ptr<e1_local_connector> e1_gw = create_e1_local_connector(e1_local_connector_config{*cu_up_pcaps.e1ap});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -384,14 +383,8 @@ int main(int argc, char** argv)
   }
 
   // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj =
-      build_cu_up(cu_up_config,
-                  workers,
-                  *e1_gw,
-                  *f1u_conn->get_f1u_cu_up_gateway(),
-                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::N3)].get(),
-                  *cu_timers,
-                  *epoll_broker);
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(
+      cu_up_config, workers, *e1_gw, *f1u_conn->get_f1u_cu_up_gateway(), *cu_up_pcaps.n3, *cu_timers, *epoll_broker);
   cu_up_obj->start();
 
   // Instantiate one DU.
