@@ -210,6 +210,7 @@ bool du_processor_impl::create_rrc_ue(du_ue&                                 ue,
   rrc_ue_create_msg.cell.tac              = cell_db.at(ue.get_pcell_index()).tac;
   rrc_ue_create_msg.cell.pci              = cell_db.at(ue.get_pcell_index()).pci;
   rrc_ue_create_msg.cell.bands            = cell_db.at(ue.get_pcell_index()).bands;
+  rrc_ue_create_msg.sec_context           = &ue.get_security_context();
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();

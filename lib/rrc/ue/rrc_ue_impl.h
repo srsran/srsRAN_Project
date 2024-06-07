@@ -34,6 +34,7 @@ public:
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
               const rrc_ue_cfg_t&                    cfg_,
+              security::security_context&            security_context_,
               const byte_buffer                      du_to_cu_container,
               ue_task_scheduler&                     task_sched,
               std::optional<rrc_ue_transfer_context> rrc_context);

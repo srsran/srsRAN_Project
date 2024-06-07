@@ -140,6 +140,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          msg.c_rnti,
                                                          rrc_cell,
                                                          ue_cfg,
+                                                         *msg.sec_context,
                                                          msg.du_to_cu_container.copy(),
                                                          *msg.ue_task_sched,
                                                          msg.rrc_context));

@@ -71,6 +71,9 @@ public:
   /// \brief Get the task scheduler of the UE.
   ue_task_scheduler& get_task_sched() override { return task_sched; }
 
+  /// \brief Get the security context of the UE.
+  security::security_context& get_security_context() override { return sec_context; }
+
   // du_ue
 
   /// \brief Get the RRC UE control message notifier of the UE.
@@ -194,6 +197,7 @@ private:
   // common context
   ue_index_t                           ue_index = ue_index_t::invalid;
   ue_task_scheduler_impl               task_sched;
+  security::security_context           sec_context;
   std::unique_ptr<up_resource_manager> up_mng;
 
   // du ue context

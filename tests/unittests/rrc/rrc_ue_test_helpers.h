@@ -105,6 +105,7 @@ protected:
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
+                                           sec_ctxt,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            task_sched_handle,
                                            std::optional<rrc_ue_transfer_context>{});
@@ -407,8 +408,9 @@ protected:
               92);
   }
 
-  const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
-  rrc_cfg_t        cfg{}; // empty config
+  const ue_index_t           ALLOCATED_UE_INDEX = uint_to_ue_index(23);
+  rrc_cfg_t                  cfg{}; // empty config
+  security::security_context sec_ctxt = {};
 
   timer_manager                        timers;
   manual_task_worker                   ctrl_worker{64};
