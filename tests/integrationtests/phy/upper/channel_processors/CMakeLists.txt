@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set_directory_properties(PROPERTIES LABELS "phy")
+set_directory_properties(PROPERTIES LABELS "phy;tsan;NO_MEMCHECK")
 
 add_executable(pxsch_bler_test
         pxsch_bler_test.cpp
@@ -22,7 +22,7 @@ target_link_libraries(pxsch_bler_test
         gtest
         gtest_main
 )
-gtest_discover_tests(pxsch_bler_test PROPERTIES LABELS "tsan" PROPERTIES LABELS "NO_MEMCHECK")
+gtest_discover_tests(pxsch_bler_test)
 
 add_executable(pxsch_chain_test pxsch_chain_test.cpp)
 target_link_libraries(pxsch_chain_test
@@ -33,4 +33,4 @@ target_link_libraries(pxsch_chain_test
         gtest
         gtest_main
 )
-gtest_discover_tests(pxsch_chain_test PROPERTIES LABELS "tsan" PROPERTIES LABELS "NO_MEMCHECK")
+gtest_discover_tests(pxsch_chain_test)

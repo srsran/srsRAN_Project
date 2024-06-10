@@ -20,7 +20,6 @@
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
-#include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/sch/sch_mcs.h"
@@ -82,12 +81,13 @@ struct pxsch_bler_params {
 std::ostream& operator<<(std::ostream& os, const pxsch_bler_params& params)
 {
   fmt::print(os,
-             "channel={} sinr={}dB nof_rx_ports={} mcs={} f_alloc={} max_bler={} max_mean_evm={}",
+             "channel={} sinr={}dB nof_rx_ports={} mcs={} f_alloc=from{}to{} max_bler={} max_mean_evm={}",
              params.channel_delay_profile,
              params.sinr_dB,
              params.nof_rx_ports,
              params.mcs_index.to_uint(),
-             params.freq_allocation,
+             params.freq_allocation.start(),
+             params.freq_allocation.stop(),
              params.max_bler,
              params.max_mean_evm);
   return os;
