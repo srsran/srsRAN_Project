@@ -143,15 +143,15 @@ void cu_up::stop()
   }
   logger.debug("CU-UP stopping...");
 
-  // Start statistics report timer.
-  statistics_report_timer.stop();
-
   eager_async_task<void> main_loop;
   std::atomic<bool>      main_loop_stopped{false};
 
   auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
     if (main_loop.empty()) {
       // First call. Initiate shutdown operations.
+
+      // Stop statistics report timer.
+      statistics_report_timer.stop();
 
       // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
       disconnect();
