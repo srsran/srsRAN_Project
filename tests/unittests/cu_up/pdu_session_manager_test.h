@@ -15,8 +15,8 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-using namespace srsran;
-using namespace srs_cu_up;
+namespace srsran {
+namespace srs_cu_up {
 
 const network_interface_config net_config_default = {};
 
@@ -232,3 +232,6 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
 
   return pdu_session_modify_item;
 }
+
+} // namespace srs_cu_up
+} // namespace srsran

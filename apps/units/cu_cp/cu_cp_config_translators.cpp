@@ -12,6 +12,7 @@
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/nr_cgi_helpers.h"
+#include <sstream>
 
 using namespace srsran;
 

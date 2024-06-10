@@ -496,7 +496,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   TESTASSERT(bbdev_accelerator);
 
   // Set the hardware-accelerator configuration.
-  hw_accelerator_pdsch_enc_configuration hw_encoder_config;
+  hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
   hw_encoder_config.acc_type          = "acc100";
   hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
 

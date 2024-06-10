@@ -358,7 +358,10 @@ unit coverage:
     expire_in: 10 minutes
   retry: 2
   needs:
-    - job: intermediate commits
+    - job: intermediate commits cached
+      optional: true
+      artifacts: true
+    - job: intermediate commits clean
       optional: true
       artifacts: true
     - job: smoke release update cache

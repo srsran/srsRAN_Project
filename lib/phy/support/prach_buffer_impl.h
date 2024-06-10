@@ -14,8 +14,6 @@
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/prach_buffer.h"
 
-using namespace srsran;
-
 namespace srsran {
 
 /// PRACH buffer with a fix storage size at initialization.

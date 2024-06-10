@@ -19,8 +19,8 @@
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsran;
-using namespace srs_cu_cp;
+namespace srsran {
+namespace srs_cu_cp {
 
 // Helper function to verify that two lists are identical.
 template <typename T>
@@ -87,3 +87,6 @@ protected:
     ASSERT_EQ(e1ap_msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
   }
 };
+
+} // namespace srs_cu_cp
+} // namespace srsran

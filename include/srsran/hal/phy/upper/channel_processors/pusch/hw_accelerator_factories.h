@@ -15,9 +15,6 @@
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec.h"
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
 
-using namespace srsran;
-using namespace hal;
-
 namespace srsran {
 namespace hal {
 
@@ -32,7 +29,7 @@ struct hw_accelerator_pusch_dec_configuration {
   std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context;
 };
 
-// Returns an instance of a PUSCH decoder hardware accelerator factory on success,
+/// Returns an instance of a PUSCH decoder hardware accelerator factory on success,
 /// otherwise returns nullptr.
 /// \param[in] accelerator_config Hardware-accelerator configuration.
 /// \return Pointer to PUSCH decoding HW accelerator.

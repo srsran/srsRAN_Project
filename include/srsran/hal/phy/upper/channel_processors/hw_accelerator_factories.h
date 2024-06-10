@@ -14,9 +14,6 @@
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc_factory.h"
 
-using namespace srsran;
-using namespace hal;
-
 namespace srsran {
 namespace hal {
 
@@ -27,7 +24,7 @@ struct hw_accelerator_pdsch_enc_configuration {
   std::shared_ptr<srsran::dpdk::bbdev_acc> bbdev_accelerator;
 };
 
-// Returns an instance of a PDSCH encoder hardware accelerator factory on success,
+/// Returns an instance of a PDSCH encoder hardware accelerator factory on success,
 /// otherwise returns nullptr.
 /// \param[in] accelerator_config Hardware-accelerator configuration.
 /// \return Pointer to PDSCH encoding HW accelerator.

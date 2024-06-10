@@ -569,6 +569,8 @@ smoke avx512 cached:
   stage: manual
   timeout: 1 hour
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
         <<: *instruction_set_changes
@@ -669,9 +671,11 @@ smoke arm neon clean:
 
 # Intermediate commits
 
-intermediate commits:
+intermediate commits cached:
   extends: .smoke release
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
     - if: $ON_MR
   timeout: 1 hour
   variables:
@@ -733,6 +737,13 @@ valgrind changed tests:
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
+
+intermediate commits clean:
+  extends: intermediate commits cached
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache:
+    - !reference [.fetch_src_cache, cache]
 
 #################
 # Build Nightly #
@@ -1306,7 +1317,7 @@ debian 11 amd64 avx512:
     matrix:
       # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10] 
+      - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1348,7 +1359,7 @@ sanitizers amd64 avx512:
     matrix:
       # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
       # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.04, ubuntu-23.10] 
+      - OS: [ubuntu-24.04, ubuntu-23.10]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"

@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 using namespace srsran;
+using namespace asn1::e2sm;
 
 // Helper global variables to pass pcap_writer to all tests.
 bool      g_enable_pcap = false;

@@ -369,7 +369,7 @@ public:
   {
     if (ues.size() == 0) {
       // E2 Node level measurements
-      meas_record_item_c meas_record_item;
+      asn1::e2sm::meas_record_item_c meas_record_item;
       if (meas_type.meas_name().to_string() == "DRB.RlcSduDelayDl") {
         if (meas_values_float.size()) {
           meas_record_item.set_real();
@@ -394,7 +394,7 @@ public:
       std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ueid_);
       uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
 
-      meas_record_item_c meas_record_item;
+      asn1::e2sm::meas_record_item_c meas_record_item;
       if (ue_idx < presence.size()) {
         if (presence[ue_idx]) {
           if (meas_type.meas_name().to_string() == "DRB.RlcSduDelayDl") {
@@ -454,8 +454,8 @@ private:
   {
     for (unsigned ue_idx = 0; ue_idx < presence.size(); ue_idx++) {
       if (presence[ue_idx] and cond_satisfied[ue_idx]) {
-        ue_id_c        ueid;
-        ue_id_gnb_du_s ueid_gnb_du{};
+        asn1::e2sm::ue_id_c        ueid;
+        asn1::e2sm::ue_id_gnb_du_s ueid_gnb_du{};
         ueid_gnb_du.gnb_cu_ue_f1ap_id = ue_ids[ue_idx];
         ueid_gnb_du.ran_ue_id_present = false;
         ueid.set_gnb_du_ue_id()       = ueid_gnb_du;
@@ -579,15 +579,16 @@ inline e2_message generate_e2_setup_failure(unsigned transaction_id)
   return e2_setup_failure;
 }
 
-inline ue_id_gnb_du_s generate_ueid_gnb_du(uint32_t ue_idx)
+inline asn1::e2sm::ue_id_gnb_du_s generate_ueid_gnb_du(uint32_t ue_idx)
 {
-  ue_id_gnb_du_s ueid;
+  asn1::e2sm::ue_id_gnb_du_s ueid;
   ueid.gnb_cu_ue_f1ap_id = ue_idx;
   ueid.ran_ue_id_present = false;
   return ueid;
 }
 
-inline asn1::e2ap::ric_action_to_be_setup_item_s generate_e2sm_kpm_ric_action(e2sm_kpm_action_definition_s& action_def)
+inline asn1::e2ap::ric_action_to_be_setup_item_s
+generate_e2sm_kpm_ric_action(asn1::e2sm::e2sm_kpm_action_definition_s& action_def)
 {
   asn1::e2ap::ric_action_to_be_setup_item_s ric_action;
   ric_action.ric_action_type               = asn1::e2ap::ric_action_type_opts::report;
@@ -614,7 +615,7 @@ inline e2_message generate_e2sm_kpm_subscription_request(asn1::e2ap::ric_action_
   ric_subscript_reqs->ric_request_id.ric_instance_id  = 0;
   ric_subscript_reqs->ric_sub_details.ric_action_to_be_setup_list.resize(1);
   ric_subscript_reqs->ric_sub_details.ric_action_to_be_setup_list[0]->ric_action_to_be_setup_item() = ric_action;
-  e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
+  asn1::e2sm::e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
   e2sm_kpm_event_trigger_def.event_definition_formats.event_definition_format1().report_period = 1000;
 
   byte_buffer   buf;
@@ -696,8 +697,8 @@ class dummy_e2sm_handler : public e2sm_handler
   {
     e2sm_action_definition action_def;
     action_def.service_model = e2sm_service_model_t::KPM;
-    e2sm_kpm_action_definition_s& e2sm_kpm_action_definition =
-        std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
+    asn1::e2sm::e2sm_kpm_action_definition_s& e2sm_kpm_action_definition =
+        std::get<asn1::e2sm::e2sm_kpm_action_definition_s>(action_def.action_definition);
     e2sm_kpm_action_definition.ric_style_type = 3;
     e2sm_kpm_action_definition.action_definition_formats.set_action_definition_format3();
     e2sm_kpm_action_definition.action_definition_formats.action_definition_format3().meas_cond_list.resize(1);
