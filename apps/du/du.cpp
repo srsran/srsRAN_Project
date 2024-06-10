@@ -45,6 +45,7 @@
 #include <atomic>
 
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/services/application_message_banners.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/services/stdin_command_dispatcher.h"
@@ -125,7 +126,8 @@ static void register_app_logs(const log_appconfig& log_cfg, const dynamic_du_uni
 
 int main(int argc, char** argv)
 {
-  fmt::print("\n--== srsRAN DU (commit {}) ==--\n\n", get_build_hash());
+  static constexpr std::string_view app_name = "DU";
+  app_services::application_message_banners::announce_app_and_version(app_name);
 
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
@@ -330,14 +332,13 @@ int main(int argc, char** argv)
   // Start processing.
   du_inst.start();
 
-  fmt::print("==== DU started ===\n");
-  fmt::print("Type <t> to view trace\n");
+  {
+    app_services::application_message_banners app_banner(app_name);
 
-  while (is_app_running) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    while (is_app_running) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
   }
-
-  fmt::print("Stopping ..\n");
 
   // Stop DU activity.
   du_inst.stop();

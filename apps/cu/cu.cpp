@@ -56,6 +56,7 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
+#include "apps/services/application_message_banners.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
@@ -148,7 +149,8 @@ std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_con
 
 int main(int argc, char** argv)
 {
-  fmt::print("\n--== srsRAN CU (commit {}) ==--\n\n", get_build_hash());
+  static constexpr std::string_view app_name = "CU";
+  app_services::application_message_banners::announce_app_and_version(app_name);
 
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
@@ -388,14 +390,13 @@ int main(int argc, char** argv)
   dlt_pcaps.push_back(std::move(f1ap_p));
   dlt_pcaps.push_back(std::move(ngap_p));
 
-  fmt::print("==== CU started ===\n");
-  fmt::print("Type <h> to view help\n");
+  {
+    app_services::application_message_banners app_banner(app_name);
 
-  while (is_app_running) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    while (is_app_running) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
   }
-
-  fmt::print("Stopping ..\n");
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
