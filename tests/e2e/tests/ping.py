@@ -355,7 +355,7 @@ def _ping(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        gtpu_enable=True,
+        n3_enable=True,
         log_ip_level="debug",
     )
     configure_artifacts(
