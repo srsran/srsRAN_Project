@@ -263,7 +263,7 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_address                = cu_cp_config.f1ap_config.f1c_bind_address;
   f1c_sctp_cfg.bind_port                   = 38471;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
-  f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.ngap});
+  f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
