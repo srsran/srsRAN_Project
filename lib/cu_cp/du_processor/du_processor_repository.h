@@ -69,6 +69,9 @@ public:
   /// \return asynchronous task for the DU processor removal.
   async_task<void> remove_du(du_index_t du_idx);
 
+  /// Number of DUs managed by the CU-CP.
+  size_t get_nof_dus() const { return du_db.size(); }
+
 private:
   struct du_context {
     // CU-CP handler of DU processor events.

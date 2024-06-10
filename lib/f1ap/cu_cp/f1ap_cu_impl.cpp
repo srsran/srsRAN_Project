@@ -50,6 +50,11 @@ async_task<void> f1ap_cu_impl::stop()
   return launch_async<f1ap_stop_procedure>(du_processor_notifier, ue_ctxt_list);
 }
 
+const f1ap_du_context& f1ap_cu_impl::get_context() const
+{
+  return du_ctxt;
+}
+
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
   const char* msg_name = "\"DLRRCMessageTransfer\"";
@@ -392,7 +397,7 @@ void f1ap_cu_impl::log_pdu(bool is_rx, const f1ap_message& msg)
   }
 
   // In case of F1 Setup, the gNB-DU-Id might not be set yet.
-  gnb_du_id_t du_id = du_ctxt.du_id;
+  gnb_du_id_t du_id = du_ctxt.gnb_du_id;
   if (du_id == gnb_du_id_t::invalid) {
     if (msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg and
         msg.pdu.init_msg().value.type().value == f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {

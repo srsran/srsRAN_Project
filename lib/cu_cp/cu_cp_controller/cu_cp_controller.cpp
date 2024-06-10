@@ -10,6 +10,7 @@
 
 #include "cu_cp_controller.h"
 #include "../cu_up_processor/cu_up_processor_repository.h"
+#include "../du_processor/du_processor_repository.h"
 #include "../routine_managers/cu_cp_routine_manager.h"
 #include <thread>
 
@@ -22,7 +23,7 @@ cu_cp_controller::cu_cp_controller(const cu_cp_configuration&        config_,
                                    const ngap_configuration&         ngap_cfg_,
                                    ngap_connection_manager&          ngap_conn_mng_,
                                    const cu_up_processor_repository& cu_ups_,
-                                   du_processor_repository&          dus,
+                                   du_processor_repository&          dus_,
                                    task_executor&                    ctrl_exec_) :
   cfg(config_),
   ue_mng(ue_mng_),
@@ -31,7 +32,7 @@ cu_cp_controller::cu_cp_controller(const cu_cp_configuration&        config_,
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
   amf_mng(routine_manager_, ngap_cfg_, ngap_conn_mng_),
-  du_mng(cfg.max_nof_dus, dus, ctrl_exec, routine_manager_)
+  du_mng(cfg.max_nof_dus, dus_, ctrl_exec, routine_manager_)
 {
   (void)ue_mng;
 }
@@ -83,14 +84,13 @@ void cu_cp_controller::stop_impl()
   }));
 }
 
-bool cu_cp_controller::handle_du_setup_request(const du_setup_request& req)
+bool cu_cp_controller::handle_du_setup_request(du_index_t du_idx, const du_setup_request& req)
 {
   if (not amf_mng.is_amf_connected()) {
     // If AMF is not connected, it either means that the CU-CP is not operational state or there is a CU-CP failure.
     return false;
   }
-
-  return true;
+  return du_mng.handle_du_config_update(du_idx, req);
 }
 
 bool cu_cp_controller::request_ue_setup() const

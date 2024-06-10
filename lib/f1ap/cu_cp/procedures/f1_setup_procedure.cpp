@@ -10,12 +10,12 @@
 
 #include "f1_setup_procedure.h"
 #include "../../common/asn1_helpers.h"
-#include "../du_context.h"
 #include "../f1ap_asn1_converters.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
+#include "srsran/f1ap/cu_cp/f1ap_du_context.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 
@@ -166,7 +166,7 @@ static f1ap_message create_f1_setup_reject(const asn1::f1ap::f1_setup_request_s&
 }
 
 void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_request_s& request,
-                                                  du_context&                           du_ctxt,
+                                                  f1ap_du_context&                      du_ctxt,
                                                   f1ap_message_notifier&                pdu_notifier,
                                                   du_setup_notifier&                    du_setup_notif,
                                                   srslog::basic_logger&                 logger)
@@ -179,8 +179,9 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
     return;
   }
 
-  du_ctxt.du_id   = (gnb_du_id_t)request->gnb_du_id;
-  du_ctxt.du_name = request->gnb_du_name_present ? request->gnb_du_name.to_string() : "unnamed";
+  du_ctxt.gnb_du_id          = (gnb_du_id_t)request->gnb_du_id;
+  du_ctxt.gnb_du_name        = request->gnb_du_name_present ? request->gnb_du_name.to_string() : "unnamed";
+  du_ctxt.gnb_du_rrc_version = request->gnb_du_rrc_version.latest_rrc_version.to_number();
 
   // Request DU setup to CU-CP.
   du_setup_request du_req          = create_du_setup_request(request);

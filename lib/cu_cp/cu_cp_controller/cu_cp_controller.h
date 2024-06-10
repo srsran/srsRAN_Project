@@ -46,7 +46,7 @@ public:
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
-  bool handle_du_setup_request(const du_setup_request& req);
+  bool handle_du_setup_request(du_index_t du_idx, const du_setup_request& req);
 
   /// \brief Determines whether the CU-CP should accept a new UE connection.
   bool request_ue_setup() const;

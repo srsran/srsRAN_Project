@@ -18,6 +18,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_du_context.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
 
@@ -185,6 +186,8 @@ class f1ap_cu : public f1ap_message_handler,
 {
 public:
   virtual ~f1ap_cu() = default;
+
+  virtual const f1ap_du_context& get_context() const = 0;
 
   virtual async_task<void> stop() = 0;
 
