@@ -239,8 +239,7 @@ public:
 
     // iterate over all ids starting with the next_ran_ue_id to find the available id
     while (true) {
-      // Only iterate over ue_index_to_ran_ue_id (size=MAX_NOF_UES_PER_DU)
-      // to avoid iterating over all possible values of ran_ue_id_t (size=2^32-1)
+      // Iterate over ue_index_to_ran_ue_id
       auto it = std::find_if(ue_index_to_ran_ue_id.begin(), ue_index_to_ran_ue_id.end(), [this](auto& u) {
         return u.second == next_ran_ue_id;
       });
