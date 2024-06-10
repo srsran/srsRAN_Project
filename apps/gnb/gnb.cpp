@@ -34,6 +34,7 @@
 
 #include "apps/services/worker_manager.h"
 
+#include "apps/services/application_tracer.h"
 #include "apps/services/metrics_hub.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
@@ -224,11 +225,10 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger&            gnb_logger = srslog::fetch_basic_logger("GNB");
+  app_services::application_tracer app_tracer;
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    gnb_logger.info("Opening event tracer...");
-    open_trace_file(gnb_cfg.log_cfg.tracing_filename);
-    gnb_logger.info("Event tracer opened successfully");
+    app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
   }
 
   if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
@@ -461,12 +461,6 @@ int main(int argc, char** argv)
   gnb_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    gnb_logger.info("Closing event tracer...");
-    close_trace_file();
-    gnb_logger.info("Event tracer closed successfully");
-  }
 
   if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
     cleanup_cgroups();

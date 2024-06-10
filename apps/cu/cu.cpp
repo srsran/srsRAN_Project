@@ -57,6 +57,7 @@
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
 
 #include "apps/services/application_message_banners.h"
+#include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
@@ -210,11 +211,10 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger& cu_logger = srslog::fetch_basic_logger("CU");
+  srslog::basic_logger&            cu_logger = srslog::fetch_basic_logger("CU");
+  app_services::application_tracer app_tracer;
   if (not cu_cfg.log_cfg.tracing_filename.empty()) {
-    cu_logger.info("Opening event tracer...");
-    open_trace_file(cu_cfg.log_cfg.tracing_filename);
-    cu_logger.info("Event tracer opened successfully");
+    app_tracer.enable_tracer(cu_cfg.log_cfg.tracing_filename, cu_logger);
   }
 
   // configure cgroups
@@ -406,12 +406,6 @@ int main(int argc, char** argv)
   cu_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (not cu_cfg.log_cfg.tracing_filename.empty()) {
-    cu_logger.info("Closing event tracer...");
-    close_trace_file();
-    cu_logger.info("Event tracer closed successfully");
-  }
 
   // Clean cgroups
   // TODO required for CU?

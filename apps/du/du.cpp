@@ -45,6 +45,7 @@
 
 #include "../units/flexible_du/du_high/pcap_factory.h"
 #include "apps/services/application_message_banners.h"
+#include "apps/services/application_tracer.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/services/stdin_command_dispatcher.h"
@@ -180,11 +181,10 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger& du_logger = srslog::fetch_basic_logger("DU");
+  srslog::basic_logger&            du_logger = srslog::fetch_basic_logger("DU");
+  app_services::application_tracer app_tracer;
   if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    du_logger.info("Opening event tracer...");
-    open_trace_file(du_cfg.log_cfg.tracing_filename);
-    du_logger.info("Event tracer opened successfully");
+    app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
   }
 
   if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
@@ -345,12 +345,6 @@ int main(int argc, char** argv)
   du_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    du_logger.info("Closing event tracer...");
-    close_trace_file();
-    du_logger.info("Event tracer closed successfully");
-  }
 
   if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
     cleanup_cgroups();
