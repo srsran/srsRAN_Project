@@ -134,6 +134,10 @@ public:
                                             rrc_ue_handler&                  rrc_handler,
                                             rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
+  /// \brief Handle DU removal event.
+  /// \param[in] du_index The index of the DU.
+  virtual void handle_du_processor_removal(du_index_t du_index) = 0;
+
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue The interface of the created RRC UE.

@@ -125,6 +125,7 @@ private:
                                     f1ap_statistics_handler&         f1ap_statistic_handler,
                                     rrc_ue_handler&                  rrc_handler,
                                     rrc_du_statistics_handler&       rrc_statistic_handler) override;
+  void handle_du_processor_removal(du_index_t du_index) override;
 
   void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 

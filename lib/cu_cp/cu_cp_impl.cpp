@@ -571,6 +571,11 @@ void cu_cp_impl::handle_du_processor_creation(du_index_t                       d
   rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
 }
 
+void cu_cp_impl::handle_du_processor_removal(du_index_t du_index)
+{
+  rrc_du_adapters.erase(du_index);
+}
+
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {
   // Connect RRC UE to NGAP to RRC UE adapter
