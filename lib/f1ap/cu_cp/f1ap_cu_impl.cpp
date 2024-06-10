@@ -239,7 +239,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     logger.debug("du_ue={}: Ignoring SUL access indicator", du_ue_id);
   }
 
-  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Cause: Failed to allocate CU-UE-F1AP-ID", du_ue_id);
     return;

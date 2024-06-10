@@ -41,7 +41,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
     return ue_index_t::invalid;
   }
 
-  ue_index_t new_ue_index = get_next_ue_index(du_index);
+  ue_index_t new_ue_index = allocate_ue_index(du_index);
   if (new_ue_index == ue_index_t::invalid) {
     logger.warning("CU-CP UE creation Failed. Cause: No free UE index available");
     return ue_index_t::invalid;
@@ -176,7 +176,7 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
 
 // private functions
 
-ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)
+ue_index_t ue_manager::allocate_ue_index(du_index_t du_index)
 {
   // Search unallocated UE index
   for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {

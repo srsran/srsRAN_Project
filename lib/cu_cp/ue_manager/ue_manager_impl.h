@@ -14,10 +14,10 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
-#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
 #include <unordered_map>
 
@@ -140,7 +140,7 @@ public:
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
-  ue_index_t get_next_ue_index(du_index_t du_index);
+  ue_index_t allocate_ue_index(du_index_t du_index);
 
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
   const ue_configuration        ue_config;

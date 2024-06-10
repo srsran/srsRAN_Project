@@ -94,7 +94,7 @@ bool ue_context_setup_procedure::find_or_create_f1ap_ue_context()
 
   // F1AP UE context does not yet exist.
   // Allocate gNB-CU-UE-F1AP-ID.
-  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
   if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.warning("ue={} proc=\"{}\": No CU UE F1AP ID available", request.ue_index, name());
     return false;
