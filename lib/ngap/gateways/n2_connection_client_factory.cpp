@@ -9,7 +9,6 @@
  */
 
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
-#include "../ngap_asn1_packer.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/gateways/sctp_network_client_factory.h"
@@ -36,11 +35,11 @@ public:
 
   bool on_new_sdu(byte_buffer sdu) override
   {
-    // Unpack F1AP PDU.
+    // Unpack NGAP PDU.
     asn1::cbit_ref bref(sdu);
     ngap_message   msg;
     if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-      logger.error("Couldn't unpack F1AP PDU");
+      logger.error("Couldn't unpack NGAP PDU");
       return false;
     }
 
@@ -61,7 +60,8 @@ private:
   srslog::basic_logger&                  logger;
 };
 
-/// Notifier for converting unpacked NGAP PDUs coming from the DU into packed NGAP PDUs and forward them to the N2 GW.
+/// \brief Notifier for converting unpacked NGAP PDUs coming from the CU-CP into packed NGAP PDUs and forward them to
+/// the N2 GW.
 class n2_to_sctp_pdu_notifier final : public ngap_message_notifier
 {
 public:
@@ -74,11 +74,11 @@ public:
 
   void on_new_message(const ngap_message& msg) override
   {
-    // pack F1AP PDU into SCTP SDU.
+    // pack NGAP PDU into SCTP SDU.
     byte_buffer   tx_sdu{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(tx_sdu);
     if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-      logger.error("Failed to pack F1AP PDU");
+      logger.error("Failed to pack NGAP PDU");
       return;
     }
 
@@ -200,7 +200,7 @@ private:
   }
 
   dlt_pcap&             pcap_writer;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   std::unique_ptr<ngap_message_notifier> cu_cp_rx_notifier;
 };
@@ -244,7 +244,7 @@ private:
   io_broker&                          broker;
   const sctp_network_connector_config sctp_cfg;
   dlt_pcap&                           pcap_writer;
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("CU-CP");
 
   // SCTP network adapter
   std::unique_ptr<sctp_network_client> sctp_gateway;
