@@ -41,6 +41,7 @@ struct cu_up_unit_pcap_config {
   }
   /// When using the gNB app, there is no point in instantiating
   /// E1 pcaps twice. This function force disables them in the CU-UP.
+  /// TODO: revisit
   void disable_e1_pcaps() { e1ap.enabled = false; }
 };
 

@@ -50,6 +50,8 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_cp_unit_pcap_config& pca
       ->always_capture_default();
   add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
 }
 
 static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config& report_params)

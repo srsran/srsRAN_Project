@@ -609,6 +609,7 @@ struct du_high_unit_pcap_config {
   }
   /// When using the gNB app, there is no point in instantiating
   /// F1 pcaps twice. This function force disables them.
+  /// TODO: revisit
   void disable_f1_pcaps()
   {
     f1u.enabled  = false;

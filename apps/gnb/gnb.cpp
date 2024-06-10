@@ -289,9 +289,9 @@ int main(int argc, char** argv)
   cu_up_config.pcap_cfg.disable_e1_pcaps();
   du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps();
   srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, workers.get_executor_getter());
+      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
   srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, workers.get_executor_getter());
+      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
 
   srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
       modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);

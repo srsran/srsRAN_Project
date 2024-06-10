@@ -23,17 +23,11 @@ struct du_dlt_pcaps {
   std::unique_ptr<dlt_pcap> f1ap;
   std::unique_ptr<dlt_pcap> f1u;
   std::unique_ptr<dlt_pcap> e2ap;
-  void                      close() const
+  void                      close()
   {
-    if (f1ap != nullptr) {
-      f1ap->close();
-    }
-    if (f1u != nullptr) {
-      f1u->close();
-    }
-    if (e2ap != nullptr) {
-      e2ap->close();
-    }
+    f1ap.reset();
+    f1u.reset();
+    e2ap.reset();
   }
 };
 
