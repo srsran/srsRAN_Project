@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/bounded_integer.h"
 #include "srsran/ran/ntn.h"
 #include <variant>
 #include <vector>

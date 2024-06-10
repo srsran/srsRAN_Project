@@ -16,7 +16,9 @@
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/async/async_task.h"
+#include <optional>
 
 namespace srsran {
 namespace srs_du {
@@ -45,7 +47,11 @@ struct f1_setup_request_message {
 };
 
 struct f1_setup_response_message {
-  bool success = false;
+  enum class result_code { success, timeout, proc_failure, invalid_response, f1_setup_failure };
+  /// Possible result outcomes for F1 Setup procedure.
+  result_code result;
+  /// Cause provided by CU-CP in case of F1 Setup Failure.
+  std::string f1_setup_failure_cause;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
@@ -55,7 +61,7 @@ public:
   virtual ~f1ap_connection_manager() = default;
 
   /// \brief Connect the DU to CU-CP via F1-C interface.
-  virtual SRSRAN_NODISCARD bool connect_to_cu_cp() = 0;
+  [[nodiscard]] virtual bool connect_to_cu_cp() = 0;
 
   /// \brief Initiates the F1 Setup procedure as per TS 38.473, Section 8.2.3.
   /// \param[in] request The F1SetupRequest message to transmit.

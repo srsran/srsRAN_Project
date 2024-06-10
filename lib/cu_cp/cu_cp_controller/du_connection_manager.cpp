@@ -244,12 +244,13 @@ bool du_connection_manager::handle_du_config_update(du_index_t du_idx, const du_
         dus.get_du_processor(other_du_idx).get_f1ap_interface().get_f1ap_handler().get_context();
 
     if (du_ctxt.gnb_du_id == req.gnb_du_id) {
-      logger.warning("du={}: Rejecting DU setup request. Cause: DU with GNB-DU-ID already exists.", req.gnb_du_id);
+      logger.warning("du={}: Rejecting DU configuration update. Cause: DU with GNB-DU-ID already exists.",
+                     req.gnb_du_id);
       return false;
     }
 
     if (du_ctxt.gnb_du_name == req.gnb_du_name) {
-      logger.warning("du={}: Rejecting DU setup request. Cause: DU with GNB-DU-Name {} already exists.",
+      logger.warning("du={}: Rejecting DU configuration update. Cause: DU with GNB-DU-Name {} already exists.",
                      req.gnb_du_id,
                      req.gnb_du_name);
       return false;

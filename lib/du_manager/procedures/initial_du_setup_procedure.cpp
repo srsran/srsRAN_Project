@@ -85,8 +85,26 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
 
 void initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_response_message& resp)
 {
-  // TODO
-  if (not resp.success) {
-    report_fatal_error("F1 Setup failed");
+  if (resp.result != f1_setup_response_message::result_code::success) {
+    std::string cause;
+    switch (resp.result) {
+      case f1_setup_response_message::result_code::f1_setup_failure:
+        cause = "CU-CP responded with F1 Setup Failure";
+        if (resp.f1_setup_failure_cause != "unspecified") {
+          cause += fmt::format(" with cause {}", resp.f1_setup_failure_cause);
+        }
+        break;
+      case f1_setup_response_message::result_code::invalid_response:
+        cause = "CU-CP response to F1 Setup Request is invalid";
+        break;
+      case f1_setup_response_message::result_code::timeout:
+        cause = "CU-CP did not respond to F1 Setup Request";
+        break;
+      case f1_setup_response_message::result_code::proc_failure:
+        cause = "DU failed to run F1 Setup Procedure";
+      default:
+        report_fatal_error("Invalid F1 Setup Response");
+    }
+    report_error("F1 Setup failed. Cause: {}", cause);
   }
 }

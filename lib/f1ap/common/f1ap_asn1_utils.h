@@ -32,6 +32,8 @@ inline const char* get_cause_str(const asn1::f1ap::cause_c& cause)
       return cause.protocol().to_string();
     case cause_c::types_opts::misc:
       return cause.misc().to_string();
+    case cause_c::types_opts::choice_ext:
+      return "choice_ext";
     default:
       break;
   }
