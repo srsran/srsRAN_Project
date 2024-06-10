@@ -43,7 +43,7 @@ protected:
   rrc_cfg_t               rrc_cfg;
   timer_manager           timers;
   manual_task_worker      ctrl_worker{128};
-  ue_configuration        ue_config;
+  ue_configuration        ue_config{{}, 8192};
   up_resource_manager_cfg up_config;
 
   security_manager_config sec_config{{security::integrity_algorithm::nia2,

@@ -83,18 +83,7 @@ public:
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
-  size_t get_nof_du_ues(du_index_t du_index)
-  {
-    unsigned ue_count = 0;
-    // Search allocated UE indexes
-    for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
-      ue_index_t new_ue_index = generate_ue_index(du_index, i);
-      if (ues.find(new_ue_index) != ues.end()) {
-        ue_count++;
-      }
-    }
-    return ue_count;
-  }
+  size_t get_nof_du_ues(du_index_t du_index);
 
   // ngap
 

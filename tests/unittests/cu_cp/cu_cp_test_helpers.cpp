@@ -78,7 +78,7 @@ cu_cp_test::cu_cp_test()
 
   // UE config
   cfg.ue_config.inactivity_timer      = std::chrono::seconds{7200};
-  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_dus * MAX_NOF_UES_PER_DU;
+  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_ues;
 
   // periodic statistic logging
   cfg.statistics_report_period = std::chrono::seconds(1);

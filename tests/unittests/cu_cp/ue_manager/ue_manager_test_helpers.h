@@ -35,8 +35,9 @@ protected:
   srslog::basic_logger& ue_mng_logger = srslog::fetch_basic_logger("CU-UEMNG");
 
   unsigned max_nof_dus = 6;
+  unsigned ues_per_du  = 1024;
 
-  ue_configuration        ue_config{std::chrono::seconds{7200}, max_nof_dus* MAX_NOF_UES_PER_DU};
+  ue_configuration        ue_config{std::chrono::seconds{7200}, max_nof_dus* ues_per_du};
   up_resource_manager_cfg up_config;
   security_manager_config sec_config;
   timer_manager           timers;

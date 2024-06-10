@@ -38,12 +38,13 @@ struct cu_cp_ue_context {
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(const ue_index_t               ue_index_,
+  cu_cp_ue(ue_index_t                     ue_index_,
+           du_index_t                     du_index_,
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
-           const pci_t                    pci_    = INVALID_PCI,
-           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI);
+           pci_t                          pci_    = INVALID_PCI,
+           rnti_t                         c_rnti_ = rnti_t::INVALID_RNTI);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -60,7 +61,7 @@ public:
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  du_index_t get_du_index() { return ue_ctxt.du_idx; }
+  [[nodiscard]] du_index_t get_du_index() const { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() { return pcell_index; }

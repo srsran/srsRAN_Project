@@ -28,7 +28,7 @@ TEST_F(ue_manager_test, when_multiple_ue_indexes_allocated_then_ue_indexes_valid
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
+  for (unsigned it = 0; it < ue_mng.get_ue_config().max_nof_supported_ues; it++) {
     // Check that the ue index is valid
     ASSERT_NE(ue_mng.add_ue(du_index), ue_index_t::invalid);
   }
@@ -43,7 +43,7 @@ TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_in
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
+  for (unsigned it = 0; it < ue_mng.get_ue_config().max_nof_supported_ues; it++) {
     // Check that the ue index is valid
     ASSERT_NE(ue_mng.add_ue(du_index), ue_index_t::invalid);
   }
@@ -144,7 +144,8 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+  for (unsigned it = to_value(rnti_t::MIN_CRNTI);
+       it < unsigned(to_value(rnti_t::MIN_CRNTI) + ue_mng.get_ue_config().max_nof_supported_ues);
        it++) {
     rnti_t     rnti     = to_rnti(it);
     ue_index_t ue_index = ue_mng.add_ue(du_index);
@@ -174,7 +175,7 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   ue_mng_logger.set_level(srslog::basic_levels::debug);
 
   // check that the maximum number of DU UEs has been reached
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), ue_mng.get_ue_config().max_nof_supported_ues);
 }
 
 /// Test creation of unsupported number of DU UEs
@@ -186,7 +187,8 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   ue_mng_logger.set_level(srslog::basic_levels::warning);
   test_logger.set_level(srslog::basic_levels::warning);
 
-  for (unsigned it = to_value(rnti_t::MIN_CRNTI); it < unsigned(to_value(rnti_t::MIN_CRNTI) + MAX_NOF_UES_PER_DU);
+  for (unsigned it = to_value(rnti_t::MIN_CRNTI);
+       it < unsigned(to_value(rnti_t::MIN_CRNTI) + ue_mng.get_ue_config().max_nof_supported_ues);
        it++) {
     rnti_t     rnti     = to_rnti(it);
     ue_index_t ue_index = ue_mng.add_ue(du_index);
@@ -217,11 +219,11 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   test_logger.set_level(srslog::basic_levels::debug);
 
   // check that the maximum number of DU UEs has been reached
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), ue_mng.get_ue_config().max_nof_supported_ues);
 
   ue_index_t ue_index = ue_mng.add_ue(du_index);
   ASSERT_EQ(ue_index, ue_index_t::invalid);
 
   // check that the UE has not been added
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), ue_mng.get_ue_config().max_nof_supported_ues);
 }

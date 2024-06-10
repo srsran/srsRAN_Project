@@ -113,7 +113,10 @@ private:
 class dummy_f1ap_du_processor_notifier : public srs_cu_cp::f1ap_du_processor_notifier
 {
 public:
-  dummy_f1ap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_f1ap_du_processor_notifier(const unsigned max_nof_supported_ues_) :
+    max_nof_supported_ues(max_nof_supported_ues_), logger(srslog::fetch_basic_logger("TEST"))
+  {
+  }
 
   du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
   {
@@ -140,7 +143,7 @@ public:
   ue_index_t on_new_cu_cp_ue_required() override
   {
     ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
-    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
+    if (ue_id < max_nof_supported_ues) {
       ue_index              = srs_cu_cp::uint_to_ue_index(ue_id);
       last_created_ue_index = ue_index;
       ue_id++;
@@ -176,6 +179,7 @@ public:
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
+  const unsigned            max_nof_supported_ues;
   srslog::basic_logger&     logger;
   uint16_t                  ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
   fifo_async_task_scheduler task_sched{16};
@@ -210,8 +214,10 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
+  const unsigned max_nof_ues = 8192;
+
   dummy_f1ap_pdu_notifier          f1ap_pdu_notifier;
-  dummy_f1ap_du_processor_notifier du_processor_notifier;
+  dummy_f1ap_du_processor_notifier du_processor_notifier{max_nof_ues};
   timer_manager                    timers;
   manual_task_worker               ctrl_worker{128};
   std::unique_ptr<f1ap_cu>         f1ap;

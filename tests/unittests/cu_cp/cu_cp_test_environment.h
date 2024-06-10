@@ -25,6 +25,7 @@ namespace srs_cu_cp {
 struct cu_cp_test_env_params {
   unsigned max_nof_cu_ups = 4;
   unsigned max_nof_dus    = 4;
+  unsigned max_nof_ues    = 8192;
   /// Injected AMF stub to handle CU-CP PDUs.
   std::unique_ptr<mock_amf> amf_stub = create_mock_amf();
 };

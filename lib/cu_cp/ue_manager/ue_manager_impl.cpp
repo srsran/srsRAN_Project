@@ -53,7 +53,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
   // Create UE object
   ues.emplace(std::piecewise_construct,
               std::forward_as_tuple(new_ue_index),
-              std::forward_as_tuple(new_ue_index, up_config, sec_config, std::move(ue_sched)));
+              std::forward_as_tuple(new_ue_index, du_index, up_config, sec_config, std::move(ue_sched)));
 
   logger.info("ue={}: Created new CU-CP UE", new_ue_index);
 
@@ -157,6 +157,19 @@ cu_cp_ue* ue_manager::find_du_ue(ue_index_t ue_index)
   return nullptr;
 }
 
+size_t ue_manager::get_nof_du_ues(du_index_t du_index)
+{
+  unsigned ue_count = 0;
+  // Count UEs connected to the DU
+  for (const auto& ue : ues) {
+    if (ue.second.get_du_index() == du_index) {
+      ue_count++;
+    }
+  }
+
+  return ue_count;
+}
+
 std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
   std::vector<metrics_report::ue_info> report;
@@ -179,7 +192,7 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
 ue_index_t ue_manager::allocate_ue_index(du_index_t du_index)
 {
   // Search unallocated UE index
-  for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
+  for (uint16_t i = 0; i < ue_config.max_nof_supported_ues; i++) {
     ue_index_t new_ue_index = generate_ue_index(du_index, i);
     if (ues.find(new_ue_index) == ues.end()) {
       logger.debug("Allocating new ue_index={} for du_index={}", new_ue_index, du_index);

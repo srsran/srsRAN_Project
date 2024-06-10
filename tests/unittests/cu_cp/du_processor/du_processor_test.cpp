@@ -13,6 +13,7 @@
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -163,11 +164,12 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("RRC").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
+  for (unsigned it = 0; it < ue_mng.get_ue_config().max_nof_supported_ues; it++) {
     // Generate ue_creation message
     rnti_t                          c_rnti   = to_rnti(it + 1); // 0 is not a valid RNTI
     ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
@@ -182,14 +184,15 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("RRC").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
 
   // Try to allocate additional UE index
   ue_index_t ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
   ASSERT_EQ(ue_index, ue_index_t::invalid);
 
-  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), MAX_NOF_UES_PER_DU);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
 }
