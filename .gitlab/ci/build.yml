@@ -417,9 +417,9 @@ variables:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "False"
-    DPDK_VERSION: "23.11"
+    DPDK_VERSION: "23.11_avx2"
     BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke valgrind:
   extends: .build_and_unit
@@ -1144,18 +1144,18 @@ ubuntu dpdk:
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11"]
+        DPDK_VERSION: ["23.11_avx2"]
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3", "23.11"]
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3", "23.11"]
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.3", "23.11"]
@@ -1397,7 +1397,7 @@ build uhd alt:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "False"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1723,7 +1723,6 @@ rhel-8 arm neon:
   ENABLE_ZEROMQ: "False"
   ENABLE_DPDK: "True"
   COMPILER: [gcc, clang]
-  DPDK_VERSION: ["22.11.3", "23.11"]
 
 ubuntu-20.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1737,6 +1736,7 @@ ubuntu-20.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3", "23.11"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1752,6 +1752,7 @@ ubuntu-20.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3", "23.11"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1767,6 +1768,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1782,6 +1784,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1797,6 +1800,7 @@ ubuntu-23.10 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1812,6 +1816,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1827,7 +1832,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11"
+        DPDK_VERSION: "23.11_avx2"
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1843,7 +1848,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11"
+        DPDK_VERSION: "23.11_avx512"
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 

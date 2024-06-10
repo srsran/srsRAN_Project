@@ -166,6 +166,15 @@ fi
 # Setup DPDK
 if [[ -n "$DPDK_VERSION" ]]; then
     [ ! -d "/opt/dpdk/$DPDK_VERSION" ] && echo "DPDK version not found" && exit 1
+    # Create alias for _avx2 / _avx512 versions
+    if [[ $DPDK_VERSION == *_* ]]; then
+        DPDK_VERSION_BASE=${DPDK_VERSION%_*}
+        if [ -e "/opt/dpdk/$DPDK_VERSION_BASE" ]; then
+            rm -Rf "/opt/dpdk/$DPDK_VERSION_BASE"
+        fi
+        ln -s "/opt/dpdk/$DPDK_VERSION" "/opt/dpdk/$DPDK_VERSION_BASE"
+        DPDK_VERSION=$DPDK_VERSION_BASE
+    fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
