@@ -16,6 +16,7 @@
 #include "../../support/resource_grid_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
 #include "srsran/support/file_vector.h"
+#include <optional>
 
 namespace srsran {
 
