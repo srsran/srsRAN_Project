@@ -34,7 +34,7 @@ template <typename... Args>
 {
   srslog::flush();
   ::fflush(stdout);
-  fmt::print(stderr, "srsGNB ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
+  fmt::print(stderr, "srsRAN ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 
   std::quick_exit(1);
 }
@@ -44,7 +44,7 @@ template <typename... Args>
 template <typename... Args>
 [[gnu::noinline, noreturn]] inline void report_fatal_error(const char* reason_fmt, Args&&... args) noexcept
 {
-  srsran_terminate("srsGNB FATAL ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
+  srsran_terminate("srsRAN FATAL ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 }
 
 /// \brief Verifies if condition is true. If not, report a fatal error and close application.
