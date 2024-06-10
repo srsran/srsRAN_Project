@@ -31,11 +31,15 @@
 #include <memory>
 
 namespace srsran {
+
+class task_executor;
+
 namespace ofh {
 
 /// Creates a receiver with the given configuration and dependencies.
 std::unique_ptr<receiver> create_receiver(const receiver_config&                            receiver_cfg,
                                           srslog::basic_logger&                             logger,
+                                          task_executor&                                    uplink_executor,
                                           std::unique_ptr<ether::receiver>                  eth_receiver,
                                           std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                                           std::shared_ptr<prach_context_repository>         prach_context_repo,

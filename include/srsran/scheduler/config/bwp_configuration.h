@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "dmrs.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/ran/band_helper.h"
@@ -36,6 +35,7 @@
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
+#include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/vrb_alloc.h"
 #include <bitset>
 

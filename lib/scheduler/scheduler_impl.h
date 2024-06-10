@@ -70,8 +70,7 @@ private:
   const scheduler_expert_config expert_params;
   sched_configuration_notifier& config_notifier;
 
-  srslog::basic_logger&  logger;
-  scheduler_event_logger sched_ev_logger;
+  srslog::basic_logger& logger;
 
   // Slot metrics sink.
   scheduler_metrics_handler metrics;

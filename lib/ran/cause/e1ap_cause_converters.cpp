@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-const uint8_t e1ap_to_ngap_cause_radio_network[] = {
+static constexpr uint8_t e1ap_to_ngap_cause_radio_network[] = {
     (uint8_t)ngap_cause_radio_network_t::unspecified, // unspecified
     (uint8_t)ngap_cause_radio_network_t::unspecified, // unknown_or_already_allocated_gnb_cu_cp_ue_e1ap_id
     (uint8_t)ngap_cause_radio_network_t::unspecified, // unknown_or_already_allocated_gnb_cu_up_ue_e1ap_id
@@ -65,13 +65,13 @@ const uint8_t e1ap_to_ngap_cause_radio_network[] = {
     (uint8_t)ngap_cause_radio_network_t::unspecified                        // meas_not_supported_for_the_obj
 };
 
-const uint8_t e1ap_to_ngap_cause_transport[] = {
+static constexpr uint8_t e1ap_to_ngap_cause_transport[] = {
     (uint8_t)ngap_cause_transport_t::transport_res_unavailable, // transport_res_unavailable
     (uint8_t)ngap_cause_transport_t::unspecified,               // unspecified
     (uint8_t)ngap_cause_transport_t::unspecified                // unknown_tnl_address_for_iab
 };
 
-const uint8_t e1ap_to_ngap_cause_misc[] = {
+static constexpr uint8_t e1ap_to_ngap_cause_misc[] = {
     (uint8_t)ngap_cause_misc_t::ctrl_processing_overload,             // ctrl_processing_overload
     (uint8_t)ngap_cause_misc_t::not_enough_user_plane_processing_res, // not_enough_user_plane_processing_res
     (uint8_t)ngap_cause_misc_t::hardware_fail,                        // hardware_fail
@@ -81,21 +81,19 @@ const uint8_t e1ap_to_ngap_cause_misc[] = {
 
 ngap_cause_t srsran::e1ap_to_ngap_cause(e1ap_cause_t e1ap_cause)
 {
-  ngap_cause_t ngap_cause;
-
-  if (variant_holds_alternative<e1ap_cause_radio_network_t>(e1ap_cause)) {
-    ngap_cause = ngap_cause_radio_network_t(
-        e1ap_to_ngap_cause_radio_network[uint8_t(variant_get<e1ap_cause_radio_network_t>(e1ap_cause))]);
-  } else if (variant_holds_alternative<e1ap_cause_transport_t>(e1ap_cause)) {
-    ngap_cause =
-        ngap_cause_transport_t(e1ap_to_ngap_cause_transport[uint8_t(variant_get<e1ap_cause_transport_t>(e1ap_cause))]);
-  } else if (variant_holds_alternative<cause_protocol_t>(e1ap_cause)) {
-    ngap_cause = variant_get<cause_protocol_t>(e1ap_cause);
-  } else if (variant_holds_alternative<cause_misc_t>(e1ap_cause)) {
-    ngap_cause = ngap_cause_misc_t(e1ap_to_ngap_cause_misc[uint8_t(variant_get<cause_misc_t>(e1ap_cause))]);
-  } else {
-    report_fatal_error("Cannot convert cause to NGAP type: {}", e1ap_cause);
+  if (const auto* result = std::get_if<e1ap_cause_radio_network_t>(&e1ap_cause)) {
+    return ngap_cause_radio_network_t(e1ap_to_ngap_cause_radio_network[uint8_t(*result)]);
+  }
+  if (const auto* result = std::get_if<e1ap_cause_transport_t>(&e1ap_cause)) {
+    return ngap_cause_transport_t(e1ap_to_ngap_cause_transport[uint8_t(*result)]);
+  }
+  if (const auto* result = std::get_if<cause_protocol_t>(&e1ap_cause)) {
+    return *result;
+  }
+  if (const auto* result = std::get_if<cause_misc_t>(&e1ap_cause)) {
+    return ngap_cause_misc_t(e1ap_to_ngap_cause_misc[uint8_t(*result)]);
   }
 
-  return ngap_cause;
-};
+  report_fatal_error("Cannot convert cause to NGAP type: {}", e1ap_cause);
+  return {};
+}

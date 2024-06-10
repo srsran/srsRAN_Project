@@ -548,7 +548,7 @@ TEST_F(byte_buffer_tester, is_contiguous)
 TEST_F(byte_buffer_tester, hexdump)
 {
   std::vector<uint8_t> bytes{0x1, 0x2, 0x3, 0x4, 0x5, 0xff};
-  byte_buffer          pdu = make_byte_buffer("0102030405FF");
+  byte_buffer          pdu = make_byte_buffer("0102030405FF").value();
   ASSERT_EQ(pdu, bytes);
 }
 

@@ -90,8 +90,8 @@ e2sm_rc_control_service::e2sm_rc_control_service(uint32_t style_id_) : e2sm_rc_c
 
 bool e2sm_rc_control_service::control_request_supported(const e2sm_ric_control_request& req)
 {
-  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const e2sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = std::get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2sm_rc_ctrl_msg_s& ctrl_msg = std::get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
 
   // All styles 1 - 10 use hdr and msg format 1
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
@@ -137,7 +137,7 @@ async_task<e2sm_ric_control_response>
 e2sm_rc_control_service::execute_control_request(const e2sm_ric_control_request& req)
 {
   const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
-      variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+      std::get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
 
   if (config_req_executors.find(ctrl_hdr.ric_ctrl_action_id) == config_req_executors.end()) {
     return launch_async([](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
@@ -165,10 +165,10 @@ e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_r
   req_f1.ric_ctrl_ack_request         = false;
 
   e2sm_rc_ctrl_hdr_format1_s& hdr_f1 =
-      variant_get<asn1::e2sm::e2sm_rc_ctrl_hdr_s>(req_f1.request_ctrl_hdr).ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+      std::get<asn1::e2sm::e2sm_rc_ctrl_hdr_s>(req_f1.request_ctrl_hdr).ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
 
   e2sm_rc_ctrl_msg_format1_s& msg_f1 =
-      variant_get<asn1::e2sm::e2sm_rc_ctrl_msg_s>(req_f1.request_ctrl_msg).ric_ctrl_msg_formats.set_ctrl_msg_format1();
+      std::get<asn1::e2sm::e2sm_rc_ctrl_msg_s>(req_f1.request_ctrl_msg).ric_ctrl_msg_formats.set_ctrl_msg_format1();
 
   hdr_f1.ric_style_type     = style.indicated_ctrl_style_type;
   hdr_f1.ric_ctrl_action_id = action.ric_ctrl_action_id;
@@ -195,8 +195,8 @@ e2sm_ric_control_request e2sm_rc_control_service_style_255::create_req_f1_from_r
 
 bool e2sm_rc_control_service_style_255::control_request_supported(const e2sm_ric_control_request& req)
 {
-  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
-  const e2sm_rc_ctrl_msg_s& ctrl_msg = variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
+  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = std::get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr);
+  const e2sm_rc_ctrl_msg_s& ctrl_msg = std::get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg);
 
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value !=
       e2sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::types_opts::ctrl_hdr_format2) {
@@ -249,9 +249,9 @@ e2sm_rc_control_service_style_255::execute_control_request(const e2sm_ric_contro
   aggregated_response.success = false;
 
   const e2sm_rc_ctrl_hdr_format2_s& ctrl_hdr_f2 =
-      variant_get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format2();
+      std::get<e2sm_rc_ctrl_hdr_s>(req.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format2();
   const e2sm_rc_ctrl_msg_format2_s& ctrl_msg_f2 =
-      variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format2();
+      std::get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format2();
 
   for (auto& style : ctrl_msg_f2.ric_ctrl_style_list) {
     for (auto& action : style.ric_ctrl_action_list) {

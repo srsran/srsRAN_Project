@@ -30,8 +30,8 @@
 #include "frequency_allocation_type.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/tci.h"
+#include <variant>
 
 namespace srsran {
 
@@ -48,7 +48,7 @@ struct csi_rs_resource_mapping {
   /// The time domain location reference \f$l_0\f$ in TS 38.211, clause 7.4.1.5.3. Values {0,...,13}.
   unsigned first_ofdm_symbol_in_td;
   /// The time domain location reference \f$l_1\f$ in TS 38.211, clause 7.4.1.5.3. Values {2,...,12}.
-  optional<unsigned> first_ofdm_symbol_in_td2;
+  std::optional<unsigned> first_ofdm_symbol_in_td2;
   /// CDM configuration.
   csi_rs_cdm_type cdm;
   /// Frequency density configuration.
@@ -120,15 +120,15 @@ struct nzp_csi_rs_resource {
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB. Values {-8,...,15}. See TS 38.214, clause 5.2.2.3.1.
   int8_t pwr_ctrl_offset;
   /// Power offset of NZP CSI-RS RE to SSS RE. Value in dB. Values {-3, 0, 3, 6}. See TS 38.214, clause 5.2.2.3.1.
-  optional<int8_t> pwr_ctrl_offset_ss_db;
+  std::optional<int8_t> pwr_ctrl_offset_ss_db;
   /// Scrambling ID. See TS 38.214, clause 5.2.2.3.1.
   unsigned scrambling_id;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources.
-  optional<csi_resource_periodicity> csi_res_period;
+  std::optional<csi_resource_periodicity> csi_res_period;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
-  optional<unsigned> csi_res_offset;
+  std::optional<unsigned> csi_res_offset;
   /// Present only for periodic NZP-CSI-RS-Resources (as indicated in CSI-ResourceConfig).
-  optional<tci_state_id_t> qcl_info_periodic_csi_rs;
+  std::optional<tci_state_id_t> qcl_info_periodic_csi_rs;
 
   bool operator==(const nzp_csi_rs_resource& rhs) const
   {
@@ -150,10 +150,10 @@ struct nzp_csi_rs_resource_set {
   static_vector<nzp_csi_rs_res_id_t, nzp_csi_rs_res_set_id_t::MAX_NOF_NZP_CSI_RS_RESOURCES_PER_SET> nzp_csi_rs_res;
   /// Indicates whether repetition is on/off. If false, UE may not assume that the NZP-CSI-RS resources within the
   /// resource set are transmitted with the same downlink spatial domain transmission filter.
-  optional<bool> is_repetition_on;
+  std::optional<bool> is_repetition_on;
   /// Offset X between the slot containing the DCI that triggers a set of aperiodic NZP CSI-RS resources and the slot in
   /// which the CSI-RS resource set is transmitted. Values {0,...,6}.
-  optional<unsigned> aperiodic_trigger_offset;
+  std::optional<unsigned> aperiodic_trigger_offset;
   /// Indicates that the antenna port for all NZP-CSI-RS resources in the CSI-RS resource set is same.
   bool is_trs_info_present{false};
 
@@ -191,14 +191,14 @@ struct csi_im_resource {
     bool operator!=(const csi_im_resource_element_pattern& rhs) const { return !(rhs == *this); }
   };
 
-  csi_im_res_id_t                           res_id;
-  optional<csi_im_resource_element_pattern> csi_im_res_element_pattern;
+  csi_im_res_id_t                                res_id;
+  std::optional<csi_im_resource_element_pattern> csi_im_res_element_pattern;
   /// RBs that the CSI resource spans, related to the CRB 0.
   crb_interval freq_band_rbs;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources.
-  optional<csi_resource_periodicity> csi_res_period;
+  std::optional<csi_resource_periodicity> csi_res_period;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
-  optional<unsigned> csi_res_offset;
+  std::optional<unsigned> csi_res_offset;
 
   bool operator==(const csi_im_resource& rhs) const
   {
@@ -259,18 +259,18 @@ struct csi_associated_report_config_info {
     bool operator!=(const nzp_csi_rs& rhs) const { return !(rhs == *this); }
   };
 
-  csi_report_config_id_t                    report_cfg_id;
-  variant<nzp_csi_rs, csi_ssb_resource_set> res_for_channel;
+  csi_report_config_id_t                         report_cfg_id;
+  std::variant<nzp_csi_rs, csi_ssb_resource_set> res_for_channel;
   /// CSI-IM-ResourceSet for interference measurement. Values
   /// {1,...,MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
   /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with
   /// csi-IM-ResourcesForInterference.
-  optional<unsigned> csi_im_resources_for_interference;
+  std::optional<unsigned> csi_im_resources_for_interference;
   /// NZP-CSI-RS-ResourceSet for interference measurement. Values
   /// {1,...,MAX_NOF_NZP_CSI_RS_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
   /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with
   /// nzp-CSI-RS-ResourcesForInterference.
-  optional<unsigned> nzp_csi_rs_resources_for_interference;
+  std::optional<unsigned> nzp_csi_rs_resources_for_interference;
 
   bool operator==(const csi_associated_report_config_info& rhs) const
   {
@@ -333,9 +333,9 @@ struct csi_meas_config {
   /// Configured CSI report settings as specified in TS 38.214 clause 5.2.1.1. Maximum size: 48.
   std::vector<csi_report_config> csi_report_cfg_list;
   /// Size of CSI request field in DCI (bits). See TS 38.214, clause 5.2.1.5.1.
-  optional<unsigned>                                        report_trigger_size;
-  optional<csi_aperiodic_trigger_state_list>                aperiodic_trigger_state_list;
-  optional<csi_semi_persistent_on_pusch_trigger_state_list> semi_persistent_on_pusch_trigger_state_list;
+  std::optional<unsigned>                                        report_trigger_size;
+  std::optional<csi_aperiodic_trigger_state_list>                aperiodic_trigger_state_list;
+  std::optional<csi_semi_persistent_on_pusch_trigger_state_list> semi_persistent_on_pusch_trigger_state_list;
 
   bool operator==(const csi_meas_config& rhs) const
   {
@@ -356,8 +356,8 @@ struct zp_csi_rs_resource {
   /// \brief OFDM symbol and subcarrier occupancy of the ZP-CSI-RS resource within a slot.
   csi_rs_resource_mapping res_mapping;
   /// Periodicity and slot offset for periodic/semi-persistent ZP-CSI-RS.
-  optional<csi_resource_periodicity> period;
-  optional<unsigned>                 offset;
+  std::optional<csi_resource_periodicity> period;
+  std::optional<unsigned>                 offset;
 
   bool operator==(const zp_csi_rs_resource& other) const
   {

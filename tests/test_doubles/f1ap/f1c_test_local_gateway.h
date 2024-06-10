@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
+#include "srsran/f1u/du/f1u_gateway.h"
 
 namespace srsran {
 
@@ -115,6 +116,25 @@ private:
   srs_cu_cp::cu_cp_f1c_handler* cu_cp_du_mng = nullptr;
 
   std::vector<std::unique_ptr<du_connection_test_context>> connections;
+};
+
+class f1u_test_local_gateway : public srs_du::f1u_du_gateway
+{
+  std::unique_ptr<srs_du::f1u_du_gateway_bearer> create_du_bearer(uint32_t                       ue_index,
+                                                                  drb_id_t                       drb_id,
+                                                                  srs_du::f1u_config             config,
+                                                                  const up_transport_layer_info& dl_up_tnl_info,
+                                                                  const up_transport_layer_info& ul_up_tnl_info,
+                                                                  srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
+                                                                  timer_factory                              timers,
+                                                                  task_executor& ue_executor) override
+  {
+    return nullptr;
+  }
+
+  void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) override {}
+
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
 };
 
 } // namespace srsran

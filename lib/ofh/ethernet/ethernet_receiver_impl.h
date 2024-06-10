@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ethernet_rx_buffer_pool.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/srslog/logger.h"
 
@@ -34,6 +35,8 @@ namespace ether {
 /// Implementation for the Ethernet receiver.
 class receiver_impl : public receiver
 {
+  static constexpr unsigned BUFFER_SIZE = 9600;
+
   enum class receiver_status { idle, running, stop_requested, stopped };
 
 public:
@@ -64,6 +67,7 @@ private:
   std::reference_wrapper<frame_notifier> notifier;
   int                                    socket_fd = -1;
   std::atomic<receiver_status>           rx_status{receiver_status::idle};
+  ethernet_rx_buffer_pool                buffer_pool;
 };
 
 } // namespace ether

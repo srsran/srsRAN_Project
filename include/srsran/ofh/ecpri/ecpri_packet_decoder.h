@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ofh/ecpri/ecpri_packet_properties.h"
+#include <variant>
 
 namespace srsran {
 namespace ecpri {
@@ -34,7 +34,7 @@ struct packet_parameters {
   /// Common header.
   common_header header;
   /// eCPRI type parameters.
-  variant<realtime_control_parameters, iq_data_parameters> type_params;
+  std::variant<realtime_control_parameters, iq_data_parameters> type_params;
 };
 
 /// eCPRI packet decoder interface.

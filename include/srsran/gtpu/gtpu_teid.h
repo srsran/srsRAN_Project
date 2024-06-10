@@ -52,6 +52,12 @@ constexpr gtpu_teid_t int_to_gtpu_teid(uint32_t teid_val)
 /// \brief TEID for path management messages via GTP-U, e.g. echo request, echo response,...
 constexpr gtpu_teid_t GTPU_PATH_MANAGEMENT_TEID = int_to_gtpu_teid(0);
 
+/// \brief Smallest TEID value that is not used for path management.
+constexpr gtpu_teid_t GTPU_TEID_MIN = int_to_gtpu_teid(1);
+
+/// \brief Largest TEID value that is not used for path management.
+constexpr gtpu_teid_t GTPU_TEID_MAX = int_to_gtpu_teid(std::numeric_limits<uint32_t>::max());
+
 } // namespace srsran
 
 namespace fmt {

@@ -68,15 +68,13 @@ void dynamic_du_impl::add_dus(std::vector<std::unique_ptr<du_wrapper>> active_du
   du_list = std::move(active_du);
   srsran_assert(!du_list.empty(), "Cannot set an empty DU list");
 
-  for (unsigned sector_id = 0, sector_end = du_list.size(); sector_id != sector_end; ++sector_id) {
-    srsran_assert(du_list[sector_id], "Invalid DU");
-
-    auto& du_obj = du_list[sector_id];
-    auto& upper  = du_obj->get_du_low_wrapper().get_du_low().get_upper_phy(sector_id);
-
-    // Make connections between DU and RU.
-    ru_ul_adapt.map_handler(sector_id, upper.get_rx_symbol_handler());
-    ru_timing_adapt.map_handler(sector_id, upper.get_timing_handler());
-    ru_error_adapt.map_handler(sector_id, upper.get_error_handler());
+  for (auto& du_obj : du_list) {
+    span<upper_phy*> upper_ptrs = du_obj->get_du_low_wrapper().get_du_low().get_all_upper_phys();
+    for (auto* upper : upper_ptrs) {
+      // Make connections between DU and RU.
+      ru_ul_adapt.map_handler(upper->get_sector_id(), upper->get_rx_symbol_handler());
+      ru_timing_adapt.map_handler(upper->get_sector_id(), upper->get_timing_handler());
+      ru_error_adapt.map_handler(upper->get_sector_id(), upper->get_error_handler());
+    }
   }
 }

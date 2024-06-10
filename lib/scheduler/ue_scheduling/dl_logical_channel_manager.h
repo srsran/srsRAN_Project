@@ -38,7 +38,7 @@ public:
     /// LCID of the MAC CE.
     lcid_dl_sch_t ce_lcid;
     /// Holds payload of CE except UE Contention Resolution Identity.
-    variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
+    std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
   };
 
   dl_logical_channel_manager();
@@ -75,11 +75,7 @@ public:
   bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
 
   /// \brief Checks whether a ConRes CE is pending for transmission.
-  /// \remark ConRes CE is only sent when there is pending data for SRB0 or SRB1.
-  bool is_con_res_id_pending() const
-  {
-    return (pending_con_res_id and (has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1)));
-  }
+  bool is_con_res_id_pending() const { return pending_con_res_id; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
   bool has_pending_ces() const { return not pending_ces.empty(); }

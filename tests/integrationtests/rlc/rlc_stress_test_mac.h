@@ -44,7 +44,7 @@ class mac_dummy : public rlc_tx_lower_layer_notifier
 
 public:
   mac_dummy(const stress_test_args& args_, uint32_t ue_id, rb_id_t rb_id) :
-    args(args_), logger("MAC", {0, ue_id, rb_id, "DL"}), rgen(args_.seed), bsr(0)
+    args(args_), logger("MAC", {(gnb_du_id_t)0, ue_id, rb_id, "DL"}), rgen(args_.seed), bsr(0)
   {
   }
 

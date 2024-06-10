@@ -28,14 +28,12 @@ bool srsran::csi_helper::is_csi_reporting_slot(const serving_cell_config& ue_cfg
     // We assume we only use the first CSI report configuration.
     const unsigned csi_report_cfg_idx = 0;
     const auto&    csi_report_cfg     = ue_cfg.csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+    const auto&    csi_report_cfg_type =
+        std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
 
     // > Scheduler CSI grants.
-    unsigned csi_offset =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_offset;
-    unsigned csi_period = csi_report_periodicity_to_uint(
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_period);
+    unsigned csi_offset = csi_report_cfg_type.report_slot_offset;
+    unsigned csi_period = csi_report_periodicity_to_uint(csi_report_cfg_type.report_slot_period);
 
     if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
       return true;

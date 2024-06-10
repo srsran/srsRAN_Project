@@ -68,6 +68,8 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
       sched_req.si_scheduling->si_messages[i].period_radio_frames =
           du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
       sched_req.si_scheduling->si_messages[i].msg_len = si_payload_sizes[i + 1];
+      sched_req.si_scheduling->si_messages[i].si_window_position =
+          du_cfg.si_config->si_sched_info[i].si_window_position;
     }
   }
 

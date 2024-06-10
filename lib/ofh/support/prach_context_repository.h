@@ -68,8 +68,7 @@ public:
   prach_context() = default;
 
   /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
-  prach_context(const prach_buffer_context& context, prach_buffer& buffer) :
-    context_info({context, &buffer}), nof_symbols(get_preamble_duration(context.format))
+  prach_context(const prach_buffer_context& context, prach_buffer& buffer) : context_info({context, &buffer})
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
     srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
@@ -82,9 +81,8 @@ public:
 
     freq_mapping_info = prach_frequency_mapping_get(preamble_info.scs, context.pusch_scs);
 
-    if (!nof_symbols) {
-      nof_symbols = 1;
-    }
+    nof_symbols = preamble_info.nof_symbols;
+
     // Initialize statistics.
     for (unsigned i = 0; i != nof_symbols; ++i) {
       buffer_stats.emplace_back(buffer.get_max_nof_ports(), preamble_info.sequence_length);

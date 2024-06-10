@@ -27,7 +27,7 @@
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
@@ -66,9 +66,7 @@ public:
                                                                      const srs_cu_up::f1u_config&   config,
                                                                      const up_transport_layer_info& ul_up_tnl_info,
                                                                      f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                                                     task_executor&                        ul_exec,
-                                                                     timer_factory ue_dl_timer_factory,
-                                                                     unique_timer& ue_inactivity_timer) = 0;
+                                                                     task_executor&                        ul_exec) = 0;
 
   virtual void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
                               const up_transport_layer_info& dl_up_tnl_info) = 0;

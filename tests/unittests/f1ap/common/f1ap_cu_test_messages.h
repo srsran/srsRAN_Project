@@ -52,12 +52,12 @@ f1ap_message generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id, 
 f1ap_message generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
 /// \brief Generates dummy F1AP UE CONTEXT SETUP RESPONSE message.
-f1ap_message
-generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                   gnb_du_ue_f1ap_id_t du_ue_id,
-                                   rnti_t              crnti             = to_rnti(0x4601),
-                                   byte_buffer         cell_group_config = make_byte_buffer(
-                                       "5c02b091117aec701061e000b1c03544cde4a20c7c080408c008241000100000"));
+f1ap_message generate_ue_context_setup_response(
+    gnb_cu_ue_f1ap_id_t cu_ue_id,
+    gnb_du_ue_f1ap_id_t du_ue_id,
+    rnti_t              crnti = to_rnti(0x4601),
+    byte_buffer         cell_group_config =
+        make_byte_buffer("5c02b091117aec701061e000b1c03544cde4a20c7c080408c008241000100000").value());
 
 /// \brief Generates dummy F1AP UE CONTEXT SETUP FAILURE message.
 f1ap_message generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);

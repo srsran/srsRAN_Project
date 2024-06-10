@@ -31,6 +31,7 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac.h"
 #include "srsran/pcap/rlc_pcap.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <map>
@@ -44,7 +45,7 @@ namespace srs_du {
 struct du_manager_params {
   struct ran_params {
     std::string                        gnb_du_name;
-    uint64_t                           gnb_du_id;
+    gnb_du_id_t                        gnb_du_id;
     uint8_t                            rrc_version;
     transport_layer_address            du_bind_addr;
     std::vector<du_cell_config>        cells;

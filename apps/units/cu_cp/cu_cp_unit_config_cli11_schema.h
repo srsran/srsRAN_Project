@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
+
 #include "CLI/CLI11.hpp"
 
 namespace srsran {
@@ -30,5 +32,11 @@ struct cu_cp_unit_config;
 
 /// Configures the given CLI11 application with the CU-CP application unit configuration schema.
 void configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg);
+
+/// Auto derive DU high parameters after the parsing.
+void autoderive_cu_cp_parameters_after_parsing(CLI::App&                app,
+                                               cu_cp_unit_config&       unit_cfg,
+                                               std::vector<std::string> plmns,
+                                               std::vector<unsigned>    tacs);
 
 } // namespace srsran

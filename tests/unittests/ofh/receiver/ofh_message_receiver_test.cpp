@@ -24,6 +24,7 @@
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
 #include "../compression/ofh_iq_decompressor_test_doubles.h"
+#include "srsran/ofh/ethernet/ethernet_unique_buffer.h"
 #include "srsran/ofh/ofh_factories.h"
 #include <gtest/gtest.h>
 
@@ -32,6 +33,17 @@ using namespace ofh;
 using namespace srsran::ofh::testing;
 
 namespace {
+/// Dummy Ethernet receive buffer.
+class dummy_eth_rx_buffer : public ether::rx_buffer
+{
+public:
+  explicit dummy_eth_rx_buffer(std::vector<uint8_t>&& init_values) { buffer = init_values; }
+
+  span<const uint8_t> data() const override { return buffer; };
+
+private:
+  std::vector<uint8_t> buffer;
+};
 /// Data flow User-Plane uplink PRACH spy.
 class data_flow_uplane_uplink_prach_spy : public data_flow_uplane_uplink_prach
 {
@@ -108,9 +120,9 @@ public:
 /// Dummy Ethernet receiver class.
 class dummy_eth_receiver : public ether::receiver
 {
-  void start(ether::frame_notifier& notifier) override{};
+  void start(ether::frame_notifier& notifier) override {}
 
-  void stop() override{};
+  void stop() override {}
 };
 
 } // namespace
@@ -130,7 +142,7 @@ protected:
   data_flow_uplane_uplink_prach_spy*              df_prach;
   ecpri_packet_decoder_spy*                       ecpri_decoder;
   vlan_frame_decoder_spy*                         vlan_decoder;
-  message_receiver                                ul_handler;
+  message_receiver_impl                           ul_handler;
 
 public:
   ofh_message_receiver_fixture() :
@@ -192,13 +204,13 @@ public:
 
 TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_ethernet_type)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
   ether::vlan_frame_params params = vlan_params;
   params.eth_type                 = 7777;
   vlan_decoder->set_vlan_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_FALSE(ecpri_decoder->has_decode_function_been_called());
@@ -208,13 +220,13 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_ethernet_typ
 
 TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_src_mac)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
   ether::vlan_frame_params params = vlan_params;
   params.mac_src_address          = {0xbe, 0xbe, 0xca, 0xfe, 0xba, 0xca};
   vlan_decoder->set_vlan_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_FALSE(ecpri_decoder->has_decode_function_been_called());
@@ -224,13 +236,13 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_src_mac)
 
 TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_dst_mac)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
   ether::vlan_frame_params params = vlan_params;
   params.mac_dst_address          = {0xbe, 0xbe, 0xca, 0xfe, 0xba, 0xca};
   vlan_decoder->set_vlan_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_FALSE(ecpri_decoder->has_decode_function_been_called());
@@ -240,14 +252,14 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_dst_mac)
 
 TEST_F(ofh_message_receiver_fixture, discard_ecpri_control_frames)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
   ecpri::packet_parameters params;
   params.header.msg_type = srsran::ecpri::message_type::rt_control_data;
   params.type_params.emplace<ecpri::realtime_control_parameters>(ecpri::realtime_control_parameters{1, 2});
   ecpri_decoder->set_ecpri_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -257,13 +269,13 @@ TEST_F(ofh_message_receiver_fixture, discard_ecpri_control_frames)
 
 TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_uplink_eacx)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
-  ecpri::packet_parameters params                                  = ecpri_params;
-  variant_get<ecpri::iq_data_parameters>(params.type_params).pc_id = 2;
+  ecpri::packet_parameters params                               = ecpri_params;
+  std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 2;
   ecpri_decoder->set_ecpri_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -273,13 +285,13 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_uplink_eacx)
 
 TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_prach_eacx)
 {
-  static_vector<uint8_t, 1> msg = {1};
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1}));
 
-  ecpri::packet_parameters params                                  = ecpri_params;
-  variant_get<ecpri::iq_data_parameters>(params.type_params).pc_id = 6;
+  ecpri::packet_parameters params                               = ecpri_params;
+  std::get<ecpri::iq_data_parameters>(params.type_params).pc_id = 6;
   ecpri_decoder->set_ecpri_params(params);
 
-  ul_handler.on_new_frame(msg);
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -289,8 +301,8 @@ TEST_F(ofh_message_receiver_fixture, discard_frames_with_unexpected_prach_eacx)
 
 TEST_F(ofh_message_receiver_fixture, invalid_slot_point_peek_does_not_call_data_flows)
 {
-  static_vector<uint8_t, 3> msg = {1, 0, 0};
-  ul_handler.on_new_frame(msg);
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1, 0, 0}));
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -300,8 +312,8 @@ TEST_F(ofh_message_receiver_fixture, invalid_slot_point_peek_does_not_call_data_
 
 TEST_F(ofh_message_receiver_fixture, valid_uplink_message_gets_processed_by_data_flow)
 {
-  static_vector<uint8_t, 4> msg = {0, 0, 0, 0};
-  ul_handler.on_new_frame(msg);
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{0, 0, 0, 0}));
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -311,8 +323,8 @@ TEST_F(ofh_message_receiver_fixture, valid_uplink_message_gets_processed_by_data
 
 TEST_F(ofh_message_receiver_fixture, valid_long_prach_message_gets_processed_by_data_flow)
 {
-  static_vector<uint8_t, 4> msg = {1, 0, 0, 0};
-  ul_handler.on_new_frame(msg);
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{1, 0, 0, 0}));
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());
@@ -322,8 +334,8 @@ TEST_F(ofh_message_receiver_fixture, valid_long_prach_message_gets_processed_by_
 
 TEST_F(ofh_message_receiver_fixture, valid_short_prach_message_gets_processed_by_data_flow)
 {
-  static_vector<uint8_t, 4> msg = {3, 0, 0, 0};
-  ul_handler.on_new_frame(msg);
+  ether::unique_rx_buffer buffer(dummy_eth_rx_buffer(std::vector<uint8_t>{3, 0, 0, 0}));
+  ul_handler.on_new_frame(std::move(buffer));
 
   ASSERT_TRUE(vlan_decoder->has_decode_function_been_called());
   ASSERT_TRUE(ecpri_decoder->has_decode_function_been_called());

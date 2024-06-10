@@ -61,7 +61,7 @@ bool e2sm_rc_impl::add_e2sm_control_service(std::unique_ptr<e2sm_control_service
 
 e2sm_control_service* e2sm_rc_impl::get_e2sm_control_service(const e2sm_ric_control_request& request)
 {
-  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = variant_get<e2sm_rc_ctrl_hdr_s>(request.request_ctrl_hdr);
+  const e2sm_rc_ctrl_hdr_s& ctrl_hdr = std::get<e2sm_rc_ctrl_hdr_s>(request.request_ctrl_hdr);
 
   int64_t ric_style_type = 0;
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value ==

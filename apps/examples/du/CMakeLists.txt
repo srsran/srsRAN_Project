@@ -27,8 +27,8 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
         target_link_libraries(du_example
                 srsran_du_high
                 srsran_gateway
-                mac_fapi_adaptor_factory
-                phy_fapi_adaptor_factory
+                srsran_mac_fapi_adaptor
+                srsran_phy_fapi_adaptor
                 srsran_fapi
                 srsran_phy_support
                 srsran_upper_phy

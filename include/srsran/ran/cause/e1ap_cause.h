@@ -23,8 +23,8 @@
 #pragma once
 
 #include "common.h"
-#include "srsran/adt/variant.h"
 #include "fmt/format.h"
+#include <variant>
 
 namespace srsran {
 
@@ -67,7 +67,7 @@ enum class e1ap_cause_radio_network_t : uint8_t {
 
 enum class e1ap_cause_transport_t : uint8_t { unspecified = 0, transport_res_unavailable, unknown_tnl_address_for_iab };
 
-using e1ap_cause_t = variant<e1ap_cause_radio_network_t, e1ap_cause_transport_t, cause_protocol_t, cause_misc_t>;
+using e1ap_cause_t = std::variant<e1ap_cause_radio_network_t, e1ap_cause_transport_t, cause_protocol_t, cause_misc_t>;
 
 } // namespace srsran
 
@@ -85,15 +85,16 @@ struct formatter<srsran::e1ap_cause_t> {
   template <typename FormatContext>
   auto format(srsran::e1ap_cause_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::e1ap_cause_radio_network_t>(o)) {
-      return format_to(ctx.out(), "radio_network-id{}", srsran::variant_get<srsran::e1ap_cause_radio_network_t>(o));
-    } else if (srsran::variant_holds_alternative<srsran::e1ap_cause_transport_t>(o)) {
-      return format_to(ctx.out(), "transport-id{}", srsran::variant_get<srsran::e1ap_cause_transport_t>(o));
-    } else if (srsran::variant_holds_alternative<srsran::cause_protocol_t>(o)) {
-      return format_to(ctx.out(), "protocol-id{}", srsran::variant_get<srsran::cause_protocol_t>(o));
-    } else {
-      return format_to(ctx.out(), "misc-id{}", srsran::variant_get<srsran::cause_misc_t>(o));
+    if (const auto* result = std::get_if<srsran::e1ap_cause_radio_network_t>(&o)) {
+      return format_to(ctx.out(), "radio_network-id{}", *result);
     }
+    if (const auto* result = std::get_if<srsran::e1ap_cause_transport_t>(&o)) {
+      return format_to(ctx.out(), "transport-id{}", *result);
+    }
+    if (const auto* result = std::get_if<srsran::cause_protocol_t>(&o)) {
+      return format_to(ctx.out(), "protocol-id{}", *result);
+    }
+    return format_to(ctx.out(), "misc-id{}", std::get<srsran::cause_misc_t>(o));
   }
 };
 

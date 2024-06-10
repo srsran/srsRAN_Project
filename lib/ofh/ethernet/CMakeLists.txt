@@ -22,6 +22,7 @@ set(SOURCES
         ethernet_factories.cpp
         ethernet_transmitter_impl.cpp
         ethernet_receiver_impl.cpp
+        ethernet_rx_buffer_impl.cpp
         vlan_ethernet_frame_builder_impl.cpp
         vlan_ethernet_frame_decoder_impl.cpp)
 

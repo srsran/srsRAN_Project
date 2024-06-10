@@ -46,7 +46,7 @@ public:
 
   bool full() const override { return false; }
 
-  uint32_t get_max_teids() override { return std::numeric_limits<uint32_t>::max(); }
+  uint32_t get_max_nof_teids() override { return std::numeric_limits<uint32_t>::max(); }
 
 private:
   uint32_t next_gtpu_teid = 0;
@@ -207,6 +207,8 @@ public:
     }
     f1u_bearers.erase(bearer_it);
   }
+
+  expected<std::string> get_du_bind_address(gnb_du_id_t du_index) override { return std::string("127.0.0.1"); }
 
   std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
 };

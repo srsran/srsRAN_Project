@@ -30,19 +30,18 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                const sched_cell_configuration_request_message& msg,
                                const cell_configuration&                       cell_cfg_,
                                ue_scheduler&                                   ue_sched_,
-                               scheduler_event_logger&                         ev_logger,
                                scheduler_metrics_handler&                      metrics_handler) :
   cell_cfg(cell_cfg_),
   ue_sched(ue_sched_),
   res_grid(cell_cfg),
-  event_logger(ev_logger),
+  event_logger(cell_cfg.cell_index, cell_cfg.pci),
   metrics(metrics_handler),
   result_logger(sched_cfg.log_broadcast_messages, cell_cfg.pci),
   logger(srslog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
   csi_sch(cell_cfg),
-  ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger),
+  ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, event_logger),
   prach_sch(cell_cfg),
   pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(pucch_alloc),
@@ -52,7 +51,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
   // Register new cell in the UE scheduler.
-  ue_sched.add_cell(ue_scheduler_cell_params{msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid});
+  ue_sched.add_cell(
+      ue_scheduler_cell_params{msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &event_logger});
 }
 
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)

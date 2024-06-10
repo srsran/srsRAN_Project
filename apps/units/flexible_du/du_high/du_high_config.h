@@ -28,6 +28,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/ntn.h"
@@ -350,6 +351,9 @@ struct du_high_unit_sib_config {
     std::vector<uint8_t> sib_mapping_info;
     /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
     unsigned si_period_rf = 32;
+    /// SI window position of the associated SI-message. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
+    /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+    std::optional<unsigned> si_window_position;
   };
 
   struct sib_ue_timers_and_constants {
@@ -732,6 +736,8 @@ struct du_high_unit_config {
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
   std::string ran_node_name = "srsgnb01";
+  /// DU identifier.
+  gnb_du_id_t gnb_du_id = gnb_du_id_t::min;
   /// PCAPs.
   du_high_unit_pcap_config pcaps;
   /// Metrics.

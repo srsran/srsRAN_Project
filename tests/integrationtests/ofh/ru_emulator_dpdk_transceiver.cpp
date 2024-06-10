@@ -20,6 +20,7 @@
  *
  */
 
+#include "../../../lib/ofh/ethernet/dpdk/dpdk_ethernet_rx_buffer_impl.h"
 #include "ru_emulator_transceiver.h"
 #include <chrono>
 #include <future>
@@ -90,12 +91,8 @@ void dpdk_transceiver::receive()
 
   for (auto mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
     ::rte_vlan_strip(mbuf);
-
-    uint8_t* data   = rte_pktmbuf_mtod(mbuf, uint8_t*);
-    unsigned length = mbuf->pkt_len;
-    notifier->on_new_frame(span<const uint8_t>(data, length));
-
-    ::rte_pktmbuf_free(mbuf);
+    dpdk_rx_buffer_impl buffer(mbuf);
+    notifier->on_new_frame(std::move(buffer));
   }
 }
 

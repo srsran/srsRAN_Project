@@ -70,6 +70,35 @@ public:
                   uci_constants::MAX_NOF_PAYLOAD_BITS);
   }
 
+  /// \brief Creates a UCI message from initializer lists.
+  /// \param[in] harq_ack  HARQ-ACK feedback bits.
+  /// \param[in] csi_part1 CSI Part 1 bits.
+  /// \param[in] csi_part2 CSI Part 2 bits.
+  /// \param[in] sr        SR bits.
+  pucch_uci_message(const std::initializer_list<uint8_t>& sr,
+                    const std::initializer_list<uint8_t>& harq_ack,
+                    const std::initializer_list<uint8_t>& csi_part1,
+                    const std::initializer_list<uint8_t>& csi_part2) :
+    nof_sr_bits(sr.size()),
+    nof_harq_ack_bits(harq_ack.size()),
+    nof_csi_part1_bits(csi_part1.size()),
+    nof_csi_part2_bits(csi_part2.size())
+  {
+    unsigned i = 0;
+    for (uint8_t value : harq_ack) {
+      data[i++] = value;
+    }
+    for (uint8_t value : sr) {
+      data[i++] = value;
+    }
+    for (uint8_t value : csi_part1) {
+      data[i++] = value;
+    }
+    for (uint8_t value : csi_part2) {
+      data[i++] = value;
+    }
+  }
+
   /// Sets the message status.
   void set_status(uci_status status_) { status = status_; }
 

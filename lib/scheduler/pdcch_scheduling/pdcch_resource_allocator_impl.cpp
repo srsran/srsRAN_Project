@@ -36,6 +36,7 @@ pdcch_resource_allocator_impl::pdcch_resource_allocator_impl(const cell_configur
     const coreset_configuration& cs_cfg = (ss.get_coreset_id() == to_coreset_id(0))
                                               ? (*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0)
                                               : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
+
     for (unsigned lidx = 0; lidx != NOF_AGGREGATION_LEVELS; ++lidx) {
       const aggregation_level aggr_lvl            = aggregation_index_to_level(lidx);
       const unsigned          nof_candidates      = ss.get_nof_candidates()[lidx];
@@ -44,7 +45,7 @@ pdcch_resource_allocator_impl::pdcch_resource_allocator_impl(const cell_configur
       aggr_lvl_candidates.candidates = pdcch_candidates_common_ss_get_lowest_cce(
           pdcch_candidates_common_ss_configuration{aggr_lvl, nof_candidates, cs_cfg.get_nof_cces()});
       aggr_lvl_candidates.candidate_crbs.resize(aggr_lvl_candidates.candidates.size());
-      for (unsigned i = 0; i != aggr_lvl_candidates.candidates.size(); ++i) {
+      for (unsigned i = 0, e = aggr_lvl_candidates.candidates.size(); i != e; ++i) {
         aggr_lvl_candidates.candidate_crbs[i] = pdcch_helper::cce_to_prb_mapping(
             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, cs_cfg, cell_cfg.pci, aggr_lvl, i);
 
@@ -56,7 +57,7 @@ pdcch_resource_allocator_impl::pdcch_resource_allocator_impl(const cell_configur
     }
   }
 
-  for (unsigned i = 0; i < SLOT_ALLOCATOR_RING_SIZE; ++i) {
+  for (unsigned i = 0; i != SLOT_ALLOCATOR_RING_SIZE; ++i) {
     slot_records[i] = std::make_unique<pdcch_slot_allocator>();
   }
 }
@@ -83,12 +84,9 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_
   const bwp_configuration&          bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   const search_space_configuration& ss_cfg =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
-  const coreset_configuration* cs_cfg = nullptr;
-  if (ss_cfg.get_coreset_id() == to_coreset_id(0)) {
-    cs_cfg = &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
-  } else {
-    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
-  }
+  const coreset_configuration* cs_cfg = (ss_cfg.get_coreset_id() == to_coreset_id(0))
+                                            ? &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0)
+                                            : &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
 
   return alloc_dl_pdcch_helper(slot_alloc,
                                rnti,
@@ -184,7 +182,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
   pdcch.ctx.context.ss_id     = ss_cfg.get_id();
   pdcch.ctx.context.dci_format =
       (ss_cfg.is_common_search_space() ||
-       (variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
+       (std::get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
         search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
           ? "0_0"
           : "0_1";
@@ -233,7 +231,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.context.ss_id     = ss_cfg.get_id();
   pdcch.ctx.context.dci_format =
       (ss_cfg.is_common_search_space() ||
-       (variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
+       (std::get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
         search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
           ? "1_0"
           : "1_1";

@@ -32,30 +32,14 @@ prach_preamble_information srsran::get_prach_preamble_long_info(prach_format_typ
   srsran_assert(is_long_preamble(format), "Invalid preamble format. It must be a long preamble.");
   switch (format) {
     case prach_format_type::zero:
-      return {839U,
-              prach_subcarrier_spacing::kHz1_25,
-              phy_time_unit::from_units_of_kappa(24576),
-              phy_time_unit::from_units_of_kappa(3168),
-              true};
+      return {839U, prach_subcarrier_spacing::kHz1_25, 1, phy_time_unit::from_units_of_kappa(3168), true};
     case prach_format_type::one:
-      return {839U,
-              prach_subcarrier_spacing::kHz1_25,
-              phy_time_unit::from_units_of_kappa(2 * 24576),
-              phy_time_unit::from_units_of_kappa(21024),
-              true};
+      return {839U, prach_subcarrier_spacing::kHz1_25, 2, phy_time_unit::from_units_of_kappa(21024), true};
     case prach_format_type::two:
-      return {839U,
-              prach_subcarrier_spacing::kHz1_25,
-              phy_time_unit::from_units_of_kappa(4 * 24576),
-              phy_time_unit::from_units_of_kappa(4688),
-              true};
+      return {839U, prach_subcarrier_spacing::kHz1_25, 4, phy_time_unit::from_units_of_kappa(4688), true};
     case prach_format_type::three:
     default:
-      return {839U,
-              prach_subcarrier_spacing::kHz5,
-              phy_time_unit::from_units_of_kappa(4 * 6144),
-              phy_time_unit::from_units_of_kappa(3168),
-              true};
+      return {839U, prach_subcarrier_spacing::kHz5, 4, phy_time_unit::from_units_of_kappa(3168), true};
   }
 }
 
@@ -73,72 +57,67 @@ srsran::get_prach_preamble_short_info(prach_format_type format, prach_subcarrier
   info.scs                     = ra_scs;
   info.support_restricted_sets = false;
 
-  unsigned      numerology             = to_numerology_value(ra_scs);
-  phy_time_unit symbol_length_x0_kappa = phy_time_unit::from_units_of_kappa((1U * 2048) >> numerology);
-  phy_time_unit symbol_length_x1_kappa = phy_time_unit::from_units_of_kappa((2U * 2048) >> numerology);
-  phy_time_unit symbol_length_x2_kappa = phy_time_unit::from_units_of_kappa((4U * 2048) >> numerology);
-  phy_time_unit symbol_length_x3_kappa = phy_time_unit::from_units_of_kappa((6U * 2048) >> numerology);
-  phy_time_unit symbol_length_x4_kappa = phy_time_unit::from_units_of_kappa((12U * 2048) >> numerology);
-  phy_time_unit cp_length_A1_kappa     = phy_time_unit::from_units_of_kappa(288U >> numerology);
-  phy_time_unit cp_length_A2_kappa     = phy_time_unit::from_units_of_kappa(576U >> numerology);
-  phy_time_unit cp_length_A3_kappa     = phy_time_unit::from_units_of_kappa(864U >> numerology);
-  phy_time_unit cp_length_B1_kappa     = phy_time_unit::from_units_of_kappa(216U >> numerology);
-  phy_time_unit cp_length_B2_kappa     = phy_time_unit::from_units_of_kappa(360U >> numerology);
-  phy_time_unit cp_length_B3_kappa     = phy_time_unit::from_units_of_kappa(504U >> numerology);
-  phy_time_unit cp_length_B4_kappa     = phy_time_unit::from_units_of_kappa(936U >> numerology);
-  phy_time_unit cp_length_C0_kappa     = phy_time_unit::from_units_of_kappa(1240U >> numerology);
-  phy_time_unit cp_length_C2_kappa     = phy_time_unit::from_units_of_kappa(2048U >> numerology);
+  unsigned      numerology         = to_numerology_value(ra_scs);
+  phy_time_unit cp_length_A1_kappa = phy_time_unit::from_units_of_kappa(288U >> numerology);
+  phy_time_unit cp_length_A2_kappa = phy_time_unit::from_units_of_kappa(576U >> numerology);
+  phy_time_unit cp_length_A3_kappa = phy_time_unit::from_units_of_kappa(864U >> numerology);
+  phy_time_unit cp_length_B1_kappa = phy_time_unit::from_units_of_kappa(216U >> numerology);
+  phy_time_unit cp_length_B2_kappa = phy_time_unit::from_units_of_kappa(360U >> numerology);
+  phy_time_unit cp_length_B3_kappa = phy_time_unit::from_units_of_kappa(504U >> numerology);
+  phy_time_unit cp_length_B4_kappa = phy_time_unit::from_units_of_kappa(936U >> numerology);
+  phy_time_unit cp_length_C0_kappa = phy_time_unit::from_units_of_kappa(1240U >> numerology);
+  phy_time_unit cp_length_C2_kappa = phy_time_unit::from_units_of_kappa(2048U >> numerology);
 
   switch (format) {
     case prach_format_type::A1:
-      info.symbol_length = symbol_length_x1_kappa;
-      info.cp_length     = cp_length_A1_kappa;
+      info.nof_symbols = 2U;
+      info.cp_length   = cp_length_A1_kappa;
       break;
     case prach_format_type::A2:
-      info.symbol_length = symbol_length_x2_kappa;
-      info.cp_length     = cp_length_A2_kappa;
+      info.nof_symbols = 4U;
+      info.cp_length   = cp_length_A2_kappa;
       break;
     case prach_format_type::A3:
-      info.symbol_length = symbol_length_x3_kappa;
-      info.cp_length     = cp_length_A3_kappa;
+      info.nof_symbols = 6U;
+      info.cp_length   = cp_length_A3_kappa;
       break;
     case prach_format_type::B1:
-      info.symbol_length = symbol_length_x1_kappa;
-      info.cp_length     = cp_length_B1_kappa;
+      info.nof_symbols = 2U;
+      info.cp_length   = cp_length_B1_kappa;
       break;
     case prach_format_type::B4:
-      info.symbol_length = symbol_length_x4_kappa;
-      info.cp_length     = cp_length_B4_kappa;
+      info.nof_symbols = 12U;
+      info.cp_length   = cp_length_B4_kappa;
       break;
     case prach_format_type::C0:
-      info.symbol_length = symbol_length_x0_kappa;
-      info.cp_length     = cp_length_C0_kappa;
+      info.nof_symbols = 1U;
+      info.cp_length   = cp_length_C0_kappa;
       break;
     case prach_format_type::C2:
-      info.symbol_length = symbol_length_x2_kappa;
-      info.cp_length     = cp_length_C2_kappa;
+      info.nof_symbols = 4U;
+      info.cp_length   = cp_length_C2_kappa;
       break;
     case prach_format_type::A1_B1:
-      info.symbol_length = symbol_length_x1_kappa;
-      info.cp_length     = (last_occasion) ? cp_length_B1_kappa : cp_length_A1_kappa;
+      info.nof_symbols = 2U;
+      info.cp_length   = (last_occasion) ? cp_length_B1_kappa : cp_length_A1_kappa;
       break;
     case prach_format_type::A2_B2:
-      info.symbol_length = symbol_length_x2_kappa;
-      info.cp_length     = (last_occasion) ? cp_length_B2_kappa : cp_length_A2_kappa;
+      info.nof_symbols = 4U;
+      info.cp_length   = (last_occasion) ? cp_length_B2_kappa : cp_length_A2_kappa;
       break;
     case prach_format_type::A3_B3:
     default:
-      info.symbol_length = symbol_length_x3_kappa;
-      info.cp_length     = (last_occasion) ? cp_length_B3_kappa : cp_length_A3_kappa;
+      info.nof_symbols = 6U;
+      info.cp_length   = (last_occasion) ? cp_length_B3_kappa : cp_length_A3_kappa;
       break;
   }
   return info;
 }
 
-phy_time_unit srsran::get_prach_window_duration(srsran::prach_format_type  format,
-                                                srsran::subcarrier_spacing pusch_scs,
-                                                unsigned                   start_symbol_index,
-                                                unsigned                   nof_td_occasions)
+phy_time_unit srsran::get_prach_window_duration(prach_format_type  format,
+                                                subcarrier_spacing pusch_scs,
+                                                unsigned           start_symbol_index,
+                                                unsigned           nof_td_occasions)
 {
   // Cyclic prefix extension for short preambles at 0 and 0.5 ms from the start of the subframe.
   static constexpr phy_time_unit sixteen_kappa = phy_time_unit::from_units_of_kappa(16);
@@ -180,7 +159,7 @@ phy_time_unit srsran::get_prach_window_duration(srsran::prach_format_type  forma
     }
   } else {
     prach_preamble_information preamble_info = get_prach_preamble_long_info(format);
-    t_end                                    = t_start + preamble_info.cp_length + preamble_info.symbol_length;
+    t_end                                    = t_start + preamble_info.cp_length + preamble_info.symbol_length();
 
     // Round to t_end to the next subframe for long preambles.
     t_end = phy_time_unit::from_seconds(1e-3 * std::ceil(t_end.to_seconds() * 1e3));
@@ -206,7 +185,7 @@ prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configu
     // Derive PRACH subcarrier spacing and other parameters.
     const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
 
-    const double length_msecs = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
+    const double length_msecs = (info.cp_length.to_seconds() + info.symbol_length().to_seconds()) * 1000;
     output.nof_symbols        = ceil(length_msecs / symbol_duration_msec);
     // Map the starting symbol with from the SCS 15kHz FR1 reference for PRACH into PUSCH SCS.
     const unsigned start_symbol_pusch_scs_in_subframe =

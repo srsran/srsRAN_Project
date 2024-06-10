@@ -37,7 +37,6 @@ struct ngap_context_t {
   std::string          plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
   unsigned             tac;
   std::vector<guami_t> served_guami_list;
-  guami_t              current_guami;
   std::chrono::seconds pdu_session_setup_timeout; // timeout for PDU context setup in seconds
 };
 

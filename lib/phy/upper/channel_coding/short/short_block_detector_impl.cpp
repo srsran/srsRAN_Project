@@ -76,8 +76,8 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
 // ML detection for 2-bit messages.
 static double detect_2(span<uint8_t> output, span<const log_likelihood_ratio> input)
 {
-  constexpr unsigned        NOF_BITS = 3;
-  std::array<int, NOF_BITS> llr_as_int;
+  constexpr unsigned        NOF_BITS   = 3;
+  std::array<int, NOF_BITS> llr_as_int = {};
 
   unsigned in_size = input.size();
   if (in_size == NOF_BITS) {

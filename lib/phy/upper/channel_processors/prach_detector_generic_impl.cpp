@@ -165,8 +165,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   max_delay_samples          = (max_delay_samples * dft_size) / L_ra;
 
   // Calculate number of symbols.
-  unsigned nof_symbols =
-      static_cast<unsigned>(preamble_info.symbol_length.to_seconds() * ra_scs_to_Hz(preamble_info.scs));
+  unsigned nof_symbols = preamble_info.nof_symbols;
 
   unsigned i_td_occasion = 0;
   unsigned i_fd_occasion = 0;

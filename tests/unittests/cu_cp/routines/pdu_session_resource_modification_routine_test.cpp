@@ -181,10 +181,10 @@ TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_fai
 
   // Verify content of initial bearer modification request.
   ASSERT_TRUE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
-  ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+  ASSERT_TRUE(std::holds_alternative<e1ap_bearer_context_modification_request>(
       e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
   const auto& bearer_ctxt_mod_req =
-      variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
+      std::get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
   ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
@@ -362,10 +362,10 @@ TEST_F(pdu_session_resource_modification_test,
 
   // Verify content of initial bearer modification request.
   ASSERT_TRUE(e1ap_bearer_ctxt_mng.first_e1ap_request.has_value());
-  ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+  ASSERT_TRUE(std::holds_alternative<e1ap_bearer_context_modification_request>(
       e1ap_bearer_ctxt_mng.first_e1ap_request.value()));
   const auto& bearer_ctxt_mod_req =
-      variant_get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
+      std::get<e1ap_bearer_context_modification_request>(e1ap_bearer_ctxt_mng.first_e1ap_request.value());
   ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
   ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()

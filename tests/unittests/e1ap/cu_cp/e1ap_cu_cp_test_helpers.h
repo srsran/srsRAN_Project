@@ -24,7 +24,7 @@
 
 #include "../common/e1ap_cu_cp_test_messages.h"
 #include "../common/test_helpers.h"
-#include "e1ap_test_local_gateway.h"
+#include "e1_test_local_gateway.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_common.h"
@@ -86,8 +86,8 @@ public:
   size_t nof_connections() const { return cu_up_tx_notifiers.size(); }
 
 private:
-  srslog::basic_logger&   logger;
-  e1ap_test_local_gateway local_e1ap_gw;
+  srslog::basic_logger& logger;
+  e1_test_local_gateway local_e1ap_gw;
 
   std::vector<std::unique_ptr<e1ap_message_notifier>> cu_up_tx_notifiers;
 };

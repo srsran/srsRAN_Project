@@ -73,9 +73,9 @@ static unsigned get_pdsch_precoding_matrix_index(unsigned              offset,
   }
 
   if (nof_ports == 2U) {
-    srsran_assert(variant_holds_alternative<csi_report_pmi::two_antenna_port>(precoding_info.type),
+    srsran_assert(std::holds_alternative<csi_report_pmi::two_antenna_port>(precoding_info.type),
                   "Expected PMI information");
-    unsigned pmi = variant_get<csi_report_pmi::two_antenna_port>(precoding_info.type).pmi;
+    unsigned pmi = std::get<csi_report_pmi::two_antenna_port>(precoding_info.type).pmi;
 
     logger.debug("Two ports PDSCH precoding matrix, pmi={}, nof_layers={}", pmi, nof_layers);
 
@@ -83,10 +83,9 @@ static unsigned get_pdsch_precoding_matrix_index(unsigned              offset,
   }
 
   if (nof_ports == 4U) {
-    srsran_assert(variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.type),
+    srsran_assert(std::holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.type),
                   "Invalid PMI information");
-    const csi_report_pmi::typeI_single_panel_4ports_mode1& report =
-        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.type);
+    const auto& report = std::get<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.type);
 
     logger.debug("Four ports PDSCH precoding matrix, i11={}, i13={}, i2={}, nof_layers={}",
                  report.i_1_1,

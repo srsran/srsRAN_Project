@@ -27,7 +27,7 @@ add_executable(ue_scheduler_test
         ue_configuration_test.cpp
         ue_grid_allocator_test.cpp
         ul_logical_channel_test.cpp
-        ue_pdsch_param_candidate_searcher_test.cpp
+        ue_pxsch_alloc_param_candidate_searcher_test.cpp
         ue_link_adaptation_controller_test.cpp
         ta_manager_test.cpp
         ue_harq_link_adaptation_test.cpp)

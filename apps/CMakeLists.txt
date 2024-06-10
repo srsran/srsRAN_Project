@@ -19,6 +19,8 @@
 #
 
 add_subdirectory(examples)
+add_subdirectory(cu)
 add_subdirectory(gnb)
+add_subdirectory(du)
 add_subdirectory(units)
 add_subdirectory(services)

@@ -75,7 +75,7 @@ inline crb_interval get_ra_crb_limits_common(const bwp_downlink_common& init_dl_
                                                  : init_dl_bwp.pdcch_common.common_coreset.value();
   srsran_assert(
       ss_cfg.is_common_search_space() and
-          variant_get<search_space_configuration::common_dci_format>(ss_cfg.get_monitored_dci_formats()).f0_0_and_f1_0,
+          std::get<search_space_configuration::common_dci_format>(ss_cfg.get_monitored_dci_formats()).f0_0_and_f1_0,
       "Invalid SearchSpace type");
 
   return get_ra_crb_limits(dci_dl_format::f1_0, init_dl_bwp, init_dl_bwp, ss_cfg, cs_cfg);

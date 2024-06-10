@@ -193,7 +193,7 @@ struct gtpu_ie_gtpu_peer_address {
   using ipv6_addr_t = std::array<uint8_t, 16>;
 
   /// IPv4 or IPv6 Address
-  variant<ipv4_addr_t, ipv6_addr_t> gtpu_peer_address;
+  std::variant<ipv4_addr_t, ipv6_addr_t> gtpu_peer_address;
 };
 
 /// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6
@@ -393,12 +393,12 @@ struct formatter<srsran::gtpu_ie_gtpu_peer_address> {
   auto format(const srsran::gtpu_ie_gtpu_peer_address& ie, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
-      auto& addr = srsran::variant_get<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
+    if (std::holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
+      auto& addr = std::get<srsran::gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
       return format_to(ctx.out(), "peer_addr={}.{}.{}.{}", addr[0], addr[1], addr[2], addr[3]);
     }
-    if (srsran::variant_holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address)) {
-      auto& addr = srsran::variant_get<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address);
+    if (std::holds_alternative<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address)) {
+      auto& addr = std::get<srsran::gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address);
       return format_to(ctx.out(),
                        "peer_addr={:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}:{:x}{:x}",
                        addr[0],

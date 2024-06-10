@@ -101,7 +101,7 @@ private:
   pcap_rlc_pdu_context pcap_context;
 
 public:
-  rlc_rx_um_entity(uint32_t                          du_index,
+  rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
                    du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,

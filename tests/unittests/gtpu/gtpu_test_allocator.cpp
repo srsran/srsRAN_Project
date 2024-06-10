@@ -32,7 +32,7 @@ TEST(gtpu_pool_test, normal_request_succeeds)
 {
   gtpu_teid_pool_impl pool(MAX_TEIDS);
 
-  for (unsigned n = 0; n < 3; ++n) {
+  for (unsigned n = GTPU_TEID_MIN.value(); n < 3 + GTPU_TEID_MIN.value(); ++n) {
     expected<gtpu_teid_t> teid = pool.request_teid();
     ASSERT_EQ(true, teid.has_value());
     ASSERT_EQ(teid.value(), gtpu_teid_t{n});
@@ -43,7 +43,7 @@ TEST(gtpu_pool_test, full_pool_request_fails)
 {
   gtpu_teid_pool_impl pool(MAX_TEIDS);
 
-  for (unsigned n = 0; n < MAX_TEIDS; ++n) {
+  for (unsigned n = GTPU_TEID_MIN.value(); n < MAX_TEIDS + GTPU_TEID_MIN.value(); ++n) {
     expected<gtpu_teid_t> teid = pool.request_teid();
     ASSERT_EQ(true, teid.has_value());
     ASSERT_EQ(teid.value(), gtpu_teid_t{n});
@@ -56,7 +56,7 @@ TEST(gtpu_pool_test, request_after_all_release_succeeds)
 {
   gtpu_teid_pool_impl pool(MAX_TEIDS);
 
-  for (unsigned n = 0; n < MAX_TEIDS; ++n) {
+  for (unsigned n = GTPU_TEID_MIN.value(); n < MAX_TEIDS + GTPU_TEID_MIN.value(); ++n) {
     expected<gtpu_teid_t> teid = pool.request_teid();
     ASSERT_EQ(true, teid.has_value());
     ASSERT_EQ(teid.value(), gtpu_teid_t{n});
@@ -70,7 +70,7 @@ TEST(gtpu_pool_test, request_after_few_free_succeeds)
 {
   gtpu_teid_pool_impl pool(MAX_TEIDS);
 
-  for (unsigned n = 0; n < MAX_TEIDS; ++n) {
+  for (unsigned n = GTPU_TEID_MIN.value(); n < MAX_TEIDS + GTPU_TEID_MIN.value(); ++n) {
     expected<gtpu_teid_t> teid = pool.request_teid();
     ASSERT_EQ(true, teid.has_value());
     ASSERT_EQ(teid.value(), gtpu_teid_t{n});
@@ -90,6 +90,11 @@ TEST(gtpu_pool_test, request_after_few_free_succeeds)
     expected<gtpu_teid_t> teid = pool.request_teid();
     ASSERT_EQ(true, teid.has_value());
     ASSERT_EQ(teid.value(), gtpu_teid_t{8});
+  }
+  // full again
+  {
+    expected<gtpu_teid_t> teid = pool.request_teid();
+    ASSERT_EQ(false, teid.has_value());
   }
 }
 

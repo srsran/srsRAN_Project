@@ -232,13 +232,13 @@ private:
   const unsigned dl_pipeline_delay = 4;
   const unsigned uci_process_delay = 2;
 
-  sched_cfg_dummy_notifier                    cfg_notif;
-  sched_dummy_metric_notifier                 metric_notif;
-  scheduler_expert_config                     expert_cfg;
-  cell_config_builder_params                  builder_params;
-  std::vector<du_cell_config>                 du_cell_cfgs;
-  srslog::basic_logger&                       logger;
-  optional<srs_du::du_pucch_resource_manager> pucch_res_mng;
+  sched_cfg_dummy_notifier                         cfg_notif;
+  sched_dummy_metric_notifier                      metric_notif;
+  scheduler_expert_config                          expert_cfg;
+  cell_config_builder_params                       builder_params;
+  std::vector<du_cell_config>                      du_cell_cfgs;
+  srslog::basic_logger&                            logger;
+  std::optional<srs_du::du_pucch_resource_manager> pucch_res_mng;
 
   std::unique_ptr<mac_scheduler> sch;
 

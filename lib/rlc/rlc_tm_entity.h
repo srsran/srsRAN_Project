@@ -31,7 +31,7 @@ namespace srsran {
 class rlc_tm_entity : public rlc_base_entity
 {
 public:
-  rlc_tm_entity(uint32_t                             du_index_,
+  rlc_tm_entity(gnb_du_id_t                          gnb_du_id_,
                 du_ue_index_t                        ue_index_,
                 rb_id_t                              rb_id_,
                 const rlc_tm_config&                 config,
@@ -45,14 +45,14 @@ public:
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
                 rlc_pcap&                            pcap) :
-    rlc_base_entity(du_index_,
+    rlc_base_entity(gnb_du_id_,
                     ue_index_,
                     rb_id_,
                     metrics_period_,
                     rlc_metrics_notifier_,
                     timer_factory{timers, ue_executor})
   {
-    tx = std::make_unique<rlc_tx_tm_entity>(du_index_,
+    tx = std::make_unique<rlc_tx_tm_entity>(gnb_du_id_,
                                             ue_index_,
                                             rb_id_,
                                             config.tx,
@@ -63,7 +63,7 @@ public:
                                             metrics_period.count() != 0,
                                             pcap);
     rx = std::make_unique<rlc_rx_tm_entity>(
-        du_index_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_period.count() != 0, pcap);
+        gnb_du_id_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_period.count() != 0, pcap);
   }
 };
 

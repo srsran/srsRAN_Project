@@ -60,12 +60,12 @@ public:
     // Derive parameters from the PRACH format.
     if (is_long_preamble(context.format)) {
       prach_preamble_information info = get_prach_preamble_long_info(context.format);
-      nof_symbols                     = static_cast<unsigned>(info.symbol_length.to_seconds() * ra_scs_to_Hz(info.scs));
+      nof_symbols                     = info.nof_symbols;
       sequence_length                 = info.sequence_length;
     } else {
       prach_preamble_information info =
           get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), false);
-      nof_symbols     = static_cast<unsigned>(info.symbol_length.to_seconds() * ra_scs_to_Hz(info.scs));
+      nof_symbols     = info.nof_symbols;
       sequence_length = info.sequence_length;
     }
 

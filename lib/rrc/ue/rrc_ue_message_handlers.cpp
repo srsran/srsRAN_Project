@@ -234,9 +234,13 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)
 {
   // convert asn1 to common type
-  rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
-  // send measurement results to cell measurement manager
-  measurement_notifier.on_measurement_report(meas_results);
+  rrc_meas_results meas_results =
+      asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results, srslog::fetch_basic_logger("RRC"));
+  // Send measurement results to cell measurement manager only measurements are not empty.
+  if (meas_results.meas_result_neigh_cells.has_value() and
+      not meas_results.meas_result_neigh_cells->meas_result_list_nr.empty()) {
+    measurement_notifier.on_measurement_report(meas_results);
+  }
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
@@ -428,6 +432,14 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
     rrc_reest_context.capabilities = context.capabilities.value();
   }
   rrc_reest_context.up_ctx = up_resource_mng.get_up_context();
+
+  // TODO: Handle scenario with multiple reestablishments for the same UE
+  rrc_reest_context.reestablishment_ongoing = context.reestablishment_ongoing;
+
+  // If no reestablishment is ongoing, set it to true.
+  if (not context.reestablishment_ongoing) {
+    context.reestablishment_ongoing = true;
+  }
 
   return rrc_reest_context;
 }

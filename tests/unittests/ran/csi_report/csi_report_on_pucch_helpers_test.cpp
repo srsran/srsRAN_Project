@@ -40,18 +40,18 @@ auto to_tuple(const csi_report_data& data)
 
 bool operator==(const csi_report_pmi& left, const csi_report_pmi& right)
 {
-  if (variant_holds_alternative<csi_report_pmi::two_antenna_port>(left.type) &&
-      variant_holds_alternative<csi_report_pmi::two_antenna_port>(right.type)) {
-    csi_report_pmi::two_antenna_port left2  = variant_get<csi_report_pmi::two_antenna_port>(left.type);
-    csi_report_pmi::two_antenna_port right2 = variant_get<csi_report_pmi::two_antenna_port>(right.type);
+  if (std::holds_alternative<csi_report_pmi::two_antenna_port>(left.type) &&
+      std::holds_alternative<csi_report_pmi::two_antenna_port>(right.type)) {
+    csi_report_pmi::two_antenna_port left2  = std::get<csi_report_pmi::two_antenna_port>(left.type);
+    csi_report_pmi::two_antenna_port right2 = std::get<csi_report_pmi::two_antenna_port>(right.type);
     return left2.pmi == right2.pmi;
   }
-  if (variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type) &&
-      variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type)) {
+  if (std::holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type) &&
+      std::holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type)) {
     csi_report_pmi::typeI_single_panel_4ports_mode1 left2 =
-        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type);
+        std::get<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type);
     csi_report_pmi::typeI_single_panel_4ports_mode1 right2 =
-        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type);
+        std::get<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type);
     return (left2.i_1_1 == right2.i_1_1) && (left2.i_1_3 == right2.i_1_3) && (left2.i_2 == right2.i_2);
   }
 

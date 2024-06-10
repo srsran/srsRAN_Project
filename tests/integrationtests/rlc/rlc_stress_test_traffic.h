@@ -36,7 +36,7 @@ class stress_traffic_sink : public pdcp_rx_upper_data_notifier
   rlc_bearer_logger logger;
 
 public:
-  stress_traffic_sink(uint32_t ue_id, rb_id_t rb_id) : logger("TRAFF", {0, ue_id, rb_id, "UL"}) {}
+  stress_traffic_sink(uint32_t ue_id, rb_id_t rb_id) : logger("TRAFF", {(gnb_du_id_t)0, ue_id, rb_id, "UL"}) {}
 
   // pdcp_rx_upper_data_notifier interface
   void on_new_sdu(byte_buffer pdu) final;
@@ -60,7 +60,7 @@ public:
     args(args_),
     rgen(args_.seed),
     int_dist(args_.min_sdu_size, args_.max_sdu_size),
-    logger("TRAFF", {0, ue_id, rb_id, "DL"})
+    logger("TRAFF", {(gnb_du_id_t)0, ue_id, rb_id, "DL"})
   {
   }
 

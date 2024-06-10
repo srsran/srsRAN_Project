@@ -29,6 +29,9 @@
 #include <thread>
 #include <unistd.h>
 
+static const std::string isolated_cgroup_path     = "/sys/fs/cgroup/srs_isolated";
+static const std::string housekeeping_cgroup_path = "/sys/fs/cgroup/srs_housekeeping";
+
 /// Executes system command, deletes the given path if the command fails.
 static bool exec_system_command(const std::string& command, const std::string& cleanup_path = "")
 {
@@ -103,7 +106,7 @@ bool srsran::configure_cgroups(const srsran::os_sched_affinity_bitmask& isol_cpu
 
   /// Create cgroup for OS tasks, call it 'housekeeping' cgroup.
   if (!os_cpus.empty()) {
-    std::string housekeeping = cgroup_path + "/housekeeping";
+    std::string housekeeping = cgroup_path + "/srs_housekeeping";
     if ((::mkdir(housekeeping.c_str(), 0755)) < 0 && errno != EEXIST) {
       fmt::print("Could not create {} directory. error=\"{}\"\n", housekeeping, strerror(errno));
       return false;
@@ -136,7 +139,7 @@ bool srsran::configure_cgroups(const srsran::os_sched_affinity_bitmask& isol_cpu
   }
 
   /// Create cgroup with isolated CPUs dedicated for the gNB app.
-  std::string isol_cgroup_path = cgroup_path + "/isolated";
+  std::string isol_cgroup_path = cgroup_path + "/srs_isolated";
   if ((::mkdir(isol_cgroup_path.c_str(), 0755)) < 0 && errno != EEXIST) {
     fmt::print("Could not create {} directory. error=\"{}\"\n", isol_cgroup_path, strerror(errno));
     return false;
@@ -157,10 +160,8 @@ void srsran::cleanup_cgroups()
 {
   using namespace std::chrono_literals;
 
-  bool        cgroup_changed           = false;
-  std::string isolated_cgroup_path     = "/sys/fs/cgroup/isolated";
-  std::string housekeeping_cgroup_path = "/sys/fs/cgroup/housekeeping";
-  std::string root_cgroup_path         = "/sys/fs/cgroup/cgroup.procs";
+  bool        cgroup_changed   = false;
+  std::string root_cgroup_path = "/sys/fs/cgroup/cgroup.procs";
 
   struct stat sysfs_info;
   if (::stat("/sys/fs/cgroup", &sysfs_info) < 0) {
@@ -188,6 +189,29 @@ void srsran::cleanup_cgroups()
   if (cgroup_changed) {
     std::this_thread::sleep_for(100ms);
   }
+}
+
+std::optional<std::string> srsran::check_cgroups()
+{
+  // Return false if the system doesn't have cgroups-v2 mounted.
+  struct stat sysfs_info;
+  if (::stat("/sys/fs/cgroup", &sysfs_info) < 0) {
+    return {};
+  }
+
+  fmt::memory_buffer buffer;
+  struct stat        info;
+  if (::stat(housekeeping_cgroup_path.c_str(), &info) == 0) {
+    fmt::format_to(buffer, "{}", housekeeping_cgroup_path);
+  }
+  if (::stat(isolated_cgroup_path.c_str(), &info) == 0) {
+    if (buffer.size() != 0) {
+      fmt::format_to(buffer, ", ");
+    }
+    fmt::format_to(buffer, "{}", isolated_cgroup_path);
+  }
+
+  return (buffer.size() != 0) ? to_string(buffer) : std::optional<std::string>{};
 }
 
 bool srsran::check_cpu_governor(srslog::basic_logger& logger)

@@ -36,11 +36,11 @@ struct validator_report {
 
   /// Error report information structure. Contains the information that helps to identify the source of the failure.
   struct error_report {
-    int32_t                               value;
-    const char*                           property_name;
-    message_type_id                       message_type;
-    optional<std::pair<int32_t, int32_t>> expected_value_range;
-    optional<unsigned>                    pdu_type;
+    int32_t                                    value;
+    const char*                                property_name;
+    message_type_id                            message_type;
+    std::optional<std::pair<int32_t, int32_t>> expected_value_range;
+    std::optional<unsigned>                    pdu_type;
 
     error_report(int32_t                     value_,
                  std::pair<int32_t, int32_t> range,

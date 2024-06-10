@@ -24,7 +24,7 @@
 
 using namespace srsran;
 
-rlc_tx_tm_entity::rlc_tx_tm_entity(uint32_t                             du_index,
+rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
                                    rb_id_t                              rb_id,
                                    const rlc_tx_tm_config&              config,
@@ -34,7 +34,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(uint32_t                             du_index
                                    task_executor&                       pcell_executor_,
                                    bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_index, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
+  rlc_tx_entity(du_id, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
   pcell_executor(pcell_executor_),

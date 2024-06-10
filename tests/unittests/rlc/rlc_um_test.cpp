@@ -97,7 +97,7 @@ protected:
     config.tx.queue_size      = 4096;
 
     // Create RLC entities
-    rlc1 = std::make_unique<rlc_um_entity>(0,
+    rlc1 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,
                                            du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
                                            config,
@@ -111,7 +111,7 @@ protected:
                                            pcell_worker,
                                            ue_worker,
                                            pcap1);
-    rlc2 = std::make_unique<rlc_um_entity>(0,
+    rlc2 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,
                                            du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
                                            config,

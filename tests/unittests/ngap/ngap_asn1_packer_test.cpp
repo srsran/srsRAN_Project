@@ -35,7 +35,7 @@ using namespace srs_cu_cp;
 
 security::sec_key make_sec_key(std::string hex_str)
 {
-  byte_buffer       key_buf = make_byte_buffer(hex_str);
+  byte_buffer       key_buf = make_byte_buffer(hex_str).value();
   security::sec_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
@@ -147,7 +147,7 @@ TEST_F(ngap_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
   const char*       security_key_cstr = "50636e38151d62356d9a1a0c9f2391885177307ad494be15281dfe5fdac06302";
   security::sec_key security_key      = make_sec_key(security_key_cstr);
 
-  byte_buffer buf = make_byte_buffer(ngap_init_ctx_req);
+  byte_buffer buf = make_byte_buffer(ngap_init_ctx_req).value();
 
   asn1::cbit_ref          bref(buf);
   srs_cu_cp::ngap_message msg = {};
@@ -221,7 +221,7 @@ TEST_F(ngap_asn1_packer_test, when_ul_nas_message_packing_successful_then_unpack
 // test unsuccessful unpacking
 TEST_F(ngap_asn1_packer_test, when_unpack_unsuccessful_then_error_indication_is_send)
 {
-  byte_buffer ngap_pdu = make_byte_buffer("deadbeef");
+  byte_buffer ngap_pdu = make_byte_buffer("deadbeef").value();
   // Unpack message and forward to ngap
   packer->handle_packed_pdu(ngap_pdu);
 

@@ -29,11 +29,11 @@
 
 using namespace srsran;
 
-// Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
-// potential RLC header.
+/// Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
+/// potential RLC header.
 static const unsigned RLC_HEADER_SIZE_ESTIM = 2;
 
-// Minimum size required to fit a MAC subheader and SDU.
+/// Minimum size required to fit a MAC subheader and SDU.
 static size_t min_mac_subhdr_and_sdu_space_required(lcid_t lcid)
 {
   return MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (lcid != LCID_SRB0 ? RLC_HEADER_SIZE_ESTIM : 0);
@@ -442,10 +442,10 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
       pdu_logger.add_conres_id(conres);
     } break;
     case lcid_dl_sch_t::TA_CMD: {
-      srsran_assert(variant_holds_alternative<ta_cmd_ce_payload>(subpdu.ce_payload) == true,
+      srsran_assert(std::holds_alternative<ta_cmd_ce_payload>(subpdu.ce_payload) == true,
                     "Invalid MAC CE payload for lcid={}",
                     subpdu.lcid.value());
-      const auto ce_payload = variant_get<ta_cmd_ce_payload>(subpdu.ce_payload);
+      const auto ce_payload = std::get<ta_cmd_ce_payload>(subpdu.ce_payload);
       ue_pdu.add_tag_cmd(ce_payload);
       pdu_logger.add_ta_cmd(ce_payload);
     } break;

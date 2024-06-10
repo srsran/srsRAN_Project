@@ -619,8 +619,14 @@ public:
     std::generate(alphas.begin(), alphas.end(), [n = 0U]() mutable {
       return (TWOPI * static_cast<float>(n++) / static_cast<float>(NRE));
     });
-    return std::make_unique<pucch_detector_impl>(
-        low_papr_factory->create(1, 0, alphas), prg_factory->create(), eqzr_factory->create());
+
+    std::unique_ptr<pucch_detector_format0> detector_format0 =
+        std::make_unique<pucch_detector_format0>(prg_factory->create(), low_papr_factory->create(1, 0, alphas));
+
+    return std::make_unique<pucch_detector_impl>(low_papr_factory->create(1, 0, alphas),
+                                                 prg_factory->create(),
+                                                 eqzr_factory->create(),
+                                                 std::move(detector_format0));
   }
 };
 

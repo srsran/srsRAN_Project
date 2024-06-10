@@ -1476,8 +1476,9 @@ SRSASN_CODE ext_groups_unpacker_guard::unpack(cbit_ref& bref)
 {
   bref_tracker = &bref;
   // unpack nof of ext groups
-  HANDLE_CODE(unpack_norm_small_non_neg_whole_number(nof_unpacked_groups, bref));
-  nof_unpacked_groups += 1;
+  uint32_t nof_ext_groups = 0;
+  HANDLE_CODE(unpack_norm_small_non_neg_whole_number(nof_ext_groups, bref));
+  nof_unpacked_groups += nof_ext_groups + 1;
   resize(nof_unpacked_groups);
 
   // unpack each group presence flag

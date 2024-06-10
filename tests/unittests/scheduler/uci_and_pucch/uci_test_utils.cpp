@@ -170,8 +170,8 @@ test_bench::test_bench(const test_bench_params& params,
     const unsigned pucch_f2_nof_prbs = 3U;
     for (auto& pucch_res : ul_cfg.init_ul_bwp.pucch_cfg.value().pucch_res_list) {
       if (pucch_res.format == pucch_format::FORMAT_2 and
-          variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
-        variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_nof_prbs;
+          std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
+        std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_nof_prbs;
       }
     }
   }
@@ -179,15 +179,15 @@ test_bench::test_bench(const test_bench_params& params,
   if (params.cfg_for_mimo_4x4) {
     ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
         csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
-    auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()
-                                                                                 .serv_cell_cfg.ul_config.value()
-                                                                                 .init_ul_bwp.pusch_cfg.value()
-                                                                                 .uci_cfg.value()
-                                                                                 .beta_offsets_cfg.value());
+    auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()
+                                                                              .serv_cell_cfg.ul_config.value()
+                                                                              .init_ul_bwp.pusch_cfg.value()
+                                                                              .uci_cfg.value()
+                                                                              .beta_offsets_cfg.value());
     beta_offsets.beta_offset_csi_p2_idx_1.value() = 6;
   }
 
-  auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+  auto& csi_report = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
       ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;

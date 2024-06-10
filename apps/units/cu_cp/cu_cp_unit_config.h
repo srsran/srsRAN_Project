@@ -110,6 +110,8 @@ struct cu_cp_unit_security_config {
 struct cu_cp_unit_f1ap_config {
   /// Timeout for the UE context setup procedure in milliseconds.
   unsigned ue_context_setup_timeout = 1000;
+  /// F1-C bind address
+  std::string f1c_bind_address = "127.0.10.1";
 };
 
 /// RLC UM TX configuration
@@ -239,6 +241,10 @@ struct cu_cp_unit_config {
   std::string ran_node_name = "cu_cp_01";
   /// gNB identifier.
   gnb_id_t gnb_id = {411, 22};
+  /// List of accepted PLMNs.
+  std::vector<std::string> plmns;
+  /// List of accepted TACs.
+  std::vector<unsigned> tacs;
   /// Maximum number of DUs.
   uint16_t max_nof_dus = 6;
   /// Maximum number of CU-UPs.

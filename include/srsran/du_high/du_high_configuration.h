@@ -15,6 +15,7 @@
 #include "srsran/mac/mac_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -40,7 +41,7 @@ struct du_high_configuration {
   e2_connection_client*              e2_client                 = nullptr;
   e2_du_metrics_interface*           e2_du_metric_iface        = nullptr;
   std::string                        gnb_du_name;
-  uint64_t                           gnb_du_id;
+  gnb_du_id_t                        gnb_du_id;
   transport_layer_address            du_bind_addr;
   std::vector<du_cell_config>        cells;
   std::map<srb_id_t, du_srb_config>  srbs;

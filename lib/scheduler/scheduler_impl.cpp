@@ -43,20 +43,17 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     return false;
   }
 
-  // Update logger with new cell index.
-  sched_ev_logger.enqueue(scheduler_event_logger::cell_creation_event{msg.cell_index, cell_cfg->pci});
-
   // Check if it is a new DU Cell Group.
   if (not groups.contains(msg.cell_group_index)) {
     // If it is a new group, create a new instance.
     groups.emplace(msg.cell_group_index,
-                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
+                   std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics));
   }
 
   // Create a new cell scheduler instance.
-  cells.emplace(msg.cell_index,
-                std::make_unique<cell_scheduler>(
-                    expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], sched_ev_logger, metrics));
+  cells.emplace(
+      msg.cell_index,
+      std::make_unique<cell_scheduler>(expert_params, msg, *cell_cfg, *groups[msg.cell_group_index], metrics));
 
   return true;
 }

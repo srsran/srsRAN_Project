@@ -20,6 +20,7 @@
 
 add_library(srsran_pusch_processor STATIC
         pusch_codeblock_decoder.cpp
+        pusch_decoder_empty_impl.cpp
         pusch_decoder_impl.cpp
         pusch_demodulator_impl.cpp
         factories.cpp

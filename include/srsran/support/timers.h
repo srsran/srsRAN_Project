@@ -24,12 +24,13 @@
 
 #include "srsran/adt/intrusive_list.h"
 #include "srsran/adt/unique_function.h"
-#include "srsran/adt/variant.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_assert.h"
 #include <chrono>
 #include <deque>
 #include <mutex>
+#include <utility>
+#include <variant>
 
 namespace srsran {
 
@@ -213,8 +214,9 @@ private:
   std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
-  std::mutex                                                   cmd_mutex;
-  std::vector<variant<cmd_t, std::unique_ptr<timer_frontend>>> pending_cmds, cmds_to_process;
+  std::mutex                                                        cmd_mutex;
+  std::vector<std::variant<cmd_t, std::unique_ptr<timer_frontend>>> pending_cmds;
+  std::vector<std::variant<cmd_t, std::unique_ptr<timer_frontend>>> cmds_to_process;
 };
 
 /// \brief This class represents a timer which invokes a user-provided callback upon timer expiration. To setup a

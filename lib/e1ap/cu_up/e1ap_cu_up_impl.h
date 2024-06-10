@@ -34,16 +34,16 @@
 namespace srsran {
 namespace srs_cu_up {
 
-class e1ap_connection_client;
+class e1_connection_client;
 class e1ap_event_manager;
 
 class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(e1ap_connection_client& e1ap_client_handler_,
-                  e1ap_cu_up_notifier&    cu_up_notifier_,
-                  timer_manager&          timers_,
-                  task_executor&          cu_up_exec_);
+  e1ap_cu_up_impl(e1_connection_client& e1_client_handler_,
+                  e1ap_cu_up_notifier&  cu_up_notifier_,
+                  timer_manager&        timers_,
+                  task_executor&        cu_up_exec_);
   ~e1ap_cu_up_impl() override;
 
   // e1ap connection manager functions

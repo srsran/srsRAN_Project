@@ -41,7 +41,7 @@ static void configure_cli11_log_args(CLI::App& app, ru_emulator_log_appconfig& l
   app.add_option("--level", log_params.level, "Log level")->capture_default_str()->check(level_check);
 }
 
-static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, optional<ru_emulator_dpdk_appconfig>& config)
+static void configure_cli11_ru_emu_dpdk_args(CLI::App& app, std::optional<ru_emulator_dpdk_appconfig>& config)
 {
   config.emplace();
 

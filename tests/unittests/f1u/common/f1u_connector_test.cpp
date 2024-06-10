@@ -89,10 +89,6 @@ protected:
     // create f1-u connector
     f1u_conn = std::make_unique<f1u_local_connector>();
 
-    timers = timer_factory{timer_mng, ue_worker};
-
-    ue_inactivity_timer = timers.create_timer();
-
     // prepare F1-U DU bearer config
     f1u_du_config.t_notify     = 10;
     f1u_du_config.warn_on_drop = true;
@@ -241,7 +237,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -252,11 +248,11 @@ TEST_F(f1u_connector_test, ul_dl_flow)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("dead").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("dbee").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -273,7 +269,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -284,18 +280,18 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("dead").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("dbee").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Deleting CU bearer will disconnect from connector
   cu_bearer.reset();
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  byte_buffer du_buf2 = make_byte_buffer("fdea").value();
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -312,7 +308,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -323,22 +319,22 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("dddd").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("bbbb").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Disconnect CU bearer without destryoing it from connector
   cu_gw->disconnect_cu_bearer(ul_tnl);
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD").value();
   check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  byte_buffer du_buf2 = make_byte_buffer("BEEF").value();
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -354,7 +350,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -365,18 +361,18 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("dead").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("dbee").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Delete DU bearer
   du_bearer.reset();
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 }
 
@@ -392,7 +388,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
@@ -403,22 +399,22 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("DDDD").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("BBBB").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer.get(), cu_rx);
 
   // Disconnect DU bearer without destryoing it from connector
   du_gw->remove_du_bearer(dl_tnl);
 
   // Check CU-UP -> DU path is properly detached
-  byte_buffer cu_buf2 = make_byte_buffer("DEAD");
+  byte_buffer cu_buf2 = make_byte_buffer("DEAD").value();
   check_dl_path_disconnected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx);
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer du_buf2 = make_byte_buffer("BEEF");
+  byte_buffer du_buf2 = make_byte_buffer("BEEF").value();
   check_ul_path_disconnected(du_buf2.deep_copy().value(), du_bearer.get(), cu_rx);
 }
 
@@ -435,7 +431,7 @@ TEST_F(f1u_connector_test, update_du_f1u)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_notifier                     cu_rx;
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker, timers, ue_inactivity_timer);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx1;
@@ -446,11 +442,11 @@ TEST_F(f1u_connector_test, update_du_f1u)
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl1);
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf = make_byte_buffer("ABCD");
+  byte_buffer cu_buf = make_byte_buffer("dead").value();
   check_dl_path_connected(cu_buf.deep_copy().value(), cu_bearer.get(), du_rx1);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf = make_byte_buffer("DCBA");
+  byte_buffer du_buf = make_byte_buffer("beef").value();
   check_ul_path_connected(du_buf.deep_copy().value(), du_bearer1.get(), cu_rx);
 
   logger.info("Attach new DU bearer");
@@ -467,11 +463,11 @@ TEST_F(f1u_connector_test, update_du_f1u)
   du_bearer1.reset();
 
   // Check CU-UP -> DU path
-  byte_buffer cu_buf2 = make_byte_buffer("ABCD");
+  byte_buffer cu_buf2 = make_byte_buffer("dead").value();
   check_dl_path_connected(cu_buf2.deep_copy().value(), cu_bearer.get(), du_rx2);
 
   // Check DU-> CU-UP path
-  byte_buffer du_buf2 = make_byte_buffer("DCBA");
+  byte_buffer du_buf2 = make_byte_buffer("dbee").value();
   check_ul_path_connected(du_buf2.deep_copy().value(), du_bearer2.get(), cu_rx);
 }
 

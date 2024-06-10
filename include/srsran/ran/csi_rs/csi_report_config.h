@@ -25,9 +25,9 @@
 #include "codebook_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_constants.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include <variant>
 
 namespace srsran {
 
@@ -59,7 +59,7 @@ enum class csi_report_periodicity {
   slots320 = 320
 };
 
-inline unsigned csi_report_periodicity_to_uint(csi_report_periodicity period)
+constexpr unsigned csi_report_periodicity_to_uint(csi_report_periodicity period)
 {
   return static_cast<unsigned>(period);
 }
@@ -127,6 +127,7 @@ struct csi_report_config {
     }
     bool operator!=(const semi_persistent_report_on_pusch& rhs) const { return !(rhs == *this); }
   };
+
   struct aperiodic_report {
     /// Timing offset Y for aperiodic reporting using PUSCH. This field lists the allowed offset values. This list
     /// must have the same number of entries as the pusch-TimeDomainAllocationList in PUSCH-Config. A particular value
@@ -168,12 +169,16 @@ struct csi_report_config {
   /// \brief Reporting configuration in the frequency domain.
   /// \remark See TS 38.331, \c reportFreqConfiguration.
   struct report_frequency_config {
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    report_frequency_config() {}
+
     cqi_format_indicator cqi_format_ind{cqi_format_indicator::none};
     pmi_format_indicator pmi_format_ind{pmi_format_indicator::none};
     /// Indicates a contiguous or non-contiguous subset of subbands in the bandwidth part which CSI shall be reported
     /// for. This field is absent if there are less than 24 PRBs. Values {3,...,19}. See TS 38.331, \c
     /// csi-ReportingBand.
-    optional<unsigned> nof_csi_reporting_subbands;
+    std::optional<unsigned> nof_csi_reporting_subbands;
     /// Used in conjunction with \c nof_csi_reporting_subbands, where each bit in the bit-string represents one subband.
     bounded_bitset<MAX_NOF_CSI_REPORTING_SUBBANDS> csi_reporting_subbands_bitmap;
 
@@ -200,7 +205,7 @@ struct csi_report_config {
 
     port_index_type_t port_index_type;
     /// Used only for \c port_index_type_t > \c port_index_1.
-    optional<unsigned> rank1_x;
+    std::optional<unsigned> rank1_x;
     /// Max. size of vector is 2.
     std::vector<unsigned> rank2_x;
     /// \c {rank3_x, rank4_x} are used only for \c port_index_type_t > \c port_index_2.
@@ -230,31 +235,31 @@ struct csi_report_config {
   csi_report_config_id_t report_cfg_id;
   /// Indicates in which serving cell the CSI-ResourceConfig indicated below are to be found. If the field is absent,
   /// the resources are on the same serving cell as this report configuration.
-  optional<du_cell_index_t> carrier;
+  std::optional<du_cell_index_t> carrier;
   /// Resources for channel measurement.
   csi_res_config_id_t res_for_channel_meas;
   /// CSI IM resources for interference measurement.
-  optional<csi_res_config_id_t> csi_im_res_for_interference;
+  std::optional<csi_res_config_id_t> csi_im_res_for_interference;
   /// NZP CSI RS resources for interference measurement.
-  optional<csi_res_config_id_t> nzp_csi_rs_res_for_interference;
+  std::optional<csi_res_config_id_t> nzp_csi_rs_res_for_interference;
   /// Time domain behavior of reporting configuration.
-  variant<periodic_or_semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
+  std::variant<periodic_or_semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
                          report_cfg_type;
   report_quantity_type_t report_qty_type;
   /// Relevant only when \c report_quantity_type_t is of type \c cri_ri_i1_cqi.
   csi_ri_i1_cqi_pdsch_bundle_size_for_csi pdsch_bundle_size_for_csi{csi_ri_i1_cqi_pdsch_bundle_size_for_csi::none};
-  optional<report_frequency_config>       report_freq_cfg;
+  std::optional<report_frequency_config>  report_freq_cfg;
   /// Time domain measurement restriction for the channel (signal) measurements. See TS 38.214, clause 5.2.1.1.
   bool is_time_restrictions_for_channel_meas_configured{false};
   /// Time domain measurement restriction for interference measurements. See TS 38.214, clause 5.2.1.1.
   bool is_time_restrictions_for_interference_meas_configured{false};
   /// Codebook configuration for Type-1 or Type-2 including codebook subset restriction.
-  optional<codebook_config> codebook_cfg;
+  std::optional<codebook_config> codebook_cfg;
   /// Turning on/off group beam based reporting.
   bool is_group_based_beam_reporting_enabled;
   /// Value is relevant only when \c is_group_based_beam_reporting_enabled is false. Values {1, 2, 3, 4}.
-  optional<unsigned>    nof_reported_rs;
-  optional<cqi_table_t> cqi_table;
+  std::optional<unsigned>    nof_reported_rs;
+  std::optional<cqi_table_t> cqi_table;
   /// If csi-ReportingBand is absent, the UE shall ignore this field.
   subband_size_t subband_size;
   /// Port indication for RI/CQI calculation. For each CSI-RS resource in the linked ResourceConfig for channel

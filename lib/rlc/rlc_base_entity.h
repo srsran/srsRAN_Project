@@ -39,13 +39,13 @@ namespace srsran {
 class rlc_base_entity : public rlc_entity
 {
 public:
-  rlc_base_entity(uint32_t              du_index_,
+  rlc_base_entity(gnb_du_id_t           gnb_du_id_,
                   du_ue_index_t         ue_index_,
                   rb_id_t               rb_id_,
                   timer_duration        metrics_period_,
                   rlc_metrics_notifier* rlc_metrics_notifier_,
                   timer_factory         timers) :
-    logger("RLC", {du_index_, ue_index_, rb_id_, "DL/UL"}),
+    logger("RLC", {gnb_du_id_, ue_index_, rb_id_, "DL/UL"}),
     ue_index(ue_index_),
     rb_id(rb_id_),
     metrics_period(metrics_period_),

@@ -38,7 +38,7 @@ static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
   const bwp_id_t bwp_id      = srsran::MIN_BWP_ID;
   const auto& csi_report_cfg = ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
   auto&       csi_pucch_res_list =
-      variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+      std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
           .pucch_csi_res_list;
 
   const auto& it = std::find_if(csi_pucch_res_list.begin(),

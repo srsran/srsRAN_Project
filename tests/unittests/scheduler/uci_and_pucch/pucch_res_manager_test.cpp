@@ -544,7 +544,7 @@ protected:
     }
 
     const unsigned f2_idx_offset = tot_ue_f1_res * nof_pucch_cfgs + (ue_idx % nof_pucch_cfgs) * tot_ue_f2_res;
-    auto&          csi_cfg       = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    auto&          csi_cfg       = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                         serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.front().report_cfg_type)
                         .pucch_csi_res_list.front();
 

@@ -64,15 +64,12 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
 
   // Process all the PDUs taken from the repository.
   for (const auto& pdu : pdus) {
-    if (variant_holds_alternative<uplink_processor::pusch_pdu>(pdu)) {
-      const auto& pusch_pdu = variant_get<uplink_processor::pusch_pdu>(pdu);
-      process_pusch(pusch_pdu, ul_processor, grid, context.slot);
-    } else if (variant_holds_alternative<uplink_processor::pucch_pdu>(pdu)) {
-      const auto& pucch_pdu = variant_get<uplink_processor::pucch_pdu>(pdu);
-      ul_processor.process_pucch(rx_results_notifier, grid, pucch_pdu);
-    } else if (variant_holds_alternative<uplink_processor::srs_pdu>(pdu)) {
-      const auto& srs_pdu = variant_get<uplink_processor::srs_pdu>(pdu);
-      ul_processor.process_srs(rx_results_notifier, grid, srs_pdu);
+    if (const auto* pusch_pdu = std::get_if<uplink_processor::pusch_pdu>(&pdu)) {
+      process_pusch(*pusch_pdu, ul_processor, grid, context.slot);
+    } else if (const auto* pucch_pdu = std::get_if<uplink_processor::pucch_pdu>(&pdu)) {
+      ul_processor.process_pucch(rx_results_notifier, grid, *pucch_pdu);
+    } else if (const auto* srs_pdu = std::get_if<uplink_processor::srs_pdu>(&pdu)) {
+      ul_processor.process_srs(rx_results_notifier, grid, *srs_pdu);
     }
   }
 }

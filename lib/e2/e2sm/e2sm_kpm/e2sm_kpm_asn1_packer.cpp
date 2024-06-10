@@ -40,7 +40,7 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_bu
   e2sm_action_definition action_def;
   asn1::cbit_ref         bref(action_definition);
   action_def.service_model = e2sm_service_model_t::KPM;
-  if (variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
+  if (std::get<e2sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM KPM Action Definition\n");
     action_def.service_model = e2sm_service_model_t::UNKNOWN_SM;
   }

@@ -36,10 +36,10 @@
 #include "iq_compression_none_avx512.h"
 #endif
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
 #include "iq_compression_bfp_neon.h"
 #include "iq_compression_none_neon.h"
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 
 using namespace srsran;
 using namespace ofh;
@@ -64,11 +64,11 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
       }
     }
 #endif
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
         return std::make_unique<iq_compression_none_neon>(logger, iq_scaling);
       }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
       return std::make_unique<iq_compression_none_impl>(logger, iq_scaling);
     case compression_type::BFP:
 #ifdef __x86_64__
@@ -86,11 +86,11 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
       }
     }
 #endif
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
         return std::make_unique<iq_compression_bfp_neon>(logger, iq_scaling);
       }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
       return std::make_unique<iq_compression_bfp_impl>(logger, iq_scaling);
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();
@@ -125,11 +125,11 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
       }
     }
 #endif
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
         return std::make_unique<iq_compression_none_neon>(logger);
       }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
       return std::make_unique<iq_compression_none_impl>(logger);
     case compression_type::BFP:
 #ifdef __x86_64__
@@ -145,11 +145,11 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
       }
     }
 #endif
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
         return std::make_unique<iq_compression_bfp_neon>(logger);
       }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
       return std::make_unique<iq_compression_bfp_impl>(logger);
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();

@@ -21,3 +21,4 @@
 add_subdirectory(common)
 add_subdirectory(cu_cp)
 add_subdirectory(cu_up)
+add_subdirectory(gateways)

@@ -80,16 +80,21 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 
     // Check for SI window start, as per TS 38.331, Section 5.2.2.3.2.
 
-    // 2> for the concerned SI message, determine the number n which corresponds to the order of entry in the list of SI
-    // messages configured by schedulingInfoList in si-SchedulingInfo in SIB1;
+    // 2> For the concerned SI message, determine the number n which corresponds to the order of entry in the list of SI
+    // messages configured by schedulingInfoList in si-SchedulingInfo in SIB1.
     const unsigned n = i + 1;
 
-    // 2> determine the integer value x = (n – 1) × w, where w is the si-WindowLength
-    const unsigned x = (n - 1) * si_sched_cfg->si_window_len_slots;
+    // 3> Determine the integer value x = (n – 1) × w, where w is the si-WindowLength.
+    unsigned x = (n - 1) * si_sched_cfg->si_window_len_slots;
+    if (si_msg.si_window_position.has_value()) {
+      // 3> Determine the integer value x = (si-WindowPosition -1) × w, where w is the si-WindowLength. See TS 38 331
+      // V17.0.0.
+      x = (si_msg.si_window_position.value() - 1) * si_sched_cfg->si_window_len_slots;
+    }
 
-    // 2> the SI-window starts at the slot #a, where a = x mod N, in the radio frame for which SFN mod T = FLOOR(x/N),
+    // 3> The SI-window starts at the slot #a, where a = x mod N, in the radio frame for which SFN mod T = FLOOR(x/N),
     // where T is the si-Periodicity of the concerned SI message and N is the number of slots in a radio frame as
-    // specified in TS 38.213
+    // specified in TS 38.213.
     const unsigned N = sl_tx.nof_slots_per_frame();
     const unsigned a = x % N;
     if (sl_tx.slot_index() != a) {

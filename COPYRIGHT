@@ -40,11 +40,6 @@ Copyright: 2017-2023 University of Cincinnati, developed by Henry Schreiner
 License:   BSD-3-clause
 
 
-Files:     external/variant/variant.hpp
-Copyright: 2015-2017 Michael Park
-License:   Boost Software License, Version 1.0
-
-
 Files:     external/rigtorp/MPMCQueue.hpp
 Copyright: 2018 Erik Rigtorp
 License:   MIT

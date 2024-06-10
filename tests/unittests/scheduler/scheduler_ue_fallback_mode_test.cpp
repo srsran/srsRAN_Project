@@ -91,14 +91,13 @@ public:
 class scheduler_conres_without_pdu_test : public base_scheduler_conres_test, public ::testing::Test
 {};
 
-TEST_F(scheduler_conres_without_pdu_test,
-       when_conres_ce_is_enqueued_and_no_msg4_is_enqueued_then_pdsch_is_not_scheduled)
+TEST_F(scheduler_conres_without_pdu_test, when_conres_ce_is_enqueued_and_no_msg4_is_enqueued_then_pdsch_is_scheduled)
 {
   // Enqueue ConRes CE.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
-  // Ensure the ConRes CEU is not scheduled without a Msg4 SDU.
-  ASSERT_FALSE(this->run_slot_until(
+  // Ensure the ConRes CE is scheduled without a Msg4 SDU.
+  ASSERT_TRUE(this->run_slot_until(
       [this]() { return find_ue_pdsch(rnti, *this->last_sched_res_list[to_du_cell_index(0)]) != nullptr; }));
 }
 
@@ -141,6 +140,9 @@ TEST_P(scheduler_con_res_msg4_test,
 
   // Enqueue several RACH indications, so that RARs that need to be scheduled may fight for RB space with the Msg4.
   enqueue_random_number_of_rach_indications();
+
+  // Run until all RARs are scheduled.
+  this->run_slot_until([this]() { return this->last_sched_res_list[to_du_cell_index(0)]->dl.rar_grants.empty(); });
 
   // Enqueue ConRes CE.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});

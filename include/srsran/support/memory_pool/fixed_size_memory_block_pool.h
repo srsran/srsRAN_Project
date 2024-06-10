@@ -128,7 +128,24 @@ public:
   fixed_size_memory_block_pool& operator=(const fixed_size_memory_block_pool&) = delete;
   fixed_size_memory_block_pool& operator=(fixed_size_memory_block_pool&&)      = delete;
 
-  ~fixed_size_memory_block_pool() {}
+  ~fixed_size_memory_block_pool()
+  {
+    if constexpr (DebugSanitizeAddress) {
+      unsigned                           rem_batches = nof_total_batches();
+      free_memory_block_list             list;
+      std::unordered_map<long int, bool> addresses;
+      for (unsigned i = 0; i < rem_batches; i++) {
+        report_fatal_error_if_not(central_mem_cache.try_dequeue(list), "segments were lost {} < {}", i, rem_batches);
+        for (unsigned j = 0; j < block_batch_size; j++) {
+          void* p = list.try_pop();
+          report_fatal_error_if_not(p != nullptr, "lost segment {} < {}", j, block_batch_size);
+          report_fatal_error_if_not(addresses.find((long int)p) == addresses.end(), "repeated segment detected");
+          addresses.insert(std::make_pair((long int)p, true));
+        }
+      }
+      report_fatal_error_if_not(not central_mem_cache.try_dequeue(list), "more batches than when initialized");
+    }
+  }
 
   /// \brief Get instance of a memory pool singleton.
   static pool_type& get_instance(size_t nof_blocks = 0, size_t mem_block_size = 0)
@@ -278,6 +295,11 @@ private:
             while (not local_cache.back().empty()) {
               parent->incomplete_batch.push(local_cache.back().try_pop());
               if (parent->incomplete_batch.size() >= block_batch_size) {
+                // Note: Central_mem_cache uses a queue that uses atomic_fences. TSAN doesn't deal well with atomic
+                // fences, so we need to add a hint here.
+#ifdef ENABLE_TSAN
+                __tsan_release((void*)parent->incomplete_batch.head);
+#endif
                 // The incomplete batch is now complete and can be pushed to the central cache.
                 report_error_if_not(parent->central_mem_cache.enqueue(producer_token, parent->incomplete_batch),
                                     "Failed to push blocks to central cache");

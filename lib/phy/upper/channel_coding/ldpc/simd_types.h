@@ -33,7 +33,7 @@
 
 #if defined(__ARM_NEON)
 #include <arm_neon.h>
-#endif // defined(HAVE_NEON)
+#endif // defined(__ARM_NEON)
 
 namespace srsran {
 namespace detail {
@@ -54,7 +54,7 @@ using simd256_type = struct {
 using simd512_type = struct {
   // Just for compatibility with the x86 implementation, not used in ARM.
 };
-#endif // defined(HAVE_NEON)
+#endif // defined(__ARM_NEON)
 
 struct simd128_wrapper {
   using simdType = simd128_type;

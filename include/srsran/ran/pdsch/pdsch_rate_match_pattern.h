@@ -50,8 +50,8 @@ struct rate_match_pattern {
     /// \brief Type of symbols in resource block.
     enum class symbols_in_rb_type { one_slot, two_slot };
 
-    symbols_in_rb_type          type;
-    variant<one_slot, two_slot> symbols;
+    symbols_in_rb_type               type;
+    std::variant<one_slot, two_slot> symbols;
 
     bool operator==(const symbols_in_rb& rhs) const { return type == rhs.type && symbols == rhs.symbols; }
     bool operator!=(const symbols_in_rb& rhs) const { return !(rhs == *this); }
@@ -74,13 +74,13 @@ struct rate_match_pattern {
     enum class periodicity_and_pattern_type { n2, n4, n5, n8, n10, n20, n40 };
 
     periodicity_and_pattern_type type;
-    variant<periodicity_and_pattern_n2,
-            periodicity_and_pattern_n4,
-            periodicity_and_pattern_n5,
-            periodicity_and_pattern_n8,
-            periodicity_and_pattern_n10,
-            periodicity_and_pattern_n20,
-            periodicity_and_pattern_n40>
+    std::variant<periodicity_and_pattern_n2,
+                 periodicity_and_pattern_n4,
+                 periodicity_and_pattern_n5,
+                 periodicity_and_pattern_n8,
+                 periodicity_and_pattern_n10,
+                 periodicity_and_pattern_n20,
+                 periodicity_and_pattern_n40>
         prd_and_patt;
 
     bool operator==(const periodicity_and_pattern& rhs) const
@@ -115,7 +115,7 @@ struct rate_match_pattern {
   /// In frequency domain, the resource is determined by the frequency domain resource of the CORESET with the
   /// corresponding CORESET ID. Time domain resource is determined by the parameters of the associated search space of
   /// the CORESET.
-  variant<bitmaps, coreset_id> pattern_type;
+  std::variant<bitmaps, coreset_id> pattern_type;
   /// The field is mandatory present if the RateMatchPattern is defined on cell level. The field is absent when the
   /// RateMatchPattern is defined on BWP level. If the RateMatchPattern is defined on BWP level, the UE applies the SCS
   /// of the BWP.

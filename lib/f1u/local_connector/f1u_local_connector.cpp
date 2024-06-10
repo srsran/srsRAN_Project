@@ -31,9 +31,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                              ue_i
                                       const srs_cu_up::f1u_config&          config,
                                       const up_transport_layer_info&        ul_up_tnl_info,
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
-                                      task_executor&                        ul_exec,
-                                      timer_factory                         ue_dl_timer_factory,
-                                      unique_timer&                         ue_inactivity_timer)
+                                      task_executor&                        ul_exec)
 {
   logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
   std::unique_lock<std::mutex> lock(map_mutex);
@@ -99,10 +97,8 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
     }
     cu_tun->detach_du_notifier(cu_tun->dl_tnl_info.value());
   } else {
-    logger_cu.warning(
-        "Could not find DU F1-U bearer from which to disconect CU bearer, no DL-TEID info present at CU bearer. "
-        "UL GTP Tunnel={}",
-        ul_up_tnl_info);
+    // The DU has already removed and disconnected its F1-U bearer before the CU-UP
+    logger_cu.info("No associated DU F1-U bearer when disconnecting CU F1-U bearer. UL GTP Tunnel={}", ul_up_tnl_info);
   }
 
   // Remove DL path

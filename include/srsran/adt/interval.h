@@ -53,9 +53,9 @@ public:
     srsran_assert(start_ <= stop_, "Invalid interval [{}, {})", start_, stop_);
   }
 
-  T start() const { return start_; }
+  constexpr T start() const { return start_; }
 
-  T stop() const { return stop_; }
+  constexpr T stop() const { return stop_; }
 
   bool empty() const { return not RightClosed and stop_ == start_; }
 

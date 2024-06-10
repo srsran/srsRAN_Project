@@ -28,7 +28,7 @@ ADD builder.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/builder.sh
 
 RUN python -m venv /usr/local/builder_tools
-RUN /usr/local/builder_tools/bin/pip install "pandas <3" "psutil < 6"
+RUN /usr/local/builder_tools/bin/pip install "pandas < 3" "psutil < 6"
 ADD changed_tests.py /usr/local/bin
 RUN chmod +x /usr/local/bin/changed_tests.py
 ADD ram_reporter.py /usr/local/bin

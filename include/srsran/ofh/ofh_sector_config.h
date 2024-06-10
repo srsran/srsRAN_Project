@@ -127,10 +127,10 @@ struct sector_dependencies {
   srslog::basic_logger* logger = nullptr;
   /// Downlink task executor.
   task_executor* downlink_executor;
-  /// Transmitter task executor.
-  task_executor* transmitter_executor = nullptr;
-  /// Receiver task executor.
-  task_executor* receiver_executor = nullptr;
+  /// Message transmitter and receiver task executor.
+  task_executor* txrx_executor = nullptr;
+  /// Uplink task executor.
+  task_executor* uplink_executor = nullptr;
   /// User-Plane received symbol notifier.
   std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
   /// Optional Ethernet gateway.

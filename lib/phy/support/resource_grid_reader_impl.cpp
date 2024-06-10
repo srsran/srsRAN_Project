@@ -56,45 +56,6 @@ bool resource_grid_reader_impl::is_empty() const
   return true;
 }
 
-span<cf_t> resource_grid_reader_impl::get(span<cf_t>       symbols,
-                                          unsigned         port,
-                                          unsigned         l,
-                                          unsigned         k_init,
-                                          span<const bool> mask) const
-{
-  unsigned mask_size = mask.size();
-
-  srsran_assert(k_init + mask_size <= get_nof_subc(),
-                "The initial subcarrier index (i.e., {}) plus the mask size (i.e., {}) exceeds the maximum number of "
-                "subcarriers (i.e., {})",
-                k_init,
-                mask.size(),
-                get_nof_subc());
-  srsran_assert(l < get_nof_symbols(),
-                "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})",
-                l,
-                get_nof_symbols());
-  srsran_assert(port < get_nof_ports(),
-                "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})",
-                port,
-                get_nof_ports());
-
-  // Access the OFDM symbol from the resource grid.
-  span<const cf_t> rg_symbol = data.get_view({l, port});
-
-  // Iterate mask.
-  unsigned count = 0;
-  for (unsigned k = 0; k != mask_size; ++k) {
-    if (mask[k]) {
-      symbols[count] = rg_symbol[k + k_init];
-      count++;
-    }
-  }
-
-  // Update symbol buffer.
-  return symbols.last(symbols.size() - count);
-}
-
 span<cf_t> resource_grid_reader_impl::get(span<cf_t>                          symbols,
                                           unsigned                            port,
                                           unsigned                            l,

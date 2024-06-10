@@ -33,7 +33,7 @@ using namespace srs_cu_cp;
 
 security::sec_key srsran::srs_cu_cp::make_sec_key(std::string hex_str)
 {
-  byte_buffer       key_buf = make_byte_buffer(hex_str);
+  byte_buffer       key_buf = make_byte_buffer(hex_str).value();
   security::sec_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
@@ -41,7 +41,7 @@ security::sec_key srsran::srs_cu_cp::make_sec_key(std::string hex_str)
 
 security::sec_128_key srsran::srs_cu_cp::make_sec_128_key(std::string hex_str)
 {
-  byte_buffer           key_buf = make_byte_buffer(hex_str);
+  byte_buffer           key_buf = make_byte_buffer(hex_str).value();
   security::sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
@@ -184,10 +184,10 @@ rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfigur
 
   rrc_recfg_v1530_ies non_crit_ext;
   // add dummy NAS PDU
-  non_crit_ext.ded_nas_msg_list.push_back(make_byte_buffer("aabbcc"));
+  non_crit_ext.ded_nas_msg_list.push_back(make_byte_buffer("aabbcc").value());
 
   // add dummy master cell group config
-  non_crit_ext.master_cell_group = make_byte_buffer("deadbeef");
+  non_crit_ext.master_cell_group = make_byte_buffer("deadbeef").value();
 
   args.non_crit_ext = non_crit_ext;
 

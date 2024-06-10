@@ -97,7 +97,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     }
 
     // Calculate time-domain occasion end time.
-    phy_time_unit t_occasion_end = t_occasion_start + preamble_info.cp_length + preamble_info.symbol_length;
+    phy_time_unit t_occasion_end = t_occasion_start + preamble_info.cp_length + preamble_info.symbol_length();
 
     // Add sixteen kappa to the cyclic prefix length if ...
     if (is_short_preamble(preamble_info.scs)) {
@@ -114,7 +114,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     }
 
     // Calculate occasion duration.
-    phy_time_unit occasion_duration = preamble_info.cp_length + preamble_info.symbol_length;
+    phy_time_unit occasion_duration = preamble_info.cp_length + preamble_info.symbol_length();
 
     unsigned sample_offset = t_occasion_start.to_samples(srate.to_Hz());
     unsigned nof_samples   = occasion_duration.to_samples(srate.to_Hz());
@@ -134,7 +134,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     unsigned       prach_scs_Hz         = ra_scs_to_Hz(preamble_info.scs);
     unsigned       ofdm_symbol_len      = dft.get_size();
     unsigned       cyclic_prefix_length = preamble_info.cp_length.to_samples(srate.to_Hz());
-    unsigned       nof_symbols          = preamble_info.symbol_length.to_samples(ra_scs_to_Hz(preamble_info.scs));
+    unsigned       nof_symbols          = preamble_info.nof_symbols;
 
     // Make sure the number of occasions and symbols fit in the buffer.
     srsran_assert(nof_symbols <= buffer.get_max_nof_symbols(),

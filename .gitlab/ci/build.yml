@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/srsran_project_packaging
-    ref: "6"
+    ref: "7"
     file: .gitlab/ci-shared/package.yml
   - local: .gitlab/ci/src_cache.yml
 
@@ -79,14 +79,14 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${AUTO_DETECT_ISA}-${ENABLE_AVX512}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${BUILD_ARGS}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${AUTO_DETECT_ISA}-${ENABLE_AVX512}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}-${BUILD_ARGS}
     paths: [ccache]
-    policy: pull
+    policy: pull-push
 
 #################
 # Template jobs #
@@ -116,6 +116,8 @@ variables:
     ENABLE_WERROR: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
+    # TEST
+    CTEST_TIMEOUT: 0
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_CPU_REQUEST: 6
@@ -272,7 +274,11 @@ variables:
         CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
-        $CTEST_CMD && ret=0 || ret=1
+
+        status_file=$(mktemp)
+        timeout ${CTEST_TIMEOUT} \
+          bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" \
+          && ret=$(cat ${status_file}) || ret=124
 
         if [[ $TEST_MODE = "coverage" ]]; then 
           common_options="-j${KUBERNETES_CPU_REQUEST} \
@@ -301,6 +307,11 @@ variables:
           maxsize=$((10*1204*1024))
           (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
         fi
+
+        if [ $ret -eq 124 ]; then
+          echo "The test execution exceeded the maximum allowed time !!!!"
+        fi
+
         exit $ret
       }
   script:
@@ -343,9 +354,9 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: coverage
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
     ENABLE_GCOV: "True"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke relwithdeb:
@@ -356,8 +367,8 @@ variables:
     BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke tsan:
@@ -369,8 +380,8 @@ variables:
     ASSERT_LEVEL: PARANOID
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke rhel:
@@ -381,8 +392,8 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_TAG}"]
 
 .smoke archlinux:
@@ -394,8 +405,8 @@ variables:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_TAG}"]
 
 .smoke dpdk:
@@ -408,9 +419,9 @@ variables:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
+    AUTO_DETECT_ISA: "False"
     DPDK_VERSION: "23.11"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_TAG}"]
 
 .smoke valgrind:
@@ -421,9 +432,8 @@ variables:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: valgrind
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "False"
-    BUILD_ARGS: -DEXIT_TIMEOUT=120
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DEXIT_TIMEOUT=120 -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
   tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke avx512:
@@ -434,8 +444,8 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "True"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v4"
   tags: ["${AMD64_AVX512_TAG}"]
 
 .smoke arm:
@@ -457,7 +467,8 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    AUTO_DETECT_ISA: "True"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=armv8.2-a+crypto+fp16+dotprod"
   tags: ["${ARM64_TAG}"]
 
 # Combinations to use in schedules matrix
@@ -475,7 +486,7 @@ variables:
 
 smoke relwithdeb cached:
   extends: .smoke relwithdeb
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -489,7 +500,7 @@ smoke relwithdeb cached:
 smoke tsan cached:
   extends: .smoke tsan
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -504,7 +515,7 @@ smoke tsan cached:
 smoke rhel cached:
   extends: .smoke rhel
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -519,7 +530,7 @@ smoke rhel cached:
 smoke archlinux cached:
   extends: .smoke archlinux
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -534,7 +545,7 @@ smoke archlinux cached:
 smoke dpdk cached:
   extends: .smoke dpdk
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -553,10 +564,10 @@ smoke dpdk cached:
         - lib/phy/**/*
         - tests/unittests/phy/**/*
 
-smoke avx512:
+smoke avx512 cached:
   extends: .smoke avx512
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
       changes:
@@ -566,11 +577,14 @@ smoke avx512:
         <<: *instruction_set_changes
       when: manual
       allow_failure: false
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_get
 
 smoke arm cached:
   extends: .smoke arm
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -589,7 +603,7 @@ smoke arm cached:
 smoke arm neon cached:
   extends: .smoke arm neon
   stage: manual
-  timeout: 45 min
+  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -632,6 +646,13 @@ smoke dpdk clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
 
+smoke avx512 clean:
+  extends: .smoke avx512
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      changes:
+        <<: *instruction_set_changes
+
 smoke arm clean:
   extends: .smoke arm
   rules:
@@ -652,14 +673,13 @@ intermediate commits:
   extends: .smoke release
   rules:
     - if: $ON_MR
-  timeout: 45 min
+  timeout: 1 hour
   variables:
     SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
     - git fetch origin --depth=20 $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
     - |
-      TEST_MODE=none
       for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)
       do
         echo "##################################################"
@@ -668,13 +688,6 @@ intermediate commits:
         git checkout $rev
         build_srsgnb
       done
-    - |
-      TEST_MODE=coverage
-      git checkout $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-      echo "##################################################"
-      echo "#### $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
-      echo "##################################################"
-      build_srsgnb
     - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -683,6 +696,8 @@ intermediate commits:
 valgrind changed tests:
   extends: .smoke valgrind
   stage: manual
+  allow_failure:
+    exit_codes: 124 # timeout command's exit code when the time is reached
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
       when: never
@@ -690,10 +705,10 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  timeout: 1h
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
+    CTEST_TIMEOUT: 20m
     SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
@@ -713,6 +728,7 @@ valgrind changed tests:
       echo "##################################################"
       git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
       build_srsgnb
+    - echo "This test execution has a timeout of ${CTEST_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -820,11 +836,18 @@ smoke valgrind update cache:
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
-  variables:
-    SAVE_ARTIFACTS: "True" # Valgrind generates extra files
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
+
+smoke avx512 update cache:
+  extends: .smoke avx512
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  retry: 2
+  cache:
+    - !reference [.fetch_src_cache, cache]
+    - *cache_build_set
 
 smoke arm update cache:
   extends: .smoke arm
@@ -881,8 +904,8 @@ package:
   variables: &package_variables
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-    KUBERNETES_CPU_REQUEST: 7
-    KUBERNETES_CPU_LIMIT: 7
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
     KUBERNETES_MEMORY_LIMIT: 12Gi
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
@@ -1018,14 +1041,17 @@ rhel-8 amd64 avx2:
 # Basic AMD NO_ISA / AVX512
 
 ubuntu-24.04 amd64 no isa release:
-  extends: .smoke release
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 150 minutes
   interruptible: false
   variables:
-    ENABLE_GCOV: "False"
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     AUTO_DETECT_ISA: "False"
   tags: ["${AMD64_TAG}"]
@@ -1034,14 +1060,17 @@ ubuntu-24.04 amd64 no isa release:
       - COMPILER: [gcc, clang]
 
 ubuntu-24.04 amd64 avx512 release:
-  extends: .smoke release
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 120 minutes
   interruptible: false
   variables:
-    ENABLE_GCOV: "False"
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
@@ -1053,14 +1082,17 @@ ubuntu-24.04 amd64 avx512 release:
 # Basic ARM NO_ISA / NEON
 
 ubuntu-24.04 arm no isa release:
-  extends: .smoke release
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 150 minutes
   interruptible: false
   variables:
-    ENABLE_GCOV: "False"
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     AUTO_DETECT_ISA: "False"
   tags: ["${ARM64_TAG}"]
@@ -1069,14 +1101,17 @@ ubuntu-24.04 arm no isa release:
       - COMPILER: [gcc, clang]
 
 ubuntu-24.04 arm neon release:
-  extends: .smoke release
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 120 minutes
   interruptible: false
   variables:
-    ENABLE_GCOV: "False"
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: default
     AUTO_DETECT_ISA: "True"
   tags: ["${ARM64_TAG}"]
@@ -1086,7 +1121,7 @@ ubuntu-24.04 arm neon release:
 
 # Basic DPDK
 
-smoke dpdk:
+ubuntu dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
@@ -1269,7 +1304,9 @@ debian 11 amd64 avx512:
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
+      - OS: [ubuntu-24.04, ubuntu-23.10] 
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1288,7 +1325,6 @@ debian 11 amd64 avx512:
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
-        SAVE_ARTIFACTS: "True"
 
 sanitizers amd64 no isa:
   extends: .weekly sanitizers
@@ -1310,7 +1346,9 @@ sanitizers amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-24.04, ubuntu-23.10, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
+      - OS: [ubuntu-24.04, ubuntu-23.10] 
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1943,35 +1981,9 @@ basic avx512 dpdk:
     expire_in: 3 day
 
 basic avx512 dpdk withassert:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: delayed
-      start_in: 2 hours
-  retry: 2
-  interruptible: false
+  extends: basic avx512 dpdk
   variables:
-    OS: ubuntu-24.04
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    TEST_MODE: none
-    ENABLE_UHD: "False"
-    ENABLE_ZEROMQ: "False"
-    ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "True"
-    FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: NORMAL
-    SAVE_ARTIFACTS: "True"
-    KUBERNETES_CPU_REQUEST: 14
-    KUBERNETES_CPU_LIMIT: 14
-    KUBERNETES_MEMORY_REQUEST: 20Gi
-    KUBERNETES_MEMORY_LIMIT: 20Gi
-  tags: ["${AMD64_VIAVI_BUILDER_TAG}"]
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
 
 #######
 # Web #

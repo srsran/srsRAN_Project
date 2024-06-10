@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -58,7 +58,7 @@ build trx driver:
         rm -Rf build 
         mkdir build
         cd build
-        cmake -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
+        cmake -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64-v3" ..
         make -j${KUBERNETES_CPU_REQUEST} trx_srsran_test
       }
     - |

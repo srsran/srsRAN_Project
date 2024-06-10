@@ -68,16 +68,6 @@ public:
   }
 
   // See resource_grid_reader for documentation.
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
-  {
-    // Count number of elements.
-    unsigned nof_symbols = std::accumulate(
-        mask.begin(), mask.end(), 0U, [](unsigned count, bool active_re) { return count + (active_re ? 1U : 0U); });
-
-    return get(symbols, nof_symbols);
-  }
-
-  // See resource_grid_reader for documentation.
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,
                  unsigned                            l,

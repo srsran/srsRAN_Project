@@ -1270,7 +1270,8 @@ inline rrc_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_result
   return meas_result_nr;
 };
 
-inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results)
+inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results,
+                                                    srslog::basic_logger&               logger)
 {
   rrc_meas_results meas_results;
 
@@ -1307,8 +1308,8 @@ inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_res
       }
     } else {
       // error
-      report_fatal_error("Invalid meas result neigh cells type = {}.",
-                         asn1_meas_results.meas_result_neigh_cells.type());
+      logger.error("Ignoring neighbor cell measurement. Cause: Unsupported cell type {}",
+                   asn1_meas_results.meas_result_neigh_cells.type().to_string());
     }
 
     meas_results.meas_result_neigh_cells = meas_result_neigh_cell;

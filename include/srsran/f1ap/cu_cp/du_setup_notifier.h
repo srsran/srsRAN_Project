@@ -31,6 +31,7 @@
 #include "srsran/ran/pci.h"
 #include <cstdint>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace srsran {
@@ -61,10 +62,10 @@ struct du_setup_result {
     std::string  cause_str;
   };
 
-  variant<accepted, rejected> result;
+  std::variant<accepted, rejected> result;
 
   /// Whether the DU setup request was accepted by the CU-CP.
-  bool is_accepted() const { return variant_holds_alternative<accepted>(result); }
+  bool is_accepted() const { return std::holds_alternative<accepted>(result); }
 };
 
 /// \brief Interface used to handle F1AP interface management procedures as defined in TS 38.473 section 8.2.

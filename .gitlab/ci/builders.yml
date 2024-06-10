@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -58,8 +58,8 @@ ubuntu-uhd-builder:
     arch_name: ""
     uhd_version: ""
     GIT_STRATEGY: none
-    KUBERNETES_CPU_REQUEST: 3
-    KUBERNETES_CPU_LIMIT: 3
+    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_LIMIT: 4
     KUBERNETES_MEMORY_REQUEST: 7Gi
     KUBERNETES_MEMORY_LIMIT: 7Gi
   before_script:

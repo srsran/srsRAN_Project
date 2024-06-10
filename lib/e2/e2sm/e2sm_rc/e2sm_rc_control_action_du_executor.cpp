@@ -190,7 +190,7 @@ void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(co
 bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const e2sm_ric_control_request& req)
 {
   const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
-      variant_get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
+      std::get<e2sm_rc_ctrl_msg_s>(req.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
 
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) == action_params.end()) {
@@ -222,9 +222,9 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
 {
   du_mac_sched_control_config       ctrl_config = {};
   const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
-      variant_get<e2sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
+      std::get<e2sm_rc_ctrl_hdr_s>(e2sm_req_.request_ctrl_hdr).ric_ctrl_hdr_formats.ctrl_hdr_format1();
   const e2sm_rc_ctrl_msg_format1_s& ctrl_msg =
-      variant_get<e2sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
+      std::get<e2sm_rc_ctrl_msg_s>(e2sm_req_.request_ctrl_msg).ric_ctrl_msg_formats.ctrl_msg_format1();
   switch (ctrl_hdr.ue_id.type()) {
     case ue_id_c::types_opts::gnb_ue_id:
       ctrl_config.ue_id = ctrl_hdr.ue_id.gnb_ue_id().amf_ue_ngap_id;
@@ -258,7 +258,7 @@ e2sm_ric_control_response e2sm_rc_control_action_2_6_du_executor::convert_to_e2s
 
   // Always fill outcome here, it will be decided later whether it should be included in the e2 response.
   e2sm_response.ric_ctrl_outcome_present       = true;
-  e2sm_rc_ctrl_outcome_format1_s& ctrl_outcome = variant_get<e2sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome)
+  e2sm_rc_ctrl_outcome_format1_s& ctrl_outcome = std::get<e2sm_rc_ctrl_outcome_s>(e2sm_response.ric_ctrl_outcome)
                                                      .ric_ctrl_outcome_formats.set_ctrl_outcome_format1();
 
   // TODO: fill outcome properly

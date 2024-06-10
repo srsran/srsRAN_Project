@@ -28,6 +28,7 @@
 #include "srsran/ran/srs/srs_constants.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_assert.h"
 #include <cmath>
 #include <complex>
@@ -51,6 +52,9 @@ public:
   srs_channel_matrix() = default;
 
   /// \brief Constructs a channel matrix with the desired number of transmit and receive ports.
+  ///
+  /// The channel coefficients are initialized to zero.
+  ///
   /// \param[in] nof_rx_ports Number of receive ports.
   /// \param[in] nof_tx_ports Number of transmit ports.
   /// \remark An assertion is triggered if the number of receive ports exceeds \ref srs_constants::max_nof_rx_ports.
@@ -65,6 +69,8 @@ public:
                   "The number of transmit ports (i.e., {}) exceeds the maximum (i.e., {}).",
                   nof_tx_ports,
                   srs_constants::max_nof_tx_ports);
+    // Initialize coefficients to zero.
+    srsvec::zero(data.get_data());
   }
 
   /// \brief Constructs a channel matrix with the desired number of receive and transmit ports.

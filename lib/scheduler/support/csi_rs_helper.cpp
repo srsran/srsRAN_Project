@@ -32,7 +32,6 @@ bool srsran::csi_helper::is_csi_rs_slot(const cell_configuration& cell_cfg, slot
     return false;
   }
 
-  //  for (unsigned i = 0; i != cell_cfg.zp_csi_rs_list.size(); ++i)
   for (const auto& zp_csi : cell_cfg.zp_csi_rs_list) {
     if (zp_csi.offset.has_value() and zp_csi.period.has_value() and
         (sl_tx - *zp_csi.offset).to_uint() % (unsigned)*zp_csi.period == 0) {

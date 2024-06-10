@@ -294,8 +294,9 @@ srsran::srs_cu_cp::generate_valid_initial_context_setup_request_message_with_pdu
   asn1::ngap::pdu_session_res_setup_item_cxt_req_s pdu_session_item;
   pdu_session_item.pdu_session_id = 1U;
   pdu_session_item.s_nssai.sst.from_number(1U);
-  pdu_session_item.pdu_session_res_setup_request_transfer = make_byte_buffer(
-      "0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00");
+  pdu_session_item.pdu_session_res_setup_request_transfer =
+      make_byte_buffer("0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00")
+          .value();
 
   init_context_setup_req->pdu_session_res_setup_list_cxt_req.push_back(pdu_session_item);
 
@@ -362,8 +363,9 @@ srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_message_with_p
   asn1::ngap::pdu_session_res_setup_item_cxt_req_s pdu_session_item;
   pdu_session_item.pdu_session_id = 1U;
   pdu_session_item.s_nssai.sst.from_number(1U);
-  pdu_session_item.pdu_session_res_setup_request_transfer = make_byte_buffer(
-      "0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00");
+  pdu_session_item.pdu_session_res_setup_request_transfer =
+      make_byte_buffer("0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00")
+          .value();
 
   init_context_setup_req->pdu_session_res_setup_list_cxt_req.push_back(pdu_session_item);
 
@@ -505,12 +507,12 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_release_comm
 
   // Add PDU Session NAS PDU
   pdu_session_res_release_cmd->nas_pdu_present = true;
-  pdu_session_res_release_cmd->nas_pdu         = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201");
+  pdu_session_res_release_cmd->nas_pdu         = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201").value();
 
   // Add  PDU session resource to release list
   asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = pdu_session_id_to_uint(pdu_session_id);
-  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10");
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10").value();
   pdu_session_res_release_cmd->pdu_session_res_to_release_list_rel_cmd.push_back(
       pdu_session_res_to_release_item_rel_cmd);
 
@@ -701,7 +703,7 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
 
   // add ue radio cap for paging
   paging->ue_radio_cap_for_paging_present                       = true;
-  paging->ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef");
+  paging->ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef").value();
 
   // add paging origin
   paging->paging_origin_present = true;
@@ -798,8 +800,10 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   asn1::ngap::pdu_session_res_setup_item_ho_req_s setup_item;
   setup_item.pdu_session_id = 1;
   setup_item.s_nssai.sst.from_number(1);
-  setup_item.ho_request_transfer = make_byte_buffer(
-      "0000050082000a0c400000003040000000008b000a01f00a32130200001b13007f00010000860001000088000700010000091c00");
+  setup_item.ho_request_transfer =
+      make_byte_buffer(
+          "0000050082000a0c400000003040000000008b000a01f00a32130200001b13007f00010000860001000088000700010000091c00")
+          .value();
   ho_request->pdu_session_res_setup_list_ho_req.push_back(setup_item);
   // allowed nssai
   asn1::ngap::allowed_nssai_item_s allowed_nssai;
@@ -811,9 +815,11 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   // source to target transparent container
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
   // rrc container
-  transparent_container.rrc_container = make_byte_buffer(
-      "0021930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007a071e439f0000240400e03"
-      "00000000100186c0000700809df0000000000000103a0002000012cb2800281c50f0007000f00000004008010240a0");
+  transparent_container.rrc_container =
+      make_byte_buffer("0021930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007a071e"
+                       "439f0000240400e03"
+                       "00000000100186c0000700809df0000000000000103a0002000012cb2800281c50f0007000f00000004008010240a0")
+          .value();
   // pdu session res info list
   asn1::ngap::pdu_session_res_info_item_s session_item;
   session_item.pdu_session_id = 1;
@@ -869,21 +875,28 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_
   ho_cmd->pdu_session_res_ho_list_present = true;
   asn1::ngap::pdu_session_res_ho_item_s ho_item;
   ho_item.pdu_session_id  = 1;
-  ho_item.ho_cmd_transfer = make_byte_buffer("00");
+  ho_item.ho_cmd_transfer = make_byte_buffer("00").value();
   ho_cmd->pdu_session_res_ho_list.push_back(ho_item);
 
   // target to source transparent container
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s transparent_container;
   // rrc container
-  transparent_container.rrc_container = make_byte_buffer(
-      "08190115200204d00f00102f1f852020605701ac00445ebb1c041878002c00445ebb1c041878002c24445ebb1c041878002c700d3133b414"
-      "831f0203e0102341e0400024a771002900000000c000140000034ec00187c8a000000697386589000401833251870024e1106fbf56c70eb0"
-      "04162301620981950001ffff8000000306e10840000702ca0041904000040d31a01100102002a28908900081001514488500040800a8a246"
-      "30002040054514060088681aab2420e2048a163068e1e4a78fa0428918f04000850404800b50405000850505800b50506000850606800b50"
-      "6071a48500079a4b5000b9a4b5040f0050703e68410101a10484268414111a10584668418129a10720496302645c24d03a41078bbf030438"
-      "00000071ffa5294a529e502c0000432ec000000000000a0000018ad5450047001800082002a210054401c040421000a88401560070201104"
-      "002a210055801c0c0421000a88401568070401104002a210055a00100000010430102030403834000a8a2000000200400080600080900220"
-      "0a600002298094e3800c00");
+  transparent_container.rrc_container = make_byte_buffer("08190115200204d00f00102f1f852020605701ac00445ebb1c041878002c0"
+                                                         "0445ebb1c041878002c24445ebb1c041878002c700d3133b414"
+                                                         "831f0203e0102341e0400024a771002900000000c000140000034ec00187c"
+                                                         "8a000000697386589000401833251870024e1106fbf56c70eb0"
+                                                         "04162301620981950001ffff8000000306e10840000702ca0041904000040"
+                                                         "d31a01100102002a28908900081001514488500040800a8a246"
+                                                         "30002040054514060088681aab2420e2048a163068e1e4a78fa0428918f04"
+                                                         "000850404800b50405000850505800b50506000850606800b50"
+                                                         "6071a48500079a4b5000b9a4b5040f0050703e68410101a10484268414111"
+                                                         "a10584668418129a10720496302645c24d03a41078bbf030438"
+                                                         "00000071ffa5294a529e502c0000432ec000000000000a0000018ad545004"
+                                                         "7001800082002a210054401c040421000a88401560070201104"
+                                                         "002a210055801c0c0421000a88401568070401104002a210055a001000000"
+                                                         "10430102030403834000a8a2000000200400080600080900220"
+                                                         "0a600002298094e3800c00")
+                                            .value();
   ho_cmd->target_to_source_transparent_container = pack_into_pdu(transparent_container);
 
   return ngap_msg;

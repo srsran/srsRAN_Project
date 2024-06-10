@@ -53,7 +53,7 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
   unsigned i_re = 0;
 
-#if defined(__AVX2__) || defined(HAVE_NEON)
+#if defined(__AVX2__) || defined(__ARM_NEON)
   // Views over the input data.
   std::array<span<const cf_t>, MAX_PORTS> port_symbols;
   std::array<span<const cf_t>, MAX_PORTS> port_ests;
@@ -132,7 +132,7 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
     // If abnormal calculation parameters are detected, the equalized symbols are set to zero.
     srsran_simd_cfi_storeu(symbols_out.data() + i_re, srsran_simd_cf_select(cf_zero, re_out, isnormal_mask));
   }
-#endif // __AVX2__ || HAVE_NEON
+#endif // __AVX2__ || __ARM_NEON
 
   for (; i_re != nof_re; ++i_re) {
     float ch_mod_sq = 0.0F;

@@ -24,7 +24,7 @@
 
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/optional.h"
-#include "srsran/adt/variant.h"
+#include <variant>
 
 namespace srsran {
 
@@ -55,7 +55,7 @@ struct csi_report_pmi {
   };
 
   /// Actual PMI value.
-  variant<two_antenna_port, typeI_single_panel_4ports_mode1> type;
+  std::variant<two_antenna_port, typeI_single_panel_4ports_mode1> type;
 };
 
 /// Collects Chanel State Information (CSI) report fields.

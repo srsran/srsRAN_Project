@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "17"
+    ref: "18"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -118,8 +118,8 @@ e2e request and config validation:
     KUBERNETES_CPU_LIMIT: 2
     KUBERNETES_MEMORY_REQUEST: 2Gi
     KUBERNETES_MEMORY_LIMIT: 2Gi
-    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "12G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "12G"
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "20G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     GROUP: zmq
   tags:
@@ -304,7 +304,6 @@ amari 32UE:
 
 amari 32UE beta:
   extends: amari 32UE
-  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: ["reestablishment", "handover"]
@@ -503,6 +502,7 @@ android n300:
 viavi:
   stage: rf
   extends: .e2e-run
+  timeout: 8h
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"
@@ -514,6 +514,17 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "fading and 32UE",
+            "fading and 1UE",
+            "ideal and 32UE",
+            "ideal and 1UE",
+            "birth-death and 32UE",
+            "birth-death and 1UE",
+          ]
 
 viavi-debug:
   stage: rf

@@ -52,6 +52,9 @@ public:
   /// Default destructor.
   virtual ~upper_phy() = default;
 
+  /// Returns the sector identifier of this upper PHY.
+  virtual unsigned get_sector_id() const = 0;
+
   /// Returns a reference to the receive symbol handler of this upper PHY.
   virtual upper_phy_rx_symbol_handler& get_rx_symbol_handler() = 0;
 

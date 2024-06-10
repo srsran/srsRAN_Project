@@ -151,7 +151,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
 
   // Make PDUs
   std::vector<byte_buffer> pdus;
-  rlc_tx = std::make_unique<rlc_tx_am_entity>(0,
+  rlc_tx = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,
                                               du_ue_index_t::MIN_DU_UE_INDEX,
                                               srb_id_t::srb0,
                                               config,
@@ -250,7 +250,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
   config.t_reassembly      = 200;
 
   // Create RLC AM RX entity
-  std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(0,
+  std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
                                                                                 du_ue_index_t::MIN_DU_UE_INDEX,
                                                                                 srb_id_t::srb0,
                                                                                 config,

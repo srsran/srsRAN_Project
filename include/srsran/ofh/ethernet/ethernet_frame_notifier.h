@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ethernet_unique_buffer.h"
 #include "srsran/adt/span.h"
 
 namespace srsran {
@@ -35,7 +36,7 @@ public:
   virtual ~frame_notifier() = default;
 
   /// Notifies the reception of an Ethernet frame coming from the underlying Ethernet link.
-  virtual void on_new_frame(span<const uint8_t> payload) = 0;
+  virtual void on_new_frame(unique_rx_buffer buffer) = 0;
 };
 
 } // namespace ether

@@ -284,8 +284,8 @@ static void pdsch_conversion_benchmark()
 
     builder_pdsch.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
 
-    optional<int>   profile_nr;
-    optional<float> dmrs_profile;
+    std::optional<int>   profile_nr;
+    std::optional<float> dmrs_profile;
     if (power_nr != -9) {
       profile_nr.emplace(power_nr);
     } else {
@@ -300,7 +300,7 @@ static void pdsch_conversion_benchmark()
     builder_pdsch.set_maintenance_v3_codeword_parameters(
         ldpc_graph, tb_size_lbrm_bytes, pdu_bitmap & 1U, (pdu_bitmap >> 1) & 1U);
 
-    optional<float> data_profile;
+    std::optional<float> data_profile;
     if (power != -33) {
       data_profile.emplace(power);
     }

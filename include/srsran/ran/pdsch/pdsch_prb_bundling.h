@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
+#include <variant>
 
 namespace srsran {
 
@@ -49,7 +49,7 @@ struct prb_bundling {
     bool operator!=(const dynamic_bundling& rhs) const { return !(rhs == *this); }
   };
 
-  variant<static_bundling, dynamic_bundling> bundling;
+  std::variant<static_bundling, dynamic_bundling> bundling;
 
   bool operator==(const prb_bundling& rhs) const { return bundling == rhs.bundling; }
   bool operator!=(const prb_bundling& rhs) const { return !(rhs == *this); }

@@ -22,14 +22,27 @@
 
 #pragma once
 
+#include "srsran/adt/interval.h"
 #include "srsran/ran/resource_block.h"
 
 namespace srsran {
 
 namespace pucch_constants {
 
+/// PUCCH hopping identifier, parameter \f$n_{ID}\f$ range.
+static constexpr interval<unsigned, false> n_id_range(0, 1024);
+
 /// PUCCH does not make use of spatial multiplexing.
 static constexpr unsigned MAX_LAYERS = 1;
+
+/// PUCCH Format 0 number of OFDM symbols range.
+static constexpr interval<unsigned, true> format0_nof_symbols_range(1, 2);
+
+/// PUCCH Format 0 range for number of HARQ-ACK feedback bits.
+static constexpr interval<unsigned, true> format0_nof_harq_ack_range(0, 2);
+
+/// PUCCH Format 0 initial cyclic shift range.
+static constexpr interval<unsigned, false> format0_initial_cyclic_shift_range(0, 12);
 
 /// Maximum number of symbols (without DM-RS) that PUCCH Format 1 can transmit.
 static constexpr unsigned FORMAT1_N_MAX = 7;

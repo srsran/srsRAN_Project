@@ -34,9 +34,10 @@ namespace srsran {
 class dummy_pdcch_resource_allocator : public pdcch_resource_allocator
 {
 public:
-  rnti_t               last_dl_pdcch_rnti;
-  pdcch_dl_information next_ue_pdcch_alloc;
-  pdcch_ul_information next_ue_ul_pdcch_alloc;
+  rnti_t                          last_dl_pdcch_rnti;
+  pdcch_dl_information            next_ue_pdcch_alloc;
+  pdcch_ul_information            next_ue_ul_pdcch_alloc;
+  std::function<bool(slot_point)> fail_pdcch_alloc_cond;
 
   pdcch_dl_information* alloc_dl_pdcch_common(cell_slot_resource_allocator& slot_alloc,
                                               rnti_t                        rnti,
@@ -44,6 +45,9 @@ public:
                                               aggregation_level             aggr_lvl) override
   {
     TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
+    if (fail_pdcch_alloc_cond and fail_pdcch_alloc_cond(slot_alloc.slot)) {
+      return nullptr;
+    }
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
     slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
     slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;

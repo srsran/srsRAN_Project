@@ -25,25 +25,27 @@
 
 using namespace srsran;
 
-void scheduler_event_logger::log_impl()
+scheduler_event_logger::scheduler_event_logger(du_cell_index_t cell_index_, pci_t pci_) :
+  cell_index(cell_index_),
+  pci(pci_),
+  logger(srslog::fetch_basic_logger("SCHED")),
+  mode(logger.debug.enabled() ? mode_t::debug : (logger.info.enabled() ? mode_t::info : mode_t::none))
 {
   if (mode == debug) {
-    logger.debug("Processed slot events:{}", to_c_str(fmtbuf));
-    fmtbuf.clear();
+    fmt::format_to(fmtbuf, "\n- Cell creation: idx={} pci={}", cell_index, pci);
   } else if (mode == info) {
-    logger.info("Processed slot events:{}", to_c_str(fmtbuf));
-    fmtbuf.clear();
+    fmt::format_to(fmtbuf, "{}Cell creation idx={} pci={}", separator(), cell_index, pci);
   }
 }
 
-void scheduler_event_logger::enqueue_impl(const cell_creation_event& cell_ev)
+void scheduler_event_logger::log_impl()
 {
-  cell_pcis[cell_ev.cell_index] = cell_ev.pci;
-
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- Cell creation: idx={} pci={}", cell_ev.cell_index, cell_ev.pci);
+    logger.debug("Processed slot events pci={}:{}", pci, to_c_str(fmtbuf));
+    fmtbuf.clear();
   } else if (mode == info) {
-    fmt::format_to(fmtbuf, "{}Cell creation idx={} pci={}", separator(), cell_ev.cell_index, cell_ev.pci);
+    logger.info("Processed slot events pci={}:{}", pci, to_c_str(fmtbuf));
+    fmtbuf.clear();
   }
 }
 
@@ -51,7 +53,7 @@ void scheduler_event_logger::enqueue_impl(const prach_event& rach_ev)
 {
   if (mode == debug) {
     fmt::format_to(fmtbuf,
-                   "\n- PRACH: slot={}, pci={} preamble={} ra-rnti={} temp_crnti={} ta_cmd={}",
+                   "\n- PRACH: slot={} pci={} preamble={} ra-rnti={} temp_crnti={} ta_cmd={}",
                    rach_ev.slot_rx,
                    cell_pcis[rach_ev.cell_index],
                    rach_ev.preamble_id,

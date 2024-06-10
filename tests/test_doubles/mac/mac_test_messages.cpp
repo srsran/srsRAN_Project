@@ -58,6 +58,20 @@ mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_poin
                                     .crcs  = {mac_crc_pdu{.rnti = rnti, .harq_id = h_id, .tb_crc_success = true}}};
 }
 
+mac_crc_indication_message srsran::test_helpers::create_crc_indication(slot_point                sl_rx,
+                                                                       span<const ul_sched_info> puschs)
+{
+  mac_crc_indication_message crc_ind;
+  crc_ind.sl_rx = sl_rx;
+  crc_ind.crcs.resize(puschs.size());
+  for (unsigned i = 0; i != puschs.size(); ++i) {
+    crc_ind.crcs[i].rnti           = puschs[i].pusch_cfg.rnti;
+    crc_ind.crcs[i].harq_id        = puschs[i].pusch_cfg.harq_id;
+    crc_ind.crcs[i].tb_crc_success = true;
+  }
+  return crc_ind;
+}
+
 mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
 {
   mac_uci_pdu pdu{};
@@ -109,6 +123,30 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
   return pdu;
 }
 
+mac_uci_pdu srsran::test_helpers::create_uci_pdu(rnti_t rnti, const uci_info& pusch_uci)
+{
+  mac_uci_pdu pdu{};
+  pdu.rnti             = rnti;
+  auto& pusch_ind      = pdu.pdu.emplace<mac_uci_pdu::pusch_type>();
+  pusch_ind.ul_sinr_dB = 100;
+
+  if (pusch_uci.harq.has_value() and pusch_uci.harq->harq_ack_nof_bits > 0) {
+    auto& harq = pusch_uci.harq.value();
+    pusch_ind.harq_info.emplace();
+    pusch_ind.harq_info->is_valid = true;
+    pusch_ind.harq_info->payload.resize(harq.harq_ack_nof_bits);
+    pusch_ind.harq_info->payload.fill(true);
+  }
+  if (pusch_uci.csi.has_value() and pusch_uci.csi->csi_part1_nof_bits > 0) {
+    pusch_ind.csi_part1_info.emplace();
+    pusch_ind.csi_part1_info->is_valid = true;
+    pusch_ind.csi_part1_info->payload.resize(pusch_uci.csi->csi_part1_nof_bits);
+    pusch_ind.csi_part1_info->payload.fill(true);
+  }
+
+  return pdu;
+}
+
 mac_uci_indication_message srsran::test_helpers::create_uci_indication(slot_point sl_rx, span<const pucch_info> pucchs)
 {
   mac_uci_indication_message uci_ind;
@@ -117,4 +155,17 @@ mac_uci_indication_message srsran::test_helpers::create_uci_indication(slot_poin
     uci_ind.ucis.push_back(create_uci_pdu(pucch));
   }
   return uci_ind;
+}
+
+std::optional<mac_uci_indication_message> srsran::test_helpers::create_uci_indication(slot_point                sl_rx,
+                                                                                      span<const ul_sched_info> puschs)
+{
+  mac_uci_indication_message uci_ind;
+  uci_ind.sl_rx = sl_rx;
+  for (const auto& pusch : puschs) {
+    if (pusch.uci.has_value()) {
+      uci_ind.ucis.push_back(create_uci_pdu(pusch.pusch_cfg.rnti, pusch.uci.value()));
+    }
+  }
+  return uci_ind.ucis.empty() ? std::nullopt : std::make_optional(uci_ind);
 }

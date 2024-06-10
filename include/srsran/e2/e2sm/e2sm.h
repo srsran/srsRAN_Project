@@ -23,12 +23,12 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/adt/variant.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2sm/e2sm_kpm_ies.h"
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2_messages.h"
 #include "srsran/support/async/async_task.h"
+#include <variant>
 
 namespace srsran {
 
@@ -41,28 +41,28 @@ struct e2sm_event_trigger_definition {
 };
 
 struct e2sm_action_definition {
-  e2sm_service_model_t                                                                       service_model;
-  variant<asn1::e2sm::e2sm_kpm_action_definition_s, asn1::e2sm::e2sm_rc_action_definition_s> action_definition;
+  e2sm_service_model_t                                                                            service_model;
+  std::variant<asn1::e2sm::e2sm_kpm_action_definition_s, asn1::e2sm::e2sm_rc_action_definition_s> action_definition;
 };
 
 struct e2sm_ric_control_request {
-  e2sm_service_model_t                    service_model;
-  bool                                    ric_call_process_id_present  = false;
-  bool                                    ric_ctrl_ack_request_present = false;
-  uint64_t                                ric_call_process_id;
-  variant<asn1::e2sm::e2sm_rc_ctrl_hdr_s> request_ctrl_hdr;
-  variant<asn1::e2sm::e2sm_rc_ctrl_msg_s> request_ctrl_msg;
-  bool                                    ric_ctrl_ack_request;
+  e2sm_service_model_t                         service_model;
+  bool                                         ric_call_process_id_present  = false;
+  bool                                         ric_ctrl_ack_request_present = false;
+  uint64_t                                     ric_call_process_id;
+  std::variant<asn1::e2sm::e2sm_rc_ctrl_hdr_s> request_ctrl_hdr;
+  std::variant<asn1::e2sm::e2sm_rc_ctrl_msg_s> request_ctrl_msg;
+  bool                                         ric_ctrl_ack_request;
 };
 
 struct e2sm_ric_control_response {
-  e2sm_service_model_t                        service_model;
-  bool                                        success;
-  bool                                        ric_call_process_id_present = false;
-  bool                                        ric_ctrl_outcome_present    = false;
-  uint64_t                                    ric_call_process_id;
-  variant<asn1::e2sm::e2sm_rc_ctrl_outcome_s> ric_ctrl_outcome;
-  asn1::e2ap::cause_c                         cause;
+  e2sm_service_model_t                             service_model;
+  bool                                             success;
+  bool                                             ric_call_process_id_present = false;
+  bool                                             ric_ctrl_outcome_present    = false;
+  uint64_t                                         ric_call_process_id;
+  std::variant<asn1::e2sm::e2sm_rc_ctrl_outcome_s> ric_ctrl_outcome;
+  asn1::e2ap::cause_c                              cause;
 };
 
 /// RIC control action executor maps an control action request to the proper stack functions.

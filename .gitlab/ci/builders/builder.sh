@@ -187,7 +187,9 @@ fi
 (which ccache >/dev/null) && CCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" || CCACHE_CMAKE_ARGS=""
 
 # Build process
+ccache -z || true
 mkdir -p "$BUILD_FOLDER"
 cd "$BUILD_FOLDER" || exit
 cmake $CCACHE_CMAKE_ARGS "$@" ..
 make $MAKE_EXTRA
+ccache -sv || true

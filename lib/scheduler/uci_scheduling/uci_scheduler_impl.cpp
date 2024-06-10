@@ -142,7 +142,7 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
     const unsigned csi_report_cfg_idx = 0;
     const auto&    csi_report_cfg = ue_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
     const auto&    period_pucch =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
+        std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
 
     unsigned period_slots = csi_report_periodicity_to_uint(period_pucch.report_slot_period);
     add_resource(ue_cfg.crnti, period_pucch.report_slot_offset, period_slots, false);
@@ -193,7 +193,7 @@ void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
     const unsigned csi_report_cfg_idx = 0;
     const auto&    csi_report_cfg = ue_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
     const auto&    period_pucch =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
+        std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
 
     unsigned period_slots = csi_report_periodicity_to_uint(period_pucch.report_slot_period);
     rem_resource(ue_cfg.crnti, period_pucch.report_slot_offset, period_slots, false);

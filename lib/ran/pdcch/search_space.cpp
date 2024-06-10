@@ -75,15 +75,15 @@ search_space_configuration::search_space_configuration(nr_band            band,
 }
 
 search_space_configuration::search_space_configuration(
-    search_space_id                                    id_,
-    coreset_id                                         cs_id_,
-    std::array<uint8_t, 5>                             nof_candidates_,
-    variant<common_dci_format, ue_specific_dci_format> dci_fmt_,
-    unsigned                                           monitoring_slot_periodicity_,
-    unsigned                                           monitoring_slot_offset_,
-    subcarrier_spacing                                 scs_common,
-    unsigned                                           duration_,
-    monitoring_symbols_within_slot_t                   monitoring_symbols_within_slot_) :
+    search_space_id                                         id_,
+    coreset_id                                              cs_id_,
+    std::array<uint8_t, 5>                                  nof_candidates_,
+    std::variant<common_dci_format, ue_specific_dci_format> dci_fmt_,
+    unsigned                                                monitoring_slot_periodicity_,
+    unsigned                                                monitoring_slot_offset_,
+    subcarrier_spacing                                      scs_common,
+    unsigned                                                duration_,
+    monitoring_symbols_within_slot_t                        monitoring_symbols_within_slot_) :
   id(id_),
   cs_id(cs_id_),
   nof_candidates(nof_candidates_),

@@ -41,7 +41,8 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.viavi.client import CampaignStatusEnum, Viavi
 
 from .steps.configuration import configure_metric_server_for_gnb
-from .steps.stub import get_metrics, GNB_STARTUP_TIMEOUT, GnbMetrics, handle_start_error, stop
+from .steps.kpis import get_kpis, KPIs
+from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _POD_ERROR = "Error creating the pod"
@@ -419,27 +420,21 @@ def check_metrics_criteria(
     is_ok = True
 
     # Check metrics
-    gnb_metrics: GnbMetrics = get_metrics(gnb)
+    viavi_failure_manager = viavi.get_test_failures()
+    kpis: KPIs = get_kpis(gnb, viavi_failure_manager=viavi_failure_manager, metrics_summary=metrics_summary)
 
     is_ok &= check_and_print_criteria(
-        "DL bitrate", gnb_metrics.dl_brate_agregate, test_configuration.expected_dl_bitrate, operator.gt
+        "DL bitrate", kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt, False
     )
     is_ok &= check_and_print_criteria(
-        "UL bitrate", gnb_metrics.ul_brate_agregate, test_configuration.expected_ul_bitrate, operator.gt
+        "UL bitrate", kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt, False
     )
     is_ok &= (
-        check_and_print_criteria("Number of KOs and/or retrxs", gnb_metrics.nof_kos_aggregate, 0, operator.eq)
+        check_and_print_criteria("Number of KOs and/or retrxs", kpis.nof_ko_aggregate, 0, operator.eq, not fail_if_kos)
         or not fail_if_kos
     )
 
-    # Save metrics
-    if metrics_summary is not None:
-        metrics_summary.write_metric("dl_bitrate", gnb_metrics.dl_brate_agregate)
-        metrics_summary.write_metric("ul_bitrate", gnb_metrics.ul_brate_agregate)
-        metrics_summary.write_metric("kos", gnb_metrics.nof_kos_aggregate)
-
     # Check procedure table
-    viavi_failure_manager = viavi.get_test_failures()
     viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
     is_ok &= viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
 
@@ -448,13 +443,19 @@ def check_metrics_criteria(
 
 
 def check_and_print_criteria(
-    name: str, current: float, expected: float, operator_method: Callable[[float, float], bool]
+    name: str,
+    current: float,
+    expected: float,
+    operator_method: Callable[[float, float], bool],
+    force_log_info: bool = False,
 ) -> bool:
     """
     Check and print criteria
     """
     is_ok = operator_method(current, expected)
-    (logging.info if is_ok else logging.error)(f"{name} expected: {expected}, actual: {current}")
+    (logging.info if is_ok or force_log_info else logging.error)(
+        f"{name} expected: {expected:.2e}, actual: {current:.2e}"
+    )
     return is_ok
 
 

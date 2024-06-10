@@ -21,6 +21,7 @@
  */
 
 #include "ofh_receiver_impl.h"
+#include "ofh_message_receiver_task_dispatcher.h"
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 
 using namespace srsran;
@@ -72,7 +73,8 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
   msg_receiver(get_message_receiver_configuration(config),
                get_message_receiver_dependencies(std::move(dependencies), window_checker)),
-  ctrl(msg_receiver)
+  rcv_task_dispatcher(msg_receiver, *dependencies.executor),
+  ctrl(rcv_task_dispatcher)
 {
 }
 

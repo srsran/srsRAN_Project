@@ -286,17 +286,39 @@ struct formatter<srsran::prach_detection_result> {
 /// \brief Custom formatter for \c pucch_processor::format0_configuration.
 template <>
 struct formatter<srsran::pucch_processor::format0_configuration> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
-    return ctx.begin();
+    return helper.parse(ctx);
   }
 
   template <typename FormatContext>
   auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "format0_configuration");
+    if (config.context.has_value()) {
+      helper.format_always(ctx, config.context.value());
+    }
+    helper.format_always(ctx, "format=0");
+    helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
+    helper.format_if_verbose(ctx, "slot={}", config.slot);
+    helper.format_always(ctx, "prb1={}", config.starting_prb);
+    helper.format_always(
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+    helper.format_always(
+        ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
+    helper.format_always(ctx, "cs={}", config.initial_cyclic_shift);
+    helper.format_if_verbose(ctx, "n_id={}", config.n_id);
+    helper.format_if_verbose(ctx, "sr_opportunity={}", config.sr_opportunity);
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
+
+    return ctx.out();
   }
 };
 

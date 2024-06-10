@@ -64,54 +64,54 @@ TEST_F(asn1_cause_conversion_test, when_ngap_cause_received_then_conversion_to_c
 
   asn1_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::unspecified;
   ngap_cause                     = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::unspecified);
 
   asn1_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::cell_not_available;
   ngap_cause                     = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::cell_not_available);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::cell_not_available);
 
   asn1_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::up_confidentiality_protection_not_possible;
   ngap_cause                     = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_radio_network_t>(ngap_cause),
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_radio_network_t>(ngap_cause),
             ngap_cause_radio_network_t::up_confidentiality_protection_not_possible);
 
   asn1_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::ho_target_not_allowed;
   ngap_cause                     = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::ho_target_not_allowed);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::ho_target_not_allowed);
 
   asn1_cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::user_inactivity;
   ngap_cause                     = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::user_inactivity);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_radio_network_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_radio_network_t>(ngap_cause), ngap_cause_radio_network_t::user_inactivity);
 
   asn1_cause.set_transport() = asn1::ngap::cause_transport_opts::unspecified;
   ngap_cause                 = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_transport_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_transport_t>(ngap_cause), ngap_cause_transport_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_transport_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_transport_t>(ngap_cause), ngap_cause_transport_t::unspecified);
 
   asn1_cause.set_nas() = asn1::ngap::cause_nas_opts::deregister;
   ngap_cause           = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_nas_t>(ngap_cause));
-  ASSERT_EQ(variant_get<cause_nas_t>(ngap_cause), cause_nas_t::deregister);
+  ASSERT_TRUE(std::holds_alternative<cause_nas_t>(ngap_cause));
+  ASSERT_EQ(std::get<cause_nas_t>(ngap_cause), cause_nas_t::deregister);
 
   asn1_cause.set_protocol() = asn1::ngap::cause_protocol_opts::msg_not_compatible_with_receiver_state;
   ngap_cause                = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_protocol_t>(ngap_cause));
-  ASSERT_EQ(variant_get<cause_protocol_t>(ngap_cause), cause_protocol_t::msg_not_compatible_with_receiver_state);
+  ASSERT_TRUE(std::holds_alternative<cause_protocol_t>(ngap_cause));
+  ASSERT_EQ(std::get<cause_protocol_t>(ngap_cause), cause_protocol_t::msg_not_compatible_with_receiver_state);
 
   asn1_cause.set_misc() = asn1::ngap::cause_misc_opts::unspecified;
   ngap_cause            = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_misc_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_misc_t>(ngap_cause), ngap_cause_misc_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_misc_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_misc_t>(ngap_cause), ngap_cause_misc_t::unspecified);
 
   asn1_cause.set_misc() = asn1::ngap::cause_misc_opts::unknown_plmn_or_sn_pn;
   ngap_cause            = asn1_to_cause(asn1_cause);
-  ASSERT_TRUE(variant_holds_alternative<ngap_cause_misc_t>(ngap_cause));
-  ASSERT_EQ(variant_get<ngap_cause_misc_t>(ngap_cause), ngap_cause_misc_t::unknown_plmn_or_sn_pn);
+  ASSERT_TRUE(std::holds_alternative<ngap_cause_misc_t>(ngap_cause));
+  ASSERT_EQ(std::get<ngap_cause_misc_t>(ngap_cause), ngap_cause_misc_t::unknown_plmn_or_sn_pn);
 }
 
 // test conversion to ngap asn1
@@ -181,58 +181,58 @@ TEST_F(asn1_cause_conversion_test, when_f1ap_cause_received_then_conversion_to_c
 
   f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::unspecified;
   cause                          = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::unspecified);
 
   f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::cell_not_available;
   cause                          = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::cell_not_available);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::cell_not_available);
 
   f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::normal_release;
   cause                          = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::normal_release);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::normal_release);
 
   f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::gnb_cu_cell_capacity_exceeded;
   cause                          = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::gnb_cu_cell_capacity_exceeded);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::gnb_cu_cell_capacity_exceeded);
 
   f1ap_cause.set_radio_network() = asn1::f1ap::cause_radio_network_opts::rl_fail_others;
   cause                          = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::rl_fail_others);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_radio_network_t>(cause), f1ap_cause_radio_network_t::rl_fail_others);
 
   f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::unspecified;
   cause                      = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_transport_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_transport_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unspecified);
 
   f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::unknown_tnl_address_for_iab;
   cause                      = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_transport_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unknown_tnl_address_for_iab);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_transport_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unknown_tnl_address_for_iab);
 
   f1ap_cause.set_transport() = asn1::f1ap::cause_transport_opts::unknown_up_tnl_info_for_iab;
   cause                      = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<f1ap_cause_transport_t>(cause));
-  ASSERT_EQ(variant_get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unknown_up_tnl_info_for_iab);
+  ASSERT_TRUE(std::holds_alternative<f1ap_cause_transport_t>(cause));
+  ASSERT_EQ(std::get<f1ap_cause_transport_t>(cause), f1ap_cause_transport_t::unknown_up_tnl_info_for_iab);
 
   f1ap_cause.set_protocol() = asn1::f1ap::cause_protocol_opts::semantic_error;
   cause                     = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_protocol_t>(cause));
-  ASSERT_EQ(variant_get<cause_protocol_t>(cause), cause_protocol_t::semantic_error);
+  ASSERT_TRUE(std::holds_alternative<cause_protocol_t>(cause));
+  ASSERT_EQ(std::get<cause_protocol_t>(cause), cause_protocol_t::semantic_error);
 
   f1ap_cause.set_misc() = asn1::f1ap::cause_misc_opts::hardware_fail;
   cause                 = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_misc_t>(cause));
-  ASSERT_EQ(variant_get<cause_misc_t>(cause), cause_misc_t::hardware_fail);
+  ASSERT_TRUE(std::holds_alternative<cause_misc_t>(cause));
+  ASSERT_EQ(std::get<cause_misc_t>(cause), cause_misc_t::hardware_fail);
 
   f1ap_cause.set_misc() = asn1::f1ap::cause_misc_opts::unspecified;
   cause                 = asn1_to_cause(f1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_misc_t>(cause));
-  ASSERT_EQ(variant_get<cause_misc_t>(cause), cause_misc_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<cause_misc_t>(cause));
+  ASSERT_EQ(std::get<cause_misc_t>(cause), cause_misc_t::unspecified);
 }
 
 // test conversion to f1ap asn1
@@ -310,54 +310,54 @@ TEST_F(asn1_cause_conversion_test, when_e1ap_cause_received_then_conversion_to_c
 
   e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::unspecified;
   cause                          = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::unspecified);
 
   e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::unknown_or_inconsistent_pair_of_ue_e1ap_id;
   cause                          = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_radio_network_t>(cause),
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_radio_network_t>(cause),
             e1ap_cause_radio_network_t::unknown_or_inconsistent_pair_of_ue_e1ap_id);
 
   e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::normal_release;
   cause                          = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::normal_release);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::normal_release);
 
   e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::pdcp_cfg_not_supported;
   cause                          = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::pdcp_cfg_not_supported);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::pdcp_cfg_not_supported);
 
   e1ap_cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::report_characteristic_empty;
   cause                          = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_radio_network_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::report_characteristic_empty);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_radio_network_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_radio_network_t>(cause), e1ap_cause_radio_network_t::report_characteristic_empty);
 
   e1ap_cause.set_transport() = asn1::e1ap::cause_transport_opts::unspecified;
   cause                      = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_transport_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_transport_t>(cause), e1ap_cause_transport_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_transport_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_transport_t>(cause), e1ap_cause_transport_t::unspecified);
 
   e1ap_cause.set_transport() = asn1::e1ap::cause_transport_opts::unknown_tnl_address_for_iab;
   cause                      = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<e1ap_cause_transport_t>(cause));
-  ASSERT_EQ(variant_get<e1ap_cause_transport_t>(cause), e1ap_cause_transport_t::unknown_tnl_address_for_iab);
+  ASSERT_TRUE(std::holds_alternative<e1ap_cause_transport_t>(cause));
+  ASSERT_EQ(std::get<e1ap_cause_transport_t>(cause), e1ap_cause_transport_t::unknown_tnl_address_for_iab);
 
   e1ap_cause.set_protocol() = asn1::e1ap::cause_protocol_opts::semantic_error;
   cause                     = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_protocol_t>(cause));
-  ASSERT_EQ(variant_get<cause_protocol_t>(cause), cause_protocol_t::semantic_error);
+  ASSERT_TRUE(std::holds_alternative<cause_protocol_t>(cause));
+  ASSERT_EQ(std::get<cause_protocol_t>(cause), cause_protocol_t::semantic_error);
 
   e1ap_cause.set_misc() = asn1::e1ap::cause_misc_opts::hardware_fail;
   cause                 = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_misc_t>(cause));
-  ASSERT_EQ(variant_get<cause_misc_t>(cause), cause_misc_t::hardware_fail);
+  ASSERT_TRUE(std::holds_alternative<cause_misc_t>(cause));
+  ASSERT_EQ(std::get<cause_misc_t>(cause), cause_misc_t::hardware_fail);
 
   e1ap_cause.set_misc() = asn1::e1ap::cause_misc_opts::unspecified;
   cause                 = asn1_to_cause(e1ap_cause);
-  ASSERT_TRUE(variant_holds_alternative<cause_misc_t>(cause));
-  ASSERT_EQ(variant_get<cause_misc_t>(cause), cause_misc_t::unspecified);
+  ASSERT_TRUE(std::holds_alternative<cause_misc_t>(cause));
+  ASSERT_EQ(std::get<cause_misc_t>(cause), cause_misc_t::unspecified);
 }
 
 // test conversion to e1ap asn1

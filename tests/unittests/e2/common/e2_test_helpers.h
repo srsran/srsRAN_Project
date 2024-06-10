@@ -709,7 +709,7 @@ class dummy_e2sm_handler : public e2sm_handler
     e2sm_action_definition action_def;
     action_def.service_model = e2sm_service_model_t::KPM;
     e2sm_kpm_action_definition_s& e2sm_kpm_action_definition =
-        variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition);
+        std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
     e2sm_kpm_action_definition.ric_style_type = 3;
     e2sm_kpm_action_definition.action_definition_formats.set_action_definition_format3();
     e2sm_kpm_action_definition.action_definition_formats.action_definition_format3().meas_cond_list.resize(1);
@@ -761,7 +761,7 @@ public:
 
   dummy_e2_pdu_notifier* get_e2_msg_notifier() { return msg_notifier; }
 
-  void close() override{};
+  void close() override {}
 
 private:
   srslog::basic_logger&  logger;

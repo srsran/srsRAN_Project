@@ -447,8 +447,21 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
 
+  // Create synchronous PUSCH processor for UCI only.
+  pusch_config.decoder_factory =
+      create_pusch_decoder_empty_factory(config.ul_bw_rb, pusch_config.ch_estimate_dimensions.nof_tx_layers);
+  report_fatal_error_if_not(pusch_config.decoder_factory, "Invalid PUSCH decoder factory for UCI.");
+  std::shared_ptr<pusch_processor_factory> uci_proc_factory = create_pusch_processor_factory_sw(pusch_config);
+  report_fatal_error_if_not(uci_proc_factory, "Invalid PUSCH processor factory for UCI.");
+
   // Create PUSCH processor pool factory.
-  pusch_factory = create_pusch_processor_pool(std::move(pusch_factory), config.max_pusch_concurrency);
+  pusch_processor_pool_factory_config pusch_proc_pool_config;
+  pusch_proc_pool_config.factory                = pusch_factory;
+  pusch_proc_pool_config.uci_factory            = uci_proc_factory;
+  pusch_proc_pool_config.nof_regular_processors = config.max_pusch_concurrency;
+  pusch_proc_pool_config.nof_uci_processors     = config.max_ul_thread_concurrency;
+  pusch_proc_pool_config.blocking               = false;
+  pusch_factory                                 = create_pusch_processor_pool(pusch_proc_pool_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor pool factory.");
 
   std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory = create_low_papr_sequence_generator_sw_factory();
@@ -714,12 +727,12 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  if (variant_holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
+  if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory =
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
-  } else if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+  } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
-        variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
+        std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
     report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 2,
                               "The number of threads (i.e., {}) must be equal to or greater than 2.");
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
@@ -736,7 +749,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
-  } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
+  } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);
   }
@@ -761,9 +774,9 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   if (config.nof_concurrent_threads > 1) {
     // If the PDSCH instance is concurrent, the number of instances is given by the PDSCH processor configuration.
     unsigned max_nof_simultaneous_pdsch = config.nof_concurrent_threads;
-    if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+    if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
       max_nof_simultaneous_pdsch =
-          variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
+          std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
     }
 
     pdcch_proc_factory =

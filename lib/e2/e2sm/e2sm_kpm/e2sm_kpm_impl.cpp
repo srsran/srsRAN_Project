@@ -48,7 +48,7 @@ bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ric_action_to_be_setup_it
   }
   logger.info("Admitting action {} (type {})", ric_action.ric_action_id, ric_action.ric_action_type);
   e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
-      variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition);
+      std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
 
   switch (e2sm_kpm_action_def.ric_style_type) {
     case 1:
@@ -237,7 +237,7 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
     return nullptr;
   }
   e2sm_kpm_action_definition_s& e2sm_kpm_action_def =
-      variant_get<e2sm_kpm_action_definition_s>(action_def.action_definition);
+      std::get<e2sm_kpm_action_definition_s>(action_def.action_definition);
   uint32_t ric_style_type = e2sm_kpm_action_def.ric_style_type;
   switch (ric_style_type) {
     case 1:

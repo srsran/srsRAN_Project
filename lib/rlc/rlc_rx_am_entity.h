@@ -55,7 +55,7 @@ struct rlc_rx_am_sdu_info {
   /// Indicates a gap (i.e. a missing segment) among all already received segments.
   bool has_gap = false;
   /// Buffer for either a full SDU or a set of SDU segments.
-  variant<byte_buffer_slice, segment_set_t> sdu_data;
+  std::variant<byte_buffer_slice, segment_set_t> sdu_data;
 };
 
 /// \brief Rx state variables
@@ -148,7 +148,7 @@ private:
   pcap_rlc_pdu_context pcap_context;
 
 public:
-  rlc_rx_am_entity(uint32_t                          du_index_,
+  rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
                    du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
@@ -332,15 +332,15 @@ struct formatter<srsran::rlc_rx_am_sdu_info> {
   auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
+    if (std::holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
       // full SDU
-      const srsran::byte_buffer_slice& payload = srsran::variant_get<srsran::byte_buffer_slice>(info.sdu_data);
+      const srsran::byte_buffer_slice& payload = std::get<srsran::byte_buffer_slice>(info.sdu_data);
       return format_to(
           ctx.out(), "has_gap={} fully_received={} sdu_len={}", info.has_gap, info.fully_received, payload.length());
-    } else if (srsran::variant_holds_alternative<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data)) {
+    } else if (std::holds_alternative<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data)) {
       // segmented SDU
       const srsran::rlc_rx_am_sdu_info::segment_set_t& segments =
-          srsran::variant_get<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data);
+          std::get<srsran::rlc_rx_am_sdu_info::segment_set_t>(info.sdu_data);
       return format_to(ctx.out(),
                        "has_gap={} fully_received={} nof_segments={}",
                        info.has_gap,

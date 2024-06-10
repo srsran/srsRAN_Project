@@ -74,18 +74,13 @@ struct fmt::formatter<srsran::csi_report_pmi> {
   template <typename FormatContext>
   auto format(const srsran::csi_report_pmi& pmi, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::csi_report_pmi::two_antenna_port>(pmi.type)) {
-      srsran::csi_report_pmi::two_antenna_port value =
-          srsran::variant_get<srsran::csi_report_pmi::two_antenna_port>(pmi.type);
-      helper.format_always(ctx, "pmi={}", value.pmi);
-    }
-
-    if (srsran::variant_holds_alternative<srsran::csi_report_pmi::typeI_single_panel_4ports_mode1>(pmi.type)) {
-      srsran::csi_report_pmi::typeI_single_panel_4ports_mode1 value =
-          srsran::variant_get<srsran::csi_report_pmi::typeI_single_panel_4ports_mode1>(pmi.type);
-      helper.format_always(ctx, "i_1_1={}", value.i_1_1);
-      helper.format_always(ctx, "i_1_3={}", value.i_1_3);
-      helper.format_always(ctx, "i_2={}", value.i_2);
+    if (const auto* two_ports_pmi = std::get_if<srsran::csi_report_pmi::two_antenna_port>(&pmi.type)) {
+      helper.format_always(ctx, "pmi={}", two_ports_pmi->pmi);
+    } else if (const auto* four_ports_pmi =
+                   std::get_if<srsran::csi_report_pmi::typeI_single_panel_4ports_mode1>(&pmi.type)) {
+      helper.format_always(ctx, "i_1_1={}", four_ports_pmi->i_1_1);
+      helper.format_always(ctx, "i_1_3={}", four_ports_pmi->i_1_3);
+      helper.format_always(ctx, "i_2={}", four_ports_pmi->i_2);
     }
 
     return ctx.out();

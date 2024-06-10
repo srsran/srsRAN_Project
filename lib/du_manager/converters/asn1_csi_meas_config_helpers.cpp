@@ -398,20 +398,19 @@ static asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resou
 {
   csi_res_cfg_s out{};
   out.csi_res_cfg_id = cfg.res_cfg_id;
-  if (variant_holds_alternative<csi_resource_config::nzp_csi_rs_ssb>(cfg.csi_rs_res_set_list)) {
-    auto&       res_set     = out.csi_rs_res_set_list.set_nzp_csi_rs_ssb();
-    const auto& res_set_val = variant_get<csi_resource_config::nzp_csi_rs_ssb>(cfg.csi_rs_res_set_list);
-    for (const auto& res_set_id : res_set_val.nzp_csi_rs_res_set_list) {
+  if (const auto* nzp_csi_res = std::get_if<csi_resource_config::nzp_csi_rs_ssb>(&cfg.csi_rs_res_set_list)) {
+    auto& res_set = out.csi_rs_res_set_list.set_nzp_csi_rs_ssb();
+    for (const auto& res_set_id : nzp_csi_res->nzp_csi_rs_res_set_list) {
       res_set.nzp_csi_rs_res_set_list.push_back(res_set_id);
     }
-    res_set.csi_ssb_res_set_list_present = not res_set_val.csi_ssb_res_set_list.empty();
-    for (const auto& res_set_id : res_set_val.csi_ssb_res_set_list) {
+    res_set.csi_ssb_res_set_list_present = not nzp_csi_res->csi_ssb_res_set_list.empty();
+    for (const auto& res_set_id : nzp_csi_res->csi_ssb_res_set_list) {
       res_set.csi_ssb_res_set_list[0] = res_set_id;
     }
-  } else if (variant_holds_alternative<csi_resource_config::csi_im_resource_set_list>(cfg.csi_rs_res_set_list)) {
-    auto&       res_set     = out.csi_rs_res_set_list.set_csi_im_res_set_list();
-    const auto& res_set_val = variant_get<csi_resource_config::csi_im_resource_set_list>(cfg.csi_rs_res_set_list);
-    for (const auto& res_set_id : res_set_val) {
+  } else if (const auto* csi_im_res =
+                 std::get_if<csi_resource_config::csi_im_resource_set_list>(&cfg.csi_rs_res_set_list)) {
+    auto& res_set = out.csi_rs_res_set_list.set_csi_im_res_set_list();
+    for (const auto& res_set_id : *csi_im_res) {
       res_set.push_back(res_set_id);
     }
   }
@@ -497,241 +496,232 @@ static void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_a
 
 static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
 {
-  if (variant_holds_alternative<codebook_config::type1>(cfg.codebook_type)) {
-    const auto& tp1_cfg_val = variant_get<codebook_config::type1>(cfg.codebook_type);
-    auto&       out_tp1_cfg = out.codebook_type.set_type1();
+  if (const auto* tp1_cfg_val = std::get_if<codebook_config::type1>(&cfg.codebook_type)) {
+    auto& out_tp1_cfg = out.codebook_type.set_type1();
     // Single Panel.
-    if (variant_holds_alternative<codebook_config::type1::single_panel>(tp1_cfg_val.sub_type)) {
-      const auto& sp_cfg_val = variant_get<codebook_config::type1::single_panel>(tp1_cfg_val.sub_type);
-      auto&       out_sp_cfg = out_tp1_cfg.sub_type.set_type_i_single_panel();
+    if (const auto* sp_cfg_val = std::get_if<codebook_config::type1::single_panel>(&tp1_cfg_val->sub_type)) {
+      auto& out_sp_cfg = out_tp1_cfg.sub_type.set_type_i_single_panel();
       // Two antennas.
-      if (variant_holds_alternative<
-              codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction>(
-              sp_cfg_val.nof_antenna_ports)) {
-        const auto& ant_restriction =
-            variant_get<codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction>(
-                sp_cfg_val.nof_antenna_ports);
+      if (const auto* ant_restriction1 =
+              std::get_if<codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction>(
+                  &sp_cfg_val->nof_antenna_ports)) {
         auto& out_ant_restriction = out_sp_cfg.nr_of_ant_ports.set_two();
-        out_ant_restriction.two_tx_codebook_subset_restrict.from_number(ant_restriction.to_uint64());
+        out_ant_restriction.two_tx_codebook_subset_restrict.from_number(ant_restriction1->to_uint64());
       }
       // More than two antennas.
-      else if (variant_holds_alternative<codebook_config::type1::single_panel::more_than_two_antenna_ports>(
-                   sp_cfg_val.nof_antenna_ports)) {
-        const auto& ant_restriction = variant_get<codebook_config::type1::single_panel::more_than_two_antenna_ports>(
-            sp_cfg_val.nof_antenna_ports);
+      else if (const auto* ant_restriction2 =
+                   std::get_if<codebook_config::type1::single_panel::more_than_two_antenna_ports>(
+                       &sp_cfg_val->nof_antenna_ports)) {
         auto& out_ant_restriction = out_sp_cfg.nr_of_ant_ports.set_more_than_two();
-        switch (ant_restriction.n1_n2_restriction_type) {
+        switch (ant_restriction2->n1_n2_restriction_type) {
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::two_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_two_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::two_two: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_two_two_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::four_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::three_two: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_three_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::six_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_six_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::four_two: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::eight_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_eight_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::
               four_three: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_three_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::six_two: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_six_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::
               twelve_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_twelve_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::four_four: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_four_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::eight_two: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_eight_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_restriction_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction2->n1_n2_restriction_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::
               sixteen_one: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_sixteen_one_type_i_single_panel_restrict();
-            n1_n2.from_number(ant_restriction.n1_n2_restriction_value.to_uint64());
+            n1_n2.from_number(ant_restriction2->n1_n2_restriction_value.to_uint64());
             break;
           }
           default:
-            srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction.n1_n2_restriction_type);
+            srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction2->n1_n2_restriction_type);
         }
-        if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.size() > 0) {
+        if (!ant_restriction2->typei_single_panel_codebook_subset_restriction_i2.empty()) {
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2_present = true;
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2.from_number(
-              ant_restriction.typei_single_panel_codebook_subset_restriction_i2.to_uint64());
+              ant_restriction2->typei_single_panel_codebook_subset_restriction_i2.to_uint64());
         }
       }
-      out_sp_cfg.type_i_single_panel_ri_restrict.from_number(sp_cfg_val.typei_single_panel_ri_restriction.to_uint64());
-    } else if (variant_holds_alternative<codebook_config::type1::multi_panel>(tp1_cfg_val.sub_type)) {
-      const auto& mp_cfg_val = variant_get<codebook_config::type1::multi_panel>(tp1_cfg_val.sub_type);
-      auto&       out_mp_cfg = out_tp1_cfg.sub_type.set_type_i_multi_panel();
-      switch (mp_cfg_val.ng_n1_n2_restriction_type) {
+      out_sp_cfg.type_i_single_panel_ri_restrict.from_number(sp_cfg_val->typei_single_panel_ri_restriction.to_uint64());
+    } else if (const auto* mp_cfg_val = std::get_if<codebook_config::type1::multi_panel>(&tp1_cfg_val->sub_type)) {
+      auto& out_mp_cfg = out_tp1_cfg.sub_type.set_type_i_multi_panel();
+      switch (mp_cfg_val->ng_n1_n2_restriction_type) {
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::two_two_one: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_two_one_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::two_four_one: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_four_one_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::four_two_one: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_four_two_one_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::two_two_two: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_two_two_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::two_eight_one: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_eight_one_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::four_four_one: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_four_four_one_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::two_four_two: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_four_two_type_i_multi_panel_restrict();
-          ng_n1_n2.from_string(fmt::format("{:b}", mp_cfg_val.ng_n1_n2_restriction_value));
+          ng_n1_n2.from_string(fmt::format("{:b}", mp_cfg_val->ng_n1_n2_restriction_value));
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_restriction_type_t::four_two_two: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_four_two_two_type_i_multi_panel_restrict();
-          ng_n1_n2.from_number(mp_cfg_val.ng_n1_n2_restriction_value.to_uint64());
+          ng_n1_n2.from_number(mp_cfg_val->ng_n1_n2_restriction_value.to_uint64());
           break;
         }
         default:
-          srsran_assertion_failure("Invalid ng-n1-n2 type={}", mp_cfg_val.ng_n1_n2_restriction_type);
+          srsran_assertion_failure("Invalid ng-n1-n2 type={}", mp_cfg_val->ng_n1_n2_restriction_type);
       }
-      out_mp_cfg.ri_restrict.from_number(mp_cfg_val.ri_restriction.to_uint64());
+      out_mp_cfg.ri_restrict.from_number(mp_cfg_val->ri_restriction.to_uint64());
     }
-    out_tp1_cfg.codebook_mode = tp1_cfg_val.codebook_mode;
-  } else if (variant_holds_alternative<codebook_config::type2>(cfg.codebook_type)) {
-    const auto& tp2_cfg_val = variant_get<codebook_config::type2>(cfg.codebook_type);
-    auto&       out_tp2_cfg = out.codebook_type.set_type2();
-    if (variant_holds_alternative<codebook_config::type2::typeii>(tp2_cfg_val.sub_type)) {
-      const auto& typeii     = variant_get<codebook_config::type2::typeii>(tp2_cfg_val.sub_type);
-      auto&       out_typeii = out_tp2_cfg.sub_type.set_type_ii();
-      switch (typeii.n1_n2_codebook_subset_restriction_type) {
+    out_tp1_cfg.codebook_mode = tp1_cfg_val->codebook_mode;
+  } else if (const auto* tp2_cfg_val = std::get_if<codebook_config::type2>(&cfg.codebook_type)) {
+    auto& out_tp2_cfg = out.codebook_type.set_type2();
+    if (const auto* typeii = std::get_if<codebook_config::type2::typeii>(&tp2_cfg_val->sub_type)) {
+      auto& out_typeii = out_tp2_cfg.sub_type.set_type_ii();
+      switch (typeii->n1_n2_codebook_subset_restriction_type) {
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::two_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_two_one();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::two_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_two_two();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_one();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::three_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_three_two();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::six_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_six_one();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_two();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::eight_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_eight_one();
-          n1_n2.from_number(typeii.n1_n2_codebook_subset_restriction_value.to_uint64());
+          n1_n2.from_number(typeii->n1_n2_codebook_subset_restriction_value.to_uint64());
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_three: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_three();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::six_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_six_two();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::twelve_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_twelve_one();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_four: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_four();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::eight_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_eight_two();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::sixteen_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_sixteen_one();
-          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii->n1_n2_codebook_subset_restriction_value));
           break;
         }
         default:
           srsran_assertion_failure("Invalid n1-n2 codebook subset restriction type={}",
-                                   typeii.n1_n2_codebook_subset_restriction_type);
+                                   typeii->n1_n2_codebook_subset_restriction_type);
       }
-      out_typeii.type_ii_ri_restrict.from_number(typeii.typeii_ri_restriction.to_uint64());
-    } else if (variant_holds_alternative<codebook_config::type2::typeii_port_selection>(tp2_cfg_val.sub_type)) {
-      const auto& typeii_ps     = variant_get<codebook_config::type2::typeii_port_selection>(tp2_cfg_val.sub_type);
-      auto&       out_typeii_ps = out_tp2_cfg.sub_type.set_type_ii_port_sel();
-      if (typeii_ps.port_selection_sampling_size.has_value()) {
+      out_typeii.type_ii_ri_restrict.from_number(typeii->typeii_ri_restriction.to_uint64());
+    } else if (const auto* typeii_ps =
+                   std::get_if<codebook_config::type2::typeii_port_selection>(&tp2_cfg_val->sub_type)) {
+      auto& out_typeii_ps = out_tp2_cfg.sub_type.set_type_ii_port_sel();
+      if (typeii_ps->port_selection_sampling_size.has_value()) {
         out_typeii_ps.port_sel_sampling_size_present = true;
-        switch (typeii_ps.port_selection_sampling_size.value()) {
+        switch (typeii_ps->port_selection_sampling_size.value()) {
           case 1:
             out_typeii_ps.port_sel_sampling_size = codebook_cfg_s::codebook_type_c_::type2_s_::sub_type_c_::
                 type_ii_port_sel_s_::port_sel_sampling_size_opts::n1;
@@ -750,15 +740,15 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
             break;
           default:
             srsran_assertion_failure("Invalid port selection sampling size={}",
-                                     typeii_ps.port_selection_sampling_size.value());
+                                     typeii_ps->port_selection_sampling_size.value());
         }
       }
       out_typeii_ps.type_ii_port_sel_ri_restrict.from_number(
-          typeii_ps.typeii_port_selection_ri_restriction.to_uint64());
+          typeii_ps->typeii_port_selection_ri_restriction.to_uint64());
     }
 
-    out_tp2_cfg.subband_amplitude = tp2_cfg_val.subband_amplitude;
-    switch (tp2_cfg_val.phase_alphabet_size) {
+    out_tp2_cfg.subband_amplitude = tp2_cfg_val->subband_amplitude;
+    switch (tp2_cfg_val->phase_alphabet_size) {
       case 4:
         out_tp2_cfg.phase_alphabet_size = codebook_cfg_s::codebook_type_c_::type2_s_::phase_alphabet_size_opts::n4;
         break;
@@ -766,10 +756,10 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
         out_tp2_cfg.phase_alphabet_size = codebook_cfg_s::codebook_type_c_::type2_s_::phase_alphabet_size_opts::n8;
         break;
       default:
-        srsran_assertion_failure("Invalid phase alphabet size={}", tp2_cfg_val.phase_alphabet_size);
+        srsran_assertion_failure("Invalid phase alphabet size={}", tp2_cfg_val->phase_alphabet_size);
     }
 
-    switch (tp2_cfg_val.nof_beams) {
+    switch (tp2_cfg_val->nof_beams) {
       case 2:
         out_tp2_cfg.nof_beams = codebook_cfg_s::codebook_type_c_::type2_s_::nof_beams_opts::two;
         break;
@@ -780,7 +770,7 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
         out_tp2_cfg.nof_beams = codebook_cfg_s::codebook_type_c_::type2_s_::nof_beams_opts::four;
         break;
       default:
-        srsran_assertion_failure("Invalid nof. beams={}", tp2_cfg_val.nof_beams);
+        srsran_assertion_failure("Invalid nof. beams={}", tp2_cfg_val->nof_beams);
     }
   }
 }
@@ -893,32 +883,31 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
     out.nzp_csi_rs_res_for_interference         = cfg.nzp_csi_rs_res_for_interference.value();
   }
 
-  if (variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(cfg.report_cfg_type)) {
-    const auto& rep_cfg_val =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(cfg.report_cfg_type);
-    if (rep_cfg_val.report_type ==
+  if (const auto* rep_cfg_val =
+          std::get_if<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(&cfg.report_cfg_type)) {
+    if (rep_cfg_val->report_type ==
         csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic) {
       auto& rep_cfg = out.report_cfg_type.set_periodic();
       make_asn1_csi_report_periodicity_and_offset(
-          rep_cfg.report_slot_cfg, rep_cfg_val.report_slot_period, rep_cfg_val.report_slot_offset);
-      for (const auto& pucch_csi_res : rep_cfg_val.pucch_csi_res_list) {
+          rep_cfg.report_slot_cfg, rep_cfg_val->report_slot_period, rep_cfg_val->report_slot_offset);
+      for (const auto& pucch_csi_res : rep_cfg_val->pucch_csi_res_list) {
         rep_cfg.pucch_csi_res_list.push_back({.ul_bw_part_id = pucch_csi_res.ul_bwp,
                                               .pucch_res = static_cast<uint8_t>(pucch_csi_res.pucch_res_id.ue_res_id)});
       }
-    } else if (rep_cfg_val.report_type ==
+    } else if (rep_cfg_val->report_type ==
                csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::semi_persistent) {
       auto& rep_cfg = out.report_cfg_type.semi_persistent_on_pucch();
       make_asn1_csi_report_periodicity_and_offset(
-          rep_cfg.report_slot_cfg, rep_cfg_val.report_slot_period, rep_cfg_val.report_slot_offset);
-      for (const auto& pucch_csi_res : rep_cfg_val.pucch_csi_res_list) {
+          rep_cfg.report_slot_cfg, rep_cfg_val->report_slot_period, rep_cfg_val->report_slot_offset);
+      for (const auto& pucch_csi_res : rep_cfg_val->pucch_csi_res_list) {
         rep_cfg.pucch_csi_res_list.push_back({.ul_bw_part_id = pucch_csi_res.ul_bwp,
                                               .pucch_res = static_cast<uint8_t>(pucch_csi_res.pucch_res_id.ue_res_id)});
       }
     }
-  } else if (variant_holds_alternative<csi_report_config::semi_persistent_report_on_pusch>(cfg.report_cfg_type)) {
-    const auto& rep_cfg_val = variant_get<csi_report_config::semi_persistent_report_on_pusch>(cfg.report_cfg_type);
-    auto&       rep_cfg     = out.report_cfg_type.semi_persistent_on_pusch();
-    switch (rep_cfg_val.slot_cfg) {
+  } else if (const auto* rep_cfg_val2 =
+                 std::get_if<csi_report_config::semi_persistent_report_on_pusch>(&cfg.report_cfg_type)) {
+    auto& rep_cfg = out.report_cfg_type.semi_persistent_on_pusch();
+    switch (rep_cfg_val2->slot_cfg) {
       case csi_report_periodicity::slots5:
         rep_cfg.report_slot_cfg =
             csi_report_cfg_s::report_cfg_type_c_::semi_persistent_on_pusch_s_::report_slot_cfg_opts::sl5;
@@ -948,16 +937,15 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
             csi_report_cfg_s::report_cfg_type_c_::semi_persistent_on_pusch_s_::report_slot_cfg_opts::sl320;
         break;
       default:
-        srsran_assertion_failure("Invalid CSI report periodicity={}", rep_cfg_val.slot_cfg);
+        srsran_assertion_failure("Invalid CSI report periodicity={}", rep_cfg_val2->slot_cfg);
     }
-    for (const auto& offset : rep_cfg_val.report_slot_offset_list) {
+    for (unsigned offset : rep_cfg_val2->report_slot_offset_list) {
       rep_cfg.report_slot_offset_list.push_back(offset);
     }
-    rep_cfg.p0alpha = rep_cfg_val.p0_alpha;
-  } else if (variant_holds_alternative<csi_report_config::aperiodic_report>(cfg.report_cfg_type)) {
-    const auto& rep_cfg_val = variant_get<csi_report_config::aperiodic_report>(cfg.report_cfg_type);
-    auto&       rep_cfg     = out.report_cfg_type.set_aperiodic();
-    for (const auto& offset : rep_cfg_val.report_slot_offset_list) {
+    rep_cfg.p0alpha = rep_cfg_val2->p0_alpha;
+  } else if (const auto* rep_cfg_val3 = std::get_if<csi_report_config::aperiodic_report>(&cfg.report_cfg_type)) {
+    auto& rep_cfg = out.report_cfg_type.set_aperiodic();
+    for (const auto& offset : rep_cfg_val3->report_slot_offset_list) {
       rep_cfg.report_slot_offset_list.push_back(offset);
     }
   }
@@ -1195,20 +1183,17 @@ make_asn1_aperiodic_trigger_state(const csi_aperiodic_trigger_state& cfg)
     csi_associated_report_cfg_info_s out_report_cfg_info{};
     out_report_cfg_info.report_cfg_id = report_cfg_info.report_cfg_id;
 
-    if (variant_holds_alternative<csi_associated_report_config_info::nzp_csi_rs>(report_cfg_info.res_for_channel)) {
-      const auto& res_for_chnl =
-          variant_get<csi_associated_report_config_info::nzp_csi_rs>(report_cfg_info.res_for_channel);
+    if (const auto* res_for_chnl =
+            std::get_if<csi_associated_report_config_info::nzp_csi_rs>(&report_cfg_info.res_for_channel)) {
       auto& out_res_for_chnl   = out_report_cfg_info.res_for_ch.set_nzp_csi_rs();
-      out_res_for_chnl.res_set = res_for_chnl.resource_set;
-      for (const auto& qcl_info : res_for_chnl.qcl_info) {
+      out_res_for_chnl.res_set = res_for_chnl->resource_set;
+      for (const auto& qcl_info : res_for_chnl->qcl_info) {
         out_res_for_chnl.qcl_info.push_back(qcl_info);
       }
-    } else if (variant_holds_alternative<csi_associated_report_config_info::csi_ssb_resource_set>(
-                   report_cfg_info.res_for_channel)) {
-      const auto& res_for_chnl =
-          variant_get<csi_associated_report_config_info::csi_ssb_resource_set>(report_cfg_info.res_for_channel);
+    } else if (const auto* res_for_chnl2 = std::get_if<csi_associated_report_config_info::csi_ssb_resource_set>(
+                   &report_cfg_info.res_for_channel)) {
       auto& out_res_for_chnl = out_report_cfg_info.res_for_ch.set_csi_ssb_res_set();
-      out_res_for_chnl       = res_for_chnl;
+      out_res_for_chnl       = *res_for_chnl2;
     }
 
     if (report_cfg_info.nzp_csi_rs_resources_for_interference.has_value()) {
@@ -1300,7 +1285,7 @@ void srsran::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
     out.report_trigger_size         = dest.report_trigger_size.value();
   }
 
-  if ((dest.aperiodic_trigger_state_list.has_value() and not src.aperiodic_trigger_state_list.has_value()) ||
+  if ((dest.aperiodic_trigger_state_list.has_value() and not src.aperiodic_trigger_state_list.has_value()) or
       (dest.aperiodic_trigger_state_list.has_value() and src.aperiodic_trigger_state_list.has_value() and
        dest.aperiodic_trigger_state_list != src.aperiodic_trigger_state_list)) {
     out.aperiodic_trigger_state_list_present = true;
@@ -1314,7 +1299,7 @@ void srsran::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
   }
 
   if ((dest.semi_persistent_on_pusch_trigger_state_list.has_value() and
-       not src.semi_persistent_on_pusch_trigger_state_list.has_value()) ||
+       not src.semi_persistent_on_pusch_trigger_state_list.has_value()) or
       (dest.semi_persistent_on_pusch_trigger_state_list.has_value() and
        src.semi_persistent_on_pusch_trigger_state_list.has_value() and
        dest.semi_persistent_on_pusch_trigger_state_list != src.semi_persistent_on_pusch_trigger_state_list)) {

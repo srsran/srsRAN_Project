@@ -24,8 +24,8 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tiny_optional.h"
-#include "srsran/adt/variant.h"
 #include <cstdint>
+#include <variant>
 
 namespace srsran {
 
@@ -89,8 +89,8 @@ struct uci_on_pusch {
   using beta_offsets_semi_static = beta_offsets;
   using beta_offsets_dynamic     = static_vector<beta_offsets, max_nof_beta_offsets>;
 
-  std::optional<variant<beta_offsets_dynamic, beta_offsets_semi_static>> beta_offsets_cfg;
-  alpha_scaling_opt                                                      scaling;
+  std::optional<std::variant<beta_offsets_dynamic, beta_offsets_semi_static>> beta_offsets_cfg;
+  alpha_scaling_opt                                                           scaling;
 
   bool operator==(const uci_on_pusch& rhs) const
   {

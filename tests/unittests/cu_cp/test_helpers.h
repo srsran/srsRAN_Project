@@ -30,7 +30,6 @@
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
-#include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -39,6 +38,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <variant>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -86,7 +86,7 @@ public:
 
   byte_buffer on_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override
   {
-    return make_byte_buffer("deadbeef");
+    return make_byte_buffer("deadbeef").value();
   }
 
   async_task<void> on_ue_removal_required(ue_index_t ue_index) override
@@ -400,7 +400,7 @@ public:
     second_e1ap_request.reset();
   }
 
-  std::optional<variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>>
+  std::optional<std::variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>>
                                                           first_e1ap_request;
   std::optional<e1ap_bearer_context_modification_request> second_e1ap_request;
 
@@ -472,7 +472,7 @@ public:
       CORO_BEGIN(ctx);
 
       res.success                          = ue_context_setup_outcome;
-      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
 
       CORO_RETURN(res);
     });
@@ -497,7 +497,7 @@ public:
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
-      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
       // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);

@@ -219,10 +219,10 @@ INSTANTIATE_TEST_SUITE_P(LDPCRateMatchingSuite,
                                                               "avx2",
                                                               "avx512"
 #endif // __x86_64__
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
                                                               ,
                                                               "neon"
-#endif // HAVE_NEON
+#endif // __ARM_NEON
                                                               ),
                                             ::testing::ValuesIn(ldpc_rate_matcher_test_data)));
 } // namespace

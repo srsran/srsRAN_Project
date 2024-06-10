@@ -47,6 +47,15 @@ public:
   virtual std::unique_ptr<pusch_decoder> create() = 0;
 };
 
+/// \brief Creates a factory for the empty PUSCH decoder.
+///
+/// See \ref pusch_decoder_empty_impl for more details on the implementation.
+///
+/// \param[in] nof_prb     Maximum number of PRB.
+/// \param[in] nof_layers  Maximum number of layers.
+/// \return An instance of PUSCH decoder factory.
+std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_empty_factory(unsigned nof_prb, unsigned nof_layers);
+
 struct pusch_decoder_factory_sw_configuration {
   std::shared_ptr<crc_calculator_factory>      crc_factory;
   std::shared_ptr<ldpc_decoder_factory>        decoder_factory;
@@ -109,9 +118,35 @@ struct pusch_processor_factory_sw_configuration {
 std::shared_ptr<pusch_processor_factory>
 create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config);
 
-std::shared_ptr<pusch_processor_factory> create_pusch_processor_pool(std::shared_ptr<pusch_processor_factory> factory,
-                                                                     unsigned max_nof_processors,
-                                                                     bool     blocking = false);
+/// \brief Collection of parameters necessary to build a PUSCH processor pool.
+///
+/// The PUSCH processor pool uses the regular factory for the asynchronous PUSCH decoding. When the regular PUSCH
+/// processors are all reserved, it uses the processors created from the UCI only factory.
+///
+/// The UCI factory processors are executed synchronously and perform the exact same tasks as a regular PUSCH processor
+/// except the shared channel decoding is skipped.
+struct pusch_processor_pool_factory_config {
+  /// PUSCH processor factory for regular processing.
+  std::shared_ptr<pusch_processor_factory> factory;
+  /// PUSCH processor factory for UCI only.
+  std::shared_ptr<pusch_processor_factory> uci_factory;
+  /// \brief Number of regular PUSCH processors.
+  ///
+  /// This is the maximum number of PUSCH processors that can be in the process of decoding shared channel. The number
+  /// of regular processors is independent from the number of threads.
+  unsigned nof_regular_processors;
+  /// \brief Number of UCI PUSCH processors.
+  ///
+  /// This is the number of PUSCH processors that process only UCI in case all the regular PUSCH processors are
+  /// reserved. The number of UCI processors must be equal to the number of threads that will use the PUSCH processor
+  /// pool.
+  unsigned nof_uci_processors;
+  /// Set to true for the pool to wait for processors to be unlocked.
+  bool blocking = false;
+};
+
+/// Creates a PUSCH processor pool.
+std::shared_ptr<pusch_processor_factory> create_pusch_processor_pool(pusch_processor_pool_factory_config& config);
 
 class ulsch_demultiplex_factory
 {

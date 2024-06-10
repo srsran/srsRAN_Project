@@ -23,10 +23,10 @@
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -50,6 +50,16 @@ class du_high_many_cells_tester : public du_high_env_simulator, public testing::
 {
 public:
   du_high_many_cells_tester() : du_high_env_simulator(du_high_env_sim_params{GetParam().nof_cells}) {}
+
+  bool run_until_csi(du_cell_index_t cell_idx, rnti_t rnti)
+  {
+    return run_until([this, cell_idx, rnti]() {
+      if (phy.cells[cell_idx].last_ul_res.has_value()) {
+        return find_ue_uci_with_csi(rnti, *phy.cells[cell_idx].last_ul_res.value().ul_res) != nullptr;
+      }
+      return false;
+    });
+  }
 };
 
 TEST_P(du_high_many_cells_tester, when_du_high_initiated_then_f1_setup_is_sent_with_correct_number_of_cells)
@@ -105,8 +115,9 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
     rnti_t rnti = to_rnti(0x4601 + i);
     ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
     ASSERT_TRUE(run_rrc_setup(rnti));
-    ASSERT_TRUE(force_ue_fallback(rnti));
     ASSERT_TRUE(run_ue_context_setup(rnti));
+    // Wait for a CSI to be sent, otherwise the TBs will be small.
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
 
     // Ensure DU<->CU-UP tunnel was created.
     ASSERT_EQ(cu_up_sim.last_drb_id.value(), drb_id_t::drb1);
@@ -114,29 +125,41 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
 
   // Forward several DRB PDUs to all UEs.
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
-  for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
-    for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    for (unsigned c = 0; c != GetParam().nof_cells; ++c) {
       nru_dl_message f1u_pdu{test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, i, pdcp_pdu_size, i), i};
       cu_up_sim.created_du_notifs[c]->on_new_pdu(f1u_pdu);
     }
   }
 
   // Ensure DRB is active by verifying that the DRB PDUs are scheduled.
-  unsigned              bytes_sched          = 0;
-  const unsigned        expected_bytes_sched = nof_pdcp_pdus * pdcp_pdu_size * GetParam().nof_cells;
   std::vector<unsigned> bytes_sched_per_cell(GetParam().nof_cells, 0);
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
     phy.cells[i].last_dl_data.reset();
   }
 
-  while (bytes_sched < expected_bytes_sched and this->run_until([this]() {
+  // condition to stop experiment.
+  auto stop_condition = [this, &bytes_sched_per_cell]() {
+    for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
+      if (bytes_sched_per_cell[c] < nof_pdcp_pdus * pdcp_pdu_size) {
+        // one of the cells still didn't send all the pending traffic.
+        return false;
+      }
+    }
+    return true;
+  };
+  // check if a PDSCH was scheduled.
+  auto pdsch_grant_scheduled = [this]() {
     for (unsigned i = 0; i != du_high_cfg.cells.size(); ++i) {
       if (phy.cells[i].last_dl_data.has_value() and not phy.cells[i].last_dl_data.value().ue_pdus.empty()) {
         return true;
       }
     }
     return false;
-  })) {
+  };
+
+  std::vector<unsigned> largest_pdu_per_cell(GetParam().nof_cells, 0);
+  while (not stop_condition() and this->run_until([pdsch_grant_scheduled]() { return pdsch_grant_scheduled(); })) {
     for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
       auto& phy_cell = phy.cells[c];
       if (not phy_cell.last_dl_data.has_value()) {
@@ -148,23 +171,26 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
             << fmt::format("c-rnti={} scheduled in the wrong cell={}", ue_grant.pdsch_cfg.rnti, c);
 
         // Update the total number of bytes scheduled.
-        if (ue_grant.pdsch_cfg.codewords[0].new_data) {
-          bytes_sched += phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
-          bytes_sched_per_cell[c] += phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
+        if (ue_grant.pdsch_cfg.codewords[0].new_data and
+            std::any_of(ue_grant.tb_list[0].lc_chs_to_sched.begin(),
+                        ue_grant.tb_list[0].lc_chs_to_sched.end(),
+                        // is DRB data
+                        [](const dl_msg_lc_info& lc) { return lc.lcid.is_sdu() and lc.lcid.to_lcid() >= LCID_SRB3; })) {
+          unsigned pdu_size = phy_cell.last_dl_data.value().ue_pdus[i].pdu.size();
+          bytes_sched_per_cell[c] += pdu_size;
+          largest_pdu_per_cell[c] = std::max(largest_pdu_per_cell[c], pdu_size);
         }
       }
       phy.cells[c].last_dl_data.reset();
     }
   }
 
-  ASSERT_GE(bytes_sched, expected_bytes_sched)
-      << fmt::format("Not enough PDSCH grants (bytes={}) were scheduled to meet the enqueued PDCP PDUs (bytes={})",
-                     bytes_sched,
-                     expected_bytes_sched);
+  ASSERT_TRUE(stop_condition()) << "Experiment did not finish when all cells transmitted pending traffic";
 
-  for (unsigned c = 0; c != du_high_cfg.cells.size(); ++c) {
-    ASSERT_GE(bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size) << fmt::format(
-        "In cell={} scheduled bytes {} < expected bytes {}", c, bytes_sched_per_cell[c], nof_pdcp_pdus * pdcp_pdu_size);
+  // Cells should schedule equally large MAC PDUs
+  for (unsigned c = 1; c != du_high_cfg.cells.size(); ++c) {
+    ASSERT_EQ(largest_pdu_per_cell[c], largest_pdu_per_cell[0])
+        << fmt::format("cells {} and {} cannot schedule equally large PDUs", 0, c);
   }
 }
 

@@ -36,10 +36,10 @@ struct ue_pdsch_grant {
   const ue*       user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
-  search_space_id ss_id;
-  unsigned        time_res_index;
-  crb_interval    crbs;
-  sch_mcs_index   mcs;
+  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> recommended_nof_bytes;
+  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> max_nof_rbs;
 };
 
 /// Information relative to a UE PUSCH grant.
@@ -47,10 +47,10 @@ struct ue_pusch_grant {
   const ue*       user;
   du_cell_index_t cell_index;
   harq_id_t       h_id;
-  crb_interval    crbs;
-  unsigned        time_res_index;
-  search_space_id ss_id = to_search_space_id(1);
-  sch_mcs_index   mcs;
+  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> recommended_nof_bytes;
+  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> max_nof_rbs;
 };
 
 /// \brief Outcome of a UE grant allocation, and action for the scheduler policy to follow afterwards.

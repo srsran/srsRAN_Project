@@ -115,7 +115,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
   du_mng_exec(worker),
   ue_exec_mapper(worker),
   cell_exec_mapper(worker),
-  params{{"srsgnb", 1, 1, transport_layer_address::create_from_string("127.0.0.1"), du_cells},
+  params{{"srsgnb", (gnb_du_id_t)1, 1, transport_layer_address::create_from_string("127.0.0.1"), du_cells},
          {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
          {f1ap, f1ap},
          {f1u_gw},

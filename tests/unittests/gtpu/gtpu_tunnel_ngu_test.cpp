@@ -151,8 +151,8 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   sockaddr_storage   orig_addr = {};
-  byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
-  byte_buffer        strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
+  byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl).value();
+  byte_buffer        strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl).value();
   gtpu_dissected_pdu dissected_pdu;
   bool               read_ok = gtpu_dissect_pdu(dissected_pdu, strip_vec.deep_copy().value(), gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);

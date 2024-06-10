@@ -90,7 +90,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   // Compute fundamental CSI report period.
   // TODO: Handle more than one CSI report period.
   if (default_csi_report_cfg.has_value()) {
-    const auto& rep = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    const auto& rep = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         default_csi_report_cfg->report_cfg_type);
     csi_period_slots = csi_report_periodicity_to_uint(rep.report_slot_period);
   }
@@ -154,9 +154,9 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
   // TODO: Support more than one nzp-CSI-RS resource for measurement.
   const csi_res_config_id_t  csi_res_cfg_id = csi_meas_cfg.csi_report_cfg_list[0].res_for_channel_meas;
   const csi_resource_config& csi_res_cfg    = csi_meas_cfg.csi_res_cfg_list[csi_res_cfg_id];
-  const auto& nzp_csi_rs_ssb = variant_get<csi_resource_config::nzp_csi_rs_ssb>(csi_res_cfg.csi_rs_res_set_list);
-  const auto& csi_set        = csi_meas_cfg.nzp_csi_rs_res_set_list[nzp_csi_rs_ssb.nzp_csi_rs_res_set_list[0]];
-  const nzp_csi_rs_resource& csi_res       = csi_meas_cfg.nzp_csi_rs_res_list[csi_set.nzp_csi_rs_res[0]];
+  const auto& nzp_csi_rs_ssb         = std::get<csi_resource_config::nzp_csi_rs_ssb>(csi_res_cfg.csi_rs_res_set_list);
+  const auto& csi_set                = csi_meas_cfg.nzp_csi_rs_res_set_list[nzp_csi_rs_ssb.nzp_csi_rs_res_set_list[0]];
+  const nzp_csi_rs_resource& csi_res = csi_meas_cfg.nzp_csi_rs_res_list[csi_set.nzp_csi_rs_res[0]];
   const unsigned             csi_rs_period = csi_resource_periodicity_to_uint(*csi_res.csi_res_period);
   const unsigned             csi_rs_offset = *csi_res.csi_res_offset;
 
@@ -247,21 +247,20 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         sr_res_offset = *sr_res_offset_it;
         free_sr_list.erase(sr_res_offset_it);
         break;
-      } else {
-        cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
+      }
+      cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
 
-        auto optimal_res_it = get_csi_resource_offset(
-            cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value(), sr_res_offset_it->second, free_csi_list);
+      auto optimal_res_it = get_csi_resource_offset(
+          cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value(), sr_res_offset_it->second, free_csi_list);
 
-        if (optimal_res_it != free_csi_list.end()) {
-          // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
-          // lists of free resources.
-          csi_res_offset = *optimal_res_it;
-          free_csi_list.erase(optimal_res_it);
-          sr_res_offset = *sr_res_offset_it;
-          free_sr_list.erase(sr_res_offset_it);
-          break;
-        }
+      if (optimal_res_it != free_csi_list.end()) {
+        // At this point the allocation has been successful. Remove SR and CSI resources assigned to this UE from the
+        // lists of free resources.
+        csi_res_offset = *optimal_res_it;
+        free_csi_list.erase(optimal_res_it);
+        sr_res_offset = *sr_res_offset_it;
+        free_sr_list.erase(sr_res_offset_it);
+        break;
       }
     }
     ++sr_res_offset_it;
@@ -296,7 +295,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.front().offset =
       sr_res_offset.value().second;
   if (cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
-    srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
         .report_slot_offset = csi_res_offset.value().second;
   }
@@ -313,7 +312,7 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
 
   unsigned csi_offset = 0;
   if (cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
-    auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    auto& target_csi_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
     csi_offset = target_csi_cfg.report_slot_offset;
     cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_res_offset_free_list.emplace_back(

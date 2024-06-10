@@ -291,7 +291,8 @@ struct rrc_ue_reestablishment_context_response {
   security::security_context               sec_context;
   std::optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
   up_context                               up_ctx;
-  bool                                     old_ue_fully_attached = false;
+  bool                                     old_ue_fully_attached   = false;
+  bool                                     reestablishment_ongoing = false;
 };
 
 /// Interface to notify about UE context updates.

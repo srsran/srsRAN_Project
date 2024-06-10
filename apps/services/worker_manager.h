@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../du/du_appconfig.h"
 #include "../gnb/gnb_appconfig.h"
 #include "../units/flexible_du/split_dynamic/dynamic_du_unit_config.h"
 #include "os_sched_affinity_manager.h"
@@ -36,7 +37,10 @@ namespace srsran {
 
 /// Manages the workers of the app.
 struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg, const dynamic_du_unit_config& du_cfg, unsigned gtpu_queue_size);
+  worker_manager(const dynamic_du_unit_config&     du_cfg,
+                 const expert_execution_appconfig& expert_appcfg,
+                 pcap_appconfig&                   pcap_cfg,
+                 unsigned                          gtpu_queue_size);
 
   void stop();
 
@@ -68,9 +72,9 @@ struct worker_manager {
   task_executor*              radio_exec      = nullptr;
   task_executor*              ru_printer_exec = nullptr;
   task_executor*              ru_timing_exec  = nullptr;
+  std::vector<task_executor*> ru_txrx_exec;
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
-  std::vector<task_executor*> ru_tx_exec;
   std::vector<task_executor*> ru_rx_exec;
   task_executor*              cu_cp_e2_exec    = nullptr;
   task_executor*              cu_up_e2_exec    = nullptr;
@@ -123,11 +127,12 @@ private:
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
-  execution_config_helper::worker_pool create_low_prio_workers(const gnb_appconfig& appcfg);
-  void                                 create_low_prio_executors(const gnb_appconfig&            appcfg,
-                                                                 const du_high_unit_pcap_config& du_pcaps,
-                                                                 unsigned                        nof_cells,
-                                                                 unsigned                        gtpu_queue_size);
+  execution_config_helper::worker_pool create_low_prio_workers(const expert_execution_appconfig& expert_appcfg);
+  void                                 create_low_prio_executors(const expert_execution_appconfig& expert_appcfg,
+                                                                 const pcap_appconfig&             pcap_cfg,
+                                                                 const du_high_unit_pcap_config&   du_pcaps,
+                                                                 unsigned                          nof_cells,
+                                                                 unsigned                          gtpu_queue_size);
   void                                 associate_low_prio_executors();
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
@@ -148,8 +153,9 @@ private:
                                unsigned nof_cells);
 
   /// Helper method that creates the Radio Unit executors.
-  void create_ru_executors(const variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-                           const du_high_unit_config&                                                          du_high);
+  void
+  create_ru_executors(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
+                      const du_high_unit_config&                                                               du_high);
 
   /// Helper method that creates the lower PHY executors.
   void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells);

@@ -34,7 +34,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
   unsigned index = 0;
   char     v     = *value;
 
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 32.
   for (unsigned simd_index_end = 32 * (input.size() / 32); index != simd_index_end; index += 32) {
     // Load 32 consecutive words starting at index.
@@ -48,9 +48,9 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
       break;
     }
   }
-#endif // HAVE_AVX2
+#endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
   bool found = false;
   // Advances the input index to either the first SIMD word that contains value or the last index rounded to 16.
   for (unsigned simd_index_end = 16 * (input.size() / 16); index != simd_index_end; index += 16) {
@@ -75,7 +75,7 @@ const char* srsran::srsvec::detail::find(span<const char> input, const char* val
       break;
     }
   }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 
   // Keeps iterating from the current index to the end.
   for (; index != input.size(); ++index) {

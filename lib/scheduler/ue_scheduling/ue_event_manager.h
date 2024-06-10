@@ -45,12 +45,13 @@ class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_dl_buffer_state_indication_handler
 {
 public:
-  ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler, scheduler_event_logger& ev_logger);
+  ue_event_manager(ue_repository& ue_db, scheduler_metrics_handler& metrics_handler);
   ~ue_event_manager();
 
   void add_cell(cell_resource_allocator& cell_res_grid,
                 ue_fallback_scheduler&   fallback_sched,
-                uci_scheduler_impl&      uci_sched);
+                uci_scheduler_impl&      uci_sched,
+                scheduler_event_logger&  ev_logger);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -118,7 +119,6 @@ private:
 
   ue_repository&             ue_db;
   scheduler_metrics_handler& metrics_handler;
-  scheduler_event_logger&    ev_logger;
   srslog::basic_logger&      logger;
 
   /// List of added and configured cells.
@@ -132,6 +132,8 @@ private:
 
     // Reference to the CSI and SR UCI scheduler.
     uci_scheduler_impl* uci_sched = nullptr;
+
+    scheduler_event_logger* ev_logger = nullptr;
   };
   std::array<du_cell, MAX_NOF_DU_CELLS> du_cells{};
 

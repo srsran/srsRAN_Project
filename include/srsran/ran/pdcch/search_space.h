@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/sched_consts.h"
+#include <variant>
 
 namespace srsran {
 
@@ -89,14 +89,14 @@ struct search_space_configuration {
                                       unsigned           search_space0_index);
 
   /// Constructor for non-SearchSpace#0 SearchSpaces.
-  explicit search_space_configuration(search_space_id                                    id_,
-                                      coreset_id                                         cs_id_,
-                                      std::array<uint8_t, 5>                             nof_candidates_,
-                                      variant<common_dci_format, ue_specific_dci_format> dci_fmt_,
-                                      unsigned                                           monitoring_slot_periodicity_,
-                                      unsigned                                           monitoring_slot_offset_,
-                                      subcarrier_spacing                                 scs_common,
-                                      unsigned                                           duration_,
+  explicit search_space_configuration(search_space_id                                         id_,
+                                      coreset_id                                              cs_id_,
+                                      std::array<uint8_t, 5>                                  nof_candidates_,
+                                      std::variant<common_dci_format, ue_specific_dci_format> dci_fmt_,
+                                      unsigned                         monitoring_slot_periodicity_,
+                                      unsigned                         monitoring_slot_offset_,
+                                      subcarrier_spacing               scs_common,
+                                      unsigned                         duration_,
                                       monitoring_symbols_within_slot_t monitoring_symbols_within_slot_);
 
   bool operator==(const search_space_configuration& rhs) const
@@ -132,7 +132,7 @@ struct search_space_configuration {
   bool is_search_space0() const { return id == search_space_id(0); }
 
   /// \brief Returns whether SearchSpace if of Common SearchSpace(CSS) or UE Specific SearchSpace(USS).
-  bool is_common_search_space() const { return variant_holds_alternative<common_dci_format>(dci_fmt); }
+  bool is_common_search_space() const { return std::holds_alternative<common_dci_format>(dci_fmt); }
 
   /// \brief Sets the nof. PDCCH candidates for non-SearchSpace#0 SearchSpaces.
   void set_non_ss0_nof_candidates(std::array<uint8_t, 5> nof_candidates_)
@@ -145,14 +145,14 @@ struct search_space_configuration {
   span<const uint8_t> get_nof_candidates() const { return nof_candidates; }
 
   /// \brief Sets the DCI format(s) monitored in non-SearchSpace#0 SearchSpaces.
-  void set_non_ss0_monitored_dci_formats(variant<common_dci_format, ue_specific_dci_format> dci_fmt_)
+  void set_non_ss0_monitored_dci_formats(std::variant<common_dci_format, ue_specific_dci_format> dci_fmt_)
   {
     srsran_assert(not is_search_space0(), "Invalid access to DCI format(s) monitored of SearchSpace#0");
     dci_fmt = dci_fmt_;
   }
 
   /// \brief Returns DCI format(s) monitored in the SearchSpace.
-  const variant<common_dci_format, ue_specific_dci_format>& get_monitored_dci_formats() const { return dci_fmt; }
+  const std::variant<common_dci_format, ue_specific_dci_format>& get_monitored_dci_formats() const { return dci_fmt; }
 
   /// \brief Sets the periodicity in number of slots for non-SearchSpace#0 SearchSpaces
   void set_non_ss0_monitoring_slot_periodicity(unsigned periodicity)
@@ -236,7 +236,7 @@ private:
   /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> nof_candidates;
   /// DCI formats applicable to SearchSpace.
-  variant<common_dci_format, ue_specific_dci_format> dci_fmt;
+  std::variant<common_dci_format, ue_specific_dci_format> dci_fmt;
   /// SearchSpace periodicity in nof. slots for PDCCH monitoring.
   /// For SearchSpace == 0, set based on tables in TS 38.213, Section 13.
   /// For SearchSpace != 0, possible values: {1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320, 640, 1280, 2560}.

@@ -25,7 +25,9 @@
 /// \file
 /// \brief Implementation of tiny_optional<T> class as a more memory-efficient alternative to optional<T>.
 
-#include "srsran/adt/optional.h"
+#include "srsran/support/srsran_assert.h"
+#include <memory>
+#include <optional>
 
 namespace srsran {
 
@@ -33,17 +35,17 @@ namespace srsran {
 template <typename T, T...>
 struct tiny_optional_traits;
 
-/// \brief Specialization for tiny_optional<T, AbsentValue>, where an instance of T equal to AbsentValue corresponds
-/// to an empty optional.
+/// \brief Specialization for tiny_optional<T, AbsentValue>, where an instance of T equal to AbsentValue corresponds to
+/// an empty optional.
 template <typename T, T AbsentValue>
 struct tiny_optional_traits<T, AbsentValue> {
-  constexpr static T empty_value() noexcept { return AbsentValue; }
+  static constexpr T empty_value() noexcept { return AbsentValue; }
 };
 
 /// \brief Specialization for tiny_optional for unique_ptr<T>, where nullptr corresponds to an empty optional.
 template <typename T>
 struct tiny_optional_traits<std::unique_ptr<T>> {
-  constexpr static std::unique_ptr<T> empty_value() noexcept { return nullptr; }
+  static constexpr std::unique_ptr<T> empty_value() noexcept { return nullptr; }
 };
 
 namespace detail {
@@ -54,13 +56,13 @@ class base_tiny_optional
 {
   using traits = tiny_optional_traits<T, Args...>;
 
-  // SFINAE helpers.
+  /// SFINAE helpers.
   template <typename U>
   using is_self = std::is_same<base_tiny_optional<T, Args...>, std::remove_const_t<std::decay_t<U>>>;
 
 public:
   constexpr base_tiny_optional() = default;
-  constexpr base_tiny_optional(nullopt_t /**/) : base_tiny_optional() {}
+  constexpr base_tiny_optional(std::nullopt_t /**/) : base_tiny_optional() {}
   template <typename U = T, std::enable_if_t<not is_self<U>::value, int> = 0>
   constexpr base_tiny_optional(U&& u) : val(std::forward<U>(u))
   {
@@ -93,16 +95,17 @@ public:
     srsran_assert(has_value(), "Invalid optional<T> access");
     return std::move(this->val);
   }
+
   constexpr T*        operator->() noexcept { return &value(); }
   constexpr const T*  operator->() const noexcept { return &value(); }
   constexpr T&        operator*() & noexcept { return value(); }
-  constexpr T&&       operator*() && noexcept { return value(); }
+  constexpr T&&       operator*() && noexcept { return std::move(value()); }
   constexpr const T&  operator*() const& noexcept { return value(); }
-  constexpr const T&& operator*() const&& noexcept { return value(); }
+  constexpr const T&& operator*() const&& noexcept { return std::move(value()); }
 
   /// Constructs a new object of type T inside the optional<T>'s storage, and sets the optional state to not empty.
   template <typename... Args2>
-  constexpr T& emplace(Args2&&... args) noexcept(std::is_nothrow_constructible<T, Args2...>::value)
+  constexpr T& emplace(Args2&&... args) noexcept(std::is_nothrow_constructible_v<T, Args2...>)
   {
     this->val = T(std::forward<Args2>(args)...);
     return value();
@@ -113,7 +116,7 @@ public:
     return has_value() == rhs.has_value() and (has_value() ? val == rhs.val : true);
   }
 
-  constexpr bool operator!=(const base_tiny_optional& rhs) const { return !(rhs == *this); }
+  constexpr bool operator!=(const base_tiny_optional& rhs) const { return not(rhs == *this); }
 
 private:
   T val = traits::empty_value();
@@ -133,11 +136,11 @@ using is_complete_type = decltype(is_complete_impl(std::declval<T*>()));
 template <typename T, T... Flags>
 class tiny_optional : public std::conditional_t<detail::is_complete_type<tiny_optional_traits<T, Flags...>>::value,
                                                 detail::base_tiny_optional<T, Flags...>,
-                                                optional<T>>
+                                                std::optional<T>>
 {
   using base_type = typename std::conditional_t<detail::is_complete_type<tiny_optional_traits<T, Flags...>>::value,
                                                 detail::base_tiny_optional<T, Flags...>,
-                                                optional<T>>;
+                                                std::optional<T>>;
 
 public:
   using value_type = T;

@@ -23,8 +23,8 @@
 #pragma once
 
 #include "common.h"
-#include "srsran/adt/variant.h"
 #include "fmt/format.h"
+#include <variant>
 
 namespace srsran {
 
@@ -79,7 +79,7 @@ enum class f1ap_cause_transport_t : uint8_t {
   unknown_up_tnl_info_for_iab
 };
 
-using f1ap_cause_t = variant<f1ap_cause_radio_network_t, f1ap_cause_transport_t, cause_protocol_t, cause_misc_t>;
+using f1ap_cause_t = std::variant<f1ap_cause_radio_network_t, f1ap_cause_transport_t, cause_protocol_t, cause_misc_t>;
 
 } // namespace srsran
 
@@ -97,15 +97,16 @@ struct formatter<srsran::f1ap_cause_t> {
   template <typename FormatContext>
   auto format(srsran::f1ap_cause_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    if (srsran::variant_holds_alternative<srsran::f1ap_cause_radio_network_t>(o)) {
-      return format_to(ctx.out(), "radio_network-id{}", srsran::variant_get<srsran::f1ap_cause_radio_network_t>(o));
-    } else if (srsran::variant_holds_alternative<srsran::f1ap_cause_transport_t>(o)) {
-      return format_to(ctx.out(), "transport-id{}", srsran::variant_get<srsran::f1ap_cause_transport_t>(o));
-    } else if (srsran::variant_holds_alternative<srsran::cause_protocol_t>(o)) {
-      return format_to(ctx.out(), "protocol-id{}", srsran::variant_get<srsran::cause_protocol_t>(o));
-    } else {
-      return format_to(ctx.out(), "misc-id{}", srsran::variant_get<srsran::cause_misc_t>(o));
+    if (const auto* cause = std::get_if<srsran::f1ap_cause_radio_network_t>(&o)) {
+      return format_to(ctx.out(), "radio_network-id{}", *cause);
     }
+    if (const auto* cause = std::get_if<srsran::f1ap_cause_transport_t>(&o)) {
+      return format_to(ctx.out(), "transport-id{}", *cause);
+    }
+    if (const auto* cause = std::get_if<srsran::cause_protocol_t>(&o)) {
+      return format_to(ctx.out(), "protocol-id{}", *cause);
+    }
+    return format_to(ctx.out(), "misc-id{}", std::get<srsran::cause_misc_t>(o));
   }
 };
 

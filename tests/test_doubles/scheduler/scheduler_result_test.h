@@ -49,15 +49,8 @@ inline const dl_msg_alloc* find_ue_pdsch(rnti_t rnti, span<const dl_msg_alloc> d
   return it != dlgrants.end() ? &*it : nullptr;
 }
 
-inline const dl_msg_alloc* find_ue_pdsch_with_lcid(rnti_t rnti, lcid_t lcid, span<const dl_msg_alloc> dlgrants)
-{
-  auto it = std::find_if(dlgrants.begin(), dlgrants.end(), [rnti, lcid](const dl_msg_alloc& pdsch) {
-    return pdsch.pdsch_cfg.rnti == rnti and std::any_of(pdsch.tb_list[0].lc_chs_to_sched.begin(),
-                                                        pdsch.tb_list[0].lc_chs_to_sched.end(),
-                                                        [lcid](const dl_msg_lc_info& t) { return t.lcid == lcid; });
-  });
-  return it != dlgrants.end() ? &*it : nullptr;
-}
+const dl_msg_alloc* find_ue_pdsch_with_lcid(rnti_t rnti, lcid_dl_sch_t lcid, span<const dl_msg_alloc> dlgrants);
+const dl_msg_alloc* find_ue_pdsch_with_lcid(rnti_t rnti, lcid_t lcid, span<const dl_msg_alloc> dlgrants);
 
 inline const ul_sched_info* find_ue_pusch(rnti_t rnti, span<const ul_sched_info> ulgrants)
 {
@@ -115,5 +108,8 @@ inline const pucch_info* find_ue_pucch_with_csi(rnti_t rnti, span<const pucch_in
   }
   return nullptr;
 }
+
+/// Find UCI (both PUCCH and PUSCH) containing CSI for the given RNTI.
+const csi_report_configuration* find_ue_uci_with_csi(rnti_t rnti, const ul_sched_result& ul_res);
 
 } // namespace srsran

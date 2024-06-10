@@ -21,6 +21,7 @@
  */
 
 #include "dpdk_ethernet_receiver.h"
+#include "dpdk_ethernet_rx_buffer_impl.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/support/executors/task_executor.h"
@@ -36,7 +37,7 @@ namespace {
 class dummy_frame_notifier : public frame_notifier
 {
   // See interface for documentation.
-  void on_new_frame(span<const uint8_t> payload) override {}
+  void on_new_frame(ether::unique_rx_buffer buffer) override {}
 };
 
 } // namespace
@@ -114,25 +115,10 @@ void dpdk_receiver_impl::receive()
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
   }
-  ofh_tracer << trace_event("ofh_dpdk_rx", dpdk_rx_tp);
 
   for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
-    std::array<uint8_t, MAX_BUFFER_SIZE> buffer;
-
-    trace_point tp             = ofh_tracer.now();
-    trace_point dpdk_memcpy_tp = ofh_tracer.now();
     ::rte_vlan_strip(mbuf);
-    ::rte_ether_hdr* eth    = rte_pktmbuf_mtod(mbuf, ::rte_ether_hdr*);
-    unsigned         length = mbuf->pkt_len;
-
-    std::memcpy(buffer.data(), eth, length);
-    ofh_tracer << trace_event("ofh_dpdk_memcpy", dpdk_memcpy_tp);
-
-    trace_point dpdk_free_tp = ofh_tracer.now();
-    ::rte_pktmbuf_free(mbuf);
-    ofh_tracer << trace_event("ofh_dpdk_free_mbufs", dpdk_free_tp);
-
-    notifier.get().on_new_frame(span<const uint8_t>(buffer.data(), length));
-    ofh_tracer << trace_event("ofh_receiver", tp);
+    notifier.get().on_new_frame(unique_rx_buffer(dpdk_rx_buffer_impl(mbuf)));
   }
+  ofh_tracer << trace_event("ofh_dpdk_rx", dpdk_rx_tp);
 }

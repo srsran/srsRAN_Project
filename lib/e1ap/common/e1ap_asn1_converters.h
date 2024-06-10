@@ -22,20 +22,23 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_ies.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cause/e1ap_cause.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos_prio_level.h"
+#include "srsran/ran/s_nssai.h"
+#include "srsran/sdap/sdap_config.h"
+#include "srsran/security/security.h"
 #include "srsran/support/error_handling.h"
 #include <string>
-#include <vector>
 
 namespace srsran {
+
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
 /// \param[in] ciph_algo Cyphering Algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
@@ -58,7 +61,7 @@ ciphering_algorithm_to_e1ap_asn1(const srsran::security::ciphering_algorithm& ci
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
       break;
     default:
-      srsran_assert(false, "Invalid ciphering algorithm ({})", ciph_algo);
+      report_fatal_error("Invalid ciphering algorithm ({})", ciph_algo);
       break;
   }
 
@@ -71,7 +74,7 @@ ciphering_algorithm_to_e1ap_asn1(const srsran::security::ciphering_algorithm& ci
 inline srsran::security::ciphering_algorithm
 e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_ciph_algo)
 {
-  srsran::security::ciphering_algorithm ciph_algo = {};
+  srsran::security::ciphering_algorithm ciph_algo;
 
   switch (asn1_ciph_algo) {
     case asn1::e1ap::ciphering_algorithm_opts::nea0:
@@ -87,7 +90,7 @@ e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_c
       ciph_algo = srsran::security::ciphering_algorithm::nea3;
       break;
     default:
-      srsran_assert(false, "Invalid ciphering algorithm ({})", asn1_ciph_algo);
+      report_fatal_error("Invalid ciphering algorithm ({})", asn1_ciph_algo);
   }
 
   return ciph_algo;
@@ -115,7 +118,7 @@ integrity_algorithm_to_e1ap_asn1(const srsran::security::integrity_algorithm& in
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
       break;
     default:
-      srsran_assert(false, "Invalid integrity protection algorithm ({})", int_algo);
+      report_fatal_error("Invalid integrity protection algorithm ({})", int_algo);
   }
 
   return asn1_int_algo;
@@ -127,7 +130,7 @@ integrity_algorithm_to_e1ap_asn1(const srsran::security::integrity_algorithm& in
 inline srsran::security::integrity_algorithm
 e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorithm_e& asn1_int_algo)
 {
-  srsran::security::integrity_algorithm int_algo = {};
+  srsran::security::integrity_algorithm int_algo;
 
   switch (asn1_int_algo) {
     case asn1::e1ap::integrity_protection_algorithm_opts::nia0:
@@ -143,7 +146,7 @@ e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorith
       int_algo = srsran::security::integrity_algorithm::nia3;
       break;
     default:
-      srsran_assert(false, "Invalid integrity protection algorithm ({})", asn1_int_algo);
+      report_fatal_error("Invalid integrity protection algorithm ({})", asn1_int_algo);
   }
 
   return int_algo;
@@ -186,10 +189,7 @@ inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cg
 {
   asn1::e1ap::nr_cgi_s asn1_nr_cgi;
 
-  // nr cell id
   asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
-
-  // plmn id
   asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
 
   return asn1_nr_cgi;
@@ -224,7 +224,7 @@ inline asn1::e1ap::sdap_hdr_dl_opts::options sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_h
 /// \brief Converts type \c sdap_config to an E1AP ASN.1 type.
 /// \param sdap_cfg sdap config object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(sdap_config_t sdap_cfg)
+inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(const sdap_config_t& sdap_cfg)
 {
   asn1::e1ap::sdap_cfg_s asn1_sdap_cfg;
 
@@ -285,12 +285,7 @@ inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_c
 {
   sdap_config_t sdap_cfg;
 
-  if (asn1_sdap_cfg.default_drb == asn1::e1ap::default_drb_opts::options::true_value) {
-    sdap_cfg.default_drb = true;
-  } else {
-    sdap_cfg.default_drb = false;
-  }
-
+  sdap_cfg.default_drb = asn1_sdap_cfg.default_drb == asn1::e1ap::default_drb_opts::options::true_value;
   sdap_cfg.sdap_hdr_dl = e1ap_asn1_to_sdap_hdr_dl_cfg(asn1_sdap_cfg.sdap_hdr_dl);
   sdap_cfg.sdap_hdr_ul = e1ap_asn1_to_sdap_hdr_ul_cfg(asn1_sdap_cfg.sdap_hdr_ul);
 
@@ -312,7 +307,7 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::pdcp_rlc_mode rlc_mod)
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
-      srsran_assert(false, "Invalid RLC mode ({})", rlc_mod);
+      report_fatal_error("Invalid RLC mode ({})", rlc_mod);
   }
 
   return asn1_rlc_mode;
@@ -323,7 +318,7 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::pdcp_rlc_mode rlc_mod)
 /// \return The rlc_mode object where the result of the conversion is stored.
 inline srsran::pdcp_rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 {
-  srsran::pdcp_rlc_mode rlc_mode = {};
+  srsran::pdcp_rlc_mode rlc_mode;
 
   switch (asn1_rlc_mod) {
     case asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional:
@@ -335,7 +330,7 @@ inline srsran::pdcp_rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mo
       rlc_mode = srsran::pdcp_rlc_mode::am;
       break;
     default:
-      srsran_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
+      report_fatal_error("Invalid RLC mode: {}", asn1_rlc_mod.to_string());
       break;
   }
 
@@ -355,7 +350,7 @@ inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
       asn1_sn_size = asn1::e1ap::pdcp_sn_size_e::s_neg18;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", sn_size);
+      report_fatal_error("Unsupported PDCP SN size. PDCP SN size={}", sn_size);
   }
 
   return asn1_sn_size;
@@ -364,7 +359,7 @@ inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
 /// \brief Convert E1AP ASN.1 to PDCP SN size.
 inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size)
 {
-  pdcp_sn_size sn_size = {};
+  pdcp_sn_size sn_size;
 
   switch (asn1_sn_size) {
     case asn1::e1ap::pdcp_sn_size_e::s_neg12:
@@ -374,7 +369,7 @@ inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size
       sn_size = pdcp_sn_size::size18bits;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", asn1_sn_size);
+      report_fatal_error("Unsupported PDCP SN size. PDCP SN size={}", asn1_sn_size);
   }
 
   return sn_size;
@@ -383,7 +378,7 @@ inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size
 /// \brief Converts E1AP ASN.1 discard timer type to \c pdcp_discard_timer type.
 inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e asn1_discard_timer)
 {
-  pdcp_discard_timer discard_timer = {};
+  pdcp_discard_timer discard_timer;
 
   switch (asn1_discard_timer) {
     case asn1::e1ap::discard_timer_opts::ms10:
@@ -435,7 +430,7 @@ inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e
       discard_timer = pdcp_discard_timer::infinity;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", asn1_discard_timer);
+      report_fatal_error("Unsupported PDCP discard timer. PDCP discard timer={}", asn1_discard_timer);
   }
   return discard_timer;
 }
@@ -495,7 +490,7 @@ inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer
       asn1_discard_timer = asn1::e1ap::discard_timer_opts::infinity;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
+      report_fatal_error("Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
   }
 
   return asn1_discard_timer;
@@ -504,7 +499,7 @@ inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer
 /// \brief Converts E1AP ASN.1 t-Reordering type to \c pdcp_t_reordering type.
 inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e asn1_t_reordering)
 {
-  pdcp_t_reordering t_reordering = {};
+  pdcp_t_reordering t_reordering;
 
   // t-Reordering
   switch (asn1_t_reordering) {
@@ -617,7 +612,7 @@ inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e as
       t_reordering = pdcp_t_reordering::ms3000;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", asn1_t_reordering);
+      report_fatal_error("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", asn1_t_reordering);
   }
 
   return t_reordering;
@@ -740,7 +735,7 @@ inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_
       asn1_t_reordering = asn1::e1ap::t_reordering_e::nulltype;
       break;
     default:
-      srsran_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
+      report_fatal_error("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
   }
 
   return asn1_t_reordering;
@@ -753,13 +748,13 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
 {
   asn1::e1ap::pdcp_cfg_s asn1_pdcp_cfg;
 
-  // pdcp sn size dl
+  // pdcp sn size dl.
   asn1_pdcp_cfg.pdcp_sn_size_dl = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_dl);
 
-  // pdcp sn size ul
+  // pdcp sn size ul.
   asn1_pdcp_cfg.pdcp_sn_size_ul = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_ul);
 
-  // rlc mode
+  // rlc mode.
   asn1_pdcp_cfg.rlc_mode = rlc_mode_to_asn1(pdcp_cfg.rlc_mod);
 
   // rohc params
@@ -796,25 +791,25 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     }
   }
 
-  // t reordering timer
+  // t reordering timer.
   if (pdcp_cfg.t_reordering_timer.has_value()) {
     asn1_pdcp_cfg.t_reordering_timer_present      = true;
     asn1_pdcp_cfg.t_reordering_timer.t_reordering = pdcp_t_reordering_to_asn1(pdcp_cfg.t_reordering_timer.value());
   }
 
-  // discard timer
+  // discard timer.
   if (pdcp_cfg.discard_timer.has_value()) {
     asn1_pdcp_cfg.discard_timer_present = true;
     asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
   }
 
-  // ul data split thres
+  // ul data split thres.
   if (pdcp_cfg.ul_data_split_thres.has_value()) {
     asn1_pdcp_cfg.ul_data_split_thres_present = true;
     asn1::number_to_enum(asn1_pdcp_cfg.ul_data_split_thres, pdcp_cfg.ul_data_split_thres.value());
   }
 
-  // pdcp dupl
+  // pdcp dupl.
   if (pdcp_cfg.pdcp_dupl.has_value()) {
     asn1_pdcp_cfg.pdcp_dupl_present = true;
     if (pdcp_cfg.pdcp_dupl.value()) {
@@ -824,7 +819,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     }
   }
 
-  // pdcp reest
+  // pdcp reest.
   if (pdcp_cfg.pdcp_reest.has_value()) {
     asn1_pdcp_cfg.pdcp_reest_present = true;
     if (pdcp_cfg.pdcp_reest.value()) {
@@ -834,7 +829,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     }
   }
 
-  // pdcp data recovery
+  // pdcp data recovery.
   if (pdcp_cfg.pdcp_data_recovery.has_value()) {
     asn1_pdcp_cfg.pdcp_data_recovery_present = true;
     if (pdcp_cfg.pdcp_data_recovery.value()) {
@@ -844,13 +839,13 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
     }
   }
 
-  // dupl activation
+  // dupl activation.
   if (pdcp_cfg.dupl_activation.has_value()) {
     asn1_pdcp_cfg.dupl_activation_present = true;
     asn1::string_to_enum(asn1_pdcp_cfg.dupl_activation, pdcp_cfg.dupl_activation.value());
   }
 
-  // out of orfder delivery
+  // out of orfder delivery.
   if (pdcp_cfg.out_of_order_delivery.has_value()) {
     asn1_pdcp_cfg.out_of_order_delivery_present = true;
     if (pdcp_cfg.out_of_order_delivery.value()) {
@@ -870,13 +865,13 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
 {
   e1ap_pdcp_config pdcp_cfg;
 
-  // pdcp sn size dl
+  // pdcp sn size dl.
   pdcp_cfg.pdcp_sn_size_dl = asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_dl);
 
-  // pdcp sn size ul
+  // pdcp sn size ul.
   pdcp_cfg.pdcp_sn_size_ul = asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_ul);
 
-  // rlc mode
+  // rlc mode.
   pdcp_cfg.rlc_mod = asn1_to_rlc_mode(asn1_pdcp_cfg.rlc_mode);
 
   // rohc params
@@ -899,8 +894,8 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
       rohc_params.rohc     = rohc;
       pdcp_cfg.rohc_params = rohc_params;
     } else if (asn1_pdcp_cfg.rohc_params.type().value == asn1::e1ap::rohc_params_c::types_opts::ul_only_rohc) {
-      e1ap_rohc_params rohc_params = {};
-      e1ap_rohc        ul_only_rohc;
+      e1ap_rohc_params rohc_params  = {};
+      e1ap_rohc        ul_only_rohc = {};
 
       ul_only_rohc.max_cid       = asn1_pdcp_cfg.rohc_params.ul_only_rohc().max_c_id;
       ul_only_rohc.rohc_profiles = asn1_pdcp_cfg.rohc_params.ul_only_rohc().rohc_profiles;
@@ -919,22 +914,22 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
     }
   }
 
-  // t reordering timer
+  // t reordering timer.
   if (asn1_pdcp_cfg.t_reordering_timer_present) {
     pdcp_cfg.t_reordering_timer = asn1_to_pdcp_t_reordering(asn1_pdcp_cfg.t_reordering_timer.t_reordering);
   }
 
-  // discard timer
+  // discard timer.
   if (asn1_pdcp_cfg.discard_timer_present) {
     pdcp_cfg.discard_timer = asn1_to_pdcp_discard_timer(asn1_pdcp_cfg.discard_timer);
   }
 
-  // ul data split thres
+  // ul data split thres.
   if (asn1_pdcp_cfg.ul_data_split_thres_present) {
     pdcp_cfg.ul_data_split_thres = asn1_pdcp_cfg.ul_data_split_thres.to_number();
   }
 
-  // pdcp dupl
+  // pdcp dupl.
   if (asn1_pdcp_cfg.pdcp_dupl_present) {
     if (asn1_pdcp_cfg.pdcp_dupl == asn1::e1ap::pdcp_dupl_opts::options::true_value) {
       pdcp_cfg.pdcp_dupl = true;
@@ -943,7 +938,7 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
     }
   }
 
-  // pdcp reest
+  // pdcp reest.
   if (asn1_pdcp_cfg.pdcp_reest_present) {
     if (asn1_pdcp_cfg.pdcp_reest == asn1::e1ap::pdcp_reest_opts::options::true_value) {
       pdcp_cfg.pdcp_reest = true;
@@ -952,7 +947,7 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
     }
   }
 
-  // pdcp data recovery
+  // pdcp data recovery.
   if (asn1_pdcp_cfg.pdcp_data_recovery_present) {
     if (asn1_pdcp_cfg.pdcp_data_recovery == asn1::e1ap::pdcp_data_recovery_opts::options::true_value) {
       pdcp_cfg.pdcp_data_recovery = true;
@@ -961,12 +956,12 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
     }
   }
 
-  // dupl activation
+  // dupl activation.
   if (asn1_pdcp_cfg.dupl_activation_present) {
     pdcp_cfg.dupl_activation = asn1_pdcp_cfg.dupl_activation.to_string();
   }
 
-  // out of orfder delivery
+  // out of orfder delivery.
   if (asn1_pdcp_cfg.out_of_order_delivery_present) {
     if (asn1_pdcp_cfg.out_of_order_delivery == asn1::e1ap::out_of_order_delivery_opts::options::true_value) {
       pdcp_cfg.out_of_order_delivery = true;
@@ -1012,21 +1007,24 @@ inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
 {
   asn1::e1ap::cause_c asn1_cause;
 
-  if (variant_holds_alternative<e1ap_cause_radio_network_t>(cause)) {
-    asn1_cause.set_radio_network() =
-        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<e1ap_cause_radio_network_t>(cause));
-  } else if (variant_holds_alternative<e1ap_cause_transport_t>(cause)) {
-    asn1_cause.set_transport() =
-        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<e1ap_cause_transport_t>(cause));
-  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
-    asn1_cause.set_protocol() =
-        static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
-  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
-    asn1_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
-  } else {
-    report_fatal_error("Cannot convert cause to E1AP type: {}", cause);
+  if (const auto* result = std::get_if<e1ap_cause_radio_network_t>(&cause)) {
+    asn1_cause.set_radio_network() = static_cast<asn1::e1ap::cause_radio_network_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<e1ap_cause_transport_t>(&cause)) {
+    asn1_cause.set_transport() = static_cast<asn1::e1ap::cause_transport_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<cause_protocol_t>(&cause)) {
+    asn1_cause.set_protocol() = static_cast<asn1::e1ap::cause_protocol_opts::options>(*result);
+    return asn1_cause;
+  }
+  if (const auto* result = std::get_if<cause_misc_t>(&cause)) {
+    asn1_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(*result);
+    return asn1_cause;
   }
 
+  report_fatal_error("Cannot convert cause to E1AP type: {}", cause);
   return asn1_cause;
 }
 
@@ -1058,12 +1056,13 @@ inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi
   uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
   ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
 
-  std::string mcc_string, mnc_string;
+  std::string mcc_string;
+  std::string mnc_string;
   mcc_to_string(cgi.mcc, &mcc_string);
   mnc_to_string(cgi.mnc, &mnc_string);
   cgi.plmn = mcc_string + mnc_string;
 
-  // Set PLMN hex string
+  // Set PLMN hex string.
   cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
 
   cgi.nci = asn1_cgi.nr_cell_id.to_number();
@@ -1117,12 +1116,12 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
   for (const auto& asn1_flow_map_item : ans1_flow_map_list) {
     e1ap_qos_flow_qos_param_item flow_map_item;
     flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id);
-    // Add qos flow level params
+    // Add qos flow level params.
 
-    // Add qos characteristics
+    // Add qos characteristics.
     if (asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.type() ==
         asn1::e1ap::qos_characteristics_c::types_opts::dyn_5qi) {
-      auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
+      const auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
       dyn_5qi_descriptor_t dyn_5qi;
       dyn_5qi.qos_prio_level                 = uint_to_qos_prio_level(asn1_dyn_5qi.qos_prio_level);
@@ -1145,7 +1144,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
 
       flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
     } else {
-      auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
+      const auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
       non_dyn_5qi_descriptor_t non_dyn_5qi;
       non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
@@ -1161,7 +1160,8 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
 
       flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
     }
-    // add ng ran alloc retention prio
+
+    // Add ng ran alloc retention prio.
     flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
         asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level;
     flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
@@ -1169,7 +1169,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
         asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability.to_string();
 
-    // Add gbr qos flow info
+    // Add gbr qos flow info.
     if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info_present) {
       e1ap_gbr_qos_flow_info gbr_qos_flow_info;
       gbr_qos_flow_info.max_flow_bit_rate_dl =
@@ -1192,31 +1192,31 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info = gbr_qos_flow_info;
     }
 
-    // Add reflective qos attribute
+    // Add reflective qos attribute.
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute =
           asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute);
     }
 
-    // Add add qos info
+    // Add add qos info.
     if (asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info_present) {
       flow_map_item.qos_flow_level_qos_params.add_qos_info =
           asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info);
     }
 
-    // Add paging policy ind
+    // Add paging policy ind.
     if (asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind_present) {
       flow_map_item.qos_flow_level_qos_params.paging_policy_ind =
           asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind;
     }
 
-    // Add reflective qos ind
+    // Add reflective qos ind.
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_ind =
           asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind);
     }
 
-    // Add qos flow map ind
+    // Add qos flow map ind.
     if (asn1_flow_map_item.qos_flow_map_ind_present) {
       flow_map_item.qos_flow_map_ind = asn1_flow_map_item.qos_flow_map_ind.to_string();
     }
@@ -1230,7 +1230,7 @@ inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_reque
 {
   e1ap_data_forwarding_info_request data_forwarding_info_request;
 
-  // drb data forwarding info request
+  // DRB data forwarding info request.
   data_forwarding_info_request.data_forwarding_request =
       asn1_data_forwarding_info_request.data_forwarding_request.to_string();
 
@@ -1245,7 +1245,7 @@ inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_reque
   return data_forwarding_info_request;
 }
 
-/// \brief Convert E1AP ASN.1 PDCP SN Status Info to \c e1ap_pdcp_sn_status_info type
+/// \brief Convert E1AP ASN.1 PDCP SN Status Info to \c e1ap_pdcp_sn_status_info type.
 inline e1ap_pdcp_sn_status_info
 e1ap_asn1_to_pdcp_sn_status_info(const asn1::e1ap::pdcp_sn_status_info_s& asn1_pdcp_sn_status_info)
 {
@@ -1275,31 +1275,31 @@ e1ap_drb_item_list_to_asn1(asn1::dyn_array<template_asn1_item>&                 
   for (const auto& drb_setup_item_ng_ran : drb_setup_list_ng_ran) {
     template_asn1_item asn1_drb_setup_item;
 
-    // Add DRB ID
+    // Add DRB ID.
     asn1_drb_setup_item.drb_id = drb_id_to_uint(drb_setup_item_ng_ran.drb_id);
 
-    // Add UL UP Transport Params
+    // Add UL UP Transport Params.
     for (const auto& ul_up_transport_param : drb_setup_item_ng_ran.ul_up_transport_params) {
       asn1::e1ap::up_params_item_s asn1_up_transport_param;
       up_transport_layer_info_to_asn1(asn1_up_transport_param.up_tnl_info, ul_up_transport_param.up_tnl_info);
       asn1_drb_setup_item.ul_up_transport_params.push_back(asn1_up_transport_param);
     }
 
-    // Add Flow setup List
+    // Add Flow setup List.
     for (const auto& qos_flow_item : drb_setup_item_ng_ran.flow_setup_list) {
       asn1::e1ap::qos_flow_item_s asn1_flow_item;
       asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
       asn1_drb_setup_item.flow_setup_list.push_back(asn1_flow_item);
     }
 
-    // Add Flow Failed List
+    // Add Flow Failed List.
     for (const auto& flow_failed_item : drb_setup_item_ng_ran.flow_failed_list) {
       asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
       asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
       asn1_drb_setup_item.flow_failed_list.push_back(asn1_flow_failed_item);
     }
 
-    // Add DRB Data Forwarding Info Response
+    // Add DRB Data Forwarding Info Response.
     if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.has_value()) {
       asn1_drb_setup_item.drb_data_forwarding_info_resp_present = true;
       if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {

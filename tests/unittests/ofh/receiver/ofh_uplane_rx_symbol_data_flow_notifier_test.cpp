@@ -29,6 +29,8 @@ using namespace srsran;
 using namespace ofh;
 using namespace ofh::testing;
 
+static constexpr ofdm_symbol_range symbol_range = {0, 14};
+
 TEST(ofh_data_flow_uplane_rx_symbol_notifier, empty_context_does_not_notify)
 {
   auto                                notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
@@ -54,7 +56,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, unwritten_grid_does_not_notify)
   unsigned                            sector = 0;
   resource_grid_spy                   grid(2, 14, 273);
 
-  repo->add({slot, sector}, grid);
+  repo->add({slot, sector}, grid, symbol_range);
   sender.notify_received_symbol(slot, symbol);
 
   ASSERT_FALSE(repo->get(slot, symbol).empty());
@@ -73,7 +75,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, completed_resource_grid_triggers_n
   resource_grid_spy                   grid(2, 14, 273);
 
   static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
-  repo->add({slot, sector}, grid);
+  repo->add({slot, sector}, grid, symbol_range);
   ASSERT_FALSE(repo->get(slot, symbol).empty());
 
   // Fill the grid.
@@ -102,7 +104,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_port_does_not_notify)
   resource_grid_spy                   grid(2, 14, 273);
 
   static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
-  repo->add({slot, sector}, grid);
+  repo->add({slot, sector}, grid, symbol_range);
 
   // Fill the grid.
   repo->write_grid(slot, 0, symbol, 0, samples);
@@ -125,7 +127,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_prbs_does_not_notify)
   resource_grid_spy                   grid(1, 14, 273);
 
   static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc() - 1);
-  repo->add({slot, sector}, grid);
+  repo->add({slot, sector}, grid, symbol_range);
 
   // Fill the grid.
   repo->write_grid(slot, 0, symbol, 0, samples);

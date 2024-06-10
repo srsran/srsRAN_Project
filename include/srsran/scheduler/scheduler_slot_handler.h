@@ -220,7 +220,7 @@ struct dl_msg_lc_info {
   /// Number of scheduled bytes for this specific logical channel. {0..65535}.
   unsigned sched_bytes;
   /// Holds payload of CE except UE Contention Resolution Identity.
-  variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
+  std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
 };
 
 struct dl_msg_tb_info {

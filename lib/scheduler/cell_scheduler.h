@@ -31,6 +31,7 @@
 #include "common_scheduling/sib_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "config/cell_configuration.h"
+#include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_result_logger.h"
 #include "pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "pucch_scheduling/pucch_allocator_impl.h"
@@ -52,7 +53,6 @@ public:
                           const sched_cell_configuration_request_message& msg,
                           const cell_configuration&                       cell_cfg,
                           ue_scheduler&                                   ue_sched,
-                          scheduler_event_logger&                         ev_logger,
                           scheduler_metrics_handler&                      metrics);
 
   void run_slot(slot_point sl_tx);
@@ -75,7 +75,7 @@ private:
   cell_resource_allocator res_grid;
 
   /// Logger of cell events and scheduling results.
-  scheduler_event_logger&    event_logger;
+  scheduler_event_logger     event_logger;
   scheduler_metrics_handler& metrics;
   scheduler_result_logger    result_logger;
   srslog::basic_logger&      logger;

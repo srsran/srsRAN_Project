@@ -74,22 +74,36 @@ struct message_receiver_dependencies {
   std::unique_ptr<sequence_id_checker> seq_id_checker;
 };
 
-/// Open Fronthaul message receiver.
+/// Open Fronthaul message receiver interface.
 ///
 /// This class listens to incoming Ethernet frames and decodes them as Open Fronthaul messages. Once a new message is
 /// detected, is it handled to the corresponding data flow for further processing.
 class message_receiver : public ether::frame_notifier
 {
 public:
-  message_receiver(const message_receiver_config& config, message_receiver_dependencies&& dependencies);
-
-  // See interface for documentation.
-  void on_new_frame(span<const uint8_t> payload) override;
+  /// Default destructor.
+  virtual ~message_receiver() = default;
 
   /// Returns the Ethernet receiver of this Open Fronthaul message receiver.
-  ether::receiver& get_ethernet_receiver() { return *eth_receiver; }
+  virtual ether::receiver& get_ethernet_receiver() = 0;
+};
+
+/// Open Fronthaul message receiver interface implementation.
+class message_receiver_impl : public message_receiver
+{
+public:
+  message_receiver_impl(const message_receiver_config& config, message_receiver_dependencies&& dependencies);
+
+  // See interface for documentation.
+  void on_new_frame(ether::unique_rx_buffer buffer) override;
+
+  // See interface for the documentation.
+  ether::receiver& get_ethernet_receiver() override { return *eth_receiver; }
 
 private:
+  /// Processes an Ethernet frame received from the underlying Ethernet link.
+  void process_new_frame(ether::unique_rx_buffer buff);
+
   /// Returns true if the ethernet frame represented by the given eth parameters should be filtered, otherwise false.
   bool should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const;
 

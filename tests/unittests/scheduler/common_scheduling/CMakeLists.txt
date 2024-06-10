@@ -32,4 +32,4 @@ target_link_libraries(common_scheduler_test
         scheduler_test_suite
         gtest
         gtest_main)
-gtest_discover_tests(common_scheduler_test)
+add_test(common_scheduler_test common_scheduler_test)

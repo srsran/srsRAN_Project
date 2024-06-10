@@ -35,6 +35,9 @@ struct si_message_scheduling_config {
   units::bytes msg_len;
   /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
   unsigned period_radio_frames;
+  /// SI window position of the associated SI-message. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
+  /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+  std::optional<unsigned> si_window_position;
 };
 
 /// \brief Configuration of the SI message scheduling.

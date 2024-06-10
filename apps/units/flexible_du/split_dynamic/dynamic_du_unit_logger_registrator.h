@@ -38,12 +38,12 @@ inline void register_dynamic_du_loggers(const dynamic_du_unit_config& config)
   register_du_low_loggers(config.du_low_cfg.loggers);
   register_fapi_loggers(config.fapi_cfg);
 
-  if (variant_holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
-    register_ru_sdr_logs(variant_get<ru_sdr_unit_config>(config.ru_cfg).loggers);
+  if (std::holds_alternative<ru_sdr_unit_config>(config.ru_cfg)) {
+    register_ru_sdr_logs(std::get<ru_sdr_unit_config>(config.ru_cfg).loggers);
   }
 
-  if (variant_holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
-    register_ru_ofh_loggers(variant_get<ru_ofh_unit_parsed_config>(config.ru_cfg).config.loggers);
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(config.ru_cfg)) {
+    register_ru_ofh_loggers(std::get<ru_ofh_unit_parsed_config>(config.ru_cfg).config.loggers);
   }
 }
 

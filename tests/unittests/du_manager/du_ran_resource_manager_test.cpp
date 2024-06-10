@@ -47,7 +47,7 @@ protected:
         qos_cfg_list))
   {
     if (params.csi_rs_enabled) {
-      default_csi_pucch_res_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+      default_csi_pucch_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
           default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
     }
   }
@@ -81,7 +81,7 @@ protected:
   {
     return serv_cell_cfg.csi_meas_cfg.has_value() and
            not serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-           srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+           std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   }
 
@@ -90,7 +90,7 @@ protected:
   {
     srsran_assert(has_ue_csi_cfg(serv_cell_cfg), "CSI configuration not found");
 
-    return srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    return std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   }
 
@@ -172,7 +172,7 @@ protected:
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-                      srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                           default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
                   "CSI report configuration is required for this unittest;");
   }
@@ -233,13 +233,12 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
     // Check if PUCCH config is correctly updated.
     const serving_cell_config serving_cell_cfg = ue_res->cells[0].serv_cell_cfg;
     std::optional<unsigned>   csi_pucch_res{};
-    const bool                has_csi_cfg =
-        serving_cell_cfg.csi_meas_cfg.has_value() and
-        not serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-        srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-            serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+    const bool                has_csi_cfg = serving_cell_cfg.csi_meas_cfg.has_value() and
+                             not serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+                             std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                                 serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
     if (has_csi_cfg) {
-      csi_pucch_res.emplace(srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+      csi_pucch_res.emplace(std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                                 serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type)
                                 .pucch_csi_res_list.front()
                                 .pucch_res_id.cell_res_id);
@@ -344,7 +343,7 @@ protected:
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-                      srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                           default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
                   "CSI report configuration is required for this unittest;");
   }
@@ -573,7 +572,7 @@ make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params& pucch_p
 
   du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = pucch_params_.sr_period;
   if (du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
-    variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type)
         .report_slot_period = pucch_params_.csi_period;
   }
@@ -592,7 +591,7 @@ protected:
   {
     srsran_assert(default_ue_cell_cfg.csi_meas_cfg.has_value() and
                       not default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
-                      srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                      std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                           default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
                   "CSI report configuration is required for this unittest;");
     lcm_csi_sr_period =

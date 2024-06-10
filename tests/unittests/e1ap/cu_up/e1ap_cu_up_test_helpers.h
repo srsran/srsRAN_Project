@@ -33,7 +33,7 @@
 namespace srsran {
 namespace srs_cu_up {
 
-class dummy_e1ap_connection_client : public srs_cu_up::e1ap_connection_client
+class dummy_e1_connection_client : public srs_cu_up::e1_connection_client
 {
 public:
   e1ap_message last_tx_e1ap_pdu;
@@ -59,7 +59,7 @@ protected:
   void setup_bearer(unsigned int cu_cp_ue_e1ap_id);
 
   /// Dummy E1AP gateway to connect to CU-CP and send E1AP PDUs.
-  dummy_e1ap_connection_client e1ap_gw;
+  dummy_e1_connection_client e1ap_gw;
 
   timer_manager timers;
 

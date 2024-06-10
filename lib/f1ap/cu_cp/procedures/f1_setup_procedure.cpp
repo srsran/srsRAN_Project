@@ -64,7 +64,7 @@ du_setup_request srsran::srs_cu_cp::create_du_setup_request(const asn1::f1ap::f1
   // GNB DU served cells list
   if (asn1_request->gnb_du_served_cells_list_present) {
     for (const auto& asn1_served_cell_item : asn1_request->gnb_du_served_cells_list) {
-      auto& asn1_served_cell = asn1_served_cell_item.value().gnb_du_served_cells_item();
+      const auto& asn1_served_cell = asn1_served_cell_item.value().gnb_du_served_cells_item();
 
       cu_cp_du_served_cells_item served_cell;
 
@@ -144,7 +144,7 @@ static f1ap_message create_f1_setup_response(const asn1::f1ap::f1_setup_request_
   resp->gnb_cu_rrc_version.latest_rrc_version.from_number(cu_response.gnb_cu_rrc_version);
 
   // activate all DU cells
-  if (cu_response.cells_to_be_activ_list.size() > 0) {
+  if (not cu_response.cells_to_be_activ_list.empty()) {
     resp->cells_to_be_activ_list_present = true;
     for (const auto& du_cell : cu_response.cells_to_be_activ_list) {
       asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
@@ -202,12 +202,12 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   f1ap_message f1ap_msg;
   if (not request_outcome.is_accepted()) {
     // Failed to setup DU case.
-    auto& fail_resp = variant_get<du_setup_result::rejected>(request_outcome.result);
+    auto& fail_resp = std::get<du_setup_result::rejected>(request_outcome.result);
     logger.warning("Rejecting F1 Setup Request. Cause: {}", fail_resp.cause_str);
     f1ap_msg = create_f1_setup_reject(request, cause_to_asn1(fail_resp.cause));
   } else {
     // DU has been accepted.
-    f1ap_msg = create_f1_setup_response(request, variant_get<du_setup_result::accepted>(request_outcome.result));
+    f1ap_msg = create_f1_setup_response(request, std::get<du_setup_result::accepted>(request_outcome.result));
   }
 
   // Send F1AP PDU to F1-C.

@@ -387,11 +387,10 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
                 "The CSI is the first dedicated PUCCH grant that is expected to be allocated.");
 
   if (existing_grants.format1_sr_grant != nullptr) {
-    return convert_to_format2_csi(
-        pucch_slot_alloc, *existing_grants.format1_sr_grant, crnti, ue_cell_cfg, csi_part1_nof_bits);
+    convert_to_format2_csi(pucch_slot_alloc, *existing_grants.format1_sr_grant, crnti, ue_cell_cfg, csi_part1_nof_bits);
   }
 
-  return allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
+  allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
 }
 
 pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
@@ -427,12 +426,10 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
       return removed_uci_info;
     }
     // Proceed with Format 1.
-    else {
-      // Only remove HARQ-ACK grant, handle SR grant separately.
-      removed_uci_info.harq_ack_nof_bits = it->format_1.harq_ack_nof_bits;
-      pucchs.erase(it);
-      resource_manager.release_harq_f1_resource(slot_alloc.slot, crnti, pucch_cfg);
-    }
+    // Only remove HARQ-ACK grant, handle SR grant separately.
+    removed_uci_info.harq_ack_nof_bits = it->format_1.harq_ack_nof_bits;
+    pucchs.erase(it);
+    resource_manager.release_harq_f1_resource(slot_alloc.slot, crnti, pucch_cfg);
   }
 
   // Remove SR grant, if any.
@@ -831,8 +828,8 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   const unsigned    candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_to_report) + csi_part1_nof_bits;
 
   const unsigned max_payload =
-      get_pucch_format2_max_payload(variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
-                                    variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_symbols,
+      get_pucch_format2_max_payload(std::get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
+                                    std::get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_symbols,
                                     max_pucch_code_rate);
 
   // It's the config validator that should ensure this is verified.
@@ -869,7 +866,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
                            rnti,
                            *pucch_res,
                            ue_cell_cfg,
-                           variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
+                           std::get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
                            harq_bits_only_csi,
                            sr_bits_to_report,
                            csi_part1_nof_bits);
@@ -907,8 +904,8 @@ std::optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_
                                                                .format_2_common_param.value()
                                                                .max_c_rate);
   const unsigned max_payload =
-      get_pucch_format2_max_payload(variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
-                                    variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
+      get_pucch_format2_max_payload(std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
+                                    std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
                                     max_pucch_code_rate);
 
   if (max_payload < candidate_uci_bits) {
@@ -926,8 +923,8 @@ std::optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_
   // Compute the number of PRBs required for the uci bits computed above.
   const unsigned nof_prbs =
       get_pucch_format2_nof_prbs(candidate_uci_bits,
-                                 variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
-                                 variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
+                                 std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
+                                 std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
                                  max_pucch_code_rate);
 
   // Remove the previously allocated PUCCH format-1 resources.
@@ -994,8 +991,8 @@ pucch_allocator_impl::change_format2_resource(cell_slot_resource_allocator&     
                                                                .format_2_common_param.value()
                                                                .max_c_rate);
   const unsigned max_payload =
-      get_pucch_format2_max_payload(variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
-                                    variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
+      get_pucch_format2_max_payload(std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
+                                    std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
                                     max_pucch_code_rate);
 
   if (max_payload < candidate_uci_bits) {
@@ -1014,8 +1011,8 @@ pucch_allocator_impl::change_format2_resource(cell_slot_resource_allocator&     
   // Compute the number of PRBs required for the uci bits computed above.
   const unsigned nof_prbs =
       get_pucch_format2_nof_prbs(candidate_uci_bits,
-                                 variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
-                                 variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
+                                 std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_prbs,
+                                 std::get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
                                  max_pucch_code_rate);
 
   // Remove the previously allocated PUCCH format-2 resource.
@@ -1150,8 +1147,8 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
                                                                .format_2_common_param.value()
                                                                .max_c_rate);
   const unsigned max_payload =
-      get_pucch_format2_max_payload(variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
-                                    variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_symbols,
+      get_pucch_format2_max_payload(std::get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
+                                    std::get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_symbols,
                                     max_pucch_code_rate);
 
   // When this function is called, it means that there are no SR grants to be multiplexed with CSI; thus, the CSI bits
@@ -1172,7 +1169,7 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
                            crnti,
                            *csi_f2_res,
                            ue_cell_cfg,
-                           variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
+                           std::get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
                            harq_ack_bits_only_csi,
                            sr_bits_only_csi,
                            csi_part1_bits);
@@ -1216,7 +1213,7 @@ std::optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(puc
                                                                .format_2_common_param.value()
                                                                .max_c_rate);
 
-  const auto&    f2_params    = variant_get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params);
+  const auto&    f2_params    = std::get<pucch_format_2_3_cfg>(pucch_f2_harq_cfg.pucch_res->format_params);
   const unsigned max_nof_prbs = f2_params.nof_prbs;
   const unsigned nof_symbols  = f2_params.nof_symbols;
   const unsigned max_payload  = get_pucch_format2_max_payload(max_nof_prbs, nof_symbols, max_pucch_code_rate);
@@ -1261,7 +1258,7 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
 
   // Set PRBs and symbols, first.
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
-  const auto& res_f1 = variant_get<pucch_format_1_cfg>(pucch_ded_res_cfg.format_params);
+  const auto& res_f1 = std::get<pucch_format_1_cfg>(pucch_ded_res_cfg.format_params);
   pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
                                  pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_1_NOF_PRBS);
   pucch_grant.resources.symbols.set(res_f1.starting_sym_idx, res_f1.starting_sym_idx + res_f1.nof_symbols);
@@ -1299,7 +1296,7 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
   pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb, pucch_ded_res_cfg.starting_prb + nof_prbs);
-  const auto& res_f2 = variant_get<pucch_format_2_3_cfg>(pucch_ded_res_cfg.format_params);
+  const auto& res_f2 = std::get<pucch_format_2_3_cfg>(pucch_ded_res_cfg.format_params);
   pucch_grant.resources.symbols.set(res_f2.starting_sym_idx, res_f2.starting_sym_idx + res_f2.nof_symbols);
   if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
     pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),

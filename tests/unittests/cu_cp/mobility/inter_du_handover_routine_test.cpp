@@ -69,7 +69,7 @@ protected:
         generate_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0),
                                          int_to_gnb_du_ue_f1ap_id(0),
                                          srb_id_t::srb1,
-                                         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699"));
+                                         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value());
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
     f1c_gw.get_du(source_du_index).on_new_message(ul_rrc_msg);
   }
@@ -104,7 +104,8 @@ protected:
             "0b8c8b5040c00504032014120d00505036014160e0050603a0141a120c506a0496302a72fd159e26f2681d2083c5df81821c000000"
             "38ffd294a5294f28160000219760000000000005000001456aa28023800c00041000710804e20070101084000e21009c200e040220"
             "8001c420138401c0c042100038840270c038200882000710804e18004000000410c04080c100e0d0000e388000000400800100c001"
-            "0120044014c00004620090e3800c"));
+            "0120044014c00004620090e3800c")
+            .value());
     f1c_gw.get_du(target_du_index).on_new_message(ue_context_setup_resp);
   }
 
@@ -152,8 +153,10 @@ protected:
   /// \brief Inject RRC Reconfiguration Complete.
   void inject_rrc_reconfig_complete(std::optional<unsigned> transaction_id = {})
   {
-    f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
-        int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("8000080035c41efd"));
+    f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0),
+                                                                       int_to_gnb_du_ue_f1ap_id(0),
+                                                                       srb_id_t::srb1,
+                                                                       make_byte_buffer("8000080035c41efd").value());
     f1c_gw.get_du(target_du_index).on_new_message(rrc_recfg_complete);
   }
 

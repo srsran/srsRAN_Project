@@ -31,6 +31,7 @@ namespace srsran {
 class pdcch_resource_allocator;
 struct cell_resource_allocator;
 class sched_ue_configuration_handler;
+class scheduler_event_logger;
 
 struct ue_scheduler_cell_params {
   du_cell_index_t           cell_index;
@@ -38,6 +39,7 @@ struct ue_scheduler_cell_params {
   pucch_allocator*          pucch_alloc;
   uci_allocator*            uci_alloc;
   cell_resource_allocator*  cell_res_alloc;
+  scheduler_event_logger*   ev_logger;
 };
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot

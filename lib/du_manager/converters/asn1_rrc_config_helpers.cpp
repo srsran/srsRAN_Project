@@ -135,7 +135,7 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.get_nof_candidates()[4]);
   ss.search_space_type_present = true;
   if (cfg.is_common_search_space()) {
-    const auto dci_fmt = variant_get<search_space_configuration::common_dci_format>(cfg.get_monitored_dci_formats());
+    const auto dci_fmt = std::get<search_space_configuration::common_dci_format>(cfg.get_monitored_dci_formats());
     ss.search_space_type.set_common();
     ss.search_space_type.common().dci_format0_0_and_format1_0_present = dci_fmt.f0_0_and_f1_0;
     ss.search_space_type.common().dci_format2_0_present               = dci_fmt.f2_0;
@@ -143,8 +143,7 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
     ss.search_space_type.common().dci_format2_2_present               = dci_fmt.f2_2;
     ss.search_space_type.common().dci_format2_3_present               = dci_fmt.f2_3;
   } else {
-    const auto dci_fmt =
-        variant_get<search_space_configuration::ue_specific_dci_format>(cfg.get_monitored_dci_formats());
+    const auto dci_fmt = std::get<search_space_configuration::ue_specific_dci_format>(cfg.get_monitored_dci_formats());
     ss.search_space_type.set_ue_specific();
     ss.search_space_type.ue_specific().dci_formats.value =
         dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
@@ -154,7 +153,7 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
   return ss;
 }
 
-rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
+static rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 {
   rlc_bearer_cfg_s out;
 
@@ -919,8 +918,8 @@ static asn1::rrc_nr::tdd_ul_dl_pattern_s make_asn1_rrc_tdd_ul_dl_pattern(subcarr
   // Set period in ms.
   const float periodicity_ms =
       static_cast<float>(pattern.dl_ul_tx_period_nof_slots) / static_cast<float>(get_nof_slots_per_subframe(ref_scs));
-  auto same_period_func = [periodicity_ms](float v) { return std::abs(v - periodicity_ms) < 0.001F; };
-  auto it               = std::find_if(basic_periods.begin(), basic_periods.end(), same_period_func);
+  auto        same_period_func = [periodicity_ms](float v) { return std::abs(v - periodicity_ms) < 0.001F; };
+  const auto* it               = std::find_if(basic_periods.begin(), basic_periods.end(), same_period_func);
   if (it != basic_periods.end()) {
     out.dl_ul_tx_periodicity.value =
         (asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::options)std::distance(basic_periods.begin(), it);
@@ -960,7 +959,8 @@ srsran::srs_du::make_asn1_rrc_tdd_ul_dl_cfg_common(const tdd_ul_dl_config_common
   return out;
 }
 
-void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_config& src, const pdcch_config& dest)
+static void
+calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_config& src, const pdcch_config& dest)
 {
   calculate_addmodremlist_diff(
       out.coreset_to_add_mod_list,
@@ -981,7 +981,7 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
   // TODO: Remaining.
 }
 
-void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
+static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
 {
   if (cfg.is_dmrs_type2) {
     out.dmrs_type_present = true;
@@ -1019,7 +1019,7 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
   }
 }
 
-void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info& cfg)
+static void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info& cfg)
 {
   if (cfg.cell.has_value()) {
     out.cell_present = true;
@@ -1089,7 +1089,8 @@ asn1::rrc_nr::tci_state_s srsran::srs_du::make_asn1_rrc_tci_state(const tci_stat
   return tci_st;
 }
 
-void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& src, const pdsch_config& dest)
+static void
+calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_config& src, const pdsch_config& dest)
 {
   out.data_scrambling_id_pdsch_present = dest.data_scrambling_id_pdsch.has_value();
   if (out.data_scrambling_id_pdsch_present) {
@@ -1186,11 +1187,10 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
   }
 
   // PRB Bundling.
-  if (variant_holds_alternative<prb_bundling::static_bundling>(dest.prb_bndlg.bundling)) {
+  if (const auto* result = std::get_if<prb_bundling::static_bundling>(&dest.prb_bndlg.bundling)) {
     auto& st_bundling               = out.prb_bundling_type.set_static_bundling();
     st_bundling.bundle_size_present = true;
-    const auto& bdlng               = variant_get<prb_bundling::static_bundling>(dest.prb_bndlg.bundling);
-    switch (bdlng.sz.value()) {
+    switch (result->sz.value()) {
       case prb_bundling::static_bundling::bundling_size::n4:
         st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::n4;
         break;
@@ -1198,13 +1198,13 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
         st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
         break;
       default:
-        srsran_assertion_failure("Invalid static PRB bundling size={}", bdlng.sz.value());
+        srsran_assertion_failure("Invalid static PRB bundling size={}", result->sz.value());
     }
   } else {
     // Dynamic bundling.
     auto& dy_bundling                    = out.prb_bundling_type.set_dyn_bundling();
     dy_bundling.bundle_size_set1_present = true;
-    const auto& bdlng                    = variant_get<prb_bundling::dynamic_bundling>(dest.prb_bndlg.bundling);
+    const auto& bdlng                    = std::get<prb_bundling::dynamic_bundling>(dest.prb_bndlg.bundling);
     switch (bdlng.sz_set1.value()) {
       case prb_bundling::dynamic_bundling::bundling_size_set1::n4:
         dy_bundling.bundle_size_set1 = pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4;
@@ -1311,8 +1311,8 @@ asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(c
   return pucch_res_set;
 }
 
-void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& out,
-                                              const pucch_common_all_formats&   cfg)
+static void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& out,
+                                                     const pucch_common_all_formats&   cfg)
 {
   out.interslot_freq_hop_present = cfg.interslot_freq_hop;
   out.add_dmrs_present           = cfg.additional_dmrs;
@@ -1380,14 +1380,14 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
   }
   switch (cfg.format) {
     case pucch_format::FORMAT_0: {
-      const auto& f0            = variant_get<pucch_format_0_cfg>(cfg.format_params);
+      const auto& f0            = std::get<pucch_format_0_cfg>(cfg.format_params);
       auto&       format0       = pucch_res.format.set_format0();
       format0.init_cyclic_shift = f0.initial_cyclic_shift;
       format0.nrof_symbols      = f0.nof_symbols;
       format0.start_symbol_idx  = f0.starting_sym_idx;
     } break;
     case pucch_format::FORMAT_1: {
-      const auto& f1            = variant_get<pucch_format_1_cfg>(cfg.format_params);
+      const auto& f1            = std::get<pucch_format_1_cfg>(cfg.format_params);
       auto&       format1       = pucch_res.format.set_format1();
       format1.init_cyclic_shift = f1.initial_cyclic_shift;
       format1.nrof_symbols      = f1.nof_symbols;
@@ -1395,21 +1395,21 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
       format1.time_domain_occ   = f1.time_domain_occ;
     } break;
     case pucch_format::FORMAT_2: {
-      const auto& f2           = variant_get<pucch_format_2_3_cfg>(cfg.format_params);
+      const auto& f2           = std::get<pucch_format_2_3_cfg>(cfg.format_params);
       auto&       format2      = pucch_res.format.set_format2();
       format2.start_symbol_idx = f2.starting_sym_idx;
       format2.nrof_symbols     = f2.nof_symbols;
       format2.nrof_prbs        = f2.nof_prbs;
     } break;
     case pucch_format::FORMAT_3: {
-      const auto& f3           = variant_get<pucch_format_2_3_cfg>(cfg.format_params);
+      const auto& f3           = std::get<pucch_format_2_3_cfg>(cfg.format_params);
       auto&       format3      = pucch_res.format.set_format3();
       format3.start_symbol_idx = f3.starting_sym_idx;
       format3.nrof_symbols     = f3.nof_symbols;
       format3.nrof_prbs        = f3.nof_prbs;
     } break;
     case pucch_format::FORMAT_4: {
-      const auto& f4           = variant_get<pucch_format_4_cfg>(cfg.format_params);
+      const auto& f4           = std::get<pucch_format_4_cfg>(cfg.format_params);
       auto&       format4      = pucch_res.format.set_format4();
       format4.start_symbol_idx = f4.starting_sym_idx;
       format4.nrof_symbols     = f4.nof_symbols;
@@ -1519,7 +1519,8 @@ srsran::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_conf
   return sr_res_cfg;
 }
 
-void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& src, const pucch_config& dest)
+static void
+calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& src, const pucch_config& dest)
 {
   // PUCCH Resource Set.
   calculate_addmodremlist_diff(
@@ -1597,7 +1598,7 @@ void calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_con
   }
 }
 
-void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_uplink_config& cfg)
+static void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_uplink_config& cfg)
 {
   if (cfg.trans_precoder_disabled.has_value()) {
     out.transform_precoder_disabled_present = true;
@@ -1677,9 +1678,9 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
   }
 }
 
-void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
-                                     const dmrs_uplink_config&    src,
-                                     const dmrs_uplink_config&    dest)
+static void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
+                                            const dmrs_uplink_config&    src,
+                                            const dmrs_uplink_config&    dest)
 {
   if (dest.is_dmrs_type2) {
     out.dmrs_type_present = true;
@@ -1752,12 +1753,12 @@ srsran::srs_du::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_po
 {
   pusch_pathloss_ref_rs_s ploss_ref_rs;
   ploss_ref_rs.pusch_pathloss_ref_rs_id = cfg.id;
-  if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.rs)) {
+  if (const auto* nzp_csi_res = std::get_if<nzp_csi_rs_res_id_t>(&cfg.rs)) {
     auto& csi_rs_idx = ploss_ref_rs.ref_sig.set_csi_rs_idx();
-    csi_rs_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.rs);
-  } else if (variant_holds_alternative<ssb_id_t>(cfg.rs)) {
+    csi_rs_idx       = *nzp_csi_res;
+  } else if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.rs)) {
     auto& ssb_idx = ploss_ref_rs.ref_sig.set_ssb_idx();
-    ssb_idx       = variant_get<ssb_id_t>(cfg.rs);
+    ssb_idx       = *ssb_id;
   }
   return ploss_ref_rs;
 }
@@ -1782,7 +1783,7 @@ srsran::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power
   return sri_pwr_ctl;
 }
 
-void make_asn1_rrc_alpha(asn1::rrc_nr::alpha_e& out, const alpha& cfg)
+static void make_asn1_rrc_alpha(asn1::rrc_nr::alpha_e& out, alpha cfg)
 {
   switch (cfg) {
     case alpha::alpha0:
@@ -1814,9 +1815,9 @@ void make_asn1_rrc_alpha(asn1::rrc_nr::alpha_e& out, const alpha& cfg)
   }
 }
 
-void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
-                                  const pusch_config::pusch_power_control& src,
-                                  const pusch_config::pusch_power_control& dest)
+static void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
+                                         const pusch_config::pusch_power_control& src,
+                                         const pusch_config::pusch_power_control& dest)
 {
   if (dest.is_tpc_accumulation_disabled) {
     out.tpc_accumulation_present = true;
@@ -1832,16 +1833,16 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
     out.p0_nominal_without_grant         = dest.p0_nominal_without_grant.value();
   }
 
-  for (unsigned idx = 0; idx < dest.p0_alphasets.size(); idx++) {
+  for (const auto& set : dest.p0_alphasets) {
     p0_pusch_alpha_set_s p0_alphaset{};
-    p0_alphaset.p0_pusch_alpha_set_id = dest.p0_alphasets[idx].id;
-    if (dest.p0_alphasets[idx].p0.has_value()) {
+    p0_alphaset.p0_pusch_alpha_set_id = set.id;
+    if (set.p0.has_value()) {
       p0_alphaset.p0_present = true;
-      p0_alphaset.p0         = dest.p0_alphasets[idx].p0.value();
+      p0_alphaset.p0         = set.p0.value();
     }
-    if (dest.p0_alphasets[idx].p0_pusch_alpha != srsran::alpha::not_set) {
+    if (set.p0_pusch_alpha != srsran::alpha::not_set) {
       p0_alphaset.alpha_present = true;
-      make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha);
+      make_asn1_rrc_alpha(p0_alphaset.alpha, set.p0_pusch_alpha);
     }
     out.p0_alpha_sets.push_back(p0_alphaset);
   }
@@ -1867,7 +1868,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
       [](const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& res) { return res.id; });
 }
 
-void fill_uci_beta_offset(beta_offsets_s& beta_out, const beta_offsets& beta_in)
+static void fill_uci_beta_offset(beta_offsets_s& beta_out, const beta_offsets& beta_in)
 {
   if (beta_in.beta_offset_ack_idx_1.has_value()) {
     beta_out.beta_offset_ack_idx1_present = true;
@@ -1919,7 +1920,7 @@ void fill_uci_beta_offset(beta_offsets_s& beta_out, const beta_offsets& beta_in)
   }
 }
 
-void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusch& uci_in)
+static void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusch& uci_in)
 {
   switch (uci_in.scaling) {
     case alpha_scaling_opt::f0p5:
@@ -1940,19 +1941,18 @@ void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusc
 
   if (uci_in.beta_offsets_cfg.has_value()) {
     uci_asn1.beta_offsets_present = true;
-    if (variant_holds_alternative<uci_on_pusch::beta_offsets_semi_static>(uci_in.beta_offsets_cfg.value())) {
-      const auto& in_semi_static = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_in.beta_offsets_cfg.value());
-      auto&       out_semi_static = uci_asn1.beta_offsets.set_semi_static();
-
-      fill_uci_beta_offset(out_semi_static, in_semi_static);
+    if (const auto* in_semi_static =
+            std::get_if<uci_on_pusch::beta_offsets_semi_static>(&uci_in.beta_offsets_cfg.value())) {
+      auto& out_semi_static = uci_asn1.beta_offsets.set_semi_static();
+      fill_uci_beta_offset(out_semi_static, *in_semi_static);
     } else {
-      auto& input_dynamic = variant_get<uci_on_pusch::beta_offsets_dynamic>(uci_in.beta_offsets_cfg.value());
-      auto& out_dynamic   = uci_asn1.beta_offsets.set_dyn();
+      const auto& input_dynamic = std::get<uci_on_pusch::beta_offsets_dynamic>(uci_in.beta_offsets_cfg.value());
+      auto&       out_dynamic   = uci_asn1.beta_offsets.set_dyn();
 
       srsran_assert(input_dynamic.size() == out_dynamic.max_size(), "Mismatch between input and output vectors");
 
-      for (size_t n = 0; n != input_dynamic.size(); ++n) {
-        fill_uci_beta_offset(out_dynamic[n], input_dynamic[n]);
+      for (unsigned i = 0, e = input_dynamic.size(); i != e; ++i) {
+        fill_uci_beta_offset(out_dynamic[i], input_dynamic[i]);
       }
     }
   } else {
@@ -1982,7 +1982,8 @@ make_asn1_rrc_pusch_time_domain_alloc_list(const pusch_time_domain_resource_allo
   return out;
 }
 
-void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
+static void
+calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
 {
   if (dest.data_scrambling_id_pusch.has_value()) {
     out.data_scrambling_id_pusch_present = true;
@@ -2133,38 +2134,37 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
     srs_res_set.srs_res_id_list.push_back(res_id);
   }
 
-  if (variant_holds_alternative<srs_config::srs_resource_set::aperiodic_resource_type>(cfg.res_type)) {
-    auto&       aper_res     = srs_res_set.res_type.set_aperiodic();
-    const auto& cfg_aper_res = variant_get<srs_config::srs_resource_set::aperiodic_resource_type>(cfg.res_type);
-    aper_res.aperiodic_srs_res_trigger = cfg_aper_res.aperiodic_srs_res_trigger;
-    if (cfg_aper_res.csi_rs.has_value()) {
+  if (const auto* cfg_aper_res = std::get_if<srs_config::srs_resource_set::aperiodic_resource_type>(&cfg.res_type)) {
+    auto& aper_res                     = srs_res_set.res_type.set_aperiodic();
+    aper_res.aperiodic_srs_res_trigger = cfg_aper_res->aperiodic_srs_res_trigger;
+    if (cfg_aper_res->csi_rs.has_value()) {
       aper_res.csi_rs_present = true;
-      aper_res.csi_rs         = cfg_aper_res.csi_rs.value();
+      aper_res.csi_rs         = cfg_aper_res->csi_rs.value();
     }
-    if (cfg_aper_res.slot_offset.has_value()) {
+    if (cfg_aper_res->slot_offset.has_value()) {
       aper_res.slot_offset_present = true;
-      aper_res.slot_offset         = cfg_aper_res.slot_offset.value();
+      aper_res.slot_offset         = cfg_aper_res->slot_offset.value();
     }
-    if (not cfg_aper_res.aperiodic_srs_res_trigger_list.empty()) {
+    if (not cfg_aper_res->aperiodic_srs_res_trigger_list.empty()) {
       aper_res.aperiodic_srs_res_trigger_list.set_present();
       auto* aper_res_trig_list = aper_res.aperiodic_srs_res_trigger_list.get();
-      for (const auto& ap_res_trig : cfg_aper_res.aperiodic_srs_res_trigger_list) {
+      for (const auto& ap_res_trig : cfg_aper_res->aperiodic_srs_res_trigger_list) {
         aper_res_trig_list->push_back(ap_res_trig);
       }
     }
-  } else if (variant_holds_alternative<srs_config::srs_resource_set::semi_persistent_resource_type>(cfg.res_type)) {
-    auto&       semi_p_res     = srs_res_set.res_type.set_semi_persistent();
-    const auto& cfg_semi_p_res = variant_get<srs_config::srs_resource_set::semi_persistent_resource_type>(cfg.res_type);
-    if (cfg_semi_p_res.associated_csi_rs.has_value()) {
+  } else if (const auto* cfg_semi_p_res =
+                 std::get_if<srs_config::srs_resource_set::semi_persistent_resource_type>(&cfg.res_type)) {
+    auto& semi_p_res = srs_res_set.res_type.set_semi_persistent();
+    if (cfg_semi_p_res->associated_csi_rs.has_value()) {
       semi_p_res.associated_csi_rs_present = true;
-      semi_p_res.associated_csi_rs         = cfg_semi_p_res.associated_csi_rs.value();
+      semi_p_res.associated_csi_rs         = cfg_semi_p_res->associated_csi_rs.value();
     }
-  } else if (variant_holds_alternative<srs_config::srs_resource_set::periodic_resource_type>(cfg.res_type)) {
-    auto&       per_res     = srs_res_set.res_type.set_periodic();
-    const auto& cfg_per_res = variant_get<srs_config::srs_resource_set::periodic_resource_type>(cfg.res_type);
-    if (cfg_per_res.associated_csi_rs.has_value()) {
+  } else if (const auto* cfg_per_res =
+                 std::get_if<srs_config::srs_resource_set::periodic_resource_type>(&cfg.res_type)) {
+    auto& per_res = srs_res_set.res_type.set_periodic();
+    if (cfg_per_res->associated_csi_rs.has_value()) {
       per_res.associated_csi_rs_present = true;
-      per_res.associated_csi_rs         = cfg_per_res.associated_csi_rs.value();
+      per_res.associated_csi_rs         = cfg_per_res->associated_csi_rs.value();
     }
   }
 
@@ -2212,20 +2212,20 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
 
   if (cfg.pathloss_ref_rs.has_value()) {
     srs_res_set.pathloss_ref_rs_present = true;
-    if (variant_holds_alternative<ssb_id_t>(cfg.pathloss_ref_rs.value())) {
+    if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.pathloss_ref_rs.value())) {
       auto& ssb_idx = srs_res_set.pathloss_ref_rs.set_ssb_idx();
-      ssb_idx       = variant_get<ssb_id_t>(cfg.pathloss_ref_rs.value());
-    } else if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.pathloss_ref_rs.value())) {
+      ssb_idx       = *ssb_id;
+    } else if (const auto* csi_rs_res = std::get_if<nzp_csi_rs_res_id_t>(&cfg.pathloss_ref_rs.value())) {
       auto& csi_res_idx = srs_res_set.pathloss_ref_rs.set_csi_rs_idx();
-      csi_res_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.pathloss_ref_rs.value());
+      csi_res_idx       = *csi_rs_res;
     }
   }
 
   return srs_res_set;
 }
 
-void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodicity_and_offset_c&   out,
-                                                      const srs_config::srs_periodicity_and_offset& cfg)
+static void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodicity_and_offset_c&   out,
+                                                             const srs_config::srs_periodicity_and_offset& cfg)
 {
   switch (cfg.type) {
     case srs_config::srs_periodicity_and_offset::type_t::sl1:
@@ -2418,26 +2418,26 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
       res.spatial_relation_info.serving_cell_id_present = true;
       res.spatial_relation_info.serving_cell_id         = cfg.spatial_relation_info.value().serv_cell_id.value();
     }
-    if (variant_holds_alternative<ssb_id_t>(cfg.spatial_relation_info.value().reference_signal)) {
+    if (const auto* ssb_id = std::get_if<ssb_id_t>(&cfg.spatial_relation_info.value().reference_signal)) {
       auto& ssb_idx = res.spatial_relation_info.ref_sig.set_ssb_idx();
-      ssb_idx       = variant_get<ssb_id_t>(cfg.spatial_relation_info.value().reference_signal);
-    } else if (variant_holds_alternative<nzp_csi_rs_res_id_t>(cfg.spatial_relation_info.value().reference_signal)) {
+      ssb_idx       = *ssb_id;
+    } else if (const auto* nzp_csi_res =
+                   std::get_if<nzp_csi_rs_res_id_t>(&cfg.spatial_relation_info.value().reference_signal)) {
       auto& csi_rs_idx = res.spatial_relation_info.ref_sig.set_csi_rs_idx();
-      csi_rs_idx       = variant_get<nzp_csi_rs_res_id_t>(cfg.spatial_relation_info.value().reference_signal);
-    } else if (variant_holds_alternative<srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal>(
-                   cfg.spatial_relation_info.value().reference_signal)) {
-      auto&       srs_ref_sig     = res.spatial_relation_info.ref_sig.set_srs();
-      const auto& cfg_srs_ref_sig = variant_get<srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal>(
-          cfg.spatial_relation_info.value().reference_signal);
-      srs_ref_sig.res_id = cfg_srs_ref_sig.res_id;
-      srs_ref_sig.ul_bwp = cfg_srs_ref_sig.ul_bwp;
+      csi_rs_idx       = *nzp_csi_res;
+    } else if (const auto* cfg_srs_ref_sig =
+                   std::get_if<srs_config::srs_resource::srs_spatial_relation_info::srs_ref_signal>(
+                       &cfg.spatial_relation_info.value().reference_signal)) {
+      auto& srs_ref_sig  = res.spatial_relation_info.ref_sig.set_srs();
+      srs_ref_sig.res_id = cfg_srs_ref_sig->res_id;
+      srs_ref_sig.ul_bwp = cfg_srs_ref_sig->ul_bwp;
     }
   }
 
   return res;
 }
 
-void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& src, const srs_config& dest)
+static void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& src, const srs_config& dest)
 {
   calculate_addmodremlist_diff(
       out.srs_res_set_to_add_mod_list,
@@ -2510,9 +2510,9 @@ calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& s
   return out.init_ul_bwp_present;
 }
 
-void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
-                                           const pdsch_serving_cell_config&        src,
-                                           const pdsch_serving_cell_config&        dest)
+static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
+                                                  const pdsch_serving_cell_config&        src,
+                                                  const pdsch_serving_cell_config&        dest)
 {
   if ((dest.code_block_group_tx.has_value() && not src.code_block_group_tx.has_value()) ||
       (dest.code_block_group_tx.has_value() && src.code_block_group_tx.has_value() &&
@@ -2709,7 +2709,7 @@ srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_add
   return req;
 }
 
-void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cfg)
+static void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cfg)
 {
   switch (cfg.retx_timer) {
     case retx_bsr_timer::sf10:
@@ -2869,7 +2869,7 @@ asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
   return tag_cfg;
 }
 
-void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cfg)
+static void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cfg)
 {
   switch (cfg.periodic_timer) {
     case phr_periodic_timer::sf10:

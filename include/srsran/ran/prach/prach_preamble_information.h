@@ -38,12 +38,21 @@ struct prach_preamble_information {
   unsigned sequence_length;
   /// Parameter \f$\Delta f^{RA}\f$.
   prach_subcarrier_spacing scs;
-  /// Parameter \f$N_u\f$. Expressed in units of the reference symbol time \f$\kappa\f$.
-  phy_time_unit symbol_length;
+  /// \brief Number of OFDM symbols.
+  ///
+  /// It is given by the first multiplier that appears in the \f$N_u\f$ column, in TS38.211 Tables 6.3.3.1-1 and
+  /// 6.3.3.1-2.
+  unsigned nof_symbols;
   /// Parameter \f$N_{CP}^{RA}\f$. Expressed in units of the reference symbol time \f$\kappa\f$.
   phy_time_unit cp_length;
   /// Flag: true if the preamble supports the restricted sets A and B.
   bool support_restricted_sets;
+
+  /// Parameter \f$N_u\f$, expressed in units of the reference symbol time \f$\kappa\f$.
+  phy_time_unit symbol_length() const
+  {
+    return phy_time_unit::from_seconds(static_cast<double>(nof_symbols) / static_cast<double>(ra_scs_to_Hz(scs)));
+  }
 };
 
 /// \brief Get long PRACH preamble information as per TS38.211 Table 6.3.3.1-1.

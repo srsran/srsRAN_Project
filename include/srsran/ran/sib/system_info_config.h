@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ran/ntn.h"
+#include <variant>
 #include <vector>
 
 namespace srsran {
@@ -112,6 +112,8 @@ struct speed_state_reselection_params {
 };
 
 struct sib2_info {
+  // TODO: cpp17 transition workaround for a clang compiler issue
+  char dummy;
   /// Number of SS blocks to average for cell measurement derivation. If the field is absent the UE uses the measurement
   /// quantity as specified in TS 38.304.
   std::optional<uint8_t> nof_ssbs_to_average;
@@ -175,24 +177,26 @@ struct sib2_info {
 };
 
 struct sib19_info {
-  std::optional<uint16_t>                                      distance_thres;
-  std::optional<std::string>                                   ref_location;
-  optional<uint16_t>                                           cell_specific_koffset;
-  optional<variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
-  optional<epoch_time_t>                                       epoch_time;
-  optional<uint16_t>                                           k_mac;
-  optional<ta_common_t>                                        ta_info;
+  // TODO: cpp17 transition workaround for a clang compiler issue
+  char                                                                   dummy;
+  std::optional<uint16_t>                                                distance_thres;
+  std::optional<std::string>                                             ref_location;
+  std::optional<uint16_t>                                                cell_specific_koffset;
+  std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
+  std::optional<epoch_time_t>                                            epoch_time;
+  std::optional<uint16_t>                                                k_mac;
+  std::optional<ta_common_t>                                             ta_info;
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.
-using sib_info = variant<sib2_info, sib19_info>;
+using sib_info = std::variant<sib2_info, sib19_info>;
 
 inline sib_type get_sib_info_type(const sib_info& sib)
 {
-  if (variant_holds_alternative<sib2_info>(sib)) {
+  if (std::holds_alternative<sib2_info>(sib)) {
     return sib_type::sib2;
   }
-  if (variant_holds_alternative<sib19_info>(sib)) {
+  if (std::holds_alternative<sib19_info>(sib)) {
     return sib_type::sib19;
   }
   return sib_type::sib_invalid;
@@ -204,6 +208,11 @@ struct si_message_sched_info {
   std::vector<sib_type> sib_mapping_info;
   /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
   unsigned si_period_radio_frames = 32;
+  /// SI window position of the associated SI-message. The network provides si-WindowPosition in an ascending order,
+  /// i.e. si-WindowPosition in the subsequent entry in schedulingInfoList2 has always value higher than in the previous
+  /// entry of schedulingInfoList2. See TS 38.331, \c SchedulingInfo2-r17. Values: {1,...,256}.
+  /// \remark This field is only applicable for release 17 \c SI-SchedulingInfo.
+  std::optional<unsigned> si_window_position;
 };
 
 /// This struct contains the information required for the generation of the SI messages sent by the network and the

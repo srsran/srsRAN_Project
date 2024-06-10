@@ -24,9 +24,9 @@
 #include "srsran/srsvec/bit.h"
 #include "srsran/support/math_utils.h"
 
-#if HAVE_SSE
+#if __SSE4_1__
 #include <immintrin.h>
-#endif // HAVE_SSE
+#endif // __SSE4_1__
 
 using namespace srsran;
 
@@ -92,15 +92,15 @@ crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<co
   for (unsigned i = 0; i < nbytes; i++) {
     // Get pack a byte from 8 bits.
     span<const uint8_t> pter = input.subspan(8U * i, 8);
-#ifdef HAVE_SSE
+#ifdef __SSE4_1__
     // Get 8 Bit
     __m64 mask = _mm_cmpgt_pi8(*(reinterpret_cast<const __m64*>(pter.data())), _mm_set1_pi8(0));
 
     // Get mask and reverse.
     uint8_t byte = reverse_byte(static_cast<uint8_t>(_mm_movemask_pi8(mask)));
-#else  // HAVE_SSE
+#else  // __SSE4_1__
     uint8_t byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
-#endif // HAVE_SSE
+#endif // __SSE4_1__
     put_byte(byte);
   }
 

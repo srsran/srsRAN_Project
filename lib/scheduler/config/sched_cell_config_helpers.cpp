@@ -43,31 +43,32 @@ srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& 
 
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");
 
-  std::vector<sched_grid_resource> pucch_guardbands{};
+  std::vector<sched_grid_resource> pucch_guardbands;
 
   auto list_contains_resource = [&pucch_guardbands](const sched_grid_resource& res) {
     return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) != pucch_guardbands.end();
   };
 
   for (const auto& pucch_res : res_list) {
-    srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
-                      variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
+    srsran_assert(std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
+                      std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
                   "Only PUCCH format 1 and 2 are currently supported");
-    const unsigned starting_sym = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
-                                      ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).starting_sym_idx
-                                      : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).starting_sym_idx;
-    const unsigned nof_symbols  = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
-                                      ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).nof_symbols
-                                      : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_symbols;
+    const unsigned starting_sym = std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+                                      ? std::get<pucch_format_1_cfg>(pucch_res.format_params).starting_sym_idx
+                                      : std::get<pucch_format_2_3_cfg>(pucch_res.format_params).starting_sym_idx;
+    const unsigned nof_symbols  = std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+                                      ? std::get<pucch_format_1_cfg>(pucch_res.format_params).nof_symbols
+                                      : std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_symbols;
     // For PUCCH format 1, the resource has 1 PRB only.
-    const unsigned nof_prbs = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+    const unsigned nof_prbs = std::holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
                                   ? 1U
-                                  : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs;
+                                  : std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs;
 
     // In the following, \c res_no_freq_hop contains the PRBs/symbols of the PUCCH resource with no frequency hopping,
     // or, if frequency hopping is enabled, the PRBs/symbols of the first hop.
     // \c res_freq_hop is only used if frequency hopping is enabled and contains the PRBs/symbols of the second hop.
-    sched_grid_resource res_no_freq_hop, res_freq_hop;
+    sched_grid_resource res_no_freq_hop;
+    sched_grid_resource res_freq_hop;
     res_no_freq_hop.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + nof_prbs);
 
     if (pucch_res.second_hop_prb.has_value()) {

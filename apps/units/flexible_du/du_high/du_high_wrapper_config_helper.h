@@ -43,6 +43,13 @@ struct du_high_unit_config;
 struct du_high_wrapper_config;
 struct du_high_wrapper_dependencies;
 
+/// Set up sources for the DU high metrics.
+void configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
+                               console_helper&              console_helper,
+                               metrics_log_helper&          metrics_logger,
+                               e2_metric_connector_manager& e2_metric_connectors,
+                               metrics_hub&                 metrics_hub);
+
 /// Fills the given DU high wrapper configuration.
 void fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                  const du_high_unit_config&     du_high_unit_cfg,
@@ -53,7 +60,6 @@ void fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                  timer_manager&                 timer_mng,
                                  mac_pcap&                      mac_p,
                                  rlc_pcap&                      rlc_p,
-                                 console_helper&                console_helper,
                                  metrics_log_helper&            metrics_logger,
                                  e2_connection_client&          e2_client_handler,
                                  e2_metric_connector_manager&   e2_metric_connectors,

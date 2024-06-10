@@ -114,7 +114,7 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
                     : get_prach_preamble_short_info(config.format, to_ra_subcarrier_spacing(config.pusch_scs), false);
 
   // Calculate number of symbols.
-  unsigned nof_symbols = preamble_info.symbol_length.to_samples(ra_scs_to_Hz(preamble_info.scs));
+  unsigned nof_symbols = preamble_info.nof_symbols;
 
   // Build expected buffer data.
   prach_buffer_spy expected_buffer(

@@ -22,9 +22,9 @@
 
 #include "ng_setup_procedure.h"
 #include "../ngap_asn1_helpers.h"
-#include "srsran/adt/variant.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_timer.h"
+#include <variant>
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -120,7 +120,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
-    for (const auto& guami_item : variant_get<ngap_ng_setup_response>(res).served_guami_list) {
+    for (const auto& guami_item : std::get<ngap_ng_setup_response>(res).served_guami_list) {
       context.served_guami_list.push_back(guami_item.guami);
     }
 

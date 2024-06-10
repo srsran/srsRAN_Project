@@ -41,7 +41,7 @@ public:
 
 } // namespace
 
-std::unique_ptr<e1ap_message_notifier> dummy_e1ap_connection_client::handle_cu_up_connection_request(
+std::unique_ptr<e1ap_message_notifier> dummy_e1_connection_client::handle_cu_up_connection_request(
     std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier_)
 {
   cu_up_rx_pdu_notifier = std::move(cu_up_rx_pdu_notifier_);

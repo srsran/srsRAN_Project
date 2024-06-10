@@ -80,29 +80,6 @@ public:
   // See interface for documentation.
   unsigned get_nof_symbols() const override { return max_symb; }
 
-  // See interface for documentation.
-  span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
-  {
-    std::unique_lock<std::mutex> lock(entries_mutex);
-    TESTASSERT(k_init + mask.size() <= max_prb * NRE,
-               "The mask staring at {} for {} subcarriers exceeds the resource grid bandwidth (max {}).",
-               k_init,
-               mask.size(),
-               max_prb * NRE);
-    ++count;
-    unsigned i_symb = 0;
-    for (unsigned k = 0; k != mask.size(); ++k) {
-      if (mask[k]) {
-        put(port, l, k_init + k, symbols[i_symb]);
-        i_symb++;
-      }
-    }
-
-    // Consume buffer.
-    return symbols.last(symbols.size() - i_symb);
-  }
-
   span<const cf_t> put(unsigned                            port,
                        unsigned                            l,
                        unsigned                            k_init,
@@ -301,21 +278,6 @@ public:
   bool is_empty(unsigned port) const override { return entries.empty(); }
 
   bool is_empty() const override { return entries.empty(); }
-
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
-  {
-    ++count;
-    unsigned i_symb = 0;
-    for (unsigned k = 0; k != mask.size(); ++k) {
-      if (mask[k]) {
-        symbols[i_symb] = get(static_cast<uint8_t>(port), l, k_init + k);
-        i_symb++;
-      }
-    }
-
-    // Consume buffer.
-    return symbols.last(symbols.size() - i_symb);
-  }
 
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,

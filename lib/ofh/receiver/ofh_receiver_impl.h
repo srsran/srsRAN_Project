@@ -26,18 +26,24 @@
 #include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_message_receiver.h"
+#include "ofh_message_receiver_task_dispatcher.h"
 #include "ofh_receiver_controller.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 
 namespace srsran {
+
+class task_executor;
+
 namespace ofh {
 
 /// Open Fronthaul receiver implementation dependencies.
 struct receiver_impl_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Uplink task executor.
+  task_executor* executor = nullptr;
   /// Ethernet receiver.
   std::unique_ptr<ether::receiver> eth_receiver;
   /// eCPRI packet decoder.
@@ -67,9 +73,10 @@ public:
   controller& get_controller() override;
 
 private:
-  rx_window_checker   window_checker;
-  message_receiver    msg_receiver;
-  receiver_controller ctrl;
+  rx_window_checker                    window_checker;
+  message_receiver_impl                msg_receiver;
+  ofh_message_receiver_task_dispatcher rcv_task_dispatcher;
+  receiver_controller                  ctrl;
 };
 
 } // namespace ofh

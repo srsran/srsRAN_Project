@@ -64,6 +64,7 @@ validator_result srsran::config_validators::validate_pdcch_cfg(const serving_cel
              ss.get_id());
     }
   }
+
   // TODO: Validate other parameters.
   return {};
 }
@@ -106,6 +107,7 @@ static validator_result validate_zp_csi_rs(const serving_cell_config& ue_cell_cf
            csi_im.freq_band_rbs,
            csi_im.csi_im_res_element_pattern->symbol_location);
   }
+
   return {};
 }
 
@@ -166,11 +168,11 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   // Verify each resource format matches the corresponding parameters.
   for (auto res : pucch_cfg.pucch_res_list) {
     const bool format_match_format_params =
-        (res.format == pucch_format::FORMAT_0 and variant_holds_alternative<pucch_format_0_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_1 and variant_holds_alternative<pucch_format_1_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_2 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_3 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
-        (res.format == pucch_format::FORMAT_4 and variant_holds_alternative<pucch_format_4_cfg>(res.format_params));
+        (res.format == pucch_format::FORMAT_0 and std::holds_alternative<pucch_format_0_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_1 and std::holds_alternative<pucch_format_1_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_2 and std::holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_3 and std::holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_4 and std::holds_alternative<pucch_format_4_cfg>(res.format_params));
     VERIFY(format_match_format_params,
            "PUCCH cell res id={} format does not match the PUCCH format parameters",
            res.res_id.cell_res_id);
@@ -205,14 +207,14 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   if (ue_cell_cfg.csi_meas_cfg.has_value()) {
     const auto& csi_cfg = ue_cell_cfg.csi_meas_cfg.value();
     VERIFY(not csi_cfg.csi_report_cfg_list.empty() and
-               variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+               std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                    csi_cfg.csi_report_cfg_list.front().report_cfg_type) and
-               not variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+               not std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                        csi_cfg.csi_report_cfg_list.front().report_cfg_type)
                        .pucch_csi_res_list.empty(),
            "PUCCH-CSI-ResourceList has not been configured in the CSI-reportConfig");
 
-    const auto& csi = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    const auto& csi = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         csi_cfg.csi_report_cfg_list.front().report_cfg_type);
     const unsigned csi_res_id = csi.pucch_csi_res_list.front().pucch_res_id.cell_res_id;
     // Verify the PUCCH resource id that indicated in the CSI resource config exists in the PUCCH resource list.
@@ -224,7 +226,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
            "PUCCH resource used for CSI is expected to be Format 2");
 
     // Verify the CSI/SR bits do not exceed the PUCCH F2 payload.
-    const auto&    csi_pucch_res_params = variant_get<pucch_format_2_3_cfg>(csi_pucch_res_id->format_params);
+    const auto&    csi_pucch_res_params = std::get<pucch_format_2_3_cfg>(csi_pucch_res_id->format_params);
     const unsigned pucch_f2_max_payload =
         get_pucch_format2_max_payload(csi_pucch_res_params.nof_prbs,
                                       csi_pucch_res_params.nof_symbols,
@@ -253,7 +255,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
     const unsigned pucch_res_set_idx_for_f2   = 1;
     for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx_for_f2].pucch_res_id_list) {
       auto*          res_f2_it                = get_pucch_resource_with_id(res_idx.cell_res_id);
-      const auto&    harq_f2_pucch_res_params = variant_get<pucch_format_2_3_cfg>(res_f2_it->format_params);
+      const auto&    harq_f2_pucch_res_params = std::get<pucch_format_2_3_cfg>(res_f2_it->format_params);
       const unsigned pucch_harq_f2_max_payload =
           get_pucch_format2_max_payload(harq_f2_pucch_res_params.nof_prbs,
                                         harq_f2_pucch_res_params.nof_symbols,
@@ -299,9 +301,9 @@ srsran::config_validators::validate_nzp_csi_rs_list(span<const nzp_csi_rs_resour
   }
 
   // Check: Verify that NZP-CSI-RS do not collide with each other.
-  for (auto it = nzp_csi_rs_res_list.begin(); it != nzp_csi_rs_res_list.end(); ++it) {
+  for (const auto* it = nzp_csi_rs_res_list.begin(); it != nzp_csi_rs_res_list.end(); ++it) {
     if (it->csi_res_offset.has_value() and it->csi_res_period.has_value()) {
-      for (auto it2 = it + 1; it2 != nzp_csi_rs_res_list.end(); ++it2) {
+      for (const auto* it2 = it + 1; it2 != nzp_csi_rs_res_list.end(); ++it2) {
         if (it2->csi_res_offset.has_value() and it2->csi_res_period.has_value()) {
           VERIFY(it->csi_res_period.value() == it2->csi_res_period.value(),
                  "NZP-CSI-RS resources with different periods not supported");
@@ -418,8 +420,8 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
 
   // CSI-ResourceConfig.
   for (const auto& res_cfg : csi_meas_cfg.csi_res_cfg_list) {
-    if (variant_holds_alternative<csi_resource_config::nzp_csi_rs_ssb>(res_cfg.csi_rs_res_set_list)) {
-      const auto& variant_value = variant_get<csi_resource_config::nzp_csi_rs_ssb>(res_cfg.csi_rs_res_set_list);
+    if (std::holds_alternative<csi_resource_config::nzp_csi_rs_ssb>(res_cfg.csi_rs_res_set_list)) {
+      const auto& variant_value = std::get<csi_resource_config::nzp_csi_rs_ssb>(res_cfg.csi_rs_res_set_list);
       for (const auto& res_set_id : variant_value.nzp_csi_rs_res_set_list) {
         VERIFY_ID_EXISTS([res_set_id](const nzp_csi_rs_resource_set& rhs) { return rhs.res_set_id == res_set_id; },
                          csi_meas_cfg.nzp_csi_rs_res_set_list,
@@ -432,9 +434,8 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
                          "CSI SSB resource set id={} does not exist",
                          res_set_id);
       }
-    } else if (variant_holds_alternative<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list)) {
-      const auto& variant_value =
-          variant_get<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list);
+    } else if (std::holds_alternative<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list)) {
+      const auto& variant_value = std::get<csi_resource_config::csi_im_resource_set_list>(res_cfg.csi_rs_res_set_list);
       for (const auto& res_set_id : variant_value) {
         VERIFY_ID_EXISTS([res_set_id](const csi_im_resource_set& rhs) { return rhs.res_set_id == res_set_id; },
                          csi_meas_cfg.csi_im_res_set_list,
@@ -473,10 +474,10 @@ srsran::config_validators::validate_csi_meas_cfg(const serving_cell_config&     
           nzp_csi_rs_res_for_interference);
     }
 
-    if (variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    if (std::holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
             rep_cfg.report_cfg_type)) {
       const auto& pucch_csi =
-          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(rep_cfg.report_cfg_type);
+          std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(rep_cfg.report_cfg_type);
       VERIFY(ue_cell_cfg.ul_config.has_value(), "Cell does not define a UL Config");
       VERIFY(ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value(), "Cell={} does not define a PUCCH Config");
       const auto& pucch_resources = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_res_list;

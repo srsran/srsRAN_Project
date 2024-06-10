@@ -31,10 +31,6 @@ namespace srsran {
 class scheduler_event_logger
 {
 public:
-  struct cell_creation_event {
-    du_cell_index_t cell_index;
-    pci_t           pci;
-  };
   struct prach_event {
     slot_point      slot_rx;
     du_cell_index_t cell_index;
@@ -102,11 +98,7 @@ public:
     scheduler_slot_handler::error_outcome outcome;
   };
 
-  scheduler_event_logger() :
-    logger(srslog::fetch_basic_logger("SCHED")),
-    mode(logger.debug.enabled() ? mode_t::debug : (logger.info.enabled() ? mode_t::info : mode_t::none))
-  {
-  }
+  scheduler_event_logger(du_cell_index_t cell_index_, pci_t pci_);
 
   void log()
   {
@@ -134,8 +126,6 @@ private:
 
   void log_impl();
 
-  void enqueue_impl(const cell_creation_event& cell_ev);
-
   void enqueue_impl(const prach_event& rach_ev);
   void enqueue_impl(const rach_indication_message& rach_ind);
 
@@ -155,6 +145,8 @@ private:
   void enqueue_impl(const dl_buffer_state_indication_message& bs);
   void enqueue_impl(const phr_event& phr_ev);
 
+  du_cell_index_t       cell_index;
+  pci_t                 pci;
   srslog::basic_logger& logger;
   mode_t                mode = none;
 

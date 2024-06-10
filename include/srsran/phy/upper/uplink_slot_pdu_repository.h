@@ -22,16 +22,16 @@
 
 #pragma once
 
-#include "srsran/adt/variant.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
+#include <variant>
 #include <vector>
 
 namespace srsran {
 
 /// Defines an entry of the uplink slot PDU repository.
 using uplink_slot_pdu_entry =
-    variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu, uplink_processor::srs_pdu>;
+    std::variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu, uplink_processor::srs_pdu>;
 
 /// \brief Uplink slot PDU repository.
 ///

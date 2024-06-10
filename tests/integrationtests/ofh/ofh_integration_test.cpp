@@ -276,7 +276,7 @@ namespace {
 class dummy_frame_notifier : public ether::frame_notifier
 {
   // See interface for documentation.
-  void on_new_frame(span<const uint8_t> payload) override{};
+  void on_new_frame(ether::unique_rx_buffer buffer) override{};
 };
 dummy_frame_notifier dummy_notifier;
 
@@ -299,6 +299,19 @@ public:
 protected:
   srslog::basic_logger&                         logger;
   std::reference_wrapper<ether::frame_notifier> notifier;
+};
+
+/// Dummy Ethernet receive buffer.
+class dummy_eth_rx_buffer : public ether::rx_buffer
+{
+public:
+  /// Constructor receive a view on external data buffer managed by \c dummy_eth_receiver.
+  explicit dummy_eth_rx_buffer(span<const uint8_t> data_span_) { data_span = data_span_; }
+
+  span<const uint8_t> data() const override { return data_span; };
+
+private:
+  span<const uint8_t> data_span;
 };
 
 /// Dummy Ethernet receiver that receives data from RU emulator and pushes them to the OFH receiver without using real
@@ -335,7 +348,9 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         read_pos = (read_pos + 1) % QUEUE_SIZE;
       }
-      notifier.get().on_new_frame(span<const uint8_t>(queue[read_pos].data(), queue[read_pos].size()));
+      ether::unique_rx_buffer buffer(
+          dummy_eth_rx_buffer{span<const uint8_t>(queue[read_pos].data(), queue[read_pos].size())});
+      notifier.get().on_new_frame(std::move(buffer));
     })) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
@@ -1047,11 +1062,11 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   dependencies.error_notifier     = &error_notifier;
 
   dependencies.sector_dependencies.emplace_back();
-  auto& sector_deps                = dependencies.sector_dependencies.back();
-  sector_deps.logger               = &logger;
-  sector_deps.downlink_executor    = workers.ru_dl_exec;
-  sector_deps.receiver_executor    = workers.ru_rx_exec;
-  sector_deps.transmitter_executor = workers.ru_tx_exec;
+  auto& sector_deps             = dependencies.sector_dependencies.back();
+  sector_deps.logger            = &logger;
+  sector_deps.downlink_executor = workers.ru_dl_exec;
+  sector_deps.uplink_executor   = workers.ru_rx_exec;
+  sector_deps.txrx_executor     = workers.ru_tx_exec;
 
   // Configure Ethernet gateway.
   auto gateway            = std::make_unique<test_gateway>();

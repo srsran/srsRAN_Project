@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/support/executors/unique_thread.h"
-#include <atomic>
+#include <mutex>
 #include <utility>
 
 namespace srsran {
@@ -50,34 +50,50 @@ public:
   public:
     subscriber() = default;
     subscriber(io_broker& broker_, int fd_) : broker(&broker_), fd(fd_) {}
-    subscriber(subscriber&& other) noexcept : broker(other.broker), fd(other.fd.exchange(-1, std::memory_order_relaxed))
+    subscriber(subscriber&& other) noexcept
     {
+      std::lock_guard<std::mutex> lock(other.mutex);
+      broker = other.broker;
+      fd     = std::exchange(other.fd, -1);
     }
     subscriber& operator=(subscriber&& other) noexcept
     {
-      reset();
+      std::scoped_lock lock(mutex, other.mutex);
+      reset_nolock();
       broker = other.broker;
-      fd     = other.fd.exchange(-1, std::memory_order_relaxed);
+      fd     = std::exchange(other.fd, -1);
       return *this;
     }
     ~subscriber() { reset(); }
 
     /// Checks whether the FD is connected to the broker.
-    bool registered() const { return fd.load(std::memory_order_relaxed) >= 0; }
+    bool registered() const
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      return fd >= 0;
+    }
 
     /// Resets the handle, deregistering the FD from the broker.
     bool reset()
     {
-      int fd_tmp = fd.exchange(-1, std::memory_order_relaxed);
+      std::lock_guard<std::mutex> lock(mutex);
+      return reset_nolock();
+    }
+
+  private:
+    bool reset_nolock()
+    {
+      int fd_tmp = std::exchange(fd, -1);
       if (fd_tmp >= 0) {
         return broker->unregister_fd(fd_tmp);
       }
       return false;
     }
 
-  private:
-    io_broker*       broker = nullptr;
-    std::atomic<int> fd{-1};
+    // Mutex unique to the subscriber object.
+    mutable std::mutex mutex;
+    io_broker*         broker = nullptr;
+    int                fd     = -1;
   };
 
   /// Callback called when registered fd has data

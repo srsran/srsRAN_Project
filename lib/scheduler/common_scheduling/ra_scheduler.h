@@ -75,6 +75,7 @@ private:
   struct pending_rar_t {
     rnti_t                                                  ra_rnti = rnti_t::INVALID_RNTI;
     slot_point                                              prach_slot_rx;
+    slot_point                                              last_sched_try_slot;
     slot_interval                                           rar_window;
     static_vector<rnti_t, MAX_PREAMBLES_PER_PRACH_OCCASION> tc_rntis;
   };
@@ -110,18 +111,29 @@ private:
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
 
+  /// Delete RARs that are out of the RAR window.
+  void update_pending_rars(slot_point pdcch_slot);
+
+  /// Determines whether the resource grid for the provided slot has the conditions for RAR scheduling.
+  bool is_slot_candidate_for_rar(cell_slot_resource_allocator& slot_res_alloc);
+
+  /// Try scheduling pending RARs for the provided slot.
+  void schedule_pending_rars(cell_resource_allocator& res_alloc, slot_point pdcch_slot);
+
   /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.
-  unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc);
+  unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc, slot_point pdcch_slot);
 
   /// Schedule RAR grant and associated Msg3 grants in the provided scheduling resources.
   /// \param res_alloc Cell Resource Allocator.
-  /// \param rar pending RAR with an associated RA-RNTI that is going to be scheduled.
+  /// \param pending_rar pending RAR with an associated RA-RNTI that is going to be scheduled.
+  /// \param pdcch_slot Slot where the PDCCH is going to be scheduled.
   /// \param rar_crbs CRBs of the RAR to be scheduled.
   /// \param pdsch_time_res_index Index of PDSCH time domain resource.
   /// \param msg3_candidates List of Msg3s with respective resource information (e.g. RBs and symbols) to allocate.
   void fill_rar_grant(cell_resource_allocator&         res_alloc,
                       const pending_rar_t&             pending_rar,
+                      slot_point                       pdcch_slot,
                       crb_interval                     rar_crbs,
                       unsigned                         pdsch_time_res_index,
                       span<const msg3_alloc_candidate> msg3_candidates);
@@ -130,6 +142,10 @@ private:
   void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx);
 
   sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
+
+  // Set the max number of slots the scheduler can look ahead in the resource grid (with respect to the current slot) to
+  // find PDSCH space for RAR.
+  static const unsigned max_dl_slots_ahead_sched = 8U;
 
   // args
   const scheduler_ra_expert_config& sched_cfg;

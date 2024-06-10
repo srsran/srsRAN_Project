@@ -79,13 +79,13 @@ static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_depen
 {
   // Prepare sector configuration.
   ofh::sector_dependencies ofh_sector_dependencies;
-  ofh_sector_dependencies.logger               = dependencies.logger;
-  ofh_sector_dependencies.receiver_executor    = dependencies.receiver_executor;
-  ofh_sector_dependencies.transmitter_executor = dependencies.transmitter_executor;
-  ofh_sector_dependencies.downlink_executor    = dependencies.downlink_executor;
-  ofh_sector_dependencies.notifier             = std::move(notifier);
-  ofh_sector_dependencies.eth_gateway          = std::move(dependencies.eth_gateway);
-  ofh_sector_dependencies.eth_receiver         = std::move(dependencies.eth_receiver);
+  ofh_sector_dependencies.logger            = dependencies.logger;
+  ofh_sector_dependencies.uplink_executor   = dependencies.uplink_executor;
+  ofh_sector_dependencies.txrx_executor     = dependencies.txrx_executor;
+  ofh_sector_dependencies.downlink_executor = dependencies.downlink_executor;
+  ofh_sector_dependencies.notifier          = std::move(notifier);
+  ofh_sector_dependencies.eth_gateway       = std::move(dependencies.eth_gateway);
+  ofh_sector_dependencies.eth_receiver      = std::move(dependencies.eth_receiver);
 
   return ofh_sector_dependencies;
 }

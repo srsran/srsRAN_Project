@@ -48,7 +48,7 @@ struct rlc_bearer_config {
 };
 
 /// \brief Create configuration for RLC SRB entity.
-rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t                                 du_index,
+rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
                                                              du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_srb&                               bearer,
@@ -57,7 +57,7 @@ rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t           
                                                              rlc_pcap&                                rlc_pcap);
 
 /// \brief Create configuration for RLC DRB entity.
-rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t                                 du_index,
+rlc_entity_creation_message make_rlc_entity_creation_message(gnb_du_id_t                              du_id,
                                                              du_ue_index_t                            ue_index,
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_drb&                               bearer,

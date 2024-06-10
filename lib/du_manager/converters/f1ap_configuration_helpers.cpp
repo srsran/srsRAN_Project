@@ -48,6 +48,7 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
       srsran_assertion_failure("Invalid SCS common");
       mib.sub_carrier_spacing_common.value = asn1::rrc_nr::mib_s::sub_carrier_spacing_common_opts::scs15or60;
   }
+
   /// As per TS 38.331, MIB, the field "ssb-SubcarrierOffset" in the MIB only encodes the 4 LSB of k_SSB.
   mib.ssb_subcarrier_offset            = static_cast<uint8_t>(du_cfg.ssb_cfg.k_ssb.to_uint() & 0b00001111U);
   mib.dmrs_type_a_position.value       = du_cfg.dmrs_typeA_pos == dmrs_typeA_position::pos2
@@ -63,6 +64,7 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
   asn1::bit_ref     bref{buf};
   asn1::SRSASN_CODE ret = mib.pack(bref);
   srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack MIB");
+
   return buf;
 }
 
@@ -74,6 +76,7 @@ static asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
 static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const dl_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
+
   dl_cfg_common_sib_s out;
   // > frequencyInfoDL FrequencyInfoDL-SIB
   for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
@@ -85,10 +88,13 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const d
   out.freq_info_dl.offset_to_point_a = cfg.freq_info_dl.offset_to_point_a;
   out.freq_info_dl.scs_specific_carrier_list =
       srs_du::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_dl.scs_carrier_list);
+
   // > initialDownlinkBWP BWP-DownlinkCommon
   out.init_dl_bwp = srs_du::make_asn1_init_dl_bwp(cfg);
+
   // BCCH-Config
   out.bcch_cfg.mod_period_coeff.value = bcch_cfg_s::mod_period_coeff_opts::n4;
+
   // PCCH-Config
   switch (cfg.pcch_cfg.default_paging_cycle) {
     case paging_cycle::rf32:
@@ -247,10 +253,12 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
 static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_cell_common(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
+
   serving_cell_cfg_common_sib_s cell;
   cell.dl_cfg_common         = make_asn1_rrc_dl_cfg_common_sib(du_cfg.dl_cfg_common);
   cell.ul_cfg_common_present = true;
   cell.ul_cfg_common         = make_asn1_rrc_ul_config_common(du_cfg.ul_cfg_common);
+
   // SSB params.
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));
@@ -315,8 +323,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.conn_est_fail_ctrl.conn_est_fail_offset         = 1;
 
   if (du_cfg.si_config.has_value()) {
-    for (auto sib : du_cfg.si_config->sibs) {
-      if (variant_holds_alternative<sib2_info>(sib)) {
+    for (const auto& sib : du_cfg.si_config->sibs) {
+      if (std::holds_alternative<sib2_info>(sib)) {
         sib1.si_sched_info_present = true;
         bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
         srsran_assert(ret, "Invalid SI window length");
@@ -327,7 +335,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           srsran_assert(ret, "Invalid SI period");
           for (auto mapping_info : cfg_si.sib_mapping_info) {
             sib_type_info_s type_info;
-            const uint8_t   sib_id      = static_cast<uint8_t>(mapping_info);
+            auto            sib_id      = static_cast<uint8_t>(mapping_info);
             ret                         = asn1::number_to_enum(type_info.type, sib_id);
             type_info.value_tag_present = true;
             type_info.value_tag         = 0;
@@ -339,7 +347,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
             sib1.si_sched_info.sched_info_list.push_back(asn1_si);
           }
         }
-      } else if (variant_holds_alternative<sib19_info>(sib)) {
+      } else if (std::holds_alternative<sib19_info>(sib)) {
         sib1.non_crit_ext_present                                               = true;
         sib1.non_crit_ext.non_crit_ext_present                                  = true;
         sib1.non_crit_ext.non_crit_ext.non_crit_ext_present                     = true;
@@ -353,9 +361,12 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           asn1_si_r17.si_broadcast_status_r17.value = sched_info2_r17_s::si_broadcast_status_r17_opts::broadcasting;
           bool ret = asn1::number_to_enum(asn1_si_r17.si_periodicity_r17, cfg_si.si_period_radio_frames);
           srsran_assert(ret, "Invalid SI period");
+          if (cfg_si.si_window_position.has_value()) {
+            asn1_si_r17.si_win_position_r17 = cfg_si.si_window_position.value();
+          }
           for (auto mapping_info : cfg_si.sib_mapping_info) {
             sib_type_info_v1700_s type_info;
-            const uint8_t         sib_id_r17 = static_cast<uint8_t>(mapping_info);
+            auto                  sib_id_r17 = static_cast<uint8_t>(mapping_info);
             type_info.sib_type_r17.set_type1_r17();
             ret = asn1::number_to_enum(type_info.sib_type_r17.type1_r17(), sib_id_r17);
             if (ret) {
@@ -366,6 +377,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
             si_sched_info_r17.sched_info_list2_r17.push_back(asn1_si_r17);
           }
         }
+      } else {
+        srsran_terminate("Invalid SIB type");
       }
     }
   }
@@ -438,18 +451,17 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
   }
 
   if (sib19_params.ephemeris_info.has_value()) {
-    if (variant_holds_alternative<ecef_coordinates_t>(sib19_params.ephemeris_info.value())) {
-      auto& pos_vel = variant_get<ecef_coordinates_t>(sib19_params.ephemeris_info.value());
+    if (const auto* pos_vel = std::get_if<ecef_coordinates_t>(&sib19_params.ephemeris_info.value())) {
       sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
       sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = pos_vel.position_x;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = pos_vel.position_y;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = pos_vel.position_z;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = pos_vel.velocity_vx;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = pos_vel.velocity_vy;
-      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = pos_vel.velocity_vz;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = pos_vel->position_x;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = pos_vel->position_y;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = pos_vel->position_z;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = pos_vel->velocity_vx;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = pos_vel->velocity_vy;
+      sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = pos_vel->velocity_vz;
     } else {
-      auto& orbital_elem = variant_get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
+      const auto& orbital_elem = std::get<orbital_coordinates_t>(sib19_params.ephemeris_info.value());
       sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
       sib19.ntn_cfg_r17.ephemeris_info_r17.set_orbital_r17();
       sib19.ntn_cfg_r17.ephemeris_info_r17.orbital_r17().semi_major_axis_r17 = (uint64_t)orbital_elem.semi_major_axis;
@@ -509,20 +521,21 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
 
   switch (get_sib_info_type(sib)) {
     case sib_type::sib2: {
-      const sib2_info& cfg     = variant_get<sib2_info>(sib);
-      sib2_s&          out_sib = ret.set_sib2();
-      out_sib                  = make_asn1_rrc_cell_sib2(cfg);
+      const auto& cfg     = std::get<sib2_info>(sib);
+      sib2_s&     out_sib = ret.set_sib2();
+      out_sib             = make_asn1_rrc_cell_sib2(cfg);
       if (cfg.nof_ssbs_to_average.has_value()) {
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average         = cfg.nof_ssbs_to_average.value();
       }
-      // TODO
-    } break;
+      break;
+    }
     case sib_type::sib19: {
-      const sib19_info& cfg     = variant_get<sib19_info>(sib);
-      sib19_r17_s&      out_sib = ret.set_sib19_v1700();
-      out_sib                   = make_asn1_rrc_cell_sib19(cfg);
-    } break;
+      const auto&  cfg     = std::get<sib19_info>(sib);
+      sib19_r17_s& out_sib = ret.set_sib19_v1700();
+      out_sib              = make_asn1_rrc_cell_sib19(cfg);
+      break;
+    }
     default:
       srsran_assertion_failure("Invalid SIB type");
   }

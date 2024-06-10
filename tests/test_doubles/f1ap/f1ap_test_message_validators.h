@@ -36,7 +36,9 @@ class byte_buffer;
 namespace test_helpers {
 
 /// \brief Check if an F1AP message is a valid Initial UL RRC Message Transfer message.
-bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti, optional<nr_cell_global_id_t> nci = {});
+bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,
+                                       rnti_t                                    rnti,
+                                       const std::optional<nr_cell_global_id_t>& nci = {});
 
 bool is_valid_dl_rrc_message_transfer(const f1ap_message& msg);
 

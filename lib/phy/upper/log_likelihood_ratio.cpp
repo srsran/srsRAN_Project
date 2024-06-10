@@ -28,9 +28,9 @@
 #ifdef __AVX2__
 #include <immintrin.h>
 #endif // __AVX2__
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
 #include <arm_neon.h>
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 
 using namespace srsran;
 
@@ -172,7 +172,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 }
 #endif // __AVX2__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
 static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
 {
   const uint8x16_t mask_msb_u8    = vdupq_n_u8(0x80);
@@ -221,7 +221,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
     hard_bits.insert(hard_bit, i_bit, 1);
   }
 }
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 
 bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
@@ -233,7 +233,7 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
 
   unsigned nof_bits = soft_bits.size();
 
-#if defined(__AVX2__) || defined(HAVE_NEON)
+#if defined(__AVX2__) || defined(__ARM_NEON)
 
   hard_decision_simd(hard_bits, reinterpret_cast<const int8_t*>(soft_bits.data()), nof_bits);
 
@@ -245,7 +245,7 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
     // Insert into the bit buffer.
     hard_bits.insert(hard_bit, i_bit, 1);
   }
-#endif // __AVX2__ or HAVE_NEON
+#endif // __AVX2__ or __ARM_NEON
 
   // Return false if it finds a zero in the soft bits.
   return srsvec::find(soft_bits, log_likelihood_ratio(0)) == soft_bits.end();

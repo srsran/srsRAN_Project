@@ -48,50 +48,13 @@ struct gnb_appconfig;
 struct rlc_am_appconfig;
 struct mac_lc_appconfig;
 
-/// Converts and returns SSB periodicity, offset and duration into a valid SSB measurement and timing configuration.
-srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration);
-
 /// Converts and returns the subcarrier spacing.
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
 /// Converts and returns the given gnb application configuration to a NGAP Network Gateway configuration.
 srsran::sctp_network_connector_config generate_ngap_nw_config(const cu_cp_unit_amf_config& config);
 
-/// Converts and returns the given gnb application configuration to a CU-CP configuration.
-srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const du_high_unit_config& config,
-                                                     const cu_cp_unit_config&   cu_cfg);
-
-/// Converts and returns the given gnb application configuration to a DU cell configuration.
-std::vector<du_cell_config> generate_du_cell_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application QoS configuration to a DU QoS list configuration.
-std::map<five_qi_t, du_qos_config> generate_du_qos_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application QoS configuration to a DU SRB list configuration.
-std::map<srb_id_t, du_srb_config> generate_du_srb_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application configuration to a mac expert configuration.
-mac_expert_config generate_mac_expert_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application configuration to a scheduler expert configuration.
-scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config);
-
-/// Converts and returns the given gnb application configuration to an upper PHY configuration.
-upper_phy_config
-generate_du_low_config(const du_high_unit_cell_config& config, const du_low_unit_config& du_low, unsigned sector_id);
-
-/// Converts and returns the given gnb application configuration to a Radio Unit configuration.
-ru_configuration generate_ru_config(const gnb_appconfig&          config,
-                                    span<const du_cell_config>    cells,
-                                    const dynamic_du_unit_config& unit_cfg);
-
 /// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
 srsran::sctp_network_connector_config generate_e2ap_nw_config(const gnb_appconfig& config, int ppid);
-
-/// Converts and returns the given gnb application configuration to a E2 configuration.
-e2ap_configuration generate_e2_config(const du_high_unit_config& du_high);
-
-/// Augments RLC parameters based on NTN configuration.
-void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, du_srb_config>& srb_cfgs);
 
 } // namespace srsran

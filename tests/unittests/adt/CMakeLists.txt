@@ -55,10 +55,6 @@ add_executable(expected_test expected_test.cpp)
 target_link_libraries(expected_test srslog)
 add_test(expected_test expected_test)
 
-add_executable(optional_test optional_test.cpp)
-target_link_libraries(optional_test srslog gtest gtest_main)
-add_test(optional_test optional_test)
-
 add_executable(tiny_optional_test tiny_optional_test.cpp)
 target_link_libraries(tiny_optional_test srslog gtest gtest_main)
 add_test(tiny_optional_test tiny_optional_test)

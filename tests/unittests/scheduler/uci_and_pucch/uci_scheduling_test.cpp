@@ -41,22 +41,22 @@ public:
                               .period           = sr_period,
                               .offset           = sr_offset}}
   {
-    csi_offset = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
-                                                                                                 .get_pcell()
-                                                                                                 .cfg()
-                                                                                                 .cfg_dedicated()
-                                                                                                 .csi_meas_cfg.value()
-                                                                                                 .csi_report_cfg_list[0]
-                                                                                                 .report_cfg_type)
+    csi_offset = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
+                                                                                              .get_pcell()
+                                                                                              .cfg()
+                                                                                              .cfg_dedicated()
+                                                                                              .csi_meas_cfg.value()
+                                                                                              .csi_report_cfg_list[0]
+                                                                                              .report_cfg_type)
                      .report_slot_offset;
 
-    csi_period = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
-                                                                                                 .get_pcell()
-                                                                                                 .cfg()
-                                                                                                 .cfg_dedicated()
-                                                                                                 .csi_meas_cfg.value()
-                                                                                                 .csi_report_cfg_list[0]
-                                                                                                 .report_cfg_type)
+    csi_period = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
+                                                                                              .get_pcell()
+                                                                                              .cfg()
+                                                                                              .cfg_dedicated()
+                                                                                              .csi_meas_cfg.value()
+                                                                                              .csi_report_cfg_list[0]
+                                                                                              .report_cfg_type)
                      .report_slot_period;
 
     // In the slots with SR only, the expected format is Format 1.

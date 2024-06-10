@@ -29,20 +29,20 @@
 
 using namespace srsran;
 
-std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit_config&           unit_cfg,
-                                                                worker_manager&                    workers,
-                                                                srs_cu_up::e1ap_connection_client& e1ap_conn_client,
-                                                                f1u_cu_up_gateway&                 f1u_gateway,
-                                                                dlt_pcap&                          gtpu_pcap,
-                                                                timer_manager&                     timers,
-                                                                io_broker&                         io_brk)
+std::unique_ptr<srs_cu_up::cu_up_interface> srsran::build_cu_up(const cu_up_unit_config&         unit_cfg,
+                                                                worker_manager&                  workers,
+                                                                srs_cu_up::e1_connection_client& e1_conn_client,
+                                                                f1u_cu_up_gateway&               f1u_gateway,
+                                                                dlt_pcap&                        gtpu_pcap,
+                                                                timer_manager&                   timers,
+                                                                io_broker&                       io_brk)
 {
   srs_cu_up::cu_up_configuration config = generate_cu_up_config(unit_cfg);
   config.ctrl_executor                  = workers.cu_up_ctrl_exec;
   config.cu_up_e2_exec                  = workers.cu_up_e2_exec;
   config.ue_exec_pool                   = workers.cu_up_exec_mapper.get();
   config.io_ul_executor                 = workers.cu_up_io_ul_exec; // Optionally select separate exec for UL IO
-  config.e1ap.e1ap_conn_client          = &e1ap_conn_client;
+  config.e1ap.e1_conn_client            = &e1_conn_client;
   config.f1u_gateway                    = &f1u_gateway;
   config.gtpu_pcap                      = &gtpu_pcap;
   config.timers                         = &timers;

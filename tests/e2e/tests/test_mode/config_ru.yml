@@ -55,12 +55,12 @@ buffer_pool:
 
 expert_execution:
   affinities:
-    low_priority_cpus: 6-10,18-22
+    low_priority_cpus: {{low_priority_cpus}}
   cell_affinities:
-    - l1_dl_cpus: 2-10,14-22
-      l1_ul_cpus: 2-10,14-22
-      l2_cell_cpus: 1,13
-      ru_cpus: 2,14
+    - l1_dl_cpus: {{l1_dl_cpus}}
+      l1_ul_cpus: {{l1_ul_cpus}}
+      l2_cell_cpus: {{l2_cell_cpus}}
+      ru_cpus: {{ru_cpus}}
 
 expert_phy:
   max_request_headroom_slots: 3

@@ -35,7 +35,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
   srsran_assert(cfg.ue_exec_pool != nullptr, "Invalid CU-UP UE executor pool");
   srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
-  srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
+  srsran_assert(cfg.e1ap.e1_conn_client != nullptr, "Invalid E1 connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.ngu_gw != nullptr, "Invalid N3 gateway");
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
@@ -85,7 +85,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Create e1ap
-  e1ap = create_e1ap(*cfg.e1ap.e1ap_conn_client, e1ap_cu_up_ev_notifier, *cfg.timers, *cfg.ctrl_executor);
+  e1ap = create_e1ap(*cfg.e1ap.e1_conn_client, e1ap_cu_up_ev_notifier, *cfg.timers, *cfg.ctrl_executor);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
 
   cfg.e1ap.e1ap_conn_mng = e1ap.get();

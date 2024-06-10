@@ -57,21 +57,6 @@ public:
   /// \return \c true if the resource grid is empty. Otherwise, \c false.
   virtual bool is_empty() const = 0;
 
-  /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a mask to
-  /// indicate which subcarriers are allocated and which are not.
-  ///
-  /// \param[out] symbols Destination symbol buffer.
-  /// \param[in]  port    Port index.
-  /// \param[in]  l       Symbol index.
-  /// \param[in]  k_init  Initial subcarrier index.
-  /// \param[in] mask     Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
-  /// \return A view to the unused entries of \c symbols.
-  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
-  /// \note The number of elements of \c symbol shall be equal to or greater than the number of true elements in
-  /// \c mask.
-  virtual span<cf_t>
-  get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const = 0;
-
   /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
   /// to indicate which subcarriers are allocated and which are not.
   ///

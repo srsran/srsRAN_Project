@@ -438,6 +438,12 @@ static bool validate_cu_cp_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_con
     return false;
   }
 
+  if (config.plmns.size() != config.tacs.size()) {
+    fmt::print("Number of PLMNs '{}' do not match the number of TACs '{}'\n", config.plmns.size(), config.tacs.size());
+
+    return false;
+  }
+
   return true;
 }
 

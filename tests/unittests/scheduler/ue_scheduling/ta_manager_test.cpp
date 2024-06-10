@@ -109,9 +109,9 @@ TEST_P(ta_manager_tester, ta_cmd_is_successfully_triggered)
   }
   ASSERT_TRUE(ta_cmd_mac_ce_alloc.has_value()) << "Missing TA command CE allocation";
   ASSERT_TRUE(ta_cmd_mac_ce_alloc->lcid == lcid_dl_sch_t::TA_CMD) << "TA command is not be triggered";
-  ASSERT_TRUE(variant_holds_alternative<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload))
+  ASSERT_TRUE(std::holds_alternative<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload))
       << "TA command CE payload is absent";
-  auto ta_cmd_ce = variant_get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
+  auto ta_cmd_ce = std::get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
   ASSERT_EQ(ta_cmd_ce.ta_cmd, new_ta_cmd) << "New TA command does not match the expected TA command value";
 }
 
@@ -137,9 +137,9 @@ TEST_P(ta_manager_tester, verify_computed_new_ta_cmd_based_on_multiple_n_ta_diff
   }
   ASSERT_TRUE(ta_cmd_mac_ce_alloc.has_value()) << "Missing TA command CE allocation";
   ASSERT_TRUE(ta_cmd_mac_ce_alloc->lcid == lcid_dl_sch_t::TA_CMD) << "TA command is not be triggered";
-  ASSERT_TRUE(variant_holds_alternative<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload))
+  ASSERT_TRUE(std::holds_alternative<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload))
       << "TA command CE payload is absent";
-  auto ta_cmd_ce = variant_get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
+  auto ta_cmd_ce = std::get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload);
   ASSERT_EQ(ta_cmd_ce.ta_cmd, expected_new_ta_cmd) << "New TA command does not match the expected TA command value";
 }
 

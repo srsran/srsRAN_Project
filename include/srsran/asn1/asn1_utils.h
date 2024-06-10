@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/any.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
+#include <any>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -1398,18 +1398,18 @@ public:
     return *this;
   }
 
-  bool has_value() const { return not obj.empty(); }
+  bool has_value() const { return obj.has_value(); }
 
   template <typename T>
   bool holds_choice() const
   {
-    return srsran::any_cast<T>(&obj) != nullptr;
+    return std::any_cast<T>(&obj) != nullptr;
   }
 
   template <typename T>
   T& get()
   {
-    T* ret = srsran::any_cast<T>(&obj);
+    T* ret = std::any_cast<T>(&obj);
     srsran_assert(ret != nullptr, "Invalid choice type");
     return *ret;
   }
@@ -1417,15 +1417,15 @@ public:
   template <typename T>
   const T& get() const
   {
-    const T* ret = srsran::any_cast<T>(&obj);
+    const T* ret = std::any_cast<T>(&obj);
     srsran_assert(ret != nullptr, "Invalid choice type");
     return *ret;
   }
 
-  void reset() { obj.clear(); }
+  void reset() { obj.reset(); }
 
 private:
-  srsran::any obj;
+  std::any obj;
 };
 
 /*********************

@@ -80,7 +80,7 @@ struct ulsch_configuration {
 /// The parameters are described in TS38.212 Section 6.3.2.4.1.
 struct ulsch_information {
   /// Shared channel (SCH) parameters.
-  optional<sch_information> sch;
+  std::optional<sch_information> sch;
   /// Number of encoded and rate-matched UL-SCH data bits. Parameter \f$G^\textup{UL-SCH}\f$.
   units::bits nof_ul_sch_bits;
   /// Number of encoded and rate-matched HARQ-ACK data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
