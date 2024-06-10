@@ -180,6 +180,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
   out_cfg.max_nof_dus                    = cu_cfg.max_nof_dus;
   out_cfg.max_nof_cu_ups                 = cu_cfg.max_nof_cu_ups;
+  out_cfg.max_nof_ues                    = cu_cfg.max_nof_ues;
 
   out_cfg.ngap_config.gnb_id               = cu_cfg.gnb_id;
   out_cfg.ngap_config.ran_node_name        = cu_cfg.ran_node_name;
@@ -208,7 +209,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   }
 
   out_cfg.ue_config.inactivity_timer            = std::chrono::seconds{cu_cfg.inactivity_timer};
-  out_cfg.ue_config.max_nof_supported_ues       = cu_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
+  out_cfg.ue_config.max_nof_supported_ues       = cu_cfg.max_nof_ues;
   out_cfg.ngap_config.pdu_session_setup_timeout = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
   out_cfg.statistics_report_period              = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 

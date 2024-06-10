@@ -235,6 +235,8 @@ struct cu_cp_unit_config {
   uint16_t max_nof_dus = 6;
   /// Maximum number of CU-UPs.
   uint16_t max_nof_cu_ups = 6;
+  /// Maximum number of UEs.
+  uint64_t max_nof_ues = 8192;
   /// Inactivity timer in seconds.
   int inactivity_timer = 120;
   /// PDU session setup timeout in seconds (must be larger than T310).
