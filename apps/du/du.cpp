@@ -99,7 +99,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const log_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
+static void register_app_logs(const srs_du::log_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {

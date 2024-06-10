@@ -19,6 +19,25 @@
 namespace srsran {
 namespace srs_du {
 
+/// Configuration of logging functionalities.
+struct log_appconfig {
+  /// Path to log file or "stdout" to print to console.
+  std::string filename = "/tmp/du.log";
+  /// Default log level for all layers.
+  std::string all_level = "warning";
+  /// Generic log level assigned to library components without layer-specific level.
+  std::string lib_level     = "warning";
+  std::string e2ap_level    = "warning";
+  std::string config_level  = "none";
+  std::string metrics_level = "none";
+  /// Maximum number of bytes to write when dumping hex arrays.
+  int hex_max_size = 0;
+  /// Set to true to log broadcasting messages and all PRACH opportunities.
+  bool broadcast_enabled = false;
+  /// Set to a valid file path to enable tracing and write the trace to the file.
+  std::string tracing_filename;
+};
+
 /// Configuration of the F1-C interface of the DU.
 struct f1c_appconfig {
   /// CU-CP F1-C address the DU will connect to.
@@ -38,7 +57,7 @@ struct f1u_appconfig {
 /// DU application configuration.
 struct du_appconfig {
   /// Logging configuration.
-  log_appconfig log_cfg;
+  srs_du::log_appconfig log_cfg;
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// E2 configuration.
