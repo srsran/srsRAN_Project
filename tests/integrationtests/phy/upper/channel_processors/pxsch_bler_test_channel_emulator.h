@@ -60,9 +60,7 @@ public:
   void run(resource_grid_writer& rx_grid, const resource_grid_reader& tx_grid);
 
 private:
-  /// \brief Internal concurrent channel emulator.
-  ///
-  ///
+  /// Internal concurrent channel emulator.
   class concurrent_channel_emulator
   {
   public:

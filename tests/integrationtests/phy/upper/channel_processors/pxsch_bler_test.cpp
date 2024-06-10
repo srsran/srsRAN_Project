@@ -157,10 +157,6 @@ protected:
     std::condition_variable        cvar;
   };
 
-  static void SetUpTestSuite() { srslog::init(); }
-
-  static void TearDownTestSuite() {}
-
   void SetUp() override
   {
     // Prepare executors.
