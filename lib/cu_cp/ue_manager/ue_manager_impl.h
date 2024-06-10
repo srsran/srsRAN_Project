@@ -126,10 +126,24 @@ public:
     return ues.at(ue_index).get_meas_context();
   }
 
+protected:
+  ue_index_t next_ue_index = ue_index_t::min;
+
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
-  ue_index_t allocate_ue_index(du_index_t du_index);
+  ue_index_t allocate_ue_index();
+
+  inline void increase_next_ue_index()
+  {
+    if (next_ue_index == ue_index_t::max) {
+      // reset cu ue f1ap id counter
+      next_ue_index = ue_index_t::min;
+    } else {
+      // increase cu ue f1ap id counter
+      next_ue_index = uint_to_ue_index(ue_index_to_uint(next_ue_index) + 1);
+    }
+  }
 
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
   const ue_configuration        ue_config;

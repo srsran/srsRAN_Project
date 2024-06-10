@@ -41,7 +41,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
     return ue_index_t::invalid;
   }
 
-  ue_index_t new_ue_index = allocate_ue_index(du_index);
+  ue_index_t new_ue_index = allocate_ue_index();
   if (new_ue_index == ue_index_t::invalid) {
     logger.warning("CU-CP UE creation Failed. Cause: No free UE index available");
     return ue_index_t::invalid;
@@ -189,15 +189,35 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
 
 // private functions
 
-ue_index_t ue_manager::allocate_ue_index(du_index_t du_index)
+ue_index_t ue_manager::allocate_ue_index()
 {
-  // Search unallocated UE index
-  for (uint16_t i = 0; i < ue_config.max_nof_supported_ues; i++) {
-    ue_index_t new_ue_index = generate_ue_index(du_index, i);
-    if (ues.find(new_ue_index) == ues.end()) {
-      logger.debug("Allocating new ue_index={} for du_index={}", new_ue_index, du_index);
-      return new_ue_index;
+  // return invalid when no UE index is available
+  if (ues.size() == ue_config.max_nof_supported_ues) {
+    return ue_index_t::invalid;
+  }
+
+  // Check if the next_ue_index is available
+  if (ues.find(next_ue_index) == ues.end()) {
+    ue_index_t ret = next_ue_index;
+    // increase the next_ue_index
+    increase_next_ue_index();
+    return ret;
+  }
+
+  // Find holes in the allocated IDs by iterating over all ids starting with the next_ue_index to find the
+  // available id
+  while (true) {
+    // increase the next_ue_index and try again
+    increase_next_ue_index();
+
+    // return the id if it is not already used
+    if (ues.find(next_ue_index) == ues.end()) {
+      ue_index_t ret = next_ue_index;
+      // increase the next_ue_index
+      increase_next_ue_index();
+      return ret;
     }
   }
+
   return ue_index_t::invalid;
 }

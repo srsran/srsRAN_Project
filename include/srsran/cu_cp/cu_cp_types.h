@@ -33,19 +33,17 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Maximum number of UEs per DU (implementation-defined).
-const uint16_t MAX_NOF_UES_PER_DU = 1024;
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_DUS = 65535;
-/// Maximum number of UEs supported by CU-CP (implementation-defined).
-#define MAX_NOF_CU_UES (MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
-/// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_CU_UPS = 65535;
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_DU_CELLS = 16;
+/// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
+const uint16_t MAX_NOF_CU_UPS = 65535;
+/// Maximum number of UEs supported by CU-CP (implementation-defined).
+const uint64_t MAX_NOF_CU_UES = 4294967295; // 2^32 - 1
 
 /// \brief ue_index internally used to identify the UE CU-CP-wide.
-/// \remark The ue_index is derived from the DU index and the maximum number of UEs per DU.
+/// \remark The ue_index is derived from the maximum number of DUs and the maximum number of UEs per DU.
 enum class ue_index_t : uint64_t { min = 0, max = MAX_NOF_CU_UES - 1, invalid = MAX_NOF_CU_UES };
 
 /// Convert ue_index  type to integer.
@@ -73,21 +71,6 @@ constexpr inline du_index_t uint_to_du_index(std::underlying_type_t<du_index_t> 
 constexpr inline std::underlying_type_t<du_index_t> du_index_to_uint(du_index_t du_index)
 {
   return static_cast<std::underlying_type_t<du_index_t>>(du_index);
-}
-
-/// Get DU index from UE index.
-inline du_index_t get_du_index_from_ue_index(ue_index_t index)
-{
-  if (index == ue_index_t::invalid) {
-    return du_index_t::invalid;
-  }
-  return uint_to_du_index((ue_index_to_uint(index) / MAX_NOF_UES_PER_DU));
-}
-
-/// Generate a UE index from DU index and an index.
-inline ue_index_t generate_ue_index(du_index_t du_index, uint16_t index)
-{
-  return uint_to_ue_index(du_index_to_uint(du_index) * MAX_NOF_UES_PER_DU + index);
 }
 
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
