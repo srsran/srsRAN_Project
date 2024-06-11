@@ -48,7 +48,7 @@ public:
   {
     // Generate RRC Reestablishment Request.
     byte_buffer rrc_container =
-        pack_ul_ccch_msg(create_rrc_reestablishment_request(old_rnti_, old_pci_, "0011000101110000"));
+        pack_ul_ccch_msg(create_rrc_reestablishment_request(old_rnti_, old_pci_, "1111010001000010"));
 
     // Send Initial UL RRC Message to CU-CP.
     f1ap_message f1ap_init_ul_rrc_msg =

@@ -16,6 +16,7 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -152,7 +153,7 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
   (void)ret;
   msg.establishment_cause                = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
   msg.user_location_info.nr_cgi.plmn_hex = "00f110";
-  msg.user_location_info.nr_cgi.nci      = 6576;
+  msg.user_location_info.nr_cgi.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   msg.user_location_info.tai.plmn_id     = "00f110";
   msg.user_location_info.tai.tac         = 7;
   return msg;
@@ -187,7 +188,7 @@ cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_i
   bool ret                                = ul_nas_transport.nas_pdu.resize(nas_pdu_len);
   (void)ret;
   ul_nas_transport.user_location_info.nr_cgi.plmn_hex = "00f110";
-  ul_nas_transport.user_location_info.nr_cgi.nci      = 6576;
+  ul_nas_transport.user_location_info.nr_cgi.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   ul_nas_transport.user_location_info.tai.plmn_id     = "00f110";
   ul_nas_transport.user_location_info.tai.tac         = 7;
 
@@ -209,7 +210,7 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
-  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(6576);
+  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
   user_loc_info_nr.tai.plmn_id.from_string("00f110");
   user_loc_info_nr.tai.tac.from_number(7);
 
@@ -704,7 +705,8 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
   asn1::ngap::recommended_cell_item_s recommended_cell_item;
   auto&                               nr_cgi = recommended_cell_item.ngran_cgi.set_nr_cgi();
   nr_cgi.plmn_id.from_string("00f110");
-  nr_cgi.nr_cell_id.from_number(6576);
+  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+  nr_cgi.nr_cell_id.from_number(nci);
   recommended_cell_item.time_stayed_in_cell_present = true;
   recommended_cell_item.time_stayed_in_cell         = 5;
 
@@ -818,13 +820,14 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   // cgi
   auto& cgi = transparent_container.target_cell_id.set_nr_cgi();
   cgi.plmn_id.from_string("00f110");
-  cgi.nr_cell_id.from_number(6576);
+  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+  cgi.nr_cell_id.from_number(nci);
   // ue history info
   asn1::ngap::last_visited_cell_item_s cell_item;
   auto&                                cell       = cell_item.last_visited_cell_info.set_ngran_cell();
   auto&                                ngran_cell = cell.global_cell_id.set_nr_cgi();
   ngran_cell.plmn_id.from_string("00f110");
-  ngran_cell.nr_cell_id.from_number(6576);
+  ngran_cell.nr_cell_id.from_number(nci);
   cell.cell_type.cell_size    = asn1::ngap::cell_size_opts::options::small;
   cell.time_ue_stayed_in_cell = 0;
   transparent_container.ue_history_info.push_back(cell_item);

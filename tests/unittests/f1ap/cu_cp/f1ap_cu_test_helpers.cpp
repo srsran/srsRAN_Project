@@ -100,7 +100,7 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
   req.ue_index = uint_to_ue_index(19);
 
   // sp cell id
-  req.sp_cell_id.nci      = 6576;
+  req.sp_cell_id.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   req.sp_cell_id.plmn_hex = "00f110";
 
   // serv cell idx

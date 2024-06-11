@@ -19,6 +19,7 @@
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 
@@ -33,7 +34,8 @@ asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcel
 
 /// \brief Generates dummy F1AP SETUP REQUEST message.
 f1ap_message generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(0x11),
-                                       unsigned    nrcell_id = 6576,
+                                       unsigned    nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22},
+                                                                                                  0U),
                                        pci_t       pci       = 0,
                                        unsigned    tac       = 7);
 

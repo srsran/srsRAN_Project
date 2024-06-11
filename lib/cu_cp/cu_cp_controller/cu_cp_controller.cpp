@@ -90,6 +90,15 @@ bool cu_cp_controller::handle_du_setup_request(du_index_t du_idx, const du_setup
     // If AMF is not connected, it either means that the CU-CP is not operational state or there is a CU-CP failure.
     return false;
   }
+  for (auto& cell : req.gnb_du_served_cells_list) {
+    if (not cfg.rrc_config.gnb_id.contains_nci(cell.served_cell_info.nr_cgi.nci)) {
+      logger.warning("du={}: Rejecting DU configuration update. Cause: NCI {:#x} does not match gNB-Id {:#x}",
+                     du_idx,
+                     cell.served_cell_info.nr_cgi.nci,
+                     cfg.rrc_config.gnb_id.id);
+      return false;
+    }
+  }
   return du_mng.handle_du_config_update(du_idx, req);
 }
 

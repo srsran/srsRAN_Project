@@ -56,7 +56,7 @@ cu_cp_test::cu_cp_test()
   cfg.timers              = &timers;
 
   // NGAP config
-  cfg.ngap_config.gnb_id        = {411, 32};
+  cfg.ngap_config.gnb_id        = {411, 22};
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";
   cfg.ngap_config.tac           = 7;
@@ -65,7 +65,7 @@ cu_cp_test::cu_cp_test()
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // RRC config
-  cfg.rrc_config.gnb_id             = {411, 32};
+  cfg.rrc_config.gnb_id             = cfg.ngap_config.gnb_id;
   cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
   cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
                                        security::integrity_algorithm::nia1,
@@ -86,35 +86,42 @@ cu_cp_test::cu_cp_test()
   // mobility config
   cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
 
+  // Generate NCIs.
+  gnb_id_t     gnb_id1 = cfg.rrc_config.gnb_id;
+  nr_cell_id_t nci1    = config_helpers::make_nr_cell_identity(cfg.rrc_config.gnb_id, 0);
+  nr_cell_id_t nci2    = config_helpers::make_nr_cell_identity(cfg.rrc_config.gnb_id, 1);
+  gnb_id_t     gnb_id2 = {cfg.rrc_config.gnb_id.id + 1, cfg.rrc_config.gnb_id.bit_length};
+  nr_cell_id_t nci3    = config_helpers::make_nr_cell_identity(gnb_id2, 0);
+
   cell_meas_config cell_cfg_1;
   cell_cfg_1.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
-  cell_cfg_1.serving_cell_cfg.nci    = 0x19b0;
-  cell_cfg_1.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
-  cell_cfg_1.ncells.push_back({0x19b1, {uint_to_report_cfg_id(2)}});
+  cell_cfg_1.serving_cell_cfg.gnb_id = gnb_id1;
+  cell_cfg_1.serving_cell_cfg.nci    = nci1;
+  cell_cfg_1.ncells.push_back({nci2, {uint_to_report_cfg_id(2)}});
   // Add external cell (for inter CU handover tests)
-  cell_cfg_1.ncells.push_back({0x19c0, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(0x19b0, cell_cfg_1);
+  cell_cfg_1.ncells.push_back({nci3, {uint_to_report_cfg_id(2)}});
+  cfg.mobility_config.meas_manager_config.cells.emplace(nci1, cell_cfg_1);
 
   cell_meas_config cell_cfg_2;
   cell_cfg_2.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
-  cell_cfg_2.serving_cell_cfg.nci    = 0x19b1;
-  cell_cfg_2.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
-  cell_cfg_2.ncells.push_back({0x19b0, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(0x19b1, cell_cfg_2);
+  cell_cfg_2.serving_cell_cfg.gnb_id = gnb_id1;
+  cell_cfg_2.serving_cell_cfg.nci    = nci2;
+  cell_cfg_2.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
+  cfg.mobility_config.meas_manager_config.cells.emplace(nci2, cell_cfg_2);
 
   // Add an external cell
   cell_meas_config cell_cfg_3;
   cell_cfg_3.periodic_report_cfg_id     = uint_to_report_cfg_id(1);
-  cell_cfg_3.serving_cell_cfg.nci       = 0x19c0;
-  cell_cfg_3.serving_cell_cfg.gnb_id    = gnb_id_t{412, 32};
+  cell_cfg_3.serving_cell_cfg.gnb_id    = gnb_id2;
+  cell_cfg_3.serving_cell_cfg.nci       = nci3;
   cell_cfg_3.serving_cell_cfg.pci       = 3;
   cell_cfg_3.serving_cell_cfg.ssb_arfcn = 632628;
   cell_cfg_3.serving_cell_cfg.band      = nr_band::n78;
   cell_cfg_3.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz15;
   cell_cfg_3.serving_cell_cfg.ssb_mtc   = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
 
-  cell_cfg_3.ncells.push_back({0x19b0, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(0x19c0, cell_cfg_3);
+  cell_cfg_3.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
+  cfg.mobility_config.meas_manager_config.cells.emplace(nci3, cell_cfg_3);
 
   // Add periodic event
   rrc_report_cfg_nr periodic_report_cfg;
@@ -300,7 +307,7 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
 
   test_e1ap_attach();
 
-  test_du_attach(du_index, int_to_gnb_du_id(0x11), 6576, pci);
+  test_du_attach(du_index, int_to_gnb_du_id(0x11), config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0), pci);
 }
 
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
@@ -455,9 +462,10 @@ bool cu_cp_test::check_minimal_paging_result()
     test_logger.error("Paging cell list size mismatch {} != {}", paging_msg->paging_cell_list.size(), 1);
     return false;
   }
-  auto& paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
-  if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != 6576) {
-    test_logger.error("NR CGI NCI mismatch {} != {}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), 6576);
+  auto&        paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
+  nr_cell_id_t nci              = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+  if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != nci) {
+    test_logger.error("NR CGI NCI mismatch {} != {}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), nci);
     return false;
   }
   if (paging_cell_item.nr_cgi.plmn_id.to_string() != "00f110") {

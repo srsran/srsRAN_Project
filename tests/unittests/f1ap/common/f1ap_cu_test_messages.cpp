@@ -40,7 +40,8 @@ f1ap_message srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_
   init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id          = (unsigned)du_ue_id;
 
-  init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000000000000001100110110000"); // 6576 in decimal
+  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0U);
+  init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci);
   init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
   init_ul_rrc->c_rnti = to_value(crnti);
 
@@ -163,7 +164,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // sp cell id
   nr_cell_global_id_t sp_cell_id;
-  sp_cell_id.nci      = 6576;
+  sp_cell_id.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   sp_cell_id.plmn_hex = "00f110";
   msg.sp_cell_id      = sp_cell_id;
 
@@ -201,7 +202,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // scell to be setup mod list
   f1ap_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
-  scell_to_be_setup_mod_item.scell_id.nci      = 6576;
+  scell_to_be_setup_mod_item.scell_id.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   scell_to_be_setup_mod_item.scell_id.plmn_hex = "00f110";
   scell_to_be_setup_mod_item.scell_idx         = 1;
   scell_to_be_setup_mod_item.scell_ul_cfg      = f1ap_cell_ul_cfg::ul;
@@ -209,7 +210,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // scell to be remd list
   f1ap_scell_to_be_remd_item scell_to_be_remd_item;
-  scell_to_be_remd_item.scell_id.nci      = 6576;
+  scell_to_be_remd_item.scell_id.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   scell_to_be_remd_item.scell_id.plmn_hex = "00f110";
   msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
 
@@ -380,7 +381,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // res coordination transfer info
   f1ap_res_coordination_transfer_info res_coordination_transfer_info;
-  res_coordination_transfer_info.m_enb_cell_id = 6576;
+  res_coordination_transfer_info.m_enb_cell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   msg.res_coordination_transfer_info           = res_coordination_transfer_info;
 
   // serving cell mo
@@ -474,7 +475,7 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   cu_cp_recommended_cell_item recommended_cell_item;
 
   // add ngran cgi
-  recommended_cell_item.ngran_cgi.nci      = 6576;
+  recommended_cell_item.ngran_cgi.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
   recommended_cell_item.ngran_cgi.plmn_hex = "00f110";
 
   // add time stayed in cell

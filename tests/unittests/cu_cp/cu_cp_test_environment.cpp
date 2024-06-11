@@ -522,7 +522,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
 
   // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
   byte_buffer rrc_container =
-      pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "0011000101110000"));
+      pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
   f1ap_message f1ap_init_ul_rrc_msg =
       test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
