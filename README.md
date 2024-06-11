@@ -23,7 +23,7 @@ Build Instructions
   * libfftw:             <https://www.fftw.org/>
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
-  * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
+  * mbedTLS:             <https://www.trustedfirmware.org/projects/mbed-tls/>
   * git-lfs:             <https://git-lfs.github.com/>
   * googletest:          <https://github.com/google/googletest/>
     * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
