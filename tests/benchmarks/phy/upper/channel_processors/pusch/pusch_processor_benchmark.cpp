@@ -570,7 +570,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
   pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols  = MAX_NSYMB_PER_SLOT;
   pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports = selected_profile.nof_rx_ports;
   pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers =
-      std::min(selected_profile.nof_rx_ports, pusch_constants::MAX_NOF_LAYERS);
+      *std::max_element(selected_profile.nof_layers_set.begin(), selected_profile.nof_layers_set.end());
   pusch_proc_factory_config.dec_nof_iterations         = 2;
   pusch_proc_factory_config.dec_enable_early_stop      = true;
   pusch_proc_factory_config.max_nof_concurrent_threads = nof_threads;
