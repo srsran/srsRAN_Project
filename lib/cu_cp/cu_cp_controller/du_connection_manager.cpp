@@ -248,13 +248,6 @@ bool du_connection_manager::handle_du_config_update(du_index_t du_idx, const du_
                      req.gnb_du_id);
       return false;
     }
-
-    if (du_ctxt.gnb_du_name == req.gnb_du_name) {
-      logger.warning("du={}: Rejecting DU configuration update. Cause: DU with GNB-DU-Name {} already exists.",
-                     req.gnb_du_id,
-                     req.gnb_du_name);
-      return false;
-    }
   }
 
   return true;
