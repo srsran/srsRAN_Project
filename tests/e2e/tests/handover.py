@@ -244,11 +244,14 @@ def _do_ho(
     to_position: Tuple[float, float, float],
     steps: int,
     sleep_between_steps: int,
+    extra_time: int = 10,
 ):
     for ue_stub in ue_array:
         logging.info("Moving UE [%s] from %s to %s", id(ue_stub), from_position, to_position)
 
-    ho_task_array = [ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps)) for ue_stub in ue_array]
+    ho_task_array = [
+        ue_expect_handover(ue_stub, ((steps + 1) * sleep_between_steps) + extra_time) for ue_stub in ue_array
+    ]
 
     for i in range(steps + 1):
         for ue_stub in ue_array:
