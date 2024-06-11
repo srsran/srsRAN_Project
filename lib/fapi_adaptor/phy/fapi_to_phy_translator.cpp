@@ -24,6 +24,7 @@
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

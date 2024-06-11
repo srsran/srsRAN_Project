@@ -11,6 +11,7 @@
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/gateways/sctp_network_client_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <condition_variable>
 #include <gtest/gtest.h>

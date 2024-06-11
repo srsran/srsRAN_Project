@@ -12,6 +12,7 @@
 
 #include "srsran/adt/intrusive_list.h"
 #include "srsran/adt/unique_function.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_assert.h"
 #include <chrono>

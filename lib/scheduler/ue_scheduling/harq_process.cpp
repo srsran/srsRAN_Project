@@ -10,6 +10,7 @@
 
 #include "harq_process.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;

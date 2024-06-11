@@ -12,6 +12,7 @@
 #include "../../../../lib/ofh/compression/quantizer.h"
 #include "ofh_compression_test_data.h"
 #include "srsran/ofh/compression/compression_factory.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

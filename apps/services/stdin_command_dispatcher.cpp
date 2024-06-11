@@ -10,6 +10,8 @@
 
 #include "stdin_command_dispatcher.h"
 #include "stdin_command_dispatcher_utils.h"
+#include "srsran/srslog/srslog.h"
+#include <csignal>
 #include <fcntl.h>
 #include <unistd.h>
 

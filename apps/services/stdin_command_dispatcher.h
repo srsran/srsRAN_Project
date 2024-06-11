@@ -12,6 +12,7 @@
 
 #include "application_command.h"
 #include "srsran/adt/span.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/io/io_broker.h"
 #include <string>
 #include <unordered_map>

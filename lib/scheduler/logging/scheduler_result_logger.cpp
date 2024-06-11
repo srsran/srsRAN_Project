@@ -10,6 +10,7 @@
 
 #include "scheduler_result_logger.h"
 #include "srsran/ran/csi_report/csi_report_formatters.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

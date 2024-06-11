@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsran/phy/upper/signal_processors/pss_processor.h"
 #include "srsran/phy/upper/signal_processors/sss_processor.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 

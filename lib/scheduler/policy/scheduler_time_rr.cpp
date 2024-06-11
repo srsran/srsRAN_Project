@@ -10,6 +10,7 @@
 #include "scheduler_time_rr.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

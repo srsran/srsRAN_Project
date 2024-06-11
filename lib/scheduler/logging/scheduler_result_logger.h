@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/format_utils.h"
 
 namespace srsran {

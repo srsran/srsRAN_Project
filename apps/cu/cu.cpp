@@ -103,6 +103,12 @@ static void cleanup_signal_handler()
   srslog::flush();
 }
 
+/// Function to call when an error is reported by the application.
+static void app_error_report_handler()
+{
+  srslog::flush();
+}
+
 static void initialize_log(const std::string& filename)
 {
   srslog::sink* log_sink = (filename == "stdout") ? srslog::create_stdout_sink() : srslog::create_file_sink(filename);
@@ -150,6 +156,9 @@ std::unique_ptr<srs_cu_up::cu_up_interface> app_build_cu_up(const cu_up_unit_con
 
 int main(int argc, char** argv)
 {
+  // Set the application error handler.
+  set_error_handler(app_error_report_handler);
+
   static constexpr std::string_view app_name = "CU";
   app_services::application_message_banners::announce_app_and_version(app_name);
 

@@ -9,6 +9,7 @@
  */
 
 #include "buffered_slot_gateway_impl.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi;

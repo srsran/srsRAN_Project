@@ -18,6 +18,7 @@
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srslog/srslog.h"
 #include <mutex>
 #include <numeric>
 

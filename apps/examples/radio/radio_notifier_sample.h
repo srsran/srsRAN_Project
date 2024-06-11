@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/radio/radio_factory.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 

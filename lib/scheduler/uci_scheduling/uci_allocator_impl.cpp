@@ -15,6 +15,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

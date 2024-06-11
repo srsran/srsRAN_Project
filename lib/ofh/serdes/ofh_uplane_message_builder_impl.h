@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ofh {

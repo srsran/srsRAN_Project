@@ -13,6 +13,7 @@
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
+#include <atomic>
 
 namespace srsran {
 namespace ofh {

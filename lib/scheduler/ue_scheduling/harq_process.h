@@ -21,6 +21,7 @@
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/format_utils.h"
 #include <numeric>
 

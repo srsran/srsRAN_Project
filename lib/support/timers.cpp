@@ -9,10 +9,11 @@
  */
 
 #include "srsran/support/timers.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
-/* ****  Timer Wheel configuration parameters.  **** */
+/// Timer Wheel configuration parameters.
 static constexpr size_t WHEEL_SHIFT = 16U;
 static constexpr size_t WHEEL_SIZE  = 1U << WHEEL_SHIFT;
 static constexpr size_t WHEEL_MASK  = WHEEL_SIZE - 1U;

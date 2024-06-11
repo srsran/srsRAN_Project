@@ -28,9 +28,9 @@ static constexpr unsigned TERMINATION_TIMEOUT_S =
 #endif
 
 /// Handler called after the user interrupts the program.
-static std::atomic<srsran_signal_handler> interrupt_handler;
+static std::atomic<srsran_signal_handler> interrupt_handler = nullptr;
 /// Handler called just before forcing application exit.
-static std::atomic<srsran_signal_handler> cleanup_handler;
+static std::atomic<srsran_signal_handler> cleanup_handler = nullptr;
 
 static void signal_handler(int signal)
 {

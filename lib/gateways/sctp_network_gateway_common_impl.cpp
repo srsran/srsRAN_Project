@@ -9,6 +9,7 @@
  */
 
 #include "sctp_network_gateway_common_impl.h"
+#include "srsran/srslog/srslog.h"
 #include <netdb.h>
 #include <netinet/sctp.h>
 #include <sys/socket.h>

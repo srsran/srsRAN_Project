@@ -17,6 +17,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/file_vector.h"

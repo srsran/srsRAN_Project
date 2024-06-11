@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/io/sctp_socket.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/io/sockets.h"
 #include <fcntl.h>

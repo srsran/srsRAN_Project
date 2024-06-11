@@ -9,6 +9,7 @@
  */
 
 #include "metrics_hub.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

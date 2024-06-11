@@ -12,6 +12,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/fapi/validator_report.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace fapi {

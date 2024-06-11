@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/io/sctp_socket.h"
 #include <arpa/inet.h>

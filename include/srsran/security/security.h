@@ -19,6 +19,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>

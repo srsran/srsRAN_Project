@@ -30,6 +30,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/srslog.h"
 #include <map>
 #include <string>
 #include <vector>

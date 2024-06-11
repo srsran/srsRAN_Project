@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/srslog/srslog.h"
 #include <atomic>
 
 namespace srsran {

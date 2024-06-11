@@ -13,6 +13,7 @@
 #include "quantizer.h"
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ofh {

@@ -12,6 +12,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/io/unique_fd.h"
 #include <chrono>
 #include <cstdint>

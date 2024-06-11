@@ -16,6 +16,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

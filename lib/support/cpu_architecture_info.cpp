@@ -10,6 +10,7 @@
 
 #include "srsran/support/cpu_architecture_info.h"
 #include "srsran/adt/interval.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/format_utils.h"
 #include "srsran/support/sysinfo.h"
 #include <dirent.h>

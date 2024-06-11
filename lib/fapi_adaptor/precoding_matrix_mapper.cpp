@@ -10,6 +10,7 @@
 
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "precoding_matrix_mapper_functions.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;

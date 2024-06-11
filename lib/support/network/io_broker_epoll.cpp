@@ -9,6 +9,7 @@
  */
 
 #include "io_broker_epoll.h"
+#include "srsran/srslog/srslog.h"
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <unistd.h>

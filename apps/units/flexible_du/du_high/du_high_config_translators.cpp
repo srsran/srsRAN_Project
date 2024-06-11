@@ -9,9 +9,7 @@
  */
 
 #include "du_high_config_translators.h"
-
 #include "du_high_config.h"
-
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
@@ -22,6 +20,7 @@
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
