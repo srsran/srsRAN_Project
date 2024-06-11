@@ -44,8 +44,7 @@ static void configure_cli11_log_args(CLI::App& app, srs_du::log_appconfig& log_p
   };
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option(
-         "--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU")
+  app.add_option("--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC and F1")
       ->capture_default_str()
       ->check(level_check);
   app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
@@ -98,11 +97,8 @@ static void configure_cli11_log_args(CLI::App& app, srs_du::log_appconfig& log_p
   });
 }
 
-static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
+static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfig& metrics_params)
 {
-  app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
-      ->capture_default_str();
-
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 

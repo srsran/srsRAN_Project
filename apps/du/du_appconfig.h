@@ -52,6 +52,16 @@ struct f1u_appconfig {
   std::string bind_address = "127.0.10.2";
 };
 
+/// Metrics report configuration.
+struct metrics_appconfig {
+  /// JSON metrics reporting.
+  bool        enable_json_metrics      = false;
+  std::string addr                     = "127.0.0.1";
+  uint16_t    port                     = 55555;
+  bool        autostart_stdout_metrics = false;
+  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+};
+
 } // namespace srs_du
 
 /// DU application configuration.
@@ -59,7 +69,7 @@ struct du_appconfig {
   /// Logging configuration.
   srs_du::log_appconfig log_cfg;
   /// Metrics configuration.
-  metrics_appconfig metrics_cfg;
+  srs_du::metrics_appconfig metrics_cfg;
   /// E2 configuration.
   e2_appconfig e2_cfg;
   /// F1-C configuration.
