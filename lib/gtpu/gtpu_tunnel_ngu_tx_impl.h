@@ -22,25 +22,31 @@
 namespace srsran {
 
 /// Class used for transmitting GTP-U NGU bearers, e.g. on N3 interface.
-class gtpu_tunnel_ngu_tx_impl : public gtpu_tunnel_base_tx, public gtpu_tunnel_ngu_tx_lower_layer_interface
+class gtpu_tunnel_ngu_tx_impl final : public gtpu_tunnel_base_tx, public gtpu_tunnel_ngu_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_ngu_tx_impl(srs_cu_up::ue_index_t                             ue_index,
-                          gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg_,
-                          dlt_pcap&                                         gtpu_pcap_,
-                          gtpu_tunnel_common_tx_upper_layer_notifier&       upper_dn_) :
+  gtpu_tunnel_ngu_tx_impl(srs_cu_up::ue_index_t                                    ue_index,
+                          const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config& cfg_,
+                          dlt_pcap&                                                gtpu_pcap_,
+                          gtpu_tunnel_common_tx_upper_layer_notifier&              upper_dn_) :
     gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{ue_index, cfg_.peer_teid, "UL"}, gtpu_pcap_, upper_dn_), cfg(cfg_)
   {
     to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
     logger.log_info("GTPU NGU Tx configured. {}", cfg);
   }
 
+  void stop() { stopped = true; }
+
   /*
    * SDU/PDU handlers
    */
 
-  void handle_sdu(byte_buffer buf, qos_flow_id_t qfi) final
+  void handle_sdu(byte_buffer buf, qos_flow_id_t qfi) override
   {
+    if (stopped) {
+      return;
+    }
+
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
     hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
@@ -83,5 +89,6 @@ public:
 private:
   const gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config cfg;
   sockaddr_storage                                        peer_sockaddr;
+  bool                                                    stopped = false;
 };
 } // namespace srsran

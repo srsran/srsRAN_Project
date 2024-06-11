@@ -65,6 +65,14 @@ public:
   }
   ~gtpu_tunnel_ngu_rx_impl() override = default;
 
+  void stop()
+  {
+    if (not stopped) {
+      reordering_timer.stop();
+      stopped = true;
+    }
+  }
+
   /*
    * Testing Helpers
    */
@@ -76,6 +84,10 @@ protected:
   // domain-specific PDU handler
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
+    if (stopped) {
+      return;
+    }
+
     gtpu_teid_t                     teid                  = pdu.hdr.teid;
     psup_dl_pdu_session_information pdu_session_info      = {};
     bool                            have_pdu_session_info = false;
@@ -234,6 +246,7 @@ protected:
 private:
   psup_packing                             psup_packer;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
+  bool                                     stopped = false;
 
   /// Rx config
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config config;

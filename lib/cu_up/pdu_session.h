@@ -43,6 +43,8 @@ struct pdu_session {
     if (not stopped) {
       gtpu_rx_demux.remove_tunnel(local_teid);
 
+      gtpu->stop();
+
       // Stop DRBs
       for (const auto& drb : drbs) {
         drb.second->stop();
