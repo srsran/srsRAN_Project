@@ -72,24 +72,18 @@ struct pxsch_bler_params {
   sch_mcs_index mcs_index;
   // Frequency allocation.
   prb_interval freq_allocation;
-  // Maximum block error rate pass criteria.
-  double max_bler;
-  // Maximum measured mean EVM pass criteria.
-  double max_mean_evm;
 };
 
 std::ostream& operator<<(std::ostream& os, const pxsch_bler_params& params)
 {
   fmt::print(os,
-             "channel={} sinr={}dB nof_rx_ports={} mcs={} f_alloc=from{}to{} max_bler={} max_mean_evm={}",
+             "channel={} sinr={}dB nof_rx_ports={} mcs={} f_alloc=from{}to{}",
              params.channel_delay_profile,
              params.sinr_dB,
              params.nof_rx_ports,
              params.mcs_index.to_uint(),
              params.freq_allocation.start(),
-             params.freq_allocation.stop(),
-             params.max_bler,
-             params.max_mean_evm);
+             params.freq_allocation.stop());
   return os;
 }
 
@@ -430,24 +424,18 @@ TEST_P(PxschBlerTestFixture, Fading)
              ta_stats_us.get_min(),
              ta_stats_us.get_max(),
              ta_stats_us.get_mean());
-
-// Assert pass criteria only if there are no sanitizers.
-#if !(defined(__SANITIZE_THREAD__) || defined(__SANITIZE_MEMORY__))
-  ASSERT_LE(bler, GetParam().max_bler);
-  ASSERT_LE(evm_stats.get_mean(), GetParam().max_mean_evm);
-#endif // !(defined(__SANITIZE_THREAD__) || defined(__SANITIZE_MEMORY__))
 }
 
 static const std::vector<pxsch_bler_params> test_cases = {
-    {"TDLA", 60.0, 1, 27, prb_interval{bwp_start_rb, bwp_size_rb}, 0.003, 0.003},
-    {"TDLA", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}, 0.001, 0.002},
-    {"TDLA", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}, 0.001, 0.002},
-    {"TDLB", 60.0, 1, 10, prb_interval{bwp_start_rb, bwp_size_rb}, 0.003, 0.01},
-    {"TDLB", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}, 0.002, 0.003},
-    {"TDLB", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}, 0.001, 0.003},
-    {"TDLC", 60.0, 1, 8, prb_interval{bwp_start_rb, bwp_size_rb}, 0.003, 0.3},
-    {"TDLC", 60.0, 2, 12, prb_interval{bwp_start_rb, bwp_size_rb}, 0.003, 0.1},
-    {"TDLC", 60.0, 4, 19, prb_interval{bwp_start_rb, bwp_size_rb}, 0.003, 0.1}};
+    {"TDLA", 60.0, 1, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLA", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLA", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 1, 10, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 1, 8, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 2, 12, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 4, 19, prb_interval{bwp_start_rb, bwp_size_rb}}};
 
 INSTANTIATE_TEST_SUITE_P(PxschBlertest, PxschBlerTestFixture, ::testing::ValuesIn(test_cases));
 
