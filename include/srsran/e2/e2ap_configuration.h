@@ -18,7 +18,6 @@ namespace srsran {
 /// \brief E2AP configuration
 struct e2ap_configuration {
   gnb_id_t    gnb_id = {0, 22};
-  std::string ran_node_name;
   std::string plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
   unsigned    max_setup_retries = 5;
   bool        e2sm_kpm_enabled  = false;
