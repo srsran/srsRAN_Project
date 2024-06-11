@@ -155,6 +155,28 @@ TEST_F(cu_cp_connectivity_test, when_dus_with_duplicate_du_ids_connect_then_f1_s
             f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
+TEST_F(cu_cp_connectivity_test, when_a_du_with_non_matching_gnb_id_connects_then_f1_setup_is_rejected)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Establish two TNL connections between DU and the CU-CP.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = *ret;
+
+  // DU sends F1 Setup Request.
+  gnb_du_id_t  du_id    = int_to_gnb_du_id(0x55);
+  f1ap_message f1ap_pdu = test_helpers::generate_f1_setup_request(du_id, 0x0); // the gnb-id does not match.
+  get_du(du_idx).push_ul_pdu(f1ap_pdu);
+
+  // Ensure the F1 Setup Failure is received for the DU.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.unsuccessful_outcome().value.type().value,
+            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
+}
+
 TEST_F(cu_cp_connectivity_test, when_max_nof_dus_connected_reached_then_cu_cp_rejects_new_du_connections)
 {
   for (unsigned idx = 0; idx < this->get_test_env_params().max_nof_dus; idx++) {
