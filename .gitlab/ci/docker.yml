@@ -57,6 +57,27 @@ metrics tox:
       changes:
         - docker/metrics_server/**/*
 
+grafana version changed:
+  extends: .version_changed_pyproject
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - docker/grafana/**/*
+  script:
+    - NEW_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+    - export NEW_VERSION
+    - |
+      git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
+      if [ ! -e "docker/grafana/version.yml" ]; then
+          exit 0
+      fi
+    - OLD_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+    - export OLD_VERSION
+    - |
+      echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
+    - python3 -c "import semver; import os; exit(0) if (semver.compare(os.environ['NEW_VERSION'], os.environ['OLD_VERSION']) > 0) else exit(1)"
+
 metrics version changed:
   extends: .version_changed_pyproject
   stage: static
@@ -182,6 +203,31 @@ metrics server image:
 
 metrics server image latest:
   extends: metrics server image
+  variables:
+    OVERWRITE: "true"
+  before_script:
+    - |
+      export VERSION=latest
+
+grafana server image:
+  extends: .docker-builder
+  stage: publish
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/grafana/**/*
+  variables:
+    REGISTRY_URI: $GITLAB_REGISTRY_URI
+    NAME: grafana
+    CONTEXT: ${CI_PROJECT_DIR}/docker/grafana
+    MODE: publish
+  before_script:
+    - |
+      export VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+
+grafana server image latest:
+  extends: grafana server image
   variables:
     OVERWRITE: "true"
   before_script:
