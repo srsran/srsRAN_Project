@@ -833,7 +833,7 @@ e2ap_configuration srsran::generate_e2_config(const du_high_unit_config& du_high
 {
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
   out_cfg.gnb_id             = du_high.gnb_id;
-  out_cfg.ran_node_name      = du_high.ran_node_name;
+  out_cfg.ran_node_name      = "srsgnb01"; // TODO: Remove dependency from E2-DU.
   out_cfg.plmn               = du_high.cells_cfg.front().cell.plmn;
   out_cfg.e2sm_kpm_enabled   = du_high.e2_cfg.e2sm_kpm_enabled;
   out_cfg.e2sm_rc_enabled    = du_high.e2_cfg.e2sm_rc_enabled;

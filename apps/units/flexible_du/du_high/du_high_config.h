@@ -749,8 +749,6 @@ struct du_high_unit_config {
   bool warn_on_drop = false;
   /// gNodeB identifier.
   gnb_id_t gnb_id = {411, 22};
-  /// Node name.
-  std::string ran_node_name = "srsgnb01";
   /// DU identifier.
   gnb_du_id_t gnb_du_id = gnb_du_id_t::min;
   /// PCAPs.
