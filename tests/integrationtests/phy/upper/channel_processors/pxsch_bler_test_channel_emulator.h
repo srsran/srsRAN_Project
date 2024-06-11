@@ -43,6 +43,7 @@ public:
   /// \param[in] nof_rx_ports    Number of receive ports.
   /// \param[in] nof_subc        Number of the resource grid subcarriers.
   /// \param[in] nof_symbols     Number of OFDM symbols per slot.
+  /// \param[in] max_nof_threads Maximum number of threads used by the asynchronous executor.
   /// \param[in] scs             Resource grid subcarrier spacing.
   /// \param[in] executor_       Asynchronous task execution.
   channel_emulator(std::string        channel,
@@ -50,6 +51,7 @@ public:
                    unsigned           nof_rx_ports,
                    unsigned           nof_subc,
                    unsigned           nof_symbols,
+                   unsigned           max_nof_threads,
                    subcarrier_spacing scs,
                    task_executor&     executor_);
 

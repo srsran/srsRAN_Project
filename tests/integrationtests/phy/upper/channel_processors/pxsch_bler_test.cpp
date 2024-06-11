@@ -52,11 +52,9 @@ static constexpr unsigned           n_id                        = 0;
 static constexpr unsigned           scrambling_id               = 0;
 static constexpr bool               n_scid                      = false;
 static constexpr bool               use_early_stop              = true;
-static const unsigned               max_nof_threads             = std::thread::hardware_concurrency();
-
-// Number of slots to simulate. Reduce it for ASAN and TSAN.
-static bool     show_partial    = true;
-static unsigned nof_repetitions = 10 * 10240 * pow2(to_numerology_value(scs));
+static unsigned                     max_nof_threads             = std::thread::hardware_concurrency();
+static bool                         show_stats                  = true;
+static unsigned                     nof_repetitions             = 10 * 10240 * pow2(to_numerology_value(scs));
 
 namespace {
 
@@ -282,8 +280,14 @@ protected:
     tx_data.resize(tbs / 8);
     rx_data.resize(tbs / 8);
 
-    emulator = std::make_unique<channel_emulator>(
-        channel, GetParam().sinr_dB, GetParam().nof_rx_ports, MAX_RB * NRE, nof_ofdm_symbols, scs, *executor);
+    emulator = std::make_unique<channel_emulator>(channel,
+                                                  GetParam().sinr_dB,
+                                                  GetParam().nof_rx_ports,
+                                                  MAX_RB * NRE,
+                                                  nof_ofdm_symbols,
+                                                  max_nof_threads,
+                                                  scs,
+                                                  *executor);
   }
 
   void TearDown() override
@@ -373,7 +377,7 @@ TEST_P(PxschBlerTestFixture, Fading)
     ++pusch_config.slot;
 
     // Set following line to 1 for printing partial results.
-    if (show_partial && (n % 100 == 0)) {
+    if (show_stats && (n % 100 == 0)) {
       // Calculate resultant metrics.
       double bler            = static_cast<double>(error_count) / static_cast<double>(count);
       double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
@@ -406,24 +410,26 @@ TEST_P(PxschBlerTestFixture, Fading)
   double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
 
   // Print results.
-  fmt::print("Iterations={{{:<2} {:<2} {:<3.1f}}}; "
-             "BLER={:.10f}; "
-             "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
-             "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-             "TA={{{:.2f} {:.2f} {:.2f}}}us;\n",
-             min_iterations,
-             max_iterations,
-             mean_iterations,
-             bler,
-             sinr_stats.get_min(),
-             sinr_stats.get_max(),
-             sinr_stats.get_mean(),
-             evm_stats.get_min(),
-             evm_stats.get_max(),
-             evm_stats.get_mean(),
-             ta_stats_us.get_min(),
-             ta_stats_us.get_max(),
-             ta_stats_us.get_mean());
+  if (show_stats) {
+    fmt::print("Iterations={{{:<2} {:<2} {:<3.1f}}}; "
+               "BLER={:.10f}; "
+               "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
+               "EVM={{{:.3f} {:.3f} {:.3f}}}; "
+               "TA={{{:.2f} {:.2f} {:.2f}}}us;\n",
+               min_iterations,
+               max_iterations,
+               mean_iterations,
+               bler,
+               sinr_stats.get_min(),
+               sinr_stats.get_max(),
+               sinr_stats.get_mean(),
+               evm_stats.get_min(),
+               evm_stats.get_max(),
+               evm_stats.get_mean(),
+               ta_stats_us.get_min(),
+               ta_stats_us.get_max(),
+               ta_stats_us.get_mean());
+  }
 }
 
 static const std::vector<pxsch_bler_params> test_cases = {
@@ -444,8 +450,9 @@ int main(int argc, char** argv)
   // If the test is called from CTest, it might have more than one command line argument. In this case, disable the
   // partial results and reduce the number of repetitions.
   if (argc > 1) {
-    show_partial    = false;
-    nof_repetitions = 128;
+    show_stats      = false;
+    nof_repetitions = 4;
+    max_nof_threads = 2;
   }
 
   ::testing::InitGoogleTest(&argc, argv);

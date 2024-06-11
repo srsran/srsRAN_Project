@@ -70,13 +70,14 @@ channel_emulator::channel_emulator(std::string        channel,
                                    unsigned           nof_rx_ports,
                                    unsigned           nof_subc,
                                    unsigned           nof_symbols,
+                                   unsigned           max_nof_threads,
                                    subcarrier_spacing scs,
                                    task_executor&     executor_) :
   nof_ofdm_symbols(nof_symbols),
   dist_taps(cf_t(), 1.0F),
   freq_domain_channel({nof_subc, nof_rx_ports}),
   temp_channel(nof_subc),
-  emulators(std::thread::hardware_concurrency(), sinr_dB, nof_subc),
+  emulators(max_nof_threads, sinr_dB, nof_subc),
   executor(executor_)
 {
   // Select fading channel taps.
