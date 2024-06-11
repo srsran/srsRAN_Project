@@ -28,8 +28,6 @@ protected:
   unsigned nbits;
   unsigned offset;
 
-  static void SetUpTestSuite() {}
-
   void SetUp() override
   {
     // Get test parameters.
