@@ -36,7 +36,7 @@ unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, 
 /// \param csi_period_msec CSI period in milliseconds.
 void compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
                                   unsigned                max_pucch_grants_per_slot,
-                                  unsigned                sr_period_msec,
+                                  float                   sr_period_msec,
                                   std::optional<unsigned> csi_period_msec);
 
 } // namespace config_helpers

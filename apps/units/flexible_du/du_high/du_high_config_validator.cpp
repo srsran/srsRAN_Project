@@ -390,8 +390,18 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  static constexpr std::array<unsigned, 11> valid_sr_period_slots{1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320};
-  const unsigned sr_period_slots = get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec;
+  static constexpr std::array<unsigned, 12> valid_sr_period_slots{1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320};
+  const auto sr_period_slots = static_cast<unsigned>(get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec);
+
+  // Check that the SR period in milliseconds leads to an integer number of slots.
+  if (get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec != static_cast<float>(sr_period_slots)) {
+    fmt::print("SR period (i.e., {}ms) times the number of slots per subframe (i.e., {}) must be an integer number of "
+               "slots.\n",
+               pucch_cfg.sr_period_msec,
+               get_nof_slots_per_subframe(scs_common));
+    return false;
+  }
+
   if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
       valid_sr_period_slots.end()) {
     fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));

@@ -583,8 +583,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     if (sr_cng.empty()) {
       sr_cng.emplace_back(scheduling_request_resource_config{});
     }
-    sr_cng.front().period = static_cast<sr_periodicity>(get_nof_slots_per_subframe(base_cell.common_scs) *
-                                                        base_cell.pucch_cfg.sr_period_msec);
+    sr_cng.front().period = static_cast<sr_periodicity>(
+        static_cast<unsigned>(get_nof_slots_per_subframe(base_cell.common_scs) * base_cell.pucch_cfg.sr_period_msec));
 
     // If any dependent parameter needs to be updated, this is the place.
     config_helpers::compute_nof_sr_csi_pucch_res(du_pucch_cfg,
