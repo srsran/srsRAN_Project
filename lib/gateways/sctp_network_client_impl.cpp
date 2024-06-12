@@ -181,7 +181,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
                  dest_port);
     return nullptr;
   }
-  if (not node_cfg.bind_address.empty()) {
+  if (node_cfg.bind_address.empty()) {
     // Make sure to close any socket created for any previous connection.
     socket.close();
   }
