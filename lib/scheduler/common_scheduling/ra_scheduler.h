@@ -98,7 +98,8 @@ private:
 
   void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
 
-  void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
+  void
+  log_postponed_rar(const pending_rar_t& rar, const char* cause_str, std::optional<slot_point> sl = std::nullopt) const;
 
   /// Delete RARs that are out of the RAR window.
   void update_pending_rars(slot_point pdcch_slot);
