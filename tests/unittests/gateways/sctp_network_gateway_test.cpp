@@ -125,6 +125,8 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
 TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
 {
   sctp_network_connector_config config;
+  config.if_name      = "client";
+  config.dest_name    = "server";
   config.bind_address = "127.0.0.1";
   config.bind_port    = 0;
   config.reuse_addr   = true;
@@ -138,6 +140,8 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
 TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
 {
   sctp_network_connector_config config;
+  config.if_name      = "client";
+  config.dest_name    = "server";
   config.bind_address = "::1";
   config.bind_port    = 0;
   config.reuse_addr   = true;
@@ -153,7 +157,8 @@ TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
   sctp_network_connector_config config;
-  config.connection_name   = "TEST";
+  config.if_name           = "client";
+  config.dest_name         = "server";
   config.connect_address   = "127.0.0.1";
   config.connect_port      = 0; // attempt to connect to port 0 which should always fail
   config.non_blocking_mode = true;
@@ -167,7 +172,8 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
   sctp_network_connector_config config;
-  config.connection_name   = "TEST";
+  config.if_name           = "client";
+  config.dest_name         = "server";
   config.connect_address   = "::1";
   config.connect_port      = 0; // attempt to connect to port 0 which should always fail
   config.non_blocking_mode = true;
@@ -179,6 +185,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   sctp_network_connector_config server_config;
+  server_config.if_name           = "server";
   server_config.bind_address      = "127.0.0.1";
   server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
@@ -191,7 +198,8 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
   ASSERT_NE(server_port.value(), 0);
 
   sctp_network_connector_config client_config;
-  client_config.connection_name   = "TEST";
+  client_config.if_name           = "client";
+  client_config.dest_name         = "server";
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
@@ -227,6 +235,7 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   sctp_network_connector_config server_config;
+  server_config.if_name           = "server";
   server_config.bind_address      = "::1";
   server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
@@ -239,7 +248,8 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   ASSERT_NE(server_port.value(), 0);
 
   sctp_network_connector_config client_config;
-  client_config.connection_name   = "TEST";
+  client_config.if_name           = "client";
+  client_config.dest_name         = "server";
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
@@ -275,6 +285,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   sctp_network_connector_config server_config;
+  server_config.if_name           = "server";
   server_config.bind_address      = "localhost";
   server_config.bind_port         = 0;
   server_config.non_blocking_mode = true;
@@ -287,7 +298,8 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   ASSERT_NE(server_port.value(), 0);
 
   sctp_network_connector_config client_config;
-  client_config.connection_name   = "TEST";
+  client_config.if_name           = "client";
+  client_config.dest_name         = "server";
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_port.value();
   client_config.non_blocking_mode = true;
@@ -328,6 +340,7 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
   uint32_t rto_max  = 800;
 
   sctp_network_connector_config server_config;
+  server_config.if_name      = "server";
   server_config.bind_address = "127.0.0.1";
   server_config.bind_port    = 0;
   server_config.reuse_addr   = true;
@@ -358,6 +371,7 @@ TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
   uint32_t max_init_timeo    = 120;
 
   sctp_network_connector_config server_config;
+  server_config.if_name           = "server";
   server_config.bind_address      = "127.0.0.1";
   server_config.bind_port         = 0;
   server_config.reuse_addr        = true;

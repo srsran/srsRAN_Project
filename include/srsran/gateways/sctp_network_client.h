@@ -42,7 +42,7 @@ public:
 
   /// \brief Connect to remote SCTP server.
   [[nodiscard]] virtual std::unique_ptr<sctp_association_sdu_notifier>
-  connect_to(const std::string&                             connection_name,
+  connect_to(const std::string&                             dest_name,
              const std::string&                             dest_addr,
              int                                            dest_port,
              std::unique_ptr<sctp_association_sdu_notifier> recv_handler) = 0;

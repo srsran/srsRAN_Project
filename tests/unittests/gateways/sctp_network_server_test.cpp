@@ -90,7 +90,7 @@ public:
     server_addr = server_addr_;
     server_port = server_port_;
 
-    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_SEQPACKET});
+    auto result = sctp_socket::create(sctp_socket_params{"CLIENT", AF_INET, SOCK_SEQPACKET});
     if (not result.has_value()) {
       return false;
     }
@@ -124,6 +124,7 @@ class sctp_network_server_test : public base_sctp_network_test, public ::testing
 protected:
   sctp_network_server_test()
   {
+    server_cfg.sctp.if_name      = "SERVER";
     server_cfg.sctp.ppid         = NGAP_PPID;
     server_cfg.sctp.bind_address = "127.0.0.1";
     server_cfg.sctp.bind_port    = 0;

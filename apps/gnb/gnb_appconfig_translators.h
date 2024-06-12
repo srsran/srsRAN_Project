@@ -39,9 +39,6 @@ struct mac_lc_appconfig;
 /// Converts and returns the subcarrier spacing.
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
 
-/// Converts and returns the given gnb application configuration to a NGAP Network Gateway configuration.
-srsran::sctp_network_connector_config generate_ngap_nw_config(const cu_cp_unit_amf_config& config);
-
 /// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
 srsran::sctp_network_connector_config generate_e2ap_nw_config(const gnb_appconfig& config, int ppid);
 

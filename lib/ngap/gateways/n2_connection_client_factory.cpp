@@ -213,7 +213,7 @@ public:
     broker(broker_), sctp_cfg(sctp_), pcap_writer(pcap_)
   {
     // Create SCTP network adapter.
-    sctp_gateway = create_sctp_network_client(sctp_network_client_config{"AMF", sctp_cfg, broker});
+    sctp_gateway = create_sctp_network_client(sctp_network_client_config{sctp_cfg, broker});
     report_error_if_not(sctp_gateway != nullptr, "Failed to create SCTP gateway client.\n");
   }
 
@@ -261,6 +261,14 @@ srsran::srs_cu_cp::create_n2_connection_client(const n2_connection_client_config
   }
 
   // Connection to AMF through SCTP.
-  const auto& nw_mode = std::get<n2_connection_client_config::network>(params.mode);
-  return std::make_unique<n2_sctp_gateway_client>(nw_mode.broker, nw_mode.sctp, params.pcap);
+  const auto&                           nw_mode = std::get<n2_connection_client_config::network>(params.mode);
+  srsran::sctp_network_connector_config sctp_cfg;
+  sctp_cfg.dest_name       = "AMF";
+  sctp_cfg.if_name         = "N2";
+  sctp_cfg.connect_address = nw_mode.amf_address;
+  sctp_cfg.connect_port    = nw_mode.amf_port;
+  sctp_cfg.bind_address    = nw_mode.bind_address;
+  sctp_cfg.bind_interface  = nw_mode.bind_interface;
+  sctp_cfg.ppid            = NGAP_PPID;
+  return std::make_unique<n2_sctp_gateway_client>(nw_mode.broker, sctp_cfg, params.pcap);
 }

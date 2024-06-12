@@ -21,7 +21,8 @@ std::unique_ptr<srs_du::f1c_connection_client> create_f1c_client_gateway(const s
                                                                          dlt_pcap&          f1ap_pcap)
 {
   sctp_network_connector_config f1c_sctp{};
-  f1c_sctp.connection_name = "F1-C";
+  f1c_sctp.if_name         = "F1-C";
+  f1c_sctp.dest_name       = "CU-CP";
   f1c_sctp.connect_address = cu_cp_addr;
   f1c_sctp.connect_port    = 38471;
   f1c_sctp.ppid            = F1AP_PPID;

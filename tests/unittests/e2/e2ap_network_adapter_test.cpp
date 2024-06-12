@@ -46,6 +46,7 @@ protected:
     ric_rx_e2_sniffer = std::make_unique<e2_sniffer>(*this);
     ric_pcap          = std::make_unique<dummy_e2ap_pcap>();
     e2_sctp_gateway_config e2_server_sctp_cfg{{}, *ric_broker, *ric_pcap};
+    e2_server_sctp_cfg.sctp.if_name      = "E2";
     e2_server_sctp_cfg.sctp.ppid         = NGAP_PPID;
     e2_server_sctp_cfg.sctp.bind_address = "127.0.0.1";
     e2_server_sctp_cfg.sctp.bind_port    = 0;
@@ -61,6 +62,8 @@ protected:
 
     // create E2 agent
     sctp_network_connector_config e2agent_config;
+    e2agent_config.dest_name       = "NearRT-RIC";
+    e2agent_config.if_name         = "E2";
     e2agent_config.connect_address = "127.0.0.1";
     e2agent_config.connect_port    = ric_gw_port.value();
     e2agent_config.bind_address    = "127.0.0.101";

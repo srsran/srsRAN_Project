@@ -26,6 +26,7 @@ public:
                      srslog::basic_logger&                                    logger_) :
     ppid(parent.node_cfg.ppid),
     fd(parent.socket.fd().value()),
+    if_name(parent.node_cfg.if_name),
     assoc_id(assoc.assoc_id),
     client_addr(assoc.addr),
     assoc_shutdown_flag(assoc.association_shutdown_received),
@@ -42,10 +43,13 @@ public:
       return false;
     }
     if (sdu.length() > network_gateway_sctp_max_len) {
-      logger.error("PDU of {} bytes exceeds maximum length of {} bytes", sdu.length(), network_gateway_sctp_max_len);
+      logger.error("{}: PDU of {} bytes exceeds maximum length of {} bytes",
+                   if_name,
+                   sdu.length(),
+                   network_gateway_sctp_max_len);
       return false;
     }
-    logger.debug("assoc={}: Sending PDU of {} bytes", assoc_id, sdu.length());
+    logger.debug("{} assoc={}: Sending PDU of {} bytes", if_name, assoc_id, sdu.length());
 
     span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
 
@@ -61,7 +65,8 @@ public:
                                   0,
                                   0);
     if (bytes_sent == -1) {
-      logger.error("assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
+      logger.error("{} assoc={}: Closing SCTP association. Cause: Couldn't send {} B of data. errno={}",
+                   if_name,
                    assoc_id,
                    pdu_span.size_bytes(),
                    strerror(errno));
@@ -96,9 +101,9 @@ private:
       // Failed to send EOF.
       // Note: It may happen when the sender notifier is removed just before the SCTP shutdown event is handled in
       // the server recv thread.
-      logger.info("fd={} assoc={}: Couldn't send EOF during shut down (errno=\"{}\")", fd, assoc_id, strerror(errno));
+      logger.info("{} assoc={}: Couldn't send EOF during shut down (errno=\"{}\")", if_name, assoc_id, strerror(errno));
     } else {
-      logger.debug("fd={} assoc={}: Sent EOF to SCTP client and closed SCTP association", fd, assoc_id);
+      logger.debug("{} assoc={}: Sent EOF to SCTP client and closed SCTP association", if_name, assoc_id);
     }
 
     // Signal sender closed the channel.
@@ -108,6 +113,7 @@ private:
   // Note: We copy all the required params by value to avoid race conditions with the server thread.
   const uint32_t                ppid;
   const int                     fd;
+  std::string                   if_name;
   const int                     assoc_id;
   const transport_layer_address client_addr;
   // This flag is shared by the server main class and this notifier and is used to signal the association shut down.
@@ -138,8 +144,6 @@ sctp_network_server_impl::~sctp_network_server_impl()
 
   // Once the IO unsubscription completes, it is safe to remove associations.
   handle_socket_shutdown(nullptr);
-
-  logger.info("fd={}: SCTP server closed", socket.fd().value());
 }
 
 bool sctp_network_server_impl::create_and_bind()
@@ -247,7 +251,7 @@ void sctp_network_server_impl::handle_notification(span<const uint8_t>          
     }
     case SCTP_SHUTDOWN_EVENT: {
       const struct sctp_shutdown_event* n = &notif->sn_shutdown_event;
-      handle_association_shutdown(n->sse_assoc_id, "Client shutdown");
+      handle_association_shutdown(n->sse_assoc_id, "Client requested the shutdown");
       break;
     }
     default:
@@ -282,23 +286,22 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
       assoc_factory.create(std::make_unique<sctp_send_notifier>(*this, assoc_ctxt, logger));
   if (assoc_ctxt.sctp_data_recv_notifier == nullptr) {
     associations.erase(assoc_id);
-    logger.error("fd={} assoc={} client={}: Unable to create a new SCTP association handler",
-                 socket.fd().value(),
+    logger.error("{} assoc={} client={}: Unable to create a new SCTP association handler",
+                 node_cfg.if_name,
                  assoc_id,
                  assoc_ctxt.addr);
     return;
   }
 
-  logger.info(
-      "fd={} assoc={}: New client SCTP association (client_addr={})", socket.fd().value(), assoc_id, assoc_ctxt.addr);
+  logger.info("{} assoc={}: New client SCTP association (client_addr={})", node_cfg.if_name, assoc_id, assoc_ctxt.addr);
 }
 
 void sctp_network_server_impl::handle_association_shutdown(int assoc_id, const char* cause)
 {
   auto assoc_it = associations.find(assoc_id);
   if (assoc_it == associations.end()) {
-    logger.error("fd={} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
-                 socket.fd().value(),
+    logger.error("{} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
+                 node_cfg.if_name,
                  assoc_id);
     return;
   }
@@ -308,8 +311,8 @@ void sctp_network_server_impl::handle_association_shutdown(int assoc_id, const c
   bool prev = assoc_it->second.association_shutdown_received->exchange(true);
   if (not prev and cause != nullptr) {
     // The association sender didn't yet close the connection and the association was closed by the client
-    logger.info("fd={} assoc={}: SCTP association was shut down (client_addr={}). Cause: {}",
-                socket.fd().value(),
+    logger.info("{} assoc={}: SCTP association was shut down (client_addr={}). Cause: {}",
+                node_cfg.if_name,
                 assoc_it->first,
                 assoc_it->second.addr,
                 cause);
@@ -346,13 +349,6 @@ bool sctp_network_server_impl::listen()
     return false;
   }
 
-  if (logger.debug.enabled()) {
-    logger.debug("fd={}: Listening for new SCTP associations on {}:{}...",
-                 socket.fd().value(),
-                 node_cfg.bind_address,
-                 get_listen_port());
-  }
-
   return true;
 }
 
@@ -378,8 +374,12 @@ std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp
                                                                       sctp_network_association_factory&  assoc_factory_)
 {
   // Validate arguments
+  if (sctp_cfg.if_name.empty()) {
+    srslog::fetch_basic_logger("SCTP-GW").error("Cannot create SCTP server. Cause: No name was provided");
+    return nullptr;
+  }
   if (sctp_cfg.bind_address.empty()) {
-    srslog::fetch_basic_logger("SCTP-GW").error("Cannot create SCTP server without bind address");
+    srslog::fetch_basic_logger("SCTP-GW").error("{}: Cannot create SCTP server without bind address", sctp_cfg.if_name);
     return nullptr;
   }
 

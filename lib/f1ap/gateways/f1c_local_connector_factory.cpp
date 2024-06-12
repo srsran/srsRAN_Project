@@ -100,6 +100,7 @@ public:
   {
     // Create SCTP server.
     sctp_network_gateway_config sctp;
+    sctp.if_name      = "F1-C";
     sctp.ppid         = F1AP_PPID;
     sctp.bind_address = "127.0.0.1";
     // Use any bind port available.
@@ -113,7 +114,8 @@ public:
 
     // Create SCTP client.
     sctp_network_connector_config sctp_client;
-    sctp_client.connection_name = "F1-C";
+    sctp_client.if_name         = "F1-C";
+    sctp_client.dest_name       = "CU-CP";
     sctp_client.connect_address = "127.0.0.1";
     sctp_client.connect_port    = server->get_listen_port().value();
     sctp_client.ppid            = F1AP_PPID;

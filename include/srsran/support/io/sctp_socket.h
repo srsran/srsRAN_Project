@@ -21,6 +21,8 @@
 namespace srsran {
 
 struct sctp_socket_params {
+  /// Name of the interface for logging purposes.
+  std::string            if_name;
   int                    ai_family;
   int                    ai_socktype;
   bool                   reuse_addr        = false;
@@ -65,6 +67,7 @@ public:
 private:
   bool set_sockopts(const sctp_socket_params& params);
 
+  std::string           if_name;
   bool                  non_blocking_mode = false;
   srslog::basic_logger& logger;
 

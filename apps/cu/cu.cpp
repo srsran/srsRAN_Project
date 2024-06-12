@@ -59,6 +59,7 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
 
@@ -305,32 +306,9 @@ int main(int argc, char** argv)
   // Set up the JSON log channel used by metrics.
   // TODO metrics. Do we have any CU-CP or CU-UP JSON metrics?
 
-  // Create NGAP Gateway.
-  // TODO had to include gnb
-  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
-  {
-    using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
-    using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
-    using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
-
-    // TODO generate network config in helper function, not in apps/gnb
-    srsran::sctp_network_connector_config n2_nw_cfg;
-    n2_nw_cfg.connection_name = "AMF";
-    n2_nw_cfg.connect_address = cu_cp_config.amf_cfg.ip_addr;
-    n2_nw_cfg.connect_port    = cu_cp_config.amf_cfg.port;
-    if (cu_cp_config.amf_cfg.n2_bind_addr == "auto") {
-      n2_nw_cfg.bind_address = cu_cp_config.amf_cfg.bind_addr;
-    } else {
-      n2_nw_cfg.bind_address = cu_cp_config.amf_cfg.n2_bind_addr;
-    }
-    n2_nw_cfg.bind_interface = cu_cp_config.amf_cfg.n2_bind_interface;
-    n2_nw_cfg.ppid           = NGAP_PPID;
-
-    n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
-        *cu_cp_dlt_pcaps.ngap,
-        cu_cp_config.amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}}
-                                     : ngap_mode_t{network_mode_t{*epoll_broker, n2_nw_cfg}}});
-  }
+  // Create N2 Client Gateway.
+  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
+      generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
 
   // E2AP configuration.
   // Create E2AP GW remote connector.

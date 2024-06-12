@@ -53,10 +53,7 @@ bool sctp_network_gateway_impl::create_and_connect()
     }
   }
 
-  fmt::print("Connecting to {} on {}:{}\n",
-             config.connection_name.c_str(),
-             config.connect_address.c_str(),
-             config.connect_port);
+  fmt::print("Connecting to {} on {}:{}\n", config.dest_name, config.connect_address.c_str(), config.connect_port);
 
   sockaddr_searcher                                  searcher{config.connect_address, config.connect_port, logger};
   std::chrono::time_point<std::chrono::steady_clock> start  = std::chrono::steady_clock::now();

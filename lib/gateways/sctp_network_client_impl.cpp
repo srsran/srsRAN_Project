@@ -9,6 +9,7 @@
  */
 
 #include "sctp_network_client_impl.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/sockets.h"
 #include <netinet/sctp.h>
 
@@ -21,7 +22,7 @@ class sctp_network_client_impl::sctp_send_notifier final : public sctp_associati
 {
 public:
   sctp_send_notifier(sctp_network_client_impl& parent_, const transport_layer_address& server_addr_) :
-    client_name(parent_.client_name),
+    client_name(parent_.node_cfg.if_name),
     ppid(parent_.node_cfg.ppid),
     fd(parent_.socket.fd().value()),
     logger(parent_.logger),
@@ -42,7 +43,7 @@ public:
       logger.error("PDU of {} bytes exceeds maximum length of {} bytes", sdu.length(), network_gateway_sctp_max_len);
       return false;
     }
-    logger.debug("Sending PDU of {} bytes", sdu.length());
+    logger.debug("{}: Sending PDU of {} bytes", client_name, sdu.length());
 
     // Note: each sender needs its own buffer to avoid race conditions with the recv.
     span<const uint8_t> pdu_span = to_span(sdu, send_buffer);
@@ -115,19 +116,14 @@ private:
   std::shared_ptr<std::atomic<bool>> closed_flag;
 };
 
-sctp_network_client_impl::sctp_network_client_impl(const std::string&                 client_name_,
-                                                   const sctp_network_gateway_config& sctp_cfg,
-                                                   io_broker&                         broker_) :
-  sctp_network_gateway_common_impl(sctp_cfg),
-  client_name(client_name_),
-  broker(broker_),
-  temp_recv_buffer(network_gateway_sctp_max_len)
+sctp_network_client_impl::sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg, io_broker& broker_) :
+  sctp_network_gateway_common_impl(sctp_cfg), broker(broker_), temp_recv_buffer(network_gateway_sctp_max_len)
 {
 }
 
 sctp_network_client_impl::~sctp_network_client_impl()
 {
-  logger.debug("{}: Closing...", client_name);
+  logger.debug("{}: Closing...", node_cfg.if_name);
 
   // If there is a connection on-going.
   if (shutdown_received != nullptr) {
@@ -162,21 +158,18 @@ sctp_network_client_impl::~sctp_network_client_impl()
   std::unique_lock<std::mutex> lock(connection_mutex);
   connection_cvar.wait(lock, [this]() { return server_addr.empty(); });
   socket.close();
-
-  logger.info("{}: SCTP client closed", client_name);
 }
 
 std::unique_ptr<sctp_association_sdu_notifier>
-sctp_network_client_impl::connect_to(const std::string&                             connection_name,
+sctp_network_client_impl::connect_to(const std::string&                             dest_name,
                                      const std::string&                             dest_addr,
                                      int                                            dest_port,
                                      std::unique_ptr<sctp_association_sdu_notifier> recv_handler_)
 {
   if (shutdown_received != nullptr and not shutdown_received->load(std::memory_order_relaxed)) {
     // If this is not the first connection.
-    logger.error("{}: New connection to {} on {}:{} failed. Cause: Connection is already in progress",
-                 client_name,
-                 connection_name,
+    logger.error("{}: Connection to {}:{} failed. Cause: Connection is already in progress",
+                 node_cfg.if_name,
                  dest_addr,
                  dest_port);
     return nullptr;
@@ -186,8 +179,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
     socket.close();
   }
 
-  logger.info("{}: Connecting to {} on {}:{}...", client_name, connection_name, dest_addr, dest_port);
-  fmt::print("{}: Connecting to {} on {}:{}...\n", client_name, connection_name, dest_addr, dest_port);
+  fmt::print("{}: Connecting to {} on {}:{}...\n", node_cfg.if_name, dest_name, dest_addr, dest_port);
 
   sockaddr_searcher searcher{dest_addr, dest_port, logger};
   auto              start = std::chrono::steady_clock::now();
@@ -229,14 +221,15 @@ sctp_network_client_impl::connect_to(const std::string&                         
       cause = "IO broker could not register socket";
     }
     fmt::print("{}: Failed to connect to {} on {}:{}. error=\"{}\" timeout={}ms\n",
-               client_name,
-               connection_name,
+               node_cfg.if_name,
+               dest_name,
                dest_addr,
                dest_port,
                cause,
                now_ms.count());
-    logger.error("{}: Failed to connect SCTP socket to {}:{}. error=\"{}\" timeout={}ms",
-                 client_name,
+    logger.error("{}: Failed to connect to {} on {}:{}. error=\"{}\" timeout={}ms",
+                 node_cfg.if_name,
+                 dest_name,
                  dest_addr,
                  dest_port,
                  cause,
@@ -276,7 +269,8 @@ sctp_network_client_impl::connect_to(const std::string&                         
     return nullptr;
   }
 
-  logger.info("{}: SCTP connection to {}:{} was successful", client_name, dest_addr, dest_port);
+  logger.info("{}: SCTP connection to {} on {}:{} was established", node_cfg.if_name, dest_name, dest_addr, dest_port);
+  fmt::print("{}: Connection to {} on {}:{} was established\n", node_cfg.if_name, dest_name, dest_addr, dest_port);
 
   return std::make_unique<sctp_send_notifier>(*this, addr);
 }
@@ -304,7 +298,7 @@ void sctp_network_client_impl::receive()
       handle_connection_close(cause.c_str());
     } else {
       if (!node_cfg.non_blocking_mode) {
-        logger.debug("Socket timeout reached");
+        logger.debug("{}: Socket timeout reached", node_cfg.if_name);
       }
     }
     return;
@@ -331,7 +325,7 @@ void sctp_network_client_impl::handle_connection_close(const char* cause)
 
   if (not prev and cause != nullptr) {
     // The SCTP sender (the upper layers) didn't yet close the connection.
-    logger.info("{}: SCTP connection was shut down. Cause: {}", client_name, cause);
+    logger.info("{}: SCTP connection was shut down. Cause: {}", node_cfg.if_name, cause);
   }
 }
 
@@ -353,7 +347,7 @@ void sctp_network_client_impl::handle_sctp_shutdown_comp()
 
 void sctp_network_client_impl::handle_data(span<const uint8_t> payload)
 {
-  logger.debug("{}: Received {} bytes", client_name, payload.size());
+  logger.debug("{}: Received {} bytes", node_cfg.if_name, payload.size());
 
   // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
   recv_handler->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
@@ -400,12 +394,17 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
   }
 }
 
-std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const std::string&                 client_name,
-                                                                      const sctp_network_gateway_config& sctp_cfg,
+std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const sctp_network_gateway_config& sctp_cfg,
                                                                       io_broker&                         broker_)
 {
+  // Validate arguments.
+  if (sctp_cfg.if_name.empty()) {
+    srslog::fetch_basic_logger("SCTP-GW").error("Cannot create SCTP client. Cause: No name was provided");
+    return nullptr;
+  }
+
   // Create a SCTP server instance.
-  std::unique_ptr<sctp_network_client_impl> server{new sctp_network_client_impl(client_name, sctp_cfg, broker_)};
+  std::unique_ptr<sctp_network_client_impl> server{new sctp_network_client_impl(sctp_cfg, broker_)};
 
   // If a bind address is provided, create a socket here and bind it.
   if (not sctp_cfg.bind_address.empty()) {

@@ -45,6 +45,7 @@
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
 
+#include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
@@ -343,18 +344,8 @@ int main(int argc, char** argv)
   e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   // Create N2 Gateway.
-  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
-  {
-    using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
-    using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
-    using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
-
-    n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
-        *cu_cp_dlt_pcaps.ngap,
-        cu_cp_config.amf_cfg.no_core
-            ? ngap_mode_t{no_core_mode_t{}}
-            : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(cu_cp_config.amf_cfg)}}});
-  }
+  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
+      generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
 
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);

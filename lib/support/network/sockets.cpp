@@ -18,7 +18,7 @@
 
 using namespace srsran;
 
-bool srsran::getnameinfo(struct sockaddr&              ai_addr,
+bool srsran::getnameinfo(const struct sockaddr&        ai_addr,
                          const socklen_t&              ai_addrlen,
                          std::array<char, NI_MAXHOST>& ip_address,
                          int&                          port)
@@ -33,7 +33,7 @@ bool srsran::getnameinfo(struct sockaddr&              ai_addr,
   return true;
 }
 
-socket_name_info srsran::get_nameinfo(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
+socket_name_info srsran::get_nameinfo(const struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
 {
   std::array<char, NI_MAXHOST> ip_addr;
   int                          port;
