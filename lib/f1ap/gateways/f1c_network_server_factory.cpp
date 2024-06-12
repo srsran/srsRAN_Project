@@ -102,6 +102,7 @@ public:
   {
     // Create SCTP server.
     sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
+    report_error_if_not(sctp_server != nullptr, "Failed to create SCTP server");
   }
 
   void attach_cu_cp(srs_cu_cp::cu_cp_f1c_handler& cu_f1c_handler_) override
@@ -110,7 +111,7 @@ public:
 
     // Start listening for new DU SCTP connections.
     bool result = sctp_server->listen();
-    report_fatal_error_if_not(result, "Failed to start SCTP server.\n");
+    report_error_if_not(result, "Failed to start SCTP server.\n");
   }
 
   std::optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }

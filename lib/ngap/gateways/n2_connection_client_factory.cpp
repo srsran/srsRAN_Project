@@ -223,9 +223,12 @@ public:
     srsran_assert(cu_cp_rx_pdu_notifier != nullptr, "CU-CP Rx PDU notifier is null");
 
     // Establish SCTP connection and register SCTP Rx message handler.
-    logger.debug("Establishing TNL connection to AMF ({}:{})...", sctp_cfg.connect_address, sctp_cfg.connect_port);
+    logger.debug("Establishing TNL connection to {} ({}:{})...",
+                 sctp_cfg.dest_name,
+                 sctp_cfg.connect_address,
+                 sctp_cfg.connect_port);
     std::unique_ptr<sctp_association_sdu_notifier> sctp_sender = sctp_gateway->connect_to(
-        "N2",
+        sctp_cfg.dest_name,
         sctp_cfg.connect_address,
         sctp_cfg.connect_port,
         std::make_unique<sctp_to_n2_pdu_notifier>(std::move(cu_cp_rx_pdu_notifier), pcap_writer, logger));
@@ -234,7 +237,16 @@ public:
           "Failed to establish N2 TNL connection to AMF on {}:{}.\n", sctp_cfg.connect_address, sctp_cfg.connect_port);
       return nullptr;
     }
-    logger.info("N2 TNL connection to AMF on {}:{} established", sctp_cfg.connect_address, sctp_cfg.connect_port);
+    logger.info("{}: Connection to {} on {}:{} was established",
+                sctp_cfg.if_name,
+                sctp_cfg.dest_name,
+                sctp_cfg.connect_address,
+                sctp_cfg.connect_port);
+    fmt::print("{}: Connection to {} on {}:{} completed\n",
+               sctp_cfg.if_name,
+               sctp_cfg.dest_name,
+               sctp_cfg.connect_address,
+               sctp_cfg.connect_port);
 
     // Return the Tx PDU notifier to the CU-CP.
     return std::make_unique<n2_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);

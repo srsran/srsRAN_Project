@@ -179,8 +179,6 @@ sctp_network_client_impl::connect_to(const std::string&                         
     socket.close();
   }
 
-  fmt::print("{}: Connecting to {} on {}:{}...\n", node_cfg.if_name, dest_name, dest_addr, dest_port);
-
   sockaddr_searcher searcher{dest_addr, dest_port, logger};
   auto              start = std::chrono::steady_clock::now();
   // Create SCTP socket only if not created earlier during bind. Otherwise, reuse socket.
@@ -270,7 +268,6 @@ sctp_network_client_impl::connect_to(const std::string&                         
   }
 
   logger.info("{}: SCTP connection to {} on {}:{} was established", node_cfg.if_name, dest_name, dest_addr, dest_port);
-  fmt::print("{}: Connection to {} on {}:{} was established\n", node_cfg.if_name, dest_name, dest_addr, dest_port);
 
   return std::make_unique<sctp_send_notifier>(*this, addr);
 }

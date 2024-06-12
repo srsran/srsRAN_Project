@@ -270,6 +270,7 @@ int main(int argc, char** argv)
 
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
+  f1c_sctp_cfg.if_name                     = "F1-C";
   f1c_sctp_cfg.bind_address                = cu_cp_config.f1ap_config.f1c_bind_address;
   f1c_sctp_cfg.bind_port                   = 38471;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
