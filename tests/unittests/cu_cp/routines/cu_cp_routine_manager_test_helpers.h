@@ -15,6 +15,7 @@
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

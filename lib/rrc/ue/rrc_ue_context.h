@@ -31,14 +31,12 @@ public:
                    const rnti_t                           c_rnti_,
                    const rrc_cell_context&                cell_,
                    const rrc_ue_cfg_t&                    cfg_,
-                   security::security_context&            sec_context_,
                    std::optional<rrc_ue_transfer_context> rrc_context_);
 
   const ue_index_t                                         ue_index; // UE index assigned by the DU processor
   const rnti_t                                             c_rnti;   // current C-RNTI
   const rrc_cell_context                                   cell;     // current cell
   const rrc_ue_cfg_t                                       cfg;
-  security::security_context&                              sec_context;
   rrc_state                                                state = rrc_state::idle;
   std::optional<rrc_meas_cfg>                              meas_cfg;
   std::optional<uint32_t>                                  five_g_tmsi;

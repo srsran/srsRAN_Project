@@ -121,8 +121,6 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
   ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
-  ue_cfg.int_algo_pref_list             = cfg.int_algo_pref_list;
-  ue_cfg.enc_algo_pref_list             = cfg.enc_algo_pref_list;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   // Copy RRC cell and add SSB ARFCN.
@@ -135,13 +133,12 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
                                                          ngap_ctrl_notifier,
                                                          *msg.rrc_ue_cu_cp_notifier,
                                                          *msg.measurement_notifier,
+                                                         *msg.cu_cp_ue_notifier,
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          rrc_cell,
                                                          ue_cfg,
-                                                         *msg.sec_context,
                                                          msg.du_to_cu_container.copy(),
-                                                         *msg.ue_task_sched,
                                                          msg.rrc_context));
 
   if (res.second) {

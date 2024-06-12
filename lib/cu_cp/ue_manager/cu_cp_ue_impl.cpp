@@ -13,12 +13,12 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_ue::cu_cp_ue(const ue_index_t                  ue_index_,
-                   const up_resource_manager_cfg&    up_cfg,
-                   const ue_security_manager_config& sec_cfg,
-                   ue_task_scheduler_impl            task_sched_,
-                   const pci_t                       pci_,
-                   const rnti_t                      c_rnti_) :
+cu_cp_ue::cu_cp_ue(const ue_index_t               ue_index_,
+                   const up_resource_manager_cfg& up_cfg,
+                   const security_manager_config& sec_cfg,
+                   ue_task_scheduler_impl         task_sched_,
+                   const pci_t                    pci_,
+                   const rnti_t                   c_rnti_) :
   ue_index(ue_index_),
   task_sched(std::move(task_sched_)),
   up_mng(up_cfg),
@@ -35,7 +35,8 @@ cu_cp_ue::cu_cp_ue(const ue_index_t                  ue_index_,
 
   ue_ctxt.du_idx = get_du_index_from_ue_index(ue_index);
 
-  ue_adapter.connect_ue(*this);
+  rrc_ue_cu_cp_ue_ev_notifier.connect_ue(*this);
+  ngap_cu_cp_ue_ev_notifier.connect_ue(*this);
 }
 
 /// \brief Update a UE with PCI and/or C-RNTI.

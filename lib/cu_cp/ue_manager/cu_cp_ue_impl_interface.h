@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/security/security.h"
 
 namespace srsran {
 
@@ -20,6 +20,7 @@ namespace srs_cu_cp {
 // Forward declarations.
 class up_resource_manager;
 class ue_task_scheduler;
+class ue_security_manager;
 class ngap_rrc_ue_pdu_notifier;
 class ngap_rrc_ue_control_notifier;
 
@@ -38,8 +39,8 @@ public:
   /// \brief Get the task scheduler of the UE.
   virtual ue_task_scheduler& get_task_sched() = 0;
 
-  /// \brief Get the security context of the UE.
-  virtual security::security_context& get_security_context() = 0;
+  /// \brief Get the security manager of the UE.
+  virtual ue_security_manager& get_security_manager() = 0;
 
   /// \brief Get the RRC UE PDU notifier of the UE.
   virtual ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;

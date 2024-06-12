@@ -137,12 +137,11 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.cell.tac              = cell.tac;
   rrc_ue_create_msg.cell.pci              = cell.pci;
   rrc_ue_create_msg.cell.bands            = cell.bands;
-  rrc_ue_create_msg.sec_context           = &ue.get_security_context();
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();
+  rrc_ue_create_msg.cu_cp_ue_notifier     = &ue.get_rrc_ue_cu_cp_ue_notifier();
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
-  rrc_ue_create_msg.ue_task_sched         = &ue.get_task_sched();
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
   auto* rrc_ue                            = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {

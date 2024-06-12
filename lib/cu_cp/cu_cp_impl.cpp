@@ -16,11 +16,10 @@
 #include "routines/ue_removal_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_security_manager.h"
+#include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
-#include "srsran/support/executors/sync_task_executor.h"
 #include <chrono>
 #include <future>
 #include <thread>
@@ -42,7 +41,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config,
          up_resource_manager_cfg{config_.rrc_config.drb_config},
-         ue_security_manager_config{cfg.rrc_config.int_algo_pref_list, cfg.rrc_config.enc_algo_pref_list},
+         security_manager_config{cfg.rrc_config.int_algo_pref_list, cfg.rrc_config.enc_algo_pref_list},
          *cfg.timers,
          *cfg.cu_cp_executor),
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
@@ -219,12 +218,9 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  security::security_context sec_ctx = ue->get_security_context();
-  security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
-
   return routine_mng.start_reestablishment_context_modification_routine(
       ue_index,
-      up_sec,
+      ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(get_du_index_from_ue_index(ue_index)).get_f1ap_interface().get_f1ap_ue_context_manager(),
       ue->get_rrc_ue_notifier(),
@@ -357,6 +353,16 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
       request, ngap_entity->get_ngap_control_message_handler(), *this, logger);
 }
 
+bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt)
+{
+  cu_cp_ue* ue = ue_mng.find_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Could not find UE", ue_index);
+    return false;
+  }
+  return ue->get_security_manager().init_security_context(sec_ctxt);
+}
+
 async_task<cu_cp_pdu_session_resource_setup_response>
 cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request)
 {
@@ -368,7 +374,7 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
 
   return routine_mng.start_pdu_session_resource_setup_routine(
       request,
-      ue->get_security_context().get_as_config(security::sec_domain::up),
+      ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
           .get_f1ap_interface()

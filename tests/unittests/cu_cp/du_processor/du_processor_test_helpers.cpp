@@ -9,9 +9,10 @@
  */
 
 #include "du_processor_test_helpers.h"
+#include "../du_processor_test_messages.h"
+#include "lib/cu_cp/cu_cp_controller/common_task_scheduler.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
-#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
-#include "srsran/support/async/async_test_utils.h"
+#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include <memory>
 
 using namespace srsran;

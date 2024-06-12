@@ -122,30 +122,12 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
+  async_task<bool> on_new_security_context() override
   {
     logger.info("Received a new security context");
-
-    bool result = true;
-
-    // NIA0 is not allowed
-    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                    security::integrity_algorithm::nia1,
-                                                                    security::integrity_algorithm::nia3,
-                                                                    security::integrity_algorithm::nia0};
-    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                    security::ciphering_algorithm::nea2,
-                                                                    security::ciphering_algorithm::nea1,
-                                                                    security::ciphering_algorithm::nea3};
-
-    security::security_context tmp_ctxt;
-    tmp_ctxt = sec_context;
-
-    result = tmp_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
-
-    return launch_async([result](coro_context<async_task<bool>>& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(result);
+      CORO_RETURN(true);
     });
   }
 
@@ -223,6 +205,14 @@ public:
   {
     srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
+  }
+
+  bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) override
+  {
+    srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "UE must be present");
+    logger.info("Received a handover request");
+
+    return ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt);
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -377,30 +367,13 @@ public:
 
   void set_security_enabled(bool enabled) { security_enabled = enabled; }
 
-  async_task<bool> handle_init_security_context(const security::security_context& sec_ctxt) override
+  async_task<bool> handle_init_security_context() override
   {
     logger.info("Received a new security context");
 
-    bool result = true;
-
-    // NIA0 is not allowed
-    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                    security::integrity_algorithm::nia1,
-                                                                    security::integrity_algorithm::nia3,
-                                                                    security::integrity_algorithm::nia0};
-    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                    security::ciphering_algorithm::nea2,
-                                                                    security::ciphering_algorithm::nea1,
-                                                                    security::ciphering_algorithm::nea3};
-
-    security::security_context tmp_ctxt;
-    tmp_ctxt = sec_ctxt;
-
-    result = tmp_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
-
-    return launch_async([result](coro_context<async_task<bool>>& ctx) mutable {
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      CORO_RETURN(result);
+      CORO_RETURN(true);
     });
   }
 

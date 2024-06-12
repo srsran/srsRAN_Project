@@ -8,6 +8,7 @@
  *
  */
 
+#include "../cu_cp_test_messages.h"
 #include "cu_cp_routine_manager_test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_test_utils.h"

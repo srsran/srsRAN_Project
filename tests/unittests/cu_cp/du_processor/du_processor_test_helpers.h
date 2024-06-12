@@ -10,21 +10,17 @@
 
 #pragma once
 
-#include "../du_processor_test_messages.h"
 #include "../test_helpers.h"
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/du_processor/du_configuration_manager.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "lib/f1ap/common/asn1_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/rrc/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -50,14 +46,14 @@ protected:
   ue_configuration        ue_config;
   up_resource_manager_cfg up_config;
 
-  ue_security_manager_config sec_config{{security::integrity_algorithm::nia2,
-                                         security::integrity_algorithm::nia1,
-                                         security::integrity_algorithm::nia3,
-                                         security::integrity_algorithm::nia0},
-                                        {security::ciphering_algorithm::nea0,
-                                         security::ciphering_algorithm::nea2,
-                                         security::ciphering_algorithm::nea1,
-                                         security::ciphering_algorithm::nea3}};
+  security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                      security::integrity_algorithm::nia1,
+                                      security::integrity_algorithm::nia3,
+                                      security::integrity_algorithm::nia0},
+                                     {security::ciphering_algorithm::nea0,
+                                      security::ciphering_algorithm::nea2,
+                                      security::ciphering_algorithm::nea1,
+                                      security::ciphering_algorithm::nea3}};
 
   ue_manager                             ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
   dummy_ngap_ue_context_removal_handler  ngap_ue_removal_handler;

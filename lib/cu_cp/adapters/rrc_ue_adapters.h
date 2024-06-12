@@ -12,9 +12,10 @@
 
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
-#include "../du_processor/du_processor.h"
+#include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -80,6 +81,87 @@ public:
 private:
   ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
   ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;
+};
+
+/// Adapter between RRC UE and CU-CP UE
+class rrc_ue_cu_cp_ue_adapter : public rrc_ue_cu_cp_ue_notifier
+{
+public:
+  rrc_ue_cu_cp_ue_adapter() = default;
+
+  void connect_ue(cu_cp_ue_impl_interface& ue_) { ue = &ue_; }
+
+  /// \brief Schedule an async task for the UE.
+  bool schedule_async_task(async_task<void> task) override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_task_sched().schedule_async_task(std::move(task));
+  }
+
+  timer_factory get_timer_factory() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_task_sched().get_timer_factory();
+  }
+
+  task_executor& get_executor() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_task_sched().get_executor();
+  }
+
+  /// \brief Get the AS configuration for the RRC domain
+  security::sec_as_config get_rrc_as_config() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().get_rrc_as_config();
+  }
+
+  /// \brief Get the AS configuration for the RRC domain with 128-bit keys
+  security::sec_128_as_config get_rrc_128_as_config() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().get_rrc_128_as_config();
+  }
+
+  /// \brief Enable security
+  void enable_security() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().enable_security();
+  }
+
+  /// \brief Get the current security context
+  security::security_context get_security_context() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().get_security_context();
+  }
+
+  /// \brief Get the selected security algorithms
+  security::sec_selected_algos get_security_algos() override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().get_security_algos();
+  }
+
+  /// \brief Update the security context
+  /// \param[in] sec_ctxt The new security context
+  void update_security_context(security::security_context sec_ctxt) override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().update_security_context(sec_ctxt);
+  }
+
+  /// \brief Perform horizontal key derivation
+  void horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().horizontal_key_derivation(target_pci, target_ssb_arfcn);
+  }
+
+private:
+  cu_cp_ue_impl_interface* ue = nullptr;
 };
 
 /// Adapter between RRC UE and CU-CP

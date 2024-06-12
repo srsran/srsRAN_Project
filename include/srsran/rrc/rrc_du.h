@@ -13,7 +13,6 @@
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
-#include "srsran/cu_cp/ue_task_scheduler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -36,12 +35,11 @@ struct rrc_ue_creation_message {
   ue_index_t                             ue_index;
   rnti_t                                 c_rnti;
   rrc_cell_context                       cell;
-  security::security_context*            sec_context;
   rrc_pdu_f1ap_notifier*                 f1ap_pdu_notifier;
   rrc_ue_context_update_notifier*        rrc_ue_cu_cp_notifier;
   rrc_ue_measurement_notifier*           measurement_notifier;
+  rrc_ue_cu_cp_ue_notifier*              cu_cp_ue_notifier;
   byte_buffer                            du_to_cu_container;
-  ue_task_scheduler*                     ue_task_sched;
   std::optional<rrc_ue_transfer_context> rrc_context;
 };
 

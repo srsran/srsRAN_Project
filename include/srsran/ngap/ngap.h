@@ -103,7 +103,7 @@ public:
   virtual ~ngap_rrc_ue_control_notifier() = default;
 
   /// \brief Notify about the reception of new security context.
-  virtual async_task<bool> on_new_security_context(const security::security_context& sec_context) = 0;
+  virtual async_task<bool> on_new_security_context() = 0;
 
   /// \brief Get packed handover preparation message for inter-gNB handover.
   virtual byte_buffer on_handover_preparation_message_required() = 0;
@@ -129,6 +129,14 @@ public:
 
   /// \brief Get the RRC UE control notifier of the UE.
   virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
+
+  /// \brief Notify the CU-CP about a security context
+  /// \param[in] sec_ctxt The received security context
+  /// \return True if the security context was successfully initialized, false otherwise
+  virtual bool init_security_context(security::security_context sec_ctxt) = 0;
+
+  /// \brief Check if security is enabled
+  [[nodiscard]] virtual bool is_security_enabled() const = 0;
 };
 
 /// NGAP notifier to the CU-CP.
@@ -147,6 +155,12 @@ public:
   /// \param[in] task The task to schedule.
   /// \returns True if the task was successfully scheduled, false otherwise.
   virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
+
+  /// \brief Notify the CU-CP about a security context received in a handover request.
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] sec_ctxt The received security context.
+  /// \return True if the security context was successfully initialized, false otherwise.
+  virtual bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.

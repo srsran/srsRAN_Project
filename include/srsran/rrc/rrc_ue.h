@@ -230,10 +230,6 @@ public:
   /// \return The measurement config, if present.
   virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) = 0;
 
-  /// \brief Handle the reception of a new security context.
-  /// \return True if the security context was applied successfully, false otherwise
-  virtual bool handle_new_security_context(const security::security_context& sec_context) = 0;
-
   /// \brief Handle the handover command RRC PDU.
   /// \param[in] cmd The handover command RRC PDU.
   /// \returns The handover RRC Reconfiguration PDU. If the handover command is invalid, the PDU is empty.
@@ -255,8 +251,7 @@ public:
   virtual ~rrc_ue_init_security_context_handler() = default;
 
   /// \brief Handle the received Init Security Context.
-  /// \param[in] sec_ctxt The Init Security Context.
-  virtual async_task<bool> handle_init_security_context(const security::security_context& sec_ctxt) = 0;
+  virtual async_task<bool> handle_init_security_context() = 0;
 
   /// \brief Get the status of the security context.
   virtual bool get_security_enabled() = 0;
@@ -269,6 +264,43 @@ public:
   virtual ~rrc_ue_handover_preparation_handler() = default;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
+};
+
+class rrc_ue_cu_cp_ue_notifier
+{
+public:
+  virtual ~rrc_ue_cu_cp_ue_notifier() = default;
+
+  /// \brief Get the timer factory for the UE.
+  virtual timer_factory get_timer_factory() = 0;
+
+  /// \brief Get the task executor for the UE.
+  virtual task_executor& get_executor() = 0;
+
+  /// \brief Schedule an async task for the UE.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
+
+  /// \brief Get the AS configuration for the RRC domain
+  virtual security::sec_as_config get_rrc_as_config() = 0;
+
+  /// \brief Get the AS configuration for the RRC domain with 128-bit keys
+  virtual security::sec_128_as_config get_rrc_128_as_config() = 0;
+
+  /// \brief Enable security
+  virtual void enable_security() = 0;
+
+  /// \brief Get the current security context
+  virtual security::security_context get_security_context() = 0;
+
+  /// \brief Get the selected security algorithms
+  virtual security::sec_selected_algos get_security_algos() = 0;
+
+  /// \brief Update the security context
+  /// \param[in] sec_ctxt The new security context
+  virtual void update_security_context(security::security_context sec_ctxt) = 0;
+
+  /// \brief Perform horizontal key derivation
+  virtual void horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.

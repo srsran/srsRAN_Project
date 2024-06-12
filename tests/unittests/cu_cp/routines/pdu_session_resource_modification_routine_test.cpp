@@ -8,6 +8,7 @@
  *
  */
 
+#include "../cu_cp_test_messages.h"
 #include "cu_cp_routine_manager_test_helpers.h"
 #include "pdu_session_resource_routine_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"

@@ -411,6 +411,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                                                                              ue->get_rrc_ue_control_notifier(),
                                                                              ue->get_rrc_ue_pdu_notifier(),
                                                                              cu_cp_notifier,
+                                                                             *ue,
                                                                              *tx_pdu_notifier,
                                                                              ue_ctxt.logger));
 }
@@ -446,7 +447,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Stop PDU session setup timer
   ue_ctxt.pdu_session_setup_timer.stop();
 
-  if (!ue->get_rrc_ue_control_notifier().on_security_enabled()) {
+  if (!ue->is_security_enabled()) {
     ue_ctxt.logger.log_warning("Dropping PduSessionResourceSetupRequest. Security context does not exist");
     send_error_indication(*tx_pdu_notifier, logger, ue_ctxt.ue_ids.ran_ue_id, ue_ctxt.ue_ids.amf_ue_id, {});
     return;
@@ -701,6 +702,13 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
       ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
     logger.warning("Sending HandoverFailure. Couldn't allocate UE index");
+    tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
+    return;
+  }
+
+  // Inititialize security context of target UE
+  if (!cu_cp_notifier.on_handover_request_received(ho_request.ue_index, ho_request.security_context)) {
+    logger.warning("Sending HandoverFailure. Couldn't initialize security context");
     tx_pdu_notifier->on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }

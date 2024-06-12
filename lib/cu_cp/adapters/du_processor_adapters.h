@@ -13,8 +13,6 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/support/srsran_assert.h"
 #include <cstddef>
@@ -236,12 +234,6 @@ public:
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->get_packed_handover_preparation_message();
-  }
-
-  bool on_new_security_context(const security::security_context& sec_context) override
-  {
-    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->handle_new_security_context(sec_context);
   }
 
   byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override

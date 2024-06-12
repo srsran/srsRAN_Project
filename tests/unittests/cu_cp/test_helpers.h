@@ -10,19 +10,14 @@
 
 #pragma once
 
-#include "cu_cp_test_messages.h"
-#include "du_processor_test_messages.h"
 #include "lib/cu_cp/cu_cp_controller/node_connection_notifier.h"
 #include "lib/cu_cp/cu_cp_impl_interface.h"
 #include "lib/cu_cp/cu_up_processor/cu_up_processor_impl_interface.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
-#include "srsran/support/test_utils.h"
 #include <cstdint>
 #include <list>
 #include <memory>
@@ -586,12 +581,6 @@ public:
   rrc_ue_transfer_context get_transfer_context() override { return rrc_ue_transfer_context{}; }
 
   byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; }
-
-  bool on_new_security_context(const security::security_context& sec_context) override
-  {
-    logger.info("Received a new security context.");
-    return true;
-  }
 
   byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override { return byte_buffer{}; }
 

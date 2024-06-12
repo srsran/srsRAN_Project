@@ -38,12 +38,12 @@ struct cu_cp_ue_context {
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(const ue_index_t                  ue_index_,
-           const up_resource_manager_cfg&    up_cfg,
-           const ue_security_manager_config& sec_cfg,
-           ue_task_scheduler_impl            task_sched_,
-           const pci_t                       pci_    = INVALID_PCI,
-           const rnti_t                      c_rnti_ = rnti_t::INVALID_RNTI);
+  cu_cp_ue(const ue_index_t               ue_index_,
+           const up_resource_manager_cfg& up_cfg,
+           const security_manager_config& sec_cfg,
+           ue_task_scheduler_impl         task_sched_,
+           const pci_t                    pci_    = INVALID_PCI,
+           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -71,11 +71,11 @@ public:
   /// \brief Get the task scheduler of the UE.
   ue_task_scheduler& get_task_sched() override { return task_sched; }
 
+  /// \brief Get the security manager of the UE.
+  ue_security_manager& get_security_manager() override { return sec_mng; }
+
   cu_cp_ue_context&                     get_ue_context() { return ue_ctxt; }
   [[nodiscard]] const cu_cp_ue_context& get_ue_context() const { return ue_ctxt; }
-
-  /// \brief Get the security context of the UE.
-  security::security_context& get_security_context() override { return sec_context; }
 
   /// \brief Get the measurement context of the UE.
   cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
@@ -110,7 +110,11 @@ public:
   /// \brief Get the RRC UE control notifier of the UE.
   ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override;
 
-  ngap_cu_cp_ue_notifier& get_ngap_cu_cp_ue_notifier() { return ue_adapter; }
+  /// \brief Get the NGAP CU-CP UE notifier of the UE.
+  ngap_cu_cp_ue_notifier& get_ngap_cu_cp_ue_notifier() { return ngap_cu_cp_ue_ev_notifier; }
+
+  /// \brief Get the RRC UE CU-CP UE notifier of the UE.
+  rrc_ue_cu_cp_ue_notifier& get_rrc_ue_cu_cp_ue_notifier() { return rrc_ue_cu_cp_ue_ev_notifier; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier();
@@ -134,22 +138,22 @@ public:
 
 private:
   // common context
-  ue_index_t                 ue_index = ue_index_t::invalid;
-  ue_task_scheduler_impl     task_sched;
-  security::security_context sec_context;
-  up_resource_manager        up_mng;
-  ue_security_manager        sec_mng;
+  ue_index_t             ue_index = ue_index_t::invalid;
+  ue_task_scheduler_impl task_sched;
+  up_resource_manager    up_mng;
+  ue_security_manager    sec_mng;
 
   // du ue context
   cu_cp_ue_context ue_ctxt;
   du_cell_index_t  pcell_index = du_cell_index_t::invalid;
   pci_t            pci         = INVALID_PCI;
 
+  rrc_ue_cu_cp_ue_adapter                       rrc_ue_cu_cp_ue_ev_notifier;
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
   // ngap ue context
-  ngap_cu_cp_ue_adapter ue_adapter;
+  ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
   // cu-cp ue context

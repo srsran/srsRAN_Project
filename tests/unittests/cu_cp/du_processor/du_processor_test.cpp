@@ -8,6 +8,7 @@
  *
  */
 
+#include "../du_processor_test_messages.h"
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"

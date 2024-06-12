@@ -19,7 +19,7 @@ using namespace srs_cu_cp;
 class ngap_pdu_session_resource_release_procedure_test : public ngap_test
 {
 protected:
-  ue_index_t start_procedure(const pdu_session_id_t pdu_session_id)
+  ue_index_t start_procedure(const pdu_session_id_t pdu_session_id, bool enable_security = true)
   {
     ue_index_t ue_index = create_ue();
 
@@ -34,6 +34,11 @@ protected:
 
     // Inject PDU Session Resource Setup request
     run_pdu_session_resource_setup(ue_index, pdu_session_id);
+
+    if (enable_security) {
+      // Mark security as enabled
+      ue_mng.find_ue(ue_index)->get_security_manager().enable_security();
+    }
 
     return ue_index;
   }

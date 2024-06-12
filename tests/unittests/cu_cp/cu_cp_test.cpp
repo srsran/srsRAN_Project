@@ -14,6 +14,7 @@
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

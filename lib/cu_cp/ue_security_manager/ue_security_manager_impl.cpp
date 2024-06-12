@@ -13,7 +13,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_security_manager::ue_security_manager(const ue_security_manager_config& cfg_) :
+ue_security_manager::ue_security_manager(const security_manager_config& cfg_) :
   cfg(cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }

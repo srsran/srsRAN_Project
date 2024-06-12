@@ -58,6 +58,12 @@ public:
   /// \returns Pointer to the NGAP UE notifier.
   virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
 
+  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] sec_ctxt The received security context.
+  /// \return True if the security context was successfully initialized, false otherwise.
+  virtual bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
+
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
   /// \returns The PDU Session Resource Setup Response.

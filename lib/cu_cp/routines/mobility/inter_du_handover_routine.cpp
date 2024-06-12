@@ -134,8 +134,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   // Inform CU-UP about new DL tunnels.
   {
     // get securtiy context of target UE
-    if (!add_security_context_to_bearer_context_modification(
-            target_ue->get_security_context().get_as_config(security::sec_domain::up))) {
+    if (!add_security_context_to_bearer_context_modification(target_ue->get_security_manager().get_up_as_config())) {
       logger.warning("ue={}: \"{}\" failed to create UE context at target DU", request.source_ue_index, name());
       CORO_AWAIT(ue_removal_handler.handle_ue_removal_request(target_ue_context_setup_request.ue_index));
       // Note: From this point the UE is removed and only the stored context can be accessed.
@@ -191,7 +190,6 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
       }
     }
 
-    target_ue = ue_mng.find_du_ue(target_ue_context_setup_response.ue_index);
     // Trigger RRC Reconfiguration
     CORO_AWAIT_VALUE(reconf_result,
                      launch_async<handover_reconfiguration_routine>(rrc_reconfig_args,

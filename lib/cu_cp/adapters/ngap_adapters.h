@@ -13,7 +13,7 @@
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
-#include "../up_resource_manager/up_resource_manager_impl.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 
@@ -61,6 +61,12 @@ public:
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->schedule_ue_task(ue_index, std::move(task));
+  }
+
+  bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_handover_request(ue_index, sec_ctxt);
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -119,29 +125,41 @@ public:
   /// \brief Get the UE index of the UE.
   ue_index_t get_ue_index() override
   {
-    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_ue_index();
   }
 
   /// \brief Schedule an async task for the UE.
   bool schedule_async_task(async_task<void> task) override
   {
-    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_task_sched().schedule_async_task(std::move(task));
   }
 
   /// \brief Get the RRC UE PDU notifier of the UE.
   ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
   {
-    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_rrc_ue_pdu_notifier();
   }
 
   /// \brief Get the RRC UE control notifier of the UE.
   ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
   {
-    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_rrc_ue_control_notifier();
+  }
+
+  bool init_security_context(security::security_context sec_ctxt) override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().init_security_context(sec_ctxt);
+  }
+
+  [[nodiscard]] bool is_security_enabled() const override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_security_manager().is_security_enabled();
   }
 
 private:
@@ -169,10 +187,10 @@ public:
     rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
-  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
+  async_task<bool> on_new_security_context() override
   {
     srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
-    return rrc_ue_security_handler->handle_init_security_context(sec_context);
+    return rrc_ue_security_handler->handle_init_security_context();
   }
 
   bool on_security_enabled() override
@@ -183,7 +201,7 @@ public:
 
   byte_buffer on_handover_preparation_message_required() override
   {
-    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
+    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE UP manager must not be nullptr");
     return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
   }
 

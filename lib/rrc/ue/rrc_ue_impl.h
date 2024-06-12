@@ -14,7 +14,6 @@
 #include "rrc_ue_context.h"
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
-#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -29,13 +28,12 @@ public:
               rrc_ue_control_notifier&               ngap_ctrl_notif_,
               rrc_ue_context_update_notifier&        cu_cp_notif_,
               rrc_ue_measurement_notifier&           measurement_notifier_,
+              rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
               const rrc_ue_cfg_t&                    cfg_,
-              security::security_context&            security_context_,
               const byte_buffer                      du_to_cu_container,
-              ue_task_scheduler&                     task_sched,
               std::optional<rrc_ue_transfer_context> rrc_context);
   ~rrc_ue_impl();
 
@@ -71,7 +69,6 @@ public:
   rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_msg) override;
   rrc_ue_transfer_context     get_transfer_context() override;
   std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
-  bool                        handle_new_security_context(const security::security_context& sec_context) override;
   byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) override;
 
@@ -108,8 +105,8 @@ private:
   void on_security_context_sucessful() override;
   bool get_security_enabled() override { return context.security_enabled; }
 
-  // initializes the security context and triggers the SMC procedure
-  async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
+  // Triggers the SMC procedure
+  async_task<bool> handle_init_security_context() override;
 
   rrc_ue_context_t                context;
   rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;    // PDU notifier to the F1AP
@@ -117,8 +114,8 @@ private:
   rrc_ue_control_notifier&        ngap_ctrl_notifier;   // Control message notifier to the NGAP
   rrc_ue_context_update_notifier& cu_cp_notifier;       // notifier to the CU-CP
   rrc_ue_measurement_notifier&    measurement_notifier; // cell measurement notifier
+  rrc_ue_cu_cp_ue_notifier&       cu_cp_ue_notifier;    // cu-cp ue notifier
   byte_buffer                     du_to_cu_container;   // initial RRC message from DU to CU
-  ue_task_scheduler&              task_sched;
   rrc_ue_logger                   logger;
 
   // RRC procedures handling
