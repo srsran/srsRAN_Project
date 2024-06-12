@@ -295,7 +295,7 @@ static void configure_cli11_expert_execution_args(CLI::App& app, expert_executio
   configure_cli11_non_rt_threads_args(*non_rt_threads_subcmd, config.threads.non_rt_threads);
 }
 
-static void configure_cli11_f1c_args(CLI::App& app, srs_du::f1c_appconfig& f1c_params)
+static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c_params)
 {
   app.add_option("--cu_cp_addr", f1c_params.cu_cp_address, "CU-CP F1-C address to connect to")->capture_default_str();
   app.add_option(
@@ -321,8 +321,8 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
 {
   // F1-C section.
-  CLI::App* f1c_subcmd = app.add_subcommand("f1c", "F1-C interface configuration")->configurable();
-  configure_cli11_f1c_args(*f1c_subcmd, du_cfg.f1c_cfg);
+  CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP interface configuration")->configurable();
+  configure_cli11_f1ap_args(*f1ap_subcmd, du_cfg.f1ap_cfg);
 
   // F1-U section.
   CLI::App* f1u_subcmd = app.add_subcommand("f1u", "F1-U interface configuration")->configurable();

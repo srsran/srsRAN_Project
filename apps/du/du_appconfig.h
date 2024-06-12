@@ -39,7 +39,7 @@ struct log_appconfig {
 };
 
 /// Configuration of the F1-C interface of the DU.
-struct f1c_appconfig {
+struct f1ap_appconfig {
   /// CU-CP F1-C address the DU will connect to.
   std::string cu_cp_address = "127.0.10.1";
   /// DU F1-C bind address.
@@ -73,7 +73,7 @@ struct du_appconfig {
   /// E2 configuration.
   e2_appconfig e2_cfg;
   /// F1-C configuration.
-  srs_du::f1c_appconfig f1c_cfg;
+  srs_du::f1ap_appconfig f1ap_cfg;
   /// F1-U configuration.
   srs_du::f1u_appconfig f1u_cfg;
   /// Buffer pool configuration.

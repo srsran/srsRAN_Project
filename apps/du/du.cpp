@@ -258,7 +258,7 @@ int main(int argc, char** argv)
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
-      du_cfg.f1c_cfg.cu_cp_address, du_cfg.f1c_cfg.bind_address, *epoll_broker, *du_dlt_pcaps.f1ap);
+      du_cfg.f1ap_cfg.cu_cp_address, du_cfg.f1ap_cfg.bind_address, *epoll_broker, *du_dlt_pcaps.f1ap);
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
