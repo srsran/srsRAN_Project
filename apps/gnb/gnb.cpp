@@ -44,7 +44,6 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
-#include "srsran/support/sysinfo.h"
 
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
@@ -59,6 +58,7 @@
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
 #include "apps/services/application_message_banners.h"
+#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
@@ -231,8 +231,9 @@ int main(int argc, char** argv)
     app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
   }
 
+  app_services::core_isolation_manager core_isolation_mngr;
   if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!configure_cgroups(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
+    if (!core_isolation_mngr.isolate_cores(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
       report_error("Failed to isolate specified CPUs");
     }
   }
@@ -461,10 +462,6 @@ int main(int argc, char** argv)
   gnb_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    cleanup_cgroups();
-  }
 
   return 0;
 }

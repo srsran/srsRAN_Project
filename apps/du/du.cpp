@@ -39,13 +39,13 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
-#include "srsran/support/sysinfo.h"
 
 #include <atomic>
 
 #include "../units/flexible_du/du_high/pcap_factory.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
+#include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/services/stdin_command_dispatcher.h"
@@ -187,8 +187,9 @@ int main(int argc, char** argv)
     app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
   }
 
+  app_services::core_isolation_manager core_isolation_mngr;
   if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!configure_cgroups(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
+    if (!core_isolation_mngr.isolate_cores(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
       report_error("Failed to isolate specified CPUs");
     }
   }
@@ -345,10 +346,6 @@ int main(int argc, char** argv)
   du_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    cleanup_cgroups();
-  }
 
   return 0;
 }
