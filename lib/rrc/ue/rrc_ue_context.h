@@ -43,7 +43,6 @@ public:
   uint64_t                                                 setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts                   connection_cause;
   std::map<srb_id_t, ue_srb_context>                       srbs;
-  bool                                                     security_enabled = false;
   std::optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
   std::optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
   std::optional<rrc_ue_transfer_context> transfer_context; // Context of old UE when created through mobility.

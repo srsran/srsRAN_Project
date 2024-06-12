@@ -131,19 +131,15 @@ public:
     });
   }
 
-  bool on_security_enabled() override { return security_enabled; }
-
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
   {
     ho_preparation_message = std::move(ho_preparation_message_);
   }
-  void set_security_enabled(bool enabled) { security_enabled = enabled; }
 
   byte_buffer last_nas_pdu;
   byte_buffer ho_preparation_message;
-  bool        security_enabled = true;
   byte_buffer last_handover_command;
 
 private:
@@ -376,9 +372,6 @@ public:
       CORO_RETURN(true);
     });
   }
-
-  /// \brief Get the status of the security context.
-  bool get_security_enabled() override { return security_enabled; }
 
 private:
   bool                  security_enabled = true;

@@ -252,9 +252,6 @@ public:
 
   /// \brief Handle the received Init Security Context.
   virtual async_task<bool> handle_init_security_context() = 0;
-
-  /// \brief Get the status of the security context.
-  virtual bool get_security_enabled() = 0;
 };
 
 /// Handler to get the handover preparation context to the NGAP.

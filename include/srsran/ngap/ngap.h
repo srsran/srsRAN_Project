@@ -107,9 +107,6 @@ public:
 
   /// \brief Get packed handover preparation message for inter-gNB handover.
   virtual byte_buffer on_handover_preparation_message_required() = 0;
-
-  /// \brief Get the status of the security context.
-  virtual bool on_security_enabled() = 0;
 };
 
 /// NGAP notifier to the CU-CP UE
