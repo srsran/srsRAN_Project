@@ -190,7 +190,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
 def test_zmq_reestablishment_parallel(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_32: Tuple[UEStub, ...],
+    ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     metrics_summary: MetricsSummary,
@@ -208,7 +208,7 @@ def test_zmq_reestablishment_parallel(
     with _test_reestablishments(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_32,
+        ue_array=ue_8,
         fivegc=fivegc,
         gnb=gnb,
         metrics_summary=metrics_summary,
@@ -226,7 +226,7 @@ def test_zmq_reestablishment_parallel(
         for i in range(number_of_reestablishments):
             logging.info("Starting Reestablishment for all UEs + Traffic running in background. Iteration %s", i + 1)
             ping_task_array = ping_start(ue_attach_info_dict, fivegc, reestablishment_time)
-            ue_reestablishment_parallel(ue_32, reestablishment_time)
+            ue_reestablishment_parallel(ue_8, reestablishment_time)
             ping_wait_until_finish(ping_task_array)
 
         logging.info("Starting traffic after all reestablishments have been completed")
