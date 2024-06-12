@@ -44,12 +44,22 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  rrc_cfg_t                              rrc_cfg;
-  timer_manager                          timers;
-  manual_task_worker                     ctrl_worker{128};
-  ue_configuration                       ue_config;
-  up_resource_manager_cfg                up_config;
-  ue_manager                             ue_mng{ue_config, up_config, timers, ctrl_worker};
+  rrc_cfg_t               rrc_cfg;
+  timer_manager           timers;
+  manual_task_worker      ctrl_worker{128};
+  ue_configuration        ue_config;
+  up_resource_manager_cfg up_config;
+
+  ue_security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                         security::integrity_algorithm::nia1,
+                                         security::integrity_algorithm::nia3,
+                                         security::integrity_algorithm::nia0},
+                                        {security::ciphering_algorithm::nea0,
+                                         security::ciphering_algorithm::nea2,
+                                         security::ciphering_algorithm::nea1,
+                                         security::ciphering_algorithm::nea3}};
+
+  ue_manager                             ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
   dummy_ngap_ue_context_removal_handler  ngap_ue_removal_handler;
   dummy_du_processor_cu_cp_notifier      cu_cp_notifier{&ue_mng};
   dummy_du_connection_notifier           du_conn_notifier;

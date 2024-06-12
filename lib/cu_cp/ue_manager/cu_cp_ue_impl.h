@@ -14,6 +14,7 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
+#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
@@ -37,11 +38,12 @@ struct cu_cp_ue_context {
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(const ue_index_t               ue_index_,
-           const up_resource_manager_cfg& up_cfg,
-           ue_task_scheduler_impl         task_sched_,
-           const pci_t                    pci_    = INVALID_PCI,
-           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI);
+  cu_cp_ue(const ue_index_t                  ue_index_,
+           const up_resource_manager_cfg&    up_cfg,
+           const ue_security_manager_config& sec_cfg,
+           ue_task_scheduler_impl            task_sched_,
+           const pci_t                       pci_    = INVALID_PCI,
+           const rnti_t                      c_rnti_ = rnti_t::INVALID_RNTI);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -136,6 +138,7 @@ private:
   ue_task_scheduler_impl     task_sched;
   security::security_context sec_context;
   up_resource_manager        up_mng;
+  ue_security_manager        sec_mng;
 
   // du ue context
   cu_cp_ue_context ue_ctxt;

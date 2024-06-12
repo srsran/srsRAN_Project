@@ -76,10 +76,20 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
-  ngap_configuration               cfg;
-  timer_manager                    timers;
-  manual_task_worker               ctrl_worker{128};
-  ue_manager                       ue_mng{{}, {}, timers, ctrl_worker};
+  ngap_configuration cfg;
+  timer_manager      timers;
+  manual_task_worker ctrl_worker{128};
+
+  ue_security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                         security::integrity_algorithm::nia1,
+                                         security::integrity_algorithm::nia3,
+                                         security::integrity_algorithm::nia0},
+                                        {security::ciphering_algorithm::nea0,
+                                         security::ciphering_algorithm::nea2,
+                                         security::ciphering_algorithm::nea1,
+                                         security::ciphering_algorithm::nea3}};
+
+  ue_manager                       ue_mng{{}, {}, sec_config, timers, ctrl_worker};
   dummy_n2_gateway                 n2_gw;
   dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;

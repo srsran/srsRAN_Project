@@ -14,6 +14,7 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
+#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
@@ -27,10 +28,11 @@ namespace srs_cu_cp {
 class ue_manager : public ue_metrics_handler
 {
 public:
-  explicit ue_manager(const ue_configuration&        ue_config_,
-                      const up_resource_manager_cfg& up_config_,
-                      timer_manager&                 timers,
-                      task_executor&                 cu_cp_exec);
+  explicit ue_manager(const ue_configuration&           ue_config_,
+                      const up_resource_manager_cfg&    up_config_,
+                      const ue_security_manager_config& sec_config_,
+                      timer_manager&                    timers,
+                      task_executor&                    cu_cp_exec);
 
   /// Stop UE activity.
   void stop();
@@ -140,9 +142,10 @@ private:
   /// \return The UE index.
   ue_index_t get_next_ue_index(du_index_t du_index);
 
-  srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
-  const ue_configuration        ue_config;
-  const up_resource_manager_cfg up_config;
+  srslog::basic_logger&            logger = srslog::fetch_basic_logger("CU-UEMNG");
+  const ue_configuration           ue_config;
+  const up_resource_manager_cfg    up_config;
+  const ue_security_manager_config sec_config;
 
   // Manager of UE task schedulers.
   ue_task_scheduler_manager ue_task_scheds;

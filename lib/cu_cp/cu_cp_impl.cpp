@@ -16,6 +16,7 @@
 #include "routines/ue_removal_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/ue_security_manager.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
@@ -39,7 +40,11 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}, *cfg.timers, *cfg.cu_cp_executor),
+  ue_mng(config_.ue_config,
+         up_resource_manager_cfg{config_.rrc_config.drb_config},
+         ue_security_manager_config{cfg.rrc_config.int_algo_pref_list, cfg.rrc_config.enc_algo_pref_list},
+         *cfg.timers,
+         *cfg.cu_cp_executor),
   cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   routine_mng(ue_mng, cfg.default_security_indication, logger),
   du_db(du_repository_config{cfg,

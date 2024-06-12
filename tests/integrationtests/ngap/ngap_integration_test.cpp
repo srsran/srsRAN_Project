@@ -137,7 +137,7 @@ protected:
   up_resource_manager_cfg               up_config;
   timer_manager                         timers;
   manual_task_worker                    ctrl_worker{128};
-  ue_manager                            ue_mng{ue_config, up_config, timers, ctrl_worker};
+  ue_manager                            ue_mng{ue_config, up_config, {}, timers, ctrl_worker};
   dummy_ngap_cu_cp_notifier             cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier      cu_cp_paging_notifier;
   std::unique_ptr<ngap_network_adapter> adapter;

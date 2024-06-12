@@ -38,7 +38,7 @@ protected:
   timer_manager                                   timers;
   dummy_e1ap_message_notifier                     e1ap_notifier;
   manual_task_worker                              ctrl_worker{128};
-  ue_manager                                      ue_mng{{}, {}, timers, ctrl_worker};
+  ue_manager                                      ue_mng{{}, {}, {}, timers, ctrl_worker};
   dummy_e1ap_cu_cp_notifier                       cu_cp_notifier{ue_mng};
   std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor_obj;
   uint16_t                                        max_nof_cu_ups = 4;

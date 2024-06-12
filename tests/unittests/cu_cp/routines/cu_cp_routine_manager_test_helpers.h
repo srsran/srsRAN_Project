@@ -51,7 +51,7 @@ protected:
   dummy_f1ap_ue_context_manager                      f1ap_ue_ctxt_mng;
   dummy_ngap_control_message_handler                 ngap_control_handler;
   dummy_ue_task_scheduler                            ue_task_sched{timers, ctrl_worker};
-  ue_manager                                         ue_mng{ue_config, up_config, timers, ctrl_worker};
+  ue_manager                                         ue_mng{ue_config, up_config, {}, timers, ctrl_worker};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   dummy_du_processor_rrc_ue_srb_control_notifier     rrc_ue_srb_ctrl_notifier;
   dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;

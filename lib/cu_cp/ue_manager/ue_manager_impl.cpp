@@ -9,6 +9,7 @@
  */
 
 #include "ue_manager_impl.h"
+#include "srsran/cu_cp/ue_security_manager.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -18,11 +19,12 @@ void cu_cp_ue::stop()
   task_sched.stop();
 }
 
-ue_manager::ue_manager(const ue_configuration&        ue_config_,
-                       const up_resource_manager_cfg& up_config_,
-                       timer_manager&                 timers,
-                       task_executor&                 cu_cp_exec) :
-  ue_config(ue_config_), up_config(up_config_), ue_task_scheds(timers, cu_cp_exec, logger)
+ue_manager::ue_manager(const ue_configuration&           ue_config_,
+                       const up_resource_manager_cfg&    up_config_,
+                       const ue_security_manager_config& sec_config_,
+                       timer_manager&                    timers,
+                       task_executor&                    cu_cp_exec) :
+  ue_config(ue_config_), up_config(up_config_), sec_config(sec_config_), ue_task_scheds(timers, cu_cp_exec, logger)
 {
 }
 
@@ -51,7 +53,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
   // Create UE object
   ues.emplace(std::piecewise_construct,
               std::forward_as_tuple(new_ue_index),
-              std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
+              std::forward_as_tuple(new_ue_index, up_config, sec_config, std::move(ue_sched)));
 
   logger.info("ue={}: Created new CU-CP UE", new_ue_index);
 

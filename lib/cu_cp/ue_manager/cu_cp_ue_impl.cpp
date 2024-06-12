@@ -13,12 +13,17 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_ue::cu_cp_ue(const ue_index_t               ue_index_,
-                   const up_resource_manager_cfg& up_cfg,
-                   ue_task_scheduler_impl         task_sched_,
-                   const pci_t                    pci_,
-                   const rnti_t                   c_rnti_) :
-  ue_index(ue_index_), task_sched(std::move(task_sched_)), up_mng(up_cfg), rrc_ue_cu_cp_ev_notifier(ue_index)
+cu_cp_ue::cu_cp_ue(const ue_index_t                  ue_index_,
+                   const up_resource_manager_cfg&    up_cfg,
+                   const ue_security_manager_config& sec_cfg,
+                   ue_task_scheduler_impl            task_sched_,
+                   const pci_t                       pci_,
+                   const rnti_t                      c_rnti_) :
+  ue_index(ue_index_),
+  task_sched(std::move(task_sched_)),
+  up_mng(up_cfg),
+  sec_mng(sec_cfg),
+  rrc_ue_cu_cp_ev_notifier(ue_index)
 {
   if (pci_ != INVALID_PCI) {
     pci = pci_;
