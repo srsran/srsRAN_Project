@@ -9,6 +9,7 @@
 add_subdirectory(cell_meas_manager)
 add_subdirectory(mobility_manager)
 add_subdirectory(up_resource_manager)
+add_subdirectory(ue_security_manager)
 
 set(SOURCES
       cu_cp_factory.cpp
