@@ -83,10 +83,20 @@ trigger docker:
       changes:
         paths:
           - .gitlab/ci/docker.yml
+          - .gitlab/ci/builders/builder.sh
+          - .gitlab/ci/builders/build_uhd.sh
+          - .gitlab/ci/builders/build_dpdk.sh
+          - .gitlab/ci/builders/install_dependencies.sh
+          - .gitlab/ci/builders/install_uhd_dependencies.sh
+          - .gitlab/ci/builders/install_dpdk_dependencies.sh
           - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
-          - scripts/srsran_performance
           - .gdbinit
+      variables:
+        CI_DESCRIPTION: $CI_DESCRIPTION
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        CI_DESCRIPTION: $CI_DESCRIPTION
   trigger:
     include: .gitlab/ci/docker.yml
     strategy: depend

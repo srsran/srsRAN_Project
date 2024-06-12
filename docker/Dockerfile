@@ -6,11 +6,24 @@
 # the distribution.
 #
 
+# Build args
+################
+# OS_VERSION            Ubuntu OS version
+# LIB                   uhd or dpdk (lowercase)
+# LIB_VERSION           UHD or DPDK version number
+# ARCH                  gcc/clang compatible arch
+# NUM_CORES             Number or empty for all
+# EXTRA_CMAKE_ARGS      Extra flags for srsRAN Project
+
+ARG OS_VERSION=24.04
+ARG LIB=uhd
+ARG LIB_VERSION=4.6.0.0
+ARG ARCH=native
+ARG NUM_CORES=""
+
 ##################
 # Stage 1: Build #
 ##################
-
-ARG OS_VERSION=24.04
 FROM ubuntu:$OS_VERSION as builder
 
 # Adding the complete repo to the context, in /src folder
@@ -19,11 +32,30 @@ ADD . /src
 # RUN apt update && apt-get install -y --no-install-recommends git git-lfs
 # RUN git clone https://github.com/srsran/srsRAN_Project.git /src
 
-# Install build dependencies, and also ZMQ and UHD libraries
-RUN /src/.gitlab/ci/builders/install_dependencies.sh
+# Install srsRAN build dependencies
+ARG LIB
+RUN /src/.gitlab/ci/builders/install_dependencies.sh build && \
+    /src/.gitlab/ci/builders/install_${LIB}_dependencies.sh build
 
-# Build srsRAN Project with default options
-RUN /src/.gitlab/ci/builders/builder.sh /src
+ARG LIB_VERSION
+ARG ARCH
+ARG NUM_CORES
+
+# Compile UHD/DPDK
+RUN /src/.gitlab/ci/builders/build_${LIB}.sh ${LIB_VERSION} ${ARCH} ${NUM_CORES}
+
+# Compile srsRAN Project
+ARG EXTRA_CMAKE_ARGS=""
+RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
+    LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
+    export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
+    /src/.gitlab/ci/builders/builder.sh \
+    -m -j${NUM_CORES} \
+    -DBUILD_TESTS=False \
+    -DENABLE_${LIB_UPPER}=On \
+    -DCMAKE_CXX_FLAGS="-march=${ARCH}" \
+    ${EXTRA_CMAKE_ARGS} /src
+
 # Install in the OS filesystem to later copy into the next stage
 RUN cd /src/build && make install
 
@@ -33,18 +65,18 @@ RUN cd /src/build && make install
 
 FROM ubuntu:$OS_VERSION
 
+ARG LIB
+ARG LIB_VERSION
+
 # Copy srsRAN binaries and libraries installed in previous stage
+COPY --from=builder /opt/${LIB}/${LIB_VERSION} /usr/local
 COPY --from=builder /usr/local /usr/local
 
-# Copy the install dependencies script
-ADD .gitlab/ci/builders/install_dependencies.sh /usr/local/bin
+# Copy the install dependencies scripts
+ADD .gitlab/ci/builders/install_${LIB}_dependencies.sh /usr/local/etc/install_lib_dependencies.sh
+ADD .gitlab/ci/builders/install_dependencies.sh /usr/local/etc/install_srsran_dependencies.sh
 
-# Install runtime dependencies and extra libs such as UHD/ZMQ
-RUN /usr/local/bin/install_dependencies.sh run && \
-    /usr/local/bin/install_dependencies.sh extra && \
+# Install srsran and lib runtime dependencies
+RUN /usr/local/etc/install_srsran_dependencies.sh run && \
+    /usr/local/etc/install_lib_dependencies.sh run && \
     apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Uncomment this to download uhd images inside the container 
-# instead of sharing them with the host (in the docker-compose.yml)
-# RUN uhd_images_downloader -t b2xx && \
-#     uhd_images_downloader -t n300    

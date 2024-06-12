@@ -69,6 +69,9 @@ main() {
             dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel # dpdk libelf libdwarf
         fi
 
+    else
+        echo "OS $ID not supported"
+        exit 1
     fi
 
 }

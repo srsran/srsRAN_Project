@@ -83,20 +83,8 @@ ubuntu-uhd-builder:
     # Install dependencies and compile
     - |
       build_uhd() {
-        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
-          curl apt-transport-https ca-certificates xz-utils \
-          cmake build-essential pkg-config \
-          libboost-all-dev libusb-1.0-0-dev doxygen \
-          python3-docutils python3-mako python3-numpy python3-setuptools python3-requests
-
-        cd /tmp
-        curl -LJO "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz"
-        tar -xf "uhd-${uhd_version}.tar.gz"
-        cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
-        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" ..
-        make -j${KUBERNETES_CPU_REQUEST}
-        make install
-
+        .gitlab/ci/builders/install_uhd_dependencies.sh build
+        .gitlab/ci/builders/build_uhd.sh ${uhd_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
         cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
@@ -176,19 +164,8 @@ ubuntu-dpdk-builder:
     # Install dependencies and compile
     - |
       build_dpdk() {
-        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
-          curl apt-transport-https ca-certificates xz-utils \
-          python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
-        
-        export PIP_EXTRA_INDEX_URL=""
-        pip3 install meson pyelftools || pip3 install --break-system-packages meson pyelftools 
-
-        cd /tmp
-        curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
-        cd dpdk*${dpdk_version}
-        meson build --prefix "/opt/dpdk/${dpdk_version}"
-        ninja -j${KUBERNETES_CPU_REQUEST} -C build install
-
+        .gitlab/ci/builders/install_dpdk_dependencies.sh build
+        .gitlab/ci/builders/build_dpdk.sh ${dpdk_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
         cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
       }

@@ -6,8 +6,6 @@
 # the distribution.
 #
 
-version: '3.9'
-
 services:
   5gc:
     container_name: open5gs_5gc

@@ -151,14 +151,16 @@ esac
 cd "$FOLDER" || exit
 
 # Setup UHD
-uhd_system_version=$(uhd_config_info --version) && regex="^UHD ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*" && [[ $uhd_system_version =~ $regex ]]
-uhd_system_version="${BASH_REMATCH[1]}"
-if [[ -z "$UHD_VERSION" || "$UHD_VERSION" == "$uhd_system_version" ]]; then
-    echo "Using default UHD $uhd_system_version"
-else
-    [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
-    export UHD_DIR="/opt/uhd/$UHD_VERSION"
-    echo "UHD_DIR set to $UHD_DIR"
+if [[ -n "$UHD_VERSION" ]]; then
+    uhd_system_version=$(uhd_config_info --version) && regex="^UHD ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*" && [[ $uhd_system_version =~ $regex ]]
+    uhd_system_version="${BASH_REMATCH[1]}"
+    if [[ -z "$UHD_VERSION" || "$UHD_VERSION" == "$uhd_system_version" ]]; then
+        echo "Using default UHD $uhd_system_version"
+    else
+        [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
+        export UHD_DIR="/opt/uhd/$UHD_VERSION"
+        echo "UHD_DIR set to $UHD_DIR"
+    fi
 fi
 
 # Setup DPDK
@@ -166,8 +168,6 @@ if [[ -n "$DPDK_VERSION" ]]; then
     [ ! -d "/opt/dpdk/$DPDK_VERSION" ] && echo "DPDK version not found" && exit 1
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
     echo "DPDK_DIR set to $DPDK_DIR"
-else
-    echo "DPDK not set"
 fi
 
 # Setup cache dir
