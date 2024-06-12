@@ -127,7 +127,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const log_appconfig&            log_cfg,
+static void register_app_logs(const logger_appconfig&         log_cfg,
                               const cu_cp_unit_logger_config& cu_cp_loggers,
                               const cu_up_unit_logger_config& cu_up_loggers,
                               const dynamic_du_unit_config&   du_loggers)

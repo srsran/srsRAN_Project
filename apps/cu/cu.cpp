@@ -61,6 +61,7 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "cu_appconfig.h"
+#include "cu_appconfig_validator.h"
 
 #include <atomic>
 #include <thread>
@@ -119,7 +120,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const srs_cu::log_appconfig&    log_cfg,
+static void register_app_logs(const logger_appconfig&         log_cfg,
                               const cu_cp_unit_logger_config& cu_cp_loggers,
                               const cu_up_unit_logger_config& cu_up_loggers)
 {
@@ -200,7 +201,8 @@ int main(int argc, char** argv)
   CLI11_PARSE(app, argc, argv);
 
   // Check the modified configuration.
-  if (!validate_cu_cp_unit_config(cu_cp_config) || !validate_cu_up_unit_config(cu_up_config)) {
+  if (!validate_cu_appconfig(cu_cfg) || !validate_cu_cp_unit_config(cu_cp_config) ||
+      !validate_cu_up_unit_config(cu_up_config)) {
     report_error("Invalid configuration detected.\n");
   }
 

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
-#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -40,25 +40,6 @@ struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;
-};
-
-/// Configuration of logging functionalities.
-struct log_appconfig {
-  /// Path to log file or "stdout" to print to console.
-  std::string filename = "/tmp/gnb.log";
-  /// Default log level for all layers.
-  std::string all_level = "warning";
-  /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level     = "warning";
-  std::string e2ap_level    = "warning";
-  std::string config_level  = "none";
-  std::string metrics_level = "none";
-  /// Maximum number of bytes to write when dumping hex arrays.
-  int hex_max_size = 0;
-  /// Set to true to log broadcasting messages and all PRACH opportunities.
-  bool broadcast_enabled = false;
-  /// Set to a valid file path to enable tracing and write the trace to the file.
-  std::string tracing_filename;
 };
 
 /// Metrics report configuration.
@@ -117,8 +98,8 @@ struct hal_appconfig {
 
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
-  /// Logging configuration.
-  log_appconfig log_cfg;
+  /// Loggers configuration.
+  logger_appconfig log_cfg;
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// gNodeB identifier.

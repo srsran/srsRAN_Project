@@ -9,6 +9,7 @@
  */
 
 #include "du_appconfig_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "du_appconfig.h"
 #include "srsran/support/cli11_utils.h"
 
@@ -24,77 +25,6 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   } catch (const std::out_of_range& e) {
     return {e.what()};
   }
-}
-
-// TODO this is common between DU and CU.
-static void configure_cli11_log_args(CLI::App& app, srs_du::log_appconfig& log_params)
-{
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
-  auto metric_level_check = [](const std::string& value) -> std::string {
-    if (value == "none" || value == "info" || value == "debug") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [none,info,debug]";
-  };
-
-  app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option("--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC and F1")
-      ->capture_default_str()
-      ->check(level_check);
-  app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
-  app.add_option("--config_level", log_params.config_level, "Config log level")
-      ->capture_default_str()
-      ->check(metric_level_check);
-  app.add_option("--metrics_level", log_params.metrics_level, "Metrics log level")
-      ->capture_default_str()
-      ->check(metric_level_check);
-  app.add_option(
-         "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
-  app.add_option("--broadcast_enabled",
-                 log_params.broadcast_enabled,
-                 "Enable logging in the physical and MAC layer of broadcast messages and all PRACH opportunities")
-      ->always_capture_default();
-  app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
-      ->always_capture_default();
-
-  // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
-  app.callback([&]() {
-    // Do nothing when all_level is not defined or it is defined as warning.
-    if (app.count("--all_level") == 0 || log_params.all_level == "warning") {
-      return;
-    }
-
-    const auto options = app.get_options();
-    for (auto* option : options) {
-      // Skip all_level option and unrelated options to log level.
-      if (option->check_name("--all_level") || option->get_name().find("level") == std::string::npos) {
-        continue;
-      }
-
-      // Do nothing if option is present.
-      if (option->count()) {
-        continue;
-      }
-
-      // Config and metrics loggers have only subset of levels.
-      if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
-        if (log_params.all_level == "error") {
-          option->default_val<std::string>("none");
-          continue;
-        }
-      }
-
-      option->default_val<std::string>(log_params.all_level);
-    }
-  });
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfig& metrics_params)
@@ -320,6 +250,9 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<hal_appconfig>
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
 {
+  // Loggers section.
+  configure_cli11_with_logger_appconfig_schema(app, du_cfg.log_cfg);
+
   // F1-C section.
   CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP interface configuration")->configurable();
   configure_cli11_f1ap_args(*f1ap_subcmd, du_cfg.f1ap_cfg);
@@ -327,10 +260,6 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // F1-U section.
   CLI::App* nru_subcmd = app.add_subcommand("nru", "NR-U interface configuration")->configurable();
   configure_cli11_f1u_args(*nru_subcmd, du_cfg.nru_cfg);
-
-  // Logging section.
-  CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
-  configure_cli11_log_args(*log_subcmd, du_cfg.log_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();

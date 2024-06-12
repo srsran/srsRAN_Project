@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../gnb/gnb_appconfig.h" // TODO: Remove
+#include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/support/executors/unique_thread.h"
@@ -18,25 +19,6 @@
 
 namespace srsran {
 namespace srs_du {
-
-/// Configuration of logging functionalities.
-struct log_appconfig {
-  /// Path to log file or "stdout" to print to console.
-  std::string filename = "/tmp/du.log";
-  /// Default log level for all layers.
-  std::string all_level = "warning";
-  /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level     = "warning";
-  std::string e2ap_level    = "warning";
-  std::string config_level  = "none";
-  std::string metrics_level = "none";
-  /// Maximum number of bytes to write when dumping hex arrays.
-  int hex_max_size = 0;
-  /// Set to true to log broadcasting messages and all PRACH opportunities.
-  bool broadcast_enabled = false;
-  /// Set to a valid file path to enable tracing and write the trace to the file.
-  std::string tracing_filename;
-};
 
 /// Configuration of the F1-C interface of the DU.
 struct f1ap_appconfig {
@@ -66,8 +48,8 @@ struct metrics_appconfig {
 
 /// DU application configuration.
 struct du_appconfig {
-  /// Logging configuration.
-  srs_du::log_appconfig log_cfg;
+  /// Loggers configuration.
+  logger_appconfig log_cfg;
   /// Metrics configuration.
   srs_du::metrics_appconfig metrics_cfg;
   /// E2 configuration.

@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
+#include <CLI/CLI11.hpp>
 
 namespace srsran {
 
-struct cu_appconfig;
+struct logger_appconfig;
 
-/// Configures the given CLI11 application with the CU application configuration schema.
-void configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg);
+/// Configures the given CLI11 application with the logger application configuration schema.
+void configure_cli11_with_logger_appconfig_schema(CLI::App& app, logger_appconfig& config);
 
 } // namespace srsran

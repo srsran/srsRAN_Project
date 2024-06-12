@@ -9,20 +9,11 @@
  */
 
 #include "gnb_appconfig_validators.h"
+#include "apps/services/logger/logger_appconfig_validator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/flexible_du/du_high/du_high_config.h"
 
 using namespace srsran;
-
-/// Validates the given logging configuration. Returns true on success, otherwise false.
-static bool validate_log_appconfig(const log_appconfig& config)
-{
-  if (config.filename.empty()) {
-    return false;
-  }
-
-  return true;
-}
 
 static bool validate_hal_config(const std::optional<hal_appconfig>& config)
 {
@@ -42,7 +33,7 @@ static bool validate_hal_config(const std::optional<hal_appconfig>& config)
 
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
-  if (!validate_log_appconfig(config.log_cfg)) {
+  if (!validate_logger_appconfig(config.log_cfg)) {
     return false;
   }
 
