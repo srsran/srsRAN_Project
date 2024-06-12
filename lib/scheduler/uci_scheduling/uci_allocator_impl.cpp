@@ -347,5 +347,5 @@ uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_reso
 
 bool uci_allocator_impl::has_uci_harq_on_common_pucch_res(rnti_t rnti, slot_point sl_tx)
 {
-  return pucch_alloc.has_common_pucch_f1_grant(rnti, sl_tx);
+  return pucch_alloc.has_common_pucch_grant(rnti, sl_tx);
 }

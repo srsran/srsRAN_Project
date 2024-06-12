@@ -120,7 +120,7 @@ public:
   /// \param[in] rnti RNTI of the UE.
   /// \param[in] sl_tx Slot to search PUCCH grants.
   /// \return Returns true if a PUCCH grant using common PUCCH resource exits. False, otherwise.
-  virtual bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const = 0;
+  virtual bool has_common_pucch_grant(rnti_t rnti, slot_point sl_tx) const = 0;
 };
 
 } // namespace srsran

@@ -64,7 +64,7 @@ public:
                                           rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
 
-  bool has_common_pucch_f1_grant(rnti_t rnti, slot_point sl_tx) const override;
+  bool has_common_pucch_grant(rnti_t rnti, slot_point sl_tx) const override;
 
 private:
   /// ////////////  Helper struct and classes   //////////////
@@ -139,12 +139,13 @@ private:
 
   using resource_set_q_t = std::vector<pucch_allocator_impl::pucch_grant>;
 
-  struct ue_pucch_bits {
+  struct ue_grants {
     rnti_t           rnti;
+    bool             has_common_pucch;
     pucch_grant_list pucch_grants;
   };
 
-  using slot_pucch_grants = static_vector<ue_pucch_bits, MAX_PUCCH_PDUS_PER_SLOT>;
+  using slot_pucch_grants = static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT>;
 
   class res_manager_garbage_collector
   {
@@ -167,12 +168,11 @@ private:
   std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
                                                                  const dci_context_information& dci_info);
 
-  std::optional<unsigned> exec_common_and_ded_res_alloc(cell_slot_resource_allocator& pucch_alloc,
-                                                        pucch_info*                   existing_grant,
-                                                        rnti_t                        rnti,
-                                                        const ue_cell_configuration&  ue_cell_cfg,
-                                                        pucch_res_alloc_cfg           common_res_cfg,
-                                                        const pucch_resource&         ded_res_cfg);
+  void exec_common_and_ded_res_alloc(cell_slot_resource_allocator& pucch_alloc,
+                                     rnti_t                        rnti,
+                                     const ue_cell_configuration&  ue_cell_cfg,
+                                     pucch_res_alloc_cfg           common_res_cfg,
+                                     const pucch_resource&         ded_res_cfg);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
   std::optional<unsigned> allocate_new_format1_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -222,10 +222,10 @@ private:
                                                          const ue_cell_configuration& ue_cell_cfg,
                                                          unsigned                     harq_ack_bits_increment);
 
-  std::optional<pucch_com_ded_res> find_common_and_ded_harq_res_available(cell_slot_resource_allocator&  pucch_alloc,
-                                                                          pucch_info*                    existing_grant,
-                                                                          rnti_t                         rnti,
-                                                                          const ue_cell_configuration&   ue_cell_cfg,
+  std::optional<pucch_com_ded_res> find_common_and_ded_harq_res_available(cell_slot_resource_allocator& pucch_alloc,
+                                                                          ue_grants*                    existing_grants,
+                                                                          rnti_t                        rnti,
+                                                                          const ue_cell_configuration&  ue_cell_cfg,
                                                                           const dci_context_information& dci_info);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
@@ -266,26 +266,29 @@ private:
 
   std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
                                                        uci_bits                      new_bits,
-                                                       ue_pucch_bits&                current_grants,
-                                                       const ue_cell_configuration&  ue_cell_cfg);
+                                                       ue_grants&                    current_grants,
+                                                       const ue_cell_configuration&  ue_cell_cfg,
+                                                       bool                          preserve_res_indicator = false);
 
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
                                                                  uci_bits                     new_bits,
-                                                                 ue_pucch_bits                ue_current_grants,
+                                                                 ue_grants                    ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
 
   pucch_grant_list multiplex_resources(slot_point                   sl_tx,
                                        rnti_t                       crnti,
                                        pucch_grant_list             candidate_grants,
-                                       const ue_cell_configuration& ue_cell_cfg);
+                                       const ue_cell_configuration& ue_cell_cfg,
+                                       bool                         preserve_res_indicator = false);
 
   std::optional<pucch_grant> merge_pucch_resources(span<const pucch_grant> resources_to_merge,
                                                    slot_point              slot_harq,
                                                    rnti_t                  crnti,
-                                                   const pucch_config&     pucch_cfg);
+                                                   const pucch_config&     pucch_cfg,
+                                                   bool                    preserve_res_indicator = false);
 
   std::optional<unsigned> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
-                                          ue_pucch_bits&                existing_pucchs,
+                                          ue_grants&                    existing_pucchs,
                                           rnti_t                        crnti,
                                           pucch_grant_list              grants_to_tx,
                                           const ue_cell_configuration&  ue_cell_cfg);
@@ -294,7 +297,7 @@ private:
 
   void remove_unsed_pucch_res(slot_point                   sl_tx,
                               pucch_grant_list             grants_to_tx,
-                              ue_pucch_bits&               existing_pucchs,
+                              ue_grants&                   existing_pucchs,
                               const ue_cell_configuration& ue_cell_cfg);
 
   // Helper that retrieves the existing grants allocated to a given UE for a given slot.
