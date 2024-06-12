@@ -134,28 +134,25 @@ void receiver_impl::receive_loop()
 }
 
 /// Blocking function that waits for incoming data over the socket or until the specified timeout expires.
-static bool wait_for_data(int socket, std::chrono::seconds timeout)
+static bool wait_for_data(int socket, std::chrono::microseconds timeout)
 {
   fd_set read_fs;
   FD_ZERO(&read_fs);
   FD_SET(socket, &read_fs);
-  timeval tv = {static_cast<time_t>(timeout.count()), 0};
+  timeval tv = {0, static_cast<__suseconds_t>(timeout.count())};
 
   return (::select(socket + 1, &read_fs, nullptr, nullptr, &tv) > 0);
 }
 
 void receiver_impl::receive()
 {
-  ofh_tracer << instant_trace_event("ofh_receiver_wait_data", instant_trace_event::cpu_scope::thread);
-
-  if (!wait_for_data(socket_fd, std::chrono::seconds(1))) {
+  if (!wait_for_data(socket_fd, std::chrono::microseconds(5))) {
     return;
   }
 
   trace_point tp = ofh_tracer.now();
 
   auto exp_buffer = buffer_pool.reserve();
-
   if (exp_buffer.is_error()) {
     logger.warning("No buffer is available for receiving an Ethernet packet");
     return;

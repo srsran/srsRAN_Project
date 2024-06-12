@@ -88,9 +88,9 @@ void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
   enqueue_messages_into_burst(interval_up, frame_burst);
 
   // Transmit the data.
-  trace_point tp_dpdk = ofh_tracer.now();
+  trace_point tp_ether = ofh_tracer.now();
   transmit_frame_burst(frame_burst);
-  ofh_tracer << trace_event("ofh_dpdk_tx", tp_dpdk);
+  ofh_tracer << trace_event("ofh_ether_tx", tp_ether);
 
   // Clear sent buffers.
   pool->clear_sent_frame_buffers(interval_cp_dl);
