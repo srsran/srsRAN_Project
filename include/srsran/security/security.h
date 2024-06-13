@@ -210,9 +210,9 @@ struct security_context {
 
   bool select_algorithms(preferred_integrity_algorithms pref_inte_list, preferred_ciphering_algorithms pref_ciph_list);
   void generate_as_keys();
-  sec_as_config     get_as_config(sec_domain domain);
-  sec_128_as_config get_128_as_config(sec_domain domain);
-  void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
+  [[nodiscard]] sec_as_config     get_as_config(sec_domain domain) const;
+  [[nodiscard]] sec_128_as_config get_128_as_config(sec_domain domain) const;
+  void                            horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 };
 
 /******************************************************************************

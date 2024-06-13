@@ -19,12 +19,12 @@ ue_security_manager::ue_security_manager(const security_manager_config& cfg_) :
 }
 
 // up_ue_security_manager
-security::sec_as_config ue_security_manager::get_up_as_config()
+security::sec_as_config ue_security_manager::get_up_as_config() const
 {
   return sec_context.get_as_config(security::sec_domain::up);
 }
 
-security::sec_128_as_config ue_security_manager::get_up_128_as_config()
+security::sec_128_as_config ue_security_manager::get_up_128_as_config() const
 {
   return sec_context.get_128_as_config(security::sec_domain::up);
 }
@@ -66,22 +66,22 @@ void ue_security_manager::enable_security()
   security_enabled = true;
 }
 
-security::security_context ue_security_manager::get_security_context()
+security::security_context ue_security_manager::get_security_context() const
 {
   return sec_context;
 }
 
-security::sec_selected_algos ue_security_manager::get_security_algos()
+security::sec_selected_algos ue_security_manager::get_security_algos() const
 {
   return sec_context.sel_algos;
 }
 
-security::sec_as_config ue_security_manager::get_rrc_as_config()
+security::sec_as_config ue_security_manager::get_rrc_as_config() const
 {
   return sec_context.get_as_config(security::sec_domain::rrc);
 }
 
-security::sec_128_as_config ue_security_manager::get_rrc_128_as_config()
+security::sec_128_as_config ue_security_manager::get_rrc_128_as_config() const
 {
   return sec_context.get_128_as_config(security::sec_domain::rrc);
 }

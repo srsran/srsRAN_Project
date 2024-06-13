@@ -23,21 +23,21 @@ public:
   ~ue_security_manager() = default;
 
   // up_ue_security_manager
-  security::sec_as_config     get_up_as_config();
-  security::sec_128_as_config get_up_128_as_config();
+  [[nodiscard]] security::sec_as_config     get_up_as_config() const;
+  [[nodiscard]] security::sec_128_as_config get_up_128_as_config() const;
 
   // ngap_ue_security_manager
   bool               init_security_context(security::security_context sec_ctxt);
   [[nodiscard]] bool is_security_enabled() const;
 
   // rrc_ue_security_manager
-  void                         enable_security();
-  security::security_context   get_security_context();
-  security::sec_selected_algos get_security_algos();
-  security::sec_as_config      get_rrc_as_config();
-  security::sec_128_as_config  get_rrc_128_as_config();
-  void                         update_security_context(security::security_context sec_ctxt);
-  void                         horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
+  void                                       enable_security();
+  [[nodiscard]] security::security_context   get_security_context() const;
+  [[nodiscard]] security::sec_selected_algos get_security_algos() const;
+  [[nodiscard]] security::sec_as_config      get_rrc_as_config() const;
+  [[nodiscard]] security::sec_128_as_config  get_rrc_128_as_config() const;
+  void                                       update_security_context(security::security_context sec_ctxt);
+  void                                       horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 
 private:
   security_manager_config    cfg;
