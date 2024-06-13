@@ -206,11 +206,11 @@ void sctp_network_server_impl::handle_data(int assoc_id, span<const uint8_t> pay
 {
   auto assoc_it = associations.find(assoc_id);
   if (assoc_it == associations.end()) {
-    logger.error("fd={} assoc={}: Received data on unknown SCTP association", socket.fd().value(), assoc_id);
+    logger.error("{} assoc={}: Received data on unknown SCTP association", node_cfg.if_name, assoc_id);
     return;
   }
 
-  logger.debug("fd={} assoc={}: Received {} bytes", socket.fd().value(), assoc_id, payload.size());
+  logger.debug("{} assoc={}: Received {} bytes", node_cfg.if_name, assoc_id, payload.size());
 
   // Note: For SCTP, we avoid byte buffer allocation failures by resorting to fallback allocation.
   assoc_it->second.sctp_data_recv_notifier->on_new_sdu(byte_buffer{byte_buffer::fallback_allocation_tag{}, payload});
@@ -266,15 +266,14 @@ void sctp_network_server_impl::handle_sctp_comm_up(const struct sctp_assoc_chang
   int  assoc_id = assoc_change.sac_assoc_id;
   auto it       = associations.find(assoc_id);
   if (it != associations.end()) {
-    logger.warning(
-        "fd={} assoc={}: SCTP COMM UP received but association already existed", socket.fd().value(), assoc_id);
+    logger.warning("{} assoc={}: SCTP COMM UP received but association already existed", node_cfg.if_name, assoc_id);
     return;
   }
 
   // Add an entry for the association in the lookup
   auto result = associations.emplace(assoc_id, assoc_id);
   if (not result.second) {
-    logger.error("fd={} assoc={}: Unable to create new SCTP association", socket.fd().value(), assoc_id);
+    logger.error("{} assoc={}: Unable to create new SCTP association", node_cfg.if_name, assoc_id);
     return;
   }
 
@@ -323,8 +322,8 @@ void sctp_network_server_impl::handle_sctp_shutdown_comp(int assoc_id)
 {
   auto assoc_it = associations.find(assoc_id);
   if (assoc_it == associations.end()) {
-    logger.error("fd={} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
-                 socket.fd().value(),
+    logger.error("{} assoc={}: Failed to shutdown SCTP association. Cause: SCTP association Id not found",
+                 node_cfg.if_name,
                  assoc_id);
     return;
   }
@@ -337,7 +336,8 @@ void sctp_network_server_impl::handle_sctp_shutdown_comp(int assoc_id)
 bool sctp_network_server_impl::listen()
 {
   if (node_cfg.bind_address.empty()) {
-    logger.error("Cannot listen to new SCTP associations if an address to bind to is not provided");
+    logger.error("{}: Cannot listen to new SCTP associations if an address to bind to is not provided",
+                 node_cfg.if_name);
     return false;
   }
 

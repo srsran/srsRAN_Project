@@ -341,9 +341,6 @@ int main(int argc, char** argv)
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
 
-  // Connect F1-C to CU-CP.
-  cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
-
   // start CU-CP
   cu_logger.info("Starting CU-CP...");
   cu_cp_obj.start();
@@ -353,6 +350,9 @@ int main(int argc, char** argv)
   if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
+
+  // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
+  cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // Create and start CU-UP
   // TODO right now build_cu_up() depends on the worker_manager, but the worker manager

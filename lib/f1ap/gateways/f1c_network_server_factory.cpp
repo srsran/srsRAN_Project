@@ -112,6 +112,10 @@ public:
     // Start listening for new DU SCTP connections.
     bool result = sctp_server->listen();
     report_error_if_not(result, "Failed to start SCTP server.\n");
+    fmt::print("{}: Listening for new connections on {}:{}...\n",
+               params.sctp.if_name,
+               params.sctp.bind_address,
+               params.sctp.bind_port);
   }
 
   std::optional<uint16_t> get_listen_port() const override { return sctp_server->get_listen_port(); }
@@ -129,6 +133,7 @@ public:
     if (f1c_receiver == nullptr) {
       return nullptr;
     }
+
     return std::make_unique<gw_to_f1c_pdu_notifier>(std::move(f1c_receiver), params.pcap, logger);
   }
 

@@ -397,15 +397,15 @@ std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const sctp
     return nullptr;
   }
 
-  // Create a SCTP server instance.
-  std::unique_ptr<sctp_network_client_impl> server{new sctp_network_client_impl(sctp_cfg, broker_)};
+  // Create a SCTP client instance.
+  std::unique_ptr<sctp_network_client_impl> client{new sctp_network_client_impl(sctp_cfg, broker_)};
 
   // If a bind address is provided, create a socket here and bind it.
   if (not sctp_cfg.bind_address.empty()) {
-    if (not server->create_and_bind_common()) {
+    if (not client->create_and_bind_common()) {
       return nullptr;
     }
   }
 
-  return server;
+  return client;
 }

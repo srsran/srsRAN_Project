@@ -297,7 +297,8 @@ SRSRAN_NODISCARD bool sctp_socket::listen()
   }
   if (logger.info.enabled()) {
     // Note: avoid computing the listen_port if log channel is disabled.
-    logger.info("{}: Listening for new SCTP connections on port {}...", if_name, get_listen_port().value());
+    int16_t port = get_listen_port().value();
+    logger.info("{}: Listening for new SCTP connections on port {}...", if_name, port);
   }
   return true;
 }

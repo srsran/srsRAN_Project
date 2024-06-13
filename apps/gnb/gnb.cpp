@@ -371,9 +371,6 @@ int main(int argc, char** argv)
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
 
-  // Connect F1-C to CU-CP.
-  f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
-
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj.start();
@@ -382,6 +379,9 @@ int main(int argc, char** argv)
   if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
+
+  // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
+  f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // Create and start CU-UP
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
