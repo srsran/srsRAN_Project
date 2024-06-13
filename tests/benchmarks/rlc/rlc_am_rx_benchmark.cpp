@@ -123,6 +123,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   config.poll_pdu        = 4;
   config.poll_byte       = 25;
   config.queue_size      = 4096;
+  config.max_window      = 0;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
