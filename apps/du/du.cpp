@@ -9,7 +9,6 @@
  */
 
 #include "srsran/gtpu/gtpu_config.h"
-#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
@@ -240,7 +239,7 @@ int main(int argc, char** argv)
   cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
   cu_up_unit_pcap_config dummy_cu_up_pcap{};
   worker_manager         workers{
-      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.f1u_cfg.pdu_queue_size};
+      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.nru_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -270,7 +269,7 @@ int main(int argc, char** argv)
   du_f1u_gtpu_msg.gtpu_pcap                         = du_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config      = {};
-  du_f1u_gw_config.bind_address                     = du_cfg.f1u_cfg.bind_address;
+  du_f1u_gw_config.bind_address                     = du_cfg.nru_cfg.bind_address;
   du_f1u_gw_config.bind_port                        = GTPU_PORT;
   du_f1u_gw_config.reuse_addr                       = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> du_f1u_gw = srs_cu_up::create_udp_ngu_gateway(
