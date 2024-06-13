@@ -39,15 +39,25 @@ protected:
       auto* cfg = cfg_mng.add_cell(test_helpers::make_default_sched_cell_configuration_request(cfg_builder_params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
-    }())
+    }()),
+    current_slot(cfg_builder_params.scs_common, 0)
   {
     // Initialize resource grid.
-    res_grid.slot_indication({cfg_builder_params.scs_common, 0});
-    pdcch_alloc.slot_indication({cfg_builder_params.scs_common, 0});
-    pucch_alloc.slot_indication({cfg_builder_params.scs_common, 0});
-    uci_alloc.slot_indication({cfg_builder_params.scs_common, 0});
+    res_grid.slot_indication(current_slot);
+    pdcch_alloc.slot_indication(current_slot);
+    pucch_alloc.slot_indication(current_slot);
+    uci_alloc.slot_indication(current_slot);
 
     alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
+  }
+
+  void run_slot()
+  {
+    ++current_slot;
+    res_grid.slot_indication(current_slot);
+    pdcch_alloc.slot_indication(current_slot);
+    pucch_alloc.slot_indication(current_slot);
+    uci_alloc.slot_indication(current_slot);
   }
 
   ue& add_ue(du_ue_index_t ue_index, const std::initializer_list<lcid_t>& lcids_to_activate)
@@ -90,6 +100,8 @@ protected:
 
   ue_repository          ues;
   ue_cell_grid_allocator alloc{expert_cfg, ues, srslog::fetch_basic_logger("SCHED")};
+
+  slot_point current_slot;
 };
 
 TEST_F(ue_grid_allocator_tester,
@@ -219,4 +231,166 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
            ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
            .k2;
   ASSERT_EQ(res_grid[k2].result.ul.puschs.back().pusch_cfg.rbs.type1().length(), remaining_crbs);
+}
+
+TEST_F(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_ue)
+{
+  static const unsigned nof_bytes_to_schedule = 400U;
+
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  // First PDSCH grant for the UE.
+  const ue_pdsch_grant grant{.user                  = &u,
+                             .cell_index            = to_du_cell_index(0),
+                             .h_id                  = to_harq_id(0),
+                             .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+
+  // Second PDSCH grant for the UE.
+  const ue_pdsch_grant grant2{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(1),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  // Second PDSCH grant should not be allocated.
+  ASSERT_NE(alloc.allocate_dl_grant(grant2), alloc_outcome::success);
+}
+
+TEST_F(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_ue)
+{
+  static const unsigned nof_bytes_to_schedule = 400U;
+
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  // First PUSCH grant for the UE.
+  const ue_pusch_grant grant{.user                  = &u,
+                             .cell_index            = to_du_cell_index(0),
+                             .h_id                  = to_harq_id(0),
+                             .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  ASSERT_EQ(alloc.allocate_ul_grant(grant), alloc_outcome::success);
+
+  // Second PUSCH grant for the UE.
+  const ue_pusch_grant grant2{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(1),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  // Second PUSCH grant should not be allocated.
+  ASSERT_NE(alloc.allocate_ul_grant(grant2), alloc_outcome::success);
+}
+
+TEST_F(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_increasing_order_of_time)
+{
+  static const unsigned nof_bytes_to_schedule = 400U;
+
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  slot_point last_pusch_alloc_slot;
+
+  // First PUSCH grant for the UE.
+  const ue_pusch_grant grant{.user                  = &u,
+                             .cell_index            = to_du_cell_index(0),
+                             .h_id                  = to_harq_id(0),
+                             .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  ASSERT_EQ(alloc.allocate_ul_grant(grant), alloc_outcome::success);
+  unsigned k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
+                    ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
+                    .k2;
+  last_pusch_alloc_slot = current_slot + k2;
+
+  // Second PUSCH grant in the same slot for the UE.
+  const ue_pusch_grant grant2{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(1),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  const auto outcome = alloc.allocate_ul_grant(grant2);
+  if (outcome == srsran::alloc_outcome::success) {
+    k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
+             ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
+             .k2;
+    ASSERT_GT(current_slot + k2, last_pusch_alloc_slot);
+    last_pusch_alloc_slot = current_slot + k2;
+  }
+
+  run_slot();
+
+  // Third PUSCH grant in the next slot for the UE.
+  const ue_pusch_grant grant3{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(2),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+  ASSERT_EQ(alloc.allocate_ul_grant(grant3), alloc_outcome::success);
+  k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
+           ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
+           .k2;
+  ASSERT_GT(current_slot + k2, last_pusch_alloc_slot);
+}
+
+TEST_F(ue_grid_allocator_tester,
+       ack_slot_of_consecutive_pdschs_for_a_ue_must_be_greater_than_or_equal_to_last_ack_slot_allocated)
+{
+  static const unsigned nof_bytes_to_schedule = 400U;
+
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  slot_point last_pdsch_ack_slot;
+
+  // First PDSCH grant for the UE.
+  const ue_pdsch_grant grant{.user                  = &u,
+                             .cell_index            = to_du_cell_index(0),
+                             .h_id                  = to_harq_id(0),
+                             .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  const search_space_info* ss_info =
+      u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
+  unsigned k1 =
+      ss_info
+          ->get_k1_candidates()[*res_grid[0].result.dl.dl_pdcchs.back().dci.c_rnti_f1_1.pdsch_harq_fb_timing_indicator];
+  last_pdsch_ack_slot = current_slot + k1;
+
+  // Second PDSCH grant in the same slot for the UE.
+  const ue_pdsch_grant grant2{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(1),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+
+  const auto outcome = alloc.allocate_dl_grant(grant2);
+  if (outcome == srsran::alloc_outcome::success) {
+    ss_info = u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
+    k1      = ss_info->get_k1_candidates()
+             [*res_grid[0].result.dl.dl_pdcchs.back().dci.c_rnti_f1_1.pdsch_harq_fb_timing_indicator];
+    ASSERT_GE(current_slot + k1, last_pdsch_ack_slot);
+    last_pdsch_ack_slot = current_slot + k1;
+  }
+
+  run_slot();
+
+  // Third PDSCH grant in the next slot for the UE.
+  const ue_pdsch_grant grant3{.user                  = &u,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(2),
+                              .recommended_nof_bytes = nof_bytes_to_schedule};
+  ASSERT_EQ(alloc.allocate_dl_grant(grant3), alloc_outcome::success);
+  ss_info = u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
+  k1 =
+      ss_info
+          ->get_k1_candidates()[*res_grid[0].result.dl.dl_pdcchs.back().dci.c_rnti_f1_1.pdsch_harq_fb_timing_indicator];
+  ASSERT_GE(current_slot + k1, last_pdsch_ack_slot);
 }
