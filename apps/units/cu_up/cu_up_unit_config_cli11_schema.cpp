@@ -16,6 +16,16 @@
 
 using namespace srsran;
 
+static void configure_cli11_nru_args(CLI::App& app, cu_up_nru_appconfig& nru_cfg)
+{
+  add_option(app,
+             "--bind_addr",
+             nru_cfg.bind_addr,
+             "Default local IP address interfaces bind to, unless a specific bind address is specified")
+      ->check(CLI::ValidIPV4);
+  add_option(app, "--udp_max_rx_msgs", nru_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
+}
+
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
   add_option(app, "--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")
@@ -30,6 +40,10 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
              cu_up_params.warn_on_drop,
              "Log a warning for dropped packets in GTP-U, SDAP, PDCP and F1-U due to full queues")
       ->capture_default_str();
+
+  // NR-U section.
+  CLI::App* nru_subcmd = add_subcommand(app, "nru", "NR-U parameters")->configurable();
+  configure_cli11_nru_args(*nru_subcmd, cu_up_params.nru_cfg);
 }
 
 static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& log_params)

@@ -34,6 +34,11 @@ struct cu_up_unit_upf_config {
   bool        no_core           = false;
 };
 
+struct cu_up_nru_appconfig {
+  std::string bind_addr       = "127.0.10.1"; // Bind address used by the F1-U interface
+  int         udp_rx_max_msgs = 256; // Max number of UDP packets received by a single syscall on the F1-U interface.
+};
+
 /// QoS configuration.
 struct cu_up_unit_qos_config {
   five_qi_t   five_qi       = uint_to_five_qi(9);
@@ -54,6 +59,8 @@ struct cu_up_unit_config {
   cu_up_unit_logger_config loggers;
   /// PCAPs.
   cu_up_unit_pcap_config pcap_cfg;
+  /// NR-U
+  cu_up_nru_appconfig nru_cfg;
   /// QoS configuration.
   std::vector<cu_up_unit_qos_config> qos_cfg;
 };

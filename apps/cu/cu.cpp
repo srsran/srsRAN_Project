@@ -60,7 +60,6 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
-#include "apps/units/cu_up/cu_up_wrapper.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -283,7 +282,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   udp_network_gateway_config  cu_f1u_gw_config  = {};
-  cu_f1u_gw_config.bind_address                 = cu_cfg.f1u_cfg.f1u_bind_addr;
+  cu_f1u_gw_config.bind_address                 = cu_up_config.nru_cfg.bind_addr;
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
@@ -360,7 +359,7 @@ int main(int argc, char** argv)
   // function and create things direclty here.
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
                                                                           workers,
-                                                                          cu_cfg.f1u_cfg.f1u_bind_addr,
+                                                                          cu_up_config.nru_cfg.bind_addr,
                                                                           *e1_gw,
                                                                           *cu_f1u_conn,
                                                                           *cu_up_dlt_pcaps.n3,
