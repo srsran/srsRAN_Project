@@ -226,7 +226,7 @@ int main(int argc, char** argv)
   // TODO
 
   // Setup size of byte buffer pool.
-  // TODO byte_buffer_pool
+  init_byte_buffer_segment_pool(cu_cfg.buffer_pool_config.nof_segments, cu_cfg.buffer_pool_config.segment_size);
 
   // Log build info
   cu_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
