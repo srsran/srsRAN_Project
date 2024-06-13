@@ -126,38 +126,35 @@ sctp_network_client_impl::~sctp_network_client_impl()
   logger.debug("{}: Closing...", node_cfg.if_name);
 
   // If there is a connection on-going.
-  if (shutdown_received != nullptr) {
-    // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
-    bool eof_needed   = not shutdown_received->exchange(true);
-    shutdown_received = nullptr;
-
-    // Send EOF to force the connection shutdown.
-    // Note: This is necessary to avoid a data race in the recv_handler and io_sub unsubscription
-    if (eof_needed) {
-      transport_layer_address server_addr_cpy;
-      {
-        std::unique_lock<std::mutex> lock(connection_mutex);
-        server_addr_cpy = server_addr;
-      }
-      if (not server_addr_cpy.empty()) {
-        sctp_sendmsg(socket.fd().value(),
-                     nullptr,
-                     0,
-                     const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
-                     server_addr_cpy.native().addrlen,
-                     htonl(node_cfg.ppid),
-                     SCTP_EOF,
-                     stream_no,
-                     0,
-                     0);
-      }
+  bool                    eof_needed = false;
+  transport_layer_address server_addr_cpy;
+  {
+    std::lock_guard<std::mutex> lock(connection_mutex);
+    // If there is no connection, return right away.
+    if (server_addr.empty()) {
+      return;
     }
+    eof_needed      = not shutdown_received->exchange(true);
+    server_addr_cpy = server_addr;
+  }
+
+  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
+  if (eof_needed) {
+    sctp_sendmsg(socket.fd().value(),
+                 nullptr,
+                 0,
+                 const_cast<struct sockaddr*>(server_addr_cpy.native().addr),
+                 server_addr_cpy.native().addrlen,
+                 htonl(node_cfg.ppid),
+                 SCTP_EOF,
+                 stream_no,
+                 0,
+                 0);
   }
 
   // No subscription is on-going. It is now safe to close the socket.
   std::unique_lock<std::mutex> lock(connection_mutex);
   connection_cvar.wait(lock, [this]() { return server_addr.empty(); });
-  socket.close();
 }
 
 std::unique_ptr<sctp_association_sdu_notifier>
@@ -166,17 +163,16 @@ sctp_network_client_impl::connect_to(const std::string&                         
                                      int                                            dest_port,
                                      std::unique_ptr<sctp_association_sdu_notifier> recv_handler_)
 {
-  if (shutdown_received != nullptr and not shutdown_received->load(std::memory_order_relaxed)) {
-    // If this is not the first connection.
-    logger.error("{}: Connection to {}:{} failed. Cause: Connection is already in progress",
-                 node_cfg.if_name,
-                 dest_addr,
-                 dest_port);
-    return nullptr;
-  }
-  if (node_cfg.bind_address.empty()) {
-    // Make sure to close any socket created for any previous connection.
-    socket.close();
+  {
+    std::lock_guard<std::mutex> lock(connection_mutex);
+    if (not server_addr.empty()) {
+      // If this is not the first connection.
+      logger.error("{}: Connection to {}:{} failed. Cause: Connection is already in progress",
+                   node_cfg.if_name,
+                   dest_addr,
+                   dest_port);
+      return nullptr;
+    }
   }
 
   sockaddr_searcher searcher{dest_addr, dest_port, logger};
@@ -236,13 +232,13 @@ sctp_network_client_impl::connect_to(const std::string&                         
   }
 
   // Create objects representing state of the client.
-  recv_handler      = std::move(recv_handler_);
-  shutdown_received = std::make_shared<std::atomic<bool>>(false);
-  auto addr         = transport_layer_address::create_from_sockaddr(*result->ai_addr, result->ai_addrlen);
+  recv_handler = std::move(recv_handler_);
+  auto addr    = transport_layer_address::create_from_sockaddr(*result->ai_addr, result->ai_addrlen);
   {
-    // Save server address
+    // Save server address and create a shutdown context flag.
     std::unique_lock<std::mutex> lock(connection_mutex);
-    server_addr = addr;
+    server_addr       = addr;
+    shutdown_received = std::make_shared<std::atomic<bool>>(false);
   }
 
   // Register the socket in the IO broker.
@@ -254,15 +250,15 @@ sctp_network_client_impl::connect_to(const std::string&                         
         handle_connection_close(cause.c_str());
       });
   if (not io_sub.registered()) {
+    // IO subscription failed.
     {
       std::unique_lock<std::mutex> lock(connection_mutex);
-      // IO subscription failed.
-      if (not reuse_socket) {
-        socket.close();
-      }
       server_addr = {};
+      shutdown_received.reset();
     }
-    shutdown_received.reset();
+    if (not reuse_socket) {
+      socket.close();
+    }
     recv_handler.reset();
     return nullptr;
   }
@@ -311,14 +307,8 @@ void sctp_network_client_impl::receive()
 
 void sctp_network_client_impl::handle_connection_close(const char* cause)
 {
-  if (shutdown_received == nullptr) {
-    // It has already been closed.
-    return;
-  }
-
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
-  bool prev         = shutdown_received->exchange(true);
-  shutdown_received = nullptr;
+  bool prev = shutdown_received->exchange(true);
 
   if (not prev and cause != nullptr) {
     // The SCTP sender (the upper layers) didn't yet close the connection.
@@ -328,17 +318,24 @@ void sctp_network_client_impl::handle_connection_close(const char* cause)
 
 void sctp_network_client_impl::handle_sctp_shutdown_comp()
 {
-  // Notify the connection drop to the SCTP sender.
+  // Notify SCTP sender that there is no need to send EOF.
+  shutdown_received->store(true);
+
+  // Notify the connection drop to the upper layers.
   recv_handler.reset();
 
-  std::unique_lock<std::mutex> lock(connection_mutex);
   // Unsubscribe from listening to new IO events.
   io_sub.reset();
 
-  // Erase server_addr.
-  server_addr = {};
+  // Make sure to close any socket created and implicitly bound for any previous connection.
+  if (node_cfg.bind_address.empty()) {
+    socket.close();
+  }
 
-  // Notify the dtor that the connection is closed.
+  // Erase server_addr and notify dtor that connection is closed.
+  std::unique_lock<std::mutex> lock(connection_mutex);
+  server_addr       = {};
+  shutdown_received = nullptr;
   connection_cvar.notify_one();
 }
 
