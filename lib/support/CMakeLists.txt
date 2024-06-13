@@ -11,23 +11,25 @@ add_subdirectory(network)
 add_subdirectory(version)
 
 set(SOURCES
-        backtrace.cpp
-        math_utils.cpp
         executors/priority_task_queue.cpp
         executors/priority_task_worker.cpp
-        executors/unique_thread.cpp
+        executors/task_execution_manager.cpp
         executors/task_worker.cpp
         executors/task_worker_pool.cpp
-        executors/task_execution_manager.cpp
-        timers.cpp
+        executors/unique_thread.cpp
+        backtrace.cpp
         bit_encoding.cpp
-        config_yaml.cpp
-        signal_handling.cpp
-        event_tracing.cpp
-        sysinfo.cpp
         byte_buffer.cpp
         byte_buffer_chain.cpp
-        cpu_architecture_info.cpp)
+        config_yaml.cpp
+        cpu_architecture_info.cpp
+        event_tracing.cpp
+        signal_handling.cpp
+        sysinfo.cpp
+        timers.cpp
+        math_utils.cpp
+        tsan_options.cpp
+        )
 
 add_library(srsran_support STATIC ${SOURCES})
 target_link_libraries(srsran_support srsran_network ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY}
