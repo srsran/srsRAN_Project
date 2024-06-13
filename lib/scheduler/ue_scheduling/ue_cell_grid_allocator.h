@@ -37,9 +37,9 @@ public:
 
   void slot_indication(slot_point sl);
 
-  alloc_status allocate_dl_grant(const ue_pdsch_grant& grant) override;
+  alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) override;
 
-  alloc_status allocate_ul_grant(const ue_pusch_grant& grant) override;
+  alloc_result allocate_ul_grant(const ue_pusch_grant& grant) override;
 
 private:
   struct cell_t {

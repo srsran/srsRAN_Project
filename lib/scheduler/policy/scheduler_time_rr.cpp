@@ -236,13 +236,13 @@ du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_u
       it = ue_db.begin();
     }
     const ue&          u      = **it;
-    const alloc_status result = alloc_ue(u);
-    if (result == alloc_status::skip_slot) {
+    const alloc_result result = alloc_ue(u);
+    if (result.status == alloc_status::skip_slot) {
       // Grid allocator directed policy to stop allocations for this slot.
       break;
     }
 
-    if (result == alloc_status::success and first_alloc) {
+    if (result.status == alloc_status::success and first_alloc) {
       // Mark the next UE to be the first UE to get allocated in the following slot.
       // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
       // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
@@ -255,7 +255,7 @@ du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_u
 }
 
 /// Allocate UE PDSCH grant.
-static alloc_status alloc_dl_ue(const ue&                         u,
+static alloc_result alloc_dl_ue(const ue&                         u,
                                 const ue_resource_grid_view&      res_grid,
                                 ue_pdsch_allocator&               pdsch_alloc,
                                 bool                              is_retx,
@@ -266,11 +266,11 @@ static alloc_status alloc_dl_ue(const ue&                         u,
 {
   if (not is_retx) {
     if (not u.has_pending_dl_newtx_bytes()) {
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
     if (ue_with_srb_data_only and not u.has_pending_dl_newtx_bytes(LCID_SRB1) and
         not u.has_pending_dl_newtx_bytes(LCID_SRB2)) {
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
   }
 
@@ -280,13 +280,13 @@ static alloc_status alloc_dl_ue(const ue&                         u,
 
     if (ue_cc.is_in_fallback_mode()) {
       // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
 
     // UE is already allocated in the PDCCH for this slot (e.g. we should skip a newTx if a reTx has already been
     // allocated for this UE).
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
 
     // Get DL HARQ candidates.
@@ -303,18 +303,18 @@ static alloc_status alloc_dl_ue(const ue&                         u,
         grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
         grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
       }
-      const alloc_status result = pdsch_alloc.allocate_dl_grant(grant);
+      const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
-      if (result != alloc_status::invalid_params) {
+      if (result.status != alloc_status::invalid_params) {
         return result;
       }
     }
   }
-  return alloc_status::skip_ue;
+  return {alloc_status::skip_ue};
 }
 
 /// Allocate UE PUSCH grant.
-static alloc_status alloc_ul_ue(const ue&                    u,
+static alloc_result alloc_ul_ue(const ue&                    u,
                                 const ue_resource_grid_view& res_grid,
                                 ue_pusch_allocator&          pusch_alloc,
                                 bool                         is_retx,
@@ -325,11 +325,11 @@ static alloc_status alloc_ul_ue(const ue&                    u,
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
     if (pending_newtx_bytes == 0) {
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
   }
 
@@ -338,7 +338,7 @@ static alloc_status alloc_ul_ue(const ue&                    u,
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
     if (ue_cc.is_in_fallback_mode()) {
       // Skip allocation for UEs in fallback mode, as it is handled by the SRB fallback scheduler.
-      return alloc_status::skip_ue;
+      return {alloc_status::skip_ue};
     }
 
     // Get UL HARQ candidates.
@@ -355,14 +355,14 @@ static alloc_status alloc_ul_ue(const ue&                    u,
         grant.recommended_nof_bytes = u.pending_ul_newtx_bytes();
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
       }
-      const alloc_status result = pusch_alloc.allocate_ul_grant(grant);
+      const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
-      if (result != alloc_status::invalid_params) {
+      if (result.status != alloc_status::invalid_params) {
         return result;
       }
     }
   }
-  return alloc_status::skip_ue;
+  return {alloc_status::skip_ue};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
