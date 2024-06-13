@@ -734,14 +734,15 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
   srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
   auto& dest_pusch_cfg = dest_cell_grp_cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
   // Add new/remove configurations.
-  dest_pusch_cfg.srs_res_set.push_back(srs_config::srs_resource_set{
-      .id                 = static_cast<srs_config::srs_res_set_id>(1),
-      .srs_res_id_list    = {static_cast<srs_config::srs_res_id>(1)},
-      .res_type           = srs_config::srs_resource_set::semi_persistent_resource_type{.associated_csi_rs =
-                                                                                  static_cast<nzp_csi_rs_res_id_t>(1)},
-      .srs_res_set_usage  = srs_config::srs_resource_set::usage::non_codebook,
-      .srs_pwr_ctrl_alpha = alpha::alpha07,
-      .p0                 = -70});
+  srs_config::srs_resource_set::semi_persistent_resource_type semi_persistent_resource;
+  semi_persistent_resource.associated_csi_rs = static_cast<nzp_csi_rs_res_id_t>(1);
+  dest_pusch_cfg.srs_res_set.push_back(
+      srs_config::srs_resource_set{.id                 = static_cast<srs_config::srs_res_set_id>(1),
+                                   .srs_res_id_list    = {static_cast<srs_config::srs_res_id>(1)},
+                                   .res_type           = semi_persistent_resource,
+                                   .srs_res_set_usage  = srs_config::srs_resource_set::usage::non_codebook,
+                                   .srs_pwr_ctrl_alpha = alpha::alpha07,
+                                   .p0                 = -70});
   // Release.
   dest_pusch_cfg.srs_res_set.erase(dest_pusch_cfg.srs_res_set.begin());
 

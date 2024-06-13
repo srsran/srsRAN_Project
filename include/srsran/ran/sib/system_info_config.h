@@ -101,8 +101,10 @@ struct speed_state_reselection_params {
 };
 
 struct sib2_info {
-  // TODO: cpp17 transition workaround for a clang compiler issue
-  char dummy;
+  // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+  // with std::optional.
+  sib2_info() {}
+
   /// Number of SS blocks to average for cell measurement derivation. If the field is absent the UE uses the measurement
   /// quantity as specified in TS 38.304.
   std::optional<uint8_t> nof_ssbs_to_average;
@@ -166,8 +168,10 @@ struct sib2_info {
 };
 
 struct sib19_info {
-  // TODO: cpp17 transition workaround for a clang compiler issue
-  char                                                                   dummy;
+  // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+  // with std::optional.
+  sib19_info() {}
+
   std::optional<uint16_t>                                                distance_thres;
   std::optional<std::string>                                             ref_location;
   std::optional<uint16_t>                                                cell_specific_koffset;

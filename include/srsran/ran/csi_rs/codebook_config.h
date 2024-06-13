@@ -61,7 +61,10 @@ struct codebook_config {
         bool operator!=(const more_than_two_antenna_ports& rhs) const { return !(rhs == *this); }
       };
 
-      char                                                                                            dummy;
+      // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
+      // types with std::optional.
+      single_panel() {}
+
       std::variant<two_antenna_ports_two_tx_codebook_subset_restriction, more_than_two_antenna_ports> nof_antenna_ports;
       /// Restriction for RI for typeI-SinglePanel-RI-Restriction.
       bounded_bitset<8> typei_single_panel_ri_restriction;
@@ -103,7 +106,10 @@ struct codebook_config {
       bool operator!=(const multi_panel& rhs) const { return !(rhs == *this); }
     };
 
-    char                                    dummy;
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    type1() {}
+
     std::variant<single_panel, multi_panel> sub_type;
     /// CodebookMode as specified in TS 38.214, clause 5.2.2.2.2. Value {1,...,2}.
     unsigned codebook_mode;
@@ -150,7 +156,10 @@ struct codebook_config {
 
     /// \brief See TS 38.331, \c typeII-PortSelection in \c CodebookConfig.
     struct typeii_port_selection {
-      char dummy;
+      // This user provided constructor is added here to fix a Clang compilation error related to the use of nested
+      // types with std::optional.
+      typeii_port_selection() {}
+
       /// The size of the port selection codebook (parameter d). See TS 38.214 clause 5.2.2.2.6. Values {1, 2, 3, 4}.
       std::optional<unsigned> port_selection_sampling_size;
       /// Restriction for RI for TypeII-PortSelection-RI-Restriction.

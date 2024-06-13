@@ -98,8 +98,10 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    // TODO: cpp17 transition workaround for a clang compiler issue
-    char dummy;
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    pusch_type() {}
+
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
@@ -131,8 +133,10 @@ struct mac_uci_pdu {
       static_vector<uci_pucch_f0_or_f1_harq_values, NOF_HARQS_PER_UCI> harqs;
     };
 
-    // TODO: cpp17 transition workaround for a clang compiler issue
-    char dummy;
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    pucch_f0_or_f1_type() {}
+
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
@@ -200,8 +204,10 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    // TODO: cpp17 transition workaround for a clang compiler issue
-    char dummy;
+    // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
+    // with std::optional.
+    pucch_f2_or_f3_or_f4_type() {}
+
     /// Metric of channel quality in dB.
     std::optional<float> ul_sinr_dB;
     /// Timing Advance Offset measured for the UE.
