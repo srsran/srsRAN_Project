@@ -1965,7 +1965,7 @@ basic avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: delayed
-      start_in: 2 hours
+      start_in: 1 hours
   retry: 2
   interruptible: false
   variables:
