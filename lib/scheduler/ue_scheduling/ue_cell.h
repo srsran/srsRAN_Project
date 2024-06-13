@@ -135,10 +135,10 @@ public:
 
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
-  /// \brief Returns an estimated DL bitrate in kbps (kilo bits per second) based on the given input parameters.
-  double get_estimated_dl_brate_kbps(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
-  /// \brief Returns an estimated UL bitrate in kbps (kilo bits per second) based on the given input parameters.
-  double get_estimated_ul_brate_kbps(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
+  /// \brief Returns an estimated DL rate in bytes per TTI (slot) duration based on the given input parameters.
+  double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
+  /// \brief Returns an estimated UL rate in bytes per TTI (slot) duration based on the given input parameters.
+  double get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
 private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
