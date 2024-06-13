@@ -16,7 +16,7 @@
 using namespace srsran;
 
 // TODO this is common between DU and CU.
-static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
+static void configure_cli11_log_args(CLI::App& app, srs_cu::log_appconfig& log_params)
 {
   auto level_check = [](const std::string& value) -> std::string {
     if (value == "info" || value == "debug" || value == "warning" || value == "error") {
@@ -83,12 +83,12 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   });
 }
 
-static void configure_cli11_f1ap_args(CLI::App& app, cu_f1ap_appconfig& f1ap_params)
+static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& f1ap_params)
 {
   add_option(app, "--bind_address", f1ap_params.bind_address, "F1-C bind address")->capture_default_str();
 }
 
-static void configure_cli11_nru_args(CLI::App& app, cu_nru_appconfig& nru_cfg)
+static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nru_cfg)
 {
   add_option(app,
              "--bind_addr",

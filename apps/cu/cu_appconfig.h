@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/support/executors/unique_thread.h"
-#include <optional>
+#include "apps/gnb/gnb_appconfig.h"
 #include <string>
 
 namespace srsran {
+namespace srs_cu {
 
 /// Configuration of logging functionalities.
 struct log_appconfig {
@@ -34,36 +33,6 @@ struct log_appconfig {
   std::string tracing_filename;
 };
 
-/// CPU affinities configuration for the gNB app.
-struct cpu_affinities_appconfig {
-  /// CPUs isolation.
-  std::optional<os_sched_affinity_bitmask> isolated_cpus;
-  /// Low priority workers CPU affinity mask.
-  os_sched_affinity_config low_priority_cpu_cfg = {sched_affinity_mask_types::low_priority,
-                                                   {},
-                                                   sched_affinity_mask_policy::mask};
-};
-
-/// Non real time thread configuration for the gNB.
-struct non_rt_threads_appconfig {
-  /// Number of non real time threads for processing of CP and UP data in the upper layers
-  unsigned nof_non_rt_threads = 4;
-};
-
-/// Expert threads configuration of the CU app.
-struct expert_threads_appconfig {
-  /// Non real time thread configuration of the gNB app.
-  non_rt_threads_appconfig non_rt_threads;
-};
-
-/// Expert configuration of the gNB app.
-struct expert_execution_appconfig {
-  /// gNB CPU affinities.
-  cpu_affinities_appconfig affinities;
-  /// Expert thread configuration of the gNB app.
-  expert_threads_appconfig threads;
-};
-
 /// NR-U configuration
 struct cu_nru_appconfig {
   std::string bind_addr       = "127.0.10.1"; // Bind address used by the F1-U interface
@@ -75,20 +44,24 @@ struct cu_f1ap_appconfig {
   /// F1-C bind address
   std::string bind_address = "127.0.10.1";
 };
+} // namespace srs_cu
 
 /// Monolithic gnb application configuration.
 struct cu_appconfig {
   /// Logging configuration.
-  log_appconfig log_cfg;
+  srs_cu::log_appconfig log_cfg;
 
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
 
   /// NR-U
-  cu_nru_appconfig nru_cfg;
+  srs_cu::cu_nru_appconfig nru_cfg;
 
   /// F1AP
-  cu_f1ap_appconfig f1ap_cfg;
+  srs_cu::cu_f1ap_appconfig f1ap_cfg;
+
+  /// Buffer pool configuration.
+  buffer_pool_appconfig buffer_pool_config;
 
   /// TODO fill in the rest of the configuration
 };

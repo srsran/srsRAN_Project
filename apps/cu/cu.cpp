@@ -35,6 +35,7 @@
 #include "apps/cu/cu_worker_manager.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
+#include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
@@ -59,7 +60,6 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
-#include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "cu_appconfig.h"
 
 #include <atomic>
@@ -119,7 +119,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const log_appconfig&            log_cfg,
+static void register_app_logs(const srs_cu::log_appconfig&    log_cfg,
                               const cu_cp_unit_logger_config& cu_cp_loggers,
                               const cu_up_unit_logger_config& cu_up_loggers)
 {
@@ -191,12 +191,8 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &cu_cp_config]() {
     // Create the PLMN and TAC list from the cells.
-    // TODO remove hard-coded value
     std::vector<std::string> plmns;
     std::vector<unsigned>    tacs;
-    plmns.emplace_back("00101");
-    tacs.emplace_back(7);
-
     autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
   });
 
@@ -296,23 +292,15 @@ int main(int argc, char** argv)
 
   // Create manager of timers for CU-CP and CU-UP, which will be
   // driven by the system timer slot ticks.
-  // TODO revisit how to use the system timer timer source.
   timer_manager  app_timers{256};
   timer_manager* cu_timers = &app_timers;
 
   // Create time source that ticks the timers
   io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
 
-  // Set up the JSON log channel used by metrics.
-  // TODO metrics. Do we have any CU-CP or CU-UP JSON metrics?
-
   // Create N2 Client Gateway.
   std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
       generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
-
-  // E2AP configuration.
-  // Create E2AP GW remote connector.
-  // TODO This seems to be used in the DU only?
 
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
@@ -324,12 +312,6 @@ int main(int argc, char** argv)
   // create CU-CP.
   auto              cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
   srs_cu_cp::cu_cp& cu_cp_obj          = *cu_cp_obj_and_cmds.unit;
-
-  // TODO: Remove JSON sink and refactor console_helper to not require it upon construction
-  // Set up the JSON log channel used by metrics.
-  srslog::sink&        json_sink    = srslog::fetch_udp_sink("127.0.9.9", 61234, srslog::create_json_formatter());
-  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
-  json_channel.set_enabled(false);
 
   // Create console helper object for commands and metrics printing.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
@@ -354,9 +336,6 @@ int main(int argc, char** argv)
   cu_f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
 
   // Create and start CU-UP
-  // TODO right now build_cu_up() depends on the worker_manager, but the worker manager
-  // depends on multiple configurations of the DU/RU. As such, temporarly we avoid the
-  // function and create things direclty here.
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
                                                                           workers,
                                                                           cu_cfg.nru_cfg.bind_addr,
@@ -393,9 +372,6 @@ int main(int argc, char** argv)
   cu_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  // Clean cgroups
-  // TODO required for CU?
 
   return 0;
 }
