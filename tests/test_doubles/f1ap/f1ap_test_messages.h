@@ -59,6 +59,12 @@ f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                  byte_buffer         cell_group_cfg = {},
                                                  byte_buffer         rrc_container  = {});
 
+/// \brief Generates F1AP DL RRC TRANSFER message with provided RRC container.
+f1ap_message create_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                            srb_id_t            srb_id,
+                                            byte_buffer         rrc_container);
+
 /// \brief Generates F1AP UL RRC TRANSFER message with provided RRC container.
 f1ap_message create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                             gnb_cu_ue_f1ap_id_t cu_ue_id,
