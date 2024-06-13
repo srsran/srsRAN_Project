@@ -101,6 +101,7 @@ private:
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails)
 {
   sctp_network_connector_config config;
+  config.if_name      = "server";
   config.bind_address = "1.1.1.1";
   config.bind_port    = 0;
   config.reuse_addr   = true;
@@ -113,6 +114,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
 {
   sctp_network_connector_config config;
+  config.if_name      = "server";
   config.bind_address = "1:1::";
   config.bind_port    = 0;
   config.reuse_addr   = true;
