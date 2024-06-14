@@ -52,9 +52,11 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
-  while (not dl_queue.empty() and alloc_result.status != alloc_status::skip_slot) {
-    ue_ctxt& ue  = *dl_queue.top();
-    alloc_result = try_dl_alloc(ue, ues, pdsch_alloc);
+  while (not dl_queue.empty()) {
+    ue_ctxt& ue = *dl_queue.top();
+    if (alloc_result.status != alloc_status::skip_slot) {
+      alloc_result = try_dl_alloc(ue, ues, pdsch_alloc);
+    }
     ue.save_dl_alloc(alloc_result.alloc_bytes);
     dl_queue.pop();
   }
@@ -94,9 +96,11 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
-  while (not ul_queue.empty() and alloc_result.status != alloc_status::skip_slot) {
-    ue_ctxt& ue  = *ul_queue.top();
-    alloc_result = try_ul_alloc(ue, ues, pusch_alloc);
+  while (not ul_queue.empty()) {
+    ue_ctxt& ue = *ul_queue.top();
+    if (alloc_result.status != alloc_status::skip_slot) {
+      alloc_result = try_ul_alloc(ue, ues, pusch_alloc);
+    }
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     ul_queue.pop();
   }

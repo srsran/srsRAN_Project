@@ -25,7 +25,7 @@ public:
   ul_sched(ue_pusch_allocator& pusch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) override;
 
 private:
-  const double fairness_coeff = 1.0;
+  const double fairness_coeff = 2.0;
   const double exp_avg_alpha  = 0.01;
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
