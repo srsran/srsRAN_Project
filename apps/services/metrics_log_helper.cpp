@@ -115,7 +115,11 @@ void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
       fmt::format_to(buffer, " cqi=n/a");
     }
 
-    fmt::format_to(buffer, " ri={}", int(ue.ri));
+    if (!std::isnan(ue.ri) && !iszero(ue.ri)) {
+      fmt::format_to(buffer, " ri={:.1f}", ue.ri);
+    } else {
+      fmt::format_to(buffer, " ri=n/a");
+    }
 
     fmt::format_to(buffer, " dl_mcs={}", int(ue.dl_mcs.to_uint()));
     if (ue.dl_brate_kbps > 0) {

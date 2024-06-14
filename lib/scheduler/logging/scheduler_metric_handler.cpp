@@ -71,10 +71,12 @@ void scheduler_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float si
 void scheduler_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
 {
   if (csi.first_tb_wideband_cqi.has_value()) {
-    u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
+    ++u.data.nof_cqi_reports;
+    u.data.sum_cqi += csi.first_tb_wideband_cqi->to_uint();
   }
   if (csi.ri.has_value()) {
-    u.last_ri = csi.ri->to_uint();
+    ++u.data.nof_ri_reports;
+    u.data.sum_ri += csi.ri->to_uint();
   }
 }
 
@@ -277,8 +279,10 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   scheduler_ue_metrics ret{};
   ret.pci           = pci;
   ret.rnti          = rnti;
-  ret.cqi           = last_cqi;
-  ret.ri            = last_ri;
+  ret.cqi           = data.nof_cqi_reports > 0
+                          ? static_cast<uint8_t>(std::roundf(static_cast<float>(data.sum_cqi) / data.nof_cqi_reports))
+                          : 0U;
+  ret.ri            = data.nof_ri_reports > 0 ? static_cast<float>(data.sum_ri) / data.nof_ri_reports : 0;
   uint8_t mcs       = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;

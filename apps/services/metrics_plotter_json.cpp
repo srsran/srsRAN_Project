@@ -19,7 +19,7 @@ namespace {
 DECLARE_METRIC("pci", metric_pci, pci_t, "");
 DECLARE_METRIC("rnti", metric_rnti, uint16_t, "");
 DECLARE_METRIC("cqi", metric_cqi, uint8_t, "");
-DECLARE_METRIC("ri", metric_ri, uint8_t, "");
+DECLARE_METRIC("ri", metric_ri, float, "");
 DECLARE_METRIC("dl_mcs", metric_dl_mcs, uint8_t, "");
 DECLARE_METRIC("dl_brate", metric_dl_brate, double, "");
 DECLARE_METRIC("dl_nof_ok", metric_dl_nof_ok, unsigned, "");

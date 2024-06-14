@@ -42,9 +42,13 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
       double   sum_pusch_snrs         = 0;
       double   sum_pucch_snrs         = 0;
       double   sum_pusch_rsrp         = 0;
+      unsigned sum_cqi                = 0;
+      unsigned sum_ri                 = 0;
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
+      unsigned nof_cqi_reports        = 0;
+      unsigned nof_ri_reports         = 0;
       unsigned dl_prbs_used           = 0;
       unsigned ul_prbs_used           = 0;
     };
@@ -57,8 +61,6 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
     unsigned                               nof_prbs;
     du_ue_index_t                          ue_index;
     rnti_t                                 rnti;
-    uint8_t                                last_cqi = 0;
-    uint8_t                                last_ri  = 1;
     unsigned                               last_bsr = 0;
     std::optional<int>                     last_phr;
     std::optional<phy_time_unit>           last_ta;

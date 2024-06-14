@@ -134,7 +134,11 @@ void metrics_plotter_stdout::report_metrics(const scheduler_cell_metrics& metric
       fmt::print(" | {:>3.3}", "n/a");
     }
 
-    fmt::print("  {:>2}", int(ue.ri));
+    if (!std::isnan(ue.ri) && !iszero(ue.ri)) {
+      fmt::print(" {:>3.1f}", ue.ri);
+    } else {
+      fmt::print(" {:>3.3}", "n/a");
+    }
 
     fmt::print("   {:>2}", int(ue.dl_mcs.to_uint()));
     if (ue.dl_brate_kbps > 0) {
