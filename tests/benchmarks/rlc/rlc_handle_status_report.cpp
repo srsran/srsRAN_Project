@@ -92,6 +92,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   config.poll_pdu        = 4;
   config.poll_byte       = 25;
   config.queue_size      = 4096;
+  config.max_window      = 0;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
