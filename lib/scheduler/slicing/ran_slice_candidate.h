@@ -19,21 +19,8 @@ namespace detail {
 template <bool IsDl>
 class common_ran_slice_candidate
 {
-  struct candidate_deleter {
-    void operator()(ran_slice_instance* p)
-    {
-      if (p != nullptr) {
-        if constexpr (IsDl) {
-          p->pdsch_completed();
-        } else {
-          p->pusch_completed();
-        }
-      }
-    }
-  };
-
 public:
-  common_ran_slice_candidate(ran_slice_instance* instance_) : inst(instance_, candidate_deleter{}) {}
+  common_ran_slice_candidate(ran_slice_instance& instance_) : inst(&instance_) {}
 
   ran_slice_id_t                               id() const { return inst->id; }
   [[nodiscard]] const slice_rrm_policy_config& cfg() const { return inst->cfg; }
@@ -41,9 +28,6 @@ public:
 
   bool is_candidate(du_ue_index_t ue_idx) const { return inst->contains(ue_idx); }
   bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const { return inst->contains(ue_idx, lcid); }
-
-  /// Signal that the allocations for this slice are complete.
-  void clear() { inst.reset(); }
 
   /// Register that a new grant was allocated for a given UE.
   void store_grant(unsigned nof_rbs)
@@ -65,7 +49,7 @@ public:
   }
 
 protected:
-  std::unique_ptr<ran_slice_instance, candidate_deleter> inst;
+  ran_slice_instance* inst = nullptr;
 };
 
 } // namespace detail

@@ -20,21 +20,24 @@ namespace srsran {
 class slice_scheduler
 {
 public:
-  slice_scheduler(const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
+  slice_scheduler(const cell_configuration& cell_cfg_);
 
   /// Reset the state of the slices.
   void slot_indication();
 
   /// Update the state of the slice with the provided UE configs.
-  void add_ue(du_ue_index_t ue_idx, const ue_configuration& ue_cfg);
-  void reconf_ue(du_ue_index_t ue_idx, const ue_configuration& next_ue_cfg, const ue_configuration& prev_ue_cfg);
+  void add_ue(const ue_configuration& ue_cfg);
+  void reconf_ue(const ue_configuration& next_ue_cfg, const ue_configuration& prev_ue_cfg);
   void rem_ue(du_ue_index_t ue_idx);
 
   /// Get next RAN slice for PDSCH scheduling.
-  dl_ran_slice_candidate get_next_dl_candidate();
+  std::optional<dl_ran_slice_candidate> get_next_dl_candidate();
 
   /// Get next RAN slice for PUSCH scheduling.
-  ul_ran_slice_candidate get_next_ul_candidate();
+  std::optional<ul_ran_slice_candidate> get_next_ul_candidate();
+
+  size_t                         nof_slices() const { return slices.size(); }
+  const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].cfg; }
 
 private:
   struct slice_prio_context {
@@ -51,8 +54,8 @@ private:
 
   ran_slice_instance& get_slice(const rrm_policy_member& rrm);
 
-  dl_ran_slice_candidate create_dl_candidate();
-  ul_ran_slice_candidate create_ul_candidate();
+  std::optional<dl_ran_slice_candidate> create_dl_candidate();
+  std::optional<ul_ran_slice_candidate> create_ul_candidate();
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;

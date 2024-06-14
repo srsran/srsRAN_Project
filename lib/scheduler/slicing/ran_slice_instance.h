@@ -32,7 +32,7 @@ public:
 
   int get_dl_prio()
   {
-    if (not active() or pdsch_stopped or cfg.max_prb <= pdsch_rb_count) {
+    if (not active() or pdsch_complete or cfg.max_prb <= pdsch_rb_count) {
       return skip_slice_prio;
     }
     return cfg.min_prb > pdsch_rb_count ? cfg.min_prb - pdsch_rb_count : default_slice_prio;
@@ -40,7 +40,7 @@ public:
 
   int get_ul_prio()
   {
-    if (not active() or pusch_stopped or cfg.max_prb <= pusch_rb_count) {
+    if (not active() or pusch_complete or cfg.max_prb <= pusch_rb_count) {
       return skip_slice_prio;
     }
     return cfg.min_prb > pusch_rb_count ? cfg.min_prb - pusch_rb_count : default_slice_prio;
@@ -53,10 +53,10 @@ public:
   void store_pusch_grant(unsigned crbs) { pusch_rb_count += crbs; }
 
   /// Mark the allocation of PDSCH for this slice and the current slot as complete.
-  void pdsch_completed() { pdsch_stopped = true; }
+  void set_pdsch_scheduled() { pdsch_complete = true; }
 
   /// Mark the allocation of PUSCH for this slice and the current slot as complete.
-  void pusch_completed() { pusch_stopped = true; }
+  void set_pusch_scheduled() { pusch_complete = true; }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.
   bool contains(du_ue_index_t ue_idx) const { return bearers.contains(ue_idx); }
@@ -87,8 +87,8 @@ public:
   unsigned pusch_rb_count = 0;
 
 private:
-  bool pdsch_stopped = false;
-  bool pusch_stopped = false;
+  bool pdsch_complete = false;
+  bool pusch_complete = false;
 };
 
 } // namespace srsran

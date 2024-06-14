@@ -17,6 +17,6 @@ namespace srsran {
 
 /// RAN slice identifier that should be unique for a given cell,PLMN,S-NSSAI.
 struct ran_slice_id_tag {};
-using ran_slice_id_t = strong_type<uint8_t, struct ran_slice_id_tag, strong_increment_decrement>;
+using ran_slice_id_t = strong_type<uint8_t, struct ran_slice_id_tag, strong_increment_decrement, strong_equality>;
 
 } // namespace srsran

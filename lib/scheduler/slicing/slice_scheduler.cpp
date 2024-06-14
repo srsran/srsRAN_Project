@@ -14,7 +14,7 @@
 
 using namespace srsran;
 
-slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_) :
+slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_) :
   cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default slice).
@@ -61,28 +61,26 @@ void slice_scheduler::slot_indication()
   std::sort(sorted_ul_prios.begin(), sorted_ul_prios.end(), std::greater<>{});
 }
 
-void slice_scheduler::add_ue(du_ue_index_t ue_idx, const ue_configuration& ue_cfg)
+void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
 {
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.add_logical_channel(ue_idx, lc_cfg.lcid);
+    sl_inst.add_logical_channel(ue_cfg.ue_index, lc_cfg.lcid);
   }
 }
 
-void slice_scheduler::reconf_ue(du_ue_index_t           ue_idx,
-                                const ue_configuration& next_ue_cfg,
-                                const ue_configuration& prev_ue_cfg)
+void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_configuration& prev_ue_cfg)
 {
   // Remove old bearers.
   for (const logical_channel_config& lc_cfg : prev_ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.rem_logical_channel(ue_idx, lc_cfg.lcid);
+    sl_inst.rem_logical_channel(prev_ue_cfg.ue_index, lc_cfg.lcid);
   }
 
   // Add new bearers.
   for (const logical_channel_config& lc_cfg : next_ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.add_logical_channel(ue_idx, lc_cfg.lcid);
+    sl_inst.add_logical_channel(prev_ue_cfg.ue_index, lc_cfg.lcid);
   }
 }
 
@@ -104,7 +102,7 @@ ran_slice_instance& slice_scheduler::get_slice(const rrm_policy_member& rrm)
   return *it;
 }
 
-dl_ran_slice_candidate slice_scheduler::get_next_dl_candidate()
+std::optional<dl_ran_slice_candidate> slice_scheduler::get_next_dl_candidate()
 {
   if (slices.size() == 1) {
     return create_dl_candidate();
@@ -128,7 +126,7 @@ dl_ran_slice_candidate slice_scheduler::get_next_dl_candidate()
   return create_dl_candidate();
 }
 
-ul_ran_slice_candidate slice_scheduler::get_next_ul_candidate()
+std::optional<ul_ran_slice_candidate> slice_scheduler::get_next_ul_candidate()
 {
   if (slices.size() == 1) {
     return create_ul_candidate();
@@ -152,14 +150,22 @@ ul_ran_slice_candidate slice_scheduler::get_next_ul_candidate()
   return create_ul_candidate();
 }
 
-dl_ran_slice_candidate slice_scheduler::create_dl_candidate()
+std::optional<dl_ran_slice_candidate> slice_scheduler::create_dl_candidate()
 {
-  bool has_candidates = sorted_dl_prios[0].prio != ran_slice_instance::skip_slice_prio;
-  return dl_ran_slice_candidate{has_candidates ? &slices[sorted_dl_prios[0].id.value()] : nullptr};
+  if (sorted_dl_prios[0].prio != ran_slice_instance::skip_slice_prio) {
+    slices[sorted_dl_prios[0].id.value()].set_pdsch_scheduled();
+    sorted_dl_prios[0].prio = ran_slice_instance::skip_slice_prio;
+    return dl_ran_slice_candidate{slices[sorted_dl_prios[0].id.value()]};
+  }
+  return std::nullopt;
 }
 
-ul_ran_slice_candidate slice_scheduler::create_ul_candidate()
+std::optional<ul_ran_slice_candidate> slice_scheduler::create_ul_candidate()
 {
-  bool has_candidates = sorted_ul_prios[0].prio != ran_slice_instance::skip_slice_prio;
-  return ul_ran_slice_candidate{has_candidates ? &slices[sorted_ul_prios[0].id.value()] : nullptr};
+  if (sorted_ul_prios[0].prio != ran_slice_instance::skip_slice_prio) {
+    slices[sorted_ul_prios[0].id.value()].set_pusch_scheduled();
+    sorted_ul_prios[0].prio = ran_slice_instance::skip_slice_prio;
+    return ul_ran_slice_candidate{slices[sorted_ul_prios[0].id.value()]};
+  }
+  return std::nullopt;
 }
