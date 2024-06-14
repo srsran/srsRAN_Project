@@ -270,7 +270,7 @@ int main(int argc, char** argv)
   // Create F1-C GW (TODO cleanup port and PPID args with factory)
   sctp_network_gateway_config f1c_sctp_cfg = {};
   f1c_sctp_cfg.if_name                     = "F1-C";
-  f1c_sctp_cfg.bind_address                = cu_cp_config.f1ap_config.f1c_bind_address;
+  f1c_sctp_cfg.bind_address                = cu_cfg.f1ap_cfg.bind_address;
   f1c_sctp_cfg.bind_port                   = 38471;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
   f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.f1ap});
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   udp_network_gateway_config  cu_f1u_gw_config  = {};
-  cu_f1u_gw_config.bind_address                 = cu_up_config.nru_cfg.bind_addr;
+  cu_f1u_gw_config.bind_address                 = cu_cfg.nru_cfg.bind_addr;
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
   // function and create things direclty here.
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = app_build_cu_up(cu_up_config,
                                                                           workers,
-                                                                          cu_up_config.nru_cfg.bind_addr,
+                                                                          cu_cfg.nru_cfg.bind_addr,
                                                                           *e1_gw,
                                                                           *cu_f1u_conn,
                                                                           *cu_up_dlt_pcaps.n3,
