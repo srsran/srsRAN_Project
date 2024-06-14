@@ -27,7 +27,7 @@ void ran_slice_instance::slot_indication()
   pusch_stopped  = false;
 }
 
-void ran_slice_instance::set_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
+void ran_slice_instance::add_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
 {
   if (not bearers.contains(ue_idx)) {
     bearers.emplace(ue_idx, MAX_NOF_RB_LCIDS);

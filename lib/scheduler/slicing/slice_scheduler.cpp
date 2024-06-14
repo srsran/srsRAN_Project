@@ -30,6 +30,7 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const slic
       create_scheduler_strategy(scheduler_strategy_params{"time_rr", &logger}, cell_cfg.expert_cfg.ue);
   sorted_dl_prios.emplace_back(id_count);
   sorted_ul_prios.emplace_back(id_count);
+  ++id_count;
   // Configured RRM policy members
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
@@ -64,7 +65,7 @@ void slice_scheduler::add_ue(du_ue_index_t ue_idx, const ue_configuration& ue_cf
 {
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.set_logical_channel(ue_idx, lc_cfg.lcid);
+    sl_inst.add_logical_channel(ue_idx, lc_cfg.lcid);
   }
 }
 
@@ -81,7 +82,7 @@ void slice_scheduler::reconf_ue(du_ue_index_t           ue_idx,
   // Add new bearers.
   for (const logical_channel_config& lc_cfg : next_ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.set_logical_channel(ue_idx, lc_cfg.lcid);
+    sl_inst.add_logical_channel(ue_idx, lc_cfg.lcid);
   }
 }
 

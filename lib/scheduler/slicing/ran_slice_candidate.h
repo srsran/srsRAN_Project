@@ -15,6 +15,7 @@
 namespace srsran {
 namespace detail {
 
+/// \brief RAN slice that is the next candidate for allocation in a given slot and cell.
 template <bool IsDl>
 class common_ran_slice_candidate
 {
@@ -38,8 +39,8 @@ public:
   [[nodiscard]] const slice_rrm_policy_config& cfg() const { return inst->cfg; }
   scheduler_policy&                            policy() { return *inst->policy; }
 
-  bool is_candidate(du_ue_index_t ue_idx) const { return inst->is_candidate(ue_idx); }
-  bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const { return inst->is_candidate(ue_idx, lcid); }
+  bool is_candidate(du_ue_index_t ue_idx) const { return inst->contains(ue_idx); }
+  bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const { return inst->contains(ue_idx, lcid); }
 
   /// Signal that the allocations for this slice are complete.
   void clear() { inst.reset(); }

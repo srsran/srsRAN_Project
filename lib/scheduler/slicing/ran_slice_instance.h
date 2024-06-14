@@ -21,7 +21,8 @@ namespace srsran {
 class ran_slice_instance
 {
 public:
-  constexpr static int skip_slice_prio = std::numeric_limits<int>::min();
+  constexpr static int skip_slice_prio    = std::numeric_limits<int>::min();
+  constexpr static int default_slice_prio = 0;
 
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
@@ -34,7 +35,7 @@ public:
     if (not active() or pdsch_stopped or cfg.max_prb <= pdsch_rb_count) {
       return skip_slice_prio;
     }
-    return cfg.min_prb > pdsch_rb_count ? cfg.min_prb - pdsch_rb_count : 0;
+    return cfg.min_prb > pdsch_rb_count ? cfg.min_prb - pdsch_rb_count : default_slice_prio;
   }
 
   int get_ul_prio()
@@ -42,7 +43,7 @@ public:
     if (not active() or pusch_stopped or cfg.max_prb <= pusch_rb_count) {
       return skip_slice_prio;
     }
-    return cfg.min_prb > pusch_rb_count ? cfg.min_prb - pusch_rb_count : 0;
+    return cfg.min_prb > pusch_rb_count ? cfg.min_prb - pusch_rb_count : default_slice_prio;
   }
 
   /// Save PDSCH grant.
@@ -57,17 +58,19 @@ public:
   /// Mark the allocation of PUSCH for this slice and the current slot as complete.
   void pusch_completed() { pusch_stopped = true; }
 
-  /// Determine if a UE is a candidate for this slice.
-  bool is_candidate(du_ue_index_t ue_idx) const { return bearers.contains(ue_idx); }
+  /// Determine if at least one bearer of the given UE is currently managed by this slice.
+  bool contains(du_ue_index_t ue_idx) const { return bearers.contains(ue_idx); }
 
-  /// Determine if a (UE, LCID) is a candidate for this slice.
-  bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const
-  {
-    return is_candidate(ue_idx) and bearers[ue_idx].test(lcid);
-  }
+  /// Determine if a (UE, LCID) tuple are managed by this slice.
+  bool contains(du_ue_index_t ue_idx, lcid_t lcid) const { return contains(ue_idx) and bearers[ue_idx].test(lcid); }
 
-  void set_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
+  /// Add a new (UE, LCID) to the list of bearers managed by this slice.
+  void add_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
+
+  /// Remove a (UE, LCID) from the list of bearers managed by this slice.
   void rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
+
+  /// Remove a UE and all associated LCIDs from the list of bearers managed by this slice.
   void rem_ue(du_ue_index_t ue_idx);
 
   ran_slice_id_t            id;
