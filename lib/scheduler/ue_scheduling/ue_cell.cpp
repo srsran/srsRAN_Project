@@ -472,8 +472,6 @@ void ue_cell::apply_link_adaptation_procedures(const csi_report_data& csi_report
 
 double ue_cell::get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const
 {
-  static const double slot_duration_ms =
-      SUBFRAME_DURATION_MSEC / get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
   static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
   const unsigned      dmrs_prbs   = calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs);
@@ -490,14 +488,11 @@ double ue_cell::get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_
                                                             .n_prb            = nof_prbs});
 
   // Return the estimated throughput, considering that the number of bytes is for a slot.
-  const unsigned tbs_bytes = tbs_bits / NOF_BITS_PER_BYTE;
-  return tbs_bytes / slot_duration_ms;
+  return tbs_bits / NOF_BITS_PER_BYTE;
 }
 
 double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const
 {
-  static const double slot_duration_ms =
-      SUBFRAME_DURATION_MSEC / get_nof_slots_per_subframe(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
   static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
   const unsigned      dmrs_prbs   = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
@@ -514,6 +509,5 @@ double ue_cell::get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_
                                                             .n_prb            = nof_prbs});
 
   // Return the estimated throughput, considering that the number of bytes is for a slot.
-  const unsigned tbs_bytes = tbs_bits / NOF_BITS_PER_BYTE;
-  return tbs_bytes / slot_duration_ms;
+  return tbs_bits / NOF_BITS_PER_BYTE;
 }
