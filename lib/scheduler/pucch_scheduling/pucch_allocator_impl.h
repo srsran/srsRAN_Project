@@ -82,9 +82,9 @@ private:
     pucch_format format;
   };
 
-  struct pucch_com_ded_res {
-    pucch_res_alloc_cfg   pucch_common_info;
-    const pucch_resource& pucch_ded_cfg;
+  struct pucch_common_params {
+    unsigned pucch_res_indicator;
+    unsigned r_pucch;
   };
 
   struct uci_bits {
@@ -132,9 +132,11 @@ private:
     [[nodiscard]] uci_bits get_uci_bits() const;
   };
 
+  /// Keeps track of the PUCCH grants (common + dedicated) for a given UE.
   struct ue_grants {
-    rnti_t           rnti;
-    bool             has_common_pucch;
+    rnti_t rnti;
+    bool   has_common_pucch;
+
     pucch_grant_list pucch_grants;
   };
 
@@ -161,17 +163,15 @@ private:
   std::optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
                                                                  const dci_context_information& dci_info);
 
-  void exec_common_and_ded_res_alloc(cell_slot_resource_allocator& pucch_alloc,
-                                     rnti_t                        rnti,
-                                     const ue_cell_configuration&  ue_cell_cfg,
-                                     pucch_res_alloc_cfg           common_res_cfg,
-                                     const pucch_resource&         ded_res_cfg);
+  void compute_pucch_common_params_and_alloc(cell_slot_resource_allocator& pucch_alloc,
+                                             rnti_t                        rnti,
+                                             pucch_common_params           pucch_params);
 
-  std::optional<pucch_com_ded_res> find_common_and_ded_harq_res_available(cell_slot_resource_allocator& pucch_alloc,
-                                                                          ue_grants*                    existing_grants,
-                                                                          rnti_t                        rnti,
-                                                                          const ue_cell_configuration&  ue_cell_cfg,
-                                                                          const dci_context_information& dci_info);
+  std::optional<pucch_common_params> find_common_and_ded_harq_res_available(cell_slot_resource_allocator& pucch_alloc,
+                                                                            ue_grants* existing_grants,
+                                                                            rnti_t     rnti,
+                                                                            const ue_cell_configuration&   ue_cell_cfg,
+                                                                            const dci_context_information& dci_info);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
   std::optional<unsigned> allocate_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -244,11 +244,6 @@ private:
 
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
-
-  using slot_alloc_list = static_vector<rnti_t, MAX_PUCCH_PDUS_PER_SLOT>;
-
-  // \brief Ring of PUCCH allocations indexed by slot.
-  circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_common_alloc_grid;
 
   const unsigned                PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration&     cell_cfg;
