@@ -83,8 +83,8 @@ ubuntu-uhd-builder:
     # Install dependencies and compile
     - |
       build_uhd() {
-        .gitlab/ci/builders/install_uhd_dependencies.sh build
-        .gitlab/ci/builders/build_uhd.sh ${uhd_version} native ${KUBERNETES_CPU_REQUEST}
+        docker/scripts/install_uhd_dependencies.sh build
+        docker/scripts/build_uhd.sh ${uhd_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
         cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
@@ -164,8 +164,8 @@ ubuntu-dpdk-builder:
     # Install dependencies and compile
     - |
       build_dpdk() {
-        .gitlab/ci/builders/install_dpdk_dependencies.sh build
-        .gitlab/ci/builders/build_dpdk.sh ${dpdk_version} native ${KUBERNETES_CPU_REQUEST}
+        docker/scripts/install_dpdk_dependencies.sh build
+        docker/scripts/build_dpdk.sh ${dpdk_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
         cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
       }
@@ -232,7 +232,10 @@ ubuntu-dpdk-builder:
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
     - |
-      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
+      cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
+      ls -lah $CONTEXT
+    - |
+      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk
       ls -lah $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
@@ -288,6 +291,8 @@ image-build-publish [codechecker]:
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/codechecker
       export BUILD_ARGS="CR_REGISTRY_URI=${CR_REGISTRY_URI};CI_TOOLS_REPO=${CI_TOOLS_REPO}"
+    - |
+      cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
   needs:
     - builder version
   cache:

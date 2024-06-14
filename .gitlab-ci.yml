@@ -72,6 +72,7 @@ trigger builder:
           - .gitlab/ci/src_cache.yml
           - .gitlab/ci/builders.yml
           - .gitlab/ci/builders/**/*
+          - docker/scripts/**/*
   trigger:
     include: .gitlab/ci/builders.yml
     strategy: depend
@@ -83,12 +84,6 @@ trigger docker:
       changes:
         paths:
           - .gitlab/ci/docker.yml
-          - .gitlab/ci/builders/builder.sh
-          - .gitlab/ci/builders/build_uhd.sh
-          - .gitlab/ci/builders/build_dpdk.sh
-          - .gitlab/ci/builders/install_dependencies.sh
-          - .gitlab/ci/builders/install_uhd_dependencies.sh
-          - .gitlab/ci/builders/install_dpdk_dependencies.sh
           - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
           - .gdbinit
@@ -401,7 +396,7 @@ pages:
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv docs/index.html public/index.html
-    - .gitlab/ci/builders/install_dependencies.sh
+    - docker/scripts/install_dependencies.sh
     - apt-get update && apt-get install -y --no-install-recommends rsync
     - |
       rm -Rf build

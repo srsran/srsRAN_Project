@@ -32,12 +32,7 @@ variables:
 .gnb-docker:
   - changes: &srs_container_changes
       paths:
-        - .gitlab/ci/builders/builder.sh
-        - .gitlab/ci/builders/build_uhd.sh
-        - .gitlab/ci/builders/build_dpdk.sh
-        - .gitlab/ci/builders/install_dependencies.sh
-        - .gitlab/ci/builders/install_uhd_dependencies.sh
-        - .gitlab/ci/builders/install_dpdk_dependencies.sh
+        - docker/scripts/**/*
         - docker/Dockerfile
 
 .uhd_params:
@@ -65,6 +60,7 @@ no docker changes:
         - docker/metrics_server/**/*
         - docker/open5gs/**/*
         - docker/grafana/**/*
+        - docker/scripts/**/*
       when: never
     - if: $ON_MR
   script:

@@ -34,22 +34,22 @@ ADD . /src
 
 # Install srsRAN build dependencies
 ARG LIB
-RUN /src/.gitlab/ci/builders/install_dependencies.sh build && \
-    /src/.gitlab/ci/builders/install_${LIB}_dependencies.sh build
+RUN /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_${LIB}_dependencies.sh build
 
 ARG LIB_VERSION
 ARG ARCH
 ARG NUM_CORES
 
 # Compile UHD/DPDK
-RUN /src/.gitlab/ci/builders/build_${LIB}.sh ${LIB_VERSION} ${ARCH} ${NUM_CORES}
+RUN /src/docker/scripts/build_${LIB}.sh ${LIB_VERSION} ${ARCH} ${NUM_CORES}
 
 # Compile srsRAN Project
 ARG EXTRA_CMAKE_ARGS=""
 RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
     export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
-    /src/.gitlab/ci/builders/builder.sh \
+    /src/docker/scripts/builder.sh \
     -m -j${NUM_CORES} \
     -DBUILD_TESTS=False \
     -DENABLE_${LIB_UPPER}=On \
@@ -73,8 +73,8 @@ COPY --from=builder /opt/${LIB}/${LIB_VERSION} /usr/local
 COPY --from=builder /usr/local /usr/local
 
 # Copy the install dependencies scripts
-ADD .gitlab/ci/builders/install_${LIB}_dependencies.sh /usr/local/etc/install_lib_dependencies.sh
-ADD .gitlab/ci/builders/install_dependencies.sh /usr/local/etc/install_srsran_dependencies.sh
+ADD docker/scripts/install_${LIB}_dependencies.sh /usr/local/etc/install_lib_dependencies.sh
+ADD docker/scripts/install_dependencies.sh /usr/local/etc/install_srsran_dependencies.sh
 
 # Install srsran and lib runtime dependencies
 RUN /usr/local/etc/install_srsran_dependencies.sh run && \
