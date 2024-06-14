@@ -91,7 +91,7 @@ void ue_security_manager::update_security_context(security::security_context sec
   sec_context = sec_ctxt;
 }
 
-void ue_security_manager::horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn)
+void ue_security_manager::perform_horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn)
 {
   sec_context.horizontal_key_derivation(target_pci, target_ssb_arfcn);
 }

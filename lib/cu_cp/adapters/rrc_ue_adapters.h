@@ -154,10 +154,10 @@ public:
   }
 
   /// \brief Perform horizontal key derivation
-  void horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) override
+  void perform_horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
-    return ue->get_security_manager().horizontal_key_derivation(target_pci, target_ssb_arfcn);
+    return ue->get_security_manager().perform_horizontal_key_derivation(target_pci, target_ssb_arfcn);
   }
 
 private:

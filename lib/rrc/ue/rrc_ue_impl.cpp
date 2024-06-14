@@ -50,7 +50,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
     if (!rrc_context.value().is_inter_cu_handover) {
       cu_cp_ue_notifier.update_security_context(rrc_context.value().sec_context);
     }
-    cu_cp_ue_notifier.horizontal_key_derivation(cell_.pci, cell_.ssb_arfcn);
+    cu_cp_ue_notifier.perform_horizontal_key_derivation(cell_.pci, cell_.ssb_arfcn);
 
     // Create SRBs.
     for (const auto& srb : rrc_context.value().srbs) {

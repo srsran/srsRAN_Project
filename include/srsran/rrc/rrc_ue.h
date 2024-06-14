@@ -297,7 +297,7 @@ public:
   virtual void update_security_context(security::security_context sec_ctxt) = 0;
 
   /// \brief Perform horizontal key derivation
-  virtual void horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) = 0;
+  virtual void perform_horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn) = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
