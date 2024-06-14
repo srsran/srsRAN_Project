@@ -18,23 +18,23 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
-    const ngap_handover_preparation_request& request_,
-    const ngap_context_t&                    context_,
-    const ngap_ue_ids&                       ue_ids_,
-    ngap_message_notifier&                   amf_notifier_,
-    ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
-    ngap_cu_cp_notifier&                     cu_cp_notifier_,
-    up_resource_manager&                     up_manager_,
-    ngap_transaction_manager&                ev_mng_,
-    timer_factory                            timers,
-    ngap_ue_logger&                          logger_) :
+    const ngap_handover_preparation_request&                  request_,
+    const ngap_context_t&                                     context_,
+    const ngap_ue_ids&                                        ue_ids_,
+    const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions_map_,
+    ngap_message_notifier&                                    amf_notifier_,
+    ngap_rrc_ue_control_notifier&                             rrc_ue_notifier_,
+    ngap_cu_cp_notifier&                                      cu_cp_notifier_,
+    ngap_transaction_manager&                                 ev_mng_,
+    timer_factory                                             timers,
+    ngap_ue_logger&                                           logger_) :
   request(request_),
   context(context_),
   ue_ids(ue_ids_),
+  pdu_sessions_map(pdu_sessions_map_),
   amf_notifier(amf_notifier_),
   rrc_ue_notifier(rrc_ue_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
-  up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
@@ -94,7 +94,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 void ngap_handover_preparation_procedure::get_required_handover_context()
 {
   ngap_ue_source_handover_context                           src_ctx;
-  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager.get_pdu_sessions_map();
+  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = pdu_sessions_map;
   // create a map of all PDU sessions and their associated QoS flows
   for (const auto& pdu_session : pdu_sessions) {
     std::vector<qos_flow_id_t> qos_flows;

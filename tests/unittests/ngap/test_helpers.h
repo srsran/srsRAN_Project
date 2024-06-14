@@ -14,10 +14,10 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/security/security.h"
-#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
 
@@ -213,7 +213,7 @@ public:
     ue_notifiers_map.emplace(ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier});
   }
 
-  bool on_new_ngap_ue(ue_index_t ue_index) override
+  ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
     srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
     auto& ue_notifier = ue_notifiers_map.at(ue_index);
@@ -224,16 +224,22 @@ public:
     last_ue = ue_index;
 
     // Add NGAP UE to UE manager
-    ngap_ue* ue =
+    ngap_ue_notifier* ue =
         ue_manager.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
 
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);
-      return false;
+      return nullptr;
     }
 
     logger.info("ue={}: NGAP UE was created", ue_index);
-    return true;
+    return ue;
+  }
+
+  bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
+  {
+    srsran_assert(ue_manager.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
+    return ue_manager.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>

@@ -201,10 +201,10 @@ public:
   /// \param[in] ue_index Index of the UE to add the notifiers to.
   /// \param[in] rrc_ue_pdu_notifier RRC UE PDU notifier for the UE.
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
-  /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  virtual ngap_ue* set_ue_ng_context(ue_index_t                    ue_index,
-                                     ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                                     ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
+  /// \return Pointer to the NGAP UE notifier.
+  virtual ngap_ue_notifier* set_ue_ng_context(ue_index_t                    ue_index,
+                                              ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                                              ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.

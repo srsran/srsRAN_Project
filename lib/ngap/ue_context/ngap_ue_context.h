@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ngap_ue_logger.h"
+#include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/support/timers.h"
 #include <unordered_map>
@@ -25,19 +26,24 @@ struct ngap_ue_ids {
 };
 
 struct ngap_ue_context {
-  ngap_ue_ids    ue_ids;
-  uint64_t       aggregate_maximum_bit_rate_dl = 0;
-  unique_timer   pdu_session_setup_timer       = {};
-  bool           release_requested             = false;
-  bool           release_scheduled             = false;
-  byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
-  ngap_ue_logger logger;
+  ngap_ue_ids       ue_ids;
+  uint64_t          aggregate_maximum_bit_rate_dl = 0;
+  unique_timer      pdu_session_setup_timer       = {};
+  ngap_ue_notifier* ue                            = nullptr;
+  bool              release_requested             = false;
+  bool              release_scheduled             = false;
+  byte_buffer       last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
+  ngap_ue_logger    logger;
 
   ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
     ue_ids({ue_index_, ran_ue_id_}), logger("NGAP", {ue_index_, ran_ue_id_})
   {
     pdu_session_setup_timer = timers_.create_unique_timer(task_exec_);
   }
+
+  void add_ue_notifier(ngap_ue_notifier* ue_) { ue = ue_; }
+
+  [[nodiscard]] ngap_ue_notifier* get_ue() const { return ue; }
 };
 
 class ngap_ue_context_list

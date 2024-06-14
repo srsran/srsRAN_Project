@@ -157,9 +157,9 @@ du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 
 // ngap_ue_manager
 
-ngap_ue* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
-                                       ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                                       ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
+ngap_ue_notifier* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
+                                                ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
+                                                ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
@@ -177,11 +177,11 @@ ngap_ue* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
 
   auto& ue = ues.at(ue_index);
 
-  ue.add_ngap_ue_context(rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_);
+  auto* ue_notifier = ue.add_ngap_ue_context(rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_);
 
   logger.debug("ue={}: Added NGAP UE", ue_index);
 
-  return &ue;
+  return ue_notifier;
 }
 
 ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)

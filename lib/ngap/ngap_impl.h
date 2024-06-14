@@ -16,7 +16,6 @@
 #include "procedures/ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
 #include "srsran/asn1/ngap/ngap.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
@@ -33,7 +32,6 @@ public:
   ngap_impl(ngap_configuration&                ngap_cfg_,
             ngap_cu_cp_notifier&               cu_cp_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
-            ngap_ue_manager&                   ue_manager_,
             n2_connection_client&              n2_gateway,
             timer_manager&                     timers_,
             task_executor&                     ctrl_exec_);
@@ -166,7 +164,6 @@ private:
 
   ngap_cu_cp_notifier&               cu_cp_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
-  ngap_ue_manager&                   ue_manager;
   timer_manager&                     timers;
   task_executor&                     ctrl_exec;
 

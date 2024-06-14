@@ -65,13 +65,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
 
   // Create NGAP.
-  ngap_entity = create_ngap(cfg.ngap_config,
-                            ngap_cu_cp_ev_notifier,
-                            ngap_cu_cp_ev_notifier,
-                            ue_mng,
-                            *cfg.n2_gw,
-                            *cfg.timers,
-                            *cfg.cu_cp_executor);
+  ngap_entity = create_ngap(
+      cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_cu_cp_ev_notifier, *cfg.n2_gw, *cfg.timers, *cfg.cu_cp_executor);
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
@@ -599,10 +594,20 @@ async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transactio
   return launch_async<ue_transaction_info_release_routine>(ev.ues_lost, ue_mng, *this);
 }
 
-bool cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
+ngap_ue_notifier* cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
   return ue_mng.set_ue_ng_context(
       ue_index, ue_mng.get_ngap_rrc_ue_adapter(ue_index), ue_mng.get_ngap_rrc_ue_adapter(ue_index));
+}
+
+bool cu_cp_impl::schedule_ue_task(ue_index_t ue_index, async_task<void> task)
+{
+  if (ue_mng.find_ue_task_scheduler(ue_index) == nullptr) {
+    logger.debug("UE task scheduler not found for UE index={}", ue_index);
+    return false;
+  }
+
+  return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()

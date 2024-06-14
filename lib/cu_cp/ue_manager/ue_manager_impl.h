@@ -169,10 +169,13 @@ public:
   /// \brief Add the context for the NGAP UE.
   /// \param[in] rrc_ue_pdu_notifier The RRC UE PDU notifier for the UE.
   /// \param[in] rrc_ue_ctrl_notifier The RRC UE ctrl notifier for the UE.
-  void add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                           ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
+  /// \return Pointer to the NGAP UE notifier.
+  ngap_ue_notifier* add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
+                                        ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
   {
     ngap_ue_context.emplace(rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
+    ue_adapter.connect_ngap_ue(*this);
+    return &ue_adapter;
   }
 
   bool ngap_ue_created() { return ngap_ue_context.has_value(); }
@@ -209,6 +212,7 @@ private:
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
   // ngap ue context
+  ngap_cu_cp_ue_adapter    ue_adapter;
   std::optional<ngap_ue_t> ngap_ue_context;
 
   // cu-cp ue context
@@ -297,10 +301,10 @@ public:
   /// \param[in] ue_index Index of the UE to add the notifiers to.
   /// \param[in] rrc_ue_pdu_notifier RRC UE PDU notifier for the UE.
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
-  /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  ngap_ue* set_ue_ng_context(ue_index_t                    ue_index,
-                             ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                             ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_) override;
+  /// \return Pointer to the NGAP UE notifier.
+  ngap_ue_notifier* set_ue_ng_context(ue_index_t                    ue_index,
+                                      ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
+                                      ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_) override;
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.

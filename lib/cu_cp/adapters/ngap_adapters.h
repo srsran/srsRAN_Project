@@ -12,6 +12,7 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
@@ -50,10 +51,16 @@ public:
     return cu_cp_handler->handle_ngap_handover_request(request);
   }
 
-  bool on_new_ngap_ue(ue_index_t ue_index) override
+  ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_ngap_ue(ue_index);
+  }
+
+  bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->schedule_ue_task(ue_index, std::move(task));
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -99,6 +106,53 @@ public:
 private:
   du_repository_ngap_handler* du_repository_handler = nullptr;
   cu_cp_ngap_handler*         cu_cp_handler         = nullptr;
+};
+
+/// Adapter between NGAP and CU-CP UE
+class ngap_cu_cp_ue_adapter : public ngap_ue_notifier
+{
+public:
+  ngap_cu_cp_ue_adapter() = default;
+
+  void connect_ngap_ue(ngap_ue& ue_) { ue = &ue_; }
+
+  /// \brief Get the UE index of the UE.
+  ue_index_t get_ue_index() override
+  {
+    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    return ue->get_ue_index();
+  }
+
+  /// \brief Get a map of all PDU sessions of the UE as const reference.
+  [[nodiscard]] const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const override
+  {
+    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    return ue->get_up_resource_manager().get_pdu_sessions_map();
+  }
+
+  /// \brief Schedule an async task for the UE.
+  bool schedule_async_task(async_task<void> task) override
+  {
+    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    return ue->get_task_sched().schedule_async_task(std::move(task));
+  }
+
+  /// \brief Get the RRC UE PDU notifier of the UE.
+  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
+  {
+    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    return ue->get_rrc_ue_pdu_notifier();
+  }
+
+  /// \brief Get the RRC UE control notifier of the UE.
+  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
+  {
+    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
+    return ue->get_rrc_ue_control_notifier();
+  }
+
+private:
+  ngap_ue* ue = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE
