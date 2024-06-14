@@ -37,7 +37,8 @@ protected:
   // domain-specific PDU handler
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
-    gtpu_teid_t                                                 teid = pdu.hdr.teid;
+    size_t                                                      pdu_len = pdu.buf.length();
+    gtpu_teid_t                                                 teid    = pdu.hdr.teid;
     std::variant<nru_dl_user_data, nru_dl_data_delivery_status> nru_msg;
     bool                                                        have_nr_ran_container = false;
     for (auto ext_hdr : pdu.hdr.ext_list) {
@@ -56,29 +57,31 @@ protected:
                     packer.unpack(std::get<nru_dl_data_delivery_status>(nru_msg), ext_hdr.container);
                 break;
               default:
-                logger.log_warning("Unsupported PDU type in NR RAN container. pdu_type={}", pdu_type);
+                logger.log_warning(
+                    "Unsupported PDU type in NR RAN container. pdu_type={} pdu_len={}", pdu_type, pdu_len);
                 return;
             }
             if (!have_nr_ran_container) {
-              logger.log_error("Failed to unpack NR RAN container.");
+              logger.log_error("Failed to unpack NR RAN container. pdu_len={}", pdu_len);
             }
           } else {
-            logger.log_warning("Ignoring multiple NR RAN container.");
+            logger.log_warning("Ignoring multiple NR RAN container. pdu_len={}", pdu_len);
           }
           break;
         default:
-          logger.log_warning("Ignoring unexpected extension header at F1-U interface. type={}",
-                             ext_hdr.extension_header_type);
+          logger.log_warning("Ignoring unexpected extension header at F1-U interface. type={} pdu_len={}",
+                             ext_hdr.extension_header_type,
+                             pdu_len);
       }
     }
     if (!have_nr_ran_container) {
       // As per TS 29.281 Sec. 5.2.2.6 the (...) NR RAN Container (...) may be transmitted in a G-PDU over the
       // X2-U, Xn-U and F1-U user plane interfaces (...).
-      logger.log_info("T-PDU without NR RAN container. Assuming UL. pdu_len={} teid={}", pdu.buf.length(), teid);
+      logger.log_info("T-PDU without NR RAN container. Assuming UL. pdu_len={} teid={}", pdu_len, teid);
       nru_msg = {nru_dl_data_delivery_status{}}; // set to UL
     }
 
-    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={}", pdu.buf.length());
+    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={}", pdu_len);
 
     if (std::holds_alternative<nru_dl_user_data>(nru_msg)) {
       nru_dl_message dl_message = {};
@@ -96,7 +99,7 @@ protected:
       expected<byte_buffer_chain> buf =
           byte_buffer_chain::create(gtpu_extract_msg(std::move(pdu))); // header is invalidated after extraction;
       if (buf.is_error()) {
-        logger.log_error("Dropped PDU: Failed to create byte_buffer_chain");
+        logger.log_error("Dropped PDU: Failed to create byte_buffer_chain. pdu_len={}", pdu_len);
         return;
       }
       if (!buf.value().empty()) {
@@ -117,7 +120,7 @@ protected:
     }
 
     // We should never come here
-    logger.log_error("Unhandled NR-U PDU");
+    logger.log_error("Unhandled NR-U PDU. pdu_len={}", pdu_len);
   }
 
 private:
