@@ -13,6 +13,7 @@
 #include "srsran/srslog/detail/support/any.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/srslog/shared_types.h"
+#include <string>
 
 namespace srslog {
 

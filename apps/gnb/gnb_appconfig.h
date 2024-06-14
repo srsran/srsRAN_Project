@@ -13,7 +13,6 @@
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/support/executors/unique_thread.h"

@@ -10,48 +10,49 @@
 
 #include "logger_appconfig_cli11_schema.h"
 #include "logger_appconfig.h"
+#include "logger_appconfig_cli11_utils.h"
+#include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
 static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
   auto metric_level_check = [](const std::string& value) -> std::string {
-    if (value == "none" || value == "info" || value == "debug") {
-      return {};
+    if (auto level = srslog::str_to_basic_level(value); !level.has_value() ||
+                                                        level.value() == srslog::basic_levels::error ||
+                                                        level.value() == srslog::basic_levels::warning) {
+      return "Log level value not supported. Accepted values [none,info,debug]";
     }
-    return "Log level value not supported. Accepted values [none,info,debug]";
+
+    return {};
   };
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option(
-         "--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU")
-      ->capture_default_str()
-      ->check(level_check);
-  app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
-  app.add_option("--config_level", log_params.config_level, "Config log level")
-      ->capture_default_str()
+
+  app_services::add_log_option(
+      app, log_params.all_level, "--all_level", "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU");
+  app_services::add_log_option(app, log_params.lib_level, "--lib_level", "Generic log level ");
+  app_services::add_log_option(app, log_params.e2ap_level, " --e2ap_level", "E2AP log level");
+
+  add_option_function<std::string>(
+      app, " --config_level", app_services::capture_log_level_function(log_params.config_level), "Config log level")
+      ->default_str(srslog::basic_level_to_string(log_params.config_level))
       ->check(metric_level_check);
-  app.add_option("--metrics_level", log_params.metrics_level, "Metrics log level")
-      ->capture_default_str()
+  add_option_function<std::string>(
+      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
+      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
       ->check(metric_level_check);
-  app.add_option(
-         "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
+  add_option(
+      app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
-  app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
+  add_option(app, "--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
     // Do nothing when all_level is not defined or it is defined as warning.
-    if (app.count("--all_level") == 0 || log_params.all_level == "warning") {
+    if (app.count("--all_level") == 0 || log_params.all_level == srslog::basic_levels::warning) {
       return;
     }
 
@@ -69,13 +70,13 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
 
       // Config and metrics loggers have only subset of levels.
       if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
-        if (log_params.all_level == "error") {
+        if (log_params.all_level == srslog::basic_levels::error) {
           option->default_val<std::string>("none");
           continue;
         }
       }
 
-      option->default_val<std::string>(log_params.all_level);
+      option->default_val<std::string>(srslog::basic_level_to_string(log_params.all_level));
     }
   });
 }

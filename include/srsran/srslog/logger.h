@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/log_channel.h"
+#include <optional>
 
 namespace srslog {
 
@@ -148,7 +149,7 @@ struct basic_logger_channels {
 using basic_logger = build_logger_type<basic_logger_channels, basic_levels>;
 
 /// Translates a string to the corresponding logger basic level.
-inline basic_levels str_to_basic_level(std::string s)
+inline std::optional<basic_levels> str_to_basic_level(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), ::toupper);
 
@@ -167,7 +168,10 @@ inline basic_levels str_to_basic_level(std::string s)
   if ("DEBUG" == s) {
     return basic_levels::debug;
   }
-  return basic_levels::none;
+  if ("NONE" == s) {
+    return basic_levels::none;
+  }
+  return {};
 }
 
 /// Translates a logger basic level to the corresponding string.
@@ -175,17 +179,17 @@ inline const char* basic_level_to_string(basic_levels level)
 {
   switch (level) {
     case basic_levels::debug:
-      return "DEBUG";
+      return "debug";
     case basic_levels::info:
-      return "INFO";
+      return "info";
     case basic_levels::warning:
-      return "WARNING";
+      return "warning";
     case basic_levels::error:
-      return "ERROR";
+      return "error";
     default:
       break;
   }
-  return "NONE";
+  return "none";
 }
 
 } // namespace srslog

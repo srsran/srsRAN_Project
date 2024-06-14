@@ -14,7 +14,7 @@
 using namespace srsran;
 
 bool srsran::validate_appconfig(const du_appconfig& config)
-{ 
+{
   if (!validate_logger_appconfig(config.log_cfg)) {
     return false;
   }

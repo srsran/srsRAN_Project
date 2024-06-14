@@ -9,6 +9,7 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
@@ -32,18 +33,12 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 
 static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
+  app_services::add_log_option(app, log_params.mac_level, "--mac_level", "MAC log level");
+  app_services::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
+  app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
+  app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
-  add_option(app, "--mac_level", log_params.mac_level, "MAC log level")->capture_default_str()->check(level_check);
-  add_option(app, "--rlc_level", log_params.rlc_level, "RLC log level")->capture_default_str()->check(level_check);
-  add_option(app, "--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
-  add_option(app, "--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
-  add_option(app, "--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()

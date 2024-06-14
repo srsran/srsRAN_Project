@@ -30,7 +30,7 @@ using namespace srsran;
 using radio_zmq_e2e_test_parameters = std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, bool>;
 
 /// Indicates the test logging level.
-static const std::string log_level = "warning";
+static const srslog::basic_levels log_level = srslog::basic_levels::warning;
 
 class RadioZmqE2EFixture : public ::testing::TestWithParam<radio_zmq_e2e_test_parameters>
 {
@@ -88,7 +88,7 @@ protected:
     ASSERT_NE(factory, nullptr);
 
     srslog::init();
-    srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
+    srslog::fetch_basic_logger("POOL").set_level(log_level);
   }
 
   static void TearDownTestSuite() { async_task_worker.stop(); }

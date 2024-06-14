@@ -207,27 +207,20 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set the logging level.
 #ifdef UHD_LOG_INFO
-  uhd::log::severity_level severity_level = uhd::log::severity_level::info;
-  if (!radio_config.log_level.empty()) {
-    std::string log_level = radio_config.log_level;
-
-    for (auto& e : log_level) {
-      e = std::toupper(e);
-    }
-
-    if (log_level == "WARNING") {
-      severity_level = uhd::log::severity_level::warning;
-    } else if (log_level == "INFO") {
-      severity_level = uhd::log::severity_level::info;
-    } else if (log_level == "DEBUG") {
-      severity_level = uhd::log::severity_level::debug;
-    } else if (log_level == "TRACE") {
-      severity_level = uhd::log::severity_level::trace;
-    } else {
-      severity_level = uhd::log::severity_level::error;
-    }
+  switch (radio_config.log_level) {
+    case srslog::basic_levels::warning:
+      uhd::log::set_console_level(uhd::log::severity_level::warning);
+      break;
+    case srslog::basic_levels::debug:
+      uhd::log::set_console_level(uhd::log::severity_level::debug);
+      break;
+    case srslog::basic_levels::error:
+      uhd::log::set_console_level(uhd::log::severity_level::error);
+      break;
+    default:
+      uhd::log::set_console_level(uhd::log::severity_level::info);
+      break;
   }
-  uhd::log::set_console_level(severity_level);
 #endif
 
   unsigned total_rx_channel_count = 0;

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/srslog/logger.h"
 #include <string>
 
 namespace srsran {
@@ -19,12 +20,12 @@ struct logger_appconfig {
   /// Path to log file or "stdout" to print to console.
   std::string filename = "stdout";
   /// Default log level for all layers.
-  std::string all_level = "warning";
+  srslog::basic_levels all_level = srslog::basic_levels::warning;
   /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level     = "warning";
-  std::string e2ap_level    = "warning";
-  std::string config_level  = "none";
-  std::string metrics_level = "none";
+  srslog::basic_levels lib_level     = srslog::basic_levels::warning;
+  srslog::basic_levels e2ap_level    = srslog::basic_levels::warning;
+  srslog::basic_levels config_level  = srslog::basic_levels::none;
+  srslog::basic_levels metrics_level = srslog::basic_levels::none;
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
   /// Set to a valid file path to enable tracing and write the trace to the file.

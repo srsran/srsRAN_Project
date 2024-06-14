@@ -57,7 +57,8 @@ public:
     logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
   {
     srslog::init();
-    logger.set_level(srslog::str_to_basic_level(log_level));
+    auto value = srslog::str_to_basic_level(log_level);
+    logger.set_level(value.has_value() ? value.value() : srslog::basic_levels::none);
   }
 
   // See interface for documentation.

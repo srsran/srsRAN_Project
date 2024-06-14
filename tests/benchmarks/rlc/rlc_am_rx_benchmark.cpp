@@ -137,7 +137,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   std::unique_ptr<rlc_tx_am_entity> rlc_tx = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
-  logger.set_level(srslog::str_to_basic_level("warning"));
+  logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
 

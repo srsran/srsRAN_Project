@@ -59,7 +59,7 @@ static const auto modulations = to_array<std::string>({to_string(modulation_sche
                                                        to_string(modulation_scheme::QAM64),
                                                        to_string(modulation_scheme::QAM256)});
 
-static std::string log_level = "warning";
+static srslog::basic_levels log_level = srslog::basic_levels::warning;
 
 /// Program parameters.
 static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
@@ -327,9 +327,11 @@ static void parse_args(int argc, char** argv)
           sync_source = std::string(optarg);
         }
         break;
-      case 'v':
-        log_level = std::string(optarg);
+      case 'v': {
+        auto level = srslog::str_to_basic_level(std::string(optarg));
+        log_level  = level.has_value() ? level.value() : srslog::basic_levels::info;
         break;
+      }
       case 'd':
         enable_random_data = true;
         break;
@@ -490,7 +492,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv);
 
   // Make sure thread pool logging matches the test level.
-  srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
+  srslog::fetch_basic_logger("POOL").set_level(log_level);
 
   // Make sure parameters are valid.
   report_fatal_error_if_not(
@@ -583,7 +585,7 @@ int main(int argc, char** argv)
 
   // Create lower PHY error adapter logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY");
-  logger.set_level(srslog::str_to_basic_level(log_level));
+  logger.set_level(log_level);
 
   // Create adapters.
   phy_error_adapter             error_adapter(logger);

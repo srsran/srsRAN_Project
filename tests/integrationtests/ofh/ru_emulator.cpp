@@ -460,7 +460,7 @@ int main(int argc, char** argv)
   srslog::init();
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("RU_EMU", false);
-  logger.set_level(srslog::str_to_basic_level(ru_emulator_parsed_cfg.log_cfg.level));
+  logger.set_level(ru_emulator_parsed_cfg.log_cfg.level);
 
 #ifdef DPDK_FOUND
   bool uses_dpdk = ru_emulator_parsed_cfg.dpdk_config.has_value();

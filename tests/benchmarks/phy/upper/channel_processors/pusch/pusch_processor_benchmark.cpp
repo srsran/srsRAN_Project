@@ -124,11 +124,11 @@ static std::atomic<int>      pending_count = {0};
 static std::atomic<unsigned> finish_count  = {0};
 
 #ifdef HWACC_PUSCH_ENABLED
-static bool        dedicated_queue = true;
-static bool        ext_softbuffer  = true;
-static bool        std_out_sink    = true;
-static std::string hal_log_level   = "error";
-static std::string eal_arguments   = "";
+static bool                 dedicated_queue = true;
+static bool                 ext_softbuffer  = true;
+static bool                 std_out_sink    = true;
+static srslog::basic_levels hal_log_level   = srslog::basic_levels::error;
+static std::string          eal_arguments   = "";
 #endif // HWACC_PUSCH_ENABLED
 
 // Test profile structure, initialized with default profile values.
@@ -312,9 +312,11 @@ static int parse_args(int argc, char** argv)
       case 'y':
         std_out_sink = false;
         break;
-      case 'z':
-        hal_log_level = std::string(optarg);
+      case 'z': {
+        auto level    = srslog::str_to_basic_level(std::string(optarg));
+        hal_log_level = level.has_value() ? level.value() : srslog::basic_levels::error;
         break;
+      }
 #endif // HWACC_PUSCH_ENABLED
       case 'h':
       default:
@@ -430,7 +432,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
 #ifdef HWACC_PUSCH_ENABLED
   // Intefacing to the bbdev-based hardware-accelerator.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HWACC", false);
-  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+  logger.set_level(hal_log_level);
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
   bbdev_config.nof_ldpc_enc_lcores                   = 0;
@@ -711,7 +713,7 @@ int main(int argc, char** argv)
     srslog::set_default_sink(*log_sink);
     srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("EAL", false);
-    logger.set_level(srslog::str_to_basic_level(hal_log_level));
+    logger.set_level(hal_log_level);
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
     TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }

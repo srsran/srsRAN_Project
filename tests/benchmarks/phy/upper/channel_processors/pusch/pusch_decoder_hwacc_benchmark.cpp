@@ -49,11 +49,11 @@ static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
-static bool        dedicated_queue = true;
-static bool        test_harq       = false;
-static std::string hal_log_level   = "ERROR";
-static bool        std_out_sink    = true;
-static std::string eal_arguments   = "";
+static bool                 dedicated_queue = true;
+static bool                 test_harq       = false;
+static srslog::basic_levels hal_log_level   = srslog::basic_levels::error;
+static bool                 std_out_sink    = true;
+static std::string          eal_arguments   = "";
 #endif // DPDK_FOUND
 
 // Test profile structure, initialized with default profile values.
@@ -148,9 +148,11 @@ static int parse_args(int argc, char** argv)
       case 'y':
         std_out_sink = false;
         break;
-      case 'z':
-        hal_log_level = std::string(optarg);
+      case 'z': {
+        auto level    = srslog::str_to_basic_level(std::string(optarg));
+        hal_log_level = level.has_value() ? level.value() : srslog::basic_levels::error;
         break;
+      }
 #endif // DPDK_FOUND
       case 'h':
       default:
@@ -194,7 +196,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   srslog::set_default_sink(*log_sink);
   srslog::init();
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
-  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+  logger.set_level(hal_log_level);
 
   // Pointer to a dpdk-based hardware-accelerator interface.
   static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;

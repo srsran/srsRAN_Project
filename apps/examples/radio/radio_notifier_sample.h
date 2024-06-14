@@ -29,10 +29,10 @@ private:
   unsigned              count_rx_other     = 0;
 
 public:
-  radio_notifier_spy(std::string log_level_) : logger(srslog::fetch_basic_logger("Radio notification"))
+  radio_notifier_spy(srslog::basic_levels log_level_) : logger(srslog::fetch_basic_logger("Radio notification"))
   {
     srslog::init();
-    logger.set_level(srslog::str_to_basic_level(log_level_));
+    logger.set_level(log_level_);
   }
 
   void on_radio_rt_event(const event_description& description) override

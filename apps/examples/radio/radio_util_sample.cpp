@@ -27,7 +27,7 @@ using namespace srsran;
 /// Describes the benchmark configuration.
 static std::string                               rx_filename;
 static double                                    duration_s                    = 0.1;
-static std::string                               log_level                     = "info";
+static srslog::basic_levels                      log_level                     = srslog::basic_levels::info;
 static std::string                               driver_name                   = "uhd";
 static std::string                               device_arguments              = "type=b200";
 static std::vector<std::string>                  tx_channel_arguments          = {};
@@ -193,7 +193,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-d Enable discontinuous transmission mode. [Default {}]\n", enable_discontinuous_tx);
   fmt::print("\t-g Discontinuous transmission gap in number of consecutive empty buffers. [Default {}]\n",
              nof_consecutive_empty_buffers);
-  fmt::print("\t-v Logging level. [Default {}]\n", log_level);
+  fmt::print("\t-v Logging level. [Default {}]\n", srslog::basic_level_to_string(log_level));
   fmt::print("\t-o saves received signal of stream:port 0:0 in a file. Ignored if none. [Default {}]\n",
              rx_filename.empty() ? "none" : rx_filename);
   fmt::print("\t-h print this message.\n");
@@ -227,9 +227,11 @@ static void parse_args(int argc, char** argv)
           nof_consecutive_empty_buffers = std::strtol(optarg, nullptr, 10);
         }
         break;
-      case 'v':
-        log_level = std::string(optarg);
+      case 'v': {
+        auto level = srslog::str_to_basic_level(std::string(optarg));
+        log_level  = level.has_value() ? level.value() : srslog::basic_levels::info;
         break;
+      }
       case 'h':
       default:
         usage(argv[0]);

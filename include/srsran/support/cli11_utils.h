@@ -93,7 +93,7 @@ CLI::Option* add_option_function(CLI::App&                            app,
 {
   auto* opt = app.get_option_no_throw(option_name);
   if (!opt) {
-    return app.add_option_function<T>(option_name, func, desc);
+    return app.add_option_function<T>(option_name, func, desc)->run_callback_for_default();
   }
 
   // Option was found. Get the callback and create new option.

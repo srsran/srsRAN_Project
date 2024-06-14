@@ -40,11 +40,11 @@ namespace srsran {
 
 /// DU high logging functionalities.
 struct du_high_unit_logger_config {
-  std::string du_level   = "warning";
-  std::string mac_level  = "warning";
-  std::string rlc_level  = "warning";
-  std::string f1ap_level = "warning";
-  std::string f1u_level  = "warning";
+  srslog::basic_levels du_level   = srslog::basic_levels::warning;
+  srslog::basic_levels mac_level  = srslog::basic_levels::warning;
+  srslog::basic_levels rlc_level  = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;

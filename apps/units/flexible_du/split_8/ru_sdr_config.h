@@ -71,8 +71,8 @@ struct amplitude_control_unit_config {
 
 /// Configuration of logging functionalities.
 struct ru_sdr_unit_logger_config {
-  std::string radio_level = "info";
-  std::string phy_level   = "warning";
+  srslog::basic_levels radio_level = srslog::basic_levels::info;
+  srslog::basic_levels phy_level   = srslog::basic_levels::warning;
 };
 
 /// CPU affinities configuration for the cell.

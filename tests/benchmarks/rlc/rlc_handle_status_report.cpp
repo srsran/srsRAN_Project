@@ -106,7 +106,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   std::unique_ptr<rlc_tx_am_entity> rlc = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
-  logger.set_level(srslog::str_to_basic_level("warning"));
+  logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
 

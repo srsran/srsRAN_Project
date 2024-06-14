@@ -9,6 +9,7 @@
  */
 
 #include "fapi_config_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "fapi_config.h"
 #include "srsran/support/cli11_utils.h"
 
@@ -16,14 +17,7 @@ using namespace srsran;
 
 static void configure_cli11_log_args(CLI::App& app, fapi_unit_config& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
-  add_option(app, "--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
+  app_services::add_log_option(app, log_params.fapi_level, "--fapi_level", "FAPI log level");
 }
 
 static void configure_cli11_fapi_args(CLI::App& app, fapi_unit_config& config)
