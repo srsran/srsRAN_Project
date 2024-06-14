@@ -124,27 +124,6 @@ public:
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
-  /// \brief Returns the PUCCH resource indicator (format 1) of the resource used for a given RNTI at a given slot.
-  /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
-
-  /// \brief Returns the PUCCH resource indicator (format 2) of the resource used for a given RNTI at a given slot.
-  /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
-
-  /// \brief Fetches the configuration of the PUCCH Format 2 resource used for HARQ previously allocated to a given RNTI
-  /// for a given slot.
-  /// \return If the resource is found, it returns (i) the pointer to the configuration and (ii) the PUCCH resource
-  /// indicator corresponding to the PUCCH resource that previously allocated to the UE. Else, the pointer passed will
-  /// be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
-  const pucch_harq_resource_alloc_record
-  fetch_allocated_f2_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
-
-  /// \brief Returns the configuration of the PUCCH resource used for CSI (format 2) for a given RNTI at a given slot.
-  /// \return Pointer to the resource configuration used allocated to the UE; if UE is not found, returns \c nullptr.
-  const pucch_resource*
-  fetch_csi_pucch_res_config(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
-
 private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
   /// allocated.
@@ -193,8 +172,6 @@ private:
                                                           pucch_format        format);
 
   bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
-
-  int fetch_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
 
   // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
   std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
