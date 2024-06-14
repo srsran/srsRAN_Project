@@ -76,6 +76,10 @@ void inter_cu_handover_target_routine::operator()(
   // Prepare E1AP Bearer Context Setup Request and call E1AP notifier
   {
     // Get security keys for Bearer Context Setup Request (RRC UE is not created yet)
+    if (!ue->get_security_manager().is_security_context_initialized()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: Security context not initialized", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
     if (!fill_e1ap_bearer_context_setup_request(ue->get_security_manager().get_up_as_config())) {
       logger.warning("ue={}: \"{}\" failed to fill context at CU-UP", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));

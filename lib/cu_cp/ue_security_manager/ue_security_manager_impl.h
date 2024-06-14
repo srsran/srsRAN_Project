@@ -23,6 +23,7 @@ public:
   ~ue_security_manager() = default;
 
   // up_ue_security_manager
+  [[nodiscard]] bool                        is_security_context_initialized() const;
   [[nodiscard]] security::sec_as_config     get_up_as_config() const;
   [[nodiscard]] security::sec_128_as_config get_up_128_as_config() const;
 

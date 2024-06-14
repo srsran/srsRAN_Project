@@ -19,6 +19,11 @@ ue_security_manager::ue_security_manager(const security_manager_config& cfg_) :
 }
 
 // up_ue_security_manager
+bool ue_security_manager::is_security_context_initialized() const
+{
+  return sec_context.sel_algos.algos_selected;
+}
+
 security::sec_as_config ue_security_manager::get_up_as_config() const
 {
   return sec_context.get_as_config(security::sec_domain::up);
