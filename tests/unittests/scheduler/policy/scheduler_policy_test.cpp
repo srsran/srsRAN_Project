@@ -10,6 +10,7 @@
 
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "lib/scheduler/policy/scheduler_policy_factory.h"
 #include "lib/scheduler/policy/scheduler_time_rr.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
@@ -23,13 +24,11 @@
 
 using namespace srsran;
 
-enum class policy_type { time_rr };
-
 class base_scheduler_policy_test
 {
 protected:
   base_scheduler_policy_test(
-      policy_type             policy,
+      policy_scheduler_type   policy,
       scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config(),
       const sched_cell_configuration_request_message& msg =
           test_helpers::make_default_sched_cell_configuration_request()) :
@@ -43,12 +42,11 @@ protected:
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
 
-    switch (policy) {
-      case policy_type::time_rr:
-        sched = std::make_unique<scheduler_time_rr>(sched_cfg.ue);
-        break;
-      default:
-        report_fatal_error("Invalid policy");
+    sched = create_scheduler_strategy(
+        scheduler_strategy_params{policy_scheduler_type::time_rr, &srslog::fetch_basic_logger("SCHED")}, sched_cfg.ue);
+
+    if (sched == nullptr) {
+      report_fatal_error("Invalid policy");
     }
   }
 
@@ -147,7 +145,7 @@ protected:
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
 
-class scheduler_policy_test : public base_scheduler_policy_test, public ::testing::TestWithParam<policy_type>
+class scheduler_policy_test : public base_scheduler_policy_test, public ::testing::TestWithParam<policy_scheduler_type>
 {
 protected:
   scheduler_policy_test() : base_scheduler_policy_test(GetParam()) {}
@@ -258,7 +256,7 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_sr_opportunity_first_
 }
 
 class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,
-                                               public ::testing::TestWithParam<policy_type>
+                                               public ::testing::TestWithParam<policy_scheduler_type>
 {
 protected:
   scheduler_policy_partial_slot_tdd_test() :
@@ -322,7 +320,7 @@ TEST_P(scheduler_policy_partial_slot_tdd_test, scheduler_allocates_in_partial_sl
 class scheduler_round_robin_test : public base_scheduler_policy_test, public ::testing::Test
 {
 protected:
-  scheduler_round_robin_test() : base_scheduler_policy_test(policy_type::time_rr) {}
+  scheduler_round_robin_test() : base_scheduler_policy_test(policy_scheduler_type::time_rr) {}
 };
 
 TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_buffers)
@@ -380,7 +378,7 @@ TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twic
 }
 
 class scheduler_policy_alloc_bounds_test : public base_scheduler_policy_test,
-                                           public ::testing::TestWithParam<policy_type>
+                                           public ::testing::TestWithParam<policy_scheduler_type>
 {
 protected:
   scheduler_policy_alloc_bounds_test() :
@@ -440,8 +438,10 @@ TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pusch_within_conf
   ASSERT_TRUE(this->res_grid[0].result.ul.puschs.back().pusch_cfg.rbs.type1() == expected_vrb_interval);
 }
 
-INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_scheduler_type::time_rr));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_partial_slot_tdd_test,
-                         testing::Values(policy_type::time_rr));
-INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_alloc_bounds_test, testing::Values(policy_type::time_rr));
+                         testing::Values(policy_scheduler_type::time_rr));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy,
+                         scheduler_policy_alloc_bounds_test,
+                         testing::Values(policy_scheduler_type::time_rr));

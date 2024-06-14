@@ -14,8 +14,15 @@
 
 namespace srsran {
 
+/// \brief Type of policy scheduler.
+///
+/// The current types are:
+/// - time_rr - Time based Round-Robin scheduler.
+/// - time_pf - Time based Proportional Fair scheduler.
+enum class policy_scheduler_type { time_rr, time_pf };
+
 struct scheduler_strategy_params {
-  std::string           strategy = "time_rr";
+  policy_scheduler_type strategy = policy_scheduler_type::time_rr;
   srslog::basic_logger* logger;
 };
 

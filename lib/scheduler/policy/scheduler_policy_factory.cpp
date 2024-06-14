@@ -9,6 +9,7 @@
  */
 
 #include "scheduler_policy_factory.h"
+#include "scheduler_time_pf.h"
 #include "scheduler_time_rr.h"
 
 using namespace srsran;
@@ -16,5 +17,12 @@ using namespace srsran;
 std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const scheduler_strategy_params&  params,
                                                                     const scheduler_ue_expert_config& expert_cfg_)
 {
-  return std::make_unique<scheduler_time_rr>(expert_cfg_);
+  switch (params.strategy) {
+    case policy_scheduler_type::time_rr:
+      return std::make_unique<scheduler_time_rr>(expert_cfg_);
+      break;
+    case policy_scheduler_type::time_pf:
+      return std::make_unique<scheduler_time_pf>(expert_cfg_, *params.logger);
+  }
+  return nullptr;
 }
