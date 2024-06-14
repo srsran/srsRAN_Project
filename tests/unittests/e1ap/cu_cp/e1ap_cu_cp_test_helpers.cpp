@@ -22,7 +22,7 @@ e1ap_cu_cp_test::e1ap_cu_cp_test()
   srslog::init();
 
   e1ap = create_e1ap(
-      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, ue_mng, timers, ctrl_worker, max_nof_supported_ues);
+      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, timers, ctrl_worker, max_nof_supported_ues);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()

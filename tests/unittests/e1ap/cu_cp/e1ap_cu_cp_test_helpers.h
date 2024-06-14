@@ -25,6 +25,32 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// Dummy notifier just printing the received msg.
+class dummy_e1ap_cu_cp_notifier : public srs_cu_cp::e1ap_cu_cp_notifier
+{
+public:
+  dummy_e1ap_cu_cp_notifier(srs_cu_cp::ue_manager& ue_mng_) :
+    ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
+  {
+    last_msg = msg;
+    logger.info("Received an inactivity notification");
+  }
+
+  bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
+  {
+    srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
+    return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
+  }
+
+  srs_cu_cp::cu_cp_inactivity_notification last_msg;
+
+private:
+  ue_manager&           ue_mng;
+  srslog::basic_logger& logger;
+};
+
 /// \brief Reusable E1AP gateway test class for CU-CP unit tests. This class includes:
 /// a) Requests a new CU-UP connection to the CU-CP.
 /// b) Logs and stores the last transmitted/received PDU by/from the CU-CP.
@@ -109,9 +135,9 @@ protected:
   timer_manager                       timers;
   dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;
   dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
-  dummy_e1ap_cu_cp_notifier           cu_cp_notifier;
   manual_task_worker                  ctrl_worker{128};
   ue_manager                          ue_mng{{}, {}, timers, ctrl_worker};
+  dummy_e1ap_cu_cp_notifier           cu_cp_notifier{ue_mng};
   std::unique_ptr<e1ap_interface>     e1ap;
   unsigned                            max_nof_supported_ues = 1024 * 4;
 };

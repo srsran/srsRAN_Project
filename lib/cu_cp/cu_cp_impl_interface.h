@@ -92,7 +92,7 @@ public:
 };
 
 /// Handler of E1AP-CU-CP events.
-class cu_cp_e1ap_event_handler
+class cu_cp_e1ap_event_handler : public cu_cp_task_scheduler_handler
 {
 public:
   virtual ~cu_cp_e1ap_event_handler() = default;

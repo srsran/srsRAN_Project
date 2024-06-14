@@ -10,6 +10,7 @@
 
 #include "bearer_context_setup_procedure.h"
 #include "../e1ap_cu_cp_asn1_helpers.h"
+#include "common/e1ap_asn1_utils.h"
 #include "cu_cp/ue_context/e1ap_bearer_transaction_manager.h"
 
 using namespace srsran;

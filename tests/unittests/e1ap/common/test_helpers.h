@@ -269,22 +269,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy notifier just printing the received msg.
-class dummy_e1ap_cu_cp_notifier : public srs_cu_cp::e1ap_cu_cp_notifier
-{
-public:
-  dummy_e1ap_cu_cp_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
-  {
-    last_msg = msg;
-    logger.info("Received an inactivity notification");
-  }
-
-  srs_cu_cp::cu_cp_inactivity_notification last_msg;
-
-private:
-  srslog::basic_logger& logger;
-};
-
 } // namespace srsran

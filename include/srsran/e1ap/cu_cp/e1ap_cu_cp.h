@@ -122,6 +122,12 @@ class e1ap_cu_cp_notifier
 public:
   virtual ~e1ap_cu_cp_notifier() = default;
 
+  /// \brief Request scheduling a task for a UE.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] task The task to schedule.
+  /// \returns True if the task was successfully scheduled, false otherwise.
+  virtual bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) = 0;
+
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
   virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;

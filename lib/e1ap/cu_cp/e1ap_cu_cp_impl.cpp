@@ -12,8 +12,10 @@
 #include "../common/e1ap_asn1_helpers.h"
 #include "../common/log_helpers.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
+#include "procedures/bearer_context_modification_procedure.h"
+#include "procedures/bearer_context_release_procedure.h"
+#include "procedures/bearer_context_setup_procedure.h"
 #include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 
 using namespace srsran;
@@ -25,7 +27,6 @@ using namespace srs_cu_cp;
 e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                                 common_ue_manager&             ue_mng_,
                                  timer_manager&                 timers_,
                                  task_executor&                 ctrl_exec_,
                                  unsigned                       max_nof_supported_ues_) :
@@ -33,7 +34,6 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifie
   pdu_notifier(e1ap_message_notifier_with_logging(*this, e1ap_pdu_notifier_)),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
-  ue_mng(ue_mng_),
   ctrl_exec(ctrl_exec_),
   timers(timer_factory{timers_, ctrl_exec_}),
   ue_ctxt_list(timers, max_nof_supported_ues_, logger),
@@ -223,12 +223,6 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
   // Get UE context
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
 
-  auto* ue = ue_mng.find_ue(ue_ctxt.ue_ids.ue_index);
-  if (ue == nullptr) {
-    logger.warning("ue={}: Dropping InactivityNotification. UE does not exist", ue_ctxt.ue_ids.ue_index);
-    return;
-  }
-
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index = ue_ctxt.ue_ids.ue_index;
 
@@ -275,12 +269,14 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
   }
 
   // schedule forwarding of notification
-  ue->get_task_sched().schedule_async_task(
-      launch_async([this, inactivity_notification](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);
-        CORO_RETURN();
-      }));
+  if (!cu_cp_notifier.on_ue_task_schedule_required(
+          ue_ctxt.ue_ids.ue_index, launch_async([this, inactivity_notification](coro_context<async_task<void>>& ctx) {
+            CORO_BEGIN(ctx);
+            cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);
+            CORO_RETURN();
+          }))) {
+    logger.warning("ue={}: Dropping InactivityNotification. UE does not exist", ue_ctxt.ue_ids.ue_index);
+  }
 };
 
 void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
