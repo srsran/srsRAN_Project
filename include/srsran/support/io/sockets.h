@@ -29,7 +29,7 @@ struct socket_name_info {
   std::string address;
   int         port;
 };
-socket_name_info get_nameinfo(const struct sockaddr& ai_addr, const socklen_t& ai_addrlen);
+[[gnu::pure]] socket_name_info get_nameinfo(const struct sockaddr& ai_addr, const socklen_t& ai_addrlen);
 
 bool set_reuse_addr(const unique_fd& fd, srslog::basic_logger& logger);
 
@@ -46,3 +46,22 @@ bool set_non_blocking(const unique_fd& fd, srslog::basic_logger& logger);
 std::string sock_type_to_str(int type);
 
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::socket_name_info> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::socket_name_info& val, FormatContext& ctx)
+  {
+    return format_to(ctx.out(), "{}:{}", val.address, val.port);
+  }
+};
+
+} // namespace fmt

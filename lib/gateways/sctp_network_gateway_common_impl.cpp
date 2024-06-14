@@ -122,11 +122,6 @@ bool sctp_network_gateway_common_impl::create_and_bind_common()
   if (not socket.is_open()) {
     fmt::print(
         "Failed to bind SCTP socket to {}:{}. Cause: {}\n", node_cfg.bind_address, node_cfg.bind_port, strerror(errno));
-    logger.error("{}: Failed to bind SCTP socket to {}:{}. Cause: {}",
-                 node_cfg.if_name,
-                 node_cfg.bind_address,
-                 node_cfg.bind_port,
-                 strerror(errno));
     return false;
   }
 

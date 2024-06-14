@@ -149,14 +149,6 @@ bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay)
   return true;
 }
 
-auto get_addr_port_string(const struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
-{
-  return make_formattable([ai_addr, ai_addrlen](auto& ctx) {
-    auto addr = get_nameinfo(ai_addr, ai_addrlen);
-    return fmt::format_to(ctx.out(), "{}:{}", addr.address, addr.port);
-  });
-}
-
 } // namespace
 
 // sctp_socket class.
@@ -230,8 +222,7 @@ SRSRAN_NODISCARD bool
 sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const std::string& bind_interface)
 {
   if (not is_open()) {
-    logger.error(
-        "{}: Failed to bind to {}. Cause: Socket is closed", if_name, get_addr_port_string(ai_addr, ai_addrlen));
+    logger.error("Failed to bind to {}. Cause: Socket is closed", get_nameinfo(ai_addr, ai_addrlen));
     return false;
   }
 
@@ -239,14 +230,14 @@ sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const s
     return false;
   }
 
-  logger.debug("{}: Binding to {}...", if_name, get_addr_port_string(ai_addr, ai_addrlen));
+  logger.debug("{}: Binding to {}...", if_name, get_nameinfo(ai_addr, ai_addrlen));
 
   if (::bind(fd().value(), &ai_addr, ai_addrlen) == -1) {
-    logger.debug("{}: Failed to bind to {} - {}", if_name, get_addr_port_string(ai_addr, ai_addrlen), strerror(errno));
+    logger.error("{}: Failed to bind to {}. Cause: {}", if_name, get_nameinfo(ai_addr, ai_addrlen), strerror(errno));
     return false;
   }
 
-  logger.info("{}: Bind to {} was successful", if_name, get_addr_port_string(ai_addr, ai_addrlen));
+  logger.info("{}: Bind to {} was successful", if_name, get_nameinfo(ai_addr, ai_addrlen));
 
   // set socket to non-blocking after bind is successful
   if (non_blocking_mode) {
@@ -260,16 +251,14 @@ sctp_socket::bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const s
 
 SRSRAN_NODISCARD bool sctp_socket::connect(struct sockaddr& ai_addr, const socklen_t& ai_addrlen)
 {
-  logger.debug("{}: Connecting to {}...", if_name, get_addr_port_string(ai_addr, ai_addrlen));
+  logger.debug("{}: Connecting to {}...", if_name, get_nameinfo(ai_addr, ai_addrlen));
   if (not is_open()) {
-    logger.error(
-        "{}: Failed to connect to {}. Cause: socket is closed", if_name, get_addr_port_string(ai_addr, ai_addrlen));
+    logger.error("Failed to connect to {}. Cause: socket is closed", get_nameinfo(ai_addr, ai_addrlen));
     return false;
   }
 
   if (::connect(sock_fd.value(), &ai_addr, ai_addrlen) == -1) {
-    logger.debug(
-        "{}: Failed to connect to {} - {}", if_name, get_addr_port_string(ai_addr, ai_addrlen), strerror(errno));
+    logger.debug("{}: Failed to connect to {} - {}", if_name, get_nameinfo(ai_addr, ai_addrlen), strerror(errno));
     return false;
   }
 
@@ -297,7 +286,7 @@ SRSRAN_NODISCARD bool sctp_socket::listen()
   }
   if (logger.info.enabled()) {
     // Note: avoid computing the listen_port if log channel is disabled.
-    int16_t port = get_listen_port().value();
+    uint16_t port = get_listen_port().value();
     logger.info("{}: Listening for new SCTP connections on port {}...", if_name, port);
   }
   return true;
@@ -351,7 +340,7 @@ bool sctp_socket::set_sockopts(const sctp_socket_params& params)
 std::optional<uint16_t> sctp_socket::get_listen_port() const
 {
   if (not sock_fd.is_open()) {
-    logger.error("{}: Socket of SCTP network gateway not created.", if_name);
+    logger.error("Socket of SCTP network gateway not created.");
     return {};
   }
 
