@@ -20,7 +20,7 @@ namespace srsran {
 class slice_scheduler
 {
 public:
-  slice_scheduler(const cell_configuration& cell_cfg_, const cell_rrm_policy_config& cfg_);
+  slice_scheduler(const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
   /// Reset the state of the slices.
   void slot_indication();

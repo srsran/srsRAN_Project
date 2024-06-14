@@ -13,7 +13,7 @@
 #include "../config/cell_configuration.h"
 #include "../policy/scheduler_policy.h"
 #include "ran_slice_id.h"
-#include "srsran/scheduler/config/cell_rrm_policy_config.h"
+#include "srsran/scheduler/config/slice_rrm_policy_config.h"
 
 namespace srsran {
 
@@ -23,7 +23,7 @@ class ran_slice_instance
 public:
   constexpr static int skip_slice_prio = std::numeric_limits<int>::min();
 
-  ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const cell_rrm_policy_config& cfg_);
+  ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
   void slot_indication();
 
@@ -31,18 +31,18 @@ public:
 
   int get_dl_prio()
   {
-    if (not active() or pdsch_stopped or cfg.max_prb_ratio <= pdsch_rb_count) {
+    if (not active() or pdsch_stopped or cfg.max_prb <= pdsch_rb_count) {
       return skip_slice_prio;
     }
-    return cfg.min_prb_ratio > pdsch_rb_count ? cfg.min_prb_ratio - pdsch_rb_count : 0;
+    return cfg.min_prb > pdsch_rb_count ? cfg.min_prb - pdsch_rb_count : 0;
   }
 
   int get_ul_prio()
   {
-    if (not active() or pusch_stopped or cfg.max_prb_ratio <= pusch_rb_count) {
+    if (not active() or pusch_stopped or cfg.max_prb <= pusch_rb_count) {
       return skip_slice_prio;
     }
-    return cfg.min_prb_ratio > pusch_rb_count ? cfg.min_prb_ratio - pusch_rb_count : 0;
+    return cfg.min_prb > pusch_rb_count ? cfg.min_prb - pusch_rb_count : 0;
   }
 
   /// Save PDSCH grant.
@@ -72,7 +72,7 @@ public:
 
   ran_slice_id_t            id;
   const cell_configuration* cell_cfg;
-  cell_rrm_policy_config    cfg;
+  slice_rrm_policy_config   cfg;
 
   std::unique_ptr<scheduler_policy> policy;
 

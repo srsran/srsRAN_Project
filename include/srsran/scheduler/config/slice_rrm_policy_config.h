@@ -16,13 +16,13 @@
 namespace srsran {
 
 /// Cell-specific Default RAN slice configuration.
-struct cell_rrm_policy_config {
+struct slice_rrm_policy_config {
   /// RRM Policy identifier.
   rrm_policy_member rrc_member;
-  /// Sets the minimum percentage of PRBs to be allocated to this group.
-  unsigned min_prb_ratio = 0;
-  /// Sets the maximum percentage of PRBs to be allocated to this group.
-  unsigned max_prb_ratio = MAX_NOF_PRBS;
+  /// Sets the minimum number of PRBs to be allocated to this group.
+  unsigned min_prb = 0;
+  /// Sets the maximum number of PRBs to be allocated to this group.
+  unsigned max_prb = MAX_NOF_PRBS;
 };
 
 } // namespace srsran

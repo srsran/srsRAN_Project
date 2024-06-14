@@ -12,9 +12,9 @@
 
 using namespace srsran;
 
-ran_slice_instance::ran_slice_instance(ran_slice_id_t                id_,
-                                       const cell_configuration&     cell_cfg_,
-                                       const cell_rrm_policy_config& cfg_) :
+ran_slice_instance::ran_slice_instance(ran_slice_id_t                 id_,
+                                       const cell_configuration&      cell_cfg_,
+                                       const slice_rrm_policy_config& cfg_) :
   id(id_), cell_cfg(&cell_cfg_), cfg(cfg_)
 {
 }

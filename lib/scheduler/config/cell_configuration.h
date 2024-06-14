@@ -56,7 +56,7 @@ public:
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_list;
 
   /// List of RRM Policy members configured for this cell.
-  std::vector<cell_rrm_policy_config> rrm_policy_members;
+  std::vector<slice_rrm_policy_config> rrm_policy_members;
 
   // Derived Parameters.
   ssb_pattern_case ssb_case;

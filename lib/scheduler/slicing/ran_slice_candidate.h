@@ -34,9 +34,9 @@ class common_ran_slice_candidate
 public:
   common_ran_slice_candidate(ran_slice_instance* instance_) : inst(instance_, candidate_deleter{}) {}
 
-  ran_slice_id_t                              id() const { return inst->id; }
-  [[nodiscard]] const cell_rrm_policy_config& cfg() const { return inst->cfg; }
-  scheduler_policy&                           policy() { return *inst->policy; }
+  ran_slice_id_t                               id() const { return inst->id; }
+  [[nodiscard]] const slice_rrm_policy_config& cfg() const { return inst->cfg; }
+  scheduler_policy&                            policy() { return *inst->policy; }
 
   bool is_candidate(du_ue_index_t ue_idx) const { return inst->is_candidate(ue_idx); }
   bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const { return inst->is_candidate(ue_idx, lcid); }
@@ -58,9 +58,9 @@ public:
   [[nodiscard]] unsigned remaining_rbs() const
   {
     if constexpr (IsDl) {
-      return inst->cfg.max_prb_ratio < inst->pdsch_rb_count ? 0 : inst->cfg.max_prb_ratio - inst->pdsch_rb_count;
+      return inst->cfg.max_prb < inst->pdsch_rb_count ? 0 : inst->cfg.max_prb - inst->pdsch_rb_count;
     }
-    return inst->cfg.max_prb_ratio < inst->pusch_rb_count ? 0 : inst->cfg.max_prb_ratio - inst->pusch_rb_count;
+    return inst->cfg.max_prb < inst->pusch_rb_count ? 0 : inst->cfg.max_prb - inst->pusch_rb_count;
   }
 
 protected:

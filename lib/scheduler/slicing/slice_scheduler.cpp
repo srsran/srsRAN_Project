@@ -14,7 +14,7 @@
 
 using namespace srsran;
 
-slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const cell_rrm_policy_config& cfg_) :
+slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_) :
   cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default slice).
@@ -25,13 +25,13 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const cell
   // Create RAN slice instances.
   ran_slice_id_t id_count{0};
   // Default slice.
-  slices.emplace_back(id_count, cell_cfg, cell_rrm_policy_config{});
+  slices.emplace_back(id_count, cell_cfg, slice_rrm_policy_config{});
   slices.back().policy =
       create_scheduler_strategy(scheduler_strategy_params{"time_rr", &logger}, cell_cfg.expert_cfg.ue);
   sorted_dl_prios.emplace_back(id_count);
   sorted_ul_prios.emplace_back(id_count);
   // Configured RRM policy members
-  for (const cell_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
+  for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
     slices.back().policy =
         create_scheduler_strategy(scheduler_strategy_params{"time_rr", &logger}, cell_cfg.expert_cfg.ue);
