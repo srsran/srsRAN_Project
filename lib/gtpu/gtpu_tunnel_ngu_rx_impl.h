@@ -270,8 +270,13 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      parent->logger.log_warning(
-          "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      if (not parent->config.warn_expired_t_reordering) {
+        parent->logger.log_info(
+            "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      } else {
+        parent->logger.log_warning(
+            "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      }
       parent->handle_t_reordering_expire();
     }
 

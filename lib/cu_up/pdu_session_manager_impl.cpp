@@ -292,6 +292,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_port                 = net_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
+  msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
