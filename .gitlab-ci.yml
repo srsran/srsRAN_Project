@@ -87,6 +87,7 @@ trigger docker:
           - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
           - .gdbinit
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       variables:
         CI_DESCRIPTION: $CI_DESCRIPTION
     - if: $CI_DESCRIPTION =~ /Weekly/
