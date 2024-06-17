@@ -18,7 +18,8 @@ namespace srsran {
 /// \remark See O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
 struct rrm_policy_member {
   std::string plmn_id;
-  s_nssai_t   s_nssai;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
 
   bool operator==(const rrm_policy_member& other) const
   {

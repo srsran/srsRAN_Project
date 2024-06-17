@@ -154,7 +154,6 @@ std::optional<dl_ran_slice_candidate> slice_scheduler::create_dl_candidate()
 {
   if (sorted_dl_prios[0].prio != ran_slice_instance::skip_slice_prio) {
     slices[sorted_dl_prios[0].id.value()].set_pdsch_scheduled();
-    sorted_dl_prios[0].prio = ran_slice_instance::skip_slice_prio;
     return dl_ran_slice_candidate{slices[sorted_dl_prios[0].id.value()]};
   }
   return std::nullopt;
@@ -164,7 +163,6 @@ std::optional<ul_ran_slice_candidate> slice_scheduler::create_ul_candidate()
 {
   if (sorted_ul_prios[0].prio != ran_slice_instance::skip_slice_prio) {
     slices[sorted_ul_prios[0].id.value()].set_pusch_scheduled();
-    sorted_ul_prios[0].prio = ran_slice_instance::skip_slice_prio;
     return ul_ran_slice_candidate{slices[sorted_ul_prios[0].id.value()]};
   }
   return std::nullopt;

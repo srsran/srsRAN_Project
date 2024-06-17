@@ -39,18 +39,12 @@ protected:
     srslog::init();
   }
 
-  ~slice_scheduler_test() { srslog::flush(); }
+  ~slice_scheduler_test() override { srslog::flush(); }
 
-  const ue_configuration* add_ue(du_ue_index_t ue_idx)
+  const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
-    auto req                       = test_cfg.get_default_ue_config_request();
-    req.ue_index                   = ue_idx;
-    req.crnti                      = to_rnti(0x4601 + ue_idx);
-    req.starts_in_fallback         = false;
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
-
     slice_sched.add_ue(*ue_cfg);
-
     return ue_cfg;
   }
 
@@ -62,7 +56,37 @@ protected:
 };
 
 class default_slice_scheduler_test : public slice_scheduler_test
-{};
+{
+protected:
+  const ue_configuration* add_ue(du_ue_index_t ue_idx)
+  {
+    auto req               = test_cfg.get_default_ue_config_request();
+    req.ue_index           = ue_idx;
+    req.crnti              = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback = false;
+    return slice_scheduler_test::add_ue(req);
+  }
+};
+
+class rb_ratio_slice_scheduler_test : public slice_scheduler_test
+{
+protected:
+  constexpr static unsigned MIN_PRB = 10;
+  constexpr static unsigned MAX_PRB = 20;
+
+  rb_ratio_slice_scheduler_test() : slice_scheduler_test({{{"00101", s_nssai_t{1}}, MIN_PRB, MAX_PRB}}) {}
+
+  const ue_configuration* add_ue(du_ue_index_t ue_idx)
+  {
+    auto req                                        = test_cfg.get_default_ue_config_request();
+    req.ue_index                                    = ue_idx;
+    req.crnti                                       = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback                          = false;
+    (*req.cfg.lc_config_list)[2].rrm_policy.plmn_id = "00101";
+    (*req.cfg.lc_config_list)[2].rrm_policy.s_nssai = s_nssai_t{1};
+    return slice_scheduler_test::add_ue(req);
+  }
+};
 
 TEST_F(default_slice_scheduler_test, if_no_rrm_policy_cfg_exists_then_only_default_slice_is_created)
 {
@@ -84,7 +108,7 @@ TEST_F(default_slice_scheduler_test, when_no_lcid_exists_then_default_slice_is_n
 
 TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_default_slice_is_valid_candidate)
 {
-  this->add_ue(to_du_ue_index(0));
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
   slice_sched.slot_indication();
 
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -103,7 +127,7 @@ TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_def
 TEST_F(default_slice_scheduler_test,
        when_candidate_instance_goes_out_of_scope_then_it_stops_being_a_candidate_for_the_same_slot)
 {
-  this->add_ue(to_du_ue_index(0));
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
   slice_sched.slot_indication();
 
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -116,7 +140,7 @@ TEST_F(default_slice_scheduler_test,
 
 TEST_F(default_slice_scheduler_test, when_candidate_instance_goes_out_of_scope_then_it_can_be_a_candidate_for_next_slot)
 {
-  this->add_ue(to_du_ue_index(0));
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
 
   slice_sched.slot_indication();
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -126,4 +150,43 @@ TEST_F(default_slice_scheduler_test, when_candidate_instance_goes_out_of_scope_t
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
   ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+}
+
+TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_available_rbs_decreases)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+
+  unsigned alloc_rbs = 10;
+  unsigned rem_rbs   = next_dl_slice->remaining_rbs();
+  next_dl_slice->store_grant(alloc_rbs);
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), rem_rbs - alloc_rbs);
+}
+
+// rb_ratio_slice_scheduler_test
+
+TEST_F(rb_ratio_slice_scheduler_test, when_slice_with_min_rb_has_ues_then_it_is_the_first_candidate)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+  ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_MIN_DRB));
+
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+}
+
+TEST_F(rb_ratio_slice_scheduler_test, when_slice_rb_ratios_are_bounded_then_remaining_rbs_is_bounded)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+
+  ASSERT_LE(next_dl_slice->remaining_rbs(), MAX_PRB);
 }
