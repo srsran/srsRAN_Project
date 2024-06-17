@@ -27,6 +27,8 @@ from retina.protocol.base_pb2 import FiveGCDefinition, PLMN, StartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.viavi.client import CampaignStatusEnum, Viavi
+from rich.console import Console
+from rich.table import Table
 
 from .steps.configuration import configure_metric_server_for_gnb
 from .steps.kpis import get_kpis, KPIs
@@ -56,6 +58,19 @@ class _ViaviConfiguration:
     expected_dl_bitrate: float = 0
     fail_if_kos: bool = True
     warning_as_errors: bool = True
+
+
+# pylint: disable=too-many-instance-attributes
+@dataclass
+class _ViaviResult:
+    """
+    Viavi result
+    """
+
+    criteria_name: str
+    expected: float
+    current: float
+    is_ok: bool
 
 
 def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
@@ -117,6 +132,7 @@ def viavi_manual_test_timeout(request):
 @mark.viavi_manual
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi_manual(
+    capsys: pytest.CaptureFixture[str],
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -142,6 +158,7 @@ def test_viavi_manual(
     )
 
     _test_viavi(
+        capsys=capsys,
         # Retina
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -178,6 +195,7 @@ def test_viavi_manual(
 )
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi(
+    capsys: pytest.CaptureFixture[str],
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -199,6 +217,7 @@ def test_viavi(
     Runs a test using Viavi
     """
     _test_viavi(
+        capsys=capsys,
         # Retina
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -232,6 +251,7 @@ def test_viavi(
 )
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi_debug(
+    capsys: pytest.CaptureFixture[str],
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -253,6 +273,7 @@ def test_viavi_debug(
     Runs a test using Viavi
     """
     _test_viavi(
+        capsys=capsys,
         # Retina
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -274,6 +295,7 @@ def test_viavi_debug(
 
 # pylint: disable=too-many-arguments, too-many-locals
 def _test_viavi(
+    capsys: pytest.CaptureFixture[str],
     # Retina
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -384,7 +406,7 @@ def _test_viavi(
             logging.info("Folder with Viavi report: %s", report_folder)
             logging.info("Downloading Viavi report")
             viavi.download_directory(report_folder, Path(test_log_folder).joinpath("viavi"))
-            check_metrics_criteria(test_declaration, gnb, viavi, metrics_summary, test_declaration.fail_if_kos)
+            check_metrics_criteria(test_declaration, gnb, viavi, metrics_summary, test_declaration.fail_if_kos, capsys)
         except HTTPError:
             logging.error("Viavi Reports could not be downloaded")
 
@@ -398,6 +420,7 @@ def check_metrics_criteria(
     viavi: Viavi,
     metrics_summary: Optional[MetricsSummary],
     fail_if_kos: bool,
+    capsys: pytest.CaptureFixture[str],
 ):
     """
     Check pass/fail criteria
@@ -409,40 +432,107 @@ def check_metrics_criteria(
     viavi_failure_manager = viavi.get_test_failures()
     kpis: KPIs = get_kpis(gnb, viavi_failure_manager=viavi_failure_manager, metrics_summary=metrics_summary)
 
-    is_ok &= check_and_print_criteria(
-        "DL bitrate", kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt, False
+    criteria_result: List[_ViaviResult] = []
+    criteria_dl_brate_aggregate = check_criteria(
+        kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt
     )
-    is_ok &= check_and_print_criteria(
-        "UL bitrate", kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt, False
+    criteria_result.append(
+        _ViaviResult(
+            "DL bitrate", test_configuration.expected_dl_bitrate, kpis.dl_brate_aggregate, criteria_dl_brate_aggregate
+        )
     )
-    is_ok &= (
-        check_and_print_criteria("Number of KOs and/or retrxs", kpis.nof_ko_aggregate, 0, operator.eq, not fail_if_kos)
-        or not fail_if_kos
+
+    criteria_ul_brate_aggregate = check_criteria(
+        kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt
+    )
+    criteria_result.append(
+        _ViaviResult(
+            "UL bitrate", test_configuration.expected_ul_bitrate, kpis.ul_brate_aggregate, criteria_ul_brate_aggregate
+        )
+    )
+
+    criteria_nof_ko_aggregate = check_criteria(kpis.nof_ko_aggregate, 0, operator.eq) or not fail_if_kos
+    criteria_result.append(
+        _ViaviResult("Number of KOs and/or retrxs", 0, kpis.nof_ko_aggregate, criteria_nof_ko_aggregate)
     )
 
     # Check procedure table
     viavi_failure_manager.print_failures(_OMIT_VIAVI_FAILURE_LIST)
-    is_ok &= viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
+    criteria_procedure_table = viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
+    criteria_result.append(
+        _ViaviResult(
+            "Procedure table",
+            0,
+            viavi_failure_manager.get_number_of_failures(_OMIT_VIAVI_FAILURE_LIST),
+            criteria_procedure_table,
+        )
+    )
 
+    is_ok = (
+        criteria_dl_brate_aggregate
+        and criteria_ul_brate_aggregate
+        and criteria_nof_ko_aggregate
+        and criteria_procedure_table
+    )
+
+    create_table(criteria_result, capsys)
     if not is_ok:
-        pytest.fail("Test didn't pass all the criteria")
+        criteria_errors_str = []
+        for criteria in criteria_result:
+            if not criteria.is_ok:
+                criteria_errors_str.append(criteria.criteria_name)
+        pytest.fail("Test didn't pass the following criteria: " + ", ".join(criteria_errors_str))
 
 
-def check_and_print_criteria(
-    name: str,
+def create_table(results: List[_ViaviResult], capsys):
+    """
+    Create a table with the results
+    """
+    table = Table(title="Viavi Results")
+
+    table.add_column("Criteria Name", justify="left", style="cyan", no_wrap=True)
+    table.add_column("Expected", justify="right", style="magenta")
+    table.add_column("Result", justify="right", style="magenta")
+    table.add_column("Pass", justify="center", style="magenta")
+
+    for result in results:
+        row_style = "green" if result.is_ok else "red"
+        table.add_row(
+            result.criteria_name,
+            f"{get_str_number_criteria(result.expected)}",
+            f"{get_str_number_criteria(result.current)}",
+            "✅" if result.is_ok else "❌",
+            style=row_style,
+        )
+
+    console = Console()
+    # Capture the table to print it in the console
+    with console.capture() as capture:
+        console.print(table)
+    output = "\n" + capture.get()
+
+    # Disable temporarily the capsys to print the table
+    with capsys.disabled():
+        logging.info(output)
+
+
+def check_criteria(
     current: float,
     expected: float,
     operator_method: Callable[[float, float], bool],
-    force_log_info: bool = False,
 ) -> bool:
     """
-    Check and print criteria
+    Check criteria
     """
     is_ok = operator_method(current, expected)
-    (logging.info if is_ok or force_log_info else logging.error)(
-        f"{name} expected: {expected:.2e}, actual: {current:.2e}"
-    )
     return is_ok
+
+
+def get_str_number_criteria(number_criteria: float) -> str:
+    """
+    Get string number criteria
+    """
+    return f"{number_criteria:.2e}" if abs(number_criteria) > 1000 else str(number_criteria)
 
 
 def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str, timeout: int) -> _ViaviConfiguration:

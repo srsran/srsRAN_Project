@@ -714,7 +714,7 @@ def _get_metrics_msg(stub: RanStub, name: str, fail_if_kos: bool = False) -> str
             nof_kos = 0
             for ue_info in metrics.ue_array:
                 nof_kos = ue_info.dl_nof_ko + ue_info.ul_nof_ko
-            if nof_kos:
+            if nof_kos and fail_if_kos:
                 return f"{name} has {nof_kos} KOs / retrxs"
 
     return ""
