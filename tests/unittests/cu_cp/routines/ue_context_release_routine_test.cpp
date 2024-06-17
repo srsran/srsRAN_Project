@@ -33,7 +33,7 @@ protected:
   ue_index_t add_ue(pci_t pci, rnti_t c_rnti)
   {
     ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
-    du_ue*     ue       = ue_mng.set_ue_du_context(ue_index, int_to_gnb_du_id(0), pci, c_rnti);
+    cu_cp_ue*  ue       = ue_mng.set_ue_du_context(ue_index, int_to_gnb_du_id(0), pci, c_rnti);
     // Set parameters from creation message
     ue->set_pcell_index(du_cell_index_t::min);
     ue->set_rrc_ue_notifier(rrc_ue_ctrl_notifier);

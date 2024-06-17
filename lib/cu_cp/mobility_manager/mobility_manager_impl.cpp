@@ -57,7 +57,7 @@ void mobility_manager::handle_handover(ue_index_t   ue_index,
                                        pci_t        neighbor_pci)
 {
   // Find the UE context.
-  du_ue* u = ue_mng.find_du_ue(ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", ue_index);
     return;
@@ -114,7 +114,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
 
-  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;
@@ -139,7 +139,7 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
                                                 gnb_id_t     target_gnb_id,
                                                 nr_cell_id_t target_nci)
 {
-  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;

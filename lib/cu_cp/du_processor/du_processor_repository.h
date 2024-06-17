@@ -16,9 +16,9 @@
 #include "../cu_cp_controller/common_task_scheduler.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
+#include "../ue_manager/ue_manager_impl.h"
 #include "du_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
 #include <unordered_map>
 
@@ -35,7 +35,7 @@ struct du_repository_config {
   rrc_ue_nas_notifier&                   ue_nas_pdu_notifier;
   rrc_ue_control_notifier&               ue_ngap_ctrl_notifier;
   common_task_scheduler&                 common_task_sched;
-  du_processor_ue_manager&               ue_manager;
+  ue_manager&                            ue_mng;
   rrc_du_measurement_config_notifier&    meas_config_notifier;
   du_connection_notifier&                du_conn_notif;
   srslog::basic_logger&                  logger;

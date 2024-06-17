@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ue_manager.h"
+#include "ue_configuration.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/e1ap/common/e1ap_common.h"

@@ -286,7 +286,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   return true;
 }
 
-void inter_du_handover_routine::create_srb(du_ue* ue, srb_id_t srb_id)
+void inter_du_handover_routine::create_srb(cu_cp_ue* ue, srb_id_t srb_id)
 {
   srb_creation_message srb_msg{};
   srb_msg.ue_index        = ue->get_ue_index();

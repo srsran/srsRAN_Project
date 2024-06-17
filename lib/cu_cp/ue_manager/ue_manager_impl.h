@@ -14,218 +14,17 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
+#include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
-#include "srsran/cu_cp/ue_manager.h"
+#include "srsran/cu_cp/ue_configuration.h"
 #include <unordered_map>
 
 namespace srsran {
 
 namespace srs_cu_cp {
 
-struct ngap_ue_t {
-  ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier;
-  ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier;
-
-  ngap_ue_t(ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_, ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_) :
-    rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_), rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_)
-  {
-  }
-};
-
-class cu_cp_ue final : public common_ue, public du_ue, public ngap_ue
-{
-public:
-  cu_cp_ue(const ue_index_t               ue_index_,
-           const up_resource_manager_cfg& up_cfg,
-           ue_task_scheduler_impl         task_sched_,
-           const pci_t                    pci_    = INVALID_PCI,
-           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI) :
-    ue_index(ue_index_),
-    task_sched(std::move(task_sched_)),
-    up_mng(create_up_resource_manager(up_cfg)),
-    rrc_ue_cu_cp_ev_notifier(ue_index)
-  {
-    if (pci_ != INVALID_PCI) {
-      pci = pci_;
-    }
-
-    if (c_rnti_ != rnti_t::INVALID_RNTI) {
-      ue_ctxt.crnti = c_rnti_;
-    }
-
-    ue_ctxt.du_idx = get_du_index_from_ue_index(ue_index);
-  }
-
-  /// \brief Cancel all pending UE tasks.
-  void stop();
-
-  // generic_ue
-
-  /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override { return ue_index; }
-
-  /// \brief Get the UP resource manager of the UE.
-  up_resource_manager& get_up_resource_manager() override { return *up_mng; }
-
-  /// \brief Get the task scheduler of the UE.
-  ue_task_scheduler& get_task_sched() override { return task_sched; }
-
-  /// \brief Get the security context of the UE.
-  security::security_context& get_security_context() override { return sec_context; }
-
-  // du_ue
-
-  /// \brief Get the RRC UE control message notifier of the UE.
-  du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override
-  {
-    srsran_assert(rrc_ue_notifier != nullptr, "ue={}: RRC UE notifier was not set", ue_index);
-    return *rrc_ue_notifier;
-  }
-
-  /// \brief Get the RRC UE SRB control notifier of the UE.
-  du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() override
-  {
-    srsran_assert(rrc_ue_srb_notifier != nullptr, "ue={}: RRC UE SRB notifier was not set", ue_index);
-    return *rrc_ue_srb_notifier;
-  }
-
-  rrc_ue_context_update_notifier& get_rrc_ue_context_update_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
-
-  /// \brief Get the RRC UE measurement notifier of the UE.
-  rrc_ue_measurement_notifier& get_rrc_ue_measurement_notifier() override { return rrc_ue_cu_cp_ev_notifier; }
-
-  /// \brief Get the PCI of the UE.
-  [[nodiscard]] pci_t get_pci() const override { return pci; };
-
-  /// \brief Get the C-RNTI of the UE.
-  [[nodiscard]] rnti_t get_c_rnti() const override { return ue_ctxt.crnti; }
-
-  [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
-
-  /// \brief Get the DU index of the UE.
-  du_index_t get_du_index() override { return ue_ctxt.du_idx; }
-
-  /// \brief Get the PCell index of the UE.
-  du_cell_index_t get_pcell_index() override { return pcell_index; }
-
-  cu_cp_ue_context&                     get_ue_context() override { return ue_ctxt; }
-  [[nodiscard]] const cu_cp_ue_context& get_ue_context() const override { return ue_ctxt; }
-
-  /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
-                    pci_t       pci_    = INVALID_PCI,
-                    rnti_t      c_rnti_ = rnti_t::INVALID_RNTI) override
-  {
-    if (du_id_ != gnb_du_id_t::invalid) {
-      ue_ctxt.du_id = du_id_;
-    }
-
-    if (pci_ != INVALID_PCI) {
-      pci = pci_;
-    }
-
-    if (c_rnti_ != rnti_t::INVALID_RNTI) {
-      ue_ctxt.crnti = c_rnti_;
-    }
-  }
-
-  /// \brief Set the DU and PCell index of the UE.
-  /// \param[in] pcell_index PCell index of the UE.
-  void set_pcell_index(du_cell_index_t pcell_index_) override { pcell_index = pcell_index_; }
-
-  /// \brief Set the RRC UE control message notifier of the UE.
-  /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
-  void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) override
-  {
-    rrc_ue_notifier = &rrc_ue_notifier_;
-  }
-
-  /// \brief Set the RRC UE SRB notifier of the UE.
-  /// \param[in] rrc_ue_srb_notifier_ RRC UE SRB control notifier of the UE.
-  void set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier& rrc_ue_srb_notifier_) override
-  {
-    rrc_ue_srb_notifier = &rrc_ue_srb_notifier_;
-  }
-
-  [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
-
-  // ngap_ue
-
-  /// \brief Get the RRC UE PDU notifier of the UE.
-  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
-  {
-    srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
-    return ngap_ue_context.value().rrc_ue_pdu_notifier;
-  }
-
-  /// \brief Get the RRC UE control notifier of the UE.
-  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
-  {
-    srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
-    return ngap_ue_context.value().rrc_ue_ctrl_notifier;
-  }
-
-  /// \brief Add the context for the NGAP UE.
-  /// \param[in] rrc_ue_pdu_notifier The RRC UE PDU notifier for the UE.
-  /// \param[in] rrc_ue_ctrl_notifier The RRC UE ctrl notifier for the UE.
-  /// \return Pointer to the NGAP UE notifier.
-  ngap_ue_notifier* add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                                        ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
-  {
-    ngap_ue_context.emplace(rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
-    ue_adapter.connect_ngap_ue(*this);
-    return &ue_adapter;
-  }
-
-  bool ngap_ue_created() { return ngap_ue_context.has_value(); }
-
-  // cu-cp ue
-  /// \brief Get the NGAP to RRC UE adapter of the UE.
-  ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter() { return ngap_rrc_ue_ev_notifier; }
-
-  /// \brief Get the CU-CP to RRC UE adapter of the UE.
-  cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter() { return cu_cp_rrc_ue_ev_notifier; }
-
-  /// \brief Get the RRC to CU-CP adapter of the UE.
-  rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
-
-  /// \brief Set/update the measurement context of the UE.
-  void update_meas_context(cell_meas_manager_ue_context meas_ctxt) { meas_context = std::move(meas_ctxt); }
-
-  /// \brief Get the measurement context of the UE.
-  cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
-
-private:
-  // common context
-  ue_index_t                           ue_index = ue_index_t::invalid;
-  ue_task_scheduler_impl               task_sched;
-  security::security_context           sec_context;
-  std::unique_ptr<up_resource_manager> up_mng;
-
-  // du ue context
-  cu_cp_ue_context ue_ctxt;
-  du_cell_index_t  pcell_index = du_cell_index_t::invalid;
-  pci_t            pci         = INVALID_PCI;
-
-  du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
-  du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
-
-  // ngap ue context
-  ngap_cu_cp_ue_adapter    ue_adapter;
-  std::optional<ngap_ue_t> ngap_ue_context;
-
-  // cu-cp ue context
-  ngap_rrc_ue_adapter          ngap_rrc_ue_ev_notifier;
-  cu_cp_rrc_ue_adapter         cu_cp_rrc_ue_ev_notifier;
-  rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
-  cell_meas_manager_ue_context meas_context;
-};
-
-class ue_manager : public common_ue_manager,
-                   public du_processor_ue_manager,
-                   public ngap_ue_manager,
-                   public ue_metrics_handler
+class ue_manager : public ue_metrics_handler
 {
 public:
   explicit ue_manager(const ue_configuration&        ue_config_,
@@ -258,30 +57,30 @@ public:
   /// \brief Find the UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the UE if found, nullptr otherwise.
-  common_ue* find_ue(ue_index_t ue_index) override;
+  cu_cp_ue* find_ue(ue_index_t ue_index);
 
   /// \brief Get the UE task scheduler of the specified UE, even if the DU UE context is not created.
   /// \param[in] ue_index Index of the UE.
   /// \return Pointer to the UE task scheduler if found, nullptr otherwise.
-  ue_task_scheduler* find_ue_task_scheduler(ue_index_t ue_index) override;
+  ue_task_scheduler* find_ue_task_scheduler(ue_index_t ue_index);
 
-  // du_processor_ue_manager
+  // du processor
 
   /// \brief Allocate resources for the UE in the CU-CP.
   /// \param[in] du_index Index of the DU the UE is connected to.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
-  ue_index_t add_ue(du_index_t du_index) override;
+  ue_index_t add_ue(du_index_t du_index);
 
-  du_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti) override;
+  cu_cp_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
-  du_ue* find_du_ue(ue_index_t ue_index) override;
+  cu_cp_ue* find_du_ue(ue_index_t ue_index);
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
-  size_t get_nof_du_ues(du_index_t du_index) override
+  size_t get_nof_du_ues(du_index_t du_index)
   {
     unsigned ue_count = 0;
     // Search allocated UE indexes
@@ -294,7 +93,7 @@ public:
     return ue_count;
   }
 
-  // ngap_ue_manager
+  // ngap
 
   /// \brief Add notifier to a UE for the given UE index. A RAN UE ID is allocated internally. If a new UE can't be
   /// found or if a UE with the UE index was already setup, nulltpr is returned.
@@ -304,16 +103,16 @@ public:
   /// \return Pointer to the NGAP UE notifier.
   ngap_ue_notifier* set_ue_ng_context(ue_index_t                    ue_index,
                                       ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                                      ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_) override;
+                                      ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_);
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  ngap_ue* find_ngap_ue(ue_index_t ue_index) override;
+  cu_cp_ue* find_ngap_ue(ue_index_t ue_index);
 
   /// \brief Get the number of UEs connected to the AMF.
   /// \return Number of UEs.
-  size_t get_nof_ngap_ues() override
+  size_t get_nof_ngap_ues()
   {
     unsigned ue_count = 0;
     // Search allocated UE indexes

@@ -27,7 +27,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                      common_task_scheduler&              common_task_sched_,
-                                     du_processor_ue_manager&            ue_manager_,
+                                     ue_manager&                         ue_mng_,
                                      timer_manager&                      timers_,
                                      task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
@@ -35,7 +35,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
-  ue_manager(ue_manager_),
+  ue_mng(ue_mng_),
   f1ap_ev_notifier(common_task_sched_, *this)
 {
   context.du_index = cfg.du_index;
@@ -164,7 +164,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
 ue_index_t du_processor_impl::allocate_new_ue_index()
 {
-  return ue_manager.add_ue(context.du_index);
+  return ue_mng.add_ue(context.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -191,7 +191,7 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   return du_cell_index_t::invalid;
 }
 
-bool du_processor_impl::create_rrc_ue(du_ue&                                 ue,
+bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                       rnti_t                                 c_rnti,
                                       const nr_cell_global_id_t&             cgi,
                                       byte_buffer                            du_to_cu_rrc_container,
@@ -246,16 +246,16 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(req.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    srsran_assert(ue_manager.find_ue_task_scheduler(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
+    srsran_assert(ue_mng.find_ue_task_scheduler(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
     logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
-    ue_manager.find_ue_task_scheduler(req.ue_index)
+    ue_mng.find_ue_task_scheduler(req.ue_index)
         ->schedule_async_task(cu_cp_notifier.on_ue_removal_required(req.ue_index));
     return {};
   }
   const pci_t pci = cell_db.at(pcell_index).pci;
 
   // Create new UE RRC context
-  du_ue* ue = ue_manager.set_ue_du_context(req.ue_index, context.id, pci, req.c_rnti);
+  cu_cp_ue* ue = ue_mng.set_ue_du_context(req.ue_index, context.id, pci, req.c_rnti);
   if (ue == nullptr) {
     logger.warning("ue={}: Could not create UE context", req.ue_index);
     return {};
@@ -285,7 +285,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 {
   srsran_assert(request.ue_index != ue_index_t::invalid, "Invalid UE index", request.ue_index);
 
-  du_ue* ue = ue_manager.find_du_ue(request.ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   if (ue == nullptr) {
     logger.warning("ue={}: Dropping DU initiated UE context release request. UE does not exist", request.ue_index);
     return;
@@ -393,7 +393,7 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
 void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index, ngap_cause_t cause)
 {
-  du_ue* ue = ue_manager.find_du_ue(ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
 
   cu_cp_ue_context_release_request req;

@@ -13,6 +13,7 @@
 #include "../adapters/du_processor_adapters.h"
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
+#include "../ue_manager/ue_manager_impl.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -43,7 +44,7 @@ public:
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                     common_task_scheduler&              common_task_sched_,
-                    du_processor_ue_manager&            ue_manager_,
+                    ue_manager&                         ue_mng_,
                     timer_manager&                      timers_,
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
@@ -56,7 +57,7 @@ public:
   f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *f1ap; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *f1ap; }
 
-  size_t get_nof_ues() const override { return ue_manager.get_nof_du_ues(context.du_index); };
+  size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
   du_setup_result handle_du_setup_request(const du_setup_request& req) override;
@@ -90,7 +91,7 @@ public:
 private:
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
-  bool create_rrc_ue(du_ue&                                 ue,
+  bool create_rrc_ue(cu_cp_ue&                              ue,
                      rnti_t                                 c_rnti,
                      const nr_cell_global_id_t&             cgi,
                      byte_buffer                            du_to_cu_rrc_container,
@@ -123,7 +124,7 @@ private:
   f1ap_message_notifier&               f1ap_pdu_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
-  du_processor_ue_manager&             ue_manager;
+  ue_manager&                          ue_mng;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
 

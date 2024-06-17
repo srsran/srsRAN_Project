@@ -46,7 +46,7 @@ private:
 
   srslog::basic_logger& logger;
 
-  du_ue*                                 ue = nullptr;
+  cu_cp_ue*                              ue = nullptr;
   rrc_ue_transfer_context                rrc_context; //< Passed to new RRC UE upon creation.
   up_config_update                       next_config;
   std::optional<security::sec_as_config> security_cfg;

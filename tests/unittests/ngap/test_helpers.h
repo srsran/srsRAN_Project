@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "ngap_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap_message.h"
@@ -201,8 +201,7 @@ private:
 class dummy_ngap_cu_cp_notifier : public ngap_cu_cp_notifier
 {
 public:
-  dummy_ngap_cu_cp_notifier(ngap_ue_manager& ue_manager_) :
-    ue_manager(ue_manager_), logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_cu_cp_notifier(ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("TEST")){};
 
   void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
@@ -225,7 +224,7 @@ public:
 
     // Add NGAP UE to UE manager
     ngap_ue_notifier* ue =
-        ue_manager.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
+        ue_mng.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
 
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);
@@ -238,8 +237,8 @@ public:
 
   bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
   {
-    srsran_assert(ue_manager.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
-    return ue_manager.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
+    srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
+    return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -360,7 +359,7 @@ public:
   std::optional<ue_index_t>                  last_created_ue_index;
 
 private:
-  ngap_ue_manager&      ue_manager;
+  ue_manager&           ue_mng;
   srslog::basic_logger& logger;
 
   ngap_ue_context_removal_handler* ngap_handler = nullptr;

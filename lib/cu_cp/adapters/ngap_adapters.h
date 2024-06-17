@@ -12,7 +12,7 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
-#include "srsran/cu_cp/ue_manager.h"
+#include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
@@ -114,7 +114,7 @@ class ngap_cu_cp_ue_adapter : public ngap_ue_notifier
 public:
   ngap_cu_cp_ue_adapter() = default;
 
-  void connect_ngap_ue(ngap_ue& ue_) { ue = &ue_; }
+  void connect_ue(cu_cp_ue_impl_interface& ue_) { ue = &ue_; }
 
   /// \brief Get the UE index of the UE.
   ue_index_t get_ue_index() override
@@ -152,7 +152,7 @@ public:
   }
 
 private:
-  ngap_ue* ue = nullptr;
+  cu_cp_ue_impl_interface* ue = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE

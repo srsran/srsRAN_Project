@@ -22,6 +22,7 @@ set(SOURCES
       du_processor/du_processor_impl.cpp
       du_processor/du_processor_factory.cpp
       du_processor/du_processor_repository.cpp
+      metrics_handler/metrics_handler_impl.cpp
       routine_managers/cu_cp_routine_manager.cpp
       routines/amf_connection_setup_routine.cpp
       routines/pdu_session_routine_helpers.cpp
@@ -37,11 +38,11 @@ set(SOURCES
       routines/mobility/inter_du_handover_routine.cpp
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
-      metrics_handler/metrics_handler_impl.cpp
-        ue_manager/ue_task_scheduler_impl.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
-        ue_manager/ue_manager_impl.cpp
+      ue_manager/cu_cp_ue_impl.cpp
+      ue_manager/ue_manager_impl.cpp
+      ue_manager/ue_task_scheduler_impl.cpp
 )
 
 add_library(srsran_cu_cp STATIC ${SOURCES})

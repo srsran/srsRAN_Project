@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
+#include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"

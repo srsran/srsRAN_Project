@@ -150,7 +150,7 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   if (msg.ue_inactive) {
-    du_ue* ue = ue_mng.find_du_ue(msg.ue_index);
+    cu_cp_ue* ue = ue_mng.find_du_ue(msg.ue_index);
     srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
     cu_cp_ue_context_release_request req;
@@ -208,7 +208,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
 
 async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
 {
-  du_ue* ue = ue_mng.find_du_ue(ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
@@ -349,7 +349,7 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
 async_task<cu_cp_pdu_session_resource_setup_response>
 cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request)
 {
-  du_ue* ue = ue_mng.find_du_ue(request.ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
@@ -369,7 +369,7 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
 async_task<cu_cp_pdu_session_resource_modify_response>
 cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& request)
 {
-  du_ue* ue = ue_mng.find_du_ue(request.ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
@@ -388,7 +388,7 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_sessi
 async_task<cu_cp_pdu_session_resource_release_response>
 cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& command)
 {
-  du_ue* ue = ue_mng.find_du_ue(command.ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(command.ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", command.ue_index);
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
@@ -504,7 +504,7 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
                                              du_index_t&                            source_du_index,
                                              du_index_t&                            target_du_index)
 {
-  du_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.source_ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.source_ue_index);
 
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);

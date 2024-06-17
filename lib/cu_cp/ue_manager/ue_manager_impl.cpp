@@ -98,9 +98,9 @@ ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
   return ue_index_t::invalid;
 }
 
-// common_ue_manager
+// common
 
-common_ue* ue_manager::find_ue(ue_index_t ue_index)
+cu_cp_ue* ue_manager::find_ue(ue_index_t ue_index)
 {
   if (ues.find(ue_index) != ues.end()) {
     return &ues.at(ue_index);
@@ -116,9 +116,9 @@ ue_task_scheduler* ue_manager::find_ue_task_scheduler(ue_index_t ue_index)
   return nullptr;
 }
 
-// du_processor_ue_manager
+// du processor
 
-du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
+cu_cp_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
@@ -147,7 +147,7 @@ du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci
   return &ue;
 }
 
-du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
+cu_cp_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
   if (ues.find(ue_index) != ues.end() && ues.at(ue_index).du_ue_created()) {
     return &ues.at(ue_index);
@@ -155,7 +155,7 @@ du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-// ngap_ue_manager
+// ngap
 
 ngap_ue_notifier* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
                                                 ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
@@ -184,7 +184,7 @@ ngap_ue_notifier* ue_manager::set_ue_ng_context(ue_index_t                    ue
   return ue_notifier;
 }
 
-ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
+cu_cp_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
 {
   if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
     return &ues.at(ue_index);
