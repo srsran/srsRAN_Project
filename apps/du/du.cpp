@@ -41,9 +41,7 @@
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This helps prevent false alarms from the thread sanitizer.
-#ifdef __SANITIZE_THREAD__
 #include "srsran/support/tsan_options.h"
-#endif //  __SANITIZE_THREAD__
 
 #include <atomic>
 
