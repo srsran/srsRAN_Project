@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-class slice_scheduler_test : public ::testing::Test
+class slice_scheduler_test
 {
 protected:
   slice_scheduler_test(const std::vector<slice_rrm_policy_config>& rrm_policy_members = {}) :
@@ -39,7 +39,7 @@ protected:
     srslog::init();
   }
 
-  ~slice_scheduler_test() override { srslog::flush(); }
+  ~slice_scheduler_test() { srslog::flush(); }
 
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
@@ -55,7 +55,7 @@ protected:
   slice_scheduler slice_sched{cell_cfg};
 };
 
-class default_slice_scheduler_test : public slice_scheduler_test
+class default_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
 {
 protected:
   const ue_configuration* add_ue(du_ue_index_t ue_idx)
@@ -64,26 +64,6 @@ protected:
     req.ue_index           = ue_idx;
     req.crnti              = to_rnti(0x4601 + ue_idx);
     req.starts_in_fallback = false;
-    return slice_scheduler_test::add_ue(req);
-  }
-};
-
-class rb_ratio_slice_scheduler_test : public slice_scheduler_test
-{
-protected:
-  constexpr static unsigned MIN_PRB = 10;
-  constexpr static unsigned MAX_PRB = 20;
-
-  rb_ratio_slice_scheduler_test() : slice_scheduler_test({{{"00101", s_nssai_t{1}}, MIN_PRB, MAX_PRB}}) {}
-
-  const ue_configuration* add_ue(du_ue_index_t ue_idx)
-  {
-    auto req                                        = test_cfg.get_default_ue_config_request();
-    req.ue_index                                    = ue_idx;
-    req.crnti                                       = to_rnti(0x4601 + ue_idx);
-    req.starts_in_fallback                          = false;
-    (*req.cfg.lc_config_list)[2].rrm_policy.plmn_id = "00101";
-    (*req.cfg.lc_config_list)[2].rrm_policy.s_nssai = s_nssai_t{1};
     return slice_scheduler_test::add_ue(req);
   }
 };
@@ -167,6 +147,26 @@ TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_av
 
 // rb_ratio_slice_scheduler_test
 
+class rb_ratio_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
+{
+protected:
+  constexpr static unsigned MIN_SLICE_RB = 10;
+  constexpr static unsigned MAX_SLICE_RB = 20;
+
+  rb_ratio_slice_scheduler_test() : slice_scheduler_test({{{"00101", s_nssai_t{1}}, MIN_SLICE_RB, MAX_SLICE_RB}}) {}
+
+  const ue_configuration* add_ue(du_ue_index_t ue_idx)
+  {
+    auto req                                        = test_cfg.get_default_ue_config_request();
+    req.ue_index                                    = ue_idx;
+    req.crnti                                       = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback                          = false;
+    (*req.cfg.lc_config_list)[2].rrm_policy.plmn_id = "00101";
+    (*req.cfg.lc_config_list)[2].rrm_policy.s_nssai = s_nssai_t{1};
+    return slice_scheduler_test::add_ue(req);
+  }
+};
+
 TEST_F(rb_ratio_slice_scheduler_test, when_slice_with_min_rb_has_ues_then_it_is_the_first_candidate)
 {
   ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
@@ -175,12 +175,9 @@ TEST_F(rb_ratio_slice_scheduler_test, when_slice_with_min_rb_has_ues_then_it_is_
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
   ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_MIN_DRB));
-
-  next_dl_slice = slice_sched.get_next_dl_candidate();
-  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
 }
 
-TEST_F(rb_ratio_slice_scheduler_test, when_slice_rb_ratios_are_bounded_then_remaining_rbs_is_bounded)
+TEST_F(rb_ratio_slice_scheduler_test, when_slice_rb_ratios_are_min_bounded_then_remaining_rbs_is_min_bounded)
 {
   ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
   slice_sched.slot_indication();
@@ -188,5 +185,114 @@ TEST_F(rb_ratio_slice_scheduler_test, when_slice_rb_ratios_are_bounded_then_rema
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
 
-  ASSERT_LE(next_dl_slice->remaining_rbs(), MAX_PRB);
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), MIN_SLICE_RB);
+}
+
+TEST_F(rb_ratio_slice_scheduler_test,
+       when_slice_with_min_rb_is_partially_scheduled_then_it_is_never_a_candidate_again_for_the_same_slot)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+  next_dl_slice->store_grant(MIN_SLICE_RB - 1); // we leave one RB empty (MIN_SLICE_RB - 1).
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), 1);
+
+  // Another slice should be selected as second candidate.
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+
+  // No more slices to schedule.
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_FALSE(next_dl_slice.has_value());
+}
+
+TEST_F(rb_ratio_slice_scheduler_test,
+       when_slice_with_min_rb_is_allocated_until_min_rb_then_it_can_still_a_candidate_until_max_rb_is_reached)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+  next_dl_slice->store_grant(MIN_SLICE_RB);
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), 0);
+
+  // Another slice should be selected as second candidate (assuming RR between the slices 0 and 1).
+  ran_slice_id_t last_slice_id{};
+  for (unsigned i = 0; i != 2; ++i) {
+    next_dl_slice = slice_sched.get_next_dl_candidate();
+    if (i == 1) {
+      ASSERT_NE(next_dl_slice->id(), last_slice_id) << "The same slice was selected twice.";
+    }
+    if (next_dl_slice->id() == ran_slice_id_t{0}) {
+      ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_NOF_PRBS);
+    } else {
+      // Original slice is selected again, now using maxRB ratio as the remaining RBs.
+      ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+      ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
+    }
+    last_slice_id = next_dl_slice->id();
+  }
+
+  // No more slices to schedule.
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_FALSE(next_dl_slice.has_value());
+}
+
+TEST_F(rb_ratio_slice_scheduler_test,
+       when_candidates_are_scheduled_in_a_slot_then_priorities_are_recomputed_in_a_new_slot)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+  slice_sched.slot_indication();
+
+  auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  next_dl_slice->store_grant(MIN_SLICE_RB);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_FALSE(next_dl_slice.has_value());
+
+  // New slot and priorities are reestablished.
+  slice_sched.slot_indication();
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), MIN_SLICE_RB);
+  next_dl_slice->store_grant(MIN_SLICE_RB);
+  next_dl_slice                = slice_sched.get_next_dl_candidate();
+  ran_slice_id_t last_slice_id = next_dl_slice->id();
+  next_dl_slice                = slice_sched.get_next_dl_candidate();
+  ASSERT_NE(next_dl_slice->id(), last_slice_id);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_FALSE(next_dl_slice.has_value());
+}
+
+TEST_F(rb_ratio_slice_scheduler_test,
+       when_slices_are_saturated_then_slices_should_have_equal_opportunity_to_reach_max_rbs)
+{
+  ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
+
+  unsigned max_nof_slots = 100;
+  unsigned slice_0_count = 0;
+  for (unsigned count = 0; count != max_nof_slots; ++count) {
+    slice_sched.slot_indication();
+
+    // Slice 1 with minRBs to fill is first selected.
+    auto next_dl_slice = slice_sched.get_next_dl_candidate();
+    ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+    next_dl_slice->store_grant(MIN_SLICE_RB);
+
+    // Either Slice 0 or 1 are then selected.
+    next_dl_slice = slice_sched.get_next_dl_candidate();
+    if (next_dl_slice->id() == ran_slice_id_t{0}) {
+      ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_NOF_PRBS);
+      slice_0_count++;
+    } else {
+      ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+      ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
+    }
+  }
+
+  ASSERT_EQ(slice_0_count, max_nof_slots / 2) << "Round-robin of slices of same priority failed";
 }

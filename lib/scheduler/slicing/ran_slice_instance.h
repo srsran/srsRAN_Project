@@ -21,42 +21,17 @@ namespace srsran {
 class ran_slice_instance
 {
 public:
-  constexpr static int skip_slice_prio    = std::numeric_limits<int>::min();
-  constexpr static int default_slice_prio = 0;
-
   ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
 
   void slot_indication();
 
   bool active() const { return not bearers.empty(); }
 
-  int get_dl_prio()
-  {
-    if (not active() or pdsch_complete or cfg.max_prb <= pdsch_rb_count) {
-      return skip_slice_prio;
-    }
-    return cfg.min_prb > pdsch_rb_count ? cfg.min_prb - pdsch_rb_count : default_slice_prio;
-  }
-
-  int get_ul_prio()
-  {
-    if (not active() or pusch_complete or cfg.max_prb <= pusch_rb_count) {
-      return skip_slice_prio;
-    }
-    return cfg.min_prb > pusch_rb_count ? cfg.min_prb - pusch_rb_count : default_slice_prio;
-  }
-
   /// Save PDSCH grant.
   void store_pdsch_grant(unsigned crbs) { pdsch_rb_count += crbs; }
 
   /// Save PUSCH grant.
   void store_pusch_grant(unsigned crbs) { pusch_rb_count += crbs; }
-
-  /// Mark the allocation of PDSCH for this slice and the current slot as complete.
-  void set_pdsch_scheduled() { pdsch_complete = true; }
-
-  /// Mark the allocation of PUSCH for this slice and the current slot as complete.
-  void set_pusch_scheduled() { pusch_complete = true; }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.
   bool contains(du_ue_index_t ue_idx) const { return bearers.contains(ue_idx); }
@@ -85,10 +60,6 @@ public:
   unsigned pdsch_rb_count = 0;
   /// Counter of how many RBs have been scheduled for PUSCH in the current slot for this slice.
   unsigned pusch_rb_count = 0;
-
-private:
-  bool pdsch_complete = false;
-  bool pusch_complete = false;
 };
 
 } // namespace srsran

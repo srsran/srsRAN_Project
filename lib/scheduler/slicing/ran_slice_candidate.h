@@ -20,7 +20,10 @@ template <bool IsDl>
 class common_ran_slice_candidate
 {
 public:
-  common_ran_slice_candidate(ran_slice_instance& instance_) : inst(&instance_) {}
+  common_ran_slice_candidate(ran_slice_instance& instance_, unsigned max_rbs_ = 0) :
+    inst(&instance_), max_rbs(max_rbs_ == 0 ? inst->cfg.max_prb : max_rbs_)
+  {
+  }
 
   ran_slice_id_t                               id() const { return inst->id; }
   [[nodiscard]] const slice_rrm_policy_config& cfg() const { return inst->cfg; }
@@ -43,13 +46,14 @@ public:
   [[nodiscard]] unsigned remaining_rbs() const
   {
     if constexpr (IsDl) {
-      return inst->cfg.max_prb < inst->pdsch_rb_count ? 0 : inst->cfg.max_prb - inst->pdsch_rb_count;
+      return max_rbs < inst->pdsch_rb_count ? 0 : max_rbs - inst->pdsch_rb_count;
     }
-    return inst->cfg.max_prb < inst->pusch_rb_count ? 0 : inst->cfg.max_prb - inst->pusch_rb_count;
+    return max_rbs < inst->pusch_rb_count ? 0 : max_rbs - inst->pusch_rb_count;
   }
 
 protected:
-  ran_slice_instance* inst = nullptr;
+  ran_slice_instance* inst    = nullptr;
+  unsigned            max_rbs = 0;
 };
 
 } // namespace detail

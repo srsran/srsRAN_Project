@@ -13,12 +13,17 @@
 #include "../policy/scheduler_policy.h"
 #include "ran_slice_candidate.h"
 #include "ran_slice_instance.h"
+#include <queue>
 
 namespace srsran {
 
 /// Inter-slice Scheduler.
 class slice_scheduler
 {
+  using priority_type                      = uint32_t;
+  using slot_count_type                    = uint32_t;
+  constexpr static priority_type skip_prio = 0;
+
 public:
   slice_scheduler(const cell_configuration& cell_cfg_);
 
@@ -37,34 +42,80 @@ public:
   std::optional<ul_ran_slice_candidate> get_next_ul_candidate();
 
   size_t                         nof_slices() const { return slices.size(); }
-  const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].cfg; }
+  const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].inst.cfg; }
 
 private:
-  struct slice_prio_context {
-    ran_slice_id_t id;
-    // Cached values.
-    int prio = 0;
+  /// Class responsible for tracking the scheduling context of each RAN slice instance.
+  struct ran_slice_sched_context {
+    ran_slice_instance inst;
+    // Counter tracking the last time this slice was scheduled as a candidate.
+    slot_count_type last_dl_slot = 0;
+    slot_count_type last_ul_slot = 0;
 
-    slice_prio_context(ran_slice_id_t id_) : id(id_) {}
+    ran_slice_sched_context(ran_slice_id_t id, const cell_configuration& cell_cfg, const slice_rrm_policy_config& cfg) :
+      inst(id, cell_cfg, cfg)
+    {
+    }
+
+    /// Get the slice priority as a candidate, considering also past decisions by the slice scheduler for this slot.
+    priority_type get_prio(bool is_dl, slot_count_type current_slot_count, bool slice_resched) const;
+  };
+
+  struct slice_candidate_context {
+    ran_slice_id_t     id;
+    priority_type      prio;
+    interval<unsigned> rb_lims;
+
+    slice_candidate_context(ran_slice_id_t id_, priority_type prio_, interval<unsigned> rb_lims_) :
+      id(id_), prio(prio_), rb_lims(rb_lims_)
+    {
+    }
 
     /// Compares priorities between two slice contexts.
-    bool operator<(const slice_prio_context& rhs) const { return prio < rhs.prio; }
-    bool operator>(const slice_prio_context& rhs) const { return prio > rhs.prio; }
+    bool operator<(const slice_candidate_context& rhs) const { return prio < rhs.prio; }
+    bool operator>(const slice_candidate_context& rhs) const { return prio > rhs.prio; }
+  };
+
+  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
+  // inheritance.
+  class slice_prio_queue : public std::priority_queue<slice_candidate_context>
+  {
+  public:
+    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
+    // memory.
+    void clear()
+    {
+      // Access to underlying vector.
+      this->c.clear();
+    }
+
+    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
+    void push(const slice_candidate_context& elem)
+    {
+      if (elem.prio == skip_prio) {
+        return;
+      }
+      std::priority_queue<slice_candidate_context>::push(elem);
+    }
   };
 
   ran_slice_instance& get_slice(const rrm_policy_member& rrm);
 
-  std::optional<dl_ran_slice_candidate> create_dl_candidate();
-  std::optional<ul_ran_slice_candidate> create_ul_candidate();
+  template <bool IsDownlink>
+  std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>> get_next_candidate();
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
 
-  std::vector<ran_slice_instance> slices;
+  std::vector<ran_slice_sched_context> slices;
 
-  /// List of slice IDs sorted by priority.
-  std::vector<slice_prio_context> sorted_dl_prios;
-  std::vector<slice_prio_context> sorted_ul_prios;
+  // Queue of slice candidates sorted by priority.
+  slice_prio_queue dl_prio_queue;
+  slice_prio_queue ul_prio_queue;
+
+  // Count that gets incremented with every new slot. Useful for time round-robin of slices with the same priority.
+  // Note: This unsigned value will wrap-around.
+  slot_count_type slot_count = 0;
 };
 
 } // namespace srsran

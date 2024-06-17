@@ -23,8 +23,6 @@ void ran_slice_instance::slot_indication()
 {
   pdsch_rb_count = 0;
   pusch_rb_count = 0;
-  pdsch_complete = false;
-  pusch_complete = false;
 }
 
 void ran_slice_instance::add_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
