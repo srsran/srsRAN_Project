@@ -42,15 +42,15 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
       double   sum_pusch_snrs         = 0;
       double   sum_pucch_snrs         = 0;
       double   sum_pusch_rsrp         = 0;
-      unsigned sum_cqi                = 0;
-      unsigned sum_ri                 = 0;
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
-      unsigned nof_cqi_reports        = 0;
-      unsigned nof_ri_reports         = 0;
       unsigned dl_prbs_used           = 0;
       unsigned ul_prbs_used           = 0;
+      /// CQI statistics over the metrics report interval.
+      sample_statistics<unsigned> cqi;
+      /// RI statistics over the metrics report interval.
+      sample_statistics<unsigned> ri;
     };
 
     // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types

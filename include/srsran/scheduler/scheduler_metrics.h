@@ -15,6 +15,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
+#include "srsran/support/stats.h"
 #include <optional>
 
 namespace srsran {
@@ -24,8 +25,6 @@ struct scheduler_ue_metrics {
   pci_t                        pci;
   unsigned                     nof_prbs;
   rnti_t                       rnti;
-  uint8_t                      cqi;
-  float                        ri;
   sch_mcs_index                dl_mcs;
   double                       dl_prbs_used;
   double                       dl_brate_kbps;
@@ -43,6 +42,10 @@ struct scheduler_ue_metrics {
   unsigned                     dl_bs;
   std::optional<phy_time_unit> last_ta;
   std::optional<int>           last_phr;
+  /// CQI statistics over the metrics report interval.
+  sample_statistics<unsigned> cqi_stats;
+  /// RI statistics over the metrics report interval.
+  sample_statistics<unsigned> ri_stats;
 };
 
 /// \brief Snapshot of the metrics for a cell and its UEs.

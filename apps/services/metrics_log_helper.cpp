@@ -109,14 +109,14 @@ void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
     fmt::format_to(buffer, "Scheduler UE Metrics:");
     fmt::format_to(buffer, " pci={}", ue.pci);
     fmt::format_to(buffer, " rnti={:x}", to_value(ue.rnti));
-    if (!iszero(ue.cqi)) {
-      fmt::format_to(buffer, " cqi={}", int(ue.cqi));
+    if (ue.cqi_stats.get_nof_observations() > 0) {
+      fmt::format_to(buffer, " cqi={}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
     } else {
       fmt::format_to(buffer, " cqi=n/a");
     }
 
-    if (!std::isnan(ue.ri) && !iszero(ue.ri)) {
-      fmt::format_to(buffer, " ri={:.1f}", ue.ri);
+    if (ue.ri_stats.get_nof_observations() > 0) {
+      fmt::format_to(buffer, " ri={:.1f}", ue.ri_stats.get_mean());
     } else {
       fmt::format_to(buffer, " ri=n/a");
     }

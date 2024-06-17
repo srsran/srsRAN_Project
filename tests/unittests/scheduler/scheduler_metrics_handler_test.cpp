@@ -88,8 +88,11 @@ TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_
   ASSERT_EQ(ue_metrics.pusch_snr_db, 0);
   ASSERT_EQ(ue_metrics.pusch_rsrp_db, -std::numeric_limits<float>::infinity());
   ASSERT_EQ(ue_metrics.pucch_snr_db, 0);
-  ASSERT_EQ(ue_metrics.cqi, 0);
   ASSERT_EQ(ue_metrics.bsr, 0);
+
+  // Check that the CQI and RI statistics have no observations.
+  ASSERT_EQ(ue_metrics.cqi_stats.get_nof_observations(), 0);
+  ASSERT_EQ(ue_metrics.ri_stats.get_nof_observations(), 0);
 }
 
 TEST_F(scheduler_metrics_handler_tester, compute_nof_dl_oks_and_noks)

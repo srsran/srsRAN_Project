@@ -23,10 +23,10 @@ static scheduler_cell_metrics reports;
 void fill_metrics_single_ue()
 {
   scheduler_ue_metrics ue;
-  ue.pci           = 500;
-  ue.rnti          = to_rnti(0x4601);
-  ue.cqi           = 4;
-  ue.ri            = 1.0F;
+  ue.pci  = 500;
+  ue.rnti = to_rnti(0x4601);
+  ue.cqi_stats.update(4);
+  ue.ri_stats.update(1);
   ue.dl_mcs        = 28;
   ue.dl_brate_kbps = 1 * 1024; // 1Mbit
   ue.dl_nof_ok     = 900;

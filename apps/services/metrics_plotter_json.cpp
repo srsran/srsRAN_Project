@@ -86,10 +86,12 @@ void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
 
     output.write<metric_pci>(ue.pci);
     output.write<metric_rnti>(to_value(ue.rnti));
-    if (ue.cqi) {
-      output.write<metric_cqi>(ue.cqi);
+    if (ue.cqi_stats.get_nof_observations() > 0) {
+      output.write<metric_cqi>(static_cast<uint8_t>(std::roundf(ue.cqi_stats.get_mean())));
     }
-    output.write<metric_ri>(ue.ri);
+    if (ue.ri_stats.get_nof_observations() > 0) {
+      output.write<metric_ri>(ue.ri_stats.get_mean());
+    }
     output.write<metric_dl_mcs>(ue.dl_mcs.to_uint());
     output.write<metric_dl_brate>(ue.dl_brate_kbps * 1e3);
     output.write<metric_dl_nof_ok>(ue.dl_nof_ok);

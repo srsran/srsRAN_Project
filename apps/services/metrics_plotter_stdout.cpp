@@ -128,14 +128,15 @@ void metrics_plotter_stdout::report_metrics(const scheduler_cell_metrics& metric
   for (const auto& ue : metrics.ue_metrics) {
     fmt::print("{:>4}", ue.pci);
     fmt::print("{:>5x}", to_value(ue.rnti));
-    if (!iszero(ue.cqi)) {
-      fmt::print(" | {:>3}", int(ue.cqi));
+
+    if (ue.cqi_stats.get_nof_observations() > 0) {
+      fmt::print(" | {:>3}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
     } else {
       fmt::print(" | {:>3.3}", "n/a");
     }
 
-    if (!std::isnan(ue.ri) && !iszero(ue.ri)) {
-      fmt::print(" {:>3.1f}", ue.ri);
+    if (ue.ri_stats.get_nof_observations() > 0) {
+      fmt::print(" {:>3.1f}", ue.ri_stats.get_mean());
     } else {
       fmt::print(" {:>3.3}", "n/a");
     }
