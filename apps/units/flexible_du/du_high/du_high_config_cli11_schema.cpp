@@ -498,6 +498,26 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
+static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
+{
+  add_option_function<std::string>(
+      app,
+      "--policy_sched_type",
+      [&expert_params](const std::string& value) {
+        if (value == "time_pf") {
+          expert_params.policy_sched_type = srsran::policy_scheduler_type::time_pf;
+        }
+      },
+      "Type of policy scheduler to use")
+      ->default_str("time_rr")
+      ->check(CLI::IsMember({"time_rr", "time_pf"}, CLI::ignore_case));
+  add_option(app,
+             "--pf_sched_fairness_coeff",
+             expert_params.pf_sched_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair policy scheduler")
+      ->capture_default_str();
+}
+
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
 {
   add_option(app, "--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
@@ -1091,6 +1111,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   // CSI configuration.
   CLI::App* csi_subcmd = add_subcommand(app, "csi", "CSI-Meas parameters");
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
+
+  // Scheduler expert configuration.
+  CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
+  configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, du_high_unit_cell_config& cell_params)

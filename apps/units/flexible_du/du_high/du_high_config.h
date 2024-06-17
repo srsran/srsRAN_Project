@@ -30,6 +30,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
 #include <map>
 #include <string>
@@ -51,6 +52,15 @@ struct du_high_unit_logger_config {
   bool broadcast_enabled = false;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.
   bool f1ap_json_enabled = false;
+};
+
+/// Scheduler expert configuration.
+struct du_high_unit_scheduler_expert_config {
+  /// Type of policy scheduler.
+  policy_scheduler_type policy_sched_type = policy_scheduler_type::time_rr;
+  /// Fairness Coefficient to use in Proportional Fair policy scheduler.
+  /// \remark This field is applicable only when \c policy_sched_type is set to "time_pf".
+  std::optional<double> pf_sched_fairness_coeff;
 };
 
 struct du_high_unit_ssb_config {
@@ -525,6 +535,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
   du_high_unit_csi_config csi_cfg;
+  /// Scheduler expert configuration.
+  du_high_unit_scheduler_expert_config sched_expert_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {
