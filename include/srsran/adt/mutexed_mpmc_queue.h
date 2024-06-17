@@ -17,6 +17,7 @@
 namespace srsran {
 namespace detail {
 
+/// Specialization for lock-based MPMC without a blocking mechanism..
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
@@ -52,7 +53,7 @@ protected:
   blocking_queue<T> queue;
 };
 
-// Specialization for lock-based MPMC, using a condition variable as blocking mechanism.
+/// Specialization for lock-based MPMC, using a condition variable as the blocking mechanism.
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
   : public queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
