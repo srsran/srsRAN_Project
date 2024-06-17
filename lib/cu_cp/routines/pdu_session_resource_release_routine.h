@@ -30,7 +30,7 @@ public:
                                        du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
                                        ue_task_scheduler&                                task_sched_,
 
-                                       up_resource_manager&  rrc_ue_up_resource_manager_,
+                                       up_resource_manager&  up_resource_mng_,
                                        srslog::basic_logger& logger_);
 
   void operator()(coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx);
@@ -52,7 +52,7 @@ private:
   ngap_control_message_handler&                 ngap_handler;         // to request UE release
   du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;      // to trigger RRC Reconfiguration at UE
   ue_task_scheduler&                            task_sched;           // to schedule UE release request (over NGAP)
-  up_resource_manager&                          rrc_ue_up_resource_manager; // to get RRC DRB config
+  up_resource_manager&                          up_resource_mng;      // to get RRC DRB config
   srslog::basic_logger&                         logger;
 
   // (sub-)routine requests

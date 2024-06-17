@@ -266,12 +266,12 @@ bool srsran::srs_cu_cp::update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
     up_config_update&            next_config,
-    up_resource_manager&         rrc_ue_up_resource_manager,
+    up_resource_manager&         up_resource_mng,
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger)
 {
   // Set up SRB2 if this is the first DRB to be setup
-  if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
+  if (up_resource_mng.get_nof_drbs() == 0) {
     f1ap_srbs_to_be_setup_mod_item srb2;
     srb2.srb_id = srb_id_t::srb2;
     srb_setup_mod_list.emplace(srb2.srb_id, srb2);
@@ -397,7 +397,7 @@ bool srsran::srs_cu_cp::update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                 pdu_session_resource_setup_list,
     up_config_update&           next_config,
-    up_resource_manager&        rrc_ue_up_resource_manager,
+    up_resource_manager&        up_resource_mng,
     const srslog::basic_logger& logger)
 {
   // Set up SRB1 and SRB2 (this is for inter CU handover, so no SRBs are setup yet)

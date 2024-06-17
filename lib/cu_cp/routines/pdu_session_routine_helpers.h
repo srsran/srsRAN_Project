@@ -81,7 +81,7 @@ bool update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
     up_config_update&            next_config,
-    up_resource_manager&         rrc_ue_up_resource_manager,
+    up_resource_manager&         up_resource_mng,
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger);
 
@@ -91,7 +91,7 @@ bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_ite
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                                    pdu_session_resource_setup_list,
                        up_config_update&           next_config,
-                       up_resource_manager&        rrc_ue_up_resource_manager,
+                       up_resource_manager&        up_resource_mng,
                        const srslog::basic_logger& logger);
 
 bool update_setup_list(e1ap_bearer_context_modification_request&                    bearer_ctxt_mod_request,
