@@ -40,7 +40,7 @@
 #include "apps/services/e2_metric_connector_manager.h"
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
-// This helps prevent false alarms from the thread sanitizer.
+// This include is not unused - it helps prevent false alarms from the thread sanitizer.
 #include "srsran/support/tsan_options.h"
 
 #include <atomic>
