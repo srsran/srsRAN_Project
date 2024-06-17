@@ -42,8 +42,8 @@ protected:
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
 
-    sched = create_scheduler_strategy(
-        scheduler_strategy_params{policy_scheduler_type::time_rr, &srslog::fetch_basic_logger("SCHED")}, sched_cfg.ue);
+    sched_cfg.ue.strategy = policy;
+    sched                 = create_scheduler_strategy(sched_cfg.ue, &srslog::fetch_basic_logger("SCHED"));
 
     if (sched == nullptr) {
       report_fatal_error("Invalid policy");
