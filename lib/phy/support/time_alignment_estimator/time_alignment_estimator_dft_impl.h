@@ -52,9 +52,16 @@ public:
                                       subcarrier_spacing              scs,
                                       double                          max_ta) override;
 
+  // See interface for documentation.
+  time_alignment_measurement
+  estimate(span<const cf_t> symbols, unsigned stride, subcarrier_spacing scs, double max_ta) override;
+
 private:
   /// DFT processor for converting frequency domain to time domain.
   std::unique_ptr<dft_processor> idft;
+
+  /// Estimates the TA assuming the complex symbols are already in the DFT input.
+  time_alignment_measurement estimate(subcarrier_spacing scs, double max_ta);
 };
 
 } // namespace srsran

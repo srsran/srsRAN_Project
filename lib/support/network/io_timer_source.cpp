@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/io/io_timer_source.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/io/io_broker.h"
 #include "srsran/support/timers.h"

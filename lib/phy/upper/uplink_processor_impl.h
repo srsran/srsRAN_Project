@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/srslog/srslog.h"
 #include <utility>
 
 namespace srsran {

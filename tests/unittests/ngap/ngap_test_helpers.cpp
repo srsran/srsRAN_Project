@@ -48,9 +48,12 @@ ngap_test::ngap_test()
   cfg.slice_configurations.push_back(slice_cfg);
   cfg.pdu_session_setup_timeout = std::chrono::seconds(2);
 
-  ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, ue_mng, msg_notifier, timers, ctrl_worker);
+  ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, ue_mng, n2_gw, timers, ctrl_worker);
 
   cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());
+
+  // Initiate N2 TNL association to AMF.
+  report_fatal_error_if_not(ngap->handle_amf_tnl_connection_request(), "Unable to establish connection to AMF");
 }
 
 ngap_test::~ngap_test()
@@ -81,7 +84,7 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   ngap->handle_initial_ue_message(msg);
 
   new_test_ue.ran_ue_id =
-      uint_to_ran_ue_id(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
+      uint_to_ran_ue_id(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
 
   return ue_index;
 }

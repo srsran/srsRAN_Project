@@ -28,6 +28,7 @@
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 

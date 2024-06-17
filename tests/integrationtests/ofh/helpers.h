@@ -27,7 +27,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ru/ru_ofh_configuration.h"
 
-using namespace srsran;
+namespace srsran {
 
 /// Helper function to convert array of port indexes to string.
 inline std::string port_ids_to_str(span<unsigned> ports)
@@ -97,3 +97,5 @@ inline bool is_valid_bw(unsigned bandwidth)
 
   return false;
 }
+
+} // namespace srsran

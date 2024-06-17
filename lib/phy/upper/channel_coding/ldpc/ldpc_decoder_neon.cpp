@@ -86,7 +86,7 @@ void ldpc_decoder_neon::compute_var_to_check_msgs(span<log_likelihood_ratio>    
     int8x16_t c2v_s8  = check_to_var_neon.get_at(i_block);
 
     // v2c = (soft - c2v > LLR_MAX) ? LLR_MAX : (soft - c2v)
-    int8x16_t help_sub_s8 = vsubq_s8(soft_s8, c2v_s8);
+    int8x16_t help_sub_s8 = vqsubq_s8(soft_s8, c2v_s8);
     int8x16_t v2c_s8      = vminq_s8(help_sub_s8, LLR_MAX_s8());
 
     // v2c = (v2c < MIN_LLR) ? MIN_LLR : v2c

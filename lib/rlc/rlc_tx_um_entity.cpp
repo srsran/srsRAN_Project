@@ -61,10 +61,12 @@ rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
-void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
+void rlc_tx_um_entity::handle_sdu(byte_buffer sdu_buf)
 {
+  rlc_sdu sdu_;
   sdu_.time_of_arrival = std::chrono::high_resolution_clock::now();
 
+  sdu_.buf     = std::move(sdu_buf);
   sdu_.pdcp_sn = get_pdcp_sn(sdu_.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
 
   size_t sdu_length = sdu_.buf.length();

@@ -29,6 +29,7 @@
 #include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

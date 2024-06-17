@@ -44,6 +44,9 @@ public:
   /// async task and the caller side.
   void connect_to_amf(std::promise<bool>* completion_signal = nullptr);
 
+  /// \brief Initiate procedure to disconnect from the N2 interface.
+  async_task<void> stop();
+
   /// Checks whether the CU-CP is connected to the AMF.
   bool is_amf_connected() const { return amf_connected.load(std::memory_order_relaxed); }
 

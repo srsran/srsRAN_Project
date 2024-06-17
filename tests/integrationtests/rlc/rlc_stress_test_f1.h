@@ -27,7 +27,6 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
-#include <random>
 
 namespace srsran {
 class f1ap_dummy : public pdcp_tx_lower_notifier,
@@ -44,13 +43,10 @@ public:
   f1ap_dummy(uint32_t id) : logger("F1AP", {gnb_du_id_t::min, id, drb_id_t::drb1, "DL"}) {}
 
   // PDCP -> F1 -> RLC
-  void on_new_pdu(pdcp_tx_pdu pdu) final
+  void on_new_pdu(byte_buffer pdu) final
   {
-    rlc_sdu sdu = {};
-    sdu.buf     = std::move(pdu.buf);
-    sdu.pdcp_sn = pdu.pdcp_sn;
     logger.log_info("Passing F1AP PDU to RLC");
-    rlc_tx_upper->handle_sdu(std::move(sdu));
+    rlc_tx_upper->handle_sdu(std::move(pdu));
   }
 
   // PDCP -> F1AP -> RLC

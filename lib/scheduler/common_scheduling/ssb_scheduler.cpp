@@ -24,6 +24,7 @@
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/ssb_mapping.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

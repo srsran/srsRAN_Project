@@ -29,6 +29,7 @@
 #include "../ue_scheduling/harq_process.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/srslog/srslog.h"
 #include <deque>
 
 namespace srsran {

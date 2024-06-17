@@ -23,8 +23,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pdcp/pdcp_config.h"
-#include "srsran/pdcp/pdcp_tx_pdu.h"
 #include "srsran/security/security.h"
 
 /*
@@ -61,7 +59,7 @@ public:
   pdcp_tx_lower_notifier(const pdcp_tx_lower_notifier&&)            = delete;
   pdcp_tx_lower_notifier& operator=(const pdcp_tx_lower_notifier&&) = delete;
 
-  virtual void on_new_pdu(pdcp_tx_pdu pdu)      = 0; ///< Pass PDCP PDU to the lower layers.
+  virtual void on_new_pdu(byte_buffer pdu)      = 0; ///< Pass PDCP PDU to the lower layers.
   virtual void on_discard_pdu(uint32_t pdcp_sn) = 0; ///< Order lower layers to discard PDU
 };
 

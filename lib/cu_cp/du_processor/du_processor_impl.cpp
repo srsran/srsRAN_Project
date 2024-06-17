@@ -80,7 +80,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   context.name = request.gnb_du_name;
 
   // Check if CU-CP is in a state to accept a new DU connection.
-  if (not cfg.du_setup_notif->on_du_setup_request(request)) {
+  if (not cfg.du_setup_notif->on_du_setup_request(context.du_index, request)) {
     res.result =
         du_setup_result::rejected{cause_misc_t::unspecified, "CU-CP is not in a state to accept a new DU connection"};
     return res;
@@ -222,6 +222,7 @@ bool du_processor_impl::create_rrc_ue(du_ue&                                 ue,
   rrc_ue_create_msg.cell.tac              = cell_db.at(ue.get_pcell_index()).tac;
   rrc_ue_create_msg.cell.pci              = cell_db.at(ue.get_pcell_index()).pci;
   rrc_ue_create_msg.cell.bands            = cell_db.at(ue.get_pcell_index()).bands;
+  rrc_ue_create_msg.sec_context           = &ue.get_security_context();
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
   rrc_ue_create_msg.measurement_notifier  = &ue.get_rrc_ue_measurement_notifier();

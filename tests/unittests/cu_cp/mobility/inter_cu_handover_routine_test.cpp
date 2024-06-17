@@ -81,9 +81,8 @@ protected:
 
   void check_handover_required_was_sent_to_amf() const
   {
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
-              asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+    ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
               asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ho_required);
   }
 

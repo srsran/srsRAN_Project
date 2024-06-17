@@ -25,6 +25,7 @@
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/error_handling.h"
 

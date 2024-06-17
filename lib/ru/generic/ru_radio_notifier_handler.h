@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/radio/radio_notification_handler.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 

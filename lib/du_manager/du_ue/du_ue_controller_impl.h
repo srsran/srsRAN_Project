@@ -23,6 +23,7 @@
 #pragma once
 
 #include "du_ue_manager_repository.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_du {

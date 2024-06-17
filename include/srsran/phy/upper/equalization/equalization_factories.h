@@ -27,6 +27,7 @@
 #pragma once
 
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/equalization/channel_equalizer_algorithm_type.h"
 
 namespace srsran {
 
@@ -42,7 +43,10 @@ public:
   virtual std::unique_ptr<channel_equalizer> create() = 0;
 };
 
-/// Creates a Zero Forcing channel equalizer factory.
-std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_factory_zf();
+/// \brief Creates a generic channel equalizer factory.
+/// \param[in] type Selects the channel equalizer algorithm type.
+/// \return A generic chanel equalizer factory.
+std::shared_ptr<channel_equalizer_factory>
+create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type type = channel_equalizer_algorithm_type::zf);
 
 } // namespace srsran

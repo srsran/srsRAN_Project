@@ -32,6 +32,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
+#include "srsran/srslog/srslog.h"
 #include <mutex>
 
 namespace srsran {

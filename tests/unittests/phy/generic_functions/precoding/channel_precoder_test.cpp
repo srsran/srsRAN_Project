@@ -67,8 +67,6 @@ protected:
   static std::shared_ptr<channel_precoder_factory> precoder_factory;
   static std::unique_ptr<channel_precoder>         precoder;
 
-  static void SetUpTestSuite() {}
-
   void SetUp() override
   {
     const std::string& type = std::get<0>(GetParam());

@@ -43,8 +43,10 @@
 #include "lib/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1u/du/f1u_gateway.h"
@@ -248,7 +250,6 @@ private:
 public:
   std::unique_ptr<f1ap_message_notifier>        du_rx_pdu_notifier;
   std::array<std::atomic<bool>, MAX_NOF_DU_UES> ue_created_flag_list;
-  unsigned                                      next_gnb_cu_ue_f1ap_id = 0;
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
@@ -258,8 +259,6 @@ public:
   }
 
 private:
-  unsigned get_next_gnb_cu_ue_f1ap_id() { return next_gnb_cu_ue_f1ap_id++; }
-
   void handle_message(const f1ap_message& msg)
   {
     switch (msg.pdu.type().value) {
@@ -276,31 +275,42 @@ private:
 
   void handle_init_msg(const f1ap_message& msg)
   {
-    const asn1::f1ap::init_msg_s& init_msg = msg.pdu.init_msg();
+    using namespace asn1::f1ap;
+    using init_opts            = f1ap_elem_procs_o::init_msg_c::types_opts;
+    const init_msg_s& init_msg = msg.pdu.init_msg();
     switch (init_msg.value.type().value) {
-      case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request: {
+      case init_opts::f1_setup_request: {
         du_rx_pdu_notifier->on_new_message(test_helpers::generate_f1_setup_response(msg));
       } break;
-      case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
+      case init_opts::f1_removal_request: {
         du_rx_pdu_notifier->on_new_message(test_helpers::generate_f1_removal_response(msg));
       } break;
-      case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
-        // Send UE Context Modification to create DRB1.
-        f1ap_message msg2 = generate_ue_context_modification_request({drb_id_t::drb1});
-        // Do not send RRC container.
-        msg2.pdu.init_msg().value.ue_context_mod_request()->rrc_container_present = false;
+      case init_opts::init_ul_rrc_msg_transfer: {
+        // Send DL RRC Message Transfer (which triggers the exit of fallback mode).
+        gnb_du_ue_f1ap_id_t du_ue_id =
+            int_to_gnb_du_ue_f1ap_id(init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+        gnb_cu_ue_f1ap_id_t cu_ue_id =
+            int_to_gnb_cu_ue_f1ap_id(init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+        f1ap_message dl_msg = test_helpers::create_dl_rrc_message_transfer(
+            du_ue_id, cu_ue_id, srb_id_t::srb0, byte_buffer::create({0x1, 0x2, 0x3}).value());
+        du_rx_pdu_notifier->on_new_message(dl_msg);
+      } break;
+      case init_opts::ul_rrc_msg_transfer: {
+        // Send UE Context Setup to create DRB1.
+        gnb_du_ue_f1ap_id_t du_ue_id =
+            int_to_gnb_du_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+        gnb_cu_ue_f1ap_id_t cu_ue_id =
+            int_to_gnb_cu_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+        f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(cu_ue_id, du_ue_id, {drb_id_t::drb1});
+        auto&        ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
+        // Do not send RRC container, otherwise we have to send an RLC ACK.
+        ue_ctxt_setup.rrc_container_present = false;
         // Note: Use UM because AM requires status PDUs.
-        auto& drb1 = msg2.pdu.init_msg()
-                         .value.ue_context_mod_request()
-                         ->drbs_to_be_setup_mod_list[0]
-                         ->drbs_to_be_setup_mod_item();
+        auto& drb1          = ue_ctxt_setup.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
         drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
             7; // UM in default configs
-        msg2.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id = get_next_gnb_cu_ue_f1ap_id();
-        msg2.pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id =
-            init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
-        du_rx_pdu_notifier->on_new_message(msg2);
+        du_rx_pdu_notifier->on_new_message(uectxt_msg);
       } break;
       default:
         report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());
@@ -309,9 +319,10 @@ private:
 
   void handle_success_outcome(const asn1::f1ap::successful_outcome_s& succ_outcome)
   {
+    using namespace asn1::f1ap;
     switch (succ_outcome.value.type().value) {
-      case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-        ue_created_flag_list[succ_outcome.value.ue_context_mod_resp()->gnb_du_ue_f1ap_id].store(
+      case f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
+        ue_created_flag_list[succ_outcome.value.ue_context_setup_resp()->gnb_du_ue_f1ap_id].store(
             true, std::memory_order_relaxed);
       } break;
       default:
@@ -725,6 +736,8 @@ public:
   {
     using namespace std::chrono_literals;
 
+    rnti_t rnti = du_ue_index_to_rnti(ue_idx);
+
     // Wait until it's a full UL slot to send Msg3.
     auto next_ul_slot = [this]() {
       return not cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.has_value() or
@@ -737,12 +750,27 @@ public:
     mac_rx_data_indication rx_ind;
     rx_ind.sl_rx      = next_sl_tx - tx_rx_delay;
     rx_ind.cell_index = to_du_cell_index(0);
-    rx_ind.pdus.push_back(
-        mac_rx_pdu{du_ue_index_to_rnti(ue_idx),
-                   0,
-                   0,
-                   byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()});
+    rx_ind.pdus.push_back(mac_rx_pdu{
+        rnti, 0, 0, byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()});
     du_hi->get_pdu_handler().handle_rx_data_indication(std::move(rx_ind));
+
+    // Wait for Msg4.
+    auto dl_pdu_sched = [this, rnti]() {
+      if (sim_phy.slot_dl_result.dl_res != nullptr) {
+        return find_ue_pdsch_with_lcid(rnti, LCID_SRB0, sim_phy.slot_dl_result.dl_res->ue_grants) != nullptr;
+      }
+      return false;
+    };
+    run_slot_until(dl_pdu_sched);
+
+    // Push MAC UL SDU that will trigger UE Context Setup.
+    // Note: MAC UL SDU will make the UE go out of fallback mode.
+    rx_ind             = {};
+    rx_ind.sl_rx       = next_sl_tx - tx_rx_delay;
+    rx_ind.cell_index  = to_du_cell_index(0);
+    byte_buffer ul_pdu = byte_buffer::create({0x01, 0x04, 0xc0, 0x00, 0x00, 0x00}).value(); // SRB1, RLC SN 0
+    rx_ind.pdus.push_back(mac_rx_pdu{du_ue_index_to_rnti(ue_idx), 0, 0, ul_pdu.copy()});
+    du_hi->get_pdu_handler().handle_rx_data_indication(rx_ind);
 
     // Wait for UE Context Modification Response to arrive to CU.
     while (not sim_cu_cp.ue_created_flag_list[ue_idx]) {
@@ -798,7 +826,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdu_copy.value().length(), std::memory_order_relaxed);
-        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value()), .pdcp_sn = pdcp_sn_list[bearer_idx]});
+        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value())});
       }
     })) {
       // keep trying to push new PDUs.

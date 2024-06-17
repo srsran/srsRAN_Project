@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
 #include "srsran/ran/five_qi.h"
 
@@ -63,6 +64,8 @@ struct cu_up_unit_config {
   cu_up_unit_metrics_config metrics;
   /// Loggers.
   cu_up_unit_logger_config loggers;
+  /// PCAPs.
+  cu_up_unit_pcap_config pcap_cfg;
   /// QoS configuration.
   std::vector<cu_up_unit_qos_config> qos_cfg;
 };

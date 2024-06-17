@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

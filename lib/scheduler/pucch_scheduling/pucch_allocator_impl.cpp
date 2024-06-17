@@ -26,6 +26,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/srslog/srslog.h"
 
 //////////////     Helper functions       //////////////
 

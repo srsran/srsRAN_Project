@@ -21,6 +21,7 @@
  */
 
 #include "mac_fapi_adaptor_impl.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

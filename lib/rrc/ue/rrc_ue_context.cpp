@@ -30,11 +30,13 @@ rrc_ue_context_t::rrc_ue_context_t(const ue_index_t                       ue_ind
                                    const rnti_t                           c_rnti_,
                                    const rrc_cell_context&                cell_,
                                    const rrc_ue_cfg_t&                    cfg_,
+                                   security::security_context&            sec_context_,
                                    std::optional<rrc_ue_transfer_context> rrc_context_) :
   ue_index(ue_index_),
   c_rnti(c_rnti_),
   cell(cell_),
   cfg(cfg_),
+  sec_context(sec_context_),
   transfer_context(rrc_context_),
   logger(srslog::fetch_basic_logger("RRC"))
 {

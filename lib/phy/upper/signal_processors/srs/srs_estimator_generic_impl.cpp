@@ -24,7 +24,6 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tensor.h"
-#include "srsran/phy/constants.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_result.h"
@@ -32,24 +31,32 @@
 #include "srsran/ran/srs/srs_constants.h"
 #include "srsran/ran/srs/srs_information.h"
 #include "srsran/srsvec/add.h"
-#include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/mean.h"
 #include "srsran/srsvec/prod.h"
 
 using namespace srsran;
 
-bounded_bitset<srs_estimator_generic_impl::max_symbol_size>
-srs_estimator_generic_impl::generate_mask(unsigned comb_size, unsigned sequence_length)
+void srs_estimator_generic_impl::compensate_phase_shift(span<cf_t> mean_lse,
+                                                        float      phase_shift_subcarrier,
+                                                        float      phase_shift_offset)
 {
-  bounded_bitset<NRE> re_mask(NRE);
-  for (unsigned k = 0; k != NRE; k += comb_size) {
-    re_mask.set(k);
-  }
+  unsigned sequence_length = mean_lse.size();
 
-  // Make RB mask with only active RB.
-  bounded_bitset<MAX_RB> rb_mask = ~bounded_bitset<MAX_RB>((sequence_length * comb_size) / NRE);
+  // Generate phase indices.
+  span<unsigned> phase_indices = span<unsigned>(temp_phase).first(sequence_length);
+  std::generate(
+      phase_indices.begin(), phase_indices.end(), [phase_shift_subcarrier, phase_shift_offset, n = 0]() mutable {
+        return static_cast<int>(std::round(static_cast<float>(cexp_table_size) *
+                                           (static_cast<float>(n++) * phase_shift_subcarrier + phase_shift_offset) /
+                                           TWOPI));
+      });
 
-  return rb_mask.kronecker_product<NRE>(re_mask);
+  // Generate complex exponential.
+  span<cf_t> cexp = span<cf_t>(temp_cexp).first(sequence_length);
+  cexp_table.generate(cexp, phase_indices);
+
+  // Compensate phase shift.
+  srsvec::prod(mean_lse, cexp, mean_lse);
 }
 
 srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_reader&        grid,
@@ -105,9 +112,6 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
     static_vector<cf_t, max_seq_length> sequence(info.sequence_length);
     deps.sequence_generator->generate(sequence, info.sequence_group, info.sequence_number, info.n_cs, info.n_cs_max);
 
-    // Generate allocation mask.
-    bounded_bitset<max_symbol_size> mask = generate_mask(info.comb_size, info.sequence_length);
-
     // Iterate receive ports.
     for (unsigned i_rx_port_index = 0; i_rx_port_index != nof_rx_ports; ++i_rx_port_index) {
       unsigned i_rx_port = config.ports[i_rx_port_index];
@@ -122,7 +126,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
            ++i_symbol) {
         // Extract received sequence.
         static_vector<cf_t, max_seq_length> rx_sequence(info.sequence_length);
-        grid.get(rx_sequence, i_rx_port, i_symbol, info.mapping_initial_subcarrier, mask);
+        grid.get(rx_sequence, i_rx_port, i_symbol, info.mapping_initial_subcarrier, info.comb_size);
 
         // Temporary LSE.
         span<cf_t> lse = rx_sequence;
@@ -147,7 +151,7 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
       }
 
       // Estimate TA.
-      time_alignment_measurement ta_meas = deps.ta_estimator->estimate(mean_lse, mask, scs, max_ta);
+      time_alignment_measurement ta_meas = deps.ta_estimator->estimate(mean_lse, info.comb_size, scs, max_ta);
 
       // Combine time alignment measurement.
       result.time_alignment.time_alignment += ta_meas.time_alignment;
@@ -171,19 +175,13 @@ srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_re
 
       // Calculate subcarrier phase shift in radians.
       float phase_shift_subcarrier =
-          static_cast<float>(2.0F * M_PI * result.time_alignment.time_alignment * scs_to_khz(scs) * 1000 * comb_size);
+          static_cast<float>(TWOPI * result.time_alignment.time_alignment * scs_to_khz(scs) * 1000 * comb_size);
 
       // Calculate the initial phase shift in radians.
       float phase_shift_offset = phase_shift_subcarrier * (info.mapping_initial_subcarrier % comb_size) / comb_size;
 
-      // Apply phase shift in frequency domain.
-      std::transform(mean_lse.begin(),
-                     mean_lse.end(),
-                     mean_lse.begin(),
-                     [phase_shift_subcarrier, phase_shift_offset, n = 0](cf_t in) mutable {
-                       return in *
-                              std::polar(1.0F, phase_shift_subcarrier * static_cast<float>(n++) + phase_shift_offset);
-                     });
+      // Compensate phase shift.
+      compensate_phase_shift(mean_lse, phase_shift_subcarrier, phase_shift_offset);
 
       // Calculate channel wideband coefficient.
       cf_t coefficient = srsvec::mean(mean_lse);

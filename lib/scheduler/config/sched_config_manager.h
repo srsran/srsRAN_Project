@@ -25,6 +25,7 @@
 #include "ue_configuration.h"
 #include "srsran/adt/detail/operations.h"
 #include "srsran/scheduler/config/scheduler_config.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

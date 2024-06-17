@@ -25,6 +25,7 @@
 #include "srsran/mac/mac_config.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <atomic>

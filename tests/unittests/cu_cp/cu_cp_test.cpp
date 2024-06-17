@@ -233,10 +233,10 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
   cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
 
   // check that the UE Context Release Request was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
             asn1::ngap::cause_c::types::radio_network);
 }
 
@@ -264,7 +264,7 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
   cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
 
   // check that the UE Context Release Request was not sent to the AMF
-  ASSERT_NE(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_NE(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
 }
 
@@ -379,7 +379,7 @@ TEST_F(cu_cp_test,
       .on_new_message(test_helpers::generate_ue_context_release_complete(cu_ue_id, du_ue_id));
 
   // check that the ErrorIndication was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind);
 }
 
@@ -408,10 +408,10 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   f1c_gw.get_du(du_index).on_new_message(test_helpers::generate_ue_context_release_request(cu_ue_id, du_ue_id));
 
   // Check that the UE Context Release Request was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
             asn1::ngap::cause_c::types_opts::options::radio_network);
 }
 
@@ -439,7 +439,7 @@ TEST_F(
       .on_new_message(test_helpers::generate_ue_context_release_request(cu_ue_id, du_ue_id));
 
   // Check that the UE Context Release Request was not sent to the AMF
-  ASSERT_NE(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_NE(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
 
   // Check that the Ue Context Release Command was sent to the DU
@@ -512,11 +512,10 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
       .handle_message(bearer_ctxt_mod_resp);
 
   // Check that the Handover Request Ack was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(),
-            asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type().value,
             asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::ho_request_ack);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.ho_request_ack()->amf_ue_ngap_id,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.ho_request_ack()->amf_ue_ngap_id,
             amf_ue_id_to_uint(amf_ue_id));
 
   // Inject RRC Reconfiguration Complete with transaction_id=0
@@ -527,9 +526,8 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   f1c_gw.get_du(du_index).on_new_message(rrc_recfg_complete);
 
   // Check that the Handover Notify was sent to the AMF
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ho_notify);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msgs.back().pdu.init_msg().value.ho_notify()->amf_ue_ngap_id,
-            amf_ue_id_to_uint(amf_ue_id));
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ho_notify()->amf_ue_ngap_id, amf_ue_id_to_uint(amf_ue_id));
 }

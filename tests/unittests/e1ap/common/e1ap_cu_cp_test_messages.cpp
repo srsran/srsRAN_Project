@@ -21,6 +21,7 @@
  */
 
 #include "e1ap_cu_cp_test_messages.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -67,7 +68,8 @@ e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   e1ap_message e1_setup_request = generate_cu_up_e1_setup_request_base();
   auto&        setup_req        = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
 
-  setup_req->supported_plmns.push_back(generate_supported_plmns_item(6576));
+  setup_req->supported_plmns.push_back(
+      generate_supported_plmns_item(config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0)));
 
   return e1_setup_request;
 }

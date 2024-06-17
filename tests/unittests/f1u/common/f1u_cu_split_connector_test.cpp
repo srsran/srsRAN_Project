@@ -21,7 +21,7 @@
  */
 
 #include "tests/unittests/gateways/test_helpers.h"
-#include "srsran/f1u/cu_up/split_connector/f1u_split_connector.h"
+#include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/srslog/srslog.h"
@@ -141,7 +141,9 @@ protected:
     nru_gw_config.bind_port                  = 0;
     nru_gw_config.reuse_addr                 = true;
     udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
-    cu_gw  = std::make_unique<f1u_split_connector>(udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value());
+
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value()};
+    cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
 
@@ -212,9 +214,9 @@ protected:
   std::atomic<bool>                                 stop_token = {false};
   dummy_network_gateway_data_notifier_with_src_addr server_data_notifier;
 
-  srs_cu_up::f1u_config                f1u_cu_up_cfg;
-  std::unique_ptr<f1u_split_connector> cu_gw;
-  std::optional<uint16_t>              cu_gw_bind_port = 0;
+  srs_cu_up::f1u_config                  f1u_cu_up_cfg;
+  std::unique_ptr<f1u_cu_up_udp_gateway> cu_gw;
+  std::optional<uint16_t>                cu_gw_bind_port = 0;
 
   srslog::basic_logger& logger         = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger& f1u_logger_cu  = srslog::fetch_basic_logger("CU-F1-U", false);
@@ -248,7 +250,6 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_with_dl_teid_attached)
   ASSERT_TRUE(cu_buf.has_value());
 
   nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
   sdu.t_pdu          = cu_buf.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu));
@@ -282,7 +283,6 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
   ASSERT_TRUE(cu_buf.has_value());
 
   nru_dl_message sdu = {};
-  sdu.pdcp_sn        = 0;
   sdu.t_pdu          = cu_buf.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu));
@@ -376,7 +376,6 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   ASSERT_TRUE(cu_buf1.has_value());
 
   nru_dl_message sdu1 = {};
-  sdu1.pdcp_sn        = 0;
   sdu1.t_pdu          = cu_buf1.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu1));
@@ -398,7 +397,6 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   ASSERT_TRUE(cu_buf2.has_value());
 
   nru_dl_message sdu2 = {};
-  sdu2.pdcp_sn        = 0;
   sdu2.t_pdu          = cu_buf2.value().deep_copy().value();
 
   cu_bearer->on_new_pdu(std::move(sdu2));

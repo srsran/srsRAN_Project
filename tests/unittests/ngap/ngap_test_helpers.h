@@ -90,7 +90,7 @@ protected:
   timer_manager                    timers;
   manual_task_worker               ctrl_worker{128};
   ue_manager                       ue_mng{{}, {}, timers, ctrl_worker};
-  dummy_ngap_amf_notifier          msg_notifier;
+  dummy_n2_gateway                 n2_gw;
   dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
   std::unique_ptr<ngap_interface>  ngap;

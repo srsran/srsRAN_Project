@@ -50,7 +50,7 @@ protected:
       detector_factory_spy = std::make_shared<pucch_detector_factory_spy>();
 
       // Create factories required by the PUCCH demodulator factory.
-      std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
+      std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
       ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
 
       std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();

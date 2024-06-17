@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-version: '3.9'
-
 services:
   5gc:
     container_name: open5gs_5gc
@@ -124,11 +122,11 @@ services:
 
   grafana:
     container_name: grafana
-    image: grafana/grafana-oss:${GRAFANA_VERSION}
+    image: srsran/grafana
+    build:
+      context: grafana
     volumes:
       - grafana-storage:/var/lib/grafana:rw
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/etc/dashboards
     env_file:
       - .env
     depends_on:

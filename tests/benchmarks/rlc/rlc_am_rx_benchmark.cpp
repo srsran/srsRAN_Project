@@ -22,6 +22,7 @@
 
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "lib/rlc/rlc_tx_am_entity.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <getopt.h>
@@ -128,11 +129,13 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   // Set Tx config
   rlc_tx_am_config config;
   config.sn_field_length = rlc_am_sn_size::size18bits;
+  config.pdcp_sn_len     = pdcp_sn_size::size18bits;
   config.t_poll_retx     = 45;
   config.max_retx_thresh = 4;
   config.poll_pdu        = 4;
   config.poll_byte       = 25;
   config.queue_size      = 4096;
+  config.max_window      = 0;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
@@ -168,28 +171,12 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   rlc_tx->set_status_provider(tester.get());
 
   // Prepare SDU list for benchmark
-  std::vector<byte_buffer> sdu_list  = {};
-  int                      num_sdus  = params.nof_repetitions + 1; // +1 to expire t_reassembly on setup
-  int                      num_bytes = params.sdu_size;
+  int num_sdus  = params.nof_repetitions + 1; // +1 to expire t_reassembly on setup
+  int num_bytes = params.sdu_size;
+  int num_pdus  = 0;
+  int pdu_size  = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
-    byte_buffer sdu_buf = {};
-    for (int j = 0; j < num_bytes; ++j) {
-      report_error_if_not(sdu_buf.append(rand()), "Failed to allocate SDU");
-    }
-    sdu_list.push_back(std::move(sdu_buf));
-  }
-
-  int num_pdus = 0;
-  int pdu_size = params.pdu_size;
-  for (int i = 0; i < num_sdus; i++) {
-    rlc_sdu sdu;
-    auto    pdcp_hdr = byte_buffer::create({0x80, 0x00, 0x16});
-    report_error_if_not(!pdcp_hdr.is_error(), "Failed to allocate byte_buffer");
-    byte_buffer pdcp_hdr_buf = std::move(pdcp_hdr.value());
-    byte_buffer sdu_buf      = std::move(sdu_list[i]);
-    sdu.pdcp_sn              = i;
-    sdu.buf                  = std::move(pdcp_hdr_buf);
-    report_error_if_not(sdu.buf.append(std::move(sdu_buf)), "Failed to allocate SDU");
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, num_bytes, i);
     rlc_tx->handle_sdu(std::move(sdu));
     while (rlc_tx->get_buffer_state() > 0) {
       std::vector<uint8_t> pdu_buf;

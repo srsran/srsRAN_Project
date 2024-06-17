@@ -24,10 +24,10 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 
 #include <cstdint>
+#include <optional>
 
 namespace srsran {
 
@@ -173,8 +173,6 @@ struct nru_assistance_information {
 struct nru_dl_message {
   /// Transport PDU, e.g. PDCP PDU.
   byte_buffer t_pdu;
-  /// PDCP Sequence Number of the t_pdu.
-  std::optional<uint32_t> pdcp_sn;
   /// NR-U DL User Data.
   nru_dl_user_data dl_user_data;
 
@@ -186,14 +184,13 @@ struct nru_dl_message {
       return default_error_t{};
     }
     copy.t_pdu        = std::move(buf.value());
-    copy.pdcp_sn      = pdcp_sn;
     copy.dl_user_data = dl_user_data;
     return copy;
   }
 
   bool operator==(const nru_dl_message& other) const
   {
-    return t_pdu == other.t_pdu && pdcp_sn == other.pdcp_sn && dl_user_data == other.dl_user_data;
+    return t_pdu == other.t_pdu && dl_user_data == other.dl_user_data;
   }
   bool operator!=(const nru_dl_message& other) const { return not(*this == other); }
 };

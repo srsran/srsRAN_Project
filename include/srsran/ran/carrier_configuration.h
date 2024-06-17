@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "band_helper.h"
+#include "srsran/ran/nr_band.h"
 #include <cstdint>
 
 namespace srsran {

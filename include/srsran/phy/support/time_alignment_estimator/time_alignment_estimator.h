@@ -55,6 +55,16 @@ public:
                                               bounded_bitset<max_nof_symbols> mask,
                                               subcarrier_spacing              scs,
                                               double                          max_ta = 0.0) = 0;
+
+  /// \brief Estimates the time alignment from frequency domain symbols.
+  /// \param[in] symbols Complex frequency domain symbols.
+  /// \param[in] stride  Distance between the complex symbols within an OFDM symbol.
+  /// \param[in] scs     Subcarrier spacing.
+  /// \param[in] max_ta  Maximum absolute time alignment measurement if it is not zero.
+  /// \return The measured time alignment.
+  /// \remark An assertion is triggered if the number of symbols times the stride exceed the frequency domain buffer.
+  virtual time_alignment_measurement
+  estimate(span<const cf_t> symbols, unsigned stride, subcarrier_spacing scs, double max_ta = 0.0) = 0;
 };
 
 } // namespace srsran

@@ -49,6 +49,7 @@ struct rrc_ue_creation_message {
   ue_index_t                             ue_index;
   rnti_t                                 c_rnti;
   rrc_cell_context                       cell;
+  security::security_context*            sec_context;
   rrc_pdu_f1ap_notifier*                 f1ap_pdu_notifier;
   rrc_ue_context_update_notifier*        rrc_ue_cu_cp_notifier;
   rrc_ue_measurement_notifier*           measurement_notifier;

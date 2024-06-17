@@ -32,12 +32,14 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+class n2_connection_client;
+
 /// Creates an instance of an NGAP interface, notifying outgoing packets on the specified listener object.
 std::unique_ptr<ngap_interface> create_ngap(ngap_configuration&                ngap_cfg_,
                                             ngap_cu_cp_notifier&               cu_cp_ue_creation_notifier_,
                                             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
                                             ngap_ue_manager&                   ue_manager_,
-                                            ngap_message_notifier&             ngap_notifier_,
+                                            n2_connection_client&              n2_gateway_handler_,
                                             timer_manager&                     timers_,
                                             task_executor&                     ctrl_exec_);
 

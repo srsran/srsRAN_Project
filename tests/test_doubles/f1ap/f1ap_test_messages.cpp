@@ -229,7 +229,8 @@ f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue
   init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id          = (unsigned)du_ue_id;
 
-  init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000000000000001100110110000"); // 6576 in decimal
+  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+  init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci);
   init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
   init_ul_rrc->c_rnti = to_value(crnti);
 
@@ -253,6 +254,24 @@ f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue
   }
 
   return init_ul_rrc_msg;
+}
+
+f1ap_message srsran::test_helpers::create_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                  gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                  srb_id_t            srb_id,
+                                                                  byte_buffer         rrc_container)
+{
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+  auto& dlmsg = *msg.pdu.init_msg().value.dl_rrc_msg_transfer();
+
+  dlmsg.gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  dlmsg.gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  dlmsg.srb_id            = (uint8_t)srb_id;
+  dlmsg.rrc_container     = std::move(rrc_container);
+
+  return msg;
 }
 
 f1ap_message srsran::test_helpers::create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,

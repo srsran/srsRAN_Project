@@ -21,6 +21,7 @@
  */
 
 #include "metrics_handler_impl.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/srsran_assert.h"
 #include <thread>

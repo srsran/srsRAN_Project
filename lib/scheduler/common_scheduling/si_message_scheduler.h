@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

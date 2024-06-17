@@ -23,6 +23,7 @@
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/gateways/sctp_network_client_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <condition_variable>
 #include <gtest/gtest.h>
@@ -43,6 +44,7 @@ public:
     assoc_factory(std::make_unique<server_assoc_handler_factory>(*this)),
     server_cfg([this]() {
       sctp_network_server_config cfg{{}, *server_broker, *assoc_factory};
+      cfg.sctp.if_name      = "SERVER";
       cfg.sctp.ppid         = NGAP_PPID;
       cfg.sctp.bind_address = "127.0.0.1";
       cfg.sctp.bind_port    = 0;
@@ -62,7 +64,8 @@ public:
       report_fatal_error_if_not(ret.second, "Failed to insert Client Association");
 
       // Create client.
-      sctp_network_client_config client_cfg{fmt::format("client{}", i), {}, *client_broker};
+      sctp_network_client_config client_cfg{{}, *client_broker};
+      client_cfg.sctp.if_name   = fmt::format("client{}", i);
       client_cfg.sctp.ppid      = NGAP_PPID;
       ret.first->second->client = create_sctp_network_client(client_cfg);
       report_fatal_error_if_not(ret.first->second->client != nullptr, "Failed to create Client");
@@ -72,7 +75,7 @@ public:
     for (auto& assoc : client_associations) {
       int server_port             = server->get_listen_port().value();
       assoc.second->client_sender = assoc.second->client->connect_to(
-          "connection", server_cfg.sctp.bind_address, server_port, create_client_receiver(assoc.first));
+          "server", server_cfg.sctp.bind_address, server_port, create_client_receiver(assoc.first));
       report_fatal_error_if_not(assoc.second->client_sender != nullptr, "Failed to connect Client");
     }
 
@@ -192,6 +195,7 @@ class sctp_network_link_test : public base_sctp_network_link_test, public ::test
 {
 public:
   sctp_network_link_test() : base_sctp_network_link_test(GetParam().nof_clients) {}
+  ~sctp_network_link_test() { srslog::flush(); }
 };
 
 static byte_buffer create_data(unsigned start_val, unsigned nof_vals)

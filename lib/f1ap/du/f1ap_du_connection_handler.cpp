@@ -22,6 +22,7 @@
 
 #include "f1ap_du_connection_handler.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/srslog/srslog.h"
 #include <thread>
 
 using namespace srsran;

@@ -26,6 +26,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/srslog/logger.h"
 #include <mutex>
 
 namespace srsran {

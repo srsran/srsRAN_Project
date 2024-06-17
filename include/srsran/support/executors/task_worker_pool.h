@@ -25,6 +25,7 @@
 #include "unique_thread.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/detail/priority_task_queue.h"
 #include "srsran/support/executors/task_executor.h"
 

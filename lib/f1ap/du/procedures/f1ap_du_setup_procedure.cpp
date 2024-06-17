@@ -24,6 +24,7 @@
 #include "../f1ap_du_context.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/async/async_timer.h"
 
@@ -201,15 +202,15 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 
   if (not transaction.valid()) {
     // Transaction could not be allocated.
-    logger.error("F1 Setup: Procedure cancelled. Cause: Failed to allocate transaction.");
-    res.success   = false;
+    logger.error("{}: Procedure cancelled. Cause: Failed to allocate transaction.", name());
+    res.result    = f1_setup_response_message::result_code::proc_failure;
     du_ctxt.du_id = gnb_du_id_t::invalid;
     return res;
   }
   if (transaction.aborted()) {
     // Abortion/timeout case.
-    logger.error("F1 Setup: Procedure cancelled. Cause: Timeout reached.");
-    res.success   = false;
+    logger.error("{}: Procedure cancelled. Cause: Timeout reached.", name());
+    res.result    = f1_setup_response_message::result_code::timeout;
     du_ctxt.du_id = gnb_du_id_t::invalid;
     return res;
   }
@@ -217,7 +218,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    res.success = true;
+    res.result = f1_setup_response_message::result_code::success;
 
     // Update F1 DU Context (taking values from request).
     du_ctxt.du_id       = request.gnb_du_id;
@@ -227,17 +228,19 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
       du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].nr_cgi;
     }
 
-    logger.info("F1 Setup: Procedure completed successfully.");
+    logger.info("{}: Procedure completed successfully.", name());
 
   } else if (cu_pdu_response.has_value() and cu_pdu_response.error().value.type().value !=
                                                  f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
-    logger.error("Received PDU with unexpected PDU type {}", cu_pdu_response.value().value.type().to_string());
-    res.success   = false;
+    logger.error(
+        "{}: Received PDU with unexpected PDU type {}", name(), cu_pdu_response.value().value.type().to_string());
+    res.result    = f1_setup_response_message::result_code::invalid_response;
     du_ctxt.du_id = gnb_du_id_t::invalid;
   } else {
-    logger.debug("Received PDU with unsuccessful outcome cause={}",
-                 get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause));
-    res.success   = false;
+    const auto& fail           = *cu_pdu_response.error().value.f1_setup_fail();
+    res.result                 = f1_setup_response_message::result_code::f1_setup_failure;
+    res.f1_setup_failure_cause = get_cause_str(fail.cause);
+    logger.debug("{}: F1 Setup Failure with cause \"{}\"", name(), get_cause_str(fail.cause));
     du_ctxt.du_id = gnb_du_id_t::invalid;
   }
   return res;

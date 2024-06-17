@@ -19,7 +19,7 @@
 #
 
 set(SOURCES
-        channel_equalizer_zf_impl.cpp
+        channel_equalizer_generic_impl.cpp
         equalization_factories.cpp)
 
 add_library(srsran_channel_equalizer STATIC ${SOURCES})

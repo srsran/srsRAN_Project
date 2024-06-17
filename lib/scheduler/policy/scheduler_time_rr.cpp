@@ -23,6 +23,7 @@
 #include "scheduler_time_rr.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
@@ -158,8 +159,8 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
       dl_harq_candidates.push_back(h);
     } else {
       // No empty HARQs are available. Log this occurrence.
-      if (ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
-        // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+      if (ue_cc.harqs.find_pending_dl_retx() != nullptr) {
+        // HARQs are waiting for a grant for a retransmission.
         logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
                      ue_cc.ue_index,
                      ue_cc.rnti());
@@ -211,8 +212,8 @@ get_ue_ul_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
       ul_harq_candidates.push_back(h);
     } else {
       // No empty HARQs are available. Log this occurrence.
-      if (ue_cc.harqs.find_ul_harq_waiting_ack() == nullptr) {
-        // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+      if (ue_cc.harqs.find_pending_ul_retx() != nullptr) {
+        // HARQs are waiting for a grant for a retransmission.
         logger.debug("ue={} rnti={} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",
                      ue_cc.ue_index,
                      ue_cc.rnti());

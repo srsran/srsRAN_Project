@@ -22,19 +22,16 @@
 
 #pragma once
 
-#include "../common/f1ap_du_test_messages.h"
-#include "../common/test_helpers.h"
 #include "lib/du_manager/converters/f1ap_configuration_helpers.h"
-#include "lib/f1ap/common/f1ap_asn1_utils.h"
 #include "srsran/adt/slotted_array.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
-#include "srsran/pdcp/pdcp_tx_pdu.h"
-#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -184,21 +181,16 @@ class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 public:
   byte_buffer last_pdu;
 
-  void on_new_sdu(byte_buffer pdu, std::optional<uint32_t> pdcp_sn) override { last_pdu = std::move(pdu); }
+  void on_new_sdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
 };
 
 class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
   byte_buffer             last_pdu;
-  std::optional<uint32_t> last_pdu_sn;
   std::optional<uint32_t> last_discard_sn;
 
-  void on_new_sdu(pdcp_tx_pdu sdu) override
-  {
-    last_pdu    = std::move(sdu.buf);
-    last_pdu_sn = sdu.pdcp_sn;
-  }
+  void on_new_sdu(byte_buffer sdu) override { last_pdu = std::move(sdu); }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { last_discard_sn = pdcp_sn; }
 };

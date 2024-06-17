@@ -31,8 +31,27 @@
 namespace srsran {
 namespace srs_du {
 
+/// Configuration of logging functionalities.
+struct log_appconfig {
+  /// Path to log file or "stdout" to print to console.
+  std::string filename = "/tmp/du.log";
+  /// Default log level for all layers.
+  std::string all_level = "warning";
+  /// Generic log level assigned to library components without layer-specific level.
+  std::string lib_level     = "warning";
+  std::string e2ap_level    = "warning";
+  std::string config_level  = "none";
+  std::string metrics_level = "none";
+  /// Maximum number of bytes to write when dumping hex arrays.
+  int hex_max_size = 0;
+  /// Set to true to log broadcasting messages and all PRACH opportunities.
+  bool broadcast_enabled = false;
+  /// Set to a valid file path to enable tracing and write the trace to the file.
+  std::string tracing_filename;
+};
+
 /// Configuration of the F1-C interface of the DU.
-struct f1c_appconfig {
+struct f1ap_appconfig {
   /// CU-CP F1-C address the DU will connect to.
   std::string cu_cp_address = "127.0.10.1";
   /// DU F1-C bind address.
@@ -45,20 +64,28 @@ struct f1u_appconfig {
   std::string bind_address = "127.0.10.2";
 };
 
+/// Metrics report configuration.
+struct metrics_appconfig {
+  /// JSON metrics reporting.
+  bool        enable_json_metrics      = false;
+  std::string addr                     = "127.0.0.1";
+  uint16_t    port                     = 55555;
+  bool        autostart_stdout_metrics = false;
+  unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+};
+
 } // namespace srs_du
 
 /// DU application configuration.
 struct du_appconfig {
   /// Logging configuration.
-  log_appconfig log_cfg;
-  /// PCAP configuration.
-  pcap_appconfig pcap_cfg;
+  srs_du::log_appconfig log_cfg;
   /// Metrics configuration.
-  metrics_appconfig metrics_cfg;
+  srs_du::metrics_appconfig metrics_cfg;
   /// E2 configuration.
   e2_appconfig e2_cfg;
   /// F1-C configuration.
-  srs_du::f1c_appconfig f1c_cfg;
+  srs_du::f1ap_appconfig f1ap_cfg;
   /// F1-U configuration.
   srs_du::f1u_appconfig f1u_cfg;
   /// Buffer pool configuration.

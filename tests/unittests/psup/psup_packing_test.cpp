@@ -21,6 +21,7 @@
  */
 
 #include "srsran/psup/psup_packing.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

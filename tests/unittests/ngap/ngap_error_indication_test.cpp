@@ -49,7 +49,7 @@ protected:
 
   bool was_error_indication_sent() const
   {
-    return msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
   }
 };

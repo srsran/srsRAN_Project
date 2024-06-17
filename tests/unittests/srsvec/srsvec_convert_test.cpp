@@ -23,110 +23,194 @@
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/conversion.h"
 #include "srsran/support/srsran_test.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  ASSERT_CF_MAX_ERROR    = 1e-3;
-static const float  ASSERT_FLOAT_MAX_ERROR = 1e-3;
+static const float  ASSERT_CF_MAX_ERROR    = 1e-5;
+static const float  ASSERT_FLOAT_MAX_ERROR = 1e-5;
 
 using namespace srsran;
 
-void test_convert_ci(std::size_t N)
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, const cbf16_t& value)
+{
+  fmt::print(os, "{}", value);
+  return os;
+}
+
+} // namespace srsran
+
+namespace {
+
+using SrsvecConvertParams = unsigned;
+
+class SrsvecConvertFixture : public ::testing::TestWithParam<SrsvecConvertParams>
+{
+protected:
+  unsigned size;
+
+  void SetUp() override
+  {
+    // Get test parameters.
+    auto params = GetParam();
+    size        = params;
+  }
+};
+
+using namespace srsran;
+
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexInt16)
 {
   std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-  srsvec::aligned_vec<cf_t> x(N);
+  srsvec::aligned_vec<cf_t> x(size);
   for (cf_t& v : x) {
     v = cf_t(dist(rgen), dist(rgen));
   }
 
-  srsvec::aligned_vec<int16_t> z(2 * N);
+  srsvec::aligned_vec<int16_t> z(2 * size);
 
   float scale = 1000.0F;
 
   srsvec::convert(x, scale, z);
 
-  for (size_t i = 0; i != N; i++) {
+  for (size_t i = 0; i != size; ++i) {
     int16_t gold_re = static_cast<int16_t>(std::round(x[i].real() * scale));
     int16_t gold_im = static_cast<int16_t>(std::round(x[i].imag() * scale));
-    TESTASSERT_EQ(gold_re, z[2 * i + 0]);
-    TESTASSERT_EQ(gold_im, z[2 * i + 1]);
+    ASSERT_EQ(gold_re, z[2 * i + 0]);
+    ASSERT_EQ(gold_im, z[2 * i + 1]);
   }
 }
 
-void test_convert_ic(std::size_t N)
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Complex)
 {
   std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
 
-  srsvec::aligned_vec<int16_t> x(2 * N);
+  srsvec::aligned_vec<int16_t> x(2 * size);
   for (int16_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<cf_t> z(N);
+  srsvec::aligned_vec<cf_t> z(size);
 
   float scale = 1000.0F;
 
   srsvec::convert(x, scale, z);
 
-  for (size_t i = 0; i != N; i++) {
+  for (size_t i = 0; i != size; ++i) {
     cf_t  gold = {static_cast<float>(x[2 * i]) / scale, static_cast<float>(x[2 * i + 1]) / scale};
     float err  = std::abs(gold - z[i]);
     TESTASSERT(err < ASSERT_CF_MAX_ERROR);
   }
 }
 
-void test_convert_fi(std::size_t N)
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatInt16)
 {
   std::uniform_real_distribution<float> dist(-1, 1);
 
-  srsvec::aligned_vec<float> x(N);
+  srsvec::aligned_vec<float> x(size);
   for (float& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<int16_t> z(N);
+  srsvec::aligned_vec<int16_t> z(size);
 
   float scale = 1000.0F;
 
   srsvec::convert(x, scale, z);
 
-  for (size_t i = 0; i != N; i++) {
+  for (size_t i = 0; i != size; ++i) {
     int16_t gold = static_cast<int16_t>(std::round(x[i] * scale));
     TESTASSERT(gold == z[i]);
   }
 }
 
-void test_convert_if(std::size_t N)
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float)
 {
   std::uniform_int_distribution<int16_t> dist(INT16_MIN, INT16_MAX);
 
-  srsvec::aligned_vec<int16_t> x(N);
+  srsvec::aligned_vec<int16_t> x(size);
   for (int16_t& v : x) {
     v = dist(rgen);
   }
 
-  srsvec::aligned_vec<float> z(N);
+  srsvec::aligned_vec<float> z(size);
 
   float scale = 1000.0F;
 
   srsvec::convert(x, scale, z);
 
-  for (size_t i = 0; i != N; i++) {
+  for (size_t i = 0; i != size; ++i) {
     float gold = static_cast<float>(x[i]) / scale;
     float err  = std::abs(gold - z[i]);
     TESTASSERT(err < ASSERT_FLOAT_MAX_ERROR);
   }
 }
 
-int main()
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexComplex16Random)
 {
-  std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 257};
+  static constexpr float                range = std::numeric_limits<float>::max() / 2;
+  std::uniform_real_distribution<float> dist(-range, range);
 
-  for (std::size_t N : sizes) {
-    test_convert_ci(N);
-    test_convert_ic(N);
-    test_convert_fi(N);
-    test_convert_if(N);
+  srsvec::aligned_vec<cf_t> in(size);
+  std::generate(in.begin(), in.end(), [&dist]() { return cf_t(dist(rgen), dist(rgen)); });
+
+  srsvec::aligned_vec<cf_t>    out(size);
+  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+
+  // Convert from single precission to BF16.
+  srsvec::convert(data_cbf16, in);
+
+  // Convert from BF16 to single precision.
+  srsvec::convert(out, data_cbf16);
+
+  // Assert converstion from single precision.
+  for (size_t i = 0; i != size; ++i) {
+    ASSERT_EQ(data_cbf16[i], to_cbf16(in[i]));
+  }
+
+  // Assert conversion from BF16.
+  for (size_t i = 0; i != size; ++i) {
+    float tolerance = std::abs(in[i]) / 256.0F;
+    ASSERT_LT(std::abs(in[i] - out[i]), tolerance);
   }
 }
+
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexComplex16Special)
+{
+  static const float nan            = std::numeric_limits<float>::quiet_NaN();
+  static const float infinity       = std::numeric_limits<float>::infinity();
+  static const float neg_infinity   = -infinity;
+  static const float one_round_down = 1.0F + std::pow(2.0F, -8.0F);
+  static const float one_round_up   = one_round_down + std::pow(2.0F, -7.0F);
+
+  static const std::vector<float>    values          = {nan, infinity, neg_infinity, one_round_down, one_round_up};
+  static const std::vector<uint16_t> expected_values = {0x7fc0, 0x7f80, 0xff80, 0x3f80, 0x3f82};
+
+  srsvec::aligned_vec<cf_t> in(size);
+  std::generate(in.begin(), in.end(), [n = 0]() mutable {
+    float re = values[(n++) % values.size()];
+    float im = values[(n++) % values.size()];
+    return cf_t(re, im);
+  });
+
+  srsvec::aligned_vec<cbf16_t> data_cbf16(size);
+
+  // Convert from single precission to BF16.
+  srsvec::convert(data_cbf16, in);
+
+  // Verify the converted values are equal to the expected.
+  for (unsigned i = 0; i != size; ++i) {
+    cbf16_t expected;
+    expected.real = bf16_t(expected_values[(2 * i) % expected_values.size()]);
+    expected.imag = bf16_t(expected_values[(2 * i + 1) % expected_values.size()]);
+    ASSERT_EQ(expected, data_cbf16[i]);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(SrsvecConvertTest, SrsvecConvertFixture, ::testing::Values(1, 5, 7, 19, 23, 257, 1234));
+
+} // namespace

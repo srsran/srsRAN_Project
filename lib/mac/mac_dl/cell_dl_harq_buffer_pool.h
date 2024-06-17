@@ -25,6 +25,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/harq_id.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

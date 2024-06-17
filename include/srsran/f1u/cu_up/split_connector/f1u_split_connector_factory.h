@@ -20,29 +20,23 @@
  *
  */
 
-/// \file
-/// \brief Channel equalizer implementation using the Zero Forcing method.
-
 #pragma once
 
-#include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/pcap/dlt_pcap.h"
+#include <cstdint>
 
-namespace srsran {
+namespace srsran::srs_cu_up {
 
-/// Channel equalizer implementation using the Zero Forcing algorithm.
-class channel_equalizer_zf_impl : public channel_equalizer
-{
-public:
-  /// Default constructor.
-  explicit channel_equalizer_zf_impl() = default;
-
-  // See interface for documentation.
-  void equalize(span<cf_t>         eq_symbols,
-                span<float>        eq_noise_vars,
-                const re_list&     ch_symbols,
-                const ch_est_list& ch_estimates,
-                span<const float>  noise_var_estimates,
-                float              tx_scaling) override;
+struct f1u_cu_up_split_gateway_creation_msg {
+  ngu_gateway* udp_gw;
+  gtpu_demux*  demux;
+  dlt_pcap&    gtpu_pcap;
+  uint16_t     peer_port;
 };
 
-} // namespace srsran
+std::unique_ptr<srsran::f1u_cu_up_udp_gateway> create_split_f1u_gw(f1u_cu_up_split_gateway_creation_msg msg);
+
+} // namespace srsran::srs_cu_up

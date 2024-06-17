@@ -35,7 +35,7 @@ public:
 
   /// \brief Notifies the CU-CP about a DU setup request.
   /// \return True if CU-CP accepts the request.
-  virtual bool on_du_setup_request(const du_setup_request& req) = 0;
+  virtual bool on_du_setup_request(du_index_t du_index, const du_setup_request& req) = 0;
 };
 
 } // namespace srs_cu_cp

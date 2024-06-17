@@ -25,7 +25,6 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
-#include <string.h>
 
 namespace srsran {
 

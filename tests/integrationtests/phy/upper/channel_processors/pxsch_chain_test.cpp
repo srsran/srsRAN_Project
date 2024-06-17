@@ -52,7 +52,7 @@ static const symbol_slot_mask    dmrs_symbol_mask    = {0, 0, 1, 0, 0, 0, 0, 1, 
 static const float               noise_var           = convert_dB_to_power(-30);
 static constexpr unsigned        nof_ldpc_iterations = 6;
 static constexpr uint64_t        seed_begin          = 0;
-static constexpr uint64_t        seed_end            = 1024;
+static constexpr uint64_t        seed_end            = 128;
 
 using ldpc_decoder_early_stop = bool;
 using pxsch_chain_params      = std::tuple<sch_mcs_index, prb_interval, ldpc_decoder_early_stop>;
@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& os, const sch_mcs_index& index)
 
 std::ostream& operator<<(std::ostream& os, const prb_interval& prb_mapping)
 {
-  fmt::print(os, "prb={}", prb_mapping);
+  fmt::print(os, "prb=from{}to{}", prb_mapping.start(), prb_mapping.stop());
   return os;
 }
 

@@ -710,7 +710,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       });
   add_option(app, "--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
       ->capture_default_str()
-      ->check(CLI::IsMember({1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}));
+      ->check(CLI::IsMember({1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320}));
   add_option(app,
              "--f1_nof_ue_res_harq",
              pucch_params.nof_ue_pucch_f1_res_harq,
@@ -1165,8 +1165,12 @@ static void configure_cli11_test_mode_args(CLI::App& app, du_high_unit_test_mode
 
 static void configure_cli11_pcap_args(CLI::App& app, du_high_unit_pcap_config& pcap_params)
 {
+  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
   add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U PCAP file output path")->capture_default_str();
+  add_option(app, "--f1u_enable", pcap_params.f1u.enabled, "Enable F1-U packet capture")->always_capture_default();
   add_option(app, "--rlc_filename", pcap_params.rlc.filename, "RLC PCAP file output path")->capture_default_str();
   add_option(app, "--rlc_rb_type", pcap_params.rlc.rb_type, "RLC PCAP RB type (all, srb, drb)")->capture_default_str();
   add_option(app, "--rlc_enable", pcap_params.rlc.enabled, "Enable RLC packet capture")->always_capture_default();
@@ -1408,7 +1412,6 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   add_option(app, "--gnb_id_bit_length", parsed_cfg.config.gnb_id.bit_length, "gNodeB identifier length in bits")
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
-  add_option(app, "--ran_node_name", parsed_cfg.config.ran_node_name, "RAN node name")->capture_default_str();
   add_option(app, "--gnb_du_id", parsed_cfg.config.gnb_du_id, "gNB-DU Id")
       ->capture_default_str()
       ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));

@@ -385,7 +385,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_estimator_factory);
 
-  std::shared_ptr<channel_equalizer_factory>  equalizer_factory    = create_channel_equalizer_factory_zf();
+  std::shared_ptr<channel_equalizer_factory>  equalizer_factory    = create_channel_equalizer_generic_factory();
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
 
   std::shared_ptr<crc_calculator_factory> crc_calc_factory =

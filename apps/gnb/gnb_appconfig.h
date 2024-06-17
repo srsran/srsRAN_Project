@@ -23,6 +23,7 @@
 #pragma once
 
 #include "apps/services/os_sched_affinity_manager.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/direct_current_offset.h"
@@ -70,29 +71,6 @@ struct log_appconfig {
   bool broadcast_enabled = false;
   /// Set to a valid file path to enable tracing and write the trace to the file.
   std::string tracing_filename;
-};
-
-struct pcap_appconfig {
-  struct {
-    std::string filename = "/tmp/gnb_ngap.pcap";
-    bool        enabled  = false;
-  } ngap;
-  struct {
-    std::string filename = "/tmp/gnb_e1ap.pcap";
-    bool        enabled  = false;
-  } e1ap;
-  struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
-    bool        enabled  = false;
-  } f1ap;
-  struct {
-    std::string filename = "/tmp/gnb_e2ap.pcap";
-    bool        enabled  = false;
-  } e2ap;
-  struct {
-    std::string filename = "/tmp/gnb_gtpu.pcap";
-    bool        enabled  = false;
-  } gtpu;
 };
 
 /// Metrics report configuration.
@@ -153,8 +131,6 @@ struct hal_appconfig {
 struct gnb_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
-  /// PCAP configuration.
-  pcap_appconfig pcap_cfg;
   /// Metrics configuration.
   metrics_appconfig metrics_cfg;
   /// gNodeB identifier.

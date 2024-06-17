@@ -26,7 +26,6 @@
 #pragma once
 
 #include "../../../srsvec/simd.h"
-#include "channel_equalizer_zf_impl.h"
 #include "srsran/srsvec/zero.h"
 
 namespace srsran {

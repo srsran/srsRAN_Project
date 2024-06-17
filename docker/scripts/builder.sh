@@ -1,10 +1,22 @@
 #!/bin/bash
 #
-# Copyright 2013-2024 Software Radio Systems Limited
+# Copyright 2021-2024 Software Radio Systems Limited
 #
-# By using this file, you agree to the terms and conditions set
-# forth in the LICENSE file which can be found at the top level of
-# the distribution.
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
 #
 
 set -e # stop executing after error
@@ -151,14 +163,16 @@ esac
 cd "$FOLDER" || exit
 
 # Setup UHD
-uhd_system_version=$(uhd_config_info --version) && regex="^UHD ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*" && [[ $uhd_system_version =~ $regex ]]
-uhd_system_version="${BASH_REMATCH[1]}"
-if [[ -z "$UHD_VERSION" || "$UHD_VERSION" == "$uhd_system_version" ]]; then
-    echo "Using default UHD $uhd_system_version"
-else
-    [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
-    export UHD_DIR="/opt/uhd/$UHD_VERSION"
-    echo "UHD_DIR set to $UHD_DIR"
+if [[ -n "$UHD_VERSION" ]]; then
+    uhd_system_version=$(uhd_config_info --version) && regex="^UHD ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*" && [[ $uhd_system_version =~ $regex ]]
+    uhd_system_version="${BASH_REMATCH[1]}"
+    if [[ -z "$UHD_VERSION" || "$UHD_VERSION" == "$uhd_system_version" ]]; then
+        echo "Using default UHD $uhd_system_version"
+    else
+        [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
+        export UHD_DIR="/opt/uhd/$UHD_VERSION"
+        echo "UHD_DIR set to $UHD_DIR"
+    fi
 fi
 
 # Setup DPDK
@@ -166,8 +180,6 @@ if [[ -n "$DPDK_VERSION" ]]; then
     [ ! -d "/opt/dpdk/$DPDK_VERSION" ] && echo "DPDK version not found" && exit 1
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
     echo "DPDK_DIR set to $DPDK_DIR"
-else
-    echo "DPDK not set"
 fi
 
 # Setup cache dir

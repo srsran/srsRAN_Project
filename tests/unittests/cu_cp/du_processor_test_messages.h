@@ -26,6 +26,7 @@
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -33,8 +34,8 @@ namespace srs_cu_cp {
 /// \brief Generate a valid dummy F1 Setup Request.
 void generate_valid_f1_setup_request(du_setup_request& setup_request,
                                      gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
-                                     unsigned          nrcell_id = 6576,
-                                     pci_t             pci       = 0);
+                                     unsigned nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0),
+                                     pci_t    pci       = 0);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
 void generate_f1_setup_request_base(du_setup_request& setup_request);
@@ -48,8 +49,10 @@ void         generate_f1_setup_request_with_too_many_cells(du_setup_request& set
 /// \param[in] c_rnti The C-RNTI to use.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy UE Creation Message.
-ue_rrc_context_creation_request
-generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
+ue_rrc_context_creation_request generate_ue_rrc_context_creation_request(
+    ue_index_t ue_index,
+    rnti_t     c_rnti,
+    unsigned   nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
 
 } // namespace srs_cu_cp
 } // namespace srsran

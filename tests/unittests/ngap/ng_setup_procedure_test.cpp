@@ -38,8 +38,8 @@ TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Status: Procedure not yet ready.
@@ -65,8 +65,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Status: Procedure not yet ready.
@@ -84,8 +84,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   }
 
   // Status: AMF received NG Setup Request again.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Successful outcome after reinitiated NG Setup
@@ -108,8 +108,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Status: Procedure not yet ready.
@@ -121,8 +121,8 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   ngap->handle_message(ng_setup_failure);
 
   // Status: AMF received NG Setup Request again.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
@@ -150,8 +150,8 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
   lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
 
   // Status: AMF received NG Setup Request.
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
   // Action 2: NG setup failure received.

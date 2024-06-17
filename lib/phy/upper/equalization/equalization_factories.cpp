@@ -21,22 +21,30 @@
  */
 
 #include "srsran/phy/upper/equalization/equalization_factories.h"
-#include "channel_equalizer_zf_impl.h"
+#include "channel_equalizer_generic_impl.h"
 
 using namespace srsran;
 
 namespace {
 
-class channel_equalizer_factory_zf : public channel_equalizer_factory
+class channel_equalizer_generic_factory : public channel_equalizer_factory
 {
 public:
-  channel_equalizer_factory_zf() = default;
+  channel_equalizer_generic_factory(channel_equalizer_algorithm_type type_) : type(type_) {}
 
-  std::unique_ptr<channel_equalizer> create() override { return std::make_unique<channel_equalizer_zf_impl>(); }
+  std::unique_ptr<channel_equalizer> create() override
+  {
+    return std::make_unique<channel_equalizer_generic_impl>(type);
+  }
+
+private:
+  channel_equalizer_algorithm_type type;
 };
+
 } // namespace
 
-std::shared_ptr<channel_equalizer_factory> srsran::create_channel_equalizer_factory_zf()
+std::shared_ptr<channel_equalizer_factory>
+srsran::create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type type)
 {
-  return std::make_shared<channel_equalizer_factory_zf>();
+  return std::make_shared<channel_equalizer_generic_factory>(type);
 }

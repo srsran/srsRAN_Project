@@ -29,7 +29,6 @@ namespace srsran {
 
 /// Configuration of an SCTP client.
 struct sctp_network_client_config {
-  std::string                 client_name;
   sctp_network_gateway_config sctp;
   io_broker&                  broker;
 };

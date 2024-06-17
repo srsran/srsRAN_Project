@@ -200,12 +200,12 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   // Interfacing to a shared external HARQ buffer context repository.
   unsigned nof_cbs                   = MAX_NOF_SEGMENTS;
   uint64_t acc100_ext_harq_buff_size = bbdev_accelerator->get_harq_buff_size_bytes();
-  std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context =
-      create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
+  std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context =
+      hal::create_ext_harq_buffer_context_repository(nof_cbs, acc100_ext_harq_buff_size, test_harq);
   TESTASSERT(harq_buffer_context);
 
   // Set the hardware-accelerator configuration.
-  hw_accelerator_pusch_dec_configuration hw_decoder_config;
+  hal::hw_accelerator_pusch_dec_configuration hw_decoder_config;
   hw_decoder_config.acc_type            = "acc100";
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
   hw_decoder_config.ext_softbuffer      = ext_softbuffer;

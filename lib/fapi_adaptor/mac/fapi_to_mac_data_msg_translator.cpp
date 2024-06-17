@@ -22,6 +22,7 @@
 
 #include "fapi_to_mac_data_msg_translator.h"
 #include "srsran/fapi/messages.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

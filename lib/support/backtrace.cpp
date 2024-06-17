@@ -29,9 +29,12 @@ void srsran::enable_backtrace()
 {
   static backward::SignalHandling sh;
 }
-#else  // HAVE_BACKWARD
+
+#else // HAVE_BACKWARD
+
 void srsran::enable_backtrace()
 {
   // Ignore.
 }
+
 #endif // HAVE_BACKWARD

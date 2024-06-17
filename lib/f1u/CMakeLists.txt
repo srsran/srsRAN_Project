@@ -26,8 +26,8 @@ add_library(srsgnb_app_f1u_connector local_connector/f1u_local_connector.cpp)
 target_link_libraries(srsgnb_app_f1u_connector srsran_f1u_cu_up)
 
 #Split connector
-add_library(srsgnb_app_f1u_cu_up_split_connector cu_up/split_connector/f1u_split_connector.cpp)
+add_library(srsgnb_app_f1u_cu_up_split_connector cu_up/split_connector/f1u_split_connector_factory.cpp cu_up/split_connector/f1u_split_connector.cpp )
 target_link_libraries(srsgnb_app_f1u_cu_up_split_connector srsran_f1u_cu_up)
 
-add_library(srsgnb_app_f1u_du_split_connector du/split_connector/f1u_split_connector.cpp)
+add_library(srsgnb_app_f1u_du_split_connector du/split_connector/f1u_split_connector.cpp du/split_connector/f1u_split_connector_factory.cpp)
 target_link_libraries(srsgnb_app_f1u_du_split_connector srsran_f1u_du)

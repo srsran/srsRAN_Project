@@ -30,7 +30,8 @@ using namespace std::chrono_literals;
 srsran::sctp_network_connector_config srsran::generate_e2ap_nw_config(const du_appconfig& config, int ppid)
 {
   srsran::sctp_network_connector_config out_cfg;
-  out_cfg.connection_name = "NearRT-RIC";
+  out_cfg.dest_name       = "NearRT-RIC";
+  out_cfg.if_name         = "E2";
   out_cfg.connect_address = config.e2_cfg.ip_addr;
   out_cfg.connect_port    = config.e2_cfg.port;
   out_cfg.bind_address    = config.e2_cfg.bind_addr;

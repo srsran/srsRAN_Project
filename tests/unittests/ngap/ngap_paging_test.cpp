@@ -21,6 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -129,8 +130,9 @@ protected:
       test_logger.error("NR CGI PLMN mismatch {} != 00f110", cell_item.ngran_cgi.plmn_hex);
       return false;
     }
-    if (cell_item.ngran_cgi.nci != 6576) {
-      test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci, 6576);
+    nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+    if (cell_item.ngran_cgi.nci != nci) {
+      test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci, nci);
       return false;
     }
     if (cell_item.time_stayed_in_cell.value() != 5) {
@@ -184,7 +186,7 @@ protected:
 
   bool was_error_indication_sent() const
   {
-    return msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
   }
 };

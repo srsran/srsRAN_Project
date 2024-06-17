@@ -22,12 +22,14 @@
 
 #pragma once
 
+#include "ngap_connection_handler.h"
 #include "ngap_context.h"
 #include "ngap_error_indication_helper.h"
 #include "procedures/ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/ue_manager.h"
+#include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/support/executors/task_executor.h"
@@ -44,7 +46,7 @@ public:
             ngap_cu_cp_notifier&               cu_cp_notifier_,
             ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
             ngap_ue_manager&                   ue_manager_,
-            ngap_message_notifier&             ngap_notifier_,
+            n2_connection_client&              n2_gateway,
             timer_manager&                     timers_,
             task_executor&                     ctrl_exec_);
   ~ngap_impl();
@@ -52,6 +54,8 @@ public:
   bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
 
   // ngap connection manager functions
+  bool                             handle_amf_tnl_connection_request() override;
+  async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
 
   async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
@@ -91,16 +95,16 @@ private:
   class tx_pdu_notifier_with_logging final : public ngap_message_notifier
   {
   public:
-    tx_pdu_notifier_with_logging(ngap_impl& parent_, ngap_message_notifier& decorated_) :
-      parent(parent_), decorated(decorated_)
+    tx_pdu_notifier_with_logging(ngap_impl& parent_, std::unique_ptr<ngap_message_notifier> decorated_) :
+      parent(parent_), decorated(std::move(decorated_))
     {
     }
 
     void on_new_message(const ngap_message& msg) override;
 
   private:
-    ngap_impl&             parent;
-    ngap_message_notifier& decorated;
+    ngap_impl&                             parent;
+    std::unique_ptr<ngap_message_notifier> decorated;
   };
 
   /// \brief Notify about the reception of an initiating message.
@@ -175,11 +179,14 @@ private:
   ngap_cu_cp_notifier&               cu_cp_notifier;
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_manager&                   ue_manager;
-  tx_pdu_notifier_with_logging       tx_pdu_notifier;
   timer_manager&                     timers;
   task_executor&                     ctrl_exec;
 
   ngap_transaction_manager ev_mng;
+
+  ngap_connection_handler conn_handler;
+
+  std::unique_ptr<tx_pdu_notifier_with_logging> tx_pdu_notifier;
 };
 
 } // namespace srs_cu_cp

@@ -32,6 +32,7 @@
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 #include <string>
 
 namespace srsran {

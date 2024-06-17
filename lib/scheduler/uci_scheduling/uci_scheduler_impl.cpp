@@ -24,6 +24,7 @@
 #include "../cell/resource_grid.h"
 #include "../support/sched_result_helpers.h"
 #include "uci_allocator_impl.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

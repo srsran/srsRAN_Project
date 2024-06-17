@@ -21,6 +21,7 @@
  */
 
 #include "mobility_test_helpers.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -197,8 +198,8 @@ private:
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
   gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
-  nr_cell_id_t        target_nrcell_id = 0x19b1;
-  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", 0x19b1};
+  nr_cell_id_t        target_nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 1);
+  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", target_nrcell_id};
   unsigned            target_pci       = 2;
 
   ue_index_t source_ue_index = uint_to_ue_index(0);
@@ -261,6 +262,12 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
 
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();
+
+  // Make sure Bearer Context Modification contains security info
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+  ASSERT_TRUE(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.bearer_context_mod_request()->security_info_present);
 
   // Inject Bearer Context Modification Response
   inject_bearer_context_modification_response();

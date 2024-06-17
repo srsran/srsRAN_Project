@@ -27,6 +27,7 @@
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier_manager.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include <atomic>
 

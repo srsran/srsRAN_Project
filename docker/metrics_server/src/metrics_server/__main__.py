@@ -10,7 +10,7 @@ import logging
 import signal
 import socket
 from contextlib import suppress
-from datetime import datetime
+from datetime import datetime, UTC
 from http.client import RemoteDisconnected
 from queue import Queue
 from threading import Thread
@@ -166,7 +166,7 @@ def _publish_data(
             try:
                 # Currently we only support ue_list metric
                 if "ue_list" in metric:
-                    timestamp = datetime.utcfromtimestamp(metric["timestamp"]).isoformat()
+                    timestamp = datetime.fromtimestamp(metric["timestamp"], UTC).isoformat()
                     # UE Info measurement
                     for ue_info in metric["ue_list"]:
                         ue_container = ue_info["ue_container"]

@@ -20,47 +20,62 @@
  *
  */
 
-#include "srsran/support/signal_handler.h"
-#include "srsran/srslog/srslog.h"
-#include "fmt/format.h"
+#include "srsran/support/signal_handling.h"
+#include "fmt/core.h"
 #include <atomic>
 #include <csignal>
 #include <cstdio>
 #include <unistd.h>
 
+using namespace srsran;
+
+/// Termination timeout value measured in seconds.
+static constexpr unsigned TERMINATION_TIMEOUT_S =
 #ifndef TERM_TIMEOUT_S
-#define TERM_TIMEOUT_S (5)
+    5;
+#else
+    TERM_TIMEOUT_S;
 #endif
 
 /// Handler called after the user interrupts the program.
-static std::atomic<srsran_signal_handler> user_handler;
+static std::atomic<srsran_signal_handler> interrupt_handler = nullptr;
+/// Handler called just before forcing application exit.
+static std::atomic<srsran_signal_handler> cleanup_handler = nullptr;
 
 static void signal_handler(int signal)
 {
   switch (signal) {
     case SIGALRM:
-      fmt::print(stderr, "Couldn't stop after {}s. Forcing exit.\n", TERM_TIMEOUT_S);
-      srslog::flush();
+      fmt::print(stderr, "Could not stop application after {} seconds. Forcing exit.\n", TERMINATION_TIMEOUT_S);
+      if (auto handler = cleanup_handler.exchange(nullptr)) {
+        handler();
+      }
       ::raise(SIGKILL);
+      [[fallthrough]];
     default:
-      // all other registered signals try to stop the app gracefully
-      // Call the user handler if present and remove it so that further signals are treated by the default handler.
-      if (auto handler = user_handler.exchange(nullptr)) {
+      // All other registered signals try to stop the application gracefully.
+      // Call the user handler, if present, and remove it so that further signals are treated by the default handler.
+      if (auto handler = interrupt_handler.exchange(nullptr)) {
         handler();
       } else {
         return;
       }
-      alarm(TERM_TIMEOUT_S);
+      ::alarm(TERMINATION_TIMEOUT_S);
       break;
   }
 }
 
-void register_signal_handler(srsran_signal_handler handler)
+void srsran::register_interrupt_signal_handler(srsran_signal_handler handler)
 {
-  user_handler.store(handler);
+  interrupt_handler.store(handler);
 
   ::signal(SIGINT, signal_handler);
   ::signal(SIGTERM, signal_handler);
   ::signal(SIGHUP, signal_handler);
   ::signal(SIGALRM, signal_handler);
+}
+
+void srsran::register_cleanup_signal_handler(srsran_signal_handler handler)
+{
+  cleanup_handler.store(handler);
 }

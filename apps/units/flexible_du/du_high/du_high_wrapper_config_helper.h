@@ -29,23 +29,25 @@ class f1u_du_gateway;
 class f1c_connection_client;
 } // namespace srs_du
 
-class metrics_hub;
-class rlc_metrics_notifier;
+class du_high_executor_mapper;
 class e2_metric_connector_manager;
 class e2_connection_client;
-class metrics_log_helper;
-class console_helper;
-class rlc_pcap;
 class mac_pcap;
+class metrics_hub;
+class metrics_log_helper;
+class metrics_plotter_json;
+class metrics_plotter_stdout;
+class rlc_metrics_notifier;
+class rlc_pcap;
 class timer_manager;
-class du_high_executor_mapper;
 struct du_high_unit_config;
 struct du_high_wrapper_config;
 struct du_high_wrapper_dependencies;
 
 /// Set up sources for the DU high metrics.
 void configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
-                               console_helper&              console_helper,
+                               metrics_plotter_stdout&      metrics_stdout,
+                               metrics_plotter_json&        metrics_json,
                                metrics_log_helper&          metrics_logger,
                                e2_metric_connector_manager& e2_metric_connectors,
                                metrics_hub&                 metrics_hub);

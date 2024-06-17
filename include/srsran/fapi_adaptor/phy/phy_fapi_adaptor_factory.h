@@ -27,6 +27,7 @@
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 

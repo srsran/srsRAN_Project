@@ -114,20 +114,6 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   });
 }
 
-static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params)
-{
-  add_option(app, "--ngap_filename", pcap_params.ngap.filename, "NGAP PCAP file output path")->capture_default_str();
-  add_option(app, "--ngap_enable", pcap_params.ngap.enabled, "Enable NGAP packet capture")->always_capture_default();
-  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
-  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
-  add_option(app, "--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
-  add_option(app, "--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
-  add_option(app, "--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
-  add_option(app, "--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
-  add_option(app, "--gtpu_filename", pcap_params.gtpu.filename, "GTP-U PCAP file output path")->capture_default_str();
-  add_option(app, "--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
-}
-
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
   app.add_option("--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period")
@@ -356,10 +342,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Logging section.
   CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, gnb_cfg.log_cfg);
-
-  // PCAP section.
-  CLI::App* pcap_subcmd = app.add_subcommand("pcap", "PCAP configuration")->configurable();
-  configure_cli11_pcap_args(*pcap_subcmd, gnb_cfg.pcap_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();

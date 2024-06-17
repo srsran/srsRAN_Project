@@ -28,7 +28,6 @@
 #include <numeric>
 #include <random>
 
-using namespace std;
 using namespace asn1;
 using srsran::byte_buffer;
 

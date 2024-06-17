@@ -25,6 +25,7 @@
 #include "async_event_source.h"
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/timers.h"
 #include <array>

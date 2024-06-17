@@ -146,7 +146,7 @@
           "refId": "Downlink"
         }
       ],
-      "title": "Num Cells",
+      "title": "Num Cells with Active UEs",
       "transformations": [
         {
           "id": "renameByRegex",

@@ -40,8 +40,17 @@ struct n2_connection_client_config {
 
   /// Parameters specific to an SCTP network gateway.
   struct network {
-    io_broker&                            broker;
-    srsran::sctp_network_connector_config sctp;
+    io_broker&             broker;
+    std::string            bind_address;
+    std::string            bind_interface;
+    std::string            amf_address;
+    int                    amf_port = 38412;
+    std::optional<int32_t> rto_initial;
+    std::optional<int32_t> rto_min;
+    std::optional<int32_t> rto_max;
+    std::optional<int32_t> init_max_attempts;
+    std::optional<int32_t> max_init_timeo;
+    std::optional<bool>    nodelay;
   };
 
   /// PCAP writer for the NGAP messages.

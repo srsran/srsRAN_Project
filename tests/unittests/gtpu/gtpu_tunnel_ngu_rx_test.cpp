@@ -557,6 +557,54 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   }
 };
 
+/// \brief Test in-order reception of PDUs
+TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
+{
+  // create Rx entity
+  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
+
+  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  ASSERT_NE(rx, nullptr);
+
+  sockaddr_storage src_addr;
+
+  for (unsigned i = 0; i < 3; i++) {
+    byte_buffer sdu;
+    EXPECT_TRUE(sdu.append(0x11));
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, i);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    if (i != 1) {
+      rx_base->handle_pdu(std::move(pdu), src_addr);
+    }
+  }
+
+  EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+  EXPECT_TRUE(rx->is_reordering_timer_running());
+
+  // Stop RX interface
+  rx->stop();
+  rx_lower.rx_sdus.clear();
+  rx_lower.rx_qfis.clear();
+
+  // Timers should have been stopped
+  EXPECT_FALSE(rx->is_reordering_timer_running());
+
+  // No more PDUs should flow
+  {
+    byte_buffer sdu;
+    EXPECT_TRUE(sdu.append(0x11));
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(
+        sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1); // push missing pdu
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_TRUE(rx_lower.rx_qfis.empty());
+    EXPECT_TRUE(rx_lower.rx_sdus.empty());
+  }
+};
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

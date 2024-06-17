@@ -21,6 +21,8 @@
  */
 
 #pragma once
+
+#include "apps/services/application_command.h"
 #include "srsran/cu_cp/cu_cp.h"
 
 namespace srsran {
@@ -28,16 +30,25 @@ namespace srsran {
 struct cu_cp_unit_config;
 struct worker_manager;
 
+namespace srs_cu_cp {
+class n2_connection_client;
+}
+
 /// CU-CP build dependencies.
 struct cu_cp_build_dependencies {
-  task_executor*                    cu_cp_executor = nullptr;
-  task_executor*                    cu_cp_e2_exec  = nullptr;
-  srs_cu_cp::ngap_message_notifier* ngap_notifier  = nullptr;
-  timer_manager*                    timers         = nullptr;
+  task_executor*                   cu_cp_executor = nullptr;
+  task_executor*                   cu_cp_e2_exec  = nullptr;
+  srs_cu_cp::n2_connection_client* n2_client      = nullptr;
+  timer_manager*                   timers         = nullptr;
+};
+
+/// Wraps the CU-CP and its supported application commands.
+struct cu_cp_unit {
+  std::unique_ptr<srs_cu_cp::cu_cp>                               unit;
+  std::vector<std::unique_ptr<app_services::application_command>> commands;
 };
 
 /// Builds a CU-CP object with the given configuration.
-std::unique_ptr<srs_cu_cp::cu_cp> build_cu_cp(const cu_cp_unit_config&  cu_cp_unit_cfg,
-                                              cu_cp_build_dependencies& dependencies);
+cu_cp_unit build_cu_cp(const cu_cp_unit_config& cu_cp_unit_cfg, cu_cp_build_dependencies& dependencies);
 
 } // namespace srsran

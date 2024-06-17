@@ -173,12 +173,9 @@ TEST_F(f1u_cu_up_test, tx_discard)
   f1u->discard_sdu(pdcp_sn + 3); // this should trigger the next block
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, 0xcc);
-  pdcp_tx_pdu sdu1;
-  sdu1.buf     = tx_pdcp_pdu1.deep_copy().value();
-  sdu1.pdcp_sn = pdcp_sn + 22;
 
   // transmit a PDU to piggy-back previous discard
-  f1u->handle_sdu(std::move(sdu1));
+  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value());
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -233,16 +230,10 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
   constexpr uint32_t pdcp_sn  = 123;
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  pdcp_tx_pdu sdu1;
-  sdu1.buf     = tx_pdcp_pdu1.deep_copy().value();
-  sdu1.pdcp_sn = pdcp_sn;
-  f1u->handle_sdu(std::move(sdu1));
+  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value());
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  pdcp_tx_pdu sdu2;
-  sdu2.buf     = tx_pdcp_pdu2.deep_copy().value();
-  sdu2.pdcp_sn = pdcp_sn + 1;
-  f1u->handle_sdu(std::move(sdu2));
+  f1u->handle_sdu(tx_pdcp_pdu2.deep_copy().value());
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -250,14 +241,12 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
-  EXPECT_EQ(tester->tx_msg_list.front().pdcp_sn, pdcp_sn);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu2);
-  EXPECT_EQ(tester->tx_msg_list.front().pdcp_sn, pdcp_sn + 1);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();

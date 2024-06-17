@@ -22,6 +22,7 @@
 
 #include "cu_up_unit_config_cli11_schema.h"
 #include "apps/units/cu_up/cu_up_unit_config.h"
+#include "apps/units/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 
@@ -62,6 +63,17 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
+}
+
+static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)
+{
+  add_option(app, "--n3_filename", pcap_params.n3.filename, "N3 GTP-U PCAP file output path")->capture_default_str();
+  add_option(app, "--n3_enable", pcap_params.n3.enabled, "Enable N3 GTP-U packet capture")->always_capture_default();
+  add_option(app, "--f1u_filename", pcap_params.f1u.filename, "F1-U GTP-U PCAP file output path")
+      ->capture_default_str();
+  add_option(app, "--f1u_enable", pcap_params.f1u.enabled, "F1-U GTP-U PCAP")->always_capture_default();
+  add_option(app, "--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
+  add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "E1AP PCAP")->always_capture_default();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_config& metrics_params)
@@ -139,6 +151,10 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, unit_cfg.loggers);
+
+  // PCAP section.
+  CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "Logging configuration")->configurable();
+  configure_cli11_pcap_args(*pcap_subcmd, unit_cfg.pcap_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();

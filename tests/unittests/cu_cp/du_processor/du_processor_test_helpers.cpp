@@ -80,7 +80,8 @@ void du_processor_test::attach_ue()
 
   // Generate ue_creation message
   ue_index_t                      ue_index = ue_index_t::min;
-  ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 6576);
+  ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
+      ue_index, rnti_t::MIN_CRNTI, config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
   // Pass message to DU processor
   du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
 }

@@ -30,6 +30,7 @@
 #include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/units.h"
 #include <mutex>
 

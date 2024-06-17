@@ -24,6 +24,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/benchmark_utils.h"
 #include <getopt.h>
 #include <random>

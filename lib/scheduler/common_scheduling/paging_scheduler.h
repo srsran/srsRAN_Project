@@ -26,6 +26,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/slot_event_list.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/srslog/logger.h"
 #include <unordered_map>
 
 namespace srsran {

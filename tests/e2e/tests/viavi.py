@@ -319,8 +319,6 @@ def _test_viavi(
                 "common_scs": 30,
                 "tac": 7,
                 "pci": 1,
-                "nof_antennas_dl": 4,
-                "nof_antennas_ul": 1,
                 "prach_config_index": 159,
                 "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,

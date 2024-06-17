@@ -70,11 +70,11 @@ protected:
   bool was_pdu_session_resource_modify_request_valid() const
   {
     // Check that AMF notifier was called with right type
-    bool test_1 = msg_notifier.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
+    bool test_1 = n2_gw.last_ngap_msgs.back().pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_modify_resp;
 
     // Check that response contains PDU Session Resource Modify List
-    bool test_2 = msg_notifier.last_ngap_msgs.back()
+    bool test_2 = n2_gw.last_ngap_msgs.back()
                       .pdu.successful_outcome()
                       .value.pdu_session_res_modify_resp()
                       ->pdu_session_res_modify_list_mod_res_present;
@@ -85,21 +85,21 @@ protected:
   bool was_pdu_session_resource_modify_request_invalid() const
   {
     // Check that a UE release was requested from the AMF
-    bool test_1 = msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+    bool test_1 = n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request;
 
     // Check that AMF notifier was called with right type
-    bool test_2 = msg_notifier.last_ngap_msgs.end()[-2].pdu.successful_outcome().value.type() ==
+    bool test_2 = n2_gw.last_ngap_msgs.end()[-2].pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_modify_resp;
 
     // Check that response doesn't contain PDU Session Resource Modify List
-    bool test_3 = !msg_notifier.last_ngap_msgs.end()[-2]
+    bool test_3 = !n2_gw.last_ngap_msgs.end()[-2]
                        .pdu.successful_outcome()
                        .value.pdu_session_res_modify_resp()
                        ->pdu_session_res_modify_list_mod_res_present;
 
     // Check that response contains PDU Session Resource Failed to Modify List
-    bool test_4 = msg_notifier.last_ngap_msgs.end()[-2]
+    bool test_4 = n2_gw.last_ngap_msgs.end()[-2]
                       .pdu.successful_outcome()
                       .value.pdu_session_res_modify_resp()
                       ->pdu_session_res_failed_to_modify_list_mod_res_present;
@@ -109,7 +109,7 @@ protected:
 
   bool was_error_indication_sent() const
   {
-    return msg_notifier.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
   }
 };

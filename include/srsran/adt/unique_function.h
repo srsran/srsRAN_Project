@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/error_handling.h"
+#include <cstddef>
 #include <cstdint>
 
 namespace srsran {

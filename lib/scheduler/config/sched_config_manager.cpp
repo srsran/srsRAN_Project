@@ -24,6 +24,7 @@
 #include "../logging/scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

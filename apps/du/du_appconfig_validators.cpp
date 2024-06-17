@@ -26,7 +26,7 @@ using namespace srsran;
 
 bool srsran::validate_appconfig(const du_appconfig& config)
 {
-  if (config.f1c_cfg.cu_cp_address.empty()) {
+  if (config.f1ap_cfg.cu_cp_address.empty()) {
     fmt::print("CU-CP F1-C address is mandatory\n");
     return false;
   }

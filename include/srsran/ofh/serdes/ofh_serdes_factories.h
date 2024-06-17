@@ -25,6 +25,7 @@
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 
 namespace srsran {

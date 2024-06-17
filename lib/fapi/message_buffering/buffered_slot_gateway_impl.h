@@ -27,6 +27,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/srslog/logger.h"
 #include <atomic>
 
 namespace srsran {

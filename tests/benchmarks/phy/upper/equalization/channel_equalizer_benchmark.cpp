@@ -35,15 +35,20 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static unsigned nof_repetitions   = 1000;
-static unsigned nof_prb           = 106;
-static unsigned max_simo_rx_ports = 4;
-static bool     silent            = false;
+static unsigned                         nof_repetitions   = 1000;
+static unsigned                         nof_prb           = 106;
+static unsigned                         max_simo_rx_ports = 4;
+static bool                             silent            = false;
+static channel_equalizer_algorithm_type equalizer_type    = channel_equalizer_algorithm_type::zf;
 
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
+  fmt::print("\t-T Equalizer algorithm type {} or {} [Default {}]\n",
+             to_string(channel_equalizer_algorithm_type::zf),
+             to_string(channel_equalizer_algorithm_type::mmse),
+             to_string(equalizer_type));
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
 }
@@ -51,10 +56,20 @@ static void usage(const char* prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:sh")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'T':
+        if (std::strcmp(to_string(channel_equalizer_algorithm_type::zf), optarg) == 0) {
+          equalizer_type = channel_equalizer_algorithm_type::zf;
+        } else if (std::strcmp(to_string(channel_equalizer_algorithm_type::mmse), optarg) == 0) {
+          equalizer_type = channel_equalizer_algorithm_type::mmse;
+        } else {
+          fmt::print("Invalid aLgorithm.\n");
+          usage(argv[0]);
+        }
         break;
       case 's':
         silent = (!silent);
@@ -71,7 +86,8 @@ int main(int argc, char** argv)
 {
   parse_args(argc, argv);
 
-  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
+  std::shared_ptr<channel_equalizer_factory> equalizer_factory;
+  equalizer_factory = create_channel_equalizer_generic_factory(equalizer_type);
   TESTASSERT(equalizer_factory);
 
   std::unique_ptr<channel_equalizer> equalizer = equalizer_factory->create();
@@ -93,9 +109,11 @@ int main(int argc, char** argv)
   for (unsigned i_rx_port = 1; i_rx_port <= max_simo_rx_ports; ++i_rx_port) {
     channel_topologies.emplace_back(std::make_pair(i_rx_port, 1));
   }
-  // MIMO 2x2 and 2x4.
-  channel_topologies.emplace_back(std::make_pair(2, 2));
-  channel_topologies.emplace_back(std::make_pair(4, 2));
+  // MIMO 2x2 and 2x4. Only for ZF.
+  if (equalizer_type == channel_equalizer_algorithm_type::zf) {
+    channel_topologies.emplace_back(std::make_pair(2, 2));
+    channel_topologies.emplace_back(std::make_pair(4, 2));
+  }
 
   for (auto topology : channel_topologies) {
     // Get dimensions.
@@ -136,7 +154,8 @@ int main(int argc, char** argv)
     unsigned nof_processed_re = nof_subcarriers * nof_ofdm_symbols * nof_tx_layers;
 
     // Measurement description.
-    std::string meas_descr = "ZF " + fmt::to_string(nof_tx_layers) + "x" + fmt::to_string(nof_rx_ports);
+    std::string meas_descr = std::string(to_string(equalizer_type)) + " " + fmt::to_string(nof_tx_layers) + "x" +
+                             fmt::to_string(nof_rx_ports);
 
     // Equalize.
     perf_meas.new_measure(meas_descr,

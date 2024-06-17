@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration_validator.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 
 namespace srsran {

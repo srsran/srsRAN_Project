@@ -438,11 +438,12 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     }
 
     // Fill PDSCH PDU.
-    dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.emplace_back();
-    msg.context.ue_index  = u.ue_index;
-    msg.context.k1        = k1;
-    msg.context.ss_id     = ss_cfg.get_id();
-    msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
+    dl_msg_alloc& msg            = pdsch_alloc.result.dl.ue_grants.emplace_back();
+    msg.context.ue_index         = u.ue_index;
+    msg.context.k1               = k1;
+    msg.context.ss_id            = ss_cfg.get_id();
+    msg.context.nof_retxs        = h_dl.tb(0).nof_retxs;
+    msg.context.buffer_occupancy = 0; // We fill this value later, after the TB is built.
     if (is_new_data and ue_cc->link_adaptation_controller().is_dl_olla_enabled()) {
       msg.context.olla_offset = ue_cc->link_adaptation_controller().dl_cqi_offset();
     }
@@ -480,13 +481,17 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     if (is_new_data) {
       pdsch_sched_ctx.olla_mcs =
           ue_cc->link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
-      ue_cc->last_pdsch_allocated_slot = pdsch_alloc.slot;
     }
+    ue_cc->last_pdsch_allocated_slot = pdsch_alloc.slot;
+
     h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg);
 
     if (is_new_data) {
       // Set MAC logical channels to schedule in this PDU if it is a newtx.
       u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+
+      // Update context with buffer occupancy after the TB is built.
+      msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
     }
 
     return alloc_outcome::success;
@@ -989,9 +994,10 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
     ul_harq_sched_context pusch_sched_ctx;
     pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
     if (is_new_data) {
-      pusch_sched_ctx.olla_mcs         = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
-      ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
+      pusch_sched_ctx.olla_mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
     }
+    ue_cc->last_pusch_allocated_slot = pusch_alloc.slot;
+
     h_ul.save_alloc_params(pusch_sched_ctx, msg.pusch_cfg);
 
     // In case there is a SR pending. Reset it.

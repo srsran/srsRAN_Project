@@ -28,6 +28,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/hal/phy/upper/channel_processors/hw_accelerator_pdsch_enc.h"
+#include "srsran/srslog/srslog.h"
 #include <rte_bbdev_op.h>
 
 namespace srsran {

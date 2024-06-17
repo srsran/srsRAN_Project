@@ -60,7 +60,7 @@ public:
                  const bounded_bitset<MAX_RB * NRE>& mask) const override;
 
   // See interface for documentation.
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override;
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride) const override;
 
   // See interface for documentation.
   span<const cf_t> get_view(unsigned port, unsigned l) const override;

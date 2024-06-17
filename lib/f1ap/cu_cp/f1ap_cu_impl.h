@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "du_context.h"
 #include "ue_context/f1ap_cu_ue_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/cu_cp/f1ap_configuration.h"
@@ -41,7 +40,9 @@ public:
                f1ap_du_processor_notifier& f1ap_du_processor_notifier_,
                timer_manager&              timers_,
                task_executor&              ctrl_exec_);
-  ~f1ap_cu_impl();
+  ~f1ap_cu_impl() override;
+
+  const f1ap_du_context& get_context() const override;
 
   async_task<void> stop() override;
 
@@ -133,7 +134,7 @@ private:
   srslog::basic_logger&    logger;
 
   // DU context.
-  du_context du_ctxt;
+  f1ap_du_context du_ctxt;
 
   // Repository of UE Contexts.
   f1ap_ue_context_list ue_ctxt_list;

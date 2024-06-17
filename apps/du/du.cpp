@@ -20,16 +20,16 @@
  *
  */
 
-#include "srsran/gateways/sctp_network_gateway_factory.h"
+#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
-#include "srsran/support/signal_handler.h"
+#include "srsran/support/signal_handling.h"
 #include "srsran/support/version/version.h"
 
-#include "srsran/f1u/du/split_connector/f1u_split_connector.h"
+#include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 
 #include "srsran/support/io/io_broker_factory.h"
@@ -45,7 +45,6 @@
 
 #include "apps/services/worker_manager.h"
 
-#include "apps/services/console_helper.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
 
@@ -53,11 +52,16 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
-#include "srsran/support/sysinfo.h"
 
 #include <atomic>
 
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/services/application_message_banners.h"
+#include "apps/services/application_tracer.h"
+#include "apps/services/core_isolation_manager.h"
+#include "apps/services/metrics_plotter_json.h"
+#include "apps/services/metrics_plotter_stdout.h"
+#include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
@@ -70,13 +74,13 @@ using namespace srsran;
 
 /// \file
 /// \brief Application of a distributed unit (DU) that is split from the CU-CP and CU-UP via the F1 interface.
-///
-/// \cond
 
 static std::string config_file;
 
-static std::atomic<bool> is_running = {true};
-const int                MAX_CONFIG_FILES(10);
+/// Flag that indicates if the application is running or being shutdown.
+static std::atomic<bool> is_app_running = {true};
+/// Maximum number of configuration files allowed to be concatenated in the command line.
+static constexpr unsigned MAX_CONFIG_FILES = 10;
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
@@ -86,9 +90,22 @@ static void populate_cli11_generic_args(CLI::App& app)
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
 
-static void local_signal_handler()
+/// Function to call when the application is interrupted.
+static void interrupt_signal_handler()
 {
-  is_running = false;
+  is_app_running = false;
+}
+
+/// Function to call when the application is going to be forcefully shutdown.
+static void cleanup_signal_handler()
+{
+  srslog::flush();
+}
+
+/// Function to call when an error is reported by the application.
+static void app_error_report_handler()
+{
+  srslog::flush();
 }
 
 static void initialize_log(const std::string& filename)
@@ -101,7 +118,7 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const log_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
+static void register_app_logs(const srs_du::log_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
@@ -126,18 +143,17 @@ static void register_app_logs(const log_appconfig& log_cfg, const dynamic_du_uni
   register_dynamic_du_loggers(du_loggers);
 }
 
-// TODO: Remove.
-class null_command_handler : public srs_cu_cp::cu_cp_command_handler, public srs_cu_cp::cu_cp_mobility_command_handler
-{
-public:
-  srs_cu_cp::cu_cp_mobility_command_handler& get_mobility_command_handler() override { return *this; }
-  void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override {}
-};
-
 int main(int argc, char** argv)
 {
-  // Set signal handler.
-  register_signal_handler(local_signal_handler);
+  // Set the application error handler.
+  set_error_handler(app_error_report_handler);
+
+  static constexpr std::string_view app_name = "DU";
+  app_services::application_message_banners::announce_app_and_version(app_name);
+
+  // Set interrupt and cleanup signal handlers.
+  register_interrupt_signal_handler(interrupt_signal_handler);
+  register_cleanup_signal_handler(cleanup_signal_handler);
 
   // Enable backtrace.
   enable_backtrace();
@@ -154,6 +170,7 @@ int main(int argc, char** argv)
   configure_cli11_with_du_appconfig_schema(app, du_cfg);
 
   dynamic_du_unit_config du_unit_cfg;
+  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/du");
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.
@@ -186,15 +203,15 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger& du_logger = srslog::fetch_basic_logger("DU");
+  srslog::basic_logger&            du_logger = srslog::fetch_basic_logger("DU");
+  app_services::application_tracer app_tracer;
   if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    du_logger.info("Opening event tracer...");
-    open_trace_file(du_cfg.log_cfg.tracing_filename);
-    du_logger.info("Event tracer opened successfully");
+    app_tracer.enable_tracer(du_cfg.log_cfg.tracing_filename, du_logger);
   }
 
+  app_services::core_isolation_manager core_isolation_mngr;
   if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!configure_cgroups(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
+    if (!core_isolation_mngr.isolate_cores(*du_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
       report_error("Failed to isolate specified CPUs");
     }
   }
@@ -232,7 +249,10 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
-  worker_manager workers{du_unit_cfg, du_cfg.expert_execution_cfg, du_cfg.pcap_cfg, du_cfg.f1u_cfg.pdu_queue_size};
+  cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
+  cu_up_unit_pcap_config dummy_cu_up_pcap{};
+  worker_manager         workers{
+      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.f1u_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -241,22 +261,16 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  std::unique_ptr<dlt_pcap> f1ap_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
+      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  // TODO: Remove GTPU pcap
-  std::unique_ptr<dlt_pcap> gtpu_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<dlt_pcap> e2ap_p =
-      du_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(du_cfg.pcap_cfg.e2ap.filename, workers.get_executor("pcap_exec"))
-                                   : create_null_dlt_pcap();
 
   // Instantiate F1-C client gateway.
-  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw =
-      create_f1c_client_gateway(du_cfg.f1c_cfg.cu_cp_address, du_cfg.f1c_cfg.bind_address, *epoll_broker, *f1ap_p);
+  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
+      du_cfg.f1ap_cfg.cu_cp_address, du_cfg.f1ap_cfg.bind_address, *epoll_broker, *du_dlt_pcaps.f1ap);
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -265,7 +279,7 @@ int main(int argc, char** argv)
   // TODO: Simplify this and use factory.
   gtpu_demux_creation_request du_f1u_gtpu_msg       = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop                  = true;
-  du_f1u_gtpu_msg.gtpu_pcap                         = gtpu_p.get();
+  du_f1u_gtpu_msg.gtpu_pcap                         = du_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config      = {};
   du_f1u_gw_config.bind_address                     = du_cfg.f1u_cfg.bind_address;
@@ -275,8 +289,8 @@ int main(int argc, char** argv)
       du_f1u_gw_config,
       *epoll_broker,
       workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
-  std::unique_ptr<srs_du::f1u_split_connector> du_f1u_conn =
-      std::make_unique<srs_du::f1u_split_connector>(du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *gtpu_p);
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
+      srs_du::create_split_f1u_gw({du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_dlt_pcaps.f1u, GTPU_PORT});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
@@ -296,49 +310,46 @@ int main(int argc, char** argv)
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
-
-  // Create console helper object for commands and metrics printing.
-  // TODO: Remove cu_cp handler dependency.
-  null_command_handler cmd_handler;
-  console_helper       console(*epoll_broker, json_channel, cmd_handler, du_cfg.metrics_cfg.autostart_stdout_metrics);
-  console.on_app_starting();
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Instantiate one DU.
-  std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
-                                          workers,
-                                          *f1c_gw,
-                                          *du_f1u_conn,
-                                          app_timers,
-                                          *mac_p,
-                                          *rlc_p,
-                                          console,
-                                          metrics_logger,
-                                          e2_gw,
-                                          e2_metric_connectors,
-                                          rlc_json_plotter,
-                                          *hub);
+  metrics_plotter_stdout metrics_stdout(false);
+  metrics_plotter_json   metrics_json(json_channel);
+  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
+                                    workers,
+                                    *f1c_gw,
+                                    *du_f1u_conn,
+                                    app_timers,
+                                    *mac_p,
+                                    *rlc_p,
+                                    metrics_stdout,
+                                    metrics_json,
+                                    metrics_logger,
+                                    e2_gw,
+                                    e2_metric_connectors,
+                                    rlc_json_plotter,
+                                    *hub);
 
-  // Move all the DLT PCAPs to a container.
-  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps;
-  dlt_pcaps.push_back(std::move(f1ap_p));
-  dlt_pcaps.push_back(std::move(e2ap_p));
+  du& du_inst = *du_inst_and_cmds.unit;
+
+  // Register the commands.
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);
 
   // Start processing.
-  du_inst->start();
-  console.on_app_running();
+  du_inst.start();
+  {
+    app_services::application_message_banners app_banner(app_name);
 
-  while (is_running) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (is_app_running) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
   }
 
-  console.on_app_stopping();
-
   // Stop DU activity.
-  du_inst->stop();
+  du_inst.stop();
 
   if (du_cfg.e2_cfg.enable_du_e2) {
     du_logger.info("Closing E2 network connections...");
@@ -349,9 +360,7 @@ int main(int argc, char** argv)
   du_logger.info("Closing PCAP files...");
   mac_p->close();
   rlc_p->close();
-  for (auto& pcap : dlt_pcaps) {
-    pcap->close();
-  }
+  du_dlt_pcaps.close();
   du_logger.info("PCAP files successfully closed.");
 
   du_logger.info("Stopping executors...");
@@ -359,16 +368,6 @@ int main(int argc, char** argv)
   du_logger.info("Executors closed successfully.");
 
   srslog::flush();
-
-  if (not du_cfg.log_cfg.tracing_filename.empty()) {
-    du_logger.info("Closing event tracer...");
-    close_trace_file();
-    du_logger.info("Event tracer closed successfully");
-  }
-
-  if (du_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    cleanup_cgroups();
-  }
 
   return 0;
 }

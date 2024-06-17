@@ -68,6 +68,12 @@ class ngap_connection_manager
 public:
   virtual ~ngap_connection_manager() = default;
 
+  /// \brief Request a new TNL association to the AMF.
+  virtual bool handle_amf_tnl_connection_request() = 0;
+
+  /// \brief Request the NGAP handler to disconnect from the AMF.
+  virtual async_task<void> handle_amf_disconnection_request() = 0;
+
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
   /// \return Returns a ngap_ng_setup_result struct.
@@ -131,6 +137,9 @@ public:
   /// \param[in] command The Handover Command.
   /// \returns True if the Handover command is valid and was successfully handled by the DU.
   virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
+
+  /// \brief Notify that the TNL connection to the AMF was lost.
+  virtual void on_n2_disconnection() = 0;
 };
 
 /// Interface to communication with the DU repository

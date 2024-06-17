@@ -19,13 +19,13 @@
 #
 
 set(SOURCES
-        console_helper.cpp
         metrics_log_helper.cpp
         e2_metric_connector_manager.cpp
         metrics_hub.cpp
         metrics_plotter_json.cpp
         metrics_plotter_stdout.cpp
         rlc_metrics_plotter_json.cpp
+        stdin_command_dispatcher.cpp
         worker_manager.cpp)
 
 add_library(srsran_app_services STATIC ${SOURCES})

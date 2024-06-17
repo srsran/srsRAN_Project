@@ -22,6 +22,7 @@
 
 #include "pucch_guardbands_scheduler.h"
 #include "../cell/resource_grid.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

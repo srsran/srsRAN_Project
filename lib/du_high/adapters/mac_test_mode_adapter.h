@@ -25,6 +25,7 @@
 #include "srsran/du/du_test_config.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/srslog/srslog.h"
 #include <unordered_map>
 
 namespace srsran {

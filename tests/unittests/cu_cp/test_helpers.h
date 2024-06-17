@@ -209,7 +209,7 @@ private:
 class dummy_du_connection_notifier : public du_connection_notifier
 {
 public:
-  bool on_du_setup_request(const du_setup_request& req) override { return true; }
+  bool on_du_setup_request(du_index_t du_index, const du_setup_request& req) override { return true; }
 };
 
 struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {

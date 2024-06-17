@@ -112,7 +112,7 @@ public:
     pcap_writer(params.pcap), broker(params.broker), sctp_params(params.sctp)
   {
     // Create SCTP network adapter.
-    sctp_gateway = create_sctp_network_client(sctp_network_client_config{"F1C-DU", params.sctp, broker});
+    sctp_gateway = create_sctp_network_client(sctp_network_client_config{params.sctp, broker});
     report_error_if_not(sctp_gateway != nullptr, "Failed to create SCTP gateway client.\n");
   }
 
@@ -134,8 +134,16 @@ public:
                    sctp_params.connect_port);
       return nullptr;
     }
-    logger.info(
-        "F1-C TNL connection to CU-CP on {}:{} established", sctp_params.connect_address, sctp_params.connect_port);
+    logger.info("{}: TNL connection to {} on {}:{} accepted",
+                sctp_params.if_name,
+                sctp_params.dest_name,
+                sctp_params.connect_address,
+                sctp_params.connect_port);
+    fmt::print("{}: Connection to {} on {}:{} completed\n",
+               sctp_params.if_name,
+               sctp_params.dest_name,
+               sctp_params.connect_address,
+               sctp_params.connect_port);
 
     // Return the Tx PDU notifier to the DU.
     return std::make_unique<f1c_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);

@@ -85,6 +85,9 @@ public:
   /// \param[in] command The received Handover Command.
   /// \returns True if the Handover Command was successfully handled, false otherwise.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
+
+  /// \brief Handle N2 AMF connection drop.
+  virtual void handle_n2_disconnection() = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -142,6 +145,10 @@ public:
                                             f1ap_statistics_handler&         f1ap_statistic_handler,
                                             rrc_ue_handler&                  rrc_handler,
                                             rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
+
+  /// \brief Handle DU removal event.
+  /// \param[in] du_index The index of the DU.
+  virtual void handle_du_processor_removal(du_index_t du_index) = 0;
 
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] ue_index The index of the UE.

@@ -23,6 +23,7 @@
 #include "gtpu_test_shared.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>

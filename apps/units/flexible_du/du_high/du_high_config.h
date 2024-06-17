@@ -42,6 +42,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/srslog.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -587,19 +588,46 @@ struct du_high_unit_metrics_config {
 
 struct du_high_unit_pcap_config {
   struct {
-    std::string filename = "/tmp/gnb_f1ap.pcap";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
+  } e2ap;
+  struct {
+    std::string filename;
+    bool        enabled = false;
   } f1ap;
   struct {
-    std::string filename = "/tmp/gnb_rlc.pcap";
-    std::string rb_type  = "all";
-    bool        enabled  = false;
+    std::string filename;
+    bool        enabled = false;
+  } f1u;
+  struct {
+    std::string filename;
+    std::string rb_type = "all";
+    bool        enabled = false;
   } rlc;
   struct {
-    std::string filename = "/tmp/gnb_mac.pcap";
-    std::string type     = "udp";
-    bool        enabled  = false;
+    std::string filename;
+    std::string type    = "udp";
+    bool        enabled = false;
   } mac;
+  /// helper method to set the filename prefix for different apps.
+  /// This is used to provide different defaults depending on the app,
+  /// e.g.: "/tmp/gnb_f1ap.pcap", "/tmp/cu_f1ap.pcap" or "/tmp/du_f1ap.pcap"
+  void set_default_filename(std::string prefix)
+  {
+    e2ap.filename = fmt::format("{}_e2ap.pcap", prefix);
+    f1ap.filename = fmt::format("{}_f1ap.pcap", prefix);
+    f1u.filename  = fmt::format("{}_f1u.pcap", prefix);
+    rlc.filename  = fmt::format("{}_rlc.pcap", prefix);
+    mac.filename  = fmt::format("{}_mac.pcap", prefix);
+  }
+  /// When using the gNB app, there is no point in instantiating
+  /// F1 pcaps twice. This function force disables them.
+  /// TODO: revisit
+  void disable_f1_pcaps()
+  {
+    f1u.enabled  = false;
+    f1ap.enabled = false;
+  }
 };
 
 /// CPU affinities configuration for the cell.
@@ -734,8 +762,6 @@ struct du_high_unit_config {
   bool warn_on_drop = false;
   /// gNodeB identifier.
   gnb_id_t gnb_id = {411, 22};
-  /// Node name.
-  std::string ran_node_name = "srsgnb01";
   /// DU identifier.
   gnb_du_id_t gnb_du_id = gnb_du_id_t::min;
   /// PCAPs.

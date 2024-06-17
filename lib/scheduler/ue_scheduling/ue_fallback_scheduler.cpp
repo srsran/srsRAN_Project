@@ -29,6 +29,7 @@
 #include "../support/pusch/pusch_td_resource_indices.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

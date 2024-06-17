@@ -104,14 +104,13 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
   }
 }
 
-void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
+void f1u_bearer_impl::handle_sdu(byte_buffer sdu)
 {
-  logger.log_debug("F1-U bearer received SDU with pdcp_sn={}, size={}", sdu.pdcp_sn, sdu.buf.length());
+  logger.log_debug("F1-U bearer received SDU. size={}", sdu.length());
   nru_dl_message msg = {};
 
   // attach the SDU
-  msg.t_pdu   = std::move(sdu.buf);
-  msg.pdcp_sn = sdu.pdcp_sn;
+  msg.t_pdu = std::move(sdu);
 
   // attach discard blocks (if any)
   fill_discard_blocks(msg);

@@ -244,6 +244,8 @@ struct dl_msg_alloc {
     search_space_id ss_id;
     /// Number of times the HARQ process has been retransmitted.
     unsigned nof_retxs;
+    /// Current UE DL buffer occupancy, after this PDSCH grant.
+    unsigned buffer_occupancy;
     /// Offset that the OLLA algorithm applied to the DL MCS candidate to account for channel impairments.
     std::optional<float> olla_offset;
   } context;

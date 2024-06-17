@@ -24,7 +24,7 @@
 
 namespace srsran {
 
-/// Enables the backtrace.
+/// Enables dumping a stack trace when the program crashes.
 void enable_backtrace();
 
 } // namespace srsran

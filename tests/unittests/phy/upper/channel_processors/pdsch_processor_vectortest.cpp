@@ -120,7 +120,7 @@ private:
     }
 
     // Set the hardware-accelerator configuration.
-    hw_accelerator_pdsch_enc_configuration hw_encoder_config;
+    hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
     hw_encoder_config.acc_type          = "acc100";
     hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
 

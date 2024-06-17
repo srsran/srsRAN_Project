@@ -56,6 +56,8 @@ private:
                                          const rrc_ue_transfer_context&               transfer_context);
   void create_srb(du_ue* ue, srb_id_t srb_id);
 
+  bool add_security_context_to_bearer_context_modification(const srsran::security::sec_as_config& security_cfg);
+
   const cu_cp_inter_du_handover_request request;
   const byte_buffer                     target_cell_sib1;
 

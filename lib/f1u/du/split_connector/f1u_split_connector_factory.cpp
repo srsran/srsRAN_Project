@@ -20,22 +20,13 @@
  *
  */
 
-#pragma once
+#include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
+#include "f1u_split_connector.h"
 
-#include "srsran/radio/radio_notification_handler.h"
-#include "fmt/format.h"
+using namespace srsran;
+using namespace srs_du;
 
-namespace srsran {
-
-class radio_notification_handler_printer : public radio_notification_handler
+std::unique_ptr<f1u_du_udp_gateway> srsran::srs_du::create_split_f1u_gw(f1u_du_split_gateway_creation_msg msg)
 {
-public:
-  void on_radio_rt_event(const event_description& description) override
-  {
-    fmt::print("Radio Realtime Error Event: Type: {} Source: {}\n",
-               description.type.to_string(),
-               description.source.to_string());
-  }
-};
-
-} // namespace srsran
+  return std::make_unique<f1u_split_connector>(msg.udp_gw, msg.demux, msg.gtpu_pcap, msg.peer_port);
+}

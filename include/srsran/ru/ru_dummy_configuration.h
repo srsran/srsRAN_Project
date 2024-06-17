@@ -25,6 +25,7 @@
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

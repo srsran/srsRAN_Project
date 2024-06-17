@@ -35,6 +35,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {

@@ -21,6 +21,7 @@
  */
 
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

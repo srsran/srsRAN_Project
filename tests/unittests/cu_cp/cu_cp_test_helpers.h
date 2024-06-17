@@ -82,14 +82,14 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  dummy_ngap_amf_notifier ngap_amf_notifier;
-  timer_manager           timers{256};
-  manual_task_worker      ctrl_worker{128};
+  timer_manager      timers{256};
+  manual_task_worker ctrl_worker{128};
 
   std::unique_ptr<ngap_message_handler> dummy_amf;
 
   std::unique_ptr<cu_cp_impl> cu_cp_obj;
 
+  dummy_n2_gateway         n2_gw;
   dummy_cu_cp_f1c_gateway  f1c_gw;
   dummy_cu_cp_e1ap_gateway e1ap_gw;
 };

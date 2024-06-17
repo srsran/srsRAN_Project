@@ -29,12 +29,10 @@
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/subscription/e2_subscription.h"
 
-using namespace asn1::e2sm;
-
 namespace srsran {
-/// @brief  E2 INDICATION procedure will be used to send the measurement data to the RIC
-///         in response to the E2 SUBSCRIPTION REQUEST, It will execute periodically until
-///         the E2 SUBSCRIPTION DELETE REQUEST is received.
+
+/// E2 INDICATION procedure will be used to send the measurement data to the RIC in response to the E2 SUBSCRIPTION
+/// REQUEST, it will execute periodically until the E2 SUBSCRIPTION DELETE REQUEST is received.
 class e2_indication_procedure
 {
 public:
@@ -53,9 +51,9 @@ private:
   e2_event_manager&                  ev_mng;
   e2_subscription_info_t&            subscription;
   srslog::basic_logger&              logger;
-  std::vector<e2_indication_message> e2_ind_vec = {};
-  e2sm_kpm_ind_hdr_s                 ric_ind_header;
-  e2sm_kpm_ind_msg_s                 ric_ind_message;
+  std::vector<e2_indication_message> e2_ind_vec;
+  asn1::e2sm::e2sm_kpm_ind_hdr_s     ric_ind_header;
+  asn1::e2sm::e2sm_kpm_ind_msg_s     ric_ind_message;
 
   protocol_transaction_outcome_observer<asn1::e2ap::ric_sub_delete_request_s> transaction_sink;
 

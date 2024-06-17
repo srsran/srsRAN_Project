@@ -23,10 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/optional.h"
-#include "srsran/ran/du_types.h"
-#include "srsran/ran/lcid.h"
 
 /*
  * This file will hold the interfaces and notifiers for the RLC entity.
@@ -77,8 +74,8 @@ public:
   rlc_tx_upper_layer_data_interface& operator=(const rlc_tx_upper_layer_data_interface&&) = delete;
 
   /// \brief Interface for higher layers to pass SDUs into RLC
-  /// \param sdu SDU to be handled
-  virtual void handle_sdu(rlc_sdu sdu) = 0;
+  /// \param sdu_buf SDU to be handled
+  virtual void handle_sdu(byte_buffer sdu_buf) = 0;
 
   /// \brief Interface for higher layers to discard SDUs from RLC queue
   /// \param pdcp_sn PDCP sequence number (SN) of the SDU that is to be discarded

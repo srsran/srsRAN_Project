@@ -30,6 +30,7 @@
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 struct resource_grid_context;

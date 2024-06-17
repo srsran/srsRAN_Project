@@ -22,49 +22,53 @@
 
 #pragma once
 
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
-#include <cstdio>
+#include "srsran/support/error_handling.h"
+#include "fmt/format.h"
 
 namespace srsran {
-
 namespace detail {
 
-/// \brief helper function to format and print assertion messages. Before printing, the srslog is flushed.
+/// \brief Helper function to format and print assertion messages.
+///
 /// \param filename file name where assertion failed.
 /// \param line line in which assertion was placed.
 /// \param funcname function name where assertion failed.
 /// \param condstr assertion condition that failed.
 /// \param msg additional assertion message.
-[[gnu::noinline, noreturn]] inline void print_and_abort(const char*        filename,
-                                                        int                line,
-                                                        const char*        funcname,
-                                                        const char*        condstr = nullptr,
-                                                        const std::string& msg     = "") noexcept
+[[gnu::noinline, noreturn]] inline void print_and_abort(const char*             filename,
+                                                        int                     line,
+                                                        const char*             funcname,
+                                                        const char*             condstr = nullptr,
+                                                        const std::string_view& msg     = "") noexcept
 {
   fmt::memory_buffer fmtbuf;
+
   fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
   if (condstr == nullptr) {
     fmt::format_to(fmtbuf, "Assertion failed");
   } else {
     fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
   }
-  if (not msg.empty()) {
+  if (!msg.empty()) {
     fmt::format_to(fmtbuf, " - {}", msg);
   }
   if (msg.back() != '.') {
     fmt::format_to(fmtbuf, ".");
   }
   fmt::format_to(fmtbuf, "\n");
-  fmtbuf.push_back('\0'); // make it a c-string
+  // Make it a C-string.
+  fmtbuf.push_back('\0');
 
-  srslog::flush();
+  if (auto handler = error_report_handler.exchange(nullptr)) {
+    handler();
+  }
+
   fmt::print(stderr, "{}", fmtbuf.data());
   std::abort();
 }
 
 } // namespace detail
-
 } // namespace srsran
 
 // NOLINTBEGIN

@@ -20,9 +20,11 @@ builder version:
   script:
     - |
       hash_multiple() {
-        # Create a temporary tar archive of the folder
+        # Create a temporary tar archive of the folders
         temp_archive=$(mktemp)
-        tar -cf "$temp_archive" -C "$@" --mtime='1970-01-01' --sort=name .
+        
+        # Create a tar archive with the provided folders
+        tar -cf "$temp_archive" --directory="${CI_PROJECT_DIR}" --mtime='1970-01-01' --sort=name "$@"
 
         # Generate the hash of the archive using sha256sum
         hash=$(sha256sum "$temp_archive" | cut -c 1-32)
@@ -30,8 +32,8 @@ builder version:
 
         # Clean up the temporary archive
         rm "$temp_archive"
-      } 
-    - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders)
+      }
+    - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders docker/scripts)
     - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
     - echo ${DOCKER_BUILDER_VERSION}
   artifacts:

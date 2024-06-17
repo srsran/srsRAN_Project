@@ -20,20 +20,14 @@
  *
  */
 
-#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
-#include "srsran/support/signal_handler.h"
-#include "srsran/support/tsan_options.h"
+#include "srsran/support/signal_handling.h"
 #include "srsran/support/version/version.h"
 
-#include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_factory.h"
-
-#include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
 #include "srsran/ngap/gateways/n2_connection_client_factory.h"
@@ -52,17 +46,18 @@
 
 #include "apps/services/worker_manager.h"
 
-#include "apps/services/console_helper.h"
+#include "apps/services/application_tracer.h"
 #include "apps/services/metrics_hub.h"
 #include "apps/services/metrics_log_helper.h"
 #include "apps/services/rlc_metrics_plotter_json.h"
+#include "apps/services/stdin_command_dispatcher.h"
 
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
-#include "srsran/support/sysinfo.h"
 
+#include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_cli11_schema.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_validator.h"
@@ -75,6 +70,10 @@
 #include "../units/cu_cp/pcap_factory.h"
 #include "../units/cu_up/pcap_factory.h"
 #include "../units/flexible_du/du_high/pcap_factory.h"
+#include "apps/services/application_message_banners.h"
+#include "apps/services/core_isolation_manager.h"
+#include "apps/services/metrics_plotter_json.h"
+#include "apps/services/metrics_plotter_stdout.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_up/cu_up_builder.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
@@ -94,13 +93,13 @@ using namespace srsran;
 /// between the CU-CP and CU-UP going over a real SCTP connection. However, its does expose the N2 and N3 interface
 /// to the AMF and UPF over the standard SCTP ports.
 /// The app serves as an example for a all-integrated, small-cell-style gNB.
-///
-/// \cond
 
 static std::string config_file;
 
-static std::atomic<bool> is_running = {true};
-const int                MAX_CONFIG_FILES(10);
+/// Flag that indicates if the application is running or being shutdown.
+static std::atomic<bool> is_app_running = {true};
+/// Maximum number of configuration files allowed to be concatenated in the command line.
+static constexpr unsigned MAX_CONFIG_FILES = 10;
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
@@ -110,9 +109,22 @@ static void populate_cli11_generic_args(CLI::App& app)
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
 
-static void local_signal_handler()
+/// Function to call when the application is interrupted.
+static void interrupt_signal_handler()
 {
-  is_running = false;
+  is_app_running = false;
+}
+
+/// Function to call when the application is going to be forcefully shutdown.
+static void cleanup_signal_handler()
+{
+  srslog::flush();
+}
+
+/// Function to call when an error is reported by the application.
+static void app_error_report_handler()
+{
+  srslog::flush();
 }
 
 static void initialize_log(const std::string& filename)
@@ -157,8 +169,15 @@ static void register_app_logs(const log_appconfig&            log_cfg,
 
 int main(int argc, char** argv)
 {
-  // Set signal handler.
-  register_signal_handler(local_signal_handler);
+  // Set the application error handler.
+  set_error_handler(app_error_report_handler);
+
+  static constexpr std::string_view app_name = "gNB";
+  app_services::application_message_banners::announce_app_and_version(app_name);
+
+  // Set interrupt and cleanup signal handlers.
+  register_interrupt_signal_handler(interrupt_signal_handler);
+  register_cleanup_signal_handler(cleanup_signal_handler);
 
   // Enable backtrace.
   enable_backtrace();
@@ -175,12 +194,15 @@ int main(int argc, char** argv)
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   cu_cp_unit_config cu_cp_config;
+  cu_cp_config.pcap_cfg.set_default_filename("/tmp/gnb");
   configure_cli11_with_cu_cp_unit_config_schema(app, cu_cp_config);
 
   cu_up_unit_config cu_up_config;
+  cu_up_config.pcap_cfg.set_default_filename("/tmp/gnb");
   configure_cli11_with_cu_up_unit_config_schema(app, cu_up_config);
 
   dynamic_du_unit_config du_unit_cfg;
+  du_unit_cfg.du_high_cfg.config.pcaps.set_default_filename("/tmp/gnb");
   configure_cli11_with_dynamic_du_unit_config_schema(app, du_unit_cfg);
 
   // Set the callback for the app calling all the autoderivation functions.
@@ -225,15 +247,15 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  srslog::basic_logger&            gnb_logger = srslog::fetch_basic_logger("GNB");
+  app_services::application_tracer app_tracer;
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    gnb_logger.info("Opening event tracer...");
-    open_trace_file(gnb_cfg.log_cfg.tracing_filename);
-    gnb_logger.info("Event tracer opened successfully");
+    app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
   }
 
+  app_services::core_isolation_manager core_isolation_mngr;
   if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    if (!configure_cgroups(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
+    if (!core_isolation_mngr.isolate_cores(*gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)) {
       report_error("Failed to isolate specified CPUs");
     }
   }
@@ -271,7 +293,11 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
-  worker_manager workers{du_unit_cfg, gnb_cfg.expert_execution_cfg, gnb_cfg.pcap_cfg, cu_up_config.gtpu_queue_size};
+  worker_manager workers{du_unit_cfg,
+                         gnb_cfg.expert_execution_cfg,
+                         cu_cp_config.pcap_cfg,
+                         cu_up_config.pcap_cfg,
+                         cu_up_config.gtpu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -280,21 +306,27 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  std::unique_ptr<dlt_pcap>              ngap_p      = modules::cu_cp::create_dlt_pcap(gnb_cfg.pcap_cfg, workers);
-  std::vector<std::unique_ptr<dlt_pcap>> cu_up_pcaps = modules::cu_up::create_dlt_pcaps(gnb_cfg.pcap_cfg, workers);
-  std::unique_ptr<dlt_pcap>              f1ap_p =
-      modules::flexible_du::create_dlt_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  // Create layer specific PCAPs.
+  // In the gNB app, there is no point in instantiating two pcaps for each node of E1 and F1.
+  // We disable one accordingly.
+  cu_up_config.pcap_cfg.disable_e1_pcaps();
+  du_unit_cfg.du_high_cfg.config.pcaps.disable_f1_pcaps();
+  srsran::modules::cu_cp::cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
+      modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
+  srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
+      modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
+
+  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
+      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<mac_pcap> mac_p =
       modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
   std::unique_ptr<rlc_pcap> rlc_p =
       modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<dlt_pcap> e2ap_p = gnb_cfg.pcap_cfg.e2ap.enabled ? create_e2ap_pcap(gnb_cfg.pcap_cfg.e2ap.filename,
-                                                                                      workers.get_executor("pcap_exec"))
-                                                                   : create_null_dlt_pcap();
 
-  std::unique_ptr<f1c_local_connector> f1c_gw = create_f1c_local_connector(f1c_local_connector_config{*f1ap_p});
-  std::unique_ptr<e1_local_connector>  e1_gw  = create_e1_local_connector(
-      e1_local_connector_config{*cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::E1_AP)]});
+  std::unique_ptr<f1c_local_connector> f1c_gw =
+      create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
+  std::unique_ptr<e1_local_connector> e1_gw =
+      create_e1_local_connector(e1_local_connector_config{*cu_cp_dlt_pcaps.e1ap});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -323,117 +355,105 @@ int main(int argc, char** argv)
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
-  // Create NGAP Gateway.
-  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client;
-  {
-    using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
-    using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
-    using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
-
-    n2_client = srs_cu_cp::create_n2_connection_client(srs_cu_cp::n2_connection_client_config{
-        *ngap_p,
-        cu_cp_config.amf_cfg.no_core
-            ? ngap_mode_t{no_core_mode_t{}}
-            : ngap_mode_t{network_mode_t{*epoll_broker, generate_ngap_nw_config(cu_cp_config.amf_cfg)}}});
-  }
+  // Create N2 Gateway.
+  std::unique_ptr<srs_cu_cp::n2_connection_client> n2_client = srs_cu_cp::create_n2_connection_client(
+      generate_n2_client_config(cu_cp_config.amf_cfg, *cu_cp_dlt_pcaps.ngap, *epoll_broker));
 
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
 
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
   cu_cp_dependencies.cu_cp_executor = workers.cu_cp_exec;
   cu_cp_dependencies.cu_cp_e2_exec  = workers.cu_cp_e2_exec;
-  cu_cp_dependencies.ngap_notifier  = n2_client.get();
+  cu_cp_dependencies.n2_client      = n2_client.get();
   cu_cp_dependencies.timers         = cu_timers;
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp> cu_cp_obj = build_cu_cp(cu_cp_config, cu_cp_dependencies);
+  auto cu_cp_obj_and_cmds = build_cu_cp(cu_cp_config, cu_cp_dependencies);
 
-  // Create console helper object for commands and metrics printing.
-  console_helper console(
-      *epoll_broker, json_channel, cu_cp_obj->get_command_handler(), gnb_cfg.metrics_cfg.autostart_stdout_metrics);
-  console.on_app_starting();
+  srs_cu_cp::cu_cp& cu_cp_obj = *cu_cp_obj_and_cmds.unit;
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
-  // Connect NGAP adpter to CU-CP to pass NGAP messages.
-  n2_client->connect_cu_cp(cu_cp_obj->get_ng_handler().get_ngap_message_handler(),
-                           cu_cp_obj->get_ng_handler().get_ngap_event_handler());
-
   // Connect E1AP to CU-CP.
-  e1_gw->attach_cu_cp(cu_cp_obj->get_e1_handler());
-
-  // Connect F1-C to CU-CP.
-  f1c_gw->attach_cu_cp(cu_cp_obj->get_f1c_handler());
+  e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
-  cu_cp_obj->start();
+  cu_cp_obj.start();
   gnb_logger.info("CU-CP started successfully");
 
-  if (not cu_cp_obj->get_ng_handler().amf_is_connected()) {
+  if (not cu_cp_obj.get_ng_handler().amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
 
+  // Connect F1-C to CU-CP and start listening for new F1-C connection requests.
+  f1c_gw->attach_cu_cp(cu_cp_obj.get_f1c_handler());
+
   // Create and start CU-UP
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj =
-      build_cu_up(cu_up_config,
-                  workers,
-                  *e1_gw,
-                  *f1u_conn->get_f1u_cu_up_gateway(),
-                  *cu_up_pcaps[modules::cu_up::to_value(modules::cu_up::pcap_type::GTPU)].get(),
-                  *cu_timers,
-                  *epoll_broker);
+  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up_obj = build_cu_up(cu_up_config,
+                                                                      workers,
+                                                                      *e1_gw,
+                                                                      *f1u_conn->get_f1u_cu_up_gateway(),
+                                                                      *cu_up_dlt_pcaps.n3,
+                                                                      *cu_timers,
+                                                                      *epoll_broker);
   cu_up_obj->start();
 
   // Instantiate one DU.
-  std::unique_ptr<du> du_inst = create_du(du_unit_cfg,
-                                          workers,
-                                          *f1c_gw,
-                                          *f1u_conn->get_f1u_du_gateway(),
-                                          app_timers,
-                                          *mac_p,
-                                          *rlc_p,
-                                          console,
-                                          metrics_logger,
-                                          e2_gw,
-                                          e2_metric_connectors,
-                                          rlc_json_plotter,
-                                          *hub);
+  metrics_plotter_stdout metrics_stdout(gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  metrics_plotter_json   metrics_json(json_channel);
+  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
+                                    workers,
+                                    *f1c_gw,
+                                    *f1u_conn->get_f1u_du_gateway(),
+                                    app_timers,
+                                    *mac_p,
+                                    *rlc_p,
+                                    metrics_stdout,
+                                    metrics_json,
+                                    metrics_logger,
+                                    e2_gw,
+                                    e2_metric_connectors,
+                                    rlc_json_plotter,
+                                    *hub);
 
-  // Move all the DLT PCAPs to a container.
-  std::vector<std::unique_ptr<dlt_pcap>> dlt_pcaps = std::move(cu_up_pcaps);
-  dlt_pcaps.push_back(std::move(f1ap_p));
-  dlt_pcaps.push_back(std::move(ngap_p));
-  dlt_pcaps.push_back(std::move(e2ap_p));
+  du& du_inst = *du_inst_and_cmds.unit;
 
-  // Start processing.
-  du_inst->start();
-  console.on_app_running();
-
-  while (is_running) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::vector<std::unique_ptr<app_services::application_command>> commands;
+  for (auto& cmd : cu_cp_obj_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
+  }
+  for (auto& cmd : du_inst_and_cmds.commands) {
+    commands.push_back(std::move(cmd));
   }
 
-  console.on_app_stopping();
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
+
+  // Start processing.
+  du_inst.start();
+
+  {
+    app_services::application_message_banners app_banner(app_name);
+
+    while (is_app_running) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+  }
 
   // Stop DU activity.
-  du_inst->stop();
+  du_inst.stop();
 
   // Stop CU-UP activity.
   cu_up_obj->stop();
 
   // Stop CU-CP activity.
-  cu_cp_obj->stop();
-
-  gnb_logger.info("Closing network connections...");
-  n2_client->disconnect();
-  gnb_logger.info("Network connections closed successfully");
+  cu_cp_obj.stop();
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
     gnb_logger.info("Closing E2 network connections...");
@@ -444,9 +464,9 @@ int main(int argc, char** argv)
   gnb_logger.info("Closing PCAP files...");
   mac_p->close();
   rlc_p->close();
-  for (auto& pcap : dlt_pcaps) {
-    pcap->close();
-  }
+  cu_cp_dlt_pcaps.close();
+  cu_up_dlt_pcaps.close();
+  du_dlt_pcaps.close();
   gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");
@@ -455,17 +475,5 @@ int main(int argc, char** argv)
 
   srslog::flush();
 
-  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
-    gnb_logger.info("Closing event tracer...");
-    close_trace_file();
-    gnb_logger.info("Event tracer closed successfully");
-  }
-
-  if (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus) {
-    cleanup_cgroups();
-  }
-
   return 0;
 }
-
-/// \endcond

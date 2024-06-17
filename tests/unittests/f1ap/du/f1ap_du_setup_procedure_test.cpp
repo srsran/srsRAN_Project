@@ -21,6 +21,9 @@
  */
 
 #include "f1ap_du_test_helpers.h"
+#include "lib/f1ap/common/f1ap_asn1_utils.h"
+#include "unittests/f1ap/common/f1ap_du_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -55,7 +58,7 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   f1ap->handle_message(f1_setup_response);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get().success);
+  ASSERT_EQ(t.get().result, f1_setup_response_message::result_code::success);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
@@ -106,7 +109,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   f1ap->handle_message(f1_setup_response);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get().success);
+  ASSERT_EQ(t.get().result, f1_setup_response_message::result_code::success);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and unsuccessful retry
@@ -157,7 +160,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   f1ap->handle_message(f1_setup_failure);
 
   ASSERT_TRUE(t.ready());
-  EXPECT_FALSE(t.get().success);
+  ASSERT_NE(t.get().result, f1_setup_response_message::result_code::success);
 }
 
 /// Test the f1 setup procedure
@@ -203,6 +206,6 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
   f1ap->handle_message(f1_setup_response_msg);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_FALSE(t.get().success);
+  ASSERT_NE(t.get().result, f1_setup_response_message::result_code::success);
   ASSERT_EQ(f1c_gw.last_tx_f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::nulltype);
 }

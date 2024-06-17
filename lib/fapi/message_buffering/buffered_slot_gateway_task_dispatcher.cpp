@@ -22,6 +22,7 @@
 
 #include "buffered_slot_gateway_task_dispatcher.h"
 #include "srsran/fapi/messages.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;

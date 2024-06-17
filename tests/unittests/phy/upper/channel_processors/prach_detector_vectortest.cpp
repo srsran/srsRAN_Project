@@ -28,6 +28,8 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
+using namespace srsran;
+
 static bool is_recognized_conf(const srsran::prach_detector::configuration& conf)
 {
   if (conf.nof_rx_ports == 1) {

@@ -107,7 +107,7 @@ protected:
     ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
 
     // Create factories required by the PUCCH demodulator factory.
-    std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
+    std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
     ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
 
     std::shared_ptr<pucch_detector_factory> detector_factory =

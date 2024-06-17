@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/five_qi.h"
@@ -255,6 +256,8 @@ struct cu_cp_unit_config {
   unsigned pdu_session_setup_timeout = 3;
   /// Loggers configuration.
   cu_cp_unit_logger_config loggers;
+  /// PCAPs configuration.
+  cu_cp_unit_pcap_config pcap_cfg;
   /// Metrics configuration.
   cu_cp_unit_metrics_config metrics;
   /// AMF configuration.

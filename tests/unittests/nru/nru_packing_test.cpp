@@ -21,6 +21,7 @@
  */
 
 #include "srsran/nru/nru_packing.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

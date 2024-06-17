@@ -23,6 +23,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
@@ -295,6 +296,7 @@ inline size_t rlc_am_write_data_pdu_header(span<uint8_t> buf, const rlc_am_pdu_h
 } // namespace srsran
 
 namespace fmt {
+
 template <>
 struct formatter<srsran::rlc_am_pdu_header> {
   template <typename ParseContext>
@@ -363,4 +365,5 @@ struct formatter<srsran::rlc_am_status_pdu> {
     return format_to(ctx.out(), "{}", srsran::to_c_str(buffer));
   }
 };
+
 } // namespace fmt

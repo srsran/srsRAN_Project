@@ -45,6 +45,8 @@ public:
   void operator()(coro_context<async_task<f1_setup_response_message>>& ctx);
 
 private:
+  const char* name() const { return "F1 Setup"; }
+
   /// Send F1 SETUP REQUEST to CU.
   void send_f1_setup_request();
 

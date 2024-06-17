@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/tools/docker.yml
 
 ################################################################################
@@ -28,6 +28,22 @@ stages:
 
 variables:
   PY_DIR: docker/metrics_server
+
+.gnb-docker:
+  - changes: &srs_container_changes
+      paths:
+        - docker/scripts/**/*
+        - docker/Dockerfile
+
+.uhd_params:
+  variables: &uhd_params
+    LIB: uhd
+    LIB_VERSION: "4.6.0.0"
+
+.dpdk_params:
+  variables: &dpdk_params
+    LIB: dpdk
+    LIB_VERSION: "23.11"
 
 ################################################################################
 # Static
@@ -44,6 +60,7 @@ no docker changes:
         - docker/metrics_server/**/*
         - docker/open5gs/**/*
         - docker/grafana/**/*
+        - docker/scripts/**/*
       when: never
     - if: $ON_MR
   script:
@@ -56,6 +73,27 @@ metrics tox:
     - if: $ON_MR
       changes:
         - docker/metrics_server/**/*
+
+grafana version changed:
+  extends: .version_changed_pyproject
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - docker/grafana/**/*
+  script:
+    - NEW_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+    - export NEW_VERSION
+    - |
+      git checkout $CI_MERGE_REQUEST_DIFF_BASE_SHA
+      if [ ! -e "docker/grafana/version.yml" ]; then
+          exit 0
+      fi
+    - OLD_VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+    - export OLD_VERSION
+    - |
+      echo "OLD version: $OLD_VERSION -- NEW version: $NEW_VERSION"
+    - python3 -c "import semver; import os; exit(0) if (semver.compare(os.environ['NEW_VERSION'], os.environ['OLD_VERSION']) > 0) else exit(1)"
 
 metrics version changed:
   extends: .version_changed_pyproject
@@ -98,17 +136,29 @@ metrics version check in retina:
 
 gnb docker compose:
   extends: .docker compose
+  variables:
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
   rules:
     - if: $ON_MR
       changes:
+        <<: *srs_container_changes
+    - if: $ON_MR
+      changes:
         paths:
-          - .gitlab/ci/builders/install_dependencies.sh
-          - .gitlab/ci/builders/builder.sh
-          - docker/Dockerfile
           - docker/docker-compose.yml
-    - if: $CI_DESCRIPTION =~ /Weekly/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   script:
-    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
+    - docker compose -f docker/docker-compose.yml build --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
+    - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb ${TEST_CMD}"
+  parallel:
+    matrix:
+      - <<: *uhd_params
+        TEST_CMD: gnb amf --no_core=true ru_sdr --device_driver uhd | grep 'Failed to open device with address'
+      - <<: *dpdk_params
+        TEST_CMD: gnb amf --no_core=true hal --eal_args='--help'
 
 5gc docker compose:
   extends: .docker compose
@@ -187,3 +237,132 @@ metrics server image latest:
   before_script:
     - |
       export VERSION=latest
+
+grafana server image:
+  extends: .docker-builder
+  stage: publish
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/grafana/**/*
+  variables:
+    REGISTRY_URI: $GITLAB_REGISTRY_URI
+    NAME: grafana
+    CONTEXT: ${CI_PROJECT_DIR}/docker/grafana
+    MODE: publish
+  before_script:
+    - |
+      export VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+
+grafana server image latest:
+  extends: grafana server image
+  variables:
+    OVERWRITE: "true"
+  before_script:
+    - |
+      export VERSION=latest
+
+.srsran image:
+  extends: .docker-builder
+  stage: publish
+  rules:
+    - if: $ON_MR
+      changes:
+        <<: *srs_container_changes
+      variables:
+        MODE: build
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        MODE: publish
+  variables:
+    KUBERNETES_CPU_REQUEST: 6
+    KUBERNETES_CPU_LIMIT: 6
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
+    REGISTRY_URI: $GITLAB_REGISTRY_URI
+    CONTEXT: ${CI_PROJECT_DIR}
+    DOCKERFILE: docker
+    VERSION: latest
+    OVERWRITE: "true"
+  tags:
+    - ${TAG}
+  before_script:
+    - |
+      export NAME="srsran_${SPLIT}_${SUFFIX}"
+      export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};ARCH=${ARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+  needs:
+    - job: gnb docker compose
+      optional: true
+      artifacts: false
+
+srsran image split72:
+  extends: .srsran image
+  variables:
+    SPLIT: split72
+    <<: *dpdk_params
+  parallel:
+    matrix:
+      # AMD AVX2
+      - SUFFIX: release_avx2
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+        ARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      - SUFFIX: release+debug_avx2
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        ARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      # AMD AVX512
+      - SUFFIX: release_avx512
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+        ARCH: x86-64-v4
+        TAG: amd64-avx2-avx512
+        PLATFORM: amd64
+      - SUFFIX: release+debug_avx512
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        ARCH: x86-64-v4
+        TAG: amd64-avx2-avx512
+        PLATFORM: amd64
+      # ARM
+      - SUFFIX: release_arm
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+        ARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64
+      - SUFFIX: release+debug_arm
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        ARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64
+
+srsran image split8:
+  extends: .srsran image
+  variables:
+    SPLIT: split8
+    <<: *uhd_params
+  parallel:
+    matrix:
+      # AMD AVX2
+      - SUFFIX: release_avx2
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+        ARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      - SUFFIX: release+debug_avx2
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        ARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      # ARM
+      - SUFFIX: release_arm
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+        ARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64
+      - SUFFIX: release+debug_arm
+        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        ARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64

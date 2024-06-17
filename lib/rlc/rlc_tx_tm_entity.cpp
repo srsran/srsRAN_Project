@@ -45,8 +45,12 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
-void rlc_tx_tm_entity::handle_sdu(rlc_sdu sdu_)
+void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf)
 {
+  rlc_sdu sdu_;
+
+  sdu_.buf = std::move(sdu_buf);
+
   size_t sdu_len = sdu_.buf.length();
   if (sdu_queue.write(sdu_)) {
     logger.log_info(sdu_.buf.begin(), sdu_.buf.end(), "TX SDU. sdu_len={} {}", sdu_len, sdu_queue.get_state());

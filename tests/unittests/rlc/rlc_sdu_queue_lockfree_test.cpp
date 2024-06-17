@@ -24,6 +24,7 @@
 #include "lib/rlc/rlc_bearer_logger.h"
 #include "lib/rlc/rlc_sdu_queue_lockfree.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/support/test_utils.h"
 
 namespace srsran {

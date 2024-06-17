@@ -24,6 +24,7 @@
 
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 #include <mutex>

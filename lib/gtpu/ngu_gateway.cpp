@@ -22,6 +22,7 @@
 
 #include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/io/io_broker.h"
 
 using namespace srsran;

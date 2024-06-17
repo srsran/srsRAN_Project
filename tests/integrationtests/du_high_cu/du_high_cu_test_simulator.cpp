@@ -104,7 +104,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   // Prepare CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cfg;
   cu_cfg.cu_cp_executor            = workers.executors["CU-CP"];
-  cu_cfg.ngap_notifier             = &ngap_amf_notifier;
+  cu_cfg.n2_gw                     = &n2_gw;
   cu_cfg.timers                    = &timers;
   cu_cfg.ngap_config.ran_node_name = "srsgnb01";
   cu_cfg.ngap_config.plmn          = "00101";

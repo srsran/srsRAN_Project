@@ -21,6 +21,7 @@
  */
 
 #include "ul_bsr.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

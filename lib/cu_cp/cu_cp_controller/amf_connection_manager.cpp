@@ -57,6 +57,24 @@ void amf_connection_manager::connect_to_amf(std::promise<bool>* completion_signa
       }));
 }
 
+async_task<void> amf_connection_manager::stop()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Run NG Removal procedure.
+    // TODO
+
+    // Launch procedure to remove AMF connection.
+    CORO_AWAIT(ngap_conn_mng.handle_amf_disconnection_request());
+
+    // Update AMF connection handler state.
+    amf_connected = false;
+
+    CORO_RETURN();
+  });
+}
+
 void amf_connection_manager::handle_connection_setup_result(bool success)
 {
   // Update AMF connection handler state.

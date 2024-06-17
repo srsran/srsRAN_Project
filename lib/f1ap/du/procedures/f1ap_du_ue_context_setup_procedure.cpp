@@ -36,7 +36,7 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     f1ap_du_ue_manager&                           ue_mng_,
     f1ap_du_configurator&                         du_mng_,
     du_ue_index_t                                 ue_index_) :
-  msg(msg_), ue_mng(ue_mng_), du_mng(du_mng_), ue_index(ue_index_), logger(srslog::fetch_basic_logger("F1AP-DU"))
+  msg(msg_), ue_mng(ue_mng_), du_mng(du_mng_), ue_index(ue_index_), logger(srslog::fetch_basic_logger("DU-F1"))
 {
 }
 

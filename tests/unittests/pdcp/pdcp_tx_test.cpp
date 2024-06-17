@@ -90,15 +90,15 @@ TEST_P(pdcp_tx_test, pdu_gen)
 
     // Get generated PDU
     ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-    pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+    byte_buffer pdu = std::move(test_frame.pdu_queue.front());
     test_frame.pdu_queue.pop();
 
     // Get expected PDU
     byte_buffer exp_pdu;
     get_expected_pdu(tx_next, exp_pdu);
 
-    ASSERT_EQ(pdu.buf.length(), exp_pdu.length());
-    ASSERT_EQ(pdu.buf, exp_pdu);
+    ASSERT_EQ(pdu.length(), exp_pdu.length());
+    ASSERT_EQ(pdu, exp_pdu);
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
@@ -140,7 +140,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {
@@ -329,7 +329,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {
@@ -354,7 +354,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
-      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {

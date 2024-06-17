@@ -23,6 +23,7 @@
 #include "../../../../lib/ofh/compression/iq_compression_none_impl.h"
 #include "../../../../lib/ofh/serdes/ofh_uplane_message_builder_dynamic_compression_impl.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/zero.h"
 #include <gtest/gtest.h>
 

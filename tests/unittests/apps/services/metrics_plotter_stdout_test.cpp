@@ -57,8 +57,7 @@ void fill_metrics_single_ue()
 
 int main()
 {
-  srsran::metrics_plotter_stdout plotter;
-  plotter.toggle_print();
+  metrics_plotter_stdout plotter(true);
 
   fill_metrics_single_ue();
 

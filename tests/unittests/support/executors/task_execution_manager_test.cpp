@@ -20,6 +20,7 @@
  *
  */
 
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include <future>
 #include <gtest/gtest.h>

@@ -24,6 +24,7 @@
 
 #include "srsran/fapi/slot_data_message_notifier.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/srslog/logger.h"
 #include <functional>
 
 namespace srsran {

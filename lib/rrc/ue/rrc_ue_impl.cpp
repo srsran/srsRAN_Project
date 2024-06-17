@@ -41,10 +41,11 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&                   up_resource_mng_
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context                 cell_,
                          const rrc_ue_cfg_t&                    cfg_,
+                         security::security_context&            security_context_,
                          const byte_buffer                      du_to_cu_container_,
                          ue_task_scheduler&                     task_sched_,
                          std::optional<rrc_ue_transfer_context> rrc_context) :
-  context(ue_index_, c_rnti_, cell_, cfg_, rrc_context),
+  context(ue_index_, c_rnti_, cell_, cfg_, security_context_, rrc_context),
   up_resource_mng(up_resource_mng_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   nas_notifier(nas_notif_),

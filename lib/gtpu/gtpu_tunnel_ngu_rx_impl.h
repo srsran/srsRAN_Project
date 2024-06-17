@@ -77,6 +77,14 @@ public:
   }
   ~gtpu_tunnel_ngu_rx_impl() override = default;
 
+  void stop()
+  {
+    if (not stopped) {
+      reordering_timer.stop();
+      stopped = true;
+    }
+  }
+
   /*
    * Testing Helpers
    */
@@ -88,6 +96,10 @@ protected:
   // domain-specific PDU handler
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
+    if (stopped) {
+      return;
+    }
+
     gtpu_teid_t                     teid                  = pdu.hdr.teid;
     psup_dl_pdu_session_information pdu_session_info      = {};
     bool                            have_pdu_session_info = false;
@@ -246,6 +258,7 @@ protected:
 private:
   psup_packing                             psup_packer;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
+  bool                                     stopped = false;
 
   /// Rx config
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config config;
@@ -269,7 +282,8 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      parent->logger.log_info("reordering timer expired. {}", parent->st);
+      parent->logger.log_warning(
+          "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
       parent->handle_t_reordering_expire();
     }
 

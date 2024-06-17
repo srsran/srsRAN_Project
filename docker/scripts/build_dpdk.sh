@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright 2021-2024 Software Radio Systems Limited
 #
@@ -18,25 +19,26 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-if (ZEROMQ_FOUND OR UHD_FOUND)
-        add_executable(du_example
-                du_example.cpp
-                fapi_factory.cpp
-                phy_factory.cpp)
+set -e # stop executing after error
 
-        target_link_libraries(du_example
-                srsran_du_high
-                srsran_gateway
-                srsran_mac_fapi_adaptor
-                srsran_phy_fapi_adaptor
-                srsran_fapi
-                srsran_phy_support
-                srsran_upper_phy
-                srsran_signal_processors
-                srsran_channel_processors
-                srsran_channel_equalizer
-                srsran_channel_precoder
-                srsran_ru_generic)
+main() {
+    # Check number of args
+    if [ $# -lt 1 ] || [ $# -gt 3 ]; then
+        echo >&2 "Illegal number of parameters"
+        echo >&2 "Run like this: \"./build_dpdk.sh <dpdk_version> [<arch> [<ncores>]]\" where arch is any gcc/clang compatible -march and ncores could be any number or empty for all"
+        exit 1
+    fi
 
-        target_include_directories(du_example PRIVATE ${CMAKE_SOURCE_DIR})
-endif (ZEROMQ_FOUND OR UHD_FOUND)
+    local dpdk_version=$1
+    local arch="${2:-native}"
+    local ncores="${3:-$(nproc)}"
+
+    cd /tmp
+    curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar xJf -
+    cd dpdk*"${dpdk_version}"
+    meson setup build --prefix "/opt/dpdk/${dpdk_version}" -Dc_args="-march=${arch}"
+    ninja -j"${ncores}" -C build install
+
+}
+
+main "$@"

@@ -34,6 +34,7 @@
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
+#include <chrono>
 
 namespace srsran {
 

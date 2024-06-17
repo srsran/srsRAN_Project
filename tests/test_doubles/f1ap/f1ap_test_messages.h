@@ -31,6 +31,7 @@
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 
@@ -45,7 +46,8 @@ asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcel
 
 /// \brief Generates dummy F1AP SETUP REQUEST message.
 f1ap_message generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(0x11),
-                                       unsigned    nrcell_id = 6576,
+                                       unsigned    nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22},
+                                                                                                  0U),
                                        pci_t       pci       = 0,
                                        unsigned    tac       = 7);
 
@@ -68,6 +70,12 @@ f1ap_message create_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                  rnti_t              crnti,
                                                  byte_buffer         cell_group_cfg = {},
                                                  byte_buffer         rrc_container  = {});
+
+/// \brief Generates F1AP DL RRC TRANSFER message with provided RRC container.
+f1ap_message create_dl_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                            srb_id_t            srb_id,
+                                            byte_buffer         rrc_container);
 
 /// \brief Generates F1AP UL RRC TRANSFER message with provided RRC container.
 f1ap_message create_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,

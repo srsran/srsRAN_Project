@@ -24,6 +24,7 @@
 
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/gnb_id.h"
+#include <chrono>
 #include <string>
 
 namespace srsran {

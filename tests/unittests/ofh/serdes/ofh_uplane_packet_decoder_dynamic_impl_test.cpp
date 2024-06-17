@@ -23,6 +23,7 @@
 #include "../../../../lib/ofh/serdes/ofh_uplane_message_decoder_dynamic_compression_impl.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

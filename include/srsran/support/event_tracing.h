@@ -41,7 +41,7 @@ using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
 /// \brief Open a file to write trace events to.
-void open_trace_file(const std::string& trace_file_name = "/tmp/srsran_trace.json");
+void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json");
 
 /// \brief Close the trace file. This function is called automatically when the program exits.
 void close_trace_file();

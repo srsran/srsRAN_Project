@@ -27,6 +27,7 @@
 #include "radio_uhd_rx_stream.h"
 #include "radio_uhd_tx_stream.h"
 #include "srsran/radio/radio_session.h"
+#include "srsran/srslog/srslog.h"
 
 /// \brief Determines whether a frequency is valid within a range.
 ///

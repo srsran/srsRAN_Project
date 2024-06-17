@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

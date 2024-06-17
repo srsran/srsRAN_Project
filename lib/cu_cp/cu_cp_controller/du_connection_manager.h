@@ -32,6 +32,7 @@ namespace srs_cu_cp {
 
 class du_processor_repository;
 class common_task_scheduler;
+struct du_setup_request;
 
 /// \brief This class is responsible for allocating the resources in the CU-CP required to handle the establishment
 /// or drop of F1-C GW connections.
@@ -50,6 +51,9 @@ public:
   handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
 
   void stop();
+
+  /// Validate new gNB-DU configuration update.
+  bool handle_du_config_update(du_index_t du_idx, const du_setup_request& req);
 
 private:
   class shared_du_connection_context;

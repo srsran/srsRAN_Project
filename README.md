@@ -26,7 +26,7 @@ Build Preparation
   * libfftw:             <https://www.fftw.org/>
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
-  * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
+  * mbedTLS:             <https://www.trustedfirmware.org/projects/mbed-tls/>
   * googletest:          <https://github.com/google/googletest/>
 
 You can install the build tools and mandatory requirements for some example distributions with the commands below:

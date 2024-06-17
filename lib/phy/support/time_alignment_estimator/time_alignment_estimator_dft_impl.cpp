@@ -53,6 +53,31 @@ time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<cons
     channel_observed_freq[i_re] = pilots_lse[i_lse++];
   });
 
+  return estimate(scs, max_ta);
+}
+
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate(span<const srsran::cf_t>   symbols,
+                                                                       unsigned                   stride,
+                                                                       srsran::subcarrier_spacing scs,
+                                                                       double                     max_ta)
+{
+  srsran_assert(
+      symbols.size() * stride <= idft->get_size(),
+      "The number of complex symbols (i.e., {}) times the stride (i.e., {}) exceeds the IDFT size (i.e., {}).",
+      symbols.size(),
+      stride,
+      idft->get_size());
+  span<cf_t> channel_observed_freq = idft->get_input();
+  srsvec::zero(channel_observed_freq);
+  for (unsigned i_symbol = 0, i_re = 0, i_end = stride * symbols.size(); i_re != i_end; i_re += stride) {
+    channel_observed_freq[i_re] = symbols[i_symbol++];
+  }
+
+  return estimate(scs, max_ta);
+}
+
+time_alignment_measurement time_alignment_estimator_dft_impl::estimate(srsran::subcarrier_spacing scs, double max_ta)
+{
   span<const cf_t> channel_observed_time = idft->run();
 
   unsigned max_ta_samples = ((144 / 2) * dft_size) / 2048;

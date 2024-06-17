@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/srslog/log_channel.h"
 #include "fmt/format.h"
 #include <algorithm>
 #include <array>

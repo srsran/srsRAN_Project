@@ -46,6 +46,7 @@ public:
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
               const rrc_ue_cfg_t&                    cfg_,
+              security::security_context&            security_context_,
               const byte_buffer                      du_to_cu_container,
               ue_task_scheduler&                     task_sched,
               std::optional<rrc_ue_transfer_context> rrc_context);
@@ -64,7 +65,6 @@ public:
   rrc_ue_srb_handler&                   get_rrc_ue_srb_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
   rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
 

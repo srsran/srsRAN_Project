@@ -21,6 +21,7 @@
  */
 
 #include "srsran/rrc/meas_types_validators.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

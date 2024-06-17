@@ -22,6 +22,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/detail/byte_buffer_segment_pool.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/memory_pool/linear_memory_allocator.h"
 
 using namespace srsran;

@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/executors/priority_task_worker.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

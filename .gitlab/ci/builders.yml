@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "18"
+    ref: "19"
     file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -83,20 +83,8 @@ ubuntu-uhd-builder:
     # Install dependencies and compile
     - |
       build_uhd() {
-        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
-          curl apt-transport-https ca-certificates xz-utils \
-          cmake build-essential pkg-config \
-          libboost-all-dev libusb-1.0-0-dev doxygen \
-          python3-docutils python3-mako python3-numpy python3-setuptools python3-requests
-
-        cd /tmp
-        curl -LJO "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz"
-        tar -xf "uhd-${uhd_version}.tar.gz"
-        cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
-        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="/opt/uhd/${uhd_version}" ..
-        make -j${KUBERNETES_CPU_REQUEST}
-        make install
-
+        docker/scripts/install_uhd_dependencies.sh build
+        docker/scripts/build_uhd.sh ${uhd_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
         cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
@@ -176,19 +164,8 @@ ubuntu-dpdk-builder:
     # Install dependencies and compile
     - |
       build_dpdk() {
-        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
-          curl apt-transport-https ca-certificates xz-utils \
-          python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
-        
-        export PIP_EXTRA_INDEX_URL=""
-        pip3 install meson pyelftools || pip3 install --break-system-packages meson pyelftools 
-
-        cd /tmp
-        curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
-        cd dpdk*${dpdk_version}
-        meson build --prefix "/opt/dpdk/${dpdk_version}"
-        ninja -j${KUBERNETES_CPU_REQUEST} -C build install
-
+        docker/scripts/install_dpdk_dependencies.sh build
+        docker/scripts/build_dpdk.sh ${dpdk_version} native ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
         cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
       }
@@ -255,7 +232,10 @@ ubuntu-dpdk-builder:
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
     - |
-      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
+      cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
+      ls -lah $CONTEXT
+    - |
+      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk
       ls -lah $CONTEXT/uhd $CONTEXT/dpdk
   needs:
     - builder version
@@ -311,6 +291,8 @@ image-build-publish [codechecker]:
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/codechecker
       export BUILD_ARGS="CR_REGISTRY_URI=${CR_REGISTRY_URI};CI_TOOLS_REPO=${CI_TOOLS_REPO}"
+    - |
+      cp -r ${CI_PROJECT_DIR}/docker/scripts/. ${CI_PROJECT_DIR}/${CONTEXT}
   needs:
     - builder version
   cache:

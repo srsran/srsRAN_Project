@@ -26,7 +26,7 @@
 using namespace srsran;
 using namespace srsvec;
 
-static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned len)
+static void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned len)
 {
   unsigned i = 0;
 
@@ -64,7 +64,7 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
   }
 }
 
-static inline void convert_if_simd(float* z, const int16_t* x, float scale, unsigned len)
+static void convert_if_simd(float* z, const int16_t* x, float scale, unsigned len)
 {
   unsigned    i    = 0;
   const float gain = 1.0f / scale;
@@ -129,6 +129,36 @@ static inline void convert_if_simd(float* z, const int16_t* x, float scale, unsi
   }
 }
 
+static void convert_cbf16_to_cf_simd(cf_t* out, const cbf16_t* in, unsigned len)
+{
+  unsigned i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+  for (unsigned end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != end; i += SRSRAN_SIMD_CF_SIZE) {
+    srsran_simd_cfi_storeu(out + i, srsran_simd_cbf16_loadu(in + i));
+  }
+#endif // SRSRAN_SIMD_CF_SIZE
+
+  for (; i != len; ++i) {
+    out[i] = to_cf(in[i]);
+  }
+}
+
+static void convert_cf_to_cbf16_simd(cbf16_t* out, const cf_t* in, unsigned len)
+{
+  unsigned i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+  for (unsigned end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != end; i += SRSRAN_SIMD_CF_SIZE) {
+    srsran_simd_cbf16_storeu(out + i, srsran_simd_cfi_loadu(in + i));
+  }
+#endif // SRSRAN_SIMD_CF_SIZE
+
+  for (; i != len; ++i) {
+    out[i] = to_cf(in[i]);
+  }
+}
+
 void srsran::srsvec::convert(span<const cf_t> x, float scale, span<int16_t> z)
 {
   srsran_assert(2 * x.size() == z.size(), "Invalid input or output span sizes");
@@ -155,4 +185,16 @@ void srsran::srsvec::convert(span<const float> x, float scale, span<int16_t> z)
   srsran_assert(x.size() == z.size(), "Invalid input or output span sizes");
 
   convert_fi_simd(x.data(), z.data(), scale, z.size());
+}
+
+void srsran::srsvec::convert(span<cf_t> out, span<const cbf16_t> in)
+{
+  srsran_assert(in.size() == out.size(), "Invalid input or output span sizes");
+  convert_cbf16_to_cf_simd(out.data(), in.data(), in.size());
+}
+
+void srsran::srsvec::convert(span<cbf16_t> out, span<const cf_t> in)
+{
+  srsran_assert(in.size() == out.size(), "Invalid input or output span sizes");
+  convert_cf_to_cbf16_simd(out.data(), in.data(), in.size());
 }

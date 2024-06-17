@@ -42,7 +42,7 @@ using namespace srs_cu_cp;
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
+  srsran_assert(cfg.n2_gw != nullptr, "Invalid N2 GW client handler");
   srsran_assert(cfg.timers != nullptr, "Invalid timers");
 
   report_error_if_not(cfg.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
@@ -81,7 +81,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                             ngap_cu_cp_ev_notifier,
                             ngap_cu_cp_ev_notifier,
                             ue_mng,
-                            *cfg.ngap_notifier,
+                            *cfg.n2_gw,
                             *cfg.timers,
                             *cfg.cu_cp_executor);
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
@@ -231,8 +231,7 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  rrc_ue_interface*          rrc_ue  = rrc_du_adapters.at(get_du_index_from_ue_index(ue_index)).find_rrc_ue(ue_index);
-  security::security_context sec_ctx = rrc_ue->get_rrc_ue_security_context();
+  security::security_context sec_ctx = ue->get_security_context();
   security::sec_as_config    up_sec  = sec_ctx.get_as_config(security::sec_domain::up);
 
   return routine_mng.start_reestablishment_context_modification_routine(
@@ -373,13 +372,9 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  rrc_ue_interface* rrc_ue =
-      rrc_du_adapters.at(get_du_index_from_ue_index(request.ue_index)).find_rrc_ue(request.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
-
   return routine_mng.start_pdu_session_resource_setup_routine(
       request,
-      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::up),
+      ue->get_security_context().get_as_config(security::sec_domain::up),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(get_du_index_from_ue_index(request.ue_index))
           .get_f1ap_interface()
@@ -498,6 +493,11 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   });
 }
 
+void cu_cp_impl::handle_n2_disconnection()
+{
+  // TODO
+}
+
 std::optional<rrc_meas_cfg>
 cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,
                                               nr_cell_id_t                nci,
@@ -581,6 +581,11 @@ void cu_cp_impl::handle_du_processor_creation(du_index_t                       d
 {
   rrc_du_adapters[du_index] = {};
   rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
+}
+
+void cu_cp_impl::handle_du_processor_removal(du_index_t du_index)
+{
+  rrc_du_adapters.erase(du_index);
 }
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)

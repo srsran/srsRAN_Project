@@ -20,12 +20,37 @@
  *
  */
 
-// \brief Common signal handling methods for applications.
-
 #pragma once
 
-using srsran_signal_handler = void (*)();
+#include "srsran/support/sysinfo.h"
 
-/// Registers the specified function to be called when the user interrupts the program execution (eg: via Ctrl+C).
-/// Passing a null function pointer disables the current installed handler.
-void register_signal_handler(srsran_signal_handler handler);
+namespace srsran {
+namespace app_services {
+
+/// \brief Core isolation manager.
+///
+/// Isolates CPU cores used by the application using cgroups.
+class core_isolation_manager
+{
+  bool is_core_isolation_enabled = false;
+
+public:
+  ~core_isolation_manager()
+  {
+    // Clean the cgroups if they were configured.
+    if (is_core_isolation_enabled) {
+      cleanup_cgroups();
+    }
+  }
+
+  /// Configure cgroups to isolate the cores from the given isolated_cpus.
+  bool isolate_cores(const os_sched_affinity_bitmask& isolated_cpus)
+  {
+    is_core_isolation_enabled = configure_cgroups(isolated_cpus);
+
+    return is_core_isolation_enabled;
+  }
+};
+
+} // namespace app_services
+} // namespace srsran

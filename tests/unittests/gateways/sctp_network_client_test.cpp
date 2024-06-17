@@ -60,7 +60,7 @@ class dummy_sctp_server : public dummy_sctp_node
 public:
   dummy_sctp_server() : dummy_sctp_node("SERVER")
   {
-    auto result = sctp_socket::create(sctp_socket_params{AF_INET, SOCK_SEQPACKET});
+    auto result = sctp_socket::create(sctp_socket_params{"SERVER", AF_INET, SOCK_SEQPACKET});
     report_fatal_error_if_not(result.has_value(), "Failed to create SCTP socket");
     socket = std::move(result.value());
 
@@ -120,7 +120,7 @@ public:
 
   bool connect_to_server(const std::string& server_addr, int server_port)
   {
-    auto sender = client->connect_to("connection", server_addr, server_port, recv_notifier_factory.create());
+    auto sender = client->connect_to("server", server_addr, server_port, recv_notifier_factory.create());
     if (sender != nullptr) {
       client_sender = std::move(sender);
       return true;
@@ -135,7 +135,7 @@ public:
 
 protected:
   dummy_io_broker            broker;
-  sctp_network_client_config client_cfg{"client", {}, broker};
+  sctp_network_client_config client_cfg{{.if_name = "client"}, broker};
 
   sctp_recv_notifier_factory recv_notifier_factory;
 

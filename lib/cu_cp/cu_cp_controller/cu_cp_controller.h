@@ -58,7 +58,7 @@ public:
 
   amf_connection_manager& amf_connection_handler() { return amf_mng; }
 
-  bool handle_du_setup_request(const du_setup_request& req);
+  bool handle_du_setup_request(du_index_t du_idx, const du_setup_request& req);
 
   /// \brief Determines whether the CU-CP should accept a new UE connection.
   bool request_ue_setup() const;
@@ -66,13 +66,21 @@ public:
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
 
 private:
+  void stop_impl();
+
   const cu_cp_configuration&        cfg;
   ue_manager&                       ue_mng;
   const cu_up_processor_repository& cu_ups;
+  cu_cp_routine_manager&            routine_mng;
+  task_executor&                    ctrl_exec;
+  srslog::basic_logger&             logger;
 
   amf_connection_manager amf_mng;
+  du_connection_manager  du_mng;
 
-  du_connection_manager du_mng;
+  std::mutex              mutex;
+  std::condition_variable cvar;
+  bool                    running = true;
 };
 
 } // namespace srs_cu_cp

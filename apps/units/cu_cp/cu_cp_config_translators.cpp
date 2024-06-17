@@ -24,6 +24,7 @@
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/nr_cgi_helpers.h"
+#include <sstream>
 
 using namespace srsran;
 
@@ -359,4 +360,43 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   }
 
   return out_cfg;
+}
+
+srs_cu_cp::n2_connection_client_config
+srsran::generate_n2_client_config(const cu_cp_unit_amf_config& amf_cfg, dlt_pcap& pcap_writer, io_broker& broker)
+{
+  using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
+  using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
+  using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
+
+  ngap_mode_t mode = amf_cfg.no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
+  if (not amf_cfg.no_core) {
+    network_mode_t& nw_mode = std::get<network_mode_t>(mode);
+    nw_mode.amf_address     = amf_cfg.ip_addr;
+    nw_mode.amf_port        = amf_cfg.port;
+    if (amf_cfg.n2_bind_addr == "auto") {
+      nw_mode.bind_address = amf_cfg.bind_addr;
+    } else {
+      nw_mode.bind_address = amf_cfg.n2_bind_addr;
+    }
+    nw_mode.bind_interface = amf_cfg.n2_bind_interface;
+    if (amf_cfg.sctp_rto_initial >= 0) {
+      nw_mode.rto_initial = amf_cfg.sctp_rto_initial;
+    }
+    if (amf_cfg.sctp_rto_min >= 0) {
+      nw_mode.rto_min = amf_cfg.sctp_rto_min;
+    }
+    if (amf_cfg.sctp_rto_max >= 0) {
+      nw_mode.rto_max = amf_cfg.sctp_rto_max;
+    }
+    if (amf_cfg.sctp_init_max_attempts >= 0) {
+      nw_mode.init_max_attempts = amf_cfg.sctp_init_max_attempts;
+    }
+    if (amf_cfg.sctp_max_init_timeo >= 0) {
+      nw_mode.max_init_timeo = amf_cfg.sctp_max_init_timeo;
+    }
+    nw_mode.nodelay = amf_cfg.sctp_nodelay;
+  }
+
+  return srs_cu_cp::n2_connection_client_config{pcap_writer, mode};
 }

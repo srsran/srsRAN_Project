@@ -77,7 +77,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // create CU-CP config
   cu_cp_cfg                                 = config_helpers::make_default_cu_cp_config();
   cu_cp_cfg.cu_cp_executor                  = cu_cp_workers->exec.get();
-  cu_cp_cfg.ngap_notifier                   = &*amf_stub;
+  cu_cp_cfg.n2_gw                           = &*amf_stub;
   cu_cp_cfg.timers                          = &timers;
   cu_cp_cfg.ngap_config                     = config_helpers::make_default_ngap_config();
   cu_cp_cfg.max_nof_dus                     = params.max_nof_dus;
@@ -97,9 +97,6 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
-
-  // Pass CU-CP PDU handler to AMF.
-  amf_stub->attach_cu_cp_pdu_handler(cu_cp_inst->get_ng_handler().get_ngap_message_handler());
 }
 
 cu_cp_test_environment::~cu_cp_test_environment()
@@ -537,7 +534,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
 
   // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
   byte_buffer rrc_container =
-      pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "0011000101110000"));
+      pack_ul_ccch_msg(create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
   f1ap_message f1ap_init_ul_rrc_msg =
       test_helpers::create_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);

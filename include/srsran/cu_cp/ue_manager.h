@@ -61,6 +61,9 @@ public:
 
   /// \brief Get the task scheduler of the UE.
   virtual ue_task_scheduler& get_task_sched() = 0;
+
+  /// \brief Get the security context of the UE.
+  virtual security::security_context& get_security_context() = 0;
 };
 
 /// Interface for DU UE.
@@ -78,6 +81,9 @@ public:
 
   /// \brief Get the task scheduler of the UE.
   virtual ue_task_scheduler& get_task_sched() = 0;
+
+  /// \brief Get the security context of the UE.
+  virtual security::security_context& get_security_context() = 0;
 
   /// \brief Get the RRC UE control message notifier of the UE.
   virtual du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() = 0;

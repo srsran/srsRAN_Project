@@ -58,7 +58,7 @@ public:
   void stop() override { dl_notif_timer.stop(); }
 
   void handle_pdu(nru_ul_message msg) override;
-  void handle_sdu(pdcp_tx_pdu sdu) override;
+  void handle_sdu(byte_buffer sdu) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
   /// \brief Returns the UL tunnel info that was assigned upon construction.

@@ -29,6 +29,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/file_vector.h"
@@ -295,11 +296,11 @@ public:
     return symbols;
   }
 
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride = 1) const override
   {
     ++count;
     cf_t* symbol_ptr = symbols.data();
-    for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
+    for (unsigned k = k_init, k_end = k_init + stride * symbols.size(); k != k_end; k += stride) {
       *(symbol_ptr++) = get(port, l, k);
     }
   }

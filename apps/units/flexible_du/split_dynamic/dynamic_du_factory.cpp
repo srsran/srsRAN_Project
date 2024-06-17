@@ -21,13 +21,14 @@
  */
 
 #include "dynamic_du_factory.h"
-#include "apps/services/console_helper.h"
 #include "apps/services/e2_metric_connector_manager.h"
 #include "apps/services/metrics_log_helper.h"
+#include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/du_high/du_high_wrapper_config_helper.h"
 #include "apps/units/flexible_du/du_low/du_low_config_translator.h"
 #include "apps/units/flexible_du/du_low/du_low_wrapper_config_helper.h"
+#include "apps/units/flexible_du/flexible_du_commands.h"
 #include "apps/units/flexible_du/split_7_2/ru_ofh_factories.h"
 #include "apps/units/flexible_du/split_8/ru_sdr_factories.h"
 #include "dynamic_du_impl.h"
@@ -108,26 +109,29 @@ create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_conf
                                  error_notifier);
 }
 
-std::unique_ptr<du> srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
-                                      worker_manager&                workers,
-                                      srs_du::f1c_connection_client& f1c_client_handler,
-                                      srs_du::f1u_du_gateway&        f1u_gw,
-                                      timer_manager&                 timer_mng,
-                                      mac_pcap&                      mac_p,
-                                      rlc_pcap&                      rlc_p,
-                                      console_helper&                console_helper,
-                                      metrics_log_helper&            metrics_logger,
-                                      e2_connection_client&          e2_client_handler,
-                                      e2_metric_connector_manager&   e2_metric_connectors,
-                                      rlc_metrics_notifier&          rlc_json_metrics,
-                                      metrics_hub&                   metrics_hub)
+du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
+                          worker_manager&                workers,
+                          srs_du::f1c_connection_client& f1c_client_handler,
+                          srs_du::f1u_du_gateway&        f1u_gw,
+                          timer_manager&                 timer_mng,
+                          mac_pcap&                      mac_p,
+                          rlc_pcap&                      rlc_p,
+                          metrics_plotter_stdout&        metrics_stdout,
+                          metrics_plotter_json&          metrics_json,
+                          metrics_log_helper&            metrics_logger,
+                          e2_connection_client&          e2_client_handler,
+                          e2_metric_connector_manager&   e2_metric_connectors,
+                          rlc_metrics_notifier&          rlc_json_metrics,
+                          metrics_hub&                   metrics_hub)
 {
+  du_unit du_cmd_wrapper;
+
   const du_high_unit_config& du_hi    = dyn_du_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_lo    = dyn_du_cfg.du_low_cfg;
   const fapi_unit_config&    fapi_cfg = dyn_du_cfg.fapi_cfg;
 
   // Configure the application unit metrics for the DU high.
-  configure_du_high_metrics(du_hi, console_helper, metrics_logger, e2_metric_connectors, metrics_hub);
+  configure_du_high_metrics(du_hi, metrics_stdout, metrics_json, metrics_logger, e2_metric_connectors, metrics_hub);
 
   auto du_cells = generate_du_cell_config(du_hi);
 
@@ -199,11 +203,19 @@ std::unique_ptr<du> srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
 
   srsran_assert(ru, "Invalid Radio Unit");
 
-  console_helper.set_ru_controller(ru->get_controller());
+  // Add RU commands.
+  du_cmd_wrapper.commands.push_back(std::make_unique<change_log_level_app_command>());
+  du_cmd_wrapper.commands.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
+  du_cmd_wrapper.commands.push_back(std::make_unique<tx_gain_app_command>(ru->get_controller()));
+  du_cmd_wrapper.commands.push_back(std::make_unique<rx_gain_app_command>(ru->get_controller()));
+
+  // Add DU command.
+  du_cmd_wrapper.commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(metrics_stdout));
 
   du_impl->add_ru(std::move(ru));
-
   du_impl->add_dus(std::move(du_insts));
 
-  return du_impl;
+  du_cmd_wrapper.unit = std::move(du_impl);
+
+  return du_cmd_wrapper;
 }

@@ -27,6 +27,7 @@
 #include "../support/prbs_calculator.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

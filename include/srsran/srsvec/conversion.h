@@ -58,5 +58,17 @@ void convert(span<const float> x, float scale, span<int16_t> z);
 /// \param [out] z resultant data
 void convert(span<const int16_t> x, float scale, span<float> z);
 
+/// \brief Converts a sequence of numbers from complex float to complex brain float.
+///
+/// \param[out] out Resultant data.
+/// \param[in]  in  Data to convert.
+void convert(span<cbf16_t> out, span<const cf_t> in);
+
+/// \brief Converts a sequence of numbers from complex brain float to complex float.
+///
+/// \param[out] out Resultant data.
+/// \param[in]  in  Data to convert.
+void convert(span<cf_t> out, span<const cbf16_t> in);
+
 } // namespace srsvec
 } // namespace srsran

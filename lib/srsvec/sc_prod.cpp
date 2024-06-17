@@ -86,6 +86,26 @@ static void sc_prod_ccc_simd(const cf_t* x, cf_t h, cf_t* z, std::size_t len)
   }
 }
 
+static void sc_prod_ccc_simd(const cbf16_t* x, cf_t h, cbf16_t* z, std::size_t len)
+{
+  std::size_t i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+  simd_cf_t b = srsran_simd_cf_set1(h);
+  for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
+    simd_cf_t a = srsran_simd_cbf16_loadu(x + i);
+
+    simd_cf_t r = srsran_simd_cf_prod(a, b);
+
+    srsran_simd_cbf16_storeu(z + i, r);
+  }
+#endif
+
+  for (; i != len; ++i) {
+    z[i] = to_cbf16(to_cf(x[i]) * h);
+  }
+}
+
 void srsran::srsvec::sc_prod(span<const cf_t> x, cf_t h, span<cf_t> z)
 {
   srsran_srsvec_assert_size(x, z);
@@ -105,4 +125,11 @@ void srsran::srsvec::sc_prod(span<const float> x, float h, span<float> z)
   srsran_srsvec_assert_size(x, z);
 
   sc_prod_fff_simd(x.data(), h, z.data(), x.size());
+}
+
+void srsran::srsvec::sc_prod(span<const cbf16_t> x, cf_t h, span<cbf16_t> z)
+{
+  srsran_srsvec_assert_size(x, z);
+
+  sc_prod_ccc_simd(x.data(), h, z.data(), x.size());
 }

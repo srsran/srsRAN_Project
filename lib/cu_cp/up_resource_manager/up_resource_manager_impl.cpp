@@ -22,6 +22,7 @@
 
 #include "up_resource_manager_impl.h"
 #include "up_resource_manager_helpers.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

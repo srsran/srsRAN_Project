@@ -32,6 +32,7 @@
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/support/executors/task_executor.h"
 

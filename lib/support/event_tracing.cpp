@@ -32,14 +32,12 @@ using namespace std::chrono;
 
 namespace {
 
-trace_point run_epoch = trace_clock::now();
-
 /// Helper class to write trace events to a file.
 class event_trace_writer
 {
 public:
   explicit event_trace_writer(const char* trace_file) :
-    fptr(fopen(trace_file, "w")), trace_worker("tracer_worker", 2048, std::chrono::microseconds{200})
+    fptr(::fopen(trace_file, "w")), trace_worker("tracer_worker", 2048, std::chrono::microseconds{200})
   {
     if (fptr == nullptr) {
       report_fatal_error("ERROR: Failed to open trace file {}", trace_file);
@@ -56,7 +54,7 @@ public:
     trace_worker.wait_pending_tasks();
     trace_worker.stop();
     fmt::print(fptr, "\n]");
-    fclose(fptr);
+    ::fclose(fptr);
   }
 
   template <typename EventType>
@@ -88,9 +86,6 @@ private:
   std::atomic<bool> warn_logged{false};
 };
 
-/// Unique event trace file writer.
-std::unique_ptr<event_trace_writer> trace_file_writer;
-
 struct trace_event_extended : public trace_event {
   unsigned       cpu;
   const char*    thread_name;
@@ -120,7 +115,13 @@ struct timestamp_data {
   microseconds usec;
 };
 
-timestamp_data get_timestamp(trace_point tp)
+} // namespace
+
+static trace_point run_epoch = trace_clock::now();
+/// Unique event trace file writer.
+static std::unique_ptr<event_trace_writer> trace_file_writer;
+
+static timestamp_data get_timestamp(trace_point tp)
 {
   using days = duration<int, std::ratio_multiply<hours::period, std::ratio<24>>::type>;
 
@@ -139,14 +140,12 @@ timestamp_data get_timestamp(trace_point tp)
   return ret;
 }
 
-} // namespace
-
-void srsran::open_trace_file(const std::string& trace_file_name)
+void srsran::open_trace_file(std::string_view trace_file_name)
 {
   if (trace_file_writer != nullptr) {
-    report_fatal_error("Trace file already open");
+    report_fatal_error("Trace file '{}' already open", trace_file_name);
   }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name.c_str());
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name.data());
 }
 
 void srsran::close_trace_file()

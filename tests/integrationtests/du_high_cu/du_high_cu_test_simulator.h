@@ -86,11 +86,11 @@ public:
 
   const du_high_cu_cp_test_simulator_config cfg;
 
-  srslog::basic_logger&              logger;
-  timer_manager                      timers;
-  du_high_cu_cp_worker_manager       workers;
-  srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
-  f1c_test_local_gateway             f1c_gw;
+  srslog::basic_logger&        logger;
+  timer_manager                timers;
+  du_high_cu_cp_worker_manager workers;
+  srs_cu_cp::dummy_n2_gateway  n2_gw;
+  f1c_test_local_gateway       f1c_gw;
 
   std::unique_ptr<srs_cu_cp::cu_cp>    cu_cp_inst;
   std::vector<std::unique_ptr<du_sim>> dus;

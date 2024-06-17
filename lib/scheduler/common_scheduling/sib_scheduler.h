@@ -27,6 +27,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/sched_consts.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 
