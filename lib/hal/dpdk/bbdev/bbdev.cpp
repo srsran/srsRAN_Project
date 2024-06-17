@@ -27,10 +27,10 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
                  "available: ldpc_enc={}, ldpc_dec={}, fft={}).",
                  cfg.id,
                  cfg.nof_ldpc_enc_lcores,
-                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_ENC],
                  cfg.nof_ldpc_dec_lcores,
-                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_DEC],
                  cfg.nof_fft_lcores,
+                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_ENC],
+                 info.drv.num_queues[RTE_BBDEV_OP_LDPC_DEC],
                  info.drv.num_queues[RTE_BBDEV_OP_FFT]);
     return default_error_t{};
   }

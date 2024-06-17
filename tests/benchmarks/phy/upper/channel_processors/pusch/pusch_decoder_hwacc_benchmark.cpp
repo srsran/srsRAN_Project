@@ -49,10 +49,11 @@ static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
-static bool        test_harq     = false;
-static std::string hal_log_level = "ERROR";
-static bool        std_out_sink  = true;
-static std::string eal_arguments = "";
+static bool        dedicated_queue = true;
+static bool        test_harq       = false;
+static std::string hal_log_level   = "ERROR";
+static bool        std_out_sink    = true;
+static std::string eal_arguments   = "";
 #endif // DPDK_FOUND
 
 // Test profile structure, initialized with default profile values.
@@ -75,11 +76,13 @@ static test_profile selected_profile = {};
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-T X] [-e] [-i X] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
+  fmt::print("Usage: {} [-T X] [-e] [-i X] [-w] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
   fmt::print("\t-T       Hardware-accelerated PUSCH decoder type [acc100][Default {}]\n", hwacc_decoder_type);
   fmt::print("\t-e       Use LDPC decoder early stop [Default {}]\n", use_early_stop);
   fmt::print("\t-i       Number of LDPC iterations [Default {}]\n", nof_ldpc_iterations);
 #ifdef DPDK_FOUND
+  fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
+             dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Force DEBUG logging level for the HAL [Default {}]\n", hal_log_level);
@@ -124,7 +127,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "T:ei:xyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "T:ei:wxyz:h")) != -1) {
     switch (opt) {
       case 'T':
         hwacc_decoder_type = std::string(optarg);
@@ -136,6 +139,9 @@ static int parse_args(int argc, char** argv)
         nof_ldpc_iterations = strtol(optarg, nullptr, 10);
         break;
 #ifdef DPDK_FOUND
+      case 'w':
+        dedicated_queue = false;
+        break;
       case 'x':
         ext_softbuffer = false;
         break;
@@ -220,6 +226,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
   hw_decoder_config.ext_softbuffer      = ext_softbuffer;
   hw_decoder_config.harq_buffer_context = harq_buffer_context;
+  hw_decoder_config.dedicated_queue     = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
   return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);

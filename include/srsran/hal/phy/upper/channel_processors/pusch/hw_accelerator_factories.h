@@ -27,6 +27,8 @@ struct hw_accelerator_pusch_dec_configuration {
   bool ext_softbuffer;
   /// Interfacing to an external HARQ buffer context repository.
   std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context;
+  /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
+  bool dedicated_queue = true;
 };
 
 /// Returns an instance of a PUSCH decoder hardware accelerator factory on success,

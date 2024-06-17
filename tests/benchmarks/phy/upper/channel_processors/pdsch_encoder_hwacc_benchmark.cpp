@@ -44,10 +44,11 @@ static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
 
 #ifdef DPDK_FOUND
-static bool        cb_mode       = false;
-static std::string hal_log_level = "ERROR";
-static bool        std_out_sink  = true;
-static std::string eal_arguments = "";
+static bool        dedicated_queue = true;
+static bool        cb_mode         = false;
+static std::string hal_log_level   = "ERROR";
+static bool        std_out_sink    = true;
+static std::string eal_arguments   = "";
 #endif // DPDK_FOUND
 
 // Test profile structure, initialized with default profile values.
@@ -70,9 +71,11 @@ static test_profile selected_profile = {};
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-T X] [-e] [-i X] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
+  fmt::print("Usage: {} [-T X] [-e] [-i X] [-w] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n", prog);
   fmt::print("\t-T       PDSCH encoder type [generic,acc100][Default {}]\n", hwacc_encoder_type);
 #ifdef DPDK_FOUND
+  fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
+             dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Force TB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
@@ -117,12 +120,15 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "T:xyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "T:wxyz:h")) != -1) {
     switch (opt) {
       case 'T':
         hwacc_encoder_type = std::string(optarg);
         break;
 #ifdef DPDK_FOUND
+      case 'w':
+        dedicated_queue = false;
+        break;
       case 'x':
         cb_mode = true;
         break;
@@ -194,6 +200,9 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
   hw_encoder_config.acc_type          = "acc100";
   hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
+  hw_encoder_config.cb_mode           = cb_mode;
+  hw_encoder_config.max_tb_size       = RTE_BBDEV_LDPC_E_MAX_MBUF;
+  hw_encoder_config.dedicated_queue   = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
   return create_hw_accelerator_pdsch_enc_factory(hw_encoder_config);
@@ -215,10 +224,6 @@ static std::shared_ptr<pdsch_encoder_factory> create_acc100_pdsch_encoder_factor
 
   // Set the hardware-accelerated PDSCH encoder configuration.
   pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
-#ifdef DPDK_FOUND
-  encoder_hw_factory_config.cb_mode     = cb_mode;
-  encoder_hw_factory_config.max_tb_size = RTE_BBDEV_LDPC_E_MAX_MBUF;
-#endif // DPDK_FOUND
   encoder_hw_factory_config.crc_factory        = crc_calc_factory;
   encoder_hw_factory_config.segmenter_factory  = segmenter_factory;
   encoder_hw_factory_config.hw_encoder_factory = hw_encoder_factory;

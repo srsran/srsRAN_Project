@@ -252,16 +252,12 @@ public:
 class pdsch_encoder_factory_hw : public pdsch_encoder_factory
 {
 private:
-  bool                                                   cb_mode;
-  unsigned                                               max_tb_size;
   std::shared_ptr<crc_calculator_factory>                crc_factory;
   std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
   std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory;
 
 public:
   explicit pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configuration& config) :
-    cb_mode(config.cb_mode),
-    max_tb_size(config.max_tb_size),
     crc_factory(std::move(config.crc_factory)),
     segmenter_factory(std::move(config.segmenter_factory)),
     hw_encoder_factory(std::move(config.hw_encoder_factory))
@@ -278,8 +274,7 @@ public:
         crc_factory->create(crc_generator_poly::CRC24A),
         crc_factory->create(crc_generator_poly::CRC24B),
     };
-    return std::make_unique<pdsch_encoder_hw_impl>(
-        cb_mode, max_tb_size, crc, segmenter_factory->create(), hw_encoder_factory->create());
+    return std::make_unique<pdsch_encoder_hw_impl>(crc, segmenter_factory->create(), hw_encoder_factory->create());
   }
 };
 

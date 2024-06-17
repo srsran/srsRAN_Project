@@ -97,10 +97,11 @@ static unsigned                pending_count = 0;
 static unsigned                finish_count  = 0;
 
 #ifdef HWACC_PDSCH_ENABLED
-static bool        cb_mode       = false;
-static bool        std_out_sink  = true;
-static std::string hal_log_level = "error";
-static std::string eal_arguments = "";
+static bool        dedicated_queue = true;
+static bool        cb_mode         = false;
+static bool        std_out_sink    = true;
+static std::string hal_log_level   = "error";
+static std::string eal_arguments   = "";
 #endif // HWACC_PDSCH_ENABLED
 
 // Test profile structure, initialized with default profile values.
@@ -269,7 +270,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-m benchmark mode] [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D "
              "LDPC type] [-M rate "
-             "matcher type] [-P profile] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n",
+             "matcher type] [-P profile] [-w] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n",
              prog);
   fmt::print("\t-m Benchmark mode. [Default {}]\n", to_string(benchmark_mode));
   fmt::print("\t\t {:<20}It does not print any result.\n", to_string(benchmark_modes::silent));
@@ -288,6 +289,8 @@ static void usage(const char* prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
 #ifdef HWACC_PDSCH_ENABLED
+  fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
+             dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Force TB mode [Default {}]\n", cb_mode ? "cb_mode" : "tb_mode");
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
@@ -332,7 +335,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:xyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:wxyz:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -361,6 +364,9 @@ static int parse_args(int argc, char** argv)
         }
         break;
 #ifdef HWACC_PDSCH_ENABLED
+      case 'w':
+        dedicated_queue = false;
+        break;
       case 'x':
         cb_mode = true;
         break;
@@ -499,6 +505,9 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
   hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
   hw_encoder_config.acc_type          = "acc100";
   hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
+  hw_encoder_config.cb_mode           = cb_mode;
+  hw_encoder_config.max_tb_size       = RTE_BBDEV_LDPC_E_MAX_MBUF;
+  hw_encoder_config.dedicated_queue   = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
   return create_hw_accelerator_pdsch_enc_factory(hw_encoder_config);
@@ -519,10 +528,6 @@ create_acc100_pdsch_encoder_factory(std::shared_ptr<crc_calculator_factory> crc_
 
   // Set the hardware-accelerated PDSCH encoder configuration.
   pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
-#ifdef HWACC_PDSCH_ENABLED
-  encoder_hw_factory_config.cb_mode     = cb_mode;
-  encoder_hw_factory_config.max_tb_size = RTE_BBDEV_LDPC_E_MAX_MBUF;
-#endif // HWACC_PDSCH_ENABLED
   encoder_hw_factory_config.crc_factory        = crc_calculator_factory;
   encoder_hw_factory_config.segmenter_factory  = segmenter_factory;
   encoder_hw_factory_config.hw_encoder_factory = hw_encoder_factory;

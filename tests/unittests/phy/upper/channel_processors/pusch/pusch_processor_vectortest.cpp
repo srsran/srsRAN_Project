@@ -137,6 +137,7 @@ private:
     hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
     hw_decoder_config.ext_softbuffer      = true;
     hw_decoder_config.harq_buffer_context = harq_buffer_context;
+    hw_decoder_config.dedicated_queue     = true;
 
     // ACC100 hardware-accelerator implementation.
     return hal::create_hw_accelerator_pusch_dec_factory(hw_decoder_config);

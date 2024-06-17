@@ -124,10 +124,11 @@ static std::atomic<int>      pending_count = {0};
 static std::atomic<unsigned> finish_count  = {0};
 
 #ifdef HWACC_PUSCH_ENABLED
-static bool        ext_softbuffer = true;
-static bool        std_out_sink   = true;
-static std::string hal_log_level  = "error";
-static std::string eal_arguments  = "";
+static bool        dedicated_queue = true;
+static bool        ext_softbuffer  = true;
+static bool        std_out_sink    = true;
+static std::string hal_log_level   = "error";
+static std::string eal_arguments   = "";
 #endif // HWACC_PUSCH_ENABLED
 
 // Test profile structure, initialized with default profile values.
@@ -197,7 +198,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-m benchmark mode] [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D "
              "LDPC type] [-M rate "
-             "dematcher type] [-P profile] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n",
+             "dematcher type] [-P profile] [-w] [-x] [-y] [-z error|warning|info|debug] [-h] [eal_args ...]\n",
              prog);
   fmt::print("\t-m Benchmark mode. [Default {}]\n", to_string(benchmark_mode));
   fmt::print("\t\t {:<20}It does not print any result.\n", to_string(benchmark_modes::silent));
@@ -220,6 +221,8 @@ static void usage(const char* prog)
     fmt::print("\t\t {:<40} {}\n", profile.name, profile.description);
   }
 #ifdef HWACC_PUSCH_ENABLED
+  fmt::print("\t-w       Force shared hardware-queue use [Default {}]\n",
+             dedicated_queue ? "dedicated_queue" : "shared_queue");
   fmt::print("\t-x       Use the host's memory for the soft-buffer [Default {}]\n", !ext_softbuffer);
   fmt::print("\t-y       Force logging output written to a file [Default {}]\n", std_out_sink ? "std_out" : "file");
   fmt::print("\t-z       Set logging level for the HAL [Default {}]\n", hal_log_level);
@@ -265,7 +268,7 @@ static std::string capture_eal_args(int* argc, char*** argv)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:t:B:D:M:EP:m:xyz:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:t:B:D:M:EP:m:wxyz:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -300,6 +303,9 @@ static int parse_args(int argc, char** argv)
         }
         break;
 #ifdef HWACC_PUSCH_ENABLED
+      case 'w':
+        dedicated_queue = false;
+        break;
       case 'x':
         ext_softbuffer = false;
         break;
@@ -447,6 +453,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
   hw_decoder_config.ext_softbuffer      = ext_softbuffer;
   hw_decoder_config.harq_buffer_context = harq_buffer_context;
+  hw_decoder_config.dedicated_queue     = dedicated_queue;
 
   // ACC100 hardware-accelerator implementation.
   return create_hw_accelerator_pusch_dec_factory(hw_decoder_config);

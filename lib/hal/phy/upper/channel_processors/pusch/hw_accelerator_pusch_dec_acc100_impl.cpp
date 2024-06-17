@@ -22,12 +22,10 @@ void hw_accelerator_pusch_dec_acc100_impl::allocate_resources()
   int socket_id = bbdev_accelerator->get_socket_id();
 
   // Create bbdev op pools for the accelerated LDPC decoder operations.
-  // Note that a single hardware-queue per lcore is assumed.
-  unsigned nof_ldpc_dec_cores = bbdev_accelerator->get_nof_ldpc_dec_cores();
   // op pools require unique names.
-  std::string op_pool_name = fmt::format("dec_op_pool_{}_{}", device_id, queue_id);
+  std::string op_pool_name = fmt::format("dec_op_pool_{}_{}", device_id, id);
   op_pool                  = ::dpdk::create_bbdev_op_pool(
-      op_pool_name.c_str(), RTE_BBDEV_OP_LDPC_DEC, nof_ldpc_dec_cores, socket_id, bbdev_accelerator->get_logger());
+      op_pool_name.c_str(), RTE_BBDEV_OP_LDPC_DEC, MAX_NOF_SEGMENTS, socket_id, bbdev_accelerator->get_logger());
 
   // Create new mbuf pools for both input and output data for the hardware-accelerated LDPC decoder.
   // Note that the buffers are sized taking into account that only CB mode is supported by the decoder.
@@ -40,21 +38,51 @@ void hw_accelerator_pusch_dec_acc100_impl::allocate_resources()
   msg_mpool_cfg.n_mbuf         = nof_mbuf;
 
   // mbuf pools require unique names.
-  std::string mbuf_pool_name = fmt::format("dec_in_mbuf_pool_{}_{}", device_id, queue_id);
+  std::string mbuf_pool_name = fmt::format("dec_in_mbuf_pool_{}_{}", device_id, id);
   in_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, rm_mpool_cfg, bbdev_accelerator->get_logger());
 
-  mbuf_pool_name = fmt::format("harq_in_mbuf_pool_{}_{}", device_id, queue_id);
+  mbuf_pool_name = fmt::format("harq_in_mbuf_pool_{}_{}", device_id, id);
   harq_in_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, rm_mpool_cfg, bbdev_accelerator->get_logger());
 
-  mbuf_pool_name = fmt::format("dec_out_mbuf_pool_{}_{}", device_id, queue_id);
+  mbuf_pool_name = fmt::format("dec_out_mbuf_pool_{}_{}", device_id, id);
   out_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, msg_mpool_cfg, bbdev_accelerator->get_logger());
 
-  mbuf_pool_name = fmt::format("harq_out_mbuf_pool_{}_{}", device_id, queue_id);
+  mbuf_pool_name = fmt::format("harq_out_mbuf_pool_{}_{}", device_id, id);
   harq_out_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, rm_mpool_cfg, bbdev_accelerator->get_logger());
+}
+
+void hw_accelerator_pusch_dec_acc100_impl::hw_reserve_queue()
+{
+  // Verify that no hardware-queue is reserved already.
+  if (queue_id < 0) {
+    int qid = -1;
+    do {
+      qid = bbdev_accelerator->reserve_queue(RTE_BBDEV_OP_LDPC_DEC);
+    } while (qid < 0 && !dedicated_queue);
+    queue_id = qid;
+
+    // HAL logging.
+    srslog::basic_logger& logger = bbdev_accelerator->get_logger();
+    logger.info("[acc100] decoder id={}: reserved queue={}.", id, queue_id);
+  }
+}
+
+void hw_accelerator_pusch_dec_acc100_impl::hw_free_queue()
+{
+  // Verify that the hardware queue won't be requrired anymore.
+  if (!dedicated_queue || (dedicated_queue && queue_id > 0)) {
+    bbdev_accelerator->free_queue(RTE_BBDEV_OP_LDPC_DEC, queue_id);
+
+    // HAL logging.
+    srslog::basic_logger& logger = bbdev_accelerator->get_logger();
+    logger.info("[acc100] decoder id={}: freed queue={}.", id, queue_id);
+
+    queue_id = -1;
+  }
 }
 
 void hw_accelerator_pusch_dec_acc100_impl::hw_config(const hw_pusch_decoder_configuration& config, unsigned cb_index)
@@ -128,7 +156,7 @@ bool hw_accelerator_pusch_dec_acc100_impl::hw_enqueue(span<const int8_t> data,
     enqueued = ::dpdk::enqueue_ldpc_dec_operation(op[cb_index],
                                                   1,
                                                   device_id,
-                                                  queue_id,
+                                                  static_cast<uint16_t>(queue_id),
                                                   dec_config.new_data,
                                                   ext_softbuffer,
                                                   bbdev_accelerator->get_logger()); // TBD: single operation enqueued.
@@ -162,7 +190,7 @@ bool hw_accelerator_pusch_dec_acc100_impl::hw_dequeue(span<uint8_t> data,
     dequeued = ::dpdk::dequeue_ldpc_dec_operation(op[segment_index],
                                                   1,
                                                   device_id,
-                                                  queue_id,
+                                                  static_cast<uint16_t>(queue_id),
                                                   bbdev_accelerator->get_logger()); // TBD: single operation dequeued.
 
     // Check if there are new results available from the hardware accelerator.
