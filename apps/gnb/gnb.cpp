@@ -42,7 +42,12 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
+
+// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
+// This helps prevent false alarms from the thread sanitizer.
+#ifdef __SANITIZE_THREAD__
 #include "srsran/support/tsan_options.h"
+#endif //  __SANITIZE_THREAD__
 
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
