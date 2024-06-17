@@ -10,7 +10,7 @@
  *
  */
 
-#ifdef __SANITIZE_THREAD__
+#pragma once
 
 // Options taken from Mozilla project
 //   abort_on_error=1 - Causes TSan to abort instead of using exit().
@@ -24,7 +24,9 @@
 //   allocations the same way we would handle them with a regular allocator and
 //   also uncovers potential bugs that might occur in these situations.
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 const char* __tsan_default_options()
 {
@@ -45,6 +47,7 @@ const char* __tsan_default_suppressions()
       "race:libusb*\n"
       "race:libuhd*\n";
 }
-}
 
-#endif // __SANITIZE_THREAD__
+#ifdef __cplusplus
+}
+#endif

@@ -42,6 +42,7 @@
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
+#include "srsran/support/tsan_options.h"
 
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
