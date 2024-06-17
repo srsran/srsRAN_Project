@@ -8,8 +8,6 @@
  *
  */
 
-#include "srsran/pcap/dlt_pcap.h"
-#include "srsran/pcap/rlc_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
@@ -55,15 +53,15 @@
 
 #include <atomic>
 
-#include "../units/cu_cp/pcap_factory.h"
-#include "../units/cu_up/pcap_factory.h"
-#include "../units/flexible_du/du_high/pcap_factory.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
+#include "apps/units/cu_cp/pcap_factory.h"
 #include "apps/units/cu_up/cu_up_builder.h"
+#include "apps/units/cu_up/pcap_factory.h"
+#include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
@@ -303,13 +301,8 @@ int main(int argc, char** argv)
       modules::cu_cp::create_dlt_pcap(cu_cp_config.pcap_cfg, *workers.get_executor_getter());
   srsran::modules::cu_up::cu_up_dlt_pcaps cu_up_dlt_pcaps =
       modules::cu_up::create_dlt_pcaps(cu_up_config.pcap_cfg, *workers.get_executor_getter());
-
-  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
-      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<mac_pcap> mac_p =
-      modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<rlc_pcap> rlc_p =
-      modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  srsran::modules::flexible_du::du_pcaps du_pcaps =
+      modules::flexible_du::create_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
@@ -351,7 +344,7 @@ int main(int argc, char** argv)
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(gnb_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
   // Create CU-CP config.
   cu_cp_build_dependencies cu_cp_dependencies;
@@ -401,8 +394,8 @@ int main(int argc, char** argv)
                                     *f1c_gw,
                                     *f1u_conn->get_f1u_du_gateway(),
                                     app_timers,
-                                    *mac_p,
-                                    *rlc_p,
+                                    *du_pcaps.mac,
+                                    *du_pcaps.rlc,
                                     metrics_stdout,
                                     metrics_json,
                                     metrics_logger,
@@ -450,11 +443,9 @@ int main(int argc, char** argv)
   }
 
   gnb_logger.info("Closing PCAP files...");
-  mac_p->close();
-  rlc_p->close();
   cu_cp_dlt_pcaps.close();
   cu_up_dlt_pcaps.close();
-  du_dlt_pcaps.close();
+  du_pcaps.close();
   gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");
