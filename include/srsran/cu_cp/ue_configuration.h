@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include "ue_task_scheduler.h"
-#include "up_resource_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ngap/ngap.h"
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -136,11 +136,9 @@ public:
   virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
 
   /// \brief Notify RRC DU to create a UE.
-  /// \param[in] resource_mng The UP resource manager of this UE.
   /// \param[in] msg The UE creation message.
   /// \return Returns a handle to the created UE.
-  virtual rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
-                                                   const rrc_ue_creation_message& msg) = 0;
+  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void on_release_ues() = 0;

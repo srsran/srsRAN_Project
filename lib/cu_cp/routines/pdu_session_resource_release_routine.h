@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../du_processor/du_processor.h"
+#include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"

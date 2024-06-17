@@ -24,8 +24,7 @@ namespace srs_cu_cp {
 class rrc_ue_impl final : public rrc_ue_interface, public rrc_ue_controller
 {
 public:
-  rrc_ue_impl(up_resource_manager&                   up_resource_mng_,
-              rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
+  rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngap_ctrl_notif_,
               rrc_ue_context_update_notifier&        cu_cp_notif_,
@@ -113,7 +112,6 @@ private:
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
 
   rrc_ue_context_t                context;
-  up_resource_manager&            up_resource_mng;      // UP resource manager
   rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;    // PDU notifier to the F1AP
   rrc_ue_nas_notifier&            nas_notifier;         // PDU notifier to the NGAP
   rrc_ue_control_notifier&        ngap_ctrl_notifier;   // Control message notifier to the NGAP

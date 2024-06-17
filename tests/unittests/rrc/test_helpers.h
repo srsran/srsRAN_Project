@@ -13,7 +13,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
-#include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -108,20 +107,28 @@ public:
     });
   }
 
-  async_task<void> on_ue_removal_required() override
+  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
   {
-    logger.info("UE removal requested");
+    logger.info("ue={}: Requested a UE release", request.ue_index);
+    last_cu_cp_ue_context_release_request = request;
+
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
     });
   }
 
-  async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
-  {
-    logger.info("ue={}: Requested a UE release", request.ue_index);
-    last_cu_cp_ue_context_release_request = request;
+  void on_up_context_setup_required(up_context ctxt) override { logger.info("UP context setup requested"); }
 
+  up_context on_up_context_required() override
+  {
+    logger.info("UP context requested");
+    return up_context{};
+  }
+
+  async_task<void> on_ue_removal_required() override
+  {
+    logger.info("UE removal requested");
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();

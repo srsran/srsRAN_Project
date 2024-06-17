@@ -14,6 +14,7 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
+#include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
 #include <unordered_map>
@@ -73,7 +74,7 @@ public:
   du_cell_index_t get_pcell_index() { return pcell_index; }
 
   /// \brief Get the UP resource manager of the UE.
-  up_resource_manager& get_up_resource_manager() override { return *up_mng; }
+  up_resource_manager& get_up_resource_manager() override { return up_mng; }
 
   /// \brief Get the task scheduler of the UE.
   ue_task_scheduler& get_task_sched() override { return task_sched; }
@@ -150,10 +151,10 @@ public:
 
 private:
   // common context
-  ue_index_t                           ue_index = ue_index_t::invalid;
-  ue_task_scheduler_impl               task_sched;
-  security::security_context           sec_context;
-  std::unique_ptr<up_resource_manager> up_mng;
+  ue_index_t                 ue_index = ue_index_t::invalid;
+  ue_task_scheduler_impl     task_sched;
+  security::security_context sec_context;
+  up_resource_manager        up_mng;
 
   // du ue context
   cu_cp_ue_context ue_ctxt;

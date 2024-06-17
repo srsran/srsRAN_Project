@@ -580,8 +580,11 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 
   // Connect cu-cp to rrc ue adapters
   ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
-  ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(
-      get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler(), *controller, get_cu_cp_measurement_handler());
+  ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
+                                                          get_cu_cp_ue_removal_handler(),
+                                                          *controller,
+                                                          ue_mng.find_ue(ue_index)->get_up_resource_manager(),
+                                                          get_cu_cp_measurement_handler());
 }
 
 byte_buffer cu_cp_impl::handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi)

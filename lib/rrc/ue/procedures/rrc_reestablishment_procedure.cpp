@@ -22,7 +22,6 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     const asn1::rrc_nr::rrc_reest_request_s& request_,
     rrc_ue_context_t&                        context_,
     const byte_buffer&                       du_to_cu_container_,
-    up_resource_manager&                     up_resource_mng_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
     rrc_ue_srb_handler&                      srb_notifier_,
@@ -33,7 +32,6 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   reestablishment_request(request_),
   context(context_),
   du_to_cu_container(du_to_cu_container_),
-  up_resource_mng(up_resource_mng_),
   rrc_ue_setup_notifier(rrc_ue_setup_notifier_),
   rrc_ue_reest_notifier(rrc_ue_reest_notifier_),
   srb_notifier(srb_notifier_),
@@ -234,7 +232,7 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
   }
 
   // Transfer UP context from old UE
-  up_resource_mng.set_up_context(old_ue_reest_context.up_ctx);
+  cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx);
 
   // Update security keys
   // freq_and_timing must be present, otherwise the RRC UE would've never been created

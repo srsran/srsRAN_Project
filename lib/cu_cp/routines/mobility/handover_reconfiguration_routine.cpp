@@ -10,6 +10,7 @@
 
 #include "handover_reconfiguration_routine.h"
 #include "../../du_processor/du_processor.h"
+#include "../../up_resource_manager/up_resource_manager_impl.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

@@ -159,11 +159,10 @@ public:
     return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
   }
 
-  rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
-                                           const rrc_ue_creation_message& msg) override
+  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->add_ue(resource_mng, msg);
+    return rrc_du_handler->add_ue(msg);
   }
 
   void on_release_ues() override

@@ -13,7 +13,7 @@
 #include "../ngap_context.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
-#include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/cu_cp/up_context.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 

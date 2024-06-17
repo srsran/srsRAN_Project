@@ -13,6 +13,7 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
+#include "../up_resource_manager/up_resource_manager_impl_interface.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
@@ -87,14 +88,16 @@ class rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public rrc_u
 public:
   rrc_ue_cu_cp_adapter(ue_index_t ue_index_) : ue_index(ue_index_) {}
 
-  void connect_cu_cp(cu_cp_rrc_ue_interface&    cu_cp_rrc_ue_,
-                     cu_cp_ue_removal_handler&  ue_removal_handler_,
-                     cu_cp_controller&          ctrl_,
-                     cu_cp_measurement_handler& meas_handler_)
+  void connect_cu_cp(cu_cp_rrc_ue_interface&             cu_cp_rrc_ue_,
+                     cu_cp_ue_removal_handler&           ue_removal_handler_,
+                     cu_cp_controller&                   ctrl_,
+                     up_resource_manager_impl_interface& up_mng_,
+                     cu_cp_measurement_handler&          meas_handler_)
   {
     cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_;
     ue_removal_handler   = &ue_removal_handler_;
     controller           = &ctrl_;
+    up_mng               = &up_mng_;
     meas_handler         = &meas_handler_;
   }
 
@@ -134,16 +137,28 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_transfer(ue_index, old_ue_index);
   }
 
-  async_task<void> on_ue_removal_required() override
-  {
-    srsran_assert(ue_removal_handler != nullptr, "CU-CP UE removal handler must not be nullptr");
-    return ue_removal_handler->handle_ue_removal_request(ue_index);
-  }
-
   async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
+  }
+
+  void on_up_context_setup_required(up_context ctxt) override
+  {
+    srsran_assert(up_mng != nullptr, "UP resource manager must not be nullptr");
+    up_mng->set_up_context(ctxt);
+  }
+
+  up_context on_up_context_required() override
+  {
+    srsran_assert(up_mng != nullptr, "UP resource manager must not be nullptr");
+    return up_mng->get_up_context();
+  }
+
+  async_task<void> on_ue_removal_required() override
+  {
+    srsran_assert(ue_removal_handler != nullptr, "CU-CP UE removal handler must not be nullptr");
+    return ue_removal_handler->handle_ue_removal_request(ue_index);
   }
 
   std::optional<rrc_meas_cfg>
@@ -160,11 +175,12 @@ public:
   }
 
 private:
-  cu_cp_rrc_ue_interface*    cu_cp_rrc_ue_handler = nullptr;
-  cu_cp_ue_removal_handler*  ue_removal_handler   = nullptr;
-  cu_cp_controller*          controller           = nullptr;
-  cu_cp_measurement_handler* meas_handler         = nullptr;
-  ue_index_t                 ue_index;
+  cu_cp_rrc_ue_interface*             cu_cp_rrc_ue_handler = nullptr;
+  cu_cp_ue_removal_handler*           ue_removal_handler   = nullptr;
+  up_resource_manager_impl_interface* up_mng               = nullptr;
+  cu_cp_controller*                   controller           = nullptr;
+  cu_cp_measurement_handler*          meas_handler         = nullptr;
+  ue_index_t                          ue_index;
 };
 
 } // namespace srs_cu_cp

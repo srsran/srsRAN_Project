@@ -112,7 +112,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
                                                                              context,
                                                                              du_to_cu_container,
-                                                                             up_resource_mng,
                                                                              *this,
                                                                              *this,
                                                                              get_rrc_ue_srb_handler(),
@@ -406,7 +405,7 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   transfer_context.sec_context               = context.sec_context;
   transfer_context.meas_cfg                  = context.meas_cfg;
   transfer_context.srbs                      = get_srbs();
-  transfer_context.up_ctx                    = up_resource_mng.get_up_context();
+  transfer_context.up_ctx                    = cu_cp_notifier.on_up_context_required();
   transfer_context.handover_preparation_info = get_packed_handover_preparation_message();
   return transfer_context;
 }
@@ -419,7 +418,7 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
   if (context.capabilities.has_value()) {
     rrc_reest_context.capabilities = context.capabilities.value();
   }
-  rrc_reest_context.up_ctx = up_resource_mng.get_up_context();
+  rrc_reest_context.up_ctx = cu_cp_notifier.on_up_context_required();
 
   // TODO: Handle scenario with multiple reestablishments for the same UE
   rrc_reest_context.reestablishment_ongoing = context.reestablishment_ongoing;

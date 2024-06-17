@@ -643,8 +643,7 @@ public:
     return true;
   }
 
-  rrc_ue_interface* on_ue_creation_request(up_resource_manager&           up_resource_mng,
-                                           const rrc_ue_creation_message& msg) override
+  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     logger.info("Received a UE creation request");
     return nullptr;

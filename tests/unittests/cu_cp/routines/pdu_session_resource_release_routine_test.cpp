@@ -29,13 +29,14 @@ protected:
     f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_bearer_ctxt_mng.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_pdu_session_resource_release_routine(msg,
-                                                                e1ap_bearer_ctxt_mng,
-                                                                f1ap_ue_ctxt_mng,
-                                                                ngap_control_handler,
-                                                                rrc_ue_ctrl_notifier,
-                                                                ue_task_sched,
-                                                                *rrc_ue_up_resource_manager);
+    t = routine_mng->start_pdu_session_resource_release_routine(
+        msg,
+        e1ap_bearer_ctxt_mng,
+        f1ap_ue_ctxt_mng,
+        ngap_control_handler,
+        rrc_ue_ctrl_notifier,
+        ue_task_sched,
+        ue_mng.find_ue(msg.ue_index)->get_up_resource_manager());
     t_launcher.emplace(t);
   }
 
@@ -52,10 +53,10 @@ protected:
     return true;
   }
 
-  void setup_pdu_session()
+  void setup_pdu_session(ue_index_t ue_index)
   {
     // Setup single PDU session.
-    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(ue_index);
     std::optional<lazy_task_launcher<cu_cp_pdu_session_resource_setup_response>> setup_launcher;
 
     bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -69,12 +70,13 @@ protected:
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
 
     async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
-        routine_mng->start_pdu_session_resource_setup_routine(request,
-                                                              security_cfg,
-                                                              e1ap_bearer_ctxt_mng,
-                                                              f1ap_ue_ctxt_mng,
-                                                              rrc_ue_ctrl_notifier,
-                                                              *rrc_ue_up_resource_manager);
+        routine_mng->start_pdu_session_resource_setup_routine(
+            request,
+            security_cfg,
+            e1ap_bearer_ctxt_mng,
+            f1ap_ue_ctxt_mng,
+            rrc_ue_ctrl_notifier,
+            ue_mng.find_ue(request.ue_index)->get_up_resource_manager());
     setup_launcher.emplace(setup_task);
   }
 
@@ -85,9 +87,10 @@ protected:
 TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
-  setup_pdu_session();
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  setup_pdu_session(ue_index);
 
-  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
+  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release(ue_index);
 
   // Start PDU SESSION RESOURCE RELEASE routine.
   bearer_context_outcome_t bearer_context_modification_outcome{false};
@@ -100,9 +103,10 @@ TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_r
 TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
-  setup_pdu_session();
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  setup_pdu_session(ue_index);
 
-  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
+  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release(ue_index);
 
   // Start PDU SESSION RESOURCE RELEASE routine.
   bearer_context_outcome_t bearer_context_modification_outcome{true};
@@ -116,8 +120,9 @@ TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failu
 TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command_received_then_release_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_release_command command = {}; // empty message
-  command.ue_index                                   = uint_to_ue_index(0);
+  ue_index_t                                 ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_release_command command  = {}; // empty message
+  command.ue_index                                    = ue_index;
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_modification_outcome{true};
@@ -133,9 +138,10 @@ TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command
 TEST_F(pdu_session_resource_release_test, when_all_sub_actions_succeed_then_release_succeeds)
 {
   // Test Preamble.
-  setup_pdu_session();
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  setup_pdu_session(ue_index);
 
-  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
+  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release(ue_index);
 
   // Start PDU SESSION RESOURCE RELEASE routine.
   start_procedure(command, {true}, {true});

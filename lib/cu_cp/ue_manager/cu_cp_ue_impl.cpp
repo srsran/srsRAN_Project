@@ -18,10 +18,7 @@ cu_cp_ue::cu_cp_ue(const ue_index_t               ue_index_,
                    ue_task_scheduler_impl         task_sched_,
                    const pci_t                    pci_,
                    const rnti_t                   c_rnti_) :
-  ue_index(ue_index_),
-  task_sched(std::move(task_sched_)),
-  up_mng(create_up_resource_manager(up_cfg)),
-  rrc_ue_cu_cp_ev_notifier(ue_index)
+  ue_index(ue_index_), task_sched(std::move(task_sched_)), up_mng(up_cfg), rrc_ue_cu_cp_ev_notifier(ue_index)
 {
   if (pci_ != INVALID_PCI) {
     pci = pci_;

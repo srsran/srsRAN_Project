@@ -13,9 +13,9 @@
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
+#include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {

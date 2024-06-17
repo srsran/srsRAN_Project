@@ -19,8 +19,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(up_resource_manager&                   up_resource_mng_,
-                         rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
+rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          rrc_ue_control_notifier&               ngap_ctrl_notif_,
                          rrc_ue_context_update_notifier&        cu_cp_notif_,
@@ -34,7 +33,6 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&                   up_resource_mng_
                          ue_task_scheduler&                     task_sched_,
                          std::optional<rrc_ue_transfer_context> rrc_context) :
   context(ue_index_, c_rnti_, cell_, cfg_, security_context_, rrc_context),
-  up_resource_mng(up_resource_mng_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),

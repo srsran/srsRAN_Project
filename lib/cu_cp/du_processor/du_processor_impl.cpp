@@ -217,7 +217,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
   rrc_ue_create_msg.du_to_cu_container    = std::move(du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched         = &ue.get_task_sched();
   rrc_ue_create_msg.rrc_context           = std::move(rrc_context);
-  auto* rrc_ue = rrc_du_adapter.on_ue_creation_request(ue.get_up_resource_manager(), std::move(rrc_ue_create_msg));
+  auto* rrc_ue                            = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {
     logger.warning("Could not create RRC UE");
     return false;

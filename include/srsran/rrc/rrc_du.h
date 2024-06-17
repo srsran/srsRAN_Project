@@ -14,7 +14,6 @@
 #include "rrc_ue.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
-#include "srsran/ran/band_helper.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -55,7 +54,7 @@ public:
   virtual ~rrc_du_ue_repository() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg) = 0;
+  virtual rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;

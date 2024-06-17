@@ -96,7 +96,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
   return true;
 }
 
-rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg)
+rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
 {
   // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
   // TS 38.473 section 8.4.1.2.
@@ -130,8 +130,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   rrc_cell.ssb_arfcn        = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
 
   auto res = ue_db.emplace(ue_index,
-                           std::make_unique<rrc_ue_impl>(resource_mng,
-                                                         *msg.f1ap_pdu_notifier,
+                           std::make_unique<rrc_ue_impl>(*msg.f1ap_pdu_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
                                                          *msg.rrc_ue_cu_cp_notifier,

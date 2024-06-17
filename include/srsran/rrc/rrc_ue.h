@@ -16,13 +16,11 @@
 #include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
-#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
 
 namespace asn1 {
 namespace rrc_nr {
@@ -315,12 +313,20 @@ public:
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t old_ue_index) = 0;
 
-  /// \brief Notify the CU-CP to remove a UE from the CU-CP.
-  virtual async_task<void> on_ue_removal_required() = 0;
-
   /// \brief Notify the CU-CP to release a UE.
   /// \param[in] request The release request.
   virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
+
+  /// \brief Notify the CU-CP to setup an UP context.
+  /// \param[in] ctxt The UP context to setup.
+  virtual void on_up_context_setup_required(up_context ctxt) = 0;
+
+  /// \brief Get the UP context of the UE.
+  /// \returns The UP context of the UE.
+  virtual up_context on_up_context_required() = 0;
+
+  /// \brief Notify the CU-CP to remove a UE from the CU-CP.
+  virtual async_task<void> on_ue_removal_required() = 0;
 };
 
 /// Interface to notify about measurements

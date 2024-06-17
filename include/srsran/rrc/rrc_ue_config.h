@@ -11,9 +11,7 @@
 #pragma once
 
 #include "rrc_types.h"
-#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {

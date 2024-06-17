@@ -26,7 +26,6 @@ public:
   rrc_reestablishment_procedure(const asn1::rrc_nr::rrc_reest_request_s& request_,
                                 rrc_ue_context_t&                        context_,
                                 const byte_buffer&                       du_to_cu_container_,
-                                up_resource_manager&                     up_resource_mng_,
                                 rrc_ue_setup_proc_notifier&              rrc_setup_notifier_,
                                 rrc_ue_reestablishment_proc_notifier&    rrc_ue_notifier_,
                                 rrc_ue_srb_handler&                      srb_notifier_,
@@ -62,7 +61,6 @@ private:
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
   rrc_ue_context_t&                        context;
   const byte_buffer&                       du_to_cu_container;
-  up_resource_manager&                     up_resource_mng;
   rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier;
   rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier; // handler to the parent RRC UE object
   rrc_ue_srb_handler&                      srb_notifier;          // for creating SRBs
