@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
-#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/srslog/logger.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
 #include <vector>
 
@@ -21,7 +21,10 @@ namespace srsran {
 class gtpu_teid_pool_impl final : public gtpu_teid_pool
 {
 public:
-  explicit gtpu_teid_pool_impl(uint32_t max_nof_teids_) : max_nof_teids(max_nof_teids_), teid_pool(max_nof_teids_) {}
+  explicit gtpu_teid_pool_impl(uint32_t max_nof_teids_) :
+    max_nof_teids(max_nof_teids_), teid_pool(max_nof_teids_), logger(srslog::fetch_basic_logger("GTPU"))
+  {
+  }
 
   SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
   {
@@ -53,11 +56,11 @@ public:
     return teid;
   }
 
-  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override
+  bool release_teid(gtpu_teid_t teid) override
   {
     uint32_t teid_idx = teid.value() - GTPU_TEID_MIN.value();
     if (not teid_pool[teid_idx]) {
-      // trying to free non-allocated TEID
+      logger.error("Trying to free non-allocated TEID. teid={}", teid);
       return false;
     }
     teid_pool[teid_idx] = false;
@@ -65,7 +68,7 @@ public:
     return true;
   }
 
-  bool full() const override { return nof_teids >= max_nof_teids; }
+  [[nodiscard]] bool full() const override { return nof_teids >= max_nof_teids; }
 
   uint32_t get_max_nof_teids() override { return max_nof_teids; }
 
@@ -75,5 +78,7 @@ private:
   const uint32_t max_nof_teids;
 
   std::vector<bool> teid_pool;
+
+  srslog::basic_logger& logger;
 };
 } // namespace srsran

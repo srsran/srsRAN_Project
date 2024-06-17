@@ -53,6 +53,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
+  n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
   ue_dl_exec(ue_dl_exec_),
@@ -82,26 +83,31 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session, gtpu_rx_demux));
-  std::unique_ptr<pdu_session>& new_session    = pdu_sessions.at(session.pdu_session_id);
-  const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
+  // Allocate local TEID
+  expected<gtpu_teid_t> ret = n3_teid_allocator.request_teid();
+  if (ret.is_error()) {
+    logger.log_warning("Failed to create PDU session. Cause: could not allocate local TEID. {}",
+                       session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  std::unique_ptr<pdu_session> new_session = std::make_unique<pdu_session>(session, gtpu_rx_demux, n3_teid_allocator);
+  const auto&                  ul_tunnel_info = new_session->ul_tunnel_info;
+  new_session->local_teid                     = ret.value();
 
   // Get uplink transport address
-  logger.log_debug("PDU session uplink tunnel info: {} teid={} addr={}",
+  logger.log_debug("PDU session uplink tunnel info: {} local_teid={} peer_teid={} peer_addr={}",
                    session.pdu_session_id,
+                   new_session->local_teid,
                    ul_tunnel_info.gtp_teid.value(),
                    ul_tunnel_info.tp_address);
-
-  // Allocate local TEID
-  // TODO
-  // new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
   // Advertise either local or external IP address of N3 interface
   const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
                                    ? net_config.n3_bind_addr
                                    : net_config.n3_ext_addr;
   pdu_session_result.gtp_tunnel =
-      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
+      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), *new_session->local_teid);
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
@@ -113,7 +119,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = net_config.upf_port;
-  msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.local_teid                = *new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
@@ -128,7 +134,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Register tunnel at demux
   if (!gtpu_rx_demux.add_tunnel(
-          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+          *new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
@@ -160,6 +166,9 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
             ? confidentiality_protection_result_t::not_performed
             : confidentiality_protection_result_t::performed;
   }
+
+  // PDU session creation was successful, store PDU session.
+  pdu_sessions.emplace(session.pdu_session_id, std::move(new_session));
   pdu_session_result.success = true;
   return pdu_session_result;
 }

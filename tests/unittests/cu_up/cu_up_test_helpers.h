@@ -106,7 +106,7 @@ public:
 
   uint32_t get_max_nof_teids() override { return UINT32_MAX; }
 
-  uint32_t next_teid = 0;
+  uint32_t next_teid = 1;
 };
 
 /// Dummy adapter between GTP-U and Network Gateway

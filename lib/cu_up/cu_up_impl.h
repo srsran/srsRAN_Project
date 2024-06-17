@@ -17,16 +17,12 @@
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
-#include "srsran/support/executors/task_executor.h"
 #include <memory>
-#include <unordered_map>
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 class cu_up final : public cu_up_interface
 {
@@ -96,5 +92,4 @@ private:
   unique_timer statistics_report_timer;
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up
