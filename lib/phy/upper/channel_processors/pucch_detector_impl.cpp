@@ -12,7 +12,8 @@
 /// \brief PUCCH detector definition for Formats 0 and 1.
 
 #include "pucch_detector_impl.h"
-#include "srsran/srsvec/copy.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/mean.h"
 
 using namespace srsran;
@@ -302,30 +303,30 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
                                                      const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
 {
   for (uint8_t port : antenna_ports) {
-    unsigned   i_symbol       = 0;
-    unsigned   skip           = 0;
-    unsigned   symbol_index   = first_symbol + 1;
-    span<cf_t> sequence_slice = time_spread_sequence.get_view({port});
-    span<cf_t> estimate_slice = ch_estimates.get_view({port});
+    unsigned      i_symbol       = 0;
+    unsigned      skip           = 0;
+    unsigned      symbol_index   = first_symbol + 1;
+    span<cbf16_t> sequence_slice = time_spread_sequence.get_view({port});
+    span<cbf16_t> estimate_slice = ch_estimates.get_view({port});
     for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
       // Index of the first subcarrier assigned to PUCCH, before hopping.
-      unsigned   k_init         = NRE * first_prb;
-      span<cf_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
+      unsigned      k_init         = NRE * first_prb;
+      span<cbf16_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
       grid.get(sequence_chunk, port, symbol_index, k_init);
 
-      span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
+      span<const cbf16_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
       srsvec::copy(estimate_slice.subspan(skip, NRE), tmp.subspan(k_init, NRE));
     }
 
     for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
       // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
       // second_prb.has_value().
-      unsigned   k_init         = NRE * second_prb.value();
-      span<cf_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
+      unsigned      k_init         = NRE * second_prb.value();
+      span<cbf16_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
       grid.get(sequence_chunk, port, symbol_index, k_init);
 
-      span<const cf_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
-      span<cf_t>       tmp_out = estimate_slice.subspan(skip, NRE);
+      span<const cbf16_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
+      span<cbf16_t>       tmp_out = estimate_slice.subspan(skip, NRE);
       srsvec::copy(tmp_out, tmp_in);
     }
   }

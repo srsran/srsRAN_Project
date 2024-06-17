@@ -16,8 +16,8 @@
 
 using namespace srsran;
 
-static constexpr float max_abs_eq_symbol_error = 1e-2;
-static constexpr float max_abs_eq_nvar_error   = 1e-3;
+static constexpr float max_abs_eq_symbol_error = 0.2F;
+static constexpr float max_abs_eq_nvar_error   = 0.1F;
 
 namespace srsran {
 
@@ -83,11 +83,11 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
-  dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims> rx_symbols;
-  dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims> test_ch_estimates;
-  std::vector<cf_t>                                                                 eq_symbols_expected;
-  std::vector<cf_t>                                                                 eq_symbols_actual;
-  std::vector<float>                                                                eq_noise_vars_expected;
+  dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cbf16_t, re_dims> rx_symbols;
+  dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cbf16_t, ch_dims> test_ch_estimates;
+  std::vector<cf_t>                                                                    eq_symbols_expected;
+  std::vector<cf_t>                                                                    eq_symbols_actual;
+  std::vector<float>                                                                   eq_noise_vars_expected;
 
   std::vector<float> eq_noise_vars_actual;
 

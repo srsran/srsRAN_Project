@@ -20,6 +20,13 @@ using namespace srsran;
 
 static std::mt19937 rgen(0);
 
+// Gets the tolerance from an expected value.
+static float get_tolerance(cf_t expected_value)
+{
+  // The tolerance is calculated from the complex number based in brain float (BF16) precision.
+  return std::max(std::abs(expected_value) / 256.0F, 1e-5F);
+}
+
 // Creates a resource grid.
 static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 {
@@ -115,8 +122,8 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
           count++;
         }
 
-        TESTASSERT_EQ(gold.real(), value.real());
-        TESTASSERT_EQ(gold.imag(), value.imag());
+        float error = std::abs(gold - value);
+        TESTASSERT(error < get_tolerance(gold), "{} != {}", gold, value);
       }
     }
   }
@@ -133,8 +140,8 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     cf_t gold  = symbols_gold[i];
     cf_t value = symbols[i];
 
-    TESTASSERT_EQ(gold.real(), value.real());
-    TESTASSERT_EQ(gold.imag(), value.imag());
+    float error = std::abs(gold - value);
+    TESTASSERT(error < get_tolerance(gold), "{} != {}", gold, value);
   }
 }
 
@@ -187,8 +194,8 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
           count++;
         }
 
-        TESTASSERT_EQ(gold.real(), value.real());
-        TESTASSERT_EQ(gold.imag(), value.imag());
+        float error = std::abs(gold - value);
+        TESTASSERT(error < get_tolerance(gold), "{} != {}", gold, value);
       }
     }
   }
@@ -202,18 +209,18 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     cf_t gold  = symbols_gold[i];
     cf_t value = symbols[i];
 
-    TESTASSERT_EQ(gold.real(), value.real());
-    TESTASSERT_EQ(gold.imag(), value.imag());
+    float error = std::abs(gold - value);
+    TESTASSERT(error < get_tolerance(gold), "{} != {}", gold, value);
   }
 
   // Test view contents
-  span<const cf_t> view = grid->get_reader().get_view(port_gold, symbol_idx).subspan(k_init, nof_subc - k_init);
+  span<const cbf16_t> view = grid->get_reader().get_view(port_gold, symbol_idx).subspan(k_init, nof_subc - k_init);
   for (unsigned i = 0; i != nof_elements; ++i) {
     cf_t gold  = symbols_gold[i];
-    cf_t value = view[i];
+    cf_t value = to_cf(view[i]);
 
-    TESTASSERT_EQ(gold.real(), value.real());
-    TESTASSERT_EQ(gold.imag(), value.imag());
+    float error = std::abs(gold - value);
+    TESTASSERT(error < get_tolerance(gold), "{} != {}", gold, value);
   }
 }
 

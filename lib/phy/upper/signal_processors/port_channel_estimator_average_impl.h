@@ -134,6 +134,8 @@ private:
 
   /// Buffer of frequency response coefficients.
   std::array<cf_t, MAX_RB * NRE> freq_response;
+  /// Buffer of frequency response coefficients in \c bfloat16.
+  std::array<cbf16_t, MAX_RB * NRE> freq_response_cbf16;
 
   /// Buffer for the OFDM symbols starting epochs within the current slot.
   std::array<float, MAX_NSYMB_PER_SLOT> aux_symbol_start_epochs;

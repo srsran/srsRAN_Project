@@ -96,7 +96,7 @@ private:
   /// \brief Tensor for storing the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cf_t,
+                cbf16_t,
                 MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::re_list::dims>
       time_spread_sequence;
@@ -104,7 +104,7 @@ private:
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
                     channel_equalizer::ch_est_list::dims::nof_dims),
-                cf_t,
+                cbf16_t,
                 MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::ch_est_list::dims>
       ch_estimates;

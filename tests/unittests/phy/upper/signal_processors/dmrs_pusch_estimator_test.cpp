@@ -105,7 +105,7 @@ protected:
 };
 } // namespace
 
-static constexpr float tolerance = 0.001;
+static constexpr float tolerance = 0.01;
 
 TEST_P(DmrsPuschEstimatorFixture, Creation)
 {
@@ -141,7 +141,7 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
 
   for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
     for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {
-      span<cf_t> path = ch_est.get_path_ch_estimate(i_port, i_layer);
+      span<cbf16_t> path = ch_est.get_path_ch_estimate(i_port, i_layer);
       srsvec::zero(path);
     }
   }
@@ -159,20 +159,20 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
   for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
     for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {
       for (unsigned i_symbol = 0; i_symbol != ch_estimate_dims.nof_symbols; ++i_symbol) {
-        span<const cf_t> current_symbol = ch_est.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+        span<const cbf16_t> current_symbol = ch_est.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
         if ((i_port != i_layer) || (i_symbol < config.first_symbol)) {
-          ASSERT_TRUE(std::all_of(current_symbol.begin(), current_symbol.end(), [](cf_t a) {
-            return (a == cf_t(0, 0));
+          ASSERT_TRUE(std::all_of(current_symbol.begin(), current_symbol.end(), [](cbf16_t a) {
+            return (a.real.value() == 0) && (a.imag.value() == 0);
           })) << "REs should be zero on cross paths and on not allocated symbols.";
           continue;
         }
         cf_t value        = cf_t(1, 0);
         bool is_ok        = true;
         auto check_symbol = [current_symbol, &value, &is_ok](unsigned i_prb) {
-          unsigned         i_re        = i_prb * NRE;
-          span<const cf_t> current_prb = current_symbol.subspan(i_re, NRE);
-          is_ok                        = is_ok && std::all_of(current_prb.begin(), current_prb.end(), [value](cf_t a) {
-                    return (std::abs(a - value) < tolerance);
+          unsigned            i_re        = i_prb * NRE;
+          span<const cbf16_t> current_prb = current_symbol.subspan(i_re, NRE);
+          is_ok = is_ok && std::all_of(current_prb.begin(), current_prb.end(), [value](cbf16_t a) {
+                    return (std::abs(to_cf(a) - value) < tolerance);
                   });
         };
         config.rb_mask.for_each(0, config.rb_mask.size(), check_symbol);
@@ -190,8 +190,8 @@ TEST_P(DmrsPuschEstimatorFixture, Creation)
 static bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected,
                              const channel_estimate&                                computed)
 {
-  unsigned         old_symbol = 15;
-  span<const cf_t> computed_symbol;
+  unsigned            old_symbol = 15;
+  span<const cbf16_t> computed_symbol;
 
   for (const auto& this_expected : expected) {
     unsigned i_symbol = this_expected.symbol;
@@ -203,7 +203,7 @@ static bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry
       computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
     }
 
-    if (std::abs(computed_symbol[i_sc] - value) > tolerance) {
+    if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance) {
       return false;
     }
   }

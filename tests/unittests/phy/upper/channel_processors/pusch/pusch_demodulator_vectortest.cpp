@@ -13,14 +13,14 @@
 #include "pusch_demodulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
-#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/conversion.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
 
 // Maximum allowed error.
-constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 1;
+constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 12;
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
@@ -138,8 +138,8 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
       chan_estimates.set_noise_variance(test_case.context.noise_var, config.rx_ports[i_rx_port], i_layer);
 
       // Copy port channel estimates.
-      srsvec::copy(chan_estimates.get_path_ch_estimate(config.rx_ports[i_rx_port], i_layer),
-                   estimates.get_view<static_cast<unsigned>(ch_dims::rx_port)>({i_rx_port, i_layer}));
+      srsvec::convert(chan_estimates.get_path_ch_estimate(config.rx_ports[i_rx_port], i_layer),
+                      estimates.get_view<static_cast<unsigned>(ch_dims::rx_port)>({i_rx_port, i_layer}));
     }
   }
 

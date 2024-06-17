@@ -176,7 +176,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
              i_symbol != i_symbol_end;
              ++i_symbol) {
           // Extract channel estimates for the OFDM symbol, port and layer.
-          span<cf_t> ce = ch_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+          span<cbf16_t> ce = ch_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
           // Set DC to zero.
           ce[dc_position] = 0;

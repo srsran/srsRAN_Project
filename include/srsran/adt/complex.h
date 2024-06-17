@@ -43,6 +43,8 @@ struct cbf16_t {
 
   cbf16_t(cf_t value) : cbf16_t(value.real(), value.imag()) {}
 
+  cbf16_t(std::complex<double> value) : real(to_bf16(value.real())), imag(to_bf16(value.imag())) {}
+
   bool operator==(cbf16_t other) const { return (real == other.real) && (imag == other.imag); }
 
   bool operator!=(cbf16_t other) const { return !(*this == other); }

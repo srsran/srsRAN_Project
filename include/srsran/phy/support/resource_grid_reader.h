@@ -50,36 +50,67 @@ public:
   ///
   /// \param[out] symbols Destination symbol buffer.
   /// \param[in]  port    Port index.
-  /// \param[in]  l       Symbol index.
+  /// \param[in]  l       OFDM symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
-  /// \param[in] mask     Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
+  /// \param[in]  mask    Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
   /// \return A view to the unused entries of \c symbols.
-  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
-  /// \note The number of elements of \c symbol shall be equal to or greater than the number of true elements in
-  /// \c mask.
+  /// \note The initial subcarrier plus the number of elements of \c mask shall not exceed the number of resource grid
+  ///       subcarriers.
+  /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
+  ///       \c mask.
   virtual span<cf_t> get(span<cf_t>                          symbols,
                          unsigned                            port,
                          unsigned                            l,
                          unsigned                            k_init,
                          const bounded_bitset<MAX_RB * NRE>& mask) const = 0;
 
+  /// \brief Gets a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
+  /// to indicate which subcarriers are allocated and which are not.
+  ///
+  /// \param[out] symbols Destination symbol buffer.
+  /// \param[in]  port    Port index.
+  /// \param[in]  l       OFDM symbol index.
+  /// \param[in]  k_init  Initial subcarrier index.
+  /// \param[in] mask     Boolean mask denoting the subcarriers to be read (if \c true), starting from \c k_init.
+  /// \return A view to the unused entries of \c symbols.
+  /// \note The initial subcarrier plus the number of elements of \c mask shall not exceed the number of resource grid
+  ///       subcarriers.
+  /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
+  ///       \c mask.
+  virtual span<cbf16_t> get(span<cbf16_t>                       symbols,
+                            unsigned                            port,
+                            unsigned                            l,
+                            unsigned                            k_init,
+                            const bounded_bitset<MAX_RB * NRE>& mask) const = 0;
+
   /// \brief Gets a number of resource elements for a given port and symbol \c l starting at \c k_init and picks the
   /// first element every \c stride.
   ///
   /// \param[out] symbols Destination symbol buffer.
   /// \param[in]  port    Port index.
-  /// \param[in]  l       Symbol index.
+  /// \param[in]  l       OFDM symbol index.
   /// \param[in]  k_init  Initial subcarrier index.
   /// \param[in]  stride  Distance between the elements to get.
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
   virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride = 1) const = 0;
 
+  /// \brief Gets a consecutive number of resource elements for a given port and OFDM symbol \c l starting at
+  /// subcarrier \c k_init.
+  ///
+  /// \param[out] symbols Destination symbol buffer.
+  /// \param[in]  port    Port index.
+  /// \param[in]  l       OFDM symbol index.
+  /// \param[in]  k_init  Initial subcarrier index.
+  /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
+  /// subcarriers.
+  virtual void get(span<cbf16_t> symbols, unsigned port, unsigned l, unsigned k_init) const = 0;
+
   /// \brief Gets a view of all resource elements for a given port and symbol \c l.
   ///
   /// \param[in]  port    Port index.
-  /// \param[in]  l       Symbol index.
-  virtual span<const cf_t> get_view(unsigned port, unsigned l) const = 0;
+  /// \param[in]  l       OFDM symbol index.
+  virtual span<const cbf16_t> get_view(unsigned port, unsigned l) const = 0;
 };
 
 } // namespace srsran
