@@ -78,6 +78,7 @@ private:
   std::unique_ptr<ngu_tnl_pdu_session> ngu_session;
   std::unique_ptr<gtpu_demux>          ngu_demux;
   std::unique_ptr<gtpu_echo>           ngu_echo;
+  std::unique_ptr<gtpu_teid_pool>      n3_teid_allocator;
   std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
   std::unique_ptr<ue_manager>          ue_mng;
 
