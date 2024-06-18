@@ -252,7 +252,10 @@ variables:
             ;;
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
-            ctest_extra="-T memcheck -LE NO_MEMCHECK --test-timeout 10800"
+            # Default timeout per test is 1500 (25 min)
+            export CTEST_TIMEOUT=2700
+            export CTEST_TEST_TIMEOUT=${CTEST_TIMEOUT}
+            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout ${CTEST_TIMEOUT}"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
