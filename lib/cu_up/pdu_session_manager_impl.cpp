@@ -84,16 +84,16 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   }
 
   // Allocate local TEID
-  expected<gtpu_teid_t> ret = n3_teid_allocator.request_teid();
-  if (ret.is_error()) {
+  expected<gtpu_teid_t> local_teid = n3_teid_allocator.request_teid();
+  if (local_teid.is_error()) {
     logger.log_warning("Failed to create PDU session. Cause: could not allocate local TEID. {}",
                        session.pdu_session_id);
     return pdu_session_result;
   }
 
-  std::unique_ptr<pdu_session> new_session = std::make_unique<pdu_session>(session, gtpu_rx_demux, n3_teid_allocator);
-  const auto&                  ul_tunnel_info = new_session->ul_tunnel_info;
-  new_session->local_teid                     = ret.value();
+  std::unique_ptr<pdu_session> new_session =
+      std::make_unique<pdu_session>(session, local_teid.value(), gtpu_rx_demux, n3_teid_allocator);
+  const auto& ul_tunnel_info = new_session->ul_tunnel_info;
 
   // Get uplink transport address
   logger.log_debug("PDU session uplink tunnel info: {} local_teid={} peer_teid={} peer_addr={}",
@@ -107,7 +107,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                                    ? net_config.n3_bind_addr
                                    : net_config.n3_ext_addr;
   pdu_session_result.gtp_tunnel =
-      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), *new_session->local_teid);
+      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
@@ -119,7 +119,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = net_config.upf_port;
-  msg.cfg.rx.local_teid                = *new_session->local_teid;
+  msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
@@ -134,7 +134,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Register tunnel at demux
   if (!gtpu_rx_demux.add_tunnel(
-          *new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
@@ -353,7 +353,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
 pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
-                                             bool                                       new_tnl_info_required)
+                                             bool                                       new_ul_tnl_info_required)
 {
   pdu_session_modification_result pdu_session_result;
   pdu_session_result.success        = false;
@@ -395,7 +395,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_iter->second->drb_id);
 
     auto& drb = drb_iter->second;
-    if (new_tnl_info_required) {
+    if (new_ul_tnl_info_required) {
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
       if (not ret.has_value()) {

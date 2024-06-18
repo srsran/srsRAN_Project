@@ -26,12 +26,14 @@ namespace srs_cu_up {
 /// \brief Context for PDU session with session-wide parameters and all contained DRBs.
 struct pdu_session {
   pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
-              gtpu_demux_ctrl&                          gtpu_rx_demux_,
-              gtpu_teid_pool&                           n3_teid_allocator_) :
+              gtpu_teid_t      local_teid_, // the local teid used by the gNB for this PDU session
+              gtpu_demux_ctrl& gtpu_rx_demux_,
+              gtpu_teid_pool&  n3_teid_allocator_) :
     pdu_session_id(session.pdu_session_id),
     session_type(session.pdu_session_type),
     snssai(session.snssai),
     security_ind(session.security_ind),
+    local_teid(local_teid_),
     ul_tunnel_info(session.ng_ul_up_tnl_info),
     gtpu_rx_demux(gtpu_rx_demux_),
     n3_teid_allocator(n3_teid_allocator_)
@@ -45,10 +47,8 @@ struct pdu_session {
   void stop()
   {
     if (not stopped) {
-      if (local_teid.has_value()) {
-        gtpu_rx_demux.remove_tunnel(local_teid.value());
-        n3_teid_allocator.release_teid(local_teid.value());
-      }
+      gtpu_rx_demux.remove_tunnel(local_teid);
+      n3_teid_allocator.release_teid(local_teid);
 
       gtpu->stop();
 
@@ -77,10 +77,10 @@ struct pdu_session {
   uint64_t              pdu_session_res_ambr = 0;
 
   // Tunneling info used by all DRBs/QoS flows in this PDU session
-  up_transport_layer_info    ul_tunnel_info;    // the peer GTP-U address and TEID
-  std::optional<gtpu_teid_t> local_teid;        // the local teid used by the gNB for this PDU session
-  gtpu_demux_ctrl&           gtpu_rx_demux;     // The demux entity to register/remove the tunnel.
-  gtpu_teid_pool&            n3_teid_allocator; // Pool to de-allocate TEID on release
+  gtpu_teid_t             local_teid;        // the local teid used by the gNB for this PDU session
+  up_transport_layer_info ul_tunnel_info;    // the peer GTP-U address and TEID
+  gtpu_demux_ctrl&        gtpu_rx_demux;     // The demux entity to register/remove the tunnel.
+  gtpu_teid_pool&         n3_teid_allocator; // Pool to de-allocate TEID on release
 
   drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any
 
