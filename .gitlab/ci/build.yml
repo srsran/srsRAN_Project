@@ -1983,16 +1983,12 @@ basic avx512 dpdk:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11"
+    DPDK_VERSION: "23.11_avx512"
     AUTO_DETECT_ISA: "False"
     BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v4"
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
     SAVE_ARTIFACTS: "True"
-    KUBERNETES_CPU_REQUEST: 14
-    KUBERNETES_CPU_LIMIT: 14
-    KUBERNETES_MEMORY_REQUEST: 20Gi
-    KUBERNETES_MEMORY_LIMIT: 20Gi
   tags: ["${AMD64_AVX512_TAG}"]
   artifacts:
     <<: *build_artifacts
