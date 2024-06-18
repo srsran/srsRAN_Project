@@ -25,9 +25,14 @@ public:
                         ue_ran_resource_configurator ue_ran_res_);
   ~du_ue_controller_impl() override;
 
-  async_task<void> disconnect_notifiers() override;
+  /// Launches a task to stop all the UE SRB and DRB traffic.
+  async_task<void> handle_traffic_stop_request() override;
 
+  /// Launches a task to stop the UE DRB traffic due to inactivity.
   async_task<void> handle_activity_stop_request() override;
+
+  /// Launches a task to stop the traffic for some UE DRBs.
+  async_task<void> handle_drb_traffic_stop_request(span<const drb_id_t> drbs_to_stop) override;
 
   void schedule_async_task(async_task<void> task) override { ue_db.schedule_async_task(ue_index, std::move(task)); }
 
@@ -35,6 +40,7 @@ public:
 
   void handle_crnti_ce_detection() override;
 
+  /// Schedule a task to stop DRB traffic.
   void stop_drb_traffic() override;
 
   mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *mac_rlf_notifier; }

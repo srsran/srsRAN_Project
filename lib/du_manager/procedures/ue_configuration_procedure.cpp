@@ -50,7 +50,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   // > Update DU UE bearers.
-  update_ue_context();
+  CORO_AWAIT(update_ue_context());
 
   // > Update MAC bearers.
   CORO_AWAIT_VALUE(mac_ue_reconfiguration_response mac_res, update_mac_mux_and_demux());
@@ -63,7 +63,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   CORO_RETURN(mac_res.result ? make_ue_config_response() : make_ue_config_failure());
 }
 
-void ue_configuration_procedure::update_ue_context()
+async_task<void> ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
   for (srb_id_t srbid : request.srbs_to_setup) {
@@ -171,6 +171,9 @@ void ue_configuration_procedure::update_ue_context()
     }
     ue->bearers.add_drb(std::move(drb));
   }
+
+  // Request traffic to stop for DRBs that are going to be removed.
+  return ue->handle_drb_traffic_stop_request(request.drbs_to_rem);
 }
 
 void ue_configuration_procedure::clear_old_ue_context()
