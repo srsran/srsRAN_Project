@@ -365,9 +365,21 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   span<cf_t> ce_freq = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
   freq_interpolator->interpolate(ce_freq, filtered_pilots_lse, interpolator_cfg);
 
+  // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
+  int      lowest_rb  = hop_rb_mask.find_lowest();
+  int      highest_rb = hop_rb_mask.find_highest();
+  unsigned rb_count   = hop_rb_mask.count();
+  srsran_assert(highest_rb >= lowest_rb, "Invalid hop RB mask.");
+  bool is_contiguous = (static_cast<unsigned>(highest_rb + 1 - lowest_rb) == rb_count);
+
   // Map frequency response to channel estimates.
   for (unsigned i_symbol = first_symbol; i_symbol != last_symbol; ++i_symbol) {
     span<cf_t> symbol_fr_resp = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
+
+    if (is_contiguous) {
+      srsvec::copy(symbol_fr_resp.subspan(lowest_rb * NRE, NRE * rb_count), ce_freq.first(NRE * rb_count));
+      continue;
+    }
 
     unsigned i_prb_ce = 0;
     hop_rb_mask.for_each(0, hop_rb_mask.size(), [&](unsigned i_prb) {
