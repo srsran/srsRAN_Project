@@ -169,11 +169,14 @@ if [[ -n "$DPDK_VERSION" ]]; then
     # Create alias for _avx2 / _avx512 versions
     if [[ $DPDK_VERSION == *_* ]]; then
         DPDK_VERSION_BASE=${DPDK_VERSION%_*}
+        # If the folder without _ exists, try to remove it
         if [ -e "/opt/dpdk/$DPDK_VERSION_BASE" ]; then
-            rm -Rf "/opt/dpdk/$DPDK_VERSION_BASE"
+            rm -Rf "/opt/dpdk/$DPDK_VERSION_BASE" || echo "/opt/dpdk/$DPDK_VERSION_BASE already exists!!"
         fi
-        ln -s "/opt/dpdk/$DPDK_VERSION" "/opt/dpdk/$DPDK_VERSION_BASE"
-        DPDK_VERSION=$DPDK_VERSION_BASE
+        # If we can create the hard line, we change DPDK_VERSION to the new version without _
+        if ln -s "/opt/dpdk/$DPDK_VERSION" "/opt/dpdk/$DPDK_VERSION_BASE"; then
+            DPDK_VERSION=$DPDK_VERSION_BASE
+        fi
     fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
     echo "DPDK_DIR set to $DPDK_DIR"
