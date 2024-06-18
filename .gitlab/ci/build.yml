@@ -926,6 +926,7 @@ package:
   parallel:
     matrix:
       - OS_VERSION: "20.04"
+        extraopts: -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
