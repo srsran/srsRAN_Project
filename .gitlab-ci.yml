@@ -99,6 +99,17 @@ trigger docker:
   variables:
     PY_DIR: docker/metrics_server
 
+helm:
+  stage: ci
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+  trigger:
+    project: softwareradiosystems/ci/srsgnb_k8s
+    branch: main
+  needs:
+    - job: trigger docker
+      artifacts: false
+
 ################################################################################
 ## Static
 ################################################################################
