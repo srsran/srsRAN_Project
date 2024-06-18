@@ -57,7 +57,7 @@ private:
     {
     }
 
-    /// Get the slice priority as a candidate, considering also past decisions by the slice scheduler for this slot.
+    /// Determines the slice candidate priority.
     priority_type get_prio(bool is_dl, slot_count_type current_slot_count, bool slice_resched) const;
   };
 

@@ -27,7 +27,7 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_) :
   slices.back().inst.policy =
       create_scheduler_strategy(scheduler_strategy_params{"time_rr", &logger}, cell_cfg.expert_cfg.ue);
   ++id_count;
-  // Configured RRM policy members
+  // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
     slices.back().inst.policy =
@@ -87,7 +87,7 @@ void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 
 ran_slice_instance& slice_scheduler::get_slice(const rrm_policy_member& rrm)
 {
-  auto it = std::find_if(slices.begin() + 1, slices.end(), [&rrm](const ran_slice_sched_context& slice) {
+  auto it = std::find_if(slices.begin(), slices.end(), [&rrm](const ran_slice_sched_context& slice) {
     return slice.inst.cfg.rrc_member == rrm;
   });
   if (it == slices.end()) {
@@ -151,11 +151,11 @@ slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_pri
 {
   // Note: The positive integer representing the priority of a slice consists of a concatenation of three priority
   // values:
-  // 1. slice traffic priority (16 bits). Differentiation of slices based on whether they have minimum required
-  // traffic agreements (e.g. minRB ratio).
+  // 1. slice traffic priority (16 most significant bits). It differentiates slices based on whether they have
+  // minimum required traffic agreements (e.g. minRB ratio).
   // 2. delay priority (8 bits), which attributes the highest priority to slices that have not been scheduled for a
-  // long time
-  // 3. round-robin based on slot indication count (8 bits).
+  // long time.
+  // 3. round-robin based on slot indication count (8 least significant bits).
 
   // Priority when slice has already reached its minimum RB ratio agreement.
   constexpr static priority_type default_prio = 0x1U;

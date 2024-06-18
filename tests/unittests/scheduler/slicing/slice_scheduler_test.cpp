@@ -157,12 +157,13 @@ protected:
 
   const ue_configuration* add_ue(du_ue_index_t ue_idx)
   {
-    auto req                                        = test_cfg.get_default_ue_config_request();
-    req.ue_index                                    = ue_idx;
-    req.crnti                                       = to_rnti(0x4601 + ue_idx);
-    req.starts_in_fallback                          = false;
-    (*req.cfg.lc_config_list)[2].rrm_policy.plmn_id = "00101";
-    (*req.cfg.lc_config_list)[2].rrm_policy.s_nssai = s_nssai_t{1};
+    const unsigned drb1_idx                                = 2;
+    auto           req                                     = test_cfg.get_default_ue_config_request();
+    req.ue_index                                           = ue_idx;
+    req.crnti                                              = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback                                 = false;
+    (*req.cfg.lc_config_list)[drb1_idx].rrm_policy.plmn_id = "00101";
+    (*req.cfg.lc_config_list)[drb1_idx].rrm_policy.s_nssai = s_nssai_t{1};
     return slice_scheduler_test::add_ue(req);
   }
 };
