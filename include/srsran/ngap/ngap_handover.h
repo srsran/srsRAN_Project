@@ -24,9 +24,10 @@ struct ngap_ue_source_handover_context {
 };
 
 struct ngap_handover_preparation_request {
-  ue_index_t   ue_index = ue_index_t::invalid;
-  gnb_id_t     gnb_id;
-  nr_cell_id_t nci;
+  ue_index_t                                             ue_index = ue_index_t::invalid;
+  gnb_id_t                                               gnb_id;
+  nr_cell_id_t                                           nci;
+  std::map<pdu_session_id_t, std::vector<qos_flow_id_t>> pdu_sessions;
 };
 
 struct ngap_handover_preparation_response {

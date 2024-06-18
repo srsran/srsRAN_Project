@@ -13,7 +13,6 @@
 #include "../ngap_context.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
-#include "srsran/cu_cp/up_context.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -23,31 +22,29 @@ namespace srs_cu_cp {
 class ngap_handover_preparation_procedure
 {
 public:
-  ngap_handover_preparation_procedure(const ngap_handover_preparation_request&                  req_,
-                                      const ngap_context_t&                                     context_,
-                                      const ngap_ue_ids&                                        ue_ids_,
-                                      const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions_map_,
-                                      ngap_message_notifier&                                    amf_notifier_,
-                                      ngap_rrc_ue_control_notifier&                             rrc_ue_notifier_,
-                                      ngap_cu_cp_notifier&                                      cu_cp_notifier_,
-                                      ngap_transaction_manager&                                 ev_mng_,
-                                      timer_factory                                             timers,
-                                      ngap_ue_logger&                                           logger_);
+  ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
+                                      const ngap_context_t&                    context_,
+                                      const ngap_ue_ids&                       ue_ids_,
+                                      ngap_message_notifier&                   amf_notifier_,
+                                      ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
+                                      ngap_cu_cp_notifier&                     cu_cp_notifier_,
+                                      ngap_transaction_manager&                ev_mng_,
+                                      timer_factory                            timers,
+                                      ngap_ue_logger&                          logger_);
 
   void operator()(coro_context<async_task<ngap_handover_preparation_response>>& ctx);
 
   static const char* name() { return "Handover Preparation Procedure"; }
 
 private:
-  const ngap_handover_preparation_request                   request;
-  const ngap_context_t                                      context;
-  const ngap_ue_ids                                         ue_ids;
-  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions_map;
-  ngap_message_notifier&                                    amf_notifier;
-  ngap_rrc_ue_control_notifier&                             rrc_ue_notifier;
-  ngap_cu_cp_notifier&                                      cu_cp_notifier;
-  ngap_transaction_manager&                                 ev_mng;
-  ngap_ue_logger&                                           logger;
+  const ngap_handover_preparation_request request;
+  const ngap_context_t                    context;
+  const ngap_ue_ids                       ue_ids;
+  ngap_message_notifier&                  amf_notifier;
+  ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
+  ngap_cu_cp_notifier&                    cu_cp_notifier;
+  ngap_transaction_manager&               ev_mng;
+  ngap_ue_logger&                         logger;
 
   unique_timer tng_reloc_prep_timer;
 

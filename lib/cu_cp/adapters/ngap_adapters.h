@@ -123,13 +123,6 @@ public:
     return ue->get_ue_index();
   }
 
-  /// \brief Get a map of all PDU sessions of the UE as const reference.
-  [[nodiscard]] const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const override
-  {
-    srsran_assert(ue != nullptr, "NGAP UE must not be nullptr");
-    return ue->get_up_resource_manager().get_pdu_sessions_map();
-  }
-
   /// \brief Schedule an async task for the UE.
   bool schedule_async_task(async_task<void> task) override
   {

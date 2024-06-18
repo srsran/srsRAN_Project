@@ -899,7 +899,6 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
   return launch_async<ngap_handover_preparation_procedure>(msg,
                                                            context,
                                                            ue_ctxt.ue_ids,
-                                                           ue->get_pdu_sessions_map(),
                                                            *tx_pdu_notifier,
                                                            ue->get_rrc_ue_control_notifier(),
                                                            cu_cp_notifier,

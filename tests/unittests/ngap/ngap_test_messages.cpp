@@ -13,6 +13,7 @@
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
@@ -891,4 +892,28 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_
   ho_cmd->target_to_source_transparent_container = pack_into_pdu(transparent_container);
 
   return ngap_msg;
+}
+
+ngap_handover_preparation_request srsran::srs_cu_cp::generate_handover_preparation_request(
+    ue_index_t                                                ue_index,
+    const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
+    gnb_id_t                                                  gnb_id,
+    nr_cell_id_t                                              nci)
+{
+  ngap_handover_preparation_request request = {};
+  request.ue_index                          = ue_index;
+  request.gnb_id                            = gnb_id;
+  request.nci                               = nci;
+  // create a map of all PDU sessions and their associated QoS flows
+  for (const auto& pdu_session : pdu_sessions) {
+    std::vector<qos_flow_id_t> qos_flows;
+    for (const auto& drb : pdu_session.second.drbs) {
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        qos_flows.push_back(qos_flow.first);
+      }
+    }
+    request.pdu_sessions.insert({pdu_session.first, qos_flows});
+  }
+
+  return request;
 }

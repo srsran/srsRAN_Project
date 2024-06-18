@@ -13,7 +13,9 @@
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/up_context.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_types.h"
 
 namespace srsran {
@@ -199,6 +201,13 @@ ngap_message generate_valid_handover_request(amf_ue_id_t amf_ue_id);
 
 /// \brief Generate a valid dummy Handover Command message.
 ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate a handover preparation request.
+ngap_handover_preparation_request
+generate_handover_preparation_request(ue_index_t                                                ue_index,
+                                      const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
+                                      gnb_id_t                                                  gnb_id = {1, 22},
+                                      nr_cell_id_t                                              nci    = 1);
 
 } // namespace srs_cu_cp
 } // namespace srsran

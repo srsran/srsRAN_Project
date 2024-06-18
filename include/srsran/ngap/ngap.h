@@ -121,9 +121,6 @@ public:
   /// \brief Get the UE index of the UE.
   virtual ue_index_t get_ue_index() = 0;
 
-  /// \brief Get a map of all PDU sessions of the UE as const reference.
-  [[nodiscard]] virtual const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const = 0;
-
   /// \brief Schedule an async task for the UE.
   virtual bool schedule_async_task(async_task<void> task) = 0;
 
