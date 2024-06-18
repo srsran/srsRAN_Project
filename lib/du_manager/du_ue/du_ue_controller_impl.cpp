@@ -236,19 +236,7 @@ async_task<void> du_ue_controller_impl::disconnect_notifiers()
   rlf_handler->disconnect();
 
   // > Disconnect bearers from within the UE execution context.
-  return execute_and_continue_on_blocking(
-      cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, [this]() {
-        // > Disconnect DRBs.
-        for (auto& drb_pair : bearers.drbs()) {
-          du_ue_drb& drb = *drb_pair.second;
-          drb.stop();
-        }
-
-        // > Disconnect SRBs.
-        for (du_ue_srb& srb : bearers.srbs()) {
-          srb.stop();
-        }
-      });
+  return create_stop_traffic_task();
 }
 
 async_task<void> du_ue_controller_impl::handle_activity_stop_request()
@@ -257,14 +245,7 @@ async_task<void> du_ue_controller_impl::handle_activity_stop_request()
   rlf_handler->disconnect();
 
   // > Disconnect bearers from within the UE execution context.
-  return execute_and_continue_on_blocking(
-      cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, [this]() {
-        // > Disconnect DRBs.
-        for (auto& drb_pair : bearers.drbs()) {
-          du_ue_drb& drb = *drb_pair.second;
-          drb.stop();
-        }
-      });
+  return create_stop_drb_traffic_task();
 }
 
 void du_ue_controller_impl::handle_rlf_detection(rlf_cause cause)
@@ -279,19 +260,47 @@ void du_ue_controller_impl::handle_crnti_ce_detection()
 
 void du_ue_controller_impl::stop_drb_traffic()
 {
-  // > Disconnect DRBs.
-  logger.debug("ue={}: Stopping DRB traffic...", ue_index);
-
   // Note: We use an async task rather than just an execute call, to ensure that this task is not dispatched after
   // the UE has already been deleted.
-  schedule_async_task(execute_and_continue_on_blocking(
-      cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, [this]() {
-        // > Disconnect DRBs.
-        for (auto& drb_pair : bearers.drbs()) {
-          du_ue_drb& drb = *drb_pair.second;
-          drb.stop();
-        }
+  schedule_async_task(create_stop_drb_traffic_task());
+}
 
-        logger.info("ue={}: DRB traffic stopped", ue_index);
-      }));
+async_task<void> du_ue_controller_impl::create_stop_drb_traffic_task()
+{
+  logger.debug("ue={}: Stopping DRB traffic...", ue_index);
+
+  return run_in_ue_executor([this]() {
+    // > Disconnect DRBs.
+    for (auto& drb_pair : bearers.drbs()) {
+      du_ue_drb& drb = *drb_pair.second;
+      drb.stop();
+    }
+    logger.info("ue={}: DRB traffic stopped", ue_index);
+  });
+}
+
+async_task<void> du_ue_controller_impl::create_stop_traffic_task()
+{
+  logger.debug("ue={}: Stopping SRB and DRB traffic...", ue_index);
+
+  return run_in_ue_executor([this]() {
+    // > Disconnect DRBs.
+    for (auto& drb_pair : bearers.drbs()) {
+      du_ue_drb& drb = *drb_pair.second;
+      drb.stop();
+    }
+
+    // > Disconnect SRBs.
+    for (du_ue_srb& srb : bearers.srbs()) {
+      srb.stop();
+    }
+
+    logger.info("ue={}: SRB and DRB traffic stopped", ue_index);
+  });
+}
+
+async_task<void> du_ue_controller_impl::run_in_ue_executor(unique_task task)
+{
+  return execute_and_continue_on_blocking(
+      cfg.services.ue_execs.ctrl_executor(ue_index), cfg.services.du_mng_exec, std::move(task));
 }

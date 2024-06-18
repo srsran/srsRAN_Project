@@ -43,6 +43,11 @@ public:
 private:
   class rlf_state_machine;
 
+  async_task<void> run_in_ue_executor(unique_task task);
+
+  async_task<void> create_stop_drb_traffic_task();
+  async_task<void> create_stop_traffic_task();
+
   du_ue_manager_repository& ue_db;
   const du_manager_params&  cfg;
   srslog::basic_logger&     logger = srslog::fetch_basic_logger("DU-MNG");
