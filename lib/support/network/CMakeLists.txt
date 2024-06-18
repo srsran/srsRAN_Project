@@ -15,5 +15,4 @@ add_library(srsran_network
         sockets.cpp)
 target_link_libraries(srsran_network srslog)
 
-install(TARGETS srsran_network
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_network)
