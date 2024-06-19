@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "up_resource_manager_impl_interface.h"
+#include "srsran/cu_cp/up_context.h"
 #include <map>
 
 namespace srsran {
@@ -56,7 +56,7 @@ struct up_config_update_result {
 up_config_update to_config_update(const up_context& old_context);
 
 /// UP resource manager implementation
-class up_resource_manager final : public up_resource_manager_impl_interface
+class up_resource_manager
 {
 public:
   up_resource_manager(const up_resource_manager_cfg& cfg);
@@ -82,8 +82,8 @@ public:
   std::vector<pdu_session_id_t> get_pdu_sessions();
   std::vector<drb_id_t>         get_drbs();
 
-  up_context get_up_context() override;
-  void       set_up_context(const up_context& ctx) override;
+  up_context get_up_context();
+  void       set_up_context(const up_context& ctx);
 
   const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map();
 
