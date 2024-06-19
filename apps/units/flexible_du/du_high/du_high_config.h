@@ -58,9 +58,8 @@ struct du_high_unit_logger_config {
 struct du_high_unit_scheduler_expert_config {
   /// Type of policy scheduler.
   policy_scheduler_type policy_sched_type = policy_scheduler_type::time_rr;
-  /// Fairness Coefficient to use in Proportional Fair policy scheduler.
-  /// \remark This field is applicable only when \c policy_sched_type is set to "time_pf".
-  std::optional<double> pf_sched_fairness_coeff;
+  /// Policy scheduler expert parameters.
+  policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
 };
 
 struct du_high_unit_ssb_config {

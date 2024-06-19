@@ -801,9 +801,11 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.pdsch_crb_limits       = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pusch_crb_limits       = {pusch.start_rb, pusch.end_rb};
   out_cfg.ue.strategy               = app_sched_expert_cfg.policy_sched_type;
-  if (app_sched_expert_cfg.policy_sched_type == policy_scheduler_type::time_pf and
-      app_sched_expert_cfg.pf_sched_fairness_coeff.has_value()) {
-    out_cfg.ue.pf_sched_fairness_coeff = app_sched_expert_cfg.pf_sched_fairness_coeff.value();
+  if (app_sched_expert_cfg.policy_sched_type == policy_scheduler_type::time_pf) {
+    out_cfg.ue.strategy_cfg = time_pf_scheduler_expert_config{};
+    if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
+      out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
+    }
   }
 
   // PUCCH and scheduler expert parameters.

@@ -23,6 +23,7 @@
 #include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <chrono>
+#include <variant>
 
 namespace srsran {
 
@@ -32,6 +33,18 @@ namespace srsran {
 /// - time_rr - Time based Round-Robin scheduler.
 /// - time_pf - Time based Proportional Fair scheduler.
 enum class policy_scheduler_type { time_rr, time_pf };
+
+/// \brief Proportional fair policy scheduler expert parameters.
+struct time_pf_scheduler_expert_config {
+  /// Fairness Coefficient to use in Proportional Fair policy scheduler.
+  double pf_sched_fairness_coeff = 2.0F;
+};
+
+/// \brief Round-Robin policy scheduler expert parameters.
+struct time_rr_scheduler_expert_config {};
+
+/// \brief Policy scheduler expert parameters.
+using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_config, time_pf_scheduler_expert_config>;
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
@@ -103,8 +116,8 @@ struct scheduler_ue_expert_config {
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Type of policy scheduler.
   policy_scheduler_type strategy = policy_scheduler_type::time_rr;
-  /// Fairness Coefficient to use in Proportional Fair policy scheduler.
-  double pf_sched_fairness_coeff = 2.0F;
+  /// Expert parameters to be passed to the policy scheduler based on \c policy_scheduler_type.
+  policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

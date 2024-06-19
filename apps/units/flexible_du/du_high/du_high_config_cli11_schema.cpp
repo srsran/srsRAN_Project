@@ -498,6 +498,31 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
+static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_scheduler_expert_config& expert_params)
+{
+  add_option(app,
+             "--pf_sched_fairness_coeff",
+             expert_params.pf_sched_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair policy scheduler")
+      ->capture_default_str();
+}
+
+static void configure_cli11_policy_scheduler_expert_args(CLI::App&                             app,
+                                                         du_high_unit_scheduler_expert_config& expert_params)
+{
+  static time_pf_scheduler_expert_config pf_sched_expert_cfg;
+  CLI::App*                              pf_sched_cfg_subcmd =
+      add_subcommand(app, "pf_sched", "Proportional Fair policy scheduler expert configuration")->configurable();
+  configure_cli11_pf_scheduler_expert_args(*pf_sched_cfg_subcmd, pf_sched_expert_cfg);
+  auto pf_sched_verify_callback = [&]() {
+    CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
+    if (pf_sched_sub_cmd->count() != 0) {
+      expert_params.policy_sched_expert_cfg = pf_sched_expert_cfg;
+    }
+  };
+  pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
+}
+
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
   add_option_function<std::string>(
@@ -511,11 +536,10 @@ static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_sc
       "Type of policy scheduler to use")
       ->default_str("time_rr")
       ->check(CLI::IsMember({"time_rr", "time_pf"}, CLI::ignore_case));
-  add_option(app,
-             "--pf_sched_fairness_coeff",
-             expert_params.pf_sched_fairness_coeff,
-             "Fairness Coefficient to use in Proportional Fair policy scheduler")
-      ->capture_default_str();
+
+  CLI::App* policy_sched_cfg_subcmd =
+      add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params);
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
