@@ -57,7 +57,9 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngap_impl::~ngap_impl() {}
 
-bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_ue_notifier& new_ue_notifier)
+bool ngap_impl::update_ue_index(ue_index_t              new_ue_index,
+                                ue_index_t              old_ue_index,
+                                ngap_cu_cp_ue_notifier& new_ue_notifier)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {
     logger.warning("Failed to transfer NGAP UE context from ue={} to ue={}. Old UE context does not exist",
@@ -69,7 +71,7 @@ bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index
   ue_ctxt_list[old_ue_index].logger.log_debug("Transferring NGAP UE context to ue={}", new_ue_index);
 
   // Notify CU-CP about creation of NGAP UE
-  ngap_ue_notifier* ue = cu_cp_notifier.on_new_ngap_ue(new_ue_index);
+  ngap_cu_cp_ue_notifier* ue = cu_cp_notifier.on_new_ngap_ue(new_ue_index);
   if (ue == nullptr) {
     logger.error("ue={}: Failed to transfer UE context", new_ue_index);
     return false;
@@ -168,7 +170,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   }
 
   // Create UE context and store it
-  ngap_ue_notifier* ue_notifier = cu_cp_notifier.on_new_ngap_ue(msg.ue_index);
+  ngap_cu_cp_ue_notifier* ue_notifier = cu_cp_notifier.on_new_ngap_ue(msg.ue_index);
   ue_ctxt_list.add_ue(msg.ue_index, ran_ue_id, *ue_notifier, timers, ctrl_exec);
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];

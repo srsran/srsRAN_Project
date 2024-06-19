@@ -51,7 +51,7 @@ public:
     return cu_cp_handler->handle_ngap_handover_request(request);
   }
 
-  ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
+  ngap_cu_cp_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_ngap_ue(ue_index);
@@ -109,7 +109,7 @@ private:
 };
 
 /// Adapter between NGAP and CU-CP UE
-class ngap_cu_cp_ue_adapter : public ngap_ue_notifier
+class ngap_cu_cp_ue_adapter : public ngap_cu_cp_ue_notifier
 {
 public:
   ngap_cu_cp_ue_adapter() = default;

@@ -268,7 +268,8 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     }
 
     // Transfer NGAP UE Context to new UE and remove the old context
-    if (not ngap_entity->update_ue_index(ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_ue_notifier())) {
+    if (not ngap_entity->update_ue_index(
+            ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_cu_cp_ue_notifier())) {
       return false;
     }
 
@@ -338,7 +339,7 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
 
   // Transfer NGAP UE Context to new UE and remove the old context
   if (!ngap_entity->update_ue_index(
-          target_ue_index, source_ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_ue_notifier())) {
+          target_ue_index, source_ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_cu_cp_ue_notifier())) {
     return;
   }
   // Transfer E1AP UE Context to new UE and remove old context
@@ -602,13 +603,13 @@ async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transactio
   return launch_async<ue_transaction_info_release_routine>(ev.ues_lost, ue_mng, *this);
 }
 
-ngap_ue_notifier* cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
+ngap_cu_cp_ue_notifier* cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
   auto* ue = ue_mng.find_ue(ue_index);
   if (ue == nullptr) {
     return nullptr;
   }
-  return &ue->get_ngap_ue_notifier();
+  return &ue->get_ngap_cu_cp_ue_notifier();
 }
 
 bool cu_cp_impl::schedule_ue_task(ue_index_t ue_index, async_task<void> task)

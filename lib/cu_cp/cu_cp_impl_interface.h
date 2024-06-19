@@ -56,7 +56,7 @@ public:
   /// \brief Handle the creation of a new NGAP UE. This will add the NGAP adapters to the UE manager.
   /// \param[in] ue_index The index of the new NGAP UE.
   /// \returns Pointer to the NGAP UE notifier.
-  virtual ngap_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
+  virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.

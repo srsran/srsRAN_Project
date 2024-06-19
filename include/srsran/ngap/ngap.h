@@ -85,7 +85,7 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
-/// Interface to notify about NAS PDUs and messages.
+/// Notifier to the RRC UE for NAS PDUs.
 class ngap_rrc_ue_pdu_notifier
 {
 public:
@@ -96,7 +96,7 @@ public:
   virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
 };
 
-/// Interface to notify the RRC UE about control messages.
+/// Notifier to the RRC UE for control messages.
 class ngap_rrc_ue_control_notifier
 {
 public:
@@ -112,11 +112,11 @@ public:
   virtual bool on_security_enabled() = 0;
 };
 
-/// Interface for NGAP UE.
-class ngap_ue_notifier
+/// NGAP notifier to the CU-CP UE
+class ngap_cu_cp_ue_notifier
 {
 public:
-  virtual ~ngap_ue_notifier() = default;
+  virtual ~ngap_cu_cp_ue_notifier() = default;
 
   /// \brief Get the UE index of the UE.
   virtual ue_index_t get_ue_index() = 0;
@@ -131,7 +131,7 @@ public:
   virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
 };
 
-/// Interface to notify the CU-CP about an NGAP UE creation.
+/// NGAP notifier to the CU-CP.
 class ngap_cu_cp_notifier
 {
 public:
@@ -140,7 +140,7 @@ public:
   /// \brief Notifies the CU-CP about a new NGAP UE.
   /// \param[in] ue_index The index of the new NGAP UE.
   /// \returns Pointer to the NGAP UE notifier.
-  virtual ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) = 0;
+  virtual ngap_cu_cp_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) = 0;
 
   /// \brief Request scheduling a task for a UE.
   /// \param[in] ue_index The index of the UE.
@@ -247,7 +247,8 @@ public:
   /// \param[in] old_ue_index The old index of the UE.
   /// \param[in] new_ue_notifier The notifier to the new UE.
   /// \returns True if the update was successful, false otherwise.
-  virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_ue_notifier& new_ue_notifier) = 0;
+  virtual bool
+  update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

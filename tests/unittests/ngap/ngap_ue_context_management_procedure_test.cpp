@@ -422,7 +422,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_is_tranfered_a
   ASSERT_TRUE(target_ue.rrc_ue_dl_nas_handler.last_nas_pdu.empty());
 
   // Transfer NGAP UE context to new target UE.
-  ngap->update_ue_index(target_ue_index, ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_ue_notifier());
+  ngap->update_ue_index(target_ue_index, ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_cu_cp_ue_notifier());
 
   // Inject NAS message again.
   ngap->handle_message(dl_nas_transport);

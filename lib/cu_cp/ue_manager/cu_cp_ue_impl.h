@@ -108,7 +108,7 @@ public:
   /// \brief Get the RRC UE control notifier of the UE.
   ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override;
 
-  ngap_ue_notifier& get_ngap_ue_notifier() { return ue_adapter; }
+  ngap_cu_cp_ue_notifier& get_ngap_cu_cp_ue_notifier() { return ue_adapter; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier();

@@ -134,7 +134,7 @@ private:
   async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override;
 
   // NGAP UE creation handler
-  ngap_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;
+  ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) override;
 
   // cu_cp_task_scheduler_handler
   bool schedule_ue_task(ue_index_t ue_index, async_task<void> task) override;

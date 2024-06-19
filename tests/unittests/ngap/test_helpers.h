@@ -205,7 +205,7 @@ public:
 
   void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
+  ngap_cu_cp_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
     last_ue = ue_index;
 
@@ -216,7 +216,7 @@ public:
     }
 
     logger.info("ue={}: NGAP UE was created", ue_index);
-    return &ue->get_ngap_ue_notifier();
+    return &ue->get_ngap_cu_cp_ue_notifier();
   }
 
   bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override

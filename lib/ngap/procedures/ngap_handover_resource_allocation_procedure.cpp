@@ -82,7 +82,7 @@ bool ngap_handover_resource_allocation_procedure::create_ngap_ue(ue_index_t ue_i
   }
 
   // Notify CU-CP about creation of NGAP UE
-  ngap_ue_notifier* ue_notifier = cu_cp_ue_creation_notifier.on_new_ngap_ue(ue_index);
+  ngap_cu_cp_ue_notifier* ue_notifier = cu_cp_ue_creation_notifier.on_new_ngap_ue(ue_index);
   if (ue_notifier == nullptr) {
     logger.error("ue={}: Failed to create UE", ue_index);
     // Remove created UE context
