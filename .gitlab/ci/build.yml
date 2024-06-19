@@ -17,10 +17,7 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
-
-  AMD64_LIB_BUILDER_TAG: on-prem-amd64
-  AMD64_VIAVI_BUILDER_TAG: on-prem-amd64-avx2-avx512
-
+  
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
@@ -117,7 +114,7 @@ variables:
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # TEST
-    CTEST_TIMEOUT: 0
+    TEST_EXECUTION_TIMEOUT: 0
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_CPU_REQUEST: 6
@@ -255,7 +252,10 @@ variables:
             ;;
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
-            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout 10800"
+            # Default timeout per test is 1500 (25 min)
+            export CTEST_TIMEOUT=2700
+            export CTEST_TEST_TIMEOUT=${CTEST_TIMEOUT}
+            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout ${CTEST_TIMEOUT}"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
@@ -276,7 +276,7 @@ variables:
         echo "============================================================================================="
 
         status_file=$(mktemp)
-        timeout ${CTEST_TIMEOUT} \
+        timeout ${TEST_EXECUTION_TIMEOUT} \
           bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" \
           && ret=$(cat ${status_file}) || ret=124
 
@@ -420,9 +420,9 @@ variables:
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "False"
-    DPDK_VERSION: "23.11"
+    DPDK_VERSION: "23.11_avx2"
     BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke valgrind:
   extends: .build_and_unit
@@ -712,7 +712,7 @@ valgrind changed tests:
   variables:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
-    CTEST_TIMEOUT: 20m
+    TEST_EXECUTION_TIMEOUT: 20m
     SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
@@ -732,7 +732,7 @@ valgrind changed tests:
       echo "##################################################"
       git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
       build_srsgnb
-    - echo "This test execution has a timeout of ${CTEST_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
+    - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -921,10 +921,12 @@ package:
     KUBERNETES_MEMORY_LIMIT: 12Gi
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+    extraopts: -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64-v3"
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
+        extraopts: -DAUTO_DETECT_ISA=False -DCMAKE_CXX_FLAGS="-march=x86-64"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.10"
       - OS_VERSION: "24.04"
@@ -938,7 +940,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   script:
     - gnb --version
   parallel:
@@ -1146,18 +1148,18 @@ ubuntu dpdk:
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11"]
+        DPDK_VERSION: ["23.11_avx2"]
       - OS: ubuntu-23.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3", "23.11"]
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.3", "23.11"]
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.3", "23.11"]
@@ -1399,7 +1401,7 @@ build uhd alt:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
     AUTO_DETECT_ISA: "False"
-  tags: ["${AMD64_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-24.04
@@ -1725,7 +1727,6 @@ rhel-8 arm neon:
   ENABLE_ZEROMQ: "False"
   ENABLE_DPDK: "True"
   COMPILER: [gcc, clang]
-  DPDK_VERSION: ["22.11.3", "23.11"]
 
 ubuntu-20.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1739,6 +1740,7 @@ ubuntu-20.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3", "23.11"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1754,6 +1756,7 @@ ubuntu-20.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3", "23.11"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1769,6 +1772,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1784,6 +1788,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1799,6 +1804,7 @@ ubuntu-23.10 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx2", "23.11_avx2"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1814,6 +1820,7 @@ ubuntu-23.10 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
+        DPDK_VERSION: ["22.11.3_avx512", "23.11_avx512"]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1829,7 +1836,7 @@ ubuntu-24.04 amd64 avx2 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11"
+        DPDK_VERSION: "23.11_avx2"
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -1845,7 +1852,7 @@ ubuntu-24.04 amd64 avx512 dpdk:
     matrix:
       - OS: ubuntu-24.04
         <<: *basic_combinations_dpdk
-        DPDK_VERSION: "23.11"
+        DPDK_VERSION: "23.11_avx512"
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1916,7 +1923,7 @@ basic package:
   variables:
     <<: *package_variables
     OS_VERSION: "24.04"
-  tags: ["${AMD64_LIB_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX2_TAG}"]
   needs: []
 
 basic tsan:
@@ -1976,17 +1983,13 @@ basic avx512 dpdk:
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
-    DPDK_VERSION: "23.11"
-    AUTO_DETECT_ISA: "True"
-    ENABLE_AVX512: "True"
+    DPDK_VERSION: "23.11_avx512"
+    AUTO_DETECT_ISA: "False"
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v4"
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
     SAVE_ARTIFACTS: "True"
-    KUBERNETES_CPU_REQUEST: 14
-    KUBERNETES_CPU_LIMIT: 14
-    KUBERNETES_MEMORY_REQUEST: 20Gi
-    KUBERNETES_MEMORY_LIMIT: 20Gi
-  tags: ["${AMD64_VIAVI_BUILDER_TAG}"]
+  tags: ["${AMD64_AVX512_TAG}"]
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day

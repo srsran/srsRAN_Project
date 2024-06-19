@@ -131,8 +131,6 @@ std::shared_ptr<pdsch_encoder_factory> create_pdsch_encoder_factory_sw(pdsch_enc
 
 /// HW-accelerated PDSCH encoder factory configuration parameters.
 struct pdsch_encoder_factory_hw_configuration {
-  bool                                                   cb_mode = false;
-  unsigned                                               max_tb_size;
   std::shared_ptr<crc_calculator_factory>                crc_factory;
   std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
   std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> hw_encoder_factory;

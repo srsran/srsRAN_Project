@@ -34,6 +34,13 @@ struct hw_accelerator_pdsch_enc_configuration {
   std::string acc_type;
   /// Interfacing to a bbdev-based hardware-accelerator.
   std::shared_ptr<srsran::dpdk::bbdev_acc> bbdev_accelerator;
+  /// Defines if the PDSCH encoder operates in CB mode (true) or TB mode (false).
+  bool cb_mode = false;
+  /// Defines the maximum supported TB size in bytes (CB mode will be forced for larger TBs).
+  /// Only used in TB mode.
+  unsigned max_tb_size;
+  /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
+  bool dedicated_queue;
 };
 
 /// Returns an instance of a PDSCH encoder hardware accelerator factory on success,

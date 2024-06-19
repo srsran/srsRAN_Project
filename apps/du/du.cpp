@@ -21,8 +21,6 @@
  */
 
 #include "srsran/gtpu/gtpu_config.h"
-#include "srsran/pcap/dlt_pcap.h"
-#include "srsran/pcap/mac_pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
@@ -53,15 +51,19 @@
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
 #include "apps/services/e2_metric_connector_manager.h"
 
+// Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
+// This include is not unused - it helps prevent false alarms from the thread sanitizer.
+#include "srsran/support/tsan_options.h"
+
 #include <atomic>
 
-#include "../units/flexible_du/du_high/pcap_factory.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
@@ -252,7 +254,7 @@ int main(int argc, char** argv)
   cu_cp_unit_pcap_config dummy_cu_cp_pcap{};
   cu_up_unit_pcap_config dummy_cu_up_pcap{};
   worker_manager         workers{
-      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.f1u_cfg.pdu_queue_size};
+      du_unit_cfg, du_cfg.expert_execution_cfg, dummy_cu_cp_pcap, dummy_cu_up_pcap, du_cfg.nru_cfg.pdu_queue_size};
 
   // Set layer-specific pcap options.
   const auto& low_prio_cpu_mask = du_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -261,16 +263,12 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  srsran::modules::flexible_du::du_dlt_pcaps du_dlt_pcaps =
-      modules::flexible_du::create_dlt_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<mac_pcap> mac_p =
-      modules::flexible_du::create_mac_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
-  std::unique_ptr<rlc_pcap> rlc_p =
-      modules::flexible_du::create_rlc_pcap(du_unit_cfg.du_high_cfg.config.pcaps, workers);
+  srsran::modules::flexible_du::du_pcaps du_pcaps =
+      modules::flexible_du::create_pcaps(du_unit_cfg.du_high_cfg.config.pcaps, workers);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
-      du_cfg.f1ap_cfg.cu_cp_address, du_cfg.f1ap_cfg.bind_address, *epoll_broker, *du_dlt_pcaps.f1ap);
+      du_cfg.f1ap_cfg.cu_cp_address, du_cfg.f1ap_cfg.bind_address, *epoll_broker, *du_pcaps.f1ap);
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -279,10 +277,10 @@ int main(int argc, char** argv)
   // TODO: Simplify this and use factory.
   gtpu_demux_creation_request du_f1u_gtpu_msg       = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop                  = true;
-  du_f1u_gtpu_msg.gtpu_pcap                         = du_dlt_pcaps.f1u.get();
+  du_f1u_gtpu_msg.gtpu_pcap                         = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config      = {};
-  du_f1u_gw_config.bind_address                     = du_cfg.f1u_cfg.bind_address;
+  du_f1u_gw_config.bind_address                     = du_cfg.nru_cfg.bind_address;
   du_f1u_gw_config.bind_port                        = GTPU_PORT;
   du_f1u_gw_config.reuse_addr                       = true;
   std::unique_ptr<srs_cu_up::ngu_gateway> du_f1u_gw = srs_cu_up::create_udp_ngu_gateway(
@@ -290,7 +288,7 @@ int main(int argc, char** argv)
       *epoll_broker,
       workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
   std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
-      srs_du::create_split_f1u_gw({du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_dlt_pcaps.f1u, GTPU_PORT});
+      srs_du::create_split_f1u_gw({du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
@@ -310,7 +308,7 @@ int main(int argc, char** argv)
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
 
   // Create E2AP GW remote connector.
-  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_dlt_pcaps.e2ap};
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
   // Create metrics log helper.
   metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
@@ -323,8 +321,8 @@ int main(int argc, char** argv)
                                     *f1c_gw,
                                     *du_f1u_conn,
                                     app_timers,
-                                    *mac_p,
-                                    *rlc_p,
+                                    *du_pcaps.mac,
+                                    *du_pcaps.rlc,
                                     metrics_stdout,
                                     metrics_json,
                                     metrics_logger,
@@ -358,9 +356,7 @@ int main(int argc, char** argv)
   }
 
   du_logger.info("Closing PCAP files...");
-  mac_p->close();
-  rlc_p->close();
-  du_dlt_pcaps.close();
+  du_pcaps.close();
   du_logger.info("PCAP files successfully closed.");
 
   du_logger.info("Stopping executors...");

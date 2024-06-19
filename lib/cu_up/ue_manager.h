@@ -43,6 +43,7 @@ public:
                       f1u_cu_up_gateway&                          f1u_gw_,
                       gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
                       gtpu_demux_ctrl&                            gtpu_rx_demux_,
+                      gtpu_teid_pool&                             n3_teid_allocator_,
                       gtpu_teid_pool&                             f1u_teid_allocator_,
                       cu_up_executor_pool&                        exec_pool_,
                       dlt_pcap&                                   gtpu_pcap_,
@@ -67,6 +68,7 @@ private:
   f1u_cu_up_gateway&                          f1u_gw;
   gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier;
   gtpu_demux_ctrl&                            gtpu_rx_demux;
+  gtpu_teid_pool&                             n3_teid_allocator;
   gtpu_teid_pool&                             f1u_teid_allocator;
   cu_up_executor_pool&                        exec_pool;
   dlt_pcap&                                   gtpu_pcap;

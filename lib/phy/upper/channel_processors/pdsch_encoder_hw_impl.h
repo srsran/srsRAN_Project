@@ -54,21 +54,14 @@ public:
   ///
   /// Sets up the internal components, namely LDPC segmenter, all the CRC calculators and the hardware accelerator.
   ///
-  /// \param[in] cb_mode     Defines if the PDSCH encoder operates in CB mode (true) or TB mode (false).
-  /// \param[in] max_cb_size Defines the maximum supported TB size in bytes (CB mode will be forced for larger TBs).
-  ///                        Only used in TB mode.
   /// \param[in] seg         Unique pointer to an LDPC segmenter.
   /// \param[in] crcs        Structure with pointers to three CRC calculator objects, with generator polynomials of type
   /// \c
   ///                        CRC16, \c CRC24A and \c CRC24B.
   /// \param[in] hw          Unique pointer to a hardware-accelerator.
-  pdsch_encoder_hw_impl(bool                                           cb_mode_,
-                        unsigned                                       max_tb_size_,
-                        sch_crc&                                       c,
+  pdsch_encoder_hw_impl(sch_crc&                                       c,
                         std::unique_ptr<ldpc_segmenter_tx>             seg,
                         std::unique_ptr<hal::hw_accelerator_pdsch_enc> hw) :
-    cb_mode(cb_mode_),
-    max_tb_size(max_tb_size_),
     crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}),
     segmenter(std::move(seg)),
     encoder(std::move(hw))

@@ -41,12 +41,12 @@ main() {
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
                 curl apt-transport-https ca-certificates xz-utils \
                 python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
-            pip3 install --break-system-packages meson pyelftools
+            pip3 install meson pyelftools || pip3 install --break-system-packages meson pyelftools
         fi
         if [[ "$mode" == "all" || "$mode" == "run" ]]; then
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
                 python3-pip libnuma-dev pciutils libfdt-dev
-            pip3 install --break-system-packages pyelftools
+            pip3 install pyelftools || pip3 install --break-system-packages pyelftools
         fi
     else
         echo "OS $ID not supported"

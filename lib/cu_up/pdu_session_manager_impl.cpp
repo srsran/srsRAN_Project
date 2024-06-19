@@ -45,6 +45,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    timer_factory                               ue_ul_timer_factory_,
                                                    timer_factory                               ue_ctrl_timer_factory_,
                                                    f1u_cu_up_gateway&                          f1u_gw_,
+                                                   gtpu_teid_pool&                             n3_teid_allocator_,
                                                    gtpu_teid_pool&                             f1u_teid_allocator_,
                                                    gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                            gtpu_rx_demux_,
@@ -64,6 +65,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
+  n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
   ue_dl_exec(ue_dl_exec_),
@@ -73,7 +75,114 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_pcap(gtpu_pcap_),
   f1u_gw(f1u_gw_)
 {
-  (void)ue_ctrl_exec;
+}
+
+pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
+{
+  pdu_session_setup_result pdu_session_result = {};
+  pdu_session_result.success                  = false;
+  pdu_session_result.pdu_session_id           = session.pdu_session_id;
+  pdu_session_result.cause                    = e1ap_cause_radio_network_t::unspecified;
+
+  if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
+    logger.log_error("PDU Session with {} already exists", session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  if (pdu_sessions.size() >= MAX_NUM_PDU_SESSIONS_PER_UE) {
+    logger.log_error("PDU Session for {} cannot be created. Max number of PDU sessions reached",
+                     session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  // Allocate local TEID
+  expected<gtpu_teid_t> local_teid = n3_teid_allocator.request_teid();
+  if (local_teid.is_error()) {
+    logger.log_warning("Failed to create PDU session. Cause: could not allocate local TEID. {}",
+                       session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  std::unique_ptr<pdu_session> new_session =
+      std::make_unique<pdu_session>(session, local_teid.value(), gtpu_rx_demux, n3_teid_allocator);
+  const auto& ul_tunnel_info = new_session->ul_tunnel_info;
+
+  // Get uplink transport address
+  logger.log_debug("PDU session uplink tunnel info: {} local_teid={} peer_teid={} peer_addr={}",
+                   session.pdu_session_id,
+                   new_session->local_teid,
+                   ul_tunnel_info.gtp_teid.value(),
+                   ul_tunnel_info.tp_address);
+
+  // Advertise either local or external IP address of N3 interface
+  const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
+                                   ? net_config.n3_bind_addr
+                                   : net_config.n3_ext_addr;
+  pdu_session_result.gtp_tunnel =
+      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
+
+  // Create SDAP entity
+  sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
+  new_session->sdap                     = create_sdap(sdap_msg);
+
+  // Create GTPU entity
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.ue_index                         = ue_index;
+  msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
+  msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
+  msg.cfg.tx.peer_port                 = net_config.upf_port;
+  msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
+  msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
+  msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
+  msg.tx_upper                         = &gtpu_tx_notifier;
+  msg.gtpu_pcap                        = &gtpu_pcap;
+  msg.ue_dl_timer_factory              = ue_dl_timer_factory;
+  new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
+
+  // Connect adapters
+  new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
+  new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
+
+  // Register tunnel at demux
+  if (!gtpu_rx_demux.add_tunnel(
+          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+    logger.log_error(
+        "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
+    return pdu_session_result;
+  }
+
+  // Handle DRB setup
+  for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
+    drb_setup_result drb_result = handle_drb_to_setup_item(*new_session, drb_to_setup);
+    pdu_session_result.drb_setup_results.push_back(drb_result);
+  }
+
+  // Ref: TS 38.463 Sec. 8.3.1.2:
+  // For each PDU session for which the Security Indication IE is included in the PDU Session Resource To Setup List
+  // IE of the BEARER CONTEXT SETUP REQUEST message, and the Integrity Protection Indication IE or Confidentiality
+  // Protection Indication IE is set to "preferred", then the gNB-CU-UP should, if supported, perform user plane
+  // integrity protection or ciphering, respectively, for the concerned PDU session and shall notify whether it
+  // performed the user plane integrity protection or ciphering by including the Integrity Protection Result IE or
+  // Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup List IE of the BEARER
+  // CONTEXT SETUP RESPONSE message.
+  if (security_result_required(session.security_ind)) {
+    pdu_session_result.security_result = security_result_t{};
+    auto& sec_res                      = pdu_session_result.security_result.value();
+    sec_res.integrity_protection_result =
+        session.security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
+            ? integrity_protection_result_t::not_performed
+            : integrity_protection_result_t::performed;
+    sec_res.confidentiality_protection_result =
+        session.security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
+            ? confidentiality_protection_result_t::not_performed
+            : confidentiality_protection_result_t::performed;
+  }
+
+  // PDU session creation was successful, store PDU session.
+  pdu_sessions.emplace(session.pdu_session_id, std::move(new_session));
+  pdu_session_result.success = true;
+  return pdu_session_result;
 }
 
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
@@ -254,107 +363,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   return drb_result;
 }
 
-pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
-{
-  pdu_session_setup_result pdu_session_result = {};
-  pdu_session_result.success                  = false;
-  pdu_session_result.pdu_session_id           = session.pdu_session_id;
-  pdu_session_result.cause                    = e1ap_cause_radio_network_t::unspecified;
-
-  if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
-    logger.log_error("PDU Session with {} already exists", session.pdu_session_id);
-    return pdu_session_result;
-  }
-
-  if (pdu_sessions.size() >= MAX_NUM_PDU_SESSIONS_PER_UE) {
-    logger.log_error("PDU Session for {} cannot be created. Max number of PDU sessions reached",
-                     session.pdu_session_id);
-    return pdu_session_result;
-  }
-
-  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session, gtpu_rx_demux));
-  std::unique_ptr<pdu_session>& new_session    = pdu_sessions.at(session.pdu_session_id);
-  const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
-
-  // Get uplink transport address
-  logger.log_debug("PDU session uplink tunnel info: {} teid={} addr={}",
-                   session.pdu_session_id,
-                   ul_tunnel_info.gtp_teid.value(),
-                   ul_tunnel_info.tp_address);
-
-  // Allocate local TEID
-  new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
-
-  // Advertise either local or external IP address of N3 interface
-  const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
-                                   ? net_config.n3_bind_addr
-                                   : net_config.n3_ext_addr;
-  pdu_session_result.gtp_tunnel =
-      up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
-
-  // Create SDAP entity
-  sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
-  new_session->sdap                     = create_sdap(sdap_msg);
-
-  // Create GTPU entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.ue_index                         = ue_index;
-  msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
-  msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                 = net_config.upf_port;
-  msg.cfg.rx.local_teid                = new_session->local_teid;
-  msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
-  msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                         = &gtpu_tx_notifier;
-  msg.gtpu_pcap                        = &gtpu_pcap;
-  msg.ue_dl_timer_factory              = ue_dl_timer_factory;
-  new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
-
-  // Connect adapters
-  new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
-  new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
-
-  // Register tunnel at demux
-  if (!gtpu_rx_demux.add_tunnel(
-          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
-    logger.log_error(
-        "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
-    return pdu_session_result;
-  }
-
-  // Handle DRB setup
-  for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
-    drb_setup_result drb_result = handle_drb_to_setup_item(*new_session, drb_to_setup);
-    pdu_session_result.drb_setup_results.push_back(drb_result);
-  }
-
-  // Ref: TS 38.463 Sec. 8.3.1.2:
-  // For each PDU session for which the Security Indication IE is included in the PDU Session Resource To Setup List
-  // IE of the BEARER CONTEXT SETUP REQUEST message, and the Integrity Protection Indication IE or Confidentiality
-  // Protection Indication IE is set to "preferred", then the gNB-CU-UP should, if supported, perform user plane
-  // integrity protection or ciphering, respectively, for the concerned PDU session and shall notify whether it
-  // performed the user plane integrity protection or ciphering by including the Integrity Protection Result IE or
-  // Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup List IE of the BEARER
-  // CONTEXT SETUP RESPONSE message.
-  if (security_result_required(session.security_ind)) {
-    pdu_session_result.security_result = security_result_t{};
-    auto& sec_res                      = pdu_session_result.security_result.value();
-    sec_res.integrity_protection_result =
-        session.security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
-            ? integrity_protection_result_t::not_performed
-            : integrity_protection_result_t::performed;
-    sec_res.confidentiality_protection_result =
-        session.security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
-            ? confidentiality_protection_result_t::not_performed
-            : confidentiality_protection_result_t::performed;
-  }
-  pdu_session_result.success = true;
-  return pdu_session_result;
-}
-
 pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
-                                             bool                                       new_tnl_info_required)
+                                             bool                                       new_ul_tnl_info_required)
 {
   pdu_session_modification_result pdu_session_result;
   pdu_session_result.success        = false;
@@ -396,7 +407,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_iter->second->drb_id);
 
     auto& drb = drb_iter->second;
-    if (new_tnl_info_required) {
+    if (new_ul_tnl_info_required) {
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
       if (not ret.has_value()) {
@@ -570,13 +581,4 @@ void pdu_session_manager_impl::disconnect_all_pdu_sessions()
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
-}
-
-gtpu_teid_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_session_id)
-{
-  // Local TEID is the concatenation of the unique UE index and the PDU session ID
-  uint32_t local_teid = ue_index;
-  local_teid <<= 8U;
-  local_teid |= pdu_session_id_to_uint(pdu_session_id);
-  return gtpu_teid_t{local_teid};
 }

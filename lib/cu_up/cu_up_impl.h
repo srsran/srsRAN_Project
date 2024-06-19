@@ -29,16 +29,12 @@
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
-#include "srsran/support/executors/task_executor.h"
 #include <memory>
-#include <unordered_map>
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 class cu_up final : public cu_up_interface
 {
@@ -90,6 +86,7 @@ private:
   std::unique_ptr<ngu_tnl_pdu_session> ngu_session;
   std::unique_ptr<gtpu_demux>          ngu_demux;
   std::unique_ptr<gtpu_echo>           ngu_echo;
+  std::unique_ptr<gtpu_teid_pool>      n3_teid_allocator;
   std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
   std::unique_ptr<ue_manager>          ue_mng;
 
@@ -107,5 +104,4 @@ private:
   unique_timer statistics_report_timer;
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

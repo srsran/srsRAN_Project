@@ -33,7 +33,7 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
   // Receiving a frame burst larger than MAX_BURST_SIZE requires making several Tx bursts.
   for (unsigned offset = 0; offset < frames.size();) {
     auto frame_burst = frames.subspan(offset, std::min<unsigned>(MAX_BURST_SIZE, frames.size() - offset));
-    offset += frames.size();
+    offset += frame_burst.size();
 
     static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frame_burst.size());
     if (::rte_pktmbuf_alloc_bulk(port_ctx->get_mempool(), mbufs.data(), frame_burst.size()) < 0) {

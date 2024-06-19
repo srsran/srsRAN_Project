@@ -46,17 +46,16 @@ tox python in builder:
 ################################################################################
 # UHD builder
 ################################################################################
-ubuntu-uhd-builder:
+.ubuntu-uhd-builder:
   stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
-  tags:
-    - on-prem-${arch_name}
   variables:
     os_version: ""
     arch_name: ""
     uhd_version: ""
+    target_arch: ""
     GIT_STRATEGY: none
     KUBERNETES_CPU_REQUEST: 4
     KUBERNETES_CPU_LIMIT: 4
@@ -84,7 +83,7 @@ ubuntu-uhd-builder:
     - |
       build_uhd() {
         docker/scripts/install_uhd_dependencies.sh build
-        docker/scripts/build_uhd.sh ${uhd_version} native ${KUBERNETES_CPU_REQUEST}
+        docker/scripts/build_uhd.sh ${uhd_version} ${target_arch} ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd
         cp -r /opt/uhd/${uhd_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}
       }
@@ -111,33 +110,63 @@ ubuntu-uhd-builder:
     expire_in: 8 hours
   parallel:
     matrix:
-      - os_version: "20.04"
-        arch_name: [amd64, arm64]
+      - &uhd_2004_matrix
+        os_version: "20.04"
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"] # uhd 3.15.0.0 default
-      - os_version: "22.04"
-        arch_name: [amd64, arm64]
+      - &uhd_2204_matrix
+        os_version: "22.04"
         uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
-      - os_version: "23.10"
-        arch_name: [amd64, arm64]
+      - &uhd_2310_matrix
+        os_version: "23.10"
         uhd_version: ["4.6.0.0"] # "4.4.0.0" default
       # - os_version: "24.04"
-      #   arch_name: [amd64, arm64]
       #   uhd_version: [] # "4.6.0.0" default
+
+ubuntu-uhd-builder no isa:
+  extends: .ubuntu-uhd-builder
+  tags:
+    - amd64
+  variables:
+    arch_name: amd64
+    target_arch: x86-64 # x86-64-vX not supported in compilers' versions
+  parallel:
+    matrix:
+      - *uhd_2004_matrix
+
+ubuntu-uhd-builder avx2:
+  extends: .ubuntu-uhd-builder
+  tags:
+    - amd64-avx2
+  variables:
+    arch_name: amd64
+    target_arch: x86-64-v3
+  parallel:
+    matrix:
+      - *uhd_2204_matrix
+      - *uhd_2310_matrix
+
+ubuntu-uhd-builder arm64:
+  extends: .ubuntu-uhd-builder
+  tags:
+    - arm64
+  variables:
+    arch_name: arm64
+    target_arch: armv8.2-a+crypto+fp16+dotprod
 
 ################################################################################
 # DPDK builder
 ################################################################################
-ubuntu-dpdk-builder:
+.ubuntu-dpdk-builder:
   stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
-  tags:
-    - on-prem-${arch_name}
   variables:
     os_version: ""
     arch_name: ""
     dpdk_version: ""
+    extra_arch_name: ""
+    target_arch: ""
     GIT_STRATEGY: none
     KUBERNETES_CPU_REQUEST: 6
     KUBERNETES_CPU_LIMIT: 6
@@ -152,7 +181,7 @@ ubuntu-dpdk-builder:
         DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
         
         cd ${CI_PROJECT_DIR}
-        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}/dpdk.tar.gz" -o output.tar.gz)
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}${extra_arch_name}/dpdk.tar.gz" -o output.tar.gz)
         if [[ $http_code == "200" ]]; then
           tar -xf output.tar.gz
           return 0
@@ -164,18 +193,20 @@ ubuntu-dpdk-builder:
     # Install dependencies and compile
     - |
       build_dpdk() {
+        unset PIP_EXTRA_INDEX_URL
+        unset PIP_INDEX_URL        
         docker/scripts/install_dpdk_dependencies.sh build
-        docker/scripts/build_dpdk.sh ${dpdk_version} native ${KUBERNETES_CPU_REQUEST}
+        docker/scripts/build_dpdk.sh ${dpdk_version} ${target_arch} ${KUBERNETES_CPU_REQUEST}
         mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk
-        cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}
+        cp -r /opt/dpdk/${dpdk_version} ${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}${extra_arch_name}
       }
 
     # Publish compiled version to the registry
     - |
       publish_to_registry() {
         cd ${CI_PROJECT_DIR}
-        tar -czf dpdk.tar.gz .gitlab/ci/builders/dpdk/${dpdk_version}
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}/dpdk.tar.gz"
+        tar -czf dpdk.tar.gz .gitlab/ci/builders/dpdk/${dpdk_version}${extra_arch_name}
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${arch_name}-${dpdk_version}${extra_arch_name}/dpdk.tar.gz"
       }
   script:
     - |
@@ -192,18 +223,65 @@ ubuntu-dpdk-builder:
     expire_in: 8 hours
   parallel:
     matrix:
-      - os_version: "20.04"
-        arch_name: [amd64, arm64]
+      - &dpdk_2004_matrix
+        os_version: "20.04"
         dpdk_version: ["21.08", "22.11.3", "23.11"]
-      - os_version: "22.04"
-        arch_name: [amd64, arm64]
+      - &dpdk_2204_matrix
+        os_version: "22.04"
         dpdk_version: ["21.08", "22.11.3", "23.11"]
-      - os_version: "23.10"
-        arch_name: [amd64, arm64]
+      - &dpdk_2310_matrix
+        os_version: "23.10"
         dpdk_version: ["22.11.3", "23.11"]
-      - os_version: "24.04"
-        arch_name: [amd64, arm64]
+      - &dpdk_2404_matrix
+        os_version: "24.04"
         dpdk_version: ["23.11"]
+
+ubuntu-dpdk-builder no isa:
+  extends: .ubuntu-dpdk-builder
+  tags:
+    - amd64-avx2
+  variables:
+    arch_name: amd64
+    target_arch: x86-64
+  parallel:
+    matrix:
+      - *dpdk_2004_matrix
+
+ubuntu-dpdk-builder avx2:
+  extends: .ubuntu-dpdk-builder
+  tags:
+    - amd64-avx2
+  variables:
+    arch_name: amd64
+    extra_arch_name: _avx2
+    target_arch: x86-64-v3
+  parallel:
+    matrix:
+      - *dpdk_2204_matrix
+      - *dpdk_2310_matrix
+      - *dpdk_2404_matrix
+
+ubuntu-dpdk-builder avx512:
+  extends: .ubuntu-dpdk-builder
+  tags:
+    - amd64-avx2-avx512
+  variables:
+    arch_name: amd64
+    extra_arch_name: _avx512
+    target_arch: x86-64-v4
+  parallel:
+    matrix:
+      - *dpdk_2204_matrix
+      - *dpdk_2310_matrix
+      - *dpdk_2404_matrix
+
+ubuntu-dpdk-builder arm64:
+  extends: .ubuntu-dpdk-builder
+  tags:
+    - arm64
+  variables:
+    arch_name: arm64
+    target_arch: armv8.2-a+crypto+fp16+dotprod
 
 ################################################################################
 # Common
@@ -323,17 +401,15 @@ image-build-publish [ubuntu, 20.04, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder no isa
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: amd64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder no isa
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: amd64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 20.04, amd64]:
@@ -357,17 +433,15 @@ image-build-publish [ubuntu, 20.04, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: arm64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "20.04"
-            arch_name: arm64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 20.04, arm64]:
@@ -409,17 +483,20 @@ image-build-publish [ubuntu, 22.04, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: amd64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: amd64
+            dpdk_version: ["21.08", "22.11.3", "23.11"]
+    - job: ubuntu-dpdk-builder avx512
+      parallel:
+        matrix:
+          - os_version: "22.04"
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 22.04, amd64]:
@@ -443,17 +520,15 @@ image-build-publish [ubuntu, 22.04, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: arm64
             uhd_version: ["4.6.0.0", "4.4.0.0", "4.3.0.0"]
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "22.04"
-            arch_name: arm64
             dpdk_version: ["21.08", "22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 22.04, arm64]:
@@ -495,17 +570,20 @@ image-build-publish [ubuntu, 23.10, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder avx2
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: amd64
             uhd_version: ["4.6.0.0"] # "4.4.0.0" default
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: amd64
+            dpdk_version: ["22.11.3", "23.11"]
+    - job: ubuntu-dpdk-builder avx512
+      parallel:
+        matrix:
+          - os_version: "23.10"
             dpdk_version: ["22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.10, amd64]:
@@ -529,17 +607,15 @@ image-build-publish [ubuntu, 23.10, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
-    - job: ubuntu-uhd-builder
+    - job: ubuntu-uhd-builder arm64
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: arm64
             uhd_version: ["4.6.0.0"] # "4.4.0.0" default
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "23.10"
-            arch_name: arm64
             dpdk_version: ["22.11.3", "23.11"]
 
 alternative-tag [ubuntu, 23.10, arm64]:
@@ -581,11 +657,15 @@ image-build-publish [ubuntu, 24.04, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "24.04"
-            arch_name: amd64
+            dpdk_version: ["23.11"]
+    - job: ubuntu-dpdk-builder avx512
+      parallel:
+        matrix:
+          - os_version: "24.04"
             dpdk_version: ["23.11"]
 
 alternative-tag [ubuntu, 24.04, amd64]:
@@ -609,11 +689,10 @@ image-build-publish [ubuntu, 24.04, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
-    - job: ubuntu-dpdk-builder
+    - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "24.04"
-            arch_name: arm64
             dpdk_version: ["23.11"]
 
 alternative-tag [ubuntu, 24.04, arm64]:

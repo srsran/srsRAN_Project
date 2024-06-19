@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/mpmc_queue.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/units.h"
 #include <rte_bbdev.h>
@@ -35,6 +36,8 @@ namespace dpdk {
 static constexpr unsigned MAX_NOF_BBDEV_QUEUES = 128;
 /// Maximum number of operations that can be stored in a hardware queue at a given time.
 static constexpr unsigned MAX_NOF_OP_IN_QUEUE = 16;
+/// Maximum number of VF instances supported by a bbdev-based hardware-accelerator.
+static constexpr unsigned MAX_NOF_BBDEV_VF_INSTANCES = 64;
 
 /// Configuration parameters and objects tied to a bbdev-based hardware-accelerator.
 struct bbdev_acc_configuration {
@@ -61,9 +64,9 @@ class bbdev_acc
 {
 public:
   /// Constructor.
-  /// \param[in] dpdk Pointer to a dpdk-based hardware-accelerator interface.
-  /// \param[in] info bbdev Device information.
-  /// \param[in] cfg  Configuration parameters of the bbdev-based hardware-accelerator.
+  /// \param[in] cfg    Configuration parameters of the bbdev-based hardware-accelerator.
+  /// \param[in] info   bbdev Device information.
+  /// \param[in] logger SRS logger.
   explicit bbdev_acc(const bbdev_acc_configuration& cfg, const ::rte_bbdev_info& info_, srslog::basic_logger& logger);
 
   /// Destructor.
@@ -112,13 +115,25 @@ public:
   /// Reserves a free queue to be used by a specific hardware-accelerated channel processor function.
   /// \param[in] op_type Type of bbdev op.
   /// \return ID of the reserved queue.
-  int reserve_queue(rte_bbdev_op_type op_type);
+  int reserve_queue(::rte_bbdev_op_type op_type);
 
   /// Frees a queue used by a specific hardware-accelerated channel processor function.
   /// \param[in] queue_id ID of the queue to be freed.
-  void free_queue(unsigned queue_id);
+  void free_queue(::rte_bbdev_op_type op_type, unsigned queue_id);
+
+  /// Returns a unique ID for an instance of an LDPC encoder using the bbdev-based accelerator.
+  /// \return Encoder ID.
+  unsigned reserve_encoder() { return nof_ldpc_enc_instances++; }
+
+  /// Returns a unique ID for an instance of an LDPC decoder using the bbdev-based accelerator.
+  /// \return Decoder ID.
+  unsigned reserve_decoder() { return nof_ldpc_dec_instances++; }
 
 private:
+  /// Codeblock identifier list type.
+  using queue_id_list =
+      concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+
   /// ID of the bbdev-based hardware-accelerator.
   unsigned id;
   /// Structure providing device information.
@@ -129,8 +144,12 @@ private:
   unsigned nof_ldpc_dec_lcores;
   /// Number of lcores available to the hardware-accelerated FFT (disabled if 0).
   unsigned nof_fft_lcores;
-  /// Array indicating the queue availability.
-  bounded_bitset<MAX_NOF_BBDEV_QUEUES> queue_used;
+  /// List containing the free queue ids for hardware-acclerated LDPC encoder functions.
+  queue_id_list available_ldpc_enc_queue;
+  /// List containing the free queue ids for hardware-acclerated LDPC decoder functions.
+  queue_id_list available_ldpc_dec_queue;
+  /// List containing the free queue ids for hardware-acclerated FFT functions.
+  queue_id_list available_fft_queue;
   /// Size of each mbuf used to exchange unencoded and unrate-matched messages with the accelerator in bytes.
   unsigned msg_mbuf_size;
   /// Size of each mbuf used to exchange encoded and rate-matched messages with the accelerator in bytes.
@@ -139,6 +158,10 @@ private:
   unsigned nof_mbuf;
   /// SRS logger.
   srslog::basic_logger& logger;
+  /// Number of LDPC encoder instances using this bbdev accelerator.
+  unsigned nof_ldpc_enc_instances;
+  /// Number of LDPC decoder instances using this bbdev accelerator.
+  unsigned nof_ldpc_dec_instances;
 };
 
 } // namespace dpdk

@@ -53,6 +53,7 @@ public:
                            timer_factory                                    ue_ul_timer_factory_,
                            timer_factory                                    ue_ctrl_timer_factory_,
                            f1u_cu_up_gateway&                               f1u_gw_,
+                           gtpu_teid_pool&                                  n3_teid_allocator_,
                            gtpu_teid_pool&                                  f1u_teid_allocator_,
                            gtpu_tunnel_common_tx_upper_layer_notifier&      gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                                 gtpu_rx_demux_,
@@ -94,6 +95,7 @@ private:
   timer_factory                                            ue_ul_timer_factory;
   timer_factory                                            ue_ctrl_timer_factory;
   gtpu_tunnel_common_tx_upper_layer_notifier&              gtpu_tx_notifier;
+  gtpu_teid_pool&                                          n3_teid_allocator;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;

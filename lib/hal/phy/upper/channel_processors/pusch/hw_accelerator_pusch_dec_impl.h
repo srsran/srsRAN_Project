@@ -38,6 +38,10 @@ public:
   hw_accelerator_pusch_dec_impl() = default;
 
   // See hw_accelerator interface for the documentation.
+  void reserve_queue() override;
+  // See hw_accelerator interface for the documentation.
+  void free_queue() override;
+  // See hw_accelerator interface for the documentation.
   bool enqueue_operation(span<const int8_t> data, span<const int8_t> soft_data = {}, unsigned cb_index = 0) override;
   // See hw_accelerator interface for the documentation.
   bool dequeue_operation(span<uint8_t> data, span<int8_t> soft_data = {}, unsigned segment_index = 0) override;
@@ -52,6 +56,10 @@ public:
   bool is_external_harq_supported() const override;
 
 private:
+  /// Hardware-specific implementation of the reserve queue function.
+  virtual void hw_reserve_queue() = 0;
+  /// Hardware-specific implementation of the free queue function.
+  virtual void hw_free_queue() = 0;
   /// Hardware-specific implementation of the enqueue_operation function.
   virtual bool hw_enqueue(span<const int8_t> data, span<const int8_t> soft_data, unsigned cb_index) = 0;
   /// Hardware-specific implementation of the dequeue_operation function.

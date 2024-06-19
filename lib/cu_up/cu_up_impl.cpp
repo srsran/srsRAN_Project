@@ -79,7 +79,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // Connect GTPU GW adapter to NG-U session in order to send UL PDUs.
   gtpu_gw_adapter.connect_network_gateway(*ngu_session);
 
-  // Create TEID allocator
+  // Create N3 TEID allocator
+  gtpu_allocator_creation_request n3_alloc_msg = {};
+  n3_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
+  n3_teid_allocator                            = create_gtpu_allocator(n3_alloc_msg);
+
+  // Create F1-U TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
@@ -98,6 +103,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         *cfg.f1u_gateway,
                                         gtpu_gw_adapter,
                                         *ngu_demux,
+                                        *n3_teid_allocator,
                                         *f1u_teid_allocator,
                                         *cfg.ue_exec_pool,
                                         *cfg.gtpu_pcap,

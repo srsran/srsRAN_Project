@@ -315,7 +315,7 @@ static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c
       ->capture_default_str();
 }
 
-static void configure_cli11_f1u_args(CLI::App& app, srs_du::f1u_appconfig& f1u_params)
+static void configure_cli11_f1u_args(CLI::App& app, srs_du::nru_appconfig& f1u_params)
 {
   app.add_option("--queue_size", f1u_params.pdu_queue_size, "F1-U PDU queue size")->capture_default_str();
   app.add_option(
@@ -337,8 +337,8 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   configure_cli11_f1ap_args(*f1ap_subcmd, du_cfg.f1ap_cfg);
 
   // F1-U section.
-  CLI::App* f1u_subcmd = app.add_subcommand("f1u", "F1-U interface configuration")->configurable();
-  configure_cli11_f1u_args(*f1u_subcmd, du_cfg.f1u_cfg);
+  CLI::App* nru_subcmd = app.add_subcommand("nru", "NR-U interface configuration")->configurable();
+  configure_cli11_f1u_args(*nru_subcmd, du_cfg.nru_cfg);
 
   // Logging section.
   CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();

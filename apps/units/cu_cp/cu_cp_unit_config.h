@@ -24,7 +24,6 @@
 
 #include "apps/units/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
-#include "srsran/adt/optional.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_band.h"
@@ -111,8 +110,6 @@ struct cu_cp_unit_security_config {
 struct cu_cp_unit_f1ap_config {
   /// Timeout for the UE context setup procedure in milliseconds.
   unsigned ue_context_setup_timeout = 1000;
-  /// F1-C bind address
-  std::string f1c_bind_address = "127.0.10.1";
 };
 
 /// RLC UM TX configuration

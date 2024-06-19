@@ -163,24 +163,20 @@ bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&   
 
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_params& params)
 {
-  zp_csi_rs_resource res{};
-  res.id                    = static_cast<zp_csi_rs_res_id_t>(0);
-  res.res_mapping.nof_ports = params.nof_ports;
-  if (params.nof_ports == 1) {
-    res.res_mapping.fd_alloc.resize(12);
-    res.res_mapping.fd_alloc.set(8, true);
-    res.res_mapping.cdm = csi_rs_cdm_type::no_CDM;
-  } else if (params.nof_ports == 2) {
-    res.res_mapping.fd_alloc.resize(6);
-    res.res_mapping.fd_alloc.set(4, true);
-    res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
-  } else if (params.nof_ports == 4) {
-    res.res_mapping.fd_alloc.resize(3);
-    res.res_mapping.fd_alloc.set(2, true);
-    res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
-  } else {
+  if (params.nof_ports > 4) {
     report_error("Unsupported number of antenna ports={}", params.nof_ports);
   }
+
+  zp_csi_rs_resource res{};
+  res.id = static_cast<zp_csi_rs_res_id_t>(0);
+  // [Implementation-defined] The reason for using row 4 of Table 7.4.1.5.3-1 in TS 38.221 even in case of nof. ports <
+  // 4 is due to some RUs not supporting more than 1 ZP CSI-RS resource per symbol. Also, the specification does not
+  // restrict from using row 4 even in case of nof. ports < 4.
+  // Freq Alloc -> Row4.
+  res.res_mapping.nof_ports = 4;
+  res.res_mapping.fd_alloc.resize(3);
+  res.res_mapping.fd_alloc.set(2, true);
+  res.res_mapping.cdm                     = csi_rs_cdm_type::fd_CDM2;
   res.res_mapping.first_ofdm_symbol_in_td = 8;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
   res.res_mapping.freq_band_rbs           = get_csi_freq_occupation_rbs(params.nof_rbs, params.nof_rbs);
@@ -193,37 +189,14 @@ static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_para
 std::vector<zp_csi_rs_resource>
 srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_params& params)
 {
-  std::vector<zp_csi_rs_resource> list;
-
-  if (params.nof_ports == 1) {
-    // 4 zp-CSI-RS resources at different frequency locations.
-    list.resize(4, make_default_zp_csi_rs_resource(params));
-
-    for (unsigned res_id = 0; res_id != list.size(); ++res_id) {
-      list[res_id].id = static_cast<zp_csi_rs_res_id_t>(res_id);
-      list[res_id].res_mapping.fd_alloc.reset();
-      list[res_id].res_mapping.fd_alloc.set(8 + res_id, true);
-    }
-
-  } else if (params.nof_ports == 2) {
-    // 2 zp-CSI-RS resources at different frequency locations.
-    list.resize(2, make_default_zp_csi_rs_resource(params));
-
-    for (unsigned res_id = 0; res_id != list.size(); ++res_id) {
-      list[res_id].id = static_cast<zp_csi_rs_res_id_t>(res_id);
-      list[res_id].res_mapping.fd_alloc.reset();
-      list[res_id].res_mapping.fd_alloc.set(4 + res_id, true);
-    }
-
-  } else if (params.nof_ports == 4) {
-    // 1 zp-CSI-RS resource.
-
-    list.resize(1, make_default_zp_csi_rs_resource(params));
-    list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
-
-  } else {
-    report_error("Unsupported number of antenna ports");
+  if (params.nof_ports > 4) {
+    report_error("Unsupported number of antenna ports {}", params.nof_ports);
   }
+
+  std::vector<zp_csi_rs_resource> list;
+  // 1 zp-CSI-RS resource.
+  list.resize(1, make_default_zp_csi_rs_resource(params));
+  list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
 
   for (auto& res : list) {
     res.offset = params.zp_csi_slot_offset;
@@ -235,22 +208,14 @@ srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_para
 
 zp_csi_rs_resource_set srsran::csi_helper::make_periodic_zp_csi_rs_resource_set(const csi_builder_params& params)
 {
-  zp_csi_rs_resource_set zp_set{};
-
-  zp_set.id = static_cast<zp_csi_rs_res_set_id_t>(0);
-
-  if (params.nof_ports == 1) {
-    zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
-                                 static_cast<zp_csi_rs_res_set_id_t>(1),
-                                 static_cast<zp_csi_rs_res_set_id_t>(2),
-                                 static_cast<zp_csi_rs_res_set_id_t>(3)};
-  } else if (params.nof_ports == 2) {
-    zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0), static_cast<zp_csi_rs_res_set_id_t>(1)};
-  } else if (params.nof_ports == 4) {
-    zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0)};
-  } else {
+  if (params.nof_ports > 4) {
     report_error("Unsupported number of antenna ports {}", params.nof_ports);
   }
+
+  zp_csi_rs_resource_set zp_set{};
+
+  zp_set.id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+  zp_set.zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0)};
 
   return zp_set;
 }
@@ -408,8 +373,48 @@ static std::vector<nzp_csi_rs_resource_set> make_nzp_csi_rs_resource_sets()
   return sets;
 }
 
+/// \brief Returns the subcarrier location given the bit location set in \c frequencyDomainAllocation of CSI-RS-Resource
+/// and size of the \c frequencyDomainAllocation bitmap.
+static unsigned get_subcarrier_location_from_fd_alloc_bit_location(int     fd_alloc_bit_location,
+                                                                   uint8_t fd_alloc_bitmap_size)
+{
+  // See TS 38.211, clause 7.4.1.5.3.
+  switch (fd_alloc_bitmap_size) {
+    case 4: {
+      srsran_assert(fd_alloc_bit_location < 4,
+                    "Invalid bit location={} in frequency domain allocation of CSI-RS for row 1",
+                    fd_alloc_bit_location);
+      return fd_alloc_bit_location;
+    }
+    case 12: {
+      srsran_assert(fd_alloc_bit_location < 12,
+                    "Invalid bit location={} in frequency domain allocation of CSI-RS for row 2",
+                    fd_alloc_bit_location);
+      return fd_alloc_bit_location;
+    }
+    case 3: {
+      srsran_assert(fd_alloc_bit_location < 3,
+                    "Invalid bit location={} in frequency domain allocation of CSI-RS for row 4",
+                    fd_alloc_bit_location);
+      return 4 * fd_alloc_bit_location;
+    }
+    case 6: {
+      srsran_assert(fd_alloc_bit_location < 6,
+                    "Invalid bit location={} in frequency domain allocation of CSI-RS for row other",
+                    fd_alloc_bit_location);
+      return 2 * fd_alloc_bit_location;
+    }
+    default:
+      report_fatal_error("Invalid CSI-RS row");
+  }
+}
+
 static std::vector<csi_im_resource> make_csi_im_resources(const csi_builder_params& params)
 {
+  if (params.nof_ports > 4) {
+    report_error("Unsupported number of antenna ports={}", params.nof_ports);
+  }
+
   std::vector<csi_im_resource> res(1);
 
   // Make CSI-IM resource match in REs, symbols, slots with zp-CSI-RS>
@@ -419,11 +424,12 @@ static std::vector<csi_im_resource> make_csi_im_resources(const csi_builder_para
   res[0].res_id = static_cast<csi_im_res_id_t>(0);
   res[0].csi_im_res_element_pattern.emplace();
   res[0].csi_im_res_element_pattern->pattern_type = csi_im_resource::csi_im_resource_element_pattern_type::pattern1;
-  res[0].csi_im_res_element_pattern->subcarrier_location = zp0.res_mapping.fd_alloc.find_lowest() * params.nof_ports;
-  res[0].csi_im_res_element_pattern->symbol_location     = zp0.res_mapping.first_ofdm_symbol_in_td;
-  res[0].freq_band_rbs                                   = zp0.res_mapping.freq_band_rbs;
-  res[0].csi_res_period                                  = *zp0.period;
-  res[0].csi_res_offset                                  = *zp0.offset;
+  res[0].csi_im_res_element_pattern->subcarrier_location = get_subcarrier_location_from_fd_alloc_bit_location(
+      zp0.res_mapping.fd_alloc.find_lowest(), zp0.res_mapping.fd_alloc.size());
+  res[0].csi_im_res_element_pattern->symbol_location = zp0.res_mapping.first_ofdm_symbol_in_td;
+  res[0].freq_band_rbs                               = zp0.res_mapping.freq_band_rbs;
+  res[0].csi_res_period                              = *zp0.period;
+  res[0].csi_res_offset                              = *zp0.offset;
 
   return res;
 }

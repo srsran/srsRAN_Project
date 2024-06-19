@@ -30,6 +30,7 @@ add_subdirectory(ue_scheduling)
 add_subdirectory(uci_and_pucch)
 add_subdirectory(policy)
 add_subdirectory(config)
+add_subdirectory(slicing)
 
 add_executable(sched_no_ue_test scheduler_no_ue_test.cpp)
 target_link_libraries(sched_no_ue_test srsran_sched

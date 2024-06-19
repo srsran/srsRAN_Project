@@ -38,19 +38,35 @@ public:
   hw_accelerator_pdsch_enc_impl() = default;
 
   // See hw_accelerator interface for the documentation.
+  void reserve_queue() override;
+  // See hw_accelerator interface for the documentation.
+  void free_queue() override;
+  // See hw_accelerator interface for the documentation.
   bool enqueue_operation(span<const uint8_t> data, span<const uint8_t> aux_data = {}, unsigned cb_index = 0) override;
   // See hw_accelerator interface for the documentation.
   bool dequeue_operation(span<uint8_t> data, span<uint8_t> packed_data = {}, unsigned segment_index = 0) override;
   // See hw_accelerator interface for the documentation.
   void configure_operation(const hw_pdsch_encoder_configuration& config, unsigned cb_index = 0) override;
+  // See hw_accelerator interface for the documentation.
+  bool get_cb_mode() const override;
+  // See hw_accelerator interface for the documentation.
+  unsigned get_max_tb_size() const override;
 
 private:
+  /// Hardware-specific implementation of the reserve queue function.
+  virtual void hw_reserve_queue() = 0;
+  /// Hardware-specific implementation of the free queue function.
+  virtual void hw_free_queue() = 0;
   /// Hardware-specific implementation of the enqueue_operation function.
   virtual bool hw_enqueue(span<const uint8_t> data, unsigned cb_index) = 0;
   /// Hardware-specific implementation of the dequeue_operation function.
   virtual bool hw_dequeue(span<uint8_t> data, span<uint8_t> packed_data, unsigned segment_index) = 0;
   /// Hardware-specific configuration function.
   virtual void hw_config(const hw_pdsch_encoder_configuration& config, unsigned cb_index) = 0;
+  /// Hardware-specific CB mode quering function.
+  virtual bool get_hw_cb_mode() const = 0;
+  /// Hardware-specific maximum supported TB size quering function.
+  virtual unsigned get_hw_max_tb_size() const = 0;
 };
 
 } // namespace hal

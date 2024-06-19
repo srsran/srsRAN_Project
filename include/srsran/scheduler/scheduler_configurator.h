@@ -47,6 +47,7 @@
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/si_scheduling_config.h"
+#include "srsran/scheduler/config/slice_rrm_policy_config.h"
 #include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
@@ -102,6 +103,9 @@ struct sched_cell_configuration_request_message {
 
   /// List of nzp-CSI-RS resources common to all UEs.
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
+
+  /// List of RAN slices to support in the scheduler.
+  std::vector<slice_rrm_policy_config> rrm_policy_members;
 
   unsigned ntn_cs_koffset = 0;
 };

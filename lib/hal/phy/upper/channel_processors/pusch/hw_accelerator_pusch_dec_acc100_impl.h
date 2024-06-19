@@ -40,6 +40,10 @@ namespace hal {
 /// Class representing the ACC100 implementation of PUSCH decoding.
 class hw_accelerator_pusch_dec_acc100_impl : public hw_accelerator_pusch_dec_impl
 {
+  /// Hardware-specific implementation of the reserve queue function.
+  void hw_reserve_queue() override;
+  /// Hardware-specific implementation of the free queue function.
+  void hw_free_queue() override;
   /// Hardware-specific implementation of the enqueue_operation function.
   bool hw_enqueue(span<const int8_t> data, span<const int8_t> soft_data, unsigned cb_index) override;
   /// Hardware-specific implementation of the dequeue_operation function.
@@ -59,6 +63,9 @@ class hw_accelerator_pusch_dec_acc100_impl : public hw_accelerator_pusch_dec_imp
   /// \file
   /// \brief Members specific to bbdev-accelerated LDPC decoder functions.
 
+  /// Unique ID of the current hardware-accelerated function.
+  unsigned id;
+
   /// Pointer to a bbdev-based hardware-accelerator.
   std::shared_ptr<srsran::dpdk::bbdev_acc> bbdev_accelerator;
 
@@ -66,7 +73,7 @@ class hw_accelerator_pusch_dec_acc100_impl : public hw_accelerator_pusch_dec_imp
   unsigned device_id;
 
   /// Private member to store the ID of the queue used by the hardware-accelerated LDPC decoder function.
-  uint16_t queue_id;
+  int queue_id;
 
   /// Indicates the number of decoding operations in the queue.
   unsigned nof_enqueued_op = 0;
@@ -110,20 +117,29 @@ class hw_accelerator_pusch_dec_acc100_impl : public hw_accelerator_pusch_dec_imp
   /// HARQ context repository entry for the current decoding operation.
   std::vector<ext_harq_buffer_context_entry*> harq_context_entries;
 
+  /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
+  bool dedicated_queue;
+
 public:
   /// Constructor taking care of obtaining a bbdev-based hardware-accelerator queue and allocating the required
   /// resources.
   hw_accelerator_pusch_dec_acc100_impl(std::shared_ptr<srsran::dpdk::bbdev_acc>            bbdev_accelerator_,
                                        bool                                                ext_softbuffer_,
-                                       std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context_) :
+                                       std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context_,
+                                       bool                                                dedicated_queue_) :
     bbdev_accelerator(std::move(bbdev_accelerator_)),
     ext_softbuffer(ext_softbuffer_),
-    harq_buffer_context(std::move(harq_buffer_context_))
+    harq_buffer_context(std::move(harq_buffer_context_)),
+    dedicated_queue(dedicated_queue_)
   {
-    int qid = bbdev_accelerator->reserve_queue(RTE_BBDEV_OP_LDPC_DEC);
-    srsran_assert(qid >= 0, "No free bbdev queues available.");
-    queue_id  = static_cast<uint16_t>(qid);
+    id        = bbdev_accelerator->reserve_decoder();
     device_id = bbdev_accelerator->get_device_id();
+    // Reserve a hardware queue in case of dedicated use.
+    queue_id = -1;
+    if (dedicated_queue) {
+      hw_reserve_queue();
+      srsran_assert(queue_id >= 0, "No free RTE_BBDEV_OP_LDPC_DEC queues available.");
+    }
     allocate_resources();
     drop_op.resize(MAX_NOF_SEGMENTS);
     drop_op.reset();
@@ -131,17 +147,18 @@ public:
 
     // HAL logging.
     srslog::basic_logger& logger = bbdev_accelerator->get_logger();
-    logger.info("[acc100] new decoder: queue={}.", queue_id);
+    logger.info("[acc100] new decoder: id={}.", id);
   }
 
-  /// Destructor taking care of freeing the utilized resources and hardware-accelerator queue.
+  /// Destructor taking care of freeing the utilized resources.
   ~hw_accelerator_pusch_dec_acc100_impl()
   {
-    bbdev_accelerator->free_queue(queue_id);
+    // Free the reserved hardware queue in case of dedicated use.
+    hw_free_queue();
 
     // HAL logging.
     srslog::basic_logger& logger = bbdev_accelerator->get_logger();
-    logger.info("[acc100] destroyed decoder: queue={}.", queue_id);
+    logger.info("[acc100] destroyed decoder: id={}.", id);
   }
 };
 

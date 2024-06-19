@@ -100,6 +100,7 @@ protected:
       return;
     }
 
+    size_t                          pdu_len               = pdu.buf.length();
     gtpu_teid_t                     teid                  = pdu.hdr.teid;
     psup_dl_pdu_session_information pdu_session_info      = {};
     bool                            have_pdu_session_info = false;
@@ -109,28 +110,29 @@ protected:
           if (!have_pdu_session_info) {
             have_pdu_session_info = psup_packer.unpack(pdu_session_info, ext_hdr.container);
             if (!have_pdu_session_info) {
-              logger.log_error("Failed to unpack PDU session container.");
+              logger.log_error("Failed to unpack PDU session container. pdu_len={}", pdu_len);
             }
           } else {
-            logger.log_warning("Ignoring multiple PDU session container.");
+            logger.log_warning("Ignoring multiple PDU session container. pdu_len={}", pdu_len);
           }
           break;
         default:
-          logger.log_warning("Ignoring unexpected extension header at NG-U interface. type={}",
-                             ext_hdr.extension_header_type);
+          logger.log_warning("Ignoring unexpected extension header at NG-U interface. type={} pdu_len={}",
+                             ext_hdr.extension_header_type,
+                             pdu_len);
       }
     }
     if (!have_pdu_session_info) {
       logger.log_warning(
           "Incomplete PDU at NG-U interface: missing or invalid PDU session container. pdu_len={} teid={}",
-          pdu.buf.length(),
+          pdu_len,
           teid);
       // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the
       // N3 and N9 user plane interfaces (...).
       return;
     }
 
-    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
+    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. pdu_len={} {}", pdu_len, st);
 
     if (!pdu.hdr.flags.seq_number || config.t_reordering.count() == 0) {
       // Forward this SDU straight away.
@@ -145,7 +147,7 @@ protected:
 
     // Check out-of-window
     if (!inside_rx_window(sn)) {
-      logger.log_warning("SN falls out of Rx window. sn={} {}", sn, st);
+      logger.log_warning("SN falls out of Rx window. sn={} pdu_len={} {}", sn, pdu_len, st);
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
@@ -153,7 +155,7 @@ protected:
 
     // Check late SN
     if (rx_mod_base(sn) < rx_mod_base(st.rx_deliv)) {
-      logger.log_debug("Out-of-order after timeout or duplicate. sn={} {}", sn, st);
+      logger.log_debug("Out-of-order after timeout or duplicate. sn={} pdu_len={} {}", sn, pdu_len, st);
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
@@ -161,7 +163,7 @@ protected:
 
     // Check if PDU has been received
     if (rx_window->has_sn(sn)) {
-      logger.log_warning("Duplicate PDU dropped. sn={}", sn);
+      logger.log_warning("Duplicate PDU dropped. sn={} pdu_len={}", sn, pdu_len);
       return;
     }
 
@@ -282,8 +284,13 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      parent->logger.log_warning(
-          "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      if (not parent->config.warn_expired_t_reordering) {
+        parent->logger.log_info(
+            "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      } else {
+        parent->logger.log_warning(
+            "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
+      }
       parent->handle_t_reordering_expire();
     }
 

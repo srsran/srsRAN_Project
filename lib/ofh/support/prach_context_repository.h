@@ -33,6 +33,7 @@
 #include "srsran/srslog/srslog.h"
 #include <mutex>
 #include <numeric>
+#include <optional>
 
 namespace srsran {
 namespace ofh {
@@ -69,7 +70,8 @@ public:
   prach_context() = default;
 
   /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
-  prach_context(const prach_buffer_context& context, prach_buffer& buffer) : context_info({context, &buffer})
+  prach_context(const prach_buffer_context& context, prach_buffer& buffer, std::optional<unsigned> start_symbol_) :
+    context_info({context, &buffer})
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
     srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
@@ -82,7 +84,8 @@ public:
 
     freq_mapping_info = prach_frequency_mapping_get(preamble_info.scs, context.pusch_scs);
 
-    nof_symbols = preamble_info.nof_symbols;
+    nof_symbols  = preamble_info.nof_symbols;
+    start_symbol = start_symbol_.value_or(context_info.context.start_symbol);
 
     // Initialize statistics.
     for (unsigned i = 0; i != nof_symbols; ++i) {
@@ -116,7 +119,14 @@ public:
   /// Writes the given IQ buffer corresponding to the given symbol and port.
   void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
   {
-    symbol -= context_info.context.start_symbol;
+    if (is_long_preamble(context_info.context.format)) {
+      // Some RUs always set PRACH symbolId to 0 when long format is used ignoring the value indicated in C-Plane.
+      if (symbol >= start_symbol) {
+        symbol -= start_symbol;
+      }
+    } else {
+      symbol -= start_symbol;
+    }
 
     srsran_assert(context_info.buffer, "No valid PRACH buffer in the context");
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
@@ -167,6 +177,8 @@ private:
   prach_frequency_mapping_information freq_mapping_info;
   /// Number of OFDM symbols used by the stored PRACH.
   unsigned nof_symbols;
+  /// OFDM symbol index within the slot marking the start of PRACH preamble after the cyclic prefix.
+  unsigned start_symbol;
 };
 
 /// PRACH context repository.
@@ -203,11 +215,14 @@ public:
   }
 
   /// Adds the given entry to the repository at slot.
-  void add(const prach_buffer_context& context, prach_buffer& buffer_, slot_point slot = slot_point())
+  void add(const prach_buffer_context& context,
+           prach_buffer&               buffer_,
+           std::optional<unsigned>     start_symbol,
+           std::optional<slot_point>   slot)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    slot_point current_slot = slot.valid() ? slot : context.slot;
+    slot_point current_slot = slot.value_or(context.slot);
 
     if (logger) {
       if (!entry(current_slot).empty()) {
@@ -218,7 +233,7 @@ public:
       }
     }
 
-    entry(current_slot) = prach_context(context, buffer_);
+    entry(current_slot) = prach_context(context, buffer_, start_symbol);
   }
 
   /// Function to write the uplink PRACH buffer.

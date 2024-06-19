@@ -78,10 +78,24 @@ public:
   /// Default destructor.
   virtual ~hw_accelerator_pdsch_enc() = default;
 
+  // Reserves a hardware queue from the accelerator.
+  virtual void reserve_queue() = 0;
+
+  // Frees a hardware queue from the accelerator.
+  virtual void free_queue() = 0;
+
   /// Configures encoding operation given the common HW-oriented PDSCH encoder configuration.
   /// \param[in] config   Structure providing the configuration parameters of the PDSCH encoder.
   /// \param[in] cb_index Optional. Index of the CB for which the PDSCH encoding operation is being configured.
   virtual void configure_operation(const hw_pdsch_encoder_configuration& config, unsigned cb_index = 0) = 0;
+
+  /// Checks if the hardware-accelerated PDSCH encoder uses CB mode or TB mode.
+  /// \return True if CB mode is used, false otherwise.
+  virtual bool get_cb_mode() const = 0;
+
+  /// Checks the maximum supported TB size. Only used in TB mode.
+  /// \return TB size (in bytes).
+  virtual unsigned get_max_tb_size() const = 0;
 };
 
 } // namespace hal

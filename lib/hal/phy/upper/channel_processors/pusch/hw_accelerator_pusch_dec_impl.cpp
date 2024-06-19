@@ -25,6 +25,16 @@
 using namespace srsran;
 using namespace hal;
 
+void hw_accelerator_pusch_dec_impl::reserve_queue()
+{
+  hw_reserve_queue();
+}
+
+void hw_accelerator_pusch_dec_impl::free_queue()
+{
+  hw_free_queue();
+}
+
 bool hw_accelerator_pusch_dec_impl::enqueue_operation(span<const int8_t> data,
                                                       span<const int8_t> soft_data,
                                                       unsigned           cb_index)

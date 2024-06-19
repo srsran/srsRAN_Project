@@ -26,10 +26,17 @@
 
 namespace srsran {
 
-/// O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
+/// Identifier of a RRM Policy Member.
+/// \remark See O-RAN.WG3.E2SM-RC-R003-v3.00 Section 8.4.3.6
 struct rrm_policy_member {
   std::string plmn_id;
-  s_nssai_t   s_nssai;
+  /// Single Network Slice Selection Assistance Information (S-NSSAI).
+  s_nssai_t s_nssai;
+
+  bool operator==(const rrm_policy_member& other) const
+  {
+    return plmn_id == other.plmn_id and s_nssai == other.s_nssai;
+  }
 };
 
 struct rrm_policy_ratio_group {

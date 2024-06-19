@@ -123,6 +123,9 @@ private:
     hal::hw_accelerator_pdsch_enc_configuration hw_encoder_config;
     hw_encoder_config.acc_type          = "acc100";
     hw_encoder_config.bbdev_accelerator = bbdev_accelerator;
+    hw_encoder_config.cb_mode           = false;
+    hw_encoder_config.max_tb_size       = RTE_BBDEV_LDPC_E_MAX_MBUF;
+    hw_encoder_config.dedicated_queue   = true;
 
     // ACC100 hardware-accelerator implementation.
     return hal::create_hw_accelerator_pdsch_enc_factory(hw_encoder_config);
@@ -148,10 +151,6 @@ private:
 
     // Set the hardware-accelerated PDSCH encoder configuration.
     pdsch_encoder_factory_hw_configuration encoder_hw_factory_config;
-#ifdef HWACC_PDSCH_ENABLED
-    encoder_hw_factory_config.cb_mode     = false;
-    encoder_hw_factory_config.max_tb_size = RTE_BBDEV_LDPC_E_MAX_MBUF;
-#endif // HWACC_PDSCH_ENABLED
     encoder_hw_factory_config.crc_factory        = crc_calculator_factory;
     encoder_hw_factory_config.segmenter_factory  = segmenter_factory;
     encoder_hw_factory_config.hw_encoder_factory = hw_encoder_factory;

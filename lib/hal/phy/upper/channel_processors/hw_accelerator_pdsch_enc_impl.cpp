@@ -25,6 +25,16 @@
 using namespace srsran;
 using namespace hal;
 
+void hw_accelerator_pdsch_enc_impl::reserve_queue()
+{
+  hw_reserve_queue();
+}
+
+void hw_accelerator_pdsch_enc_impl::free_queue()
+{
+  hw_free_queue();
+}
+
 bool hw_accelerator_pdsch_enc_impl::enqueue_operation(span<const uint8_t> data,
                                                       span<const uint8_t> aux_data,
                                                       unsigned            cb_index)
@@ -42,4 +52,14 @@ bool hw_accelerator_pdsch_enc_impl::dequeue_operation(span<uint8_t> data,
 void hw_accelerator_pdsch_enc_impl::configure_operation(const hw_pdsch_encoder_configuration& config, unsigned cb_index)
 {
   hw_config(config, cb_index);
+}
+
+bool hw_accelerator_pdsch_enc_impl::get_cb_mode() const
+{
+  return get_hw_cb_mode();
+}
+
+unsigned hw_accelerator_pdsch_enc_impl::get_max_tb_size() const
+{
+  return get_hw_max_tb_size();
 }

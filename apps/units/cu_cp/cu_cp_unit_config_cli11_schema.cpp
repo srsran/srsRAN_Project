@@ -239,7 +239,6 @@ static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1a
              f1ap_params.ue_context_setup_timeout,
              "UE context setup timeout in milliseconds")
       ->capture_default_str();
-  add_option(app, "--f1c_bind_address", f1ap_params.f1c_bind_address, "F1-C bind address")->capture_default_str();
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_params)
@@ -287,7 +286,7 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
   CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
   configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
 
-  CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP configuration");
+  CLI::App* f1ap_subcmd = add_subcommand(app, "f1ap", "F1AP configuration parameters");
   configure_cli11_f1ap_args(*f1ap_subcmd, cu_cp_params.f1ap_config);
 }
 

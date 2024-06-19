@@ -86,6 +86,12 @@ public:
   /// Default destructor.
   virtual ~hw_accelerator_pusch_dec() = default;
 
+  // Reserves a hardware queue from the accelerator.
+  virtual void reserve_queue() = 0;
+
+  // Frees a hardware queue from the accelerator.
+  virtual void free_queue() = 0;
+
   /// Configures the decoding operation given the common HW-oriented PUSCH decoder configuration.
   /// \param[in] config   Structure providing the configuration parameters of the PUSCH decoder.
   /// \param[in] cb_index Optional. Index of the CB for which the PUSCH decoding operation is being configured.

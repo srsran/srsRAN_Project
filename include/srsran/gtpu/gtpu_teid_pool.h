@@ -40,9 +40,9 @@ public:
 
   SRSRAN_NODISCARD virtual expected<gtpu_teid_t> request_teid() = 0;
 
-  SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) = 0;
+  virtual bool release_teid(gtpu_teid_t teid) = 0;
 
-  virtual bool full() const = 0;
+  [[nodiscard]] virtual bool full() const = 0;
 
   virtual uint32_t get_max_nof_teids() = 0;
 };

@@ -40,7 +40,6 @@ set(SOURCES
         sysinfo.cpp
         timers.cpp
         math_utils.cpp
-        tsan_options.cpp
         )
 
 add_library(srsran_support STATIC ${SOURCES})

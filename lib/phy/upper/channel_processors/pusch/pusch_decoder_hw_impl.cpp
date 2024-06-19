@@ -137,6 +137,9 @@ void pusch_decoder_hw_impl::on_end_softbits()
                 softbits_count,
                 modulation_order);
 
+  // Reserve a hardware-queue for the current decoding operation.
+  decoder->reserve_queue();
+
   segmenter_config segmentation_config;
   segmentation_config.base_graph     = current_config.base_graph;
   segmentation_config.rv             = current_config.rv;
@@ -396,6 +399,9 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(pusch_decoder_result& stats, unsi
   } else {
     softbuffer.unlock();
   }
+
+  // Free the hardware-queue utilized by completed decoding operation.
+  decoder->free_queue();
 
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
 

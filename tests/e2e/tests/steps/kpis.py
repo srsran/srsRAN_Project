@@ -93,8 +93,11 @@ def get_kpis(
         dl_nof_ko_aggregate += ue_info.dl_nof_ko
         kpis.nof_ko_aggregate += ue_info.ul_nof_ko + ue_info.dl_nof_ko
 
-    kpis.ul_bler_aggregate = ul_nof_ko_aggregate / (ul_nof_ok_aggregate + ul_nof_ko_aggregate)
-    kpis.dl_bler_aggregate = dl_nof_ko_aggregate / (dl_nof_ok_aggregate + dl_nof_ko_aggregate)
+    tota_ul_ko_ok = ul_nof_ok_aggregate + ul_nof_ko_aggregate
+    total_dl_ko_ok = dl_nof_ok_aggregate + dl_nof_ko_aggregate
+
+    kpis.ul_bler_aggregate = 0 if not tota_ul_ko_ok else ul_nof_ko_aggregate / tota_ul_ko_ok
+    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else dl_nof_ko_aggregate / total_dl_ko_ok
 
     # UE
     for ue in ue_array:

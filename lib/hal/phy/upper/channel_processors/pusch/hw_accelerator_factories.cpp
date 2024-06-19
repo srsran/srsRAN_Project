@@ -44,6 +44,8 @@ private:
   bool ext_softbuffer;
   /// Interfacing to an external HARQ buffer context repository.
   std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context;
+  /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
+  bool dedicated_queue;
 
 public:
   // Default constructor.
@@ -51,7 +53,8 @@ public:
     acc_type(accelerator_config.acc_type),
     bbdev_accelerator(std::move(accelerator_config.bbdev_accelerator)),
     ext_softbuffer(accelerator_config.ext_softbuffer),
-    harq_buffer_context(accelerator_config.harq_buffer_context)
+    harq_buffer_context(accelerator_config.harq_buffer_context),
+    dedicated_queue(accelerator_config.dedicated_queue)
   {
   }
 
@@ -59,7 +62,7 @@ public:
   {
     if (acc_type == "acc100") {
       return std::make_unique<hw_accelerator_pusch_dec_acc100_impl>(
-          bbdev_accelerator, ext_softbuffer, harq_buffer_context);
+          bbdev_accelerator, ext_softbuffer, harq_buffer_context, dedicated_queue);
     }
     // Handle other accelerator types here.
     return {};

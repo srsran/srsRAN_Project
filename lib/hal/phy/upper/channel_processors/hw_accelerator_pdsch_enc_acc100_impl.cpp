@@ -34,12 +34,10 @@ void hw_accelerator_pdsch_enc_acc100_impl::allocate_resources()
   int socket_id = bbdev_accelerator->get_socket_id();
 
   // Create bbdev op pools for the accelerated LDPC encoder operations.
-  // Note that a single hardware-queue per lcore is assumed.
-  unsigned nof_ldpc_enc_cores = bbdev_accelerator->get_nof_ldpc_enc_cores();
   // op pools require unique names.
-  std::string op_pool_name = fmt::format("enc_op_pool_{}_{}", device_id, queue_id);
+  std::string op_pool_name = fmt::format("enc_op_pool_{}_{}", device_id, id);
   op_pool                  = ::dpdk::create_bbdev_op_pool(
-      op_pool_name.c_str(), RTE_BBDEV_OP_LDPC_ENC, nof_ldpc_enc_cores, socket_id, bbdev_accelerator->get_logger());
+      op_pool_name.c_str(), RTE_BBDEV_OP_LDPC_ENC, MAX_NOF_SEGMENTS, socket_id, bbdev_accelerator->get_logger());
 
   // Create new mbuf pools for both input and output data for the hardware-accelerated LDPC encoder.
   // Note that a predefined headroom length is added on top of the size required for the data in the mbufs. Also, the
@@ -53,12 +51,42 @@ void hw_accelerator_pdsch_enc_acc100_impl::allocate_resources()
   rm_mpool_cfg.mbuf_data_size = bbdev_accelerator->get_rm_mbuf_size().value() + RTE_PKTMBUF_HEADROOM;
   rm_mpool_cfg.n_mbuf         = nof_mbuf;
   // mbuf pools require unique names.
-  std::string mbuf_pool_name = fmt::format("enc_in_mbuf_pool_{}_{}", device_id, queue_id);
+  std::string mbuf_pool_name = fmt::format("enc_in_mbuf_pool_{}_{}", device_id, id);
   in_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, msg_mpool_cfg, bbdev_accelerator->get_logger());
-  mbuf_pool_name = fmt::format("enc_out_mbuf_pool_{}_{}", device_id, queue_id);
+  mbuf_pool_name = fmt::format("enc_out_mbuf_pool_{}_{}", device_id, id);
   out_mbuf_pool =
       ::dpdk::create_mbuf_pool(mbuf_pool_name.c_str(), socket_id, rm_mpool_cfg, bbdev_accelerator->get_logger());
+}
+
+void hw_accelerator_pdsch_enc_acc100_impl::hw_reserve_queue()
+{
+  // Verify that no hardware-queue is reserved already.
+  if (queue_id < 0) {
+    int qid = -1;
+    do {
+      qid = bbdev_accelerator->reserve_queue(RTE_BBDEV_OP_LDPC_ENC);
+    } while (qid < 0 && !dedicated_queue);
+    queue_id = qid;
+
+    // HAL logging.
+    srslog::basic_logger& logger = bbdev_accelerator->get_logger();
+    logger.info("[acc100] encoder id={}: reserved queue={}.", id, queue_id);
+  }
+}
+
+void hw_accelerator_pdsch_enc_acc100_impl::hw_free_queue()
+{
+  // Verify that the hardware queue won't be requrired anymore.
+  if (!dedicated_queue || (dedicated_queue && queue_id > 0)) {
+    bbdev_accelerator->free_queue(RTE_BBDEV_OP_LDPC_ENC, queue_id);
+
+    // HAL logging.
+    srslog::basic_logger& logger = bbdev_accelerator->get_logger();
+    logger.info("[acc100] encoder id={}: freed queue={}.", id, queue_id);
+
+    queue_id = -1;
+  }
 }
 
 void hw_accelerator_pdsch_enc_acc100_impl::hw_config(const hw_pdsch_encoder_configuration& config, unsigned cb_index)
@@ -119,8 +147,11 @@ bool hw_accelerator_pdsch_enc_acc100_impl::hw_enqueue(span<const uint8_t> data, 
                 queue_id);
 
     // Enqueue the LDPC encoding operation.
-    enqueued = ::dpdk::enqueue_ldpc_enc_operation(
-        op[cb_index], 1, device_id, queue_id, bbdev_accelerator->get_logger()); // TBD: single operation enqueued.
+    enqueued = ::dpdk::enqueue_ldpc_enc_operation(op[cb_index],
+                                                  1,
+                                                  device_id,
+                                                  static_cast<uint16_t>(queue_id),
+                                                  bbdev_accelerator->get_logger()); // TBD: single operation enqueued.
 
     // Update the enqueued task counter.
     if (enqueued) {
@@ -145,8 +176,11 @@ bool hw_accelerator_pdsch_enc_acc100_impl::hw_dequeue(span<uint8_t> data,
   // Verify that the queue is not already emtpy and that the operation has not been dropped before trying to dequeue.
   if (nof_enqueued_op > 0 && !dropped) {
     // Dequeue processed operations from the hardware-accelerated LDPC encoder.
-    dequeued = ::dpdk::dequeue_ldpc_enc_operation(
-        op[segment_index], 1, device_id, queue_id, bbdev_accelerator->get_logger()); // TBD: single operation dequeued.
+    dequeued = ::dpdk::dequeue_ldpc_enc_operation(op[segment_index],
+                                                  1,
+                                                  device_id,
+                                                  static_cast<uint16_t>(queue_id),
+                                                  bbdev_accelerator->get_logger()); // TBD: single operation dequeued.
 
     // Read the returned results (if any).
     if (dequeued) {
@@ -172,4 +206,14 @@ bool hw_accelerator_pdsch_enc_acc100_impl::hw_dequeue(span<uint8_t> data,
   }
 
   return dequeued;
+}
+
+bool hw_accelerator_pdsch_enc_acc100_impl::get_hw_cb_mode() const
+{
+  return cb_mode;
+}
+
+unsigned hw_accelerator_pdsch_enc_acc100_impl::get_hw_max_tb_size() const
+{
+  return max_tb_size;
 }

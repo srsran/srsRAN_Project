@@ -49,6 +49,7 @@ protected:
     gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
+    n3_allocator     = std::make_unique<dummy_gtpu_teid_pool>();
     f1u_allocator    = std::make_unique<dummy_gtpu_teid_pool>();
 
     // create DUT object
@@ -71,6 +72,7 @@ protected:
                                                                  timers_factory,
                                                                  timers_factory,
                                                                  *f1u_gw,
+                                                                 *n3_allocator,
                                                                  *f1u_allocator,
                                                                  *gtpu_tx_notifier,
                                                                  *gtpu_rx_demux,
@@ -95,6 +97,7 @@ protected:
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;
+  std::unique_ptr<dummy_gtpu_teid_pool>                       n3_allocator;
   std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;
   null_dlt_pcap                                               gtpu_pcap;

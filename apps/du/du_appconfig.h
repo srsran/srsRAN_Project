@@ -58,7 +58,7 @@ struct f1ap_appconfig {
   std::string bind_address = "127.0.10.2";
 };
 
-struct f1u_appconfig {
+struct nru_appconfig {
   unsigned pdu_queue_size = 2048;
   /// IP address to bind the F1-U interface to.
   std::string bind_address = "127.0.10.2";
@@ -87,7 +87,7 @@ struct du_appconfig {
   /// F1-C configuration.
   srs_du::f1ap_appconfig f1ap_cfg;
   /// F1-U configuration.
-  srs_du::f1u_appconfig f1u_cfg;
+  srs_du::nru_appconfig nru_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.
