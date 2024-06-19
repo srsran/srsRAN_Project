@@ -247,6 +247,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
+  srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "ue={} not found", ue_index);
 
   // Task to run in old UE task scheduler.
   auto handle_ue_context_transfer_impl = [this, ue_index, old_ue_index]() {
@@ -267,7 +268,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
     }
 
     // Transfer NGAP UE Context to new UE and remove the old context
-    if (not ngap_entity->update_ue_index(ue_index, old_ue_index)) {
+    if (not ngap_entity->update_ue_index(ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_ue_notifier())) {
       return false;
     }
 
@@ -333,9 +334,13 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
   srsran_assert(cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0)) != nullptr,
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
+  srsran_assert(ue_mng.find_ue(target_ue_index) != nullptr, "ue={} not found", target_ue_index);
 
   // Transfer NGAP UE Context to new UE and remove the old context
-  ngap_entity->update_ue_index(target_ue_index, source_ue_index);
+  if (!ngap_entity->update_ue_index(
+          target_ue_index, source_ue_index, ue_mng.find_ue(target_ue_index)->get_ngap_ue_notifier())) {
+    return;
+  }
   // Transfer E1AP UE Context to new UE and remove old context
   cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->update_ue_index(target_ue_index, source_ue_index);
 }
@@ -574,9 +579,9 @@ void cu_cp_impl::handle_du_processor_removal(du_index_t du_index)
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {
   // Connect RRC UE to NGAP to RRC UE adapter
-  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
-                                                          &rrc_ue.get_rrc_ue_init_security_context_handler(),
-                                                          &rrc_ue.get_rrc_ue_handover_preparation_handler());
+  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_dl_nas_message_handler(),
+                                                          rrc_ue.get_rrc_ue_init_security_context_handler(),
+                                                          rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Connect cu-cp to rrc ue adapters
   ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
@@ -599,8 +604,11 @@ async_task<void> cu_cp_impl::handle_transaction_info_loss(const f1_ue_transactio
 
 ngap_ue_notifier* cu_cp_impl::handle_new_ngap_ue(ue_index_t ue_index)
 {
-  return ue_mng.set_ue_ng_context(
-      ue_index, ue_mng.get_ngap_rrc_ue_adapter(ue_index), ue_mng.get_ngap_rrc_ue_adapter(ue_index));
+  auto* ue = ue_mng.find_ue(ue_index);
+  if (ue == nullptr) {
+    return nullptr;
+  }
+  return &ue->get_ngap_ue_notifier();
 }
 
 bool cu_cp_impl::schedule_ue_task(ue_index_t ue_index, async_task<void> task)

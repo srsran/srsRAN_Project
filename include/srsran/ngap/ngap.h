@@ -245,8 +245,9 @@ public:
   /// \brief Updates the NGAP UE context with a new UE index.
   /// \param[in] new_ue_index The new index of the UE.
   /// \param[in] old_ue_index The old index of the UE.
+  /// \param[in] new_ue_notifier The notifier to the new UE.
   /// \returns True if the update was successful, false otherwise.
-  virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
+  virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_ue_notifier& new_ue_notifier) = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

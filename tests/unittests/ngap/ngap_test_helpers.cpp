@@ -64,8 +64,8 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   test_ues.emplace(ue_index, test_ue(ue_index));
   test_ue& new_test_ue = test_ues.at(ue_index);
 
-  // Add UE to NGAP notifier
-  cu_cp_notifier.add_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier);
+  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(
+      new_test_ue.rrc_ue_dl_nas_handler, new_test_ue.rrc_ue_security_handler, new_test_ue.rrc_ue_ho_prep_handler);
 
   // generate and inject valid initial ue message
   cu_cp_initial_ue_message msg = generate_initial_ue_message(ue_index);
@@ -91,8 +91,8 @@ ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
   test_ues.emplace(ue_index, test_ue(ue_index));
   test_ue& new_test_ue = test_ues.at(ue_index);
 
-  // Add UE to NGAP notifier
-  cu_cp_notifier.add_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier);
+  ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(
+      new_test_ue.rrc_ue_dl_nas_handler, new_test_ue.rrc_ue_security_handler, new_test_ue.rrc_ue_ho_prep_handler);
 
   return ue_index;
 }
@@ -137,7 +137,7 @@ void ngap_test::add_pdu_session_to_up_manager(ue_index_t       ue_index,
                                               drb_id_t         drb_id,
                                               qos_flow_id_t    qos_flow_id)
 {
-  auto&                                        up_mng = ue_mng.find_ngap_ue(ue_index)->get_up_resource_manager();
+  auto&                                        up_mng = ue_mng.find_ue(ue_index)->get_up_resource_manager();
   up_config_update_result                      result;
   up_pdu_session_context_update                ctxt_update{pdu_session_id};
   std::map<qos_flow_id_t, up_qos_flow_context> qos_flows;

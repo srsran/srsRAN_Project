@@ -154,13 +154,13 @@ class ngap_rrc_ue_adapter : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_
 public:
   ngap_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_dl_nas_message_handler*           rrc_ue_msg_handler_,
-                      rrc_ue_init_security_context_handler* rrc_ue_security_handler_,
-                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_)
+  void connect_rrc_ue(rrc_dl_nas_message_handler&           rrc_ue_msg_handler_,
+                      rrc_ue_init_security_context_handler& rrc_ue_security_handler_,
+                      rrc_ue_handover_preparation_handler&  rrc_ue_ho_prep_handler_)
   {
-    rrc_ue_msg_handler      = rrc_ue_msg_handler_;
-    rrc_ue_security_handler = rrc_ue_security_handler_;
-    rrc_ue_ho_prep_handler  = rrc_ue_ho_prep_handler_;
+    rrc_ue_msg_handler      = &rrc_ue_msg_handler_;
+    rrc_ue_security_handler = &rrc_ue_security_handler_;
+    rrc_ue_ho_prep_handler  = &rrc_ue_ho_prep_handler_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override

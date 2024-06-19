@@ -155,43 +155,6 @@ cu_cp_ue* ue_manager::find_du_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-// ngap
-
-ngap_ue_notifier* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
-                                                ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                                                ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
-{
-  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-
-  // check if the UE is already present
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
-    logger.warning("ue={}: UE already exists", ue_index);
-    return nullptr;
-  }
-
-  // UE must be created by DU processor
-  if (ues.find(ue_index) == ues.end()) {
-    logger.warning("UE has not been created");
-    return nullptr;
-  }
-
-  auto& ue = ues.at(ue_index);
-
-  auto* ue_notifier = ue.add_ngap_ue_context(rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_);
-
-  logger.debug("ue={}: Added NGAP UE", ue_index);
-
-  return ue_notifier;
-}
-
-cu_cp_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
-{
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
-    return &ues.at(ue_index);
-  }
-  return nullptr;
-}
-
 std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
 {
   std::vector<metrics_report::ue_info> report;

@@ -37,7 +37,7 @@ public:
             task_executor&                     ctrl_exec_);
   ~ngap_impl();
 
-  bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
+  bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_ue_notifier& new_ue_notifier) override;
 
   // ngap connection manager functions
   bool                             handle_amf_tnl_connection_request() override;

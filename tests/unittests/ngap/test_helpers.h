@@ -205,34 +205,18 @@ public:
 
   void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  void add_ue(ue_index_t                    ue_index,
-              ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-              ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
-  {
-    ue_notifiers_map.emplace(ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier});
-  }
-
   ngap_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
-    auto& ue_notifier = ue_notifiers_map.at(ue_index);
-
-    srsran_assert(ue_notifier.rrc_ue_pdu_notifier != nullptr, "rrc_ue_pdu_notifier must not be nullptr");
-    srsran_assert(ue_notifier.rrc_ue_ctrl_notifier != nullptr, "rrc_ue_ctrl_notifier must not be nullptr");
-
     last_ue = ue_index;
 
-    // Add NGAP UE to UE manager
-    ngap_ue_notifier* ue =
-        ue_mng.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
-
+    auto* ue = ue_mng.find_ue(ue_index);
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);
       return nullptr;
     }
 
     logger.info("ue={}: NGAP UE was created", ue_index);
-    return ue;
+    return &ue->get_ngap_ue_notifier();
   }
 
   bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
@@ -364,14 +348,85 @@ private:
 
   ngap_ue_context_removal_handler* ngap_handler = nullptr;
 
-  struct ngap_ue_notifiers {
-    ngap_rrc_ue_pdu_notifier*     rrc_ue_pdu_notifier  = nullptr;
-    ngap_rrc_ue_control_notifier* rrc_ue_ctrl_notifier = nullptr;
-  };
-
-  std::map<ue_index_t, ngap_ue_notifiers> ue_notifiers_map;
-
   uint64_t ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+};
+
+class dummy_rrc_dl_nas_message_handler : public rrc_dl_nas_message_handler
+{
+public:
+  dummy_rrc_dl_nas_message_handler(ue_index_t ue_index_) :
+    ue_index(ue_index_), logger(srslog::fetch_basic_logger("TEST")){};
+
+  void handle_dl_nas_transport_message(byte_buffer nas_pdu) override
+  {
+    logger.info("ue={}: Received a DL NAS transport message", ue_index);
+    last_nas_pdu = std::move(nas_pdu);
+  }
+
+  byte_buffer last_nas_pdu;
+
+private:
+  ue_index_t            ue_index = ue_index_t::invalid;
+  srslog::basic_logger& logger;
+};
+
+class dummy_rrc_ue_init_security_context_handler : public rrc_ue_init_security_context_handler
+{
+public:
+  dummy_rrc_ue_init_security_context_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void set_security_enabled(bool enabled) { security_enabled = enabled; }
+
+  async_task<bool> handle_init_security_context(const security::security_context& sec_ctxt) override
+  {
+    logger.info("Received a new security context");
+
+    bool result = true;
+
+    // NIA0 is not allowed
+    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
+                                                                    security::integrity_algorithm::nia1,
+                                                                    security::integrity_algorithm::nia3,
+                                                                    security::integrity_algorithm::nia0};
+    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                                                    security::ciphering_algorithm::nea2,
+                                                                    security::ciphering_algorithm::nea1,
+                                                                    security::ciphering_algorithm::nea3};
+
+    security::security_context tmp_ctxt;
+    tmp_ctxt = sec_ctxt;
+
+    result = tmp_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
+
+    return launch_async([result](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(result);
+    });
+  }
+
+  /// \brief Get the status of the security context.
+  bool get_security_enabled() override { return security_enabled; }
+
+private:
+  bool                  security_enabled = true;
+  srslog::basic_logger& logger;
+};
+
+class dummy_rrc_ue_handover_preparation_handler : public rrc_ue_handover_preparation_handler
+{
+public:
+  dummy_rrc_ue_handover_preparation_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void set_ho_preparation_message(byte_buffer ho_preparation_message_)
+  {
+    ho_preparation_message = std::move(ho_preparation_message_);
+  }
+
+  byte_buffer get_packed_handover_preparation_message() override { return ho_preparation_message.copy(); }
+
+private:
+  srslog::basic_logger& logger;
+  byte_buffer           ho_preparation_message;
 };
 
 } // namespace srs_cu_cp

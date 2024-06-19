@@ -71,6 +71,7 @@ public:
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
   ue_index_t add_ue(du_index_t du_index);
 
+  /// \brief Set the DU context of the UE.
   cu_cp_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
@@ -94,35 +95,6 @@ public:
   }
 
   // ngap
-
-  /// \brief Add notifier to a UE for the given UE index. A RAN UE ID is allocated internally. If a new UE can't be
-  /// found or if a UE with the UE index was already setup, nulltpr is returned.
-  /// \param[in] ue_index Index of the UE to add the notifiers to.
-  /// \param[in] rrc_ue_pdu_notifier RRC UE PDU notifier for the UE.
-  /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
-  /// \return Pointer to the NGAP UE notifier.
-  ngap_ue_notifier* set_ue_ng_context(ue_index_t                    ue_index,
-                                      ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                                      ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_);
-
-  /// \brief Find the NGAP UE with the given UE index.
-  /// \param[in] ue_index Index of the UE to be found.
-  /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  cu_cp_ue* find_ngap_ue(ue_index_t ue_index);
-
-  /// \brief Get the number of UEs connected to the AMF.
-  /// \return Number of UEs.
-  size_t get_nof_ngap_ues()
-  {
-    unsigned ue_count = 0;
-    // Search allocated UE indexes
-    for (auto& ue : ues) {
-      if (ue.second.ngap_ue_created()) {
-        ue_count++;
-      }
-    }
-    return ue_count;
-  }
 
   // cu-cp ue manager
   /// \brief Get the NGAP to RRC UE adapter of the UE.

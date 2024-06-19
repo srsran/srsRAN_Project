@@ -30,13 +30,15 @@ protected:
   class test_ue
   {
   public:
-    test_ue(ue_index_t ue_index_) : ue_index(ue_index_) {}
+    test_ue(ue_index_t ue_index_) : ue_index(ue_index_), rrc_ue_dl_nas_handler(ue_index_) {}
 
     ue_index_t                 ue_index = ue_index_t::invalid;
     std::optional<amf_ue_id_t> amf_ue_id;
     std::optional<ran_ue_id_t> ran_ue_id;
 
-    dummy_ngap_rrc_ue_notifier rrc_ue_notifier;
+    dummy_rrc_dl_nas_message_handler           rrc_ue_dl_nas_handler;
+    dummy_rrc_ue_init_security_context_handler rrc_ue_security_handler;
+    dummy_rrc_ue_handover_preparation_handler  rrc_ue_ho_prep_handler;
   };
 
   ngap_test();

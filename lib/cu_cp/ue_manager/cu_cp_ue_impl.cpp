@@ -29,6 +29,8 @@ cu_cp_ue::cu_cp_ue(const ue_index_t               ue_index_,
   }
 
   ue_ctxt.du_idx = get_du_index_from_ue_index(ue_index);
+
+  ue_adapter.connect_ue(*this);
 }
 
 /// \brief Update a UE with PCI and/or C-RNTI.
@@ -45,18 +47,6 @@ void cu_cp_ue::update_du_ue(gnb_du_id_t du_id_, pci_t pci_, rnti_t c_rnti_)
   if (c_rnti_ != rnti_t::INVALID_RNTI) {
     ue_ctxt.crnti = c_rnti_;
   }
-}
-
-/// \brief Add the context for the NGAP UE.
-/// \param[in] rrc_ue_pdu_notifier The RRC UE PDU notifier for the UE.
-/// \param[in] rrc_ue_ctrl_notifier The RRC UE ctrl notifier for the UE.
-/// \return Pointer to the NGAP UE notifier.
-ngap_ue_notifier* cu_cp_ue::add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                                                ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
-{
-  ngap_ue_context.emplace(rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
-  ue_adapter.connect_ue(*this);
-  return &ue_adapter;
 }
 
 /// \brief Set/update the measurement context of the UE.
@@ -89,15 +79,13 @@ void cu_cp_ue::set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier&
 /// \brief Get the RRC UE PDU notifier of the UE.
 ngap_rrc_ue_pdu_notifier& cu_cp_ue::get_rrc_ue_pdu_notifier()
 {
-  srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
-  return ngap_ue_context.value().rrc_ue_pdu_notifier;
+  return ngap_rrc_ue_ev_notifier;
 }
 
 /// \brief Get the RRC UE control notifier of the UE.
 ngap_rrc_ue_control_notifier& cu_cp_ue::get_rrc_ue_control_notifier()
 {
-  srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
-  return ngap_ue_context.value().rrc_ue_ctrl_notifier;
+  return ngap_rrc_ue_ev_notifier;
 }
 
 /// \brief Get the RRC UE control message notifier of the UE.

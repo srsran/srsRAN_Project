@@ -34,16 +34,6 @@ struct cu_cp_ue_context {
   bool reconfiguration_disabled = false;
 };
 
-struct ngap_ue_t {
-  ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier;
-  ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier;
-
-  ngap_ue_t(ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_, ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_) :
-    rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_), rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_)
-  {
-  }
-};
-
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
@@ -93,19 +83,8 @@ public:
                     pci_t       pci_    = INVALID_PCI,
                     rnti_t      c_rnti_ = rnti_t::INVALID_RNTI);
 
-  /// \brief Add the context for the NGAP UE.
-  /// \param[in] rrc_ue_pdu_notifier The RRC UE PDU notifier for the UE.
-  /// \param[in] rrc_ue_ctrl_notifier The RRC UE ctrl notifier for the UE.
-  /// \return Pointer to the NGAP UE notifier.
-  ngap_ue_notifier* add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                                        ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier);
-
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt);
-
-  /// \brief Check if the NGAP UE context is created.
-  /// \return True if the NGAP UE context is created, false otherwise.
-  [[nodiscard]] bool ngap_ue_created() { return ngap_ue_context.has_value(); }
 
   /// \brief Check if the DU UE context is created.
   /// \return True if the DU UE context is created, false otherwise.
@@ -128,6 +107,8 @@ public:
 
   /// \brief Get the RRC UE control notifier of the UE.
   ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override;
+
+  ngap_ue_notifier& get_ngap_ue_notifier() { return ue_adapter; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier();
@@ -165,11 +146,10 @@ private:
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
   // ngap ue context
-  ngap_cu_cp_ue_adapter    ue_adapter;
-  std::optional<ngap_ue_t> ngap_ue_context;
+  ngap_cu_cp_ue_adapter ue_adapter;
+  ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
   // cu-cp ue context
-  ngap_rrc_ue_adapter          ngap_rrc_ue_ev_notifier;
   cu_cp_rrc_ue_adapter         cu_cp_rrc_ue_ev_notifier;
   rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
   cell_meas_manager_ue_context meas_context;
