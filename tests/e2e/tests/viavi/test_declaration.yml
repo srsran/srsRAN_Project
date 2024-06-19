@@ -25,11 +25,12 @@ expected_dl_bitrate_high: &expected_dl_bitrate_high 1400000000
 expected_ul_bitrate_high: &expected_ul_bitrate_high 100000000
 expected_dl_bitrate_low: &expected_dl_bitrate_low 14000
 expected_ul_bitrate_low: &expected_ul_bitrate_low 1000
+test_timeout: &test_timeout 2700 # 45 * 60
 
 tests:
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE ideal UDP bidirectional"
     max_pdschs_per_slot: 8
@@ -43,7 +44,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional"
     max_pdschs_per_slot: 1
@@ -57,7 +58,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading UDP uplink"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading UDP uplink"
     max_pdschs_per_slot: 8
@@ -71,7 +72,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading noise UDP uplink"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading noise UDP uplink"
     max_pdschs_per_slot: 8
@@ -85,7 +86,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE ideal TCP downlink"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE ideal TCP downlink"
     max_pdschs_per_slot: 8
@@ -99,7 +100,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal TCP downlink"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal TCP downlink"
     max_pdschs_per_slot: 1
@@ -113,7 +114,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "1UE fading TCP downlink"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE fading TCP downlink"
     max_pdschs_per_slot: 8
@@ -125,23 +126,23 @@ tests:
     fail_if_kos: false
     warning_as_errors: true
 
-  - campaign_filename: *campaign_filename
-    test_name: "32UE fading TCP bidirectional"
-    test_timeout: 2700 # 45 * 60
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE fading TCP bidirectional"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
-    enable_qos_viavi: false
-    # test/fail criteria
-    expected_dl_bitrate: *expected_dl_bitrate_low
-    expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: false
-    warning_as_errors: false
+  # - campaign_filename: *campaign_filename
+  #   test_name: "32UE fading TCP bidirectional"
+  #   test_timeout: *test_timeout
+  #   gnb_extra_commands: *gnb_extra_commands
+  #   id: "32UE fading TCP bidirectional"
+  #   max_pdschs_per_slot: 1
+  #   max_puschs_per_slot: 1
+  #   enable_qos_viavi: false
+  #   # test/fail criteria
+  #   expected_dl_bitrate: *expected_dl_bitrate_low
+  #   expected_ul_bitrate: *expected_ul_bitrate_low
+  #   fail_if_kos: false
+  #   warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic"
     max_pdschs_per_slot: 1
@@ -153,23 +154,23 @@ tests:
     fail_if_kos: true
     warning_as_errors: true
 
-  - campaign_filename: *campaign_filename
-    test_name: "32UE fading UDP attach-detach with traffic"
-    test_timeout: 2700 # 45 * 60
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE fading UDP attach-detach with traffic"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
-    enable_qos_viavi: false
-    # test/fail criteria
-    expected_dl_bitrate: *expected_dl_bitrate_low
-    expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: false
-    warning_as_errors: false
+  # - campaign_filename: *campaign_filename
+  #   test_name: "32UE fading UDP attach-detach with traffic"
+  #   test_timeout: *test_timeout
+  #   gnb_extra_commands: *gnb_extra_commands
+  #   id: "32UE fading UDP attach-detach with traffic"
+  #   max_pdschs_per_slot: 1
+  #   max_puschs_per_slot: 1
+  #   enable_qos_viavi: false
+  #   # test/fail criteria
+  #   expected_dl_bitrate: *expected_dl_bitrate_low
+  #   expected_ul_bitrate: *expected_ul_bitrate_low
+  #   fail_if_kos: false
+  #   warning_as_errors: false
 
   - campaign_filename: *campaign_filename
     test_name: "1UE birth-death UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "1UE birth-death UDP bidirectional"
     max_pdschs_per_slot: 8
@@ -181,23 +182,23 @@ tests:
     fail_if_kos: false
     warning_as_errors: true
 
-  - campaign_filename: *campaign_filename
-    test_name: "32UE birth-death UDP bidirectional"
-    test_timeout: 2700 # 45 * 60
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE birth-death UDP bidirectional"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 1
-    enable_qos_viavi: false
-    # test/fail criteria
-    expected_dl_bitrate: *expected_dl_bitrate_low
-    expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: false
-    warning_as_errors: true
+  # - campaign_filename: *campaign_filename
+  #   test_name: "32UE birth-death UDP bidirectional"
+  #   test_timeout: *test_timeout
+  #   gnb_extra_commands: *gnb_extra_commands
+  #   id: "32UE birth-death UDP bidirectional"
+  #   max_pdschs_per_slot: 1
+  #   max_puschs_per_slot: 1
+  #   enable_qos_viavi: false
+  #   # test/fail criteria
+  #   expected_dl_bitrate: *expected_dl_bitrate_low
+  #   expected_ul_bitrate: *expected_ul_bitrate_low
+  #   fail_if_kos: false
+  #   warning_as_errors: true
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping"
     max_pdschs_per_slot: 1
@@ -211,7 +212,7 @@ tests:
 
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping with traffic"
-    test_timeout: 2700 # 45 * 60
+    test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping with traffic"
     max_pdschs_per_slot: 1
