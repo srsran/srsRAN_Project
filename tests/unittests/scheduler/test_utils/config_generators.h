@@ -298,7 +298,7 @@ private:
   const cell_config_builder_params               builder_params;
   scheduler_expert_config                        expert_cfg;
   std::unique_ptr<sched_configuration_notifier>  cfg_notifier;
-  std::unique_ptr<scheduler_ue_metrics_notifier> metric_notifier;
+  std::unique_ptr<scheduler_metrics_notifier>    metric_notifier;
   std::unique_ptr<sched_metrics_ue_configurator> ue_metrics_configurator;
 
   sched_cell_configuration_request_message default_cell_req;

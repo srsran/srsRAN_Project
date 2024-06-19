@@ -69,19 +69,22 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
     void                 reset();
   };
 
-  scheduler_ue_metrics_notifier&  notifier;
+  scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
   /// Derived value.
   unsigned report_period_slots = 0;
-  /// \brief This type is used so that multiple threads can access different positions concurrently.
+
+  unsigned                                                           error_indication_counter = 0;
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
   /// \brief Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
 
+  scheduler_cell_metrics next_report;
+
 public:
   /// \brief Creates a scheduler UE metrics handler. In case the metrics_report_period is zero, no metrics are reported.
-  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_ue_metrics_notifier& notifier);
+  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) override;

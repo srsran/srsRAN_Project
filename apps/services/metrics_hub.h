@@ -30,16 +30,16 @@ public:
   task_executor* executor;
 };
 
-class scheduler_ue_metrics_source : public metrics_hub_source, public scheduler_ue_metrics_notifier
+class scheduler_ue_metrics_source : public metrics_hub_source, public scheduler_metrics_notifier
 {
 public:
   scheduler_ue_metrics_source(std::string source_name_) : metrics_hub_source(source_name_){};
   ~scheduler_ue_metrics_source() = default;
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
-  void add_subscriber(scheduler_ue_metrics_notifier& subscriber);
+  void report_metrics(const scheduler_cell_metrics& metrics) override;
+  void add_subscriber(scheduler_metrics_notifier& subscriber);
 
 private:
-  std::vector<scheduler_ue_metrics_notifier*> subscribers;
+  std::vector<scheduler_metrics_notifier*> subscribers;
 };
 
 class rlc_metrics_source : public metrics_hub_source, public rlc_metrics_notifier

@@ -45,14 +45,20 @@ struct scheduler_ue_metrics {
   std::optional<int>           last_phr;
 };
 
-/// \brief Notifier interface used by scheduler to report UE metrics.
-class scheduler_ue_metrics_notifier
+/// \brief Snapshot of the metrics for a cell and its UEs.
+struct scheduler_cell_metrics {
+  unsigned                          nof_error_indications = 0;
+  std::vector<scheduler_ue_metrics> ue_metrics;
+};
+
+/// \brief Notifier interface used by scheduler to report metrics.
+class scheduler_metrics_notifier
 {
 public:
-  virtual ~scheduler_ue_metrics_notifier() = default;
+  virtual ~scheduler_metrics_notifier() = default;
 
   /// \brief This method will be called periodically by the scheduler to report the latest UE metrics statistics.
-  virtual void report_metrics(span<const scheduler_ue_metrics> ue_metrics) = 0;
+  virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
 
 } // namespace srsran

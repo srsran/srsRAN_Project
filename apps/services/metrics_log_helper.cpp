@@ -102,10 +102,10 @@ static std::string float_to_eng_string(float f, int digits)
   return float_to_string(scaled, digits, 5 - factor.length()) + factor;
 }
 
-void metrics_log_helper::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
 {
   fmt::memory_buffer buffer;
-  for (const auto& ue : ue_metrics) {
+  for (const auto& ue : metrics.ue_metrics) {
     fmt::format_to(buffer, "Scheduler UE Metrics:");
     fmt::format_to(buffer, " pci={}", ue.pci);
     fmt::format_to(buffer, " rnti={:x}", to_value(ue.rnti));

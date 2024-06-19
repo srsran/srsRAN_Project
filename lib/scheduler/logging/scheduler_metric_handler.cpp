@@ -12,8 +12,8 @@
 
 using namespace srsran;
 
-scheduler_metrics_handler::scheduler_metrics_handler(msecs                          metrics_report_period,
-                                                     scheduler_ue_metrics_notifier& notifier_) :
+scheduler_metrics_handler::scheduler_metrics_handler(msecs                       metrics_report_period,
+                                                     scheduler_metrics_notifier& notifier_) :
   notifier(notifier_), report_period(metrics_report_period)
 {
 }
@@ -178,20 +178,26 @@ void scheduler_metrics_handler::handle_dl_buffer_state_indication(const dl_buffe
 
 void scheduler_metrics_handler::handle_error_indication()
 {
-  // TODO
+  error_indication_counter++;
 }
 
 void scheduler_metrics_handler::report_metrics()
 {
-  static_vector<scheduler_ue_metrics, MAX_NOF_DU_UES> metrics_report;
+  next_report.ue_metrics.clear();
+  next_report.nof_error_indications = 0;
 
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
-    metrics_report.push_back(ue.compute_report(report_period));
+    next_report.ue_metrics.push_back(ue.compute_report(report_period));
   }
 
+  next_report.nof_error_indications = error_indication_counter;
+
+  // Reset cell-wide metric counters.
+  error_indication_counter = 0;
+
   // Report all UE metrics in a batch.
-  notifier.report_metrics(metrics_report);
+  notifier.report_metrics(next_report);
 }
 
 void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_result)

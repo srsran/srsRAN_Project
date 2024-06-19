@@ -33,7 +33,7 @@ public:
   ~e2sm_kpm_du_meas_provider_impl() = default;
 
   /// scheduler_ue_metrics_notifier functions.
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void report_metrics(const scheduler_cell_metrics& ue_metrics) override;
   void report_metrics(const rlc_metrics& metrics) override;
 
   /// e2sm_kpm_meas_provider functions.

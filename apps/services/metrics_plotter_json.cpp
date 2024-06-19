@@ -65,11 +65,11 @@ static double get_time_stamp()
   return std::chrono::duration_cast<std::chrono::milliseconds>(tp).count() * 1e-3;
 }
 
-void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
 {
   metric_context_t ctx("JSON Metrics");
 
-  for (const auto& ue : ue_metrics) {
+  for (const auto& ue : metrics.ue_metrics) {
     ctx.get<mlist_ues>().emplace_back();
     auto& output = ctx.get<mlist_ues>().back();
 

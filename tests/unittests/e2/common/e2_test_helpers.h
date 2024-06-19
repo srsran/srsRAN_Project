@@ -280,7 +280,7 @@ public:
   }
 
 private:
-  std::unique_ptr<scheduler_ue_metrics_notifier> e2_meas_provider;
+  std::unique_ptr<scheduler_metrics_notifier> e2_meas_provider;
 };
 
 class dummy_f1ap_ue_id_translator : public srs_du::f1ap_ue_id_translator

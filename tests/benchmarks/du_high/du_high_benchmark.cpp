@@ -193,13 +193,13 @@ static void print_args(const bench_params& params)
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
 }
 
-class dummy_metrics_handler : public scheduler_ue_metrics_notifier
+class dummy_metrics_handler : public scheduler_metrics_notifier
 {
 public:
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  void report_metrics(const scheduler_cell_metrics& metrics) override
   {
     unsigned sum_dl_bs = 0;
-    for (const auto& ue : ue_metrics) {
+    for (const auto& ue : metrics.ue_metrics) {
       sum_dl_bs += ue.dl_bs;
     }
     tot_dl_bs.store(sum_dl_bs, std::memory_order_relaxed);

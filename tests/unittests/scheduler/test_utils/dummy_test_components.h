@@ -150,10 +150,10 @@ public:
   void on_ue_delete_response(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
 };
 
-class scheduler_ue_metrics_dummy_notifier : public scheduler_ue_metrics_notifier
+class scheduler_ue_metrics_dummy_notifier : public scheduler_metrics_notifier
 {
 public:
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
+  void report_metrics(const scheduler_cell_metrics& ue_metrics) override {}
 };
 
 class scheduler_harq_timeout_dummy_handler : public harq_timeout_handler

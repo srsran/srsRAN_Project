@@ -18,7 +18,7 @@ using namespace srsran;
 /// This is meant to visually and (currently still) manually verify the correct
 /// metrics formatting and plotting.
 
-static std::vector<scheduler_ue_metrics> reports;
+static scheduler_cell_metrics reports;
 
 void fill_metrics_single_ue()
 {
@@ -40,7 +40,7 @@ void fill_metrics_single_ue()
   ue.ul_nof_nok    = 1;
   ue.bsr           = 8192;
   ue.dl_bs         = 100000;
-  reports.push_back(ue);
+  reports.ue_metrics.push_back(ue);
 }
 
 int main()
