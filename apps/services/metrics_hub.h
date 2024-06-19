@@ -14,6 +14,7 @@
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/memory_pool/unbounded_object_pool.h"
 
 namespace srsran {
 
@@ -33,19 +34,25 @@ public:
 class scheduler_ue_metrics_source : public metrics_hub_source, public scheduler_metrics_notifier
 {
 public:
-  scheduler_ue_metrics_source(std::string source_name_) : metrics_hub_source(source_name_){};
-  ~scheduler_ue_metrics_source() = default;
+  scheduler_ue_metrics_source(std::string source_name_);
   void report_metrics(const scheduler_cell_metrics& metrics) override;
   void add_subscriber(scheduler_metrics_notifier& subscriber);
 
 private:
+  static constexpr size_t metric_pool_initial_capacity = 3;
+
+  srslog::basic_logger& logger;
+
   std::vector<scheduler_metrics_notifier*> subscribers;
+
+  // We use the metrics pool to cache and avoid allocating memory for each report in a RT thread.
+  unbounded_object_pool<scheduler_cell_metrics> metrics_pool;
 };
 
 class rlc_metrics_source : public metrics_hub_source, public rlc_metrics_notifier
 {
 public:
-  rlc_metrics_source(std::string source_name_) : metrics_hub_source(source_name_){};
+  rlc_metrics_source(std::string source_name_) : metrics_hub_source(source_name_) {}
   ~rlc_metrics_source() = default;
   void report_metrics(const rlc_metrics& metrics) override;
   void add_subscriber(rlc_metrics_notifier& subscriber);
