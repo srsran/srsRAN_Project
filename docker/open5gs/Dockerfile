@@ -68,10 +68,12 @@ RUN echo $OPEN5GS_VERSION > ./open5gsversion
 # RUN git ls-remote --tags https://github.com/open5gs/open5gs | sort -t '/' -k 3 -V | awk -F/ '{ print $3 }' | awk '!/\^\{\}/' | tail -n 1 > ./open5gsversion
 
 # open5gs
-RUN git clone --depth 1 --branch $(cat ./open5gsversion) https://github.com/open5gs/open5gs open5gs\
+ARG NUM_CORES=""
+RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
+    git clone --depth 1 --branch $(cat ./open5gsversion) https://github.com/open5gs/open5gs open5gs\
     && cd open5gs \
     && meson build --prefix=`pwd`/install \
-    && ninja -C build \
+    && ninja -j ${NUM_CORES} -C build \
     && cd build \
     && ninja install
 

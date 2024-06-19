@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/tools/python.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -468,7 +468,7 @@ manifest [ubuntu, 20.04]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Ubuntu 22.04
@@ -555,7 +555,7 @@ manifest [ubuntu, 22.04]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Ubuntu 23.10
@@ -642,7 +642,7 @@ manifest [ubuntu, 23.10]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Ubuntu 24.04
@@ -719,7 +719,7 @@ manifest [ubuntu, 24.04]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Debian
@@ -781,7 +781,7 @@ manifest [debian, 11]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 alternative-tag [debian, 12, amd64]:
   extends:
@@ -826,7 +826,7 @@ manifest [debian, 12]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Rhel 8
@@ -890,7 +890,7 @@ manifest [rhel, 8]:
       optional: false
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
 # Archlinux
@@ -926,11 +926,11 @@ manifest [archlinux, latest]:
   script:
     - |
       skopeo copy \
-        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}-amd64 \
-        docker://${REGISTRY}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}
+        docker://${REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}-amd64 \
+        docker://${REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-$OS_NAME-$OS_VERSION:${DOCKER_BUILDER_VERSION}
   parallel:
     matrix:
-      - REGISTRY: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
   needs:
     - builder version
     - job: alternative-tag [archlinux, latest, amd64]
