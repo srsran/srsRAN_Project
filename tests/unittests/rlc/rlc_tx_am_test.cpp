@@ -1219,6 +1219,41 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
+TEST_P(rlc_tx_am_test, retx_many_pdus_and_notify_mac)
+{
+  const uint32_t sdu_size        = 1500;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t n_pdus          = MAX_DL_PDU_LENGTH / sdu_size + 1;
+
+  std::vector<std::vector<uint8_t>> pdus  = tx_full_pdus(n_pdus, sdu_size);
+  uint32_t                          n_bsr = tester->bsr_count;
+
+  // NACK everything
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+
+  for (uint32_t nack_sn = 0; nack_sn < n_pdus; nack_sn++) {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = nack_sn;
+    status_pdu.push_nack(nack);
+  }
+  rlc->on_status_pdu(std::move(status_pdu));
+  pcell_worker.run_pending_tasks();
+  EXPECT_EQ(rlc->get_buffer_state(), n_pdus * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr, n_pdus * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+  // Verify transmit notification for queued SDUs
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
+  }
+
+  // Verify delivery notification for fully ACK'ed SDUs is zero
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 0);
+}
+
 TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 {
   const uint32_t sdu_size = 4;
