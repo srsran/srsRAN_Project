@@ -176,6 +176,11 @@ void scheduler_metrics_handler::handle_dl_buffer_state_indication(const dl_buffe
   }
 }
 
+void scheduler_metrics_handler::handle_error_indication()
+{
+  // TODO
+}
+
 void scheduler_metrics_handler::report_metrics()
 {
   static_vector<scheduler_ue_metrics, MAX_NOF_DU_UES> metrics_report;

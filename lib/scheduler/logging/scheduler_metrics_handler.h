@@ -110,6 +110,9 @@ public:
   /// \brief Handle DL Buffer Status indication.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs);
 
+  /// \brief Handle Error Indication reported to the scheduler for a given cell.
+  void handle_error_indication();
+
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result);
 
