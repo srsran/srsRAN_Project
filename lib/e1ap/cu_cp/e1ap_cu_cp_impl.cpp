@@ -269,7 +269,7 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
   }
 
   // schedule forwarding of notification
-  if (!cu_cp_notifier.on_ue_task_schedule_required(
+  if (!cu_cp_notifier.schedule_async_task(
           ue_ctxt.ue_ids.ue_index, launch_async([this, inactivity_notification](coro_context<async_task<void>>& ctx) {
             CORO_BEGIN(ctx);
             cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);

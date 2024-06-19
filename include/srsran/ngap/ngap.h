@@ -146,7 +146,7 @@ public:
   /// \param[in] ue_index The index of the UE.
   /// \param[in] task The task to schedule.
   /// \returns True if the task was successfully scheduled, false otherwise.
-  virtual bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) = 0;
+  virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.

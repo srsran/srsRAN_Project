@@ -38,7 +38,7 @@ public:
     logger.info("Received an inactivity notification");
   }
 
-  bool on_ue_task_schedule_required(ue_index_t ue_index, async_task<void> task) override
+  bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
   {
     srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
     return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));

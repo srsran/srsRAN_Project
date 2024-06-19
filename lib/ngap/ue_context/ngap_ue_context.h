@@ -45,7 +45,7 @@ struct ngap_ue_context {
     pdu_session_setup_timer = timers_.create_unique_timer(task_exec_);
   }
 
-  [[nodiscard]] ngap_ue_notifier* get_ue() const { return ue; }
+  [[nodiscard]] ngap_ue_notifier* get_cu_cp_ue() const { return ue; }
 };
 
 class ngap_ue_context_list

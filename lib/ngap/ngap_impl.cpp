@@ -204,7 +204,7 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -326,7 +326,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     return;
   }
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -365,7 +365,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     return;
   }
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -434,7 +434,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
     return;
   }
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -502,7 +502,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // Store last PDU session resource modify request
   ue_ctxt.last_pdu_session_resource_modify_request = asn1_request_pdu.copy();
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -553,7 +553,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
     return;
   }
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -631,7 +631,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     ue_ctxt_list.update_amf_ue_id(ran_ue_id, amf_ue_id);
   }
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -703,7 +703,7 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
     return;
   }
 
-  if (!cu_cp_notifier.on_ue_task_schedule_required(
+  if (!cu_cp_notifier.schedule_async_task(
           ho_request.ue_index,
           launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
                                                                     uint_to_amf_ue_id(msg->amf_ue_ngap_id),
@@ -755,7 +755,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -877,7 +877,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
-  auto* ue = ue_ctxt.get_ue();
+  auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                 ue_ctxt.ue_ids.ue_index,
@@ -936,7 +936,7 @@ void ngap_impl::remove_ue_context(ue_index_t ue_index)
 void ngap_impl::schedule_error_indication(ue_index_t ue_index, ngap_cause_t cause, std::optional<amf_ue_id_t> amf_ue_id)
 {
   ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
-  auto*            ue      = ue_ctxt.get_ue();
+  auto*            ue      = ue_ctxt.get_cu_cp_ue();
 
   srsran_assert(ue != nullptr,
                 "ue={} amf_ue={}: UE for UE context doesn't exist",
@@ -955,7 +955,7 @@ void ngap_impl::on_pdu_session_setup_timer_expired(ue_index_t ue_index)
   if (ue_ctxt_list.contains(ue_index)) {
     ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
-    auto* ue = ue_ctxt.get_ue();
+    auto* ue = ue_ctxt.get_cu_cp_ue();
     srsran_assert(ue != nullptr,
                   "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
                   ue_ctxt.ue_ids.ue_index,
