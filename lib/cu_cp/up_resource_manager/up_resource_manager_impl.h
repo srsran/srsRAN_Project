@@ -62,9 +62,9 @@ public:
   up_resource_manager(const up_resource_manager_cfg& cfg);
   ~up_resource_manager() = default;
 
-  bool validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items);
-  bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu);
-  bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu);
+  bool validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) const;
+  bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) const;
+  bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) const;
 
   up_config_update
   calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items);
@@ -72,20 +72,20 @@ public:
   up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu);
 
   bool                          apply_config_update(const up_config_update_result& config);
-  const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi);
-  const up_drb_context&         get_drb_context(drb_id_t drb_id);
-  bool                          has_pdu_session(pdu_session_id_t pdu_session_id);
-  size_t                        get_nof_drbs();
-  size_t                        get_nof_pdu_sessions();
-  size_t                        get_nof_qos_flows(pdu_session_id_t psi);
-  size_t                        get_total_nof_qos_flows();
-  std::vector<pdu_session_id_t> get_pdu_sessions();
-  std::vector<drb_id_t>         get_drbs();
+  const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi) const;
+  const up_drb_context&         get_drb_context(drb_id_t drb_id) const;
+  bool                          has_pdu_session(pdu_session_id_t pdu_session_id) const;
+  size_t                        get_nof_drbs() const;
+  size_t                        get_nof_pdu_sessions() const;
+  size_t                        get_nof_qos_flows(pdu_session_id_t psi) const;
+  size_t                        get_total_nof_qos_flows() const;
+  std::vector<pdu_session_id_t> get_pdu_sessions() const;
+  std::vector<drb_id_t>         get_drbs() const;
 
-  up_context get_up_context();
+  up_context get_up_context() const;
   void       set_up_context(const up_context& ctx);
 
-  const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map();
+  const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const;
 
 private:
   bool valid_5qi(const five_qi_t five_qi);
