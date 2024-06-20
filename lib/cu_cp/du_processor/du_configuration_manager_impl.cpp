@@ -96,8 +96,9 @@ expected<const du_configuration_context*, du_setup_result::rejected>
 du_configuration_manager_impl::add_du_config(const du_setup_request& req)
 {
   // Validate config.
-  if (not validate_new_du_config(req)) {
-    return nullptr;
+  auto result = validate_new_du_config(req);
+  if (result.is_error()) {
+    return result.error();
   }
 
   // Create new DU config context.

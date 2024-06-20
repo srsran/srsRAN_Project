@@ -27,6 +27,8 @@ public:
 
   std::unique_ptr<du_configuration_handler> create_du_handler();
 
+  size_t nof_dus() const { return dus.size(); }
+
 private:
   class du_configuration_handler_impl;
 
