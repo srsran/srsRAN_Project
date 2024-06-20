@@ -41,11 +41,12 @@ namespace srsran {
 
 /// DU high logging functionalities.
 struct du_high_unit_logger_config {
-  srslog::basic_levels du_level   = srslog::basic_levels::warning;
-  srslog::basic_levels mac_level  = srslog::basic_levels::warning;
-  srslog::basic_levels rlc_level  = srslog::basic_levels::warning;
-  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
-  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
+  srslog::basic_levels du_level      = srslog::basic_levels::warning;
+  srslog::basic_levels mac_level     = srslog::basic_levels::warning;
+  srslog::basic_levels rlc_level     = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level    = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level     = srslog::basic_levels::warning;
+  srslog::basic_levels metrics_level = srslog::basic_levels::none;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
@@ -604,8 +605,9 @@ struct du_high_unit_metrics_config {
     unsigned report_period = 0; // RLC report period in ms
     bool     json_enabled  = false;
   } rlc;
-  bool     enable_json_metrics   = false;
-  unsigned stdout_metrics_period = 1000; // Statistics report period in milliseconds
+  bool     enable_json_metrics      = false;
+  unsigned stdout_metrics_period    = 1000; // Statistics report period in milliseconds
+  bool     autostart_stdout_metrics = false;
 };
 
 struct du_high_unit_pcap_config {

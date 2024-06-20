@@ -30,10 +30,6 @@
 #include "du_appconfig_validators.h"
 
 #include "apps/services/worker_manager.h"
-
-#include "apps/services/metrics_log_helper.h"
-#include "apps/services/rlc_metrics_plotter_json.h"
-
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
@@ -51,8 +47,8 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/core_isolation_manager.h"
-#include "apps/services/metrics_plotter_json.h"
-#include "apps/services/metrics_plotter_stdout.h"
+#include "apps/services/metrics/metrics_manager.h"
+#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
@@ -292,16 +288,8 @@ int main(int argc, char** argv)
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
-  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
-  json_channel.set_enabled(du_cfg.metrics_cfg.enable_json_metrics);
 
-  // Set up RLC JSON log channel used by metrics.
-  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
-  rlc_json_channel.set_enabled(du_unit_cfg.du_high_cfg.config.metrics.rlc.json_enabled);
-  rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
-
-  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
-  e2_metric_connector_manager  e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
+  e2_metric_connector_manager e2_metric_connectors(du_unit_cfg.du_high_cfg.config.cells_cfg.size());
 
   // E2AP configuration.
   srsran::sctp_network_connector_config e2_du_nw_config = generate_e2ap_nw_config(du_cfg, E2_DU_PPID);
@@ -309,26 +297,24 @@ int main(int argc, char** argv)
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *du_pcaps.e2ap};
 
-  // Create metrics log helper.
-  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
-
-  // Instantiate one DU.
-  metrics_plotter_stdout metrics_stdout(false);
-  metrics_plotter_json   metrics_json(json_channel);
-  auto                   du_inst_and_cmds = create_du(du_unit_cfg,
+  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+  auto                                      du_inst_and_cmds = create_du(du_unit_cfg,
                                     workers,
                                     *f1c_gw,
                                     *du_f1u_conn,
                                     app_timers,
                                     *du_pcaps.mac,
                                     *du_pcaps.rlc,
-                                    metrics_stdout,
-                                    metrics_json,
-                                    metrics_logger,
                                     e2_gw,
                                     e2_metric_connectors,
-                                    rlc_json_plotter,
-                                    *hub);
+                                    json_sink,
+                                    metrics_notifier_forwarder);
+
+  // Only DU has metrics now.
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);
+  // Connect the forwarder to the metrics manager.
+  metrics_notifier_forwarder.connect(metrics_mngr);
 
   du& du_inst = *du_inst_and_cmds.unit;
 

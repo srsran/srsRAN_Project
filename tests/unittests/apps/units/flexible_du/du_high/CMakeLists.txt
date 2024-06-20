@@ -6,4 +6,4 @@
 # the distribution.
 #
 
-add_subdirectory(units)
+add_subdirectory(metrics)

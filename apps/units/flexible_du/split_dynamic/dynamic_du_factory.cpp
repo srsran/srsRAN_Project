@@ -10,7 +10,6 @@
 
 #include "dynamic_du_factory.h"
 #include "apps/services/e2_metric_connector_manager.h"
-#include "apps/services/metrics_log_helper.h"
 #include "apps/units/flexible_du/du_high/du_high_commands.h"
 #include "apps/units/flexible_du/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_du/du_high/du_high_wrapper_config_helper.h"
@@ -104,30 +103,51 @@ create_radio_unit(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_conf
                                  error_notifier);
 }
 
-du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
-                          worker_manager&                workers,
-                          srs_du::f1c_connection_client& f1c_client_handler,
-                          srs_du::f1u_du_gateway&        f1u_gw,
-                          timer_manager&                 timer_mng,
-                          mac_pcap&                      mac_p,
-                          rlc_pcap&                      rlc_p,
-                          metrics_plotter_stdout&        metrics_stdout,
-                          metrics_plotter_json&          metrics_json,
-                          metrics_log_helper&            metrics_logger,
-                          e2_connection_client&          e2_client_handler,
-                          e2_metric_connector_manager&   e2_metric_connectors,
-                          rlc_metrics_notifier&          rlc_json_metrics,
-                          metrics_hub&                   metrics_hub)
+/// \brief Update the Flexible DU metrics configuration with the given local DU configuration and E2 configuration.
+///
+/// This function manages the multicell workaround for the DU high metrics. To have multicell, now one DU is
+/// instantiated per cell, so the this would create multiple consumers that does not make sense, for example stdout.
+/// With this we avoid having 2 different objects that write in the stdout.
+static void update_du_metrics(std::vector<app_services::metrics_config>& flexible_du_cfg,
+                              std::vector<app_services::metrics_config>  local_du_cfg,
+                              bool                                       is_e2_enabled)
+{
+  // Empty config, copy the local.
+  if (flexible_du_cfg.empty()) {
+    flexible_du_cfg = std::move(local_du_cfg);
+  }
+
+  if (!is_e2_enabled) {
+    return;
+  }
+
+  // When E2 is enabled grab the E2 consumers from the local DU and add them to the flexible DU.
+  srsran_assert(flexible_du_cfg.size() == local_du_cfg.size(),
+                "Flexible DU metrics size '{}' does not match DU metrics size '{}'",
+                flexible_du_cfg.size(),
+                local_du_cfg.size());
+  for (unsigned i = 0, e = local_du_cfg.size(); i != e; ++i) {
+    flexible_du_cfg.push_back(std::move(local_du_cfg.back()));
+  }
+}
+
+du_unit srsran::create_du(const dynamic_du_unit_config&   dyn_du_cfg,
+                          worker_manager&                 workers,
+                          srs_du::f1c_connection_client&  f1c_client_handler,
+                          srs_du::f1u_du_gateway&         f1u_gw,
+                          timer_manager&                  timer_mng,
+                          mac_pcap&                       mac_p,
+                          rlc_pcap&                       rlc_p,
+                          e2_connection_client&           e2_client_handler,
+                          e2_metric_connector_manager&    e2_metric_connectors,
+                          srslog::sink&                   json_sink,
+                          app_services::metrics_notifier& metrics_notifier)
 {
   du_unit du_cmd_wrapper;
 
   const du_high_unit_config& du_hi    = dyn_du_cfg.du_high_cfg.config;
   const du_low_unit_config&  du_lo    = dyn_du_cfg.du_low_cfg;
   const fapi_unit_config&    fapi_cfg = dyn_du_cfg.fapi_cfg;
-
-  // Configure the application unit metrics for the DU high.
-  configure_du_high_metrics(
-      du_hi, metrics_stdout, metrics_logger, metrics_json, rlc_json_metrics, e2_metric_connectors, metrics_hub);
 
   auto du_cells = generate_du_cell_config(du_hi);
 
@@ -234,18 +254,27 @@ du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
                                                 workers,
                                                 i);
 
-    fill_du_high_wrapper_config(du_cfg.du_high_cfg,
-                                tmp_cfg,
-                                i,
-                                workers.get_du_high_executor_mapper(i),
-                                f1c_client_handler,
-                                f1u_gw,
-                                timer_mng,
-                                mac_p,
-                                rlc_p,
-                                e2_client_handler,
-                                e2_metric_connectors,
-                                metrics_hub);
+    auto cell_services_cfg = fill_du_high_wrapper_config(du_cfg.du_high_cfg,
+                                                         tmp_cfg,
+                                                         i,
+                                                         workers.get_du_high_executor_mapper(i),
+                                                         f1c_client_handler,
+                                                         f1u_gw,
+                                                         timer_mng,
+                                                         mac_p,
+                                                         rlc_p,
+                                                         e2_client_handler,
+                                                         e2_metric_connectors,
+                                                         json_sink,
+                                                         metrics_notifier);
+
+    update_du_metrics(du_cmd_wrapper.metrics, std::move(cell_services_cfg.first), tmp_cfg.e2_cfg.enable_du_e2);
+
+    // Use the commands of the first cell.
+    if (i == 0) {
+      for (auto& command : cell_services_cfg.second)
+        du_cmd_wrapper.commands.push_back(std::move(command));
+    }
 
     // FAPI configuration.
     du_cfg.du_high_cfg.fapi.log_level = fapi_cfg.fapi_level;
@@ -279,13 +308,13 @@ du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
   du_cmd_wrapper.commands.push_back(std::make_unique<tx_gain_app_command>(ru->get_controller()));
   du_cmd_wrapper.commands.push_back(std::make_unique<rx_gain_app_command>(ru->get_controller()));
 
-  // Add DU command.
-  du_cmd_wrapper.commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(metrics_stdout));
-
   du_impl->add_ru(std::move(ru));
   du_impl->add_dus(std::move(du_insts));
 
   du_cmd_wrapper.unit = std::move(du_impl);
+
+  // Configure the application unit metrics for the DU high.
+  announce_du_high_cells(du_hi);
 
   return du_cmd_wrapper;
 }

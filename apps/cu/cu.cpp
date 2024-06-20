@@ -33,7 +33,6 @@
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
 #include "apps/cu/cu_worker_manager.h"
-#include "apps/services/metrics_log_helper.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
 #include "apps/units/cu_cp/cu_cp_logger_registrator.h"
@@ -329,9 +328,6 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   app_services::stdin_command_dispatcher command_parser(*epoll_broker, cu_cp_obj_and_cmds.commands);
-
-  // Create metrics log helper.
-  metrics_log_helper metrics_logger(srslog::fetch_basic_logger("METRICS"));
 
   // Connect E1AP to CU-CP.
   e1_gw->attach_cu_cp(cu_cp_obj.get_e1_handler());

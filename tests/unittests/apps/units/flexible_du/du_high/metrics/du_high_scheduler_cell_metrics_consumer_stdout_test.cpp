@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../../apps/services/metrics_plotter_stdout.h"
+#include "apps/units/flexible_du/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
 
 using namespace srsran;
 
@@ -45,11 +45,11 @@ void fill_metrics_single_ue()
 
 int main()
 {
-  metrics_plotter_stdout plotter(true);
+  scheduler_cell_metrics_consumer_stdout plotter(true);
 
   fill_metrics_single_ue();
 
-  plotter.report_metrics(reports);
+  plotter.handle_metric(scheduler_cell_metrics_impl(reports));
 
   return 0;
 }

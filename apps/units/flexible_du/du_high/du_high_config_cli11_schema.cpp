@@ -62,6 +62,21 @@ static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& 
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
+  auto metric_level_check = [](const std::string& value) -> std::string {
+    if (auto level = srslog::str_to_basic_level(value); !level.has_value() ||
+                                                        level.value() == srslog::basic_levels::error ||
+                                                        level.value() == srslog::basic_levels::warning) {
+      return "Log level value not supported. Accepted values [none,info,debug]";
+    }
+
+    return {};
+  };
+
+  add_option_function<std::string>(
+      app, "--metrics_level", app_services::capture_log_level_function(log_params.metrics_level), "Metrics log level")
+      ->default_str(srslog::basic_level_to_string(log_params.metrics_level))
+      ->check(metric_level_check);
+
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
@@ -1377,6 +1392,10 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
 
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
+
+  add_option(
+      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
+      ->capture_default_str();
 
   add_option(app,
              "--stdout_metrics_period",

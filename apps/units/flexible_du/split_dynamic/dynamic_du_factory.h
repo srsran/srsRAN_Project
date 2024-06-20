@@ -12,12 +12,16 @@
 
 #include "apps/gnb/gnb_appconfig.h"
 #include "apps/services/application_command.h"
-#include "apps/services/metrics_hub.h"
+#include "apps/services/metrics/metrics_config.h"
 #include "apps/services/worker_manager.h"
 #include "srsran/du/du.h"
 #include "srsran/pcap/rlc_pcap.h"
 
 namespace srsran {
+
+namespace app_services {
+class metrics_notifier;
+}
 
 class e2_connection_client;
 class e2_metric_connector_manager;
@@ -40,21 +44,19 @@ class f1u_du_gateway;
 struct du_unit {
   std::unique_ptr<du>                                             unit;
   std::vector<std::unique_ptr<app_services::application_command>> commands;
+  std::vector<app_services::metrics_config>                       metrics;
 };
 
-du_unit create_du(const dynamic_du_unit_config&  dyn_du_cfg,
-                  worker_manager&                workers,
-                  srs_du::f1c_connection_client& f1c_client_handler,
-                  srs_du::f1u_du_gateway&        f1u_gw,
-                  timer_manager&                 timer_mng,
-                  mac_pcap&                      mac_p,
-                  rlc_pcap&                      rlc_p,
-                  metrics_plotter_stdout&        metrics_stdout,
-                  metrics_plotter_json&          metrics_json,
-                  metrics_log_helper&            metrics_logger,
-                  e2_connection_client&          e2_client_handler,
-                  e2_metric_connector_manager&   e2_metric_connectors,
-                  rlc_metrics_notifier&          rlc_json_metrics,
-                  metrics_hub&                   metrics_hub);
+du_unit create_du(const dynamic_du_unit_config&   dyn_du_cfg,
+                  worker_manager&                 workers,
+                  srs_du::f1c_connection_client&  f1c_client_handler,
+                  srs_du::f1u_du_gateway&         f1u_gw,
+                  timer_manager&                  timer_mng,
+                  mac_pcap&                       mac_p,
+                  rlc_pcap&                       rlc_p,
+                  e2_connection_client&           e2_client_handler,
+                  e2_metric_connector_manager&    e2_metric_connectors,
+                  srslog::sink&                   json_sink,
+                  app_services::metrics_notifier& metrics_notifier);
 
 } // namespace srsran
