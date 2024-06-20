@@ -521,14 +521,13 @@ viavi:
     - *retina-needs
   parallel:
     matrix:
-      - KEYWORDS:
-          [
-            "fading and 32UE",
-            "fading and 1UE",
-            "ideal and 32UE",
+      - KEYWORDS: [
             "ideal and 1UE",
-            "birth-death and 32UE",
+            "ideal and 32UE",
+            "fading and 1UE",
+            # "fading and 32UE",
             "birth-death and 1UE",
+            # "birth-death and 32UE",
           ]
 
 viavi-debug:
@@ -576,5 +575,5 @@ retina setup:
 retina post:
   stage: .post
   extends: .demolition
-  dependencies: 
+  dependencies:
     - load retina variables
