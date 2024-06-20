@@ -9,8 +9,33 @@
  */
 
 #include "du_configuration_manager_impl.h"
+#include "srsran/ran/nr_cgi_helpers.h"
+#include "srsran/rrc/rrc_config.h"
 
-using namespace srsran::srs_cu_cp;
+using namespace srsran;
+using namespace srs_cu_cp;
+
+static error_type<du_setup_result::rejected> validate_cell_config(const cu_cp_du_served_cells_item& served_cell)
+{
+  const auto& cell_info = served_cell.served_cell_info;
+
+  if (not config_helpers::is_valid(cell_info.nr_cgi)) {
+    return error_type<du_setup_result::rejected>{
+        du_setup_result::rejected{cause_protocol_t::semantic_error, "Invalid NR CGI"}};
+  }
+
+  if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
+    return error_type<du_setup_result::rejected>{du_setup_result::rejected{
+        cause_protocol_t::msg_not_compatible_with_receiver_state, fmt::format("Missing TAC for cell")}};
+  }
+
+  if (not served_cell.gnb_du_sys_info.has_value()) {
+    return error_type<du_setup_result::rejected>{du_setup_result::rejected{
+        cause_protocol_t::semantic_error, fmt::format("Missing system information for cell")}};
+  }
+
+  return {};
+}
 
 class du_configuration_manager_impl::du_configuration_handler_impl : public du_configuration_handler
 {
@@ -23,44 +48,52 @@ public:
     }
   }
 
-  bool handle_new_du_config(const du_setup_request& req) override
+  validation_result handle_new_du_config(const du_setup_request& req) override
   {
     if (this->ctxt != nullptr) {
-      parent.logger.error("du_id={}: Failed to create DU config. Cause: DU already configured", req.gnb_du_id);
-      return false;
+      return error_type<du_setup_result::rejected>{
+          du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "DU already configured"}};
     }
-    this->ctxt = parent.add_du_config(req);
-    return this->ctxt != nullptr;
+    auto ret = parent.add_du_config(req);
+    if (ret.has_value()) {
+      this->ctxt = ret.value();
+      return {};
+    }
+    return ret.error();
   }
 
-  bool handle_du_config_update(const du_config_update_request& req) override
+  validation_result handle_du_config_update(const du_config_update_request& req) override
   {
     if (this->ctxt == nullptr) {
-      parent.logger.error("du_id={}: Failed to update DU config. Cause: DU was not setup", req.gnb_du_id);
-      return false;
+      return error_type<du_setup_result::rejected>{du_setup_result::rejected{
+          cause_protocol_t::msg_not_compatible_with_receiver_state, "DU with same gNB-DU-Id was not setup"}};
     }
 
     // Reconfiguration.
-    const du_configuration_context* result = parent.handle_du_config_update(*this->ctxt, req);
-    if (result == nullptr) {
-      return false;
+    auto ret = parent.handle_du_config_update(*this->ctxt, req);
+    if (ret.is_error()) {
+      return ret.error();
     }
-    this->ctxt = result;
-    return true;
+    this->ctxt = ret.value();
+    return {};
   }
 
 private:
   du_configuration_manager_impl& parent;
 };
 
-du_configuration_manager_impl::du_configuration_manager_impl() : logger(srslog::fetch_basic_logger("CU-CP")) {}
+du_configuration_manager_impl::du_configuration_manager_impl(const rrc_cfg_t& rrc_cfg_) :
+  rrc_cfg(rrc_cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
+{
+}
 
 std::unique_ptr<du_configuration_handler> du_configuration_manager_impl::create_du_handler()
 {
   return std::make_unique<du_configuration_handler_impl>(*this);
 }
 
-const du_configuration_context* du_configuration_manager_impl::add_du_config(const du_setup_request& req)
+expected<const du_configuration_context*, du_setup_result::rejected>
+du_configuration_manager_impl::add_du_config(const du_setup_request& req)
 {
   // Validate config.
   if (not validate_new_du_config(req)) {
@@ -77,7 +110,7 @@ const du_configuration_context* du_configuration_manager_impl::add_du_config(con
   return &ctxt;
 }
 
-const du_configuration_context*
+expected<const du_configuration_context*, du_setup_result::rejected>
 du_configuration_manager_impl::handle_du_config_update(const du_configuration_context& current_ctxt,
                                                        const du_config_update_request& req)
 {
@@ -128,22 +161,51 @@ void du_configuration_manager_impl::rem_du(gnb_du_id_t du_id)
   dus.erase(it);
 }
 
-bool du_configuration_manager_impl::validate_new_du_config(const du_setup_request& req) const
+error_type<du_setup_result::rejected>
+du_configuration_manager_impl::validate_new_du_config(const du_setup_request& req) const
 {
+  // Ensure the DU config does not collide with other DUs.
   for (const auto& [du_id, du_cfg] : dus) {
     if (du_cfg.id == req.gnb_du_id) {
-      logger.warning("du_id={}: Failed to create DU config. Cause: Duplicate DU ID", req.gnb_du_id);
-    }
-    if (du_cfg.name == req.gnb_du_name) {
-      logger.warning("du_id={}: Failed to create DU config. Cause: Duplicate DU name", req.gnb_du_name);
-      return false;
+      return error_type<du_setup_result::rejected>{
+          du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Duplicate DU ID"}};
     }
   }
-  return true;
+
+  // Validate served cell configurations.
+  for (const auto& served_cell : req.gnb_du_served_cells_list) {
+    auto ret = validate_cell_config_request(served_cell);
+    if (not ret.has_value()) {
+      return ret;
+    }
+  }
+
+  return {};
 }
 
-bool du_configuration_manager_impl::validate_du_config_update(const du_config_update_request& req) const
+error_type<du_setup_result::rejected>
+du_configuration_manager_impl::validate_du_config_update(const du_config_update_request& req) const
 {
   // TODO
-  return true;
+  return {};
+}
+
+error_type<du_setup_result::rejected>
+du_configuration_manager_impl::validate_cell_config_request(const cu_cp_du_served_cells_item& cell_req) const
+{
+  auto ret = validate_cell_config(cell_req);
+  if (ret.is_error()) {
+    return ret.error();
+  }
+
+  // Ensure NCIs match the gNB-Id.
+  if (not rrc_cfg.gnb_id.contains_nci(cell_req.served_cell_info.nr_cgi.nci)) {
+    return error_type<du_setup_result::rejected>{
+        du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
+                                  fmt::format("NCI {:#x} of the served Cell does not match gNB-Id {:#x}",
+                                              cell_req.served_cell_info.nr_cgi.nci,
+                                              rrc_cfg.gnb_id.id)}};
+  }
+
+  return {};
 }

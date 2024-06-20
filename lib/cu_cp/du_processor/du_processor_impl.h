@@ -14,6 +14,7 @@
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../ue_manager/ue_manager_impl.h"
+#include "du_configuration_handler.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -22,7 +23,6 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
 #include <string>
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -37,7 +37,7 @@ class du_processor_impl : public du_processor,
                           public du_processor_mobility_handler
 {
 public:
-  du_processor_impl(const du_processor_config_t&        du_processor_config_,
+  du_processor_impl(du_processor_config_t               du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
                     f1ap_message_notifier&              f1ap_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,

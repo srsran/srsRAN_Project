@@ -40,10 +40,10 @@ public:
   }
 
   /// Add a new DU configuration the CU-CP.
-  virtual bool handle_new_du_config(const du_setup_request& req) = 0;
+  virtual error_type<du_setup_result::rejected> handle_new_du_config(const du_setup_request& req) = 0;
 
   /// Update the configuration of an existing DU managed by the CU-CP.
-  virtual bool handle_du_config_update(const du_config_update_request& req) = 0;
+  virtual error_type<du_setup_result::rejected> handle_du_config_update(const du_config_update_request& req) = 0;
 
 protected:
   const du_configuration_context* ctxt = nullptr;

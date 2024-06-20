@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 class common_task_scheduler;
 
 /// Creates an instance of an DU processor interface
-std::unique_ptr<du_processor> create_du_processor(const du_processor_config_t&        du_processor_config_,
+std::unique_ptr<du_processor> create_du_processor(du_processor_config_t               du_processor_config_,
                                                   du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                                   f1ap_message_notifier&              f1ap_notifier_,
                                                   rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,

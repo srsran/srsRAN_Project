@@ -20,7 +20,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-du_processor_impl::du_processor_impl(const du_processor_config_t&        du_processor_config_,
+du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
@@ -30,7 +30,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
                                      ue_manager&                         ue_mng_,
                                      timer_manager&                      timers_,
                                      task_executor&                      ctrl_exec_) :
-  cfg(du_processor_config_),
+  cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
@@ -69,8 +69,15 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   // Check if CU-CP is in a state to accept a new DU connection.
   if (not cfg.du_setup_notif->on_du_setup_request(context.du_index, request)) {
-    res.result =
-        du_setup_result::rejected{cause_misc_t::unspecified, "CU-CP is not in a state to accept a new DU connection"};
+    res.result = du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
+                                           "CU-CP is not in a state to accept a new DU connection"};
+    return res;
+  }
+
+  // Validate and update DU configuration.
+  auto cfg_res = cfg.du_cfg_hdlr->handle_new_du_config(request);
+  if (cfg_res.is_error()) {
+    res.result = cfg_res.error();
     return res;
   }
 
@@ -94,26 +101,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
     }
 
     du_cell.cgi = served_cell.served_cell_info.nr_cgi;
-    if (not config_helpers::is_valid(du_cell.cgi)) {
-      res.result = du_setup_result::rejected{cause_protocol_t::semantic_error,
-                                             fmt::format("Invalid CGI for cell {}", du_cell.cell_index)};
-      return res;
-    }
-
     du_cell.pci = served_cell.served_cell_info.nr_pci;
-
-    if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
-      res.result = du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
-                                             fmt::format("Missing TAC for cell {}", du_cell.cell_index)};
-      return res;
-    }
     du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
-
-    if (not served_cell.gnb_du_sys_info.has_value()) {
-      res.result = du_setup_result::rejected{cause_protocol_t::semantic_error,
-                                             fmt::format("Missing system information for cell {}", du_cell.cell_index)};
-      return res;
-    }
     // Store and unpack system information
     du_cell.sys_info.packed_mib  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
     du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
