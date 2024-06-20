@@ -74,10 +74,13 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
   /// Derived value.
   unsigned report_period_slots = 0;
 
-  unsigned                                                           error_indication_counter = 0;
+  unsigned                  error_indication_counter = 0;
+  std::chrono::microseconds decision_latency_sum{0};
+
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
-  /// \brief Counter of number of slots elapsed since the last report.
+
+  /// Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
 
   scheduler_cell_metrics next_report;
@@ -117,7 +120,7 @@ public:
   void handle_error_indication();
 
   /// \brief Handle results stored in the scheduler result and push new entry.
-  void push_result(slot_point sl_tx, const sched_result& slot_result);
+  void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 
   /// \brief Checks whether the metrics reporting is active.
   bool connected() const { return report_period != std::chrono::nanoseconds{0}; }
@@ -126,7 +129,7 @@ private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
   void report_metrics();
-  void handle_slot_result(const sched_result& slot_result);
+  void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 };
 
 } // namespace srsran

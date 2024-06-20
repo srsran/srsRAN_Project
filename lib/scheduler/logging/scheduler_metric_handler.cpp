@@ -184,23 +184,25 @@ void scheduler_metrics_handler::handle_error_indication()
 void scheduler_metrics_handler::report_metrics()
 {
   next_report.ue_metrics.clear();
-  next_report.nof_error_indications = 0;
 
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
     next_report.ue_metrics.push_back(ue.compute_report(report_period));
   }
 
-  next_report.nof_error_indications = error_indication_counter;
+  next_report.nof_error_indications    = error_indication_counter;
+  next_report.average_decision_latency = decision_latency_sum / report_period_slots;
 
   // Reset cell-wide metric counters.
   error_indication_counter = 0;
+  decision_latency_sum     = std::chrono::microseconds{0};
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
 }
 
-void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_result)
+void scheduler_metrics_handler::handle_slot_result(const sched_result&       slot_result,
+                                                   std::chrono::microseconds slot_decision_latency)
 {
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
@@ -240,9 +242,13 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
     u.data.nof_puschs++;
   }
+
+  decision_latency_sum += slot_decision_latency;
 }
 
-void scheduler_metrics_handler::push_result(slot_point sl_tx, const sched_result& slot_result)
+void scheduler_metrics_handler::push_result(slot_point                sl_tx,
+                                            const sched_result&       slot_result,
+                                            std::chrono::microseconds slot_decision_latency)
 {
   if (report_period_slots == 0) {
     // The SCS common is now known.
@@ -250,7 +256,7 @@ void scheduler_metrics_handler::push_result(slot_point sl_tx, const sched_result
     report_period_slots = usecs{report_period} / slot_dur;
   }
 
-  handle_slot_result(slot_result);
+  handle_slot_result(slot_result, slot_decision_latency);
 
   ++slot_counter;
   if (slot_counter >= report_period_slots) {

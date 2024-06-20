@@ -321,8 +321,6 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
   // Run the test for 10000 slots.
   const size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
-    t_bench.sched_res_logger.on_slot_start();
-
     // Run SIB1 scheduler.
     sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
@@ -386,8 +384,6 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   // Run the test for 10000 slots.
   const size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
-    t_bench.sched_res_logger.on_slot_start();
-
     // Run SIB1 scheduler.
     sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
@@ -438,8 +434,6 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
   // Run the test for 10000 slots.
   const size_t test_length_slots = 100;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
-    t_bench.sched_res_logger.on_slot_start();
-
     // Clear the SSB list of it is not empty.
     auto& ssb_list = t_bench.get_slot_res_grid().result.dl.bc.ssb_info;
     if (not ssb_list.empty()) {
@@ -713,8 +707,6 @@ protected:
     // Run the test for 10000 slots.
     const size_t test_length_slots = 10000;
     for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
-      t_bench.sched_res_logger.on_slot_start();
-
       // Run SIB1 scheduler.
       sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 

@@ -34,7 +34,7 @@ protected:
 
   void run_slot(const sched_result& sched_res)
   {
-    metrics.push_result(next_sl_tx, sched_res);
+    metrics.push_result(next_sl_tx, sched_res, std::chrono::microseconds{0});
     ++next_sl_tx;
     slot_count++;
   }
