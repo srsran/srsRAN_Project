@@ -62,6 +62,11 @@ public:
     return ptr{new T(), pool_deleter{*this}};
   }
 
+  unsigned current_capacity_approx() const
+  {
+    return objects.size_approx();
+  }
+
 private:
   moodycamel::ConcurrentQueue<std::unique_ptr<T>> objects;
 };
