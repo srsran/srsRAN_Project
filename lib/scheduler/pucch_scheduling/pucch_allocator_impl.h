@@ -87,17 +87,6 @@ private:
     unsigned r_pucch;
   };
 
-  struct uci_bits {
-    unsigned    harq_ack_bits  = 0U;
-    sr_nof_bits sr_bits        = sr_nof_bits::no_sr;
-    unsigned    csi_part1_bits = 0U;
-
-    [[nodiscard]] unsigned get_total_bits() const
-    {
-      return harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits;
-    }
-  };
-
   // At the moment, we only supports PUCCH resource set index 0 and 1.
   enum class pucch_res_set_idx : uint8_t { set_0 = 0, set_1 };
 
@@ -106,21 +95,31 @@ private:
     uint8_t           pucch_res_ind = 0;
   };
 
+  /// Defines the type of resource.
+  /// HARQ indicates the HAR-ACK resource (it can carry HARQ-ACK and/or SR and/or CSI bits).
+  /// SR indicates the resource dedicated for SR (it can carry SR and HARQ-ACK bits).
+  /// CSI indicates the resource dedicated for CSI (it can carry CSI and SR bits).
   enum class pucch_grant_type { harq_ack, sr, csi };
 
+  /// \brief Defines a PUCCH grant (and its relevant information) currently allocated to a given UE.
+  /// It is used internally to keep track of the UEs' allocations of the PUCCH grants with dedicated resources.
   class pucch_grant
   {
   public:
     pucch_grant_type type;
     // Only relevant for HARQ-ACK resources.
     harq_res_id           harq_id;
-    pucch_format          format;
-    uci_bits              bits;
+    pucch_uci_bits        bits;
     const pucch_resource* pucch_res_cfg = nullptr;
 
+    [[nodiscard]] pucch_format get_format() const
+    {
+      return pucch_res_cfg != nullptr ? pucch_res_cfg->format : pucch_format::NOF_FORMATS;
+    }
     [[nodiscard]] ofdm_symbol_range get_symbols() const;
   };
 
+  /// \brief List of possible PUCCH grants that allocated to a UE, at a given slot.
   class pucch_grant_list
   {
   public:
@@ -129,30 +128,31 @@ private:
     std::optional<pucch_grant> csi_resource;
     unsigned                   nof_grants = 0;
 
-    [[nodiscard]] uci_bits get_uci_bits() const;
+    [[nodiscard]] pucch_uci_bits get_uci_bits() const;
+    [[nodiscard]] bool           is_emtpy() const;
   };
 
   /// Keeps track of the PUCCH grants (common + dedicated) for a given UE.
   struct ue_grants {
     rnti_t rnti;
-    bool   has_common_pucch;
-
+    // Information about the common PUCCH grant.
+    bool has_common_pucch = false;
+    // List of PUCCH grants with dedicated resources.
     pucch_grant_list pucch_grants;
   };
 
   using slot_pucch_grants = static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT>;
 
-  class res_manager_garbage_collector
-  {
-  public:
-    res_manager_garbage_collector(pucch_resource_manager& res_manager_) : res_manager(res_manager_){};
-
+  /// \brief Collects the information of what PUCCH cell resources have been allocated to a UE at given slot.
+  /// This info is only used during the allocation, and the PUCCH allocator is called for a new UE or new allocation.
+  struct res_manager_garbage_collector {
     bool                    harq_set_0 = false;
     bool                    harq_set_1 = false;
     bool                    csi        = false;
     bool                    sr         = false;
     pucch_resource_manager& res_manager;
 
+    res_manager_garbage_collector(pucch_resource_manager& res_manager_) : res_manager(res_manager_){};
     void reset();
     void release_resource(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
   };
@@ -168,7 +168,7 @@ private:
                                              pucch_common_params           pucch_params);
 
   std::optional<pucch_common_params> find_common_and_ded_harq_res_available(cell_slot_resource_allocator& pucch_alloc,
-                                                                            ue_grants* existing_grants,
+                                                                            ue_grants& existing_grants,
                                                                             rnti_t     rnti,
                                                                             const ue_cell_configuration&   ue_cell_cfg,
                                                                             const dci_context_information& dci_info);
@@ -184,34 +184,14 @@ private:
                           const ue_cell_configuration&  ue_cell_cfg,
                           unsigned                      csi_part1_bits);
 
-  // Fills the PUCCH HARQ grant for common resources.
-  void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);
-
-  // Fills the PUCCH Format 1 grant.
-  void fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
-                                    rnti_t                crnti,
-                                    const pucch_resource& pucch_ded_res_cfg,
-                                    unsigned              harq_ack_bits,
-                                    sr_nof_bits           sr_bits);
-
-  // Fills the PUCCH Format 2 grant.
-  void fill_pucch_format2_grant(pucch_info&                  pucch_grant,
-                                rnti_t                       crnti,
-                                const pucch_resource&        pucch_ded_res_cfg,
-                                const ue_cell_configuration& ue_cell_cfg,
-                                unsigned                     nof_prbs,
-                                unsigned                     harq_ack_bits,
-                                sr_nof_bits                  sr_bits,
-                                unsigned                     csi_part1_bits);
-
   std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                       uci_bits                      new_bits,
+                                                       pucch_uci_bits                new_bits,
                                                        ue_grants&                    current_grants,
                                                        const ue_cell_configuration&  ue_cell_cfg,
                                                        bool                          preserve_res_indicator = false);
 
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
-                                                                 uci_bits                     new_bits,
+                                                                 pucch_uci_bits               new_bits,
                                                                  ue_grants                    ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
 
@@ -232,6 +212,26 @@ private:
                                           rnti_t                        crnti,
                                           pucch_grant_list              grants_to_tx,
                                           const ue_cell_configuration&  ue_cell_cfg);
+
+  // Fills the PUCCH HARQ grant for common resources.
+  void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);
+
+  // Fills the PUCCH Format 1 grant.
+  void fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
+                                    rnti_t                crnti,
+                                    const pucch_resource& pucch_ded_res_cfg,
+                                    unsigned              harq_ack_bits,
+                                    sr_nof_bits           sr_bits);
+
+  // Fills the PUCCH Format 2 grant.
+  void fill_pucch_format2_grant(pucch_info&                  pucch_grant,
+                                rnti_t                       crnti,
+                                const pucch_resource&        pucch_ded_res_cfg,
+                                const ue_cell_configuration& ue_cell_cfg,
+                                unsigned                     nof_prbs,
+                                unsigned                     harq_ack_bits,
+                                sr_nof_bits                  sr_bits,
+                                unsigned                     csi_part1_bits);
 
   /// ////////////  Private helpers   //////////////
 

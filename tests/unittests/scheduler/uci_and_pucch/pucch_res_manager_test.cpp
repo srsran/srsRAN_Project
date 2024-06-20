@@ -239,7 +239,7 @@ TEST_F(test_pucch_resource_manager, allocate_csi_resource)
 
 TEST_F(test_pucch_resource_manager, release_and_reallocate_csi_resource)
 {
-  // There is no allcoated resource, expects false from the release.
+  // There is no allocated resource, expects false from the release.
   ASSERT_FALSE(res_manager.release_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg));
 
   const unsigned        expected_csi_res_index = 9;
@@ -248,7 +248,7 @@ TEST_F(test_pucch_resource_manager, release_and_reallocate_csi_resource)
 
   const pucch_resource* res_second_allc_no_release =
       res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
-  ASSERT_EQ(nullptr, res_second_allc_no_release);
+  ASSERT_EQ(res, res_second_allc_no_release);
 
   // This time the release it supposed to return true.
   ASSERT_TRUE(res_manager.release_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg));
@@ -398,7 +398,7 @@ protected:
 
       };
 
-    const pucch_config& get_pucch_cfg() const
+    [[nodiscard]] const pucch_config& get_pucch_cfg() const
     {
       return ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
     }
@@ -782,7 +782,7 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_sr)
   const pucch_resource* sr_resource_ue1 =
       res_manager.reserve_sr_res_available(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg());
   ASSERT_EQ(&ues[1]->get_pucch_cfg().pucch_res_list[8], sr_resource_ue1);
-  ASSERT_EQ(nullptr, res_manager.reserve_sr_res_available(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg()));
+  ASSERT_EQ(sr_resource_ue1, res_manager.reserve_sr_res_available(sl_tx, ues[1]->cnrti, ues[1]->get_pucch_cfg()));
   ASSERT_EQ(17, sr_resource_ue1->res_id.cell_res_id);
 
   // Release resource and verify it was successful.

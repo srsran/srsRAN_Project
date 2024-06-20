@@ -24,8 +24,13 @@ struct pucch_uci_bits {
   /// Number of SR info bits that should have been reported in the removed PUCCH grant.
   sr_nof_bits sr_bits{sr_nof_bits::no_sr};
   /// Number of CSI Part 1 info bits that should have been reported in the removed PUCCH grant.
-  unsigned csi_part1_bits{0};
+  unsigned csi_part1_nof_bits{0};
   // TODO: add extra bits for CSI Part 2.
+
+  [[nodiscard]] unsigned get_total_bits() const
+  {
+    return harq_ack_nof_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_nof_bits;
+  }
 };
 
 /// PUCCH scheduling interface.

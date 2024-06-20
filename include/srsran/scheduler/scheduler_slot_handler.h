@@ -482,6 +482,12 @@ struct prach_occasion_info {
 
 /// Info about PUCCH used resource.
 struct pucch_info {
+  /// This information only is used by the scheduler.
+  struct context {
+    unsigned id        = MAX_PUCCH_PDUS_PER_SLOT;
+    bool     is_common = false;
+  };
+
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
@@ -496,6 +502,8 @@ struct pucch_info {
   };
   /// In case the PUCCH will contain CSI bits, this struct contains information how those bits are to be decoded.
   std::optional<csi_report_configuration> csi_rep_cfg;
+
+  context pdu_context;
 };
 
 struct ul_sched_result {

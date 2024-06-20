@@ -273,10 +273,17 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
                 "Indexing of PUCCH resource set exceeds the size of the cell resource array");
   span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], ue_res_id_set_for_harq.size());
 
-  // Check first if there is any PUCCH resource is available.
+  // Check first if there is any PUCCH resource already used by this UE.
   auto* available_resource = std::find_if(slot_ue_res_array.begin(),
                                           slot_ue_res_array.end(),
-                                          [](const resource_tracker res) { return res.rnti == rnti_t::INVALID_RNTI; });
+                                          [crnti](const resource_tracker res) { return res.rnti == crnti; });
+
+  // If not, find an available resource.
+  if (available_resource == slot_ue_res_array.end()) {
+    available_resource = std::find_if(slot_ue_res_array.begin(),
+                                      slot_ue_res_array.end(),
+                                      [](const resource_tracker res) { return res.rnti == rnti_t::INVALID_RNTI; });
+  }
 
   const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 

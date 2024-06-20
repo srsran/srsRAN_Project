@@ -184,6 +184,7 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
 {
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
+  // TODO: remove this, as with the new refactor we are not constrained by this anymore.
   static const uint8_t max_harq_bits_per_uci = 2U;
 
   const slot_point          pdsch_slot = res_alloc[k0].slot;
@@ -262,7 +263,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
   const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(slot_alloc, crnti, ue_cell_cfg);
 
   // In case there are no UCI bits from PUCCH, then there is no UCI to be multiplexed on the PUSCH.
-  if (pucch_uci.harq_ack_nof_bits == 0 and pucch_uci.csi_part1_bits == 0) {
+  if (pucch_uci.harq_ack_nof_bits == 0 and pucch_uci.csi_part1_nof_bits == 0) {
     return;
   }
 
@@ -270,7 +271,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
   uci_info& uci = pusch_grant.uci.emplace();
   uci.alpha     = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
 
-  if (pucch_uci.csi_part1_bits != 0) {
+  if (pucch_uci.csi_part1_nof_bits != 0) {
     // The number of bits is computed based on the CSI report configuration.
     add_csi_to_uci_on_pusch(uci.csi.emplace(uci_info::csi_info()), ue_cell_cfg);
   }
