@@ -219,8 +219,9 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
   rlc_tx_am_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
-  sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
+  sdu_info.is_retx             = sdu.is_retx;
+  sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.time_of_arrival     = sdu.time_of_arrival;
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
