@@ -13,6 +13,7 @@
 #include "../du_processor_test_messages.h"
 #include "../test_helpers.h"
 #include "du_processor_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_configuration_manager_impl.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
@@ -43,6 +44,7 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
+  rrc_cfg_t                              rrc_cfg;
   timer_manager                          timers;
   manual_task_worker                     ctrl_worker{128};
   ue_configuration                       ue_config;
@@ -56,6 +58,7 @@ protected:
   dummy_rrc_ue_cu_cp_adapter             rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter             rrc_du_cu_cp_notifier;
   std::unique_ptr<common_task_scheduler> common_task_sched;
+  du_configuration_manager_impl          du_cfg_mgr;
   std::unique_ptr<du_processor>          du_processor_obj;
 
   async_task<ue_index_t>                        t;

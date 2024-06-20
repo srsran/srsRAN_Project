@@ -52,8 +52,9 @@ static du_setup_request create_basic_du_setup_request()
 class du_configuration_manager_test : public ::testing::Test
 {
 public:
-  du_configuration_manager_test() : du_cfg_mng(create_basic_rrc_config()) {}
+  du_configuration_manager_test() : du_cfg_mng(rrc_cfg) {}
 
+  rrc_cfg_t                     rrc_cfg = create_basic_rrc_config();
   du_configuration_manager_impl du_cfg_mng;
 };
 

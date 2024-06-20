@@ -30,7 +30,8 @@ private:
 
 } // namespace
 
-du_processor_test::du_processor_test() : common_task_sched(std::make_unique<dummy_task_sched>())
+du_processor_test::du_processor_test() :
+  rrc_cfg{gnb_id_t{411, 22}}, common_task_sched(std::make_unique<dummy_task_sched>()), du_cfg_mgr{rrc_cfg}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
@@ -40,6 +41,7 @@ du_processor_test::du_processor_test() : common_task_sched(std::make_unique<dumm
   du_processor_config_t du_cfg = {};
   du_cfg.du_index              = uint_to_du_index(0);
   du_cfg.du_setup_notif        = &du_conn_notifier;
+  du_cfg.du_cfg_hdlr           = du_cfg_mgr.create_du_handler();
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          cu_cp_notifier,
@@ -69,7 +71,7 @@ void du_processor_test::attach_ue()
   // Generate ue_creation message
   ue_index_t                      ue_index = ue_index_t::min;
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+      ue_index, rnti_t::MIN_CRNTI, config_helpers::make_nr_cell_identity(rrc_cfg.gnb_id, 0));
   // Pass message to DU processor
   du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
 }
