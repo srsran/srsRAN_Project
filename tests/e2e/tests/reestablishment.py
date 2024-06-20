@@ -39,6 +39,8 @@ from .steps.stub import (
     ue_validate_no_reattaches,
 )
 
+_ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED", "socket is already closed"]
+
 
 @mark.parametrize(
     "band, common_scs, bandwidth, noise_spd",
@@ -50,7 +52,7 @@ from .steps.stub import (
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-locals
 def test_zmq_reestablishment_sequentially(
     retina_manager: RetinaTestManager,
@@ -117,7 +119,7 @@ def test_zmq_reestablishment_sequentially(
     (param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-locals
 def test_zmq_reestablishment_sequentially_full_rate(
     retina_manager: RetinaTestManager,
@@ -185,7 +187,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
     ),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-locals
 def test_zmq_reestablishment_parallel(
     retina_manager: RetinaTestManager,
@@ -250,7 +252,7 @@ def test_zmq_reestablishment_parallel(
     (param(3, 15, 50, 0, id="band:%s-scs:%s-bandwidth:%s-noise:%s"),),
 )
 @mark.zmq
-@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
+@mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
 # pylint: disable=too-many-arguments,too-many-locals
 def test_zmq_reestablishment_parallel_full_rate(
     retina_manager: RetinaTestManager,
