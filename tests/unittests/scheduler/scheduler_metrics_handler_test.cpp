@@ -26,7 +26,7 @@ class scheduler_metrics_handler_tester : public ::testing::Test
 {
 protected:
   scheduler_metrics_handler_tester(
-      std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(1, 100)}) :
+      std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(2, 100)}) :
     report_period(period), metrics(period, metrics_notif)
   {
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs);
@@ -223,16 +223,19 @@ TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
 {
   using usecs                = std::chrono::microseconds;
   std::vector<usecs> samples = {usecs{10}, usecs{50}, usecs{150}, usecs{300}, usecs{500}};
+  samples.resize(report_period.count() - 1);
 
   sched_result sched_res;
   for (unsigned i = 0; i != samples.size(); ++i) {
     this->run_slot(sched_res, samples[i]);
+    ASSERT_TRUE(metrics_notif.last_report.ue_metrics.empty());
   }
 
   this->get_next_metric();
   scheduler_cell_metrics cell_metrics = metrics_notif.last_report;
-  ASSERT_LT(cell_metrics.average_decision_latency.count(), 100);
-  ASSERT_GT(cell_metrics.average_decision_latency.count(), 0);
+
+  unsigned expected_avg = std::accumulate(samples.begin(), samples.end(), usecs{0}).count() / report_period.count();
+  ASSERT_EQ(cell_metrics.average_decision_latency.count(), expected_avg);
 
   for (unsigned i = 0; i != cell_metrics.latency_thres_count.size(); ++i) {
     unsigned expected = std::count_if(samples.begin(), samples.end(), [i](usecs u) {
