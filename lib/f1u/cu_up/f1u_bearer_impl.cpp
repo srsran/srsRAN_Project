@@ -93,13 +93,16 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
   }
 }
 
-void f1u_bearer_impl::handle_sdu(byte_buffer sdu)
+void f1u_bearer_impl::handle_sdu(byte_buffer sdu, bool is_retx)
 {
-  logger.log_debug("F1-U bearer received SDU. size={}", sdu.length());
+  logger.log_debug("F1-U bearer received SDU. size={} is_retx={}", sdu.length(), is_retx);
   nru_dl_message msg = {};
 
   // attach the SDU
   msg.t_pdu = std::move(sdu);
+
+  // set retransmission flag
+  msg.dl_user_data.retransmission_flag = is_retx;
 
   // attach discard blocks (if any)
   fill_discard_blocks(msg);

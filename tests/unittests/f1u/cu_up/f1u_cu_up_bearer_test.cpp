@@ -163,7 +163,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, 0xcc);
 
   // transmit a PDU to piggy-back previous discard
-  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value());
+  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value(), /* is_retx = */ false);
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -172,6 +172,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_FALSE(tester->tx_msg_list.front().t_pdu.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
+  EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.retransmission_flag);
   ASSERT_TRUE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
   ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value().size(), 2);
   EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_sn);
@@ -218,10 +219,13 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
   constexpr uint32_t pdcp_sn  = 123;
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value());
+  f1u->handle_sdu(tx_pdcp_pdu1.deep_copy().value(), /* is_retx = */ false);
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  f1u->handle_sdu(tx_pdcp_pdu2.deep_copy().value());
+  f1u->handle_sdu(tx_pdcp_pdu2.deep_copy().value(), /* is_retx = */ false);
+
+  // Also check a ReTx
+  f1u->handle_sdu(tx_pdcp_pdu2.deep_copy().value(), /* is_retx = */ true);
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -229,12 +233,21 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
+  EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.retransmission_flag);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu2);
+  EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.retransmission_flag);
+  EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
+
+  tester->tx_msg_list.pop_front();
+
+  ASSERT_FALSE(tester->tx_msg_list.empty());
+  EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu2);
+  EXPECT_TRUE(tester->tx_msg_list.front().dl_user_data.retransmission_flag);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();

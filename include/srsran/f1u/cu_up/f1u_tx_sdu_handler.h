@@ -26,7 +26,8 @@ public:
 
   /// \brief Immediately transmits a PDCP TX PDU to lower layers towards the DU.
   /// \param sdu The PDCP TX PDU to be transmitted to lower layers.
-  virtual void handle_sdu(byte_buffer sdu) = 0;
+  /// \param is_retx Determines whether the SDU is a PDCP retransmission or not.
+  virtual void handle_sdu(byte_buffer sdu, bool is_retx) = 0;
 
   /// \brief Enqueues a notification to discard the given PDCP TX PDU at the DU.
   ///
