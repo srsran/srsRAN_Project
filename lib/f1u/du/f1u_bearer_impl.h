@@ -72,17 +72,30 @@ private:
   /// layers. The purpose of this timer is to avoid excessive uplink notifications for every PDCP SN that is notified by
   /// lower layers.
   unique_timer ul_notif_timer;
+
   /// Holds the most recent highest transmitted PDCP SN that is frequently updated by lower layers (i.e. by RLC AM/UM)
   std::atomic<uint32_t> highest_transmitted_pdcp_sn{unset_pdcp_sn};
   /// Holds the most recent highest delivered PDCP SN that is frequently updated by lower layers (i.e. by RLC AM)
   std::atomic<uint32_t> highest_delivered_pdcp_sn{unset_pdcp_sn};
+  /// Holds the most recent highest retransmitted PDCP SN that is frequently updated by lower layers (i.e. by RLC AM)
+  std::atomic<uint32_t> highest_retransmitted_pdcp_sn{unset_pdcp_sn};
+  /// Holds the most recent highest delivered retransmitted PDCP SN that is frequently updated by lower layers (i.e. by
+  /// RLC AM)
+  std::atomic<uint32_t> highest_delivered_retransmitted_pdcp_sn{unset_pdcp_sn};
+
   /// Holds the last highest transmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
   uint32_t notif_highest_transmitted_pdcp_sn = unset_pdcp_sn;
   /// Holds the last highest delivered PDCP SN that was reported to upper layers (i.e. towards CU-UP)
   uint32_t notif_highest_delivered_pdcp_sn = unset_pdcp_sn;
+  /// Holds the last highest retransmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
+  uint32_t notif_highest_retransmitted_pdcp_sn = unset_pdcp_sn;
+  /// Holds the last highest delivered retransmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
+  uint32_t notif_highest_delivered_retransmitted_pdcp_sn = unset_pdcp_sn;
 
   bool fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status);
   bool fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status& status);
+  bool fill_highest_retransmitted_pdcp_sn(nru_dl_data_delivery_status& status);
+  bool fill_highest_delivered_retransmitted_pdcp_sn(nru_dl_data_delivery_status& status);
   void fill_data_delivery_status(nru_ul_message& msg);
 
   void handle_pdu_impl(nru_dl_message msg);
