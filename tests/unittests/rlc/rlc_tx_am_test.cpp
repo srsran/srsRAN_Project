@@ -26,6 +26,8 @@ class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
 public:
   std::list<uint32_t> highest_transmitted_pdcp_sn_list;
   std::list<uint32_t> highest_delivered_pdcp_sn_list;
+  std::list<uint32_t> highest_retransmitted_pdcp_sn_list;
+  std::list<uint32_t> highest_delivered_retransmitted_pdcp_sn_list;
   rlc_am_sn_size      sn_size;
   rlc_am_status_pdu   status;
   bool                status_required = false;
@@ -47,6 +49,18 @@ public:
   {
     // store in list
     highest_delivered_pdcp_sn_list.push_back(max_deliv_pdcp_sn);
+  }
+
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override
+  {
+    // store in list
+    highest_retransmitted_pdcp_sn_list.push_back(max_retx_pdcp_sn);
+  }
+
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override
+  {
+    // store in list
+    highest_delivered_retransmitted_pdcp_sn_list.push_back(max_deliv_retx_pdcp_sn);
   }
 
   // rlc_tx_upper_layer_control_notifier interface

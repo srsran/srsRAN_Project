@@ -107,6 +107,16 @@ void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
   highest_delivered_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
 }
 
+void f1u_bearer_impl::handle_retransmit_notification(uint32_t highest_pdcp_sn)
+{
+  // TODO
+}
+
+void f1u_bearer_impl::handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn)
+{
+  // TODO
+}
+
 bool f1u_bearer_impl::fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status)
 {
   uint32_t cur_highest_transmitted_pdcp_sn = highest_transmitted_pdcp_sn.load(std::memory_order_relaxed);

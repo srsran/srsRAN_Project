@@ -226,7 +226,11 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    if (sdu.is_retx) {
+      upper_dn.on_retransmitted_sdu(sdu.pdcp_sn.value());
+    } else {
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    }
   }
 
   // Segment new SDU if necessary
@@ -660,13 +664,18 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          ? status.ack_sn
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
-  std::optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
-  bool                    recycle_bin_full  = false;
+  std::optional<uint32_t> max_deliv_pdcp_sn      = {}; // initialize with not value set
+  std::optional<uint32_t> max_deliv_retx_pdcp_sn = {}; // initialize with not value set
+  bool                    recycle_bin_full       = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
       if (sdu_info.pdcp_sn.has_value()) {
-        max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        if (sdu_info.is_retx) {
+          max_deliv_retx_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        } else {
+          max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        }
       }
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
@@ -682,6 +691,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   }
   if (max_deliv_pdcp_sn.has_value()) {
     upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value());
+  }
+  if (max_deliv_retx_pdcp_sn.has_value()) {
+    upper_dn.on_delivered_retransmitted_sdu(max_deliv_retx_pdcp_sn.value());
   }
   logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
   if (recycle_bin_full) {

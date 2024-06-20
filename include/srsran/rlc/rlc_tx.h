@@ -73,11 +73,13 @@ public:
 };
 
 /// This interface represents the data upper layer that the TX RLC bearer must notify on transmission and/or delivery of
-/// SDUs it can stop its discard timer.
+/// (new or ReTx) SDUs so it can stop its discard timer.
 ///
 /// The following events shall be notified:
-/// - on transmission of an SDU, i.e. pop from SDU queue
-/// - on successful delivery of an SDU (only RLC AM)
+/// - on transmission of a new SDU, i.e. pop from SDU queue with is_retx == false.
+/// - on successful delivery of a new SDU with is_retx == false (only RLC AM).
+/// - on transmission of a ReTx SDU, i.e. pop from SDU queue with is_retx == true (only RLC AM).
+/// - on successful delivery of a ReTx SDU with is_retx == true (only RLC AM).
 class rlc_tx_upper_layer_data_notifier
 {
 public:
@@ -85,13 +87,27 @@ public:
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was transmitted to the
   /// lower layers.
+  ///
   /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
   virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) = 0;
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
   /// delivered in sequence towards the UE.
+  ///
   /// \param max_deliv_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
   virtual void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) = 0;
+
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the retransmitted PDCP PDU that was
+  /// transmitted to the lower layers.
+  ///
+  /// \param max_retx_pdcp_sn Highest retransmitted PDCP PDU sequence number.
+  virtual void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) = 0;
+
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the retransmitted PDCP PDU that was
+  /// successfully delivered in sequence towards the UE.
+  ///
+  /// \param max_deliv_retx_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
+  virtual void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) = 0;
 };
 
 /// This interface represents the control upper layer that the
