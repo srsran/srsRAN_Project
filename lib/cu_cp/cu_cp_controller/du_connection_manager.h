@@ -40,9 +40,6 @@ public:
 
   void stop();
 
-  /// Validate new gNB-DU configuration update.
-  bool handle_du_config_update(du_index_t du_idx, const du_setup_request& req);
-
 private:
   class shared_du_connection_context;
   class f1_gw_to_cu_cp_pdu_adapter;

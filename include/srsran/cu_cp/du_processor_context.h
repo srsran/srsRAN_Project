@@ -35,12 +35,6 @@ struct du_cell_context {
   du_sys_info          sys_info;                              /// System information provided by DU
 };
 
-struct du_processor_context {
-  du_index_t  du_index = du_index_t::invalid;  /// Index assisgned by CU-CP
-  gnb_du_id_t id       = gnb_du_id_t::invalid; /// the gNB-DU-ID
-  std::string name     = "none";               /// gNB-DU-Name
-};
-
 } // namespace srs_cu_cp
 
 } // namespace srsran

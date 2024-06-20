@@ -232,23 +232,3 @@ void du_connection_manager::stop()
     stop_cvar.wait(lock, [this] { return stop_completed; });
   }
 }
-
-bool du_connection_manager::handle_du_config_update(du_index_t du_idx, const du_setup_request& req)
-{
-  for (unsigned i = 0, nof_dus = dus.get_nof_dus(); i != nof_dus; ++i) {
-    du_index_t other_du_idx = uint_to_du_index(i);
-    if (other_du_idx == du_idx) {
-      continue;
-    }
-    const f1ap_du_context& du_ctxt =
-        dus.get_du_processor(other_du_idx).get_f1ap_interface().get_f1ap_handler().get_context();
-
-    if (du_ctxt.gnb_du_id == req.gnb_du_id) {
-      logger.warning("du={}: Rejecting DU configuration update. Cause: DU with GNB-DU-ID already exists.",
-                     req.gnb_du_id);
-      return false;
-    }
-  }
-
-  return true;
-}

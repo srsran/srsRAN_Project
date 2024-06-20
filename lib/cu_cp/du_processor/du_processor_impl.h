@@ -51,13 +51,13 @@ public:
 
   // getter functions
 
-  du_index_t                       get_du_index() override { return context.du_index; }
+  du_index_t                       get_du_index() override { return cfg.du_index; }
   f1ap_cu&                         get_f1ap_handler() override { return *f1ap; };
   f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *f1ap; }
   f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *f1ap; }
 
-  size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(context.du_index); };
+  size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(cfg.du_index); };
 
   // du_processor_f1ap_interface
   du_setup_result handle_du_setup_request(const du_setup_request& req) override;
@@ -131,7 +131,6 @@ private:
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;
 
-  du_processor_context                       context;
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
 
   std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;

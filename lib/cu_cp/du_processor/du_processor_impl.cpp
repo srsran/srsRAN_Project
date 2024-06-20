@@ -38,8 +38,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   ue_mng(ue_mng_),
   f1ap_ev_notifier(common_task_sched_, *this)
 {
-  context.du_index = cfg.du_index;
-
   // create f1ap
   f1ap = create_f1ap(cfg.f1ap_cfg, f1ap_pdu_notifier, f1ap_ev_notifier, timers_, ctrl_exec_);
 
@@ -52,7 +50,7 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 
-  cu_cp_notifier.on_du_processor_created(context.du_index,
+  cu_cp_notifier.on_du_processor_created(cfg.du_index,
                                          f1ap->get_f1ap_ue_context_removal_handler(),
                                          f1ap->get_f1ap_statistics_handler(),
                                          rrc->get_rrc_ue_handler(),
@@ -63,12 +61,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 {
   du_setup_result res;
 
-  // Set DU context
-  context.id   = request.gnb_du_id;
-  context.name = request.gnb_du_name;
-
   // Check if CU-CP is in a state to accept a new DU connection.
-  if (not cfg.du_setup_notif->on_du_setup_request(context.du_index, request)) {
+  if (not cfg.du_setup_notif->on_du_setup_request(cfg.du_index, request)) {
     res.result = du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
                                            "CU-CP is not in a state to accept a new DU connection"};
     return res;
@@ -91,7 +85,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
     du_cell_context du_cell;
-    du_cell.du_index   = context.du_index;
+    du_cell.du_index   = cfg.du_index;
     du_cell.cell_index = get_next_du_cell_index();
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
@@ -153,7 +147,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
 ue_index_t du_processor_impl::allocate_new_ue_index()
 {
-  return ue_mng.add_ue(context.du_index);
+  return ue_mng.add_ue(cfg.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -244,7 +238,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   const pci_t pci = cell_db.at(pcell_index).pci;
 
   // Create new UE RRC context
-  cu_cp_ue* ue = ue_mng.set_ue_du_context(req.ue_index, context.id, pci, req.c_rnti);
+  cu_cp_ue* ue = ue_mng.set_ue_du_context(req.ue_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti);
   if (ue == nullptr) {
     logger.warning("ue={}: Could not create UE context", req.ue_index);
     return {};
@@ -373,7 +367,7 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
   // If not nr cgi for a tac from the paging message is found paging message is not forwarded to DU
   if (!nr_cgi_for_tac_found) {
-    logger.info("du_index={}: No NR CGI for paging TACs available at this DU", context.du_index);
+    logger.info("du_index={}: No NR CGI for paging TACs available at this DU", cfg.du_index);
     return;
   }
 
@@ -438,11 +432,14 @@ byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
 metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() const
 {
   metrics_report::du_info report;
-  report.id = context.id;
-  for (const auto& cell : cell_db) {
-    report.cells.emplace_back();
-    report.cells.back().cgi = cell.second.cgi;
-    report.cells.back().pci = cell.second.pci;
+  report.id = gnb_du_id_t::invalid;
+  if (cfg.du_cfg_hdlr->has_context()) {
+    report.id = cfg.du_cfg_hdlr->get_context().id;
+    for (const auto& cell : cell_db) {
+      report.cells.emplace_back();
+      report.cells.back().cgi = cell.second.cgi;
+      report.cells.back().pci = cell.second.pci;
+    }
   }
   return report;
 }
