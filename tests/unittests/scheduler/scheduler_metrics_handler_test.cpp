@@ -32,9 +32,9 @@ protected:
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs);
   }
 
-  void run_slot(const sched_result& sched_res)
+  void run_slot(const sched_result& sched_res, std::chrono::microseconds latency = std::chrono::microseconds{0})
   {
-    metrics.push_result(next_sl_tx, sched_res, std::chrono::microseconds{0});
+    metrics.push_result(next_sl_tx, sched_res, latency);
     ++next_sl_tx;
     slot_count++;
   }
@@ -217,4 +217,35 @@ TEST_F(scheduler_metrics_handler_tester, compute_bitrate)
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_brate_kbps, 0) << "NACKs should not count for bitrate";
   ASSERT_EQ(ue_metrics.ul_brate_kbps, 0) << "NACKs should not count for bitrate";
+}
+
+TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
+{
+  using usecs                = std::chrono::microseconds;
+  std::vector<usecs> samples = {usecs{10}, usecs{50}, usecs{150}, usecs{300}, usecs{500}};
+
+  sched_result sched_res;
+  for (unsigned i = 0; i != samples.size(); ++i) {
+    this->run_slot(sched_res, samples[i]);
+  }
+
+  this->get_next_metric();
+  scheduler_cell_metrics cell_metrics = metrics_notif.last_report;
+  ASSERT_LT(cell_metrics.average_decision_latency.count(), 100);
+  ASSERT_GT(cell_metrics.average_decision_latency.count(), 0);
+
+  for (unsigned i = 0; i != cell_metrics.latency_thres_count.size(); ++i) {
+    unsigned expected = std::count_if(samples.begin(), samples.end(), [i](usecs u) {
+      return scheduler_cell_metrics::latency_thres_usec[i] < u.count();
+    });
+    ASSERT_EQ(cell_metrics.latency_thres_count[i], expected);
+  }
+}
+
+TEST_F(scheduler_metrics_handler_tester, compute_error_indications)
+{
+  metrics.handle_error_indication();
+  metrics.handle_error_indication();
+  this->get_next_metric();
+  ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 2);
 }
