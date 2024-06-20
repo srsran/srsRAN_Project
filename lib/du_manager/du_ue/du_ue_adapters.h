@@ -54,7 +54,7 @@ public:
   /// \brief Stop forwarding SDUs to the RLC layer.
   void disconnect();
 
-  void on_new_sdu(byte_buffer sdu) override
+  void on_new_sdu(byte_buffer sdu, bool is_retx) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
     rlc_tx->handle_sdu(std::move(sdu));

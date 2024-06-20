@@ -76,7 +76,7 @@ void f1u_bearer_impl::handle_pdu_impl(nru_dl_message msg)
   // handle T-PDU
   if (!msg.t_pdu.empty()) {
     logger.log_debug("Delivering T-PDU. size={}", msg.t_pdu.length());
-    rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu));
+    rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu), msg.dl_user_data.retransmission_flag);
   }
   // handle discard notifications
   if (msg.dl_user_data.discard_blocks.has_value()) {

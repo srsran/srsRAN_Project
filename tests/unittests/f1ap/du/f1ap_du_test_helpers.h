@@ -176,9 +176,14 @@ class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
   byte_buffer             last_pdu;
+  bool                    last_pdu_is_retx;
   std::optional<uint32_t> last_discard_sn;
 
-  void on_new_sdu(byte_buffer sdu) override { last_pdu = std::move(sdu); }
+  void on_new_sdu(byte_buffer sdu, bool is_retx) override
+  {
+    last_pdu         = std::move(sdu);
+    last_pdu_is_retx = is_retx;
+  }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { last_discard_sn = pdcp_sn; }
 };
