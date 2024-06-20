@@ -72,7 +72,7 @@ private:
 public:
   rlc_tx_um_entity(gnb_du_id_t                          gnb_du_id,
                    du_ue_index_t                        ue_index,
-                   rb_id_t                              rb_id,
+                   rb_id_t                              rb_id_,
                    const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -86,7 +86,7 @@ public:
   };
 
   // Interfaces for higher layers
-  void handle_sdu(byte_buffer sdu_buf) override;
+  void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers

@@ -127,7 +127,7 @@ private:
 public:
   rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                    du_ue_index_t                        ue_index,
-                   rb_id_t                              rb_id,
+                   rb_id_t                              rb_id_,
                    const rlc_tx_am_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -148,7 +148,7 @@ public:
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
 
   // Interfaces for higher layers
-  void handle_sdu(byte_buffer sdu_buf) override;
+  void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers

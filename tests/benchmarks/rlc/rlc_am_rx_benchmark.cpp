@@ -165,7 +165,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   int pdu_size  = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, num_bytes, i);
-    rlc_tx->handle_sdu(std::move(sdu));
+    rlc_tx->handle_sdu(std::move(sdu), false);
     while (rlc_tx->get_buffer_state() > 0) {
       std::vector<uint8_t> pdu_buf;
       pdu_buf.resize(pdu_size);

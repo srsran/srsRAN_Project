@@ -21,7 +21,7 @@ using namespace srsran;
 
 rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                                    du_ue_index_t                        ue_index,
-                                   rb_id_t                              rb_id,
+                                   rb_id_t                              rb_id_,
                                    const rlc_tx_am_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -31,7 +31,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                                    task_executor&                       ue_executor_,
                                    bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
+  rlc_tx_entity(gnb_du_id, ue_index, rb_id_, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
@@ -45,7 +45,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_),
-  pcap_context(ue_index, rb_id, config)
+  pcap_context(ue_index, rb_id_, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -55,7 +55,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                 config.pdcp_sn_len,
                 gnb_du_id,
                 ue_index,
-                rb_id);
+                rb_id_);
 
   // check timer t_poll_retransmission timer
   srsran_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
@@ -70,26 +70,38 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
-void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf)
+void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 {
   rlc_sdu sdu;
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
 
   sdu.buf     = std::move(sdu_buf);
+  sdu.is_retx = is_retx;
   sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+
+  // Sanity check for PDCP ReTx in SRBs
+  if (SRSRAN_UNLIKELY(rb_id.is_srb() && sdu.is_retx)) {
+    logger.log_error("Ignored unexpected PDCP retransmission flag in SRB RLC AM SDU");
+    sdu.is_retx = false;
+  }
 
   size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(sdu.buf.begin(),
                     sdu.buf.end(),
-                    "TX SDU. sdu_len={} pdcp_sn={} {}",
+                    "TX SDU. sdu_len={} pdcp_sn={} is_retx={} {}",
                     sdu.buf.length(),
                     sdu.pdcp_sn,
+                    sdu.is_retx,
                     sdu_queue.get_state());
     metrics.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
-    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue.get_state());
+    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} is_retx={} {}",
+                       sdu_length,
+                       sdu.pdcp_sn,
+                       sdu.is_retx,
+                       sdu_queue.get_state());
     metrics.metrics_add_lost_sdus(1);
   }
 }

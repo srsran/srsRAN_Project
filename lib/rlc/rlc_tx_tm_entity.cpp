@@ -14,7 +14,7 @@ using namespace srsran;
 
 rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    du_ue_index_t                        ue_index,
-                                   rb_id_t                              rb_id,
+                                   rb_id_t                              rb_id_,
                                    const rlc_tx_tm_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -22,22 +22,27 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    task_executor&                       pcell_executor_,
                                    bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_id, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
+  rlc_tx_entity(du_id, ue_index, rb_id_, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
   pcell_executor(pcell_executor_),
-  pcap_context(ue_index, rb_id, /* is_uplink */ false)
+  pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
   metrics.metrics_set_mode(rlc_mode::tm);
   logger.log_info("RLC TM created. {}", cfg);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
-void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf)
+void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 {
   rlc_sdu sdu_;
 
   sdu_.buf = std::move(sdu_buf);
+
+  // Sanity check for PDCP ReTx in RLC TM
+  if (SRSRAN_UNLIKELY(is_retx)) {
+    logger.log_error("Ignored unexpected PDCP retransmission flag in RLC TM SDU");
+  }
 
   size_t sdu_len = sdu_.buf.length();
   if (sdu_queue.write(sdu_)) {

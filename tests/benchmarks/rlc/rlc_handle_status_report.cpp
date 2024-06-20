@@ -129,7 +129,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
 
     for (int i = 0; i < 2048; i++) {
       byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, 7, 0);
-      rlc->handle_sdu(std::move(sdu));
+      rlc->handle_sdu(std::move(sdu), false);
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);
     }

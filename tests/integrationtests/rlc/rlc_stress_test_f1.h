@@ -34,7 +34,7 @@ public:
   void on_new_pdu(byte_buffer pdu, bool is_retx) final
   {
     logger.log_info("Passing F1AP PDU to RLC");
-    rlc_tx_upper->handle_sdu(std::move(pdu));
+    rlc_tx_upper->handle_sdu(std::move(pdu), is_retx);
   }
 
   // PDCP -> F1AP -> RLC

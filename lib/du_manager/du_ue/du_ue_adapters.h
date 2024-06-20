@@ -36,7 +36,7 @@ public:
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
 
-    rlc_tx->handle_sdu(std::move(pdu));
+    rlc_tx->handle_sdu(std::move(pdu), /* is_retx = */ false);
   }
 
 private:
@@ -57,7 +57,7 @@ public:
   void on_new_sdu(byte_buffer sdu, bool is_retx) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(std::move(sdu));
+    rlc_tx->handle_sdu(std::move(sdu), is_retx);
   }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { rlc_tx->discard_sdu(pdcp_sn); }
