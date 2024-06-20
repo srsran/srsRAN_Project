@@ -27,7 +27,6 @@ struct du_sys_info {
 
 struct du_cell_context {
   du_cell_index_t      cell_index = du_cell_index_t::invalid; /// CU internal cell ID
-  du_index_t           du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
   nr_cell_global_id_t  cgi;                                   /// global cell ID
   uint32_t             tac;                                   /// tracking area code
   pci_t                pci;                                   /// Physical cell ID

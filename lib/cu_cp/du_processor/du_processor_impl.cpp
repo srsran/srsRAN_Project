@@ -83,43 +83,9 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
     return res;
   }
 
-  for (const auto& served_cell : request.gnb_du_served_cells_list) {
-    du_cell_context du_cell;
-    du_cell.du_index   = cfg.du_index;
-    du_cell.cell_index = get_next_du_cell_index();
-
-    if (du_cell.cell_index == du_cell_index_t::invalid) {
-      res.result = du_setup_result::rejected{cause_misc_t::ctrl_processing_overload,
-                                             "Maximum number of DU cells supported in the CU-CP reached"};
-      return res;
-    }
-
-    du_cell.cgi = served_cell.served_cell_info.nr_cgi;
-    du_cell.pci = served_cell.served_cell_info.nr_pci;
-    du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
-    // Store and unpack system information
-    du_cell.sys_info.packed_mib  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
-    du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
-
-    // Add band information.
-    if (served_cell.served_cell_info.nr_mode_info.fdd.has_value()) {
-      for (const auto& band : served_cell.served_cell_info.nr_mode_info.fdd.value().dl_nr_freq_info.freq_band_list_nr) {
-        du_cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
-      }
-    } else if (served_cell.served_cell_info.nr_mode_info.tdd.has_value()) {
-      for (const auto& band : served_cell.served_cell_info.nr_mode_info.tdd.value().nr_freq_info.freq_band_list_nr) {
-        du_cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
-      }
-    }
-
-    // TODO: add unpacking of sys_info
-
-    // add cell to DU context
-    du_cell_index_t cell_index = du_cell.cell_index;
-    cell_db.emplace(cell_index, std::move(du_cell));
-
+  const du_configuration_context& du_config = cfg.du_cfg_hdlr->get_context();
+  for (const du_cell_context& cell : du_config.served_cells) {
     // Add cell to lookup
-    auto& cell = cell_db.at(cell_index);
     if (tac_to_nr_cgi.find(cell.tac) == tac_to_nr_cgi.end()) {
       tac_to_nr_cgi.emplace(cell.tac, std::vector<nr_cell_global_id_t>{cell.cgi});
     } else {
@@ -150,30 +116,6 @@ ue_index_t du_processor_impl::allocate_new_ue_index()
   return ue_mng.add_ue(cfg.du_index);
 }
 
-du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
-{
-  for (auto& cell_pair : cell_db) {
-    auto& cell = cell_pair.second;
-    if (cell.cgi.nci == packed_nr_cell_id) {
-      return cell.cell_index;
-    }
-  }
-  return du_cell_index_t::invalid;
-}
-
-du_cell_index_t du_processor_impl::get_next_du_cell_index()
-{
-  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS;
-       du_cell_idx_int++) {
-    du_cell_index_t cell_idx = uint_to_du_cell_index(du_cell_idx_int);
-    if (cell_db.find(cell_idx) == cell_db.end()) {
-      return cell_idx;
-    }
-  }
-  logger.warning("No DU cell index available");
-  return du_cell_index_t::invalid;
-}
-
 bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                       rnti_t                                 c_rnti,
                                       const nr_cell_global_id_t&             cgi,
@@ -185,14 +127,16 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                std::forward_as_tuple(ue.get_ue_index()),
                                std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue.get_ue_index()));
 
+  const du_cell_context& cell = *cfg.du_cfg_hdlr->get_context().find_cell(cgi);
+
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
   rrc_ue_create_msg.ue_index              = ue.get_ue_index();
   rrc_ue_create_msg.c_rnti                = c_rnti;
   rrc_ue_create_msg.cell.cgi              = cgi;
-  rrc_ue_create_msg.cell.tac              = cell_db.at(ue.get_pcell_index()).tac;
-  rrc_ue_create_msg.cell.pci              = cell_db.at(ue.get_pcell_index()).pci;
-  rrc_ue_create_msg.cell.bands            = cell_db.at(ue.get_pcell_index()).bands;
+  rrc_ue_create_msg.cell.tac              = cell.tac;
+  rrc_ue_create_msg.cell.pci              = cell.pci;
+  rrc_ue_create_msg.cell.bands            = cell.bands;
   rrc_ue_create_msg.sec_context           = &ue.get_security_context();
   rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
   rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &ue.get_rrc_ue_context_update_notifier();
@@ -227,15 +171,15 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   srsran_assert(config_helpers::is_valid(req.cgi), "ue={}: Invalid CGI", req.ue_index);
 
   // Check that creation message is valid
-  du_cell_index_t pcell_index = find_cell(req.cgi.nci);
-  if (pcell_index == du_cell_index_t::invalid) {
+  const du_cell_context* pcell = cfg.du_cfg_hdlr->get_context().find_cell(req.cgi);
+  if (pcell == nullptr) {
     srsran_assert(ue_mng.find_ue_task_scheduler(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
     logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
     ue_mng.find_ue_task_scheduler(req.ue_index)
         ->schedule_async_task(cu_cp_notifier.on_ue_removal_required(req.ue_index));
     return {};
   }
-  const pci_t pci = cell_db.at(pcell_index).pci;
+  const pci_t pci = pcell->pci;
 
   // Create new UE RRC context
   cu_cp_ue* ue = ue_mng.set_ue_du_context(req.ue_index, cfg.du_cfg_hdlr->get_context().id, pci, req.c_rnti);
@@ -243,7 +187,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
     logger.warning("ue={}: Could not create UE context", req.ue_index);
     return {};
   }
-  ue->set_pcell_index(pcell_index);
+  ue->set_pcell_index(pcell->cell_index);
 
   // Create RRC UE. If the DU-to-CU-RRC-Container is empty, the UE will be rejected.
   if (not create_rrc_ue(*ue, req.c_rnti, req.cgi, req.du_to_cu_rrc_container.copy(), std::move(req.prev_context))) {
@@ -400,30 +344,29 @@ void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index
 
 bool du_processor_impl::has_cell(pci_t pci)
 {
-  return std::any_of(cell_db.begin(), cell_db.end(), [pci](const auto& cell) { return cell.second.pci == pci; });
+  return cfg.du_cfg_hdlr->get_context().find_cell(pci) != nullptr;
 }
 
 bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
 {
-  return std::any_of(cell_db.begin(), cell_db.end(), [cgi](const auto& cell) { return cell.second.cgi == cgi; });
+  return cfg.du_cfg_hdlr->get_context().find_cell(cgi) != nullptr;
 }
 
 std::optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
 {
-  std::optional<nr_cell_global_id_t> cgi;
-  for (const auto& cell : cell_db) {
-    if (cell.second.pci == pci) {
-      return cell.second.cgi;
-    }
+  const du_cell_context* cell = cfg.du_cfg_hdlr->get_context().find_cell(pci);
+  if (cell != nullptr) {
+    return cell->cgi;
   }
-  return cgi;
+  return std::nullopt;
 }
 
 byte_buffer du_processor_impl::get_packed_sib1(nr_cell_global_id_t cgi)
 {
-  for (const auto& cell : cell_db) {
-    if (cell.second.cgi == cgi) {
-      return cell.second.sys_info.packed_sib1.copy();
+  const auto& cells = cfg.du_cfg_hdlr->get_context().served_cells;
+  for (const auto& cell : cells) {
+    if (cell.cgi == cgi) {
+      return cell.sys_info.packed_sib1.copy();
     }
   }
   return byte_buffer{};
@@ -434,11 +377,12 @@ metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() co
   metrics_report::du_info report;
   report.id = gnb_du_id_t::invalid;
   if (cfg.du_cfg_hdlr->has_context()) {
-    report.id = cfg.du_cfg_hdlr->get_context().id;
-    for (const auto& cell : cell_db) {
+    report.id         = cfg.du_cfg_hdlr->get_context().id;
+    const auto& cells = cfg.du_cfg_hdlr->get_context().served_cells;
+    for (const auto& cell : cells) {
       report.cells.emplace_back();
-      report.cells.back().cgi = cell.second.cgi;
-      report.cells.back().pci = cell.second.pci;
+      report.cells.back().cgi = cell.cgi;
+      report.cells.back().pci = cell.pci;
     }
   }
   return report;

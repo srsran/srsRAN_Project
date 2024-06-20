@@ -92,6 +92,30 @@ std::unique_ptr<du_configuration_handler> du_configuration_manager_impl::create_
   return std::make_unique<du_configuration_handler_impl>(*this);
 }
 
+static du_cell_context create_du_cell_config(du_cell_index_t cell_idx, const cu_cp_du_served_cells_item& f1ap_cell_cfg)
+{
+  const auto&     cell_req = f1ap_cell_cfg.served_cell_info;
+  du_cell_context cell;
+  cell.cell_index = cell_idx;
+  cell.cgi        = cell_req.nr_cgi;
+  cell.tac        = cell_req.five_gs_tac.value();
+  cell.pci        = cell_req.nr_pci;
+  // Add band information.
+  if (cell_req.nr_mode_info.fdd.has_value()) {
+    for (const auto& band : cell_req.nr_mode_info.fdd.value().dl_nr_freq_info.freq_band_list_nr) {
+      cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
+    }
+  } else if (cell_req.nr_mode_info.tdd.has_value()) {
+    for (const auto& band : cell_req.nr_mode_info.tdd.value().nr_freq_info.freq_band_list_nr) {
+      cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
+    }
+  }
+  // Add packed MIB and SIB1
+  cell.sys_info.packed_mib  = f1ap_cell_cfg.gnb_du_sys_info->mib_msg.copy();
+  cell.sys_info.packed_sib1 = f1ap_cell_cfg.gnb_du_sys_info->sib1_msg.copy();
+  return cell;
+}
+
 expected<const du_configuration_context*, du_setup_result::rejected>
 du_configuration_manager_impl::add_du_config(const du_setup_request& req)
 {
@@ -107,7 +131,10 @@ du_configuration_manager_impl::add_du_config(const du_setup_request& req)
   ctxt.id                        = req.gnb_du_id;
   ctxt.name                      = req.gnb_du_name;
   ctxt.rrc_version               = req.gnb_du_rrc_version;
-  ctxt.gnb_du_served_cells_list  = req.gnb_du_served_cells_list;
+  ctxt.served_cells.resize(req.gnb_du_served_cells_list.size());
+  for (unsigned i = 0; i != ctxt.served_cells.size(); ++i) {
+    ctxt.served_cells[i] = create_du_cell_config(uint_to_du_cell_index(i), req.gnb_du_served_cells_list[i]);
+  }
   return &ctxt;
 }
 
@@ -134,12 +161,11 @@ du_configuration_manager_impl::handle_du_config_update(const du_configuration_co
   du_configuration_context& du_context = it->second;
   // > Remove cells.
   for (const nr_cell_global_id_t& cgi : req.served_cells_to_rem) {
-    auto cell_it =
-        std::find_if(it->second.gnb_du_served_cells_list.begin(),
-                     it->second.gnb_du_served_cells_list.end(),
-                     [&cgi](const cu_cp_du_served_cells_item& item) { return item.served_cell_info.nr_cgi == cgi; });
-    if (cell_it != it->second.gnb_du_served_cells_list.end()) {
-      du_context.gnb_du_served_cells_list.erase(cell_it);
+    auto cell_it = std::find_if(it->second.served_cells.begin(),
+                                it->second.served_cells.end(),
+                                [&cgi](const du_cell_context& item) { return item.cgi == cgi; });
+    if (cell_it != it->second.served_cells.end()) {
+      du_context.served_cells.erase(cell_it);
     } else {
       logger.warning(
           "du_id={}: Failed to remove cell nci={}. Cause: It was not previously set", current_ctxt.id, cgi.nci);
@@ -147,7 +173,20 @@ du_configuration_manager_impl::handle_du_config_update(const du_configuration_co
   }
   // > Add new cells.
   for (const auto& cell_to_add : req.served_cells_to_add) {
-    du_context.gnb_du_served_cells_list.push_back(cell_to_add);
+    // Allocate cell index.
+    du_cell_index_t cell_idx = du_cell_index_t::invalid;
+    for (unsigned i = 0; i != MAX_NOF_DU_CELLS; ++i) {
+      if (std::none_of(du_context.served_cells.begin(),
+                       du_context.served_cells.end(),
+                       [i](const du_cell_context& item) { return item.cell_index == uint_to_du_cell_index(i); })) {
+        cell_idx = uint_to_du_cell_index(i);
+        break;
+      }
+    }
+    // Note: Existence of a free cell index should be guaranteed during validation.
+    srsran_assert(cell_idx != du_cell_index_t::invalid, "Failed to allocate cell index");
+
+    du_context.served_cells.push_back(create_du_cell_config(cell_idx, cell_to_add));
   }
   return &it->second;
 }
@@ -171,6 +210,11 @@ du_configuration_manager_impl::validate_new_du_config(const du_setup_request& re
       return error_type<du_setup_result::rejected>{
           du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Duplicate DU ID"}};
     }
+  }
+
+  if (req.gnb_du_served_cells_list.size() > MAX_NOF_DU_CELLS) {
+    return error_type<du_setup_result::rejected>{
+        du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Too many served cells"}};
   }
 
   // Validate served cell configurations.

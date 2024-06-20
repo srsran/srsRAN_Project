@@ -20,7 +20,7 @@ using namespace srs_cu_cp;
 
 void srsran::srs_cu_cp::generate_valid_f1_setup_request(du_setup_request& setup_request,
                                                         gnb_du_id_t       gnb_du_id,
-                                                        unsigned          nrcell_id,
+                                                        nr_cell_id_t      nrcell_id,
                                                         pci_t             pci)
 {
   f1ap_message f1setup_msg = test_helpers::generate_f1_setup_request(gnb_du_id, nrcell_id, pci);
@@ -73,15 +73,16 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(du_setup_r
 }
 
 ue_rrc_context_creation_request
-srsran::srs_cu_cp::generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id)
+srsran::srs_cu_cp::generate_ue_rrc_context_creation_request(ue_index_t ue_index, rnti_t c_rnti, nr_cell_id_t nrcell_id)
 {
   ue_rrc_context_creation_request req = {};
   req.ue_index                        = ue_index;
   req.c_rnti                          = c_rnti;
-  asn1::f1ap::nr_cgi_s asn1_cgi;
-  asn1_cgi.nr_cell_id.from_number(nrcell_id);
-  asn1_cgi.plmn_id.from_string("02f899");
-  req.cgi = cgi_from_asn1(asn1_cgi);
+  req.cgi.mcc                         = 61441;
+  req.cgi.mnc                         = 65281;
+  req.cgi.plmn                        = "00101";
+  req.cgi.plmn_hex                    = "00f110";
+  req.cgi.nci                         = nrcell_id;
   asn1::unbounded_octstring<true> tmp;
   tmp.from_string(
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"

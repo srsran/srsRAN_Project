@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/support/srsran_assert.h"
@@ -17,11 +18,26 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// Current configuration of the DU being managed by the CU-CP.
 struct du_configuration_context {
-  gnb_du_id_t                             id;
-  std::string                             name;
-  uint8_t                                 rrc_version = 2;
-  std::vector<cu_cp_du_served_cells_item> gnb_du_served_cells_list;
+  /// gNB-DU ID reported during F1 setup, as per TS 38.473.
+  gnb_du_id_t id;
+  /// gNB-DU name reported during F1 setup, as per TS 38.473.
+  std::string name;
+  uint8_t     rrc_version = 2;
+  /// Served cells for this DU.
+  std::vector<du_cell_context> served_cells;
+
+  const du_cell_context* find_cell(pci_t pci) const
+  {
+    auto it = std::find_if(served_cells.begin(), served_cells.end(), [&pci](const auto& c) { return c.pci == pci; });
+    return it != served_cells.end() ? &(*it) : nullptr;
+  }
+  const du_cell_context* find_cell(nr_cell_global_id_t cgi) const
+  {
+    auto it = std::find_if(served_cells.begin(), served_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
+    return it != served_cells.end() ? &(*it) : nullptr;
+  }
 };
 
 class du_configuration_handler
