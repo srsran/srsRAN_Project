@@ -31,14 +31,14 @@ private:
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
-    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, double fairness_coeff_, double exp_avg_alpha_) :
-      ue_index(ue_index_), cell_index(cell_index_), fairness_coeff(fairness_coeff_), exp_avg_alpha(exp_avg_alpha_)
+    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
+      ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
     {
     }
 
-    /// Returns average DL rate expressed in bytes per TTI (slot).
+    /// Returns average DL rate expressed in bytes per slot.
     [[nodiscard]] double dl_avg_rate() const { return dl_nof_samples == 0 ? 0 : dl_avg_rate_; }
-    /// Returns average UL rate expressed in bytes per TTI (slot).
+    /// Returns average UL rate expressed in bytes per slot.
     [[nodiscard]] double ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : ul_avg_rate_; }
 
     void compute_dl_prio(const ue& u);
@@ -47,10 +47,9 @@ private:
     void save_dl_alloc(uint32_t alloc_bytes);
     void save_ul_alloc(uint32_t alloc_bytes);
 
-    const du_ue_index_t   ue_index;
-    const du_cell_index_t cell_index;
-    const double          fairness_coeff;
-    const double          exp_avg_alpha;
+    const du_ue_index_t      ue_index;
+    const du_cell_index_t    cell_index;
+    const scheduler_time_pf* parent;
 
     /// DL priority value of the UE.
     double dl_prio = 0;
@@ -63,9 +62,9 @@ private:
     const ul_harq_process* ul_newtx_h = nullptr;
 
   private:
-    /// Average DL rate expressed in bytes per TTI (slot) experienced by UE.
+    /// Average DL rate expressed in bytes per slot experienced by UE.
     double dl_avg_rate_ = 0;
-    /// Average UL rate expressed in bytes per TTI (slot) experienced by UE.
+    /// Average UL rate expressed in bytes per slot experienced by UE.
     double ul_avg_rate_ = 0;
     /// Nof. DL samples over which average DL bitrate is computed.
     uint32_t dl_nof_samples = 0;
@@ -73,10 +72,10 @@ private:
     uint32_t ul_nof_samples = 0;
   };
 
-  /// \breif Attempts to allocate PDSCH for a UE.
+  /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status and nof. allocated bytes.
   alloc_result try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc);
-  /// \breif Attempts to allocate PUSCH for a UE.
+  /// \brief Attempts to allocate PUSCH for a UE.
   /// \return Returns allocation status and nof. allocated bytes.
   alloc_result try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc);
 

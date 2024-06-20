@@ -135,9 +135,9 @@ public:
 
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
-  /// \brief Returns an estimated DL rate in bytes per TTI (slot) based on the given input parameters.
+  /// \brief Returns an estimated DL rate in bytes per slot based on the given input parameters.
   double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
-  /// \brief Returns an estimated UL rate in bytes per TTI (slot) based on the given input parameters.
+  /// \brief Returns an estimated UL rate in bytes per slot based on the given input parameters.
   double get_estimated_ul_rate(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
 
 private:

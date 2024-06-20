@@ -43,8 +43,7 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     auto it = ue_history_db.find(u->ue_index);
     if (it == ue_history_db.end()) {
       // TODO: Consider other cells when carrier aggregation is supported.
-      ue_history_db.emplace(u->ue_index,
-                            ue_ctxt{u->ue_index, u->get_pcell().cell_index, fairness_coeff, exp_avg_alpha});
+      ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
       it = ue_history_db.find(u->ue_index);
     }
     it->second.compute_dl_prio(*u);
@@ -87,8 +86,7 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
     auto it = ue_history_db.find(u->ue_index);
     if (it == ue_history_db.end()) {
       // TODO: Consider other cells when carrier aggregation is supported.
-      ue_history_db.emplace(u->ue_index,
-                            ue_ctxt{u->ue_index, u->get_pcell().cell_index, fairness_coeff, exp_avg_alpha});
+      ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
       it = ue_history_db.find(u->ue_index);
     }
     it->second.compute_ul_prio(*u, res_grid);
@@ -208,9 +206,10 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
     }
 
     // Calculate DL PF priority.
+    // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
     double estimated_rate   = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
     double current_avg_rate = dl_avg_rate();
-    dl_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, fairness_coeff)
+    dl_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
                                                       : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
     return;
   }
@@ -274,9 +273,10 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
     sch_mcs_index mcs = ue_cc->link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
 
     // Calculate UL PF priority.
+    // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
     double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
     double current_avg_rate = ul_avg_rate();
-    ul_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, fairness_coeff)
+    ul_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
                                                       : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
     return;
   }
@@ -285,20 +285,20 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t alloc_bytes)
 {
-  if (dl_nof_samples < 1 / exp_avg_alpha) {
+  if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
     dl_avg_rate_ = dl_avg_rate_ + (alloc_bytes - dl_avg_rate_) / (dl_nof_samples + 1);
   } else {
-    dl_avg_rate_ = (1 - exp_avg_alpha) * dl_avg_rate_ + (exp_avg_alpha)*alloc_bytes;
+    dl_avg_rate_ = (1 - parent->exp_avg_alpha) * dl_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
   }
   dl_nof_samples++;
 }
 
 void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 {
-  if (ul_nof_samples < 1 / exp_avg_alpha) {
+  if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
     ul_avg_rate_ = ul_avg_rate_ + (alloc_bytes - ul_avg_rate_) / (ul_nof_samples + 1);
   } else {
-    ul_avg_rate_ = (1 - exp_avg_alpha) * ul_avg_rate_ + (exp_avg_alpha)*alloc_bytes;
+    ul_avg_rate_ = (1 - parent->exp_avg_alpha) * ul_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
   }
   ul_nof_samples++;
 }
