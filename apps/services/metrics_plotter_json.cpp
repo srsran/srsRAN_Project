@@ -49,12 +49,23 @@ DECLARE_METRIC_SET("ue_container",
                    metric_ul_nof_nok,
                    metric_bsr);
 
+/// cell-wide metrics.
+DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
+DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
+DECLARE_METRIC("latency_thres_count", metric_latency_thres_count, unsigned, "");
+DECLARE_METRIC_LIST("latency_thres_count", mlist_thres_count, std::vector<metric_latency_thres_count>);
+DECLARE_METRIC_SET("cell_metrics",
+                   cell_metrics,
+                   metric_error_indication_count,
+                   metric_average_latency,
+                   mlist_thres_count);
+
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
 DECLARE_METRIC_LIST("ue_list", mlist_ues, std::vector<mset_ue_container>);
 
 /// Metrics context.
-using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mlist_ues>;
+using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_metrics, mlist_ues>;
 
 } // namespace
 
@@ -92,6 +103,15 @@ void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
     output.write<metric_ul_nof_nok>(ue.ul_nof_nok);
     output.write<metric_bsr>(ue.bsr);
+  }
+
+  auto& cell_output = ctx.get<cell_metrics>();
+  cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
+  cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
+  for (unsigned count : metrics.latency_thres_count) {
+    cell_output.get<mlist_thres_count>().emplace_back();
+    auto& elem = cell_output.get<mlist_thres_count>().back();
+    elem.value = count;
   }
 
   // Log the context.

@@ -47,9 +47,12 @@ struct scheduler_ue_metrics {
 
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
-  unsigned                          nof_error_indications = 0;
-  std::chrono::microseconds         average_decision_latency{0};
-  std::vector<scheduler_ue_metrics> ue_metrics;
+  constexpr static std::array<unsigned, 2> latency_thres_usec = {100, 250};
+
+  unsigned                                        nof_error_indications = 0;
+  std::chrono::microseconds                       average_decision_latency{0};
+  std::array<unsigned, latency_thres_usec.size()> latency_thres_count{0};
+  std::vector<scheduler_ue_metrics>               ue_metrics;
 };
 
 /// \brief Notifier interface used by scheduler to report metrics.
