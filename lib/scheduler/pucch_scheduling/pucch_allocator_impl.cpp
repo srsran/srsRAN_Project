@@ -223,9 +223,10 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell
     return std::nullopt;
   }
 
-  const bool new_ue_grants_added = ue_grants_it == pucch_grants.end();
+  const bool new_ue_grant_added = ue_grants_it == pucch_grants.end();
 
-  if (new_ue_grants_added) {
+  // Keep track of whether a new ue_grant has been added; in case the function fails, remove it before exiting.
+  if (new_ue_grant_added) {
     pucch_grants.emplace_back(ue_grants{.rnti = rnti});
   }
 
@@ -239,7 +240,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_and_ded_harq_res(cell
     return pucch_common_info.value().pucch_res_indicator;
   }
 
-  if (new_ue_grants_added) {
+  if (new_ue_grant_added) {
     pucch_grants.pop_back();
   }
 
@@ -1654,11 +1655,14 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
                                           const ue_cell_configuration& ue_cell_cfg,
                                           bool                         preserve_res_indicator)
 {
+  // This function implements the multiplexing pseudo-code for PUCCH resources defined in Section 9.2.5, TS 38.213.
+  // Refer to paragraph starting as "Set Q to the set of resources for transmission of corresponding PUCCHs in a single
+  // slot without repetitions where".
   pucch_grant_list mplexed_grants;
 
   std::vector<pucch_grant> resource_set_q;
 
-  // Build the resource set Q.
+  // Build the resource set Q. Refer to Section 9.2.5, TS 38.213.
   if (candidate_grants.harq_resource.has_value()) {
     resource_set_q.emplace_back(candidate_grants.harq_resource.value());
   }
@@ -1680,7 +1684,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
 
   sort_res_set_q();
 
-  // This is the implementation of the sudo code for multiplexing the resources provided in Section 9.2.5, TS 38.213.
+  // This is the implementation of the pseudo-code for multiplexing the resources provided in Section 9.2.5, TS 38.213.
   unsigned o_cnt = 0;
   unsigned j_cnt = 0;
   while (j_cnt < resource_set_q.size()) {
@@ -1701,6 +1705,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
           return {};
         }
         // Remove the old resources that got merged from the set.
+        // TODO: check if, by using a different data structure, we can achive the deletion more efficiently.
         resource_set_q.erase(resource_set_q.begin() + j_cnt - o_cnt, resource_set_q.begin() + j_cnt + 1);
 
         // Add the new resource (resulting from the previous merge) to the set.
@@ -1718,8 +1723,8 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
     }
   }
 
-  // The PUCCH resource multiplexing algorithm above is specified for the UE. In the GNB, we need to add an extra
-  // resource Format 1 if slot there is a SR opportunity and HARQ bits to be reported with PUCCH Format 1.
+  // The PUCCH resource multiplexing algorithm above is specified from the UE's perspective. In the GNB, we need to add
+  // an extra resource Format 1 if slot there is a SR opportunity and HARQ bits to be reported with PUCCH Format 1.
   if (resource_set_q.size() == 1 and resource_set_q.front().get_format() == pucch_format::FORMAT_1 and
       resource_set_q.front().bits.harq_ack_nof_bits != 0 and
       resource_set_q.front().bits.sr_bits != sr_nof_bits::no_sr) {
@@ -1760,12 +1765,15 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
 {
   slot_point sl_ack = pucch_slot_alloc.slot;
 
-  // Find resource needed for the bits to be reported, assuming the resource is not multiplexed.
+  // Find the resources needed for the UCI bits to be reported, assuming the resources are not multiplexed.
   std::optional<pucch_grant_list> candidate_resources =
       get_pucch_res_pre_multiplexing(sl_ack, new_bits, current_grants, ue_cell_cfg);
   if (not candidate_resources.has_value()) {
     return std::nullopt;
   }
+
+  // TODO: Implement optimization step to avoid the multiplexing process if the UCI bits results in the same PUCCH
+  // grants as the previous allocation.
 
   // Multiplex the resources.
   pucch_grant_list multiplexed_grants = multiplex_resources(

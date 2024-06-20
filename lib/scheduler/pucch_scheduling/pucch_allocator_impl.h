@@ -173,57 +173,63 @@ private:
                                                                             const ue_cell_configuration&   ue_cell_cfg,
                                                                             const dci_context_information& dci_info);
 
-  // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
+  // Helper that allocates a NEW PUCCH HARQ grant (Format 0 or 1).
   std::optional<unsigned> allocate_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
                                               rnti_t                        crnti,
                                               const ue_cell_configuration&  ue_cell_cfg);
 
-  // Helper that allocates a new PUCCH HARQ grant (Format 2) for CSI.
+  // Helper that allocates a new PUCCH HARQ grant (Format 2/3/4) for CSI.
   void allocate_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
                           rnti_t                        crnti,
                           const ue_cell_configuration&  ue_cell_cfg,
                           unsigned                      csi_part1_bits);
 
+  // Implements the main steps of the multiplexing procedure as defined in TS 38.213, Section 9.2.5.
   std::optional<unsigned> multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
                                                        pucch_uci_bits                new_bits,
                                                        ue_grants&                    current_grants,
                                                        const ue_cell_configuration&  ue_cell_cfg,
                                                        bool                          preserve_res_indicator = false);
 
+  // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
                                                                  pucch_uci_bits               new_bits,
                                                                  ue_grants                    ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
 
+  // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
   pucch_grant_list multiplex_resources(slot_point                   sl_tx,
                                        rnti_t                       crnti,
                                        pucch_grant_list             candidate_grants,
                                        const ue_cell_configuration& ue_cell_cfg,
                                        bool                         preserve_res_indicator = false);
 
+  // Applies the multiplexing rules depending on the PUCCH resource format, as per TS 38.213, Section 9.2.5.1/2.
   std::optional<pucch_grant> merge_pucch_resources(span<const pucch_grant> resources_to_merge,
                                                    slot_point              slot_harq,
                                                    rnti_t                  crnti,
                                                    const pucch_config&     pucch_cfg,
                                                    bool                    preserve_res_indicator = false);
 
+  // Allocate the PUCCH PDUs in the scheduler output, depending on the new PUCCH grants to be transmitted, and depending
+  // on the PUCCH PDUs currently allocated.
   std::optional<unsigned> allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
                                           ue_grants&                    existing_pucchs,
                                           rnti_t                        crnti,
                                           pucch_grant_list              grants_to_tx,
                                           const ue_cell_configuration&  ue_cell_cfg);
 
-  // Fills the PUCCH HARQ grant for common resources.
+  // Fills the PUCCH HARQ PDU for common resources.
   void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);
 
-  // Fills the PUCCH Format 1 grant.
+  // Fills the PUCCH Format 1 PDU.
   void fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
                                     rnti_t                crnti,
                                     const pucch_resource& pucch_ded_res_cfg,
                                     unsigned              harq_ack_bits,
                                     sr_nof_bits           sr_bits);
 
-  // Fills the PUCCH Format 2 grant.
+  // Fills the PUCCH Format 2 PDU.
   void fill_pucch_format2_grant(pucch_info&                  pucch_grant,
                                 rnti_t                       crnti,
                                 const pucch_resource&        pucch_ded_res_cfg,
