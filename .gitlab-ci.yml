@@ -104,6 +104,9 @@ helm:
   stage: ci
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      variables:
+        CI_DESCRIPTION: Synchronization with srsGNB
+        NOTIFY_SLACK: "true"
   trigger:
     project: softwareradiosystems/ci/srsgnb_k8s
     branch: main
