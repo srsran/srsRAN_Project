@@ -118,4 +118,4 @@ INSTANTIATE_TEST_SUITE_P(ShortBlockDetectorTest,
 
 } // end namespace
 
-/// \encond
+/// \endcond

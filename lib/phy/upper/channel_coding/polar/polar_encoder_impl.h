@@ -8,6 +8,8 @@
  *
  */
 
+/// \file
+/// \brief Polar encoder - Declaration of implementation class.
 #pragma once
 
 #include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
@@ -15,6 +17,7 @@
 
 namespace srsran {
 
+/// Polar encoder implementation.
 class polar_encoder_impl : public polar_encoder
 {
 public:
