@@ -192,7 +192,7 @@ std::vector<execution_config_helper::single_worker> worker_manager::create_fapi_
 }
 
 std::vector<execution_config_helper::priority_multiqueue_worker>
-worker_manager::create_du_hi_slot_workers(unsigned nof_cells)
+worker_manager::create_du_hi_slot_workers(unsigned nof_cells, bool rt_mode)
 {
   using namespace execution_config_helper;
   std::vector<priority_multiqueue_worker> workers;
@@ -206,7 +206,7 @@ worker_manager::create_du_hi_slot_workers(unsigned nof_cells)
         std::chrono::microseconds{10},
         // Left empty, is filled later.
         {},
-        os_thread_realtime_priority::max() - 2,
+        rt_mode ? os_thread_realtime_priority::max() - 2 : os_thread_realtime_priority::no_realtime(),
         affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l2_cell)};
 
     workers.push_back(du_cell_worker);
@@ -244,7 +244,7 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
   }
 
   // Workers for handling cell slot indications of different cells.
-  auto slot_workers = create_du_hi_slot_workers(nof_cells);
+  auto slot_workers = create_du_hi_slot_workers(nof_cells, not is_blocking_mode_active);
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
     const std::string cell_id_str = std::to_string(cell_id);
 

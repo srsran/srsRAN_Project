@@ -130,7 +130,8 @@ private:
 
   std::vector<execution_config_helper::single_worker> create_fapi_workers(unsigned nof_cells);
 
-  std::vector<execution_config_helper::priority_multiqueue_worker> create_du_hi_slot_workers(unsigned nof_cells);
+  std::vector<execution_config_helper::priority_multiqueue_worker> create_du_hi_slot_workers(unsigned nof_cells,
+                                                                                             bool     rt_mode);
 
   /// Helper method that creates the Distributed Unit executors.
   void create_du_executors(bool                      is_blocking_mode_active,
