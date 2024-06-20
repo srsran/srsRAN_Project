@@ -52,9 +52,6 @@ public:
   void on_e1ap_connection_drop() override;
   bool e1ap_is_connected() override { return e1ap_connected; }
 
-  // cu_up_ngu_interface
-  gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override { return *ngu_demux; }
-
 private:
   void disconnect();
 

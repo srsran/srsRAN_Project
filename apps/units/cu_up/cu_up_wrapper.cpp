@@ -35,11 +35,6 @@ std::optional<uint16_t> cu_up_wrapper::get_n3_bind_port()
   return cu_up->get_n3_bind_port();
 }
 
-gtpu_demux_rx_upper_layer_interface& cu_up_wrapper::get_ngu_pdu_handler()
-{
-  return cu_up->get_ngu_pdu_handler();
-}
-
 e1ap_message_handler& cu_up_wrapper::get_e1ap_message_handler()
 {
   return cu_up->get_e1ap_message_handler();

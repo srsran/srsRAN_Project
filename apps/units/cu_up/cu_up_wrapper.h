@@ -34,9 +34,6 @@ public:
   std::optional<uint16_t> get_n3_bind_port() override;
 
   // See interface for documentation.
-  gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override;
-
-  // See interface for documentation.
   e1ap_message_handler& get_e1ap_message_handler() override;
 
   // See interface for documentation.

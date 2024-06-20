@@ -59,21 +59,10 @@ public:
   virtual bool e1ap_is_connected() = 0;
 };
 
-/// Interface to notify about GTP-U packets (from the NGU) to the CU-UP
-class cu_up_ngu_interface
+class cu_up_interface : public cu_up_e1ap_connection_notifier, public cu_up_e1ap_interface
 {
 public:
-  virtual ~cu_up_ngu_interface() = default;
-
-  /// \brief Get the NGu PDU handler interface.
-  /// \return The NGu PDU handler interface.
-  virtual gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() = 0;
-};
-
-class cu_up_interface : public cu_up_e1ap_connection_notifier, public cu_up_e1ap_interface, public cu_up_ngu_interface
-{
-public:
-  virtual ~cu_up_interface() = default;
+  ~cu_up_interface() override = default;
 
   virtual void start() = 0;
 
