@@ -56,6 +56,12 @@ struct du_setup_result {
   bool is_accepted() const { return std::holds_alternative<accepted>(result); }
 };
 
+struct du_config_update_request {
+  gnb_du_id_t                             gnb_du_id;
+  std::vector<cu_cp_du_served_cells_item> served_cells_to_add;
+  std::vector<nr_cell_global_id_t>        served_cells_to_rem;
+};
+
 /// \brief Interface used to handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class du_setup_notifier
 {
