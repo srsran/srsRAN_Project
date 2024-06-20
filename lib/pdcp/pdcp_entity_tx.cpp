@@ -133,7 +133,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   // Write to lower layers
-  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf));
+  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
 
   // Increment TX_NEXT
   st.tx_next++;
@@ -194,19 +194,24 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   logger.log_info("Reestablished PDCP. st={}", st);
 }
 
-void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)
+void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx)
 {
-  logger.log_info(
-      buf.begin(), buf.end(), "TX PDU. type=data pdu_len={} sn={} count={}", buf.length(), SN(count), count);
+  logger.log_info(buf.begin(),
+                  buf.end(),
+                  "TX PDU. type=data pdu_len={} sn={} count={} is_retx={}",
+                  buf.length(),
+                  SN(count),
+                  count,
+                  is_retx);
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  lower_dn.on_new_pdu(std::move(buf), is_retx);
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
   logger.log_info(buf.begin(), buf.end(), "TX PDU. type=ctrl pdu_len={}", buf.length());
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  lower_dn.on_new_pdu(std::move(buf), /* is_retx = */ false);
 }
 
 void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
@@ -444,7 +449,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       byte_buffer protected_buf = std::move(exp_buf.value());
-      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf));
+      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf), /* is_retx = */ true);
     }
   }
 }

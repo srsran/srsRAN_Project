@@ -32,6 +32,7 @@ class pdcp_tx_gen_frame : public pdcp_tx_lower_notifier, public pdcp_tx_upper_co
 {
 public:
   std::queue<byte_buffer> pdu_queue   = {};
+  std::queue<byte_buffer> retx_queue  = {};
   uint32_t                pdu_counter = 0;
 
   /// PDCP TX upper layer control notifier
@@ -39,7 +40,15 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu) final { pdu_queue.push(std::move(pdu)); }
+  void on_new_pdu(byte_buffer pdu, bool is_retx) final
+  {
+    if (is_retx) {
+      retx_queue.push(std::move(pdu));
+    } else {
+      pdu_queue.push(std::move(pdu));
+    }
+  }
+
   void on_discard_pdu(uint32_t pdcp_sn) final {}
 };
 

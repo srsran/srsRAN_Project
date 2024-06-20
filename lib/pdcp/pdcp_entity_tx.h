@@ -232,7 +232,7 @@ private:
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
 
-  void write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf);
+  void write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx);
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
