@@ -125,3 +125,13 @@ ue_index_t ue_manager::get_next_ue_index()
   }
   return INVALID_UE_INDEX;
 }
+
+void ue_manager::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
+{
+  ue_context* ue_ctx = find_ue(ue_index);
+  if (ue_ctx == nullptr) {
+    logger.error("Cannot schedule UE task, could not find UE. ue_index={}", ue_index);
+    return;
+  }
+  ue_ctx->task_sched.schedule(std::move(task));
+}

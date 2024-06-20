@@ -53,7 +53,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(e1_connection_client& e1_client_handler_,
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
-e1ap_cu_up_impl::~e1ap_cu_up_impl() {}
+e1ap_cu_up_impl::~e1ap_cu_up_impl() = default;
 
 bool e1ap_cu_up_impl::connect_to_cu_cp()
 {

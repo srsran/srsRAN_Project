@@ -17,11 +17,13 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 #include <utility>
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
+
+constexpr uint16_t UE_TASK_QUEUE_SIZE = 1024;
 
 /// \brief UE context setup configuration
 struct ue_context_cfg {
@@ -50,6 +52,7 @@ public:
              gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
              gtpu_demux_ctrl&                            gtpu_rx_demux_,
              dlt_pcap&                                   gtpu_pcap) :
+    task_sched(UE_TASK_QUEUE_SIZE),
     index(index_),
     cfg(std::move(cfg_)),
     logger("CU-UP", {index_}),
@@ -122,6 +125,8 @@ public:
 
   [[nodiscard]] const cu_up_ue_logger& get_logger() const { return logger; };
 
+  fifo_async_task_scheduler task_sched;
+
 private:
   ue_index_t      index;
   ue_context_cfg  cfg;
@@ -154,5 +159,4 @@ private:
   }
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

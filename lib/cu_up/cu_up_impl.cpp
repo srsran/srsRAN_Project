@@ -199,6 +199,11 @@ void cu_up::disconnect()
   e1ap_cu_up_ev_notifier.disconnect();
 }
 
+void cu_up::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
+{
+  ue_mng->schedule_ue_async_task(ue_index, std::move(task));
+}
+
 void process_successful_pdu_resource_setup_mod_outcome(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                     pdu_session_resource_setup_list,
