@@ -84,6 +84,22 @@ public:
   ///
   /// \param highest_sn Highest in a sequence delivered PDCP PDU sequence number.
   virtual void handle_delivery_notification(uint32_t highest_sn) = 0;
+
+  /// \brief Informs the PDCP entity about the highest PDCP PDU sequence number of the PDCP PDU that was retransmitted
+  /// by the lower layers (i.e. by the RLC AM).
+  ///
+  /// This notification is only applicable for RLC AM.
+  ///
+  /// \param highest_sn Highest retransmitted PDCP PDU sequence number.
+  virtual void handle_retransmit_notification(uint32_t highest_sn) = 0;
+
+  /// \brief Informs the PDCP about the highest PDCP PDU sequence number of the retransmitted PDCP PDU that was
+  /// successfully delivered in sequence towards the UE.
+  ///
+  /// This notification is only applicable for RLC AM.
+  ///
+  /// \param highest_sn Highest in a sequence delivered retransmitted PDCP PDU sequence number.
+  virtual void handle_delivery_retransmitted_notification(uint32_t highest_sn) = 0;
 };
 
 /// This interface represents the data entry point of the transmitting side of a PDCP entity.

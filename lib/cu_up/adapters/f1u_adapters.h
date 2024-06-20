@@ -43,9 +43,20 @@ public:
   {
     pdcp_tx_handler->handle_transmit_notification(highest_pdcp_sn);
   }
+
   void on_delivery_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_delivery_notification(highest_pdcp_sn);
+  }
+
+  void on_retransmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    pdcp_tx_handler->handle_retransmit_notification(highest_pdcp_sn);
+  }
+
+  void on_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override
+  {
+    pdcp_tx_handler->handle_delivery_retransmitted_notification(highest_pdcp_sn);
   }
 
 private:

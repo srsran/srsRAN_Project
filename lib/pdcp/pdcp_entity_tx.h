@@ -114,6 +114,8 @@ public:
 
   void handle_transmit_notification(uint32_t notif_sn) override;
   void handle_delivery_notification(uint32_t notif_sn) override;
+  void handle_retransmit_notification(uint32_t notif_sn) override;
+  void handle_delivery_retransmitted_notification(uint32_t notif_sn) override;
 
   /// \brief Evaluates a PDCP status report
   ///

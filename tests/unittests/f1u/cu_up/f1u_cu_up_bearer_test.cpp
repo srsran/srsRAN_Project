@@ -24,6 +24,8 @@ public:
   std::list<nru_dl_message>    tx_msg_list;
   std::list<uint32_t>          highest_transmitted_pdcp_sn_list;
   std::list<uint32_t>          highest_delivered_pdcp_sn_list;
+  std::list<uint32_t>          highest_retransmitted_pdcp_sn_list;
+  std::list<uint32_t>          highest_delivered_retransmitted_pdcp_sn_list;
   std::list<byte_buffer_chain> rx_sdu_list;
 
   // f1u_tx_pdu_notifier interface
@@ -37,6 +39,14 @@ public:
   void on_delivery_notification(uint32_t highest_pdcp_sn) override
   {
     highest_delivered_pdcp_sn_list.push_back(highest_pdcp_sn);
+  }
+  void on_retransmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    highest_retransmitted_pdcp_sn_list.push_back(highest_pdcp_sn);
+  }
+  void on_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override
+  {
+    highest_delivered_retransmitted_pdcp_sn_list.push_back(highest_pdcp_sn);
   }
 
   // f1u_rx_sdu_notifier interface

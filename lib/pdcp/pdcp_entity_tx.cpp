@@ -509,8 +509,40 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
-    logger.log_warning("Received PDU delivery notification on UM bearer. sn={}", notif_sn);
+    logger.log_error("Ignored unexpected PDU delivery notification in UM bearer. notif_sn={}", notif_sn);
   }
+}
+
+void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
+{
+  if (SRSRAN_UNLIKELY(is_srb())) {
+    logger.log_error("Ignored unexpected PDU retransmit notification in SRB. notif_sn={}", notif_sn);
+    return;
+  }
+  if (SRSRAN_UNLIKELY(is_um())) {
+    logger.log_error("Ignored unexpected PDU retransmit notification in UM bearer. notif_sn={}", notif_sn);
+    return;
+  }
+
+  // Nothing to do here
+  logger.log_debug("Ignored handling PDU retransmit notification for notif_sn={}", notif_sn);
+}
+
+void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
+{
+  if (SRSRAN_UNLIKELY(is_srb())) {
+    logger.log_error("Ignored unexpected PDU delivery retransmitted notification in SRB. notif_sn={}", notif_sn);
+    return;
+  }
+  if (SRSRAN_UNLIKELY(is_um())) {
+    logger.log_error("Ignored unexpected PDU delivery retransmitted notification in UM bearer. notif_sn={}", notif_sn);
+    return;
+  }
+
+  // TODO: Here we can stop discard timers of successfully retransmitted PDUs once they can be distinguished from
+  // origianls (e.g. if they are moved into a separate container upon retransmission).
+  // For now those retransmitted PDUs will be cleaned when handling delivery notification for following originals.
+  logger.log_debug("Ignored handling PDU delivery retransmitted notification for notif_sn={}", notif_sn);
 }
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
