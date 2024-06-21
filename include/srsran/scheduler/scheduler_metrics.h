@@ -47,6 +47,7 @@ struct scheduler_ue_metrics {
 
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
+  /// Latency thresholds for the latency_thres_count.
   constexpr static std::array<unsigned, 2> latency_thres_usec = {100, 250};
 
   unsigned                                        nof_error_indications = 0;
