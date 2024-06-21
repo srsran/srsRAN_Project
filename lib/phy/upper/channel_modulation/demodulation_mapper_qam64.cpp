@@ -11,6 +11,11 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+#define HAVE_AVX512
+#include "avx512_helpers.h"
+#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+
 #ifdef __AVX2__
 #include "avx2_helpers.h"
 #endif // __AVX2__
@@ -59,8 +64,111 @@ static const std::array<float, 8> SLOPE_45 =
     {4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42, 0, 0, 0, 0};
 static const std::array<float, 8> INTERCEPT_45 = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21, 0, 0, 0, 0};
 
-#ifdef __AVX2__
+#ifdef HAVE_AVX512
+static void demod_QAM64_avx512(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+{
+  __m512i rcp_noise_idx = _mm512_setr_epi32(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7);
 
+  // Load symbols.
+  __m512 symbols_0 = _mm512_loadu_ps(reinterpret_cast<const float*>(symbol + 0));
+  __m512 symbols_1 = _mm512_loadu_ps(reinterpret_cast<const float*>(symbol + 8));
+  __m512 symbols_2 = _mm512_loadu_ps(reinterpret_cast<const float*>(symbol + 16));
+  __m512 symbols_3 = _mm512_loadu_ps(reinterpret_cast<const float*>(symbol + 24));
+
+  // Load noise.
+  __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
+  __m256 noise_1 = _mm256_loadu_ps(noise_var + 8);
+  __m256 noise_2 = _mm256_loadu_ps(noise_var + 16);
+  __m256 noise_3 = _mm256_loadu_ps(noise_var + 24);
+
+  // Make noise reciprocal.
+  __m256 rcp_noise_si256_0 = mm512::safe_div(_mm256_set1_ps(1), noise_0);
+  __m256 rcp_noise_si256_1 = mm512::safe_div(_mm256_set1_ps(1), noise_1);
+  __m256 rcp_noise_si256_2 = mm512::safe_div(_mm256_set1_ps(1), noise_2);
+  __m256 rcp_noise_si256_3 = mm512::safe_div(_mm256_set1_ps(1), noise_3);
+
+  // Repeat noise values for real and imaginary parts and put the results in an AVX512 register.
+  __m512 rcp_noise_0 = _mm512_permutexvar_ps(rcp_noise_idx, _mm512_zextps256_ps512(rcp_noise_si256_0));
+  __m512 rcp_noise_1 = _mm512_permutexvar_ps(rcp_noise_idx, _mm512_zextps256_ps512(rcp_noise_si256_1));
+  __m512 rcp_noise_2 = _mm512_permutexvar_ps(rcp_noise_idx, _mm512_zextps256_ps512(rcp_noise_si256_2));
+  __m512 rcp_noise_3 = _mm512_permutexvar_ps(rcp_noise_idx, _mm512_zextps256_ps512(rcp_noise_si256_3));
+
+  // Calculate l_value for bits 0 and 1.
+  __m512 l_value_01_0 =
+      mm512::interval_function(symbols_0, rcp_noise_0, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m512 l_value_01_1 =
+      mm512::interval_function(symbols_1, rcp_noise_1, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m512 l_value_01_2 =
+      mm512::interval_function(symbols_2, rcp_noise_2, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m512 l_value_01_3 =
+      mm512::interval_function(symbols_3, rcp_noise_3, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+
+  // Calculate l_value for bits 2 and 3.
+  __m512 l_value_23_0 =
+      mm512::interval_function(symbols_0, rcp_noise_0, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m512 l_value_23_1 =
+      mm512::interval_function(symbols_1, rcp_noise_1, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m512 l_value_23_2 =
+      mm512::interval_function(symbols_2, rcp_noise_2, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m512 l_value_23_3 =
+      mm512::interval_function(symbols_3, rcp_noise_3, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+
+  // Calculate l_value for bits 4 and 5.
+  __m512 l_value_45_0 =
+      mm512::interval_function(symbols_0, rcp_noise_0, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m512 l_value_45_1 =
+      mm512::interval_function(symbols_1, rcp_noise_1, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m512 l_value_45_2 =
+      mm512::interval_function(symbols_2, rcp_noise_2, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m512 l_value_45_3 =
+      mm512::interval_function(symbols_3, rcp_noise_3, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+
+  // Quantize LLRs.
+  __m512i llr_i8_0 = mm512::quantize_ps(l_value_01_0, l_value_23_0, l_value_45_0, RANGE_LIMIT_FLOAT);
+  __m512i llr_i8_1 = mm512::quantize_ps(l_value_01_1, l_value_23_1, l_value_45_1, RANGE_LIMIT_FLOAT);
+  __m512i llr_i8_2 = mm512::quantize_ps(l_value_01_2, l_value_23_2, l_value_45_2, RANGE_LIMIT_FLOAT);
+  __m512i llr_i8_3 = mm512::quantize_ps(l_value_01_3, l_value_23_3, l_value_45_3, RANGE_LIMIT_FLOAT);
+
+  // Reorganize 8-bit LLRs in three 512-bit registers.
+  uint8_t idx0_[64] = {
+      0x00, 0x01, 0x04, 0x05, 0x08, 0x09, 0x02, 0x03, 0x06, 0x07, 0x0a, 0x0b, // 0 - 11
+      0x10, 0x11, 0x14, 0x15, 0x18, 0x19, 0x12, 0x13, 0x16, 0x17, 0x1a, 0x1b, // 12 - 23
+      0x20, 0x21, 0x24, 0x25, 0x28, 0x29, 0x22, 0x23, 0x26, 0x27, 0x2a, 0x2b, // 24 - 35
+      0x30, 0x31, 0x34, 0x35, 0x38, 0x39, 0x32, 0x33, 0x36, 0x37, 0x3a, 0x3b, // 36 - 47
+      0x40, 0x41, 0x44, 0x45, 0x48, 0x49, 0x42, 0x43, 0x46, 0x47, 0x4a, 0x4b, // 48 - 59
+      0x50, 0x51, 0x54, 0x55                                                  // 60 - 63
+  };
+  uint8_t idx1_[64] = {
+      0x18, 0x19, 0x12, 0x13, 0x16, 0x17, 0x1a, 0x1b,                         // 0 - 7
+      0x20, 0x21, 0x24, 0x25, 0x28, 0x29, 0x22, 0x23, 0x26, 0x27, 0x2a, 0x2b, // 8 - 19
+      0x30, 0x31, 0x34, 0x35, 0x38, 0x39, 0x32, 0x33, 0x36, 0x37, 0x3a, 0x3b, // 20 - 31
+      0x40, 0x41, 0x44, 0x45, 0x48, 0x49, 0x42, 0x43, 0x46, 0x47, 0x4a, 0x4b, // 32 - 43
+      0x50, 0x51, 0x54, 0x55, 0x58, 0x59, 0x52, 0x53, 0x56, 0x57, 0x5a, 0x5b, // 44 - 55
+      0x60, 0x61, 0x64, 0x65, 0x68, 0x69, 0x62, 0x63                          // 56 - 63
+  };
+  uint8_t idx2_[64] = {
+      0x26, 0x27, 0x2a, 0x2b,                                                 // 0 - 3
+      0x30, 0x31, 0x34, 0x35, 0x38, 0x39, 0x32, 0x33, 0x36, 0x37, 0x3a, 0x3b, // 4 - 15
+      0x40, 0x41, 0x44, 0x45, 0x48, 0x49, 0x42, 0x43, 0x46, 0x47, 0x4a, 0x4b, // 16 - 27
+      0x50, 0x51, 0x54, 0x55, 0x58, 0x59, 0x52, 0x53, 0x56, 0x57, 0x5a, 0x5b, // 28 - 39
+      0x60, 0x61, 0x64, 0x65, 0x68, 0x69, 0x62, 0x63, 0x66, 0x67, 0x6a, 0x6b, // 40 - 41
+      0x70, 0x71, 0x74, 0x75, 0x78, 0x79, 0x72, 0x73, 0x76, 0x77, 0x7a, 0x7b  // 52 - 63
+  };
+  __m512i idx0      = _mm512_loadu_si512(idx0_);
+  __m512i idx1      = _mm512_loadu_si512(idx1_);
+  __m512i idx2      = _mm512_loadu_si512(idx2_);
+  __m512i llr_i8_0_ = _mm512_permutex2var_epi8(llr_i8_0, idx0, llr_i8_1);
+  __m512i llr_i8_1_ = _mm512_permutex2var_epi8(llr_i8_1, idx1, llr_i8_2);
+  __m512i llr_i8_2_ = _mm512_permutex2var_epi8(llr_i8_2, idx2, llr_i8_3);
+
+  // Store results.
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(llr + 0), llr_i8_0_);
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(llr + 64), llr_i8_1_);
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(llr + 128), llr_i8_2_);
+}
+#endif // HAVE_AVX512
+
+#ifdef __AVX2__
 static void demod_QAM64_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
   // Load symbols.
@@ -278,6 +386,18 @@ void srsran::demodulate_soft_QAM64(span<log_likelihood_ratio> llrs,
   const float*          noise_it     = noise_vars.begin();
   log_likelihood_ratio* llr_it       = llrs.begin();
   std::size_t           symbol_index = 0;
+
+#ifdef HAVE_AVX512
+  // For AVX512, it generates 192 LLRs simultaneously. The input is read in batches of 32 symbols.
+  for (std::size_t symbol_index_end = (symbols.size() / 32) * 32; symbol_index != symbol_index_end;
+       symbol_index += 32) {
+    demod_QAM64_avx512(llr_it, symbols_it, noise_it);
+
+    llr_it += 192;
+    symbols_it += 32;
+    noise_it += 32;
+  }
+#endif // HAVE_AVX512
 
 #ifdef __AVX2__
   // For AVX2, it generates 96 LLRs simultaneously. The input is read in batches of 16 symbols.
