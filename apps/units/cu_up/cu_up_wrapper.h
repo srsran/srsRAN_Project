@@ -53,7 +53,7 @@ public:
   handle_bearer_context_setup_request(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override;
 
   // See interface for documentation.
-  srs_cu_up::e1ap_bearer_context_modification_response
+  async_task<srs_cu_up::e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const srs_cu_up::e1ap_bearer_context_modification_request& msg) override;
 
   /// \brief Schedule an async task for an UE.

@@ -241,8 +241,6 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.set_protocol();
 
-  e1ap_bearer_context_modification_request bearer_context_mod = {};
-
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     logger.warning("Sending BearerContextModificationFailure. UE context not available");
     pdu_notifier->on_new_message(e1ap_msg);
@@ -251,10 +249,12 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
 
-  cu_up_notifier.on_schedule_ue_async_task(ue_ctxt.ue_ids.ue_index,
-                                           launch_async<bearer_context_modification_procedure>());
-
-  bearer_context_mod.ue_index = ue_ctxt.ue_ids.ue_index;
+  cu_up_notifier.on_schedule_ue_async_task(
+      ue_ctxt.ue_ids.ue_index,
+      launch_async<bearer_context_modification_procedure>(ue_ctxt, msg, *pdu_notifier, cu_up_notifier));
+  /*
+  e1ap_bearer_context_modification_request bearer_context_mod = {};
+  bearer_context_mod.ue_index                                 = ue_ctxt.ue_ids.ue_index;
 
   // security info
   if (msg->security_info_present) {
@@ -319,6 +319,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");
     pdu_notifier->on_new_message(e1ap_msg);
   }
+  */
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)

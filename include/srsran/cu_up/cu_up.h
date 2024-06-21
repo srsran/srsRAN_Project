@@ -44,7 +44,7 @@ public:
   /// \brief Create a new UE context and handle bearer modification request.
   /// \param[in] msg The original bearer modification request.
   /// \return Returns message containing the index of the created UE and all response/failure message.
-  virtual e1ap_bearer_context_modification_response
+  virtual async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) = 0;
 
   /// \brief Handle bearer release command and remove the associated UE context.

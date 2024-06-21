@@ -90,7 +90,7 @@ public:
     return response;
   }
 
-  srs_cu_up::e1ap_bearer_context_modification_response on_bearer_context_modification_request_received(
+  async_task<srs_cu_up::e1ap_bearer_context_modification_response> on_bearer_context_modification_request_received(
       const srs_cu_up::e1ap_bearer_context_modification_request& msg) override
   {
     logger.info("Received BearerContextModificationRequest");
@@ -141,7 +141,7 @@ public:
     response.ue_index                                             = ue_index;
     response.success                                              = true;
 
-    return response;
+    return {};
   }
 
   void on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override

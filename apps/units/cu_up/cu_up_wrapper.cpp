@@ -66,7 +66,9 @@ cu_up_wrapper::handle_bearer_context_setup_request(const srs_cu_up::e1ap_bearer_
   return cu_up->handle_bearer_context_setup_request(msg);
 }
 
-srs_cu_up::e1ap_bearer_context_modification_response cu_up_wrapper::handle_bearer_context_modification_request(
+// TODO remove from public interface
+async_task<srs_cu_up::e1ap_bearer_context_modification_response>
+cu_up_wrapper::handle_bearer_context_modification_request(
     const srs_cu_up::e1ap_bearer_context_modification_request& msg)
 {
   return cu_up->handle_bearer_context_modification_request(msg);

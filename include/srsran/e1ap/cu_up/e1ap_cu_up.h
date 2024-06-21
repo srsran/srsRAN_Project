@@ -65,7 +65,7 @@ public:
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context modification message.
   /// \return Returns a bearer context response message containing the index of the created UE context.
-  virtual e1ap_bearer_context_modification_response
+  virtual async_task<e1ap_bearer_context_modification_response>
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) = 0;
 
   /// \brief Notifies the UE manager to release a UE context.

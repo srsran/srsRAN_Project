@@ -33,7 +33,7 @@ public:
     return cu_up_handler->handle_bearer_context_setup_request(msg);
   }
 
-  e1ap_bearer_context_modification_response
+  async_task<e1ap_bearer_context_modification_response>
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) override
   {
     if (cu_up_handler == nullptr) {

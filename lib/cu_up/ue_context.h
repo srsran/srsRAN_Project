@@ -53,6 +53,7 @@ public:
              gtpu_demux_ctrl&                            gtpu_rx_demux_,
              dlt_pcap&                                   gtpu_pcap) :
     task_sched(UE_TASK_QUEUE_SIZE),
+    ue_exec_mapper(std::move(ue_exec_mapper_)),
     index(index_),
     cfg(std::move(cfg_)),
     logger("CU-UP", {index_}),
@@ -72,12 +73,11 @@ public:
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
                         gtpu_rx_demux_,
-                        ue_exec_mapper_->dl_pdu_executor(),
-                        ue_exec_mapper_->ul_pdu_executor(),
-                        ue_exec_mapper_->ctrl_executor(),
-                        ue_exec_mapper_->crypto_executor(),
+                        ue_exec_mapper->dl_pdu_executor(),
+                        ue_exec_mapper->ul_pdu_executor(),
+                        ue_exec_mapper->ctrl_executor(),
+                        ue_exec_mapper->crypto_executor(),
                         gtpu_pcap),
-    ue_exec_mapper(std::move(ue_exec_mapper_)),
     ue_dl_timer_factory(ue_dl_timer_factory_),
     ue_ul_timer_factory(ue_ul_timer_factory_),
     ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
@@ -127,6 +127,8 @@ public:
 
   fifo_async_task_scheduler task_sched;
 
+  std::unique_ptr<ue_executor_mapper> ue_exec_mapper;
+
 private:
   ue_index_t      index;
   ue_context_cfg  cfg;
@@ -134,8 +136,6 @@ private:
 
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
-
-  std::unique_ptr<ue_executor_mapper> ue_exec_mapper;
 
   timer_factory ue_dl_timer_factory;
   timer_factory ue_ul_timer_factory;
