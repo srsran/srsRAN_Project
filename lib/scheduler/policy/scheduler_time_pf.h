@@ -60,6 +60,8 @@ private:
     const dl_harq_process* dl_newtx_h = nullptr;
     const ul_harq_process* ul_retx_h  = nullptr;
     const ul_harq_process* ul_newtx_h = nullptr;
+    /// Flag indicating whether SR indication from the UE is received or not.
+    bool sr_ind_received = false;
 
   private:
     /// Average DL rate expressed in bytes per slot experienced by UE.

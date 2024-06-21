@@ -221,8 +221,11 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
     // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
     const double estimated_rate   = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
     const double current_avg_rate = dl_avg_rate();
-    dl_prio = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
-                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
+    if (current_avg_rate != 0) {
+      dl_prio = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
+    } else {
+      dl_prio = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+    }
     return;
   }
   dl_newtx_h = nullptr;
@@ -233,14 +236,16 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
   ul_retx_h            = nullptr;
   ul_newtx_h           = nullptr;
   ul_prio              = 0;
+  sr_ind_received      = false;
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
     return;
   }
 
   // Calculate UL priority.
-  ul_retx_h  = ue_cc->harqs.find_pending_ul_retx();
-  ul_newtx_h = ue_cc->harqs.find_empty_ul_harq();
+  ul_retx_h       = ue_cc->harqs.find_pending_ul_retx();
+  ul_newtx_h      = ue_cc->harqs.find_empty_ul_harq();
+  sr_ind_received = u.has_pending_sr();
   if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -288,8 +293,11 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
     // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
     const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
     const double current_avg_rate = ul_avg_rate();
-    ul_prio = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
-                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
+    if (current_avg_rate != 0) {
+      ul_prio = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
+    } else {
+      ul_prio = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+    }
     return;
   }
   ul_newtx_h = nullptr;
@@ -298,6 +306,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t alloc_bytes)
 {
   if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
+    // Fast start before transitioning to exponential average.
     dl_avg_rate_ = dl_avg_rate_ + (alloc_bytes - dl_avg_rate_) / (dl_nof_samples + 1);
   } else {
     dl_avg_rate_ = (1 - parent->exp_avg_alpha) * dl_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
@@ -308,6 +317,7 @@ void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t alloc_bytes)
 void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 {
   if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
+    // Fast start before transitioning to exponential average.
     ul_avg_rate_ = ul_avg_rate_ + (alloc_bytes - ul_avg_rate_) / (ul_nof_samples + 1);
   } else {
     ul_avg_rate_ = (1 - parent->exp_avg_alpha) * ul_avg_rate_ + (parent->exp_avg_alpha) * alloc_bytes;
@@ -318,15 +328,28 @@ void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
 bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
                                                        const scheduler_time_pf::ue_ctxt* rhs) const
 {
-  bool is_lhs_retx = lhs->dl_retx_h != nullptr;
-  bool is_rhs_retx = rhs->dl_retx_h != nullptr;
+  const bool is_lhs_retx = lhs->dl_retx_h != nullptr;
+  const bool is_rhs_retx = rhs->dl_retx_h != nullptr;
   return (not is_lhs_retx and is_rhs_retx) or (is_lhs_retx == is_rhs_retx and lhs->dl_prio < rhs->dl_prio);
 }
 
 bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
                                                        const scheduler_time_pf::ue_ctxt* rhs) const
 {
-  bool is_lhs_retx = lhs->ul_retx_h != nullptr;
-  bool is_rhs_retx = rhs->ul_retx_h != nullptr;
-  return (not is_lhs_retx and is_rhs_retx) or (is_lhs_retx == is_rhs_retx and lhs->ul_prio < rhs->ul_prio);
+  const bool is_lhs_retx = lhs->ul_retx_h != nullptr;
+  const bool is_rhs_retx = rhs->ul_retx_h != nullptr;
+  if (not is_lhs_retx and is_rhs_retx) {
+    return true;
+  }
+  if (is_lhs_retx == is_rhs_retx) {
+    if (not is_lhs_retx) {
+      // NewTx and SR indication received for one of the UEs.
+      if (not lhs->sr_ind_received and rhs->sr_ind_received) {
+        return true;
+      }
+    }
+    // All other cases compare priorities.
+    return lhs->ul_prio < rhs->ul_prio;
+  }
+  return false;
 }
