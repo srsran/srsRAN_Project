@@ -103,7 +103,7 @@ trigger docker:
 helm:
   stage: ci
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
       variables:
         CI_DESCRIPTION: Synchronization with srsGNB
         NOTIFY_SLACK: "true"
