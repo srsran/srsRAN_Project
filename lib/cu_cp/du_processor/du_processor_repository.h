@@ -17,7 +17,7 @@
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
 #include "../ue_manager/ue_manager_impl.h"
-#include "du_configuration_manager_impl.h"
+#include "du_configuration_manager.h"
 #include "du_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
@@ -98,7 +98,7 @@ private:
 
   std::map<du_index_t, du_context> du_db;
 
-  du_configuration_manager_impl du_cfg_mng;
+  du_configuration_manager du_cfg_mng;
 };
 
 } // namespace srs_cu_cp

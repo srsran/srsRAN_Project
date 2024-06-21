@@ -26,14 +26,14 @@ struct du_configuration_context {
   std::string name;
   uint8_t     rrc_version = 2;
   /// Served cells for this DU.
-  std::vector<du_cell_context> served_cells;
+  std::vector<du_cell_configuration> served_cells;
 
-  const du_cell_context* find_cell(pci_t pci) const
+  const du_cell_configuration* find_cell(pci_t pci) const
   {
     auto it = std::find_if(served_cells.begin(), served_cells.end(), [&pci](const auto& c) { return c.pci == pci; });
     return it != served_cells.end() ? &(*it) : nullptr;
   }
-  const du_cell_context* find_cell(nr_cell_global_id_t cgi) const
+  const du_cell_configuration* find_cell(nr_cell_global_id_t cgi) const
   {
     auto it = std::find_if(served_cells.begin(), served_cells.end(), [&cgi](const auto& c) { return c.cgi == cgi; });
     return it != served_cells.end() ? &(*it) : nullptr;

@@ -20,10 +20,10 @@ namespace srs_cu_cp {
 struct rrc_cfg_t;
 
 /// Validator and repository of configurations for DUs handled by the CU-CP.
-class du_configuration_manager_impl
+class du_configuration_manager
 {
 public:
-  du_configuration_manager_impl(const rrc_cfg_t& rrc_cfg_);
+  du_configuration_manager(const rrc_cfg_t& rrc_cfg_);
 
   /// Create a new DU configuration handler.
   std::unique_ptr<du_configuration_handler> create_du_handler();

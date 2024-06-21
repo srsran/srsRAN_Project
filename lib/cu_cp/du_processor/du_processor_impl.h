@@ -119,9 +119,6 @@ private:
 
   std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
 
-  // timers associated with a given DU.
-  timer_manager timer_db;
-
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
 

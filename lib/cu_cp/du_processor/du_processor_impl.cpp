@@ -84,7 +84,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   }
 
   const du_configuration_context& du_config = cfg.du_cfg_hdlr->get_context();
-  for (const du_cell_context& cell : du_config.served_cells) {
+  for (const du_cell_configuration& cell : du_config.served_cells) {
     // Add cell to lookup
     if (tac_to_nr_cgi.find(cell.tac) == tac_to_nr_cgi.end()) {
       tac_to_nr_cgi.emplace(cell.tac, std::vector<nr_cell_global_id_t>{cell.cgi});
@@ -127,7 +127,7 @@ bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                std::forward_as_tuple(ue.get_ue_index()),
                                std::forward_as_tuple(f1ap->get_f1ap_rrc_message_handler(), ue.get_ue_index()));
 
-  const du_cell_context& cell = *cfg.du_cfg_hdlr->get_context().find_cell(cgi);
+  const du_cell_configuration& cell = *cfg.du_cfg_hdlr->get_context().find_cell(cgi);
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
@@ -171,7 +171,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   srsran_assert(config_helpers::is_valid(req.cgi), "ue={}: Invalid CGI", req.ue_index);
 
   // Check that creation message is valid
-  const du_cell_context* pcell = cfg.du_cfg_hdlr->get_context().find_cell(req.cgi);
+  const du_cell_configuration* pcell = cfg.du_cfg_hdlr->get_context().find_cell(req.cgi);
   if (pcell == nullptr) {
     srsran_assert(ue_mng.find_ue_task_scheduler(req.ue_index) != nullptr, "ue={}: Could not find UE", req.ue_index);
     logger.warning("ue={}: Could not find cell with NCI={}", req.ue_index, req.cgi.nci);
@@ -354,7 +354,7 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
 
 std::optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
 {
-  const du_cell_context* cell = cfg.du_cfg_hdlr->get_context().find_cell(pci);
+  const du_cell_configuration* cell = cfg.du_cfg_hdlr->get_context().find_cell(pci);
   if (cell != nullptr) {
     return cell->cgi;
   }

@@ -19,7 +19,7 @@ set(SOURCES
       cu_up_processor/cu_up_processor_impl.cpp
       cu_up_processor/cu_up_processor_factory.cpp
       cu_up_processor/cu_up_processor_repository.cpp
-      du_processor/du_configuration_manager_impl.cpp
+      du_processor/du_configuration_manager.cpp
       du_processor/du_processor_impl.cpp
       du_processor/du_processor_factory.cpp
       du_processor/du_processor_repository.cpp

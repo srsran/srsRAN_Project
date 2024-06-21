@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/cu_cp/du_processor/du_configuration_manager_impl.h"
+#include "lib/cu_cp/du_processor/du_configuration_manager.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_config.h"
 #include <gtest/gtest.h>
@@ -54,8 +54,8 @@ class du_configuration_manager_test : public ::testing::Test
 public:
   du_configuration_manager_test() : du_cfg_mng(rrc_cfg) {}
 
-  rrc_cfg_t                     rrc_cfg = create_basic_rrc_config();
-  du_configuration_manager_impl du_cfg_mng;
+  rrc_cfg_t                rrc_cfg = create_basic_rrc_config();
+  du_configuration_manager du_cfg_mng;
 };
 
 TEST_F(du_configuration_manager_test, when_instance_created_then_it_has_no_dus)

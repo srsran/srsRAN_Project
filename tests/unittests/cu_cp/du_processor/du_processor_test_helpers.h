@@ -13,7 +13,7 @@
 #include "../du_processor_test_messages.h"
 #include "../test_helpers.h"
 #include "du_processor_test_helpers.h"
-#include "lib/cu_cp/du_processor/du_configuration_manager_impl.h"
+#include "lib/cu_cp/du_processor/du_configuration_manager.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
@@ -58,7 +58,7 @@ protected:
   dummy_rrc_ue_cu_cp_adapter             rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter             rrc_du_cu_cp_notifier;
   std::unique_ptr<common_task_scheduler> common_task_sched;
-  du_configuration_manager_impl          du_cfg_mgr;
+  du_configuration_manager               du_cfg_mgr;
   std::unique_ptr<du_processor>          du_processor_obj;
 
   async_task<ue_index_t>                        t;

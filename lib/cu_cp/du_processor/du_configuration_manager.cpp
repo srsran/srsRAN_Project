@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_configuration_manager_impl.h"
+#include "du_configuration_manager.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_config.h"
 
@@ -37,10 +37,10 @@ static error_type<du_setup_result::rejected> validate_cell_config(const cu_cp_du
   return {};
 }
 
-class du_configuration_manager_impl::du_configuration_handler_impl : public du_configuration_handler
+class du_configuration_manager::du_configuration_handler_impl : public du_configuration_handler
 {
 public:
-  du_configuration_handler_impl(du_configuration_manager_impl& parent_) : parent(parent_) {}
+  du_configuration_handler_impl(du_configuration_manager& parent_) : parent(parent_) {}
   ~du_configuration_handler_impl() override
   {
     if (ctxt != nullptr) {
@@ -79,23 +79,24 @@ public:
   }
 
 private:
-  du_configuration_manager_impl& parent;
+  du_configuration_manager& parent;
 };
 
-du_configuration_manager_impl::du_configuration_manager_impl(const rrc_cfg_t& rrc_cfg_) :
+du_configuration_manager::du_configuration_manager(const rrc_cfg_t& rrc_cfg_) :
   rrc_cfg(rrc_cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
-std::unique_ptr<du_configuration_handler> du_configuration_manager_impl::create_du_handler()
+std::unique_ptr<du_configuration_handler> du_configuration_manager::create_du_handler()
 {
   return std::make_unique<du_configuration_handler_impl>(*this);
 }
 
-static du_cell_context create_du_cell_config(du_cell_index_t cell_idx, const cu_cp_du_served_cells_item& f1ap_cell_cfg)
+static du_cell_configuration create_du_cell_config(du_cell_index_t                   cell_idx,
+                                                   const cu_cp_du_served_cells_item& f1ap_cell_cfg)
 {
-  const auto&     cell_req = f1ap_cell_cfg.served_cell_info;
-  du_cell_context cell;
+  const auto&           cell_req = f1ap_cell_cfg.served_cell_info;
+  du_cell_configuration cell;
   cell.cell_index = cell_idx;
   cell.cgi        = cell_req.nr_cgi;
   cell.tac        = cell_req.five_gs_tac.value();
@@ -117,7 +118,7 @@ static du_cell_context create_du_cell_config(du_cell_index_t cell_idx, const cu_
 }
 
 expected<const du_configuration_context*, du_setup_result::rejected>
-du_configuration_manager_impl::add_du_config(const du_setup_request& req)
+du_configuration_manager::add_du_config(const du_setup_request& req)
 {
   // Validate config.
   auto result = validate_new_du_config(req);
@@ -139,8 +140,8 @@ du_configuration_manager_impl::add_du_config(const du_setup_request& req)
 }
 
 expected<const du_configuration_context*, du_setup_result::rejected>
-du_configuration_manager_impl::handle_du_config_update(const du_configuration_context& current_ctxt,
-                                                       const du_config_update_request& req)
+du_configuration_manager::handle_du_config_update(const du_configuration_context& current_ctxt,
+                                                  const du_config_update_request& req)
 {
   if (current_ctxt.id != req.gnb_du_id) {
     logger.warning("du_id={}: Failed to update DU. Cause: DU ID mismatch", current_ctxt.id);
@@ -163,7 +164,7 @@ du_configuration_manager_impl::handle_du_config_update(const du_configuration_co
   for (const nr_cell_global_id_t& cgi : req.served_cells_to_rem) {
     auto cell_it = std::find_if(it->second.served_cells.begin(),
                                 it->second.served_cells.end(),
-                                [&cgi](const du_cell_context& item) { return item.cgi == cgi; });
+                                [&cgi](const du_cell_configuration& item) { return item.cgi == cgi; });
     if (cell_it != it->second.served_cells.end()) {
       du_context.served_cells.erase(cell_it);
     } else {
@@ -176,9 +177,10 @@ du_configuration_manager_impl::handle_du_config_update(const du_configuration_co
     // Allocate cell index.
     du_cell_index_t cell_idx = du_cell_index_t::invalid;
     for (unsigned i = 0; i != MAX_NOF_DU_CELLS; ++i) {
-      if (std::none_of(du_context.served_cells.begin(),
-                       du_context.served_cells.end(),
-                       [i](const du_cell_context& item) { return item.cell_index == uint_to_du_cell_index(i); })) {
+      if (std::none_of(
+              du_context.served_cells.begin(), du_context.served_cells.end(), [i](const du_cell_configuration& item) {
+                return item.cell_index == uint_to_du_cell_index(i);
+              })) {
         cell_idx = uint_to_du_cell_index(i);
         break;
       }
@@ -191,7 +193,7 @@ du_configuration_manager_impl::handle_du_config_update(const du_configuration_co
   return &it->second;
 }
 
-void du_configuration_manager_impl::rem_du(gnb_du_id_t du_id)
+void du_configuration_manager::rem_du(gnb_du_id_t du_id)
 {
   auto it = dus.find(du_id);
   if (it == dus.end()) {
@@ -202,7 +204,7 @@ void du_configuration_manager_impl::rem_du(gnb_du_id_t du_id)
 }
 
 error_type<du_setup_result::rejected>
-du_configuration_manager_impl::validate_new_du_config(const du_setup_request& req) const
+du_configuration_manager::validate_new_du_config(const du_setup_request& req) const
 {
   // Ensure the DU config does not collide with other DUs.
   for (const auto& [du_id, du_cfg] : dus) {
@@ -229,14 +231,14 @@ du_configuration_manager_impl::validate_new_du_config(const du_setup_request& re
 }
 
 error_type<du_setup_result::rejected>
-du_configuration_manager_impl::validate_du_config_update(const du_config_update_request& req) const
+du_configuration_manager::validate_du_config_update(const du_config_update_request& req) const
 {
   // TODO
   return {};
 }
 
 error_type<du_setup_result::rejected>
-du_configuration_manager_impl::validate_cell_config_request(const cu_cp_du_served_cells_item& cell_req) const
+du_configuration_manager::validate_cell_config_request(const cu_cp_du_served_cells_item& cell_req) const
 {
   auto ret = validate_cell_config(cell_req);
   if (ret.is_error()) {
