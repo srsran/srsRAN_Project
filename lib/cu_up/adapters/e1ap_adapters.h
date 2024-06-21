@@ -50,6 +50,14 @@ public:
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 
+  void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override
+  {
+    if (cu_up_handler == nullptr) {
+      return;
+    }
+    return cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
+  }
+
 private:
   cu_up_e1ap_interface* cu_up_handler = nullptr;
 };

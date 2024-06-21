@@ -10,6 +10,7 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../common/log_helpers.h"
+#include "cu_up/procedures/bearer_context_modification_procedure.h"
 #include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
@@ -249,6 +250,9 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   }
 
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
+
+  cu_up_notifier.on_schedule_ue_async_task(ue_ctxt.ue_ids.ue_index,
+                                           launch_async<bearer_context_modification_procedure>());
 
   bearer_context_mod.ue_index = ue_ctxt.ue_ids.ue_index;
 

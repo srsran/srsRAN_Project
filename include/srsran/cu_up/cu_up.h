@@ -57,6 +57,10 @@ public:
   /// \brief Get the state of the E1AP connection.
   /// \return True if E1AP is connected, false otherwise.
   virtual bool e1ap_is_connected() = 0;
+
+  /// \brief Schedule an async task for an UE.
+  /// Can be used to initiate UE routines.
+  virtual void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 class cu_up_interface : public cu_up_e1ap_connection_notifier, public cu_up_e1ap_interface

@@ -11,6 +11,7 @@ add_library(srsran_e1ap_cu_up
         e1ap_cu_up_factory.cpp
         e1ap_cu_up_impl.cpp
         e1ap_cu_up_connection_handler.cpp
-        procedures/e1ap_cu_up_setup_procedure.cpp)
+        procedures/e1ap_cu_up_setup_procedure.cpp
+        procedures/bearer_context_modification_procedure.cpp)
 target_include_directories(srsran_e1ap_cu_up PRIVATE ..)
 target_link_libraries(srsran_e1ap_cu_up e1ap_asn1 srsran_e1ap_common)

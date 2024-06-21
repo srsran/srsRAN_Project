@@ -148,9 +148,9 @@ public:
   {
     logger.info("Received BearerContextReleaseCommand");
     last_bearer_context_release_command = msg;
-
-    return;
   }
+
+  void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index_, async_task<void> task) override {}
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
 

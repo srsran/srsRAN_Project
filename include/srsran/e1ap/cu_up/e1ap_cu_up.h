@@ -71,6 +71,9 @@ public:
   /// \brief Notifies the UE manager to release a UE context.
   /// \param[in] msg The received bearer context release command.
   virtual void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) = 0;
+
+  /// \brief Schedules async task on UE.
+  virtual void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 /// \brief Interface to query statistics from the E1AP interface.

@@ -71,3 +71,6 @@ srs_cu_up::e1ap_bearer_context_modification_response cu_up_wrapper::handle_beare
 {
   return cu_up->handle_bearer_context_modification_request(msg);
 }
+
+// TODO remove from public interface
+void cu_up_wrapper::schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) {}

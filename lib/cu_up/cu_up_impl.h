@@ -37,7 +37,7 @@ public:
   std::optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
 
   // cu_up_e1ap_interface
-  void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task);
+  void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task) override;
 
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
 
