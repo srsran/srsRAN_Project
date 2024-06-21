@@ -59,6 +59,12 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
       alloc_result = try_dl_alloc(ue, ues, pdsch_alloc);
     }
     ue.save_dl_alloc(alloc_result.alloc_bytes);
+    // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
+    // attempted again before scheduling new transmissions.
+    if (ue.dl_retx_h != nullptr and alloc_result.status != alloc_status::skip_ue and
+        alloc_result.status != alloc_status::skip_slot) {
+      dl_queue.push(&ue);
+    }
     dl_queue.pop();
   }
 }
@@ -102,6 +108,12 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
       alloc_result = try_ul_alloc(ue, ues, pusch_alloc);
     }
     ue.save_ul_alloc(alloc_result.alloc_bytes);
+    // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
+    // attempted again before scheduling new transmissions.
+    if (ue.ul_retx_h != nullptr and alloc_result.status != alloc_status::skip_ue and
+        alloc_result.status != alloc_status::skip_slot) {
+      ul_queue.push(&ue);
+    }
     ul_queue.pop();
   }
 }
@@ -115,9 +127,9 @@ scheduler_time_pf::try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
   if (ctxt.dl_retx_h != nullptr) {
     grant.h_id   = ctxt.dl_retx_h->id;
     alloc_result = pdsch_alloc.allocate_dl_grant(grant);
-    if (alloc_result.status == alloc_status::success) {
-      return alloc_result;
-    }
+    // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
+    // UEs.
+    return alloc_result;
   }
 
   if (ctxt.dl_newtx_h != nullptr) {
@@ -139,9 +151,9 @@ scheduler_time_pf::try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
   if (ctxt.ul_retx_h != nullptr) {
     grant.h_id   = ctxt.ul_retx_h->id;
     alloc_result = pusch_alloc.allocate_ul_grant(grant);
-    if (alloc_result.status == alloc_status::success) {
-      return alloc_result;
-    }
+    // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
+    // UEs.
+    return alloc_result;
   }
 
   if (ctxt.ul_newtx_h != nullptr) {
@@ -207,10 +219,10 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 
     // Calculate DL PF priority.
     // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
-    double estimated_rate   = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
-    double current_avg_rate = dl_avg_rate();
-    dl_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
-                                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
+    const double estimated_rate   = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
+    const double current_avg_rate = dl_avg_rate();
+    dl_prio = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
+                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
     return;
   }
   dl_newtx_h = nullptr;
@@ -245,8 +257,8 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
     const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_res_list.front();
     // [Implementation-defined] We assume nof. HARQ ACK bits is zero at PUSCH slot as a simplification in calculating
     // estimated instantaneous achievable rate.
-    const unsigned nof_harq_ack_bits  = 0;
-    const bool     is_csi_report_slot = csi_helper::is_csi_reporting_slot(
+    constexpr unsigned nof_harq_ack_bits  = 0;
+    const bool         is_csi_report_slot = csi_helper::is_csi_reporting_slot(
         u.get_pcell().cfg().cfg_dedicated(), res_grid.get_pusch_slot(cell_index, pusch_td_cfg.k2));
 
     pusch_config_params pusch_cfg;
@@ -274,10 +286,10 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
 
     // Calculate UL PF priority.
     // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
-    double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
-    double current_avg_rate = ul_avg_rate();
-    ul_prio                 = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
-                                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
+    const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
+    const double current_avg_rate = ul_avg_rate();
+    ul_prio = (current_avg_rate != 0) ? estimated_rate / pow(current_avg_rate, parent->fairness_coeff)
+                                      : (estimated_rate == 0 ? 0 : std::numeric_limits<double>::max());
     return;
   }
   ul_newtx_h = nullptr;
