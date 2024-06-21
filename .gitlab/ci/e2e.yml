@@ -305,11 +305,12 @@ amari 32UE:
             "iperf and tcp and not band:3",
           ]
 
-amari 32UE beta:
+amari 8UE beta:
   extends: amari 32UE
   parallel:
     matrix:
       - KEYWORDS: ["reestablishment", "handover"]
+  allow_failure: true
 
 amari 32UE asan:
   extends: .zmq

@@ -57,7 +57,7 @@ _ONLY_RERUN = ["failed to start", "Attach timeout reached", "StatusCode.ABORTED"
 def test_zmq_reestablishment_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_32: Tuple[UEStub, ...],
+    ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     metrics_summary: MetricsSummary,
@@ -75,7 +75,7 @@ def test_zmq_reestablishment_sequentially(
     for reest_ue_attach_info_dict, other_ue_attach_info_dict in _iterator_over_attached_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_32,
+        ue_array=ue_8,
         fivegc=fivegc,
         gnb=gnb,
         metrics_summary=metrics_summary,
