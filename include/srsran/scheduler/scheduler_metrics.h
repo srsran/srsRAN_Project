@@ -47,13 +47,15 @@ struct scheduler_ue_metrics {
 
 /// \brief Snapshot of the metrics for a cell and its UEs.
 struct scheduler_cell_metrics {
-  /// Latency thresholds for the latency_thres_count.
-  constexpr static std::array<unsigned, 2> latency_thres_usec = {100, 250};
+  /// Latency histogram number of bins.
+  constexpr static unsigned latency_hist_bins = 10;
+  /// Distance between histogram bins.
+  constexpr static unsigned nof_usec_per_bin = 50;
 
-  unsigned                                        nof_error_indications = 0;
-  std::chrono::microseconds                       average_decision_latency{0};
-  std::array<unsigned, latency_thres_usec.size()> latency_thres_count{0};
-  std::vector<scheduler_ue_metrics>               ue_metrics;
+  unsigned                                nof_error_indications = 0;
+  std::chrono::microseconds               average_decision_latency{0};
+  std::array<unsigned, latency_hist_bins> latency_histogram{0};
+  std::vector<scheduler_ue_metrics>       ue_metrics;
 };
 
 /// \brief Notifier interface used by scheduler to report metrics.

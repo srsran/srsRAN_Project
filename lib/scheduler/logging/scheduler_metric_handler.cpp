@@ -192,12 +192,12 @@ void scheduler_metrics_handler::report_metrics()
 
   next_report.nof_error_indications    = error_indication_counter;
   next_report.average_decision_latency = decision_latency_sum / report_period_slots;
-  next_report.latency_thres_count      = count_latency_over_thres;
+  next_report.latency_histogram        = decision_latency_hist;
 
   // Reset cell-wide metric counters.
   error_indication_counter = 0;
   decision_latency_sum     = std::chrono::microseconds{0};
-  count_latency_over_thres = {};
+  decision_latency_hist    = {};
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
@@ -247,10 +247,9 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result&       slo
 
   // Process latency.
   decision_latency_sum += slot_decision_latency;
-  for (unsigned i = 0; i != count_latency_over_thres.size(); ++i) {
-    count_latency_over_thres[i] +=
-        slot_decision_latency.count() > scheduler_cell_metrics::latency_thres_usec[i] ? 1 : 0;
-  }
+  unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
+  bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
+  decision_latency_hist[bin_idx]++;
 }
 
 void scheduler_metrics_handler::push_result(slot_point                sl_tx,

@@ -74,9 +74,9 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
   /// Derived value.
   unsigned report_period_slots = 0;
 
-  unsigned                                                                error_indication_counter = 0;
-  std::chrono::microseconds                                               decision_latency_sum{0};
-  std::array<unsigned, scheduler_cell_metrics::latency_thres_usec.size()> count_latency_over_thres;
+  unsigned                                                        error_indication_counter = 0;
+  std::chrono::microseconds                                       decision_latency_sum{0};
+  std::array<unsigned, scheduler_cell_metrics::latency_hist_bins> decision_latency_hist{};
 
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;

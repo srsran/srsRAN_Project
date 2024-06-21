@@ -223,25 +223,26 @@ TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
 {
   using usecs                = std::chrono::microseconds;
   std::vector<usecs> samples = {usecs{10}, usecs{50}, usecs{150}, usecs{300}, usecs{500}};
-  samples.resize(report_period.count() - 1);
+  samples.resize(report_period.count());
 
   sched_result sched_res;
   for (unsigned i = 0; i != samples.size(); ++i) {
-    this->run_slot(sched_res, samples[i]);
     ASSERT_TRUE(metrics_notif.last_report.ue_metrics.empty());
+    this->run_slot(sched_res, samples[i]);
   }
-
-  this->get_next_metric();
+  ASSERT_FALSE(metrics_notif.last_report.ue_metrics.empty());
   scheduler_cell_metrics cell_metrics = metrics_notif.last_report;
 
   unsigned expected_avg = std::accumulate(samples.begin(), samples.end(), usecs{0}).count() / report_period.count();
   ASSERT_EQ(cell_metrics.average_decision_latency.count(), expected_avg);
 
-  for (unsigned i = 0; i != cell_metrics.latency_thres_count.size(); ++i) {
+  for (unsigned i = 0; i != cell_metrics.latency_histogram.size(); ++i) {
     unsigned expected = std::count_if(samples.begin(), samples.end(), [i](usecs u) {
-      return scheduler_cell_metrics::latency_thres_usec[i] < u.count();
+      unsigned bin = u.count() / scheduler_cell_metrics::nof_usec_per_bin;
+      bin          = std::min(bin, scheduler_cell_metrics::latency_hist_bins - 1);
+      return bin == i;
     });
-    ASSERT_EQ(cell_metrics.latency_thres_count[i], expected);
+    ASSERT_EQ(cell_metrics.latency_histogram[i], expected);
   }
 }
 
@@ -251,4 +252,6 @@ TEST_F(scheduler_metrics_handler_tester, compute_error_indications)
   metrics.handle_error_indication();
   this->get_next_metric();
   ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 2);
+  this->get_next_metric();
+  ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 0);
 }

@@ -108,7 +108,7 @@ void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
   auto& cell_output = ctx.get<cell_metrics>();
   cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
   cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
-  for (unsigned count : metrics.latency_thres_count) {
+  for (unsigned count : metrics.latency_histogram) {
     cell_output.get<mlist_thres_count>().emplace_back();
     auto& elem = cell_output.get<mlist_thres_count>().back();
     elem.value = count;
