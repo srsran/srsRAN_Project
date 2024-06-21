@@ -125,3 +125,7 @@ gtest_discover_tests(bcd_helpers_test)
 add_executable(nr_cgi_helpers_test nr_cgi_helpers_test.cpp)
 target_link_libraries(nr_cgi_helpers_test srsran_support gtest gtest_main)
 gtest_discover_tests(nr_cgi_helpers_test)
+
+add_executable(cell_identity_test cell_identity_test.cpp)
+target_link_libraries(cell_identity_test srsran_support gtest gtest_main)
+add_test(cell_identity_test cell_identity_test)
