@@ -78,17 +78,17 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
       logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
       rx_delivery_notifier.on_delivery_notification(pdcp_sn);
     }
-    // Highest successfully delivered retransmitted PDCP SN
-    if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
-      uint32_t pdcp_sn = status.highest_delivered_retransmitted_pdcp_sn.value();
-      logger.log_warning("Unhandled highest successfully delivered retransmitted pdcp_sn={}", pdcp_sn);
-      // TODO
-    }
     // Highest retransmitted PDCP SN
     if (status.highest_retransmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_retransmitted_pdcp_sn.value();
-      logger.log_warning("Unhandled highest retransmitted pdcp_sn={}", pdcp_sn);
-      // TODO
+      logger.log_debug("Notifying highest retransmitted pdcp_sn={}", pdcp_sn);
+      rx_delivery_notifier.on_retransmit_notification(pdcp_sn);
+    }
+    // Highest successfully delivered retransmitted PDCP SN
+    if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_delivered_retransmitted_pdcp_sn.value();
+      logger.log_debug("Notifying highest successfully delivered retransmitted pdcp_sn={}", pdcp_sn);
+      rx_delivery_notifier.on_delivery_retransmitted_notification(pdcp_sn);
     }
   }
 }
