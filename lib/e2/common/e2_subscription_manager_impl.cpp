@@ -27,8 +27,8 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ric_su
   e2_subscription_t            subscription = {};
   e2_subscribe_reponse_message outcome;
   subscription.subscription_info.request_id.ric_requestor_id = msg->ric_request_id.ric_requestor_id;
-  subscription.subscription_info.ran_function_id             = msg->ran_function_id;
   subscription.subscription_info.request_id.ric_instance_id  = msg->ric_request_id.ric_instance_id;
+  subscription.subscription_info.ran_function_id             = msg->ran_function_id;
   e2sm_event_trigger_definition event_trigger_def;
 
   if (supported_ran_functions.count(msg->ran_function_id)) {
@@ -43,15 +43,17 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ric_su
     outcome.request_id.ric_requestor_id          = subscription.subscription_info.request_id.ric_requestor_id;
     outcome.request_id.ric_instance_id           = subscription.subscription_info.request_id.ric_instance_id;
     outcome.ran_function_id                      = subscription.subscription_info.ran_function_id;
-    subscriptions.insert(std::pair<int, e2_subscription_t>(subscription.subscription_info.request_id.ric_requestor_id,
-                                                           std::move(subscription)));
+    subscriptions.insert(std::pair<e2_subscription_key_t, e2_subscription_t>(
+        std::make_tuple(subscription.subscription_info.request_id.ric_requestor_id,
+                        subscription.subscription_info.request_id.ric_instance_id),
+        std::move(subscription)));
     get_subscription_result(msg->ran_function_id,
                             outcome,
-                            subscriptions[outcome.request_id.ric_requestor_id],
+                            subscriptions[{outcome.request_id.ric_requestor_id, outcome.request_id.ric_instance_id}],
                             msg->ric_sub_details.ric_action_to_be_setup_list);
     if (!outcome.success) {
       logger.error("Failed to setup subscription");
-      subscriptions.erase(outcome.request_id.ric_requestor_id);
+      subscriptions.erase({outcome.request_id.ric_requestor_id, outcome.request_id.ric_instance_id});
     }
   } else {
     outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
@@ -72,7 +74,7 @@ e2_subscription_manager_impl::handle_subscription_delete(const asn1::e2ap::ric_s
   outcome.response->ran_function_id            = msg->ran_function_id;
   outcome.response->ric_request_id             = msg->ric_request_id;
   outcome.success                              = false;
-  if (subscriptions.count(outcome.request_id.ric_requestor_id)) {
+  if (subscriptions.count({outcome.request_id.ric_requestor_id, outcome.request_id.ric_instance_id})) {
     outcome.success = true;
   } else {
     outcome.failure->cause.set_misc();
@@ -86,7 +88,8 @@ void e2_subscription_manager_impl::start_subscription(const asn1::e2ap::ric_requ
                                                       uint16_t                            ran_func_id)
 {
   e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(ran_func_id);
-  for (auto& action : subscriptions[ric_request_id.ric_requestor_id].subscription_info.action_list) {
+  for (auto& action :
+       subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].subscription_info.action_list) {
     auto& action_def = action.action_definition;
     if (action.ric_action_type == asn1::e2ap::ric_action_type_e::report) {
       action.report_service = e2sm->get_e2sm_report_service(action_def);
@@ -97,18 +100,22 @@ void e2_subscription_manager_impl::start_subscription(const asn1::e2ap::ric_requ
     }
   }
 
-  subscriptions[ric_request_id.ric_requestor_id].indication_task = launch_async<e2_indication_procedure>(
-      notif, ev_mng, subscriptions[ric_request_id.ric_requestor_id].subscription_info, logger);
+  subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].indication_task =
+      launch_async<e2_indication_procedure>(
+          notif,
+          ev_mng,
+          subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].subscription_info,
+          logger);
 }
 
 void e2_subscription_manager_impl::stop_subscription(const asn1::e2ap::ric_request_id_s&         ric_request_id,
                                                      e2_event_manager&                           ev_mng,
                                                      const asn1::e2ap::ric_sub_delete_request_s& msg)
 {
-  if (subscriptions.count(ric_request_id.ric_requestor_id)) {
-    ev_mng.sub_del_reqs[ric_request_id.ric_requestor_id]->set(msg);
-    subscriptions[ric_request_id.ric_requestor_id].indication_task.await_ready();
-    subscriptions.erase(ric_request_id.ric_requestor_id);
+  if (subscriptions.count({ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id})) {
+    ev_mng.sub_del_reqs[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}]->set(msg);
+    subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}].indication_task.await_ready();
+    subscriptions.erase({ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id});
   } else {
     logger.error("RIC instance ID not found");
   }
@@ -130,8 +137,9 @@ bool e2_subscription_manager_impl::action_supported(const ric_action_to_be_setup
   }
 
   if (e2sm->action_supported(action)) {
-    subscriptions[ric_request_id.ric_requestor_id].subscription_info.action_list.push_back(
-        {std::move(action_def_buf.value()), action.ric_action_id, action.ric_action_type});
+    subscriptions[{ric_request_id.ric_requestor_id, ric_request_id.ric_instance_id}]
+        .subscription_info.action_list.push_back(
+            {std::move(action_def_buf.value()), action.ric_action_id, action.ric_action_type});
     return true;
   }
 
