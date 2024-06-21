@@ -13,7 +13,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/band_helper.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
@@ -98,11 +98,12 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
 
     // Fill Served PLMNs
     f1ap_cell.served_cell_info.served_plmns.resize(1);
-    f1ap_cell.served_cell_info.served_plmns[0].plmn_id.from_number(plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
+    f1ap_cell.served_cell_info.served_plmns[0].plmn_id.from_number(
+        bcd_helper::plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
 
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg.pci;
-    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
+    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
     f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci);
     f1ap_cell.served_cell_info.five_gs_tac_present = true;
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);

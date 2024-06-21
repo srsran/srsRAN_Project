@@ -11,7 +11,7 @@
 #include "ngap_handover_preparation_procedure.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_message.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -125,7 +125,7 @@ void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id
   target_id.target_ran_node_id();
   target_id.target_ran_node_id().global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
   target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().plmn_id.from_number(
-      plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
+      bcd_helper::plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
   target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
   target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(
       request.gnb_id.id, request.gnb_id.bit_length);
@@ -168,7 +168,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   }
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
 
-  target_nr_cgi.plmn_id.from_number(plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
+  target_nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
   target_nr_cgi.nr_cell_id.from_number(request.nci);
 
   last_visited_cell_item_s        last_visited_cell_item;

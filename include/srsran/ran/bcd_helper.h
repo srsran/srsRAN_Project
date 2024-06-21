@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <ctype.h>
-#include <stdint.h>
+#include "srsran/adt/span.h"
+#include <cstdint>
 #include <string>
 
 namespace srsran {
@@ -21,7 +21,10 @@ namespace bcd_helper {
 /// Check if integer corresponds to a valid BCD-encoded MCC value (3 digits).
 inline bool is_valid_mcc(uint16_t mcc)
 {
-  if ((mcc & 0xf000) != 0xf000) {
+  if ((mcc & 0xf000U) != 0xf000U) {
+    return false;
+  }
+  if (((mcc & 0xf00U) >> 8U) > 9U || ((mcc & 0x0f0U) >> 4U) > 9U || (mcc & 0x00fU) > 9U) {
     return false;
   }
   return true;
@@ -40,10 +43,28 @@ inline bool is_valid_mcc(const std::string& mcc_str)
   return true;
 }
 
+/// Check if array of digits corresponds to a valid MCC value (3 digits).
+inline bool is_valid_mcc(const std::array<uint8_t, 3>& bytes)
+{
+  for (uint8_t byte : bytes) {
+    if (byte > 9) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Check if integer corresponds to a valid BCD-encoded MNC value (2 or 3 digits).
 inline bool is_valid_mnc(uint16_t mnc)
 {
   if ((mnc & 0xf000) != 0xf000) {
+    return false;
+  }
+  unsigned digit3 = mnc & 0xf00U;
+  if (digit3 != 0xf00U && digit3 > 9U) {
+    return false;
+  }
+  if (((mnc & 0x0f0U) >> 4U) > 9U || (mnc & 0x00fU) > 9U) {
     return false;
   }
   return true;
@@ -64,9 +85,57 @@ inline bool is_valid_mnc(const std::string& mnc_str)
   return true;
 }
 
-} // namespace bcd_helper
+/// Check if array of digits corresponds to a valid MNC value (2 or 3 digits).
+inline bool is_valid_mnc(span<const uint8_t> bytes)
+{
+  if (bytes.size() != 2 and bytes.size() != 3) {
+    return false;
+  }
+  for (uint8_t byte : bytes) {
+    if (byte > 9) {
+      return false;
+    }
+  }
+  return true;
+}
 
-/// Convert between string and BCD-coded MCC.
+inline bool is_valid_plmn(uint32_t bcd_plmn)
+{
+  if ((bcd_plmn & 0xff000000U) != 0) {
+    return false;
+  }
+  return true;
+}
+
+/// Extract BCD-coded MCC from PLMN
+inline uint16_t bcd_plmn_to_mcc(uint32_t plmn)
+{
+  if (not is_valid_plmn(plmn)) {
+    return 0U;
+  }
+  uint16_t mcc = 0xf000U;
+  mcc |= (plmn & 0x0f0000U) >> 8;  // MCC digit 1
+  mcc |= (plmn & 0xf00000U) >> 16; // MCC digit 2
+  mcc |= (plmn & 0x00f00U) >> 8;   // MCC digit 3
+  return mcc;
+}
+
+/// Extract BCD-coded MCC from PLMN
+inline uint16_t bcd_plmn_to_mnc(uint32_t plmn)
+{
+  if (not is_valid_plmn(plmn)) {
+    return 0U;
+  }
+  bool     is_2_digit = (plmn & 0x00f000) >> 12 == 0xf;
+  uint16_t mnc;
+  mnc = 0xf000U;
+  mnc |= is_2_digit ? 0x0f00U : (plmn & 0x00f000) >> 4; // MNC digit 1
+  mnc |= (plmn & 0xf) << 4;                             // MNC digit 2
+  mnc |= (plmn & 0xf0) >> 4;                            // MNC digit 3
+  return mnc;
+}
+
+/// \brief Convert string to BCD-coded MCC.
 /// Digits are represented by 4-bit nibbles. Unused nibbles are filled with 0xf.
 /// MCC 001 results in 0xf001
 inline bool string_to_mcc(const std::string& str, uint16_t* mcc)
@@ -74,22 +143,22 @@ inline bool string_to_mcc(const std::string& str, uint16_t* mcc)
   if (not bcd_helper::is_valid_mcc(str)) {
     return false;
   }
-  *mcc = 0xf000;
-  *mcc |= ((uint8_t)(str[0] - '0') << 8);
-  *mcc |= ((uint8_t)(str[1] - '0') << 4);
-  *mcc |= ((uint8_t)(str[2] - '0'));
+  *mcc = 0xf000U;
+  *mcc |= static_cast<uint16_t>(str[0] - '0') << 8U;
+  *mcc |= static_cast<uint16_t>(str[1] - '0') << 4U;
+  *mcc |= static_cast<uint16_t>(str[2] - '0');
   return true;
 }
 
 inline bool mcc_to_string(uint16_t mcc, std::string* str)
 {
-  if ((mcc & 0xf000) != 0xf000) {
+  if (not bcd_helper::is_valid_mcc(mcc)) {
     return false;
   }
   *str = "";
-  *str += ((mcc & 0x0f00) >> 8) + '0';
-  *str += ((mcc & 0x00f0) >> 4) + '0';
-  *str += (mcc & 0x000f) + '0';
+  *str += ((mcc & 0x0f00U) >> 8U) + '0';
+  *str += ((mcc & 0x00f0U) >> 4U) + '0';
+  *str += (mcc & 0x000fU) + '0';
   return true;
 }
 
@@ -235,33 +304,19 @@ std::string mnc_bytes_to_string(Vec mnc_bytes)
 /// MNC 001 represented as 0xf001
 /// MNC 01 represented as 0xff01
 /// PLMN encoded as per TS 38.413 sec 9.3.3.5
-inline void ngap_plmn_to_mccmnc(uint32_t plmn, uint16_t* mcc, uint16_t* mnc)
+inline bool ngap_plmn_to_mccmnc(uint32_t plmn, uint16_t* mcc, uint16_t* mnc)
 {
-  uint8_t nibbles[6];
-  nibbles[0] = (plmn & 0xf00000) >> 20;
-  nibbles[1] = (plmn & 0x0f0000) >> 16;
-  nibbles[2] = (plmn & 0x00f000) >> 12;
-  nibbles[3] = (plmn & 0x000f00) >> 8;
-  nibbles[4] = (plmn & 0x0000f0) >> 4;
-  nibbles[5] = (plmn & 0x00000f);
-
-  *mcc = 0xf000;
-  *mnc = 0xf000;
-  *mcc |= nibbles[1] << 8; // MCC digit 1
-  *mcc |= nibbles[0] << 4; // MCC digit 2
-  *mcc |= nibbles[3];      // MCC digit 3
-
-  if (nibbles[2] == 0xf) {
-    // 2-digit MNC
-    *mnc |= 0x0f00;          // MNC digit 1
-    *mnc |= nibbles[5] << 4; // MNC digit 2
-    *mnc |= nibbles[4];      // MNC digit 3
-  } else {
-    // 3-digit MNC
-    *mnc |= nibbles[2] << 8; // MNC digit 1
-    *mnc |= nibbles[5] << 4; // MNC digit 2
-    *mnc |= nibbles[4];      // MNC digit 3
+  uint16_t mcc_tmp = bcd_plmn_to_mcc(plmn);
+  if (mcc_tmp == 0) {
+    return false;
   }
+  uint16_t mnc_tmp = bcd_plmn_to_mnc(plmn);
+  if (mnc_tmp == 0) {
+    return false;
+  }
+  *mcc = mcc_tmp;
+  *mnc = mnc_tmp;
+  return true;
 }
 
 /// Convert BCD-coded MCC and MNC to PLMN.
@@ -322,11 +377,14 @@ inline uint32_t plmn_string_to_bcd(const std::string& plmn)
 inline std::string plmn_bcd_to_string(uint32_t plmn)
 {
   uint16_t mcc, mnc;
-  ngap_plmn_to_mccmnc(plmn, &mcc, &mnc);
+  if (not bcd_helper::ngap_plmn_to_mccmnc(plmn, &mcc, &mnc)) {
+    return "";
+  }
   std::string mcc_string, mnc_string;
   mcc_to_string(mcc, &mcc_string);
   mnc_to_string(mnc, &mnc_string);
   return mcc_string + mnc_string;
 }
 
+} // namespace bcd_helper
 } // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/nr_cgi.h"
@@ -1042,12 +1042,12 @@ inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi
 {
   nr_cell_global_id_t cgi          = {};
   uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
-  ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
+  bcd_helper::ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
 
   std::string mcc_string;
   std::string mnc_string;
-  mcc_to_string(cgi.mcc, &mcc_string);
-  mnc_to_string(cgi.mnc, &mnc_string);
+  bcd_helper::mcc_to_string(cgi.mcc, &mcc_string);
+  bcd_helper::mnc_to_string(cgi.mnc, &mnc_string);
   cgi.plmn = mcc_string + mnc_string;
 
   // Set PLMN hex string.

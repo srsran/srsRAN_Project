@@ -14,7 +14,7 @@
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/qos_prio_level.h"
 
@@ -42,7 +42,7 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
     asn1::e1ap::supported_plmns_item_s asn1_plmn_item;
 
     // plmn id
-    asn1_plmn_item.plmn_id.from_number(plmn_string_to_bcd(plmn_item.plmn_id));
+    asn1_plmn_item.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(plmn_item.plmn_id));
 
     // slice support list
     for (const auto& slice_item : plmn_item.slice_support_list) {
@@ -191,7 +191,7 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   request.ue_dl_aggregate_maximum_bit_rate = asn1_request->ue_dl_aggr_max_bit_rate;
 
   // serving plmn
-  request.serving_plmn = plmn_bcd_to_string(asn1_request->serving_plmn.to_number());
+  request.serving_plmn = bcd_helper::plmn_bcd_to_string(asn1_request->serving_plmn.to_number());
 
   // activity notification level
   request.activity_notif_level = asn1_to_activity_notification_level(asn1_request->activity_notif_level.value);

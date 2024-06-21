@@ -12,7 +12,7 @@
 #include "asn1_rrc_config_helpers.h"
 #include "srsran/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "srsran/asn1/rrc_nr/meas_timing_cfg.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/error_handling.h"
 

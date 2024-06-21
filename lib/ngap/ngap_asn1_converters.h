@@ -14,7 +14,7 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -537,8 +537,8 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
 
   // plmn id
   nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
-  nr_cgi.plmn     = plmn_bcd_to_string(asn1_nr_cgi.plmn_id.to_number());
-  ngap_plmn_to_mccmnc(asn1_nr_cgi.plmn_id.to_number(), &nr_cgi.mcc, &nr_cgi.mnc);
+  nr_cgi.plmn     = bcd_helper::plmn_bcd_to_string(asn1_nr_cgi.plmn_id.to_number());
+  bcd_helper::ngap_plmn_to_mccmnc(asn1_nr_cgi.plmn_id.to_number(), &nr_cgi.mcc, &nr_cgi.mnc);
 
   return nr_cgi;
 }

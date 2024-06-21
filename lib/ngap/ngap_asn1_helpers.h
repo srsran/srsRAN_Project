@@ -44,7 +44,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
   asn1_request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(
       request.global_ran_node_id.gnb_id.id, request.global_ran_node_id.gnb_id.bit_length);
   asn1_request->global_ran_node_id.global_gnb_id().plmn_id.from_number(
-      plmn_string_to_bcd(request.global_ran_node_id.plmn_id));
+      bcd_helper::plmn_string_to_bcd(request.global_ran_node_id.plmn_id));
 
   // fill ran node name
   asn1_request->ran_node_name_present = true;
@@ -62,7 +62,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
       asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
 
       // fill plmn id
-      asn1_broadcast_plmn_item.plmn_id.from_number(plmn_string_to_bcd(broadcast_plmn_item.plmn_id));
+      asn1_broadcast_plmn_item.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(broadcast_plmn_item.plmn_id));
 
       // fill tai slice support list
       for (const auto& slice_support_item : broadcast_plmn_item.tai_slice_support_list) {

@@ -12,10 +12,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/ran/bcd_helpers.h"
-#include <array>
-#include <cstdint>
-#include <string>
+#include "srsran/ran/bcd_helper.h"
 
 namespace srsran {
 
@@ -40,9 +37,20 @@ public:
   static expected<mobile_country_code> from_string(const std::string& mcc_str)
   {
     uint16_t mcc;
-    if (!string_to_mcc(mcc_str, &mcc)) {
+    if (!bcd_helper::string_to_mcc(mcc_str, &mcc)) {
       return default_error_t{};
     }
+    return mobile_country_code{mcc};
+  }
+
+  /// Conversion of an array of 3 bytes into a mobile_country_code.
+  static expected<mobile_country_code> from_bytes(const std::array<uint8_t, 3>& bytes)
+  {
+    uint16_t mcc;
+    if (not bcd_helper::is_valid_mcc(bytes)) {
+      return default_error_t{};
+    }
+    bcd_helper::bytes_to_mcc(bytes.data(), &mcc);
     return mobile_country_code{mcc};
   }
 
@@ -51,14 +59,14 @@ public:
   std::string to_string() const
   {
     std::string str;
-    mcc_to_string(data, &str);
+    bcd_helper::mcc_to_string(data, &str);
     return str;
   }
 
   std::array<uint8_t, 3> to_bytes() const
   {
     std::array<uint8_t, 3> bytes = {};
-    mcc_to_bytes(data, bytes.data());
+    bcd_helper::mcc_to_bytes(data, bytes.data());
     return bytes;
   }
 
@@ -92,9 +100,20 @@ public:
   static expected<mobile_network_code> from_string(const std::string& mnc_str)
   {
     uint16_t mnc;
-    if (!string_to_mnc(mnc_str, &mnc)) {
+    if (!bcd_helper::string_to_mnc(mnc_str, &mnc)) {
       return default_error_t{};
     }
+    return mobile_network_code{mnc};
+  }
+
+  /// Conversion of an array of 2/3 bytes into a mobile_network_code.
+  static expected<mobile_network_code> from_bytes(span<const uint8_t> bytes)
+  {
+    if (not bcd_helper::is_valid_mnc(bytes)) {
+      return default_error_t{};
+    }
+    uint16_t mnc;
+    bcd_helper::bytes_to_mnc(bytes.data(), &mnc, bytes.size());
     return mobile_network_code{mnc};
   }
 
@@ -103,7 +122,7 @@ public:
   std::string to_string() const
   {
     std::string str;
-    mnc_to_string(data, &str);
+    bcd_helper::mnc_to_string(data, &str);
     return str;
   }
 
@@ -111,7 +130,7 @@ public:
   {
     static_vector<uint8_t, 3> bytes(3);
     uint8_t                   len;
-    mnc_to_bytes(data, bytes.data(), &len);
+    bcd_helper::mnc_to_bytes(data, bytes.data(), &len);
     bytes.resize(len);
     return bytes;
   }
@@ -130,7 +149,7 @@ private:
 class plmn_identity
 {
   plmn_identity(uint32_t bcd_plmn) : data(bcd_plmn) {}
-  plmn_identity(uint16_t bcd_mcc, uint16_t bcd_mnc) { ngap_mccmnc_to_plmn(bcd_mcc, bcd_mnc, &data); }
+  plmn_identity(uint16_t bcd_mcc, uint16_t bcd_mnc) { bcd_helper::ngap_mccmnc_to_plmn(bcd_mcc, bcd_mnc, &data); }
 
 public:
   plmn_identity() = delete;
@@ -138,7 +157,7 @@ public:
 
   static expected<plmn_identity> from_string(const std::string& plmn_id_str)
   {
-    uint32_t plmn = plmn_string_to_bcd(plmn_id_str);
+    uint32_t plmn = bcd_helper::plmn_string_to_bcd(plmn_id_str);
     if (plmn == 0) {
       return default_error_t{};
     }
@@ -147,21 +166,11 @@ public:
 
   uint32_t to_bcd() const { return data; }
 
-  mobile_country_code mcc() const
-  {
-    uint16_t mcc, dummy;
-    ngap_plmn_to_mccmnc(data, &mcc, &dummy);
-    return mobile_country_code::from_bcd(mcc).value();
-  }
+  mobile_country_code mcc() const { return mobile_country_code::from_bcd(bcd_helper::bcd_plmn_to_mcc(data)).value(); }
 
-  mobile_network_code mnc() const
-  {
-    uint16_t dummy, mnc;
-    ngap_plmn_to_mccmnc(data, &dummy, &mnc);
-    return mobile_network_code::from_bcd(mnc).value();
-  }
+  mobile_network_code mnc() const { return mobile_network_code::from_bcd(bcd_helper::bcd_plmn_to_mnc(data)).value(); }
 
-  std::string to_string() const { return plmn_bcd_to_string(data); }
+  std::string to_string() const { return bcd_helper::plmn_bcd_to_string(data); }
 
   bool operator==(const plmn_identity& rhs) const { return data == rhs.data; }
   bool operator!=(const plmn_identity& rhs) const { return data != rhs.data; }

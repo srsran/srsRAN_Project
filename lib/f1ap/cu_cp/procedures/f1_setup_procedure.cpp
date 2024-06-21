@@ -16,7 +16,7 @@
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_du_context.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 
 using namespace srsran;
@@ -136,7 +136,8 @@ static f1ap_message create_f1_setup_response(const asn1::f1ap::f1_setup_request_
     resp->cells_to_be_activ_list_present = true;
     for (const auto& du_cell : cu_response.cells_to_be_activ_list) {
       asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
-      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(plmn_string_to_bcd(du_cell.nr_cgi.plmn));
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(
+          bcd_helper::plmn_string_to_bcd(du_cell.nr_cgi.plmn));
       resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci);
 
       if (du_cell.nr_pci.has_value()) {
