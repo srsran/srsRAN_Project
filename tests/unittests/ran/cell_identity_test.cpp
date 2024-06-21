@@ -46,9 +46,9 @@ TEST_F(bcd_helper_test, is_valid_mnc_checks_bcd_integer)
   ASSERT_FALSE(bcd_helper::is_valid_mnc(0x0000));
   ASSERT_FALSE(bcd_helper::is_valid_mcc(0xfa00));
   ASSERT_FALSE(bcd_helper::is_valid_mcc(0xfff0));
-  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xF000));
-  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xFF00));
-  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xFF10));
+  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xf000));
+  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xff00));
+  ASSERT_TRUE(bcd_helper::is_valid_mnc(0xff10));
 }
 
 TEST_F(bcd_helper_test, is_valid_mnc_checks_string)
@@ -315,4 +315,12 @@ TEST_F(plmn_id_test, plmn_id_creation_from_mnc_mcc_succeeds)
   ASSERT_EQ(plmn.to_string(), "00101");
   ASSERT_EQ(plmn.mcc().to_string(), "001");
   ASSERT_EQ(plmn.mnc().to_string(), "01");
+}
+
+TEST_F(plmn_id_test, plmn_id_test_value_is_mcc_mnc_test_value)
+{
+  ASSERT_EQ(mobile_country_code::test_value().to_string(), "001");
+  ASSERT_EQ(mobile_network_code::test_value().to_string(), "01");
+  ASSERT_EQ(plmn_identity::test_value().mcc(), mobile_country_code::test_value());
+  ASSERT_EQ(plmn_identity::test_value().mnc(), mobile_network_code::test_value());
 }

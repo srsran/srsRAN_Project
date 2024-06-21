@@ -19,10 +19,13 @@ namespace srsran {
 /// Identifier of a Mobile Country Code (MCC).
 class mobile_country_code
 {
-  mobile_country_code(uint16_t mcc) { data = mcc; }
+  constexpr mobile_country_code(uint16_t mcc) : data(mcc) {}
 
 public:
   mobile_country_code() = delete;
+
+  /// Test value for mobile_country_code "001".
+  static constexpr mobile_country_code test_value() { return mobile_country_code{0xf001}; }
 
   /// Conversion of a BCD-encoded MCC integer into a mobile_country_code.
   static expected<mobile_country_code> from_bcd(uint16_t bcd_mcc)
@@ -82,10 +85,13 @@ private:
 /// Identifier of a Mobile Network Code (MNC).
 class mobile_network_code
 {
-  mobile_network_code(uint16_t mnc) { data = mnc; }
+  constexpr mobile_network_code(uint16_t mnc) : data(mnc) {}
 
 public:
   mobile_network_code() = delete;
+
+  /// Test value for mobile_country_code "01".
+  static constexpr mobile_network_code test_value() { return mobile_network_code{0xff01U}; }
 
   /// Conversion of a BCD-encoded MNC integer into a mobile_network_code.
   static expected<mobile_network_code> from_bcd(uint16_t bcd_mnc)
@@ -148,10 +154,13 @@ private:
 /// Identifier of a Public Land Mobile Network (PLMN).
 class plmn_identity
 {
-  plmn_identity(uint32_t bcd_plmn) : data(bcd_plmn) {}
+  constexpr plmn_identity(uint32_t bcd_plmn) : data(bcd_plmn) {}
   plmn_identity(uint16_t bcd_mcc, uint16_t bcd_mnc) { bcd_helper::ngap_mccmnc_to_plmn(bcd_mcc, bcd_mnc, &data); }
 
 public:
+  /// Test value for PLMN identity "00101".
+  static constexpr plmn_identity test_value() { return plmn_identity{0xf110}; }
+
   plmn_identity() = delete;
   plmn_identity(mobile_country_code mcc, mobile_network_code mnc) : plmn_identity(mcc.to_bcd(), mnc.to_bcd()) {}
 
