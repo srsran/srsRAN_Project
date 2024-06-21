@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/plmn_identity.h"
 #include <gtest/gtest.h>
 
@@ -323,4 +324,50 @@ TEST_F(plmn_id_test, plmn_id_test_value_is_mcc_mnc_test_value)
   ASSERT_EQ(mobile_network_code::test_value().to_string(), "01");
   ASSERT_EQ(plmn_identity::test_value().mcc(), mobile_country_code::test_value());
   ASSERT_EQ(plmn_identity::test_value().mnc(), mobile_network_code::test_value());
+}
+
+class nci_test : public ::testing::Test
+{};
+
+TEST_F(nci_test, nci_creation_from_invalid_number_fails)
+{
+  auto ret = nr_cell_identity::from_number(0x123456789a);
+  ASSERT_TRUE(ret.is_error());
+}
+
+TEST_F(nci_test, nci_creation_from_valid_number_succeeds)
+{
+  auto ret = nr_cell_identity::from_number(0x19b01);
+  ASSERT_TRUE(ret.has_value());
+  nr_cell_identity nci = ret.value();
+  ASSERT_EQ(nci.value(), 0x19b01);
+
+  ret = nr_cell_identity::from_number(0x123456789);
+  ASSERT_TRUE(ret.has_value());
+  nci = ret.value();
+  ASSERT_EQ(nci.value(), 0x123456789);
+}
+
+TEST_F(nci_test, nci_creation_from_invalid_string_fails)
+{
+  auto ret = nr_cell_identity::parse_hex("123456789a");
+  ASSERT_TRUE(ret.is_error());
+  ret = nr_cell_identity::parse_hex("12345678x");
+  ASSERT_TRUE(ret.is_error());
+}
+
+TEST_F(nci_test, nci_creation_from_valid_string_succeeds)
+{
+  auto ret = nr_cell_identity::parse_hex("19B01");
+  ASSERT_TRUE(ret.has_value());
+  nr_cell_identity nci = ret.value();
+  ASSERT_EQ(nci.value(), 0x19B01);
+  ASSERT_EQ(fmt::format("{:x}", nci), "19b01");
+  ASSERT_EQ(fmt::format("{:#x}", nci), "0x19b01");
+
+  ret = nr_cell_identity::parse_hex("123456789");
+  ASSERT_TRUE(ret.has_value());
+  nci = ret.value();
+  ASSERT_EQ(nci.value(), 0x123456789);
+  ASSERT_EQ(fmt::format("{:x}", nci), "123456789");
 }
