@@ -147,17 +147,19 @@ e2e request and config validation:
       echo "srsGNB sources+build size is" $(du -hs .)
     # Remove any existing retina resource for this group
     - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
-    # Add extra secret env variables to the .env file
+    # Add extra config env variables to the .env file
     - |
       echo "" >> .gitlab/ci/e2e/.env
-      cat $RETINA_SECRET_ENV >> .gitlab/ci/e2e/.env
+      cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
+
+      echo -e "\nGNB_BINARY_PATH=../../" >> .gitlab/ci/e2e/.env
+      echo -e "\nGNB_REMOTE_PATH=$CI_PROJECT_DIR" >> .gitlab/ci/e2e/.env
+      echo -e "\nis_executable=false" >> .gitlab/ci/e2e/.env
+
     # Set username for retina
     - |
       cd tests/e2e
       export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
-    # Change sharing gnb file for complete src + build (With gnb) folder
-    - |
-      sed -i "s|- local_path: ../../build/apps/gnb/gnb|- local_path: ../../|; s|remote_path: /usr/local/bin|remote_path: $CI_PROJECT_DIR|; s|is_executable: true|is_executable: false|" ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Run Retina
     - |
       E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"

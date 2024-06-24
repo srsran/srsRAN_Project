@@ -28,7 +28,7 @@
     - type: license
       model: amarisoft-5g
   shared_files:
-    - local_path: ../../build_trx_srsran/libtrx_srsran.so
+    - local_path: ${AMARISOFT_TXRX_BINARY_PATH}
       remote_path: /opt/lteue/trx_srsran.so
       is_executable: true
 
@@ -53,9 +53,9 @@
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
-    - local_path: ../../build/apps/gnb/gnb
-      remote_path: /usr/local/bin
-      is_executable: true
+    - local_path: ${GNB_BINARY_PATH}
+      remote_path: ${GNB_REMOTE_PATH}
+      is_executable: ${GNB_IS_EXECUTABLE}
 
 - name: open5gs
   type: 5gc
