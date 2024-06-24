@@ -36,7 +36,7 @@ ARG NUM_CORES=""
 ##################
 # Stage 1: Build #
 ##################
-FROM ubuntu:$OS_VERSION as builder
+FROM ubuntu:$OS_VERSION AS builder
 
 # Adding the complete repo to the context, in /src folder
 ADD . /src
