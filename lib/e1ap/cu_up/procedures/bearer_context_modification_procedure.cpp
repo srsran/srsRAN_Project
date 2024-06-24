@@ -31,75 +31,49 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
 {
   CORO_BEGIN(ctx);
 
-  fmt::print("CU-UP bearer context modification\n");
-
   bearer_context_mod.ue_index = ue_ctxt.ue_ids.ue_index;
 
-  // security info
-  if (request->security_info_present) {
-    bearer_context_mod.security_info.emplace();
-    bearer_context_mod.security_info->security_algorithm.ciphering_algo =
-        e1ap_asn1_to_ciphering_algorithm(request->security_info.security_algorithm.ciphering_algorithm);
-
-    if (request->security_info.security_algorithm.integrity_protection_algorithm_present) {
-      bearer_context_mod.security_info->security_algorithm.integrity_protection_algorithm =
-          e1ap_asn1_to_integrity_algorithm(request->security_info.security_algorithm.integrity_protection_algorithm);
-    }
-    bearer_context_mod.security_info->up_security_key.encryption_key =
-        request->security_info.up_securitykey.encryption_key.copy();
-    bearer_context_mod.security_info->up_security_key.integrity_protection_key =
-        request->security_info.up_securitykey.integrity_protection_key.copy();
-  }
-
-  // sys bearer context mod request
-  if (request->sys_bearer_context_mod_request_present) {
-    // We only support NG-RAN Bearer
-    if (request->sys_bearer_context_mod_request.type() !=
-        asn1::e1ap::sys_bearer_context_mod_request_c::types::ng_ran_bearer_context_mod_request) {
-      ue_ctxt.logger.log_error("Sending BearerContextModificationFailure. Cause: Not handling E-UTRAN Bearers");
-
-      // send response
-      pdu_notifier.on_new_message(e1ap_msg);
-      CORO_EARLY_RETURN();
-    }
-
-    fill_e1ap_bearer_context_modification_request(bearer_context_mod, request);
-  }
-
-  CORO_AWAIT_VALUE(bearer_context_mod_response_msg,
-                   cu_up_notifier.on_bearer_context_modification_request_received(bearer_context_mod));
-  fmt::print("CU-UP bearer context modified\n");
-
-  if (bearer_context_mod_response_msg.ue_index == INVALID_UE_INDEX) {
-    ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure: Cause: Invalid UE index");
-
-    // send response
+  if (not validate_request()) {
     pdu_notifier.on_new_message(e1ap_msg);
     CORO_EARLY_RETURN();
   }
 
-  if (bearer_context_mod_response_msg.success) {
-    e1ap_msg.pdu.set_successful_outcome();
-    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id =
-        request->gnb_cu_cp_ue_e1ap_id;
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_up_ue_e1ap_id =
-        request->gnb_cu_up_ue_e1ap_id;
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp_present = true;
-    fill_asn1_bearer_context_modification_response(
-        e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp,
-        bearer_context_mod_response_msg);
-    ue_ctxt.logger.log_debug("Sending BearerContextModificationResponse");
-    // send response
+  fill_e1ap_bearer_context_modification_request(bearer_context_mod, request);
+
+  // Here, we transfer to the UE control executor to safely delete PDU sessions,
+  // change keys, perform PDCP retransmissions, etc.
+  CORO_AWAIT_VALUE(bearer_context_mod_response_msg,
+                   cu_up_notifier.on_bearer_context_modification_request_received(bearer_context_mod));
+
+  // Could not find UE
+  if (bearer_context_mod_response_msg.ue_index == INVALID_UE_INDEX) {
+    ue_ctxt.logger.log_error("Sending BearerContextModificationFailure: Cause: Invalid UE index");
     pdu_notifier.on_new_message(e1ap_msg);
-  } else {
+    CORO_EARLY_RETURN();
+  }
+
+  // PDU sessions failed to setup
+  if (not bearer_context_mod_response_msg.success) {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
         cause_to_asn1(bearer_context_mod_response_msg.cause.value());
-
-    // send response
-    ue_ctxt.logger.log_debug("Sending BearerContextModificationFailure");
+    ue_ctxt.logger.log_warning("Sending BearerContextModificationFailure");
     pdu_notifier.on_new_message(e1ap_msg);
+    CORO_EARLY_RETURN();
   }
+
+  // Bearer modification successful
+  e1ap_msg.pdu.set_successful_outcome();
+  e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+  e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id =
+      request->gnb_cu_cp_ue_e1ap_id;
+  e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_up_ue_e1ap_id =
+      request->gnb_cu_up_ue_e1ap_id;
+  e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp_present = true;
+  fill_asn1_bearer_context_modification_response(
+      e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp,
+      bearer_context_mod_response_msg);
+  ue_ctxt.logger.log_debug("Sending BearerContextModificationResponse");
+  pdu_notifier.on_new_message(e1ap_msg);
   CORO_RETURN();
 }
 
@@ -112,4 +86,16 @@ void bearer_context_modification_procedure::prepare_failure_message()
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_up_ue_e1ap_id =
       request->gnb_cu_up_ue_e1ap_id;
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.set_protocol();
+}
+
+bool bearer_context_modification_procedure::validate_request()
+{
+  // We only support NG-RAN bearers
+  if (request->sys_bearer_context_mod_request_present &&
+      request->sys_bearer_context_mod_request.type() !=
+          asn1::e1ap::sys_bearer_context_mod_request_c::types::ng_ran_bearer_context_mod_request) {
+    ue_ctxt.logger.log_error("Sending BearerContextModificationFailure. Cause: Not handling E-UTRAN Bearers");
+    return false;
+  }
+  return true;
 }

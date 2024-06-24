@@ -45,6 +45,7 @@ private:
   e1ap_bearer_context_modification_response bearer_context_mod_response_msg = {};
 
   void prepare_failure_message();
+  bool validate_request();
 };
 
 } // namespace srsran::srs_cu_up

@@ -59,6 +59,10 @@ private:
 
   void on_statistics_report_timer_expired();
 
+  e1ap_bearer_context_modification_response
+  handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
+                                                  const e1ap_bearer_context_modification_request& msg);
+
   cu_up_configuration cfg;
 
   // logger
