@@ -60,7 +60,7 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
 
       // send response
       pdu_notifier.on_new_message(e1ap_msg);
-      return;
+      CORO_EARLY_RETURN();
     }
 
     fill_e1ap_bearer_context_modification_request(bearer_context_mod, request);
@@ -75,7 +75,7 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
 
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
-    return;
+    CORO_EARLY_RETURN();
   }
 
   if (bearer_context_mod_response_msg.success) {
