@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include "srsran/ran/gnb_id.h"
 #include <cstdint>
 #include <cstdlib>
 
@@ -27,12 +28,25 @@ public:
   static constexpr nr_cell_identity min() { return nr_cell_identity{0x0}; }
   static constexpr nr_cell_identity max() { return nr_cell_identity{((uint64_t)1U << 36U) - 1U}; }
 
-  static expected<nr_cell_identity> from_number(uint64_t val)
+  static expected<nr_cell_identity> create(uint64_t val)
   {
     if (val > max().val) {
       return default_error_t{};
     }
     return nr_cell_identity{val};
+  }
+
+  static expected<nr_cell_identity> create(gnb_id_t gnb_id, uint16_t local_cell_id)
+  {
+    if (gnb_id.bit_length < 22 or gnb_id.bit_length > 32) {
+      // invalid bit length.
+      return default_error_t{};
+    }
+    if (local_cell_id >= (1U << (36U - gnb_id.bit_length))) {
+      // invalid local cell id.
+      return default_error_t{};
+    }
+    return nr_cell_identity{(uint64_t)gnb_id.id << (36U - gnb_id.bit_length) | local_cell_id};
   }
 
   static expected<nr_cell_identity> parse_hex(const std::string& hex_str)
@@ -50,6 +64,20 @@ public:
   }
 
   uint64_t value() const { return val; }
+
+  /// Extract local cell ID from NR Cell Identity.
+  uint16_t local_cell_id(unsigned nof_local_cell_id_bits) const
+  {
+    srsran_assert(nof_local_cell_id_bits >= 4 and nof_local_cell_id_bits <= 14, "Invalid number of local cell id bits");
+    return val & ((1U << nof_local_cell_id_bits) - 1U);
+  }
+
+  /// Extract gNB-DU ID from NR Cell Identity.
+  gnb_id_t gnb_du_id(unsigned nof_gnb_id_bits) const
+  {
+    srsran_assert(nof_gnb_id_bits >= 22 and nof_gnb_id_bits <= 32, "Invalid number of gNB-DU ID bits");
+    return gnb_id_t{static_cast<uint32_t>(val >> (36U - nof_gnb_id_bits)), static_cast<uint8_t>(nof_gnb_id_bits)};
+  }
 
   static size_t nof_bits() { return 36; }
 
