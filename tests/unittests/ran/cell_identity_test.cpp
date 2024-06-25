@@ -216,21 +216,21 @@ TEST_F(mnc_test, mnc_creation_from_invalid_bcd_integer_fails)
 
 TEST_F(mnc_test, mnc_creation_from_valid_2_digit_bcd_integer_succeeds)
 {
-  auto ret = mobile_network_code::from_bcd(0xFF01);
+  auto ret = mobile_network_code::from_bcd(0xff01U);
   ASSERT_TRUE(ret.has_value());
   mobile_network_code mnc = ret.value();
   ASSERT_EQ(mnc.to_string(), "01");
-  ASSERT_EQ(mnc.to_bcd(), 0xFF01);
+  ASSERT_EQ(mnc.to_bcd(), 0xff01U);
   ASSERT_EQ(mnc.nof_digits(), 2);
 }
 
 TEST_F(mnc_test, mnc_creation_from_valid_3_digit_bcd_integer_succeeds)
 {
-  auto ret = mobile_network_code::from_bcd(0xF001);
+  auto ret = mobile_network_code::from_bcd(0xf001U);
   ASSERT_TRUE(ret.has_value());
   mobile_network_code mnc = ret.value();
   ASSERT_EQ(mnc.to_string(), "001");
-  ASSERT_EQ(mnc.to_bcd(), 0xF001);
+  ASSERT_EQ(mnc.to_bcd(), 0xf001U);
   ASSERT_EQ(mnc.nof_digits(), 3);
 }
 
@@ -246,7 +246,7 @@ TEST_F(mnc_test, mnc_creation_from_valid_2_digit_string_succeeds)
   ASSERT_TRUE(ret.has_value());
   mobile_network_code mnc = ret.value();
   ASSERT_EQ(mnc.to_string(), "01");
-  ASSERT_EQ(mnc.to_bcd(), 0xFF01);
+  ASSERT_EQ(mnc.to_bcd(), 0xff01U);
   ASSERT_EQ(mnc.nof_digits(), 2);
 }
 
@@ -256,7 +256,7 @@ TEST_F(mnc_test, mnc_creation_from_valid_3_digit_string_succeeds)
   ASSERT_TRUE(ret.has_value());
   mobile_network_code mnc = ret.value();
   ASSERT_EQ(mnc.to_string(), "001");
-  ASSERT_EQ(mnc.to_bcd(), 0xF001);
+  ASSERT_EQ(mnc.to_bcd(), 0xf001U);
   ASSERT_EQ(mnc.nof_digits(), 3);
 }
 
@@ -303,7 +303,7 @@ TEST_F(plmn_id_test, plmn_id_creation_from_valid_string_succeeds)
   auto ret = plmn_identity::parse("00101");
   ASSERT_TRUE(ret.has_value());
   plmn_identity plmn = ret.value();
-  ASSERT_EQ(plmn.to_bcd(), 0xF110);
+  ASSERT_EQ(plmn.to_bcd(), 0xf110U);
   ASSERT_EQ(plmn.to_string(), "00101");
   ASSERT_EQ(plmn.mcc().to_string(), "001");
   ASSERT_EQ(plmn.mnc().to_string(), "01");
@@ -312,7 +312,7 @@ TEST_F(plmn_id_test, plmn_id_creation_from_valid_string_succeeds)
 TEST_F(plmn_id_test, plmn_id_creation_from_mnc_mcc_succeeds)
 {
   plmn_identity plmn{mobile_country_code::from_string("001").value(), mobile_network_code::from_string("01").value()};
-  ASSERT_EQ(plmn.to_bcd(), 0xF110);
+  ASSERT_EQ(plmn.to_bcd(), 0xf110U);
   ASSERT_EQ(plmn.to_string(), "00101");
   ASSERT_EQ(plmn.mcc().to_string(), "001");
   ASSERT_EQ(plmn.mnc().to_string(), "01");
@@ -327,20 +327,29 @@ TEST_F(plmn_id_test, plmn_id_creation_from_invalid_bytes_fails)
 
 TEST_F(plmn_id_test, plmn_id_creation_from_valid_bytes_succeeds)
 {
-  plmn_identity plmn = plmn_identity::from_bytes({0x00, 0x1f, 0x01}).value();
+  plmn_identity plmn = plmn_identity::from_bytes({0x00, 0xf1, 0x10}).value();
   ASSERT_EQ(plmn.to_string(), "00101");
-  plmn = plmn_identity::from_bytes({0x00, 0x10, 0x01}).value();
+  ASSERT_EQ(plmn.to_bcd(), 0xf110);
+  plmn = plmn_identity::from_bytes({0x00, 0x01, 0x10}).value();
   ASSERT_EQ(plmn.to_string(), "001001");
+  ASSERT_EQ(plmn.to_bcd(), 0x0110);
+  plmn = plmn_identity::from_bytes({0x21, 0x43, 0x65}).value();
+  ASSERT_EQ(plmn.to_string(), "123456");
+  ASSERT_EQ(plmn.to_bcd(), 0x214365);
 }
 
 TEST_F(plmn_id_test, plmn_id_conversion_to_bytes)
 {
   plmn_identity          plmn  = plmn_identity::parse("00101").value();
-  std::array<uint8_t, 3> bytes = {0x00, 0x1f, 0x01};
+  std::array<uint8_t, 3> bytes = {0x00, 0xf1, 0x10};
   ASSERT_EQ(plmn.to_bytes(), bytes);
   plmn  = plmn_identity::parse("001001").value();
-  bytes = {0x00, 0x10, 0x01};
+  bytes = {0x00, 0x01, 0x10};
   ASSERT_EQ(plmn.to_bytes(), bytes);
+  plmn  = plmn_identity::parse("123456").value();
+  bytes = {0x21, 0x43, 0x65};
+  ASSERT_EQ(plmn.to_bytes(), bytes);
+  ASSERT_EQ(plmn.to_string(), "123456");
 }
 
 TEST_F(plmn_id_test, plmn_id_test_value_is_mcc_mnc_test_value)

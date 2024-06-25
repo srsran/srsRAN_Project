@@ -61,10 +61,10 @@ inline bool is_valid_mnc(uint16_t mnc)
     return false;
   }
   unsigned digit3 = mnc & 0xf00U;
-  if (digit3 != 0xf00U && digit3 > 9U) {
+  if (digit3 != 0xf00U && digit3 > 0x900U) {
     return false;
   }
-  if (((mnc & 0x0f0U) >> 4U) > 9U || (mnc & 0x00fU) > 9U) {
+  if ((mnc & 0x0f0U) > 0x90U || (mnc & 0x00fU) > 9U) {
     return false;
   }
   return true;

@@ -180,8 +180,9 @@ public:
   /// digits from MNC (2 digit MNC) or 3 digits from MNC (3 digit MNC).
   static expected<plmn_identity> from_bytes(const std::array<uint8_t, 3>& bytes)
   {
-    uint16_t mcc = 0xf000U + (static_cast<uint16_t>(bytes[0]) << 4U) + (bytes[1] >> 4U);
-    uint16_t mnc = 0xf000U + (static_cast<uint16_t>(bytes[1] & 0xfU) << 8U) + bytes[2];
+    uint16_t mcc = 0xf000U + (static_cast<uint16_t>(bytes[0] & 0xfU) << 8U) + (bytes[0] & 0xf0U) + (bytes[1] & 0xfU);
+    uint16_t mnc = 0xf000U + (static_cast<uint16_t>(bytes[1] & 0xf0U) << 4U) + ((bytes[2] & 0xf0U) >> 4U) +
+                   ((bytes[2] & 0xfU) << 4U);
     if (not bcd_helper::is_valid_mcc(mcc) or not bcd_helper::is_valid_mnc(mnc)) {
       return default_error_t{};
     }
@@ -195,9 +196,9 @@ public:
     std::array<uint8_t, 3> bytes = {};
     uint16_t               mcc   = bcd_helper::bcd_plmn_to_mcc(data);
     uint16_t               mnc   = bcd_helper::bcd_plmn_to_mnc(data);
-    bytes[0]                     = (mcc >> 4U) & 0xffU;
-    bytes[1]                     = ((mcc & 0xfU) << 4U) + ((mnc >> 0x8U) & 0xfU);
-    bytes[2]                     = mnc & 0xffU;
+    bytes[0]                     = ((mcc & 0xf00U) >> 8U) + (mcc & 0xf0U);
+    bytes[1]                     = (mcc & 0xfU) + ((mnc & 0xf00U) >> 4U);
+    bytes[2]                     = ((mnc & 0xfU) << 4U) + ((mnc & 0xf0U) >> 4U);
     return bytes;
   }
 
