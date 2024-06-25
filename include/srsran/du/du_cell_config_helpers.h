@@ -75,7 +75,7 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   cfg.pci         = params.pci;
   cfg.tac         = 1;
   cfg.nr_cgi.plmn = "00101";
-  cfg.nr_cgi.nci  = config_helpers::make_nr_cell_identity({411, 22}, 1);
+  cfg.nr_cgi.nci  = nr_cell_identity::create({411, 22}, 1).value();
 
   cfg.dl_carrier              = make_default_dl_carrier_configuration(params);
   cfg.ul_carrier              = make_default_ul_carrier_configuration(params);

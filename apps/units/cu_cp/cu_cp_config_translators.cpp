@@ -222,16 +222,16 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
+    nr_cell_identity            nci = nr_cell_identity::create(app_cfg_item.nr_cell_id).value();
     srs_cu_cp::cell_meas_config meas_cfg_item;
-    meas_cfg_item.serving_cell_cfg.nci = app_cfg_item.nr_cell_id;
+    meas_cfg_item.serving_cell_cfg.nci = nci;
     if (app_cfg_item.periodic_report_cfg_id.has_value()) {
       meas_cfg_item.periodic_report_cfg_id =
           srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
     }
 
     if (app_cfg_item.gnb_id_bit_length.has_value()) {
-      meas_cfg_item.serving_cell_cfg.gnb_id =
-          config_helpers::get_gnb_id(app_cfg_item.nr_cell_id, app_cfg_item.gnb_id_bit_length.value());
+      meas_cfg_item.serving_cell_cfg.gnb_id = nci.gnb_id(app_cfg_item.gnb_id_bit_length.value());
     }
     meas_cfg_item.serving_cell_cfg.pci       = app_cfg_item.pci;
     meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
@@ -249,7 +249,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 
     for (const auto& ncell : app_cfg_item.ncells) {
       srs_cu_cp::neighbor_cell_meas_config ncell_meas_cfg;
-      ncell_meas_cfg.nci = ncell.nr_cell_id;
+      ncell_meas_cfg.nci = nr_cell_identity::create(ncell.nr_cell_id).value();
       for (const auto& report_id : ncell.report_cfg_ids) {
         ncell_meas_cfg.report_cfg_ids.push_back(srs_cu_cp::uint_to_report_cfg_id(report_id));
       }

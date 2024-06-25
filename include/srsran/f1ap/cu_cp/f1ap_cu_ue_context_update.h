@@ -122,7 +122,7 @@ struct f1ap_rat_freq_prio_info {
 };
 
 struct f1ap_res_coordination_transfer_info {
-  uint64_t m_enb_cell_id;
+  nr_cell_identity m_enb_cell_id;
   // ResourceCoordinationEUTRACellInfo (optional)
 };
 
@@ -267,7 +267,7 @@ struct f1ap_ue_context_modification_request {
 };
 
 struct f1ap_associated_scell_item {
-  nr_cell_id_t scell_id;
+  nr_cell_identity scell_id;
 };
 
 /// \brief Response from F1AP-CU to CU once "UE Context Modification" procedure is complete.

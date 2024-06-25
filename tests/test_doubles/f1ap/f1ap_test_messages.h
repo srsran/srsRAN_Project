@@ -30,14 +30,13 @@ struct f1ap_message;
 namespace test_helpers {
 
 /// \brief Generate a dummy F1AP Served Cell Item.
-asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(unsigned nrcell_id, pci_t nrpci, unsigned tac = 7);
+asn1::f1ap::gnb_du_served_cells_item_s generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac = 7);
 
 /// \brief Generates dummy F1AP SETUP REQUEST message.
-f1ap_message generate_f1_setup_request(gnb_du_id_t gnb_du_id = int_to_gnb_du_id(0x11),
-                                       unsigned    nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22},
-                                                                                                  0U),
-                                       pci_t       pci       = 0,
-                                       unsigned    tac       = 7);
+f1ap_message generate_f1_setup_request(gnb_du_id_t      gnb_du_id = int_to_gnb_du_id(0x11),
+                                       nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(),
+                                       pci_t            pci = 0,
+                                       unsigned         tac = 7);
 
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
 f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);

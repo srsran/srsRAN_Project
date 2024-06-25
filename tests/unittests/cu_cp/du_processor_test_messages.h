@@ -20,11 +20,11 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
-void generate_valid_f1_setup_request(du_setup_request& setup_request,
-                                     gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
-                                     nr_cell_id_t nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22},
-                                                                                                    0),
-                                     pci_t        pci       = 0);
+void generate_valid_f1_setup_request(
+    du_setup_request& setup_request,
+    gnb_du_id_t       gnb_du_id = int_to_gnb_du_id(0x11),
+    nr_cell_identity  nrcell_id = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(),
+    pci_t             pci       = 0);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
 void generate_f1_setup_request_base(du_setup_request& setup_request);
@@ -39,9 +39,9 @@ void         generate_f1_setup_request_with_too_many_cells(du_setup_request& set
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy UE Creation Message.
 ue_rrc_context_creation_request generate_ue_rrc_context_creation_request(
-    ue_index_t   ue_index,
-    rnti_t       c_rnti,
-    nr_cell_id_t nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+    ue_index_t       ue_index,
+    rnti_t           c_rnti,
+    nr_cell_identity nrcell_id = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
 } // namespace srs_cu_cp
 } // namespace srsran

@@ -10,21 +10,17 @@
 
 #pragma once
 
+#include "srsran/ran/nr_cell_identity.h"
 #include <algorithm>
 #include <cstdint>
 #include <string>
 
 namespace srsran {
 
-/// \brief 36-bit identifying an NR Cell Id as specified in subclause 9.3.1.7 of 3GPP TS 38.413
-/// \remark The leftmost (22-32) bits of the NR Cell Identity correspond to the gNB ID and remaining (4-14) bits for
-/// Cell ID.
-using nr_cell_id_t = uint64_t;
-
 /// \brief The NR Cell Global Identity (NR-CGI)
 struct nr_cell_global_id_t {
   nr_cell_global_id_t() = default;
-  nr_cell_global_id_t(uint16_t mcc_, uint16_t mnc_, std::string plmn_, std::string plmn_hex_, nr_cell_id_t nci_) :
+  nr_cell_global_id_t(uint16_t mcc_, uint16_t mnc_, std::string plmn_, std::string plmn_hex_, nr_cell_identity nci_) :
     mcc(mcc_), mnc(mnc_), plmn(plmn_), plmn_hex(plmn_hex_), nci(nci_)
   {
   }
@@ -38,7 +34,7 @@ struct nr_cell_global_id_t {
   /// Full PLMN as hex string with filler digit if needed.
   std::string plmn_hex;
   /// NR cell id.
-  nr_cell_id_t nci;
+  nr_cell_identity nci;
 
   bool operator==(const nr_cell_global_id_t& rhs) const
   {

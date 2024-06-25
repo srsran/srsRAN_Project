@@ -500,7 +500,7 @@ void cu_cp_impl::handle_n2_disconnection()
 
 std::optional<rrc_meas_cfg>
 cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,
-                                              nr_cell_id_t                nci,
+                                              nr_cell_identity            nci,
                                               std::optional<rrc_meas_cfg> current_meas_config)
 {
   return cell_meas_mng.get_measurement_config(ue_index, nci, current_meas_config);
@@ -511,7 +511,7 @@ void cu_cp_impl::handle_measurement_report(const ue_index_t ue_index, const rrc_
   cell_meas_mng.report_measurement(ue_index, meas_results);
 }
 
-bool cu_cp_impl::handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg)
+bool cu_cp_impl::handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   return cell_meas_mng.update_cell_config(nci, serv_cell_cfg);
 }

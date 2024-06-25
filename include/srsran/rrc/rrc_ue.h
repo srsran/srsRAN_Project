@@ -368,7 +368,7 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   virtual std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  on_measurement_config_request(nr_cell_identity nci, std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void on_measurement_report(const rrc_meas_results& meas_results) = 0;

@@ -83,9 +83,9 @@ inline asn1::f1ap::cause_c cause_to_asn1(f1ap_cause_t cause)
 /// \brief Convert F1AP NRCGI to NR Cell Identity.
 /// \param f1ap_cgi The F1AP NRCGI.
 /// \return The NR Cell Identity.
-inline nr_cell_id_t f1ap_asn1_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
+inline nr_cell_identity f1ap_asn1_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
 {
-  return f1ap_cgi.nr_cell_id.to_number();
+  return nr_cell_identity::create(f1ap_cgi.nr_cell_id.to_number()).value();
 }
 
 /// \brief Convert \c rlc_mode to F1AP ASN.1.
@@ -362,7 +362,7 @@ inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_sce
                                                     const f1ap_scell_to_be_setup_mod_item& scell_to_be_setup_mod_item)
 {
   // scell id
-  asn1_scell_to_be_setup_mod_item.scell_id.nr_cell_id.from_number(scell_to_be_setup_mod_item.scell_id.nci);
+  asn1_scell_to_be_setup_mod_item.scell_id.nr_cell_id.from_number(scell_to_be_setup_mod_item.scell_id.nci.value());
   asn1_scell_to_be_setup_mod_item.scell_id.plmn_id.from_string(scell_to_be_setup_mod_item.scell_id.plmn_hex);
 
   // scell idx
@@ -696,7 +696,7 @@ inline asn1::f1ap::nr_cgi_s nr_cgi_to_f1ap_asn1(const nr_cell_global_id_t& nr_cg
   asn1::f1ap::nr_cgi_s asn1_nr_cgi;
 
   // nr cell id
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
 
   // plmn id
   asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
@@ -712,7 +712,7 @@ inline nr_cell_global_id_t f1ap_asn1_to_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_
   nr_cell_global_id_t nr_cgi;
 
   // nr cell id
-  nr_cgi.nci = asn1_nr_cgi.nr_cell_id.to_number();
+  nr_cgi.nci = nr_cell_identity::create(asn1_nr_cgi.nr_cell_id.to_number()).value();
 
   // plmn id
   nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();

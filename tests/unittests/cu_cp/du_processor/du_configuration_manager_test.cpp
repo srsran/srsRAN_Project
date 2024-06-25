@@ -30,7 +30,7 @@ static cu_cp_served_cell_info create_basic_served_cell_info()
   cell_info.nr_cgi.mnc      = 1;
   cell_info.nr_cgi.plmn     = "00101";
   cell_info.nr_cgi.plmn_hex = "00f110";
-  cell_info.nr_cgi.nci      = config_helpers::make_nr_cell_identity({411, 22}, 0x1);
+  cell_info.nr_cgi.nci      = nr_cell_identity::create({411, 22}, 0x1).value();
   cell_info.five_gs_tac     = 7;
   cell_info.nr_pci          = 1;
   return cell_info;

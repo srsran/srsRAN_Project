@@ -104,7 +104,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg.pci;
     f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
-    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci);
+    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci.value());
     f1ap_cell.served_cell_info.five_gs_tac_present = true;
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);
     if (cell_cfg.duplx_mode == duplex_mode::TDD) {

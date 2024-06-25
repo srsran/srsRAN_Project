@@ -358,7 +358,7 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
     asn1_request->res_coordination_transfer_info_present                                  = true;
     asn1_request->res_coordination_transfer_info.res_coordination_eutra_cell_info_present = false;
     asn1_request->res_coordination_transfer_info.m_enb_cell_id.from_number(
-        request.res_coordination_transfer_info.value().m_enb_cell_id);
+        request.res_coordination_transfer_info.value().m_enb_cell_id.value());
   }
 
   // serving cell mo

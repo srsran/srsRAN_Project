@@ -773,7 +773,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 
       // add ngran cgi
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
-          cu_cp_recommended_cell_item.ngran_cgi.nci);
+          cu_cp_recommended_cell_item.ngran_cgi.nci.value());
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id.from_string(
           cu_cp_recommended_cell_item.ngran_cgi.plmn_hex);
 
@@ -887,7 +887,8 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
         cu_cp_recommended_cell_item recommended_cell_item;
 
         // add ngran cgi
-        recommended_cell_item.ngran_cgi.nci      = asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number();
+        recommended_cell_item.ngran_cgi.nci =
+            nr_cell_identity::create(asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number()).value();
         recommended_cell_item.ngran_cgi.plmn_hex = asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_string();
 
         // add time stayed in cell

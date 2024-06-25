@@ -34,7 +34,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // sp cell id
   if (request.sp_cell_id.has_value()) {
     asn1_request->sp_cell_id_present = true;
-    asn1_request->sp_cell_id.nr_cell_id.from_number(request.sp_cell_id.value().nci);
+    asn1_request->sp_cell_id.nr_cell_id.from_number(request.sp_cell_id.value().nci.value());
     asn1_request->sp_cell_id.plmn_id.from_string(request.sp_cell_id.value().plmn_hex);
   }
 
@@ -126,7 +126,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       asn1_scell_to_be_remd_item_container.load_info_obj(ASN1_F1AP_ID_SCELL_TO_BE_REMD_ITEM);
 
       auto& asn1_scell_to_be_remd_item = asn1_scell_to_be_remd_item_container.value().scell_to_be_remd_item();
-      asn1_scell_to_be_remd_item.scell_id.nr_cell_id.from_number(scell_to_be_remd_item.scell_id.nci);
+      asn1_scell_to_be_remd_item.scell_id.nr_cell_id.from_number(scell_to_be_remd_item.scell_id.nci.value());
       asn1_scell_to_be_remd_item.scell_id.plmn_id.from_string(scell_to_be_remd_item.scell_id.plmn_hex);
 
       asn1_request->scell_to_be_remd_list.push_back(asn1_scell_to_be_remd_item_container);
@@ -290,7 +290,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
     asn1_request->res_coordination_transfer_info_present                                  = true;
     asn1_request->res_coordination_transfer_info.res_coordination_eutra_cell_info_present = false;
     asn1_request->res_coordination_transfer_info.m_enb_cell_id.from_number(
-        request.res_coordination_transfer_info.value().m_enb_cell_id);
+        request.res_coordination_transfer_info.value().m_enb_cell_id.value());
   }
 
   // serving cell mo
@@ -495,7 +495,7 @@ inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu
     asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o> asn1_paging_cell_item_container;
     auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
 
-    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci);
+    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci.value());
     asn1_paging_cell_item.nr_cgi.plmn_id.from_string(cell_item.ngran_cgi.plmn_hex);
 
     asn1_paging->paging_cell_list.push_back(asn1_paging_cell_item_container);

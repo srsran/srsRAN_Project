@@ -27,10 +27,10 @@ public:
   virtual ~cell_meas_mobility_manager_notifier() = default;
 
   /// \brief Notifies that a neighbor cell became stronger than the current serving cell.
-  virtual void on_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                              gnb_id_t     neighbor_gnb_id,
-                                              nr_cell_id_t neighbor_nci,
-                                              pci_t        neighbor_pci) = 0;
+  virtual void on_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                              gnb_id_t         neighbor_gnb_id,
+                                              nr_cell_identity neighbor_nci,
+                                              pci_t            neighbor_pci) = 0;
 };
 
 /// Basic cell manager implementation
@@ -42,17 +42,18 @@ public:
                     ue_manager&                          ue_mng_);
   ~cell_meas_manager() = default;
 
-  std::optional<rrc_meas_cfg>
-  get_measurement_config(ue_index_t ue_index, nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {});
-  std::optional<cell_meas_config> get_cell_config(nr_cell_id_t nci);
-  bool                            update_cell_config(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg);
-  void                            report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
+  std::optional<rrc_meas_cfg>     get_measurement_config(ue_index_t                  ue_index,
+                                                         nr_cell_identity            nci,
+                                                         std::optional<rrc_meas_cfg> current_meas_config = {});
+  std::optional<cell_meas_config> get_cell_config(nr_cell_identity nci);
+  bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
+  void report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
 
 private:
   /// \brief Generate measurement objects for the given cell configuration.
   void generate_measurement_objects_for_serving_cells();
 
-  void update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg);
+  void update_measurement_object(nr_cell_identity nci, const serving_cell_meas_config& serving_cell_cfg);
 
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
@@ -60,7 +61,7 @@ private:
 
   std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
       ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
-  std::unordered_map<ssb_frequency_t, std::vector<nr_cell_id_t>> ssb_freq_to_ncis;
+  std::unordered_map<ssb_frequency_t, std::vector<nr_cell_identity>> ssb_freq_to_ncis;
 
   srslog::basic_logger& logger;
 };

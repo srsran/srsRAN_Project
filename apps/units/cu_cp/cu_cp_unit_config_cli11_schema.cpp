@@ -84,14 +84,16 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_unit_report_config&
 
 static void configure_cli11_ncell_args(CLI::App& app, cu_cp_unit_neighbor_cell_config_item& config)
 {
-  add_option(app, "--nr_cell_id", config.nr_cell_id, "Neighbor cell id");
+  add_option(app, "--nr_cell_id", config.nr_cell_id, "Neighbor cell id")
+      ->check(CLI::Range(static_cast<uint64_t>(0U), nr_cell_identity::max().value()));
   add_option(
       app, "--report_configs", config.report_cfg_ids, "Report configurations to configure for this neighbor cell");
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_item& config)
 {
-  add_option(app, "--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
+  add_option(app, "--nr_cell_id", config.nr_cell_id, "Cell id to be configured")
+      ->check(CLI::Range(static_cast<uint64_t>(0U), nr_cell_identity::max().value()));
   add_option(app,
              "--periodic_report_cfg_id",
              config.periodic_report_cfg_id,

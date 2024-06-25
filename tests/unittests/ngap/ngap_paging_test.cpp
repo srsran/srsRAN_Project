@@ -118,7 +118,7 @@ protected:
       test_logger.error("NR CGI PLMN mismatch {} != 00f110", cell_item.ngran_cgi.plmn_hex);
       return false;
     }
-    nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+    nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
     if (cell_item.ngran_cgi.nci != nci) {
       test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci, nci);
       return false;

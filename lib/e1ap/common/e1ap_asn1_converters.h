@@ -177,7 +177,7 @@ inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cg
 {
   asn1::e1ap::nr_cgi_s asn1_nr_cgi;
 
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
   asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
 
   return asn1_nr_cgi;
@@ -1053,7 +1053,7 @@ inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi
   // Set PLMN hex string.
   cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
 
-  cgi.nci = asn1_cgi.nr_cell_id.to_number();
+  cgi.nci = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value();
 
   return cgi;
 }

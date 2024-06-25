@@ -99,7 +99,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
   // Generate ue_creation message
   ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
   // Pass message to DU processor
   ue_rrc_context_creation_response resp =
@@ -117,7 +117,8 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
 
   // Generate ue_creation message
   ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-  ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, 1);
+  ue_rrc_context_creation_request req =
+      generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(1).value());
 
   // Pass message to DU processor
   ue_rrc_context_creation_response resp =
@@ -138,7 +139,7 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
   // Generate ue_creation message
   ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
   // Pass message to DU processor
   ue_rrc_context_creation_response resp =
@@ -171,7 +172,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
     rnti_t                          c_rnti   = to_rnti(it + 1); // 0 is not a valid RNTI
     ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
     ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-        ue_index, c_rnti, config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+        ue_index, c_rnti, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
     // Pass message to DU processor
     ue_rrc_context_creation_response resp =

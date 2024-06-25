@@ -20,7 +20,7 @@
 
 using namespace srsran;
 
-static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_mobility_config& config)
+static bool validate_mobility_appconfig(gnb_id_t gnb_id, const cu_cp_unit_mobility_config& config)
 {
   // check that report config ids are unique
   std::map<unsigned, std::string> report_cfg_ids_to_report_type;
@@ -32,12 +32,13 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
     report_cfg_ids_to_report_type.emplace(report_cfg.report_cfg_id, report_cfg.report_type);
   }
 
-  std::map<nr_cell_id_t, std::set<unsigned>> cell_to_report_cfg_id;
+  std::map<nr_cell_identity, std::set<unsigned>> cell_to_report_cfg_id;
 
   // check cu_cp_cell_config
-  std::set<nr_cell_id_t> ncis;
+  std::set<nr_cell_identity> ncis;
   for (const auto& cell : config.cells) {
-    if (!ncis.emplace(cell.nr_cell_id).second) {
+    nr_cell_identity nci = nr_cell_identity::create(cell.nr_cell_id).value();
+    if (!ncis.emplace(nci).second) {
       fmt::print("Cells must be unique ({:#x} already present)\n", cell.nr_cell_id);
       return false;
     }
@@ -50,8 +51,8 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
 
     if (cell.periodic_report_cfg_id.has_value()) {
       // try to add report config id to cell_to_report_cfg_id map
-      cell_to_report_cfg_id.emplace(cell.nr_cell_id, std::set<unsigned>());
-      auto& report_cfg_ids = cell_to_report_cfg_id.at(cell.nr_cell_id);
+      cell_to_report_cfg_id.emplace(nci, std::set<unsigned>());
+      auto& report_cfg_ids = cell_to_report_cfg_id.at(nci);
       if (!report_cfg_ids.emplace(cell.periodic_report_cfg_id.value()).second) {
         fmt::print("cell={}: report_config_id={} already configured for this cell)\n",
                    cell.nr_cell_id,
@@ -66,7 +67,7 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
     }
 
     // check if cell is an external managed cell
-    if (config_helpers::get_gnb_id(cell.nr_cell_id, gnb_id.bit_length) != gnb_id) {
+    if (nci.gnb_id(gnb_id.bit_length) != gnb_id) {
       if (!cell.gnb_id_bit_length.has_value() || !cell.pci.has_value() || !cell.band.has_value() ||
           !cell.ssb_arfcn.has_value() || !cell.ssb_scs.has_value() || !cell.ssb_period.has_value() ||
           !cell.ssb_offset.has_value() || !cell.ssb_duration.has_value()) {
@@ -92,8 +93,8 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
     for (const auto& ncell : cell.ncells) {
       // try to add report config ids to cell_to_report_cfg_id map
       for (const auto& id : ncell.report_cfg_ids) {
-        if (cell_to_report_cfg_id.find(ncell.nr_cell_id) != cell_to_report_cfg_id.end() &&
-            !cell_to_report_cfg_id.at(ncell.nr_cell_id).emplace(id).second) {
+        if (cell_to_report_cfg_id.find(nci) != cell_to_report_cfg_id.end() &&
+            !cell_to_report_cfg_id.at(nci).emplace(id).second) {
           fmt::print("cell={}: report_config_id={} already configured for this cell\n", ncell.nr_cell_id, id);
           return false;
         }
@@ -103,8 +104,9 @@ static bool validate_mobility_appconfig(const gnb_id_t gnb_id, const cu_cp_unit_
 
   // verify that each configured neighbor cell is present
   for (const auto& cell : config.cells) {
+    nr_cell_identity nci = nr_cell_identity::create(cell.nr_cell_id).value();
     for (const auto& ncell : cell.ncells) {
-      if (ncis.find(ncell.nr_cell_id) == ncis.end()) {
+      if (ncis.find(nci) == ncis.end()) {
         fmt::print("Neighbor cell config for nci={:#x} incomplete. No valid configuration for cell nci={:#x} found.\n",
                    cell.nr_cell_id,
                    ncell.nr_cell_id);

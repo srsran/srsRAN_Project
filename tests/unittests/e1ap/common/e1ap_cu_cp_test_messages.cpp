@@ -15,7 +15,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::e1ap;
 
-asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
+asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(nr_cell_identity nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
   supported_plmns_item.plmn_id.from_string("00f110");
@@ -26,7 +26,7 @@ asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_i
 
   asn1::e1ap::nr_cgi_support_item_s nr_cgi_support_item;
   nr_cgi_support_item.nr_cgi.plmn_id.from_string("00f110");
-  nr_cgi_support_item.nr_cgi.nr_cell_id.from_number(nrcell_id);
+  nr_cgi_support_item.nr_cgi.nr_cell_id.from_number(nrcell_id.value());
   supported_plmns_item.nr_cgi_support_list.push_back(nr_cgi_support_item);
 
   supported_plmns_item.qos_params_support_list_present = false;
@@ -57,7 +57,7 @@ e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   auto&        setup_req        = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
 
   setup_req->supported_plmns.push_back(
-      generate_supported_plmns_item(config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0)));
+      generate_supported_plmns_item(nr_cell_identity::create(gnb_id_t{411, 22}, 0).value()));
 
   return e1_setup_request;
 }

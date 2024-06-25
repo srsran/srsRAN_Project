@@ -257,7 +257,7 @@ public:
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   virtual std::optional<rrc_meas_cfg>
   handle_measurement_config_request(ue_index_t                  ue_index,
-                                    nr_cell_id_t                nci,
+                                    nr_cell_identity            nci,
                                     std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
   /// \brief Handle a measurement report for given UE.
@@ -273,7 +273,8 @@ public:
   /// \brief Handle a request to update the measurement related parameters for the given cell id.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  virtual bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) = 0;
+  virtual bool handle_cell_config_update_request(nr_cell_identity                nci,
+                                                 const serving_cell_meas_config& serv_cell_cfg) = 0;
 };
 
 /// Interface to request handover.

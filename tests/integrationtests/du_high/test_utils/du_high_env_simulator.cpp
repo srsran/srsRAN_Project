@@ -169,7 +169,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     for (unsigned i = 0; i < params.nof_cells; ++i) {
       builder_params.pci = (pci_t)i;
       cfg.cells.push_back(config_helpers::make_default_du_cell_config(builder_params));
-      cfg.cells.back().nr_cgi.nci = i;
+      cfg.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
     }
 
     cfg.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);

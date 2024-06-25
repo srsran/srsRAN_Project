@@ -200,7 +200,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
   // Get packed varShortMAC-Input
   asn1::rrc_nr::var_short_mac_input_s var_short_mac_input = {};
   var_short_mac_input.source_pci                          = reestablishment_request.rrc_reest_request.ue_id.pci;
-  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
+  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci.value());
   var_short_mac_input.source_c_rnti        = reestablishment_request.rrc_reest_request.ue_id.c_rnti;
   byte_buffer   var_short_mac_input_packed = {};
   asn1::bit_ref bref(var_short_mac_input_packed);

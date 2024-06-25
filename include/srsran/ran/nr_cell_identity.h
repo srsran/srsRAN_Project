@@ -28,6 +28,8 @@ public:
   static constexpr nr_cell_identity min() { return nr_cell_identity{0x0}; }
   static constexpr nr_cell_identity max() { return nr_cell_identity{((uint64_t)1U << 36U) - 1U}; }
 
+  nr_cell_identity() : val(0) {}
+
   static expected<nr_cell_identity> create(uint64_t val)
   {
     if (val > max().val) {
@@ -73,13 +75,20 @@ public:
   }
 
   /// Extract gNB-DU ID from NR Cell Identity.
-  gnb_id_t gnb_du_id(unsigned nof_gnb_id_bits) const
+  gnb_id_t gnb_id(unsigned nof_gnb_id_bits) const
   {
     srsran_assert(nof_gnb_id_bits >= 22 and nof_gnb_id_bits <= 32, "Invalid number of gNB-DU ID bits");
     return gnb_id_t{static_cast<uint32_t>(val >> (36U - nof_gnb_id_bits)), static_cast<uint8_t>(nof_gnb_id_bits)};
   }
 
   static size_t nof_bits() { return 36; }
+
+  bool operator==(const nr_cell_identity& nci) const { return val == nci.val; }
+  bool operator!=(const nr_cell_identity& nci) const { return !(*this == nci); }
+  bool operator<(const nr_cell_identity& nci) const { return val < nci.val; }
+  bool operator<=(const nr_cell_identity& nci) const { return val <= nci.val; }
+  bool operator>(const nr_cell_identity& nci) const { return val > nci.val; }
+  bool operator>=(const nr_cell_identity& nci) const { return val >= nci.val; }
 
 private:
   uint64_t val;

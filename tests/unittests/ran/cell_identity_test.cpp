@@ -389,11 +389,11 @@ TEST_F(nci_test, nci_to_gnb_id)
   ASSERT_TRUE(ret.has_value());
   nr_cell_identity nci = ret.value();
   gnb_id_t         gnb_id{0x19, 24};
-  ASSERT_EQ(nci.gnb_du_id(24), gnb_id);
+  ASSERT_EQ(nci.gnb_id(24), gnb_id);
   gnb_id = {0x19b, 28};
-  ASSERT_EQ(nci.gnb_du_id(28), gnb_id);
+  ASSERT_EQ(nci.gnb_id(28), gnb_id);
   gnb_id = {0x19b0, 32};
-  ASSERT_EQ(nci.gnb_du_id(32), gnb_id);
+  ASSERT_EQ(nci.gnb_id(32), gnb_id);
 }
 
 TEST_F(nci_test, invalid_gnb_id_and_local_cell_id_to_nci_fails)
@@ -409,6 +409,6 @@ TEST_F(nci_test, valid_gnb_id_and_local_cell_id_to_nci_succeeds)
   auto     ret = nr_cell_identity::create(gnb_id, 0xb01);
   ASSERT_TRUE(ret.has_value());
   nr_cell_identity nci = ret.value();
-  ASSERT_EQ(nci.gnb_du_id(24), gnb_id);
+  ASSERT_EQ(nci.gnb_id(24), gnb_id);
   ASSERT_EQ(nci.local_cell_id(12), 0xb01);
 }

@@ -186,7 +186,7 @@ private:
   // target DU parameters.
   du_index_t          target_du_index  = uint_to_du_index(1);
   gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
-  nr_cell_id_t        target_nrcell_id = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 1);
+  nr_cell_identity    target_nrcell_id = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value();
   nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", target_nrcell_id};
   unsigned            target_pci       = 2;
 

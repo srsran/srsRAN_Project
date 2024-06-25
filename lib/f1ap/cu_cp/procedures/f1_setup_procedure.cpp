@@ -138,7 +138,7 @@ static f1ap_message create_f1_setup_response(const asn1::f1ap::f1_setup_request_
       asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
       resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(
           bcd_helper::plmn_string_to_bcd(du_cell.nr_cgi.plmn));
-      resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci);
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci.value());
 
       if (du_cell.nr_pci.has_value()) {
         resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;

@@ -74,7 +74,8 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   f1ap_message_notifier* f1c_rx_pdu_notif2 = this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg2 = test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 8);
+  f1ap_message f1setup_msg2 =
+      test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), nr_cell_identity::create(6577).value(), 1, 8);
 
   // Pass message to CU-CP
   f1c_rx_pdu_notif2->on_new_message(f1setup_msg2);
@@ -103,7 +104,8 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_only_sent_t
   f1ap_message_notifier* f1c_rx_pdu_notif2 = this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg2 = test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), 6577, 1, 7);
+  f1ap_message f1setup_msg2 =
+      test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x12), nr_cell_identity::create(6577).value(), 1, 7);
 
   // Pass message to CU-CP
   f1c_rx_pdu_notif2->on_new_message(f1setup_msg2);

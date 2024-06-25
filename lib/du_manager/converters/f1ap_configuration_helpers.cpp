@@ -299,7 +299,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   }
   sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;
   sib1.cell_access_related_info.plmn_id_info_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci.value());
   sib1.cell_access_related_info.plmn_id_info_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 

@@ -246,7 +246,7 @@ du_configuration_manager::validate_cell_config_request(const cu_cp_du_served_cel
   }
 
   // Ensure NCIs match the gNB-Id.
-  if (not rrc_cfg.gnb_id.contains_nci(cell_req.served_cell_info.nr_cgi.nci)) {
+  if (cell_req.served_cell_info.nr_cgi.nci.gnb_id(rrc_cfg.gnb_id.bit_length) != rrc_cfg.gnb_id) {
     return error_type<du_setup_result::rejected>{
         du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
                                   fmt::format("NCI {:#x} of the served Cell does not match gNB-Id {:#x}",

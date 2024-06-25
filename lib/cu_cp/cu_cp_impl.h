@@ -86,12 +86,12 @@ public:
   // cu_cp_measurement_handler
   std::optional<rrc_meas_cfg>
        handle_measurement_config_request(ue_index_t                  ue_index,
-                                         nr_cell_id_t                nci,
+                                         nr_cell_identity            nci,
                                          std::optional<rrc_meas_cfg> current_meas_config = {}) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler
-  bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
+  bool handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_mobility_manager_handler
   async_task<cu_cp_inter_du_handover_response>

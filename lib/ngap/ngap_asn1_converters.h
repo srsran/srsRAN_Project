@@ -188,9 +188,9 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
 /// \param ngap_cgi The NGAP NRCGI.
 /// \return The NR Cell Identity.
-inline nr_cell_id_t cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
+inline nr_cell_identity cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
 {
-  return ngap_cgi.nr_cell_id.to_number();
+  return nr_cell_identity::create(ngap_cgi.nr_cell_id.to_number()).value();
 }
 
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
@@ -202,7 +202,7 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
   asn1::ngap::user_location_info_nr_s asn1_user_location_info;
 
   // add nr cgi
-  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci);
+  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci.value());
   asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_user_location_info.nr_cgi.plmn_hex);
   // add tai
   asn1_user_location_info.tai.plmn_id.from_string(cu_cp_user_location_info.tai.plmn_id);
@@ -533,7 +533,7 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
   nr_cell_global_id_t nr_cgi;
 
   // nr cell id
-  nr_cgi.nci = asn1_nr_cgi.nr_cell_id.to_number();
+  nr_cgi.nci = nr_cell_identity::create(asn1_nr_cgi.nr_cell_id.to_number()).value();
 
   // plmn id
   nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
@@ -551,7 +551,7 @@ inline asn1::ngap::nr_cgi_s nr_cgi_to_ngap_asn1(const nr_cell_global_id_t& nr_cg
   asn1::ngap::nr_cgi_s asn1_nr_cgi;
 
   // nr cell id
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
 
   // plmn id
   asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);

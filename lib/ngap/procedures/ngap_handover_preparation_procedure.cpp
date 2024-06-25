@@ -169,7 +169,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
 
   target_nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
-  target_nr_cgi.nr_cell_id.from_number(request.nci);
+  target_nr_cgi.nr_cell_id.from_number(request.nci.value());
 
   last_visited_cell_item_s        last_visited_cell_item;
   last_visited_ngran_cell_info_s& ngran_cell = last_visited_cell_item.last_visited_cell_info.set_ngran_cell();

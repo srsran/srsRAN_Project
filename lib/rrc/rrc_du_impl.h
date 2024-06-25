@@ -65,7 +65,7 @@ private:
   // RRC-internal user database indexed by ue_index
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
   // Cell database to store cell information from the DU
-  std::map<nr_cell_id_t, rrc_cell_info> cell_info_db;
+  std::map<nr_cell_identity, rrc_cell_info> cell_info_db;
 };
 
 } // namespace srs_cu_cp
