@@ -34,7 +34,7 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter_for_invalid_plmn)
 {
   // use known a PLMN
   asn1::f1ap::nr_cgi_s asn1_cgi;
-  asn1_cgi.plmn_id.from_string("00f000"); // 000.00
+  asn1_cgi.plmn_id.from_string("00f00a"); // 000.0a
   asn1_cgi.nr_cell_id.from_number(6576);
 
   // convert to internal NGI representation
