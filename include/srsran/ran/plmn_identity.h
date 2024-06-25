@@ -164,7 +164,8 @@ public:
   plmn_identity() = delete;
   plmn_identity(mobile_country_code mcc, mobile_network_code mnc) : plmn_identity(mcc.to_bcd(), mnc.to_bcd()) {}
 
-  static expected<plmn_identity> from_string(const std::string& plmn_id_str)
+  /// Convert PLMN string representation to PLMN instance (e.g. "00101" for test network).
+  static expected<plmn_identity> parse(const std::string& plmn_id_str)
   {
     uint32_t plmn = bcd_helper::plmn_string_to_bcd(plmn_id_str);
     if (plmn == 0) {
@@ -173,12 +174,38 @@ public:
     return plmn_identity{plmn};
   }
 
+  /// \brief Convert array of bytes representation to PLMN instance.
+  ///
+  /// The PLMN identity byte representation consists of 3 digits from MCC followed by either a filler digit plus 2
+  /// digits from MNC (2 digit MNC) or 3 digits from MNC (3 digit MNC).
+  static expected<plmn_identity> from_bytes(const std::array<uint8_t, 3>& bytes)
+  {
+    uint16_t mcc = 0xf000U + (static_cast<uint16_t>(bytes[0]) << 4U) + (bytes[1] >> 4U);
+    uint16_t mnc = 0xf000U + ((bytes[1] & 0xfU) << 8U) + bytes[2];
+    if (not bcd_helper::is_valid_mcc(mcc) or not bcd_helper::is_valid_mnc(mnc)) {
+      return default_error_t{};
+    }
+    return plmn_identity{mcc, mnc};
+  }
+
   uint32_t to_bcd() const { return data; }
+
+  std::array<uint8_t, 3> to_bytes() const
+  {
+    std::array<uint8_t, 3> bytes = {};
+    uint16_t               mcc   = bcd_helper::bcd_plmn_to_mcc(data);
+    uint16_t               mnc   = bcd_helper::bcd_plmn_to_mnc(data);
+    bytes[0]                     = (mcc >> 4U) & 0xffU;
+    bytes[1]                     = ((mcc & 0xfU) << 4U) + ((mnc >> 0x8U) & 0xfU);
+    bytes[2]                     = mnc & 0xffU;
+    return bytes;
+  }
 
   mobile_country_code mcc() const { return mobile_country_code::from_bcd(bcd_helper::bcd_plmn_to_mcc(data)).value(); }
 
   mobile_network_code mnc() const { return mobile_network_code::from_bcd(bcd_helper::bcd_plmn_to_mnc(data)).value(); }
 
+  /// Convert PLMN to string representation (e.g. "00101" for test network).
   std::string to_string() const { return bcd_helper::plmn_bcd_to_string(data); }
 
   bool operator==(const plmn_identity& rhs) const { return data == rhs.data; }

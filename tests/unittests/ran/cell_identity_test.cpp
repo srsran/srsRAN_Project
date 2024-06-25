@@ -294,13 +294,13 @@ class plmn_id_test : public ::testing::Test
 
 TEST_F(plmn_id_test, plmn_id_creation_from_invalid_string_fails)
 {
-  auto ret = plmn_identity::from_string("1234567");
+  auto ret = plmn_identity::parse("1234567");
   ASSERT_TRUE(ret.is_error());
 }
 
 TEST_F(plmn_id_test, plmn_id_creation_from_valid_string_succeeds)
 {
-  auto ret = plmn_identity::from_string("00101");
+  auto ret = plmn_identity::parse("00101");
   ASSERT_TRUE(ret.has_value());
   plmn_identity plmn = ret.value();
   ASSERT_EQ(plmn.to_bcd(), 0xF110);
@@ -316,6 +316,31 @@ TEST_F(plmn_id_test, plmn_id_creation_from_mnc_mcc_succeeds)
   ASSERT_EQ(plmn.to_string(), "00101");
   ASSERT_EQ(plmn.mcc().to_string(), "001");
   ASSERT_EQ(plmn.mnc().to_string(), "01");
+}
+
+TEST_F(plmn_id_test, plmn_id_creation_from_invalid_bytes_fails)
+{
+  auto ret = plmn_identity::from_bytes({0x00, 0x1f, 0x0a});
+  ASSERT_TRUE(ret.is_error());
+  ret = plmn_identity::from_bytes({0x00, 0xdf, 0x01});
+}
+
+TEST_F(plmn_id_test, plmn_id_creation_from_valid_bytes_succeeds)
+{
+  plmn_identity plmn = plmn_identity::from_bytes({0x00, 0x1f, 0x01}).value();
+  ASSERT_EQ(plmn.to_string(), "00101");
+  plmn = plmn_identity::from_bytes({0x00, 0x10, 0x01}).value();
+  ASSERT_EQ(plmn.to_string(), "001001");
+}
+
+TEST_F(plmn_id_test, plmn_id_conversion_to_bytes)
+{
+  plmn_identity          plmn  = plmn_identity::parse("00101").value();
+  std::array<uint8_t, 3> bytes = {0x00, 0x1f, 0x01};
+  ASSERT_EQ(plmn.to_bytes(), bytes);
+  plmn  = plmn_identity::parse("001001").value();
+  bytes = {0x00, 0x10, 0x01};
+  ASSERT_EQ(plmn.to_bytes(), bytes);
 }
 
 TEST_F(plmn_id_test, plmn_id_test_value_is_mcc_mnc_test_value)
