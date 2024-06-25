@@ -30,7 +30,7 @@ namespace srsran {
 class resource_grid_writer_impl : public resource_grid_writer
 {
 public:
-  using storage_type = tensor<static_cast<unsigned>(resource_grid_dimensions::all), cf_t, resource_grid_dimensions>;
+  using storage_type = tensor<static_cast<unsigned>(resource_grid_dimensions::all), cbf16_t, resource_grid_dimensions>;
 
   /// Constructs a resource grid writer implementation from a tensor.
   resource_grid_writer_impl(storage_type& data_, std::atomic<unsigned>& empty_) : data(data_), empty(empty_) {}

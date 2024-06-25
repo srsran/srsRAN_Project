@@ -25,7 +25,9 @@
 #include "../test_helpers.h"
 #include "lib/cu_cp/routine_managers/cu_cp_routine_manager.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "lib/cu_cp/up_resource_manager/up_resource_manager_impl.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/five_qi.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -46,7 +48,15 @@ protected:
   ue_configuration                ue_config{std::chrono::seconds{10}};
   srsran::security::sec_as_config security_cfg;
   security_indication_t           default_security_indication = {};
-  up_resource_manager_cfg         drb_cfg;
+
+  pdcp_config pdcp_cfg{pdcp_rb_type::drb,
+                       pdcp_rlc_mode::am,
+                       {},
+                       {},
+                       {pdcp_sn_size::size12bits},
+                       {pdcp_sn_size::size12bits}};
+
+  up_resource_manager_cfg up_config{{{uint_to_five_qi(9), {pdcp_cfg}}, {uint_to_five_qi(7), {pdcp_cfg}}}};
 
   timer_manager                                      timers;
   manual_task_worker                                 ctrl_worker{128};
@@ -54,12 +64,11 @@ protected:
   dummy_f1ap_ue_context_manager                      f1ap_ue_ctxt_mng;
   dummy_ngap_control_message_handler                 ngap_control_handler;
   dummy_ue_task_scheduler                            ue_task_sched{timers, ctrl_worker};
-  ue_manager                                         ue_mng{ue_config, drb_cfg, timers, ctrl_worker};
+  ue_manager                                         ue_mng{ue_config, up_config, {}, timers, ctrl_worker};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   dummy_du_processor_rrc_ue_srb_control_notifier     rrc_ue_srb_ctrl_notifier;
   dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;
   dummy_cu_cp_ue_removal_handler                     ue_removal_handler{&ue_mng};
-  std::unique_ptr<up_resource_manager_impl>          rrc_ue_up_resource_manager;
   std::unique_ptr<cu_cp_routine_manager>             routine_mng;
 };
 

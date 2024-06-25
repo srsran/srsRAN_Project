@@ -37,7 +37,7 @@ public:
                              e1ap_bearer_context_manager*            e1ap_bearer_ctxt_mng_,
                              f1ap_ue_context_manager&                f1ap_ue_ctxt_mng_,
                              cu_cp_ue_removal_handler&               ue_removal_handler_,
-                             du_processor_ue_manager&                ue_manager_,
+                             ue_manager&                             ue_mng_,
                              srslog::basic_logger&                   logger_);
 
   void operator()(coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx);
@@ -50,7 +50,7 @@ private:
   e1ap_bearer_context_manager* e1ap_bearer_ctxt_mng = nullptr; // to trigger bearer context setup at CU-UP
   f1ap_ue_context_manager&     f1ap_ue_ctxt_mng;               // to trigger UE context modification at DU
   cu_cp_ue_removal_handler&    ue_removal_handler;             // to remove UE
-  du_processor_ue_manager&     ue_manager;
+  ue_manager&                  ue_mng;
   srslog::basic_logger&        logger;
 
   // (sub-)routine requests

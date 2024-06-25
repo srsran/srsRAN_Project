@@ -20,13 +20,18 @@
  *
  */
 
-#include "up_resource_manager_impl.h"
-#include "srsran/cu_cp/up_resource_manager.h"
+#pragma once
 
-using namespace srsran;
+#include "srsran/cu_cp/cu_cp_types.h"
 
-std::unique_ptr<srs_cu_cp::up_resource_manager>
-srsran::srs_cu_cp::create_up_resource_manager(const srs_cu_cp::up_resource_manager_cfg& cfg_)
-{
-  return std::make_unique<srs_cu_cp::up_resource_manager_impl>(cfg_);
-}
+namespace srsran {
+namespace srs_cu_cp {
+
+/// UE configuration passed to CU-CP
+struct ue_configuration {
+  std::chrono::seconds inactivity_timer;
+  unsigned             max_nof_supported_ues = MAX_NOF_CU_UES;
+};
+
+} // namespace srs_cu_cp
+} // namespace srsran

@@ -84,6 +84,9 @@ void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 
 void cell_scheduler::run_slot(slot_point sl_tx)
 {
+  // Mark the start of the slot.
+  auto slot_start_tp = std::chrono::high_resolution_clock::now();
+
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
     while (SRSRAN_UNLIKELY(res_grid.slot_tx() + 1 != sl_tx)) {
@@ -101,9 +104,6 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   pdcch_sch.slot_indication(sl_tx);
   pucch_alloc.slot_indication(sl_tx);
   uci_alloc.slot_indication(sl_tx);
-
-  // > Mark slot start for logging purposes.
-  result_logger.on_slot_start();
 
   // > SSB scheduling.
   ssb_sch.run_slot(res_grid, sl_tx);
@@ -130,12 +130,16 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Schedule UE DL and UL data.
   ue_sched.run_slot(sl_tx, cell_cfg.cell_index);
 
+  // > Mark stop of the slot processing
+  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
+  auto slot_dur     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+
   // > Log processed events.
   event_logger.log();
 
   // > Log the scheduler results.
-  result_logger.on_scheduler_result(last_result());
+  result_logger.on_scheduler_result(last_result(), slot_dur);
 
   // > Push the scheduler results to the metrics handler.
-  metrics.push_result(sl_tx, last_result());
+  metrics.push_result(sl_tx, last_result(), slot_dur);
 }

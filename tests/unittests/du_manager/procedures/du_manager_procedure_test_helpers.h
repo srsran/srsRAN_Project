@@ -46,16 +46,20 @@ public:
 
   fifo_async_task_scheduler* ue_ctrl_loop;
 
-  async_task<void> disconnect_notifiers() override
+  async_task<void> handle_traffic_stop_request() override
   {
     ue_notifiers_disconnected = true;
     return launch_no_op_task();
   }
   async_task<void> handle_activity_stop_request() override { return launch_no_op_task(); }
-  void             schedule_async_task(async_task<void> task) override { ue_ctrl_loop->schedule(std::move(task)); }
-  void             handle_rlf_detection(rlf_cause cause) override {}
-  void             handle_crnti_ce_detection() override {}
-  void             stop_drb_traffic() override {}
+  async_task<void> handle_drb_traffic_stop_request(span<const drb_id_t> /*unused*/) override
+  {
+    return launch_no_op_task();
+  }
+  void schedule_async_task(async_task<void> task) override { ue_ctrl_loop->schedule(std::move(task)); }
+  void handle_rlf_detection(rlf_cause cause) override {}
+  void handle_crnti_ce_detection() override {}
+  void stop_drb_traffic() override {}
   mac_ue_radio_link_notifier&          get_mac_rlf_notifier() override { return *this; }
   void                                 on_rlf_detected() override {}
   void                                 on_crnti_ce_received() override {}

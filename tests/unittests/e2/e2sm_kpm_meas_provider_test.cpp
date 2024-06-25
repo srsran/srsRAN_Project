@@ -48,10 +48,10 @@ class e2_rlc_metrics_notifier : public e2_du_metrics_notifier, public e2_du_metr
 public:
   void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
 
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  void report_metrics(const scheduler_cell_metrics& metrics) override
   {
     if (e2_meas_provider) {
-      e2_meas_provider->report_metrics(ue_metrics);
+      e2_meas_provider->report_metrics(metrics);
     }
   }
 

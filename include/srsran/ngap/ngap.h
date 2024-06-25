@@ -27,12 +27,12 @@
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 struct ngap_message;
+struct up_pdu_session_context;
 
 /// This interface is used to push NGAP messages to the NGAP interface.
 class ngap_message_handler
@@ -97,7 +97,58 @@ public:
   virtual void remove_ue_context(ue_index_t ue_index) = 0;
 };
 
-/// Interface to notify the CU-CP about an NGAP UE creation.
+/// Notifier to the RRC UE for NAS PDUs.
+class ngap_rrc_ue_pdu_notifier
+{
+public:
+  virtual ~ngap_rrc_ue_pdu_notifier() = default;
+
+  /// \brief Notify about the a new nas pdu.
+  /// \param [in] nas_pdu The nas pdu.
+  virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
+};
+
+/// Notifier to the RRC UE for control messages.
+class ngap_rrc_ue_control_notifier
+{
+public:
+  virtual ~ngap_rrc_ue_control_notifier() = default;
+
+  /// \brief Notify about the reception of new security context.
+  virtual async_task<bool> on_new_security_context() = 0;
+
+  /// \brief Get packed handover preparation message for inter-gNB handover.
+  virtual byte_buffer on_handover_preparation_message_required() = 0;
+};
+
+/// NGAP notifier to the CU-CP UE
+class ngap_cu_cp_ue_notifier
+{
+public:
+  virtual ~ngap_cu_cp_ue_notifier() = default;
+
+  /// \brief Get the UE index of the UE.
+  virtual ue_index_t get_ue_index() = 0;
+
+  /// \brief Schedule an async task for the UE.
+  virtual bool schedule_async_task(async_task<void> task) = 0;
+
+  /// \brief Get the RRC UE PDU notifier of the UE.
+  virtual ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;
+
+  /// \brief Get the RRC UE control notifier of the UE.
+  virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
+
+  /// \brief Notify the CU-CP about a security context
+  /// \param[in] sec_ctxt The received security context
+  /// \return True if the security context was successfully initialized, false otherwise
+  virtual bool init_security_context(security::security_context sec_ctxt) = 0;
+
+  /// \brief Check if security is enabled
+  [[nodiscard]] virtual bool is_security_enabled() const = 0;
+};
+
+/// NGAP notifier to the CU-CP.
 class ngap_cu_cp_notifier
 {
 public:
@@ -105,8 +156,20 @@ public:
 
   /// \brief Notifies the CU-CP about a new NGAP UE.
   /// \param[in] ue_index The index of the new NGAP UE.
-  /// \returns True if the UE was successfully created, false otherwise.
-  virtual bool on_new_ngap_ue(ue_index_t ue_index) = 0;
+  /// \returns Pointer to the NGAP UE notifier.
+  virtual ngap_cu_cp_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Request scheduling a task for a UE.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] task The task to schedule.
+  /// \returns True if the task was successfully scheduled, false otherwise.
+  virtual bool schedule_async_task(ue_index_t ue_index, async_task<void> task) = 0;
+
+  /// \brief Notify the CU-CP about a security context received in a handover request.
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] sec_ctxt The received security context.
+  /// \return True if the security context was successfully initialized, false otherwise.
+  virtual bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
@@ -196,33 +259,6 @@ public:
                                                      const unsigned             tac) = 0;
 };
 
-/// Interface to notify about NAS PDUs and messages.
-class ngap_rrc_ue_pdu_notifier
-{
-public:
-  virtual ~ngap_rrc_ue_pdu_notifier() = default;
-
-  /// \brief Notify about the a new nas pdu.
-  /// \param [in] nas_pdu The nas pdu.
-  virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
-};
-
-/// Interface to notify the RRC UE about control messages.
-class ngap_rrc_ue_control_notifier
-{
-public:
-  virtual ~ngap_rrc_ue_control_notifier() = default;
-
-  /// \brief Notify about the reception of new security context.
-  virtual async_task<bool> on_new_security_context(const security::security_context& sec_context) = 0;
-
-  /// \brief Get packed handover preparation message for inter-gNB handover.
-  virtual byte_buffer on_handover_preparation_message_required() = 0;
-
-  /// \brief Get the status of the security context.
-  virtual bool on_security_enabled() = 0;
-};
-
 /// Interface to control the NGAP.
 class ngap_ue_control_manager
 {
@@ -232,8 +268,10 @@ public:
   /// \brief Updates the NGAP UE context with a new UE index.
   /// \param[in] new_ue_index The new index of the UE.
   /// \param[in] old_ue_index The old index of the UE.
+  /// \param[in] new_ue_notifier The notifier to the new UE.
   /// \returns True if the update was successful, false otherwise.
-  virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
+  virtual bool
+  update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

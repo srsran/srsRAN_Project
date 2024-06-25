@@ -37,22 +37,20 @@ struct du_sys_info {
   byte_buffer packed_sib1;
 };
 
-struct du_cell_context {
-  du_cell_index_t      cell_index = du_cell_index_t::invalid; /// CU internal cell ID
-  du_index_t           du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
-  nr_cell_global_id_t  cgi;                                   /// global cell ID
-  uint32_t             tac;                                   /// tracking area code
-  pci_t                pci;                                   /// Physical cell ID
-  std::vector<nr_band> bands;                                 /// NR bands provided/supported by the cell.
-  du_sys_info          sys_info;                              /// System information provided by DU
-};
-
-struct du_processor_context {
-  du_index_t  du_index = du_index_t::invalid;  /// Index assisgned by CU-CP
-  gnb_du_id_t id       = gnb_du_id_t::invalid; /// the gNB-DU-ID
-  std::string name     = "none";               /// gNB-DU-Name
+struct du_cell_configuration {
+  /// CU-CP specific DU cell identifier.
+  du_cell_index_t cell_index = du_cell_index_t::invalid;
+  /// Global cell ID.
+  nr_cell_global_id_t cgi;
+  /// Tracking Area Code
+  uint32_t tac;
+  /// Physical cell ID
+  pci_t pci;
+  /// NR bands provided/supported by the cell.
+  std::vector<nr_band> bands;
+  /// System Information provided by the DU for this cell.
+  du_sys_info sys_info;
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsran

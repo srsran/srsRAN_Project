@@ -31,36 +31,39 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(up_resource_manager&                   up_resource_mng_,
-                         rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
+rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifier_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          rrc_ue_control_notifier&               ngap_ctrl_notif_,
                          rrc_ue_context_update_notifier&        cu_cp_notif_,
                          rrc_ue_measurement_notifier&           measurement_notifier_,
+                         rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
                          const ue_index_t                       ue_index_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context                 cell_,
                          const rrc_ue_cfg_t&                    cfg_,
-                         security::security_context&            security_context_,
                          const byte_buffer                      du_to_cu_container_,
-                         ue_task_scheduler&                     task_sched_,
                          std::optional<rrc_ue_transfer_context> rrc_context) :
-  context(ue_index_, c_rnti_, cell_, cfg_, security_context_, rrc_context),
-  up_resource_mng(up_resource_mng_),
+  context(ue_index_, c_rnti_, cell_, cfg_, rrc_context),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),
   cu_cp_notifier(cu_cp_notif_),
   measurement_notifier(measurement_notifier_),
+  cu_cp_ue_notifier(cu_cp_ue_notifier_),
   du_to_cu_container(du_to_cu_container_),
-  task_sched(task_sched_),
   logger("RRC", {ue_index_, c_rnti_}),
-  event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_factory()))
+  event_mng(std::make_unique<rrc_ue_event_manager>(cu_cp_ue_notifier.get_timer_factory()))
 {
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
   srsran_assert(context.cfg.rrc_procedure_timeout_ms > 0, "RRC procedure timeout cannot be zero.");
 
+  // Update security context and keys
   if (rrc_context.has_value()) {
+    if (!rrc_context.value().is_inter_cu_handover) {
+      cu_cp_ue_notifier.update_security_context(rrc_context.value().sec_context);
+    }
+    cu_cp_ue_notifier.perform_horizontal_key_derivation(cell_.pci, cell_.ssb_arfcn);
+
     // Create SRBs.
     for (const auto& srb : rrc_context.value().srbs) {
       srb_creation_message srb_msg{};
@@ -88,11 +91,12 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     context.srbs.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(msg.srb_id),
-        std::forward_as_tuple(msg.ue_index, msg.srb_id, task_sched.get_timer_factory(), task_sched.get_executor()));
+        std::forward_as_tuple(
+            msg.ue_index, msg.srb_id, cu_cp_ue_notifier.get_timer_factory(), cu_cp_ue_notifier.get_executor()));
     auto& srb_context = context.srbs.at(msg.srb_id);
 
     if (msg.srb_id == srb_id_t::srb2 || msg.enable_security) {
-      security::sec_as_config sec_cfg = context.sec_context.get_as_config(security::sec_domain::rrc);
+      security::sec_as_config sec_cfg = cu_cp_ue_notifier.get_rrc_as_config();
       srb_context.enable_full_security(security::truncate_config(sec_cfg));
     }
 
@@ -127,14 +131,13 @@ void rrc_ue_impl::on_new_as_security_context()
                       "Attempted to configure security, but there is no interface to PDCP");
 
   context.srbs.at(srb_id_t::srb1)
-      .enable_rx_security(security::integrity_enabled::on,
-                          security::ciphering_enabled::off,
-                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+      .enable_rx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::off, cu_cp_ue_notifier.get_rrc_128_as_config());
   context.srbs.at(srb_id_t::srb1)
-      .enable_tx_security(security::integrity_enabled::on,
-                          security::ciphering_enabled::off,
-                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
-  context.security_enabled = true;
+      .enable_tx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::off, cu_cp_ue_notifier.get_rrc_128_as_config());
+
+  cu_cp_ue_notifier.enable_security();
 }
 
 void rrc_ue_impl::on_security_context_sucessful()
@@ -143,20 +146,18 @@ void rrc_ue_impl::on_security_context_sucessful()
                       "Attempted to configure security, but there is no interface to PDCP");
 
   context.srbs.at(srb_id_t::srb1)
-      .enable_rx_security(security::integrity_enabled::on,
-                          security::ciphering_enabled::on,
-                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+      .enable_rx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
   context.srbs.at(srb_id_t::srb1)
-      .enable_tx_security(security::integrity_enabled::on,
-                          security::ciphering_enabled::on,
-                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+      .enable_tx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
 }
 
-async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)
+async_task<bool> rrc_ue_impl::handle_init_security_context()
 {
-  context.sec_context = sec_ctx;
   //  Launch RRC security mode procedure
-  return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
+  return launch_async<rrc_security_mode_command_procedure>(
+      context, cu_cp_ue_notifier.get_security_algos(), *this, *event_mng, logger);
 }
 
 byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
@@ -176,7 +177,7 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
 
 void rrc_ue_impl::on_ue_release_required(const ngap_cause_t& cause)
 {
-  task_sched.schedule_async_task(launch_async([this, cause](coro_context<async_task<void>>& ctx) mutable {
+  cu_cp_ue_notifier.schedule_async_task(launch_async([this, cause](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT(cu_cp_notifier.on_ue_release_required({context.ue_index, {}, cause}));

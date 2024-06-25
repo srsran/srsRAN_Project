@@ -106,12 +106,12 @@ void security_context::horizontal_key_derivation(pci_t target_pci, unsigned targ
   generate_as_keys();
 }
 
-sec_128_as_config security_context::get_128_as_config(sec_domain domain)
+sec_128_as_config security_context::get_128_as_config(sec_domain domain) const
 {
   return truncate_config(get_as_config(domain));
 }
 
-sec_as_config security_context::get_as_config(sec_domain domain)
+sec_as_config security_context::get_as_config(sec_domain domain) const
 {
   srsran_sanity_check(sel_algos.algos_selected, "Tried to get AS config, but no algorithms are selected");
   sec_as_config as_cfg;

@@ -66,7 +66,8 @@ protected:
   timer_manager                      timers;
   ue_configuration                   ue_config;
   up_resource_manager_cfg            up_config;
-  ue_manager                         ue_mng{ue_config, up_config, timers, ctrl_worker};
+  security_manager_config            sec_config;
+  ue_manager                         ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
 };
 
 } // namespace srs_cu_cp

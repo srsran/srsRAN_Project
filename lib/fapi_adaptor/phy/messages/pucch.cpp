@@ -25,6 +25,36 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
+static void fill_format0_parameters(pucch_processor::format0_configuration& config,
+                                    const fapi::ul_pucch_pdu&               fapi_pdu,
+                                    slot_point                              slot,
+                                    uint16_t                                num_rx_ant)
+{
+  config.slot         = slot;
+  config.bwp_size_rb  = fapi_pdu.bwp_size;
+  config.bwp_start_rb = fapi_pdu.bwp_start;
+  config.cp           = fapi_pdu.cp;
+  config.starting_prb = fapi_pdu.prb_start;
+  if (fapi_pdu.intra_slot_frequency_hopping) {
+    config.second_hop_prb.emplace(fapi_pdu.second_hop_prb);
+  }
+
+  config.n_id           = fapi_pdu.nid_pucch_hopping;
+  config.nof_harq_ack   = fapi_pdu.bit_len_harq;
+  config.sr_opportunity = fapi_pdu.sr_bit_len == 1U;
+
+  // Fill the antenna port indices starting from 0.
+  config.ports.resize(num_rx_ant);
+  std::iota(config.ports.begin(), config.ports.end(), 0);
+
+  config.initial_cyclic_shift = fapi_pdu.initial_cyclic_shift;
+  config.nof_symbols          = fapi_pdu.nr_of_symbols;
+  config.start_symbol_index   = fapi_pdu.start_symbol_index;
+
+  // Fill PUCCH context for logging.
+  config.context = pucch_context(fapi_pdu.rnti);
+}
+
 static void fill_format1_parameters(pucch_processor::format1_configuration& config,
                                     const fapi::ul_pucch_pdu&               fapi_pdu,
                                     slot_point                              slot,
@@ -114,6 +144,9 @@ void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu
   }
 
   switch (context.format) {
+    case pucch_format::FORMAT_0:
+      fill_format0_parameters(pdu.format0, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+      break;
     case pucch_format::FORMAT_1:
       fill_format1_parameters(pdu.format1, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
       break;

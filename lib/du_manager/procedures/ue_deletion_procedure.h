@@ -46,7 +46,7 @@ private:
 
   // Disconnects all the DRBs and SRBs associated with the UE. After the bearers have been disconnected, it is safe
   // to start the deletion of the associated bearer contexts.
-  async_task<void> disconnect_inter_layer_interfaces();
+  async_task<void> stop_ue_bearer_traffic();
 
   const du_ue_index_t       ue_index;
   du_ue_manager_repository& ue_mng;

@@ -205,13 +205,13 @@ static void print_args(const bench_params& params)
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
 }
 
-class dummy_metrics_handler : public scheduler_ue_metrics_notifier
+class dummy_metrics_handler : public scheduler_metrics_notifier
 {
 public:
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  void report_metrics(const scheduler_cell_metrics& metrics) override
   {
     unsigned sum_dl_bs = 0;
-    for (const auto& ue : ue_metrics) {
+    for (const auto& ue : metrics.ue_metrics) {
       sum_dl_bs += ue.dl_bs;
     }
     tot_dl_bs.store(sum_dl_bs, std::memory_order_relaxed);
@@ -668,7 +668,7 @@ public:
   }
 
   template <typename StopCondition>
-  bool run_slot_until(const StopCondition& cond_func, unsigned slot_timeout = 1000)
+  bool run_slot_until(const StopCondition& cond_func, unsigned slot_timeout = 100000)
   {
     unsigned count = 0;
     for (; count < slot_timeout; ++count) {
@@ -744,7 +744,7 @@ public:
              not is_tdd_full_ul_slot(cfg.cells[to_du_cell_index(0)].tdd_ul_dl_cfg_common.value(),
                                      slot_point(next_sl_tx - tx_rx_delay - 1).slot_index());
     };
-    run_slot_until(next_ul_slot);
+    report_fatal_error_if_not(run_slot_until(next_ul_slot), "No slot for Msg3 was detected");
 
     // Received Msg3 with UL-CCCH message.
     mac_rx_data_indication rx_ind;
@@ -753,6 +753,7 @@ public:
     rx_ind.pdus.push_back(mac_rx_pdu{
         rnti, 0, 0, byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}).value()});
     du_hi->get_pdu_handler().handle_rx_data_indication(std::move(rx_ind));
+    test_logger.info("rnti={}: Msg3 forwarded to DU-high", rnti);
 
     // Wait for Msg4.
     auto dl_pdu_sched = [this, rnti]() {
@@ -761,7 +762,8 @@ public:
       }
       return false;
     };
-    run_slot_until(dl_pdu_sched);
+    report_fatal_error_if_not(run_slot_until(dl_pdu_sched), "Msg4 with RRC Setup was not scheduled");
+    test_logger.info("rnti={}: DU-high scheduled Msg4 (containing RRC Setup)", rnti);
 
     // Push MAC UL SDU that will trigger UE Context Setup.
     // Note: MAC UL SDU will make the UE go out of fallback mode.

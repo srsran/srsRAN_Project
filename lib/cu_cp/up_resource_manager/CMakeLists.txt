@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-  up_resource_manager_factory.cpp
   up_resource_manager_impl.cpp
   up_resource_manager_helpers.cpp
 )

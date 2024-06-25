@@ -60,8 +60,8 @@ void equalize_mmse_1xn(span<cf_t>                            symbols_out,
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficient.
-      cf_t re_in  = ch_symbols[{i_re, i_port}];
-      cf_t ch_est = ch_estimates[{i_re, i_port}] * tx_scaling;
+      cf_t re_in  = to_cf(ch_symbols[{i_re, i_port}]);
+      cf_t ch_est = to_cf(ch_estimates[{i_re, i_port}]) * tx_scaling;
 
       // Compute the channel square norm.
       float ch_est_norm = std::norm(ch_est);

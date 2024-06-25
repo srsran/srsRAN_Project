@@ -38,7 +38,7 @@ public:
   e2_du_metrics_connector();
   ~e2_du_metrics_connector() = default;
 
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void report_metrics(const scheduler_cell_metrics& metrics) override;
 
   void report_metrics(const rlc_metrics& metrics) override;
 

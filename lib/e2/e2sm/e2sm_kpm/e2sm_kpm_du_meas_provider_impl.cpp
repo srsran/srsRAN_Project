@@ -121,10 +121,10 @@ bool e2sm_kpm_du_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<con
   return true;
 }
 
-void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void e2sm_kpm_du_meas_provider_impl::report_metrics(const scheduler_cell_metrics& cell_metrics)
 {
   last_ue_metrics.clear();
-  for (auto& ue_metric : ue_metrics) {
+  for (auto& ue_metric : cell_metrics.ue_metrics) {
     last_ue_metrics.push_back(ue_metric);
   }
 }
@@ -300,7 +300,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l
   scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
 
   meas_record_item_c meas_record_item;
-  meas_record_item.set_integer() = (int)ue_metrics.cqi;
+  meas_record_item.set_integer() = ue_metrics.cqi_stats.get_nof_observations() > 0
+                                       ? static_cast<uint64_t>(std::roundf(ue_metrics.cqi_stats.get_mean()))
+                                       : 0;
   items.push_back(meas_record_item);
   meas_collected = true;
 

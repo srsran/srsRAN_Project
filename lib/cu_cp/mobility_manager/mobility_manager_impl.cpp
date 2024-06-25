@@ -69,7 +69,7 @@ void mobility_manager::handle_handover(ue_index_t   ue_index,
                                        pci_t        neighbor_pci)
 {
   // Find the UE context.
-  du_ue* u = ue_mng.find_du_ue(ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", ue_index);
     return;
@@ -126,7 +126,7 @@ void mobility_manager::handle_inter_du_handover(ue_index_t source_ue_index,
   request.cgi                             = cgi.value();
   request.target_du_index                 = target_du_index;
 
-  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;
@@ -151,7 +151,7 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
                                                 gnb_id_t     target_gnb_id,
                                                 nr_cell_id_t target_nci)
 {
-  du_ue* u = ue_mng.find_du_ue(source_ue_index);
+  cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {
     logger.error("ue={}: Couldn't find UE", source_ue_index);
     return;
@@ -161,6 +161,19 @@ void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
   request.ue_index                          = source_ue_index;
   request.gnb_id                            = target_gnb_id;
   request.nci                               = target_nci;
+
+  // create a map of all PDU sessions and their associated QoS flows
+  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions =
+      ue_mng.find_ue(source_ue_index)->get_up_resource_manager().get_pdu_sessions_map();
+  for (const auto& pdu_session : pdu_sessions) {
+    std::vector<qos_flow_id_t> qos_flows;
+    for (const auto& drb : pdu_session.second.drbs) {
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        qos_flows.push_back(qos_flow.first);
+      }
+    }
+    request.pdu_sessions.insert({pdu_session.first, qos_flows});
+  }
 
   // Send handover preparation request to the NGAP handler.
   auto ho_trigger =

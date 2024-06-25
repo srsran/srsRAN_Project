@@ -54,15 +54,15 @@ private:
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&               setup_request,
                                          const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs,
                                          const rrc_ue_transfer_context&               transfer_context);
-  void create_srb(du_ue* ue, srb_id_t srb_id);
+  void create_srb(cu_cp_ue* ue, srb_id_t srb_id);
 
   bool add_security_context_to_bearer_context_modification(const srsran::security::sec_as_config& security_cfg);
 
   const cu_cp_inter_du_handover_request request;
   const byte_buffer                     target_cell_sib1;
 
-  du_ue* source_ue = nullptr; // Pointer to UE in the source DU
-  du_ue* target_ue = nullptr; // Pointer to UE in the target DU
+  cu_cp_ue* source_ue = nullptr; // Pointer to UE in the source DU
+  cu_cp_ue* target_ue = nullptr; // Pointer to UE in the target DU
 
   rrc_ue_transfer_context source_rrc_context;
 

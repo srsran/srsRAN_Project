@@ -75,9 +75,10 @@ protected:
     init_sec_ctx.k                          = sk_gnb;
     std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
     std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
+    ue_mng.find_ue(allocated_ue_index)->get_security_manager().init_security_context(init_sec_ctx);
 
     // Trigger SMC
-    async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context(init_sec_ctx);
+    async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context();
     lazy_task_launcher<bool> t_launcher(t);
 
     // Receive SMC complete

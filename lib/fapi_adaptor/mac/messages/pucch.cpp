@@ -52,6 +52,28 @@ static unsigned convert_sr_bits_to_unsigned(sr_nof_bits value)
   return 0U;
 }
 
+/// Fills the Format 0 parameters.
+static void fill_format0_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+{
+  // Hopping parameters.
+  const prb_interval&   hop_prbs            = mac_pdu.resources.second_hop_prbs;
+  const pucch_format_0& f0                  = mac_pdu.format_0;
+  const bool            intra_slot_freq_hop = hop_prbs.empty() ? false : true;
+  builder.set_hopping_information_parameters(
+      intra_slot_freq_hop, hop_prbs.start(), f0.group_hopping, f0.n_id_hopping, f0.initial_cyclic_shift);
+
+  // Do not use pi/2 BPSK for UCI symbols.
+  static constexpr bool use_pi_to_bpsk = false;
+  // Format 0 does not support multi slot repetition.
+  pucch_repetition_tx_slot pucch_repetition = pucch_repetition_tx_slot::no_multi_slot;
+  builder.set_common_parameters(mac_pdu.format, pucch_repetition, use_pi_to_bpsk);
+
+  // Format 0 does not support CSI.
+  static constexpr unsigned csi_part1_bit_length = 0U;
+  builder.set_bit_length_parameters(
+      convert_sr_bits_to_unsigned(f0.sr_bits), f0.harq_ack_nof_bits, csi_part1_bit_length);
+}
+
 /// Fills the Format 1 parameters.
 static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
@@ -63,14 +85,14 @@ static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const p
       intra_slot_freq_hop, hop_prbs.start(), f1.group_hopping, f1.n_id_hopping, f1.initial_cyclic_shift);
 
   // Do not use pi/2 BPSK for UCI symbols.
-  static const bool use_pi_to_bpsk = false;
+  static constexpr bool use_pi_to_bpsk = false;
   builder.set_common_parameters(mac_pdu.format, f1.slot_repetition, use_pi_to_bpsk);
 
   // Time domain occasion.
   builder.set_format1_parameters(f1.time_domain_occ);
 
   // Format 1 does not support CSI.
-  static const unsigned csi_part1_bit_length = 0U;
+  static constexpr unsigned csi_part1_bit_length = 0U;
   builder.set_bit_length_parameters(
       convert_sr_bits_to_unsigned(f1.sr_bits), f1.harq_ack_nof_bits, csi_part1_bit_length);
 }
@@ -104,6 +126,8 @@ static void fill_format2_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   switch (mac_pdu.format) {
+    case pucch_format::FORMAT_0:
+      fill_format0_parameters(builder, mac_pdu);
     case pucch_format::FORMAT_1:
       fill_format1_parameters(builder, mac_pdu);
       break;

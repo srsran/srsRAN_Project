@@ -454,13 +454,24 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<pusch_processor_factory> uci_proc_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(uci_proc_factory, "Invalid PUSCH processor factory for UCI.");
 
+  // The PUSCH processor pool shall be blocking if PUSCH decoder operates in synchronous mode;
+  bool pusch_processor_pool_blocking = (config.pusch_decoder_executor == nullptr);
+
+  // If PUSCH decoders operate in asynchronous mode the number of PUSCH regular processors is equal to the maximum
+  // number of enqueued PUSCH transmissions. Otherwise, the number of PUSCH regular processors is equal to number of UL
+  // threads.
+  unsigned nof_regular_processors = config.max_pusch_concurrency;
+  if (pusch_processor_pool_blocking) {
+    nof_regular_processors = config.max_ul_thread_concurrency;
+  }
+
   // Create PUSCH processor pool factory.
   pusch_processor_pool_factory_config pusch_proc_pool_config;
   pusch_proc_pool_config.factory                = pusch_factory;
   pusch_proc_pool_config.uci_factory            = uci_proc_factory;
-  pusch_proc_pool_config.nof_regular_processors = config.max_pusch_concurrency;
+  pusch_proc_pool_config.nof_regular_processors = nof_regular_processors;
   pusch_proc_pool_config.nof_uci_processors     = config.max_ul_thread_concurrency;
-  pusch_proc_pool_config.blocking               = false;
+  pusch_proc_pool_config.blocking               = pusch_processor_pool_blocking;
   pusch_factory                                 = create_pusch_processor_pool(pusch_proc_pool_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor pool factory.");
 

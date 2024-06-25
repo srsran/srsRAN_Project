@@ -63,13 +63,13 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
   }
 
   // Views over input channel symbols, organized by receive port.
-  std::array<span<const cf_t>, nof_ports> symbols_in;
+  std::array<span<const cbf16_t>, nof_ports> symbols_in;
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
     symbols_in[i_port] = ch_symbols.get_view<>({i_port});
   }
 
   // Views over channel estimates, organized by receive port and transmit layer.
-  std::array<std::array<span<const cf_t>, nof_layers>, nof_ports> ch_estimates;
+  std::array<std::array<span<const cbf16_t>, nof_layers>, nof_ports> ch_estimates;
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       ch_estimates[i_port][i_layer] = ch_estimates_.get_view<>({i_port, i_layer});
@@ -88,14 +88,14 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     std::array<std::array<simd_cf_t, nof_layers>, nof_ports> ch;
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-        ch[i_port][i_layer] = srsran_simd_cfi_loadu(ch_estimates[i_port][i_layer].data() + i_re);
+        ch[i_port][i_layer] = srsran_simd_cbf16_loadu(ch_estimates[i_port][i_layer].data() + i_re);
       }
     }
 
     // Input Resource Elements.
     std::array<simd_cf_t, nof_ports> re_in;
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      re_in[i_port] = srsran_simd_cfi_loadu(symbols_in[i_port].data() + i_re);
+      re_in[i_port] = srsran_simd_cbf16_loadu(symbols_in[i_port].data() + i_re);
     }
 
     // Calculate the product of the channel matrix (recall, it's an Nx2 matrix) and its hermitian transpose.
@@ -185,7 +185,7 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     std::array<std::array<cf_t, nof_layers>, nof_ports> ch_conj;
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-        ch[i_port][i_layer]      = ch_estimates[i_port][i_layer][i_re];
+        ch[i_port][i_layer]      = to_cf(ch_estimates[i_port][i_layer][i_re]);
         ch_conj[i_port][i_layer] = std::conj(ch[i_port][i_layer]);
       }
     }
@@ -193,7 +193,7 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
     // Input Resource Elements.
     std::array<cf_t, nof_ports> re_in;
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      re_in[i_port] = symbols_in[i_port][i_re];
+      re_in[i_port] = to_cf(symbols_in[i_port][i_re]);
     }
 
     // Calculate the product of the channel matrix (recall, it's an Nx2 matrix) and its hermitian transpose.

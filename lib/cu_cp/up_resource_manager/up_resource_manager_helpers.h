@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "up_resource_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h" // for SDAP config
-#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/pdcp/pdcp_config.h"
 
 namespace srsran {

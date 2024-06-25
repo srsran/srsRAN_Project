@@ -31,53 +31,38 @@
 namespace srsran {
 namespace detail {
 
-// Specialization for lockfree MPMC using no blocking mechanism.
+/// Specialization for lockfree MPMC without a blocking mechanism.
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
-  struct custom_deleter {
-    void operator()(::rigtorp::MPMCQueue<T>* ptr) const
-    {
-      using mpmc_queue = ::rigtorp::MPMCQueue<T>;
-      if (ptr != nullptr) {
-        ptr->~mpmc_queue();
-        free(ptr);
-      }
-    }
-  };
-
 public:
   template <typename... Args>
-  explicit queue_impl(size_t qsize)
+  explicit queue_impl(size_t qsize) : queue(qsize)
   {
-    // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
-    void* ptr = nullptr;
-    int   ret = posix_memalign(&ptr, alignof(::rigtorp::MPMCQueue<T>), sizeof(::rigtorp::MPMCQueue<T>));
-    report_error_if_not(ret == 0, "Unable to allocate memory for MPMCQueue");
-    queue.reset(new (ptr)::rigtorp::MPMCQueue<T>(qsize));
   }
 
-  bool try_push(const T& elem) { return queue->try_push(elem); }
-  bool try_push(T&& elem) { return queue->try_push(std::move(elem)); }
+  bool try_push(const T& elem) { return queue.try_push(elem); }
 
-  bool try_pop(T& elem) { return queue->try_pop(elem); }
+  bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
+
+  bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   size_t size() const
   {
     // Note: MPMCqueue size can be negative.
-    ptrdiff_t ret = queue->size();
+    ptrdiff_t ret = queue.size();
     return static_cast<size_t>(std::max(ret, static_cast<ptrdiff_t>(0)));
   }
 
-  bool empty() const { return queue->empty(); }
+  bool empty() const { return queue.empty(); }
 
-  size_t capacity() const { return queue->capacity(); }
+  size_t capacity() const { return queue.capacity(); }
 
 protected:
-  std::unique_ptr<::rigtorp::MPMCQueue<T>, custom_deleter> queue;
+  ::rigtorp::MPMCQueue<T> queue;
 };
 
-// Specialization for lockfree MPMC using a sleep as blocking mechanism.
+/// Specialization for lockfree MPMC using a sleep as the blocking mechanism.
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
   : public queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>

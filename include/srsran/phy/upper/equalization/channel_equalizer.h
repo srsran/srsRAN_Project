@@ -62,11 +62,11 @@ private:
 public:
   /// \brief Container for input and output Resource Elements.
   /// \remark Dimension indexing given by \ref channel_equalizer::re_dims.
-  using re_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cf_t, re_dims>;
+  using re_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cbf16_t, re_dims>;
 
   /// \brief Container for the channel estimates.
   /// \remark Dimension indexing given by \ref channel_equalizer::ch_dims.
-  using ch_est_list = tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cf_t, ch_dims>;
+  using ch_est_list = tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cbf16_t, ch_dims>;
 
   /// Default destructor.
   virtual ~channel_equalizer() = default;

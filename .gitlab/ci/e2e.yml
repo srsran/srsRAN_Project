@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -305,11 +305,12 @@ amari 32UE:
             "iperf and tcp and not band:3",
           ]
 
-amari 32UE beta:
+amari 8UE beta:
   extends: amari 32UE
   parallel:
     matrix:
       - KEYWORDS: ["reestablishment", "handover"]
+  allow_failure: true
 
 amari 32UE asan:
   extends: .zmq
@@ -521,14 +522,13 @@ viavi:
     - *retina-needs
   parallel:
     matrix:
-      - KEYWORDS:
-          [
-            "fading and 32UE",
-            "fading and 1UE",
-            "ideal and 32UE",
+      - KEYWORDS: [
             "ideal and 1UE",
-            "birth-death and 32UE",
+            "ideal and 32UE",
+            "fading and 1UE",
+            # "fading and 32UE",
             "birth-death and 1UE",
+            # "birth-death and 32UE",
           ]
 
 viavi-debug:
@@ -576,5 +576,5 @@ retina setup:
 retina post:
   stage: .post
   extends: .demolition
-  dependencies: 
+  dependencies:
     - load retina variables

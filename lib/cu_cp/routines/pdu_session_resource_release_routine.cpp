@@ -34,7 +34,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     ngap_control_message_handler&                     ngap_handler_,
     du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
     ue_task_scheduler&                                task_sched_,
-    up_resource_manager&                              rrc_ue_up_resource_manager_,
+    up_resource_manager&                              up_resource_mng_,
     srslog::basic_logger&                             logger_) :
   release_cmd(release_cmd_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
@@ -42,7 +42,7 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
   ngap_handler(ngap_handler_),
   rrc_ue_notifier(rrc_ue_notifier_),
   task_sched(task_sched_),
-  rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
+  up_resource_mng(up_resource_mng_),
   logger(logger_)
 {
 }
@@ -69,14 +69,14 @@ void pdu_session_resource_release_routine::operator()(
   logger.debug("ue={}: \"{}\" initialized", release_cmd.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
-  if (!rrc_ue_up_resource_manager.validate_request(release_cmd)) {
+  if (!up_resource_mng.validate_request(release_cmd)) {
     logger.warning("ue={}: \"{}\" Invalid PduSessionResourceReleaseCommand", release_cmd.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_release_response(false));
   }
 
   {
     // Calculate next user-plane configuration based on incoming release command.
-    next_config = rrc_ue_up_resource_manager.calculate_update(release_cmd);
+    next_config = up_resource_mng.calculate_update(release_cmd);
   }
 
   // Inform CU-UP about the release of a bearer
@@ -172,7 +172,7 @@ pdu_session_resource_release_routine::handle_pdu_session_resource_release_respon
   for (const auto& pdu_session_to_remove : next_config.pdu_sessions_to_remove_list) {
     result.pdu_sessions_removed_list.push_back(pdu_session_to_remove);
   }
-  rrc_ue_up_resource_manager.apply_config_update(result);
+  up_resource_mng.apply_config_update(result);
 
   if (success) {
     logger.debug("ue={}: \"{}\" finalized", release_cmd.ue_index, name());

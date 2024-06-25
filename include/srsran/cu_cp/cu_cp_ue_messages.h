@@ -26,7 +26,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/cu_cp/up_context.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/security/security.h"
 

@@ -31,7 +31,7 @@ namespace {
 DECLARE_METRIC("pci", metric_pci, pci_t, "");
 DECLARE_METRIC("rnti", metric_rnti, uint16_t, "");
 DECLARE_METRIC("cqi", metric_cqi, uint8_t, "");
-DECLARE_METRIC("ri", metric_ri, uint8_t, "");
+DECLARE_METRIC("ri", metric_ri, float, "");
 DECLARE_METRIC("dl_mcs", metric_dl_mcs, uint8_t, "");
 DECLARE_METRIC("dl_brate", metric_dl_brate, double, "");
 DECLARE_METRIC("dl_nof_ok", metric_dl_nof_ok, unsigned, "");
@@ -61,12 +61,23 @@ DECLARE_METRIC_SET("ue_container",
                    metric_ul_nof_nok,
                    metric_bsr);
 
+/// cell-wide metrics.
+DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
+DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
+DECLARE_METRIC("latency_thres_count", metric_latency_thres_count, unsigned, "");
+DECLARE_METRIC_LIST("latency_thres_count", mlist_thres_count, std::vector<metric_latency_thres_count>);
+DECLARE_METRIC_SET("cell_metrics",
+                   cell_metrics,
+                   metric_error_indication_count,
+                   metric_average_latency,
+                   mlist_thres_count);
+
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
 DECLARE_METRIC_LIST("ue_list", mlist_ues, std::vector<mset_ue_container>);
 
 /// Metrics context.
-using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mlist_ues>;
+using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_metrics, mlist_ues>;
 
 } // namespace
 
@@ -77,20 +88,22 @@ static double get_time_stamp()
   return std::chrono::duration_cast<std::chrono::milliseconds>(tp).count() * 1e-3;
 }
 
-void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
 {
   metric_context_t ctx("JSON Metrics");
 
-  for (const auto& ue : ue_metrics) {
+  for (const auto& ue : metrics.ue_metrics) {
     ctx.get<mlist_ues>().emplace_back();
     auto& output = ctx.get<mlist_ues>().back();
 
     output.write<metric_pci>(ue.pci);
     output.write<metric_rnti>(to_value(ue.rnti));
-    if (ue.cqi) {
-      output.write<metric_cqi>(ue.cqi);
+    if (ue.cqi_stats.get_nof_observations() > 0) {
+      output.write<metric_cqi>(static_cast<uint8_t>(std::roundf(ue.cqi_stats.get_mean())));
     }
-    output.write<metric_ri>(ue.ri);
+    if (ue.ri_stats.get_nof_observations() > 0) {
+      output.write<metric_ri>(ue.ri_stats.get_mean());
+    }
     output.write<metric_dl_mcs>(ue.dl_mcs.to_uint());
     output.write<metric_dl_brate>(ue.dl_brate_kbps * 1e3);
     output.write<metric_dl_nof_ok>(ue.dl_nof_ok);
@@ -104,6 +117,15 @@ void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_me
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
     output.write<metric_ul_nof_nok>(ue.ul_nof_nok);
     output.write<metric_bsr>(ue.bsr);
+  }
+
+  auto& cell_output = ctx.get<cell_metrics>();
+  cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
+  cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
+  for (unsigned count : metrics.latency_histogram) {
+    cell_output.get<mlist_thres_count>().emplace_back();
+    auto& elem = cell_output.get<mlist_thres_count>().back();
+    elem.value = count;
   }
 
   // Log the context.

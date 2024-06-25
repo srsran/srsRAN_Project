@@ -33,7 +33,6 @@ inline e2ap_configuration make_default_e2ap_config()
 {
   e2ap_configuration cfg{};
   cfg.gnb_id            = {411, 22};
-  cfg.ran_node_name     = "srsgnb01";
   cfg.plmn              = "00101";
   cfg.max_setup_retries = 5;
   cfg.e2sm_kpm_enabled  = false;
@@ -44,11 +43,6 @@ inline e2ap_configuration make_default_e2ap_config()
 /// Returns true if the given E2 configuration is valid, otherwise false.
 inline bool is_valid_configuration(const e2ap_configuration& config)
 {
-  if (config.ran_node_name.empty()) {
-    fmt::print("RAN node name is empty\n");
-    return false;
-  }
-
   if (config.plmn.empty()) {
     fmt::print("PLMN id is empty\n");
     return false;

@@ -27,15 +27,12 @@
 namespace srsran {
 
 /// Sink for scheduler UE metrics.
-class dummy_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
+class dummy_scheduler_ue_metrics_notifier : public scheduler_metrics_notifier
 {
 public:
-  std::vector<scheduler_ue_metrics> last_ue_metrics;
+  scheduler_cell_metrics last_metrics;
 
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
-  {
-    last_ue_metrics = std::vector<scheduler_ue_metrics>(ue_metrics.begin(), ue_metrics.end());
-  }
+  void report_metrics(const scheduler_cell_metrics& metrics) override { last_metrics = metrics; }
 };
 
 } // namespace srsran

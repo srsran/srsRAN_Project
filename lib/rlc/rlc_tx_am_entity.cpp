@@ -750,7 +750,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   l2_tracer << trace_event{"handle_status", status_tp};
 
-  update_mac_buffer_state(/* is_locked = */ true);
+  update_mac_buffer_state(/* is_locked = */ true, /* force_notify */ true);
 
   // Trigger recycling of discarded PDUs in ue_executor
   pdu_recycler.clear_by_executor(ue_executor);
@@ -899,7 +899,8 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
     logger.log_debug("Triggering buffer state update to lower layer");
     // Redirect handling of status to pcell_executor
-    if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* is_locked = */ false); })) {
+    if (not pcell_executor.defer(
+            [this]() { update_mac_buffer_state(/* is_locked = */ false, /* force_notify */ false); })) {
       logger.log_error("Failed to enqueue buffer state update");
     }
   } else {
@@ -907,11 +908,11 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   }
 }
 
-void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked)
+void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked, bool force_notify)
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
   unsigned bs = is_locked ? get_buffer_state_nolock() : get_buffer_state();
-  if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
+  if (force_notify || bs <= MAX_DL_PDU_LENGTH || prev_buffer_state <= MAX_DL_PDU_LENGTH) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
   } else {
@@ -1096,7 +1097,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
           retx_queue.size());
     }
 
-    update_mac_buffer_state(/* is_locked = */ true);
+    update_mac_buffer_state(/* is_locked = */ true, /* force_notify */ true);
   }
   /*
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.

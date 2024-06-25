@@ -17,7 +17,7 @@ variables:
   AMD64_AVX2_TAG: amd64-avx2
   AMD64_AVX512_TAG: amd64-avx2-avx512
   ARM64_TAG: arm64
-  
+
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
@@ -280,7 +280,7 @@ variables:
           bash -c "${CTEST_CMD} && echo 0 > ${status_file} || echo 1 > ${status_file}" \
           && ret=$(cat ${status_file}) || ret=124
 
-        if [[ $TEST_MODE = "coverage" ]]; then 
+        if [[ $TEST_MODE = "coverage" ]]; then
           common_options="-j${KUBERNETES_CPU_REQUEST} \
             --exclude-unreachable-branches \
             --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
@@ -677,7 +677,7 @@ intermediate commits cached:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
-  timeout: 1 hour
+  timeout: 2 hour
   variables:
     SAVE_ARTIFACTS: "True"
   script:
@@ -1889,7 +1889,7 @@ check-affinity-manager-nocpu:
               echo $output
               echo "**********************************************************************************"
               echo "Error for number of CPU = $((i-2))"
-              echo -e "\n\n\n\n\n" 
+              echo -e "\n\n\n\n\n"
           fi
       done
 

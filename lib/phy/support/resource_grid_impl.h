@@ -38,16 +38,17 @@ class resource_grid_mapper;
 class resource_grid_impl : public resource_grid
 {
 private:
-  std::atomic<unsigned> empty = {};
-  unsigned              nof_ports;
-  unsigned              nof_symb;
-  unsigned              nof_subc;
+  std::array<cbf16_t, NRE * MAX_RB> temp;
+  std::atomic<unsigned>             empty = {};
+  unsigned                          nof_ports;
+  unsigned                          nof_symb;
+  unsigned                          nof_subc;
 
   /// \brief Stores the resource grid data.
   ///
   /// The resource grid buffer is a three-dimensional array with the dimensions representing, in order, subcarriers,
   /// OFDM symbols and antenna ports.
-  dynamic_tensor<static_cast<unsigned>(resource_grid_dimensions::all), cf_t, resource_grid_dimensions> rg_buffer;
+  dynamic_tensor<static_cast<unsigned>(resource_grid_dimensions::all), cbf16_t, resource_grid_dimensions> rg_buffer;
 
   /// Resource grid writer implementation.
   resource_grid_writer_impl writer;

@@ -31,60 +31,44 @@
 namespace srsran {
 namespace detail {
 
-// Specialization for lockfree SPSC without blocking mechanism.
+/// Specialization for lockfree SPSC without a blocking mechanism.
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
 {
-  struct custom_deleter {
-    void operator()(::rigtorp::SPSCQueue<T>* ptr) const
-    {
-      using namespace ::rigtorp;
-      if (ptr != nullptr) {
-        ptr->~SPSCQueue<T>();
-        free(ptr);
-      }
-    }
-  };
-
 public:
   template <typename... Args>
-  explicit queue_impl(size_t qsize)
+  explicit queue_impl(size_t qsize) : queue(qsize)
   {
-    // Note: Pre-c++17 does not support new with alignof > alignof(max_align_t).
-    void* ptr = nullptr;
-    int   ret = posix_memalign(&ptr, alignof(::rigtorp::SPSCQueue<T>), sizeof(::rigtorp::SPSCQueue<T>));
-    report_error_if_not(ret == 0, "Unable to allocate memory for SPSCQueue");
-    queue.reset(new (ptr)::rigtorp::SPSCQueue<T>(qsize));
   }
 
   template <typename U>
   bool try_push(U&& elem)
   {
-    return queue->try_push(std::forward<U>(elem));
+    return queue.try_push(std::forward<U>(elem));
   }
 
   bool try_pop(T& elem)
   {
-    T* front = queue->front();
+    T* front = queue.front();
     if (front != nullptr) {
       elem = std::move(*front);
-      queue->pop();
+      queue.pop();
       return true;
     }
     return false;
   }
 
-  size_t size() const { return queue->size(); }
+  size_t size() const { return queue.size(); }
 
-  bool empty() const { return queue->empty(); }
+  bool empty() const { return queue.empty(); }
 
-  size_t capacity() const { return queue->capacity(); }
+  size_t capacity() const { return queue.capacity(); }
 
 protected:
-  std::unique_ptr<::rigtorp::SPSCQueue<T>, custom_deleter> queue;
+  ::rigtorp::SPSCQueue<T> queue;
 };
 
-// Specialization for lockfree SPSC using a spin sleep loop as blocking mechanism.
+/// Specialization for lockfree SPSC using a spin sleep loop as the blocking mechanism.
 template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>
   : public queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
@@ -118,7 +102,7 @@ public:
     T* f = front_blocking();
     if (f != nullptr) {
       elem = std::move(*f);
-      this->queue->pop();
+      this->queue.pop();
       return true;
     }
     return false;
@@ -130,7 +114,7 @@ public:
     T* f = front_blocking();
     if (f != nullptr) {
       func(*f);
-      this->queue->pop();
+      this->queue.pop();
       return true;
     }
     return false;
@@ -140,7 +124,7 @@ private:
   T* front_blocking()
   {
     while (running.load(std::memory_order_relaxed)) {
-      T* front = this->queue->front();
+      T* front = this->queue.front();
       if (front != nullptr) {
         return front;
       }

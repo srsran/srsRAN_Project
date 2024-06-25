@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace srsran {

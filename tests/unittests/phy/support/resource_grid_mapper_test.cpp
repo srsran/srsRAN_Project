@@ -49,7 +49,12 @@ using MultiplePRGParams = std::tuple<
 
 namespace srsran {
 
-static float ASSERT_MAX_ERROR = 1e-5;
+// Gets the tolerance from an expected value.
+static float get_tolerance(cf_t expected_value)
+{
+  // The tolerance is calculated from the complex number based in brain float (BF16) precision.
+  return std::max(std::abs(expected_value) / 256.0F, 1e-5F);
+}
 
 static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
 {
@@ -60,7 +65,9 @@ static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
 static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
 {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
-    return (std::abs(lhs_val - rhs_val) < ASSERT_MAX_ERROR);
+    float expected_error = std::min(get_tolerance(lhs_val), get_tolerance(rhs_val));
+    float error          = std::abs(lhs_val - rhs_val);
+    return (error < expected_error);
   });
 }
 

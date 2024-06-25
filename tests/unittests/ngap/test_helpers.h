@@ -22,14 +22,14 @@
 
 #pragma once
 
+#include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "ngap_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/security/security.h"
-#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
 
@@ -134,34 +134,14 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
+  async_task<bool> on_new_security_context() override
   {
     logger.info("Received a new security context");
-
-    bool result = true;
-
-    // NIA0 is not allowed
-    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                    security::integrity_algorithm::nia1,
-                                                                    security::integrity_algorithm::nia3,
-                                                                    security::integrity_algorithm::nia0};
-    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                    security::ciphering_algorithm::nea2,
-                                                                    security::ciphering_algorithm::nea1,
-                                                                    security::ciphering_algorithm::nea3};
-
-    security::security_context tmp_ctxt;
-    tmp_ctxt = sec_context;
-
-    result = tmp_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
-
-    return launch_async([result](coro_context<async_task<bool>>& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(result);
+      CORO_RETURN(true);
     });
   }
-
-  bool on_security_enabled() override { return security_enabled; }
 
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
@@ -169,11 +149,9 @@ public:
   {
     ho_preparation_message = std::move(ho_preparation_message_);
   }
-  void set_security_enabled(bool enabled) { security_enabled = enabled; }
 
   byte_buffer last_nas_pdu;
   byte_buffer ho_preparation_message;
-  bool        security_enabled = true;
   byte_buffer last_handover_command;
 
 private:
@@ -213,39 +191,36 @@ private:
 class dummy_ngap_cu_cp_notifier : public ngap_cu_cp_notifier
 {
 public:
-  dummy_ngap_cu_cp_notifier(ngap_ue_manager& ue_manager_) :
-    ue_manager(ue_manager_), logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_cu_cp_notifier(ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("TEST")){};
 
   void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  void add_ue(ue_index_t                    ue_index,
-              ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-              ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
+  ngap_cu_cp_ue_notifier* on_new_ngap_ue(ue_index_t ue_index) override
   {
-    ue_notifiers_map.emplace(ue_index, ngap_ue_notifiers{&rrc_ue_pdu_notifier, &rrc_ue_ctrl_notifier});
-  }
-
-  bool on_new_ngap_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(ue_notifiers_map.find(ue_index) != ue_notifiers_map.end(), "UE context must be present");
-    auto& ue_notifier = ue_notifiers_map.at(ue_index);
-
-    srsran_assert(ue_notifier.rrc_ue_pdu_notifier != nullptr, "rrc_ue_pdu_notifier must not be nullptr");
-    srsran_assert(ue_notifier.rrc_ue_ctrl_notifier != nullptr, "rrc_ue_ctrl_notifier must not be nullptr");
-
     last_ue = ue_index;
 
-    // Add NGAP UE to UE manager
-    ngap_ue* ue =
-        ue_manager.set_ue_ng_context(ue_index, *ue_notifier.rrc_ue_pdu_notifier, *ue_notifier.rrc_ue_ctrl_notifier);
-
+    auto* ue = ue_mng.find_ue(ue_index);
     if (ue == nullptr) {
       logger.error("ue={}: Failed to create UE", ue_index);
-      return false;
+      return nullptr;
     }
 
     logger.info("ue={}: NGAP UE was created", ue_index);
-    return true;
+    return &ue->get_ngap_cu_cp_ue_notifier();
+  }
+
+  bool schedule_async_task(ue_index_t ue_index, async_task<void> task) override
+  {
+    srsran_assert(ue_mng.find_ue_task_scheduler(ue_index) != nullptr, "UE task scheduler must be present");
+    return ue_mng.find_ue_task_scheduler(ue_index)->schedule_async_task(std::move(task));
+  }
+
+  bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) override
+  {
+    srsran_assert(ue_mng.find_ue(ue_index) != nullptr, "UE must be present");
+    logger.info("Received a handover request");
+
+    return ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt);
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
@@ -366,19 +341,70 @@ public:
   std::optional<ue_index_t>                  last_created_ue_index;
 
 private:
-  ngap_ue_manager&      ue_manager;
+  ue_manager&           ue_mng;
   srslog::basic_logger& logger;
 
   ngap_ue_context_removal_handler* ngap_handler = nullptr;
 
-  struct ngap_ue_notifiers {
-    ngap_rrc_ue_pdu_notifier*     rrc_ue_pdu_notifier  = nullptr;
-    ngap_rrc_ue_control_notifier* rrc_ue_ctrl_notifier = nullptr;
-  };
-
-  std::map<ue_index_t, ngap_ue_notifiers> ue_notifiers_map;
-
   uint64_t ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+};
+
+class dummy_rrc_dl_nas_message_handler : public rrc_dl_nas_message_handler
+{
+public:
+  dummy_rrc_dl_nas_message_handler(ue_index_t ue_index_) :
+    ue_index(ue_index_), logger(srslog::fetch_basic_logger("TEST")){};
+
+  void handle_dl_nas_transport_message(byte_buffer nas_pdu) override
+  {
+    logger.info("ue={}: Received a DL NAS transport message", ue_index);
+    last_nas_pdu = std::move(nas_pdu);
+  }
+
+  byte_buffer last_nas_pdu;
+
+private:
+  ue_index_t            ue_index = ue_index_t::invalid;
+  srslog::basic_logger& logger;
+};
+
+class dummy_rrc_ue_init_security_context_handler : public rrc_ue_init_security_context_handler
+{
+public:
+  dummy_rrc_ue_init_security_context_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void set_security_enabled(bool enabled) { security_enabled = enabled; }
+
+  async_task<bool> handle_init_security_context() override
+  {
+    logger.info("Received a new security context");
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+private:
+  bool                  security_enabled = true;
+  srslog::basic_logger& logger;
+};
+
+class dummy_rrc_ue_handover_preparation_handler : public rrc_ue_handover_preparation_handler
+{
+public:
+  dummy_rrc_ue_handover_preparation_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void set_ho_preparation_message(byte_buffer ho_preparation_message_)
+  {
+    ho_preparation_message = std::move(ho_preparation_message_);
+  }
+
+  byte_buffer get_packed_handover_preparation_message() override { return ho_preparation_message.copy(); }
+
+private:
+  srslog::basic_logger& logger;
+  byte_buffer           ho_preparation_message;
 };
 
 } // namespace srs_cu_cp

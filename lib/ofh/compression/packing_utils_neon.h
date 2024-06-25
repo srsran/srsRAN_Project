@@ -111,8 +111,10 @@ inline void pack_prb_9b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
 /// \note Each of the input registers stores four unique REs.
 inline void pack_prb_16b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
 {
-  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 9 bits.
+  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 16 bits.
   static constexpr unsigned BYTES_PER_PRB_16BIT_COMPRESSION = 48;
+  static constexpr unsigned NEON_REG_SIZE_BYTES             = 16;
+
   static const uint8x16_t shuffle_mask_u8 = vcombine_u8(vcreate_u8(0x0607040502030001), vcreate_u8(0x0e0f0c0d0a0b0809));
 
   int8x16x3_t regs_shuffled_s16;
@@ -121,7 +123,9 @@ inline void pack_prb_16b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
   regs_shuffled_s16.val[2] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[2]), shuffle_mask_u8);
 
   int8_t* data = reinterpret_cast<int8_t*>(c_prb.get_byte_buffer().data());
-  vst1q_s8_x3(data, regs_shuffled_s16);
+  vst1q_s8(data, regs_shuffled_s16.val[0]);
+  vst1q_s8(data + NEON_REG_SIZE_BYTES, regs_shuffled_s16.val[1]);
+  vst1q_s8(data + NEON_REG_SIZE_BYTES * 2, regs_shuffled_s16.val[2]);
   c_prb.set_stored_size(BYTES_PER_PRB_16BIT_COMPRESSION);
 }
 

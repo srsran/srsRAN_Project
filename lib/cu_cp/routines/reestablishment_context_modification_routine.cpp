@@ -34,14 +34,14 @@ reestablishment_context_modification_routine::reestablishment_context_modificati
     e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
     du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
-    up_resource_manager&                          rrc_ue_up_resource_manager_,
+    up_resource_manager&                          up_resource_mng_,
     srslog::basic_logger&                         logger_) :
   ue_index(ue_index_),
   security_cfg(security_cfg_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   rrc_ue_notifier(rrc_ue_notifier_),
-  rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
+  up_resource_mng(up_resource_mng_),
   logger(logger_)
 {
 }
@@ -82,7 +82,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     if (!generate_bearer_context_modification(bearer_context_modification_request,
                                               bearer_context_modification_response,
                                               ue_context_modification_response,
-                                              rrc_ue_up_resource_manager,
+                                              up_resource_mng,
                                               true)) {
       logger.warning("ue={}: \"{}\" failed to modify UE context at DU", ue_index, name());
       CORO_EARLY_RETURN(false);
@@ -119,9 +119,9 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
       // convert pdu session context
       std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
-      for (const auto& pdu_session_id : rrc_ue_up_resource_manager.get_pdu_sessions()) {
+      for (const auto& pdu_session_id : up_resource_mng.get_pdu_sessions()) {
         up_pdu_session_context_update context_update{pdu_session_id};
-        context_update.drb_to_add = rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session_id).drbs;
+        context_update.drb_to_add = up_resource_mng.get_pdu_session_context(pdu_session_id).drbs;
 
         pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
       }
@@ -162,13 +162,13 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
   bearer_context_modification_request.new_ul_tnl_info_required = true;
 
   // Request new UL TNL info for all DRBs
-  std::vector<pdu_session_id_t>          pdu_session_ids              = rrc_ue_up_resource_manager.get_pdu_sessions();
+  std::vector<pdu_session_id_t>          pdu_session_ids              = up_resource_mng.get_pdu_sessions();
   e1ap_ng_ran_bearer_context_mod_request ngran_bearer_context_mod_req = {};
   for (const pdu_session_id_t& psi : pdu_session_ids) {
     e1ap_pdu_session_res_to_modify_item pdu_sess_mod_item;
     pdu_sess_mod_item.pdu_session_id = psi;
 
-    const std::map<drb_id_t, up_drb_context>& drbs = rrc_ue_up_resource_manager.get_pdu_session_context(psi).drbs;
+    const std::map<drb_id_t, up_drb_context>& drbs = up_resource_mng.get_pdu_session_context(psi).drbs;
     for (const std::pair<const drb_id_t, up_drb_context>& drb : drbs) {
       logger.debug("{}, {}: Requesting new UL TNL for DRB", psi, drb.first);
       e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
@@ -213,7 +213,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
       item.transfer.qos_flow_add_or_modify_response_list.emplace();
 
       // re-establish old flows
-      const up_drb_context& drb_up_context = rrc_ue_up_resource_manager.get_drb_context(e1ap_drb_item.drb_id);
+      const up_drb_context& drb_up_context = up_resource_mng.get_drb_context(e1ap_drb_item.drb_id);
 
       for (const auto& flow : drb_up_context.qos_flows) {
         qos_flow_add_or_mod_response_item qos_flow;

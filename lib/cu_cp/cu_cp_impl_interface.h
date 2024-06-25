@@ -46,16 +46,35 @@ public:
   handle_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
 };
 
+/// Interface for the CU-CP to schedule tasks for UEs.
+class cu_cp_task_scheduler_handler
+{
+public:
+  virtual ~cu_cp_task_scheduler_handler() = default;
+
+  /// \brief Schedule a task for a UE.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] task The task to schedule.
+  /// \returns True if the task was successfully scheduled, false otherwise.
+  virtual bool schedule_ue_task(ue_index_t ue_index, async_task<void> task) = 0;
+};
+
 /// Interface for the NGAP notifier to communicate with the CU-CP.
-class cu_cp_ngap_handler : public cu_cp_ue_context_release_handler
+class cu_cp_ngap_handler : public cu_cp_ue_context_release_handler, public cu_cp_task_scheduler_handler
 {
 public:
   virtual ~cu_cp_ngap_handler() = default;
 
   /// \brief Handle the creation of a new NGAP UE. This will add the NGAP adapters to the UE manager.
   /// \param[in] ue_index The index of the new NGAP UE.
-  /// \returns True if the UE was successfully created, false otherwise.
-  virtual bool handle_new_ngap_ue(ue_index_t ue_index) = 0;
+  /// \returns Pointer to the NGAP UE notifier.
+  virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] sec_ctxt The received security context.
+  /// \return True if the security context was successfully initialized, false otherwise.
+  virtual bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
@@ -91,7 +110,7 @@ public:
 };
 
 /// Handler of E1AP-CU-CP events.
-class cu_cp_e1ap_event_handler
+class cu_cp_e1ap_event_handler : public cu_cp_task_scheduler_handler
 {
 public:
   virtual ~cu_cp_e1ap_event_handler() = default;

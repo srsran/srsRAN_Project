@@ -25,6 +25,7 @@
 #include "../../phy/support/resource_grid_dimensions.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/complex_normal_random.h"
 
@@ -40,7 +41,7 @@ public:
     std::mt19937                      rgen(seed);
     complex_normal_distribution<cf_t> dist(0, 1);
 
-    span<cf_t> data = rg_buffer.get_data();
+    span<cbf16_t> data = rg_buffer.get_data();
     std::generate(data.begin(), data.end(), [&rgen, &dist]() { return dist(rgen); });
   }
 
@@ -81,17 +82,43 @@ public:
   }
 
   // See resource_grid_reader for documentation.
+  span<cbf16_t> get(span<cbf16_t>                       symbols,
+                    unsigned                            port,
+                    unsigned                            l,
+                    unsigned                            k_init,
+                    const bounded_bitset<MAX_RB * NRE>& mask) const override
+  {
+    // Count number of elements.
+    unsigned nof_symbols = mask.count();
+
+    return get(symbols, nof_symbols);
+  }
+
+  // See resource_grid_reader for documentation.
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride) const override
+  {
+    srsvec::convert(symbols, rg_buffer.get_data().first(symbols.size()));
+  }
+
+  // See resource_grid_reader for documentation.
+  void get(span<cbf16_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     srsvec::copy(symbols, rg_buffer.get_data().first(symbols.size()));
   }
 
   // See resource_grid_reader for documentation.
-  span<const cf_t> get_view(unsigned port, unsigned l) const override { return rg_buffer.get_view({l, port}); }
+  span<const cbf16_t> get_view(unsigned port, unsigned l) const override { return rg_buffer.get_view({l, port}); }
 
 private:
   /// Gets a number of symbols.
   span<cf_t> get(span<cf_t> symbols, unsigned nof_symbols) const
+  {
+    srsvec::convert(symbols.first(nof_symbols), rg_buffer.get_data().first(nof_symbols));
+
+    return symbols.last(symbols.size() - nof_symbols);
+  }
+  /// Gets a number of symbols.
+  span<cbf16_t> get(span<cbf16_t> symbols, unsigned nof_symbols) const
   {
     srsvec::copy(symbols.first(nof_symbols), rg_buffer.get_data().first(nof_symbols));
 
@@ -102,7 +129,7 @@ private:
   ///
   /// The resource grid buffer is a three-dimensional array with the dimensions representing, in order, subcarriers,
   /// OFDM symbols and antenna ports.
-  dynamic_tensor<static_cast<unsigned>(resource_grid_dimensions::all), cf_t, resource_grid_dimensions> rg_buffer;
+  dynamic_tensor<static_cast<unsigned>(resource_grid_dimensions::all), cbf16_t, resource_grid_dimensions> rg_buffer;
 };
 
 } // namespace srsran

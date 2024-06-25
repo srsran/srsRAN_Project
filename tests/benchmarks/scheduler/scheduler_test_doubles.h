@@ -34,10 +34,10 @@ public:
   void on_ue_delete_response(du_ue_index_t ue_index) override {}
 };
 
-class sched_dummy_metric_notifier final : public scheduler_ue_metrics_notifier
+class sched_dummy_metric_notifier final : public scheduler_metrics_notifier
 {
 public:
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
+  void report_metrics(const scheduler_cell_metrics& metrics) override {}
 };
 
 } // namespace srsran

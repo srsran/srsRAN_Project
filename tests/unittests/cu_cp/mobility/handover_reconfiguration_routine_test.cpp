@@ -77,14 +77,14 @@ private:
   rnti_t                                             source_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier source_rrc_ue_notifier;
   dummy_f1ap_ue_context_manager                      source_f1ap_ue_ctxt_mng;
-  du_ue*                                             source_ue = nullptr;
+  cu_cp_ue*                                          source_ue = nullptr;
 
   // target UE parameters.
   du_index_t                                         target_du_index = uint_to_du_index(1);
   unsigned                                           target_pci      = 2;
   rnti_t                                             target_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier target_rrc_ue_notifier;
-  du_ue*                                             target_ue = nullptr;
+  cu_cp_ue*                                          target_ue = nullptr;
 
   async_task<bool>                        t;
   std::optional<lazy_task_launcher<bool>> t_launcher;

@@ -22,20 +22,17 @@
 
 #pragma once
 
-#include "../du_processor_test_messages.h"
 #include "../test_helpers.h"
 #include "du_processor_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_configuration_manager.h"
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
-#include "lib/f1ap/common/asn1_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/rrc/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -55,11 +52,22 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  timer_manager                          timers;
-  manual_task_worker                     ctrl_worker{128};
-  ue_configuration                       ue_config;
-  up_resource_manager_cfg                up_config;
-  ue_manager                             ue_mng{ue_config, up_config, timers, ctrl_worker};
+  rrc_cfg_t               rrc_cfg;
+  timer_manager           timers;
+  manual_task_worker      ctrl_worker{128};
+  ue_configuration        ue_config;
+  up_resource_manager_cfg up_config;
+
+  security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                      security::integrity_algorithm::nia1,
+                                      security::integrity_algorithm::nia3,
+                                      security::integrity_algorithm::nia0},
+                                     {security::ciphering_algorithm::nea0,
+                                      security::ciphering_algorithm::nea2,
+                                      security::ciphering_algorithm::nea1,
+                                      security::ciphering_algorithm::nea3}};
+
+  ue_manager                             ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
   dummy_ngap_ue_context_removal_handler  ngap_ue_removal_handler;
   dummy_du_processor_cu_cp_notifier      cu_cp_notifier{&ue_mng};
   dummy_du_connection_notifier           du_conn_notifier;
@@ -68,6 +76,7 @@ protected:
   dummy_rrc_ue_cu_cp_adapter             rrc_ue_cu_cp_notifier;
   dummy_rrc_du_cu_cp_adapter             rrc_du_cu_cp_notifier;
   std::unique_ptr<common_task_scheduler> common_task_sched;
+  du_configuration_manager               du_cfg_mgr;
   std::unique_ptr<du_processor>          du_processor_obj;
 
   async_task<ue_index_t>                        t;

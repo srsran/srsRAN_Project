@@ -138,8 +138,8 @@ protected:
 
   void initialize_grid_reader()
   {
-    for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
-      for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+    for (uint8_t symbol = 0; symbol != nof_symbols; ++symbol) {
+      for (uint16_t k = 0, e = ru_nof_prbs * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
         rg_reader_spy.write(
             resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
       }
@@ -266,8 +266,8 @@ TEST(ofh_data_flow_uplane_downlink_data_impl,
   dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(frame_size), 2);
 
   resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
-  for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
-    for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+  for (uint8_t symbol = 0; symbol != context.symbol_range.length(); ++symbol) {
+    for (uint16_t k = 0, e = config.ru_nof_prbs * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
       rg_reader_spy.write(
           resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
     }
@@ -319,8 +319,8 @@ TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_gene
     dependencies.ecpri_builder = std::move(temp);
   }
   resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
-  for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
-    for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+  for (uint8_t symbol = 0; symbol != context.symbol_range.length(); ++symbol) {
+    for (uint16_t k = 0, e = config.ru_nof_prbs * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
       rg_reader_spy.write(
           resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
     }

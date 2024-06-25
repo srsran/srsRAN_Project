@@ -47,7 +47,7 @@ from .steps.kpis import get_kpis, KPIs
 from .steps.stub import GNB_STARTUP_TIMEOUT, handle_start_error, stop
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
-_POD_ERROR = "Error creating the pod"
+_FLAKY_ERROR_LIST = ["Error creating the pod", "Viavi API call timed out"]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -203,7 +203,7 @@ def test_viavi_manual(
 @mark.viavi
 @mark.flaky(
     reruns=2,
-    only_rerun=[_POD_ERROR],
+    only_rerun=_FLAKY_ERROR_LIST,
 )
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi(
@@ -259,7 +259,7 @@ def test_viavi(
 @mark.viavi_debug
 @mark.flaky(
     reruns=2,
-    only_rerun=[_POD_ERROR],
+    only_rerun=_FLAKY_ERROR_LIST,
 )
 # pylint: disable=too-many-arguments, too-many-locals
 def test_viavi_debug(
@@ -544,7 +544,13 @@ def get_str_number_criteria(number_criteria: float) -> str:
     """
     Get string number criteria
     """
-    return f"{number_criteria:.2e}" if abs(number_criteria) > 1000 else str(number_criteria)
+    if number_criteria >= 1_000_000_000:
+        return f"{number_criteria / 1_000_000_000:.1f}G"
+    if number_criteria >= 1_000_000:
+        return f"{number_criteria / 1_000_000:.1f}M"
+    if number_criteria >= 1_000:
+        return f"{number_criteria / 1_000:.1f}K"
+    return str(number_criteria)
 
 
 def get_viavi_configuration_from_testname(campaign_filename: str, test_name: str, timeout: int) -> _ViaviConfiguration:

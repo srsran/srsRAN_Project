@@ -31,10 +31,8 @@ scheduler_result_logger::scheduler_result_logger(bool log_broadcast_, pci_t pci_
 {
 }
 
-void scheduler_result_logger::log_debug(const sched_result& result)
+void scheduler_result_logger::log_debug(const sched_result& result, std::chrono::microseconds decision_latency)
 {
-  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
-
   if (log_broadcast) {
     for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
       fmt::format_to(
@@ -295,7 +293,6 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    auto decision_latency     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
@@ -311,10 +308,8 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 }
 
-void scheduler_result_logger::log_info(const sched_result& result)
+void scheduler_result_logger::log_info(const sched_result& result, std::chrono::microseconds decision_latency)
 {
-  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
-
   if (log_broadcast) {
     for (const sib_information& sib_info : result.dl.bc.sibs) {
       fmt::format_to(fmtbuf,
@@ -386,7 +381,6 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    auto decision_latency     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
     const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
                                 result.dl.ue_grants.size() + result.dl.bc.sibs.size();
     const unsigned nof_puschs = result.ul.puschs.size();
@@ -402,14 +396,15 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
 }
 
-void scheduler_result_logger::on_scheduler_result(const sched_result& result)
+void scheduler_result_logger::on_scheduler_result(const sched_result&       result,
+                                                  std::chrono::microseconds decision_latency)
 {
   if (not enabled) {
     return;
   }
   if (logger.debug.enabled()) {
-    log_debug(result);
+    log_debug(result, decision_latency);
   } else {
-    log_info(result);
+    log_info(result, decision_latency);
   }
 }

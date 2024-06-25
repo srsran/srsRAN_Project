@@ -29,9 +29,9 @@ e2_du_metrics_connector::e2_du_metrics_connector()
   ue_metrics_queue.resize(MAX_UE_METRICS);
 }
 
-void e2_du_metrics_connector::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void e2_du_metrics_connector::report_metrics(const scheduler_cell_metrics& metrics)
 {
-  for (auto& ue_metric : ue_metrics) {
+  for (auto& ue_metric : metrics.ue_metrics) {
     if (ue_metrics_queue.size() == MAX_UE_METRICS) {
       ue_metrics_queue.pop_front();
     }
@@ -40,7 +40,7 @@ void e2_du_metrics_connector::report_metrics(span<const scheduler_ue_metrics> ue
 
   if (e2_meas_provider) {
     // Pass metrics to the E2 Measurement Provider.
-    e2_meas_provider->report_metrics(ue_metrics);
+    e2_meas_provider->report_metrics(metrics);
   }
 }
 

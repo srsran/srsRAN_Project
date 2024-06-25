@@ -40,10 +40,12 @@ cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_
 }
 
 cu_cp_pdu_session_resource_setup_request
-srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions, unsigned num_qos_flows)
+srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
+                                                       unsigned   num_pdu_sessions,
+                                                       unsigned   num_qos_flows)
 {
   cu_cp_pdu_session_resource_setup_request req;
-  req.ue_index = uint_to_ue_index(0);
+  req.ue_index = ue_index;
 
   req.ue_aggregate_maximum_bit_rate_dl = 1000;
 
@@ -85,12 +87,12 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
   return req;
 };
 
-cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_session_resource_release()
+cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_session_resource_release(ue_index_t ue_index)
 {
   cu_cp_pdu_session_resource_release_command cmd;
   pdu_session_id_t                           pdu_session_id = uint_to_pdu_session_id(1);
 
-  cmd.ue_index = uint_to_ue_index(0);
+  cmd.ue_index = ue_index;
 
   cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
   pdu_session_res_to_release_item_rel_cmd.pdu_session_id = pdu_session_id;
@@ -102,11 +104,11 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
   return cmd;
 };
 
-cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification(unsigned psi,
-                                                                                                        unsigned qfi)
+cu_cp_pdu_session_resource_modify_request
+srsran::srs_cu_cp::generate_pdu_session_resource_modification(ue_index_t ue_index, unsigned psi, unsigned qfi)
 {
   cu_cp_pdu_session_resource_modify_request request;
-  request.ue_index = uint_to_ue_index(0);
+  request.ue_index = ue_index;
 
   cu_cp_pdu_session_res_modify_item_mod_req modify_item;
   modify_item.pdu_session_id = uint_to_pdu_session_id(psi);

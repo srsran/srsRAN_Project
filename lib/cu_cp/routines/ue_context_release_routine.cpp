@@ -31,13 +31,13 @@ ue_context_release_routine::ue_context_release_routine(const cu_cp_ue_context_re
                                                        e1ap_bearer_context_manager*            e1ap_bearer_ctxt_mng_,
                                                        f1ap_ue_context_manager&                f1ap_ue_ctxt_mng_,
                                                        cu_cp_ue_removal_handler&               ue_removal_handler_,
-                                                       du_processor_ue_manager&                ue_manager_,
+                                                       ue_manager&                             ue_mng_,
                                                        srslog::basic_logger&                   logger_) :
   command(command_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   ue_removal_handler(ue_removal_handler_),
-  ue_manager(ue_manager_),
+  ue_mng(ue_mng_),
   logger(logger_)
 {
   srsran_assert(!command.cause.valueless_by_exception(), "Release command needs to be set.");
@@ -53,18 +53,18 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
   {
     release_complete.ue_index = command.ue_index;
     release_complete.pdu_session_res_list_cxt_rel_cpl =
-        ue_manager.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions();
+        ue_mng.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions();
 
     // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
     // complete message
-    release_context = ue_manager.find_du_ue(command.ue_index)
+    release_context = ue_mng.find_du_ue(command.ue_index)
                           ->get_rrc_ue_notifier()
                           .get_rrc_ue_release_context(command.requires_rrc_release);
     release_complete.user_location_info = release_context.user_location_info;
   }
 
   if (e1ap_bearer_ctxt_mng != nullptr and
-      not ue_manager.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions().empty()) {
+      not ue_mng.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions().empty()) {
     // If there is an active E1AP context,
     // prepare Bearer Context Release Command and call E1AP notifier
     bearer_context_release_command.ue_index = command.ue_index;

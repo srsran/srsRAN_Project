@@ -94,7 +94,6 @@ protected:
   {
     mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
     test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    result_logger.on_slot_start();
 
     res_grid.slot_indication(next_slot);
     next_slot++;

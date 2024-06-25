@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ngap_ue_logger.h"
+#include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/support/timers.h"
 #include <unordered_map>
@@ -37,19 +38,26 @@ struct ngap_ue_ids {
 };
 
 struct ngap_ue_context {
-  ngap_ue_ids    ue_ids;
-  uint64_t       aggregate_maximum_bit_rate_dl = 0;
-  unique_timer   pdu_session_setup_timer       = {};
-  bool           release_requested             = false;
-  bool           release_scheduled             = false;
+  ngap_ue_ids             ue_ids;
+  ngap_cu_cp_ue_notifier* ue                            = nullptr;
+  uint64_t                aggregate_maximum_bit_rate_dl = 0;
+  unique_timer            pdu_session_setup_timer       = {};
+  bool                    release_requested             = false;
+  bool                    release_scheduled             = false;
   byte_buffer    last_pdu_session_resource_modify_request; // To check if a received modify request is a duplicate
   ngap_ue_logger logger;
 
-  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
-    ue_ids({ue_index_, ran_ue_id_}), logger("NGAP", {ue_index_, ran_ue_id_})
+  ngap_ue_context(ue_index_t              ue_index_,
+                  ran_ue_id_t             ran_ue_id_,
+                  ngap_cu_cp_ue_notifier& ue_notifier_,
+                  timer_manager&          timers_,
+                  task_executor&          task_exec_) :
+    ue_ids({ue_index_, ran_ue_id_}), ue(&ue_notifier_), logger("NGAP", {ue_index_, ran_ue_id_})
   {
     pdu_session_setup_timer = timers_.create_unique_timer(task_exec_);
   }
+
+  [[nodiscard]] ngap_cu_cp_ue_notifier* get_cu_cp_ue() const { return ue; }
 };
 
 class ngap_ue_context_list
@@ -134,7 +142,11 @@ public:
     return &it->second;
   }
 
-  ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id, timer_manager& timers, task_executor& task_exec)
+  ngap_ue_context& add_ue(ue_index_t              ue_index,
+                          ran_ue_id_t             ran_ue_id,
+                          ngap_cu_cp_ue_notifier& ue_notifier,
+                          timer_manager&          timers,
+                          task_executor&          task_exec)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue={}", ran_ue_id);
@@ -142,7 +154,7 @@ public:
     logger.debug("ue={} ran_ue={}: NGAP UE context created", ue_index, ran_ue_id);
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ran_ue_id),
-                std::forward_as_tuple(ue_index, ran_ue_id, timers, task_exec));
+                std::forward_as_tuple(ue_index, ran_ue_id, ue_notifier, timers, task_exec));
     ue_index_to_ran_ue_id.emplace(ue_index, ran_ue_id);
     return ues.at(ran_ue_id);
   }
@@ -175,7 +187,7 @@ public:
     ue.logger.set_prefix({ue.ue_ids.ue_index, ran_ue_id, amf_ue_id});
   }
 
-  void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
+  void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier)
   {
     srsran_assert(new_ue_index != ue_index_t::invalid, "Invalid new_ue_index={}", new_ue_index);
     srsran_assert(old_ue_index != ue_index_t::invalid, "Invalid old_ue_index={}", old_ue_index);
@@ -189,6 +201,7 @@ public:
 
     // Update UE context
     ues.at(ran_ue_id).ue_ids.ue_index = new_ue_index;
+    ues.at(ran_ue_id).ue              = &new_ue_notifier;
 
     // Update lookups
     ue_index_to_ran_ue_id.emplace(new_ue_index, ran_ue_id);

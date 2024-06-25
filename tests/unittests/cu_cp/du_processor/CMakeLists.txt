@@ -33,6 +33,7 @@ target_link_libraries(du_processor_test_helpers
         srslog)
 
 set(SOURCES
+        du_configuration_manager_test.cpp
         du_processor_test.cpp
         )
 

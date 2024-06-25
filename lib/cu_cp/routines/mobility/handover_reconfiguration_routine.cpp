@@ -22,6 +22,7 @@
 
 #include "handover_reconfiguration_routine.h"
 #include "../../du_processor/du_processor.h"
+#include "../../up_resource_manager/up_resource_manager_impl.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -30,7 +31,7 @@ using namespace asn1::rrc_nr;
 handover_reconfiguration_routine::handover_reconfiguration_routine(
     const rrc_reconfiguration_procedure_request& request_,
     const ue_index_t&                            target_ue_index_,
-    du_ue&                                       source_ue_,
+    cu_cp_ue&                                    source_ue_,
     f1ap_ue_context_manager&                     source_f1ap_ue_ctxt_mng_,
     cu_cp_ue_context_manipulation_handler&       cu_cp_handler_,
     srslog::basic_logger&                        logger_) :

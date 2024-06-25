@@ -36,7 +36,6 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     ngap_message_notifier&                   amf_notifier_,
     ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
     ngap_cu_cp_notifier&                     cu_cp_notifier_,
-    up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     ngap_ue_logger&                          logger_) :
@@ -46,7 +45,6 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
   amf_notifier(amf_notifier_),
   rrc_ue_notifier(rrc_ue_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
-  up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
@@ -105,18 +103,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
 void ngap_handover_preparation_procedure::get_required_handover_context()
 {
-  ngap_ue_source_handover_context                           src_ctx;
-  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager.get_pdu_sessions_map();
-  // create a map of all PDU sessions and their associated QoS flows
-  for (const auto& pdu_session : pdu_sessions) {
-    std::vector<qos_flow_id_t> qos_flows;
-    for (const auto& drb : pdu_session.second.drbs) {
-      for (const auto& qos_flow : drb.second.qos_flows) {
-        qos_flows.push_back(qos_flow.first);
-      }
-    }
-    ho_ue_context.pdu_sessions.insert({pdu_session.first, qos_flows});
-  }
+  ho_ue_context.pdu_sessions  = request.pdu_sessions;
   ho_ue_context.rrc_container = rrc_ue_notifier.on_handover_preparation_message_required();
 }
 

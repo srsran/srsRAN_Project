@@ -34,22 +34,22 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     const asn1::rrc_nr::rrc_reest_request_s& request_,
     rrc_ue_context_t&                        context_,
     const byte_buffer&                       du_to_cu_container_,
-    up_resource_manager&                     up_resource_mng_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
     rrc_ue_srb_handler&                      srb_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
+    rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,
     rrc_ue_event_manager&                    event_mng_,
     rrc_ue_logger&                           logger_) :
   reestablishment_request(request_),
   context(context_),
   du_to_cu_container(du_to_cu_container_),
-  up_resource_mng(up_resource_mng_),
   rrc_ue_setup_notifier(rrc_ue_setup_notifier_),
   rrc_ue_reest_notifier(rrc_ue_reest_notifier_),
   srb_notifier(srb_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
+  cu_cp_ue_notifier(cu_cp_ue_notifier_),
   nas_notifier(nas_notifier_),
   event_mng(event_mng_),
   logger(logger_)
@@ -246,13 +246,13 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
   }
 
   // Transfer UP context from old UE
-  up_resource_mng.set_up_context(old_ue_reest_context.up_ctx);
+  cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx);
 
   // Update security keys
   // freq_and_timing must be present, otherwise the RRC UE would've never been created
-  uint32_t ssb_arfcn  = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
-  context.sec_context = old_ue_reest_context.sec_context;
-  context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
+  uint32_t ssb_arfcn = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
+  cu_cp_ue_notifier.update_security_context(old_ue_reest_context.sec_context);
+  cu_cp_ue_notifier.perform_horizontal_key_derivation(context.cell.pci, ssb_arfcn);
   logger.log_debug("Refreshed keys horizontally. pci={} ssb-arfcn={}", context.cell.pci, ssb_arfcn);
 }
 

@@ -27,6 +27,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
+#include "srsran/support/stats.h"
 #include <optional>
 
 namespace srsran {
@@ -36,8 +37,6 @@ struct scheduler_ue_metrics {
   pci_t                        pci;
   unsigned                     nof_prbs;
   rnti_t                       rnti;
-  uint8_t                      cqi;
-  uint8_t                      ri;
   sch_mcs_index                dl_mcs;
   double                       dl_prbs_used;
   double                       dl_brate_kbps;
@@ -55,16 +54,33 @@ struct scheduler_ue_metrics {
   unsigned                     dl_bs;
   std::optional<phy_time_unit> last_ta;
   std::optional<int>           last_phr;
+  /// CQI statistics over the metrics report interval.
+  sample_statistics<unsigned> cqi_stats;
+  /// RI statistics over the metrics report interval.
+  sample_statistics<unsigned> ri_stats;
 };
 
-/// \brief Notifier interface used by scheduler to report UE metrics.
-class scheduler_ue_metrics_notifier
+/// \brief Snapshot of the metrics for a cell and its UEs.
+struct scheduler_cell_metrics {
+  /// Latency histogram number of bins.
+  constexpr static unsigned latency_hist_bins = 10;
+  /// Distance between histogram bins.
+  constexpr static unsigned nof_usec_per_bin = 50;
+
+  unsigned                                nof_error_indications = 0;
+  std::chrono::microseconds               average_decision_latency{0};
+  std::array<unsigned, latency_hist_bins> latency_histogram{0};
+  std::vector<scheduler_ue_metrics>       ue_metrics;
+};
+
+/// \brief Notifier interface used by scheduler to report metrics.
+class scheduler_metrics_notifier
 {
 public:
-  virtual ~scheduler_ue_metrics_notifier() = default;
+  virtual ~scheduler_metrics_notifier() = default;
 
   /// \brief This method will be called periodically by the scheduler to report the latest UE metrics statistics.
-  virtual void report_metrics(span<const scheduler_ue_metrics> ue_metrics) = 0;
+  virtual void report_metrics(const scheduler_cell_metrics& report) = 0;
 };
 
 } // namespace srsran

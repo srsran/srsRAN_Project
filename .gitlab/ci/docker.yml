@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "19"
+    ref: "20"
     file: .gitlab/ci-shared/tools/docker.yml
 
 ################################################################################
@@ -120,23 +120,21 @@ metrics version check in retina:
 ################################################################################
 .docker compose:
   stage: compose
-  image: docker:24.0.7
+  image: docker:24.0.7-dind
   tags:
-    - saas-linux-medium-amd64
+    - amd64-avx2
   timeout: 2h
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:24.0.7-dind
-      alias: docker
-      entrypoint: ["env", "-u", "DOCKER_HOST"]
-      command: ["dockerd-entrypoint.sh"]
+  before_script:
+    - dockerd-entrypoint.sh &
+    - |
+      while ! ( nc -zv localhost 2376 2>&1 >/dev/null )
+      do
+          sleep 1
+      done
 
 gnb docker compose:
   extends: .docker compose
-  variables:
+  variables: &build_in_compose_variables
     KUBERNETES_CPU_REQUEST: 6
     KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
@@ -151,7 +149,7 @@ gnb docker compose:
           - docker/docker-compose.yml
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
   script:
-    - docker compose -f docker/docker-compose.yml build --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
+    - docker compose -f docker/docker-compose.yml build --build-arg NUM_CORES=${KUBERNETES_CPU_LIMIT} --build-arg LIB=${LIB} --build-arg LIB_VERSION=${LIB_VERSION} gnb
     - sh -c "docker compose -f docker/docker-compose.yml run --no-deps gnb ${TEST_CMD}"
   parallel:
     matrix:
@@ -162,6 +160,8 @@ gnb docker compose:
 
 5gc docker compose:
   extends: .docker compose
+  variables:
+    <<: *build_in_compose_variables
   rules:
     - if: $ON_MR
       changes:
@@ -170,6 +170,7 @@ gnb docker compose:
           - docker/docker-compose.yml
     - if: $CI_DESCRIPTION =~ /Weekly/
   script:
+    - docker compose -f docker/docker-compose.yml build --build-arg NUM_CORES=${KUBERNETES_CPU_LIMIT} 5gc
     - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
 
 grafana docker compose:

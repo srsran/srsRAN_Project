@@ -23,7 +23,6 @@
 #pragma once
 
 #include "e1ap_cu_cp.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include <memory>
@@ -35,7 +34,6 @@ namespace srs_cu_cp {
 std::unique_ptr<e1ap_interface> create_e1ap(e1ap_message_notifier&         e1ap_pdu_notifier_,
                                             e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                             e1ap_cu_cp_notifier&           cu_cp_notifier_,
-                                            common_ue_manager&             ue_mng_,
                                             timer_manager&                 timers_,
                                             task_executor&                 ctrl_exec_,
                                             unsigned                       max_nof_supported_ues_);

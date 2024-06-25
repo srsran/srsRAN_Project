@@ -54,8 +54,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
 #if defined(__AVX2__) || defined(__ARM_NEON)
   // Views over the input data.
-  std::array<span<const cf_t>, MAX_PORTS> port_symbols;
-  std::array<span<const cf_t>, MAX_PORTS> port_ests;
+  std::array<span<const cbf16_t>, MAX_PORTS> port_symbols;
+  std::array<span<const cbf16_t>, MAX_PORTS> port_ests;
 
   for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
     port_symbols[i_port] = ch_symbols.get_view({i_port});
@@ -75,8 +75,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficients.
-      simd_cf_t re_in  = srsran_simd_cfi_loadu(port_symbols[i_port].data() + i_re);
-      simd_cf_t ch_est = srsran_simd_cfi_loadu(port_ests[i_port].data() + i_re);
+      simd_cf_t re_in  = srsran_simd_cbf16_loadu(port_symbols[i_port].data() + i_re);
+      simd_cf_t ch_est = srsran_simd_cbf16_loadu(port_ests[i_port].data() + i_re);
 
       // Compute the channel square norm.
       simd_f_t ch_est_norm = srsran_simd_cf_norm_sq(ch_est);
@@ -136,12 +136,12 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
   for (; i_re != nof_re; ++i_re) {
     float ch_mod_sq = 0.0F;
     float nvar_acc  = 0.0F;
-    cf_t  re_out    = 0.0F;
+    cf_t  re_out    = cf_t();
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficient.
-      cf_t re_in  = ch_symbols[{i_re, i_port}];
-      cf_t ch_est = ch_estimates[{i_re, i_port}];
+      cf_t re_in  = to_cf(ch_symbols[{i_re, i_port}]);
+      cf_t ch_est = to_cf(ch_estimates[{i_re, i_port}]);
 
       // Compute the channel square norm.
       float ch_est_norm = std::norm(ch_est);

@@ -20,11 +20,10 @@
  *
  */
 
+#include "../cu_cp_test_messages.h"
 #include "cu_cp_routine_manager_test_helpers.h"
-#include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "pdu_session_resource_routine_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -48,8 +47,12 @@ protected:
 
   void start_procedure(const cu_cp_pdu_session_resource_setup_request& msg)
   {
-    t = routine_mng->start_pdu_session_resource_setup_routine(
-        msg, security_cfg, e1ap_bearer_ctxt_mng, f1ap_ue_ctxt_mng, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+    t = routine_mng->start_pdu_session_resource_setup_routine(msg,
+                                                              security_cfg,
+                                                              e1ap_bearer_ctxt_mng,
+                                                              f1ap_ue_ctxt_mng,
+                                                              rrc_ue_ctrl_notifier,
+                                                              ue_mng.find_ue(msg.ue_index)->get_up_resource_manager());
     t_launcher.emplace(t);
   }
 
@@ -96,7 +99,8 @@ private:
 TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unconfigured_fiveqi_received_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
   // Tweak 5QI of first QoS flow
   request.pdu_session_res_setup_items.begin()
       ->qos_flow_setup_request_items.begin()
@@ -123,7 +127,8 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unco
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_received_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{false, {}, {}};
@@ -142,7 +147,8 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_receiv
 TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_received_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -160,7 +166,8 @@ TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_rec
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure_received_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -194,7 +201,8 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure
 TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -212,7 +220,8 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setu
 TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_setup_succeeds)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -255,7 +264,8 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
 TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_session_arrives_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
@@ -288,8 +298,9 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_sess
 TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_received_then_setup_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = {}; // empty message
-  request.ue_index                                 = uint_to_ue_index(0);
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = {}; // empty message
+  request.ue_index                                  = ue_index;
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {}, {}};
@@ -314,7 +325,8 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
 TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos_flows_received_setup_succeeds)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(1, 2);
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index, 1, 2);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // first session success, second failed
@@ -354,7 +366,8 @@ TEST_F(pdu_session_resource_setup_test,
        when_setup_for_two_pdu_sessions_is_requested_but_only_first_could_be_setup_at_cuup_setup_succeeds_with_fail_list)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(2);
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index, 2, 1);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {2}}; // first session success, second failed
@@ -380,7 +393,8 @@ TEST_F(pdu_session_resource_setup_test,
 TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_requested_and_both_succeed_setup_succeeds)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(2);
+  ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+  cu_cp_pdu_session_resource_setup_request request  = generate_pdu_session_resource_setup(ue_index, 2, 1);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1, 2}, {}}; // first session success, second failed
@@ -406,9 +420,11 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_reque
 /// Test with two consecutive requests. Both with one PDU session.
 TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_bearer_setup_and_modification_succeed)
 {
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+
   // Initial PDU SESSION RESOURCE SETUP procdure using default executor.
   {
-    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(1);
+    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(ue_index, 1);
 
     bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // PDU session 1 setup success, no failure
     ue_context_outcome_t     ue_context_modification_outcome{true, {1}};
@@ -440,7 +456,8 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
 
   {
     // Generate 2nd request for different PDU session ID (we generate a request for two sessions and delete the first)
-    cu_cp_pdu_session_resource_setup_request request2 = generate_pdu_session_resource_setup(2, 1);
+    // ue_index_t                               ue_index = ue_mng.add_ue(du_index_t::min);
+    cu_cp_pdu_session_resource_setup_request request2 = generate_pdu_session_resource_setup(ue_index, 2);
     request2.pdu_session_res_setup_items.erase(uint_to_pdu_session_id(1));
 
     // Modify 5QI such that a new DRB is going to be created.

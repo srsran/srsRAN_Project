@@ -138,10 +138,18 @@ class resource_grid_dummy : public resource_grid
     {
       return {};
     }
-
+    span<cbf16_t> get(span<cbf16_t>                       symbols,
+                      unsigned                            port,
+                      unsigned                            l,
+                      unsigned                            k_init,
+                      const bounded_bitset<MAX_RB * NRE>& mask) const override
+    {
+      return {};
+    }
     void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, unsigned stride) const override {}
+    void get(span<cbf16_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
 
-    span<const cf_t> get_view(unsigned port, unsigned l) const override { return {}; }
+    span<const cbf16_t> get_view(unsigned port, unsigned l) const override { return {}; }
   };
 
   resource_grid_reader_dummy reader;

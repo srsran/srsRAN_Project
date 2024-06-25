@@ -340,7 +340,8 @@ private:
   ///
   /// Safe execution from: pcell_executor
   /// \param is_locked provides info whether the \c mutex is already locked or not.
-  void update_mac_buffer_state(bool is_locked);
+  /// \param force_notify forces a notification of the lower layer regardless of the current/previous buffer state.
+  void update_mac_buffer_state(bool is_locked, bool force_notify);
 
   /// Lock-free version of \c get_buffer_state()
   /// \return Provides the current buffer state

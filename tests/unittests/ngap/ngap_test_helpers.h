@@ -42,13 +42,15 @@ protected:
   class test_ue
   {
   public:
-    test_ue(ue_index_t ue_index_) : ue_index(ue_index_) {}
+    test_ue(ue_index_t ue_index_) : ue_index(ue_index_), rrc_ue_dl_nas_handler(ue_index_) {}
 
     ue_index_t                 ue_index = ue_index_t::invalid;
     std::optional<amf_ue_id_t> amf_ue_id;
     std::optional<ran_ue_id_t> ran_ue_id;
 
-    dummy_ngap_rrc_ue_notifier rrc_ue_notifier;
+    dummy_rrc_dl_nas_message_handler           rrc_ue_dl_nas_handler;
+    dummy_rrc_ue_init_security_context_handler rrc_ue_security_handler;
+    dummy_rrc_ue_handover_preparation_handler  rrc_ue_ho_prep_handler;
   };
 
   ngap_test();
@@ -86,10 +88,20 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
-  ngap_configuration               cfg;
-  timer_manager                    timers;
-  manual_task_worker               ctrl_worker{128};
-  ue_manager                       ue_mng{{}, {}, timers, ctrl_worker};
+  ngap_configuration cfg;
+  timer_manager      timers;
+  manual_task_worker ctrl_worker{128};
+
+  security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                      security::integrity_algorithm::nia1,
+                                      security::integrity_algorithm::nia3,
+                                      security::integrity_algorithm::nia0},
+                                     {security::ciphering_algorithm::nea0,
+                                      security::ciphering_algorithm::nea2,
+                                      security::ciphering_algorithm::nea1,
+                                      security::ciphering_algorithm::nea3}};
+
+  ue_manager                       ue_mng{{}, {}, sec_config, timers, ctrl_worker};
   dummy_n2_gateway                 n2_gw;
   dummy_ngap_cu_cp_notifier        cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;

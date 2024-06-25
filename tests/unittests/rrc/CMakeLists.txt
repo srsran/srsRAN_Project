@@ -36,5 +36,5 @@ set(SOURCES
 
 add_executable(rrc_ue_test ${SOURCES})
 target_include_directories(rrc_ue_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(rrc_ue_test rrc_ue_test_helpers srsran_rrc srsran_cu_cp_cell_meas_manager srsran_support srslog gtest gtest_main)
+target_link_libraries(rrc_ue_test rrc_ue_test_helpers srsran_rrc srsran_cu_cp srsran_support srslog gtest gtest_main)
 gtest_discover_tests(rrc_ue_test PROPERTIES "LABELS;rrc_ue")

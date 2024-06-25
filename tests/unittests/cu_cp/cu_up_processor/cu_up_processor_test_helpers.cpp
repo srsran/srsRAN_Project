@@ -37,7 +37,7 @@ cu_up_processor_test::cu_up_processor_test()
   cu_up_cfg.cu_up_index              = uint_to_cu_up_index(0);
 
   cu_up_processor_obj =
-      create_cu_up_processor(std::move(cu_up_cfg), e1ap_notifier, cu_cp_notifier, ue_mng, task_sched, ctrl_worker);
+      create_cu_up_processor(std::move(cu_up_cfg), e1ap_notifier, cu_cp_notifier, task_sched, ctrl_worker);
 }
 
 cu_up_processor_test::~cu_up_processor_test()

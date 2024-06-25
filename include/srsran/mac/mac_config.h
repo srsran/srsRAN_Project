@@ -58,8 +58,8 @@ struct mac_config {
   mac_expert_config             mac_cfg;
   mac_pcap&                     pcap;
   // Parameters passed to MAC scheduler.
-  scheduler_expert_config        sched_cfg;
-  scheduler_ue_metrics_notifier& metric_notifier;
+  scheduler_expert_config     sched_cfg;
+  scheduler_metrics_notifier& metric_notifier;
 };
 
 } // namespace srsran

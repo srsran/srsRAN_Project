@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
-#include "srsran/cu_cp/up_resource_manager.h"
+#include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
@@ -93,7 +93,7 @@ bool update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                  pdu_session_resource_setup_list,
     up_config_update&            next_config,
-    up_resource_manager&         rrc_ue_up_resource_manager,
+    up_resource_manager&         up_resource_mng,
     const security_indication_t& default_security_indication,
     const srslog::basic_logger&  logger);
 
@@ -103,7 +103,7 @@ bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_ite
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                                    pdu_session_resource_setup_list,
                        up_config_update&           next_config,
-                       up_resource_manager&        rrc_ue_up_resource_manager,
+                       up_resource_manager&        up_resource_mng,
                        const srslog::basic_logger& logger);
 
 bool update_setup_list(e1ap_bearer_context_modification_request&                    bearer_ctxt_mod_request,

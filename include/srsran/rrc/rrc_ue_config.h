@@ -23,9 +23,7 @@
 #pragma once
 
 #include "rrc_types.h"
-#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -45,8 +43,6 @@ struct rrc_ue_cfg_t {
   unsigned rrc_procedure_timeout_ms; ///< Timeout used for RRC message exchange with UE. It needs to suit the expected
                                      ///< communication delay and account for potential retransmissions (HARQ and RLC),
                                      ///< UE processing delays (see Sec 12 in TS 38.331), SR delays, etc.
-  security::preferred_integrity_algorithms int_algo_pref_list; ///< Integrity protection algorithms preference list
-  security::preferred_ciphering_algorithms enc_algo_pref_list; ///< Encryption algorithms preference list
 };
 
 } // namespace srs_cu_cp

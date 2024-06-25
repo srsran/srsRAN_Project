@@ -604,6 +604,9 @@ void ue_event_manager::handle_error_indication(slot_point                       
 
     // Log event.
     du_cells[cell_index].ev_logger->enqueue(scheduler_event_logger::error_indication_event{sl_tx, event});
+
+    // Report metrics.
+    metrics_handler.handle_error_indication();
   });
 }
 

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../cu_cp/test_helpers.h"
+#include "lib/cu_cp/ue_manager/cu_cp_ue_impl.h"
 #include "lib/rrc/ue/rrc_ue_impl.h"
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
@@ -38,7 +39,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 // Free-function to generate dummy security context (used by e.g. Mobility tests)
-static security::security_context generate_security_context()
+static security::security_context generate_security_context(ue_security_manager& sec_mng)
 {
   const char* sk_gnb_cstr = "8d2abb1a4349319ea4276295c33d107a6e274495cb9bc2433fb7d7ca4c3f7646";
 
@@ -66,6 +67,8 @@ static security::security_context generate_security_context()
   // Generate K_rrc_enc and K_rrc_int
   sec_ctxt.generate_as_keys();
 
+  sec_mng.update_security_context(sec_ctxt);
+
   return sec_ctxt;
 }
 
@@ -76,25 +79,22 @@ class rrc_ue_test_helper
 protected:
   void init()
   {
+    // add UE to UE manager
+    allocated_ue_index = ue_mng.add_ue(du_index_t::min);
+
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
-    rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
+    rrc_ue_create_msg.ue_index = allocated_ue_index;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
     bool ret                   = rrc_ue_create_msg.du_to_cu_container.resize(1);
     (void)ret;
     rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_notifier;
     rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &rrc_ue_cu_cp_notifier;
     rrc_ue_create_msg.measurement_notifier  = &rrc_ue_cu_cp_notifier;
+    rrc_ue_create_msg.cu_cp_ue_notifier     = &ue_mng.find_ue(allocated_ue_index)->get_rrc_ue_cu_cp_ue_notifier();
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
+
     rrc_ue_cfg_t ue_cfg;
-    ue_cfg.int_algo_pref_list = {security::integrity_algorithm::nia2,
-                                 security::integrity_algorithm::nia1,
-                                 security::integrity_algorithm::nia3,
-                                 security::integrity_algorithm::nia0};
-    ue_cfg.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                 security::ciphering_algorithm::nea2,
-                                 security::ciphering_algorithm::nea1,
-                                 security::ciphering_algorithm::nea3};
     // Add meas timing
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
@@ -107,19 +107,17 @@ protected:
 
     ue_cfg.meas_timings.push_back(meas_timing);
     ue_cfg.rrc_procedure_timeout_ms = rrc_procedure_timeout_ms;
-    rrc_ue                          = std::make_unique<rrc_ue_impl>(*up_resource_mng,
-                                           *rrc_ue_create_msg.f1ap_pdu_notifier,
+    rrc_ue                          = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,
+                                           *rrc_ue_create_msg.cu_cp_ue_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
-                                           sec_ctxt,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
-                                           task_sched_handle,
                                            std::optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
@@ -197,15 +195,18 @@ protected:
     std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
     std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
-    // Trigger SMC
-    get_rrc_ue_control_message_handler()->handle_new_security_context(init_sec_ctx);
+    ue_mng.find_ue(allocated_ue_index)->get_security_manager().init_security_context(init_sec_ctx);
+
+    // Configure PDCP entity security on SRB1
+    rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier = *rrc_ue;
+    rrc_ue_notifier.on_new_as_security_context();
   }
 
   void create_srb2()
   {
     init_security_context();
     srb_creation_message msg;
-    msg.ue_index = ALLOCATED_UE_INDEX;
+    msg.ue_index = allocated_ue_index;
     msg.srb_id   = srb_id_t::srb2;
     rrc_ue->get_rrc_ue_srb_handler().create_srb(msg);
   }
@@ -293,12 +294,12 @@ protected:
 
   void check_ue_release_not_requested()
   {
-    ASSERT_NE(rrc_ue_cu_cp_notifier.last_cu_cp_ue_context_release_request.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_NE(rrc_ue_cu_cp_notifier.last_cu_cp_ue_context_release_request.ue_index, allocated_ue_index);
   }
 
   void check_ue_release_requested()
   {
-    ASSERT_EQ(rrc_ue_cu_cp_notifier.last_cu_cp_ue_context_release_request.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_EQ(rrc_ue_cu_cp_notifier.last_cu_cp_ue_context_release_request.ue_index, allocated_ue_index);
   }
 
   void receive_smc_complete()
@@ -340,8 +341,8 @@ protected:
   {
     rrc_ue_reestablishment_context_response reest_context = {};
     reest_context.ue_index                                = ue_index;
-    reest_context.sec_context                             = generate_security_context();
-    reest_context.old_ue_fully_attached                   = true;
+    reest_context.sec_context = generate_security_context(ue_mng.find_ue(allocated_ue_index)->get_security_manager());
+    reest_context.old_ue_fully_attached = true;
 
     logger.debug("Adding reestablishment context for ue={}", ue_index);
 
@@ -420,17 +421,26 @@ protected:
               92);
   }
 
-  const ue_index_t           ALLOCATED_UE_INDEX = uint_to_ue_index(23);
-  rrc_cfg_t                  cfg{}; // empty config
-  security::security_context sec_ctxt = {};
+  ue_index_t allocated_ue_index;
+  rrc_cfg_t  cfg{}; // empty config
 
-  timer_manager                        timers;
-  manual_task_worker                   ctrl_worker{64};
-  std::unique_ptr<up_resource_manager> up_resource_mng =
-      create_up_resource_manager(up_resource_manager_cfg{cfg.drb_config});
-  dummy_rrc_f1ap_pdu_notifier       rrc_ue_f1ap_notifier;
-  dummy_rrc_ue_ngap_adapter         rrc_ue_ngap_notifier;
-  dummy_rrc_ue_cu_cp_adapter        rrc_ue_cu_cp_notifier;
+  security_manager_config sec_config{{security::integrity_algorithm::nia2,
+                                      security::integrity_algorithm::nia1,
+                                      security::integrity_algorithm::nia3,
+                                      security::integrity_algorithm::nia0},
+                                     {security::ciphering_algorithm::nea0,
+                                      security::ciphering_algorithm::nea2,
+                                      security::ciphering_algorithm::nea1,
+                                      security::ciphering_algorithm::nea3}};
+
+  timer_manager               timers;
+  manual_task_worker          ctrl_worker{64};
+  dummy_rrc_f1ap_pdu_notifier rrc_ue_f1ap_notifier;
+  dummy_rrc_ue_ngap_adapter   rrc_ue_ngap_notifier;
+  dummy_rrc_ue_cu_cp_adapter  rrc_ue_cu_cp_notifier;
+
+  ue_manager ue_mng{{}, {}, sec_config, timers, ctrl_worker};
+
   std::unique_ptr<rrc_ue_interface> rrc_ue;
   srslog::basic_logger&             logger = srslog::fetch_basic_logger("TEST", false);
   dummy_ue_task_scheduler           task_sched_handle{timers, ctrl_worker};

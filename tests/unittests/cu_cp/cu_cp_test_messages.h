@@ -36,15 +36,16 @@ namespace srs_cu_cp {
 cu_cp_ue_context_release_command generate_ue_context_release_command(ue_index_t ue_index);
 
 /// \brief Generate a dummy PDU Session Resource Setup request.
-cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(unsigned num_pdu_sessions = 1,
-                                                                             unsigned num_qos_flows    = 1);
+cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(ue_index_t ue_index = ue_index_t::min,
+                                                                             unsigned   num_pdu_sessions = 1,
+                                                                             unsigned   num_qos_flows    = 1);
 
 /// \brief Generate a dummy PDU Session Resource Release Command.
-cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release();
+cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release(ue_index_t ue_index = ue_index_t::min);
 
 /// \brief Generate a dummy PDU Session Resource Modification Request.
-cu_cp_pdu_session_resource_modify_request generate_pdu_session_resource_modification(unsigned psi = 1,
-                                                                                     unsigned qfi = 2);
+cu_cp_pdu_session_resource_modify_request
+generate_pdu_session_resource_modification(ue_index_t ue_index = ue_index_t::min, unsigned psi = 1, unsigned qfi = 2);
 
 /// \brief Generate a dummy PDU Session Resource Modification Request with QoS flow to remove item.
 cu_cp_pdu_session_resource_modify_request

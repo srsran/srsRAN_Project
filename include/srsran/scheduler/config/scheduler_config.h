@@ -32,7 +32,7 @@ namespace srsran {
 struct scheduler_config {
   const scheduler_expert_config& expert_params;
   sched_configuration_notifier&  config_notifier;
-  scheduler_ue_metrics_notifier& metrics_notifier;
+  scheduler_metrics_notifier&    metrics_notifier;
 };
 
 } // namespace srsran

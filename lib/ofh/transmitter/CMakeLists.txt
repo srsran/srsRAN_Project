@@ -35,4 +35,5 @@ add_library(srsran_ofh_transmitter STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_transmitter
         srsran_ran
         srsran_instrumentation
-        srslog)
+        srslog
+        srsvec)

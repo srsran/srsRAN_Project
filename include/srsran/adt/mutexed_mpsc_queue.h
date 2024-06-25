@@ -30,14 +30,21 @@ namespace srsran {
 
 namespace detail {
 
-// Specialization for lock-based MPSC, using a condition variable or sleep as blocking mechanism. The dequeues are
-// done in a batch to minimize mutex contention.
+/// Specialization for lock-based MPSC, using a condition variable or sleep as blocking mechanism. The dequeues are done
+/// in a batch to minimize mutex contention.
 template <typename T, concurrent_queue_wait_policy BlockingPolicy>
 class queue_impl<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
 {
   using queue_barrier = std::conditional_t<BlockingPolicy == concurrent_queue_wait_policy::condition_variable,
                                            queue_cond_var_barrier,
                                            queue_sleep_barrier>;
+
+  const size_t                        cap;
+  std::atomic<unsigned>               count_local_objs{0};
+  std::array<ring_buffer<T, true>, 2> queues;
+  unsigned                            index_queue_for_pop = 0;
+  mutable std::mutex                  mutex;
+  queue_barrier                       barrier;
 
 public:
   template <typename... Args>
@@ -166,16 +173,11 @@ private:
     count_local_objs.fetch_sub(1, std::memory_order_relaxed);
   }
 
-  ring_buffer<T, true>&       popping_queue() { return queues[index_queue_for_pop]; }
-  ring_buffer<T, true>&       pushing_queue() { return queues[1 - index_queue_for_pop]; }
-  const ring_buffer<T, true>& pushing_queue() const { return queues[1 - index_queue_for_pop]; }
+  ring_buffer<T, true>& popping_queue() { return queues[index_queue_for_pop]; }
 
-  const size_t                        cap;
-  std::atomic<unsigned>               count_local_objs{0};
-  std::array<ring_buffer<T, true>, 2> queues;
-  unsigned                            index_queue_for_pop = 0;
-  mutable std::mutex                  mutex;
-  queue_barrier                       barrier;
+  ring_buffer<T, true>& pushing_queue() { return queues[1 - index_queue_for_pop]; }
+
+  const ring_buffer<T, true>& pushing_queue() const { return queues[1 - index_queue_for_pop]; }
 };
 
 } // namespace detail

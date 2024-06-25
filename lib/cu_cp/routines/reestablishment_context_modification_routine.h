@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../du_processor/du_processor.h"
-#include "srsran/cu_cp/cu_cp_f1c_handler.h"
+#include "../up_resource_manager/up_resource_manager_impl.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/support/async/async_task.h"
@@ -41,8 +41,8 @@ public:
                                                e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
                                                f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
                                                du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
-                                               up_resource_manager&  rrc_ue_up_resource_manager_,
-                                               srslog::basic_logger& logger_);
+                                               up_resource_manager&                          up_resource_mng_,
+                                               srslog::basic_logger&                         logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -63,10 +63,10 @@ private:
 
   ue_index_t                                    ue_index = ue_index_t::invalid;
   security::sec_as_config                       security_cfg;
-  e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng;       // to trigger bearer context setup at CU-UP
-  f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng;           // to trigger UE context modification at DU
-  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;            // to trigger RRC Reconfiguration at UE
-  up_resource_manager&                          rrc_ue_up_resource_manager; // to get RRC DRB config
+  e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng; // to trigger bearer context setup at CU-UP
+  f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng;     // to trigger UE context modification at DU
+  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;      // to trigger RRC Reconfiguration at UE
+  up_resource_manager&                          up_resource_mng;      // to get RRC DRB config
   srslog::basic_logger&                         logger;
 
   // (sub-)routine requests

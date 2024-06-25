@@ -96,9 +96,9 @@ std::shared_ptr<port_channel_estimator_factory> ChannelEstFixture::ch_est_factor
 
 bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected, const channel_estimate& computed)
 {
-  constexpr float  tolerance  = 5e-4;
-  unsigned         old_symbol = 15;
-  span<const cf_t> computed_symbol;
+  constexpr float     tolerance  = 1e-2;
+  unsigned            old_symbol = 15;
+  span<const cbf16_t> computed_symbol;
 
   for (const auto& this_expected : expected) {
     unsigned i_symbol = this_expected.symbol;
@@ -110,7 +110,7 @@ bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> exp
       computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
     }
 
-    if (std::abs(computed_symbol[i_sc] - value) > tolerance) {
+    if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance) {
       return false;
     }
   }

@@ -27,13 +27,13 @@
 namespace srsran {
 
 /// Class used to receive metrics reports from scheduler and format them into a JSON file.
-class metrics_plotter_json : public scheduler_ue_metrics_notifier
+class metrics_plotter_json : public scheduler_metrics_notifier
 {
 public:
   explicit metrics_plotter_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   /// Notifier called from the scheduler.
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void report_metrics(const scheduler_cell_metrics& metrics) override;
 
 private:
   srslog::log_channel& log_chan;

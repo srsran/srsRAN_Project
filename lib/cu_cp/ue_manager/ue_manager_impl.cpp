@@ -21,6 +21,7 @@
  */
 
 #include "ue_manager_impl.h"
+#include "srsran/cu_cp/security_manager_config.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -32,9 +33,10 @@ void cu_cp_ue::stop()
 
 ue_manager::ue_manager(const ue_configuration&        ue_config_,
                        const up_resource_manager_cfg& up_config_,
+                       const security_manager_config& sec_config_,
                        timer_manager&                 timers,
                        task_executor&                 cu_cp_exec) :
-  ue_config(ue_config_), up_config(up_config_), ue_task_scheds(timers, cu_cp_exec, logger)
+  ue_config(ue_config_), up_config(up_config_), sec_config(sec_config_), ue_task_scheds(timers, cu_cp_exec, logger)
 {
 }
 
@@ -63,7 +65,7 @@ ue_index_t ue_manager::add_ue(du_index_t du_index)
   // Create UE object
   ues.emplace(std::piecewise_construct,
               std::forward_as_tuple(new_ue_index),
-              std::forward_as_tuple(new_ue_index, up_config, std::move(ue_sched)));
+              std::forward_as_tuple(new_ue_index, up_config, sec_config, std::move(ue_sched)));
 
   logger.info("ue={}: Created new CU-CP UE", new_ue_index);
 
@@ -110,9 +112,9 @@ ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
   return ue_index_t::invalid;
 }
 
-// common_ue_manager
+// common
 
-common_ue* ue_manager::find_ue(ue_index_t ue_index)
+cu_cp_ue* ue_manager::find_ue(ue_index_t ue_index)
 {
   if (ues.find(ue_index) != ues.end()) {
     return &ues.at(ue_index);
@@ -128,9 +130,9 @@ ue_task_scheduler* ue_manager::find_ue_task_scheduler(ue_index_t ue_index)
   return nullptr;
 }
 
-// du_processor_ue_manager
+// du processor
 
-du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
+cu_cp_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti)
 {
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
@@ -159,46 +161,9 @@ du_ue* ue_manager::set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci
   return &ue;
 }
 
-du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
+cu_cp_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
   if (ues.find(ue_index) != ues.end() && ues.at(ue_index).du_ue_created()) {
-    return &ues.at(ue_index);
-  }
-  return nullptr;
-}
-
-// ngap_ue_manager
-
-ngap_ue* ue_manager::set_ue_ng_context(ue_index_t                    ue_index,
-                                       ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier_,
-                                       ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
-{
-  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-
-  // check if the UE is already present
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
-    logger.warning("ue={}: UE already exists", ue_index);
-    return nullptr;
-  }
-
-  // UE must be created by DU processor
-  if (ues.find(ue_index) == ues.end()) {
-    logger.warning("UE has not been created");
-    return nullptr;
-  }
-
-  auto& ue = ues.at(ue_index);
-
-  ue.add_ngap_ue_context(rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_);
-
-  logger.debug("ue={}: Added NGAP UE", ue_index);
-
-  return &ue;
-}
-
-ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
-{
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
     return &ues.at(ue_index);
   }
   return nullptr;

@@ -25,8 +25,6 @@
 #include "../cu_cp_controller/cu_cp_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/support/srsran_assert.h"
 #include <cstddef>
@@ -171,11 +169,10 @@ public:
     return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
   }
 
-  rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
-                                           const rrc_ue_creation_message& msg) override
+  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->add_ue(resource_mng, msg);
+    return rrc_du_handler->add_ue(msg);
   }
 
   void on_release_ues() override
@@ -249,12 +246,6 @@ public:
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->get_packed_handover_preparation_message();
-  }
-
-  bool on_new_security_context(const security::security_context& sec_context) override
-  {
-    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->handle_new_security_context(sec_context);
   }
 
   byte_buffer on_new_rrc_handover_command(byte_buffer cmd) override

@@ -28,7 +28,7 @@
 namespace srsran {
 
 /// Class used to receive metrics reports and write them into a log file.
-class metrics_log_helper : public scheduler_ue_metrics_notifier, public rlc_metrics_notifier
+class metrics_log_helper : public scheduler_metrics_notifier, public rlc_metrics_notifier
 {
 public:
   explicit metrics_log_helper(srslog::basic_logger& logger_) : logger(logger_) {}
@@ -37,7 +37,7 @@ public:
   bool is_enabled() const { return (logger.info.enabled() or logger.debug.enabled()); };
 
   /// Notifier for the scheduler metrics.
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void report_metrics(const scheduler_cell_metrics& metrics) override;
 
   /// Notifier for the RLC metrics.
   void report_metrics(const rlc_metrics& metrics) override;

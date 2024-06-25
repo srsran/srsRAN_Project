@@ -22,13 +22,10 @@
 
 #pragma once
 
-#include "../adapters/e1ap_adapters.h"
-#include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/cu_up_task_scheduler.h"
+#include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
-#include "srsran/support/async/async_task.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -39,7 +36,6 @@ struct cu_cp_configuration;
 struct cu_up_repository_config {
   const cu_cp_configuration& cu_cp;
   e1ap_cu_cp_notifier&       e1ap_ev_notifier;
-  common_ue_manager&         ue_mng;
   srslog::basic_logger&      logger;
 };
 

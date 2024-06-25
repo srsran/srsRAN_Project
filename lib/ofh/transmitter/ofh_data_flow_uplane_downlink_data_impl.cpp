@@ -25,6 +25,7 @@
 #include "scoped_frame_buffer.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/srsvec/conversion.h"
 #include <thread>
 
 using namespace srsran;
@@ -105,8 +106,9 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
     const resource_grid_reader&                   grid)
 {
   // Temporary buffer used to store IQ data when the RU operating bandwidth is not the same to the cell bandwidth.
+  // TODO: cf_t constructor initializes with 0s.
   std::array<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> temp_buffer;
-  if (SRSRAN_UNLIKELY(ru_nof_prbs != grid.get_nof_subc())) {
+  if (SRSRAN_UNLIKELY(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB != grid.get_nof_subc())) {
     // Zero out the elements that won't be filled after reading the resource grid.
     std::fill(temp_buffer.begin() + grid.get_nof_subc(), temp_buffer.end(), 0);
   }
@@ -133,8 +135,13 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
     ofh_tracer << trace_event("ofh_uplane_pool_access", pool_access_tp);
 
     span<const cf_t> iq_data;
-    if (SRSRAN_LIKELY(ru_nof_prbs == grid.get_nof_subc())) {
-      iq_data = grid.get_view(context.port, symbol_id);
+    if (SRSRAN_LIKELY(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB == grid.get_nof_subc())) {
+      span<const cbf16_t> iq_data_cbf16 = grid.get_view(context.port, symbol_id);
+
+      // TODO: Convert compressor to cbf16_t.
+      span<cf_t> temp_iq_data(temp_buffer.data(), ru_nof_prbs * NOF_SUBCARRIERS_PER_RB);
+      srsvec::convert(temp_iq_data, iq_data_cbf16);
+      iq_data = temp_iq_data;
     } else {
       span<cf_t> temp_iq_data(temp_buffer.data(), ru_nof_prbs * NOF_SUBCARRIERS_PER_RB);
       grid.get(temp_iq_data.first(grid.get_nof_subc()), context.port, symbol_id, 0);

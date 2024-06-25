@@ -50,17 +50,22 @@ class du_ue_controller
 public:
   virtual ~du_ue_controller() = default;
 
-  /// \brief Disconnect the UE inter-layer notifiers.
+  /// \brief Stop all SRB and DRB traffic for a give UE.
   ///
   /// This method should be called as a first step in the deletion of a UE, to ensure traffic is not flowing through
   /// its bearers during the layer by layer UE context removal.
-  virtual async_task<void> disconnect_notifiers() = 0;
+  virtual async_task<void> handle_traffic_stop_request() = 0;
 
   /// \brief Stop DRB activity and the detection of RLF for this UE.
   ///
   /// This method can be called when the DU receives a request to delete a UE context, but the UE is not yet in a
   /// state where it is ready to be deleted (e.g. pending SRB PDUs).
   virtual async_task<void> handle_activity_stop_request() = 0;
+
+  /// \brief Stop activity/traffic for a subset of DRBs of a UE.
+  ///
+  /// This method can be called during a UE reconfiguration, when some DRBs are removed.
+  virtual async_task<void> handle_drb_traffic_stop_request(span<const drb_id_t> drbs_to_stop) = 0;
 
   /// \brief Schedule task for a given UE.
   virtual void schedule_async_task(async_task<void> task) = 0;

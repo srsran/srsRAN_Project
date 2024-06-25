@@ -26,6 +26,7 @@
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/executors/manual_task_worker.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -49,6 +50,7 @@ protected:
 
   ue_configuration        ue_config{std::chrono::seconds{7200}, max_nof_dus* MAX_NOF_UES_PER_DU};
   up_resource_manager_cfg up_config;
+  security_manager_config sec_config;
   timer_manager           timers;
   manual_task_worker      cu_worker{128};
   ue_manager              ue_mng;

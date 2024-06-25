@@ -33,27 +33,23 @@ class scheduler_result_logger
 public:
   explicit scheduler_result_logger(bool log_broadcast_, pci_t pci_);
 
-  void on_slot_start()
-  {
-    if (enabled) {
-      slot_start_tp = std::chrono::high_resolution_clock::now();
-    }
-  }
-
-  void on_scheduler_result(const sched_result& result);
+  /// Log scheduler result for a specific cell and slot.
+  /// \param[in] result Scheduling result for this slot.
+  /// \param[in] slot_latency Latency that it took for the scheduler to make the decision for the slot.
+  void on_scheduler_result(const sched_result&       result,
+                           std::chrono::microseconds slot_latency = std::chrono::microseconds{0});
 
 private:
-  void log_debug(const sched_result& result);
+  void log_debug(const sched_result& result, std::chrono::microseconds slot_latency);
 
-  void log_info(const sched_result& result);
+  void log_info(const sched_result& result, std::chrono::microseconds slot_latency);
 
   srslog::basic_logger& logger;
   bool                  log_broadcast;
   bool                  enabled;
   const pci_t           pci;
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> slot_start_tp;
-  fmt::memory_buffer                                          fmtbuf;
+  fmt::memory_buffer fmtbuf;
 };
 
 } // namespace srsran

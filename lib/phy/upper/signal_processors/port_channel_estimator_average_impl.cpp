@@ -24,6 +24,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
@@ -247,7 +248,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
       for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
            i_symbol != last_symbol;
            ++i_symbol) {
-        span<cf_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
+        span<cbf16_t> symbol_ch_estimate = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
         srsvec::sc_prod(
             symbol_ch_estimate, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo), symbol_ch_estimate);
       }
@@ -373,13 +374,30 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
 
   time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, cfg.scs, *ta_estimator);
 
+  // Extract RB mask lowest and highest RB. Also, determine if the allocation is contiguous.
+  int      lowest_rb  = hop_rb_mask.find_lowest();
+  int      highest_rb = hop_rb_mask.find_highest();
+  unsigned rb_count   = hop_rb_mask.count();
+  srsran_assert(highest_rb >= lowest_rb, "Invalid hop RB mask.");
+  bool is_contiguous = (static_cast<unsigned>(highest_rb + 1 - lowest_rb) == rb_count);
+
   // Interpolate frequency domain.
-  span<cf_t> ce_freq = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
+  unsigned   nof_re  = rb_count * NRE;
+  span<cf_t> ce_freq = span<cf_t>(freq_response).first(nof_re);
   freq_interpolator->interpolate(ce_freq, filtered_pilots_lse, interpolator_cfg);
+
+  // Convert interpolation result to complex BFloat16.
+  span<cbf16_t> ce_freq_cbf16 = span<cbf16_t>(freq_response_cbf16).first(nof_re);
+  srsvec::convert(ce_freq_cbf16, ce_freq);
 
   // Map frequency response to channel estimates.
   for (unsigned i_symbol = first_symbol; i_symbol != last_symbol; ++i_symbol) {
-    span<cf_t> symbol_fr_resp = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
+    span<cbf16_t> symbol_fr_resp = estimate.get_symbol_ch_estimate(i_symbol, port, i_layer);
+
+    if (is_contiguous) {
+      srsvec::copy(symbol_fr_resp.subspan(lowest_rb * NRE, nof_re), ce_freq.first(nof_re));
+      continue;
+    }
 
     unsigned i_prb_ce = 0;
     hop_rb_mask.for_each(0, hop_rb_mask.size(), [&](unsigned i_prb) {

@@ -108,7 +108,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
   return true;
 }
 
-rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message& msg)
+rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
 {
   // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
   // TS 38.473 section 8.4.1.2.
@@ -133,8 +133,6 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
   ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
-  ue_cfg.int_algo_pref_list             = cfg.int_algo_pref_list;
-  ue_cfg.enc_algo_pref_list             = cfg.enc_algo_pref_list;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   // Copy RRC cell and add SSB ARFCN.
@@ -142,19 +140,17 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   rrc_cell.ssb_arfcn        = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
 
   auto res = ue_db.emplace(ue_index,
-                           std::make_unique<rrc_ue_impl>(resource_mng,
-                                                         *msg.f1ap_pdu_notifier,
+                           std::make_unique<rrc_ue_impl>(*msg.f1ap_pdu_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
                                                          *msg.rrc_ue_cu_cp_notifier,
                                                          *msg.measurement_notifier,
+                                                         *msg.cu_cp_ue_notifier,
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          rrc_cell,
                                                          ue_cfg,
-                                                         *msg.sec_context,
                                                          msg.du_to_cu_container.copy(),
-                                                         *msg.ue_task_sched,
                                                          msg.rrc_context));
 
   if (res.second) {

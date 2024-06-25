@@ -87,14 +87,12 @@ void inter_cu_handover_target_routine::operator()(
 
   // Prepare E1AP Bearer Context Setup Request and call E1AP notifier
   {
-    // Generate security keys for Bearer Context Setup Request (RRC UE is not created yet)
-    security_cfg = generate_security_keys(rrc_context.sec_context);
-    if (!security_cfg.has_value()) {
-      logger.warning("ue={}: \"{}\" failed to generate security keys", request.ue_index, name());
+    // Get security keys for Bearer Context Setup Request (RRC UE is not created yet)
+    if (!ue->get_security_manager().is_security_context_initialized()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: Security context not initialized", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
-
-    if (!fill_e1ap_bearer_context_setup_request(security_cfg.value())) {
+    if (!fill_e1ap_bearer_context_setup_request(ue->get_security_manager().get_up_as_config())) {
       logger.warning("ue={}: \"{}\" failed to fill context at CU-UP", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
@@ -235,37 +233,6 @@ bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_
   // TODO: traverse other fields
 
   return ue_context_setup_resp.success;
-}
-
-std::optional<security::sec_as_config>
-inter_cu_handover_target_routine::generate_security_keys(security::security_context& sec_context)
-{
-  std::optional<security::sec_as_config> cfg;
-
-  // Select preferred integrity algorithm.
-  security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                  security::integrity_algorithm::nia1,
-                                                                  security::integrity_algorithm::nia3,
-                                                                  security::integrity_algorithm::nia0};
-  security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                  security::ciphering_algorithm::nea2,
-                                                                  security::ciphering_algorithm::nea1,
-                                                                  security::ciphering_algorithm::nea3};
-  if (not sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
-    logger.warning("ue={}: Could not select security algorithm", request.ue_index);
-    return cfg;
-  }
-  logger.debug("ue={}: Selected security algorithms NIA=NIA{} NEA=NEA{}",
-               request.ue_index,
-               sec_context.sel_algos.integ_algo,
-               sec_context.sel_algos.cipher_algo);
-
-  // Generate K_rrc_enc and K_rrc_int
-  sec_context.generate_as_keys();
-
-  cfg = sec_context.get_as_config(security::sec_domain::rrc);
-
-  return cfg;
 }
 
 bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(const security::sec_as_config& sec_info)

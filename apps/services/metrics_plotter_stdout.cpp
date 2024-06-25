@@ -124,29 +124,34 @@ static std::string float_to_eng_string(float f, int digits)
   return " " + float_to_string(scaled, digits, 5 - factor.length()) + factor;
 }
 
-void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void metrics_plotter_stdout::report_metrics(const scheduler_cell_metrics& metrics)
 {
   if (!print_metrics) {
     return;
   }
 
-  if (ue_metrics.size() > 10) {
+  if (metrics.ue_metrics.size() > 10) {
     print_header();
-  } else if (++nof_lines > 10 && !ue_metrics.empty()) {
+  } else if (++nof_lines > 10 && !metrics.ue_metrics.empty()) {
     nof_lines = 0;
     print_header();
   }
 
-  for (const auto& ue : ue_metrics) {
+  for (const auto& ue : metrics.ue_metrics) {
     fmt::print("{:>4}", ue.pci);
     fmt::print("{:>5x}", to_value(ue.rnti));
-    if (!iszero(ue.cqi)) {
-      fmt::print(" | {:>3}", int(ue.cqi));
+
+    if (ue.cqi_stats.get_nof_observations() > 0) {
+      fmt::print(" | {:>3}", static_cast<unsigned>(std::roundf(ue.cqi_stats.get_mean())));
     } else {
       fmt::print(" | {:>3.3}", "n/a");
     }
 
-    fmt::print("  {:>2}", int(ue.ri));
+    if (ue.ri_stats.get_nof_observations() > 0) {
+      fmt::print(" {:>3.1f}", ue.ri_stats.get_mean());
+    } else {
+      fmt::print(" {:>3.3}", "n/a");
+    }
 
     fmt::print("   {:>2}", int(ue.dl_mcs.to_uint()));
     if (ue.dl_brate_kbps > 0) {

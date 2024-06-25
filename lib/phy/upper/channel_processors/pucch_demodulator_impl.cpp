@@ -118,10 +118,10 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
 
   for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
     // Get a view of the data RE destination buffer for a single Rx port.
-    span<cf_t> re_port_buffer = ch_re.get_view({i_port});
+    span<cbf16_t> re_port_buffer = ch_re.get_view({i_port});
 
     // Get a view of the channel estimates destination buffer for a single Rx port and Tx layer.
-    span<cf_t> ests_port_buffer = ch_estimates.get_view({i_port, 0});
+    span<cbf16_t> ests_port_buffer = ch_estimates.get_view({i_port, 0});
 
     for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
          i_symbol != i_symbol_end;
@@ -130,7 +130,7 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
       re_port_buffer = resource_grid.get(re_port_buffer, i_port, i_symbol, first_subc, re_mask);
 
       // View over the channel estimation coefficients for a single OFDM symbol.
-      span<const cf_t> ests_symbol = channel_ests.get_symbol_ch_estimate(i_symbol, i_port);
+      span<const cbf16_t> ests_symbol = channel_ests.get_symbol_ch_estimate(i_symbol, i_port);
 
       // Copy channel estimation coefficients of the data RE into the destination buffer.
       re_mask.for_each(0, re_mask.size(), [&ests_port_buffer, &ests_symbol, &first_subc](unsigned bitpos) {

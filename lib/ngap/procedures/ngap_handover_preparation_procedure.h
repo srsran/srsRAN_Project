@@ -25,7 +25,6 @@
 #include "../ngap_context.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -41,7 +40,6 @@ public:
                                       ngap_message_notifier&                   amf_notifier_,
                                       ngap_rrc_ue_control_notifier&            rrc_ue_notifier_,
                                       ngap_cu_cp_notifier&                     cu_cp_notifier_,
-                                      up_resource_manager&                     up_manager_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
                                       ngap_ue_logger&                          logger_);
@@ -57,7 +55,6 @@ private:
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
   ngap_cu_cp_notifier&                    cu_cp_notifier;
-  up_resource_manager&                    up_manager;
   ngap_transaction_manager&               ev_mng;
   ngap_ue_logger&                         logger;
 

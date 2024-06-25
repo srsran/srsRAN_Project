@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "../signal_processors/pucch/pucch_helper.h"
 #include "pucch_detector_format0.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
@@ -59,12 +60,11 @@ public:
                       std::unique_ptr<channel_equalizer>            equalizer_,
                       std::unique_ptr<pucch_detector_format0>       detector_format0_) :
     low_papr(std::move(low_papr_)),
-    pseudo_random(std::move(pseudo_random_)),
+    helper(std::move(pseudo_random_)),
     equalizer(std::move(equalizer_)),
     detector_format0(std::move(detector_format0_))
   {
     srsran_assert(low_papr, "Invalid Low PAPR sequence generator.");
-    srsran_assert(pseudo_random, "Invalid pseudo-random sequence generator.");
     srsran_assert(equalizer, "Invalid equalizer.");
     srsran_assert(detector_format0, "PUCCH Format 0 detector.");
   }
@@ -100,7 +100,7 @@ private:
   /// Collection of low-PAPR sequences.
   std::unique_ptr<low_papr_sequence_collection> low_papr;
   /// Pseudorandom sequence generator.
-  std::unique_ptr<pseudo_random_generator> pseudo_random;
+  pucch_helper helper;
   /// Channel equalizer.
   std::unique_ptr<channel_equalizer> equalizer;
   /// PUCCH Format 0 detector.
@@ -108,7 +108,7 @@ private:
   /// \brief Tensor for storing the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cf_t,
+                cbf16_t,
                 MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::re_list::dims>
       time_spread_sequence;
@@ -116,7 +116,7 @@ private:
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
                     channel_equalizer::ch_est_list::dims::nof_dims),
-                cf_t,
+                cbf16_t,
                 MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
                 channel_equalizer::ch_est_list::dims>
       ch_estimates;

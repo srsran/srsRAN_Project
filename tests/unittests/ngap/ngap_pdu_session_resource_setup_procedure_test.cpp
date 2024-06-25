@@ -31,7 +31,7 @@ using namespace srs_cu_cp;
 class ngap_pdu_session_resource_setup_procedure_test : public ngap_test
 {
 protected:
-  ue_index_t start_procedure()
+  ue_index_t start_procedure(bool enable_security = true)
   {
     ue_index_t ue_index = create_ue();
 
@@ -43,6 +43,11 @@ protected:
 
     // Inject Initial Context Setup Request
     run_initial_context_setup(ue_index);
+
+    if (enable_security) {
+      // Mark security as enabled
+      ue_mng.find_ue(ue_index)->get_security_manager().enable_security();
+    }
 
     return ue_index;
   }
@@ -174,10 +179,10 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled_then_pdu_session_setup_failed)
 {
   // Test preamble
-  ue_index_t ue_index = this->start_procedure();
+  ue_index_t ue_index = this->start_procedure(false);
   auto&      ue       = test_ues.at(ue_index);
 
-  ue.rrc_ue_notifier.set_security_enabled(false);
+  ue.rrc_ue_security_handler.set_security_enabled(false);
 
   // Inject PDU Session Resource Setup Request
   pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint16_t>(

@@ -38,6 +38,7 @@ public:
                                        ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
                                        ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
                                        ngap_cu_cp_notifier&                   cu_cp_notifier_,
+                                       ngap_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
                                        ngap_message_notifier&                 amf_notifier_,
                                        ngap_ue_logger&                        logger_);
 
@@ -59,6 +60,7 @@ private:
   ngap_rrc_ue_control_notifier&   rrc_ue_ctrl_notifier;
   ngap_rrc_ue_pdu_notifier&       rrc_ue_pdu_notifier;
   ngap_cu_cp_notifier&            cu_cp_notifier;
+  ngap_cu_cp_ue_notifier&         cu_cp_ue_notifier;
   ngap_message_notifier&          amf_notifier;
   ngap_ue_logger&                 logger;
 

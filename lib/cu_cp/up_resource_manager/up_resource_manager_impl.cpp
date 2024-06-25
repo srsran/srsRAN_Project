@@ -27,41 +27,41 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg& cfg_) :
+up_resource_manager::up_resource_manager(const up_resource_manager_cfg& cfg_) :
   cfg(cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
-bool up_resource_manager_impl::validate_request(
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
+bool up_resource_manager::validate_request(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) const
 {
   return is_valid(setup_items, context, cfg, logger);
 }
 
-bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu)
+bool up_resource_manager::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) const
 {
   return is_valid(pdu, context, cfg, logger);
 }
 
-bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_release_command& pdu)
+bool up_resource_manager::validate_request(const cu_cp_pdu_session_resource_release_command& pdu) const
 {
   return is_valid(pdu, context, cfg, logger);
 }
 
-up_config_update up_resource_manager_impl::calculate_update(
+up_config_update up_resource_manager::calculate_update(
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
 {
   srsran_assert(is_valid(setup_items, context, cfg, logger), "Invalid PDU Session Resource Setup items.");
   return srsran::srs_cu_cp::calculate_update(setup_items, context, cfg, logger);
 }
 
-up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
+up_config_update up_resource_manager::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
 {
   srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
-up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu)
+up_config_update up_resource_manager::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu)
 {
   srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Release command.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
@@ -101,7 +101,7 @@ inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_sessi
   }
 }
 
-bool up_resource_manager_impl::apply_config_update(const up_config_update_result& result)
+bool up_resource_manager::apply_config_update(const up_config_update_result& result)
 {
   // Apply config update in an additive way.
   for (const auto& session : result.pdu_sessions_added_list) {
@@ -148,18 +148,18 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
   return true;
 }
 
-const up_pdu_session_context& up_resource_manager_impl::get_pdu_session_context(pdu_session_id_t psi)
+const up_pdu_session_context& up_resource_manager::get_pdu_session_context(pdu_session_id_t psi) const
 {
   srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "{} not allocated", psi);
   return context.pdu_sessions.at(psi);
 }
 
-bool up_resource_manager_impl::has_pdu_session(pdu_session_id_t pdu_session_id)
+bool up_resource_manager::has_pdu_session(pdu_session_id_t pdu_session_id) const
 {
   return context.pdu_sessions.find(pdu_session_id) != context.pdu_sessions.end();
 }
 
-const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
+const up_drb_context& up_resource_manager::get_drb_context(drb_id_t drb_id) const
 {
   srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "{} not allocated", drb_id);
   const auto& psi = context.drb_map.at(drb_id);
@@ -171,17 +171,17 @@ const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
   return context.pdu_sessions.at(psi).drbs.at(drb_id);
 }
 
-size_t up_resource_manager_impl::get_nof_drbs()
+size_t up_resource_manager::get_nof_drbs() const
 {
   return context.drb_map.size();
 }
 
-size_t up_resource_manager_impl::get_nof_pdu_sessions()
+size_t up_resource_manager::get_nof_pdu_sessions() const
 {
   return context.pdu_sessions.size();
 }
 
-size_t up_resource_manager_impl::get_nof_qos_flows(pdu_session_id_t psi)
+size_t up_resource_manager::get_nof_qos_flows(pdu_session_id_t psi) const
 {
   size_t nof_qos_flows = 0;
 
@@ -199,13 +199,13 @@ size_t up_resource_manager_impl::get_nof_qos_flows(pdu_session_id_t psi)
   return nof_qos_flows;
 }
 
-size_t up_resource_manager_impl::get_total_nof_qos_flows()
+size_t up_resource_manager::get_total_nof_qos_flows() const
 {
   // Return number of active QoS flows in all active sessions.
   return context.qos_flow_map.size();
 }
 
-std::vector<drb_id_t> up_resource_manager_impl::get_drbs()
+std::vector<drb_id_t> up_resource_manager::get_drbs() const
 {
   std::vector<drb_id_t> drb_ids;
   for (const auto& drb : context.drb_map) {
@@ -215,14 +215,15 @@ std::vector<drb_id_t> up_resource_manager_impl::get_drbs()
   return drb_ids;
 }
 
-const std::map<pdu_session_id_t, up_pdu_session_context>& up_resource_manager_impl::get_pdu_sessions_map()
+const std::map<pdu_session_id_t, up_pdu_session_context>& up_resource_manager::get_pdu_sessions_map() const
 {
   return context.pdu_sessions;
 }
 
-std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
+std::vector<pdu_session_id_t> up_resource_manager::get_pdu_sessions() const
 {
   std::vector<pdu_session_id_t> pdu_session_ids;
+  pdu_session_ids.reserve(context.pdu_sessions.size());
   for (const auto& session : context.pdu_sessions) {
     pdu_session_ids.push_back(session.first);
   }
@@ -230,12 +231,12 @@ std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
   return pdu_session_ids;
 }
 
-up_context up_resource_manager_impl::get_up_context()
+up_context up_resource_manager::get_up_context() const
 {
   return context;
 }
 
-void up_resource_manager_impl::set_up_context(const up_context& ctx)
+void up_resource_manager::set_up_context(const up_context& ctx)
 {
   context = ctx;
 }
