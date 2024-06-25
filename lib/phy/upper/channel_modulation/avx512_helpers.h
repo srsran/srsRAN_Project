@@ -16,19 +16,19 @@ namespace srsran {
 
 namespace mm512 {
 
-/// \brief Absolute values.
-/// \param[in] value Input single-precision AVX register.
-/// \return A single-precision AVX register with the absolute value.
+/// \brief Computes absolute values.
+/// \param[in] value Input single-precision AVX512 register.
+/// \return A single-precision AVX512 register with the absolute value.
 inline __m512 abs_ps(__m512 value)
 {
   const __m512 mask = _mm512_castsi512_ps(_mm512_set1_epi32(0x7fffffff));
   return _mm512_and_ps(value, mask);
 }
 
-/// \brief Copy sign from a single-precision AVX register.
-/// \param[in] value0 Single-precision AVX register.
-/// \param[in] value1 Single-precision AVX register.
-/// \return A single-precision AVX register with the magnitudes of \c value0 and the signs of \c value1.
+/// \brief Copies sign from a single-precision AVX512 register.
+/// \param[in] value0 Single-precision AVX512 register.
+/// \param[in] value1 Single-precision AVX512 register.
+/// \return A single-precision AVX512 register with the magnitudes of \c value0 and the signs of \c value1.
 /// \remark A zero in the second argument is considered as a positive number, following the convention of \c
 /// std::copysign.
 inline __m512 copysign_ps(__m512 value0, __m512 value1)
@@ -38,15 +38,15 @@ inline __m512 copysign_ps(__m512 value0, __m512 value1)
   return _mm512_or_ps(abs_value0, sign_value1);
 }
 
-/// \brief Clips the values of a single-precision AVX register.
+/// \brief Clips the values of a single-precision AVX512 register.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
 /// \param[in] range_ceil  Ceiling values.
 /// \param[in] range_floor Floor values.
-/// \return A single-precision AVX register containing the clipped values.
+/// \return A single-precision AVX512 register containing the clipped values.
 inline __m512 clip_ps(__m512 value, __m512 range_ceil, __m512 range_floor)
 {
   value = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(value, range_ceil, _CMP_GT_OS), value, range_ceil);
@@ -54,15 +54,15 @@ inline __m512 clip_ps(__m512 value, __m512 range_ceil, __m512 range_floor)
   return value;
 }
 
-/// \brief Clips the values of an AVX register carrying eight signed 32-bit integers.
+/// \brief Clips the values of an AVX512 register carrying sixteen signed 32-bit integers.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
 /// \param[in] range_ceil  Ceiling values.
 /// \param[in] range_floor Floor values.
-/// \return An AVX register containing the clipped values.
+/// \return An AVX512 register containing the clipped values.
 inline __m512i clip_epi32(__m512i value, __m512i range_ceil, __m512i range_floor)
 {
   value = _mm512_mask_blend_epi32(_mm512_cmp_epi32_mask(value, range_ceil, _MM_CMPINT_NLT), value, range_ceil);
@@ -70,11 +70,11 @@ inline __m512i clip_epi32(__m512i value, __m512i range_ceil, __m512i range_floor
   return value;
 }
 
-/// \brief Ensures that 32-bit integers are bounded, otherwise set them to zero.
+/// \brief Ensures that 32-bit integers in an AVX512 register are bounded, otherwise set them to zero.
 ///
 /// \param[in] value      Integers to be tested.
-/// \param[in] bound_up   Upper bound.
-/// \param[in] bound_low  Lower bound.
+/// \param[in] bound_up   Upper bounds.
+/// \param[in] bound_low  Lower bounds.
 /// \return The input integers with zeros in place of the out-of-bound values.
 inline __m512i check_bounds_epi32(__m512i value, __m512i bound_up, __m512i bound_low)
 {
@@ -90,13 +90,15 @@ inline __m512i check_bounds_epi32(__m512i value, __m512i bound_up, __m512i bound
   return value;
 }
 
-/// \brief Clips and quantizes four single-precision AVX512 registers, log-likelihood ratio to the discrete
-/// representation of type \c log_likelihood_ratio in a single AVX512 register.
+/// \brief Clips and quantizes four single-precision AVX512 registers.
 ///
-/// \param[in] value_0      Single-precision AVX512 register with the first eight log-likelihood ratio.
-/// \param[in] value_1      Single-precision AVX512 register with the second eight log-likelihood ratio.
-/// \param[in] value_2      Single-precision AVX512 register with the third eight log-likelihood ratio.
-/// \param[in] value_3      Single-precision AVX512 register with the fourth eight log-likelihood ratio.
+/// Each AVX512 register contains sixteen 32-bit single-precission log-likelihood ratios. These are converted into a
+/// 8-bit discrete representation of type \c log_likelihood_ratio in a single AVX512 register.
+///
+/// \param[in] value_0      Single-precision AVX512 register with the first eight log-likelihood ratios.
+/// \param[in] value_1      Single-precision AVX512 register with the second eight log-likelihood ratios.
+/// \param[in] value_2      Single-precision AVX512 register with the third eight log-likelihood ratios.
+/// \param[in] value_3      Single-precision AVX512 register with the fourth eight log-likelihood ratios.
 /// \param[in] range_limit  The input value mapped to \ref log_likelihood_ratio::max().
 /// \return A quantized representation of the input values as \c log_likelihood_ratio quantity.
 /// \note The quantization in the range <tt>(-range_limit, range_limit)</tt> is [mid-tread
@@ -143,12 +145,14 @@ inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, __m51
   return _mm512_packs_epi16(llr_i16_0, llr_i16_1);
 }
 
-/// \brief Clips and quantizes three single-precision AVX512 registers, log-likelihood ratio to the discrete
-/// representation of type \c log_likelihood_ratio in a single AVX512 register.
+/// \brief Clips and quantizes three single-precision AVX512 registers.
 ///
-/// \param[in] value_0      Single-precision AVX512 register with the first eight log-likelihood ratio.
-/// \param[in] value_1      Single-precision AVX512 register with the second eight log-likelihood ratio.
-/// \param[in] value_2      Single-precision AVX512 register with the third eight log-likelihood ratio.
+/// Each AVX512 register contains sixteen 32-bit single-precission log-likelihood ratios. These are converted into a
+/// 8-bit discrete representation of type \c log_likelihood_ratio in a single AVX512 register.
+///
+/// \param[in] value_0      Single-precision AVX512 register with the first eight log-likelihood ratios.
+/// \param[in] value_1      Single-precision AVX512 register with the second eight log-likelihood ratios.
+/// \param[in] value_2      Single-precision AVX512 register with the third eight log-likelihood ratios.
 /// \param[in] range_limit  The input value mapped to \ref log_likelihood_ratio::max().
 /// \return A quantized representation of the input values as \c log_likelihood_ratio quantity.
 /// \note The quantization in the range <tt>(-range_limit, range_limit)</tt> is [mid-tread
@@ -191,11 +195,12 @@ inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, float
   return _mm512_packs_epi16(llr_i16_0, llr_i16_1);
 }
 
-/// \brief Helper function to calculate an interval index from single-precision AVX register values.
-/// \param[in] value          Input AVX register.
+/// \brief Computes an interval index from single-precision AVX512 register values.
+/// \param[in] value          Input AVX512 register.
 /// \param[in] interval_width Interval width.
 /// \param[in] nof_intervals  Number of intervals.
-/// \return An AVX register carrying eight signed 32-bit integers with the corresponding interval indexes.
+/// \return An AVX512 register carrying sixteen signed 32-bit integers with interval indices of the corresponding
+/// values.
 inline __m512i compute_interval_idx(__m512 value, float interval_width, int nof_intervals)
 {
   // Scale.
@@ -217,41 +222,42 @@ inline __m512i compute_interval_idx(__m512 value, float interval_width, int nof_
   return idx;
 }
 
-/// \brief Get values from a look-up table.
-/// \param[in] table   Look-up table containing eight single-precision values.
-/// \param[in] indexes AVX register containing eight indexes.
-/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
-inline __m512 look_up_table(const std::array<float, 8>& table, __m512i indexes)
+/// \brief Gets values from a look-up table.
+/// \param[in] table   Look-up table containing sixteen single-precision values.
+/// \param[in] indices AVX512 register containing sixteen indices.
+/// \return A single-precision AVX512 register containing the sixteen values corresponding to the given indices.
+inline __m512 look_up_table(const std::array<float, 8>& table, __m512i indices)
 {
   // Load table in 256-bit register.
   __m256 table_m256 = _mm256_loadu_ps(table.data());
   // Cast the 256-bit register into a 512-bit register.
   __m512 table_m512 = _mm512_zextps256_ps512(table_m256);
   // Read the table.
-  return _mm512_permutexvar_ps(indexes, table_m512);
+  return _mm512_permutexvar_ps(indices, table_m512);
 }
 
-/// \brief Get values from a look-up table.
+/// \brief Gets values from a look-up table.
 /// \param[in] table   Look-up table containing sixteen single-precision values.
-/// \param[in] indexes AVX register containing eight indexes.
-/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
-inline __m512 look_up_table(const std::array<float, 16>& table, __m512i indexes)
+/// \param[in] indices AVX512 register containing sixteen indices.
+/// \return A single-precision AVX512 register containing the sixteen values corresponding to the given indices.
+inline __m512 look_up_table(const std::array<float, 16>& table, __m512i indices)
 {
   // Load the entire table into a 512-bit register.
   __m512 table_m512 = _mm512_loadu_ps(table.data());
   // Read the table.
-  return _mm512_permutexvar_ps(indexes, table_m512);
+  return _mm512_permutexvar_ps(indices, table_m512);
 }
 
-/// \brief Applies an interval function to a series of values.
+/// \brief Applies a piecewise defined function (provided by look-up tables) to a series of values.
 /// \tparam Table             Look-up table type. All tables mut be of the same type.
-/// \param[in] value          Single-precision AVX register with eight input values.
-/// \param[in] rcp_noise      Single-precision AVX register with the reciprocal noise corresponding to the values.
+/// \param[in] value          Single-precision AVX512 register with sixteen input values.
+/// \param[in] rcp_noise      Single-precision AVX512 register with the reciprocal of the noise variance corresponding
+///                           to the values.
 /// \param[in] nof_intervals  Number of intervals.
-/// \param[in] interval_width Interval width to quantify the interval indexes.
+/// \param[in] interval_width Interval width to quantify the interval indices.
 /// \param[in] slopes         Table with the slope of each interval.
 /// \param[in] intercepts     Table with the interception points of each interval.
-/// \return A single-precision AVX register containing the results of the interval function.
+/// \return A single-precision AVX512 register containing the results of the interval function.
 /// \remark The number of intervals must be lower than or equal to \c Table size.
 template <typename Table>
 inline __m512 interval_function(__m512       value,
@@ -280,15 +286,15 @@ inline __m512 interval_function(__m512       value,
 inline __m256 safe_div(__m256 dividend, __m256 divisor)
 {
   static const __m256 all_zero = _mm256_setzero_ps();
-  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
 #ifdef __AVX512VL__
   __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_GT_OQ);
   return _mm256_maskz_div_ps(mask, dividend, divisor);
-#else
+#else  // __AVX512VL__
   __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_GT_OQ);
   __m256 result = _mm256_div_ps(dividend, divisor);
   return _mm256_blendv_ps(all_zero, result, mask);
-#endif
+#endif // __AVX512VL__
 }
 
 } // namespace mm512

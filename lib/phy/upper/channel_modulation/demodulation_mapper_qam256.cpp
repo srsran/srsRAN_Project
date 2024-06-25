@@ -11,10 +11,10 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
-#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
 #define HAVE_AVX512
 #include "avx512_helpers.h"
-#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
 
 #ifdef __AVX2__
 #include "avx2_helpers.h"
@@ -158,8 +158,8 @@ static void demod_QAM256_avx512(log_likelihood_ratio* llr, const cf_t* symbol, c
   // Load noise. 8 values only.
   __m256 noise = _mm256_loadu_ps(noise_var);
 
-  // Make noise reciprocal.
-  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  // Take the reciprocal of the noise variance.
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
   __m256 rcp_noise = mm512::safe_div(_mm256_set1_ps(1), noise);
 
   // Repeat noise values for real and imaginary parts and put the results in an AVX register.
@@ -206,8 +206,8 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
   // Load noise. 4 values only.
   __m128 noise = _mm_loadu_ps(noise_var);
 
-  // Make noise reciprocal.
-  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  // Take the reciprocal of the noise variance.
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
   __m128 mask      = _mm_cmp_ps(noise, _mm_set1_ps(0), _CMP_GT_OQ);
   __m128 rcp_noise = _mm_div_ps(_mm_set1_ps(1), noise);
   rcp_noise        = _mm_blendv_ps(_mm_set1_ps(0), rcp_noise, mask);
@@ -259,7 +259,7 @@ static void demod_QAM256_neon(log_likelihood_ratio* llr, const cf_t* symbol, con
   // Load noise.
   float32x4_t noise_0 = vld1q_f32(noise_var);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
 
   // Repeat noise values for real and imaginary parts.

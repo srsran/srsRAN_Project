@@ -11,10 +11,10 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
-#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
 #define HAVE_AVX512
 #include "avx512_helpers.h"
-#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__)
+#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
 
 #ifdef __AVX2__
 #include "avx2_helpers.h"
@@ -81,7 +81,7 @@ static void demod_QAM64_avx512(log_likelihood_ratio* llr, const cf_t* symbol, co
   __m256 noise_2 = _mm256_loadu_ps(noise_var + 16);
   __m256 noise_3 = _mm256_loadu_ps(noise_var + 24);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   __m256 rcp_noise_si256_0 = mm512::safe_div(_mm256_set1_ps(1), noise_0);
   __m256 rcp_noise_si256_1 = mm512::safe_div(_mm256_set1_ps(1), noise_1);
   __m256 rcp_noise_si256_2 = mm512::safe_div(_mm256_set1_ps(1), noise_2);
@@ -181,7 +181,7 @@ static void demod_QAM64_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
   __m256 noise_1 = _mm256_loadu_ps(noise_var + 8);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   __m256 rcp_noise_0 = mm256::safe_div(_mm256_set1_ps(1), noise_0);
   __m256 rcp_noise_1 = mm256::safe_div(_mm256_set1_ps(1), noise_1);
 
@@ -279,7 +279,7 @@ static void demod_QAM64_neon(log_likelihood_ratio* llr, const cf_t* symbol, cons
   float32x4_t noise_0 = vld1q_f32(noise_var);
   float32x4_t noise_1 = vld1q_f32(noise_var + 4);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
   float32x4_t rcp_noise_1 = neon::safe_div(vdupq_n_f32(1.0f), noise_1);
 
