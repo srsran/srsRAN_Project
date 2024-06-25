@@ -19,7 +19,7 @@ namespace srsran {
 /// Identifier of a Mobile Country Code (MCC).
 class mobile_country_code
 {
-  constexpr mobile_country_code(uint16_t mcc) : data(mcc) {}
+  constexpr mobile_country_code(uint16_t mcc) : bcd(mcc) {}
 
 public:
   mobile_country_code() = delete;
@@ -57,35 +57,36 @@ public:
     return mobile_country_code{mcc};
   }
 
-  uint16_t to_bcd() const { return data; }
+  uint16_t to_bcd() const { return bcd; }
 
   std::string to_string() const
   {
     std::string str;
-    bcd_helper::mcc_to_string(data, &str);
+    bcd_helper::mcc_to_string(bcd, &str);
     return str;
   }
 
   std::array<uint8_t, 3> to_bytes() const
   {
     std::array<uint8_t, 3> bytes = {};
-    bcd_helper::mcc_to_bytes(data, bytes.data());
+    bcd_helper::mcc_to_bytes(bcd, bytes.data());
     return bytes;
   }
 
   static size_t nof_digits() { return 3; }
 
-  bool operator==(const mobile_country_code& rhs) const { return data == rhs.data; }
-  bool operator!=(const mobile_country_code& rhs) const { return data != rhs.data; }
+  bool operator==(const mobile_country_code& rhs) const { return bcd == rhs.bcd; }
+  bool operator!=(const mobile_country_code& rhs) const { return bcd != rhs.bcd; }
 
 private:
-  uint16_t data;
+  // BCD representation of MCC.
+  uint16_t bcd;
 };
 
 /// Identifier of a Mobile Network Code (MNC).
 class mobile_network_code
 {
-  constexpr mobile_network_code(uint16_t mnc) : data(mnc) {}
+  constexpr mobile_network_code(uint16_t mnc) : bcd(mnc) {}
 
 public:
   mobile_network_code() = delete;
@@ -123,12 +124,12 @@ public:
     return mobile_network_code{mnc};
   }
 
-  uint16_t to_bcd() const { return data; }
+  uint16_t to_bcd() const { return bcd; }
 
   std::string to_string() const
   {
     std::string str;
-    bcd_helper::mnc_to_string(data, &str);
+    bcd_helper::mnc_to_string(bcd, &str);
     return str;
   }
 
@@ -136,19 +137,20 @@ public:
   {
     static_vector<uint8_t, 3> bytes(3);
     uint8_t                   len;
-    bcd_helper::mnc_to_bytes(data, bytes.data(), &len);
+    bcd_helper::mnc_to_bytes(bcd, bytes.data(), &len);
     bytes.resize(len);
     return bytes;
   }
 
   /// Number of digits of the MNC.
-  size_t nof_digits() const { return (data & 0xf00U) == 0xf00U ? 2 : 3; }
+  size_t nof_digits() const { return (bcd & 0xf00U) == 0xf00U ? 2 : 3; }
 
-  bool operator==(const mobile_network_code& rhs) const { return data == rhs.data; }
-  bool operator!=(const mobile_network_code& rhs) const { return data != rhs.data; }
+  bool operator==(const mobile_network_code& rhs) const { return bcd == rhs.bcd; }
+  bool operator!=(const mobile_network_code& rhs) const { return bcd != rhs.bcd; }
 
 private:
-  uint16_t data;
+  // BCD representation of MNC.
+  uint16_t bcd;
 };
 
 /// Identifier of a Public Land Mobile Network (PLMN).

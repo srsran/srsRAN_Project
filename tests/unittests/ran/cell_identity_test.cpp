@@ -395,7 +395,7 @@ TEST_F(nci_test, nci_creation_from_valid_string_succeeds)
   auto ret = nr_cell_identity::parse_hex("19B01");
   ASSERT_TRUE(ret.has_value());
   nr_cell_identity nci = ret.value();
-  ASSERT_EQ(nci.value(), 0x19B01);
+  ASSERT_EQ(nci.value(), 0x19b01);
   ASSERT_EQ(fmt::format("{:x}", nci), "19b01");
   ASSERT_EQ(fmt::format("{:#x}", nci), "0x19b01");
 
