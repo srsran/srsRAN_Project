@@ -1289,7 +1289,7 @@ static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
 asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
 {
   pucch_res_set_s pucch_res_set;
-  pucch_res_set.pucch_res_set_id = cfg.pucch_res_set_id;
+  pucch_res_set.pucch_res_set_id = static_cast<uint8_t>(cfg.pucch_res_set_id);
   for (const auto& it : cfg.pucch_res_id_list) {
     pucch_res_set.res_list.push_back(it.ue_res_id);
   }
@@ -1517,7 +1517,7 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
       src.pucch_res_set,
       dest.pucch_res_set,
       [](const pucch_resource_set& res_set) { return make_asn1_rrc_pucch_resource_set(res_set); },
-      [](const pucch_resource_set& res_set) { return res_set.pucch_res_set_id; });
+      [](const pucch_resource_set& res_set) { return static_cast<uint8_t>(res_set.pucch_res_set_id); });
 
   // PUCCH Resource.
   calculate_addmodremlist_diff(

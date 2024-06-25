@@ -87,9 +87,6 @@ private:
     unsigned r_pucch;
   };
 
-  // At the moment, we only supports PUCCH resource set index 0 and 1.
-  enum class pucch_res_set_idx : uint8_t { set_0 = 0, set_1 };
-
   struct harq_res_id {
     pucch_res_set_idx pucch_set_idx = pucch_res_set_idx::set_0;
     uint8_t           pucch_res_ind = 0;

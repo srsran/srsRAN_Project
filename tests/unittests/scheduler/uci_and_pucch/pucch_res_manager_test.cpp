@@ -425,8 +425,8 @@ protected:
     default_pucch_cfg.pucch_res_set[1].pucch_res_id_list.clear();
 
     // Ensure the PUCCH resource sets ID are 0 and 1.
-    default_pucch_cfg.pucch_res_set[0].pucch_res_set_id = 0;
-    default_pucch_cfg.pucch_res_set[1].pucch_res_set_id = 1;
+    default_pucch_cfg.pucch_res_set[0].pucch_res_set_id = srsran::pucch_res_set_idx::set_0;
+    default_pucch_cfg.pucch_res_set[1].pucch_res_set_id = srsran::pucch_res_set_idx::set_1;
 
     const unsigned tot_ue_f1_res = nof_ue_pucch_f1_res_harq + nof_ue_pucch_f1_res_sr;
     const unsigned tot_ue_f2_res = nof_ue_pucch_f2_res_harq + nof_ue_pucch_f2_res_csi;

@@ -138,7 +138,8 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   // Verify that the PUCCH resources IDs of each PUCCH resource set point at a corresponding item in the PUCCH reource
   // list.
   VERIFY(pucch_cfg.pucch_res_set.size() >= 2, "At least 2 PUCCH resource sets need to be configured in PUCCH-Config");
-  VERIFY(pucch_cfg.pucch_res_set[0].pucch_res_set_id == 0 and pucch_cfg.pucch_res_set[1].pucch_res_set_id == 1,
+  VERIFY(pucch_cfg.pucch_res_set[0].pucch_res_set_id == pucch_res_set_idx::set_0 and
+             pucch_cfg.pucch_res_set[1].pucch_res_set_id == pucch_res_set_idx::set_1,
          "PUCCH resouce sets 0 and 1 are expected to have PUCCH-ResourceSetId 0 and 1, respectively");
   VERIFY((not pucch_cfg.pucch_res_set[0].pucch_res_id_list.empty()) and
              (not pucch_cfg.pucch_res_set[1].pucch_res_id_list.empty()),

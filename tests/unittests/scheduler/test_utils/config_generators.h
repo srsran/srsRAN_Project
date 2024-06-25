@@ -134,13 +134,13 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
   // PUCCH Resource Set ID 0.
   auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_0.pucch_res_set_id = 0;
+  pucch_res_set_0.pucch_res_set_id = pucch_res_set_idx::set_0;
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{0, 0});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{1, 1});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{2, 2});
 
   auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_1.pucch_res_set_id = 1;
+  pucch_res_set_1.pucch_res_set_id = pucch_res_set_idx::set_1;
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{3, 3});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{4, 4});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{5, 5});

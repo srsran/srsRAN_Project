@@ -527,14 +527,14 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH Resource Set ID 0. This is for PUCCH Format 1 only (Format 0 not yet supported), used for HARQ-ACK only.
   auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_0.pucch_res_set_id = 0;
+  pucch_res_set_0.pucch_res_set_id = pucch_res_set_idx::set_0;
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{0, 0});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{1, 1});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{2, 2});
 
   // PUCCH Resource Set ID 1. This is for PUCCH Format 2 only and used for HARQ-ACK + optionally SR and/or CSI.
   auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_1.pucch_res_set_id = 1;
+  pucch_res_set_1.pucch_res_set_id = pucch_res_set_idx::set_1;
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{3, 3});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{4, 4});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{5, 5});

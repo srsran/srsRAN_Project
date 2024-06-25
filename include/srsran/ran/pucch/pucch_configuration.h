@@ -168,7 +168,7 @@ struct pucch_resource {
 /// \ref pucch_config.
 struct pucch_resource_set {
   /// \c PUCCH-ResourceSetId.
-  uint8_t pucch_res_set_id;
+  pucch_res_set_idx pucch_res_set_id;
   /// \c resourceList.
   static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> pucch_res_id_list;
   /// \c maxPayloadSize.
