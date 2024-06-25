@@ -75,4 +75,7 @@ cu_up_wrapper::handle_bearer_context_modification_request(
 }
 
 // TODO remove from public interface
-void cu_up_wrapper::schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) {}
+void cu_up_wrapper::schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task)
+{
+  cu_up->schedule_ue_async_task(ue_index, std::move(task));
+}

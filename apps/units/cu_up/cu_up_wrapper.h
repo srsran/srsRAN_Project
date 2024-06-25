@@ -58,7 +58,7 @@ public:
 
   /// \brief Schedule an async task for an UE.
   /// Can be used to initiate UE routines.
-  virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
+  void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
 private:
   std::unique_ptr<srs_cu_up::ngu_gateway>     gateway;

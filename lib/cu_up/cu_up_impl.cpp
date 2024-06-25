@@ -364,7 +364,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return {};
   }
   return execute_and_continue_on_blocking(
-      ue_ctxt->ue_exec_mapper->ctrl_executor(), *cfg.ctrl_executor, [this, ue_ctxt, &msg]() {
+      ue_ctxt->ue_exec_mapper->ctrl_executor(), *cfg.ctrl_executor, [this, ue_ctxt, msg]() {
         return handle_bearer_context_modification_request_impl(*ue_ctxt, msg);
       });
 }
