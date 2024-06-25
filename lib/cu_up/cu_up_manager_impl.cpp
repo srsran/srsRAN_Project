@@ -8,13 +8,12 @@
  *
  */
 
-#include "cu_up_impl.h"
+#include "cu_up_manager_impl.h"
 #include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/support/async/execute_on.h"
 #include <future>
 
 using namespace srsran;
@@ -32,7 +31,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 
 void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
 
-cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
+cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
   assert_cu_up_configuration_valid(cfg);
 
@@ -78,10 +77,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
-  // TODO
   /// > Create e1ap
   // e1ap = create_e1ap(*cfg.e1ap.e1_conn_client, e1ap_cu_up_ev_notifier, *cfg.timers, *cfg.ctrl_executor);
-  // e1ap_cu_up_ev_notifier.connect_cu_up(*this);
+  //  e1ap_cu_up_ev_notifier.connect_cu_up(*this);
 
   cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
@@ -108,106 +106,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   }
 }
 
-cu_up::~cu_up()
-{
-  stop();
-}
-
-void cu_up::start()
-{
-  logger.info("CU-UP starting...");
-
-  std::unique_lock<std::mutex> lock(mutex);
-  if (std::exchange(running, true)) {
-    logger.warning("CU-UP already started. Ignoring start request");
-    return;
-  }
-
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (not cfg.ctrl_executor->execute([this, &p]() {
-        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
-          CORO_BEGIN(ctx);
-
-          // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
-          CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg));
-
-          // Signal start() caller thread that the operation is complete.
-          p.set_value();
-
-          CORO_RETURN();
-        });
-      })) {
-    report_fatal_error("Unable to initiate CU-UP setup routine");
-  }
-
-  // Block waiting for CU-UP setup to complete.
-  fut.wait();
-
-  logger.info("CU-UP started successfully");
-}
-
-void cu_up::stop()
-{
-  std::unique_lock<std::mutex> lock(mutex);
-  if (not std::exchange(running, false)) {
-    return;
-  }
-  logger.debug("CU-UP stopping...");
-
-  eager_async_task<void> main_loop;
-  std::atomic<bool>      main_loop_stopped{false};
-
-  auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
-    if (main_loop.empty()) {
-      // First call. Initiate shutdown operations.
-
-      // Stop statistics report timer.
-      statistics_report_timer.stop();
-
-      // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
-      disconnect();
-
-      // Stop main control loop and communicate back with the caller thread.
-      main_loop = main_ctrl_loop.request_stop();
-    }
-
-    if (main_loop.ready()) {
-      // If the main loop finished, return back to the caller.
-      main_loop_stopped = true;
-    }
-  };
-
-  // Wait until the all tasks of the main loop are completed and main loop has stopped.
-  while (not main_loop_stopped) {
-    if (not cfg.ctrl_executor->execute(stop_cu_up_main_loop)) {
-      logger.error("Unable to stop CU-UP");
-      return;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-
-  // CU-UP stops listening to new GTPU Rx PDUs.
-  ngu_session.reset();
-
-  logger.info("CU-UP stopped successfully");
-}
-
-void cu_up::disconnect()
+void cu_up_manager_impl::disconnect()
 {
   gw_data_gtpu_demux_adapter.disconnect();
   gtpu_gw_adapter.disconnect();
   // e1ap_cu_up_ev_notifier.disconnect();
-}
-
-void cu_up::on_statistics_report_timer_expired()
-{
-  // Log statistics
-  logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
-
-  // Restart timer
-  statistics_report_timer.set(cfg.statistics_report_period,
-                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
-  statistics_report_timer.run();
 }

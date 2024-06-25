@@ -14,8 +14,8 @@
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
 #include "ue_manager.h"
-#include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_configuration.h"
+#include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
@@ -24,26 +24,32 @@
 
 namespace srsran::srs_cu_up {
 
-class cu_up final : public cu_up_interface
+class cu_up_manager_impl final : public cu_up_manager_interface
 {
 public:
-  explicit cu_up(const cu_up_configuration& cfg_);
-  ~cu_up() override;
+  explicit cu_up_manager_impl(const cu_up_configuration& cfg_);
+  ~cu_up_manager_impl() override;
 
-  // cu_up_interface
-  void start() override;
-  void stop() override;
+  // cu_up_e1ap_interface
+  e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
 
-  std::optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
+  e1ap_bearer_context_setup_response
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
+
+  e1ap_bearer_context_modification_response
+  handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
+
+  void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
+
+  // cu_up_e1ap_connection_notifier
+  void on_e1ap_connection_establish() override;
+  void on_e1ap_connection_drop() override;
+  bool e1ap_is_connected() override { return e1ap_connected; }
 
 private:
   void disconnect();
 
   void on_statistics_report_timer_expired();
-
-  e1ap_bearer_context_modification_response
-  handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
-                                                  const e1ap_bearer_context_modification_request& msg);
 
   cu_up_configuration cfg;
 

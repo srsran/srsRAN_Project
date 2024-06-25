@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
