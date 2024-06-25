@@ -61,8 +61,7 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     ue.save_dl_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
-    if (ue.dl_retx_h != nullptr and alloc_result.status != alloc_status::skip_ue and
-        alloc_result.status != alloc_status::skip_slot) {
+    if (ue.dl_retx_h != nullptr and alloc_result.status == alloc_status::invalid_params) {
       dl_queue.push(&ue);
     }
     dl_queue.pop();
@@ -110,8 +109,7 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
     // attempted again before scheduling new transmissions.
-    if (ue.ul_retx_h != nullptr and alloc_result.status != alloc_status::skip_ue and
-        alloc_result.status != alloc_status::skip_slot) {
+    if (ue.ul_retx_h != nullptr and alloc_result.status == alloc_status::invalid_params) {
       ul_queue.push(&ue);
     }
     ul_queue.pop();

@@ -149,12 +149,14 @@ public:
   };
 
   /// Create a searcher for UE PDSCH parameters.
-  ue_pdsch_alloc_param_candidate_searcher(const ue&        ue_ref_,
-                                          du_cell_index_t  cell_index,
-                                          dl_harq_process& dl_harq_,
-                                          slot_point       pdcch_slot_) :
+  ue_pdsch_alloc_param_candidate_searcher(const ue&              ue_ref_,
+                                          du_cell_index_t        cell_index,
+                                          dl_harq_process&       dl_harq_,
+                                          slot_point             pdcch_slot_,
+                                          span<const slot_point> slots_with_no_pdsch_space_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
+    slots_with_no_pdsch_space(slots_with_no_pdsch_space_),
     dl_harq(dl_harq_),
     is_retx(not dl_harq.empty()),
     pdcch_slot(pdcch_slot_)
@@ -177,7 +179,7 @@ public:
   iterator end() { return iterator{*this, ss_candidate_list.end(), 0}; }
 
   /// Returns whether there are candidates or not.
-  bool is_empty() { return ss_candidate_list.empty(); }
+  bool is_empty() { return ss_candidate_list.empty() or begin() == end(); }
 
 private:
   // Generate Search Space candidates for a given HARQ.
@@ -225,20 +227,27 @@ private:
       return false;
     }
 
+    const slot_point pdsch_slot = pdcch_slot + current.pdsch_td_res().k0;
+
     // Check whether PDSCH slot is DL enabled.
-    if (not ue_cc->cfg().cell_cfg_common.is_dl_enabled(pdcch_slot + current.pdsch_td_res().k0)) {
+    if (not ue_cc->cfg().cell_cfg_common.is_dl_enabled(pdsch_slot)) {
       return false;
     }
 
     // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-    if (ue_cc->cfg().cell_cfg_common.get_nof_dl_symbol_per_slot(pdcch_slot + current.pdsch_td_res().k0) <
-        current.pdsch_td_res().symbols.stop()) {
+    if (ue_cc->cfg().cell_cfg_common.get_nof_dl_symbol_per_slot(pdsch_slot) < current.pdsch_td_res().symbols.stop()) {
       return false;
     }
 
     // Check whether PDSCH time domain resource does not overlap with CORESET.
     if (current.pdsch_td_res().symbols.start() <
         current.ss().cfg->get_first_symbol_index() + current.ss().coreset->duration) {
+      return false;
+    }
+
+    // Check whether there is any space left in PDSCH slot for allocation.
+    if (slots_with_no_pdsch_space.end() !=
+        std::find(slots_with_no_pdsch_space.begin(), slots_with_no_pdsch_space.end(), pdsch_slot)) {
       return false;
     }
 
@@ -277,6 +286,9 @@ private:
   const ue& ue_ref;
   // UE cell being allocated.
   const ue_cell* ue_cc;
+
+  // Slots with no RBs left for PDSCH allocation.
+  span<const slot_point> slots_with_no_pdsch_space;
 
   // DL HARQ considered for allocation.
   const dl_harq_process& dl_harq;
