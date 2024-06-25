@@ -12,11 +12,8 @@
 
 using namespace srsran;
 
-scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_,
-                                     srslog::basic_logger&             sched_logger) :
-  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff),
-  logger(sched_logger),
-  expert_cfg(expert_cfg_)
+scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
+  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff)
 {
 }
 

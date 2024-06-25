@@ -24,12 +24,12 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_) :
   ran_slice_id_t id_count{0};
   // Default slice.
   slices.emplace_back(id_count, cell_cfg, slice_rrm_policy_config{});
-  slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, &logger);
+  slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   ++id_count;
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
-    slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, &logger);
+    slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
     ++id_count;
   }
 }

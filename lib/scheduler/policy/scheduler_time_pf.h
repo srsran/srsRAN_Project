@@ -16,7 +16,7 @@ namespace srsran {
 class scheduler_time_pf : public scheduler_policy
 {
 public:
-  scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_, srslog::basic_logger& sched_logger);
+  scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_);
 
   void
   dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) override;
@@ -144,10 +144,6 @@ private:
   ue_dl_queue_t dl_queue;
   /// Priority queue of UEs to be scheduled in UL. The UE in front of the queue has highest priority and vice versa.
   ue_ul_queue_t ul_queue;
-
-  srslog::basic_logger& logger;
-
-  const scheduler_ue_expert_config& expert_cfg;
 };
 
 } // namespace srsran

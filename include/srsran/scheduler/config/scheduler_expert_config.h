@@ -27,13 +27,6 @@
 
 namespace srsran {
 
-/// \brief Type of policy scheduler.
-///
-/// The current types are:
-/// - time_rr - Time based Round-Robin scheduler.
-/// - time_pf - Time based Proportional Fair scheduler.
-enum class policy_scheduler_type { time_rr, time_pf };
-
 /// \brief Proportional fair policy scheduler expert parameters.
 struct time_pf_scheduler_expert_config {
   /// Fairness Coefficient to use in Proportional Fair policy scheduler.
@@ -114,9 +107,7 @@ struct scheduler_ue_expert_config {
   crb_interval pdsch_crb_limits{0, MAX_NOF_PRBS};
   /// Boundaries in RB interval for resource allocation of UE PUSCHs.
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
-  /// Type of policy scheduler.
-  policy_scheduler_type strategy = policy_scheduler_type::time_rr;
-  /// Expert parameters to be passed to the policy scheduler based on \c policy_scheduler_type.
+  /// Expert parameters to be passed to the policy scheduler.
   policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
 };
 

@@ -25,6 +25,13 @@
 
 using namespace srsran;
 
+/// \brief Type of policy scheduler.
+///
+/// The current types are:
+/// - time_rr - Time based Round-Robin scheduler.
+/// - time_pf - Time based Proportional Fair scheduler.
+enum class policy_scheduler_type { time_rr, time_pf };
+
 class base_scheduler_policy_test
 {
 protected:
@@ -46,11 +53,10 @@ protected:
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
 
-    sched_cfg.ue.strategy = policy;
     if (policy == policy_scheduler_type::time_pf) {
       sched_cfg.ue.strategy_cfg = time_pf_scheduler_expert_config{};
     }
-    sched = create_scheduler_strategy(sched_cfg.ue, &srslog::fetch_basic_logger("SCHED"));
+    sched = create_scheduler_strategy(sched_cfg.ue);
 
     if (sched == nullptr) {
       report_fatal_error("Invalid policy");

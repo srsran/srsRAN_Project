@@ -14,15 +14,13 @@
 
 using namespace srsran;
 
-std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const scheduler_ue_expert_config& expert_cfg_,
-                                                                    srslog::basic_logger*             logger)
+std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const scheduler_ue_expert_config& expert_cfg_)
 {
-  switch (expert_cfg_.strategy) {
-    case policy_scheduler_type::time_rr:
-      return std::make_unique<scheduler_time_rr>(expert_cfg_);
-      break;
-    case policy_scheduler_type::time_pf:
-      return std::make_unique<scheduler_time_pf>(expert_cfg_, *logger);
+  if (std::holds_alternative<time_rr_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
+    return std::make_unique<scheduler_time_rr>(expert_cfg_);
+  }
+  if (std::holds_alternative<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
+    return std::make_unique<scheduler_time_pf>(expert_cfg_);
   }
   return nullptr;
 }

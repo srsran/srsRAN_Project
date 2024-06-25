@@ -525,18 +525,6 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App&              
 
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
-  add_option_function<std::string>(
-      app,
-      "--policy_sched_type",
-      [&expert_params](const std::string& value) {
-        if (value == "time_pf") {
-          expert_params.policy_sched_type = srsran::policy_scheduler_type::time_pf;
-        }
-      },
-      "Type of policy scheduler to use")
-      ->default_str("time_rr")
-      ->check(CLI::IsMember({"time_rr", "time_pf"}, CLI::ignore_case));
-
   CLI::App* policy_sched_cfg_subcmd =
       add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params);
