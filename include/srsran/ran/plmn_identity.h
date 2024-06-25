@@ -181,7 +181,7 @@ public:
   static expected<plmn_identity> from_bytes(const std::array<uint8_t, 3>& bytes)
   {
     uint16_t mcc = 0xf000U + (static_cast<uint16_t>(bytes[0]) << 4U) + (bytes[1] >> 4U);
-    uint16_t mnc = 0xf000U + ((bytes[1] & 0xfU) << 8U) + bytes[2];
+    uint16_t mnc = 0xf000U + (static_cast<uint16_t>(bytes[1] & 0xfU) << 8U) + bytes[2];
     if (not bcd_helper::is_valid_mcc(mcc) or not bcd_helper::is_valid_mnc(mnc)) {
       return default_error_t{};
     }

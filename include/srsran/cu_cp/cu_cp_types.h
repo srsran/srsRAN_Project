@@ -129,8 +129,8 @@ struct cu_cp_qos_config {
 // ASN1 types converted to common types
 
 struct cu_cp_tai {
-  std::string plmn_id;
-  uint32_t    tac;
+  plmn_identity plmn_id = plmn_identity::test_value();
+  uint32_t      tac;
 };
 
 struct cu_cp_user_location_info_nr {
@@ -313,7 +313,7 @@ struct cu_cp_pdu_session_resource_setup_request {
   ue_index_t                                                            ue_index = ue_index_t::invalid;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
-  std::string                                                           serving_plmn;
+  plmn_identity                                                         serving_plmn = plmn_identity::test_value();
 };
 
 enum class cu_cp_qos_flow_map_ind { ul = 0, dl };
@@ -496,8 +496,8 @@ struct cu_cp_recommended_cells_for_paging {
 };
 
 struct cu_cp_global_gnb_id {
-  std::string plmn_id;
-  gnb_id_t    gnb_id;
+  plmn_identity plmn_id = plmn_identity::test_value();
+  gnb_id_t      gnb_id;
 };
 
 struct cu_cp_amf_paging_target {

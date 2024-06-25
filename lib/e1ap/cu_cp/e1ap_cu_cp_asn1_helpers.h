@@ -251,7 +251,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   asn1_request->ue_dl_aggr_max_bit_rate = request.ue_dl_aggregate_maximum_bit_rate;
 
   // serving plmn
-  asn1_request->serving_plmn.from_number(bcd_helper::plmn_string_to_bcd(request.serving_plmn));
+  asn1_request->serving_plmn = request.serving_plmn.to_bytes();
 
   // activity notification level
   asn1::string_to_enum(asn1_request->activity_notif_level, request.activity_notif_level);

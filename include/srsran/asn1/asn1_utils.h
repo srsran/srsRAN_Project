@@ -724,6 +724,14 @@ public:
   using iterator       = typename std::array<uint8_t, N>::iterator;
   using const_iterator = typename std::array<uint8_t, N>::const_iterator;
 
+  fixed_octstring() = default;
+  explicit fixed_octstring(const std::array<uint8_t, N>& array_) : octets_(array_) {}
+  fixed_octstring<N, aligned>& operator=(const std::array<uint8_t, N>& array_)
+  {
+    octets_ = array_;
+    return *this;
+  }
+
   const uint8_t& operator[](uint32_t idx) const { return octets_[idx]; }
   uint8_t&       operator[](uint32_t idx) { return octets_[idx]; }
   bool           operator==(const fixed_octstring<N>& other) const { return octets_ == other.octets_; }
@@ -747,6 +755,7 @@ public:
     octet_string_helper::to_octet_string(octets_, val);
     return *this;
   }
+  const std::array<uint8_t, N> to_bytes() const { return octets_; }
 
   /// Pack fixed-size octet string as per X.691 Section 16 - Encoding the octetstring type.
   /// \tparam N - number of items

@@ -11,7 +11,6 @@
 #include "gnb_appconfig_validators.h"
 #include "apps/units/cu_cp/cu_cp_unit_config.h"
 #include "apps/units/flexible_du/du_high/du_high_config.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 

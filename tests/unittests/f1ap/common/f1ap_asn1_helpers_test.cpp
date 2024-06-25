@@ -11,7 +11,6 @@
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -27,13 +26,8 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter_for_valid_plmn)
   asn1_cgi.nr_cell_id.from_number(6576);
 
   // convert to internal NGI representation
-  nr_cell_global_id_t ngi = cgi_from_asn1(asn1_cgi);
-
-  ASSERT_TRUE(srsran::config_helpers::is_valid(ngi));
-  ASSERT_EQ(0xf001, ngi.mcc);        // BCD-encoded MCC
-  ASSERT_EQ(0xff01, ngi.mnc);        // BCD-encoded MNC
-  ASSERT_EQ("00101", ngi.plmn);      // human-readable PLMN
-  ASSERT_EQ("00f110", ngi.plmn_hex); // hex-encoded PLMN (like above)
+  nr_cell_global_id_t ngi = cgi_from_asn1(asn1_cgi).value();
+  ASSERT_EQ("00101", ngi.plmn_id.to_string()); // human-readable PLMN
 }
 
 TEST(f1ap_asn1_helpers_test, test_ngi_converter_for_invalid_plmn)
@@ -44,13 +38,8 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter_for_invalid_plmn)
   asn1_cgi.nr_cell_id.from_number(6576);
 
   // convert to internal NGI representation
-  nr_cell_global_id_t ngi = cgi_from_asn1(asn1_cgi);
-
-  ASSERT_FALSE(srsran::config_helpers::is_valid(ngi));
-  ASSERT_EQ(0xf000, ngi.mcc);        // BCD-encoded MCC
-  ASSERT_EQ(0xff00, ngi.mnc);        // BCD-encoded MNC
-  ASSERT_EQ("00000", ngi.plmn);      // human-readable PLMN
-  ASSERT_EQ("00f000", ngi.plmn_hex); // hex-encoded PLMN (like above)
+  auto ngi = cgi_from_asn1(asn1_cgi);
+  ASSERT_TRUE(ngi.is_error());
 }
 
 static std::string create_random_ipv4_string()

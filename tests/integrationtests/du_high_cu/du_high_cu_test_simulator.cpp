@@ -95,7 +95,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   cu_cfg.n2_gw                     = &n2_gw;
   cu_cfg.timers                    = &timers;
   cu_cfg.ngap_config.ran_node_name = "srsgnb01";
-  cu_cfg.ngap_config.plmn          = "00101";
+  cu_cfg.ngap_config.plmn          = plmn_identity::test_value();
   cu_cfg.ngap_config.tac           = 7;
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;

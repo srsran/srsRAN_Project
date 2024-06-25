@@ -113,7 +113,7 @@ protected:
 
     cfg.gnb_id        = {411, 22};
     cfg.ran_node_name = "srsgnb01";
-    cfg.plmn          = "00101";
+    cfg.plmn          = plmn_identity::test_value();
     cfg.tac           = 7;
     s_nssai_t slice_cfg;
     slice_cfg.sst = 1;

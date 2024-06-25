@@ -35,7 +35,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
   if (request.sp_cell_id.has_value()) {
     asn1_request->sp_cell_id_present = true;
     asn1_request->sp_cell_id.nr_cell_id.from_number(request.sp_cell_id.value().nci.value());
-    asn1_request->sp_cell_id.plmn_id.from_string(request.sp_cell_id.value().plmn_hex);
+    asn1_request->sp_cell_id.plmn_id = request.sp_cell_id.value().plmn_id.to_bytes();
   }
 
   // serv cell idx
@@ -127,7 +127,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
 
       auto& asn1_scell_to_be_remd_item = asn1_scell_to_be_remd_item_container.value().scell_to_be_remd_item();
       asn1_scell_to_be_remd_item.scell_id.nr_cell_id.from_number(scell_to_be_remd_item.scell_id.nci.value());
-      asn1_scell_to_be_remd_item.scell_id.plmn_id.from_string(scell_to_be_remd_item.scell_id.plmn_hex);
+      asn1_scell_to_be_remd_item.scell_id.plmn_id = scell_to_be_remd_item.scell_id.plmn_id.to_bytes();
 
       asn1_request->scell_to_be_remd_list.push_back(asn1_scell_to_be_remd_item_container);
     }
@@ -379,7 +379,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
       auto& asn1_scell_failed_item = asn1_scell_failed_setup_mod_list_item.value().scell_failedto_setup_mod_item();
 
       f1ap_scell_failed_to_setup_mod_item scell_failed_item;
-      scell_failed_item.scell_id = cgi_from_asn1(asn1_scell_failed_item.scell_id);
+      scell_failed_item.scell_id = cgi_from_asn1(asn1_scell_failed_item.scell_id).value();
       if (asn1_scell_failed_item.cause_present) {
         scell_failed_item.cause = asn1_to_cause(asn1_scell_failed_item.cause);
       }
@@ -496,7 +496,7 @@ inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu
     auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
 
     asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci.value());
-    asn1_paging_cell_item.nr_cgi.plmn_id.from_string(cell_item.ngran_cgi.plmn_hex);
+    asn1_paging_cell_item.nr_cgi.plmn_id = cell_item.ngran_cgi.plmn_id.to_bytes();
 
     asn1_paging->paging_cell_list.push_back(asn1_paging_cell_item_container);
   }

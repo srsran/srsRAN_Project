@@ -58,7 +58,7 @@ du_setup_request srsran::srs_cu_cp::create_du_setup_request(const asn1::f1ap::f1
 
       // served cell info
       // NR CGI
-      served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi);
+      served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi).value();
 
       // NR PCI
       served_cell.served_cell_info.nr_pci = asn1_served_cell.served_cell_info.nr_pci;
@@ -136,8 +136,7 @@ static f1ap_message create_f1_setup_response(const asn1::f1ap::f1_setup_request_
     resp->cells_to_be_activ_list_present = true;
     for (const auto& du_cell : cu_response.cells_to_be_activ_list) {
       asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
-      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(
-          bcd_helper::plmn_string_to_bcd(du_cell.nr_cgi.plmn));
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id = du_cell.nr_cgi.plmn_id.to_bytes();
       resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci.value());
 
       if (du_cell.nr_pci.has_value()) {

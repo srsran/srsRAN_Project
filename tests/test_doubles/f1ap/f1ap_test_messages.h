@@ -19,7 +19,7 @@
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cgi_helpers.h"
+#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 

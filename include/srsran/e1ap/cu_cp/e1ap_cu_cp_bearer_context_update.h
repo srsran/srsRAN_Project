@@ -20,7 +20,7 @@ struct e1ap_bearer_context_setup_request {
   ue_index_t                                                              ue_index = ue_index_t::invalid;
   e1ap_security_info                                                      security_info;
   uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
-  std::string                                                             serving_plmn;
+  plmn_identity                                                           serving_plmn = plmn_identity::test_value();
   std::string                                                             activity_notif_level;
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
   std::optional<uint64_t>                                                 ue_dl_maximum_integrity_protected_data_rate;

@@ -21,7 +21,7 @@ namespace srs_cu_cp {
 // enum class ngap_handov_type { intra5gs = 0, fivegs_to_eps, eps_to_5gs, fivegs_to_utran };
 
 struct ngap_broadcast_plmn_item {
-  std::string                       plmn_id;
+  plmn_identity                     plmn_id = plmn_identity::test_value();
   std::vector<slice_support_item_t> tai_slice_support_list;
 };
 

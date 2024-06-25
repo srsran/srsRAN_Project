@@ -30,7 +30,7 @@ static du_setup_result create_du_setup_result_accept(const f1ap_message& f1_msg)
   accepted.cells_to_be_activ_list.resize(cells.size());
   for (unsigned i = 0; i != cells.size(); ++i) {
     auto& cell  = accepted.cells_to_be_activ_list[i];
-    cell.nr_cgi = cgi_from_asn1(cells[i]->gnb_du_served_cells_item().served_cell_info.nr_cgi);
+    cell.nr_cgi = cgi_from_asn1(cells[i]->gnb_du_served_cells_item().served_cell_info.nr_cgi).value();
     cell.nr_pci = cells[i]->gnb_du_served_cells_item().served_cell_info.nr_pci;
   }
   return resp;

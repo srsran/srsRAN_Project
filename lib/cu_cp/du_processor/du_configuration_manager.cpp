@@ -9,7 +9,6 @@
  */
 
 #include "du_configuration_manager.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_config.h"
 
 using namespace srsran;
@@ -17,13 +16,6 @@ using namespace srs_cu_cp;
 
 static error_type<du_setup_result::rejected> validate_cell_config(const cu_cp_du_served_cells_item& served_cell)
 {
-  const auto& cell_info = served_cell.served_cell_info;
-
-  if (not config_helpers::is_valid(cell_info.nr_cgi)) {
-    return error_type<du_setup_result::rejected>{
-        du_setup_result::rejected{cause_protocol_t::semantic_error, "Invalid NR CGI"}};
-  }
-
   if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
     return error_type<du_setup_result::rejected>{du_setup_result::rejected{
         cause_protocol_t::msg_not_compatible_with_receiver_state, fmt::format("Missing TAC for cell")}};

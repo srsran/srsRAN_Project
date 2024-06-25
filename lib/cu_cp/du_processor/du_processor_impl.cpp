@@ -13,7 +13,6 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/cause/f1ap_cause_converters.h"
 #include "srsran/ran/cause/ngap_cause.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/coroutine.h"
 
@@ -167,7 +166,6 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
 {
   srsran_assert(req.ue_index != ue_index_t::invalid, "Invalid UE index");
   srsran_assert(req.c_rnti != rnti_t::INVALID_RNTI, "ue={}: Invalid C-RNTI", req.ue_index);
-  srsran_assert(config_helpers::is_valid(req.cgi), "ue={}: Invalid CGI", req.ue_index);
 
   // Check that creation message is valid
   const du_cell_configuration* pcell = cfg.du_cfg_hdlr->get_context().find_cell(req.cgi);

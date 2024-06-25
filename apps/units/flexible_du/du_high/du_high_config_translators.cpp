@@ -277,7 +277,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     du_cell_config& out_cell = out_cfg.back();
 
     // Set the rest of the parameters.
-    out_cell.nr_cgi.plmn      = base_cell.plmn;
+    out_cell.nr_cgi.plmn_id   = plmn_identity::parse(base_cell.plmn).value();
     out_cell.nr_cgi.nci       = nr_cell_identity::create(config.gnb_id, cell_id).value();
     out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = param.search_space0_index;

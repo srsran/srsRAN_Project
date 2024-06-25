@@ -49,7 +49,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
         msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
         asn1::f1ap::init_ul_rrc_msg_transfer_s& init_msg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
         init_msg->gnb_du_ue_f1ap_id                      = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
-        init_msg->nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(nr_cgi.plmn));
+        init_msg->nr_cgi.plmn_id                         = nr_cgi.plmn_id.to_bytes();
         init_msg->nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
         init_msg->c_rnti = to_value(ue_ctxt.rnti);
         if (not init_msg->rrc_container.append(sdu.begin(), sdu.end())) {

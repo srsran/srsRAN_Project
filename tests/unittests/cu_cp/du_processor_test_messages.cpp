@@ -80,10 +80,7 @@ ue_rrc_context_creation_request srsran::srs_cu_cp::generate_ue_rrc_context_creat
   ue_rrc_context_creation_request req = {};
   req.ue_index                        = ue_index;
   req.c_rnti                          = c_rnti;
-  req.cgi.mcc                         = 61441;
-  req.cgi.mnc                         = 65281;
-  req.cgi.plmn                        = "00101";
-  req.cgi.plmn_hex                    = "00f110";
+  req.cgi.plmn_id                     = plmn_identity::test_value();
   req.cgi.nci                         = nrcell_id;
   asn1::unbounded_octstring<true> tmp;
   tmp.from_string(

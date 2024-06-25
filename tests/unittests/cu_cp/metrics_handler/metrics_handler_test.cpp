@@ -49,7 +49,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   metrics_hdlr.next_metrics.dus.emplace_back(metrics_report::du_info{
       int_to_gnb_du_id(0),
       {metrics_report::cell_info{
-          nr_cell_global_id_t{001, 01, "00101", "00f110", nr_cell_identity::create(0x22).value()}, pci_t{2}}}});
+          nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}}}});
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();

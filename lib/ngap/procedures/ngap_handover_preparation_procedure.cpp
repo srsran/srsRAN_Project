@@ -121,14 +121,12 @@ void ngap_handover_preparation_procedure::send_handover_required()
 
 void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id_c& target_id)
 {
-  target_id.set_target_ran_node_id();
-  target_id.target_ran_node_id();
-  target_id.target_ran_node_id().global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
-  target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().plmn_id.from_number(
-      bcd_helper::plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
-  target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
-  target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(
-      request.gnb_id.id, request.gnb_id.bit_length);
+  auto& target_node = target_id.set_target_ran_node_id();
+  target_node.global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
+  auto& global_gnb   = target_node.global_ran_node_id.global_gnb_id();
+  global_gnb.plmn_id = context.plmn.to_bytes();
+  global_gnb.gnb_id.set_gnb_id();
+  global_gnb.gnb_id.gnb_id().from_number(request.gnb_id.id, request.gnb_id.bit_length);
 }
 
 void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
@@ -168,7 +166,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   }
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
 
-  target_nr_cgi.plmn_id.from_number(bcd_helper::plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
+  target_nr_cgi.plmn_id = context.plmn.to_bytes();
   target_nr_cgi.nr_cell_id.from_number(request.nci.value());
 
   last_visited_cell_item_s        last_visited_cell_item;

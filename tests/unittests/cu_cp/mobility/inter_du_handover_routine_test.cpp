@@ -9,7 +9,6 @@
  */
 
 #include "mobility_test_helpers.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -187,7 +186,7 @@ private:
   du_index_t          target_du_index  = uint_to_du_index(1);
   gnb_du_id_t         target_du_id     = int_to_gnb_du_id(0x22);
   nr_cell_identity    target_nrcell_id = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value();
-  nr_cell_global_id_t target_cgi       = {001, 01, "00101", "00f110", target_nrcell_id};
+  nr_cell_global_id_t target_cgi       = {plmn_identity::test_value(), target_nrcell_id};
   unsigned            target_pci       = 2;
 
   ue_index_t source_ue_index = uint_to_ue_index(0);

@@ -12,7 +12,6 @@
 #include "srsran/adt/span.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rlc/rlc_config.h"
 #include <map>
 #include <set>

@@ -9,7 +9,6 @@
  */
 
 #include "e1ap_cu_cp_test_messages.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -84,7 +83,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   request.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea0;
   request.security_info.up_security_key.encryption_key = make_byte_buffer("9950ab8083ed034257d900e9a6a06236").value();
   request.ue_dl_aggregate_maximum_bit_rate             = 300000000;
-  request.serving_plmn                                 = "00101";
+  request.serving_plmn                                 = plmn_identity::test_value();
   request.activity_notif_level                         = "ue";
 
   e1ap_pdu_session_res_to_setup_item res_to_setup_item;

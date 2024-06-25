@@ -11,7 +11,6 @@
 #include "cu_cp_config_translators.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rlc/rlc_config.h"
 #include <sstream>
 
@@ -188,7 +187,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 
   srsran_assert(!cu_cfg.plmns.empty(), "PLMN list is empty");
   srsran_assert(!cu_cfg.tacs.empty(), "PLMN list is empty");
-  out_cfg.ngap_config.plmn = cu_cfg.plmns.front();
+  out_cfg.ngap_config.plmn = plmn_identity::parse(cu_cfg.plmns.front()).value();
   out_cfg.ngap_config.tac  = cu_cfg.tacs.front();
 
   out_cfg.rrc_config.gnb_id                         = cu_cfg.gnb_id;

@@ -13,23 +13,17 @@
 
 using namespace srsran;
 
-nr_cell_global_id_t srsran::cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi)
+expected<nr_cell_global_id_t> srsran::cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi)
 {
-  nr_cell_global_id_t cgi          = {};
-  uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
-  bcd_helper::ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
-
-  std::string mcc_string, mnc_string;
-  bcd_helper::mcc_to_string(cgi.mcc, &mcc_string);
-  bcd_helper::mnc_to_string(cgi.mnc, &mnc_string);
-  cgi.plmn = mcc_string + mnc_string;
-
-  // Set PLMN hex string
-  cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
-
-  cgi.nci = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value();
-
-  return cgi;
+  auto plmn = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes());
+  if (plmn.is_error()) {
+    return plmn.error();
+  }
+  auto nci = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number());
+  if (nci.is_error()) {
+    return nci.error();
+  }
+  return nr_cell_global_id_t{plmn.value(), nci.value()};
 }
 
 pdcp_sn_size srsran::pdcp_sn_size_from_f1ap_asn1(const asn1::f1ap::pdcp_sn_len_e& asn1_pdcp_sn_size)

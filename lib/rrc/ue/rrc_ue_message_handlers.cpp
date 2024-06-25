@@ -213,7 +213,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
   ul_nas_msg.ue_index                       = context.ue_index;
   ul_nas_msg.nas_pdu                        = ul_info_transfer.ded_nas_msg.copy();
   ul_nas_msg.user_location_info.nr_cgi      = context.cell.cgi;
-  ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
   ul_nas_msg.user_location_info.tai.tac     = context.cell.tac;
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
@@ -335,7 +335,7 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
   // prepare location info to return
   rrc_ue_release_context release_context;
   release_context.user_location_info.nr_cgi      = context.cell.cgi;
-  release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
   release_context.user_location_info.tai.tac     = context.cell.tac;
 
   if (requires_rrc_message) {

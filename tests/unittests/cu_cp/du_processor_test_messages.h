@@ -14,7 +14,6 @@
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 namespace srsran {
 namespace srs_cu_cp {

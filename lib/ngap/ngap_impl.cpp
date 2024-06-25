@@ -694,7 +694,7 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   }
 
   logger.info("HandoverRequest - extracted target cell. plmn={}, target cell_id={}",
-              ho_request.source_to_target_transparent_container.target_cell_id.plmn,
+              ho_request.source_to_target_transparent_container.target_cell_id.plmn_id,
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell

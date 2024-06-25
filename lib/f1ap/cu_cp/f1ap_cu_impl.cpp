@@ -22,7 +22,6 @@
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
@@ -224,8 +223,8 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 {
   const gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
-  nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
-  if (not config_helpers::is_valid(cgi)) {
+  expected<nr_cell_global_id_t> cgi = cgi_from_asn1(msg->nr_cgi);
+  if (cgi.is_error()) {
     logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Invalid CGI", du_ue_id);
     return;
   }
@@ -258,7 +257,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   ue_rrc_context_creation_request req;
   req.ue_index = ue_index;
   req.c_rnti   = crnti;
-  req.cgi      = cgi;
+  req.cgi      = cgi.value();
   if (msg->du_to_cu_rrc_container_present) {
     req.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
   } else {

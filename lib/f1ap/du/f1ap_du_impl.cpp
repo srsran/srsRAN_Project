@@ -490,14 +490,19 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.is_paging_origin_non_3gpp_access = true;
   }
   for (const auto& asn_nr_cgi : msg->paging_cell_list) {
-    const auto paging_cell_cgi = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
+    const auto ret = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
+    if (ret.is_error()) {
+      logger.error("Invalid CGI in paging cell list");
+      continue;
+    }
+    auto       paging_cell_cgi = ret.value();
     const auto du_cell_it =
         std::find_if(ctxt.served_cells.cbegin(),
                      ctxt.served_cells.cend(),
                      [&paging_cell_cgi](const f1ap_du_cell_context& cell) { return paging_cell_cgi == cell.nr_cgi; });
     // Cell not served by this DU.
     if (du_cell_it == ctxt.served_cells.cend()) {
-      logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn, paging_cell_cgi.nci);
+      logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn_id, paging_cell_cgi.nci);
       continue;
     }
     info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));

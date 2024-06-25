@@ -58,7 +58,7 @@ cu_cp_test::cu_cp_test()
   // NGAP config
   cfg.ngap_config.gnb_id        = {411, 22};
   cfg.ngap_config.ran_node_name = "srsgnb01";
-  cfg.ngap_config.plmn          = "00101";
+  cfg.ngap_config.plmn          = plmn_identity::test_value();
   cfg.ngap_config.tac           = 7;
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;

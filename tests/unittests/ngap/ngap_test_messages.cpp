@@ -17,7 +17,6 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -63,7 +62,7 @@ ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
   ngap_ng_setup_request request_msg;
   request_msg.global_ran_node_id.gnb_id  = {411, 22};
-  request_msg.global_ran_node_id.plmn_id = "00101";
+  request_msg.global_ran_node_id.plmn_id = plmn_identity::test_value();
 
   request_msg.ran_node_name = "srsgnb01";
 
@@ -71,7 +70,7 @@ ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
   supported_ta_item.tac = 7;
 
   ngap_broadcast_plmn_item broadcast_plmn_item;
-  broadcast_plmn_item.plmn_id = "00101";
+  broadcast_plmn_item.plmn_id = plmn_identity::test_value();
 
   slice_support_item_t slice_support_item;
   slice_support_item.s_nssai.sst = 1;
@@ -152,11 +151,11 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
   msg.ue_index                 = ue_index;
   bool ret                     = msg.nas_pdu.resize(nas_pdu_len);
   (void)ret;
-  msg.establishment_cause                = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
-  msg.user_location_info.nr_cgi.plmn_hex = "00f110";
-  msg.user_location_info.nr_cgi.nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
-  msg.user_location_info.tai.plmn_id     = "00f110";
-  msg.user_location_info.tai.tac         = 7;
+  msg.establishment_cause               = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
+  msg.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  msg.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  msg.user_location_info.tai.plmn_id    = plmn_identity::test_value();
+  msg.user_location_info.tai.tac        = 7;
   return msg;
 }
 
@@ -188,10 +187,10 @@ cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_i
   ul_nas_transport.ue_index               = ue_index;
   bool ret                                = ul_nas_transport.nas_pdu.resize(nas_pdu_len);
   (void)ret;
-  ul_nas_transport.user_location_info.nr_cgi.plmn_hex = "00f110";
-  ul_nas_transport.user_location_info.nr_cgi.nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
-  ul_nas_transport.user_location_info.tai.plmn_id     = "00f110";
-  ul_nas_transport.user_location_info.tai.tac         = 7;
+  ul_nas_transport.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  ul_nas_transport.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  ul_nas_transport.user_location_info.tai.plmn_id    = plmn_identity::test_value();
+  ul_nas_transport.user_location_info.tai.tac        = 7;
 
   return ul_nas_transport;
 }

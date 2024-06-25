@@ -363,7 +363,7 @@ inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_sce
 {
   // scell id
   asn1_scell_to_be_setup_mod_item.scell_id.nr_cell_id.from_number(scell_to_be_setup_mod_item.scell_id.nci.value());
-  asn1_scell_to_be_setup_mod_item.scell_id.plmn_id.from_string(scell_to_be_setup_mod_item.scell_id.plmn_hex);
+  asn1_scell_to_be_setup_mod_item.scell_id.plmn_id = scell_to_be_setup_mod_item.scell_id.plmn_id.to_bytes();
 
   // scell idx
   asn1_scell_to_be_setup_mod_item.scell_idx = scell_to_be_setup_mod_item.scell_idx;
@@ -699,7 +699,7 @@ inline asn1::f1ap::nr_cgi_s nr_cgi_to_f1ap_asn1(const nr_cell_global_id_t& nr_cg
   asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
 
   // plmn id
-  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+  asn1_nr_cgi.plmn_id = nr_cgi.plmn_id.to_bytes();
 
   return asn1_nr_cgi;
 }
@@ -715,7 +715,7 @@ inline nr_cell_global_id_t f1ap_asn1_to_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_
   nr_cgi.nci = nr_cell_identity::create(asn1_nr_cgi.nr_cell_id.to_number()).value();
 
   // plmn id
-  nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
+  nr_cgi.plmn_id = plmn_identity::from_bytes(asn1_nr_cgi.plmn_id.to_bytes()).value();
 
   return nr_cgi;
 }

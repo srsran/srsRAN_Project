@@ -9,7 +9,6 @@
  */
 
 #include "lib/cu_cp/du_processor/du_configuration_manager.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/rrc/rrc_config.h"
 #include <gtest/gtest.h>
 
@@ -26,13 +25,10 @@ static rrc_cfg_t create_basic_rrc_config()
 static cu_cp_served_cell_info create_basic_served_cell_info()
 {
   cu_cp_served_cell_info cell_info;
-  cell_info.nr_cgi.mcc      = 1;
-  cell_info.nr_cgi.mnc      = 1;
-  cell_info.nr_cgi.plmn     = "00101";
-  cell_info.nr_cgi.plmn_hex = "00f110";
-  cell_info.nr_cgi.nci      = nr_cell_identity::create({411, 22}, 0x1).value();
-  cell_info.five_gs_tac     = 7;
-  cell_info.nr_pci          = 1;
+  cell_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  cell_info.nr_cgi.nci     = nr_cell_identity::create({411, 22}, 0x1).value();
+  cell_info.five_gs_tac    = 7;
+  cell_info.nr_pci         = 1;
   return cell_info;
 }
 

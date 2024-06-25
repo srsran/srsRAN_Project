@@ -487,9 +487,8 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
 
 static std::vector<std::string> auto_generate_plmns()
 {
-  std::vector<std::string> out_cfg = {"00101"};
-
-  return out_cfg;
+  std::vector<std::string> vec = {"00101"};
+  return vec;
 }
 
 static std::vector<unsigned> auto_generate_tacs()
