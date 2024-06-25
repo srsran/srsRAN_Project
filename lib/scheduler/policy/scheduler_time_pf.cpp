@@ -25,31 +25,25 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_repository&         ues)
 {
   // Clear the existing contents of the queue.
-  while (not dl_queue.empty()) {
-    dl_queue.pop();
-  }
+  dl_queue.clear();
 
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
-    if (not ues.contains(it->first)) {
-      it = ue_history_db.erase(it);
-    } else {
-      ++it;
+    if (not ues.contains(it->ue_index)) {
+      ue_history_db.erase(it->ue_index);
     }
+    ++it;
   }
 
   // Add new users to history db, and update DL priority queue.
   for (const auto& u : ues) {
-    auto it = ue_history_db.find(u->ue_index);
-    if (it == ue_history_db.end()) {
+    if (not ue_history_db.contains(u->ue_index)) {
       // TODO: Consider other cells when carrier aggregation is supported.
       ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
-      it = ue_history_db.find(u->ue_index);
     }
-    it->second.compute_dl_prio(*u);
-    if (it->second.dl_newtx_h != nullptr or it->second.dl_retx_h != nullptr) {
-      dl_queue.push(&it->second);
-    }
+    ue_ctxt& ctxt = ue_history_db[u->ue_index];
+    ctxt.compute_dl_prio(*u);
+    dl_queue.push(&ctxt);
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
@@ -73,31 +67,25 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_repository&         ues)
 {
   // Clear the existing contents of the queue.
-  while (not ul_queue.empty()) {
-    ul_queue.pop();
-  }
+  ul_queue.clear();
 
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
-    if (not ues.contains(it->first)) {
-      it = ue_history_db.erase(it);
-    } else {
-      ++it;
+    if (not ues.contains(it->ue_index)) {
+      ue_history_db.erase(it->ue_index);
     }
+    ++it;
   }
 
   // Add new users to history db, and update UL priority queue.
   for (const auto& u : ues) {
-    auto it = ue_history_db.find(u->ue_index);
-    if (it == ue_history_db.end()) {
+    if (not ue_history_db.contains(u->ue_index)) {
       // TODO: Consider other cells when carrier aggregation is supported.
       ue_history_db.emplace(u->ue_index, ue_ctxt{u->ue_index, u->get_pcell().cell_index, this});
-      it = ue_history_db.find(u->ue_index);
     }
-    it->second.compute_ul_prio(*u, res_grid);
-    if (it->second.ul_newtx_h != nullptr or it->second.ul_retx_h != nullptr) {
-      ul_queue.push(&it->second);
-    }
+    ue_ctxt& ctxt = ue_history_db[u->ue_index];
+    ctxt.compute_ul_prio(*u, res_grid);
+    ul_queue.push(&ctxt);
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
@@ -116,8 +104,7 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 }
 
-alloc_result
-scheduler_time_pf::try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc)
+alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
   ue_pdsch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
@@ -125,6 +112,9 @@ scheduler_time_pf::try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
   if (ctxt.dl_retx_h != nullptr) {
     grant.h_id   = ctxt.dl_retx_h->id;
     alloc_result = pdsch_alloc.allocate_dl_grant(grant);
+    if (alloc_result.status == alloc_status::success) {
+      ctxt.dl_retx_h = nullptr;
+    }
     // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
     // UEs.
     return alloc_result;
@@ -134,14 +124,16 @@ scheduler_time_pf::try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
     grant.h_id                  = ctxt.dl_newtx_h->id;
     grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_dl_newtx_bytes();
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
+    if (alloc_result.status == alloc_status::success) {
+      ctxt.dl_newtx_h = nullptr;
+    }
     return alloc_result;
   }
 
   return {alloc_status::skip_ue};
 }
 
-alloc_result
-scheduler_time_pf::try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc)
+alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
   ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
@@ -149,6 +141,9 @@ scheduler_time_pf::try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
   if (ctxt.ul_retx_h != nullptr) {
     grant.h_id   = ctxt.ul_retx_h->id;
     alloc_result = pusch_alloc.allocate_ul_grant(grant);
+    if (alloc_result.status == alloc_status::success) {
+      ctxt.ul_retx_h = nullptr;
+    }
     // Return result here irrespective of the outcome so that reTxs of UEs are scheduled before scheduling newTxs of
     // UEs.
     return alloc_result;
@@ -158,6 +153,9 @@ scheduler_time_pf::try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, u
     grant.h_id                  = ctxt.ul_newtx_h->id;
     grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_ul_newtx_bytes();
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
+    if (alloc_result.status == alloc_status::success) {
+      ctxt.ul_newtx_h = nullptr;
+    }
     return alloc_result;
   }
 

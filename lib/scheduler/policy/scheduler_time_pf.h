@@ -76,12 +76,12 @@ private:
 
   /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status and nof. allocated bytes.
-  alloc_result try_dl_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc);
+  alloc_result try_dl_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc);
   /// \brief Attempts to allocate PUSCH for a UE.
   /// \return Returns allocation status and nof. allocated bytes.
-  alloc_result try_ul_alloc(const ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc);
+  alloc_result try_ul_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc);
 
-  std::unordered_map<du_ue_index_t, ue_ctxt> ue_history_db;
+  slotted_id_table<du_ue_index_t, ue_ctxt, MAX_NOF_DU_UES> ue_history_db;
 
   struct ue_dl_prio_compare {
     bool operator()(const ue_ctxt* lhs, const ue_ctxt* rhs) const;
@@ -90,8 +90,55 @@ private:
     bool operator()(const ue_ctxt* lhs, const ue_ctxt* rhs) const;
   };
 
-  using ue_dl_queue_t = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_dl_prio_compare>;
-  using ue_ul_queue_t = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_ul_prio_compare>;
+  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
+  // inheritance.
+  class ue_dl_queue_t : public std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_dl_prio_compare>
+  {
+    using base_type = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_dl_prio_compare>;
+
+  public:
+    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
+    // memory.
+    void clear()
+    {
+      // Access to underlying vector.
+      this->c.clear();
+    }
+
+    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
+    void push(ue_ctxt* elem)
+    {
+      if (elem->dl_retx_h == nullptr and elem->dl_newtx_h == nullptr) {
+        return;
+      }
+      base_type::push(elem);
+    }
+  };
+
+  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
+  // inheritance.
+  class ue_ul_queue_t : public std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_ul_prio_compare>
+  {
+    using base_type = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_ul_prio_compare>;
+
+  public:
+    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
+    // memory.
+    void clear()
+    {
+      // Access to underlying vector.
+      this->c.clear();
+    }
+
+    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
+    void push(ue_ctxt* elem)
+    {
+      if (elem->ul_retx_h == nullptr and elem->ul_newtx_h == nullptr) {
+        return;
+      }
+      base_type::push(elem);
+    }
+  };
 
   /// Priority queue of UEs to be scheduled in DL. The UE in front of the queue has highest priority and vice versa.
   ue_dl_queue_t dl_queue;
