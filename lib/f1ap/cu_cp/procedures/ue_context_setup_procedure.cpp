@@ -124,16 +124,16 @@ bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_set
     req.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
     req.prev_context           = std::move(rrc_context);
 
-    ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
-    if (resp.f1ap_rrc_notifier == nullptr) {
+    ue_rrc_context_creation_outcome outcome = du_processor_notifier.on_ue_rrc_context_creation_request(req);
+    if (not outcome.has_value()) {
       logger.warning("Couldn't create UE RRC context in target cell");
       return false;
     }
 
     // Add RRC notifier to F1AP UE context.
-    ue_ctxt_list.add_rrc_notifier(req.ue_index, resp.f1ap_rrc_notifier);
+    ue_ctxt_list.add_rrc_notifier(outcome->ue_index, outcome->f1ap_rrc_notifier);
 
-    logger.debug("ue={} Added RRC UE notifier", req.ue_index);
+    logger.debug("ue={} Added RRC UE notifier", outcome->ue_index);
   }
 
   return true;

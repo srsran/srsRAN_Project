@@ -43,7 +43,7 @@ public:
     return du_f1ap_handler->allocate_new_ue_index();
   }
 
-  ue_rrc_context_creation_response
+  ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");

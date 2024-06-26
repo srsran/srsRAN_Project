@@ -98,14 +98,13 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
-  ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-  ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
+  ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(
+      ue_index_t::invalid, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp =
+  ue_rrc_context_creation_outcome outcome =
       du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-  ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
+  ASSERT_TRUE(outcome.has_value());
 
   ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 }
@@ -117,14 +116,13 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
-  ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-  ue_rrc_context_creation_request req =
-      generate_ue_rrc_context_creation_request(ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(1).value());
+  ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(
+      ue_index_t::invalid, rnti_t::MIN_CRNTI, nr_cell_identity::create(1).value());
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp =
+  ue_rrc_context_creation_outcome outcome =
       du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-  ASSERT_EQ(resp.f1ap_rrc_notifier, nullptr);
+  ASSERT_TRUE(not outcome.has_value());
 }
 
 TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not_added)
@@ -138,20 +136,21 @@ TEST_F(du_processor_test, when_ue_rrc_context_exists_then_new_ue_rrc_context_not
       test_helpers::generate_f1_setup_request());
 
   // Generate ue_creation message
-  ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-  ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
+  ue_rrc_context_creation_request req = generate_ue_rrc_context_creation_request(
+      ue_index_t::invalid, rnti_t::MIN_CRNTI, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
   // Pass message to DU processor
-  ue_rrc_context_creation_response resp =
+  ue_rrc_context_creation_outcome outcome =
       du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-  ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
+  ASSERT_TRUE(outcome.has_value());
 
   ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 
   // Pass same message to DU processor again
-  resp = du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-  ASSERT_EQ(resp.f1ap_rrc_notifier, nullptr);
+  req.ue_index = outcome->ue_index;
+  ue_rrc_context_creation_outcome outcome2 =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
+  ASSERT_TRUE(not outcome2.has_value());
 
   ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), 1);
 }
@@ -171,15 +170,14 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Add the maximum number of UEs
   for (unsigned it = 0; it < ue_mng.get_ue_config().max_nof_supported_ues; it++) {
     // Generate ue_creation message
-    rnti_t                          c_rnti   = to_rnti(it + 1); // 0 is not a valid RNTI
-    ue_index_t                      ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-    ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-        ue_index, c_rnti, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
+    rnti_t                          c_rnti = to_rnti(it + 1); // 0 is not a valid RNTI
+    ue_rrc_context_creation_request req    = generate_ue_rrc_context_creation_request(
+        ue_index_t::invalid, c_rnti, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
 
     // Pass message to DU processor
-    ue_rrc_context_creation_response resp =
+    ue_rrc_context_creation_outcome outcome =
         du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-    ASSERT_NE(resp.f1ap_rrc_notifier, nullptr);
+    ASSERT_TRUE(outcome.has_value());
   }
 
   // Reset logger loglevel
@@ -190,9 +188,13 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
 
-  // Try to allocate additional UE index
-  ue_index_t ue_index = du_processor_obj->get_f1ap_interface().allocate_new_ue_index();
-  ASSERT_EQ(ue_index, ue_index_t::invalid);
+  // Try to add additional UE
+  rnti_t                          c_rnti = to_rnti(ue_mng.get_ue_config().max_nof_supported_ues + 1);
+  ue_rrc_context_creation_request req    = generate_ue_rrc_context_creation_request(
+      ue_index_t::invalid, c_rnti, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
+  ue_rrc_context_creation_outcome outcome =
+      du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
+  ASSERT_TRUE(not outcome.has_value());
 
   ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
 }

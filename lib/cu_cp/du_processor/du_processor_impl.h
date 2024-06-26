@@ -62,7 +62,7 @@ public:
   // du_processor_f1ap_interface
   du_setup_result handle_du_setup_request(const du_setup_request& req) override;
   ue_index_t      allocate_new_ue_index() override;
-  ue_rrc_context_creation_response
+  ue_rrc_context_creation_outcome
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;

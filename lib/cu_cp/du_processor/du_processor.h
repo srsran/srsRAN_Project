@@ -41,7 +41,7 @@ public:
   /// This method should be called when a C-RNTI and PCell are assigned to a UE.
   /// \param req Request to setup a new UE RRC context.
   /// \return Response to whether the request was successful or failed.
-  virtual ue_rrc_context_creation_response
+  virtual ue_rrc_context_creation_outcome
   handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
@@ -130,6 +130,10 @@ public:
   /// \param[in] served_cell_list The list of served cells.
   /// \return Returns true on success, false otherwise.
   virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
+
+  /// \brief Notify RRC DU about a required RRCReject.
+  /// \return Returns a RRC Container containing the RRCReject.
+  virtual byte_buffer on_rrc_reject_required() = 0;
 
   /// \brief Notify RRC DU to create a UE.
   /// \param[in] msg The UE creation message.

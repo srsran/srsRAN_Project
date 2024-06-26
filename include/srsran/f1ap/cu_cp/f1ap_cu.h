@@ -105,18 +105,21 @@ public:
 /// This request should be made once the C-RNTI and cell of the UE is known. That generally corresponds to the moment
 /// a Initial UL RRC Message or a F1AP UE Context Setup Response are received.
 struct ue_rrc_context_creation_request {
-  ue_index_t                             ue_index;
-  rnti_t                                 c_rnti;
-  nr_cell_global_id_t                    cgi;
-  byte_buffer                            du_to_cu_rrc_container;
+  ue_index_t          ue_index = ue_index_t::invalid; ///> If this is invalid, a new UE will be created.
+  rnti_t              c_rnti;
+  nr_cell_global_id_t cgi;
+  byte_buffer         du_to_cu_rrc_container;
   std::optional<rrc_ue_transfer_context> prev_context;
 };
 
 /// \brief Response by CU-CP to F1AP-CU request to create UE RRC context.
 struct ue_rrc_context_creation_response {
+  ue_index_t ue_index = ue_index_t::invalid;
   /// Notifier to be used by the F1AP to push new RRC PDUs to the UE RRC layer.
   f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
+
+using ue_rrc_context_creation_outcome = expected<ue_rrc_context_creation_response, byte_buffer>;
 
 /// Notification from the F1AP that the loss of transaction reference information for some UEs has been lost.
 struct f1_ue_transaction_info_loss_event {
@@ -143,7 +146,7 @@ public:
   virtual ue_index_t on_new_cu_cp_ue_required() = 0;
 
   /// \brief Notifies the CU-CP that an RRC context has been created for an existing CU-CP UE.
-  virtual ue_rrc_context_creation_response
+  virtual ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473

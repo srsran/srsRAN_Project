@@ -13,11 +13,10 @@
 #include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -125,7 +124,7 @@ public:
     return next_du_setup_resp;
   }
 
-  srs_cu_cp::ue_rrc_context_creation_response
+  srs_cu_cp::ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& msg) override
   {
     logger.info("Received {}", __FUNCTION__);
@@ -134,10 +133,17 @@ public:
     last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
     last_ue_creation_msg.c_rnti                 = msg.c_rnti;
 
-    srs_cu_cp::ue_rrc_context_creation_response ret = {};
-    ret.f1ap_rrc_notifier                           = f1ap_rrc_notifier.get();
+    srs_cu_cp::ue_rrc_context_creation_response response{msg.ue_index, f1ap_rrc_notifier.get()};
+    if (msg.ue_index == ue_index_t::invalid) {
+      response.ue_index = on_new_cu_cp_ue_required();
+    }
 
-    return ret;
+    // Return failure if no UE index is available.
+    if (response.ue_index == ue_index_t::invalid) {
+      return make_unexpected(byte_buffer::create({0x0, 0x0}).value());
+    }
+
+    return response;
   }
 
   ue_index_t on_new_cu_cp_ue_required() override
@@ -206,6 +212,8 @@ protected:
 
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
   test_ue& run_ue_context_setup();
+
+  bool was_rrc_reject_sent();
 
   void tick();
 

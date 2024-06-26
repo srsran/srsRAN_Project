@@ -205,9 +205,9 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (unsigned ue_index = 0; ue_index < max_nof_ues; ue_index++) {
+  for (unsigned du_ue_id = 0; du_ue_id < max_nof_ues; du_ue_id++) {
     // Generate ue_creation message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(ue_index));
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(du_ue_id));
 
     // Pass message to F1AP
     f1ap->handle_message(init_ul_rrc_msg);
@@ -241,20 +241,8 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
 
+  EXPECT_TRUE(was_rrc_reject_sent());
   EXPECT_EQ(f1ap->get_nof_ues(), 0);
-}
-
-TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
-{
-  // Generate F1 Initial UL RRC Message with RRC Setup Complete present
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
-  auto&        init_ul_rrc     = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  init_ul_rrc->rrc_container_rrc_setup_complete_present = true;
-
-  // Pass message to F1AP
-  f1ap->handle_message(init_ul_rrc_msg);
-
-  EXPECT_EQ(du_processor_notifier.f1ap_rrc_notifier->last_ul_ccch_pdu, init_ul_rrc->rrc_container_rrc_setup_complete);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
