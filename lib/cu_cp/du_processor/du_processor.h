@@ -218,15 +218,6 @@ public:
   /// \brief Retrieve the SIB1 for a given PCI of a DU.
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
 };
-/// Handler for an NGAP entity to communicate with the DU processor
-class du_processor_ngap_interface
-{
-public:
-  virtual ~du_processor_ngap_interface() = default;
-
-  /// \brief Allocate a new UE index.
-  virtual ue_index_t allocate_new_ue_index() = 0;
-};
 
 /// Interface to notify the F1AP about control messages.
 class du_processor_f1ap_control_notifier
@@ -321,7 +312,6 @@ public:
   virtual ~du_processor() = default;
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
-  virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
   virtual du_processor_statistics_handler& get_statistics_handler() = 0;
   virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;

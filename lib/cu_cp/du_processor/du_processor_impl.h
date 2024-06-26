@@ -31,7 +31,6 @@ class du_processor_impl : public du_processor,
                           public du_setup_handler,
                           public du_metrics_handler,
                           public du_processor_f1ap_interface,
-                          public du_processor_ngap_interface,
                           public du_processor_paging_handler,
                           public du_processor_statistics_handler,
                           public du_processor_mobility_handler
@@ -61,7 +60,6 @@ public:
 
   // du_processor_f1ap_interface
   du_setup_result handle_du_setup_request(const du_setup_request& req) override;
-  ue_index_t      allocate_new_ue_index() override;
   ue_rrc_context_creation_outcome
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
@@ -81,7 +79,6 @@ public:
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
   du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
-  du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
   du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }

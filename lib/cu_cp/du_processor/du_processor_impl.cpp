@@ -110,11 +110,6 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
   return res;
 }
 
-ue_index_t du_processor_impl::allocate_new_ue_index()
-{
-  return ue_mng.add_ue(cfg.du_index);
-}
-
 bool du_processor_impl::create_rrc_ue(cu_cp_ue&                              ue,
                                       rnti_t                                 c_rnti,
                                       const nr_cell_global_id_t&             cgi,

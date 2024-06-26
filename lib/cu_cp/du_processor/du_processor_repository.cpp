@@ -140,7 +140,7 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
 {
   for (auto& du : du_db) {
     if (du.second.processor->has_cell(cgi)) {
-      return du.second.processor->get_ngap_interface().allocate_new_ue_index();
+      return cfg.ue_mng.add_ue(du.first);
     }
   }
   logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn_id, cgi.nci);
