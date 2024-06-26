@@ -40,6 +40,6 @@ cell_cfg:
     nof_dl_slots: 7
     nof_ul_slots: 2
 
-cu_up: 
+cu_up:
   gtpu_queue_size: 32768
   gtpu_reordering_timer: 20

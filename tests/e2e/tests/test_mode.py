@@ -70,18 +70,26 @@ def test_ue(
     """
 
     # Configuration
-    retina_data.test_config = {
-        "gnb": {
-            "parameters": {
-                "gnb_id": 1,
-                "log_level": "warning",
-                "pcap": False,
+    with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
+        tmp_file.write(" ")  # Make it not empty to overwrite default one
+        tmp_file.flush()
+
+        retina_data.test_config = {
+            "gnb": {
+                "parameters": {
+                    "gnb_id": 1,
+                    "log_level": "warning",
+                    "pcap": False,
+                },
+                "templates": {
+                    "cu": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve()),
+                    "du": tmp_file.name,
+                    "ru": tmp_file.name,
+                },
             },
-            "templates": {"cell": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve())},
-        },
-    }
-    retina_manager.parse_configuration(retina_data.test_config)
-    retina_manager.push_all_config()
+        }
+        retina_manager.parse_configuration(retina_data.test_config)
+        retina_manager.push_all_config()
 
     configure_artifacts(
         retina_data=retina_data,
@@ -197,7 +205,8 @@ def _test_ru(
                     "pcap": False,
                 },
                 "templates": {
-                    "cell": str(Path(__file__).joinpath("../test_mode/config_ru.yml").resolve()),
+                    "cu": str(Path(__file__).joinpath("../test_mode/config_ru.yml").resolve()),
+                    "du": tmp_file.name,
                     "ru": tmp_file.name,
                 },
             },
