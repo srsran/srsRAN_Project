@@ -124,18 +124,14 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
 async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallback()
 {
+  context.connection_cause.value = asn1::rrc_nr::establishment_cause_e::mt_access;
+
   return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Reject RRC Reestablishment Request by sending RRC Setup
-    CORO_AWAIT(launch_async<rrc_setup_procedure>(context,
-                                                 asn1::rrc_nr::establishment_cause_e::mt_access,
-                                                 du_to_cu_container,
-                                                 rrc_ue_setup_notifier,
-                                                 srb_notifier,
-                                                 nas_notifier,
-                                                 event_mng,
-                                                 logger));
+    CORO_AWAIT(launch_async<rrc_setup_procedure>(
+        context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, nas_notifier, event_mng, logger));
 
     if (old_ue_reest_context.ue_index != ue_index_t::invalid and !old_ue_reest_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.

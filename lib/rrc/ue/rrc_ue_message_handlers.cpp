@@ -97,18 +97,13 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   context.connection_cause.value = request_ies.establishment_cause.value;
 
   // Launch RRC setup procedure
-  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(context,
-                                                                          request_ies.establishment_cause.value,
-                                                                          du_to_cu_container,
-                                                                          *this,
-                                                                          get_rrc_ue_srb_handler(),
-                                                                          nas_notifier,
-                                                                          *event_mng,
-                                                                          logger));
+  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(
+      context, du_to_cu_container, *this, get_rrc_ue_srb_handler(), nas_notifier, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
+  // Launch RRC re-establishment procedure
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
                                                                                     context,
                                                                                     du_to_cu_container,
