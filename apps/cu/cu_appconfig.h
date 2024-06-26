@@ -26,7 +26,7 @@ struct cu_nru_appconfig {
 /// F1AP configuration
 struct cu_f1ap_appconfig {
   /// F1-C bind address
-  std::string bind_address = "127.0.10.1";
+  std::string bind_addr = "127.0.10.1";
 };
 
 } // namespace srs_cu

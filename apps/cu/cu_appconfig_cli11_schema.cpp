@@ -18,7 +18,7 @@ using namespace srsran;
 
 static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& f1ap_params)
 {
-  add_option(app, "--bind_address", f1ap_params.bind_address, "F1-C bind address")->capture_default_str();
+  add_option(app, "--bind_addr", f1ap_params.bind_addr, "F1-C bind address")->capture_default_str();
 }
 
 static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nru_cfg)
