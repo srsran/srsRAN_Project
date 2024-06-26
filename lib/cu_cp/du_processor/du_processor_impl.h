@@ -39,7 +39,7 @@ class du_processor_impl : public du_processor,
 public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                    f1ap_message_notifier&              f1ap_notifier_,
+                    f1ap_message_notifier&              f1ap_pdu_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
