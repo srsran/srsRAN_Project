@@ -36,6 +36,13 @@ inline unsigned format1_cp_step_to_uint(nof_cyclic_shifts opt)
 }
 
 /// Collects the parameters for PUCCH Format 1 that can be configured.
+struct pucch_f0_params {
+  /// Indicates whether OCCs (as per \c PUCCH-format1, in \c PUCCH-Config, TS 38.331) are supported.
+  bounded_integer<unsigned, 1, 2> nof_symbols{2};
+  bool                            intraslot_freq_hopping{false};
+};
+
+/// Collects the parameters for PUCCH Format 1 that can be configured.
 struct pucch_f1_params {
   /// Number of possible Initial Cyclic Shifts, equally spaced within the range {0,...,11}, as per \c PUCCH-format1, in
   /// \c PUCCH-Config, TS 38.331.
@@ -64,6 +71,8 @@ struct pucch_f2_params {
 struct pucch_builder_params {
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
+  /// \remark Format 0 and Format 1 resources are mutually exclusive.
+  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_res_harq = 3;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f1_res_harq = 3;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
@@ -79,6 +88,7 @@ struct pucch_builder_params {
   unsigned nof_csi_resources = 1;
 
   /// PUCCH Format specific parameters.
+  pucch_f1_params f0_params;
   pucch_f1_params f1_params;
   pucch_f2_params f2_params;
 };
