@@ -142,6 +142,7 @@ public:
   ~hw_accelerator_pusch_dec_acc100_impl()
   {
     // Free the reserved hardware queue in case of dedicated use.
+    dedicated_queue = false;
     hw_free_queue();
 
     // HAL logging.
