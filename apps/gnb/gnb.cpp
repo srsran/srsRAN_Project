@@ -208,6 +208,11 @@ int main(int argc, char** argv)
       tacs.push_back(cell.cell.tac);
     }
 
+    // If test mode is enabled, we auto-enable "no_core" option
+    if (du_unit_cfg.du_high_cfg.config.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
+      cu_cp_config.amf_cfg.no_core = true;
+    }
+
     autoderive_cu_cp_parameters_after_parsing(app, cu_cp_config, std::move(plmns), std::move(tacs));
   });
 
