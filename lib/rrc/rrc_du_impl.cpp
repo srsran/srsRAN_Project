@@ -9,9 +9,10 @@
  */
 
 #include "rrc_du_impl.h"
-#include "../ran/gnb_format.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
+#include "ue/rrc_ue_helpers.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
@@ -93,6 +94,14 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
   }
 
   return true;
+}
+
+byte_buffer rrc_du_impl::get_rrc_reject()
+{
+  // pack RRC Reconfig
+  dl_ccch_msg_s dl_ccch_msg;
+  dl_ccch_msg.msg.set_c1().set_rrc_reject().crit_exts.set_rrc_reject();
+  return pack_into_pdu(dl_ccch_msg, "RRCReject");
 }
 
 rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)

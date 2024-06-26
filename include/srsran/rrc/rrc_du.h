@@ -51,6 +51,9 @@ public:
   rrc_du_ue_repository()          = default;
   virtual ~rrc_du_ue_repository() = default;
 
+  /// \brief Get the RRC Reject message to send to the UE.
+  virtual byte_buffer get_rrc_reject() = 0;
+
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) = 0;
 
