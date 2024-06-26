@@ -2,6 +2,6 @@
 
 cell_cfg:
   pdsch:
-    mcs_table: qam256  # Use QAM256 MCS table in downlink
+    mcs_table: qam256
   ssb:
-    ssb_period: 20     # Increase SSB periodicity to 20ms
+    ssb_period: 20   
