@@ -146,7 +146,7 @@ public:
     return response;
   }
 
-  ue_index_t on_new_cu_cp_ue_required() override
+  ue_index_t on_new_cu_cp_ue_required()
   {
     ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
     if (ue_id < max_nof_supported_ues) {

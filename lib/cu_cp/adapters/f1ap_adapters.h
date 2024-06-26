@@ -37,12 +37,6 @@ public:
     return du_setup_hdlr->handle_du_setup_request(msg);
   }
 
-  ue_index_t on_new_cu_cp_ue_required() override
-  {
-    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->allocate_new_ue_index();
-  }
-
   ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
   {

@@ -33,9 +33,6 @@ public:
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
 
-  /// \brief Allocate a new UE index.
-  virtual ue_index_t allocate_new_ue_index() = 0;
-
   /// \brief Request to create a new UE RRC context.
   ///
   /// This method should be called when a C-RNTI and PCell are assigned to a UE.
@@ -221,7 +218,6 @@ public:
   /// \brief Retrieve the SIB1 for a given PCI of a DU.
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
 };
-
 /// Handler for an NGAP entity to communicate with the DU processor
 class du_processor_ngap_interface
 {

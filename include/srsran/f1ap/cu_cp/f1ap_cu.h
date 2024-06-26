@@ -142,9 +142,6 @@ class f1ap_du_processor_notifier : public du_setup_notifier, public f1ap_common_
 public:
   virtual ~f1ap_du_processor_notifier() = default;
 
-  /// \brief Notifies the CU-CP to create a new UE instance.
-  virtual ue_index_t on_new_cu_cp_ue_required() = 0;
-
   /// \brief Notifies the CU-CP that an RRC context has been created for an existing CU-CP UE.
   virtual ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
