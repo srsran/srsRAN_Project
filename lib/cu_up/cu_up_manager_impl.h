@@ -36,10 +36,12 @@ public:
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
-  e1ap_bearer_context_modification_response
+  async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
 
   void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
+
+  void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
   // cu_up_e1ap_connection_notifier
   void on_e1ap_connection_establish() override;
@@ -50,6 +52,10 @@ private:
   void disconnect();
 
   void on_statistics_report_timer_expired();
+
+  e1ap_bearer_context_modification_response
+  handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
+                                                  const e1ap_bearer_context_modification_request& msg);
 
   cu_up_configuration cfg;
 

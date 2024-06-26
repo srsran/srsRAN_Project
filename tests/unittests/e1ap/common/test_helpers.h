@@ -50,7 +50,7 @@ private:
   uint16_t              ue_index = srs_cu_cp::ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
-class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_up_notifier
+class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_up_manager_notifier
 {
 public:
   dummy_e1ap_cu_up_notifier() : logger(srslog::fetch_basic_logger("TEST")), task_loop(1024) {}

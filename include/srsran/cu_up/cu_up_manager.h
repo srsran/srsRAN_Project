@@ -12,6 +12,7 @@
 
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran::srs_cu_up {
 
@@ -42,7 +43,7 @@ public:
   /// \brief Create a new UE context and handle bearer modification request.
   /// \param[in] msg The original bearer modification request.
   /// \return Returns message containing the index of the created UE and all response/failure message.
-  virtual e1ap_bearer_context_modification_response
+  virtual async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) = 0;
 
   /// \brief Handle bearer release command and remove the associated UE context.
@@ -55,6 +56,8 @@ public:
   /// \brief Get the state of the E1AP connection.
   /// \return True if E1AP is connected, false otherwise.
   virtual bool e1ap_is_connected() = 0;
+
+  virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 class cu_up_manager_interface : public cu_up_manager_e1ap_connection_notifier, public cu_up_manager_e1ap_interface

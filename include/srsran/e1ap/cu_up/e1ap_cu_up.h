@@ -50,11 +50,11 @@ public:
   handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
 };
 
-/// Methods used by E1AP to notify the CU-UP.
-class e1ap_cu_up_notifier
+/// Methods used by E1AP to notify the CU-UP manager.
+class e1ap_cu_up_manager_notifier
 {
 public:
-  virtual ~e1ap_cu_up_notifier() = default;
+  virtual ~e1ap_cu_up_manager_notifier() = default;
 
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context setup message.

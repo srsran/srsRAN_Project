@@ -11,6 +11,7 @@
 #pragma once
 
 // #include "adapters/e1ap_adapters.h"
+#include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
 #include "ue_manager.h"
@@ -66,7 +67,7 @@ private:
   // Adapters
   network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
   gtpu_network_gateway_adapter            gtpu_gw_adapter;
-  // e1ap_cu_up_adapter                      e1ap_cu_up_ev_notifier;
+  e1ap_cu_up_manager_adapter              e1ap_cu_up_mng_adapter;
 
   std::mutex mutex;
   bool       running{false};

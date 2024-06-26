@@ -39,10 +39,10 @@ private:
 
 } // namespace
 
-e1ap_cu_up_impl::e1ap_cu_up_impl(e1_connection_client& e1_client_handler_,
-                                 e1ap_cu_up_notifier&  cu_up_notifier_,
-                                 timer_manager&        timers_,
-                                 task_executor&        cu_up_exec_) :
+e1ap_cu_up_impl::e1ap_cu_up_impl(e1_connection_client&        e1_client_handler_,
+                                 e1ap_cu_up_manager_notifier& cu_up_notifier_,
+                                 timer_manager&               timers_,
+                                 task_executor&               cu_up_exec_) :
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),

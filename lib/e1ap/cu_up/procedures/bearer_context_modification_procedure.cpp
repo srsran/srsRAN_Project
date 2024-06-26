@@ -21,7 +21,7 @@ bearer_context_modification_procedure::bearer_context_modification_procedure(
     const e1ap_ue_context&                          ue_ctxt_,
     const asn1::e1ap::bearer_context_mod_request_s& request_,
     e1ap_message_notifier&                          pdu_notifier_,
-    e1ap_cu_up_notifier&                            cu_up_notifier_) :
+    e1ap_cu_up_manager_notifier&                    cu_up_notifier_) :
   ue_ctxt(ue_ctxt_), request(request_), pdu_notifier(pdu_notifier_), cu_up_notifier(cu_up_notifier_)
 {
   prepare_failure_message();

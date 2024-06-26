@@ -10,17 +10,14 @@
 
 #pragma once
 
-#include "../common/e1ap_asn1_utils.h"
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
-#include <unordered_map>
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 class e1_connection_client;
 class e1ap_event_manager;
@@ -28,10 +25,10 @@ class e1ap_event_manager;
 class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(e1_connection_client& e1_client_handler_,
-                  e1ap_cu_up_notifier&  cu_up_notifier_,
-                  timer_manager&        timers_,
-                  task_executor&        cu_up_exec_);
+  e1ap_cu_up_impl(e1_connection_client&        e1_client_handler_,
+                  e1ap_cu_up_manager_notifier& cu_up_notifier_,
+                  timer_manager&               timers_,
+                  task_executor&               cu_up_exec_);
   ~e1ap_cu_up_impl() override;
 
   // e1ap connection manager functions
@@ -98,7 +95,7 @@ private:
   srslog::basic_logger& logger;
 
   // nofifiers and handles
-  e1ap_cu_up_notifier& cu_up_notifier;
+  e1ap_cu_up_manager_notifier& cu_up_notifier;
 
   timer_manager& timers;
   task_executor& cu_up_exec;
@@ -112,5 +109,4 @@ private:
   std::unique_ptr<e1ap_event_manager> ev_mng;
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up
