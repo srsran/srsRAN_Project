@@ -284,6 +284,33 @@ amari 4UE deb:
     - *txrx-lib
     - *retina-needs
 
+amari 8UE:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS:
+          ["reestablishment and sequentially", "handover and sequentially"]
+
+amari 8UE beta:
+  extends: amari 8UE
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "reestablishment and not sequentially",
+            "handover and not sequentially",
+          ]
+  allow_failure: true
+
 amari 32UE:
   extends: .zmq
   variables:
@@ -306,13 +333,6 @@ amari 32UE:
             "iperf and tcp and band:3",
             "iperf and tcp and not band:3",
           ]
-
-amari 8UE beta:
-  extends: amari 32UE
-  parallel:
-    matrix:
-      - KEYWORDS: ["reestablishment", "handover"]
-  allow_failure: true
 
 amari 32UE asan:
   extends: .zmq
