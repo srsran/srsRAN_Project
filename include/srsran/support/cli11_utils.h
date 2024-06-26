@@ -69,7 +69,37 @@ CLI::Option* add_option(CLI::App& app, const std::string& option_name, T& param,
             callback(res);
             return CLI::detail::lexical_conversion<T, T>(res, param);
           },
-          desc)
+          desc,
+          false,
+          [&param]() -> std::string { return CLI::detail::checked_to_string<T, T>(param); })
+      ->run_callback_for_default();
+}
+
+/// Specialization for bools than changes the default function for capture the default string.
+template <>
+inline CLI::Option* add_option(CLI::App& app, const std::string& option_name, bool& param, const std::string& desc)
+{
+  auto* opt = app.get_option_no_throw(option_name);
+  if (!opt) {
+    return app.add_option(option_name, param, desc)->default_function([&param]() -> std::string {
+      return param ? "true" : "false";
+    });
+  }
+
+  // Option was found. Get the callback and create new option.
+  auto callbck = opt->get_callback();
+  app.remove_option(opt);
+
+  return app
+      .add_option(
+          option_name,
+          [&param, callback = std::move(callbck)](const CLI::results_t& res) {
+            callback(res);
+            return CLI::detail::lexical_conversion<bool, bool>(res, param);
+          },
+          desc,
+          false,
+          [&param]() -> std::string { return param ? "true" : "false"; })
       ->run_callback_for_default();
 }
 
@@ -186,6 +216,25 @@ void add_auto_enum_option(CLI::App&             app,
         return IntegerValidator(in_str);
       })
       ->default_str("auto");
+}
+
+/// Refresh the defaults values of the given app.
+inline void refresh_defaults(CLI::App& app)
+{
+  for (CLI::Option* opt : app.get_options()) {
+    // Only process the option that has a long-name (starts with a --) and is configurable.
+    if (opt->get_lnames().empty() || !opt->get_configurable()) {
+      continue;
+    }
+    opt->capture_default_str();
+  }
+
+  for (CLI::App* subcom : app.get_subcommands({})) {
+    if (subcom->get_disabled()) {
+      continue;
+    }
+    refresh_defaults(*subcom);
+  }
 }
 
 } // namespace srsran

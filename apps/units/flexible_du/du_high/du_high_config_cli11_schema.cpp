@@ -16,6 +16,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
+#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 
@@ -29,6 +30,28 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   } catch (const std::out_of_range& e) {
     return make_unexpected(e.what());
   }
+}
+
+/// Returns a default capture function for vectors of integers.
+template <typename Integer>
+static std::function<std::string()> get_vector_default_function(span<const Integer> value)
+{
+  static_assert(std::is_integral_v<Integer>, "Invalid Integer");
+
+  return [value]() -> std::string {
+    if (value.empty()) {
+      return {};
+    }
+
+    fmt::memory_buffer buffer;
+    fmt::format_to(buffer, "[");
+    for (unsigned i = 0, e = value.size() - 1; i != e; ++i) {
+      fmt::format_to(buffer, "{},", value[i]);
+    }
+    fmt::format_to(buffer, "{}]", value.back());
+
+    return to_c_str(buffer);
+  };
 }
 
 static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& log_params)
@@ -103,6 +126,7 @@ static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_c
              "--ss1_n_candidates",
              common_params.ss1_n_candidates,
              "Number of PDCCH candidates per aggregation level for SearchSpace#1. Default: {0, 0, 1, 0, 0}")
+      ->default_function(get_vector_default_function(span<const uint8_t>(common_params.ss1_n_candidates)))
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
 
@@ -150,6 +174,7 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
              ded_params.ss2_n_candidates,
              "Number of PDCCH candidates per aggregation level for SearchSpace#2. Default: {0, 0, 0, 0, 0} i.e. "
              "auto-compute nof. candidates")
+      ->default_function(get_vector_default_function(span<const uint8_t>(ded_params.ss2_n_candidates)))
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
 
@@ -286,11 +311,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->capture_default_str()
       ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
               CLI::IsMember({"outside", "undetermined", "center"}));
-  add_option(app,
-             "--harq_la_cqi_drop_threshold",
-             pdsch_params.harq_la_cqi_drop_threshold,
-             "Link Adaptation (LA) threshold for drop in CQI of the first HARQ transmission above which HARQ "
-             "retransmissions are cancelled. Set this value to 0 to disable this feature")
+  add_option<uint8_t>(app,
+                      "--harq_la_cqi_drop_threshold",
+                      pdsch_params.harq_la_cqi_drop_threshold,
+                      "Link Adaptation (LA) threshold for drop in CQI of the first HARQ transmission above which HARQ "
+                      "retransmissions are cancelled. Set this value to 0 to disable this feature")
+      ->default_function([values = pdsch_params.harq_la_cqi_drop_threshold]() { return std::to_string(values); })
       ->capture_default_str()
       ->check(CLI::Range(0, 15));
   add_option(app,
@@ -298,6 +324,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              pdsch_params.harq_la_ri_drop_threshold,
              "Link Adaptation (LA) threshold for drop in nof. layers of the first HARQ transmission above which "
              "HARQ retransmission is cancelled. Set this value to 0 to disable this feature")
+      ->default_function([values = pdsch_params.harq_la_ri_drop_threshold]() { return std::to_string(values); })
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
   add_option(app, "--dmrs_additional_position", pdsch_params.dmrs_add_pos, "PDSCH DMRS additional position")
@@ -305,7 +332,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->check(CLI::Range(0, 3));
 }
 
-static void configure_cli11_du_args(CLI::App& app, bool warn_on_drop)
+static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)
 {
   add_option(
       app, "--warn_on_drop", warn_on_drop, "Log a warning for dropped packets in F1-U, RLC and MAC due to full queues")
@@ -428,6 +455,9 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, du_high_unit_tdd_ul_dl
     CLI::App* sub_cmd = app.get_subcommand("pattern2");
     if (sub_cmd->count() != 0) {
       tdd_ul_dl_params.pattern2.emplace(pattern2_cfg);
+    }
+    if (!tdd_ul_dl_params.pattern2.has_value()) {
+      pattern2_sub_cmd->disabled();
     }
   };
   pattern2_sub_cmd->parse_complete_callback(tdd_pattern2_verify_callback);
@@ -831,6 +861,7 @@ static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config
              "--sib_mapping",
              si_sched_info.sib_mapping_info,
              "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
+      ->default_function(get_vector_default_function(span<const uint8_t>(si_sched_info.sib_mapping_info)))
       ->capture_default_str()
       ->check(CLI::IsMember({2, 19}));
   add_option(
@@ -888,18 +919,23 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
              "--preamble_trans_max",
              prach_params.preamble_trans_max,
              "Max number of RA preamble transmissions performed before declaring a failure")
+      ->default_function([value = prach_params.preamble_trans_max]() { return std::to_string(value); })
       ->capture_default_str()
       ->check(CLI::IsMember({3, 4, 5, 6, 7, 8, 10, 20, 50, 100, 200}));
   add_option(app, "--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
+      ->default_function([value = prach_params.power_ramping_step_db]() { return std::to_string(value); })
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4, 6}));
-  add_option(app, "--ports", prach_params.ports, "List of antenna ports")->capture_default_str();
+  add_option(app, "--ports", prach_params.ports, "List of antenna ports")
+      ->default_function(get_vector_default_function(span<const uint8_t>(prach_params.ports)))
+      ->capture_default_str();
   add_option(app, "--nof_ssb_per_ro", prach_params.nof_ssb_per_ro, "Number of SSBs per RACH occasion")
       ->check(CLI::IsMember({1}));
   add_option(app,
              "--nof_cb_preambles_per_ssb",
              prach_params.nof_cb_preambles_per_ssb,
              "Number of Contention Based preambles per SSB")
+      ->default_function([&value = prach_params.nof_cb_preambles_per_ssb]() { return std::to_string(value); })
       ->check(CLI::Range(1, 64));
 }
 
@@ -987,14 +1023,17 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
   add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
-  add_option(app, "--common_scs", cell_params.common_scs, "Cell common subcarrier spacing")
-      ->transform([](const std::string& value) {
-        subcarrier_spacing scs = to_subcarrier_spacing(value);
+  add_option_function<std::string>(
+      app,
+      "--common_scs",
+      [&scs = cell_params.common_scs](const std::string& value) -> std::string {
+        scs = to_subcarrier_spacing(value);
         if (scs == subcarrier_spacing::invalid) {
-          return "Invalid common subcarrier spacing '" + value + "'";
+          return fmt::format("Invalid common subcarrier spacing '{}'", value);
         }
-        return std::to_string(to_numerology_value(scs));
-      })
+        return {};
+      },
+      "Cell common subcarrier spacing")
       ->capture_default_str();
   add_option(app, "--channel_bandwidth_MHz", cell_params.channel_bw_mhz, "Channel bandwidth in MHz")
       ->capture_default_str()
@@ -1107,6 +1146,9 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
     CLI::App* tdd_sub_cmd = app.get_subcommand("tdd_ul_dl_cfg");
     if (tdd_sub_cmd->count() != 0) {
       cell_params.tdd_ul_dl_cfg.emplace(cell_tdd_pattern);
+    }
+    if (!cell_params.tdd_ul_dl_cfg.has_value()) {
+      tdd_sub_cmd->disabled();
     }
   };
   tdd_ul_dl_subcmd->parse_complete_callback(tdd_ul_dl_verify_callback);
@@ -1411,24 +1453,29 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
 
 static void configure_cli11_e2_args(CLI::App& app, du_high_unit_e2_config& e2_params)
 {
-  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
-  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address");
-  add_option(app, "--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  add_option(app, "--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent")->capture_default_str();
+  add_option(app, "--addr", e2_params.ip_addr, "RIC IP address")->capture_default_str();
+  add_option(app, "--port", e2_params.port, "RIC port")->check(CLI::Range(20000, 40000))->capture_default_str();
   add_option(app, "--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+      ->capture_default_str()
       ->check(CLI::ValidIPV4);
-  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
-  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
-  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
-  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
-  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
-  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
-  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
+  add_option(app, "--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value")->capture_default_str();
+  add_option(app, "--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min")->capture_default_str();
+  add_option(app, "--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max")->capture_default_str();
+  add_option(app, "--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts")
+      ->capture_default_str();
+  add_option(app, "--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout")
+      ->capture_default_str();
+  add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
+  add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
 }
 
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  // Adding a default function to display correctly the uint8_t type.
   add_option(app, "--gnb_id_bit_length", parsed_cfg.config.gnb_id.bit_length, "gNodeB identifier length in bits")
+      ->default_function([&value = parsed_cfg.config.gnb_id.bit_length]() { return std::to_string(value); })
       ->capture_default_str()
       ->check(CLI::Range(22, 32));
   add_option(app, "--gnb_du_id", parsed_cfg.config.gnb_du_id, "gNB-DU Id")
@@ -1559,6 +1606,8 @@ static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
   }
   if (app.get_subcommand("ntn")->count_all() == 0) {
     gnb_cfg.ntn_cfg.reset();
+    // As NTN configuration is optional, disable the command when it is not present in the configuration.
+    ntn_app->disabled();
   }
 }
 

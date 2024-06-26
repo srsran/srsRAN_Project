@@ -31,7 +31,8 @@ private:
 
 } // namespace
 
-std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also, bool, std::string) const
+std::string
+yaml_config_parser::to_config(const CLI::App* app, bool default_also, bool write_description, std::string) const
 {
   YAML::Node config;
 
@@ -51,12 +52,16 @@ std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also
       } else if (opt->count() > 1) {
         // Recover the items from the string.
         for (const auto& str : opt->results()) {
-          config[name].push_back(YAML::Load(str));
+          YAML::Node node(YAML::Load(str));
+          // Write the arrays as YAML flow instead of YAML block.
+          config[name].SetStyle((node.size() == 0) ? YAML::EmitterStyle::Flow : YAML::EmitterStyle::Block);
+          config[name].push_back(node);
         }
       } else if (default_also && !opt->get_default_str().empty()) {
         // If the option has a default and is requested by optional argument.
-        config[name] = opt->get_default_str();
+        config[name] = YAML::Load(opt->get_default_str());
       }
+
       continue;
     }
 
@@ -79,7 +84,7 @@ std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also
   }
 
   for (const CLI::App* subcom : app->get_subcommands({})) {
-    if (!default_also and !subcom->count()) {
+    if ((!default_also && !subcom->count()) || subcom->get_disabled()) {
       continue;
     }
     config[subcom->get_name()] = YAML::Load(to_config(subcom, default_also, false, ""));

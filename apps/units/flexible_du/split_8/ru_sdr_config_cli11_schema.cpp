@@ -204,7 +204,23 @@ static void configure_cli11_lower_phy_threads_args(CLI::App& app, lower_phy_thre
         }
 
         return "Invalid executor profile. Valid profiles are: single, dual and quad.";
-      });
+      })
+      ->default_function([&execution_profile]() -> std::string {
+        switch (execution_profile) {
+          case lower_phy_thread_profile::blocking:
+            return "blocking";
+          case lower_phy_thread_profile::dual:
+            return "dual";
+          case lower_phy_thread_profile::quad:
+            return "quad";
+          case lower_phy_thread_profile::single:
+            return "single";
+          default:
+            break;
+        }
+        return {};
+      })
+      ->capture_default_str();
 }
 
 static void configure_cli11_expert_execution_args(CLI::App& app, ru_sdr_unit_expert_execution_config& config)
