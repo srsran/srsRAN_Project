@@ -89,6 +89,12 @@ protected:
     du_obj->start();
   }
 
+  ~cu_du_test() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
 public:
   du_high_worker_manager workers;
   timer_manager          timers;
