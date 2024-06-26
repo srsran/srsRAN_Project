@@ -261,16 +261,21 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
 {
   rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
 
+  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+    logger.log_error("Can't get handover reconfiguraion context. {} is not set up", srb_id_t::srb1);
+    return ho_reconf_ctxt;
+  }
+
   // Create transaction to get transaction ID
   rrc_transaction transaction   = event_mng->transactions.create_transaction();
   ho_reconf_ctxt.transaction_id = transaction.id();
 
-  // pack RRC Reconfig
+  // Pack RRC Reconfig
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_recfg().crit_exts.set_rrc_recfg();
   fill_asn1_rrc_reconfiguration_msg(dl_dcch_msg.msg.c1().rrc_recfg(), ho_reconf_ctxt.transaction_id, request);
 
-  // pack DL CCCH msg
+  // Pack DL DCCH msg
   pdcp_tx_result pdcp_packing_result =
       context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCReconfiguration"));
   if (!pdcp_packing_result.is_successful()) {
