@@ -479,7 +479,7 @@ struct du_high_unit_prach_config {
   /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
-  uint8_t nof_cb_preambles_per_ssb = 4;
+  uint8_t nof_cb_preambles_per_ssb = 64;
 };
 
 /// Base cell configuration.
