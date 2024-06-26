@@ -202,6 +202,7 @@ def _handover_multi_ues(
         noise_spd=noise_spd,
         num_cells=2,
         cell_position_offset=cell_position_offset,
+        log_ip_level="debug",
     )
 
     configure_artifacts(
