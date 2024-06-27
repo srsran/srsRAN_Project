@@ -35,7 +35,9 @@ public:
   void start() override;
   void stop() override;
 
+  /// helper functions for testing
   std::optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
+  cu_up_manager*          get_cu_up_manager() { return cu_up_mng.get(); }
 
 private:
   void disconnect();

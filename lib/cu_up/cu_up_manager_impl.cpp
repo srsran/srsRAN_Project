@@ -59,7 +59,42 @@ void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<
 e1ap_bearer_context_setup_response
 cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
 {
-  return {};
+  e1ap_bearer_context_setup_response response = {};
+  response.ue_index                           = INVALID_UE_INDEX;
+  response.success                            = false;
+
+  // 1. Create new UE context
+  ue_context_cfg ue_cfg = {};
+  fill_sec_as_config(ue_cfg.security_info, msg.security_info);
+  ue_cfg.activity_level        = msg.activity_notif_level;
+  ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
+  ue_cfg.qos                   = cfg.qos;
+  ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not create UE context");
+    return response;
+  }
+  ue_ctxt->get_logger().log_info("UE created");
+
+  // 2. Handle bearer context setup request
+  for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
+    pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
+    if (result.success) {
+      process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
+    } else {
+      e1ap_pdu_session_resource_failed_item res_failed_item;
+
+      res_failed_item.pdu_session_id = result.pdu_session_id;
+      res_failed_item.cause          = result.cause;
+
+      response.pdu_session_resource_failed_list.emplace(result.pdu_session_id, res_failed_item);
+    }
+  }
+
+  // 3. Create response
+  response.ue_index = ue_ctxt->get_index();
+  response.success  = true;
+  return response;
 }
 
 async_task<e1ap_bearer_context_modification_response>
@@ -145,9 +180,6 @@ void cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer
 
   ue_mng->remove_ue(msg.ue_index);
 }
-
-void cu_up_manager_impl::on_e1ap_connection_establish() {}
-void cu_up_manager_impl::on_e1ap_connection_drop() {}
 
 /// Helper functions
 void process_successful_pdu_resource_modification_outcome(

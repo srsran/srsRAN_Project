@@ -9,9 +9,9 @@
  */
 
 #include "cu_up_test_helpers.h"
+#include "lib/cu_up/cu_up_impl.h"
 #include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
@@ -134,7 +134,7 @@ protected:
 
     auto cfg_copy   = cfg;
     cfg_copy.ngu_gw = ngu_gw.get();
-    cu_up           = create_cu_up(cfg_copy);
+    cu_up           = std::make_unique<srs_cu_up::cu_up>(cfg_copy);
   }
 
   void TearDown() override
@@ -145,14 +145,14 @@ protected:
 
   std::unique_ptr<timer_manager> app_timers;
 
-  dummy_cu_cp_handler                         e1ap_client;
-  dummy_inner_f1u_bearer                      f1u_bearer;
-  std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
-  std::unique_ptr<io_broker>                  broker;
-  std::unique_ptr<ngu_gateway>                ngu_gw;
-  std::unique_ptr<dummy_cu_up_executor_pool>  exec_pool;
-  std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
-  srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
+  dummy_cu_cp_handler                        e1ap_client;
+  dummy_inner_f1u_bearer                     f1u_bearer;
+  std::unique_ptr<dummy_f1u_gateway>         f1u_gw;
+  std::unique_ptr<io_broker>                 broker;
+  std::unique_ptr<ngu_gateway>               ngu_gw;
+  std::unique_ptr<dummy_cu_up_executor_pool> exec_pool;
+  std::unique_ptr<srs_cu_up::cu_up>          cu_up;
+  srslog::basic_logger&                      test_logger = srslog::fetch_basic_logger("TEST");
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
@@ -171,7 +171,7 @@ protected:
         bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
 
     // Setup bearer
-    // cu_up->handle_bearer_context_setup_request(bearer_context_setup);
+    cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
   }
 };
 
@@ -331,4 +331,10 @@ TEST_F(cu_up_test, ul_data_flow)
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
   close(sock_fd);
+}
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

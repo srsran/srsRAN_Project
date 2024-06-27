@@ -44,8 +44,8 @@ public:
   void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
   // cu_up_e1ap_connection_notifier
-  void on_e1ap_connection_establish() override;
-  void on_e1ap_connection_drop() override;
+  void on_e1ap_connection_establish() override { e1ap_connected = true; }
+  void on_e1ap_connection_drop() override { e1ap_connected = false; }
   bool e1ap_is_connected() override { return e1ap_connected; }
 
 private:
