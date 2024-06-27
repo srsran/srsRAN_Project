@@ -143,20 +143,6 @@ private:
 
   using slot_pucch_grants = static_vector<ue_grants, MAX_PUCCH_PDUS_PER_SLOT>;
 
-  /// \brief Collects the information of what PUCCH cell resources have been allocated to a UE at given slot.
-  /// This info is only used during the allocation, and the PUCCH allocator is called for a new UE or new allocation.
-  struct res_manager_garbage_collector {
-    bool                    harq_set_0 = false;
-    bool                    harq_set_1 = false;
-    bool                    csi        = false;
-    bool                    sr         = false;
-    pucch_resource_manager& res_manager;
-
-    res_manager_garbage_collector(pucch_resource_manager& res_manager_) : res_manager(res_manager_){};
-    void reset();
-    void release_resource(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
-  };
-
   /// ////////////  Main private functions   //////////////
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
@@ -251,13 +237,12 @@ private:
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
 
-  const unsigned                PUCCH_FORMAT_1_NOF_PRBS{1};
+  constexpr static unsigned     PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration&     cell_cfg;
   const unsigned                max_pucch_grants_per_slot;
   const unsigned                max_ul_grants_per_slot;
   slot_point                    last_sl_ind;
   pucch_resource_manager        resource_manager;
-  res_manager_garbage_collector garbage_collector;
 
   srslog::basic_logger& logger;
 };

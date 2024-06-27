@@ -25,7 +25,7 @@ static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
   // TODO: extend by passing the BWP id.
   const bwp_id_t bwp_id      = srsran::MIN_BWP_ID;
   const auto& csi_report_cfg = ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
-  auto&       csi_pucch_res_list =
+  const auto& csi_pucch_res_list =
       std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
           .pucch_csi_res_list;
 
@@ -132,7 +132,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
   if (csi_pucch_res_idx_int < 0) {
     return nullptr;
   }
-  const unsigned csi_pucch_res_idx = static_cast<unsigned>(csi_pucch_res_idx_int);
+  const auto csi_pucch_res_idx = static_cast<unsigned>(csi_pucch_res_idx_int);
 
   // Get resource list of wanted slot.
   auto& slot_record = get_slot_resource_counter(slot_csi);
@@ -153,11 +153,13 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
     return nullptr;
   }
 
-  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI.
+  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
+  // the resource had already been allocated, just return it.
   if (slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti != crnti) {
     slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti           = crnti;
     slot_record.ues_using_pucch_res[csi_pucch_res_idx].resource_usage = pucch_resource_usage::CSI;
   }
+
   return &(*res_cfg);
 };
 
@@ -188,11 +190,13 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
     return nullptr;
   }
 
-  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI.
+  // If the PUCCH res with correct ID was not allocated to the UE's RNTI, allocate it to this RNTI; otherwise, it means
+  // the resource had already been allocated, just return it.
   if (slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti != crnti and res_cfg != pucch_res_list.end()) {
     slot_record.ues_using_pucch_res[sr_pucch_res_id].rnti           = crnti;
     slot_record.ues_using_pucch_res[sr_pucch_res_id].resource_usage = pucch_resource_usage::SR;
   }
+
   return &(*res_cfg);
 };
 
@@ -226,14 +230,14 @@ bool pucch_resource_manager::release_sr_resource(slot_point slot_sr, rnti_t crnt
   return true;
 }
 
-bool pucch_resource_manager::release_csi_resource(slot_point                   slot_sr,
+bool pucch_resource_manager::release_csi_resource(slot_point                   slot_csi,
                                                   rnti_t                       crnti,
                                                   const ue_cell_configuration& ue_cell_cfg)
 {
-  srsran_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_csi < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
 
-  auto& slot_record = get_slot_resource_counter(slot_sr);
+  auto& slot_record = get_slot_resource_counter(slot_csi);
 
   // We assume each UE only has 1 CSI Resource Config configured.
   const int csi_pucch_res_idx = get_pucch_res_idx_for_csi(ue_cell_cfg);
@@ -247,6 +251,89 @@ bool pucch_resource_manager::release_csi_resource(slot_point                   s
   slot_record.ues_using_pucch_res[csi_pucch_res_idx].rnti           = rnti_t::INVALID_RNTI;
   slot_record.ues_using_pucch_res[csi_pucch_res_idx].resource_usage = pucch_resource_usage::NOT_USED;
   return true;
+}
+
+void pucch_resource_manager::reset_last_ue_allocation()
+{
+  last_ue_allocations.rnti       = rnti_t::INVALID_RNTI;
+  last_ue_allocations.harq_set_0 = false;
+  last_ue_allocations.harq_set_1 = false;
+  last_ue_allocations.sr         = false;
+  last_ue_allocations.sr         = false;
+}
+
+void pucch_resource_manager::set_new_resource_allocation(rnti_t crnti, pucch_resource_usage res_type)
+{
+  if (last_ue_allocations.rnti != crnti and last_ue_allocations.rnti != rnti_t::INVALID_RNTI) {
+    srsran_assertion_failure("The last UE allocation tracker was already in used by another RNTI");
+    return;
+  }
+
+  last_ue_allocations.rnti = crnti;
+
+  switch (res_type) {
+    case pucch_resource_usage::HARQ_F1:
+      last_ue_allocations.harq_set_0 = true;
+      break;
+    case pucch_resource_usage::HARQ_F2:
+      last_ue_allocations.harq_set_1 = true;
+      break;
+    case pucch_resource_usage::SR:
+      last_ue_allocations.sr = true;
+      break;
+    case pucch_resource_usage::CSI:
+      last_ue_allocations.csi = true;
+      break;
+    default:
+      srsran_assertion_failure("Invalid PUCCH resource usage type");
+  }
+}
+
+bool pucch_resource_manager::is_resource_allocated(rnti_t rnti, pucch_resource_usage res_type) const
+{
+  if (last_ue_allocations.rnti != rnti and last_ue_allocations.rnti != rnti_t::INVALID_RNTI) {
+    srsran_assertion_failure("The last UE allocation tracker was already in used by another RNTI");
+    return false;
+  }
+
+  switch (res_type) {
+    case pucch_resource_usage::HARQ_F1:
+      return last_ue_allocations.harq_set_0;
+    case pucch_resource_usage::HARQ_F2:
+      return last_ue_allocations.harq_set_1;
+    case pucch_resource_usage::SR:
+      return last_ue_allocations.sr;
+    case pucch_resource_usage::CSI:
+      return last_ue_allocations.csi;
+    default:
+      srsran_assertion_failure("Invalid PUCCH resource usage type");
+      return false;
+  }
+}
+
+void pucch_resource_manager::cancel_last_ue_allocations(slot_point                   slot_tx,
+                                                        rnti_t                       crnti,
+                                                        const ue_cell_configuration& ue_cell_cfg)
+{
+  if (crnti != last_ue_allocations.rnti) {
+    srsran_assertion_failure("Trying to cancel a UE allocation that was not the last one");
+    return;
+  }
+
+  if (last_ue_allocations.harq_set_0) {
+    release_harq_f1_resource(
+        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (last_ue_allocations.harq_set_1) {
+    release_harq_f2_resource(
+        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (last_ue_allocations.sr) {
+    release_sr_resource(slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  }
+  if (last_ue_allocations.csi) {
+    release_csi_resource(slot_tx, crnti, ue_cell_cfg);
+  }
 }
 
 pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_available(slot_point          slot_harq,
@@ -292,7 +379,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
       static_cast<unsigned>(available_resource - slot_ue_res_array.begin()) <
           pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list.size()) {
     // Get the PUCCH resource indicator from the available resource position within the span.
-    const unsigned pucch_res_indicator = static_cast<unsigned>(available_resource - slot_ue_res_array.begin());
+    const auto pucch_res_indicator = static_cast<unsigned>(available_resource - slot_ue_res_array.begin());
     // Get the PUCCH resource ID from the PUCCH resource indicator and the PUCCH resource set.
     const unsigned pucch_res_idx_from_list = ue_res_id_set_for_harq[pucch_res_indicator].cell_res_id;
 

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../config/ue_configuration.h"
-#include "pucch_allocator.h"
 
 namespace srsran {
 
@@ -22,6 +21,9 @@ struct pucch_harq_resource_alloc_record {
   /// PUCCH resource indicator corresponding to the resource that will be used by the UE.
   unsigned pucch_res_indicator;
 };
+
+/// Defines the PUCCH resource usage.
+enum class pucch_resource_usage { NOT_USED = 0, HARQ_F1, HARQ_F2, SR, CSI };
 
 /// \brief Class that manages the cell allocation of PUCCH resources across UEs.
 /// The correct functioning of pucch_resource_manager is based on the following assumptions:
@@ -124,6 +126,14 @@ public:
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
+  void reset_last_ue_allocation();
+
+  void set_new_resource_allocation(rnti_t rnti, pucch_resource_usage res_type);
+
+  [[nodiscard]] bool is_resource_allocated(rnti_t rnti, pucch_resource_usage res_type) const;
+
+  void cancel_last_ue_allocations(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
+
 private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
   /// allocated.
@@ -139,8 +149,6 @@ private:
   // As per Section 9.2.1, TS 38.213, this is given by the number of possible values of r_PUCCH, which is 16.
   static const size_t MAX_COMMON_PUCCH_RESOURCES{16};
 
-  enum class pucch_resource_usage { NOT_USED = 0, HARQ_F1, HARQ_F2, SR, CSI };
-
   // Tracks usage of PUCCH resources.
   struct resource_tracker {
     rnti_t               rnti;
@@ -154,6 +162,16 @@ private:
   struct rnti_pucch_res_id_slot_record {
     common_res_record_array used_common_resources;
     pucch_res_record_array  ues_using_pucch_res;
+  };
+
+  // Collects the information of what PUCCH cell resources have been allocated to a UE at given slot.
+  // This info is used/updated by the PUCCH allocator and called for a new UE or new allocation for the same UE.
+  struct ue_allocation_tracker {
+    rnti_t rnti       = rnti_t::INVALID_RNTI;
+    bool   harq_set_0 = false;
+    bool   harq_set_1 = false;
+    bool   csi        = false;
+    bool   sr         = false;
   };
 
   // Returns the resource manager allocation record for a given slot.
@@ -175,6 +193,8 @@ private:
 
   // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
   std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
+
+  ue_allocation_tracker last_ue_allocations;
 
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;

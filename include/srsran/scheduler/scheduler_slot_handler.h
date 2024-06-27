@@ -482,9 +482,12 @@ struct prach_occasion_info {
 
 /// Info about PUCCH used resource.
 struct pucch_info {
-  /// This information only is used by the scheduler.
+  /// This information only is used by the scheduler and not passed to the PHY.
   struct context {
+    /// Identifier of the PUCCH PDU within the list of PUCCH PDUs for a given slot. The ID is only meaningful for a
+    /// given UE; i.e., different UEs can reuse the same ID, but a UE cannot reuse the same ID for different PDUs.
     unsigned id        = MAX_PUCCH_PDUS_PER_SLOT;
+    /// Determines whether the PUCCH PDU uses common resources.
     bool     is_common = false;
   };
 

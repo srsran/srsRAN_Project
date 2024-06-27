@@ -99,7 +99,6 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_,
   cell_cfg(cell_cfg_),
   max_pucch_grants_per_slot(max_pucchs_per_slot),
   max_ul_grants_per_slot(max_ul_grants_per_slot_),
-  garbage_collector(resource_manager),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -137,7 +136,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cel
       grants_ue_it != pucch_grants_slot.end() and grants_ue_it->pucch_grants.harq_resource.has_value();
   const bool has_existing_common_grants = grants_ue_it != pucch_grants_slot.end() and grants_ue_it->has_common_pucch;
   if (has_existing_ded_harq_grants or has_existing_common_grants) {
-    logger.debug("tc-rnti={}: PUCCH common not allocated for slot={}. Cause: a PUCCH grant with HARQ-ACK bits "
+    logger.debug("tc-rnti={}: PUCCH common not allocated for slot={}. Cause: A PUCCH grant with HARQ-ACK bits "
                  "already exists in the same slot",
                  tcrnti,
                  pucch_slot_alloc.slot);
@@ -264,7 +263,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
-  garbage_collector.reset();
+  resource_manager.reset_last_ue_allocation();
 
   slot_point sl_ack = pucch_slot_alloc.slot;
 
@@ -281,7 +280,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
     std::optional<unsigned> pucch_res_ind =
         multiplex_and_allocate_pucch(pucch_slot_alloc, new_bits, *existing_grant_it, ue_cell_cfg);
     if (not pucch_res_ind) {
-      garbage_collector.release_resource(sl_ack, crnti, ue_cell_cfg);
+      resource_manager.cancel_last_ue_allocations(sl_ack, crnti, ue_cell_cfg);
     }
     return pucch_res_ind;
   } else {
@@ -369,7 +368,7 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
 {
   const slot_point sl_tx = pucch_slot_alloc.slot;
 
-  garbage_collector.reset();
+  resource_manager.reset_last_ue_allocation();
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
   if (pucch_slot_alloc.result.ul.pucchs.size() >=
@@ -405,7 +404,7 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
   bits_for_uci.csi_part1_nof_bits = csi_part1_nof_bits;
   auto alloc_outcome = multiplex_and_allocate_pucch(pucch_slot_alloc, bits_for_uci, *existing_grant_it, ue_cell_cfg);
   if (not alloc_outcome.has_value()) {
-    garbage_collector.release_resource(sl_tx, crnti, ue_cell_cfg);
+    resource_manager.cancel_last_ue_allocations(sl_tx, crnti, ue_cell_cfg);
   }
 }
 
@@ -740,35 +739,6 @@ void existing_pucch_pdus_handler::update_harq_pdu_bits(unsigned    harq_ack_bits
   }
 }
 
-void pucch_allocator_impl::res_manager_garbage_collector::reset()
-{
-  harq_set_0 = false;
-  harq_set_1 = false;
-  csi        = false;
-  sr         = false;
-}
-
-void pucch_allocator_impl::res_manager_garbage_collector::release_resource(slot_point                   slot_tx,
-                                                                           rnti_t                       crnti,
-                                                                           const ue_cell_configuration& ue_cell_cfg)
-{
-  if (harq_set_0) {
-    res_manager.release_harq_f1_resource(
-        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-  }
-  if (harq_set_1) {
-    res_manager.release_harq_f2_resource(
-        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-  }
-  if (sr) {
-    res_manager.release_sr_resource(
-        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-  }
-  if (csi) {
-    res_manager.release_csi_resource(slot_tx, crnti, ue_cell_cfg);
-  }
-}
-
 //////////////    Private functions       //////////////
 
 // The function returns an available common PUCCH resource (i.e., not used by other UEs); it returns a null optional
@@ -1018,7 +988,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
   // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
   const unsigned max_d_pri = 7;
   for (unsigned d_pri = 0; d_pri != max_d_pri + 1; ++d_pri) {
-    garbage_collector.reset();
+    resource_manager.reset_last_ue_allocation();
 
     // r_PUCCH, as per Section 9.2.1, TS 38.213.
     const unsigned r_pucch = get_pucch_default_resource_index(start_cce_idx, nof_coreset_cces, d_pri);
@@ -1038,7 +1008,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     if (ded_resource == nullptr) {
       continue;
     }
-    garbage_collector.harq_set_0 = true;
+    resource_manager.set_new_resource_allocation(rnti, pucch_resource_usage::HARQ_F1);
 
     // Add a current grant entry with the PUCCH resource indicator found above; this will force the function that
     // multiplexes the resources to use the specific resource with the given PUCCH resource indicator (it could be
@@ -1060,7 +1030,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     pucch_res_ind = multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, true);
 
     if (not pucch_res_ind.has_value()) {
-      garbage_collector.release_resource(pucch_alloc.slot, rnti, ue_cell_cfg);
+      resource_manager.cancel_last_ue_allocations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
 
@@ -1307,7 +1277,8 @@ void pucch_allocator_impl::remove_unsed_pucch_res(slot_point                   s
 
   // This is a special case, in which the PUCCH from resource set 0 is first reserved, but later it is converted into a
   // PUCCH from resource set 1 due to the multiplexing process.
-  if (garbage_collector.harq_set_1 and garbage_collector.harq_set_0) {
+  if (resource_manager.is_resource_allocated(existing_pucchs.rnti, pucch_resource_usage::HARQ_F2) and
+      resource_manager.is_resource_allocated(existing_pucchs.rnti, pucch_resource_usage::HARQ_F1)) {
     resource_manager.release_harq_f1_resource(
         sl_tx, existing_pucchs.rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   }
@@ -1345,9 +1316,9 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
               : resource_manager.reserve_next_f2_harq_res_available(sl_tx, ue_current_grants.rnti, pucch_cfg);
       // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
       if (pucch_set_idx == pucch_res_set_idx::set_0) {
-        garbage_collector.harq_set_0 = true;
+        resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::HARQ_F1);
       } else {
-        garbage_collector.harq_set_1 = true;
+        resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::HARQ_F2);
       }
       if (harq_resource.pucch_res == nullptr) {
         return std::nullopt;
@@ -1377,7 +1348,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
       const pucch_resource* sr_resource =
           resource_manager.reserve_sr_res_available(sl_tx, ue_current_grants.rnti, pucch_cfg);
       // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
-      garbage_collector.sr = true;
+      resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::SR);
       if (sr_resource == nullptr) {
         return std::nullopt;
       }
@@ -1404,7 +1375,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
       const pucch_resource* csi_resource =
           resource_manager.reserve_csi_resource(sl_tx, ue_current_grants.rnti, ue_cell_cfg);
       // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
-      garbage_collector.csi = true;
+      resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::CSI);
       if (csi_resource == nullptr) {
         return std::nullopt;
       }
@@ -1477,7 +1448,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
         else if (preserve_res_indicator) {
           const pucch_resource* pucch_res = resource_manager.reserve_f2_res_by_res_indicator(
               slot_harq, crnti, r_harq.harq_id.pucch_res_ind, pucch_cfg);
-          garbage_collector.harq_set_1 = true;
+          resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_F2);
           if (pucch_res != nullptr) {
             return std::nullopt;
           }
@@ -1490,7 +1461,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
         else {
           pucch_harq_resource_alloc_record res_alloc =
               resource_manager.reserve_next_f2_harq_res_available(slot_harq, crnti, pucch_cfg);
-          garbage_collector.harq_set_1 = true;
+          resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_F2);
           if (res_alloc.pucch_res != nullptr) {
             return std::nullopt;
           }
@@ -1551,7 +1522,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
       else if (preserve_res_indicator) {
         const pucch_resource* pucch_res =
             resource_manager.reserve_f2_res_by_res_indicator(slot_harq, crnti, r_harq.harq_id.pucch_res_ind, pucch_cfg);
-        garbage_collector.harq_set_1 = true;
+        resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_F2);
         if (pucch_res == nullptr) {
           return std::nullopt;
         }
@@ -1564,7 +1535,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
       else {
         pucch_harq_resource_alloc_record res_alloc =
             resource_manager.reserve_next_f2_harq_res_available(slot_harq, crnti, pucch_cfg);
-        garbage_collector.harq_set_1 = true;
+        resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_F2);
         if (res_alloc.pucch_res == nullptr) {
           return std::nullopt;
         }
@@ -1624,7 +1595,7 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
     } else {
       pucch_harq_resource_alloc_record res_alloc =
           resource_manager.reserve_next_f2_harq_res_available(slot_harq, crnti, pucch_cfg);
-      garbage_collector.harq_set_1 = true;
+      resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_F2);
       if (res_alloc.pucch_res == nullptr) {
         return std::nullopt;
       }
@@ -1730,7 +1701,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
       resource_set_q.front().bits.sr_bits != sr_nof_bits::no_sr) {
     const pucch_resource* sr_res = resource_manager.reserve_sr_res_available(
         sl_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    garbage_collector.sr = true;
+    resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::SR);
     if (sr_res == nullptr) {
       logger.error("This is not expected");
     }
