@@ -19,6 +19,7 @@
 #include "ue_task_scheduler_impl.h"
 #include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include <optional>
 #include <unordered_map>
 
 namespace srsran {
@@ -70,11 +71,26 @@ public:
 
   /// \brief Allocate resources for the UE in the CU-CP.
   /// \param[in] du_index Index of the DU the UE is connected to.
+  /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
+  /// \param[in] pci The PCI of the cell the UE is connected to.
+  /// \param[in] rnti The RNTI of the UE.
+  /// \param[in] pcell_index The index of the PCell the UE is connected to.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
-  ue_index_t add_ue(du_index_t du_index);
+  ue_index_t add_ue(du_index_t                     du_index,
+                    std::optional<gnb_du_id_t>     du_id       = std::nullopt,
+                    std::optional<pci_t>           pci         = std::nullopt,
+                    std::optional<rnti_t>          rnti        = std::nullopt,
+                    std::optional<du_cell_index_t> pcell_index = std::nullopt);
 
   /// \brief Set the DU context of the UE.
-  cu_cp_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti);
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
+  /// \param[in] pci The PCI of the cell the UE is connected to.
+  /// \param[in] rnti The RNTI of the UE.
+  /// \param[in] pcell_index The index of the PCell the UE is connected to.
+  /// \return Pointer to the DU UE if found, nullptr otherwise.
+  cu_cp_ue*
+  set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti, du_cell_index_t pcell_index);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.

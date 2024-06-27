@@ -25,14 +25,16 @@ protected:
 
   void create_ues(bool procedure_outcome, unsigned transaction_id_)
   {
-    ue_index_t source_ue_index = get_ue_manager()->add_ue(source_du_index);
-    source_ue = get_ue_manager()->set_ue_du_context(source_ue_index, int_to_gnb_du_id(0), source_pci, source_rnti);
+    ue_index_t source_ue_index =
+        get_ue_manager()->add_ue(source_du_index, int_to_gnb_du_id(0), source_pci, source_rnti, du_cell_index_t::min);
+    source_ue = get_ue_manager()->find_ue(source_ue_index);
     ASSERT_NE(source_ue, nullptr);
     source_rrc_ue_notifier.set_transaction_id(transaction_id_);
     source_ue->set_rrc_ue_notifier(source_rrc_ue_notifier);
 
-    ue_index_t target_ue_index = get_ue_manager()->add_ue(target_du_index);
-    target_ue = get_ue_manager()->set_ue_du_context(target_ue_index, int_to_gnb_du_id(0), target_pci, target_rnti);
+    ue_index_t target_ue_index =
+        get_ue_manager()->add_ue(target_du_index, int_to_gnb_du_id(0), target_pci, target_rnti, du_cell_index_t::min);
+    target_ue = get_ue_manager()->find_ue(target_ue_index);
     ASSERT_NE(target_ue, nullptr);
     cu_cp_handler.set_rrc_reconfiguration_outcome(procedure_outcome);
     target_ue->set_rrc_ue_notifier(target_rrc_ue_notifier);
@@ -61,7 +63,7 @@ protected:
 private:
   // source UE parameters.
   du_index_t                                         source_du_index = uint_to_du_index(0);
-  unsigned                                           source_pci      = 1;
+  pci_t                                              source_pci      = 1;
   rnti_t                                             source_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier source_rrc_ue_notifier;
   dummy_f1ap_ue_context_manager                      source_f1ap_ue_ctxt_mng;
@@ -69,7 +71,7 @@ private:
 
   // target UE parameters.
   du_index_t                                         target_du_index = uint_to_du_index(1);
-  unsigned                                           target_pci      = 2;
+  pci_t                                              target_pci      = 2;
   rnti_t                                             target_rnti     = to_rnti(0x4601);
   dummy_du_processor_rrc_ue_control_message_notifier target_rrc_ue_notifier;
   cu_cp_ue*                                          target_ue = nullptr;

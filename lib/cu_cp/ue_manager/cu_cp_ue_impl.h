@@ -18,6 +18,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
+#include <optional>
 #include <unordered_map>
 
 namespace srsran {
@@ -43,8 +44,10 @@ public:
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
-           pci_t                          pci_    = INVALID_PCI,
-           rnti_t                         c_rnti_ = rnti_t::INVALID_RNTI);
+           std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
+           std::optional<pci_t>           pci_         = std::nullopt,
+           std::optional<rnti_t>          c_rnti_      = std::nullopt,
+           std::optional<du_cell_index_t> pcell_index_ = std::nullopt);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -82,9 +85,10 @@ public:
   cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
-                    pci_t       pci_    = INVALID_PCI,
-                    rnti_t      c_rnti_ = rnti_t::INVALID_RNTI);
+  void update_du_ue(gnb_du_id_t     du_id_       = gnb_du_id_t::invalid,
+                    pci_t           pci_         = INVALID_PCI,
+                    rnti_t          c_rnti_      = rnti_t::INVALID_RNTI,
+                    du_cell_index_t pcell_index_ = du_cell_index_t::invalid);
 
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt);
