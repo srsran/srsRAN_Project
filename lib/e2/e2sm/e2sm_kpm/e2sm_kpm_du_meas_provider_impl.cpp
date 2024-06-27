@@ -349,7 +349,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    logger.debug("Metric: RRU.PrbAvailDl supports only NO_LABEL label.");
     return meas_collected;
   }
   meas_record_item_c meas_record_item;
@@ -372,7 +372,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    logger.debug("Metric: RRU.PrbAvailUl supports only NO_LABEL label.");
     return meas_collected;
   }
   meas_record_item_c meas_record_item;
@@ -395,7 +395,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    logger.debug("Metric: RRU.PrbTotDl supports only NO_LABEL label.");
     return meas_collected;
   }
   meas_record_item_c meas_record_item;
@@ -418,7 +418,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label
   scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    logger.debug("Metric: RRU.PrbTotUl supports only NO_LABEL label.");
     return meas_collected;
   }
   meas_record_item_c meas_record_item;
