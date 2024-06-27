@@ -60,10 +60,10 @@ public:
   virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
-class cu_up_manager_interface : public cu_up_manager_e1ap_connection_notifier, public cu_up_manager_e1ap_interface
+class cu_up_manager : public cu_up_manager_e1ap_connection_notifier, public cu_up_manager_e1ap_interface
 {
 public:
-  ~cu_up_manager_interface() override = default;
+  virtual ~cu_up_manager() = default;
 };
 
 } // namespace srsran::srs_cu_up

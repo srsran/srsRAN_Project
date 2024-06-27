@@ -14,16 +14,6 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
-{
-  srsran_assert(cfg.ue_exec_pool != nullptr, "Invalid CU-UP UE executor pool");
-  srsran_assert(cfg.io_ul_executor != nullptr, "Invalid CU-UP IO UL executor");
-  srsran_assert(cfg.e1ap.e1_conn_client != nullptr, "Invalid E1 connection client");
-  srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
-  srsran_assert(cfg.ngu_gw != nullptr, "Invalid N3 gateway");
-  srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
-}
-
 /// Helper functions
 void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
 void process_successful_pdu_resource_modification_outcome(
@@ -39,8 +29,6 @@ void process_successful_pdu_resource_setup_mod_outcome(
 
 cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
-  assert_cu_up_configuration_valid(cfg);
-
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
                                         cfg.n3_cfg,
@@ -66,6 +54,12 @@ void cu_up_manager_impl::disconnect()
 void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
 {
   ue_mng->schedule_ue_async_task(ue_index, std::move(task));
+}
+
+e1ap_bearer_context_setup_response
+cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
+{
+  return {};
 }
 
 async_task<e1ap_bearer_context_modification_response>
@@ -151,6 +145,9 @@ void cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer
 
   ue_mng->remove_ue(msg.ue_index);
 }
+
+void cu_up_manager_impl::on_e1ap_connection_establish() {}
+void cu_up_manager_impl::on_e1ap_connection_drop() {}
 
 /// Helper functions
 void process_successful_pdu_resource_modification_outcome(
@@ -258,4 +255,20 @@ void process_successful_pdu_resource_setup_mod_outcome(
     }
     pdu_session_resource_setup_list.emplace(result.pdu_session_id, res_setup_item);
   }
+}
+
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
+{
+  sec_as_config.domain = security::sec_domain::up;
+  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
+    sec_as_config.k_int = security::sec_key{};
+    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+              sec_info.up_security_key.integrity_protection_key.end(),
+              sec_as_config.k_int.value().begin());
+  }
+  std::copy(sec_info.up_security_key.encryption_key.begin(),
+            sec_info.up_security_key.encryption_key.end(),
+            sec_as_config.k_enc.begin());
+  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
+  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
 }

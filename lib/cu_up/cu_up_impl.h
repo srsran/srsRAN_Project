@@ -10,13 +10,13 @@
 
 #pragma once
 
-// #include "adapters/e1ap_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
 #include "ue_manager.h"
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_configuration.h"
+#include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
@@ -62,7 +62,7 @@ private:
   std::unique_ptr<gtpu_echo>           ngu_echo;
   std::unique_ptr<gtpu_teid_pool>      n3_teid_allocator;
   std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
-  std::unique_ptr<ue_manager>          ue_mng;
+  std::unique_ptr<cu_up_manager>       cu_up_mng;
 
   // Adapters
   network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;

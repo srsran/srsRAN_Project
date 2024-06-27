@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_impl.h"
+#include "cu_up_manager_impl.h"
 #include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
@@ -78,26 +79,16 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
-  // TODO
   /// > Create e1ap
   e1ap = create_e1ap(*cfg.e1ap.e1_conn_client, e1ap_cu_up_mng_adapter, *cfg.timers, *cfg.ctrl_executor);
-  // e1ap_cu_up_ev_notifier.connect_cu_up(*this);
 
   cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
-  /// > Create UE manager
-  ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
-                                        cfg.n3_cfg,
-                                        *e1ap,
-                                        *cfg.timers,
-                                        *cfg.f1u_gateway,
-                                        gtpu_gw_adapter,
-                                        *ngu_demux,
-                                        *n3_teid_allocator,
-                                        *f1u_teid_allocator,
-                                        *cfg.ue_exec_pool,
-                                        *cfg.gtpu_pcap,
-                                        logger);
+  /// > Create CU-UP manager
+  cu_up_mng = std::make_unique<cu_up_manager_impl>(cfg);
+
+  /// > Connect E1AP to CU-UP manager
+  e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);
 
   // Start statistics report timer
   if (cfg.statistics_report_period.count() > 0) {
@@ -204,7 +195,7 @@ void cu_up::disconnect()
 void cu_up::on_statistics_report_timer_expired()
 {
   // Log statistics
-  logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
+  // logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
 
   // Restart timer
   statistics_report_timer.set(cfg.statistics_report_period,

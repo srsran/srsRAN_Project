@@ -24,11 +24,11 @@
 
 namespace srsran::srs_cu_up {
 
-class cu_up_manager_impl final : public cu_up_manager_interface
+class cu_up_manager_impl final : public cu_up_manager
 {
 public:
   explicit cu_up_manager_impl(const cu_up_configuration& cfg_);
-  ~cu_up_manager_impl() override;
+  ~cu_up_manager_impl() override = default;
 
   // cu_up_e1ap_interface
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
