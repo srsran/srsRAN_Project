@@ -13,7 +13,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/scheduler_pucch_format.h"
-#include "srsran/support/math/gcd.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace srs_du;
@@ -84,7 +84,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   }
   // As the SR and CSI period might not be one a multiple of each other, we compute the Least Common Multiple (LCM) of
   // the two periods.
-  lcm_csi_sr_period = lcm(sr_period_slots, csi_period_slots);
+  lcm_csi_sr_period = std::lcm(sr_period_slots, csi_period_slots);
 
   // Setup RAN resources per cell.
   for (auto& cell : cells) {
