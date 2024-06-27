@@ -37,7 +37,7 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 
-  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
+  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str();
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
