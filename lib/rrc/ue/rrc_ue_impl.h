@@ -14,6 +14,7 @@
 #include "rrc_ue_context.h"
 #include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -49,7 +50,7 @@ public:
   rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
   rrc_ue_srb_handler&                   get_rrc_ue_srb_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
-  rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
+  rrc_ue_security_mode_command_handler& get_rrc_ue_security_mode_command_handler() override { return *this; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
   rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
 
@@ -61,6 +62,7 @@ public:
   void handle_dl_nas_transport_message(byte_buffer nas_pdu) override;
 
   // rrc_ue_control_message_handler
+  rrc_ue_security_mode_command_context get_security_mode_command_context() override;
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
@@ -104,7 +106,7 @@ private:
   void on_new_as_security_context() override;
   void on_security_context_sucessful() override;
 
-  // Triggers the SMC procedure
+  // rrc_ue_security_mode_command_handler
   async_task<bool> handle_init_security_context() override;
 
   rrc_ue_context_t                context;

@@ -356,10 +356,10 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_rrc_ue_init_security_context_handler : public rrc_ue_init_security_context_handler
+class dummy_rrc_ue_security_mode_command_handler : public rrc_ue_security_mode_command_handler
 {
 public:
-  dummy_rrc_ue_init_security_context_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_rrc_ue_security_mode_command_handler() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void set_security_enabled(bool enabled) { security_enabled = enabled; }
 

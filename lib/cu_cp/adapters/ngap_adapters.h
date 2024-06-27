@@ -173,7 +173,7 @@ public:
   ngap_rrc_ue_adapter() = default;
 
   void connect_rrc_ue(rrc_dl_nas_message_handler&           rrc_ue_msg_handler_,
-                      rrc_ue_init_security_context_handler& rrc_ue_security_handler_,
+                      rrc_ue_security_mode_command_handler& rrc_ue_security_handler_,
                       rrc_ue_handover_preparation_handler&  rrc_ue_ho_prep_handler_)
   {
     rrc_ue_msg_handler      = &rrc_ue_msg_handler_;
@@ -201,7 +201,7 @@ public:
 
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
-  rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
+  rrc_ue_security_mode_command_handler* rrc_ue_security_handler = nullptr;
   rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
 };
 

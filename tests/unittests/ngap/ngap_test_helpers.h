@@ -37,7 +37,7 @@ protected:
     std::optional<ran_ue_id_t> ran_ue_id;
 
     dummy_rrc_dl_nas_message_handler           rrc_ue_dl_nas_handler;
-    dummy_rrc_ue_init_security_context_handler rrc_ue_security_handler;
+    dummy_rrc_ue_security_mode_command_handler rrc_ue_security_handler;
     dummy_rrc_ue_handover_preparation_handler  rrc_ue_ho_prep_handler;
   };
 

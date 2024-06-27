@@ -159,9 +159,9 @@ protected:
         .value();
   }
 
-  rrc_ue_init_security_context_handler* get_rrc_ue_security_handler()
+  rrc_ue_security_mode_command_handler* get_rrc_ue_security_handler()
   {
-    return &rrc_ue->get_rrc_ue_init_security_context_handler();
+    return &rrc_ue->get_rrc_ue_security_mode_command_handler();
   }
 
   rrc_ue_control_message_handler* get_rrc_ue_control_message_handler()

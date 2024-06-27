@@ -14,6 +14,9 @@
 #include "rrc_measurement_types_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/rrc/rrc_types.h"
 
 namespace srsran {
 
@@ -64,6 +67,55 @@ inline expected<uint8_t> get_transaction_id(const asn1::rrc_nr::ul_dcch_msg_s& m
       break;
   }
   return make_unexpected(default_error_t{});
+}
+
+/// \brief Fills ASN.1 RRC Security Mode Command struct.
+/// \param[out] rrc_smc The RRC security mode command ASN.1 struct to fill.
+/// \param[in] int_algo The selected integrity protection algorithm.
+/// \param[in] ciph_algo The selected ciphering algorithm.
+/// \param[in] rrc_transaction_id The RRC transaction id.
+inline void fill_asn1_rrc_smc_msg(asn1::rrc_nr::security_mode_cmd_s&   rrc_smc,
+                                  const security::integrity_algorithm& int_algo,
+                                  const security::ciphering_algorithm& ciph_algo,
+                                  uint8_t                              rrc_transaction_id)
+{
+  using namespace asn1::rrc_nr;
+  security_mode_cmd_ies_s& smc_ies = rrc_smc.crit_exts.set_security_mode_cmd();
+  rrc_smc.rrc_transaction_id       = rrc_transaction_id;
+
+  // Set security algorithms
+  security_cfg_smc_s&       security_cfg_smc       = smc_ies.security_cfg_smc;
+  security_algorithm_cfg_s& security_algorithm_cfg = security_cfg_smc.security_algorithm_cfg;
+
+  security_algorithm_cfg.integrity_prot_algorithm_present = true;
+  switch (int_algo) {
+    case security::integrity_algorithm::nia0:
+      security_algorithm_cfg.integrity_prot_algorithm = integrity_prot_algorithm_e::nia0;
+      break;
+    case security::integrity_algorithm::nia1:
+      security_algorithm_cfg.integrity_prot_algorithm = integrity_prot_algorithm_e::nia1;
+      break;
+    case security::integrity_algorithm::nia2:
+      security_algorithm_cfg.integrity_prot_algorithm = integrity_prot_algorithm_e::nia2;
+      break;
+    case security::integrity_algorithm::nia3:
+      security_algorithm_cfg.integrity_prot_algorithm = integrity_prot_algorithm_e::nia3;
+      break;
+  }
+  switch (ciph_algo) {
+    case security::ciphering_algorithm::nea0:
+      security_algorithm_cfg.ciphering_algorithm = ciphering_algorithm_e::nea0;
+      break;
+    case security::ciphering_algorithm::nea1:
+      security_algorithm_cfg.ciphering_algorithm = ciphering_algorithm_e::nea1;
+      break;
+    case security::ciphering_algorithm::nea2:
+      security_algorithm_cfg.ciphering_algorithm = ciphering_algorithm_e::nea2;
+      break;
+    case security::ciphering_algorithm::nea3:
+      security_algorithm_cfg.ciphering_algorithm = ciphering_algorithm_e::nea3;
+      break;
+  }
 }
 
 /// \brief Fills ASN.1 RRC Setup struct.

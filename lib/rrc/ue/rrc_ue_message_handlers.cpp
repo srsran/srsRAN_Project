@@ -250,6 +250,52 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   }
 }
 
+rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_context()
+{
+  // activate SRB1 PDCP security
+  on_new_as_security_context();
+
+  rrc_ue_security_mode_command_context smc_ctxt;
+
+  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+    logger.log_error("Can't get security mode command. {} is not set up", srb_id_t::srb1);
+    return smc_ctxt;
+  }
+
+  // Create transaction to get transaction ID
+  rrc_transaction transaction = event_mng->transactions.create_transaction();
+  smc_ctxt.transaction_id     = transaction.id();
+
+  // Get selected security algorithms
+  security::sec_selected_algos security_algos = cu_cp_ue_notifier.get_security_algos();
+
+  // Pack SecurityModeCommand
+  dl_dcch_msg_s dl_dcch_msg;
+  dl_dcch_msg.msg.set_c1().set_security_mode_cmd().crit_exts.set_security_mode_cmd();
+  fill_asn1_rrc_smc_msg(dl_dcch_msg.msg.c1().security_mode_cmd(),
+                        security_algos.integ_algo,
+                        security_algos.cipher_algo,
+                        smc_ctxt.transaction_id);
+
+  // Pack DL DCCH msg
+  pdcp_tx_result pdcp_packing_result =
+      context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "SecurityModeCommand"));
+  if (!pdcp_packing_result.is_successful()) {
+    logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                    pdcp_packing_result.get_failure_cause());
+    on_ue_release_required(pdcp_packing_result.get_failure_cause());
+    return smc_ctxt;
+  }
+
+  smc_ctxt.rrc_ue_security_mode_command_pdu = pdcp_packing_result.pop_pdu();
+  smc_ctxt.sp_cell_id                       = context.cell.cgi;
+
+  // Log Tx message
+  log_rrc_message(logger, Tx, smc_ctxt.rrc_ue_security_mode_command_pdu, dl_dcch_msg, "DCCH DL");
+
+  return smc_ctxt;
+}
+
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(
