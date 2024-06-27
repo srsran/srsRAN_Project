@@ -37,7 +37,7 @@ inline unsigned format1_cp_step_to_uint(nof_cyclic_shifts opt)
 
 /// Collects the parameters for PUCCH Format 1 that can be configured.
 struct pucch_f0_params {
-  /// Indicates whether OCCs (as per \c PUCCH-format1, in \c PUCCH-Config, TS 38.331) are supported.
+  /// Indicates whether OCCs (as per \c PUCCH-format0, in \c PUCCH-Config, TS 38.331) are supported.
   bounded_integer<unsigned, 1, 2> nof_symbols{2};
   bool                            intraslot_freq_hopping{false};
 };

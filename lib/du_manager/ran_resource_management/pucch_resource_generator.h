@@ -47,9 +47,9 @@ error_type<std::string> pucch_parameters_validator(unsigned                     
 /// \param[in] f1_params PUCCH F2 resource parameters.
 /// \param[in] bwp_size_rbs Size of the BWP in RBs.
 /// \return The list of PUCCH resources for a cell. The list has the PUCCH Format 0/1 resources in front of the list,
-/// and the PUCCH Format 2 in the back of the list. \remark The function returns an empty list in the following cases:
-/// (i) If overall the RBs occupancy is larger than the BWP size. (ii) If F2 intra-slot frequency hopping is enabled
-/// with only 1 symbol.
+/// and the PUCCH Format 2 in the back of the list.
+/// \remark The function returns an empty list in the following cases: (i) If overall the RBs occupancy is larger than
+/// the BWP size. (ii) If F2 intra-slot frequency hopping is enabled with only 1 symbol.
 std::vector<pucch_resource> generate_cell_pucch_res_list(unsigned                                       nof_res_f0_f1,
                                                          unsigned                                       nof_res_f2,
                                                          std::variant<pucch_f0_params, pucch_f1_params> f1_params,

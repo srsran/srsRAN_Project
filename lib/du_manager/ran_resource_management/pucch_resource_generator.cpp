@@ -365,7 +365,7 @@ srsran::srs_du::pucch_parameters_validator(unsigned                             
 
   if (has_f0) {
     const auto& f0_params = std::get<pucch_f0_params>(f0_f1_params);
-    // > If intraslot_freq_hopping is enabled, check if PUCCH Format 2 has more than symbol.
+    // > If intraslot_freq_hopping is enabled, check if PUCCH Format 0 has more than symbol.
     if (has_f0 and f0_params.intraslot_freq_hopping and f0_params.nof_symbols == 1) {
       return make_unexpected("Intra-slot frequency hopping for PUCCH Format 0 requires 2 symbols");
     }
