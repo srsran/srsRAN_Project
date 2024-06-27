@@ -342,7 +342,7 @@ inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::p
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
@@ -358,7 +358,7 @@ inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 inline expected<paging_identity_type> get_paging_identity_type(const asn1::f1ap::paging_s& pdu)
@@ -374,7 +374,7 @@ inline expected<paging_identity_type> get_paging_identity_type(const asn1::f1ap:
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 inline expected<unsigned> get_paging_drx_in_nof_rf(const asn1::f1ap::paging_s& pdu)
@@ -392,7 +392,7 @@ inline expected<unsigned> get_paging_drx_in_nof_rf(const asn1::f1ap::paging_s& p
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 inline expected<unsigned> get_paging_priority(const asn1::f1ap::paging_s& pdu)
@@ -418,7 +418,7 @@ inline expected<unsigned> get_paging_priority(const asn1::f1ap::paging_s& pdu)
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 } // namespace srsran

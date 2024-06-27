@@ -104,7 +104,7 @@ void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_
     }
 
     auto pdu_buffer = byte_buffer::create(span<const uint8_t>(fapi_pdu.data, fapi_pdu.pdu_length));
-    if (pdu_buffer.is_error()) {
+    if (not pdu_buffer.has_value()) {
       srslog::fetch_basic_logger("FAPI").warning("Unable to allocate memory for MAC RX PDU");
       // Avoid new buffer allocations for the same FAPI PDU.
       break;

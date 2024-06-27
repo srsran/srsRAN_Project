@@ -26,7 +26,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::init_msg_s& out)
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 /// Extracts transaction id of Successful Outcome message.
@@ -40,7 +40,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::successful_outcome
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 /// Extracts transaction id of Unsuccessful Outcome message.
@@ -53,7 +53,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::unsuccessful_outco
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 /// Extracts transaction id of E2AP PDU.
@@ -70,7 +70,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::e2ap::e2ap_pdu_c& pdu)
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 /// Extracts message type.

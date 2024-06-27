@@ -814,7 +814,7 @@ TEST_P(byte_buffer_stress_tester, concurrent_alloc_dealloc_test)
         // Allocation of new buffer.
         auto buf =
             byte_buffer::create(span<const uint8_t>(randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)));
-        if (buf.is_error()) {
+        if (not buf.has_value()) {
           // pool is depleted.
           continue;
         }
@@ -865,7 +865,7 @@ TEST_F(byte_buffer_tester, concurrent_alloc_dealloc_test)
   // Deplete the pool
   while (true) {
     auto pdu = byte_buffer::create(span<const uint8_t>{randbytes.data(), 10U});
-    if (pdu.is_error()) {
+    if (not pdu.has_value()) {
       break;
     }
     allocated_buffers.push_back(std::move(pdu.value()));
@@ -873,7 +873,7 @@ TEST_F(byte_buffer_tester, concurrent_alloc_dealloc_test)
 
   // Pool is still empty.
   auto pdu = byte_buffer::create(span<const uint8_t>{randbytes.data(), test_rgen::uniform_int(1U, max_buffer_size)});
-  ASSERT_TRUE(pdu.is_error());
+  ASSERT_FALSE(pdu.has_value());
 
   // Test if a span can be added to a byte_buffer with heap as fallback allocator.
   size_t sz = test_rgen::uniform_int(1U, max_buffer_size);

@@ -98,7 +98,7 @@ protected:
       nru_ul_message              ul_message = {};
       expected<byte_buffer_chain> buf =
           byte_buffer_chain::create(gtpu_extract_msg(std::move(pdu))); // header is invalidated after extraction;
-      if (buf.is_error()) {
+      if (not buf.has_value()) {
         logger.log_error("Dropped PDU: Failed to create byte_buffer_chain. pdu_len={}", pdu_len);
         return;
       }

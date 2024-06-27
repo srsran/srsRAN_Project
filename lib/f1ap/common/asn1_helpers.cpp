@@ -16,12 +16,12 @@ using namespace srsran;
 expected<nr_cell_global_id_t> srsran::cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi)
 {
   auto plmn = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes());
-  if (plmn.is_error()) {
-    return plmn.error();
+  if (not plmn.has_value()) {
+    return make_unexpected(plmn.error());
   }
   auto nci = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number());
-  if (nci.is_error()) {
-    return nci.error();
+  if (not nci.has_value()) {
+    return make_unexpected(nci.error());
   }
   return nr_cell_global_id_t{plmn.value(), nci.value()};
 }

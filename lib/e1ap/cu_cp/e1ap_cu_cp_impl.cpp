@@ -329,7 +329,7 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
       }
 
       // Set transaction result and resume suspended procedure.
-      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
+      if (not ev_mng.transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
         logger.warning("Ignoring message. Cause: Transaction with id={} has already completed", transaction_id.value());
       }
   }

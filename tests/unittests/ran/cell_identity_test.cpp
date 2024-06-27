@@ -162,7 +162,7 @@ class mcc_test : public ::testing::Test
 TEST_F(mcc_test, mcc_creation_from_invalid_bcd_integer_fails)
 {
   auto ret = mobile_country_code::from_bcd(0x0000);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mcc_test, mcc_creation_from_valid_bcd_integer_succeeds)
@@ -176,7 +176,7 @@ TEST_F(mcc_test, mcc_creation_from_valid_bcd_integer_succeeds)
 TEST_F(mcc_test, mcc_creation_from_invalid_string_fails)
 {
   auto ret = mobile_country_code::from_string("1234");
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mcc_test, mcc_creation_from_valid_string_succeeds)
@@ -191,7 +191,7 @@ TEST_F(mcc_test, mcc_creation_from_invalid_bytes_fails)
 {
   std::array<uint8_t, 3> bytes = {20, 21, 1};
   auto                   ret   = mobile_country_code::from_bytes(bytes);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mcc_test, mcc_creation_from_valid_bytes_succeeds)
@@ -211,7 +211,7 @@ class mnc_test : public ::testing::Test
 TEST_F(mnc_test, mnc_creation_from_invalid_bcd_integer_fails)
 {
   auto ret = mobile_network_code::from_bcd(0x0000);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mnc_test, mnc_creation_from_valid_2_digit_bcd_integer_succeeds)
@@ -237,7 +237,7 @@ TEST_F(mnc_test, mnc_creation_from_valid_3_digit_bcd_integer_succeeds)
 TEST_F(mnc_test, mnc_creation_from_invalid_string_fails)
 {
   auto ret = mobile_network_code::from_string("1234");
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mnc_test, mnc_creation_from_valid_2_digit_string_succeeds)
@@ -264,7 +264,7 @@ TEST_F(mnc_test, mnc_creation_from_invalid_bytes_fails)
 {
   std::array<uint8_t, 3> bytes = {21, 1};
   auto                   ret   = mobile_network_code::from_bytes(bytes);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(mnc_test, mnc_creation_from_valid_2_digit_bytes_succeeds)
@@ -295,7 +295,7 @@ class plmn_id_test : public ::testing::Test
 TEST_F(plmn_id_test, plmn_id_creation_from_invalid_string_fails)
 {
   auto ret = plmn_identity::parse("1234567");
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(plmn_id_test, plmn_id_creation_from_valid_string_succeeds)
@@ -321,7 +321,7 @@ TEST_F(plmn_id_test, plmn_id_creation_from_mnc_mcc_succeeds)
 TEST_F(plmn_id_test, plmn_id_creation_from_invalid_bytes_fails)
 {
   auto ret = plmn_identity::from_bytes({0x00, 0x1f, 0x0a});
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
   ret = plmn_identity::from_bytes({0x00, 0xdf, 0x01});
 }
 
@@ -366,7 +366,7 @@ class nci_test : public ::testing::Test
 TEST_F(nci_test, nci_creation_from_invalid_number_fails)
 {
   auto ret = nr_cell_identity::create(0x123456789a);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(nci_test, nci_creation_from_valid_number_succeeds)
@@ -385,9 +385,9 @@ TEST_F(nci_test, nci_creation_from_valid_number_succeeds)
 TEST_F(nci_test, nci_creation_from_invalid_string_fails)
 {
   auto ret = nr_cell_identity::parse_hex("123456789a");
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
   ret = nr_cell_identity::parse_hex("12345678x");
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(nci_test, nci_creation_from_valid_string_succeeds)
@@ -434,7 +434,7 @@ TEST_F(nci_test, invalid_gnb_id_and_local_cell_id_to_nci_fails)
 {
   gnb_id_t gnb_id{0x19, 24};
   auto     ret = nr_cell_identity::create(gnb_id, 0x1b01);
-  ASSERT_TRUE(ret.is_error());
+  ASSERT_FALSE(ret.has_value());
 }
 
 TEST_F(nci_test, valid_gnb_id_and_local_cell_id_to_nci_succeeds)

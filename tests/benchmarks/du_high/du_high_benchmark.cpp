@@ -825,7 +825,7 @@ public:
         // We perform a deep-copy of the byte buffer to better simulate a real deployment, where there is stress over
         // the byte buffer pool.
         auto pdu_copy = pdcp_pdu.deep_copy();
-        if (pdu_copy.is_error()) {
+        if (not pdu_copy.has_value()) {
           test_logger.warning("Byte buffer segment pool depleted");
           return;
         }

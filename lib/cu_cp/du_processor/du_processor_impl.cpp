@@ -69,7 +69,7 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   // Validate and update DU configuration.
   auto cfg_res = cfg.du_cfg_hdlr->handle_new_du_config(request);
-  if (cfg_res.is_error()) {
+  if (not cfg_res.has_value()) {
     res.result = cfg_res.error();
     return res;
   }

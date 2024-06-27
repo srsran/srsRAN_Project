@@ -216,12 +216,12 @@ TEST_F(f1u_du_test, tx_pdcp_pdus)
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
-  ASSERT_FALSE(chain1.is_error());
+  ASSERT_TRUE(chain1.has_value());
   f1u->handle_sdu(std::move(chain1.value()));
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
-  ASSERT_FALSE(chain2.is_error());
+  ASSERT_TRUE(chain2.has_value());
   f1u->handle_sdu(std::move(chain2.value()));
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
@@ -255,12 +255,12 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
-  ASSERT_FALSE(chain1.is_error());
+  ASSERT_TRUE(chain1.has_value());
   f1u->handle_sdu(std::move(chain1.value()));
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
-  ASSERT_FALSE(chain2.is_error());
+  ASSERT_TRUE(chain2.has_value());
   f1u->handle_sdu(std::move(chain2.value()));
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
@@ -312,12 +312,12 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
-  ASSERT_FALSE(chain1.is_error());
+  ASSERT_TRUE(chain1.has_value());
   f1u->handle_sdu(std::move(chain1.value()));
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
-  ASSERT_FALSE(chain2.is_error());
+  ASSERT_TRUE(chain2.has_value());
   f1u->handle_sdu(std::move(chain2.value()));
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());

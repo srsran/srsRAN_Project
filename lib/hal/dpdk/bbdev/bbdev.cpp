@@ -32,7 +32,7 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
                  info.drv.num_queues[RTE_BBDEV_OP_LDPC_ENC],
                  info.drv.num_queues[RTE_BBDEV_OP_LDPC_DEC],
                  info.drv.num_queues[RTE_BBDEV_OP_FFT]);
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   // Basic checking of hardware-accelerator capabilities.
@@ -54,13 +54,13 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
   if ((cfg.nof_ldpc_enc_lcores > 0 && !ldpc_enc_capable) || (cfg.nof_ldpc_dec_lcores > 0 && !ldpc_dec_capable) ||
       (cfg.nof_fft_lcores > 0 && !fft_capable)) {
     logger.error("[bbdev] device {} does not provide the requested acceleration functions.", cfg.id);
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   // Enable interruptions.
   if (::rte_bbdev_intr_enable(cfg.id) < 0) {
     logger.error("[bbdev] interrupts for device {} not setup properly.", cfg.id);
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   // Configure the queues (only those required).
@@ -84,7 +84,7 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
                      cfg.id,
                      queue_id,
                      queue_conf.priority);
-        return default_error_t{};
+        return make_unexpected(default_error_t{});
       }
       ++queue_id;
     }
@@ -103,7 +103,7 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
                      cfg.id,
                      queue_id,
                      queue_conf.priority);
-        return default_error_t{};
+        return make_unexpected(default_error_t{});
       }
       ++queue_id;
     }
@@ -122,7 +122,7 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
                      cfg.id,
                      queue_id,
                      queue_conf.priority);
-        return default_error_t{};
+        return make_unexpected(default_error_t{});
       }
       ++queue_id;
     }
@@ -130,7 +130,7 @@ expected<::rte_bbdev_info> dpdk::bbdev_start(const bbdev_acc_configuration& cfg,
 
   if (::rte_bbdev_start(cfg.id) < 0) {
     logger.error("[bbdev] device {} not started.", cfg.id);
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   return info;

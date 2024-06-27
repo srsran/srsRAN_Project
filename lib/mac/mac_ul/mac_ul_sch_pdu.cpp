@@ -23,7 +23,7 @@ error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_rea
 {
   unsigned subpdu_len = subpdu_reader.length();
   if (subpdu_len == 0) {
-    return std::string{"Empty subPDU."};
+    return make_unexpected(std::string{"Empty subPDU."});
   }
   payload_view = {};
 
@@ -34,7 +34,7 @@ error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_rea
   header_length = 1;
 
   if (not lcid_val.is_valid_lcid()) {
-    return fmt::format("Unrecognized lcid={}.", lcid_val);
+    return make_unexpected(fmt::format("Unrecognized lcid={}.", lcid_val));
   }
 
   uint32_t sdu_length = 0;
@@ -42,7 +42,7 @@ error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_rea
     // Variable-sized MAC CEs or SDUs
 
     if (subpdu_len < (F_bit ? 3 : 2)) {
-      return fmt::format("Not enough bytes remaining in PDU to decode length prefix.");
+      return make_unexpected(fmt::format("Not enough bytes remaining in PDU to decode length prefix."));
     }
 
     // Read first length byte
@@ -58,8 +58,9 @@ error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_rea
     }
 
     if (subpdu_len < header_length + sdu_length) {
-      return fmt::format(
-          "Not enough bytes remaining in PDU to decode SDU payload ({} < {}).", subpdu_len - header_length, sdu_length);
+      return make_unexpected(fmt::format("Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
+                                         subpdu_len - header_length,
+                                         sdu_length));
     }
     payload_view = subpdu_reader.split_and_advance(sdu_length);
   } else {
@@ -73,9 +74,9 @@ error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_rea
       sdu_length = lcid_val.sizeof_ce();
 
       if (subpdu_len < header_length + sdu_length) {
-        return fmt::format("Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
-                           subpdu_len - header_length,
-                           sdu_length);
+        return make_unexpected(fmt::format("Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
+                                           subpdu_len - header_length,
+                                           sdu_length));
       }
       payload_view = subpdu_reader.split_and_advance(sdu_length);
     }
@@ -100,7 +101,7 @@ error_type<std::string> mac_ul_sch_pdu::unpack(const byte_buffer& payload)
 
     mac_ul_sch_subpdu&      subpdu = subpdus.emplace_back();
     error_type<std::string> ret    = subpdu.unpack(reader);
-    if (ret.is_error()) {
+    if (not ret.has_value()) {
       // Discard all decoded subPDUs.
       clear();
       return ret;

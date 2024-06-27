@@ -165,11 +165,11 @@ public:
   static expected<byte_buffer_chain> create(byte_buffer buf_)
   {
     auto buf = create();
-    if (buf.is_error()) {
-      return default_error_t{};
+    if (not buf.has_value()) {
+      return make_unexpected(default_error_t{});
     }
     if (not buf.value().append(std::move(buf_))) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return buf;
   }
@@ -178,11 +178,11 @@ public:
   static expected<byte_buffer_chain> create(byte_buffer_slice buf_)
   {
     auto buf = create();
-    if (buf.is_error()) {
-      return default_error_t{};
+    if (not buf.has_value()) {
+      return make_unexpected(default_error_t{});
     }
     if (not buf.value().append(std::move(buf_))) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return buf;
   }
@@ -218,7 +218,7 @@ public:
     byte_buffer buf;
     for (const byte_buffer_slice& slice : slices()) {
       if (not buf.append(slice)) {
-        return default_error_t{};
+        return make_unexpected(default_error_t{});
       }
     }
     return buf;

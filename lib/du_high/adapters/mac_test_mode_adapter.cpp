@@ -36,8 +36,8 @@ static expected<mac_rx_data_indication> create_test_pdu_with_bsr(slot_point sl_r
 
   // We pass BSR=254, which according to TS38.321 is the maximum value for the LBSR size.
   auto buf = byte_buffer::create({0x3e, 0x02, 0x01, 254});
-  if (buf.is_error()) {
-    return default_error_t{};
+  if (not buf.has_value()) {
+    return make_unexpected(default_error_t{});
   }
   return mac_rx_data_indication{
       sl_rx, to_du_cell_index(0), mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
@@ -327,7 +327,7 @@ void mac_test_mode_cell_adapter::forward_uci_ind_to_mac(const mac_uci_indication
 
         if (test_ue_cfg.pusch_active) {
           auto rx_pdu = create_test_pdu_with_bsr(uci_msg.sl_rx, pdu.rnti, to_harq_id(0));
-          if (rx_pdu.is_error()) {
+          if (not rx_pdu.has_value()) {
             logger.warning("Unable to create test PDU with BSR");
             continue;
           }
@@ -359,7 +359,7 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
     }
 
     auto rx_pdu = create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id));
-    if (rx_pdu.is_error()) {
+    if (not rx_pdu.has_value()) {
       logger.warning("Unable to create test PDU with BSR");
       continue;
     }

@@ -22,11 +22,11 @@ error_type<std::string> srsran::prach_helper::prach_config_index_is_valid(uint8_
                                               ? prach_cfg_idx <= 107U or (prach_cfg_idx > 197U and prach_cfg_idx < 219U)
                                               : prach_cfg_idx <= 86U or (prach_cfg_idx > 144U and prach_cfg_idx < 169U);
   if (not is_prach_cfg_idx_supported) {
-    return fmt::format(
+    return make_unexpected(fmt::format(
         "PRACH configuration index {} not supported. For {}, the supported PRACH configuration indices are {}\n",
         prach_cfg_idx,
         is_paired_spectrum ? "FDD" : "TDD",
-        is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+        is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]"));
   }
 
   return {};
@@ -38,24 +38,24 @@ error_type<std::string> srsran::prach_helper::zero_correlation_zone_is_valid(uin
 {
   prach_configuration prach_config = prach_configuration_get(frequency_range::FR1, dplx_mode, prach_cfg_idx);
   if (prach_config.format == prach_format_type::invalid) {
-    return fmt::format("Invalid PRACH configuration index: {}\n", prach_cfg_idx);
+    return make_unexpected(fmt::format("Invalid PRACH configuration index: {}\n", prach_cfg_idx));
   }
 
   if (dplx_mode == duplex_mode::FDD) {
     // Paired spectrum case.
     if ((prach_config.format == prach_format_type::B4) && (zero_correlation_zone != 0) &&
         (zero_correlation_zone != 11)) {
-      return fmt::format(
+      return make_unexpected(fmt::format(
           "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
-          zero_correlation_zone);
+          zero_correlation_zone));
     }
   } else {
     // Unpaired spectrum case.
     if ((prach_config.format == prach_format_type::B4) && (zero_correlation_zone != 0) &&
         (zero_correlation_zone != 14)) {
-      return fmt::format(
+      return make_unexpected(fmt::format(
           "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for TDD. Use 0 or 14.\n",
-          zero_correlation_zone);
+          zero_correlation_zone));
     }
   }
 
@@ -70,7 +70,7 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
 
   const prach_configuration prach_cfg = prach_configuration_get(frequency_range::FR1, duplex_mode::TDD, prach_cfg_idx);
   if (prach_cfg.format == prach_format_type::invalid) {
-    return interval<uint8_t>{};
+    return make_unexpected(interval<uint8_t>{});
   }
   const prach_symbols_slots_duration dur = get_prach_duration_info(prach_cfg, pusch_scs);
 
@@ -85,7 +85,7 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
       // Note: For now, PRACH in special slots is not supported.
       if (not is_tdd_full_ul_slot(tdd_cfg, slot_index)) {
         // No UL symbols exist in this slot.
-        return interval<uint8_t>{start_slot_index, start_slot_index + dur.prach_length_slots};
+        return make_unexpected(interval<uint8_t>{start_slot_index, start_slot_index + dur.prach_length_slots});
       }
     }
   }
@@ -143,9 +143,10 @@ srsran::prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(float
   }
 
   if (not is_valid) {
-    return fmt::format("Invalid nof. contention based preambles per SSB ({}) for nof. SSB per RACH occasion ({}).\n",
-                       nof_cb_preambles_per_ssb,
-                       nof_ssb_per_ro);
+    return make_unexpected(
+        fmt::format("Invalid nof. contention based preambles per SSB ({}) for nof. SSB per RACH occasion ({}).\n",
+                    nof_cb_preambles_per_ssb,
+                    nof_ssb_per_ro));
   }
 
   return {};

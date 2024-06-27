@@ -84,7 +84,7 @@ public:
       return cp_param;
     }
 
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 };
 

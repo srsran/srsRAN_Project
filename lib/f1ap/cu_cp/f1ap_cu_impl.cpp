@@ -224,7 +224,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   const gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
   expected<nr_cell_global_id_t> cgi = cgi_from_asn1(msg->nr_cgi);
-  if (cgi.is_error()) {
+  if (not cgi.has_value()) {
     logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Invalid CGI", du_ue_id);
     return;
   }

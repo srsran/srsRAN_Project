@@ -114,7 +114,7 @@ void check_dl_path_connected(const byte_buffer&                       cu_buf,
                              dummy_f1u_du_gateway_bearer_rx_notifier& du_rx)
 {
   auto du_exp_buf = byte_buffer_chain::create(cu_buf.deep_copy().value());
-  ASSERT_FALSE(du_exp_buf.is_error());
+  ASSERT_TRUE(du_exp_buf.has_value());
   nru_dl_message du_exp = {};
   du_exp.t_pdu          = cu_buf.deep_copy().value();
   nru_dl_message sdu    = {};
@@ -166,13 +166,13 @@ void check_dl_path_disconnected(const byte_buffer&                       cu_buf,
 expected<nru_ul_message> make_nru_ul_message(const byte_buffer& du_buf)
 {
   expected<byte_buffer> buf_cpy = du_buf.deep_copy();
-  if (buf_cpy.is_error()) {
-    return default_error_t{};
+  if (not buf_cpy.has_value()) {
+    return make_unexpected(default_error_t{});
   }
 
   expected<byte_buffer_chain> du_chain_buf = byte_buffer_chain::create(std::move(buf_cpy.value()));
-  if (du_chain_buf.is_error()) {
-    return default_error_t{};
+  if (not du_chain_buf.has_value()) {
+    return make_unexpected(default_error_t{});
   }
 
   nru_ul_message msg = {};
@@ -187,10 +187,10 @@ void check_ul_path_disconnected(const byte_buffer&           du_buf,
 {
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("TEST", false);
   expected<nru_ul_message> sdu    = make_nru_ul_message(du_buf);
-  ASSERT_FALSE(sdu.is_error());
+  ASSERT_TRUE(sdu.has_value());
 
   expected<nru_ul_message> cu_not_exp = make_nru_ul_message(du_buf);
-  ASSERT_FALSE(cu_not_exp.is_error());
+  ASSERT_TRUE(cu_not_exp.has_value());
 
   // logger.info("Testing equallity last_sdu T-PDU = {}", *sdu.value().t_pdu->begin());
   logger.info("Testing equallity last_sdu T-PDU = {}", cu_not_exp.value() == sdu.value());

@@ -100,7 +100,7 @@ bool sctp_network_gateway_common_impl::create_and_bind_common()
   for (result = searcher.next(); result != nullptr; result = searcher.next()) {
     // create SCTP socket
     auto outcome = this->create_socket(result->ai_family, result->ai_socktype);
-    if (outcome.is_error()) {
+    if (not outcome.has_value()) {
       if (errno == ESOCKTNOSUPPORT) {
         // There is no support for this type of socket. Stop search.
         break;

@@ -31,7 +31,7 @@ public:
   static expected<mobile_country_code> from_bcd(uint16_t bcd_mcc)
   {
     if (!bcd_helper::is_valid_mcc(bcd_mcc)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return mobile_country_code{bcd_mcc};
   }
@@ -41,7 +41,7 @@ public:
   {
     uint16_t mcc;
     if (!bcd_helper::string_to_mcc(mcc_str, &mcc)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return mobile_country_code{mcc};
   }
@@ -51,7 +51,7 @@ public:
   {
     uint16_t mcc;
     if (not bcd_helper::is_valid_mcc(bytes)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     bcd_helper::bytes_to_mcc(bytes.data(), &mcc);
     return mobile_country_code{mcc};
@@ -98,7 +98,7 @@ public:
   static expected<mobile_network_code> from_bcd(uint16_t bcd_mnc)
   {
     if (!bcd_helper::is_valid_mnc(bcd_mnc)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return mobile_network_code{bcd_mnc};
   }
@@ -108,7 +108,7 @@ public:
   {
     uint16_t mnc;
     if (!bcd_helper::string_to_mnc(mnc_str, &mnc)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return mobile_network_code{mnc};
   }
@@ -117,7 +117,7 @@ public:
   static expected<mobile_network_code> from_bytes(span<const uint8_t> bytes)
   {
     if (not bcd_helper::is_valid_mnc(bytes)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     uint16_t mnc;
     bcd_helper::bytes_to_mnc(bytes.data(), &mnc, bytes.size());
@@ -171,7 +171,7 @@ public:
   {
     uint32_t plmn = bcd_helper::plmn_string_to_bcd(plmn_id_str);
     if (plmn == 0) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return plmn_identity{plmn};
   }
@@ -186,7 +186,7 @@ public:
     uint16_t mnc = 0xf000U + (static_cast<uint16_t>(bytes[1] & 0xf0U) << 4U) + ((bytes[2] & 0xf0U) >> 4U) +
                    ((bytes[2] & 0xfU) << 4U);
     if (not bcd_helper::is_valid_mcc(mcc) or not bcd_helper::is_valid_mnc(mnc)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return plmn_identity{mcc, mnc};
   }

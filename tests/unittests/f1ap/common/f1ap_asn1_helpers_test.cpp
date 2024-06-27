@@ -39,7 +39,7 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter_for_invalid_plmn)
 
   // convert to internal NGI representation
   auto ngi = cgi_from_asn1(asn1_cgi);
-  ASSERT_TRUE(ngi.is_error());
+  ASSERT_FALSE(ngi.has_value());
 }
 
 static std::string create_random_ipv4_string()

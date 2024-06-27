@@ -18,14 +18,14 @@ namespace srsran {
 /// Macro used to check a condition and propagate an error message if the validation fails.
 #define VERIFY(cond, ...)                                                                                              \
   if (not(cond)) {                                                                                                     \
-    return error_type<std::string>(fmt::format(__VA_ARGS__));                                                          \
+    return make_unexpected(fmt::format(__VA_ARGS__));                                                                  \
   }
 
 /// Macro used to check a validation result and propagate the error in case of failure.
 #define HANDLE_ERROR(cond)                                                                                             \
   {                                                                                                                    \
     auto ret = cond;                                                                                                   \
-    if (ret.is_error()) {                                                                                              \
+    if (not ret.has_value()) {                                                                                         \
       return ret;                                                                                                      \
     }                                                                                                                  \
   }

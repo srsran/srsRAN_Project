@@ -12,8 +12,10 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/ran/gnb_id.h"
+#include "srsran/support/srsran_assert.h"
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 
 namespace srsran {
 
@@ -33,7 +35,7 @@ public:
   static expected<nr_cell_identity> create(uint64_t val)
   {
     if (val > max().val) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return nr_cell_identity{val};
   }
@@ -42,11 +44,11 @@ public:
   {
     if (gnb_id.bit_length < 22 or gnb_id.bit_length > 32) {
       // invalid bit length.
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     if (local_cell_id >= (1U << (36U - gnb_id.bit_length))) {
       // invalid local cell id.
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return nr_cell_identity{(uint64_t)gnb_id.id << (36U - gnb_id.bit_length) | local_cell_id};
   }
@@ -55,12 +57,12 @@ public:
   {
     const unsigned digits = nof_bits() / 4;
     if (hex_str.size() > digits) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     char*    p;
     uint64_t n = std::strtoul(hex_str.c_str(), &p, 16);
     if (*p != 0) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     return nr_cell_identity{n};
   }

@@ -414,14 +414,14 @@ bool pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
   e1ap_request.security_info.security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
   auto k_enc_buffer = byte_buffer::create(security_cfg.k_enc);
-  if (k_enc_buffer.is_error()) {
+  if (not k_enc_buffer.has_value()) {
     logger.warning("Unable to allocate byte_buffer");
     return false;
   }
   e1ap_request.security_info.up_security_key.encryption_key = std::move(k_enc_buffer.value());
   if (security_cfg.k_int.has_value()) {
     auto k_int_buffer = byte_buffer::create(security_cfg.k_int.value());
-    if (k_int_buffer.is_error()) {
+    if (not k_int_buffer.has_value()) {
       logger.warning("Unable to allocate byte_buffer");
       return false;
     }

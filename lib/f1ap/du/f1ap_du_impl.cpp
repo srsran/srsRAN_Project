@@ -405,7 +405,7 @@ void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 
   // Set transaction result and resume suspended procedure.
-  if (not events->transactions.set_response(transaction_id.value(), outcome)) {
+  if (not events->transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
@@ -491,7 +491,7 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
   }
   for (const auto& asn_nr_cgi : msg->paging_cell_list) {
     const auto ret = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
-    if (ret.is_error()) {
+    if (not ret.has_value()) {
       logger.error("Invalid CGI in paging cell list");
       continue;
     }

@@ -42,7 +42,7 @@ bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
 #ifdef SSB_ARFC_VALIDATOR
   error_type<std::string> ret =
       band_helper::is_dl_arfcn_valid_given_band(cfg.band.value(), cfg.ssb_arfcn.value(), cfg.ssb_scs.value());
-  if (ret.is_error()) {
+  if (not ret.has_value()) {
     srslog::fetch_basic_logger(LOG_CHAN).error(
         "Invalid SSB ARFCN={} for band {}. Cause: {}", cfg.ssb_arfcn.value(), cfg.band.value(), ret.error());
     return false;

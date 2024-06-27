@@ -28,10 +28,10 @@ validate_f1_setup_request(const asn1::f1ap::f1_setup_request_s& request)
   asn1::f1ap::cause_c cause;
   cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::unspecified;
   if (not request->gnb_du_name_present) {
-    return {std::make_pair(cause, "Missing gNB-DU name")};
+    return make_unexpected(std::make_pair(cause, "Missing gNB-DU name"));
   }
   if (not request->gnb_du_served_cells_list_present or request->gnb_du_served_cells_list.size() == 0) {
-    return {std::make_pair(cause, "DU has no served cells")};
+    return make_unexpected(std::make_pair(cause, "DU has no served cells"));
   }
 
   return {};
@@ -173,7 +173,7 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
 {
   // Message content validation.
   auto msgerr = validate_f1_setup_request(request);
-  if (msgerr.is_error()) {
+  if (not msgerr.has_value()) {
     logger.info("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
     pdu_notifier.on_new_message(create_f1_setup_reject(request, msgerr.error().first));
     return;

@@ -46,7 +46,7 @@ void dlt_pcap_impl::push_pdu(const_span<uint8_t> pdu)
     return;
   }
   auto pdu_buffer = byte_buffer::create(pdu);
-  if (pdu_buffer.is_error()) {
+  if (not pdu_buffer.has_value()) {
     return;
   }
   writer.write_pdu(std::move(pdu_buffer.value()));

@@ -24,9 +24,9 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   try {
     return std::stoi(value);
   } catch (const std::invalid_argument& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   } catch (const std::out_of_range& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   }
 }
 

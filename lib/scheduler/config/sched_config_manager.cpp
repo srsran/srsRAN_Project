@@ -72,7 +72,7 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
 
   // Ensure the common cell config is valid.
   auto ret = config_validators::validate_sched_cell_configuration_request_message(msg, expert_params);
-  srsran_assert(not ret.is_error(), "Invalid cell configuration request message. Cause: {}", ret.error().c_str());
+  srsran_assert(ret.has_value(), "Invalid cell configuration request message. Cause: {}", ret.error().c_str());
 
   added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
 
@@ -106,7 +106,7 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
 
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(cfg_req, *added_cells[pcell_index]);
-  if (result.is_error()) {
+  if (not result.has_value()) {
     logger.warning("ue={} rnti={}: Discarding invalid UE creation request. Cause: {}",
                    cfg_req.ue_index,
                    cfg_req.crnti,

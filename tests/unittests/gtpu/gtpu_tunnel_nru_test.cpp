@@ -235,7 +235,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_dl_msg_with_t_pdu)
 
   gtpu_tunnel_nru_tx_lower_layer_interface* tx          = gtpu->get_tx_lower_layer_interface();
   auto                                      tx_msg_copy = tx_msg.deep_copy();
-  ASSERT_FALSE(tx_msg_copy.is_error());
+  ASSERT_TRUE(tx_msg_copy.has_value());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
   byte_buffer exp_pdu =
@@ -272,7 +272,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
 
   gtpu_tunnel_nru_tx_lower_layer_interface* tx          = gtpu->get_tx_lower_layer_interface();
   auto                                      tx_msg_copy = tx_msg.deep_copy();
-  ASSERT_FALSE(tx_msg_copy.is_error());
+  ASSERT_TRUE(tx_msg_copy.has_value());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
   byte_buffer exp_pdu =
@@ -310,7 +310,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg_with_t_pdu)
 
   gtpu_tunnel_nru_tx_lower_layer_interface* tx          = gtpu->get_tx_lower_layer_interface();
   auto                                      tx_msg_copy = tx_msg.deep_copy();
-  ASSERT_FALSE(tx_msg_copy.is_error());
+  ASSERT_TRUE(tx_msg_copy.has_value());
   tx->handle_sdu(std::move(tx_msg_copy.value()));
 
   byte_buffer exp_pdu =

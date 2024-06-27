@@ -73,7 +73,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   byte_buffer sdu;
   if (cfg.discard_timer.has_value() && is_am()) {
     auto sdu_copy = buf.deep_copy();
-    if (sdu_copy.is_error()) {
+    if (not sdu_copy.has_value()) {
       logger.log_error("Unable to deep copy SDU");
       upper_cn.on_protocol_failure();
       return;
@@ -97,7 +97,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Apply ciphering and integrity protection
   expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
-  if (exp_buf.is_error()) {
+  if (not exp_buf.has_value()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
     upper_cn.on_protocol_failure();
@@ -217,7 +217,7 @@ void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 {
   auto status_buffer = byte_buffer::create(status.begin(), status.end());
-  if (status_buffer.is_error()) {
+  if (not status_buffer.has_value()) {
     logger.log_warning("Unable to allocate byte_buffer");
     return;
   }
@@ -290,7 +290,7 @@ expected<byte_buffer> pdcp_entity_tx::apply_ciphering_and_integrity_protection(b
   // Append MAC-I
   if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
     if (not buf.append(mac)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
   }
 
@@ -420,7 +420,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
       // Pack header
       auto buf_copy = sdu_info.sdu.deep_copy();
-      if (buf_copy.is_error()) {
+      if (not buf_copy.has_value()) {
         logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
         upper_cn.on_protocol_failure();
         return;
@@ -439,7 +439,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
       // Perform integrity protection and ciphering
       expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), sdu_info.count);
-      if (exp_buf.is_error()) {
+      if (not exp_buf.has_value()) {
         logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
                          "notifying RRC. count={} {}",
                          sdu_info.count,

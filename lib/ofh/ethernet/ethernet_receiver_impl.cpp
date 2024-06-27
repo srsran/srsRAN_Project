@@ -153,7 +153,7 @@ void receiver_impl::receive()
   trace_point tp = ofh_tracer.now();
 
   auto exp_buffer = buffer_pool.reserve();
-  if (exp_buffer.is_error()) {
+  if (not exp_buffer.has_value()) {
     logger.warning("No buffer is available for receiving an Ethernet packet");
     return;
   }

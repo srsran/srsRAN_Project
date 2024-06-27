@@ -168,8 +168,8 @@ struct nru_dl_message {
   {
     nru_dl_message        copy = {};
     expected<byte_buffer> buf  = t_pdu.deep_copy();
-    if (buf.is_error()) {
-      return default_error_t{};
+    if (not buf.has_value()) {
+      return make_unexpected(default_error_t{});
     }
     copy.t_pdu        = std::move(buf.value());
     copy.dl_user_data = dl_user_data;
@@ -197,12 +197,12 @@ struct nru_ul_message {
     nru_ul_message copy = {};
     if (t_pdu.has_value()) {
       expected<byte_buffer> buf = t_pdu.value().deep_copy();
-      if (buf.is_error()) {
-        return default_error_t{};
+      if (not buf.has_value()) {
+        return make_unexpected(default_error_t{});
       }
       expected<byte_buffer_chain> chain = byte_buffer_chain::create(std::move(buf.value()));
-      if (chain.is_error()) {
-        return default_error_t{};
+      if (not chain.has_value()) {
+        return make_unexpected(default_error_t{});
       }
       copy.t_pdu = std::move(chain.value());
     }

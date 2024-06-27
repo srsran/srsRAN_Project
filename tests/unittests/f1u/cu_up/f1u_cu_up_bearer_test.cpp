@@ -280,7 +280,7 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
   byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   nru_ul_message msg1;
   auto           chain1 = byte_buffer_chain::create(rx_pdcp_pdu1.deep_copy().value());
-  EXPECT_FALSE(chain1.is_error());
+  EXPECT_TRUE(chain1.has_value());
   msg1.t_pdu = std::move(chain1.value());
   f1u->handle_pdu(std::move(msg1));
 
@@ -291,7 +291,7 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
   byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   nru_ul_message msg2;
   auto           chain2 = byte_buffer_chain::create(rx_pdcp_pdu2.deep_copy().value());
-  EXPECT_FALSE(chain2.is_error());
+  EXPECT_TRUE(chain2.has_value());
   msg2.t_pdu = std::move(chain2.value());
   f1u->handle_pdu(std::move(msg2));
 

@@ -201,7 +201,7 @@ public:
   {
     size_t idx = key % N;
     if (present[idx]) {
-      return srsran::expected<iterator, T>(std::move(obj));
+      return make_unexpected(std::move(obj));
     }
     buffer[idx].emplace(key, std::move(obj));
     present[idx] = true;

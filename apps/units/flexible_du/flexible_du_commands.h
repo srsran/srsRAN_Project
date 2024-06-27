@@ -41,12 +41,12 @@ public:
     }
 
     expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
-    if (port_id.is_error()) {
+    if (not port_id.has_value()) {
       fmt::print("Invalid port ID.\n");
       return;
     }
     expected<double, std::string> gain_dB = app_services::parse_double(args.back());
-    if (gain_dB.is_error()) {
+    if (not gain_dB.has_value()) {
       fmt::print("Invalid gain value.\n");
       return;
     }
@@ -83,12 +83,12 @@ public:
     }
 
     expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
-    if (port_id.is_error()) {
+    if (not port_id.has_value()) {
       fmt::print("Invalid port ID.\n");
       return;
     }
     expected<double, std::string> gain_dB = app_services::parse_double(args.back());
-    if (gain_dB.is_error()) {
+    if (not gain_dB.has_value()) {
       fmt::print("Invalid gain value.\n");
       return;
     }

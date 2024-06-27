@@ -173,7 +173,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
       size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
       pdu_buf.resize(pdu_len);
       auto buf = byte_buffer::create(pdu_buf);
-      report_error_if_not(!buf.is_error(), "Failed to allocate byte_buffer");
+      report_error_if_not(buf.has_value(), "Failed to allocate byte_buffer");
       pdus.emplace_back(std::move(buf.value()));
       num_pdus++;
     }
