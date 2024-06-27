@@ -199,7 +199,7 @@ tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
+    gnb_extra_commands: "log --mac_level=info"
     id: "32UE ideal ping"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 1
@@ -213,7 +213,7 @@ tests:
   - campaign_filename: *campaign_filename
     test_name: "32UE ideal ping with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
+    gnb_extra_commands: "log --mac_level=info"
     id: "32UE ideal ping with traffic"
     max_pdschs_per_slot: 1
     max_puschs_per_slot: 1
