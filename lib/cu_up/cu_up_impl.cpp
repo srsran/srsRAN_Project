@@ -85,7 +85,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
   /// > Create CU-UP manager
-  cu_up_mng = std::make_unique<cu_up_manager_impl>(cfg);
+  cu_up_mng = std::make_unique<cu_up_manager_impl>(
+      cfg, *e1ap, gtpu_gw_adapter, *ngu_demux, *n3_teid_allocator, *f1u_teid_allocator);
 
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);

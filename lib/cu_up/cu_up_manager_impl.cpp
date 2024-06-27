@@ -27,28 +27,27 @@ void process_successful_pdu_resource_setup_mod_outcome(
                                     pdu_session_resource_setup_list,
     const pdu_session_setup_result& result);
 
-cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
+cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration&    config_,
+                                       e1ap_interface&               e1ap,
+                                       gtpu_network_gateway_adapter& gtpu_gw_adapter,
+                                       gtpu_demux&                   ngu_demux,
+                                       gtpu_teid_pool&               n3_teid_allocator,
+                                       gtpu_teid_pool&               f1u_teid_allocator) :
+  cfg(config_)
 {
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
                                         cfg.n3_cfg,
-                                        *e1ap,
+                                        e1ap,
                                         *cfg.timers,
                                         *cfg.f1u_gateway,
                                         gtpu_gw_adapter,
-                                        *ngu_demux,
-                                        *n3_teid_allocator,
-                                        *f1u_teid_allocator,
+                                        ngu_demux,
+                                        n3_teid_allocator,
+                                        f1u_teid_allocator,
                                         *cfg.ue_exec_pool,
                                         *cfg.gtpu_pcap,
                                         logger);
-}
-
-void cu_up_manager_impl::disconnect()
-{
-  gw_data_gtpu_demux_adapter.disconnect();
-  gtpu_gw_adapter.disconnect();
-  // e1ap_cu_up_ev_notifier.disconnect();
 }
 
 void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)

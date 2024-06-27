@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/support/async/async_task.h"
 
@@ -49,9 +48,6 @@ public:
   /// \brief Handle bearer release command and remove the associated UE context.
   /// \param[in] msg The original bearer release command.
   virtual void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
-
-  /// \brief Get the E1AP message handler interface.
-  virtual e1ap_message_handler& get_e1ap_message_handler() = 0;
 
   /// \brief Get the state of the E1AP connection.
   /// \return True if E1AP is connected, false otherwise.

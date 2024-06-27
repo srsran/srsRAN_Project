@@ -180,18 +180,18 @@ protected:
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the E1AP connection
-/*
+
 TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 {
   init(get_default_cu_up_config());
 
   // Connect E1AP
-  cu_up->on_e1ap_connection_establish();
+  cu_up->get_cu_up_manager()->on_e1ap_connection_establish();
 
   // check that E1AP is in connected state
-  ASSERT_TRUE(cu_up->e1ap_is_connected());
+  ASSERT_TRUE(cu_up->get_cu_up_manager()->e1ap_is_connected());
 }
-*/
+
 //////////////////////////////////////////////////////////////////////////////////////
 /* User Data Flow                                                                   */
 //////////////////////////////////////////////////////////////////////////////////////

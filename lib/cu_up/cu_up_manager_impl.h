@@ -10,16 +10,12 @@
 
 #pragma once
 
-// #include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
-#include "adapters/gw_adapters.h"
 #include "ue_manager.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
-#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <memory>
 
 namespace srsran::srs_cu_up {
@@ -27,11 +23,13 @@ namespace srsran::srs_cu_up {
 class cu_up_manager_impl final : public cu_up_manager
 {
 public:
-  explicit cu_up_manager_impl(const cu_up_configuration& cfg_);
+  explicit cu_up_manager_impl(const cu_up_configuration&    cfg_,
+                              e1ap_interface&               e1ap,
+                              gtpu_network_gateway_adapter& gtpu_gw_adapter,
+                              gtpu_demux&                   ngu_demux,
+                              gtpu_teid_pool&               n3_teid_allocator,
+                              gtpu_teid_pool&               f1u_teid_allocator);
   ~cu_up_manager_impl() override = default;
-
-  // cu_up_e1ap_interface
-  e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
 
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
@@ -49,8 +47,6 @@ public:
   bool e1ap_is_connected() override { return e1ap_connected; }
 
 private:
-  void disconnect();
-
   void on_statistics_report_timer_expired();
 
   e1ap_bearer_context_modification_response
@@ -62,29 +58,9 @@ private:
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
-  // Holds DL executor for the control TEID.
-  std::unique_ptr<ue_executor_mapper> ctrl_exec_mapper;
-
   // Components
-  std::atomic<bool>                    e1ap_connected = {false};
-  std::unique_ptr<e1ap_interface>      e1ap;
-  std::unique_ptr<ngu_tnl_pdu_session> ngu_session;
-  std::unique_ptr<gtpu_demux>          ngu_demux;
-  std::unique_ptr<gtpu_echo>           ngu_echo;
-  std::unique_ptr<gtpu_teid_pool>      n3_teid_allocator;
-  std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
-  std::unique_ptr<ue_manager>          ue_mng;
-
-  // Adapters
-  network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
-  gtpu_network_gateway_adapter            gtpu_gw_adapter;
-  // e1ap_cu_up_adapter                      e1ap_cu_up_ev_notifier;
-
-  std::mutex mutex;
-  bool       running{false};
-
-  // Handler for CU-UP tasks.
-  fifo_async_task_scheduler main_ctrl_loop;
+  std::atomic<bool>           e1ap_connected = {false};
+  std::unique_ptr<ue_manager> ue_mng;
 
   unique_timer statistics_report_timer;
 };
