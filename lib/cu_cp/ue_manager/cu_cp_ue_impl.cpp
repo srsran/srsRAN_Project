@@ -76,13 +76,6 @@ void cu_cp_ue::update_meas_context(cell_meas_manager_ue_context meas_ctxt)
   meas_context = std::move(meas_ctxt);
 }
 
-/// \brief Set the DU and PCell index of the UE.
-/// \param[in] pcell_index PCell index of the UE.
-void cu_cp_ue::set_pcell_index(du_cell_index_t pcell_index_)
-{
-  pcell_index = pcell_index_;
-}
-
 /// \brief Set the RRC UE control message notifier of the UE.
 /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
 void cu_cp_ue::set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_)

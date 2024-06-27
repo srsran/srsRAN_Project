@@ -97,10 +97,6 @@ public:
   /// \return True if the DU UE context is created, false otherwise.
   [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
 
-  /// \brief Set the DU and PCell index of the UE.
-  /// \param[in] pcell_index PCell index of the UE.
-  void set_pcell_index(du_cell_index_t pcell_index_);
-
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
   void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_);
