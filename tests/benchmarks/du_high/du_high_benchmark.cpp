@@ -660,7 +660,8 @@ public:
 
   ~du_high_bench() { stop(); }
 
-  static rnti_t du_ue_index_to_rnti(du_ue_index_t ue_idx) { return to_rnti(0x4601 + ue_idx); }
+  static rnti_t        du_ue_index_to_rnti(du_ue_index_t ue_idx) { return to_rnti(0x4601 + ue_idx); }
+  static du_ue_index_t rnti_to_du_ue_index(rnti_t rnti) { return to_du_ue_index(static_cast<unsigned>(rnti) - 0x4601); }
 
   /// \brief Run a slot indication until completion.
   void run_slot()
@@ -948,30 +949,33 @@ public:
         return;
       }
 
-      // Prepare MAC SDU for LCID 4.
-      static const lcid_t drb_lcid = uint_to_lcid(4);
-      mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
-      // Pack header and payload length.
-      // Subtract BSR length.
-      payload_len -= mac_header_size + bsr_mac_subpdu.length();
-      if (payload_len > 255) {
-        report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
-      } else {
-        report_fatal_error_if_not(rx_pdu.pdu.append(drb_lcid), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
-      }
-      static const uint8_t rlc_um_complete_pdu_header = 0x00;
-      report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
-      // Exclude RLC header from payload length.
-      report_fatal_error_if_not(rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1)),
-                                "Failed to allocate PDU");
-      // Append Long BSR bytes.
-      report_fatal_error_if_not(rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end()),
-                                "Failed to allocate PDU");
+      // Encode MAC SDU for LCID 4 only if UE Context Modification Response has arrived to CU and LCID 4 is configured.
+      if (sim_cu_cp.ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
+        // Prepare MAC SDU for LCID 4.
+        static const lcid_t drb_lcid = uint_to_lcid(4);
+        mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
+        // Pack header and payload length.
+        // Subtract BSR length.
+        payload_len -= mac_header_size + bsr_mac_subpdu.length();
+        if (payload_len > 255) {
+          report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
+        } else {
+          report_fatal_error_if_not(rx_pdu.pdu.append(drb_lcid), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
+        }
+        static const uint8_t rlc_um_complete_pdu_header = 0x00;
+        report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
+        // Exclude RLC header from payload length.
+        report_fatal_error_if_not(rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1)),
+                                  "Failed to allocate PDU");
+        // Append Long BSR bytes.
+        report_fatal_error_if_not(rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end()),
+                                  "Failed to allocate PDU");
 
-      rx_ind.pdus.push_back(rx_pdu);
+        rx_ind.pdus.push_back(rx_pdu);
+      }
 
       // Remove PUCCH UCI if UCI mltplxd on PUSCH.
       if (pusch.uci.has_value()) {
