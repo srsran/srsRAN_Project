@@ -16,8 +16,8 @@
 
 using namespace srsran;
 
-static constexpr float max_abs_eq_symbol_error = 0.2F;
-static constexpr float max_abs_eq_nvar_error   = 0.1F;
+static constexpr float max_abs_eq_symbol_error = 1e-2;
+static constexpr float max_abs_eq_nvar_error   = 1e-2;
 
 namespace srsran {
 

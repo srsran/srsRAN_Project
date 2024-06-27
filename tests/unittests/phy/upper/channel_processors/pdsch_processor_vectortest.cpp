@@ -322,8 +322,10 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   // Waits for the processor to finish.
   notifier_spy.wait_for_finished();
 
+  // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
+  constexpr float tolerance = M_SQRT2f32 / 256.0;
   // Assert results.
-  grid.assert_entries(test_case.grid_expected.read());
+  grid.assert_entries(test_case.grid_expected.read(), tolerance);
 }
 
 // Creates test suite that combines all possible parameters.
