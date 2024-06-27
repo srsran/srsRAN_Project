@@ -70,6 +70,8 @@ private:
   /// Multiple of SR and CSI periods. If SR and CSI results in having common offsets, this will be counted only once.
   std::set<unsigned> compute_sr_csi_pucch_offsets(unsigned sr_offset, unsigned csi_offset = 0);
 
+  [[nodiscard]] bool csi_offset_colliding_with_sr(unsigned sr_offset, unsigned csi_offset) const;
+
   // Parameters for PUCCH configuration passed by the user.
   const pucch_builder_params             user_defined_pucch_cfg;
   const std::vector<pucch_resource>      default_pucch_res_list;

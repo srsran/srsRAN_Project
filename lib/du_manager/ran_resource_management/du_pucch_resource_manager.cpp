@@ -148,18 +148,6 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
   const unsigned             csi_rs_period = csi_resource_periodicity_to_uint(*csi_res.csi_res_period);
   const unsigned             csi_rs_offset = *csi_res.csi_res_offset;
 
-  const auto csi_offset_colliding_with_sr = [&](unsigned offset_candidate) -> bool {
-    for (unsigned csi_off = offset_candidate; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
-      for (unsigned sr_off = candidate_sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
-        if (csi_off == sr_off) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
   const auto weight_function = [&](unsigned offset_candidate) -> unsigned {
     // This weight formula prioritizes offsets equal or after the \c csi_rs_slot_offset +
     // MINIMUM_CSI_RS_REPORT_DISTANCE.
@@ -167,7 +155,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    if (csi_offset_colliding_with_sr(offset_candidate)) {
+    if (csi_offset_colliding_with_sr(candidate_sr_offset, offset_candidate)) {
       weight += csi_rs_period;
     }
 
@@ -229,7 +217,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
       }
     }
 
-    // If the PUCCH is exceeded, proceed with the next SR resource/offset pair.
+    // If the PUCCH count is exceeded, proceed with the next SR resource/offset pair.
     if (not pucch_cnt_exceeded) {
       if (not default_csi_report_cfg.has_value()) {
         sr_res_offset = *sr_res_offset_it;
@@ -379,6 +367,19 @@ std::set<unsigned> du_pucch_resource_manager::compute_sr_csi_pucch_offsets(unsig
     }
   }
   return sr_csi_offsets;
+}
+
+bool du_pucch_resource_manager::csi_offset_colliding_with_sr(unsigned sr_offset, unsigned csi_offset) const
+{
+  for (unsigned csi_off = csi_offset; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
+    for (unsigned sr_off = sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
+      if (csi_off == sr_off) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx) const
