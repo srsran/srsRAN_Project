@@ -441,7 +441,7 @@ merge_f0_f1_f2_resource_lists(const std::vector<pucch_grant>& pucch_f0_f1_resour
   unsigned f0_f1_rbs_occupancy_low_freq = 0;
   unsigned f0_f1_rbs_occupancy_hi_freq  = 0;
 
-  if (not has_f0) {
+  if (has_f0) {
     for (const auto& res_f0 : pucch_f0_f1_resource_list) {
       auto res_id = static_cast<unsigned>(resource_list.size());
       // No need to set res_id.second, which is the PUCCH resource ID for the ASN1 message. This will be set by the DU
@@ -652,7 +652,7 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
     }
   }
 
-  return tot_nof_f1_res;
+  return tot_nof_f0_res != 0 ? tot_nof_f0_res : tot_nof_f1_res;
 }
 
 bool srsran::srs_du::ue_pucch_config_builder(
