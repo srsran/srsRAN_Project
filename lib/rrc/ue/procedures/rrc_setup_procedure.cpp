@@ -61,7 +61,11 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
+  context.state = rrc_state::connected;
+
   send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
+
+  logger.log_debug("\"{}\" finished successfully", name());
 
   CORO_RETURN();
 }
@@ -91,9 +95,6 @@ void rrc_setup_procedure::send_rrc_setup()
 void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete)
 {
   cu_cp_initial_ue_message init_ue_msg = {};
-
-  logger.log_debug("\"{}\" finished successfully", name());
-  context.state = rrc_state::connected;
 
   init_ue_msg.ue_index                       = context.ue_index;
   init_ue_msg.nas_pdu                        = rrc_setup_complete.crit_exts.rrc_setup_complete().ded_nas_msg.copy();
