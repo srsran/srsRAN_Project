@@ -77,7 +77,7 @@ void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 
   sdu.buf     = std::move(sdu_buf);
   sdu.is_retx = is_retx;
-  sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+  sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, rb_id.is_srb(), logger.get_basic_logger());
 
   // Sanity check for PDCP ReTx in SRBs
   if (SRSRAN_UNLIKELY(rb_id.is_srb() && sdu.is_retx)) {

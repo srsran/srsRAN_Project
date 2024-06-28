@@ -142,7 +142,7 @@ protected:
     ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
 
     sdu = test_helpers::create_pdcp_pdu(
-        pdcp_sn_size::size12bits, sn, sdu_size, first_byte); // 12-bit PDCP SN allows smaller SDUs
+        pdcp_sn_size::size12bits, /* is_srb = */ false, sn, sdu_size, first_byte); // 12-bit PDCP SN allows smaller SDUs
     pdu_list.clear();
     byte_buffer_view rest = {sdu};
 

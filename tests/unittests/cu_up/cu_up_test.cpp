@@ -236,14 +236,16 @@ TEST_F(cu_up_test, dl_data_flow)
   close(sock_fd);
 
   // check reception of message 1
-  nru_dl_message          sdu1         = f1u_bearer.wait_tx_sdu();
-  std::optional<uint32_t> sdu1_pdcp_sn = get_pdcp_sn(sdu1.t_pdu, pdcp_sn_size::size18bits, test_logger);
+  nru_dl_message          sdu1 = f1u_bearer.wait_tx_sdu();
+  std::optional<uint32_t> sdu1_pdcp_sn =
+      get_pdcp_sn(sdu1.t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
   ASSERT_TRUE(sdu1_pdcp_sn.has_value());
   EXPECT_EQ(sdu1_pdcp_sn.value(), 0);
 
   // check reception of message 2
-  nru_dl_message          sdu2         = f1u_bearer.wait_tx_sdu();
-  std::optional<uint32_t> sdu2_pdcp_sn = get_pdcp_sn(sdu2.t_pdu, pdcp_sn_size::size18bits, test_logger);
+  nru_dl_message          sdu2 = f1u_bearer.wait_tx_sdu();
+  std::optional<uint32_t> sdu2_pdcp_sn =
+      get_pdcp_sn(sdu2.t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
   ASSERT_TRUE(sdu2_pdcp_sn.has_value());
   EXPECT_EQ(sdu2_pdcp_sn.value(), 1);
 

@@ -28,11 +28,13 @@ namespace test_helpers {
 /// The minimum sdu_size is 3 for 12-bit PDCP SNs and 4 for 18-bit PDCP SNs (i.e. PDCP-HDR + 1 or more bytes).
 ///
 /// \param pdcp_sn_len Size of the PDCP sequence number
+/// \param is_srb Determines the bearer type: SRB (true) or DRB (false).
 /// \param pdcp_sn PDCP sequence number
 /// \param sdu_size Size of the SDU (including PDCP header)
 /// \param first_byte Value of the first payload byte after PDCP header
 /// \return the produced SDU as a byte_buffer
-byte_buffer create_pdcp_pdu(pdcp_sn_size pdcp_sn_len, uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte = 0);
+byte_buffer
+create_pdcp_pdu(pdcp_sn_size pdcp_sn_len, bool is_srb, uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte);
 
 } // namespace test_helpers
 } // namespace srsran
