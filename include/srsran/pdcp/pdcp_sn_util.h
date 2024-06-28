@@ -33,15 +33,12 @@ get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, bool is_srb, sr
 {
   if (pdcp_pdu.empty()) {
     logger.error("Cannot get PDCP SN from empty PDU");
-    srsran_assertion_failure("Cannot get PDCP SN from empty PDU");
     return {};
   }
 
   if (is_srb && pdcp_sn_len != pdcp_sn_size::size12bits) {
     logger.error(
         "Cannot get PDCP SN of SRB PDU: Invalid pdcp_sn_len={}. pdcp_pdu_len=", pdcp_sn_len, pdcp_pdu.length());
-    srsran_assertion_failure(
-        "Cannot get PDCP SN of SRB PDU: Invalid pdcp_sn_len={}. pdcp_pdu_len={}", pdcp_sn_len, pdcp_pdu.length());
     return {};
   }
 
@@ -53,7 +50,6 @@ get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, bool is_srb, sr
   read_ok          = decoder.unpack(dc_field, 1);
   if (!read_ok) {
     logger.error("Failed to get PDCP SN: Cannot read D/C field. pdcp_pdu_len={}", pdcp_pdu.length());
-    srsran_assertion_failure("Failed to get PDCP SN: Cannot read D/C field. pdcp_pdu_len={}", pdcp_pdu.length());
     return {};
   }
 
@@ -64,7 +60,6 @@ get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, bool is_srb, sr
 
   if (is_srb && dc_field == 1) {
     logger.warning("Cannot get PDCP SN of SRB PDU: Reserved MSB set. pdcp_pdu_len={}", pdcp_pdu.length());
-    srsran_assertion_failure("Cannot get PDCP SN of SRB PDU: Reserved MSB set. pdcp_pdu_len={}", pdcp_pdu.length());
     return {};
   }
 
@@ -81,25 +76,19 @@ get_pdcp_sn(byte_buffer_view pdcp_pdu, pdcp_sn_size pdcp_sn_len, bool is_srb, sr
       break;
     default:
       logger.error("Cannot get PDCP SN: Unsupported pdcp_sn_len={}", pdcp_sn_len);
-      srsran_assertion_failure("Cannot get PDCP SN: Unsupported pdcp_sn_len={}", pdcp_sn_len);
       return {};
   }
 
   if (!read_ok) {
     logger.error("Failed to get PDCP SN: Cannot read PDCP header. pdcp_pdu_len={}", pdcp_pdu.length());
-    srsran_assertion_failure("Failed to get PDCP SN: Cannot read PDCP header. pdcp_pdu_len={}", pdcp_pdu.length());
     return {};
   }
 
   if (reserved != 0) {
     if (is_srb) {
       logger.warning("Cannot get PDCP SN for SRB PDU with reserved bits set. pdcp_pdu_len={}", pdcp_pdu.length());
-      srsran_assertion_failure("Cannot get PDCP SN for SRB PDU with reserved bits set. pdcp_pdu_len={}",
-                               pdcp_pdu.length());
     } else {
       logger.warning("Cannot get PDCP SN for DRB data PDU with reserved bits set. pdcp_pdu_len={}", pdcp_pdu.length());
-      srsran_assertion_failure("Cannot get PDCP SN for DRB data PDU with reserved bits set. pdcp_pdu_len={}",
-                               pdcp_pdu.length());
     }
     return {};
   }
