@@ -6,6 +6,9 @@
 # the distribution.
 #
 
+cu_up:
+  warn_on_drop: False
+
 cu_cp:
   pdu_session_setup_timeout: 5
   inactivity_timer: 3
