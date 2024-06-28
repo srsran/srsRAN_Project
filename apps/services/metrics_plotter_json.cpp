@@ -116,7 +116,7 @@ void metrics_plotter_json::report_metrics(const scheduler_cell_metrics& metrics)
   for (unsigned bin_count : metrics.latency_histogram) {
     cell_output.get<latency_histogram>().emplace_back();
     auto& elem = cell_output.get<latency_histogram>().back();
-    elem.write<latency_bin_start_usec>(bin_idx * scheduler_cell_metrics::nof_usec_per_bin * bin_idx);
+    elem.write<latency_bin_start_usec>(bin_idx * scheduler_cell_metrics::nof_usec_per_bin);
     elem.write<latency_bin_count>(bin_count);
     bin_idx++;
   }
