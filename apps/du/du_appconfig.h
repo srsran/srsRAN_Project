@@ -48,6 +48,8 @@ struct metrics_appconfig {
 
 /// DU application configuration.
 struct du_appconfig {
+  /// Default constructor to update the log filename.
+  du_appconfig() { log_cfg.filename = "/tmp/du.log"; }
   /// Loggers configuration.
   logger_appconfig log_cfg;
   /// Metrics configuration.

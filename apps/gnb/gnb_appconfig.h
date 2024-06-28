@@ -97,6 +97,8 @@ struct hal_appconfig {
 
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
+  /// Default constructor to update the log filename.
+  gnb_appconfig() { log_cfg.filename = "/tmp/gnb.log"; }
   /// Loggers configuration.
   logger_appconfig log_cfg;
   /// Metrics configuration.

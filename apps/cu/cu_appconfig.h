@@ -33,6 +33,9 @@ struct cu_f1ap_appconfig {
 
 /// Monolithic gnb application configuration.
 struct cu_appconfig {
+  /// Default constructor to update the log filename.
+  cu_appconfig() { log_cfg.filename = "/tmp/cu.log"; }
+
   /// Loggers configuration.
   logger_appconfig log_cfg;
 
