@@ -58,8 +58,7 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
   return pucch_test;
 }
 
-// Verify if the PUCCH scheduler output (or PUCCH PDU) is correct.
-bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& test)
+bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test)
 {
   bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format == test.format;
   is_equal      = is_equal && expected.resources.prbs == test.resources.prbs &&
@@ -165,6 +164,17 @@ test_bench::test_bench(const test_bench_params& params,
   }
 
   if (params.cfg_for_mimo_4x4) {
+    auto& pucch_cfg = ue_req.cfg.cells->back().serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
+    pucch_cfg.format_2_common_param.value().max_c_rate = max_pucch_code_rate::dot_35;
+    const auto& res_f2                                 = std::find_if(pucch_cfg.pucch_res_list.begin(),
+                                      pucch_cfg.pucch_res_list.end(),
+                                      [](const auto& pucch) { return pucch.format == pucch_format::FORMAT_2; });
+    srsran_assert(res_f2 != pucch_cfg.pucch_res_list.end(), "PUCCH format 2 not found");
+    const auto& res_f2_cfg = std::get<pucch_format_2_3_cfg>(res_f2->format_params);
+    pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] =
+        get_pucch_format2_max_payload(res_f2_cfg.nof_prbs,
+                                      res_f2_cfg.nof_symbols,
+                                      to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
     ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
         csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
     auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()

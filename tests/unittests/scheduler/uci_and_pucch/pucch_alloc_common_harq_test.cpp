@@ -112,7 +112,9 @@ TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 
   ASSERT_TRUE(pucch_res_indicator.has_value());
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back()));
+  ASSERT_TRUE(
+      find_pucch_pdu(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs,
+                     [&expected = pucch_expected](const auto& pdu) { return pucch_info_match(expected, pdu); }));
 }
 
 // Tests whether PUCCH allocator returns the correct values for the DCI.
@@ -298,8 +300,9 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
   ASSERT_TRUE(pucch_res_indicator_1.has_value());
 
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
-  const pucch_info& pucch_pdu_test = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back();
 
   ASSERT_EQ(0, pucch_res_indicator_1.value());
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_pdu_benchmark, pucch_pdu_test));
+  ASSERT_TRUE(
+      find_pucch_pdu(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs,
+                     [&expected = pucch_pdu_benchmark](const auto& pdu) { return pucch_info_match(expected, pdu); }));
 }
