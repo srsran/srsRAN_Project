@@ -240,7 +240,9 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   if (msg->rrc_container_rrc_setup_complete_present) {
-    logger.debug("du_ue={}: Ignoring RRC Container RRCSetupComplete", du_ue_id);
+    logger.warning("du_ue={}: Ignoring RRC Container RRCSetupComplete. Cause: Network Sharing with multiple cell-ID "
+                   "broadcast is not supported",
+                   du_ue_id);
   }
 
   const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
