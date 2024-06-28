@@ -11,10 +11,11 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
-#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__) &&               \
+    (!defined(__GNUC__) || (__GNUC__ > 9))
 #define HAVE_AVX512
 #include "avx512_helpers.h"
-#endif // defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__)
+#endif
 
 #ifdef __AVX2__
 #include "avx2_helpers.h"

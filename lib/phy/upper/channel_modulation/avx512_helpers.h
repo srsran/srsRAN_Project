@@ -12,6 +12,26 @@
 
 #include <immintrin.h>
 
+#ifndef __AVX512F__
+#error "Architecture missmatch. Missing avx512f."
+#endif // __AVX512F__
+
+#ifndef __AVX512BW__
+#error "Architecture missmatch. Missing avx512bw."
+#endif // __AVX512BW__
+
+#ifndef __AVX512DQ__
+#error "Architecture missmatch. Missing avx512dq."
+#endif // __AVX512DQ__
+
+#ifndef __AVX512VBMI__
+#error "Architecture missmatch. Missing avx512vbmi."
+#endif // __AVX512VBMI__
+
+#if defined(__GNUC__) && (__GNUC__ <= 9)
+#error "GCC version must be greater than 9."
+#endif // defined(__GNUC__) && (__GNUC__ <= 9)
+
 namespace srsran {
 
 namespace mm512 {
