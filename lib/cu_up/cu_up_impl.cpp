@@ -15,7 +15,6 @@
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/support/async/execute_on.h"
 #include <future>
 
 using namespace srsran;
@@ -190,13 +189,13 @@ void cu_up::disconnect()
 {
   gw_data_gtpu_demux_adapter.disconnect();
   gtpu_gw_adapter.disconnect();
-  // e1ap_cu_up_ev_notifier.disconnect();
+  e1ap_cu_up_mng_adapter.disconnect();
 }
 
 void cu_up::on_statistics_report_timer_expired()
 {
   // Log statistics
-  // logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
+  logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), cu_up_mng->get_nof_ues());
 
   // Restart timer
   statistics_report_timer.set(cfg.statistics_report_period,

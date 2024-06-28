@@ -46,6 +46,8 @@ public:
   void on_e1ap_connection_drop() override { e1ap_connected = false; }
   bool e1ap_is_connected() override { return e1ap_connected; }
 
+  size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
+
 private:
   void on_statistics_report_timer_expired();
 
