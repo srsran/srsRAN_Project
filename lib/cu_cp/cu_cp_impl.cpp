@@ -497,6 +497,16 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
   });
 }
 
+ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
+{
+  du_index_t du_index = du_db.find_du(cgi);
+  if (du_index == du_index_t::invalid) {
+    logger.warning("Could not find DU for CGI={}", cgi.nci);
+    return ue_index_t::invalid;
+  }
+  return ue_mng.add_ue(du_index);
+}
+
 void cu_cp_impl::handle_n2_disconnection()
 {
   // TODO

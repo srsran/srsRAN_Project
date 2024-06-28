@@ -290,9 +290,6 @@ public:
 
   /// \brief Handles a Paging message notification.
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-
-  /// \brief Handles UE index allocation request for N2 handover at target gNB
-  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 };
 
 /// Methods to get statistics of the DU processor.

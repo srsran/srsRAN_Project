@@ -48,14 +48,18 @@ public:
   explicit du_processor_repository(du_repository_config cfg_);
 
   /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
-  /// \param[out] The index of the DU serving the given PCI.
+  /// \param[in] pci The serving cell PCI.
+  /// \return The index of the DU serving the given PCI.
   du_index_t find_du(pci_t pci);
+
+  /// \brief Checks whether a cell with the specified CGI is served by any of the connected DUs.
+  /// \param[in] cgi The serving cell CGI.
+  /// \return The index of the DU serving the given CGI.
+  du_index_t find_du(const nr_cell_global_id_t& cgi);
 
   du_processor& get_du_processor(du_index_t du_index);
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
-
-  ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& nci) override;
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 

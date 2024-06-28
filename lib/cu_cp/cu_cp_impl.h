@@ -81,6 +81,7 @@ public:
   async_task<ngap_handover_resource_allocation_response>
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
+  ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void             handle_n2_disconnection() override;
 
   // cu_cp_measurement_handler
