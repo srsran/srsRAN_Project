@@ -69,7 +69,12 @@ public:
   byte_buffer       last_rx_pdu;
   byte_buffer_chain last_tx_sdu = byte_buffer_chain::create().value();
 
-  void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
+  void             handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
+  async_task<void> handle_pdu_and_await_delivery(byte_buffer pdu) override
+  {
+    last_rx_pdu = std::move(pdu);
+    return launch_no_op_task();
+  }
   void handle_sdu(byte_buffer_chain sdu) override { last_tx_sdu = std::move(sdu); }
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}

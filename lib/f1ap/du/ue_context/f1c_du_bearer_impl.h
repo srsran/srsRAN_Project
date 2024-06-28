@@ -15,6 +15,7 @@
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/support/async/manual_event.h"
 
 namespace srsran {
 namespace srs_du {
@@ -50,6 +51,8 @@ public:
 
   void handle_pdu(byte_buffer pdu) override;
 
+  async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
+
 private:
   f1ap_ue_context&          ue_ctxt;
   const nr_cell_global_id_t nr_cgi;
@@ -82,14 +85,17 @@ public:
     // TODO
   }
 
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
-  {
-    // TODO
-  }
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void handle_pdu(byte_buffer sdu) override;
 
+  async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
+
 private:
+  static constexpr size_t MAX_CONCURRENT_DELIVERY_EVENTS = 4;
+
+  manual_event_flag& wait_for_delivery_notification(uint32_t pdcp_sn);
+
   f1ap_ue_context&       ue_ctxt;
   srb_id_t               srb_id;
   f1ap_message_notifier& f1ap_notifier;
@@ -99,7 +105,8 @@ private:
   task_executor&         ue_exec;
   srslog::basic_logger&  logger;
 
-  uint32_t get_srb_pdcp_sn(const byte_buffer& pdu);
+  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_DELIVERY_EVENTS> pending_delivery_event_pool;
+  std::optional<uint32_t>                                                       last_pdcp_sn_delivered;
 };
 
 } // namespace srs_du
