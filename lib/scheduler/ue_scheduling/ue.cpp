@@ -41,6 +41,23 @@ void ue::slot_indication(slot_point sl_tx)
     if (ue_du_cells[i] != nullptr) {
       // Clear old HARQs.
       ue_du_cells[i]->harqs.slot_indication(sl_tx);
+
+      // Clear last PDSCH and PUSCH allocated slot if gap to current \c sl_tx is too large.
+      // [Implementation-defined]
+      // If there is large gap between next PxSCH to be allocated slot and last PxSCH allocated slot it may cause huge
+      // delay in scheduling of PxSCHs under certain conditions. Since consecutive PxSCHs for a UE needs to be allocated
+      // at a slot greater than last allocated slot, the comparison of next PxSCH to be allocated slot greater than last
+      // PxSCH allocated slot will fail e.g. last PxSCH allocated slot=289.0 and PxSCH to be allocated slot=47.0.
+      // This scenario can be prevented by resetting last PxSCH allocated slot when its lagging behind current sl_tx by
+      // SCHEDULER_MAX_K0/SCHEDULER_MAX_K2 number of slots.
+      if (ue_du_cells[i]->last_pdsch_allocated_slot.valid() and
+          std::abs(sl_tx - ue_du_cells[i]->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
+        ue_du_cells[i]->last_pdsch_allocated_slot.clear();
+      }
+      if (ue_du_cells[i]->last_pusch_allocated_slot.valid() and
+          std::abs(sl_tx - ue_du_cells[i]->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
+        ue_du_cells[i]->last_pusch_allocated_slot.clear();
+      }
     }
   }
 

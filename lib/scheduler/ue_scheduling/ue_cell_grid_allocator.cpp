@@ -120,17 +120,6 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
     return {alloc_status::invalid_params};
   }
 
-  // [Implementation-defined]
-  // If there is large gap between two PDSCHs scheduled for a UE, \c last_pdsch_allocated_slot could be having an old
-  // slot value and the condition pdsch_alloc.slot (e.g. 47.0) <= ue_cc->last_pdsch_allocated_slot (e.g. 989.0) maybe be
-  // true for long time and UE may not get scheduled.
-  // This scenario can be prevented by resetting \c last_pdsch_allocated_slot when its behind current PDCCH slot by
-  // SCHEDULER_MAX_K0 number of slots.
-  if (ue_cc->last_pdsch_allocated_slot.valid() and
-      std::abs(pdcch_alloc.slot - ue_cc->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
-    ue_cc->last_pdsch_allocated_slot.clear();
-  }
-
   // Create PDSCH param candidate search object.
   ue_pdsch_alloc_param_candidate_searcher candidates{
       u, grant.cell_index, h_dl, pdcch_alloc.slot, slots_with_no_pdsch_space};
@@ -558,18 +547,6 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
                    u.crnti,
                    grant.h_id);
     return {alloc_status::invalid_params};
-  }
-
-  // [Implementation-defined]
-  // If there is large gap between two PUSCHs scheduled for a UE, \c last_pusch_allocated_slot could be having an old
-  // slot value and the condition pusch_alloc.slot (e.g. 47.3) <= ue_cc->last_pusch_allocated_slot (e.g. 989.3) maybe be
-  // true for long time and UE may not get scheduled even after receiving maximum nof. SR indication configured to UE
-  // and eventually UE PRACHes.
-  // This scenario can be prevented by resetting \c last_pusch_allocated_slot when its behind current PDCCH slot by
-  // SCHEDULER_MAX_K2 number of slots.
-  if (ue_cc->last_pusch_allocated_slot.valid() and
-      std::abs(pdcch_alloc.slot - ue_cc->last_pusch_allocated_slot) > SCHEDULER_MAX_K2) {
-    ue_cc->last_pusch_allocated_slot.clear();
   }
 
   // Create PUSCH param candidate search object.
