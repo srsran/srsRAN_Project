@@ -45,9 +45,10 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       e2sm_kpm_supported_metric_t{
           NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul});
 
-  supported_metrics.emplace("DRB.RlcSduDelayDl",
-                            e2sm_kpm_supported_metric_t{
-                                NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency});
+  supported_metrics.emplace(
+      "DRB.RlcSduDelayDl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency});
 
   supported_metrics.emplace(
       "DRB.PacketSuccessRateUlgNBUu",
@@ -783,10 +784,10 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
   return meas_collected;
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_latency(const asn1::e2sm::label_info_list_l     label_info_list,
-                                                             const std::vector<asn1::e2sm::ue_id_c>& ues,
-                                                             const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
-                                                             std::vector<asn1::e2sm::meas_record_item_c>& items)
+bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                                const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                                const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
+                                                                std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
   bool meas_collected = false;
   if ((label_info_list.size() > 1 or
