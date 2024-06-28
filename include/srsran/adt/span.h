@@ -29,25 +29,20 @@ namespace detail {
 /// Helper traits used by SFINAE expressions in constructors.
 
 template <typename U>
-struct is_span : std::false_type {
-};
+struct is_span : std::false_type {};
 template <typename U>
-struct is_span<span<U>> : std::true_type {
-};
+struct is_span<span<U>> : std::true_type {};
 
 template <typename U>
-struct is_std_array : std::false_type {
-};
+struct is_std_array : std::false_type {};
 template <typename U, std::size_t N>
-struct is_std_array<std::array<U, N>> : std::true_type {
-};
+struct is_std_array<std::array<U, N>> : std::true_type {};
 
 template <typename U>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<U>>;
 
 template <class Container, class U, class = void>
-struct is_container_compatible : public std::false_type {
-};
+struct is_container_compatible : public std::false_type {};
 template <class Container, class U>
 struct is_container_compatible<
     Container,
@@ -65,8 +60,7 @@ struct is_container_compatible<
         // Check type compatibility between the contained type and the span type.
         std::enable_if_t<
             std::is_convertible_v<std::remove_pointer_t<decltype(std::declval<Container>().data())> (*)[], U (*)[]>,
-            int>>> : public std::true_type {
-};
+            int>>> : public std::true_type {};
 
 } // namespace detail
 
@@ -91,8 +85,8 @@ public:
   /// Constructs an empty span with data() == nullptr and size() == 0.
   constexpr span() noexcept = default;
 
-  constexpr span(const span&) noexcept        = default;
-  span& operator=(const span& other) noexcept = default;
+  constexpr span(const span&) noexcept            = default;
+  span&     operator=(const span& other) noexcept = default;
 
   /// Constructs a span that is a view over the range [ptr, ptr + len).
   constexpr span(pointer ptr_, size_type len_) noexcept : ptr(ptr_), len(len_) {}
@@ -241,7 +235,8 @@ namespace fmt {
 /// \brief Custom formatter for \c span<T>.
 ///
 /// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
-/// be selected by formatting with <tt>{:,}</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
+/// be selected by formatting with <tt>{:,}</tt>. A comma plus space delimiter is available and can  be selected by
+/// formatting with <tt>{:, }</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
 template <typename T>
 struct formatter<srsran::span<T>> {
   // Stores parsed format string.
@@ -261,8 +256,9 @@ struct formatter<srsran::span<T>> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
-    static const string_view PREAMBLE_FORMAT = "{:";
-    static const string_view COMMA_DELIMITER = ", ";
+    static const string_view PREAMBLE_FORMAT            = "{:";
+    static const string_view COMMA_DELIMITER            = ",";
+    static const string_view COMMA_PLUS_SPACE_DELIMITER = ", ";
 
     // Skip if context is empty and use default format.
     if (ctx.begin() == ctx.end()) {
@@ -272,11 +268,19 @@ struct formatter<srsran::span<T>> {
     // Store the format string.
     format_buffer.clear();
     format_buffer.append(PREAMBLE_FORMAT.begin(), PREAMBLE_FORMAT.end());
+    bool comma_present = false;
     for (auto& it : ctx) {
       // Detect if comma is in the context.
       if (it == ',') {
         delimiter_buffer.clear();
         delimiter_buffer.append(COMMA_DELIMITER.begin(), COMMA_DELIMITER.end());
+        comma_present = true;
+        continue;
+      }
+
+      if (comma_present && it == ' ') {
+        delimiter_buffer.clear();
+        delimiter_buffer.append(COMMA_PLUS_SPACE_DELIMITER.begin(), COMMA_PLUS_SPACE_DELIMITER.end());
         continue;
       }
 

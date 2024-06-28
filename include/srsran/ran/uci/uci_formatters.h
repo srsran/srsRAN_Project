@@ -57,8 +57,8 @@ struct fmt::formatter<srsran::uci_part2_size_description::entry> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(
-        ctx, "params=[{:,}]", srsran::span<const srsran::uci_part2_size_description::parameter>(value.parameters));
-    helper.format_always(ctx, "map=[{:,}]", srsran::span<const uint16_t>(value.map));
+        ctx, "params=[{:, }]", srsran::span<const srsran::uci_part2_size_description::parameter>(value.parameters));
+    helper.format_always(ctx, "map=[{:, }]", srsran::span<const uint16_t>(value.map));
     return ctx.out();
   }
 };
@@ -83,7 +83,7 @@ struct fmt::formatter<srsran::uci_part2_size_description> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(
-        ctx, "entries=[{:,}]", srsran::span<const srsran::uci_part2_size_description::entry>(description.entries));
+        ctx, "entries=[{:, }]", srsran::span<const srsran::uci_part2_size_description::entry>(description.entries));
 
     return ctx.out();
   }

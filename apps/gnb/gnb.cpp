@@ -62,14 +62,19 @@
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
 #include "apps/units/cu_cp/cu_cp_builder.h"
+#include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
 #include "apps/units/cu_cp/pcap_factory.h"
 #include "apps/units/cu_up/cu_up_builder.h"
+#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
 #include "apps/units/cu_up/pcap_factory.h"
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
 #include "srsran/support/cli11_utils.h"
+
+#include <yaml-cpp/node/convert.h>
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -241,6 +246,14 @@ int main(int argc, char** argv)
     // Refesh defaults in case some parameters may have changed after the autoderivation process.
     refresh_defaults(app);
     config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
+
+    config_logger.debug("NOW IT GOES THE MANUAL CONFIG");
+    YAML::Node node;
+    fill_cu_up_config_in_yaml_schema(node, cu_up_config);
+    fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
+    fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
+    config_logger.debug("CU-UP config values: \n{}", YAML::Dump(node));
+
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }

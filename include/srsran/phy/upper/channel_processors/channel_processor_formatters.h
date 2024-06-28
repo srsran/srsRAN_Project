@@ -179,7 +179,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "precoding={}", pdu.precoding);
     if (pdu.reserved.get_nof_entries() > 0) {
-      helper.format_if_verbose(ctx, "reserved=[{:,}]", pdu.reserved.get_re_patterns());
+      helper.format_if_verbose(ctx, "reserved=[{:, }]", pdu.reserved.get_re_patterns());
     }
     return ctx.out();
   }
@@ -264,7 +264,7 @@ struct formatter<srsran::prach_detection_result> {
     helper.format_if_verbose(ctx, "res={:.1f}us", result.time_resolution.to_seconds() * 1e6);
     helper.format_if_verbose(ctx, "max_ta={:.2f}us", result.time_advance_max.to_seconds() * 1e6);
     helper.format_always(ctx,
-                         "detected_preambles=[{:,}]",
+                         "detected_preambles=[{:, }]",
                          srsran::span<const srsran::prach_detection_result::preamble_indication>(result.preambles));
 
     return ctx.out();

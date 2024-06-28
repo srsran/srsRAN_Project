@@ -117,7 +117,7 @@ public:
   /// \param[in] start_cpu_index Starting CPU index for the search.
   /// \param[in] end_cpu_index End CPU index for the search.
   /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
-  int find_lowest(size_t start_cpu_index, size_t end_cpu_index)
+  int find_lowest(size_t start_cpu_index, size_t end_cpu_index) const
   {
     return cpu_bitset.find_lowest(start_cpu_index, end_cpu_index);
   }

@@ -14,7 +14,8 @@ set(SOURCES
             ru_ofh_config_cli11_schema.cpp
             ru_ofh_factories.cpp
             ru_ofh_config_translator.cpp
-            ru_ofh_config_validator.cpp)
+            ru_ofh_config_validator.cpp
+            ru_ofh_config_yaml_writer.cpp)
 
 add_library(srsran_split_7_2_app_unit_helpers STATIC ${SOURCES})
 target_link_libraries(srsran_split_7_2_app_unit_helpers srsran_ru_ofh srsran_flexible_du_helpers)

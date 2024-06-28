@@ -10,16 +10,13 @@
 
 #pragma once
 
-#include "srsran/srslog/logger.h"
+#include <yaml-cpp/yaml.h>
 
 namespace srsran {
 
-/// FAPI configuration.
-struct fapi_unit_config {
-  /// Number of slots the L2 is running ahead of the L1.
-  unsigned l2_nof_slots_ahead = 0;
-  /// FAPI log level.
-  srslog::basic_levels fapi_level = srslog::basic_levels::warning;
-};
+struct ru_ofh_unit_config;
+
+/// Fills the given node with the OFH RU configuration values.
+void fill_ru_ofh_config_in_yaml_schema(YAML::Node& node, const ru_ofh_unit_config& config);
 
 } // namespace srsran

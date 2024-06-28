@@ -26,6 +26,21 @@ enum class sched_affinity_mask_policy {
   last
 };
 
+/// Converts the given affinity mask policy into a string.
+inline std::string to_string(sched_affinity_mask_policy policy)
+{
+  switch (policy) {
+    case sched_affinity_mask_policy::mask:
+      return "mask";
+    case sched_affinity_mask_policy::round_robin:
+      return "round-robin";
+    default:
+      srsran_assert(0, "Invalid affinity mask policy");
+      break;
+  }
+  return {};
+}
+
 /// Converts the given sting into an affinity mask policy or returns last if it could not convert it.
 inline sched_affinity_mask_policy to_affinity_mask_policy(const std::string& value)
 {
