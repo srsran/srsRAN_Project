@@ -74,6 +74,10 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       e2sm_kpm_supported_metric_t{
           NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul});
 
+  supported_metrics.emplace(
+      "DRB.AirIfDelayUl",
+      e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_delay_ul});
+
   // Check if the supported metrics are matching e2sm_kpm metrics definitions.
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_28_552_metrics());
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_oran_metrics());
@@ -337,6 +341,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm::label_info_list_
 
   return meas_collected;
 }
+
 bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_info_list_l          label_info_list,
                                                       const std::vector<asn1::e2sm::ue_id_c>&      ues,
                                                       const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
@@ -426,6 +431,24 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label
   items.push_back(meas_record_item);
   meas_collected = true;
 
+  return meas_collected;
+}
+bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_list_l          label_info_list,
+                                                  const std::vector<asn1::e2sm::ue_id_c>&      ues,
+                                                  const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                                  std::vector<asn1::e2sm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.AirIfDelayUl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_real().value = ue_metrics.ul_delay_ms;
+  items.push_back(meas_record_item);
+  meas_collected = true;
   return meas_collected;
 }
 

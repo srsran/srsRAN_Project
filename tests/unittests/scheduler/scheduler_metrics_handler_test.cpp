@@ -29,7 +29,7 @@ protected:
       std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(2, 100)}) :
     report_period(period), metrics(period, metrics_notif)
   {
-    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs);
+    metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0}, nof_prbs, num_slots_per_frame);
   }
 
   void run_slot(const sched_result& sched_res, std::chrono::microseconds latency = std::chrono::microseconds{0})
@@ -54,8 +54,9 @@ protected:
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1));
 
   slot_point next_sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
-  unsigned   slot_count = 0;
-  unsigned   nof_prbs   = 100;
+  unsigned   slot_count          = 0;
+  unsigned   nof_prbs            = 100;
+  unsigned   num_slots_per_frame = 10;
 };
 
 TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)

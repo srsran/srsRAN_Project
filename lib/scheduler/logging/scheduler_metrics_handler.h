@@ -42,6 +42,7 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
       double   sum_pusch_snrs         = 0;
       double   sum_pucch_snrs         = 0;
       double   sum_pusch_rsrp         = 0;
+      double   sum_ul_delay_ms        = 0;
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
@@ -59,6 +60,7 @@ class scheduler_metrics_handler final : public harq_timeout_handler, public sche
 
     pci_t                                  pci;
     unsigned                               nof_prbs;
+    unsigned                               num_slots_per_frame;
     du_ue_index_t                          ue_index;
     rnti_t                                 rnti;
     unsigned                               last_bsr = 0;
@@ -93,7 +95,11 @@ public:
   explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
-  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) override;
+  void handle_ue_creation(du_ue_index_t ue_index,
+                          rnti_t        rnti,
+                          pci_t         pcell_pci,
+                          unsigned      num_prbs,
+                          unsigned      num_slots_per_frame) override;
 
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index) override;
@@ -121,6 +127,8 @@ public:
 
   /// \brief Handle Error Indication reported to the scheduler for a given cell.
   void handle_error_indication();
+
+  void handle_ul_delay(du_ue_index_t ue_index, double delay);
 
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);

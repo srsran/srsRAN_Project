@@ -21,13 +21,15 @@ scheduler_metrics_handler::scheduler_metrics_handler(msecs                      
 void scheduler_metrics_handler::handle_ue_creation(du_ue_index_t ue_index,
                                                    rnti_t        rnti,
                                                    pci_t         pcell_pci,
-                                                   unsigned      num_prbs)
+                                                   unsigned      num_prbs,
+                                                   unsigned      num_slots_per_frame)
 {
   ues.emplace(ue_index);
-  ues[ue_index].rnti     = rnti;
-  ues[ue_index].ue_index = ue_index;
-  ues[ue_index].pci      = pcell_pci;
-  ues[ue_index].nof_prbs = num_prbs;
+  ues[ue_index].rnti                = rnti;
+  ues[ue_index].ue_index            = ue_index;
+  ues[ue_index].pci                 = pcell_pci;
+  ues[ue_index].nof_prbs            = num_prbs;
+  ues[ue_index].num_slots_per_frame = num_slots_per_frame;
   rnti_to_ue_index_lookup.emplace(rnti, ue_index);
 }
 
@@ -253,6 +255,13 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result&       slo
   decision_latency_hist[bin_idx]++;
 }
 
+void scheduler_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay)
+{
+  if (ues.contains(ue_index)) {
+    ues[ue_index].data.sum_ul_delay_ms += delay * (10 / (ues[ue_index].num_slots_per_frame));
+  }
+}
+
 void scheduler_metrics_handler::push_result(slot_point                sl_tx,
                                             const sched_result&       slot_result,
                                             std::chrono::microseconds slot_decision_latency)
@@ -297,6 +306,7 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.pusch_rsrp_db = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
                                                       : -std::numeric_limits<float>::infinity();
   ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
+  ret.ul_delay_ms   = data.sum_ul_delay_ms / data.count_crc_pdus;
   ret.bsr           = last_bsr;
   ret.dl_bs         = 0;
   for (const unsigned value : last_dl_bs) {

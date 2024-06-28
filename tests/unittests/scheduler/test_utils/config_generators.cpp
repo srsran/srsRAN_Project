@@ -32,7 +32,13 @@ public:
 class dummy_sched_metrics_ue_configurator : public sched_metrics_ue_configurator
 {
 public:
-  void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci, unsigned num_prbs) override {}
+  void handle_ue_creation(du_ue_index_t ue_index,
+                          rnti_t        rnti,
+                          pci_t         pcell_pci,
+                          unsigned      num_prbs,
+                          unsigned      num_slots_per_frame) override
+  {
+  }
   void handle_ue_deletion(du_ue_index_t ue_index) override {}
 };
 
