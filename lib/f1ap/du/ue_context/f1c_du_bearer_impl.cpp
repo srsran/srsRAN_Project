@@ -14,7 +14,6 @@
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/pdcp/pdcp_sn_util.h"
-#include "srsran/ran/bcd_helper.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on.h"
 
@@ -107,6 +106,10 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   ue_exec(ue_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
+  // Mark all event entries as free.
+  for (unsigned i = 0; i != pending_delivery_event_pool.size(); ++i) {
+    pending_delivery_event_pool[i].first = -1;
+  }
 }
 
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
@@ -175,10 +178,11 @@ async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buf
   // Extract PDCP SN.
   std::optional<uint32_t> pdcp_sn = get_pdcp_sn(pdu, pdcp_sn_size::size12bits, true, logger);
 
-  // Forward PDU to lower layers
-  handle_pdu(std::move(pdu));
-
+  // Check if PDCP SN extraction was successful.
   if (not pdcp_sn) {
+    // If not, forward PDU to lower layers anyway. An RLF may be triggered.
+    handle_pdu(std::move(pdu));
+
     // Return right-away, instead of waiting for delivery notification.
     logger.warning("Rx PDU {}: Ignoring SRB{} Rx PDU delivery notification. Cause: Failed to extract PDCP SN.",
                    ue_ctxt,

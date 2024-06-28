@@ -33,9 +33,6 @@ private:
   // Initiate UE Configuration in the DU.
   async_task<f1ap_ue_context_update_response> request_du_ue_config();
 
-  // Send RRC container to lower layers.
-  void send_rrc_container();
-
   // Send UE Context Setup Response to CU.
   void send_ue_context_setup_response();
 
