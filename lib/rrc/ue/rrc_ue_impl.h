@@ -44,15 +44,14 @@ public:
   void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
-  rrc_ue_controller&                    get_controller() override { return *this; }
-  rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler() override { return *this; }
-  rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler() override { return *this; }
-  rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
-  rrc_ue_srb_handler&                   get_rrc_ue_srb_handler() override { return *this; }
-  rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
-  rrc_ue_security_mode_command_handler& get_rrc_ue_security_mode_command_handler() override { return *this; }
-  rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
-  rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
+  rrc_ue_controller&                   get_controller() override { return *this; }
+  rrc_ul_ccch_pdu_handler&             get_ul_ccch_pdu_handler() override { return *this; }
+  rrc_ul_dcch_pdu_handler&             get_ul_dcch_pdu_handler() override { return *this; }
+  rrc_dl_nas_message_handler&          get_rrc_dl_nas_message_handler() override { return *this; }
+  rrc_ue_srb_handler&                  get_rrc_ue_srb_handler() override { return *this; }
+  rrc_ue_control_message_handler&      get_rrc_ue_control_message_handler() override { return *this; }
+  rrc_ue_context_handler&              get_rrc_ue_context_handler() override { return *this; }
+  rrc_ue_handover_preparation_handler& get_rrc_ue_handover_preparation_handler() override { return *this; }
 
   // rrc_ue_srb_handler
   void                                  create_srb(const srb_creation_message& msg) override;
@@ -90,6 +89,7 @@ private:
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
   void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
   void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
+  void handle_security_mode_complete(const asn1::rrc_nr::security_mode_complete_s& msg);
   void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
 
   // message senders
@@ -104,10 +104,6 @@ private:
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
   void on_new_as_security_context() override;
-  void on_security_context_sucessful() override;
-
-  // rrc_ue_security_mode_command_handler
-  async_task<bool> handle_init_security_context() override;
 
   rrc_ue_context_t                context;
   rrc_pdu_f1ap_notifier&          f1ap_pdu_notifier;    // PDU notifier to the F1AP

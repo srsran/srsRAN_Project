@@ -170,8 +170,6 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
 
   auto& ue = test_ues.at(ue_index);
 
-  ue.rrc_ue_security_handler.set_security_enabled(false);
-
   // Inject Initial Context Setup Request
   ngap_message init_context_setup_request =
       generate_invalid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());

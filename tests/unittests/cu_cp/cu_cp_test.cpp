@@ -485,7 +485,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
 
   // Inject F1AP UE Context Setup Response
   f1ap_message ue_ctxt_setup_resp =
-      generate_ue_context_setup_response(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
+      generate_ue_context_setup_response(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), to_rnti(0x4601));
   f1c_gw.get_du(du_index).on_new_message(ue_ctxt_setup_resp);
 
   // Check that the Bearer Context Modification Request Message was sent to the CU-UP

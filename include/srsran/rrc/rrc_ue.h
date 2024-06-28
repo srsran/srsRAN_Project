@@ -124,10 +124,6 @@ public:
   /// \brief Setup AS security in the UE. This includes configuring
   /// the PDCP entity security on SRB1 with the new AS keys.
   virtual void on_new_as_security_context() = 0;
-
-  /// \brief Setup AS security in the UE. This includes configuring
-  /// the PDCP entity security on SRB1 with the new AS keys.
-  virtual void on_security_context_sucessful() = 0;
 };
 
 /// Interface used by the RRC reestablishment procedure to
@@ -253,16 +249,6 @@ public:
 
   /// \brief Get the packed RRC Handover Preparation Message.
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
-};
-
-/// Handler to initialize the security context from NGAP.
-class rrc_ue_security_mode_command_handler
-{
-public:
-  virtual ~rrc_ue_security_mode_command_handler() = default;
-
-  /// \brief Handle the received Init Security Context.
-  virtual async_task<bool> handle_init_security_context() = 0;
 };
 
 /// Handler to get the handover preparation context to the NGAP.
@@ -403,7 +389,6 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_dl_nas_message_handler,
                          public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
-                         public rrc_ue_security_mode_command_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
@@ -415,15 +400,14 @@ public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
-  virtual rrc_ue_controller&                    get_controller()                           = 0;
-  virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
-  virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
-  virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
-  virtual rrc_ue_srb_handler&                   get_rrc_ue_srb_handler()                   = 0;
-  virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
-  virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
-  virtual rrc_ue_security_mode_command_handler& get_rrc_ue_security_mode_command_handler() = 0;
-  virtual rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler()  = 0;
+  virtual rrc_ue_controller&                   get_controller()                          = 0;
+  virtual rrc_ul_ccch_pdu_handler&             get_ul_ccch_pdu_handler()                 = 0;
+  virtual rrc_ul_dcch_pdu_handler&             get_ul_dcch_pdu_handler()                 = 0;
+  virtual rrc_dl_nas_message_handler&          get_rrc_dl_nas_message_handler()          = 0;
+  virtual rrc_ue_srb_handler&                  get_rrc_ue_srb_handler()                  = 0;
+  virtual rrc_ue_control_message_handler&      get_rrc_ue_control_message_handler()      = 0;
+  virtual rrc_ue_context_handler&              get_rrc_ue_context_handler()              = 0;
+  virtual rrc_ue_handover_preparation_handler& get_rrc_ue_handover_preparation_handler() = 0;
 };
 
 } // namespace srs_cu_cp

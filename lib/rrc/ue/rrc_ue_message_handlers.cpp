@@ -150,7 +150,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_setup_complete().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
-      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
+      handle_security_mode_complete(ul_dcch_msg.msg.c1().security_mode_complete());
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::ue_cap_info:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
@@ -200,6 +200,19 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   for (byte_buffer& pdu : rrc_pdus) {
     handle_pdu(srb_id, std::move(pdu));
   }
+}
+
+void rrc_ue_impl::handle_security_mode_complete(const asn1::rrc_nr::security_mode_complete_s& msg)
+{
+  srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+                      "Attempted to configure security, but there is no interface to PDCP");
+
+  context.srbs.at(srb_id_t::srb1)
+      .enable_rx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
+  context.srbs.at(srb_id_t::srb1)
+      .enable_tx_security(
+          security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
 }
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)

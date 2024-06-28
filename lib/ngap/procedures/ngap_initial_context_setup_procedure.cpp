@@ -10,11 +10,9 @@
 
 #include "ngap_initial_context_setup_procedure.h"
 #include "../ngap_asn1_helpers.h"
-#include "ngap_procedure_helpers.h"
 #include "srsran/asn1/ngap/common.h"
-#include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_message.h"
-#include "srsran/ran/cause/ngap_cause.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -23,20 +21,10 @@ using namespace asn1::ngap;
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
     const ngap_init_context_setup_request& request_,
     const ngap_ue_ids&                     ue_ids_,
-    ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
-    ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
     ngap_cu_cp_notifier&                   cu_cp_notifier_,
-    ngap_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
     ngap_message_notifier&                 amf_notifier_,
     ngap_ue_logger&                        logger_) :
-  request(request_),
-  ue_ids(ue_ids_),
-  rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
-  rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
-  cu_cp_notifier(cu_cp_notifier_),
-  cu_cp_ue_notifier(cu_cp_ue_notifier_),
-  amf_notifier(amf_notifier_),
-  logger(logger_)
+  request(request_), ue_ids(ue_ids_), cu_cp_notifier(cu_cp_notifier_), amf_notifier(amf_notifier_), logger(logger_)
 {
 }
 
@@ -46,89 +34,16 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
   logger.log_debug("\"{}\" initialized", name());
 
-  // Handle mandatory IEs
-  if (!cu_cp_ue_notifier.init_security_context(request.security_context)) {
-    fail_msg.cause = cause_protocol_t::unspecified;
+  CORO_AWAIT_VALUE(init_ctxt_setup_routine_outcome, cu_cp_notifier.on_new_initial_context_setup_request(request));
 
-    // Add failed PDU Sessions
-    if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
-      for (const auto& pdu_session_item :
-           request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
-        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
-
-        fail_msg.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id, failed_item);
-      }
-    }
-
-    send_initial_context_setup_failure(fail_msg, ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-
+  if (not init_ctxt_setup_routine_outcome.has_value()) {
+    send_initial_context_setup_failure(init_ctxt_setup_routine_outcome.error(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
     logger.log_debug("\"{}\" failed", name());
-
-    CORO_EARLY_RETURN();
+  } else {
+    send_initial_context_setup_response(init_ctxt_setup_routine_outcome.value(), ue_ids.amf_ue_id, ue_ids.ran_ue_id);
+    logger.log_debug("\"{}\" finished successfully", name());
   }
 
-  CORO_AWAIT_VALUE(success, rrc_ue_ctrl_notifier.on_new_security_context());
-
-  if (not success) {
-    fail_msg.cause = cause_protocol_t::unspecified;
-
-    // Add failed PDU Sessions
-    if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
-      for (const auto& pdu_session_item :
-           request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-        cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
-        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
-
-        fail_msg.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id, failed_item);
-      }
-    }
-
-    send_initial_context_setup_failure(fail_msg, ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-
-    logger.log_debug("\"{}\" failed", name());
-
-    CORO_EARLY_RETURN();
-  }
-
-  // Handle optional IEs
-
-  // Handle PDU Session Resource Setup List Context Request
-  if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
-    request.pdu_session_res_setup_list_cxt_req.value().ue_index     = request.ue_index;
-    request.pdu_session_res_setup_list_cxt_req.value().serving_plmn = request.guami.plmn;
-    if (request.ue_aggr_max_bit_rate.has_value()) {
-      request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl =
-          request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;
-    } else {
-      request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl = 0;
-    }
-
-    // Handle mandatory IEs
-    CORO_AWAIT_VALUE(
-        pdu_session_response,
-        cu_cp_notifier.on_new_pdu_session_resource_setup_request(request.pdu_session_res_setup_list_cxt_req.value()));
-
-    // Handle NAS PDUs
-    for (auto& session : request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-      if (!session.pdu_session_nas_pdu.empty()) {
-        handle_nas_pdu(logger, std::move(session.pdu_session_nas_pdu), rrc_ue_pdu_notifier);
-      }
-    }
-  }
-
-  if (request.nas_pdu.has_value()) {
-    handle_nas_pdu(logger, std::move(request.nas_pdu.value()), rrc_ue_pdu_notifier);
-  }
-
-  resp_msg.pdu_session_res_setup_response_items  = pdu_session_response.pdu_session_res_setup_response_items;
-  resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_response.pdu_session_res_failed_to_setup_items;
-
-  send_initial_context_setup_response(resp_msg, ue_ids.amf_ue_id, ue_ids.ran_ue_id);
-
-  logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN();
 }
 

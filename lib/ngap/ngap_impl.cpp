@@ -406,14 +406,8 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                            init_ctxt_setup_req.security_context.supported_enc_algos);
 
   // start routine
-  ue->schedule_async_task(launch_async<ngap_initial_context_setup_procedure>(init_ctxt_setup_req,
-                                                                             ue_ctxt.ue_ids,
-                                                                             ue->get_rrc_ue_control_notifier(),
-                                                                             ue->get_rrc_ue_pdu_notifier(),
-                                                                             cu_cp_notifier,
-                                                                             *ue,
-                                                                             *tx_pdu_notifier,
-                                                                             ue_ctxt.logger));
+  ue->schedule_async_task(launch_async<ngap_initial_context_setup_procedure>(
+      init_ctxt_setup_req, ue_ctxt.ue_ids, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)

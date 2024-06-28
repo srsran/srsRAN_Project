@@ -122,15 +122,6 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  async_task<bool> on_new_security_context() override
-  {
-    logger.info("Received a new security context");
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
@@ -211,10 +202,54 @@ public:
     return ue_mng.find_ue(ue_index)->get_security_manager().init_security_context(sec_ctxt);
   }
 
+  async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
+  on_new_initial_context_setup_request(ngap_init_context_setup_request& request) override
+  {
+    logger.info("Received a new initial context setup request");
+
+    last_init_ctxt_setup_request = std::move(request);
+
+    return launch_async(
+        [this, resp = ngap_init_context_setup_response{}, fail = ngap_init_context_setup_failure{}](
+            coro_context<async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>>&
+                ctx) mutable {
+          CORO_BEGIN(ctx);
+
+          if (!ue_mng.find_ue(last_init_ctxt_setup_request.ue_index)
+                   ->get_security_manager()
+                   .init_security_context(last_init_ctxt_setup_request.security_context)) {
+            // Add failed PDU session setup responses
+            if (last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.has_value()) {
+              for (const auto& session : last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.value()
+                                             .pdu_session_res_setup_items) {
+                cu_cp_pdu_session_res_setup_failed_item failed_item;
+                failed_item.pdu_session_id              = session.pdu_session_id;
+                failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
+
+                fail.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+              }
+            }
+            CORO_EARLY_RETURN(make_unexpected(fail));
+          }
+
+          // Add successful PDU session setup responses
+          if (last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.has_value()) {
+            for (const auto& session :
+                 last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
+              cu_cp_pdu_session_res_setup_response_item response_item;
+              response_item.pdu_session_id = session.pdu_session_id;
+              resp.pdu_session_res_setup_response_items.emplace(response_item.pdu_session_id, response_item);
+            }
+          }
+
+          CORO_RETURN(resp);
+        });
+  }
+
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
-    logger.info("Received a new pdu session resource setup request.");
+    logger.info("Received a new pdu session resource setup request");
 
     last_request = std::move(request);
 
@@ -323,6 +358,7 @@ public:
   }
 
   ue_index_t                                 last_ue = ue_index_t::invalid;
+  ngap_init_context_setup_request            last_init_ctxt_setup_request;
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
@@ -353,28 +389,6 @@ public:
 
 private:
   ue_index_t            ue_index = ue_index_t::invalid;
-  srslog::basic_logger& logger;
-};
-
-class dummy_rrc_ue_security_mode_command_handler : public rrc_ue_security_mode_command_handler
-{
-public:
-  dummy_rrc_ue_security_mode_command_handler() : logger(srslog::fetch_basic_logger("TEST")){};
-
-  void set_security_enabled(bool enabled) { security_enabled = enabled; }
-
-  async_task<bool> handle_init_security_context() override
-  {
-    logger.info("Received a new security context");
-
-    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-private:
-  bool                  security_enabled = true;
   srslog::basic_logger& logger;
 };
 

@@ -64,6 +64,12 @@ public:
   /// \return True if the security context was successfully initialized, false otherwise.
   virtual bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
 
+  /// \brief Handle the reception of a new Initial Context Setup Request.
+  /// \param[in] request The received Initial Context Setup Request.
+  /// \returns The Initial Context Setup Response or the Initial Context Setup Failure.
+  virtual async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
+  handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request) = 0;
+
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
   /// \returns The PDU Session Resource Setup Response.
@@ -321,6 +327,7 @@ public:
   virtual ~cu_cp_impl_interface() = default;
 
   virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()               = 0;
+  virtual cu_cp_ngap_handler&                    get_cu_cp_ngap_handler()               = 0;
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
   virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;

@@ -259,9 +259,18 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
   ngap_message init_ctxt_setup_req = generate_valid_initial_context_setup_request_message(amf_ue_id, ran_ue_id);
   cu_cp_obj->get_ngap_message_handler().handle_message(init_ctxt_setup_req);
 
+  // Inject UE Context Setup Response
+  f1ap_message ue_ctxt_setup_response = generate_ue_context_setup_response(cu_ue_id, du_ue_id);
+  f1c_gw.get_du(du_index).on_new_message(ue_ctxt_setup_response);
+
   // Inject Security Mode Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
       cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
+  f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
+
+  // Inject RRC Reconfiguration Complete
+  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00040c00fbca0d80").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 }
 
@@ -340,7 +349,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
 
   // Inject Registration Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00043a053f015362c51680bf00218003fe6db7").value());
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject PDU Session Establishment Request
@@ -348,8 +357,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       cu_ue_id,
       du_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00053a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
-                       "00000800001800005000006000006800008800900c092838339b939b0b837002c98dcab")
+      make_byte_buffer("00063a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
+                       "00000800001800005000006000006800008800900c092838339b939b0b83700e03a21bb")
           .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
@@ -375,9 +384,9 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
       cu_ue_id,
       du_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00064c821930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
-                       "a071e439f0000240400e0300000000100186c0000700809df0000000000000103a0002000012cb2800281c50f000700"
-                       "0f00000004008010240a00126cc3c6")
+      make_byte_buffer("00074e821930680ce811d1968097e360e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
+                       "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
+                       "03c00000010020040902807b0dba95")
           .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
@@ -422,7 +431,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
 
   // Inject RRC Reconfiguration Complete
   ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value());
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00080800e6847bbd").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // check that the PDU Session Resource Setup Response was sent to the AMF

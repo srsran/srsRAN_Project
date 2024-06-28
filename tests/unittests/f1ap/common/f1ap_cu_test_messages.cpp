@@ -118,10 +118,10 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap
   return msg;
 }
 
-f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                   gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                   rnti_t              crnti,
-                                                                   byte_buffer         cell_group_config)
+f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t   cu_ue_id,
+                                                                   gnb_du_ue_f1ap_id_t   du_ue_id,
+                                                                   std::optional<rnti_t> crnti,
+                                                                   byte_buffer           cell_group_config)
 {
   f1ap_message ue_context_setup_response = {};
 
@@ -129,10 +129,14 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1a
   ue_context_setup_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
 
   auto& ue_context_setup_resp = ue_context_setup_response.pdu.successful_outcome().value.ue_context_setup_resp();
-  ue_context_setup_resp->gnb_cu_ue_f1ap_id                = (unsigned)cu_ue_id;
-  ue_context_setup_resp->gnb_du_ue_f1ap_id                = (unsigned)du_ue_id;
-  ue_context_setup_resp->c_rnti_present                   = true;
-  ue_context_setup_resp->c_rnti                           = (unsigned)crnti;
+  ue_context_setup_resp->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  ue_context_setup_resp->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+
+  if (crnti.has_value()) {
+    ue_context_setup_resp->c_rnti_present = true;
+    ue_context_setup_resp->c_rnti         = (unsigned)crnti.value();
+  }
+
   ue_context_setup_resp->du_to_cu_rrc_info.cell_group_cfg = cell_group_config.copy();
 
   return ue_context_setup_response;

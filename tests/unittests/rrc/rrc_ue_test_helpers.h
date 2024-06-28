@@ -159,11 +159,6 @@ protected:
         .value();
   }
 
-  rrc_ue_security_mode_command_handler* get_rrc_ue_security_handler()
-  {
-    return &rrc_ue->get_rrc_ue_security_mode_command_handler();
-  }
-
   rrc_ue_control_message_handler* get_rrc_ue_control_message_handler()
   {
     return &rrc_ue->get_rrc_ue_control_message_handler();
@@ -188,6 +183,12 @@ protected:
     // Configure PDCP entity security on SRB1
     rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier = *rrc_ue;
     rrc_ue_notifier.on_new_as_security_context();
+  }
+
+  void enable_security()
+  {
+    rrc_ue_security_mode_command_context rrc_smc_ctxt = rrc_ue->get_security_mode_command_context();
+    receive_smc_complete();
   }
 
   void create_srb2()
