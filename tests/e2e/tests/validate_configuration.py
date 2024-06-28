@@ -13,6 +13,7 @@ import logging
 import tempfile
 from pathlib import Path
 from pprint import pformat
+from time import sleep
 
 from google.protobuf.empty_pb2 import Empty
 from pytest import mark, param
@@ -129,5 +130,11 @@ def run_config(
         )
     )
     logging.info("GNB started")
+
+    # Sleep here because the N300 requires more time (~1minute) for initialization.
+    # Otherwise we send SIGTERM to the gNB, it won't finish within 5s and will raise SIGKILL to itself,
+    # causing this test to fail.
+    logging.info("Waiting 60s...")
+    sleep(60)
 
     stop(tuple(), gnb, fivegc, retina_data, log_search=False)
