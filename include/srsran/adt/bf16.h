@@ -11,6 +11,7 @@
 #pragma once
 
 #include "strong_type.h"
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 
@@ -42,6 +43,15 @@ inline bf16_t to_bf16(float value)
   return bf16_t(temp_u16);
 }
 
+/// Converts an \c int16 value to \c bfloat16. The conversion adjusts the input magnitude range [-scale, +scale] to the
+/// output magnitude range [-1.0, 1.0].
+inline bf16_t to_bf16(int16_t value, float scale)
+{
+  const float gain = 1.0f / scale;
+  float       out  = static_cast<float>(value) * gain;
+  return to_bf16(out);
+}
+
 /// Converts a \c bfloat16 to IEEE 754 single-precision 32-bit float.
 inline float to_float(bf16_t value)
 {
@@ -57,6 +67,13 @@ inline float to_float(bf16_t value)
   ::memcpy(&ret, &temp_u32, 4);
 
   return ret;
+}
+
+/// Converts a \c bfloat16 value to \c int16. The conversion scales the input before rounding it to the nearest integer.
+inline int16_t to_int16(bf16_t value, float scale)
+{
+  float temp = to_float(value);
+  return static_cast<int16_t>(std::round(temp * scale));
 }
 
 } // namespace srsran
