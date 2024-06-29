@@ -72,6 +72,15 @@ public:
     metrics.num_malformed_pdus += num_pdus_;
   }
 
+  void metrics_add_sdu_latency(uint32_t sdu_latency_us_)
+  {
+    if (not enabled) {
+      return;
+    }
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.sdu_latency_us += sdu_latency_us_;
+  }
+
   /// RLC AM specific metrics
   void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
   {

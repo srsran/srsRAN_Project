@@ -47,7 +47,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
 void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
-
+  auto start = std::chrono::high_resolution_clock::now();
   pcap.push_pdu(pcap_context, buf);
 
   rlc_um_pdu_header header = {};
@@ -81,6 +81,9 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     // deliver to upper layer
     logger.log_info("RX SDU. sdu_len={}", sdu.value().length());
     metrics.metrics_add_sdus(1, sdu.value().length());
+    auto latency =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start);
+    metrics.metrics_add_sdu_latency(latency.count() / 1000);
     upper_dn.on_new_sdu(std::move(sdu.value()));
     // Nothing else to do here ...
     return;
@@ -115,6 +118,9 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
       // Do not pass empty SDU to upper layers and continue as normal to maintain state
     } else {
       logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, sdu.value().length());
+      auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                          sdu_info.time_of_arrival);
+      metrics.metrics_add_sdu_latency(latency.count() / 1000);
       metrics.metrics_add_sdus(1, sdu.value().length());
       upper_dn.on_new_sdu(std::move(sdu.value()));
     }
@@ -274,8 +280,11 @@ bool rlc_rx_um_entity::handle_segment_data_sdu(const rlc_um_pdu_header& header, 
   logger.log_debug("RX SDU segment. payload_len={} {}", payload.length(), header);
 
   // Add new SN to RX window if no segments have been received yet
-  rlc_rx_um_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
-
+  rlc_rx_um_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : ([&]() -> rlc_rx_um_sdu_info& {
+    rlc_rx_um_sdu_info& sdu = rx_window->add_sn(header.sn);
+    sdu.time_of_arrival     = std::chrono::high_resolution_clock::now();
+    return sdu;
+  })();
   // Create SDU segment, to be stored later
   rlc_rx_um_sdu_segment segment = {};
   segment.si                    = header.si;
