@@ -79,6 +79,11 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       "DRB.AirIfDelayUl",
       e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_delay_ul});
 
+  supported_metrics.emplace(
+      "DRB.RlcDelayUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency});
+
   // Check if the supported metrics are matching e2sm_kpm metrics definitions.
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_28_552_metrics());
   check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_oran_metrics());
@@ -139,6 +144,7 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_sdu_bytes += metrics.rx.num_sdu_bytes;
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdus += metrics.rx.num_pdus;
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdu_bytes += metrics.rx.num_pdu_bytes;
+    ue_aggr_rlc_metrics[metrics.ue_index].rx.sdu_latency_us += metrics.rx.sdu_latency_us;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdus += metrics.tx.num_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_of_pulled_sdus += metrics.tx.num_of_pulled_sdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdu_bytes += metrics.tx.num_sdu_bytes;
@@ -828,6 +834,59 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
         meas_record_item.set_real();
         meas_record_item.real().value =
             ue_aggr_rlc_metrics[ue_idx].tx.sum_sdu_latency_us / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
+        items.push_back(meas_record_item);
+        meas_collected = true;
+      } else {
+        logger.warning("Invalid RLC SDU latency value.");
+      }
+    }
+  }
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm::label_info_list_l     label_info_list,
+                                                                const std::vector<asn1::e2sm::ue_id_c>& ues,
+                                                                const std::optional<asn1::e2sm::cgi_c>  cell_global_id,
+                                                                std::vector<asn1::e2sm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcDelayUl supports only NO_LABEL label.");
+    return meas_collected;
+  }
+  if (ues.size() == 0) {
+    meas_record_item_c meas_record_item;
+    float              av_ue_sdu_latency_us = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      if (rlc_metric.second.rx.num_sdus && rlc_metric.second.rx.sdu_latency_us) {
+        av_ue_sdu_latency_us += (float)rlc_metric.second.rx.sdu_latency_us / (float)rlc_metric.second.rx.sdu_latency_us;
+      }
+    }
+    if (av_ue_sdu_latency_us) {
+      meas_record_item.set_real();
+      meas_record_item.real().value = av_ue_sdu_latency_us / ue_aggr_rlc_metrics.size();
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    } else {
+      logger.warning("Invalid RLC SDU latency value.");
+      return meas_collected;
+    }
+  } else {
+    for (auto& ue : ues) {
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+      if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
+        continue;
+      }
+      if (ue_aggr_rlc_metrics[ue_idx].rx.sdu_latency_us) {
+        meas_record_item.set_real();
+        meas_record_item.real().value =
+            ue_aggr_rlc_metrics[ue_idx].rx.sdu_latency_us / ue_aggr_rlc_metrics[ue_idx].rx.num_sdus;
         items.push_back(meas_record_item);
         meas_collected = true;
       } else {

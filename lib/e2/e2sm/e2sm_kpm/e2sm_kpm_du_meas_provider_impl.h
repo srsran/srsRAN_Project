@@ -98,6 +98,7 @@ private:
   metric_meas_getter_func_t get_drb_dl_mean_throughput;
   metric_meas_getter_func_t get_drb_ul_mean_throughput;
   metric_meas_getter_func_t get_drb_dl_rlc_sdu_latency;
+  metric_meas_getter_func_t get_drb_ul_rlc_sdu_latency;
 
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
