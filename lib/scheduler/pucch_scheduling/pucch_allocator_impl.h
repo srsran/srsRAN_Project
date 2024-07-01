@@ -108,8 +108,10 @@ private:
   public:
     pucch_grant_type type;
     // Only relevant for HARQ-ACK resources.
-    harq_res_id           harq_id;
-    pucch_uci_bits        bits;
+    harq_res_id    harq_id;
+    pucch_uci_bits bits;
+    // NOTE: The pointer to the PUCCH resource configuration can only be used within the same slot; this is to prevent
+    // the possibility that the re-configurations can null the pointer before an allocation and the next.
     const pucch_resource* pucch_res_cfg = nullptr;
 
     [[nodiscard]] pucch_format get_format() const
@@ -237,12 +239,12 @@ private:
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
 
-  constexpr static unsigned     PUCCH_FORMAT_1_NOF_PRBS{1};
-  const cell_configuration&     cell_cfg;
-  const unsigned                max_pucch_grants_per_slot;
-  const unsigned                max_ul_grants_per_slot;
-  slot_point                    last_sl_ind;
-  pucch_resource_manager        resource_manager;
+  constexpr static unsigned PUCCH_FORMAT_1_NOF_PRBS{1};
+  const cell_configuration& cell_cfg;
+  const unsigned            max_pucch_grants_per_slot;
+  const unsigned            max_ul_grants_per_slot;
+  slot_point                last_sl_ind;
+  pucch_resource_manager    resource_manager;
 
   srslog::basic_logger& logger;
 };

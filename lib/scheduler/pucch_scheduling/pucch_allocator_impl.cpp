@@ -1305,7 +1305,24 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     // There is already a PUCCH resource for HARQ-ACK; if so, we use the info and configuration from this resource.
     if (ue_current_grants.pucch_grants.harq_resource.has_value() and
         ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_set_idx == pucch_set_idx) {
-      harq_candidate_grant = ue_current_grants.pucch_grants.harq_resource.value();
+      const pucch_resource* pucch_res =
+          pucch_set_idx == pucch_res_set_idx::set_0
+              ? resource_manager.reserve_f1_res_by_res_indicator(
+                    sl_tx,
+                    ue_current_grants.rnti,
+                    ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                    pucch_cfg)
+              : resource_manager.reserve_f2_res_by_res_indicator(
+                    sl_tx,
+                    ue_current_grants.rnti,
+                    ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                    pucch_cfg);
+      if (pucch_res == nullptr) {
+        srsran_assertion_failure("rnti={}: PUCCH HARQ-ACK resource previously reserved not available anymore",
+                                 ue_current_grants.rnti);
+        return std::nullopt;
+      }
+      harq_candidate_grant.pucch_res_cfg = pucch_res;
     }
     // Get a new PUCCH resource for HARQ-ACK from the correct PUCCH resource set.
     else {
@@ -1338,22 +1355,19 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     candidate_resources.sr_resource.emplace(pucch_grant{.type = pucch_grant_type::sr});
     pucch_grant& sr_candidate_grant = candidate_resources.sr_resource.value();
 
-    // There is already a PUCCH resource for SR; if so, we use the info and configuration from this resource.
-    if (ue_current_grants.pucch_grants.sr_resource.has_value()) {
-      sr_candidate_grant = ue_current_grants.pucch_grants.sr_resource.value();
+    // Get the resource from the resource manager; the UCI bits will be added later.
+    // NOTE: if the SR resource was already assigned to this UE, the resource manager will only return the PUCCH config
+    // that was reserved previously.
+    const pucch_resource* sr_resource =
+        resource_manager.reserve_sr_res_available(sl_tx, ue_current_grants.rnti, pucch_cfg);
+    // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
+    resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::SR);
+    if (sr_resource == nullptr) {
+      srsran_assertion_failure("rnti={}: PUCCH SR resource previously reserved not available anymore",
+                               ue_current_grants.rnti);
+      return std::nullopt;
     }
-    // Get the new resource from the resource manager; the UCI bits will be added later.
-    else {
-      // TODO: handle case in which the resource is already used by the same UE.
-      const pucch_resource* sr_resource =
-          resource_manager.reserve_sr_res_available(sl_tx, ue_current_grants.rnti, pucch_cfg);
-      // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
-      resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::SR);
-      if (sr_resource == nullptr) {
-        return std::nullopt;
-      }
-      sr_candidate_grant.pucch_res_cfg = sr_resource;
-    }
+    sr_candidate_grant.pucch_res_cfg = sr_resource;
     // Only copy the SR bits, as at this stage we only need to consider the UCI bits assuming the resources still
     // need to be multiplexed.
     sr_candidate_grant.bits.harq_ack_nof_bits  = 0U;
@@ -1365,22 +1379,19 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
     candidate_resources.csi_resource.emplace(pucch_grant{.type = pucch_grant_type::csi});
     pucch_grant& csi_candidate_grant = candidate_resources.csi_resource.value();
 
-    // There is already a PUCCH resource for SR; if so, we use the info and configuration from this resource.
-    if (ue_current_grants.pucch_grants.csi_resource.has_value()) {
-      csi_candidate_grant = ue_current_grants.pucch_grants.csi_resource.value();
+    // Get the resource from the resource manager; the UCI bits will be added later.
+    // NOTE: if the CSI resource was already assigned to this UE, the resource manager will only return the PUCCH config
+    // that was reserved previously.
+    const pucch_resource* csi_resource =
+        resource_manager.reserve_csi_resource(sl_tx, ue_current_grants.rnti, ue_cell_cfg);
+    // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
+    resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::CSI);
+    if (csi_resource == nullptr) {
+      srsran_assertion_failure("rnti={}: PUCCH CSI resource previously reserved not available anymore",
+                               ue_current_grants.rnti);
+      return std::nullopt;
     }
-    // Get the new resource from the resource manager; the UCI bits will be added later.
-    else {
-      // TODO: handle case in which the resource is already used by the same UE.
-      const pucch_resource* csi_resource =
-          resource_manager.reserve_csi_resource(sl_tx, ue_current_grants.rnti, ue_cell_cfg);
-      // Save the resources that have been generated; if at some point the allocation fails, we need to release them.
-      resource_manager.set_new_resource_allocation(ue_current_grants.rnti, pucch_resource_usage::CSI);
-      if (csi_resource == nullptr) {
-        return std::nullopt;
-      }
-      csi_candidate_grant.pucch_res_cfg = csi_resource;
-    }
+    csi_candidate_grant.pucch_res_cfg = csi_resource;
     // Only copy the HARQ-ACK bits, as at this stage we only need to consider the UCI bits assuming the resources still
     // need to be multiplexed.
     csi_candidate_grant.bits.harq_ack_nof_bits  = 0U;
