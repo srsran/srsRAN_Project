@@ -13,61 +13,79 @@ jobs:
     strategy:
       matrix:
         include:
+          # --> metrics server
+          - NAME: metrics-server/metrics_server
+            EXTRA_CMAKE_ARGS: ""
+            ARCH: ""
+            PLATFORM: amd64
+            LIB: ""
+            LIB_VERSION: ""
+            DOCKERFILE: ./docker/grafana/Dockerfile
+            CONTEXT: ./docker/grafana
+          # --> grafana
+          - NAME: grafana/grafana
+            EXTRA_CMAKE_ARGS: ""
+            ARCH: ""
+            PLATFORM: amd64
+            LIB: ""
+            LIB_VERSION: ""
+            DOCKERFILE: ./docker/metrics_server/Dockerfile
+            CONTEXT: ./docker/metrics_server
           # --> split72
           # AMD AVX2
-          - SUFFIX: release_avx2
-            SPLIT: "split72"
+          - NAME: srsran-project/split72_release_avx2
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
             ARCH: x86-64-v3
-            TAG: amd64-avx2
             PLATFORM: amd64
             LIB: dpdk
             LIB_VERSION: "23.11"
-          - SUFFIX: release_with_debug_avx2
-            SPLIT: "split72"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
+          - NAME: srsran-project/split72_release_with_debug_avx2
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
             ARCH: x86-64-v3
-            TAG: amd64-avx2
             PLATFORM: amd64
             LIB: dpdk
             LIB_VERSION: "23.11"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
           # AMD AVX512
-          - SUFFIX: release_avx512
-            SPLIT: "split72"
+          - NAME: srsran-project/split72_release_avx512
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
             ARCH: x86-64-v4
-            TAG: amd64-avx2-avx512
             PLATFORM: amd64
             LIB: dpdk
             LIB_VERSION: "23.11"
-          - SUFFIX: release_with_debug_avx512
-            SPLIT: "split72"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
+          - NAME: srsran-project/split72_release_with_debug_avx512
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
             ARCH: x86-64-v4
-            TAG: amd64-avx2-avx512
             PLATFORM: amd64
             LIB: dpdk
             LIB_VERSION: "23.11"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
           # --> split8
           # AMD AVX2
-          - SUFFIX: release_avx2
-            SPLIT: "split8"
+          - NAME: srsran-project/split8_release_avx2
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
             ARCH: x86-64-v3
-            TAG: amd64-avx2
             PLATFORM: amd64
             LIB: uhd
             LIB_VERSION: "4.6.0.0"
-          - SUFFIX: release_with_debug_avx2
-            SPLIT: "split8"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
+          - NAME: srsran-project/split8_release_with_debug_avx2
             EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
             ARCH: x86-64-v3
-            TAG: amd64-avx2
             PLATFORM: amd64
             LIB: uhd
             LIB_VERSION: "4.6.0.0"
+            DOCKERFILE: ./docker/Dockerfile
+            CONTEXT: ./
     env:
-      NAME: srsran_${{ matrix.SPLIT }}_${{ matrix.SUFFIX }}
+      NAME: softwareradiosystems/${{ matrix.NAME }}
     environment: dockerhub
     steps:
       - name: Checkout code
@@ -110,10 +128,11 @@ jobs:
         with:
           push: true
           tags: ${{ steps.tags.outputs.tags }}
-          file: ./docker/Dockerfile
+          file: ${{ matrix.DOCKERFILE }}
           platforms: ${{ matrix.PLATFORM }}
+          context: ${{ matrix.CONTEXT }}
           build-args: |
-            NAME="srsran_${SPLIT}_${SUFFIX}"
+            NAME="${{ env.NAME }}"
             LIB=${{ matrix.LIB }}
             LIB_VERSION=${{ matrix.LIB_VERSION }}
             ARCH=${{ matrix.ARCH }}
