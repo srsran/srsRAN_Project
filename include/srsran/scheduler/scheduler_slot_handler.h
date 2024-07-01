@@ -486,9 +486,9 @@ struct pucch_info {
   struct context {
     /// Identifier of the PUCCH PDU within the list of PUCCH PDUs for a given slot. The ID is only meaningful for a
     /// given UE; i.e., different UEs can reuse the same ID, but a UE cannot reuse the same ID for different PDUs.
-    unsigned id        = MAX_PUCCH_PDUS_PER_SLOT;
+    unsigned id = MAX_PUCCH_PDUS_PER_SLOT;
     /// Determines whether the PUCCH PDU uses common resources.
-    bool     is_common = false;
+    bool is_common = false;
   };
 
   rnti_t                   crnti;
