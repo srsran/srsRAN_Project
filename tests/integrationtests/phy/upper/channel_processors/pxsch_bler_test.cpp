@@ -435,7 +435,7 @@ TEST_P(PxschBlerTestFixture, Fading)
 }
 
 static const std::vector<pxsch_bler_params> test_cases = {
-    {"AWGN", 20.0, 2, pusch_mcs_table::qam64, 28, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"Single-tap", 20.0, 2, pusch_mcs_table::qam64, 28, prb_interval{bwp_start_rb, bwp_size_rb}},
     {"TDLA", 60.0, 1, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
     {"TDLA", 60.0, 2, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
     {"TDLA", 60.0, 4, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},

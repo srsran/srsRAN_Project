@@ -23,8 +23,8 @@ using namespace srsran;
 
 unsigned channel_emulator::concurrent_channel_emulator::seed = 0;
 
-/// AWGN profile.
-constexpr static std::array<std::pair<unsigned, float>, 12> taps_awgn = {{{200, 0.0}}};
+/// Single-tap profile.
+constexpr static std::array<std::pair<unsigned, float>, 12> taps_single = {{{200, 0.0}}};
 
 /// TDLA fading profile.
 constexpr static std::array<std::pair<unsigned, float>, 12> taps_tdla = {{{0, -15.5},
@@ -85,8 +85,8 @@ channel_emulator::channel_emulator(std::string        channel,
 {
   // Select fading channel taps.
   span<const std::pair<unsigned, float>> taps;
-  if (channel == "AWGN") {
-    taps = taps_awgn;
+  if (channel == "Single-tap") {
+    taps = taps_single;
   } else if (channel == "TDLA") {
     taps = taps_tdla;
   } else if (channel == "TDLB") {
