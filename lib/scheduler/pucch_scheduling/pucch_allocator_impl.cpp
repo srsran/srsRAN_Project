@@ -1322,6 +1322,9 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
                                  ue_current_grants.rnti);
         return std::nullopt;
       }
+      harq_candidate_grant.harq_id.pucch_set_idx = pucch_set_idx;
+      harq_candidate_grant.harq_id.pucch_res_ind =
+          static_cast<uint8_t>(ue_current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind);
       harq_candidate_grant.pucch_res_cfg = pucch_res;
     }
     // Get a new PUCCH resource for HARQ-ACK from the correct PUCCH resource set.
