@@ -368,6 +368,20 @@ amari 32UE memcheck:
     - *txrx-lib
     - *retina-needs
 
+amari 4 cudu:
+  extends: .zmq
+  variables:
+    TESTBED: zmq_cudu
+    MARKERS: "smoke"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
+    E2E_LOG_LEVEL: "warning"
+  allow_failure: true
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+
 ################################################################################
 # TEST MODE
 ################################################################################
@@ -551,7 +565,7 @@ viavi:
             # "fading and 32UE",
             "birth-death and 1UE",
             # "birth-death and 32UE",
-            "32UE and experimental"
+            "32UE and experimental",
           ]
 
 viavi-debug:

@@ -325,9 +325,13 @@ variables:
         rm -Rf build_time_metrics.txt
       else
         mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
+        mv ${CI_PROJECT_DIR}/build/apps/cu/srscu /tmp/srscu
+        mv ${CI_PROJECT_DIR}/build/apps/du/srsdu /tmp/srsdu
         cd build
         make clean
         mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
+        mv /tmp/srscu ${CI_PROJECT_DIR}/build/apps/cu/srscu
+        mv /tmp/srsdu ${CI_PROJECT_DIR}/build/apps/du/srsdu
       fi
   timeout: 4h
   artifacts: &build_artifacts
