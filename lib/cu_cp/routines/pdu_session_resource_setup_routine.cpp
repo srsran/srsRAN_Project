@@ -88,17 +88,6 @@ void pdu_session_resource_setup_routine::operator()(
   }
 
   {
-    CORO_AWAIT_VALUE(ue_capability_transfer_result,
-                     rrc_ue_notifier.on_ue_capability_transfer_request(ue_capability_transfer_request));
-
-    // Handle UE Capability Transfer result
-    if (not ue_capability_transfer_result) {
-      logger.warning("ue={}: \"{}\" UE capability transfer failed", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
-  }
-
-  {
     // Calculate next user-plane configuration based on incoming setup message.
     next_config = up_resource_mng.calculate_update(setup_msg.pdu_session_res_setup_items);
   }

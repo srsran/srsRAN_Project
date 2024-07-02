@@ -399,6 +399,22 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
       ue_ctx.cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
+  // Wait for UE Capability Enquiry
+  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive DL RRC Message, containing RRC UE Capability Enquiry");
+  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                            "Invalid DL RRC Message Transfer");
+
+  // Inject UL RRC Message Transfer (containing UE Capability Info)
+  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
+      du_ue_id,
+      *ue_ctx.cu_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00044c821930680ce811d1968097e360e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
+                       "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
+                       "03c000000100200409028098a8660c")
+          .value()));
+
   // Wait for DL RRC Message Transfer (containing RRC Reconfiguration, containing NAS Registration Accept)
   result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(
@@ -408,7 +424,7 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
 
   // Inject UL RRC Message Transfer (containing RRC Reconfiguration Complete)
   ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      ue_ctx.cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00040c00fbca0d80").value());
+      ue_ctx.cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00050e00a18bc2b3").value());
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
   // Wait for Initial Context Setup Response.
@@ -444,7 +460,7 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
 
   // Inject Registration Complete and wait UL NAS message.
   get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-      du_ue_id, *ue_ctx.cu_ue_id, srb_id_t::srb1, make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value()));
+      du_ue_id, *ue_ctx.cu_ue_id, srb_id_t::srb1, make_byte_buffer("00063a053f015362c51680bf002180ce7cfdcb").value()));
   bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive Registration Complete");
 
@@ -453,8 +469,8 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
       du_ue_id,
       *ue_ctx.cu_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00063a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
-                       "00000800001800005000006000006800008800900c092838339b939b0b83700e03a21bb")
+      make_byte_buffer("00073a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
+                       "00000800001800005000006000006800008800900c092838339b939b0b837000260dc05")
           .value()));
   result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive Registration Complete");
@@ -470,26 +486,12 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
 
-  // Inject PDU Session Resource Setup Request and wait for F1AP DL RRC Message (containing ueCapabilityEnquiry).
+  // Inject PDU Session Resource Setup Request and wait for E1AP Bearer Context Setup Request.
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       amf_ue_id, *ue_ctx.ran_ue_id, uint_to_pdu_session_id(1));
   get_amf().push_tx_pdu(pdu_session_resource_setup_request);
-  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-  report_fatal_error_if_not(result, "Failed to receive DL RRC Message with RRC ueCapabilityEnquiry");
-  report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
-                            "Invalid DL RRC Message Transfer");
-
-  // Inject UE capability info and wait for E1AP Bearer Context Setup.
-  get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-      du_ue_id,
-      *ue_ctx.cu_ue_id,
-      srb_id_t::srb1,
-      make_byte_buffer("00074e821930680ce811d1968097e360e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
-                       "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
-                       "03c00000010020040902807b0dba95")
-          .value()));
   result = this->wait_for_e1ap_tx_pdu(0, e1ap_pdu);
-  report_fatal_error_if_not(result, "Failed to receive E1AP Bearer Context Setup");
+  report_fatal_error_if_not(result, "Failed to receive E1AP Bearer Context Setup Request");
 
   // Inject Bearer Context Setup Response and wait for F1AP UE Context Modification Request.
   get_cu_up(0).push_tx_pdu(

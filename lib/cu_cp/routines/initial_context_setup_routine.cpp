@@ -88,7 +88,15 @@ void initial_context_setup_routine::operator()(
 
   // Start UE Capability Enquiry Procedure
   {
-    /// TODO: Move UE Capability Enquiry Procedure here
+    CORO_AWAIT_VALUE(ue_capability_transfer_result,
+                     rrc_ue.handle_rrc_ue_capability_transfer_request(ue_capability_transfer_request));
+
+    // Handle UE Capability Transfer result
+    if (not ue_capability_transfer_result) {
+      logger.warning("ue={}: \"{}\" UE capability transfer failed", request.ue_index, name());
+      handle_failure();
+      CORO_EARLY_RETURN(make_unexpected(fail_msg));
+    }
   }
 
   // Handle optional IEs
@@ -140,6 +148,7 @@ void initial_context_setup_routine::operator()(
                                 {} /* No SIB1 */,
                                 logger)) {
       logger.warning("ue={}: \"{}\" Failed to fill RRCReconfiguration", request.ue_index, name());
+      handle_failure();
       CORO_EARLY_RETURN(make_unexpected(fail_msg));
     }
 

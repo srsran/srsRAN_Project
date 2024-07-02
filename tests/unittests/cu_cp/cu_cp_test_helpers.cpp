@@ -268,9 +268,20 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
       cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
+  // Inject UE capability info
+  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id,
+      du_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00044c821930680ce811d1968097e360e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
+                       "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
+                       "03c000000100200409028098a8660c")
+          .value());
+  f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
+
   // Inject RRC Reconfiguration Complete
   ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00040c00fbca0d80").value());
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00050e00a18bc2b3").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 }
 
@@ -326,23 +337,6 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
     ngap_message pdu_session_resource_setup_request =
         generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, psi);
     cu_cp_obj->get_ngap_message_handler().handle_message(pdu_session_resource_setup_request);
-
-    // check that the UE capability enquiry was sent to the DU
-    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
-              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
-
-    // Inject UE capability info
-    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        cu_ue_id,
-        du_ue_id,
-        srb_id_t::srb1,
-        make_byte_buffer(
-            "00074e821930680ce811d1968097e360e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007"
-            "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
-            "03c00000010020040902807b0dba95")
-            .value());
-    f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
     if (initial_pdu_session) {
       initial_pdu_session = false;
@@ -401,7 +395,7 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
 
     // Inject RRC Reconfiguration Complete
-    ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
         cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00080800e6847bbd").value());
     f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
@@ -452,7 +446,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t                    du_i
 
   // Inject Registration Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value());
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00063a053f015362c51680bf002180ce7cfdcb").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject PDU Session Establishment Request
@@ -460,8 +454,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t                    du_i
       cu_ue_id,
       du_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00063a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
-                       "00000800001800005000006000006800008800900c092838339b939b0b83700e03a21bb")
+      make_byte_buffer("00073a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
+                       "00000800001800005000006000006800008800900c092838339b939b0b837000260dc05")
           .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
