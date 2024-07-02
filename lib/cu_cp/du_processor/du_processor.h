@@ -71,11 +71,6 @@ class du_processor_f1ap_ue_context_notifier
 public:
   virtual ~du_processor_f1ap_ue_context_notifier() = default;
 
-  /// Notify F1AP to establish the UE context.
-  virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
-                              std::optional<rrc_ue_transfer_context> rrc_context) = 0;
-
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.
   /// \return Returns the index of the released UE.
