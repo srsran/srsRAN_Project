@@ -576,8 +576,8 @@ private:
 /// \brief TestBench for the DU-high.
 class du_high_bench
 {
-  static const unsigned DEFAULT_DL_PDU_SIZE = 1500;
-  static const unsigned PDCP_MAX_HDR_LEN    = 3;
+  static constexpr unsigned DEFAULT_DL_PDU_SIZE = 1500;
+  static constexpr unsigned PDCP_MAX_HDR_LEN    = 3;
 
 public:
   du_high_bench(unsigned                              dl_buffer_state_bytes_,
