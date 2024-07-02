@@ -63,12 +63,13 @@ public:
   // rrc_ue_control_message_handler
   rrc_ue_security_mode_command_context get_security_mode_command_context() override;
   async_task<bool>                     handle_security_mode_command_complete_expected(uint8_t transaction_id) override;
+  byte_buffer                          get_packed_ue_capabilities() override;
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
   async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_msg) override;
+  rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_message) override;
   rrc_ue_transfer_context     get_transfer_context() override;
   std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
   byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,

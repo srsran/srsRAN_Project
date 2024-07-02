@@ -197,6 +197,12 @@ public:
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
+  byte_buffer get_packed_ue_capabilities() override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_ue_capabilities();
+  }
+
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override
   {

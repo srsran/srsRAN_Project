@@ -550,6 +550,12 @@ public:
     });
   }
 
+  byte_buffer get_packed_ue_capabilities() override
+  {
+    logger.info("Received a new request to get packed UE capabilities");
+    return byte_buffer{};
+  }
+
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override
   {

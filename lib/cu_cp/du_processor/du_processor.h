@@ -151,6 +151,10 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Request the packed UE Capabilities.
+  /// \returns The packed UE capabilities.
+  virtual byte_buffer get_packed_ue_capabilities() = 0;
+
   /// \brief Request the RRC Handover Reconfiguration Context.
   /// \returns The RRC Handover Reconfiguration Context.
   virtual rrc_ue_handover_reconfiguration_context
@@ -174,6 +178,7 @@ public:
   /// \return The measurement config, if present.
   virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
+  /// \brief Request the packed Handover Preparation Message.
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 
   /// \brief Notify about the reception of a new Handover Command PDU.

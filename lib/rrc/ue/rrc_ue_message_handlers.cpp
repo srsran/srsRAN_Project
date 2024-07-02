@@ -337,6 +337,24 @@ async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uin
       });
 }
 
+byte_buffer rrc_ue_impl::get_packed_ue_capabilities()
+{
+  byte_buffer pdu{};
+
+  if (context.capabilities_list.has_value()) {
+    asn1::bit_ref bref{pdu};
+
+    if (pack_dyn_seq_of(bref, context.capabilities_list.value(), 0, 8) != asn1::SRSASN_SUCCESS) {
+      logger.log_error("Error packing UE Capability RAT Container List");
+      return byte_buffer{};
+    }
+  } else {
+    logger.log_debug("No UE capabilites available");
+  }
+
+  return pdu.copy();
+}
+
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(
@@ -448,26 +466,26 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
       if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
         logger.log_error("Can't create RRCRelease PDU. RX {} is not set up", srb_id_t::srb1);
         return release_context;
-      } else {
-        dl_dcch_msg_s dl_dcch_msg;
-        dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
-
-        // pack DL CCCH msg
-        pdcp_tx_result pdcp_packing_result =
-            context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
-        if (!pdcp_packing_result.is_successful()) {
-          logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
-                          pdcp_packing_result.get_failure_cause());
-          on_ue_release_required(pdcp_packing_result.get_failure_cause());
-          return release_context;
-        }
-
-        release_context.rrc_release_pdu = pdcp_packing_result.pop_pdu();
-        release_context.srb_id          = srb_id_t::srb1;
-
-        // Log Tx message
-        log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
       }
+
+      dl_dcch_msg_s dl_dcch_msg;
+      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+      // pack DL CCCH msg
+      pdcp_tx_result pdcp_packing_result =
+          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+      if (!pdcp_packing_result.is_successful()) {
+        logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                        pdcp_packing_result.get_failure_cause());
+        on_ue_release_required(pdcp_packing_result.get_failure_cause());
+        return release_context;
+      }
+
+      release_context.rrc_release_pdu = pdcp_packing_result.pop_pdu();
+      release_context.srb_id          = srb_id_t::srb1;
+
+      // Log Tx message
+      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
     }
 
     // Log Tx message
@@ -495,6 +513,7 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   transfer_context.srbs                      = get_srbs();
   transfer_context.up_ctx                    = cu_cp_notifier.on_up_context_required();
   transfer_context.handover_preparation_info = get_packed_handover_preparation_message();
+
   return transfer_context;
 }
 
