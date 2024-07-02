@@ -647,7 +647,8 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   }
 
   // Compute the max UCI payload per format.
-  // With Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part of the payload).
+  // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
+  // of the payload).
   constexpr static unsigned pucch_f1_max_harq_payload                        = 2U;
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = pucch_f1_max_harq_payload;
   const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);

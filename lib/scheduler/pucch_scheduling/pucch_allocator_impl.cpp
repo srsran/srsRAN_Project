@@ -263,7 +263,11 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + res_alloc.cfg.ntn_cs_koffset];
 
-  resource_manager.reset_last_ue_allocation();
+  // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in case of
+  // failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the previous
+  // record, we could release the resources that have been allocated for other UEs of allocated for this UE in a
+  // different slot.
+  resource_manager.reset_latest_reserved_res_tracker();
 
   slot_point sl_ack = pucch_slot_alloc.slot;
 
@@ -280,7 +284,7 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
     std::optional<unsigned> pucch_res_ind =
         multiplex_and_allocate_pucch(pucch_slot_alloc, new_bits, *existing_grant_it, ue_cell_cfg);
     if (not pucch_res_ind) {
-      resource_manager.cancel_last_ue_allocations(sl_ack, crnti, ue_cell_cfg);
+      resource_manager.cancel_last_ue_res_reservations(sl_ack, crnti, ue_cell_cfg);
     }
     return pucch_res_ind;
   } else {
@@ -304,7 +308,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: scheduler cache full",
+    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
                 crnti,
                 pucch_slot_alloc.slot);
     return;
@@ -368,7 +372,11 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
 {
   const slot_point sl_tx = pucch_slot_alloc.slot;
 
-  resource_manager.reset_last_ue_allocation();
+  // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in case of
+  // failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the previous
+  // record, we could release the resources that have been allocated for other UEs of allocated for this UE in a
+  // different slot.
+  resource_manager.reset_latest_reserved_res_tracker();
 
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
   if (pucch_slot_alloc.result.ul.pucchs.size() >=
@@ -392,7 +400,8 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
   if (existing_grant_it != pucch_grants_alloc_grid[sl_tx.to_uint()].end() and existing_grant_it->has_common_pucch) {
     // Allocation of dedicated + common resources are handled by allocating PUCCH common on existing CSI, not the other
     // way around. If the function enters the path, it means it too early to start scheduling the CSI.
-    logger.info("rnti={}: CSI occasion allocation for slot={} skipped. Cause: existing PUCCH common grant",
+    logger.info("rnti={}: CSI occasion allocation for slot={} skipped. Cause: There is a PUCCH common grant"
+                "allocated at this slot",
                 crnti,
                 pucch_slot_alloc.slot);
     return;
@@ -400,11 +409,11 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
 
   // Handle case of existing PUCCHs with possible multiplexing.
   pucch_uci_bits bits_for_uci = existing_grant_it->pucch_grants.get_uci_bits();
-  srsran_assert(bits_for_uci.csi_part1_nof_bits == 0, "PUCCH grant for CSI already been allocated");
+  srsran_assert(bits_for_uci.csi_part1_nof_bits == 0, "PUCCH grant for CSI has already been allocated");
   bits_for_uci.csi_part1_nof_bits = csi_part1_nof_bits;
   auto alloc_outcome = multiplex_and_allocate_pucch(pucch_slot_alloc, bits_for_uci, *existing_grant_it, ue_cell_cfg);
   if (not alloc_outcome.has_value()) {
-    resource_manager.cancel_last_ue_allocations(sl_tx, crnti, ue_cell_cfg);
+    resource_manager.cancel_last_ue_res_reservations(sl_tx, crnti, ue_cell_cfg);
   }
 }
 
@@ -988,7 +997,12 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
   // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
   const unsigned max_d_pri = 7;
   for (unsigned d_pri = 0; d_pri != max_d_pri + 1; ++d_pri) {
-    resource_manager.reset_last_ue_allocation();
+    // The PUCCH allocation may result in a temporary reservation of PUCCH resources, which need to be released in case
+    // of failure or in case the multiplexing results in a different final PUCCH resource. If we don't reset the
+    // previous record, we could release the resources that have been allocated for other UEs of allocated for this UE
+    // in a different slot.
+    // Reset at each iteration, as a new iteration indicates that the previous allocation failed.
+    resource_manager.reset_latest_reserved_res_tracker();
 
     // r_PUCCH, as per Section 9.2.1, TS 38.213.
     const unsigned r_pucch = get_pucch_default_resource_index(start_cce_idx, nof_coreset_cces, d_pri);
@@ -1030,7 +1044,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     pucch_res_ind = multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, true);
 
     if (not pucch_res_ind.has_value()) {
-      resource_manager.cancel_last_ue_allocations(pucch_alloc.slot, rnti, ue_cell_cfg);
+      resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
 
@@ -1057,7 +1071,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: scheduler cache full",
+    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
                 crnti,
                 pucch_slot_alloc.slot);
     return std::nullopt;
@@ -1108,7 +1122,7 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: scheduler cache full",
+    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
                 crnti,
                 pucch_slot_alloc.slot);
     return;

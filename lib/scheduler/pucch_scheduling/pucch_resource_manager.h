@@ -126,13 +126,19 @@ public:
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
-  void reset_last_ue_allocation();
+  /// \brief Reset the record of the PUCCH resources reserved to UE at the current slot.
+  /// \remark This function doesn't release the resources, it only resets the record of which resources have been
+  /// reserved.
+  void reset_latest_reserved_res_tracker();
 
+  /// \brief Adds a records that a given resource has been reserved for the current slot for a given UE.
   void set_new_resource_allocation(rnti_t rnti, pucch_resource_usage res_type);
 
+  /// \brief Checks whether a given resource has been reserved for the current slot for a given UE.
   [[nodiscard]] bool is_resource_allocated(rnti_t rnti, pucch_resource_usage res_type) const;
 
-  void cancel_last_ue_allocations(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
+  /// \brief Releases the resources that have been recorded as reserved for the current slot for a given UE.
+  void cancel_last_ue_res_reservations(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
 private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
@@ -149,7 +155,7 @@ private:
   // As per Section 9.2.1, TS 38.213, this is given by the number of possible values of r_PUCCH, which is 16.
   static const size_t MAX_COMMON_PUCCH_RESOURCES{16};
 
-  // Tracks usage of PUCCH resources.
+  // Tracks reservation of a PUCCH resource by a given UE and for a given usage (e.g., HARQ, SR, CSI).
   struct resource_tracker {
     rnti_t               rnti;
     pucch_resource_usage resource_usage;
@@ -158,15 +164,19 @@ private:
   using pucch_res_record_array  = std::array<resource_tracker, MAX_PUCCH_RESOURCES>;
   using common_res_record_array = std::array<bool, MAX_COMMON_PUCCH_RESOURCES>;
 
-  // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.
+  // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot; this information is
+  // used to keep track of which resources are available and which UE is using them. This information is preserved over
+  // the slots.
   struct rnti_pucch_res_id_slot_record {
     common_res_record_array used_common_resources;
     pucch_res_record_array  ues_using_pucch_res;
   };
 
-  // Collects the information of what PUCCH cell resources have been allocated to a UE at given slot.
-  // This info is used/updated by the PUCCH allocator and called for a new UE or new allocation for the same UE.
-  struct ue_allocation_tracker {
+  // Keeps track of which PUCCH cell resources have been allocated to a UE at the current slot.
+  // This info is needed to release some resources after the PUCCH multiplexing (by the PUCCH allocator), during which
+  // resources can be reserved and then released, depending on the multiplexing algorithm.
+  // The lifespan of this information lasts for a single UE PUCCH allocation.
+  struct current_slot_ue_allocations {
     rnti_t rnti       = rnti_t::INVALID_RNTI;
     bool   harq_set_0 = false;
     bool   harq_set_1 = false;
@@ -194,7 +204,7 @@ private:
   // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
   std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
 
-  ue_allocation_tracker last_ue_allocations;
+  current_slot_ue_allocations last_ue_allocations;
 
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;

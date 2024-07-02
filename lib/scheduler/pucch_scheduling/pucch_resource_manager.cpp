@@ -253,13 +253,13 @@ bool pucch_resource_manager::release_csi_resource(slot_point                   s
   return true;
 }
 
-void pucch_resource_manager::reset_last_ue_allocation()
+void pucch_resource_manager::reset_latest_reserved_res_tracker()
 {
   last_ue_allocations.rnti       = rnti_t::INVALID_RNTI;
   last_ue_allocations.harq_set_0 = false;
   last_ue_allocations.harq_set_1 = false;
   last_ue_allocations.sr         = false;
-  last_ue_allocations.sr         = false;
+  last_ue_allocations.csi        = false;
 }
 
 void pucch_resource_manager::set_new_resource_allocation(rnti_t crnti, pucch_resource_usage res_type)
@@ -311,9 +311,9 @@ bool pucch_resource_manager::is_resource_allocated(rnti_t rnti, pucch_resource_u
   }
 }
 
-void pucch_resource_manager::cancel_last_ue_allocations(slot_point                   slot_tx,
-                                                        rnti_t                       crnti,
-                                                        const ue_cell_configuration& ue_cell_cfg)
+void pucch_resource_manager::cancel_last_ue_res_reservations(slot_point                   slot_tx,
+                                                             rnti_t                       crnti,
+                                                             const ue_cell_configuration& ue_cell_cfg)
 {
   if (crnti != last_ue_allocations.rnti) {
     srsran_assertion_failure("Trying to cancel a UE allocation that was not the last one");

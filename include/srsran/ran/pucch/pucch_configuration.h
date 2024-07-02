@@ -202,7 +202,8 @@ struct pucch_config {
   static_vector<uint8_t, 8> dl_data_to_ul_ack;
 
   /// PUCCH resource max UCI payload, depending on the format. The index defines the format.
-  /// \remark All the resources of the same format are configured with the same max UCI payload.
+  /// \remark The UCI payload is the same for all UE's PUCCH resources belonging to the same format, regardless of
+  /// whether they are used for HARQ-ACK or CSI.
   /// \remark For Format 0 and 1, only the max number of HARQ-ACK bits are considered.
   static_vector<unsigned, 5> format_max_payload{0, 0, 0, 0, 0};
 
