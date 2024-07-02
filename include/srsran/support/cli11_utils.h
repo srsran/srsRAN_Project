@@ -218,23 +218,4 @@ void add_auto_enum_option(CLI::App&             app,
       ->default_str("auto");
 }
 
-/// Refresh the defaults values of the given app.
-inline void refresh_defaults(CLI::App& app)
-{
-  for (CLI::Option* opt : app.get_options()) {
-    // Only process the option that has a long-name (starts with a --) and is configurable.
-    if (opt->get_lnames().empty() || !opt->get_configurable()) {
-      continue;
-    }
-    opt->capture_default_str();
-  }
-
-  for (CLI::App* subcom : app.get_subcommands({})) {
-    if (subcom->get_disabled()) {
-      continue;
-    }
-    refresh_defaults(*subcom);
-  }
-}
-
 } // namespace srsran

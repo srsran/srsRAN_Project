@@ -207,11 +207,10 @@ static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics
   node["cu_cp_statistics_report_period"] = config.cu_cp_statistics_report_period;
 }
 
-static YAML::Node build_cu_cp_am_section(const cu_cp_unit_rlc_am_config& config)
+static void fill_cu_cp_am_section(YAML::Node node, const cu_cp_unit_rlc_am_config& config)
 {
-  YAML::Node node;
   {
-    YAML::Node tx_node;
+    YAML::Node tx_node            = node["tx"];
     tx_node["sn"]                 = config.tx.sn_field_length;
     tx_node["t-poll-retransmit"]  = config.tx.t_poll_retx;
     tx_node["max-retx-threshold"] = config.tx.max_retx_thresh;
@@ -219,89 +218,81 @@ static YAML::Node build_cu_cp_am_section(const cu_cp_unit_rlc_am_config& config)
     tx_node["poll-byte"]          = config.tx.poll_byte;
     tx_node["max_window"]         = config.tx.max_window;
     tx_node["queue-size"]         = config.tx.queue_size;
-    node["tx"]                    = tx_node;
   }
   {
-    YAML::Node rx_node;
+    YAML::Node rx_node           = node["rx"];
     rx_node["sn"]                = config.rx.sn_field_length;
     rx_node["t-reassembly"]      = config.rx.t_reassembly;
     rx_node["t-status-prohibit"] = config.rx.t_status_prohibit;
     rx_node["max_sn_per_status"] = config.rx.max_sn_per_status;
-    node["tx"]                   = rx_node;
   }
-
-  return node;
 }
 
-static YAML::Node build_cu_cp_um_bidir_section(const cu_cp_unit_rlc_um_config& config)
+static void fill_cu_cp_um_bidir_section(YAML::Node node, const cu_cp_unit_rlc_um_config& config)
 {
-  YAML::Node node;
   {
-    YAML::Node tx_node;
+    YAML::Node tx_node    = node["tx"];
     tx_node["sn"]         = config.tx.sn_field_length;
     tx_node["queue-size"] = config.tx.queue_size;
-    node["tx"]            = tx_node;
   }
   {
-    YAML::Node rx_node;
+    YAML::Node rx_node      = node["rx"];
     rx_node["sn"]           = config.rx.sn_field_length;
     rx_node["t-reassembly"] = config.rx.t_reassembly;
-    node["tx"]              = rx_node;
   }
-
-  return node;
 }
 
-static YAML::Node build_cu_cp_rlc_qos_section(const cu_cp_unit_rlc_config& config)
+static void fill_cu_cp_rlc_qos_section(YAML::Node node, const cu_cp_unit_rlc_config& config)
 {
-  YAML::Node node;
-
   node["mode"] = config.mode;
   if (config.mode == "am") {
-    node["am"] = build_cu_cp_am_section(config.am);
+    fill_cu_cp_am_section(node["am"], config.am);
   }
 
   if (config.mode == "um-bidir") {
-    node["um-bidir"] = build_cu_cp_um_bidir_section(config.um);
+    fill_cu_cp_um_bidir_section(node["um-bidir"], config.um);
   }
-
-  return node;
 }
 
-static YAML::Node build_cu_cp_pdcp_qos_section(const cu_cp_unit_pdcp_config& config)
+static void fill_cu_cp_pdcp_qos_section(YAML::Node node, const cu_cp_unit_pdcp_config& config)
 {
-  YAML::Node node;
-
   node["integrity_required"] = config.integrity_protection_required;
   {
-    YAML::Node tx_node;
+    YAML::Node tx_node                = node["tx"];
     tx_node["sn"]                     = config.tx.sn_field_length;
     tx_node["discard_timer"]          = config.tx.discard_timer;
     tx_node["status_report_required"] = config.tx.status_report_required;
-    node["tx"]                        = tx_node;
   }
   {
-    YAML::Node rx_node;
+    YAML::Node rx_node               = node["rx"];
     rx_node["sn"]                    = config.rx.sn_field_length;
     rx_node["t_reordering"]          = config.rx.t_reordering;
     rx_node["out_of_order_delivery"] = config.rx.out_of_order_delivery;
-    node["tx"]                       = rx_node;
   }
-
-  return node;
 }
 
-static void fill_cu_cp_qos_entry(YAML::Node& node, const cu_cp_unit_qos_config& config)
+static void fill_cu_cp_qos_entry(YAML::Node node, const cu_cp_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
-  node["rlc"]     = build_cu_cp_rlc_qos_section(config.rlc);
-  node["pdcp"]    = build_cu_cp_pdcp_qos_section(config.pdcp);
+  fill_cu_cp_rlc_qos_section(node["rlc"], config.rlc);
+  fill_cu_cp_pdcp_qos_section(node["pdcp"], config.pdcp);
 }
 
-static void fill_cu_cp_qos_section(YAML::Node& node, span<const cu_cp_unit_qos_config> qos_cfg)
+static YAML::Node get_last_entry(YAML::Node node)
 {
+  srsran_assert(node.size() > 0, "Node is empty");
+
+  auto it = node.begin();
+  for (unsigned i = 1; i != node.size(); ++i) {
+    ++it;
+  }
+  return *it;
+}
+
+static void fill_cu_cp_qos_section(YAML::Node node, span<const cu_cp_unit_qos_config> qos_cfg)
+{
+  auto qos_node = node["qos"];
   for (const auto& qos : qos_cfg) {
-    auto qos_node   = node["qos"];
     auto node_entry = std::find_if(qos_node.begin(), qos_node.end(), [five = qos.five_qi](const YAML::Node& tmp) {
       return static_cast<uint16_t>(five) == tmp["five_qi"].as<uint16_t>();
     });
@@ -309,14 +300,13 @@ static void fill_cu_cp_qos_section(YAML::Node& node, span<const cu_cp_unit_qos_c
       YAML::Node node_five = *node_entry;
       fill_cu_cp_qos_entry(node_five, qos);
     } else {
-      YAML::Node node_five;
-      fill_cu_cp_qos_entry(node_five, qos);
-      qos_node.push_back(node_five);
+      qos_node.push_back(YAML::Node());
+      fill_cu_cp_qos_entry(get_last_entry(qos_node), qos);
     }
   }
 }
 
-static void build_cu_cp_slicing_section(YAML::Node& node, span<const s_nssai_t> slice_cfg)
+static void build_cu_cp_slicing_section(YAML::Node node, span<const s_nssai_t> slice_cfg)
 {
   for (const auto& slice : slice_cfg) {
     YAML::Node node_entry;

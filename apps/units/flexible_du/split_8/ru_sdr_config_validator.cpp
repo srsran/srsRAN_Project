@@ -111,7 +111,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
       }
 
       fmt::print("PRACH Format {} with subcarrier spacing of {} is not compatible with {:.2f}MHz sampling rate. "
-                 "Valid sampling rates are {:, } MHz.\n",
+                 "Valid sampling rates are {:,} MHz.\n",
                  to_string(cell.prach_format),
                  to_string(cell.common_scs),
                  config.srate_MHz,

@@ -15,18 +15,6 @@
 
 using namespace srsran;
 
-static void test_int_comma_plus_space()
-{
-  std::array<int, 5> data = {0, 1, 2, 3, 4};
-  fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{:, }", span<int>(data));
-
-  std::string formatted_string = to_string(buffer);
-  std::string expected_string  = "0, 1, 2, 3, 4";
-  TESTASSERT_EQ(formatted_string, expected_string);
-  TESTASSERT_EQ(span<int>(data), span<int>(data));
-}
-
 static void test_int_comma()
 {
   std::array<int, 5> data = {0, 1, 2, 3, 4};
@@ -34,7 +22,7 @@ static void test_int_comma()
   fmt::format_to(buffer, "{:,}", span<int>(data));
 
   std::string formatted_string = to_string(buffer);
-  std::string expected_string  = "0,1,2,3,4";
+  std::string expected_string  = "0, 1, 2, 3, 4";
   TESTASSERT_EQ(formatted_string, expected_string);
   TESTASSERT_EQ(span<int>(data), span<int>(data));
 }
@@ -94,7 +82,6 @@ static void test_cf_short()
 
 int main()
 {
-  test_int_comma_plus_space();
   test_int_comma();
   test_u8_dec();
   test_u8_hex();

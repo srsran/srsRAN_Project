@@ -32,7 +32,7 @@ static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_c
   node["f1u_enable"]    = config.f1u.enabled;
   node["rlc_filename"]  = config.rlc.filename;
   node["rlc_rb_type"]   = config.rlc.rb_type;
-  node["rlc_enable"]    = config.rlc.filename;
+  node["rlc_enable"]    = config.rlc.enabled;
   node["mac_filename"]  = config.mac.filename;
   node["mac_type"]      = config.mac.type;
   node["mac_enable"]    = config.mac.enabled;
@@ -320,7 +320,7 @@ static YAML::Node build_du_high_pdsch_section(const du_high_unit_pdsch_config& c
   node["dmrs_additional_position"]   = config.dmrs_add_pos;
 
   for (auto rv : config.rv_sequence) {
-    node["rv_sequence"] = rv;
+    node["rv_sequence"].push_back(rv);
   }
   node["rv_sequence"].SetStyle(YAML::EmitterStyle::Flow);
 
@@ -371,7 +371,7 @@ static YAML::Node build_du_high_pusch_section(const du_high_unit_pusch_config& c
   node["end_rb"]                   = config.end_rb;
 
   for (auto rv : config.rv_sequence) {
-    node["rv_sequence"] = rv;
+    node["rv_sequence"].push_back(rv);
   }
   node["rv_sequence"].SetStyle(YAML::EmitterStyle::Flow);
 
@@ -406,25 +406,25 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]               = config.p0_nominal;
-  node["sr_period_ms"]             = config.sr_period_msec;
-  node["f1_nof_ue_res_harq"]       = config.nof_ue_pucch_f1_res_harq;
-  node["f1_nof_cell_res_sr"]       = config.nof_cell_sr_resources;
-  node["f1_nof_symbols"]           = config.f1_nof_symbols;
-  node["f1_enable_occ"]            = config.f1_enable_occ;
-  node["f1_nof_cyclic_shifts"]     = config.nof_cyclic_shift;
-  node["f1_intraslot_freq_hop"]    = config.f1_intraslot_freq_hopping;
-  node["nof_cell_harq_pucch_sets"] = config.nof_cell_harq_pucch_sets;
-  node["nof_ue_pucch_f2_res_harq"] = config.nof_ue_pucch_f2_res_harq;
-  node["nof_cell_csi_resources"]   = config.nof_cell_csi_resources;
-  node["f2_nof_symbols"]           = config.f2_nof_symbols;
-  node["f2_max_nof_rbs"]           = config.f2_max_nof_rbs;
-  node["f2_max_code_rate"]         = to_string(config.max_code_rate);
-  node["f2_intraslot_freq_hop"]    = config.f2_intraslot_freq_hopping;
-  node["min_k1"]                   = config.min_k1;
-  node["max_consecutive_kos"]      = config.max_consecutive_kos;
+  node["p0_nominal"]                   = config.p0_nominal;
+  node["sr_period_ms"]                 = config.sr_period_msec;
+  node["f1_nof_ue_res_harq"]           = config.nof_ue_pucch_f1_res_harq;
+  node["f1_nof_cell_res_sr"]           = config.nof_cell_sr_resources;
+  node["f1_nof_symbols"]               = config.f1_nof_symbols;
+  node["f1_enable_occ"]                = config.f1_enable_occ;
+  node["f1_nof_cyclic_shifts"]         = config.nof_cyclic_shift;
+  node["f1_intraslot_freq_hop"]        = config.f1_intraslot_freq_hopping;
+  node["nof_cell_harq_pucch_res_sets"] = config.nof_cell_harq_pucch_sets;
+  node["f2_nof_ue_res_harq"]           = config.nof_ue_pucch_f2_res_harq;
+  node["f2_nof_cell_res_csi"]          = config.nof_cell_csi_resources;
+  node["f2_nof_symbols"]               = config.f2_nof_symbols;
+  node["f2_max_nof_rbs"]               = config.f2_max_nof_rbs;
+  node["f2_max_code_rate"]             = to_string(config.max_code_rate);
+  node["f2_intraslot_freq_hop"]        = config.f2_intraslot_freq_hopping;
+  node["min_k1"]                       = config.min_k1;
+  node["max_consecutive_kos"]          = config.max_consecutive_kos;
   if (config.max_payload_bits.has_value()) {
-    node["nof_ue_puccf2_max_payloadh_f2_res_harq"] = config.max_payload_bits.value();
+    node["f2_max_payload"] = config.max_payload_bits.value();
   }
 
   return node;
@@ -601,11 +601,10 @@ static void build_du_high_cells_section(YAML::Node& node, span<const du_high_uni
   }
 }
 
-static YAML::Node build_du_high_am_section(const du_high_unit_rlc_am_config& config)
+static void fill_du_high_am_section(YAML::Node node, const du_high_unit_rlc_am_config& config)
 {
-  YAML::Node node;
   {
-    YAML::Node tx_node;
+    YAML::Node tx_node            = node["tx"];
     tx_node["sn"]                 = config.tx.sn_field_length;
     tx_node["t-poll-retransmit"]  = config.tx.t_poll_retx;
     tx_node["max-retx-threshold"] = config.tx.max_retx_thresh;
@@ -613,88 +612,75 @@ static YAML::Node build_du_high_am_section(const du_high_unit_rlc_am_config& con
     tx_node["poll-byte"]          = config.tx.poll_byte;
     tx_node["max_window"]         = config.tx.max_window;
     tx_node["queue-size"]         = config.tx.queue_size;
-    node["tx"]                    = tx_node;
   }
   {
-    YAML::Node rx_node;
+    YAML::Node rx_node           = node["rx"];
     rx_node["sn"]                = config.rx.sn_field_length;
     rx_node["t-reassembly"]      = config.rx.t_reassembly;
     rx_node["t-status-prohibit"] = config.rx.t_status_prohibit;
     rx_node["max_sn_per_status"] = config.rx.max_sn_per_status;
-    node["tx"]                   = rx_node;
   }
-
-  return node;
 }
 
-static YAML::Node build_du_high_um_bidir_section(const du_high_unit_rlc_um_config& config)
+static void fill_du_high_um_bidir_section(YAML::Node node, const du_high_unit_rlc_um_config& config)
 {
-  YAML::Node node;
   {
-    YAML::Node tx_node;
+    YAML::Node tx_node    = node["tx"];
     tx_node["sn"]         = config.tx.sn_field_length;
     tx_node["queue-size"] = config.tx.queue_size;
-    node["tx"]            = tx_node;
   }
   {
-    YAML::Node rx_node;
+    YAML::Node rx_node      = node["rx"];
     rx_node["sn"]           = config.rx.sn_field_length;
     rx_node["t-reassembly"] = config.rx.t_reassembly;
-    node["tx"]              = rx_node;
   }
-
-  return node;
 }
 
-static YAML::Node build_du_high_rlc_qos_section(const du_high_unit_rlc_config& config)
+static void fill_du_high_rlc_qos_section(YAML::Node node, const du_high_unit_rlc_config& config)
 {
-  YAML::Node node;
-
   node["mode"] = config.mode;
   if (config.mode == "am") {
-    node["am"] = build_du_high_am_section(config.am);
+    fill_du_high_am_section(node["am"], config.am);
   }
-
   if (config.mode == "um-bidir") {
-    node["um-bidir"] = build_du_high_um_bidir_section(config.um);
+    fill_du_high_um_bidir_section(node["um-bidir"], config.um);
   }
-
-  return node;
 }
 
-static YAML::Node build_du_high_f1u_qos_section(const du_high_unit_f1u_du_config& config)
+static void fill_du_high_f1u_qos_section(YAML::Node node, const du_high_unit_f1u_du_config& config)
 {
-  YAML::Node node;
-
   node["backoff_timer"] = config.t_notify;
-
-  return node;
 }
 
-static YAML::Node build_du_high_mac_qos_section(const du_high_unit_mac_lc_config& config)
+static void fill_du_high_mac_qos_section(YAML::Node node, const du_high_unit_mac_lc_config& config)
 {
-  YAML::Node node;
-
   node["lc_priority"]               = static_cast<unsigned>(config.priority);
   node["lc_group_id"]               = static_cast<unsigned>(config.lc_group_id);
   node["bucket_size_duration_ms"]   = config.bucket_size_duration_ms;
   node["prioritized_bit_rate_kBps"] = config.prioritized_bit_rate_kBps;
-
-  return node;
 }
 
-static void fill_du_high_qos_entry(YAML::Node& node, const du_high_unit_qos_config& config)
+static void fill_du_high_qos_entry(YAML::Node node, const du_high_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
-  node["rlc"]     = build_du_high_rlc_qos_section(config.rlc);
-  node["f1u_du"]  = build_du_high_f1u_qos_section(config.f1u_du);
-  node["mac"]     = build_du_high_mac_qos_section(config.mac);
+  fill_du_high_rlc_qos_section(node["rlc"], config.rlc);
+  fill_du_high_f1u_qos_section(node["f1u_du"], config.f1u_du);
+  fill_du_high_mac_qos_section(node["mac"], config.mac);
 }
 
-static void fill_qos_section(YAML::Node& node, span<const du_high_unit_qos_config> qos_cfg)
+static YAML::Node get_last_entry(YAML::Node node)
 {
+  auto it = node.begin();
+  for (unsigned i = 1; i != node.size(); ++i) {
+    ++it;
+  }
+  return *it;
+}
+
+static void fill_qos_section(YAML::Node node, span<const du_high_unit_qos_config> qos_cfg)
+{
+  auto qos_node = node["qos"];
   for (const auto& qos : qos_cfg) {
-    auto qos_node   = node["qos"];
     auto node_entry = std::find_if(qos_node.begin(), qos_node.end(), [five = qos.five_qi](const YAML::Node& tmp) {
       return static_cast<uint16_t>(five) == tmp["five_qi"].as<uint16_t>();
     });
@@ -702,9 +688,8 @@ static void fill_qos_section(YAML::Node& node, span<const du_high_unit_qos_confi
       YAML::Node node_five = *node_entry;
       fill_du_high_qos_entry(node_five, qos);
     } else {
-      YAML::Node node_five;
-      fill_du_high_qos_entry(node_five, qos);
-      qos_node.push_back(node_five);
+      qos_node.push_back(YAML::Node());
+      fill_du_high_qos_entry(get_last_entry(qos_node), qos);
     }
   }
 }
@@ -714,9 +699,8 @@ static void build_du_high_sbr_section(YAML::Node& node, const std::map<srb_id_t,
   for (const auto& cell : sbrs) {
     YAML::Node entry;
     entry["srb_id"] = cell.second.srb_id;
-    entry["rlc"]    = build_du_high_am_section(cell.second.rlc);
-    entry["mac"]    = build_du_high_mac_qos_section(cell.second.mac);
-
+    fill_du_high_am_section(entry["rlc"], cell.second.rlc);
+    fill_du_high_mac_qos_section(entry["mac"], cell.second.mac);
     node["srbs"].push_back(entry);
   }
 }

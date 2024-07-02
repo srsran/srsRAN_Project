@@ -235,8 +235,7 @@ namespace fmt {
 /// \brief Custom formatter for \c span<T>.
 ///
 /// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
-/// be selected by formatting with <tt>{:,}</tt>. A comma plus space delimiter is available and can  be selected by
-/// formatting with <tt>{:, }</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
+/// be selected by formatting with <tt>{:,}</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
 template <typename T>
 struct formatter<srsran::span<T>> {
   // Stores parsed format string.
@@ -256,9 +255,8 @@ struct formatter<srsran::span<T>> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
-    static const string_view PREAMBLE_FORMAT            = "{:";
-    static const string_view COMMA_DELIMITER            = ",";
-    static const string_view COMMA_PLUS_SPACE_DELIMITER = ", ";
+    static const string_view PREAMBLE_FORMAT = "{:";
+    static const string_view COMMA_DELIMITER = ", ";
 
     // Skip if context is empty and use default format.
     if (ctx.begin() == ctx.end()) {
@@ -268,19 +266,11 @@ struct formatter<srsran::span<T>> {
     // Store the format string.
     format_buffer.clear();
     format_buffer.append(PREAMBLE_FORMAT.begin(), PREAMBLE_FORMAT.end());
-    bool comma_present = false;
     for (auto& it : ctx) {
       // Detect if comma is in the context.
       if (it == ',') {
         delimiter_buffer.clear();
         delimiter_buffer.append(COMMA_DELIMITER.begin(), COMMA_DELIMITER.end());
-        comma_present = true;
-        continue;
-      }
-
-      if (comma_present && it == ' ') {
-        delimiter_buffer.clear();
-        delimiter_buffer.append(COMMA_PLUS_SPACE_DELIMITER.begin(), COMMA_PLUS_SPACE_DELIMITER.end());
         continue;
       }
 

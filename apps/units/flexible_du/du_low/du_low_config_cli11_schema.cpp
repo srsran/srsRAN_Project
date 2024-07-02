@@ -197,7 +197,7 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              expert_phy_params.nof_slots_request_headroom,
              "Maximum request headroom size in slots.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 3));
+      ->check(CLI::Range(0, 30));
 }
 
 void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config& parsed_cfg)

@@ -23,7 +23,8 @@ static std::string to_string(lower_phy_thread_profile profile)
 {
   switch (profile) {
     case lower_phy_thread_profile::blocking:
-      return "blocking";
+      // Blocking is an internal profile for ZMQ. Output 'single' for the configuration.
+      return "single";
     case lower_phy_thread_profile::dual:
       return "dual";
     case lower_phy_thread_profile::quad:
@@ -110,5 +111,5 @@ void srsran::fill_ru_sdr_config_in_yaml_schema(YAML::Node& node, const ru_sdr_un
 {
   fill_ru_sdr_log_section(node["log"], config.loggers);
   fill_ru_sdr_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
-  fill_ru_sdr_section(node["ru_ofh"], config);
+  fill_ru_sdr_section(node["ru_sdr"], config);
 }

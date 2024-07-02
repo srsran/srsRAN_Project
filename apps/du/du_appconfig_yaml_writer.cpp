@@ -8,15 +8,14 @@
  *
  */
 
-#include "gnb_appconfig_yaml_writer.h"
+#include "du_appconfig_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
-#include "gnb_appconfig.h"
+#include "du_appconfig.h"
 
 using namespace srsran;
 
-static void fill_gnb_appconfig_metrics_section(YAML::Node node, const metrics_appconfig& config)
+static void fill_du_appconfig_metrics_section(YAML::Node node, const srs_du::metrics_appconfig& config)
 {
-  node["pdcp_report_period"]       = config.pdcp.report_period;
   node["enable_json_metrics"]      = config.enable_json_metrics;
   node["addr"]                     = config.addr;
   node["port"]                     = config.port;
@@ -24,7 +23,7 @@ static void fill_gnb_appconfig_metrics_section(YAML::Node node, const metrics_ap
   node["stdout_metrics_period"]    = config.stdout_metrics_period;
 }
 
-static void fill_gnb_appconfig_e2_section(YAML::Node node, const e2_appconfig& config)
+static void fill_du_appconfig_e2_section(YAML::Node node, const e2_appconfig& config)
 {
   node["enable_du_e2"]           = config.enable_du_e2;
   node["addr"]                   = config.ip_addr;
@@ -39,7 +38,7 @@ static void fill_gnb_appconfig_e2_section(YAML::Node node, const e2_appconfig& c
   node["e2sm_rc_enabled"]        = config.e2sm_rc_enabled;
 }
 
-static void fill_gnb_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)
+static void fill_du_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)
 {
   if (!config.has_value()) {
     return;
@@ -48,7 +47,7 @@ static void fill_gnb_appconfig_hal_section(YAML::Node node, const std::optional<
   hal_node["eal_args"] = config.value().eal_args;
 }
 
-static void fill_gnb_appconfig_expert_execution_section(YAML::Node node, const expert_execution_appconfig& config)
+static void fill_du_appconfig_expert_execution_section(YAML::Node node, const expert_execution_appconfig& config)
 {
   {
     YAML::Node affinities_node = node["affinities"];
@@ -72,22 +71,32 @@ static void fill_gnb_appconfig_expert_execution_section(YAML::Node node, const e
   }
 }
 
-static void fill_gnb_appconfig_buffer_pool_section(YAML::Node node, const buffer_pool_appconfig& config)
+static void fill_du_appconfig_buffer_pool_section(YAML::Node node, const buffer_pool_appconfig& config)
 {
   node["nof_segments"] = config.nof_segments;
   node["segment_size"] = config.segment_size;
 }
 
-void srsran::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appconfig& config)
+static void fill_du_appconfig_nru_section(YAML::Node node, const srs_du::nru_appconfig& config)
 {
-  node["gnb_id"]            = config.gnb_id.id;
-  node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
-  node["ran_node_name"]     = config.ran_node_name;
+  node["queue_size"] = config.pdu_queue_size;
+  node["bind_addr"]  = config.bind_address;
+}
 
+static void fill_du_appconfig_f1ap_section(YAML::Node node, const srs_du::f1ap_appconfig& config)
+{
+  node["cu_cp_addr"] = config.cu_cp_address;
+  node["bind_addr"]  = config.bind_address;
+}
+
+void srsran::fill_du_appconfig_in_yaml_schema(YAML::Node& node, const du_appconfig& config)
+{
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
-  fill_gnb_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
-  fill_gnb_appconfig_e2_section(node["e2"], config.e2_cfg);
-  fill_gnb_appconfig_hal_section(node, config.hal_config);
-  fill_gnb_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
-  fill_gnb_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
+  fill_du_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
+  fill_du_appconfig_e2_section(node["e2"], config.e2_cfg);
+  fill_du_appconfig_hal_section(node, config.hal_config);
+  fill_du_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
+  fill_du_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
+  fill_du_appconfig_nru_section(node["nru"], config.nru_cfg);
+  fill_du_appconfig_f1ap_section(node["f1ap"], config.f1ap_cfg);
 }

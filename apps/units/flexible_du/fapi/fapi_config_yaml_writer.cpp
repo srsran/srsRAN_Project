@@ -8,8 +8,8 @@
  *
  */
 
-#include "fapi_config.h"
 #include "fapi_config_yaml_writer.h"
+#include "fapi_config.h"
 
 using namespace srsran;
 

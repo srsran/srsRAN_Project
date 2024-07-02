@@ -60,8 +60,11 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/stdin_command_dispatcher.h"
+#include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
+#include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
+#include "cu_appconfig_yaml_writer.h"
 
 #include <atomic>
 #include <thread>
@@ -213,7 +216,11 @@ int main(int argc, char** argv)
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
-    config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
+    YAML::Node node;
+    fill_cu_appconfig_in_yaml_schema(node, cu_cfg);
+    fill_cu_up_config_in_yaml_schema(node, cu_up_config);
+    fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
+    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }

@@ -245,18 +245,12 @@ int main(int argc, char** argv)
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
-    // Refesh defaults in case some parameters may have changed after the autoderivation process.
-    refresh_defaults(app);
-    config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
-
-    config_logger.debug("NOW IT GOES THE MANUAL CONFIG");
     YAML::Node node;
     fill_gnb_appconfig_in_yaml_schema(node, gnb_cfg);
     fill_cu_up_config_in_yaml_schema(node, cu_up_config);
     fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
     fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
-    config_logger.debug("CU-UP config values: \n{}", YAML::Dump(node));
-
+    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }

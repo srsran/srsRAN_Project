@@ -60,53 +60,48 @@ static YAML::Node build_cu_up_section(const cu_up_unit_config& config)
   return node;
 }
 
-static YAML::Node build_um_bidir_section(const cu_up_unit_qos_config& config)
+static void fill_um_bidir_section(YAML::Node node, const cu_up_unit_qos_config& config)
 {
-  YAML::Node node;
-
-  YAML::Node node_tx;
+  YAML::Node node_tx    = node["tx"];
   node_tx["queue-size"] = config.rlc_sdu_queue;
-  node["tx"]            = node_tx;
-
-  return node;
 }
 
-static YAML::Node build_am_section(const cu_up_unit_qos_config& config)
+static void fill_am_section(YAML::Node node, const cu_up_unit_qos_config& config)
 {
-  YAML::Node node;
-
-  YAML::Node node_tx;
+  YAML::Node node_tx    = node["tx"];
   node_tx["queue-size"] = config.rlc_sdu_queue;
-  node["tx"]            = node_tx;
-
-  return node;
 }
 
-static YAML::Node build_rlc_qos_section(const cu_up_unit_qos_config& config)
+static void fill_cu_up_rlc_qos_section(YAML::Node node, const cu_up_unit_qos_config& config)
 {
-  YAML::Node node;
-
   node["mode"] = config.mode;
 
   if (config.mode == "um_bidir") {
-    node["um_bidir"] = build_um_bidir_section(config);
+    fill_um_bidir_section(node["um_bidir"], config);
   } else if (config.mode == "am") {
-    node["am"] = build_am_section(config);
+    fill_am_section(node["am"], config);
   }
-
-  return node;
 }
 
-static void fill_cu_up_qos_entry(YAML::Node& node, const cu_up_unit_qos_config& config)
+static void fill_cu_up_qos_entry(YAML::Node node, const cu_up_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
-  node["rlc"]     = build_rlc_qos_section(config);
+  fill_cu_up_rlc_qos_section(node["rlc"], config);
 }
 
-static void fill_cu_up_qos_section(YAML::Node& node, span<const cu_up_unit_qos_config> qos_cfg)
+static YAML::Node get_last_entry(YAML::Node node)
 {
+  auto it = node.begin();
+  for (unsigned i = 1; i != node.size(); ++i) {
+    ++it;
+  }
+  return *it;
+}
+
+static void fill_cu_up_qos_section(YAML::Node node, span<const cu_up_unit_qos_config> qos_cfg)
+{
+  auto qos_node = node["qos"];
   for (const auto& qos : qos_cfg) {
-    auto qos_node   = node["qos"];
     auto node_entry = std::find_if(qos_node.begin(), qos_node.end(), [five = qos.five_qi](const YAML::Node& tmp) {
       return static_cast<uint16_t>(five) == tmp["five_qi"].as<uint16_t>();
     });
@@ -114,9 +109,8 @@ static void fill_cu_up_qos_section(YAML::Node& node, span<const cu_up_unit_qos_c
       YAML::Node node_five = *node_entry;
       fill_cu_up_qos_entry(node_five, qos);
     } else {
-      YAML::Node node_five;
-      fill_cu_up_qos_entry(node_five, qos);
-      qos_node.push_back(node_five);
+      qos_node.push_back(YAML::Node());
+      fill_cu_up_qos_entry(get_last_entry(qos_node), qos);
     }
   }
 }
