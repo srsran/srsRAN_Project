@@ -275,7 +275,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  resource_grid_reader_spy rg_spy(nof_tx_ports, 1, 1);
+  resource_grid_reader_spy rg_spy;
 
   // Add a single resource grid entry per port. This makes the grid non-empty on all ports.
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {

@@ -19,6 +19,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/fill.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/file_vector.h"
 #include "srsran/support/srsran_assert.h"
@@ -255,9 +256,14 @@ class resource_grid_reader_spy : public resource_grid_reader
 public:
   using expected_entry_t = resource_grid_writer_spy::expected_entry_t;
 
-  resource_grid_reader_spy(unsigned max_ports_ = 0, unsigned max_symb_ = 0, unsigned max_prb_ = 0) :
-    max_ports(max_ports_), max_symb(max_symb_), max_prb(max_prb_), temp_view(max_prb * NRE)
+  resource_grid_reader_spy() : max_ports(0), max_symb(0), max_prb(0) {}
+
+  resource_grid_reader_spy(unsigned max_ports_, unsigned max_symb_, unsigned max_prb_) :
+    max_ports(max_ports_), max_symb(max_symb_), max_prb(max_prb_), grid({max_prb * NRE, max_symb, max_ports})
   {
+    // Fill grid with NAN.
+    cf_t nan = {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()};
+    srsvec::fill(grid.get_data(), to_cbf16(nan));
   }
 
   unsigned get_nof_ports() const override { return max_ports; }
@@ -323,19 +329,7 @@ public:
   span<const cbf16_t> get_view(unsigned port, unsigned l) const override
   {
     ++count;
-
-    // Fill temporal view with NAN.
-    cf_t nan = {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()};
-    std::fill(temp_view.begin(), temp_view.end(), to_cbf16(nan));
-
-    // Write the available entries.
-    for (const auto& e : entries) {
-      if ((std::get<0>(e.first) == port) && (std::get<1>(e.first) == l)) {
-        temp_view[std::get<2>(e.first)] = e.second;
-      }
-    }
-
-    return temp_view;
+    return grid.get_view({l, port});
   }
 
   void write(span<const expected_entry_t> entries_)
@@ -350,6 +344,10 @@ public:
     entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
 
     entries.emplace(key, entry.value);
+
+    if (!grid.empty()) {
+      grid[{entry.subcarrier, entry.symbol, entry.port}] = entry.value;
+    }
   }
 
   unsigned get_count() const { return count; }
@@ -373,8 +371,8 @@ private:
   /// Stores the resource grid written entries.
   std::map<entry_key_t, cbf16_t> entries;
 
-  /// Temporal storage of the method get_view(). It is overwritten every time get_view() is called.
-  mutable std::vector<cbf16_t> temp_view;
+  /// Actual grid, for the method get_view().
+  dynamic_tensor<3, cbf16_t> grid;
 
   cbf16_t get(uint8_t port, uint8_t symbol, uint16_t subcarrier) const
   {
@@ -433,7 +431,7 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
-  void map(const re_buffer_reader& /* input */,
+  void map(const re_buffer_reader<>& /* input */,
            const re_pattern& /* pattern */,
            const precoding_configuration& /* precoding */) override
   {
@@ -486,7 +484,8 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
-  void map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) override
+  void
+  map(const re_buffer_reader<>& input, const re_pattern& pattern, const precoding_configuration& precoding) override
   {
     failure();
   }

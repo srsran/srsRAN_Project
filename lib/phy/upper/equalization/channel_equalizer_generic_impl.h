@@ -26,12 +26,12 @@ public:
   explicit channel_equalizer_generic_impl(channel_equalizer_algorithm_type type_) : type(type_) {}
 
   // See interface for documentation.
-  void equalize(span<cf_t>         eq_symbols,
-                span<float>        eq_noise_vars,
-                const re_list&     ch_symbols,
-                const ch_est_list& ch_estimates,
-                span<const float>  noise_var_estimates,
-                float              tx_scaling) override;
+  void equalize(span<cf_t>                       eq_symbols,
+                span<float>                      eq_noise_vars,
+                const re_buffer_reader<cbf16_t>& ch_symbols,
+                const ch_est_list&               ch_estimates,
+                span<const float>                noise_var_estimates,
+                float                            tx_scaling) override;
 
 private:
   channel_equalizer_algorithm_type type;

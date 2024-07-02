@@ -31,7 +31,7 @@ namespace srsran {
 template <unsigned RX_PORTS>
 void equalize_zf_2xn(span<cf_t>                            eq_symbols,
                      span<float>                           noise_vars,
-                     const channel_equalizer::re_list&     ch_symbols,
+                     const re_buffer_reader<cbf16_t>&      ch_symbols,
                      const channel_equalizer::ch_est_list& ch_estimates_,
                      float                                 noise_var_est,
                      float                                 tx_scaling)
@@ -41,7 +41,7 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
   static_assert(nof_ports >= nof_layers, "The number of ports must be greater than or equal to the number of layers.");
 
   unsigned       i_re   = 0;
-  const unsigned nof_re = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
+  const unsigned nof_re = ch_symbols.get_nof_re();
 
   // Skip processing if the noise variance is NaN, infinity or negative.
   if (!std::isnormal(noise_var_est) || (noise_var_est < 0.0F)) {
@@ -53,14 +53,14 @@ void equalize_zf_2xn(span<cf_t>                            eq_symbols,
   // Views over input channel symbols, organized by receive port.
   std::array<span<const cbf16_t>, nof_ports> symbols_in;
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-    symbols_in[i_port] = ch_symbols.get_view<>({i_port});
+    symbols_in[i_port] = ch_symbols.get_slice(i_port);
   }
 
   // Views over channel estimates, organized by receive port and transmit layer.
   std::array<std::array<span<const cbf16_t>, nof_layers>, nof_ports> ch_estimates;
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      ch_estimates[i_port][i_layer] = ch_estimates_.get_view<>({i_port, i_layer});
+      ch_estimates[i_port][i_layer] = ch_estimates_.get_channel(i_port, i_layer);
     }
   }
 

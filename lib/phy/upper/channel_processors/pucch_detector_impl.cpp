@@ -14,6 +14,7 @@
 #include "pucch_detector_impl.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/conversion.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/mean.h"
 
 using namespace srsran;
@@ -211,8 +212,8 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
   unsigned nof_res   = (config.nof_symbols / 2) * NRE;
   unsigned nof_ports = config.ports.size();
-  time_spread_sequence.resize({nof_res, nof_ports});
-  ch_estimates.resize({nof_res, nof_ports, 1});
+  time_spread_sequence.resize(nof_ports, nof_res);
+  ch_estimates.resize(nof_res, nof_ports, 1);
   eq_time_spread_sequence.resize(nof_res);
   eq_time_spread_noise_var.resize(nof_res);
 
@@ -306,8 +307,8 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
     unsigned      i_symbol       = 0;
     unsigned      skip           = 0;
     unsigned      symbol_index   = first_symbol + 1;
-    span<cbf16_t> sequence_slice = time_spread_sequence.get_view({port});
-    span<cbf16_t> estimate_slice = ch_estimates.get_view({port});
+    span<cbf16_t> sequence_slice = time_spread_sequence.get_slice(port);
+    span<cbf16_t> estimate_slice = ch_estimates.get_channel(port, 0);
     for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
       // Index of the first subcarrier assigned to PUCCH, before hopping.
       unsigned      k_init         = NRE * first_prb;

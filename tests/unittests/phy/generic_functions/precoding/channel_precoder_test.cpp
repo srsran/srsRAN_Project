@@ -75,7 +75,7 @@ protected:
   }
 
   // Generates and returns random RE values, as many as the specified number of layers and RE.
-  const re_buffer_reader& generate_random_data(unsigned nof_layers, unsigned nof_re)
+  const re_buffer_reader<>& generate_random_data(unsigned nof_layers, unsigned nof_re)
   {
     // Resize buffer.
     random_data.resize(nof_layers, nof_re);
@@ -105,8 +105,8 @@ protected:
   }
 
   // Generates the golden RE sequence, with the dimensions specified by the input buffer and precoding matrix.
-  const re_buffer_reader& generate_golden(const re_buffer_reader&        input,
-                                          const precoding_weight_matrix& precoding_matrix)
+  const re_buffer_reader<>& generate_golden(const re_buffer_reader<>&      input,
+                                            const precoding_weight_matrix& precoding_matrix)
   {
     // Get dimensions.
     unsigned nof_re     = input.get_nof_re();
@@ -140,7 +140,7 @@ protected:
   }
 
   // Generates the golden RE sequence, with the dimensions specified by the input buffer and precoding matrix.
-  const re_buffer_reader& generate_golden(span<const ci8_t> input, const precoding_weight_matrix& precoding_matrix)
+  const re_buffer_reader<>& generate_golden(span<const ci8_t> input, const precoding_weight_matrix& precoding_matrix)
   {
     // Get dimensions.
     unsigned nof_layers = precoding_matrix.get_nof_layers();
@@ -227,13 +227,13 @@ TEST_P(PrecodingFixture, RandomWeightsCft)
                                                                                                            nof_re);
   for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_re);
 
     // Create a random precoding configuration
     precoding_weight_matrix precoding_matrix = generate_random_precoding(nof_layers, nof_ports);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, precoding_matrix);
+    const re_buffer_reader<>& golden = generate_golden(input_data, precoding_matrix);
 
     // Apply precoding.
     precoder->apply_precoding(precoding_buffer, input_data, precoding_matrix);
@@ -267,7 +267,7 @@ TEST_P(PrecodingFixture, RandomWeightsCi8)
     precoding_weight_matrix precoding_matrix = generate_random_precoding(nof_layers, nof_ports);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, precoding_matrix);
+    const re_buffer_reader<>& golden = generate_golden(input_data, precoding_matrix);
 
     // Apply precoding.
     precoder->apply_layer_map_and_precoding(precoding_buffer, input_data, precoding_matrix);

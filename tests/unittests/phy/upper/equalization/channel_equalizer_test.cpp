@@ -9,10 +9,14 @@
  */
 
 #include "channel_equalizer_test_data.h"
+#include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
+#include <srsran/phy/constants.h>
 
 using namespace srsran;
 
@@ -77,17 +81,14 @@ namespace {
 
 using ChannelEqualizerParams = test_case_t;
 
-using re_dims = channel_equalizer::re_list::dims;
-using ch_dims = channel_equalizer::ch_est_list::dims;
-
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
-  dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cbf16_t, re_dims> rx_symbols;
-  dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cbf16_t, ch_dims> test_ch_estimates;
-  std::vector<cf_t>                                                                    eq_symbols_expected;
-  std::vector<cf_t>                                                                    eq_symbols_actual;
-  std::vector<float>                                                                   eq_noise_vars_expected;
+  dynamic_re_buffer<cbf16_t> rx_symbols;
+  dynamic_ch_est_list        test_ch_estimates;
+  std::vector<cf_t>          eq_symbols_expected;
+  std::vector<cf_t>          eq_symbols_actual;
+  std::vector<float>         eq_noise_vars_expected;
 
   std::vector<float> eq_noise_vars_actual;
 
@@ -95,6 +96,8 @@ protected:
 
   std::shared_ptr<channel_equalizer_factory> equalizer_factory;
   std::unique_ptr<channel_equalizer>         test_equalizer;
+
+  ChannelEqualizerFixture() : TestWithParam<srsran::test_case_t>(), rx_symbols(4, 1000) {}
 
   void SetUp() override
   {
@@ -136,12 +139,15 @@ protected:
     unsigned nof_layers   = t_case.context.nof_layers;
 
     // Resize the equalizer input data structures.
-    rx_symbols.resize({nof_re, nof_rx_ports});
-    test_ch_estimates.resize({nof_re, nof_rx_ports, nof_layers});
+    rx_symbols.resize(nof_rx_ports, nof_re);
+    test_ch_estimates.resize(nof_re, nof_rx_ports, nof_layers);
     test_noise_vars.resize(nof_rx_ports);
 
     // Read the test case symbols and estimates.
-    srsvec::copy(rx_symbols.get_data(), t_case.received_symbols.read());
+    const auto rx_symbols_vector = t_case.received_symbols.read();
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      srsvec::copy(rx_symbols.get_slice(i_port), span<const cf_t>(rx_symbols_vector).subspan(nof_re * i_port, nof_re));
+    }
     srsvec::copy(test_ch_estimates.get_data(), t_case.ch_estimates.read());
 
     // Prepare noise variance per receive port.
@@ -207,9 +213,9 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
         for (unsigned i_re = 0; i_re < nof_re; i_re += stride) {
-          test_ch_estimates[{i_re, i_port, i_layer}]          = cf_t();
-          eq_symbols_expected[nof_layers * i_re + i_layer]    = cf_t();
-          eq_noise_vars_expected[nof_layers * i_re + i_layer] = std::numeric_limits<float>::infinity();
+          test_ch_estimates.get_channel(i_port, i_layer)[i_re] = cf_t();
+          eq_symbols_expected[nof_layers * i_re + i_layer]     = cf_t();
+          eq_noise_vars_expected[nof_layers * i_re + i_layer]  = std::numeric_limits<float>::infinity();
         }
       }
     }
@@ -260,9 +266,9 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
         for (unsigned i_re = 0; i_re < nof_re; i_re += stride) {
-          test_ch_estimates[{i_re, i_port, i_layer}]          = std::numeric_limits<float>::infinity();
-          eq_symbols_expected[nof_layers * i_re + i_layer]    = cf_t();
-          eq_noise_vars_expected[nof_layers * i_re + i_layer] = std::numeric_limits<float>::infinity();
+          test_ch_estimates.get_channel(i_port, i_layer)[i_re] = std::numeric_limits<float>::infinity();
+          eq_symbols_expected[nof_layers * i_re + i_layer]     = cf_t();
+          eq_noise_vars_expected[nof_layers * i_re + i_layer]  = std::numeric_limits<float>::infinity();
         }
       }
     }
@@ -313,9 +319,9 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
       for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
         for (unsigned i_re = 0; i_re < nof_re; i_re += stride) {
-          test_ch_estimates[{i_re, i_port, i_layer}]          = std::numeric_limits<float>::quiet_NaN();
-          eq_symbols_expected[nof_layers * i_re + i_layer]    = cf_t();
-          eq_noise_vars_expected[nof_layers * i_re + i_layer] = std::numeric_limits<float>::infinity();
+          test_ch_estimates.get_channel(i_port, i_layer)[i_re] = std::numeric_limits<float>::quiet_NaN();
+          eq_symbols_expected[nof_layers * i_re + i_layer]     = cf_t();
+          eq_noise_vars_expected[nof_layers * i_re + i_layer]  = std::numeric_limits<float>::infinity();
         }
       }
     }

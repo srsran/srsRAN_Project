@@ -77,7 +77,7 @@ class resource_grid_dummy : public resource_grid
   {
   public:
     void
-    map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) override
+    map(const re_buffer_reader<>& input, const re_pattern& pattern, const precoding_configuration& precoding) override
     {
     }
 

@@ -15,9 +15,11 @@
 
 #include "../signal_processors/pucch/pucch_helper.h"
 #include "pucch_detector_format0.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
@@ -50,7 +52,8 @@ public:
     low_papr(std::move(low_papr_)),
     helper(std::move(pseudo_random_)),
     equalizer(std::move(equalizer_)),
-    detector_format0(std::move(detector_format0_))
+    detector_format0(std::move(detector_format0_)),
+    ch_estimates(MAX_ALLOCATED_RE_F1, MAX_PORTS / 2, 1)
   {
     srsran_assert(low_papr, "Invalid Low PAPR sequence generator.");
     srsran_assert(equalizer, "Invalid equalizer.");
@@ -93,21 +96,12 @@ private:
   std::unique_ptr<channel_equalizer> equalizer;
   /// PUCCH Format 0 detector.
   std::unique_ptr<pucch_detector_format0> detector_format0;
-  /// \brief Tensor for storing the spread data sequence.
+  /// \brief Buffer for storing the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cbf16_t,
-                MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
-                channel_equalizer::re_list::dims>
-      time_spread_sequence;
+  static_re_buffer<MAX_PORTS, MAX_ALLOCATED_RE_F1 / 2, cbf16_t> time_spread_sequence;
   /// \brief Tensor for storing the channel estimates corresponding to the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
-                    channel_equalizer::ch_est_list::dims::nof_dims),
-                cbf16_t,
-                MAX_ALLOCATED_RE_F1 * MAX_PORTS / 2,
-                channel_equalizer::ch_est_list::dims>
-      ch_estimates;
+  dynamic_ch_est_list ch_estimates;
   /// \brief Buffer for storing the spread data sequence after equalization.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
   static_vector<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_sequence;

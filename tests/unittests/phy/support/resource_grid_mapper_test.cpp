@@ -62,7 +62,7 @@ static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
 } // namespace srsran
 
 // Asserts that the contents of the resource grid match the golden symbols for the give allocation pattern.
-static void assert_grid(const re_buffer_reader&     golden,
+static void assert_grid(const re_buffer_reader<>&   golden,
                         const re_pattern_list&      allocation,
                         const re_pattern_list&      reserved,
                         const resource_grid_reader& grid,
@@ -105,7 +105,7 @@ static void assert_grid(const re_buffer_reader&     golden,
   }
 }
 
-static void assert_grid(const re_buffer_reader&     golden,
+static void assert_grid(const re_buffer_reader<>&   golden,
                         const re_pattern_list&      allocation,
                         const resource_grid_reader& grid,
                         unsigned                    nof_grid_rb)
@@ -142,7 +142,7 @@ protected:
   }
 
   // Generates and returns random RE values, as many as the specified number of layers and RE.
-  const re_buffer_reader& generate_random_data(unsigned nof_layers, unsigned nof_re)
+  const re_buffer_reader<>& generate_random_data(unsigned nof_layers, unsigned nof_re)
   {
     // Resize buffer.
     random_data.resize(nof_layers, nof_re);
@@ -200,10 +200,10 @@ protected:
 
   // Generates the golden RE sequence parting from the input symbols and applying precoding based on the provided
   // precoding configuration and allocation and reserved RE patterns.
-  const re_buffer_reader& generate_golden(const re_buffer_reader&        input,
-                                          const re_pattern_list&         allocation,
-                                          const precoding_configuration& configuration,
-                                          const re_pattern_list&         reserved)
+  const re_buffer_reader<>& generate_golden(const re_buffer_reader<>&      input,
+                                            const re_pattern_list&         allocation,
+                                            const precoding_configuration& configuration,
+                                            const re_pattern_list&         reserved)
   {
     // Get dimensions.
     unsigned nof_layers = configuration.get_nof_layers();
@@ -270,9 +270,9 @@ protected:
 
   // Generates the golden RE sequence parting from the input symbols and applying precoding based on the provided
   // precoding configuration and allocation patterns.
-  const re_buffer_reader& generate_golden(const re_buffer_reader&        input,
-                                          const re_pattern_list&         allocation,
-                                          const precoding_configuration& configuration)
+  const re_buffer_reader<>& generate_golden(const re_buffer_reader<>&      input,
+                                            const re_pattern_list&         allocation,
+                                            const precoding_configuration& configuration)
   {
     return generate_golden(input, allocation, configuration, re_pattern_list());
   }
@@ -337,7 +337,7 @@ TEST_F(ResourceGridMapperFixture, SinglePort)
   unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
   // Generate random RE arranged by layers.
-  const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+  const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
   // Get the resource grid mapper.
   resource_grid_mapper& mapper = grid->get_mapper();
@@ -346,7 +346,7 @@ TEST_F(ResourceGridMapperFixture, SinglePort)
   mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
   // Generate the golden precoded data.
-  const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+  const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
   // Assert resource grid contents.
   assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -377,7 +377,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerToOnePort)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -386,7 +386,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerToOnePort)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -415,7 +415,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerAllPorts)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -424,7 +424,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerAllPorts)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -449,7 +449,7 @@ TEST_F(ResourceGridMapperFixture, Identity)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_streams, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_streams, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -458,7 +458,7 @@ TEST_F(ResourceGridMapperFixture, Identity)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -489,7 +489,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerTwoPorts)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -498,7 +498,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerTwoPorts)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -529,7 +529,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerTwoPorts)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -538,7 +538,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerTwoPorts)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -571,7 +571,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerFourPorts)
       unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
       // Generate random RE arranged by layers.
-      const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+      const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
       // Get the resource grid mapper.
       resource_grid_mapper& mapper = grid->get_mapper();
@@ -580,7 +580,7 @@ TEST_F(ResourceGridMapperFixture, OneLayerFourPorts)
       mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
       // Generate the golden precoded data.
-      const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+      const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
       // Assert resource grid contents.
       assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -615,7 +615,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerFourPorts)
         unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
         // Generate random RE arranged by layers.
-        const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+        const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
         // Get the resource grid mapper.
         resource_grid_mapper& mapper = grid->get_mapper();
@@ -624,7 +624,7 @@ TEST_F(ResourceGridMapperFixture, TwoLayerFourPorts)
         mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
         // Generate the golden precoded data.
-        const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+        const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
         // Assert resource grid contents.
         assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -659,7 +659,7 @@ TEST_F(ResourceGridMapperFixture, ThreeLayerFourPorts)
       unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
       // Generate random RE arranged by layers.
-      const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+      const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
       // Get the resource grid mapper.
       resource_grid_mapper& mapper = grid->get_mapper();
@@ -668,7 +668,7 @@ TEST_F(ResourceGridMapperFixture, ThreeLayerFourPorts)
       mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
       // Generate the golden precoded data.
-      const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+      const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
       // Assert resource grid contents.
       assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -702,7 +702,7 @@ TEST_F(ResourceGridMapperFixture, FourLayerFourPorts)
       unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
       // Generate random RE arranged by layers.
-      const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+      const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
       // Get the resource grid mapper.
       resource_grid_mapper& mapper = grid->get_mapper();
@@ -711,7 +711,7 @@ TEST_F(ResourceGridMapperFixture, FourLayerFourPorts)
       mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
       // Generate the golden precoded data.
-      const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+      const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
       // Assert resource grid contents.
       assert_grid(golden, allocation, grid->get_reader(), MAX_RB);
@@ -754,7 +754,7 @@ TEST_P(ResourceGridMapperFixture, MultiplePrg)
     unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
 
     // Generate random RE arranged by layers.
-    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+    const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_data_re);
 
     // Get the resource grid mapper.
     resource_grid_mapper& mapper = grid->get_mapper();
@@ -763,7 +763,7 @@ TEST_P(ResourceGridMapperFixture, MultiplePrg)
     mapper.map(input_data, allocation.get_re_patterns().front(), precoding_config);
 
     // Generate the golden precoded data.
-    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config);
+    const re_buffer_reader<>& golden = generate_golden(input_data, allocation, precoding_config);
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, grid->get_reader(), nof_rb);

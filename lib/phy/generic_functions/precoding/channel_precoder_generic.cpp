@@ -12,9 +12,9 @@
 
 using namespace srsran;
 
-void channel_precoder_generic::apply_precoding_port(span<srsran::cf_t>              port_re,
-                                                    const srsran::re_buffer_reader& input_re,
-                                                    span<const srsran::cf_t>        port_weights) const
+void channel_precoder_generic::apply_precoding_port(span<cf_t>                port_re,
+                                                    const re_buffer_reader<>& input_re,
+                                                    span<const cf_t>          port_weights) const
 {
   unsigned nof_re     = input_re.get_nof_re();
   unsigned nof_layers = input_re.get_nof_slices();
@@ -35,7 +35,7 @@ void channel_precoder_generic::apply_precoding_port(span<srsran::cf_t>          
   }
 }
 
-void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer&              output,
+void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer<>&            output,
                                                              span<const ci8_t>              input,
                                                              const precoding_weight_matrix& precoding) const
 {

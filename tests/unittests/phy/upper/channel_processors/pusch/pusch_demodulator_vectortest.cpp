@@ -116,8 +116,14 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
 {
   const test_case_t& test_case = GetParam();
 
+  // Calculate resource grid dimensions.
+  unsigned nof_rx_ports =
+      (*std::max_element(test_case.context.config.rx_ports.begin(), test_case.context.config.rx_ports.end())) + 1;
+  unsigned nof_ofdm_symbols = test_case.context.config.start_symbol_index + test_case.context.config.nof_symbols;
+  unsigned nof_prb          = test_case.context.config.rb_mask.size();
+
   // Prepare resource grid.
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(nof_rx_ports, nof_ofdm_symbols, nof_prb);
   grid.write(test_case.symbols.read());
 
   // Read estimated channel from the test case.
