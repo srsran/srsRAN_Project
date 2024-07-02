@@ -747,10 +747,8 @@ static YAML::Node build_du_high_testmode_section(const du_high_unit_test_mode_co
   return node;
 }
 
-static YAML::Node build_du_high_e2_section(const du_high_unit_e2_config& config)
+static void fill_du_high_e2_section(YAML::Node node, const du_high_unit_e2_config& config)
 {
-  YAML::Node node;
-
   node["enable_du_e2"]           = config.enable_du_e2;
   node["addr"]                   = config.ip_addr;
   node["port"]                   = config.port;
@@ -762,8 +760,6 @@ static YAML::Node build_du_high_e2_section(const du_high_unit_e2_config& config)
   node["sctp_max_init_timeo"]    = config.sctp_max_init_timeo;
   node["e2sm_kpm_enabled"]       = config.e2sm_kpm_enabled;
   node["e2sm_rc_enabled"]        = config.e2sm_rc_enabled;
-
-  return node;
 }
 
 void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_unit_config& config)
@@ -775,8 +771,8 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
   fill_du_high_log_section(node["log"], config.loggers);
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);
+  fill_du_high_e2_section(node["e2"], config.e2_cfg);
   node["du"] = build_du_section(config);
-  node["e2"] = build_du_high_e2_section(config.e2_cfg);
   if (config.ntn_cfg) {
     node["ntn"] = build_du_high_ntn_section(config.ntn_cfg.value());
   }

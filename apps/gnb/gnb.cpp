@@ -45,6 +45,8 @@
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
+#include "gnb_appconfig_yaml_writer.h"
+
 #include "srsran/support/tsan_options.h"
 
 #include "apps/units/cu_cp/cu_cp_config_translators.h"
@@ -249,6 +251,7 @@ int main(int argc, char** argv)
 
     config_logger.debug("NOW IT GOES THE MANUAL CONFIG");
     YAML::Node node;
+    fill_gnb_appconfig_in_yaml_schema(node, gnb_cfg);
     fill_cu_up_config_in_yaml_schema(node, cu_up_config);
     fill_cu_cp_config_in_yaml_schema(node, cu_cp_config);
     fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
