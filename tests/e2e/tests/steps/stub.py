@@ -17,6 +17,7 @@ from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
+from _pytest.outcomes import Failed
 from google.protobuf.empty_pb2 import Empty
 from google.protobuf.text_format import MessageToString
 from google.protobuf.wrappers_pb2 import StringValue, UInt32Value
@@ -210,7 +211,7 @@ def handle_start_error(name: str) -> Generator[None, None, None]:
         else:
             raise err from None
     if raise_failed:
-        pytest.fail(f"{name} failed to start")
+        raise Failed(msg=f"{name} failed to start", pytrace=True) from None
 
 
 def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
