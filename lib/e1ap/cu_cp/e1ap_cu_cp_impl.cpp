@@ -94,7 +94,16 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   }
 
   // add new e1ap_ue_context
-  ue_ctxt_list.add_ue(request.ue_index, cu_cp_ue_e1ap_id);
+  if (ue_ctxt_list.add_ue(request.ue_index, cu_cp_ue_e1ap_id) == nullptr) {
+    logger.warning("Bearer Context Setup failed. Cause: bearer context already exists");
+    return launch_async([](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      e1ap_bearer_context_setup_response res;
+      res.success = false;
+      CORO_RETURN(res);
+    });
+  }
+
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_cp_ue_e1ap_id];
 
   e1ap_message e1ap_msg;
@@ -162,7 +171,7 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 
-  return launch_async<bearer_context_release_procedure>(e1ap_msg, ue_ctxt.bearer_ev_mng, pdu_notifier, ue_ctxt.logger);
+  return launch_async<bearer_context_release_procedure>(e1ap_msg, command.ue_index, ue_ctxt_list, pdu_notifier);
 }
 
 void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)

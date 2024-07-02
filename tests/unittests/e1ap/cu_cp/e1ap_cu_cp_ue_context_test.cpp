@@ -76,6 +76,28 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_not_added_then_ue_doesnt_exist)
   ASSERT_EQ(ue_ctxt_list.find_ue(cu_cp_ue_e1ap_id), nullptr);
 }
 
+TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_not_added)
+{
+  ue_index_t             ue_index         = generate_random_ue_index();
+  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
+
+  ASSERT_NE(ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id), nullptr);
+
+  ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
+  ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
+
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_ids.ue_index, ue_index);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.ue_index, ue_index);
+
+  ASSERT_EQ(ue_ctxt_list.size(), 1U);
+
+  // Try to add UE with the same UE index again
+  ASSERT_EQ(ue_ctxt_list.add_ue(ue_index, generate_random_gnb_cu_cp_ue_e1ap_id()), nullptr);
+  ASSERT_EQ(ue_ctxt_list.size(), 1U);
+}
+
 TEST_F(e1ap_cu_cp_ue_context_test, when_unsupported_number_of_ues_added_then_ue_not_added)
 {
   // Add maximum number of supported UEs

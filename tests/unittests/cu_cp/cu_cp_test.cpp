@@ -263,8 +263,7 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 /* AMF initiated PDU Session Release                                                */
 //////////////////////////////////////////////////////////////////////////////////////
 
-// Bearer Context Release is not sent even if last PDU session is removed. Only NGAP UE context release triggers Bearer
-// Context Release.
+// When multiple PDU sessions exist and not all of them are released, a BearerContextModification is sent to the CU-UP
 TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_modification_request_is_sent)
 {
   // Test preamble
@@ -275,15 +274,16 @@ TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_modif
   pci_t               pci       = 1;
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
-  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+  ran_ue_id_t                   ran_ue_id        = uint_to_ran_ue_id(0);
+  std::vector<pdu_session_id_t> psis             = {uint_to_pdu_session_id(1), uint_to_pdu_session_id(2)};
+  gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+  gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
   // Connect AMF, DU, CU-UP
   test_preamble_all_connected(du_index, pci);
   // Attach UE
   test_preamble_ue_full_attach(
-      du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, psis, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   // Inject PduSessionResourceReleaseCommand
   cu_cp_obj->get_ngap_message_handler().handle_message(
@@ -293,6 +293,41 @@ TEST_F(cu_cp_test, when_pdu_session_resource_release_command_received_then_modif
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+}
+
+// When all active PDU sessions are released a BearerContextReleaseCommand is sent to the CU-UP
+TEST_F(cu_cp_test, when_all_pdu_sessions_get_released_then_bearer_context_release_command_is_sent)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 1;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t                   ran_ue_id        = uint_to_ran_ue_id(0);
+  std::vector<pdu_session_id_t> psis             = {uint_to_pdu_session_id(1)};
+  gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+  gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+  // Attach UE
+  test_preamble_ue_full_attach(
+      du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, psis, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+
+  // Inject PduSessionResourceReleaseCommand
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_pdu_session_resource_release_command(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
+
+  // Check that the Bearer Context Release was sent to the CU-UP
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_release_cmd);
+
+  // Check that no UE Context Release Request was sent to the AMF
+  ASSERT_NE(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

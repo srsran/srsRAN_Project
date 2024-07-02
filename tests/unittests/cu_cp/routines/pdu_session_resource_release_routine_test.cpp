@@ -54,6 +54,11 @@ protected:
     return true;
   }
 
+  bool was_bearer_context_release_command_sent() const
+  {
+    return e1ap_bearer_ctxt_mng.last_release_command.ue_index != ue_index_t::invalid;
+  }
+
   void setup_pdu_session(ue_index_t ue_index)
   {
     // Setup single PDU session.
@@ -146,6 +151,23 @@ TEST_F(pdu_session_resource_release_test, when_all_sub_actions_succeed_then_rele
 
   // Start PDU SESSION RESOURCE RELEASE routine.
   start_procedure(command, {true}, {true});
+
+  // All released.
+  ASSERT_TRUE(was_pdu_session_resource_release_successful());
+}
+
+TEST_F(pdu_session_resource_release_test, when_only_pdu_session_released_then_bearer_context_release_command_sent)
+{
+  // Test Preamble.
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min);
+  setup_pdu_session(ue_index);
+
+  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release(ue_index);
+
+  // Start PDU SESSION RESOURCE RELEASE routine.
+  start_procedure(command, {true}, {true});
+
+  ASSERT_TRUE(was_bearer_context_release_command_sent());
 
   // All released.
   ASSERT_TRUE(was_pdu_session_resource_release_successful());

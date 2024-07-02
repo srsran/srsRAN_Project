@@ -67,8 +67,18 @@ void pdu_session_resource_release_routine::operator()(
     next_config = up_resource_mng.calculate_update(release_cmd);
   }
 
-  // Inform CU-UP about the release of a bearer
-  {
+  // Inform the CU-UP about the release of the bearer context
+  if (next_config.pdu_sessions_to_remove_list.size() == up_resource_mng.get_nof_pdu_sessions()) {
+    bearer_context_release_command.ue_index = release_cmd.ue_index;
+    bearer_context_release_command.cause    = e1ap_cause_radio_network_t::unspecified;
+
+    /// NOTE: Only the Bearer Context at the CU-UP will be released. We don't want to release the UE.
+
+    // Request BearerContextRelease
+    CORO_AWAIT(e1ap_bearer_ctxt_mng.handle_bearer_context_release_command(bearer_context_release_command));
+
+  } else { // Inform CU-UP about the release of a bearer
+
     // prepare BearerContextModificationRequest and call e1 notifier
     bearer_context_modification_request.ue_index = release_cmd.ue_index;
 

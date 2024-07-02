@@ -36,6 +36,15 @@ protected:
   void test_e1ap_attach();
   void test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, nr_cell_identity nrcell_id, pci_t pci);
 
+  void add_pdu_sessions(std::vector<pdu_session_id_t> psis,
+                        du_index_t                    du_index,
+                        gnb_du_ue_f1ap_id_t           du_ue_id,
+                        gnb_cu_ue_f1ap_id_t           cu_ue_id,
+                        amf_ue_id_t                   amf_ue_id,
+                        ran_ue_id_t                   ran_ue_id,
+                        gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id,
+                        gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id);
+
   void attach_ue(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id, rnti_t crnti, du_index_t du_index);
   void authenticate_ue(amf_ue_id_t         amf_ue_id,
                        ran_ue_id_t         ran_ue_id,
@@ -54,14 +63,15 @@ protected:
                                  rnti_t              crnti,
                                  amf_ue_id_t         amf_ue_id,
                                  ran_ue_id_t         ran_ue_id);
-  void test_preamble_ue_full_attach(du_index_t             du_index,
-                                    gnb_du_ue_f1ap_id_t    du_ue_id,
-                                    gnb_cu_ue_f1ap_id_t    cu_ue_id,
-                                    rnti_t                 crnti,
-                                    amf_ue_id_t            amf_ue_id,
-                                    ran_ue_id_t            ran_ue_id,
-                                    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
-                                    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+  void test_preamble_ue_full_attach(du_index_t                    du_index,
+                                    gnb_du_ue_f1ap_id_t           du_ue_id,
+                                    gnb_cu_ue_f1ap_id_t           cu_ue_id,
+                                    rnti_t                        crnti,
+                                    amf_ue_id_t                   amf_ue_id,
+                                    ran_ue_id_t                   ran_ue_id,
+                                    std::vector<pdu_session_id_t> psis_to_setup,
+                                    gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id,
+                                    gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id);
   bool check_minimal_paging_result();
   bool check_paging_result();
 

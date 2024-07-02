@@ -31,16 +31,17 @@ protected:
     pci_t               pci       = 1;
     amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
         test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-    ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
-    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
-    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+    ran_ue_id_t                   ran_ue_id        = uint_to_ran_ue_id(0);
+    std::vector<pdu_session_id_t> psis             = {uint_to_pdu_session_id(1)};
+    gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+    gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
     // Connect AMF, DU, CU-UP.
     test_preamble_all_connected(du_index, pci);
 
     // Attach UE.
     test_preamble_ue_full_attach(
-        du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+        du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id, psis, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
     // Assert single UE attached to source DU.
     ASSERT_EQ(get_nof_ues_in_source_du(), 1);
