@@ -238,6 +238,12 @@ public:
                  last_init_ctxt_setup_request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
               cu_cp_pdu_session_res_setup_response_item response_item;
               response_item.pdu_session_id = session.pdu_session_id;
+              response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
+                  up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"),
+                                          int_to_gtpu_teid(1)};
+              response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info
+                  .associated_qos_flow_list.emplace(uint_to_qos_flow_id(5),
+                                                    cu_cp_associated_qos_flow{uint_to_qos_flow_id(5)});
               resp.pdu_session_res_setup_response_items.emplace(response_item.pdu_session_id, response_item);
             }
           }
