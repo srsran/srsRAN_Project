@@ -63,6 +63,9 @@ public:
   rrc_du_ue_repository()          = default;
   virtual ~rrc_du_ue_repository() = default;
 
+  /// \brief Get the RRC Reject message to send to the UE.
+  virtual byte_buffer get_rrc_reject() = 0;
+
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) = 0;
 
@@ -79,7 +82,7 @@ public:
   /// \brief Request to update the measurement related parameters for the given cell id.
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
-  virtual bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
+  virtual bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg_) = 0;
 };
 
 /// Handle RRC UE removal

@@ -128,7 +128,7 @@ public:
     // wait until at least one PDU is received
     std::unique_lock<std::mutex> lock(rx_mutex);
     if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return pdu_queue.size() > 0; })) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     byte_buffer pdu = std::move(pdu_queue.front());
     pdu_queue.pop();
@@ -172,7 +172,7 @@ public:
     // wait until at least one PDU is received
     std::unique_lock<std::mutex> lock(rx_mutex);
     if (!rx_cvar.wait_for(lock, timeout_ms, [this]() { return pdu_queue.size() > 0; })) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     byte_buffer pdu = std::move(pdu_queue.front());
     pdu_queue.pop();

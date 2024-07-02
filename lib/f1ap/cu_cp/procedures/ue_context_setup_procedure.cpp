@@ -106,7 +106,7 @@ bool ue_context_setup_procedure::find_or_create_f1ap_ue_context()
 
   // F1AP UE context does not yet exist.
   // Allocate gNB-CU-UE-F1AP-ID.
-  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
   if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.warning("ue={} proc=\"{}\": No CU UE F1AP ID available", request.ue_index, name());
     return false;
@@ -136,16 +136,16 @@ bool ue_context_setup_procedure::create_ue_rrc_context(const f1ap_ue_context_set
     req.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
     req.prev_context           = std::move(rrc_context);
 
-    ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
-    if (resp.f1ap_rrc_notifier == nullptr) {
+    ue_rrc_context_creation_outcome outcome = du_processor_notifier.on_ue_rrc_context_creation_request(req);
+    if (not outcome.has_value()) {
       logger.warning("Couldn't create UE RRC context in target cell");
       return false;
     }
 
     // Add RRC notifier to F1AP UE context.
-    ue_ctxt_list.add_rrc_notifier(req.ue_index, resp.f1ap_rrc_notifier);
+    ue_ctxt_list.add_rrc_notifier(outcome->ue_index, outcome->f1ap_rrc_notifier);
 
-    logger.debug("ue={} Added RRC UE notifier", req.ue_index);
+    logger.debug("ue={} Added RRC UE notifier", outcome->ue_index);
   }
 
   return true;
@@ -370,7 +370,7 @@ static void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
     asn1_request->res_coordination_transfer_info_present                                  = true;
     asn1_request->res_coordination_transfer_info.res_coordination_eutra_cell_info_present = false;
     asn1_request->res_coordination_transfer_info.m_enb_cell_id.from_number(
-        request.res_coordination_transfer_info.value().m_enb_cell_id);
+        request.res_coordination_transfer_info.value().m_enb_cell_id.value());
   }
 
   // serving cell mo

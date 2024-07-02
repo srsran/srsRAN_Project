@@ -196,7 +196,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
     if (not reuse_socket) {
       // Create SCTP socket only if not created earlier through bind or another connection.
       expected<sctp_socket> outcome = create_socket(candidate->ai_family, candidate->ai_socktype);
-      if (outcome.is_error()) {
+      if (not outcome.has_value()) {
         if (errno == ESOCKTNOSUPPORT) {
           // Stop the search.
           break;

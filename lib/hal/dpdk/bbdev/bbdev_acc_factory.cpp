@@ -31,7 +31,7 @@ std::shared_ptr<bbdev_acc> srsran::dpdk::create_bbdev_acc(const bbdev_acc_config
 {
   // bbdev device start procedure.
   expected<::rte_bbdev_info> info = bbdev_start(cfg, logger);
-  if (info.is_error()) {
+  if (not info.has_value()) {
     return nullptr;
   }
 

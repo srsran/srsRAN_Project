@@ -55,19 +55,19 @@ public:
 
     auto                            arg         = args.begin();
     expected<unsigned, std::string> serving_pci = app_services::parse_int<unsigned>(*arg);
-    if (serving_pci.is_error()) {
+    if (not serving_pci.has_value()) {
       fmt::print("Invalid serving PCI.\n");
       return;
     }
     arg++;
     expected<unsigned, std::string> rnti = app_services::parse_unsigned_hex<unsigned>(*arg);
-    if (rnti.is_error()) {
+    if (not rnti.has_value()) {
       fmt::print("Invalid UE RNTI.\n");
       return;
     }
     arg++;
     expected<unsigned, std::string> target_pci = app_services::parse_int<unsigned>(*arg);
-    if (target_pci.is_error()) {
+    if (not target_pci.has_value()) {
       fmt::print("Invalid target PCI.\n");
       return;
     }

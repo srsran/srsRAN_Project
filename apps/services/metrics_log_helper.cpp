@@ -117,6 +117,18 @@ static std::string float_to_eng_string(float f, int digits)
 void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
 {
   fmt::memory_buffer buffer;
+
+  // log cell-wide metrics
+  fmt::format_to(buffer, "Cell Scheduler Metrics:");
+  fmt::format_to(buffer,
+                 " error_indications={} mean_latency={}usec latency_hist=[{}]",
+                 metrics.nof_error_indications,
+                 metrics.average_decision_latency.count(),
+                 fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  logger.info("{}", to_c_str(buffer));
+  buffer.clear();
+
+  // log ue-specific metrics
   for (const auto& ue : metrics.ue_metrics) {
     fmt::format_to(buffer, "Scheduler UE Metrics:");
     fmt::format_to(buffer, " pci={}", ue.pci);

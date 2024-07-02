@@ -21,7 +21,6 @@
  */
 
 #include "ngap_test_helpers.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -53,7 +52,7 @@ protected:
     }
 
     auto& paging_item = cu_cp_paging_notifier.last_msg.tai_list_for_paging.front();
-    if (paging_item.tai.plmn_id != "00f110") {
+    if (paging_item.tai.plmn_id != plmn_identity::test_value()) {
       test_logger.error("PLMN mismatch {} != 00f110", paging_item.tai.plmn_id);
       return false;
     }
@@ -126,11 +125,11 @@ protected:
     auto& cell_item = cu_cp_paging_notifier.last_msg.assist_data_for_paging.value()
                           .assist_data_for_recommended_cells.value()
                           .recommended_cells_for_paging.recommended_cell_list.front();
-    if (cell_item.ngran_cgi.plmn_hex != "00f110") {
-      test_logger.error("NR CGI PLMN mismatch {} != 00f110", cell_item.ngran_cgi.plmn_hex);
+    if (cell_item.ngran_cgi.plmn_id != plmn_identity::test_value()) {
+      test_logger.error("NR CGI PLMN mismatch {} != 00f110", cell_item.ngran_cgi.plmn_id);
       return false;
     }
-    nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
+    nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
     if (cell_item.ngran_cgi.nci != nci) {
       test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci, nci);
       return false;

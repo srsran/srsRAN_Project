@@ -107,7 +107,7 @@ public:
   bool aborted() const
   {
     srsran_assert(valid(), "Trying to check completion of invalid transaction");
-    return complete() and ev->get().is_error();
+    return complete() and not ev->get().has_value();
   }
 
   /// \brief Get cause of transaction failure.
@@ -262,7 +262,7 @@ public:
   template <typename U>
   SRSRAN_NODISCARD bool set_response(unsigned transaction_id, U&& result)
   {
-    static_assert(std::is_convertible<U, T>::value, "Invalid transaction response type being set");
+    static_assert(std::is_convertible_v<U, T>, "Invalid transaction response type being set");
     return set_transaction_outcome(transaction_id, std::forward<U>(result));
   }
 
@@ -281,7 +281,7 @@ private:
   };
 
   template <typename U>
-  SRSRAN_NODISCARD bool set_transaction_outcome(unsigned transaction_id, U&& result)
+  [[nodiscard]] bool set_transaction_outcome(unsigned transaction_id, U&& result)
   {
     auto it = running_transactions.find(transaction_id);
     if (it == running_transactions.end()) {
@@ -293,7 +293,11 @@ private:
     it->second.timer.stop();
 
     // Store result.
-    it->second.event.set(std::forward<U>(result));
+    if constexpr (std::is_convertible_v<U, protocol_transaction_failure>) {
+      it->second.event.set(make_unexpected(std::forward<U>(result)));
+    } else {
+      it->second.event.set(T{std::forward<U>(result)});
+    }
     return true;
   }
 

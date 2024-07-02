@@ -71,7 +71,7 @@ public:
     expected<int64_t, std::string> seconds = app_services::parse_int<int64_t>(args.front());
 
     // Verify the argument is numeric.
-    if (seconds.is_error()) {
+    if (not seconds.has_value()) {
       fmt::print("{}.\n", seconds.error());
       return;
     }

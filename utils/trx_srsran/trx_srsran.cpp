@@ -149,7 +149,7 @@ struct trx_srsran_session_context {
   std::array<std::string, RADIO_MAX_NOF_PORTS> tx_port_args;
   std::array<std::string, RADIO_MAX_NOF_PORTS> rx_port_args;
   std::string                                  factory_str;
-  std::string                                  log_level;
+  srslog::basic_levels                         log_level;
   // Radio factory.
   std::unique_ptr<radio_factory> factory;
   // Radio session.
@@ -620,10 +620,11 @@ int trx_driver_init(TRXState* s1)
   // Parse logging level.
   char* log_level_char = trx_get_param_string(s1, "log_level");
   if (log_level_char != nullptr) {
-    context.log_level = std::string(log_level_char);
+    auto value        = srslog::str_to_basic_level(std::string(log_level_char));
+    context.log_level = value.has_value() ? value.value() : srslog::basic_levels::info;
     free(log_level_char);
   } else {
-    context.log_level = "info";
+    context.log_level = srslog::basic_levels::info;
   }
 
   // Parse noise spectral density.

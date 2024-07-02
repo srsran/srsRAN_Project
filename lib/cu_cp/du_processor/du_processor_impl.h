@@ -43,7 +43,6 @@ class du_processor_impl : public du_processor,
                           public du_setup_handler,
                           public du_metrics_handler,
                           public du_processor_f1ap_interface,
-                          public du_processor_ngap_interface,
                           public du_processor_paging_handler,
                           public du_processor_statistics_handler,
                           public du_processor_mobility_handler
@@ -51,7 +50,7 @@ class du_processor_impl : public du_processor,
 public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                    f1ap_message_notifier&              f1ap_notifier_,
+                    f1ap_message_notifier&              f1ap_pdu_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
@@ -73,8 +72,7 @@ public:
 
   // du_processor_f1ap_interface
   du_setup_result handle_du_setup_request(const du_setup_request& req) override;
-  ue_index_t      allocate_new_ue_index() override;
-  ue_rrc_context_creation_response
+  ue_rrc_context_creation_outcome
        handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
@@ -93,7 +91,6 @@ public:
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
   du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
-  du_processor_ngap_interface&           get_ngap_interface() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
   du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }

@@ -35,6 +35,7 @@
 #include "srsran/support/file_vector.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/srsran_test.h"
+#include <complex>
 #include <map>
 #include <mutex>
 #include <random>
@@ -69,7 +70,8 @@ public:
     logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
   {
     srslog::init();
-    logger.set_level(srslog::str_to_basic_level(log_level));
+    auto value = srslog::str_to_basic_level(log_level);
+    logger.set_level(value.has_value() ? value.value() : srslog::basic_levels::none);
   }
 
   // See interface for documentation.
@@ -150,7 +152,7 @@ public:
                  entry.symbol,
                  entry.subcarrier);
 
-      cf_t  value = entries.at(key);
+      cf_t  value = to_cf(entries.at(key));
       float err   = std::abs(entry.value - value);
       TESTASSERT(err < ASSERT_MAX_ERROR, "Mismatched value {} but expected {}", value, entry.value);
     }
@@ -159,7 +161,7 @@ public:
   /// \brief Asserts that the mapped resource elements match with a list of expected entries.
   ///
   /// This method asserts that mapped resource elements using the put() methods match a list of expected entries
-  /// without considering any writing order, while using a parametrizable maximkum error threshold.
+  /// without considering any writing order, while using a parametrizable maximum error threshold.
   ///
   /// \param[in] expected_entries Provides a list of golden symbols to assert.
   /// \param[in] max_error Provides the maximum allowable error when comparing the data in the entries.
@@ -178,7 +180,7 @@ public:
                  entry.symbol,
                  entry.subcarrier);
 
-      cf_t  value = entries.at(key);
+      cf_t  value = to_cf(entries.at(key));
       float err   = std::abs(entry.value - value);
       TESTASSERT(err < max_error, "Mismatched value {} but expected {}", value, entry.value);
     }
@@ -202,7 +204,7 @@ private:
   static constexpr float ASSERT_MAX_ERROR = 1e-6;
 
   /// Stores the resource grid written entries.
-  std::map<entry_key_t, cf_t> entries;
+  std::map<entry_key_t, cbf16_t> entries;
 
   /// Protects concurrent write to entries.
   std::mutex entries_mutex;
@@ -255,7 +257,7 @@ private:
                  entries.size() + 1);
 
     // Write element.
-    entries.emplace(key, value);
+    entries.emplace(key, to_cbf16(value));
   }
 };
 
@@ -288,7 +290,7 @@ public:
   {
     ++count;
     mask.for_each(0, mask.size(), [&](unsigned i_subc) {
-      symbols.front() = get(static_cast<uint8_t>(port), l, k_init + i_subc);
+      symbols.front() = to_cf(get(static_cast<uint8_t>(port), l, k_init + i_subc));
       symbols         = symbols.last(symbols.size() - 1);
     });
 
@@ -317,7 +319,7 @@ public:
     ++count;
     cf_t* symbol_ptr = symbols.data();
     for (unsigned k = k_init, k_end = k_init + stride * symbols.size(); k != k_end; k += stride) {
-      *(symbol_ptr++) = get(port, l, k);
+      *(symbol_ptr++) = to_cf(get(port, l, k));
     }
   }
 
@@ -326,7 +328,7 @@ public:
     ++count;
     cbf16_t* symbol_ptr = symbols.data();
     for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
-      *(symbol_ptr++) = to_cbf16(get(port, l, k));
+      *(symbol_ptr++) = get(port, l, k);
     }
   }
 
@@ -339,7 +341,7 @@ public:
     std::fill(temp_view.begin(), temp_view.end(), to_cbf16(nan));
 
     // Write the available entries.
-    for (auto& e : entries) {
+    for (const auto& e : entries) {
       if ((std::get<0>(e.first) == port) && (std::get<1>(e.first) == l)) {
         temp_view[std::get<2>(e.first)] = e.second;
       }
@@ -381,12 +383,12 @@ private:
   using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
 
   /// Stores the resource grid written entries.
-  std::map<entry_key_t, cf_t> entries;
+  std::map<entry_key_t, cbf16_t> entries;
 
   /// Temporal storage of the method get_view(). It is overwritten every time get_view() is called.
   mutable std::vector<cbf16_t> temp_view;
 
-  cf_t get(uint8_t port, uint8_t symbol, uint16_t subcarrier) const
+  cbf16_t get(uint8_t port, uint8_t symbol, uint16_t subcarrier) const
   {
     // Generate key.
     entry_key_t key{port, symbol, subcarrier};

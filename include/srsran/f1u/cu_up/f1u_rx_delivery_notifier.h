@@ -34,8 +34,10 @@ class f1u_rx_delivery_notifier
 public:
   virtual ~f1u_rx_delivery_notifier() = default;
 
-  virtual void on_transmit_notification(uint32_t highest_pdcp_sn) = 0;
-  virtual void on_delivery_notification(uint32_t highest_pdcp_sn) = 0;
+  virtual void on_transmit_notification(uint32_t highest_pdcp_sn)               = 0;
+  virtual void on_delivery_notification(uint32_t highest_pdcp_sn)               = 0;
+  virtual void on_retransmit_notification(uint32_t highest_pdcp_sn)             = 0;
+  virtual void on_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) = 0;
 };
 
 } // namespace srs_cu_up

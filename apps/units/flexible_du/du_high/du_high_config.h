@@ -42,6 +42,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
 #include <map>
 #include <string>
@@ -51,11 +52,11 @@ namespace srsran {
 
 /// DU high logging functionalities.
 struct du_high_unit_logger_config {
-  std::string du_level   = "warning";
-  std::string mac_level  = "warning";
-  std::string rlc_level  = "warning";
-  std::string f1ap_level = "warning";
-  std::string f1u_level  = "warning";
+  srslog::basic_levels du_level   = srslog::basic_levels::warning;
+  srslog::basic_levels mac_level  = srslog::basic_levels::warning;
+  srslog::basic_levels rlc_level  = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
@@ -63,6 +64,12 @@ struct du_high_unit_logger_config {
   bool broadcast_enabled = false;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.
   bool f1ap_json_enabled = false;
+};
+
+/// Scheduler expert configuration.
+struct du_high_unit_scheduler_expert_config {
+  /// Policy scheduler expert parameters.
+  policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
 };
 
 struct du_high_unit_ssb_config {
@@ -484,7 +491,7 @@ struct du_high_unit_prach_config {
   /// Indicates the number of Contention Based preambles per SSB (L1 parameter 'CB-preambles-per-SSB'). See TS 38.331,
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
-  uint8_t nof_cb_preambles_per_ssb = 4;
+  uint8_t nof_cb_preambles_per_ssb = 64;
 };
 
 /// Base cell configuration.
@@ -537,6 +544,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_paging_config paging_cfg;
   /// CSI configuration.
   du_high_unit_csi_config csi_cfg;
+  /// Scheduler expert configuration.
+  du_high_unit_scheduler_expert_config sched_expert_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {

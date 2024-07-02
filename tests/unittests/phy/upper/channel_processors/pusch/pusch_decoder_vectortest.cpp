@@ -57,12 +57,12 @@ static unsigned nof_ldpc_iterations = 6;
 static std::string decoder_type = "generic";
 
 #ifdef HWACC_PUSCH_ENABLED
-static bool        dedicated_queue = true;
-static bool        test_harq       = true;
-static bool        ext_softbuffer  = true;
-static bool        std_out_sink    = true;
-static std::string hal_log_level   = "error";
-static std::string eal_arguments   = "";
+static bool                 dedicated_queue = true;
+static bool                 test_harq       = true;
+static bool                 ext_softbuffer  = true;
+static bool                 std_out_sink    = true;
+static srslog::basic_levels hal_log_level   = srslog::basic_levels::error;
+static std::string          eal_arguments   = "";
 #endif // HWACC_PUSCH_ENABLED
 
 static void usage(const char* prog)
@@ -139,9 +139,10 @@ static void parse_args(int argc, char** argv)
       case 'y':
         std_out_sink = false;
         break;
-      case 'z':
-        hal_log_level = std::string(optarg);
-        break;
+      case 'z': {
+        auto level    = srslog::str_to_basic_level(std::string(optarg));
+        hal_log_level = level.has_value() ? level.value() : srslog::basic_levels::error;
+      } break;
 #endif // HWACC_PUSCH_ENABLED
       case 'h':
       default:
@@ -184,7 +185,7 @@ static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelera
   srslog::set_default_sink(*log_sink);
   srslog::init();
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
-  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+  logger.set_level(hal_log_level);
 
   // Pointer to a dpdk-based hardware-accelerator interface.
   static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;

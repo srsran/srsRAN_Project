@@ -215,7 +215,7 @@ static bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry
       computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
     }
 
-    if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance) {
+    if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance * std::abs(value)) {
       return false;
     }
   }

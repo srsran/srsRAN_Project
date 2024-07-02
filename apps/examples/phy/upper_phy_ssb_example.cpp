@@ -278,7 +278,7 @@ public:
 std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(const configuration& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UpperPHY", false);
-  logger.set_level(srslog::str_to_basic_level(config.log_level));
+  logger.set_level(config.log_level);
 
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("lut");
   ASSERT_FACTORY(crc_calc_factory);

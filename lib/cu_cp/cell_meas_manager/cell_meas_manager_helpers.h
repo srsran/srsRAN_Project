@@ -47,7 +47,7 @@ void add_old_meas_config_to_rem_list(const rrc_meas_cfg& old_cfg, rrc_meas_cfg& 
 /// \param[in] nci The cell id.
 /// \returns A vector of SSB frequencies that correlate to measurement objects.
 std::vector<ssb_frequency_t> generate_measurement_object_list(const cell_meas_manager_cfg& cfg,
-                                                              nr_cell_id_t                 serving_nci);
+                                                              nr_cell_identity             serving_nci);
 
 /// \brief Generate report configuration for the given cell configuration.
 /// \param[in] cfg The cell configuration.
@@ -56,7 +56,7 @@ std::vector<ssb_frequency_t> generate_measurement_object_list(const cell_meas_ma
 /// \param[out] meas_cfg The resulting measurement configuration.
 /// \param[out] ue_meas_context The UE measurement context.
 void generate_report_config(const cell_meas_manager_cfg&  cfg,
-                            const nr_cell_id_t            nci,
+                            const nr_cell_identity        nci,
                             const report_cfg_id_t         report_cfg_id,
                             rrc_meas_cfg&                 meas_cfg,
                             cell_meas_manager_ue_context& ue_meas_context);

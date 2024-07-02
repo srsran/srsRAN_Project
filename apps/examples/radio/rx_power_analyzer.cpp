@@ -52,7 +52,7 @@ using namespace srsran;
 /// Describes the analysis configuration.
 static std::string              results_filename;
 static double                   step_time_s          = 1;
-static std::string              log_level            = "info";
+static srslog::basic_levels     log_level            = srslog::basic_levels::info;
 static std::string              driver_name          = "uhd";
 static std::string              device_arguments     = "type=b200";
 static std::vector<std::string> tx_channel_arguments = {};
@@ -106,7 +106,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-m Minimum Rx gain. [Default {}]\n", rx_gain_min);
   fmt::print("\t-M Maximum Rx gain. [Default {}]\n", rx_gain_max);
   fmt::print("\t-g Tx gain. [Default {}]\n", tx_gain);
-  fmt::print("\t-v Logging level. [Default {}]\n", log_level);
+  fmt::print("\t-v Logging level. [Default {}]\n", srslog::basic_level_to_string(log_level));
   fmt::print("\t-r Saves measurement results in a file. Ignored if none. [Default {}]\n",
              results_filename.empty() ? "none" : results_filename);
   fmt::print("\t-T Transmit random data while measuring. [Default {}]\n", tx_active);
@@ -164,9 +164,11 @@ static void parse_args(int argc, char** argv)
           tx_gain = std::strtol(optarg, nullptr, 10);
         }
         break;
-      case 'v':
-        log_level = std::string(optarg);
+      case 'v': {
+        auto level = srslog::str_to_basic_level(std::string(optarg));
+        log_level  = level.has_value() ? level.value() : srslog::basic_levels::info;
         break;
+      }
       case 'T':
         tx_active = true;
         break;
@@ -214,7 +216,7 @@ static void resize_buffers(baseband_gateway_buffer_dynamic& tx_baseband_buffer,
 {
   // Create a normal distribution for complex numbers with some power back-off.
   std::mt19937                      rgen(0);
-  complex_normal_distribution<cf_t> dist(0.0, convert_dB_to_amplitude(avg_tx_power_dBFS));
+  complex_normal_distribution<cf_t> dist({0, 0}, convert_dB_to_amplitude(avg_tx_power_dBFS));
 
   tx_baseband_buffer.resize(block_size);
 

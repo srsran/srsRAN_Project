@@ -40,10 +40,10 @@ public:
   virtual ~mobility_manager_measurement_handler() = default;
 
   /// \brief Handle event where neighbor became better than serving cell.
-  virtual void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                                  gnb_id_t     neighbor_gnb_id,
-                                                  nr_cell_id_t neighbor_nci,
-                                                  pci_t        neighbor_pci) = 0;
+  virtual void handle_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                                  gnb_id_t         neighbor_gnb_id,
+                                                  nr_cell_identity neighbor_nci,
+                                                  pci_t            neighbor_pci) = 0;
 };
 
 /// Methods used by mobility manager to signal handover events to the CU-CP.
@@ -71,14 +71,15 @@ public:
 
   void trigger_handover(pci_t source_pci, rnti_t rnti, pci_t target_pci) override;
 
-  void handle_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                          gnb_id_t     neighbor_gnb_id,
-                                          nr_cell_id_t neighbor_nci,
-                                          pci_t        neighbor_pci) override;
+  void handle_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                          gnb_id_t         neighbor_gnb_id,
+                                          nr_cell_identity neighbor_nci,
+                                          pci_t            neighbor_pci) override;
 
 private:
-  void handle_handover(ue_index_t ue_index, gnb_id_t neighbor_gnb_id, nr_cell_id_t neighbor_nci, pci_t neighbor_pci);
-  void handle_inter_cu_handover(ue_index_t source_ue_index, gnb_id_t target_gnb_id, nr_cell_id_t target_nci);
+  void
+  handle_handover(ue_index_t ue_index, gnb_id_t neighbor_gnb_id, nr_cell_identity neighbor_nci, pci_t neighbor_pci);
+  void handle_inter_cu_handover(ue_index_t source_ue_index, gnb_id_t target_gnb_id, nr_cell_identity target_nci);
   void handle_inter_du_handover(ue_index_t source_ue_index,
                                 pci_t      neighbor_pci,
                                 du_index_t source_du_index,

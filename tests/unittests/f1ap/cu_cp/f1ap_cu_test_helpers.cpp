@@ -22,7 +22,10 @@
 
 #include "f1ap_cu_test_helpers.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/asn1/rrc_nr/dl_ccch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -98,6 +101,28 @@ f1ap_cu_test::test_ue& f1ap_cu_test::run_ue_context_setup()
   return test_ues[ue_index];
 }
 
+bool f1ap_cu_test::was_rrc_reject_sent()
+{
+  // Make sure that the last message was a DLRRCMessageTransfer
+  if (f1ap_pdu_notifier.last_f1ap_msg.pdu.type().value != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
+    return false;
+  }
+  if (f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value !=
+      asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types::dl_rrc_msg_transfer) {
+    return false;
+  }
+
+  // Make sure that the DLRRCMessageTransfer contains an RRC Reject.
+  asn1::rrc_nr::dl_ccch_msg_s ccch;
+  {
+    asn1::cbit_ref bref{f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container};
+    if (ccch.unpack(bref) != asn1::SRSASN_SUCCESS) {
+      return false;
+    }
+  }
+  return ccch.msg.c1().type().value == asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject;
+}
+
 void f1ap_cu_test::tick()
 {
   this->timers.tick();
@@ -112,8 +137,8 @@ srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<d
   req.ue_index = uint_to_ue_index(19);
 
   // sp cell id
-  req.sp_cell_id.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  req.sp_cell_id.plmn_hex = "00f110";
+  req.sp_cell_id.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  req.sp_cell_id.plmn_id = plmn_identity::test_value();
 
   // serv cell idx
   req.serv_cell_idx = 1;

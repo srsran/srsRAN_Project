@@ -30,4 +30,4 @@ add_library(srsran_radio_zmq STATIC ${SOURCES_ZMQ})
 
 target_link_libraries(srsran_radio_zmq ${ZEROMQ_LIBRARIES} fmt srslog)
 
-install(TARGETS srsran_radio_zmq EXPORT srsran_export)
+add_to_exported_libs(srsran_radio_zmq)

@@ -39,7 +39,7 @@ public:
   void request_stop() { queue.stop(); }
 
   bool try_push(const T& elem) { return queue.try_push(elem); }
-  bool try_push(T&& elem) { return not queue.try_push(std::move(elem)).is_error(); }
+  bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
 
   std::optional<T> try_pop()
   {
@@ -76,7 +76,7 @@ public:
   explicit queue_impl(size_t qsize) : base_type(qsize) {}
 
   bool push_blocking(const T& elem) { return this->queue.push_blocking(elem); }
-  bool push_blocking(T&& elem) { return not this->queue.push_blocking(std::move(elem)).is_error(); }
+  bool push_blocking(T&& elem) { return this->queue.push_blocking(std::move(elem)).has_value(); }
 
   bool pop_blocking(T& elem)
   {

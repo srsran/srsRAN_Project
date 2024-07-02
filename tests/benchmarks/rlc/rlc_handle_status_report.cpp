@@ -46,8 +46,9 @@ public:
 
   // rlc_tx_upper_layer_data_notifier interface
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override {}
-
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -117,7 +118,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   std::unique_ptr<rlc_tx_am_entity> rlc = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
-  logger.set_level(srslog::str_to_basic_level("warning"));
+  logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
 
@@ -141,7 +142,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
 
     for (int i = 0; i < 2048; i++) {
       byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, 7, 0);
-      rlc->handle_sdu(std::move(sdu));
+      rlc->handle_sdu(std::move(sdu), false);
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);
     }

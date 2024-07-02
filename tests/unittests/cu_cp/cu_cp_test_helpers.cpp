@@ -70,7 +70,7 @@ cu_cp_test::cu_cp_test()
   // NGAP config
   cfg.ngap_config.gnb_id        = {411, 22};
   cfg.ngap_config.ran_node_name = "srsgnb01";
-  cfg.ngap_config.plmn          = "00101";
+  cfg.ngap_config.plmn          = plmn_identity::test_value();
   cfg.ngap_config.tac           = 7;
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
@@ -90,7 +90,7 @@ cu_cp_test::cu_cp_test()
 
   // UE config
   cfg.ue_config.inactivity_timer      = std::chrono::seconds{7200};
-  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_dus * MAX_NOF_UES_PER_DU;
+  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_ues;
 
   // periodic statistic logging
   cfg.statistics_report_period = std::chrono::seconds(1);
@@ -99,11 +99,11 @@ cu_cp_test::cu_cp_test()
   cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
 
   // Generate NCIs.
-  gnb_id_t     gnb_id1 = cfg.rrc_config.gnb_id;
-  nr_cell_id_t nci1    = config_helpers::make_nr_cell_identity(cfg.rrc_config.gnb_id, 0);
-  nr_cell_id_t nci2    = config_helpers::make_nr_cell_identity(cfg.rrc_config.gnb_id, 1);
-  gnb_id_t     gnb_id2 = {cfg.rrc_config.gnb_id.id + 1, cfg.rrc_config.gnb_id.bit_length};
-  nr_cell_id_t nci3    = config_helpers::make_nr_cell_identity(gnb_id2, 0);
+  gnb_id_t         gnb_id1 = cfg.rrc_config.gnb_id;
+  nr_cell_identity nci1    = nr_cell_identity::create(cfg.rrc_config.gnb_id, 0).value();
+  nr_cell_identity nci2    = nr_cell_identity::create(cfg.rrc_config.gnb_id, 1).value();
+  gnb_id_t         gnb_id2 = {cfg.rrc_config.gnb_id.id + 1, cfg.rrc_config.gnb_id.bit_length};
+  nr_cell_identity nci3    = nr_cell_identity::create(gnb_id2, 0).value();
 
   cell_meas_config cell_cfg_1;
   cell_cfg_1.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
@@ -297,7 +297,7 @@ void cu_cp_test::test_e1ap_attach()
   cu_cp_obj->get_e1_handler().get_cu_up(uint_to_cu_up_index(0)).get_message_handler().handle_message(e1setup_msg);
 }
 
-void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci)
+void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, nr_cell_identity nrcell_id, pci_t pci)
 {
   // Store current number of DUs.
   size_t nof_dus = f1c_gw.nof_connections();
@@ -319,7 +319,7 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
 
   test_e1ap_attach();
 
-  test_du_attach(du_index, int_to_gnb_du_id(0x11), config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0), pci);
+  test_du_attach(du_index, int_to_gnb_du_id(0x11), nr_cell_identity::create(gnb_id_t{411, 22}, 0).value(), pci);
 }
 
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
@@ -474,9 +474,9 @@ bool cu_cp_test::check_minimal_paging_result()
     test_logger.error("Paging cell list size mismatch {} != {}", paging_msg->paging_cell_list.size(), 1);
     return false;
   }
-  auto&        paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
-  nr_cell_id_t nci              = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != nci) {
+  auto&            paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
+  nr_cell_identity nci              = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != nci.value()) {
     test_logger.error("NR CGI NCI mismatch {} != {}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), nci);
     return false;
   }

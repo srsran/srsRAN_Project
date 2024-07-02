@@ -58,6 +58,4 @@ add_library(srsran_upper_phy_support
         vrb_to_prb_mapper.cpp
         )
 
-install(TARGETS log_likelihood_ratio
-        srsran_upper_phy_support
-        EXPORT srsran_export)
+add_to_exported_libs(log_likelihood_ratio srsran_upper_phy_support)

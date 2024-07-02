@@ -33,7 +33,7 @@ using namespace srsran;
 
 rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                                    du_ue_index_t                        ue_index,
-                                   rb_id_t                              rb_id,
+                                   rb_id_t                              rb_id_,
                                    const rlc_tx_am_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -43,7 +43,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                                    task_executor&                       ue_executor_,
                                    bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_) :
-  rlc_tx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
+  rlc_tx_entity(gnb_du_id, ue_index, rb_id_, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
@@ -57,7 +57,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_),
-  pcap_context(ue_index, rb_id, config)
+  pcap_context(ue_index, rb_id_, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -67,7 +67,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
                 config.pdcp_sn_len,
                 gnb_du_id,
                 ue_index,
-                rb_id);
+                rb_id_);
 
   // check timer t_poll_retransmission timer
   srsran_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
@@ -82,26 +82,38 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
-void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf)
+void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 {
   rlc_sdu sdu;
   sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
 
   sdu.buf     = std::move(sdu_buf);
+  sdu.is_retx = is_retx;
   sdu.pdcp_sn = get_pdcp_sn(sdu.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+
+  // Sanity check for PDCP ReTx in SRBs
+  if (SRSRAN_UNLIKELY(rb_id.is_srb() && sdu.is_retx)) {
+    logger.log_error("Ignored unexpected PDCP retransmission flag in SRB RLC AM SDU");
+    sdu.is_retx = false;
+  }
 
   size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(sdu.buf.begin(),
                     sdu.buf.end(),
-                    "TX SDU. sdu_len={} pdcp_sn={} {}",
+                    "TX SDU. sdu_len={} pdcp_sn={} is_retx={} {}",
                     sdu.buf.length(),
                     sdu.pdcp_sn,
+                    sdu.is_retx,
                     sdu_queue.get_state());
     metrics.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
-    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue.get_state());
+    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} is_retx={} {}",
+                       sdu_length,
+                       sdu.pdcp_sn,
+                       sdu.is_retx,
+                       sdu_queue.get_state());
     metrics.metrics_add_lost_sdus(1);
   }
 }
@@ -219,13 +231,18 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
   rlc_tx_am_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
-  sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
+  sdu_info.is_retx             = sdu.is_retx;
+  sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.time_of_arrival     = sdu.time_of_arrival;
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    if (sdu.is_retx) {
+      upper_dn.on_retransmitted_sdu(sdu.pdcp_sn.value());
+    } else {
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
+    }
   }
 
   // Segment new SDU if necessary
@@ -659,13 +676,18 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          ? status.ack_sn
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
-  std::optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
-  bool                    recycle_bin_full  = false;
+  std::optional<uint32_t> max_deliv_pdcp_sn      = {}; // initialize with not value set
+  std::optional<uint32_t> max_deliv_retx_pdcp_sn = {}; // initialize with not value set
+  bool                    recycle_bin_full       = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
       if (sdu_info.pdcp_sn.has_value()) {
-        max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        if (sdu_info.is_retx) {
+          max_deliv_retx_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        } else {
+          max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
+        }
       }
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
@@ -681,6 +703,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   }
   if (max_deliv_pdcp_sn.has_value()) {
     upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value());
+  }
+  if (max_deliv_retx_pdcp_sn.has_value()) {
+    upper_dn.on_delivered_retransmitted_sdu(max_deliv_retx_pdcp_sn.value());
   }
   logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
   if (recycle_bin_full) {

@@ -6,40 +6,40 @@
 # `cell_cfg` section. These are set to match the capabilities of srsUE. 
 
 amf:
-  addr: 10.53.1.2                                                 # The address or hostname of the AMF.
-  bind_addr: 10.53.1.1                                            # A local IP that the gNB binds to for>
+  addr: 10.53.1.2                                                
+  bind_addr: 10.53.1.1                                           
 
 ru_sdr:
-  device_driver: uhd                                              # The RF driver name.
-  device_args: type=b200                                          # Optionally pass arguments to the selected RF driver.
-  sync: external                                                  # Set sync to external. This set-up uses a LEO BODNAR GPDSO providing a 10 MHz ref.
-  srate: 23.04                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
-  tx_gain: 80                                                     # Transmit gain of the RF might need to adjusted to the given situation.
-  rx_gain: 40                                                     # Receive gain of the RF might need to adjusted to the given situation.
+  device_driver: uhd                                              
+  device_args: type=b200                                          
+  sync: external                                                 
+  srate: 23.04                                                   
+  tx_gain: 80                                                    
+  rx_gain: 40                                                    
 
 cell_cfg:
-  dl_arfcn: 368500                                                # ARFCN of the downlink carrier (center frequency).
-  band: 3                                                         # The NR band.
-  channel_bandwidth_MHz: 20                                       # Bandwith in MHz. Number of PRBs will be automatically derived.
-  common_scs: 15                                                  # Subcarrier spacing in kHz used for data.
-  plmn: "00101"                                                   # PLMN broadcasted by the gNB.
-  tac: 7                                                          # Tracking area code (needs to match the core configuration). 
+  dl_arfcn: 368500                                                
+  band: 3                                                         
+  channel_bandwidth_MHz: 20                                       
+  common_scs: 15                                                  
+  plmn: "00101"                                                   
+  tac: 7                                                          
   pdcch:
     dedicated:
-      ss2_type: common                                            # Set search space to common to match capabilities
-      dci_format_0_1_and_1_1: false                               # Use fallback DCI to match srsUE capabilities
+      ss2_type: common                                            
+      dci_format_0_1_and_1_1: false                               
     common:
-      ss0_index: 0                                                # Set search space zero index to match srsUE capabilities
-      coreset0_index: 12                                          # Set search CORESET Zero index to match srsUE capabilities
+      ss0_index: 0                                                
+      coreset0_index: 12                                          
   prach:
-    prach_config_index: 1                                         # Set PRACH config index to match srsUE expectation 
+    prach_config_index: 1                                         
 
 log:
-  filename: /tmp/gnb.log                                          # Path of the log file.
-  all_level: info                                                 # Logging level applied to all layers.
+  filename: /tmp/gnb.log                                          
+  all_level: info                                                 
 
 pcap:
-  mac_enable: enable                                              # Set to true to enable MAC-layer PCAP>
-  mac_filename: /tmp/gnb_mac.pcap                                 # Path where the MAC PCAP is stored.
-  ngap_enable: enable                                             # Set to true to enable NGAP PCAPs.
-  ngap_filename: /tmp/gnb_ngap.pcap                               # Path where the NGAP PCAP is stored.
+  mac_enable: enable                                              
+  mac_filename: /tmp/gnb_mac.pcap                                 
+  ngap_enable: enable                                             
+  ngap_filename: /tmp/gnb_ngap.pcap                               

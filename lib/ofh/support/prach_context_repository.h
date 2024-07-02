@@ -154,13 +154,13 @@ public:
   expected<prach_context_information> try_getting_complete_prach_buffer() const
   {
     if (!context_info.buffer) {
-      return default_error_t({});
+      return make_unexpected(default_error_t{});
     }
 
     if (!std::all_of(buffer_stats.begin(), buffer_stats.end(), [&](const auto& symbol) {
           return symbol.have_all_res_been_written();
         })) {
-      return default_error_t({});
+      return make_unexpected(default_error_t{});
     }
 
     return {context_info};

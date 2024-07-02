@@ -29,6 +29,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_mapping.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 #include <string>
 
@@ -74,7 +75,7 @@ public:
   /// Collects upper PHY sample configuration parameters.
   struct configuration {
     /// General upper PHY logging level.
-    std::string log_level;
+    srslog::basic_levels log_level;
     /// Specifies the maximum number of PRBs.
     unsigned max_nof_prb;
     /// Specifies the maximum number of antenna ports.

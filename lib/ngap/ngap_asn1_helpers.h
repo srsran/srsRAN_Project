@@ -51,12 +51,11 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
                                        const ngap_ng_setup_request&    request)
 {
   // fill global ran node id
-  asn1_request->global_ran_node_id.set_global_gnb_id();
-  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
-  asn1_request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(
-      request.global_ran_node_id.gnb_id.id, request.global_ran_node_id.gnb_id.bit_length);
-  asn1_request->global_ran_node_id.global_gnb_id().plmn_id.from_number(
-      plmn_string_to_bcd(request.global_ran_node_id.plmn_id));
+  auto& global_gnb = asn1_request->global_ran_node_id.set_global_gnb_id();
+  global_gnb.gnb_id.set_gnb_id();
+  global_gnb.gnb_id.gnb_id().from_number(request.global_ran_node_id.gnb_id.id,
+                                         request.global_ran_node_id.gnb_id.bit_length);
+  global_gnb.plmn_id = request.global_ran_node_id.plmn_id.to_bytes();
 
   // fill ran node name
   asn1_request->ran_node_name_present = true;
@@ -74,7 +73,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
       asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
 
       // fill plmn id
-      asn1_broadcast_plmn_item.plmn_id.from_number(plmn_string_to_bcd(broadcast_plmn_item.plmn_id));
+      asn1_broadcast_plmn_item.plmn_id = broadcast_plmn_item.plmn_id.to_bytes();
 
       // fill tai slice support list
       for (const auto& slice_support_item : broadcast_plmn_item.tai_slice_support_list) {
@@ -785,9 +784,9 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 
       // add ngran cgi
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
-          cu_cp_recommended_cell_item.ngran_cgi.nci);
-      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id.from_string(
-          cu_cp_recommended_cell_item.ngran_cgi.plmn_hex);
+          cu_cp_recommended_cell_item.ngran_cgi.nci.value());
+      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id =
+          cu_cp_recommended_cell_item.ngran_cgi.plmn_id.to_bytes();
 
       // add time stayed in cell
       if (cu_cp_recommended_cell_item.time_stayed_in_cell.has_value()) {
@@ -807,15 +806,16 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
       if (cu_cp_recommended_ran_node_item.amf_paging_target.is_global_ran_node_id) {
         // add global gnb id
         auto& asn1_global_ran_node_id = asn1_recommended_ran_node_item.amf_paging_target.set_global_ran_node_id();
-        asn1_global_ran_node_id.set_global_gnb_id().plmn_id.from_string(
-            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().plmn_id);
-        asn1_global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id().from_number(
+        auto& global_gnb              = asn1_global_ran_node_id.set_global_gnb_id();
+        global_gnb.plmn_id =
+            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().plmn_id.to_bytes();
+        global_gnb.gnb_id.set_gnb_id().from_number(
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.id,
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.bit_length);
       } else if (cu_cp_recommended_ran_node_item.amf_paging_target.is_tai) {
         // add tai
-        auto& asn1_tai = asn1_recommended_ran_node_item.amf_paging_target.set_tai();
-        asn1_tai.plmn_id.from_string(cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().plmn_id);
+        auto& asn1_tai   = asn1_recommended_ran_node_item.amf_paging_target.set_tai();
+        asn1_tai.plmn_id = cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().plmn_id.to_bytes();
         asn1_tai.tac.from_number(cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().tac);
       } else {
         asn1_recommended_ran_node_item.amf_paging_target.set(asn1::ngap::amf_paging_target_c::types_opts::nulltype);
@@ -861,7 +861,7 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
   // add tai list for paging
   for (const auto& asn1_tai_item : asn1_paging->tai_list_for_paging) {
     cu_cp_tai_list_for_paging_item tai_item;
-    tai_item.tai.plmn_id = asn1_tai_item.tai.plmn_id.to_string();
+    tai_item.tai.plmn_id = plmn_identity::from_bytes(asn1_tai_item.tai.plmn_id.to_bytes()).value();
     tai_item.tai.tac     = asn1_tai_item.tai.tac.to_number();
 
     paging.tai_list_for_paging.push_back(tai_item);
@@ -899,8 +899,10 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
         cu_cp_recommended_cell_item recommended_cell_item;
 
         // add ngran cgi
-        recommended_cell_item.ngran_cgi.nci      = asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number();
-        recommended_cell_item.ngran_cgi.plmn_hex = asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_string();
+        recommended_cell_item.ngran_cgi.nci =
+            nr_cell_identity::create(asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number()).value();
+        recommended_cell_item.ngran_cgi.plmn_id =
+            plmn_identity::from_bytes(asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_bytes()).value();
 
         // add time stayed in cell
         if (asn1_recommended_cell.time_stayed_in_cell_present) {
@@ -1102,9 +1104,9 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
 inline void
 fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const unsigned tac)
 {
-  auto& user_loc_info_nr  = asn1_msg->user_location_info.set_user_location_info_nr();
-  user_loc_info_nr.nr_cgi = nr_cgi_to_ngap_asn1(cgi);
-  user_loc_info_nr.tai.plmn_id.from_string(cgi.plmn_hex);
+  auto& user_loc_info_nr       = asn1_msg->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr.nr_cgi      = nr_cgi_to_ngap_asn1(cgi);
+  user_loc_info_nr.tai.plmn_id = cgi.plmn_id.to_bytes();
   user_loc_info_nr.tai.tac.from_number(tac);
 }
 

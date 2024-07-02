@@ -106,7 +106,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   // TODO: use real config
   cu_up_processor_config_t cu_up_cfg = {};
   cu_up_cfg.cu_up_index              = cu_up_index;
-  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.max_nof_dus * MAX_NOF_UES_PER_DU;
+  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.max_nof_ues;
 
   std::unique_ptr<cu_up_processor_impl_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
                                                                                  *cu_up_ctxt.e1ap_tx_pdu_notifier,

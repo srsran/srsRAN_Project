@@ -760,6 +760,10 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+
+    // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool.
+    pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory),
+                                                                  pdsch_processor_config.max_nof_simultaneous_pdsch);
   } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);
@@ -783,19 +787,16 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Wrap the downlink processor dependencies with pools to allow concurrent execution.
   if (config.nof_concurrent_threads > 1) {
-    // If the PDSCH instance is concurrent, the number of instances is given by the PDSCH processor configuration.
-    unsigned max_nof_simultaneous_pdsch = config.nof_concurrent_threads;
-    if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
-      max_nof_simultaneous_pdsch =
-          std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor).max_nof_simultaneous_pdsch;
-    }
-
     pdcch_proc_factory =
         create_pdcch_processor_pool_factory(std::move(pdcch_proc_factory), config.nof_concurrent_threads);
     report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor pool factory.");
 
-    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), max_nof_simultaneous_pdsch);
-    report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDSCH processor pool factory.");
+    // If the PDSCH instance is concurrent, the operation is asynchronous. In this case, each DL processor has an
+    // asynchronous pool of processors and no more pools are necessary.
+    if (!std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+      pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), config.nof_concurrent_threads);
+      report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDSCH processor pool factory.");
+    }
 
     ssb_proc_factory = create_ssb_processor_pool_factory(std::move(ssb_proc_factory), config.nof_concurrent_threads);
     report_fatal_error_if_not(pdcch_proc_factory, "Invalid SSB processor pool factory.");

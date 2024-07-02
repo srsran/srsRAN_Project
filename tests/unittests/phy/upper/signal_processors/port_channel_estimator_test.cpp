@@ -96,7 +96,7 @@ std::shared_ptr<port_channel_estimator_factory> ChannelEstFixture::ch_est_factor
 
 bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected, const channel_estimate& computed)
 {
-  constexpr float     tolerance  = 1e-2;
+  constexpr float     tolerance  = 0.008;
   unsigned            old_symbol = 15;
   span<const cbf16_t> computed_symbol;
 
@@ -110,7 +110,8 @@ bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> exp
       computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
     }
 
-    if (std::abs(to_cf(computed_symbol[i_sc]) - value) > tolerance) {
+    cf_t ref = to_cf(computed_symbol[i_sc]) - value;
+    if ((std::abs(std::real(ref)) > tolerance) || (std::abs(std::imag(ref)) > tolerance)) {
       return false;
     }
   }
@@ -172,14 +173,14 @@ TEST_P(ChannelEstFixture, test)
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
   ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, 5e-4);
   ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, 5e-4);
-  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, 0.004);
-  ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, 0.02 * std::abs(test_params.snr_est));
+  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, 5e-4);
+  ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, 0.002 * std::abs(test_params.snr_est));
   ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
   if (test_params.cfo_est_Hz.has_value()) {
     ASSERT_TRUE(estimates.get_cfo_Hz(0, 0).has_value()) << "CFO estimation was expected, none obtained.";
     ASSERT_NEAR(estimates.get_cfo_Hz(0, 0).value(),
                 test_params.cfo_est_Hz.value(),
-                0.05 * std::abs(test_params.cfo_est_Hz.value()));
+                0.001 * std::abs(test_params.cfo_est_Hz.value()));
   } else {
     ASSERT_FALSE(estimates.get_cfo_Hz(0, 0).has_value()) << "No CFO estimation was expected.";
   }

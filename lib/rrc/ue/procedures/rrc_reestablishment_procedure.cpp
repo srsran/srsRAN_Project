@@ -136,18 +136,14 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
 async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallback()
 {
+  context.connection_cause.value = asn1::rrc_nr::establishment_cause_e::mt_access;
+
   return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Reject RRC Reestablishment Request by sending RRC Setup
-    CORO_AWAIT(launch_async<rrc_setup_procedure>(context,
-                                                 asn1::rrc_nr::establishment_cause_e::mt_access,
-                                                 du_to_cu_container,
-                                                 rrc_ue_setup_notifier,
-                                                 srb_notifier,
-                                                 nas_notifier,
-                                                 event_mng,
-                                                 logger));
+    CORO_AWAIT(launch_async<rrc_setup_procedure>(
+        context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, nas_notifier, event_mng, logger));
 
     if (old_ue_reest_context.ue_index != ue_index_t::invalid and !old_ue_reest_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.
@@ -212,7 +208,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
   // Get packed varShortMAC-Input
   asn1::rrc_nr::var_short_mac_input_s var_short_mac_input = {};
   var_short_mac_input.source_pci                          = reestablishment_request.rrc_reest_request.ue_id.pci;
-  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
+  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci.value());
   var_short_mac_input.source_c_rnti        = reestablishment_request.rrc_reest_request.ue_id.c_rnti;
   byte_buffer   var_short_mac_input_packed = {};
   asn1::bit_ref bref(var_short_mac_input_packed);

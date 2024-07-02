@@ -30,7 +30,7 @@ namespace srsran {
 inline void register_fapi_loggers(const fapi_unit_config& log_cfg)
 {
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
-  fapi_logger.set_level(srslog::str_to_basic_level(log_cfg.fapi_level));
+  fapi_logger.set_level(log_cfg.fapi_level);
 }
 
 } // namespace srsran

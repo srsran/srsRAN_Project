@@ -105,10 +105,6 @@ if (ENABLE_ASAN AND ENABLE_TSAN)
     message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
 endif ()
 
-if (ENABLE_EXPORT)
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif (ENABLE_EXPORT)
-
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (ENABLE_DPDK)
   # Make sure that library export is disabed, as it is not compatible with hardware acceleration.
@@ -122,6 +118,32 @@ else (ENABLE_DPDK)
     unset(ENABLE_PDSCH_HWACC CACHE)
     unset(ENABLE_PUSCH_HWACC CACHE)
 endif (ENABLE_DPDK)
+
+########################################################################
+# ENABLE_EXPORT
+########################################################################
+
+# ENABLE_EXPORT tells cmake to make some libaries available for other
+# software to link to. If ON, the code must be compiled in PIC mode.
+# We also add a dummy target that will depend on all the exported
+# libraries to simplify their compilation.
+if (ENABLE_EXPORT)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  add_custom_target(srsran_exported_libs)
+endif (ENABLE_EXPORT)
+
+# Simple macro that tags libraries to be exported and adds them to the
+# dependencies of the dummy target.
+macro(ADD_TO_EXPORTED_LIBS)
+  if(ENABLE_EXPORT)
+    # Tag libraries.
+    install(TARGETS ${ARGV} EXPORT srsran_export)
+    # Make libraries dependencies of the srsran_exported_libs dummy
+    # target, which can be called to compile all exported libraries
+    # at once.
+    add_dependencies(srsran_exported_libs ${ARGV})
+  endif(ENABLE_EXPORT)
+endmacro(ADD_TO_EXPORTED_LIBS)
 
 ########################################################################
 # Install Dirs

@@ -87,12 +87,12 @@ public:
   void connect_f1u(f1u_tx_sdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
   void disconnect_f1u() { f1u_handler = nullptr; }
 
-  void on_new_pdu(byte_buffer pdu) override
+  void on_new_pdu(byte_buffer pdu, bool is_retx) override
   {
     if (f1u_handler == nullptr) {
       srslog::fetch_basic_logger("PDCP").info("Dropped DL PDU. F1-U handler is not connected");
     } else {
-      f1u_handler->handle_sdu(std::move(pdu));
+      f1u_handler->handle_sdu(std::move(pdu), is_retx);
     }
   }
 

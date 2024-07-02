@@ -43,7 +43,7 @@ inline expected<Integer, std::string> parse_int(std::string_view value)
     return out_value;
   }
 
-  return fmt::format("Could not convert '{}' to integer", value);
+  return make_unexpected(fmt::format("Could not convert '{}' to integer", value));
 }
 
 /// Parses hex integer values from a console command.
@@ -66,7 +66,7 @@ inline expected<Integer, std::string> parse_unsigned_hex(std::string_view value)
     return out_value;
   }
 
-  return fmt::format("Could not convert '{}' to integer", value);
+  return make_unexpected(fmt::format("Could not convert '{}' to integer", value));
 }
 
 /// \brief Parses floating point values from a console command and attempts to store them in a double.
@@ -83,7 +83,7 @@ inline expected<double, std::string> parse_double(const std::string& value)
   double out_value = std::strtod(str_init, &str_end);
 
   if (errno == ERANGE || str_end == str_init) {
-    return fmt::format("Could not convert '{}' to double", value);
+    return make_unexpected(fmt::format("Could not convert '{}' to double", value));
   }
 
   return out_value;

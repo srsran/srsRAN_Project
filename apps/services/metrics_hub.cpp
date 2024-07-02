@@ -68,10 +68,9 @@ void scheduler_ue_metrics_source::report_metrics(const scheduler_cell_metrics& m
   srsran_assert(executor != nullptr, "Task executor must not be nullptr");
 
   // Fetch a metrics report object from the pool.
+  // Note: We are trying to reuse the pre-existing allocated memory in the cached_metrics object.
   auto cached_metrics = metrics_pool.get();
-  // Try to reuse the pre-existing memory in the cached_metrics object.
-  cached_metrics->ue_metrics.assign(metrics.ue_metrics.begin(), metrics.ue_metrics.end());
-  cached_metrics->nof_error_indications = metrics.nof_error_indications;
+  *cached_metrics     = metrics;
 
   if (not executor->execute([this, cached_metrics = std::move(cached_metrics)]() {
         for (auto& subscriber : subscribers) {

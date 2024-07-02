@@ -29,8 +29,8 @@ namespace srsran {
 
 namespace neon {
 
-/// \brief Absolute values.
-/// \brief Absolute values.
+/// \brief Computes absolute values.
+/// \brief Computes absolute values.
 /// \param[in] value Input single-precision NEON register.
 /// \return A single-precision NEON register with the absolute value.
 inline float32x4_t abs_f32(float32x4_t value)
@@ -55,7 +55,7 @@ inline float32x4_t copysign_f32(float32x4_t value0, float32x4_t value1)
 
 /// \brief Clips the values of a single-precision NEON register.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
@@ -71,7 +71,7 @@ inline float32x4_t clip_f32(float32x4_t value, float32x4_t range_ceil, float32x4
 
 /// \brief Clips the values of a NEON register carrying four signed 32-bit integers.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
@@ -85,11 +85,11 @@ inline int32x4_t clip_s32(int32x4_t value, int32x4_t range_ceil, int32x4_t range
   return value;
 }
 
-/// \brief Ensures that 32-bit integers are bounded, otherwise set them to zero.
+/// \brief Ensures that 32-bit integers in a NEON register are bounded, otherwise set them to zero.
 ///
 /// \param[in] value      Integers to be tested.
-/// \param[in] bound_up   Upper bound.
-/// \param[in] bound_low  Lower bound.
+/// \param[in] bound_up   Upper bounds.
+/// \param[in] bound_low  Lower bounds.
 /// \return The input integers with zeros in place of the out-of-bound values.
 inline int32x4_t check_bounds_s32(int32x4_t value, int32x4_t bound_up, int32x4_t bound_low)
 {
@@ -103,13 +103,15 @@ inline int32x4_t check_bounds_s32(int32x4_t value, int32x4_t bound_up, int32x4_t
   return value;
 }
 
-/// \brief Clips and quantizes four single-precision NEON registers, continuous log-likelihood ratio to the discrete
-/// representation of type \c log_likelihood_ratio in a single NEON register.
+/// \brief Clips and quantizes four single-precision NEON registers.
 ///
-/// \param[in] value_0      Single-precision NEON register with the first four continuous log-likelihood ratio.
-/// \param[in] value_1      Single-precision NEON register with the second four continuous log-likelihood ratio.
-/// \param[in] value_2      Single-precision NEON register with the third four continuous log-likelihood ratio.
-/// \param[in] value_3      Single-precision NEON register with the fourth four continuous log-likelihood ratio.
+/// Each NEON register contains four 32-bit single-precission log-likelihood ratios. These are converted into a
+/// 8-bit discrete representation of type \c log_likelihood_ratio in a single NEON register.
+///
+/// \param[in] value_0      Single-precision NEON register with the first eight log-likelihood ratios.
+/// \param[in] value_1      Single-precision NEON register with the second eight log-likelihood ratios.
+/// \param[in] value_2      Single-precision NEON register with the third eight log-likelihood ratios.
+/// \param[in] value_3      Single-precision NEON register with the fourth eight log-likelihood ratios.
 /// \param[in] range_limit  The input value mapped to \ref log_likelihood_ratio::max().
 /// \return A quantized representation of the input values as \c log_likelihood_ratio quantity.
 /// \note The quantization in the range <tt>(-range_limit, range_limit)</tt> is [mid-tread
@@ -165,7 +167,7 @@ quantize_f32(float32x4_t value_0, float32x4_t value_1, float32x4_t value_2, floa
 /// \param[in] value          Input NEON register.
 /// \param[in] interval_width Interval width.
 /// \param[in] nof_intervals  Number of intervals.
-/// \return A NEON register carrying four signed 32-bit integers with the corresponding interval indexes.
+/// \return A NEON register carrying four signed 32-bit integers with the corresponding interval indices.
 inline uint32x4_t compute_interval_idx(float32x4_t value, float interval_width, int nof_intervals)
 {
   // Scale.
@@ -184,26 +186,26 @@ inline uint32x4_t compute_interval_idx(float32x4_t value, float interval_width, 
   return vreinterpretq_u32_s32(clip_s32(idx, vdupq_n_s32(nof_intervals - 1), vdupq_n_s32(0)));
 }
 
-/// \brief Get values from a look-up table.
+/// \brief Gets values from a look-up table.
 /// \param[in] table   Look-up table containing eight single-precision values.
-/// \param[in] indexes NEON register containing four indexes.
-/// \return A single-precision NEON register containing the eight values corresponding to the indexes.
-inline float32x4_t look_up_table(const float* table, uint32x4_t indexes)
+/// \param[in] indices NEON register containing four indices.
+/// \return A single-precision NEON register containing the eight values corresponding to the given indices.
+inline float32x4_t look_up_table(const float* table, uint32x4_t indices)
 {
   float32x4_t value = vdupq_n_f32(0.0);
-  value             = vsetq_lane_f32(table[vgetq_lane_u32(indexes, 0)], value, 0);
-  value             = vsetq_lane_f32(table[vgetq_lane_u32(indexes, 1)], value, 1);
-  value             = vsetq_lane_f32(table[vgetq_lane_u32(indexes, 2)], value, 2);
-  value             = vsetq_lane_f32(table[vgetq_lane_u32(indexes, 3)], value, 3);
+  value             = vsetq_lane_f32(table[vgetq_lane_u32(indices, 0)], value, 0);
+  value             = vsetq_lane_f32(table[vgetq_lane_u32(indices, 1)], value, 1);
+  value             = vsetq_lane_f32(table[vgetq_lane_u32(indices, 2)], value, 2);
+  value             = vsetq_lane_f32(table[vgetq_lane_u32(indices, 3)], value, 3);
   return value;
 }
 
-/// \brief Applies an interval function to a series of values.
+/// \brief Applies a piecewise defined function (provided by look-up tables) to a series of values.
 /// \tparam Table             Look-up table type. All tables mut be of the same type.
 /// \param[in] value          Single-precision NEON register with eight input values.
 /// \param[in] rcp_noise      Single-precision NEON register with the reciprocal noise corresponding to the values.
 /// \param[in] nof_intervals  Number of intervals.
-/// \param[in] interval_width Interval width to quantify the interval indexes.
+/// \param[in] interval_width Interval width to quantify the interval indices.
 /// \param[in] slopes         Table with the slope of each interval.
 /// \param[in] intercepts     Table with the interception points of each interval.
 /// \return A single-precision NEON register containing the results of the interval function.

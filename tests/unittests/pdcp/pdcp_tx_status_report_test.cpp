@@ -154,6 +154,7 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
 
     // read the status report
     {
+      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
       byte_buffer exp_pdu = test_frame.compile_status_report();
@@ -162,9 +163,10 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
     }
 
     // read data PDUs
+    ASSERT_EQ(test_frame.retx_queue.size(), n_sdus);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
-      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
-      test_frame.pdu_queue.pop();
+      byte_buffer pdu = std::move(test_frame.retx_queue.front());
+      test_frame.retx_queue.pop();
       byte_buffer exp_pdu = std::move(exp_pdu_list.front());
       exp_pdu_list.pop();
       ASSERT_EQ(pdu.length(), exp_pdu.length());
@@ -173,6 +175,9 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
 
     while (not test_frame.pdu_queue.empty()) {
       test_frame.pdu_queue.pop();
+    }
+    while (not test_frame.retx_queue.empty()) {
+      test_frame.retx_queue.pop();
     }
   };
 

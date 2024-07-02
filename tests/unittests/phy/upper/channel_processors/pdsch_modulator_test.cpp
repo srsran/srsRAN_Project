@@ -76,8 +76,10 @@ int main()
     // Read resource grid data.
     std::vector<resource_grid_writer_spy::expected_entry_t> rg_entries = test_case.symbols.read();
 
+    // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
+    constexpr float tolerance = M_SQRT2f32 / 256.0;
     // Assert resource grid entries.
-    grid.assert_entries(rg_entries);
+    grid.assert_entries(rg_entries, tolerance);
   }
 
   return 0;

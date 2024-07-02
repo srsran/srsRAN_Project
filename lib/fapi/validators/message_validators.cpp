@@ -96,7 +96,7 @@ error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -125,7 +125,7 @@ error_type<validator_report> srsran::fapi::validate_ul_dci_request(const ul_dci_
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -167,7 +167,7 @@ error_type<validator_report> srsran::fapi::validate_tx_data_request(const tx_dat
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -291,7 +291,7 @@ error_type<validator_report> srsran::fapi::validate_crc_indication(const crc_ind
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -440,7 +440,7 @@ error_type<validator_report> srsran::fapi::validate_rach_indication(const rach_i
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -487,7 +487,7 @@ error_type<validator_report> srsran::fapi::validate_srs_indication(const srs_ind
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -522,7 +522,7 @@ error_type<validator_report> srsran::fapi::validate_uci_indication(const uci_ind
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -628,7 +628,7 @@ error_type<validator_report> srsran::fapi::validate_error_indication(const error
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -688,7 +688,7 @@ error_type<validator_report> srsran::fapi::validate_rx_data_indication(const rx_
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -707,7 +707,7 @@ error_type<validator_report> srsran::fapi::validate_slot_indication(const slot_i
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};
@@ -744,7 +744,7 @@ error_type<validator_report> srsran::fapi::validate_ul_tti_request(const ul_tti_
 
   // Build the result.
   if (!success) {
-    return {std::move(report)};
+    return make_unexpected(std::move(report));
   }
 
   return {};

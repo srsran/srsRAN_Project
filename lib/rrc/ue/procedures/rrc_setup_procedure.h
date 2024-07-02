@@ -25,6 +25,7 @@
 #include "../rrc_ue_context.h"
 #include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/async_task.h"
@@ -68,14 +69,13 @@ namespace srs_cu_cp {
 class rrc_setup_procedure
 {
 public:
-  rrc_setup_procedure(rrc_ue_context_t&                          context_,
-                      const asn1::rrc_nr::establishment_cause_e& cause_,
-                      const byte_buffer&                         du_to_cu_container_,
-                      rrc_ue_setup_proc_notifier&                rrc_ue_notifier_,
-                      rrc_ue_srb_handler&                        srb_notifier_,
-                      rrc_ue_nas_notifier&                       nas_notifier_,
-                      rrc_ue_event_manager&                      ev_mng_,
-                      rrc_ue_logger&                             logger_);
+  rrc_setup_procedure(rrc_ue_context_t&           context_,
+                      const byte_buffer&          du_to_cu_container_,
+                      rrc_ue_setup_proc_notifier& rrc_ue_notifier_,
+                      rrc_ue_srb_handler&         srb_notifier_,
+                      rrc_ue_nas_notifier&        nas_notifier_,
+                      rrc_ue_event_manager&       ev_mng_,
+                      rrc_ue_logger&              logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -85,15 +85,14 @@ private:
   /// Instruct DU processor to create SRB1 bearer.
   void create_srb1();
 
-  /// \remark Send RRC Setup, see section 5.3.3 in TS 36.331
+  /// \remark Send RRC Setup, see section 5.3.3 in TS 36.331.
   void send_rrc_setup();
 
   /// \remark Forward the Initial UE Message to the NGAP
   void send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg);
 
-  rrc_ue_context_t&                         context;
-  const asn1::rrc_nr::establishment_cause_e cause;
-  const byte_buffer&                        du_to_cu_container;
+  rrc_ue_context_t&  context;
+  const byte_buffer& du_to_cu_container;
 
   rrc_ue_setup_proc_notifier& rrc_ue;       // handler to the parent RRC UE object
   rrc_ue_srb_handler&         srb_notifier; // for creation of SRBs

@@ -52,5 +52,4 @@ if (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)
     set_source_files_properties(backtrace.cpp APPEND PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/external)
 endif (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)
 
-install(TARGETS srsran_support
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_support)

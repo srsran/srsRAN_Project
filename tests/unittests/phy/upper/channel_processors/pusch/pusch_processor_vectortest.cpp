@@ -100,12 +100,12 @@ private:
   static std::shared_ptr<hal::hw_accelerator_pusch_dec_factory> create_hw_accelerator_pusch_dec_factory()
   {
 #ifdef HWACC_PUSCH_ENABLED
-    // Hardcoded stdout and error logging.
+    //  Hardcoded stdout and error logging.
     srslog::sink* log_sink = srslog::create_stdout_sink();
     srslog::set_default_sink(*log_sink);
     srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
-    logger.set_level(srslog::str_to_basic_level("error"));
+    logger.set_level(srslog::basic_levels::error);
 
     // Pointer to a dpdk-based hardware-accelerator interface.
     static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;

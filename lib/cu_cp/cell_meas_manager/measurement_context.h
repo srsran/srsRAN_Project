@@ -35,11 +35,11 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct meas_context_t {
-  meas_obj_id_t   meas_obj_id   = meas_obj_id_t::invalid;
-  report_cfg_id_t report_cfg_id = report_cfg_id_t::invalid;
-  gnb_id_t        gnb_id;
-  nr_cell_id_t    nci;
-  pci_t           pci;
+  meas_obj_id_t    meas_obj_id   = meas_obj_id_t::invalid;
+  report_cfg_id_t  report_cfg_id = report_cfg_id_t::invalid;
+  gnb_id_t         gnb_id;
+  nr_cell_identity nci;
+  pci_t            pci;
 };
 
 class cell_meas_manager_ue_context
@@ -101,9 +101,9 @@ public:
   slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;     // 0 is reserved for invalid meas_id
   slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids; // 0 is reserved for invalid meas_obj_id
 
-  std::map<meas_id_t, meas_context_t>                meas_id_to_meas_context;
-  std::map<nr_cell_id_t, meas_obj_id_t>              nci_to_meas_obj_id;
-  std::map<meas_obj_id_t, std::vector<nr_cell_id_t>> meas_obj_id_to_ncis;
+  std::map<meas_id_t, meas_context_t>                    meas_id_to_meas_context;
+  std::map<nr_cell_identity, meas_obj_id_t>              nci_to_meas_obj_id;
+  std::map<meas_obj_id_t, std::vector<nr_cell_identity>> meas_obj_id_to_ncis;
 
   cell_meas_manager_ue_context()
   {

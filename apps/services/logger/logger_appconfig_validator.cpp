@@ -20,19 +20,12 @@
  *
  */
 
-#include "srsran/ran/bcd_helpers.h"
-#include <gtest/gtest.h>
+#include "logger_appconfig_validator.h"
+#include "logger_appconfig.h"
 
 using namespace srsran;
 
-TEST(bcd_helpers_test, plmn_string_to_bcd)
+bool srsran::validate_logger_appconfig(const logger_appconfig& config)
 {
-  ASSERT_EQ(plmn_string_to_bcd("00101"), 0xf110);
-  ASSERT_EQ(plmn_string_to_bcd("20899"), 0x2f899);
-}
-
-TEST(bcd_helpers_test, plmn_bcd_to_string)
-{
-  ASSERT_EQ(plmn_bcd_to_string(0xf110), "00101");
-  ASSERT_EQ(plmn_bcd_to_string(0x2f899), "20899");
+  return !config.filename.empty();
 }

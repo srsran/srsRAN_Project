@@ -40,14 +40,15 @@ class rlc_tx_entity : public rlc_tx_upper_layer_data_interface,
 protected:
   rlc_tx_entity(gnb_du_id_t                          gnb_du_id,
                 du_ue_index_t                        ue_index,
-                rb_id_t                              rb_id,
+                rb_id_t                              rb_id_,
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
                 bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_) :
-    logger("RLC", {gnb_du_id, ue_index, rb_id, "DL"}),
+    logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
     metrics(metrics_enabled),
+    rb_id(rb_id_),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
     lower_dn(lower_dn_),
@@ -57,6 +58,7 @@ protected:
 
   rlc_bearer_logger                    logger;
   rlc_tx_metrics_container             metrics;
+  rb_id_t                              rb_id;
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;

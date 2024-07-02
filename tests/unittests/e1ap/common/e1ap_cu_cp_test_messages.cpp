@@ -21,13 +21,12 @@
  */
 
 #include "e1ap_cu_cp_test_messages.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::e1ap;
 
-asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
+asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(nr_cell_identity nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
   supported_plmns_item.plmn_id.from_string("00f110");
@@ -38,7 +37,7 @@ asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_i
 
   asn1::e1ap::nr_cgi_support_item_s nr_cgi_support_item;
   nr_cgi_support_item.nr_cgi.plmn_id.from_string("00f110");
-  nr_cgi_support_item.nr_cgi.nr_cell_id.from_number(nrcell_id);
+  nr_cgi_support_item.nr_cgi.nr_cell_id.from_number(nrcell_id.value());
   supported_plmns_item.nr_cgi_support_list.push_back(nr_cgi_support_item);
 
   supported_plmns_item.qos_params_support_list_present = false;
@@ -69,7 +68,7 @@ e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   auto&        setup_req        = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
 
   setup_req->supported_plmns.push_back(
-      generate_supported_plmns_item(config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0)));
+      generate_supported_plmns_item(nr_cell_identity::create(gnb_id_t{411, 22}, 0).value()));
 
   return e1_setup_request;
 }
@@ -96,7 +95,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   request.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea0;
   request.security_info.up_security_key.encryption_key = make_byte_buffer("9950ab8083ed034257d900e9a6a06236").value();
   request.ue_dl_aggregate_maximum_bit_rate             = 300000000;
-  request.serving_plmn                                 = "00101";
+  request.serving_plmn                                 = plmn_identity::test_value();
   request.activity_notif_level                         = "ue";
 
   e1ap_pdu_session_res_to_setup_item res_to_setup_item;

@@ -40,8 +40,7 @@ public:
 
   SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
   {
-    expected<gtpu_teid_t> teid;
-    teid.set_error(default_error_t{});
+    expected<gtpu_teid_t> teid = make_unexpected(default_error_t{});
 
     if (full()) {
       return teid;

@@ -7,7 +7,7 @@
 #
 
 ARG OS_VERSION=22.04
-FROM ubuntu:$OS_VERSION as base
+FROM ubuntu:$OS_VERSION AS base
 
 ENV PYTHONBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
@@ -87,7 +87,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
 # mongodb python prerequisites
 RUN python3 -m pip install pymongo click pyroute2 ipaddress python-iptables
 
-FROM base as open5gs
+FROM base AS open5gs
 
 WORKDIR /open5gs
 COPY open5gs-5gc.yml open5gs-5gc.yml.in

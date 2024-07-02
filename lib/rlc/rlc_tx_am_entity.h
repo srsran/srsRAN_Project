@@ -37,11 +37,12 @@ namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  byte_buffer                           sdu = {};
+  byte_buffer                           sdu     = {};    ///< SDU buffer
+  bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
+  std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
   std::chrono::system_clock::time_point time_of_arrival;
-  std::optional<uint32_t>               pdcp_sn;
-  uint32_t                              next_so    = 0;
-  uint32_t                              retx_count = RETX_COUNT_NOT_STARTED;
+  uint32_t                              next_so    = 0;                      ///< Segmentation progress
+  uint32_t                              retx_count = RETX_COUNT_NOT_STARTED; ///< Retransmission counter
 };
 
 /// \brief TX state variables
@@ -139,7 +140,7 @@ private:
 public:
   rlc_tx_am_entity(gnb_du_id_t                          gnb_du_id,
                    du_ue_index_t                        ue_index,
-                   rb_id_t                              rb_id,
+                   rb_id_t                              rb_id_,
                    const rlc_tx_am_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
@@ -160,7 +161,7 @@ public:
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
 
   // Interfaces for higher layers
-  void handle_sdu(byte_buffer sdu_buf) override;
+  void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers

@@ -62,5 +62,4 @@ add_library(srsran_ran
         tdd_ul_dl_config.cpp)
 target_link_libraries(srsran_ran srslog)
 
-install(TARGETS srsran_ran
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_ran)

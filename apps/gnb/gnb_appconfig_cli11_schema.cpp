@@ -21,11 +21,9 @@
  */
 
 #include "gnb_appconfig_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
-#include "srsran/ran/duplex_mode.h"
-#include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
-#include "srsran/support/config_parsers.h"
 #include "srsran/support/error_handling.h"
 #include "CLI/CLI11.hpp"
 
@@ -37,81 +35,10 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   try {
     return std::stoi(value);
   } catch (const std::invalid_argument& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   } catch (const std::out_of_range& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   }
-}
-
-static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
-{
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
-  auto metric_level_check = [](const std::string& value) -> std::string {
-    if (value == "none" || value == "info" || value == "debug") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [none,info,debug]";
-  };
-
-  app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option(
-         "--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU")
-      ->capture_default_str()
-      ->check(level_check);
-  app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
-  app.add_option("--config_level", log_params.config_level, "Config log level")
-      ->capture_default_str()
-      ->check(metric_level_check);
-  app.add_option("--metrics_level", log_params.metrics_level, "Metrics log level")
-      ->capture_default_str()
-      ->check(metric_level_check);
-  app.add_option(
-         "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
-  app.add_option("--broadcast_enabled",
-                 log_params.broadcast_enabled,
-                 "Enable logging in the physical and MAC layer of broadcast messages and all PRACH opportunities")
-      ->always_capture_default();
-  app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
-      ->always_capture_default();
-
-  // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
-  app.callback([&]() {
-    // Do nothing when all_level is not defined or it is defined as warning.
-    if (app.count("--all_level") == 0 || log_params.all_level == "warning") {
-      return;
-    }
-
-    const auto options = app.get_options();
-    for (auto* option : options) {
-      // Skip all_level option and unrelated options to log level.
-      if (option->check_name("--all_level") || option->get_name().find("level") == std::string::npos) {
-        continue;
-      }
-
-      // Do nothing if option is present.
-      if (option->count()) {
-        continue;
-      }
-
-      // Config and metrics loggers have only subset of levels.
-      if (option->check_name("--config_level") || option->check_name("--metrics_level")) {
-        if (log_params.all_level == "error") {
-          option->default_val<std::string>("none");
-          continue;
-        }
-      }
-
-      option->default_val<std::string>(log_params.all_level);
-    }
-  });
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
@@ -177,11 +104,11 @@ static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 
   os_sched_affinity_bitmask one_cpu_mask;
   if (cpu_idx >= one_cpu_mask.size()) {
-    return error_message;
+    return make_unexpected(error_message);
   }
   one_cpu_mask.set(cpu_idx);
   if (not one_cpu_mask.subtract(os_sched_affinity_bitmask::available_cpus()).empty()) {
-    return error_message;
+    return make_unexpected(error_message);
   }
   return default_success_t();
 }
@@ -190,13 +117,13 @@ static expected<unsigned, std::string> parse_one_cpu(const std::string& value)
 {
   expected<int, std::string> result = parse_int<int>(value);
 
-  if (result.is_error()) {
-    return fmt::format("Could not parse '{}' string as a CPU index", value);
+  if (not result.has_value()) {
+    return make_unexpected(fmt::format("Could not parse '{}' string as a CPU index", value));
   }
 
   error_type<std::string> validation_result = is_valid_cpu_index(result.value());
-  if (validation_result.is_error()) {
-    return validation_result.error();
+  if (not validation_result.has_value()) {
+    return make_unexpected(validation_result.error());
   }
 
   return result.value();
@@ -210,8 +137,8 @@ static expected<interval<unsigned, true>, std::string> parse_cpu_range(const std
     std::string str;
     getline(ss, str, '-');
     auto parse_result = parse_one_cpu(str);
-    if (parse_result.is_error()) {
-      return fmt::format("{}. Could not parse '{}' as a range", parse_result.error(), value);
+    if (not parse_result.has_value()) {
+      return make_unexpected(fmt::format("{}. Could not parse '{}' as a range", parse_result.error(), value));
     }
 
     range.push_back(parse_result.value());
@@ -219,11 +146,11 @@ static expected<interval<unsigned, true>, std::string> parse_cpu_range(const std
 
   // A range is defined by two numbers.
   if (range.size() != 2) {
-    return fmt::format("Could not parse '{}' as a range", value);
+    return make_unexpected(fmt::format("Could not parse '{}' as a range", value));
   }
 
   if (range[1] <= range[0]) {
-    return fmt::format("Invalid CPU core range detected [{}-{}]", range[0], range[1]);
+    return make_unexpected(fmt::format("Invalid CPU core range detected [{}-{}]", range[0], range[1]));
   }
 
   return interval<unsigned, true>(range[0], range[1]);
@@ -239,7 +166,7 @@ parse_affinity_mask(os_sched_affinity_bitmask& mask, const std::string& value, c
     getline(ss, str, ',');
     if (str.find('-') != std::string::npos) {
       auto range = parse_cpu_range(str);
-      if (range.is_error()) {
+      if (not range.has_value()) {
         report_error("{} in the '{}' property", range.error(), property_name);
       }
 
@@ -247,7 +174,7 @@ parse_affinity_mask(os_sched_affinity_bitmask& mask, const std::string& value, c
       mask.fill(range.value().start(), range.value().stop() + 1);
     } else {
       auto cpu_idx = parse_one_cpu(str);
-      if (cpu_idx.is_error()) {
+      if (not cpu_idx.has_value()) {
         report_error("{} in the '{}' property", cpu_idx.error(), property_name);
       }
 
@@ -339,9 +266,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       ->check(CLI::Range(22, 32));
   add_option(app, "--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
-  // Logging section.
-  CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
-  configure_cli11_log_args(*log_subcmd, gnb_cfg.log_cfg);
+  // Loggers section.
+  configure_cli11_with_logger_appconfig_schema(app, gnb_cfg.log_cfg);
 
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();

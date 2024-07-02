@@ -26,11 +26,12 @@
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
-#include "../ue_security_manager/ue_security_manager_impl.h"
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include <optional>
 #include <unordered_map>
 
 namespace srsran {
@@ -82,11 +83,26 @@ public:
 
   /// \brief Allocate resources for the UE in the CU-CP.
   /// \param[in] du_index Index of the DU the UE is connected to.
+  /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
+  /// \param[in] pci The PCI of the cell the UE is connected to.
+  /// \param[in] rnti The RNTI of the UE.
+  /// \param[in] pcell_index The index of the PCell the UE is connected to.
   /// \return ue_index of the created UE or ue_index_t::invalid in case of failure.
-  ue_index_t add_ue(du_index_t du_index);
+  ue_index_t add_ue(du_index_t                     du_index,
+                    std::optional<gnb_du_id_t>     du_id       = std::nullopt,
+                    std::optional<pci_t>           pci         = std::nullopt,
+                    std::optional<rnti_t>          rnti        = std::nullopt,
+                    std::optional<du_cell_index_t> pcell_index = std::nullopt);
 
   /// \brief Set the DU context of the UE.
-  cu_cp_ue* set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti);
+  /// \param[in] ue_index Index of the UE.
+  /// \param[in] du_id The gNB-DU ID of the DU the UE is connected to.
+  /// \param[in] pci The PCI of the cell the UE is connected to.
+  /// \param[in] rnti The RNTI of the UE.
+  /// \param[in] pcell_index The index of the PCell the UE is connected to.
+  /// \return Pointer to the DU UE if found, nullptr otherwise.
+  cu_cp_ue*
+  set_ue_du_context(ue_index_t ue_index, gnb_du_id_t du_id, pci_t pci, rnti_t rnti, du_cell_index_t pcell_index);
 
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
@@ -95,18 +111,7 @@ public:
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
-  size_t get_nof_du_ues(du_index_t du_index)
-  {
-    unsigned ue_count = 0;
-    // Search allocated UE indexes
-    for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
-      ue_index_t new_ue_index = generate_ue_index(du_index, i);
-      if (ues.find(new_ue_index) != ues.end()) {
-        ue_count++;
-      }
-    }
-    return ue_count;
-  }
+  size_t get_nof_du_ues(du_index_t du_index);
 
   // ngap
 
@@ -149,10 +154,24 @@ public:
     return ues.at(ue_index).get_meas_context();
   }
 
+protected:
+  ue_index_t next_ue_index = ue_index_t::min;
+
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
-  ue_index_t get_next_ue_index(du_index_t du_index);
+  ue_index_t allocate_ue_index();
+
+  inline void increase_next_ue_index()
+  {
+    if (next_ue_index == ue_index_t::max) {
+      // reset cu ue f1ap id counter
+      next_ue_index = ue_index_t::min;
+    } else {
+      // increase cu ue f1ap id counter
+      next_ue_index = uint_to_ue_index(ue_index_to_uint(next_ue_index) + 1);
+    }
+  }
 
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
   const ue_configuration        ue_config;

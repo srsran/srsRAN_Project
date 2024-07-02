@@ -30,6 +30,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
+#include <optional>
 #include <unordered_map>
 
 namespace srsran {
@@ -50,12 +51,15 @@ struct cu_cp_ue_context {
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
-  cu_cp_ue(const ue_index_t               ue_index_,
+  cu_cp_ue(ue_index_t                     ue_index_,
+           du_index_t                     du_index_,
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
-           const pci_t                    pci_    = INVALID_PCI,
-           const rnti_t                   c_rnti_ = rnti_t::INVALID_RNTI);
+           std::optional<gnb_du_id_t>     du_id_       = std::nullopt,
+           std::optional<pci_t>           pci_         = std::nullopt,
+           std::optional<rnti_t>          c_rnti_      = std::nullopt,
+           std::optional<du_cell_index_t> pcell_index_ = std::nullopt);
 
   /// \brief Cancel all pending UE tasks.
   void stop();
@@ -72,7 +76,7 @@ public:
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  du_index_t get_du_index() { return ue_ctxt.du_idx; }
+  [[nodiscard]] du_index_t get_du_index() const { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() { return pcell_index; }
@@ -93,9 +97,10 @@ public:
   cell_meas_manager_ue_context& get_meas_context() { return meas_context; }
 
   /// \brief Update a UE with PCI and/or C-RNTI.
-  void update_du_ue(gnb_du_id_t du_id_  = gnb_du_id_t::invalid,
-                    pci_t       pci_    = INVALID_PCI,
-                    rnti_t      c_rnti_ = rnti_t::INVALID_RNTI);
+  void update_du_ue(gnb_du_id_t     du_id_       = gnb_du_id_t::invalid,
+                    pci_t           pci_         = INVALID_PCI,
+                    rnti_t          c_rnti_      = rnti_t::INVALID_RNTI,
+                    du_cell_index_t pcell_index_ = du_cell_index_t::invalid);
 
   /// \brief Set/update the measurement context of the UE.
   void update_meas_context(cell_meas_manager_ue_context meas_ctxt);
@@ -103,10 +108,6 @@ public:
   /// \brief Check if the DU UE context is created.
   /// \return True if the DU UE context is created, false otherwise.
   [[nodiscard]] bool du_ue_created() const { return ue_ctxt.du_idx != du_index_t::invalid; }
-
-  /// \brief Set the DU and PCell index of the UE.
-  /// \param[in] pcell_index PCell index of the UE.
-  void set_pcell_index(du_cell_index_t pcell_index_);
 
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.

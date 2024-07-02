@@ -51,6 +51,8 @@ public:
   void handle_pdu(nru_dl_message msg) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
+  void handle_retransmit_notification(uint32_t highest_pdcp_sn) override {}
+  void handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override {}
   void handle_sdu(byte_buffer_chain sdu) override {}
   void stop() override {}
 } null_f1u_bearer;
@@ -58,7 +60,7 @@ public:
 class null_sink_rlc_bearer : public rlc_tx_upper_layer_data_interface, public rlc_rx_lower_layer_interface
 {
 public:
-  void handle_sdu(byte_buffer sdu_buf) override {}
+  void handle_sdu(byte_buffer sdu_buf, bool is_retx) override {}
   void discard_sdu(uint32_t pdcp_sn) override {}
   void handle_pdu(byte_buffer_slice pdu) override {}
 } null_rlc_bearer;

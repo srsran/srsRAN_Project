@@ -415,13 +415,13 @@ expected<byte_buffer_chain> rlc_rx_um_entity::reassemble_sdu(rlc_rx_um_sdu_info&
   // Sanity check
   if (!sdu_info.fully_received) {
     logger.log_error("Cannot reassemble SDU not marked as fully_received. sn={} {}", sn, sdu_info);
-    return {default_error_t{}};
+    return make_unexpected(default_error_t{});
   }
 
   expected<byte_buffer_chain> sdu = byte_buffer_chain::create();
   if (!sdu) {
     logger.log_error("Failed to create SDU buffer. sn={} {}", sn, sdu_info);
-    return {default_error_t{}};
+    return make_unexpected(default_error_t{});
   }
 
   for (const rlc_rx_um_sdu_segment& segm : sdu_info.segments) {
@@ -432,7 +432,7 @@ expected<byte_buffer_chain> rlc_rx_um_entity::reassemble_sdu(rlc_rx_um_sdu_info&
                        segm.so,
                        segm.payload.length(),
                        sdu_info);
-      return {default_error_t{}};
+      return make_unexpected(default_error_t{});
     }
   }
   logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", sn, sdu.value().length());

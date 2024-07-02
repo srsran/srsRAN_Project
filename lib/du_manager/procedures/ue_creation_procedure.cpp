@@ -50,7 +50,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Check if UE context was created in the DU manager.
   ue_ctx_creation_outcome = create_du_ue_context();
-  if (ue_ctx_creation_outcome.is_error()) {
+  if (not ue_ctx_creation_outcome.has_value()) {
     proc_logger.log_proc_failure("Failed to create DU UE context. Cause: {}", ue_ctx_creation_outcome.error().data());
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
@@ -107,7 +107,7 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
   // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
   ue_ran_resource_configurator ue_res = du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index);
   if (ue_res.empty()) {
-    return ue_res.get_error();
+    return make_unexpected(ue_res.get_error());
   }
 
   // Create the DU UE context.

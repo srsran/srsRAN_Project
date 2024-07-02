@@ -93,17 +93,18 @@ public:
   async_task<ngap_handover_resource_allocation_response>
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
+  ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void             handle_n2_disconnection() override;
 
   // cu_cp_measurement_handler
   std::optional<rrc_meas_cfg>
        handle_measurement_config_request(ue_index_t                  ue_index,
-                                         nr_cell_id_t                nci,
+                                         nr_cell_identity            nci,
                                          std::optional<rrc_meas_cfg> current_meas_config = {}) override;
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
   // cu_cp_measurement_config_handler
-  bool handle_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override;
+  bool handle_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override;
 
   // cu_cp_mobility_manager_handler
   async_task<cu_cp_inter_du_handover_response>

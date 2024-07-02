@@ -32,10 +32,10 @@ namespace srs_cu_cp {
 class dummy_mobility_manager : public cell_meas_mobility_manager_notifier
 {
 public:
-  void on_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                      gnb_id_t     neighbor_gnb_id,
-                                      nr_cell_id_t neighbor_nci,
-                                      pci_t        neighbor_pci) override
+  void on_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                      gnb_id_t         neighbor_gnb_id,
+                                      nr_cell_identity neighbor_nci,
+                                      pci_t            neighbor_pci) override
   {
     fmt::print("on_neighbor_better_than_spcell() called.\n");
   }

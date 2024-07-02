@@ -47,8 +47,9 @@ public:
 
   // rlc_tx_upper_layer_data_notifier interface
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override {}
-
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -148,7 +149,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   std::unique_ptr<rlc_tx_am_entity> rlc_tx = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
-  logger.set_level(srslog::str_to_basic_level("warning"));
+  logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
 
@@ -177,14 +178,14 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   int pdu_size  = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, num_bytes, i);
-    rlc_tx->handle_sdu(std::move(sdu));
+    rlc_tx->handle_sdu(std::move(sdu), false);
     while (rlc_tx->get_buffer_state() > 0) {
       std::vector<uint8_t> pdu_buf;
       pdu_buf.resize(pdu_size);
       size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);
       pdu_buf.resize(pdu_len);
       auto buf = byte_buffer::create(pdu_buf);
-      report_error_if_not(!buf.is_error(), "Failed to allocate byte_buffer");
+      report_error_if_not(buf.has_value(), "Failed to allocate byte_buffer");
       pdus.emplace_back(std::move(buf.value()));
       num_pdus++;
     }

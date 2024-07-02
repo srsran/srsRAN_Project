@@ -48,13 +48,13 @@ void mobility_manager::trigger_handover(pci_t source_pci, rnti_t rnti, pci_t tar
     logger.warning("Could not trigger handover, UE is invalid. rnti={} pci={}", rnti, source_pci);
     return;
   }
-  handle_handover(ue_index, gnb_id_t{}, nr_cell_id_t{}, target_pci); // TODO: define gNB-ID and NCI
+  handle_handover(ue_index, gnb_id_t{}, nr_cell_identity{}, target_pci); // TODO: define gNB-ID and NCI
 }
 
-void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                                          gnb_id_t     neighbor_gnb_id,
-                                                          nr_cell_id_t neighbor_nci,
-                                                          pci_t        neighbor_pci)
+void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                                          gnb_id_t         neighbor_gnb_id,
+                                                          nr_cell_identity neighbor_nci,
+                                                          pci_t            neighbor_pci)
 {
   if (!cfg.trigger_handover_from_measurements) {
     logger.debug("ue={}: Ignoring better neighbor pci={}", ue_index, neighbor_pci);
@@ -63,10 +63,10 @@ void mobility_manager::handle_neighbor_better_than_spcell(ue_index_t   ue_index,
   handle_handover(ue_index, neighbor_gnb_id, neighbor_nci, neighbor_pci);
 }
 
-void mobility_manager::handle_handover(ue_index_t   ue_index,
-                                       gnb_id_t     neighbor_gnb_id,
-                                       nr_cell_id_t neighbor_nci,
-                                       pci_t        neighbor_pci)
+void mobility_manager::handle_handover(ue_index_t       ue_index,
+                                       gnb_id_t         neighbor_gnb_id,
+                                       nr_cell_identity neighbor_nci,
+                                       pci_t            neighbor_pci)
 {
   // Find the UE context.
   cu_cp_ue* u = ue_mng.find_du_ue(ue_index);
@@ -147,9 +147,9 @@ void mobility_manager::handle_intra_du_handover(ue_index_t source_ue_index, pci_
   // TODO: prepare call
 }
 
-void mobility_manager::handle_inter_cu_handover(ue_index_t   source_ue_index,
-                                                gnb_id_t     target_gnb_id,
-                                                nr_cell_id_t target_nci)
+void mobility_manager::handle_inter_cu_handover(ue_index_t       source_ue_index,
+                                                gnb_id_t         target_gnb_id,
+                                                nr_cell_identity target_nci)
 {
   cu_cp_ue* u = ue_mng.find_du_ue(source_ue_index);
   if (u == nullptr) {

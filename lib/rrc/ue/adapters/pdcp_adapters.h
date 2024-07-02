@@ -76,7 +76,11 @@ class pdcp_rrc_ue_tx_adapter : public pdcp_tx_lower_notifier
 public:
   pdcp_rrc_ue_tx_adapter() = default;
 
-  void on_new_pdu(byte_buffer pdu) override { pdcp_pdu = std::move(pdu); }
+  void on_new_pdu(byte_buffer pdu, bool is_retx) override
+  {
+    pdcp_pdu         = std::move(pdu);
+    pdcp_pdu_is_retx = is_retx;
+  }
 
   void on_discard_pdu(uint32_t pdcp_sn) override
   {
@@ -87,6 +91,7 @@ public:
 
 private:
   byte_buffer pdcp_pdu;
+  bool        pdcp_pdu_is_retx;
 };
 
 /// Adapter between PDCP Tx control and RRC

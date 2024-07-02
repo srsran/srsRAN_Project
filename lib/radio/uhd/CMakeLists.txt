@@ -28,4 +28,4 @@ add_library(srsran_radio_uhd STATIC ${SOURCES_UHD})
 
 target_link_libraries(srsran_radio_uhd ${UHD_LIBRARIES} fmt srslog)
 
-install(TARGETS srsran_radio_uhd EXPORT srsran_export)
+add_to_exported_libs(srsran_radio_uhd)

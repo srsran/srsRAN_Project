@@ -68,7 +68,7 @@ public:
   {
     auto buffer_id = free_list.try_pop();
     if (!buffer_id.has_value()) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
 
     return {{*this, buffer_id.value()}};

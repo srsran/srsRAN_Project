@@ -46,9 +46,6 @@ public:
   std::optional<uint16_t> get_n3_bind_port() override;
 
   // See interface for documentation.
-  gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override;
-
-  // See interface for documentation.
   e1ap_message_handler& get_e1ap_message_handler() override;
 
   // See interface for documentation.
@@ -68,8 +65,12 @@ public:
   handle_bearer_context_setup_request(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override;
 
   // See interface for documentation.
-  srs_cu_up::e1ap_bearer_context_modification_response
+  async_task<srs_cu_up::e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const srs_cu_up::e1ap_bearer_context_modification_request& msg) override;
+
+  /// \brief Schedule an async task for an UE.
+  /// Can be used to initiate UE routines.
+  void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 
 private:
   std::unique_ptr<srs_cu_up::ngu_gateway>     gateway;

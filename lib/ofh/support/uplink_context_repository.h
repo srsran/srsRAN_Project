@@ -95,11 +95,11 @@ public:
   expected<uplink_context_resource_grid_info> try_getting_complete_resource_grid() const
   {
     if (!grid.grid) {
-      return default_error_t({});
+      return make_unexpected(default_error_t{});
     }
 
     if (!have_all_prbs_been_written()) {
-      return default_error_t({});
+      return make_unexpected(default_error_t{});
     }
 
     return {grid};

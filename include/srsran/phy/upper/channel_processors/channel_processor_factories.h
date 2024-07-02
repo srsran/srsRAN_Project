@@ -182,9 +182,12 @@ create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory
                                        std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory);
 
-std::shared_ptr<pdsch_processor_factory> create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory>,
-                                                                     unsigned max_nof_processors,
-                                                                     bool     blocking = false);
+std::shared_ptr<pdsch_processor_factory>
+create_pdsch_processor_asynchronous_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory,
+                                         unsigned                                 max_nof_processors);
+
+std::shared_ptr<pdsch_processor_factory>
+create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory, unsigned max_nof_processors);
 
 class prach_detector_factory
 {

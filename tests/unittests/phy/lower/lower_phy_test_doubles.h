@@ -133,7 +133,8 @@ public:
   explicit lower_phy_rx_symbol_notifier_spy(const std::string& log_level = "warning") :
     logger(srslog::fetch_basic_logger("Rx Notifier"))
   {
-    logger.set_level(srslog::str_to_basic_level(log_level));
+    auto value = srslog::str_to_basic_level(log_level);
+    logger.set_level(value.has_value() ? value.value() : srslog::basic_levels::none);
   }
 
   // See interface for documentation.

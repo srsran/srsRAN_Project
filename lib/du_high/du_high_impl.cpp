@@ -185,7 +185,7 @@ void du_high_impl::start()
     // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
     for (unsigned ue_num = 0, nof_ues = cfg.test_cfg.test_ue->nof_ues; ue_num != nof_ues; ++ue_num) {
       auto rx_buf = byte_buffer::create({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00});
-      if (rx_buf.is_error()) {
+      if (not rx_buf.has_value()) {
         logger.warning("Unable to allocate byte_buffer");
         continue;
       }

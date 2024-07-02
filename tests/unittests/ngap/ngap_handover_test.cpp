@@ -65,8 +65,11 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   auto& ue = test_ues.at(ue_index);
   ue.rrc_ue_ho_prep_handler.set_ho_preparation_message({});
 
-  ngap_handover_preparation_request request = generate_handover_preparation_request(
-      ue_index, ue_mng.find_ue(ue_index)->get_up_resource_manager().get_pdu_sessions_map(), {1, 22}, 1);
+  ngap_handover_preparation_request request =
+      generate_handover_preparation_request(ue_index,
+                                            ue_mng.find_ue(ue_index)->get_up_resource_manager().get_pdu_sessions_map(),
+                                            nr_cell_identity::create({1, 22}, 1).value(),
+                                            22);
 
   // Action 1: Launch HO preparation procedure
   test_logger.info("Launch source NGAP handover preparation procedure");

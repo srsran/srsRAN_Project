@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include <cstdint>
+#include "srsran/ran/plmn_identity.h"
 #include <limits>
 
 namespace srsran {
@@ -48,10 +48,10 @@ inline amf_ue_id_t uint_to_amf_ue_id(std::underlying_type_t<amf_ue_id_t> id)
 
 // Globally unique AMF identifier.
 struct guami_t {
-  std::string plmn;
-  uint16_t    amf_set_id;
-  uint8_t     amf_pointer;
-  uint8_t     amf_region_id;
+  plmn_identity plmn = plmn_identity::test_value();
+  uint16_t      amf_set_id;
+  uint8_t       amf_pointer;
+  uint8_t       amf_region_id;
 };
 
 struct ngap_ue_aggr_max_bit_rate {

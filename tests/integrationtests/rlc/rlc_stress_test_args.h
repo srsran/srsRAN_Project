@@ -216,30 +216,42 @@ inline bool parse_args(stress_test_args& args, int argc, char* argv[])
         args.pdcp_ciphering_algo = std::strtol(optarg, nullptr, 10);
         fprintf(stdout, "PDCP ciphering algorithm %s\n", optarg);
         break;
-      case to_number(long_only::log_stack_level):
-        args.log_level_stack = srslog::str_to_basic_level(std::string(optarg));
+      case to_number(long_only::log_stack_level): {
+        auto value           = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_stack = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "STACK log level %s\n", optarg);
         break;
-      case to_number(long_only::log_traff_level):
-        args.log_level_traff = srslog::str_to_basic_level(std::string(optarg));
+      }
+      case to_number(long_only::log_traff_level): {
+        auto value           = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_traff = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "TRAFF log level %s\n", optarg);
         break;
-      case to_number(long_only::log_pdcp_level):
-        args.log_level_pdcp = srslog::str_to_basic_level(std::string(optarg));
+      }
+      case to_number(long_only::log_pdcp_level): {
+        auto value          = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_pdcp = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "PDCP log level %s\n", optarg);
         break;
-      case to_number(long_only::log_f1_level):
-        args.log_level_f1 = srslog::str_to_basic_level(std::string(optarg));
+      }
+      case to_number(long_only::log_f1_level): {
+        auto value        = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_f1 = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "F1 log level %s\n", optarg);
         break;
-      case to_number(long_only::log_rlc_level):
-        args.log_level_rlc = srslog::str_to_basic_level(std::string(optarg));
+      }
+      case to_number(long_only::log_rlc_level): {
+        auto value         = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_rlc = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "RLC log level %s\n", optarg);
         break;
-      case to_number(long_only::log_mac_level):
-        args.log_level_mac = srslog::str_to_basic_level(std::string(optarg));
+      }
+      case to_number(long_only::log_mac_level): {
+        auto value         = srslog::str_to_basic_level(std::string(optarg));
+        args.log_level_mac = value.has_value() ? value.value() : srslog::basic_levels::none;
         fprintf(stdout, "MAC log level %s\n", optarg);
         break;
+      }
       case 'H':
         args.log_hex_limit = std::strtol(optarg, nullptr, 10);
         fprintf(stdout, "Log hex limit %d\n", args.log_hex_limit);

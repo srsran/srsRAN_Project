@@ -49,12 +49,14 @@ public:
   std::optional<uint16_t> get_n3_bind_port() override { return ngu_session->get_bind_port(); }
 
   // cu_up_e1ap_interface
+  void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task) override;
+
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
 
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
-  e1ap_bearer_context_modification_response
+  async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
 
   void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
@@ -64,13 +66,14 @@ public:
   void on_e1ap_connection_drop() override;
   bool e1ap_is_connected() override { return e1ap_connected; }
 
-  // cu_up_ngu_interface
-  gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override { return *ngu_demux; }
-
 private:
   void disconnect();
 
   void on_statistics_report_timer_expired();
+
+  e1ap_bearer_context_modification_response
+  handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
+                                                  const e1ap_bearer_context_modification_request& msg);
 
   cu_up_configuration cfg;
 

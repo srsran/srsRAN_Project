@@ -24,6 +24,7 @@
 
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/gnb_id.h"
+#include "srsran/ran/plmn_identity.h"
 #include <chrono>
 #include <string>
 
@@ -35,7 +36,7 @@ namespace srs_cu_cp {
 struct ngap_context_t {
   gnb_id_t             gnb_id = {0, 22};
   std::string          ran_node_name;
-  std::string          plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
+  plmn_identity        plmn = plmn_identity::test_value();
   unsigned             tac;
   std::vector<guami_t> served_guami_list;
   std::chrono::seconds pdu_session_setup_timeout; // timeout for PDU context setup in seconds

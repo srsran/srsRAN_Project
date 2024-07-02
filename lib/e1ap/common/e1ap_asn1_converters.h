@@ -26,7 +26,7 @@
 #include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/nr_cgi.h"
@@ -189,8 +189,8 @@ inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cg
 {
   asn1::e1ap::nr_cgi_s asn1_nr_cgi;
 
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
-  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
+  asn1_nr_cgi.plmn_id = nr_cgi.plmn_id.to_bytes();
 
   return asn1_nr_cgi;
 }
@@ -1052,21 +1052,9 @@ inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count
 /// \brief Convert E1AP ASN.1 CGI to \c nr_cell_global_id_t type.
 inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi)
 {
-  nr_cell_global_id_t cgi          = {};
-  uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
-  ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
-
-  std::string mcc_string;
-  std::string mnc_string;
-  mcc_to_string(cgi.mcc, &mcc_string);
-  mnc_to_string(cgi.mnc, &mnc_string);
-  cgi.plmn = mcc_string + mnc_string;
-
-  // Set PLMN hex string.
-  cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
-
-  cgi.nci = asn1_cgi.nr_cell_id.to_number();
-
+  nr_cell_global_id_t cgi = {};
+  cgi.nci                 = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value();
+  cgi.plmn_id             = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes()).value();
   return cgi;
 }
 

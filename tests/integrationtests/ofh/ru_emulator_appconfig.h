@@ -52,7 +52,7 @@ struct ru_emulator_ofh_appconfig {
 /// RU emulator logging parameters.
 struct ru_emulator_log_appconfig {
   /// Log level
-  std::string level = "info";
+  srslog::basic_levels level = srslog::basic_levels::info;
   /// Path to log file or "stdout" to print to console.
   std::string filename = "stdout";
 };

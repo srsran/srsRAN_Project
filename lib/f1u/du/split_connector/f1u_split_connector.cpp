@@ -90,7 +90,7 @@ expected<std::string> f1u_split_connector::get_du_bind_address(gnb_du_id_t gnb_d
 {
   std::string ip_address;
   if (not udp_session->get_bind_address(ip_address)) {
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
   return ip_address;
 }

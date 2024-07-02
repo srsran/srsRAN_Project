@@ -25,13 +25,14 @@ import logging
 import tempfile
 from pathlib import Path
 from pprint import pformat
+from time import sleep
 
 from google.protobuf.empty_pb2 import Empty
 from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import FiveGCDefinition, GNBDefinition, PLMN, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import FiveGCDefinition, PLMN, StartInfo, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -100,7 +101,8 @@ def run_config(
             "gnb": {
                 "templates": {
                     "main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve()),
-                    "cell": tmp_file.name,
+                    "cu": tmp_file.name,
+                    "du": tmp_file.name,
                     "ru": tmp_file.name,
                 }
             }
@@ -117,7 +119,7 @@ def run_config(
 
     plmn = PLMN(mcc="001", mnc="01")
 
-    gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
+    gnb.GetDefinition(Empty())
     fivegc_def: FiveGCDefinition = fivegc.GetDefinition(Empty())
 
     fivegc.Start(
@@ -135,13 +137,16 @@ def run_config(
             fivegc_definition=fivegc_def,
             start_info=StartInfo(
                 timeout=timeout,
-                post_commands=(
-                    f"amf --addr {fivegc_def.amf_ip} --bind_addr {gnb_def.zmq_ip} "
-                    f"log --filename stdout {extra_config}"
-                ),
+                post_commands=(f"log --filename stdout {extra_config}"),
             ),
         )
     )
     logging.info("GNB started")
+
+    # Sleep here because the N300 requires more time (~1minute) for initialization.
+    # Otherwise we send SIGTERM to the gNB, it won't finish within 5s and will raise SIGKILL to itself,
+    # causing this test to fail.
+    logging.info("Waiting 60s...")
+    sleep(60)
 
     stop(tuple(), gnb, fivegc, retina_data, log_search=False)

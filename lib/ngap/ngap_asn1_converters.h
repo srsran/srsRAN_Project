@@ -26,7 +26,7 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
@@ -200,9 +200,9 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
 /// \param ngap_cgi The NGAP NRCGI.
 /// \return The NR Cell Identity.
-inline nr_cell_id_t cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
+inline nr_cell_identity cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
 {
-  return ngap_cgi.nr_cell_id.to_number();
+  return nr_cell_identity::create(ngap_cgi.nr_cell_id.to_number()).value();
 }
 
 /// \brief Convert CU-CP NRCGI to NR Cell Identity.
@@ -214,10 +214,10 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
   asn1::ngap::user_location_info_nr_s asn1_user_location_info;
 
   // add nr cgi
-  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci);
-  asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_user_location_info.nr_cgi.plmn_hex);
+  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci.value());
+  asn1_user_location_info.nr_cgi.plmn_id = cu_cp_user_location_info.nr_cgi.plmn_id.to_bytes();
   // add tai
-  asn1_user_location_info.tai.plmn_id.from_string(cu_cp_user_location_info.tai.plmn_id);
+  asn1_user_location_info.tai.plmn_id = cu_cp_user_location_info.tai.plmn_id.to_bytes();
   asn1_user_location_info.tai.tac.from_number(cu_cp_user_location_info.tai.tac);
   // add timestamp
   if (cu_cp_user_location_info.time_stamp.has_value()) {
@@ -404,7 +404,7 @@ inline bool pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
 inline guami_t asn1_to_guami(const asn1::ngap::guami_s& asn1_guami)
 {
   guami_t guami;
-  guami.plmn          = asn1_guami.plmn_id.to_string();
+  guami.plmn          = plmn_identity::from_bytes(asn1_guami.plmn_id.to_bytes()).value();
   guami.amf_region_id = asn1_guami.amf_region_id.to_number();
   guami.amf_set_id    = asn1_guami.amf_set_id.to_number();
   guami.amf_pointer   = asn1_guami.amf_pointer.to_number();
@@ -516,7 +516,7 @@ inline asn1::ngap::s_nssai_s s_nssai_to_asn1(const s_nssai_t& s_nssai)
 inline cu_cp_tai ngap_asn1_to_tai(const asn1::ngap::tai_s& asn1_tai)
 {
   cu_cp_tai tai;
-  tai.plmn_id = asn1_tai.plmn_id.to_string();
+  tai.plmn_id = plmn_identity::from_bytes(asn1_tai.plmn_id.to_bytes()).value();
   tai.tac     = asn1_tai.tac.to_number();
 
   return tai;
@@ -545,12 +545,10 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
   nr_cell_global_id_t nr_cgi;
 
   // nr cell id
-  nr_cgi.nci = asn1_nr_cgi.nr_cell_id.to_number();
+  nr_cgi.nci = nr_cell_identity::create(asn1_nr_cgi.nr_cell_id.to_number()).value();
 
   // plmn id
-  nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
-  nr_cgi.plmn     = plmn_bcd_to_string(asn1_nr_cgi.plmn_id.to_number());
-  ngap_plmn_to_mccmnc(asn1_nr_cgi.plmn_id.to_number(), &nr_cgi.mcc, &nr_cgi.mnc);
+  nr_cgi.plmn_id = plmn_identity::from_bytes(asn1_nr_cgi.plmn_id.to_bytes()).value();
 
   return nr_cgi;
 }
@@ -563,10 +561,10 @@ inline asn1::ngap::nr_cgi_s nr_cgi_to_ngap_asn1(const nr_cell_global_id_t& nr_cg
   asn1::ngap::nr_cgi_s asn1_nr_cgi;
 
   // nr cell id
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
 
   // plmn id
-  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+  asn1_nr_cgi.plmn_id = nr_cgi.plmn_id.to_bytes();
 
   return asn1_nr_cgi;
 }
@@ -712,7 +710,7 @@ inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_g
   cu_cp_global_gnb_id gnb_id;
 
   // plmn id
-  gnb_id.plmn_id = asn1_gnb_id.plmn_id.to_string();
+  gnb_id.plmn_id = plmn_identity::from_bytes(asn1_gnb_id.plmn_id.to_bytes()).value();
 
   // gnb id
   gnb_id.gnb_id.id         = asn1_gnb_id.gnb_id.gnb_id().to_number();

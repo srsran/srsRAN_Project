@@ -54,7 +54,7 @@ bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
 #ifdef SSB_ARFC_VALIDATOR
   error_type<std::string> ret =
       band_helper::is_dl_arfcn_valid_given_band(cfg.band.value(), cfg.ssb_arfcn.value(), cfg.ssb_scs.value());
-  if (ret.is_error()) {
+  if (not ret.has_value()) {
     srslog::fetch_basic_logger(LOG_CHAN).error(
         "Invalid SSB ARFCN={} for band {}. Cause: {}", cfg.ssb_arfcn.value(), cfg.band.value(), ret.error());
     return false;
@@ -68,7 +68,7 @@ bool srsran::srs_cu_cp::is_valid_configuration(
     const cell_meas_manager_cfg&                                cfg,
     const std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>& ssb_freq_to_meas_object)
 {
-  std::vector<nr_cell_id_t> ncis;
+  std::vector<nr_cell_identity> ncis;
   // Verify neighbor cell lists: cell id must not be included in neighbor cell list.
   for (const auto& cell : cfg.cells) {
     const auto& nci = cell.first;
@@ -152,7 +152,7 @@ void srsran::srs_cu_cp::add_old_meas_config_to_rem_list(const rrc_meas_cfg& old_
 }
 
 std::vector<ssb_frequency_t> srsran::srs_cu_cp::generate_measurement_object_list(const cell_meas_manager_cfg& cfg,
-                                                                                 nr_cell_id_t serving_nci)
+                                                                                 nr_cell_identity serving_nci)
 {
   srsran_assert(cfg.cells.find(serving_nci) != cfg.cells.end(), "No cell config for nci={:#x}", serving_nci);
 
@@ -179,7 +179,7 @@ std::vector<ssb_frequency_t> srsran::srs_cu_cp::generate_measurement_object_list
 }
 
 void srsran::srs_cu_cp::generate_report_config(const cell_meas_manager_cfg&  cfg,
-                                               const nr_cell_id_t            nci,
+                                               const nr_cell_identity        nci,
                                                const report_cfg_id_t         report_cfg_id,
                                                rrc_meas_cfg&                 meas_cfg,
                                                cell_meas_manager_ue_context& ue_meas_context)

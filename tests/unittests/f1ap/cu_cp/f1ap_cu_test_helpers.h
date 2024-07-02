@@ -25,11 +25,10 @@
 #include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -125,7 +124,10 @@ private:
 class dummy_f1ap_du_processor_notifier : public srs_cu_cp::f1ap_du_processor_notifier
 {
 public:
-  dummy_f1ap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_f1ap_du_processor_notifier(const unsigned max_nof_supported_ues_) :
+    max_nof_supported_ues(max_nof_supported_ues_), logger(srslog::fetch_basic_logger("TEST"))
+  {
+  }
 
   du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
   {
@@ -134,7 +136,7 @@ public:
     return next_du_setup_resp;
   }
 
-  srs_cu_cp::ue_rrc_context_creation_response
+  srs_cu_cp::ue_rrc_context_creation_outcome
   on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& msg) override
   {
     logger.info("Received {}", __FUNCTION__);
@@ -143,16 +145,23 @@ public:
     last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
     last_ue_creation_msg.c_rnti                 = msg.c_rnti;
 
-    srs_cu_cp::ue_rrc_context_creation_response ret = {};
-    ret.f1ap_rrc_notifier                           = f1ap_rrc_notifier.get();
+    srs_cu_cp::ue_rrc_context_creation_response response{msg.ue_index, f1ap_rrc_notifier.get()};
+    if (msg.ue_index == ue_index_t::invalid) {
+      response.ue_index = on_new_cu_cp_ue_required();
+    }
 
-    return ret;
+    // Return failure if no UE index is available.
+    if (response.ue_index == ue_index_t::invalid) {
+      return make_unexpected(byte_buffer::create({0x0, 0x0}).value());
+    }
+
+    return response;
   }
 
-  ue_index_t on_new_cu_cp_ue_required() override
+  ue_index_t on_new_cu_cp_ue_required()
   {
     ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
-    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
+    if (ue_id < max_nof_supported_ues) {
       ue_index              = srs_cu_cp::uint_to_ue_index(ue_id);
       last_created_ue_index = ue_index;
       ue_id++;
@@ -188,6 +197,7 @@ public:
       std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
+  const unsigned            max_nof_supported_ues;
   srslog::basic_logger&     logger;
   uint16_t                  ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
   fifo_async_task_scheduler task_sched{16};
@@ -215,6 +225,8 @@ protected:
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
   test_ue& run_ue_context_setup();
 
+  bool was_rrc_reject_sent();
+
   void tick();
 
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
@@ -222,8 +234,10 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
+  const unsigned max_nof_ues = 8192;
+
   dummy_f1ap_pdu_notifier          f1ap_pdu_notifier;
-  dummy_f1ap_du_processor_notifier du_processor_notifier;
+  dummy_f1ap_du_processor_notifier du_processor_notifier{max_nof_ues};
   timer_manager                    timers;
   manual_task_worker               ctrl_worker{128};
   std::unique_ptr<f1ap_cu>         f1ap;

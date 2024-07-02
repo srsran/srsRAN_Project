@@ -148,7 +148,7 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_id_t nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
+  on_measurement_config_request(nr_cell_identity nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
   {
     std::optional<rrc_meas_cfg> meas_cfg;
     return meas_cfg;
@@ -166,7 +166,7 @@ private:
 class dummy_rrc_du_cu_cp_adapter : public rrc_du_measurement_config_notifier
 {
 public:
-  bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override
+  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
   {
     return true;
   }

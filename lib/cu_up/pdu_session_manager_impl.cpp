@@ -97,7 +97,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Allocate local TEID
   expected<gtpu_teid_t> local_teid = n3_teid_allocator.request_teid();
-  if (local_teid.is_error()) {
+  if (not local_teid.has_value()) {
     logger.log_warning("Failed to create PDU session. Cause: could not allocate local TEID. {}",
                        session.pdu_session_id);
     return pdu_session_result;

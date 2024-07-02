@@ -149,7 +149,7 @@ public:
   pdcp_rx_result unpack_pdcp_pdu(byte_buffer pdcp_pdu)
   {
     auto buffer_chain = byte_buffer_chain::create(std::move(pdcp_pdu));
-    if (buffer_chain.is_error()) {
+    if (not buffer_chain.has_value()) {
       return pdcp_rx_result{ngap_cause_misc_t::not_enough_user_plane_processing_res};
     }
 

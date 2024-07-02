@@ -29,116 +29,36 @@
 
 namespace srsran {
 
-namespace detail {
-
-/// Free PDSCH processor identifier list type.
-using pdsch_processor_free_list =
-    concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>;
-
-/// PDSCH processor wrapper. It appends its identifier into the free list when the processing is finished.
-class pdsch_processor_wrapper : private pdsch_processor, private pdsch_processor_notifier
-{
-public:
-  /// Creates a PDSCH processor wrapper from another PDSCH processor.
-  explicit pdsch_processor_wrapper(unsigned                         index_,
-                                   pdsch_processor_free_list&       free_list_,
-                                   std::unique_ptr<pdsch_processor> processor_) :
-    index(index_), free_list(free_list_), notifier(nullptr), processor(std::move(processor_))
-  {
-    srsran_assert(processor, "Invalid PDSCH processor.");
-  }
-
-  /// Creates a PDSCH processor wrapper from another PDSCH processor wrapper.
-  pdsch_processor_wrapper(pdsch_processor_wrapper&& other) :
-    index(other.index), free_list(other.free_list), notifier(other.notifier), processor(std::move(other.processor))
-  {
-    other.notifier = nullptr;
-  }
-
-  // See pdsch_processor interface for documentation.
-  void process(resource_grid_mapper&                                                         mapper,
-               pdsch_processor_notifier&                                                     notifier_,
-               static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdsch_processor::pdu_t&                                                 pdu) override
-  {
-    // Save original notifier.
-    notifier = &notifier_;
-
-    // Process.
-    processor->process(mapper, *this, data, pdu);
-  }
-
-private:
-  // See pdsch_processor_notifier for documentation.
-  void on_finish_processing() override
-  {
-    srsran_assert(notifier != nullptr, "Invalid notifier.");
-
-    // Notify the completion of the processing.
-    notifier->on_finish_processing();
-
-    // Return the PDSCH processor identifier to the free list.
-    free_list.push_blocking(index);
-  }
-
-  /// Processor identifier within the pool.
-  unsigned index;
-  /// List of free processors.
-  pdsch_processor_free_list& free_list;
-  /// Current PDSCH processor notifier.
-  pdsch_processor_notifier* notifier = nullptr;
-  /// Wrapped PDSCH processor.
-  std::unique_ptr<pdsch_processor> processor;
-};
-} // namespace detail
-
-/// \brief PDSCH processor pool
+/// \brief PDSCH processor pool.
 ///
-/// It contains PDSCH processors that are asynchronously executed. The processing of a PDSCH transmission is dropped if
-/// there are no free PDSCH processors available.
-///
+/// It contains a PDSCH processor for each DL thread. The processors are assigned to threads when they are first
+/// requested. An assertion is thrown if the number of threads processing PDSCH is larger than the number of PDSCH
+/// processors in the pool.
 class pdsch_processor_pool : public pdsch_processor
 {
 public:
-  explicit pdsch_processor_pool(span<std::unique_ptr<pdsch_processor>> processors_, bool blocking_) :
-    logger(srslog::fetch_basic_logger("PHY")), free_list(processors_.size()), blocking(blocking_)
+  /// PDSCH processor pool type.
+  using pdsch_processor_pool_type = concurrent_thread_local_object_pool<pdsch_processor>;
+
+  /// Creates a PDSCH processor pool from a list of processors. Ownership is transferred to the pool.
+  explicit pdsch_processor_pool(std::shared_ptr<pdsch_processor_pool_type> processors_) :
+    processors(std::move(processors_))
   {
-    unsigned index = 0;
-    for (std::unique_ptr<pdsch_processor>& processor : processors_) {
-      free_list.push_blocking(index);
-      processors.emplace_back(detail::pdsch_processor_wrapper(index++, free_list, std::move(processor)));
-    }
+    srsran_assert(processors, "Invalid processor pool.");
   }
 
+  // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
                pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
   {
-    // Try to get a worker.
-    std::optional<unsigned> index;
-
-    do {
-      index = free_list.try_pop();
-    } while (blocking && !index.has_value());
-
-    // If no worker is available.
-    if (!index.has_value()) {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "Insufficient number of PDSCH processors. Dropping PDSCH {:s}.", pdu);
-      notifier.on_finish_processing();
-      return;
-    }
-
-    // Process PDSCH.
-    processors[index.value()].process(mapper, notifier, data, pdu);
+    pdsch_processor& processor = processors->get();
+    return processor.process(mapper, notifier, data, pdu);
   }
 
 private:
-  srslog::basic_logger&                        logger;
-  std::vector<detail::pdsch_processor_wrapper> processors;
-  detail::pdsch_processor_free_list            free_list;
-  bool                                         blocking;
+  std::shared_ptr<pdsch_processor_pool_type> processors;
 };
 
 } // namespace srsran

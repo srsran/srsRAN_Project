@@ -172,7 +172,7 @@ expected<sctp_socket> sctp_socket::create(const sctp_socket_params& params)
   sctp_socket socket;
   if (params.if_name.empty()) {
     socket.logger.error("Failed to create SCTP socket. Cause: No interface name was provided");
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
   socket.if_name = params.if_name;
   socket.sock_fd = unique_fd{::socket(params.ai_family, params.ai_socktype, IPPROTO_SCTP)};
@@ -189,13 +189,13 @@ expected<sctp_socket> sctp_socket::create(const sctp_socket_params& params)
                    socket.if_name,
                    strerror(ret));
     }
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
   socket.logger.debug("{}: SCTP socket created with fd={}", socket.if_name, socket.sock_fd.value());
 
   if (not socket.set_sockopts(params)) {
     socket.close();
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   // Save non-blocking mode to apply after bind/connect. We do not yet support async bind/connect.

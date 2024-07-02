@@ -147,29 +147,6 @@ static bool validate_otw_format(radio_configuration::over_the_wire_format otw_fo
   return true;
 }
 
-static bool validate_log_level(const std::string& log_level)
-{
-  // Converts to a logger level.
-  srslog::basic_levels level = srslog::str_to_basic_level(log_level);
-
-  // Convert the logger level back to a string.
-  std::string actual_log_level = srslog::basic_level_to_string(level);
-
-  // Check if the strings are equal without considering the case.
-  bool are_equal = std::equal(
-      log_level.begin(), log_level.end(), actual_log_level.begin(), actual_log_level.end(), [](char a, char b) {
-        return std::tolower(a) == std::tolower(b);
-      });
-
-  // The log level is not valid if the strings are different.
-  if (!are_equal) {
-    fmt::print("Log level {} does not correspond to an actual logger level.\n", log_level);
-    return false;
-  }
-
-  return true;
-}
-
 bool radio_config_uhd_config_validator::is_configuration_valid(const radio_configuration::radio& config) const
 {
   if (!validate_clock_sources(config.clock)) {
@@ -217,10 +194,6 @@ bool radio_config_uhd_config_validator::is_configuration_valid(const radio_confi
   }
 
   if (!validate_otw_format(config.otw_format)) {
-    return false;
-  }
-
-  if (!validate_log_level(config.log_level)) {
     return false;
   }
 

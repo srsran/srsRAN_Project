@@ -42,7 +42,7 @@ static du_setup_result create_du_setup_result_accept(const f1ap_message& f1_msg)
   accepted.cells_to_be_activ_list.resize(cells.size());
   for (unsigned i = 0; i != cells.size(); ++i) {
     auto& cell  = accepted.cells_to_be_activ_list[i];
-    cell.nr_cgi = cgi_from_asn1(cells[i]->gnb_du_served_cells_item().served_cell_info.nr_cgi);
+    cell.nr_cgi = cgi_from_asn1(cells[i]->gnb_du_served_cells_item().served_cell_info.nr_cgi).value();
     cell.nr_pci = cells[i]->gnb_du_served_cells_item().served_cell_info.nr_pci;
   }
   return resp;
@@ -189,7 +189,7 @@ TEST_F(f1ap_cu_test, when_cgi_invalid_then_ue_not_added)
   // Generate F1 Initial UL RRC Message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   // Set PLMN to invalid value
-  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->nr_cgi.plmn_id.from_number(0);
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->nr_cgi.plmn_id.from_number(0xa);
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
@@ -210,16 +210,16 @@ TEST_F(f1ap_cu_test, when_rnti_invalid_then_ue_not_added)
   EXPECT_EQ(f1ap->get_nof_ues(), 0);
 }
 
-TEST_F(f1ap_cu_test, when_max_nof_ues_PER_DU_exceeded_then_ue_not_added)
+TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Reduce F1AP and TEST logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (int ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
+  for (unsigned du_ue_id = 0; du_ue_id < max_nof_ues; du_ue_id++) {
     // Generate ue_creation message
-    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(ue_index));
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(du_ue_id));
 
     // Pass message to F1AP
     f1ap->handle_message(init_ul_rrc_msg);
@@ -229,23 +229,22 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_PER_DU_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  EXPECT_EQ(f1ap->get_nof_ues(), max_nof_ues);
 
   // Add one more UE to F1AP
   // Generate ue_creation message
-  f1ap_message init_ul_rrc_msg =
-      generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(MAX_NOF_UES_PER_DU + 1));
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(max_nof_ues + 1));
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES_PER_DU);
+  EXPECT_EQ(f1ap->get_nof_ues(), max_nof_ues);
 }
 
 TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
 {
   // Add maximum number of UEs to dummy DU processor
-  du_processor_notifier.set_ue_id(MAX_NOF_UES_PER_DU);
+  du_processor_notifier.set_ue_id(max_nof_ues);
 
   // Add one more UE to F1AP
   // Generate F1 Initial UL RRC Message
@@ -254,20 +253,8 @@ TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
 
+  EXPECT_TRUE(was_rrc_reject_sent());
   EXPECT_EQ(f1ap->get_nof_ues(), 0);
-}
-
-TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
-{
-  // Generate F1 Initial UL RRC Message with RRC Setup Complete present
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
-  auto&        init_ul_rrc     = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  init_ul_rrc->rrc_container_rrc_setup_complete_present = true;
-
-  // Pass message to F1AP
-  f1ap->handle_message(init_ul_rrc_msg);
-
-  EXPECT_EQ(du_processor_notifier.f1ap_rrc_notifier->last_ul_ccch_pdu, init_ul_rrc->rrc_container_rrc_setup_complete);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

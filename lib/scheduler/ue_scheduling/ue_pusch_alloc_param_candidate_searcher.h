@@ -165,12 +165,14 @@ public:
   };
 
   /// Create a searcher for UE PUSCH parameters.
-  ue_pusch_alloc_param_candidate_searcher(const ue&        ue_ref_,
-                                          du_cell_index_t  cell_index,
-                                          ul_harq_process& ul_harq_,
-                                          slot_point       pdcch_slot_) :
+  ue_pusch_alloc_param_candidate_searcher(const ue&              ue_ref_,
+                                          du_cell_index_t        cell_index,
+                                          ul_harq_process&       ul_harq_,
+                                          slot_point             pdcch_slot_,
+                                          span<const slot_point> slots_with_no_pusch_space_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
+    slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
     is_retx(not ul_harq.empty()),
     pdcch_slot(pdcch_slot_)
@@ -199,7 +201,7 @@ public:
   iterator end() { return iterator{*this, ss_candidate_list.end(), 0}; }
 
   /// Returns whether there are candidates or not.
-  bool is_empty() { return ss_candidate_list.empty() or valid_ss_pusch_td_res_indices.empty(); }
+  bool is_empty() { return ss_candidate_list.empty() or valid_ss_pusch_td_res_indices.empty() or begin() == end(); }
 
 private:
   // Generate Search Space candidates for a given HARQ.
@@ -247,14 +249,22 @@ private:
       return false;
     }
 
+    const slot_point pusch_slot = pdcch_slot + current.pusch_td_res().k2;
+
     // Check whether PUSCH slot is UL enabled.
-    if (not ue_cc->cfg().cell_cfg_common.is_ul_enabled(pdcch_slot + current.pusch_td_res().k2)) {
+    if (not ue_cc->cfg().cell_cfg_common.is_ul_enabled(pusch_slot)) {
       return false;
     }
 
     // Check whether PUSCH time domain resource fits in UL symbols of the slot.
-    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pdcch_slot + current.pusch_td_res().k2) !=
+    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot) !=
         current.pusch_td_res().symbols.length()) {
+      return false;
+    }
+
+    // Check whether there is any space left in PUSCH slot for allocation.
+    if (slots_with_no_pusch_space.end() !=
+        std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_slot)) {
       return false;
     }
 
@@ -297,6 +307,9 @@ private:
   const ue& ue_ref;
   // UE cell being allocated.
   const ue_cell* ue_cc;
+
+  // Slots with no RBs left for PUSCH allocation.
+  span<const slot_point> slots_with_no_pusch_space;
 
   // UL HARQ considered for allocation.
   const ul_harq_process& ul_harq;

@@ -25,7 +25,7 @@
 #include "../common/e1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/qos_prio_level.h"
 
 namespace srsran {
@@ -263,7 +263,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   asn1_request->ue_dl_aggr_max_bit_rate = request.ue_dl_aggregate_maximum_bit_rate;
 
   // serving plmn
-  asn1_request->serving_plmn.from_number(plmn_string_to_bcd(request.serving_plmn));
+  asn1_request->serving_plmn = request.serving_plmn.to_bytes();
 
   // activity notification level
   asn1::string_to_enum(asn1_request->activity_notif_level, request.activity_notif_level);

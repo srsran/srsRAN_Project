@@ -242,12 +242,12 @@ expected<du_ue*, std::string> du_ue_manager::add_ue(const du_ue_context&        
   if (not is_du_ue_index_valid(ue_ctx.ue_index) or
       (not is_crnti(ue_ctx.rnti) and ue_ctx.rnti != rnti_t::INVALID_RNTI)) {
     // UE identifiers are invalid.
-    return std::string("Invalid UE identifiers");
+    return make_unexpected(std::string("Invalid UE identifiers"));
   }
 
   if (ue_db.contains(ue_ctx.ue_index) or (is_crnti(ue_ctx.rnti) and rnti_to_ue_index.count(ue_ctx.rnti) > 0)) {
     // UE already existed with same ue_index or C-RNTI.
-    return std::string("UE already existed with same ue_index or C-RNTI");
+    return make_unexpected(std::string("UE already existed with same ue_index or C-RNTI"));
   }
 
   // Create UE context object

@@ -31,7 +31,7 @@ void uplane_prach_data_flow_notifier::notify_prach(slot_point slot)
   expected<prach_context::prach_context_information> context =
       prach_context_repo->get(slot).try_getting_complete_prach_buffer();
 
-  if (context.is_error()) {
+  if (not context.has_value()) {
     return;
   }
 

@@ -232,3 +232,9 @@ TEST_F(e1ap_cu_up_test, when_valid_bearer_context_release_command_received_then_
   ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
             e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
 }
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

@@ -34,7 +34,6 @@
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;
@@ -236,8 +235,8 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 {
   const gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
-  nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
-  if (not config_helpers::is_valid(cgi)) {
+  expected<nr_cell_global_id_t> cgi = cgi_from_asn1(msg->nr_cgi);
+  if (not cgi.has_value()) {
     logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Invalid CGI", du_ue_id);
     return;
   }
@@ -252,25 +251,22 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     logger.debug("du_ue={}: Ignoring SUL access indicator", du_ue_id);
   }
 
-  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  if (msg->rrc_container_rrc_setup_complete_present) {
+    logger.warning("du_ue={}: Ignoring RRC Container RRCSetupComplete. Cause: Network Sharing with multiple cell-ID "
+                   "broadcast is not supported",
+                   du_ue_id);
+  }
+
+  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Cause: Failed to allocate CU-UE-F1AP-ID", du_ue_id);
     return;
   }
 
-  // Create CU-CP UE instance.
-  const ue_index_t ue_index = du_processor_notifier.on_new_cu_cp_ue_required();
-  if (ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Cause: CU-CP UE creation failed",
-                   msg->gnb_du_ue_f1ap_id);
-    return;
-  }
-
-  // Update the UE RRC context (e.g. C-RNTI, PCell) in the CU-CP.
+  // Request RRC UE creation in the DU processor.
   ue_rrc_context_creation_request req;
-  req.ue_index = ue_index;
-  req.c_rnti   = crnti;
-  req.cgi      = cgi;
+  req.c_rnti = crnti;
+  req.cgi    = cgi.value();
   if (msg->du_to_cu_rrc_container_present) {
     req.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
   } else {
@@ -281,33 +277,37 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
                  du_ue_id);
     req.du_to_cu_rrc_container = byte_buffer{};
   }
-  const ue_rrc_context_creation_response resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
+  ue_rrc_context_creation_outcome resp = du_processor_notifier.on_ue_rrc_context_creation_request(req);
 
-  // Remove the UE if the creation was not successful
-  if (resp.f1ap_rrc_notifier == nullptr) {
-    logger.warning("du_ue={}: Dropping InitialULRRCMessageTransfer. Cause: UE RRC context creation failed",
-                   msg->gnb_du_ue_f1ap_id);
+  // Reject the UE if the creation was not successful
+  if (not resp.has_value()) {
+    asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
+    dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(cu_ue_f1ap_id);
+    dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+    dl_rrc_msg->srb_id                           = srb_id_to_uint(srb_id_t::srb0);
+    dl_rrc_msg->rrc_container                    = resp.error().copy();
+
+    // Pack message into PDU
+    f1ap_message f1ap_dl_rrc_msg;
+    f1ap_dl_rrc_msg.pdu.set_init_msg();
+    f1ap_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+    f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = std::move(dl_rrc_msg);
+
+    // send DL RRC message
+    tx_pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
     return;
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_ue(resp->ue_index, cu_ue_f1ap_id);
   ue_ctxt_list.add_du_ue_f1ap_id(cu_ue_f1ap_id, du_ue_id);
-  ue_ctxt_list.add_rrc_notifier(ue_index, resp.f1ap_rrc_notifier);
+  ue_ctxt_list.add_rrc_notifier(resp->ue_index, resp->f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
 
   ue_ctxt.logger.log_info("Added UE context");
 
-  // Forward RRC container
-  if (msg->rrc_container_rrc_setup_complete_present) {
-    // RRC setup complete over SRB1
-    ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_dcch_pdu(srb_id_t::srb1,
-                                                             msg->rrc_container_rrc_setup_complete.copy());
-    return;
-  }
-
-  // Pass RRC container to RRC
-  ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_ccch_pdu(msg->rrc_container.copy());
+  // Forward RRC container to RRC UE
+  ue_ctxt.rrc_notifier->on_ul_ccch_pdu(byte_buffer(msg->rrc_container));
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)

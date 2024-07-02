@@ -32,7 +32,7 @@
 namespace srsran {
 
 // Maximum allowed error.
-constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 12;
+constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 1;
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {

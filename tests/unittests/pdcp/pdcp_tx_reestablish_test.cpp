@@ -119,7 +119,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   }
 
   pdcp_tx->reestablish(sec_cfg);
-  ASSERT_EQ(8, test_frame.pdu_queue.size()); // SN=2, 3 and 4 RETXed
+  ASSERT_EQ(5, test_frame.pdu_queue.size());  // unchanged
+  ASSERT_EQ(3, test_frame.retx_queue.size()); // SN=2, 3 and 4 RETXed
 
   // Check if discard timer was not reset.
   ASSERT_EQ(3, pdcp_tx->nof_discard_timers());

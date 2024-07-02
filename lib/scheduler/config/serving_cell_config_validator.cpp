@@ -32,7 +32,7 @@ using namespace srsran;
 
 #define VERIFY_ID_EXISTS(cond_lambda, id_list, ...)                                                                    \
   if (std::find_if(id_list.begin(), id_list.end(), cond_lambda) == id_list.end()) {                                    \
-    return error_type<std::string>(fmt::format(__VA_ARGS__));                                                          \
+    return make_unexpected(fmt::format(__VA_ARGS__));                                                                  \
   }
 
 validator_result srsran::config_validators::validate_pdcch_cfg(const serving_cell_config& ue_cell_cfg,

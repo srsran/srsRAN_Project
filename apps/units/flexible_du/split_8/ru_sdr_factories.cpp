@@ -48,7 +48,7 @@ std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_factory_c
     low_phy_cfg.ul_task_executor         = dependencies.workers->lower_phy_ul_exec[i];
     low_phy_cfg.prach_async_executor     = dependencies.workers->lower_prach_exec[i];
 
-    low_phy_cfg.logger->set_level(srslog::str_to_basic_level(config.ru_cfg.loggers.phy_level));
+    low_phy_cfg.logger->set_level(config.ru_cfg.loggers.phy_level);
   }
 
   return create_generic_ru(ru_config);

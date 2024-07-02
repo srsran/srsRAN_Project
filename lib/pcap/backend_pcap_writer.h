@@ -39,7 +39,7 @@ public:
   pcap_pdu_data(span<const uint8_t> context_header, byte_buffer payload)
   {
     auto header = byte_buffer::create(context_header);
-    if (header.is_error()) {
+    if (not header.has_value()) {
       return;
     }
     if (not header_buf.append(std::move(header.value()))) {

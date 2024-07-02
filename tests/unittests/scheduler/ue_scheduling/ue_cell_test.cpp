@@ -92,11 +92,11 @@ protected:
   ue_cell_configuration                    ue_cc_cfg;
 };
 
-TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_bit_rate_increases)
+TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_rate_increases)
 {
   ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, {}};
 
-  double current_bitrate = 0;
+  double current_rate = 0;
 
   // We keep MCS constant for this test.
   const sch_mcs_index ue_mcs = 28;
@@ -106,22 +106,22 @@ TEST_F(ue_cell_tester, when_dl_nof_prb_allocated_increases_estimated_dl_bit_rate
   for (unsigned nof_prbs = 0; nof_prbs < MAX_NOF_PRBS; ++nof_prbs) {
     for (const auto& pdsch_td_cfg :
          ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
-      const pdsch_config_params pdsch_cfg         = get_pdsch_cfg_params(ue_cc, pdsch_td_cfg, dci_type);
-      const double              estimated_bitrate = ue_cc.get_estimated_dl_brate_kbps(pdsch_cfg, ue_mcs, nof_prbs);
-      ASSERT_GE(estimated_bitrate, current_bitrate);
-      current_bitrate = estimated_bitrate;
+      const pdsch_config_params pdsch_cfg      = get_pdsch_cfg_params(ue_cc, pdsch_td_cfg, dci_type);
+      const double              estimated_rate = ue_cc.get_estimated_dl_rate(pdsch_cfg, ue_mcs, nof_prbs);
+      ASSERT_GE(estimated_rate, current_rate);
+      current_rate = estimated_rate;
     }
   }
 }
 
-TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_bit_rate_increases)
+TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_rate_increases)
 {
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
   ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, {}};
 
-  double current_bitrate = 0;
+  double current_rate = 0;
 
   // We keep nof. PRBs allocated constant for this test.
   const unsigned nof_prbs = 20;
@@ -131,21 +131,21 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_dl_bit_rate_increases)
   for (sch_mcs_index ue_mcs = 1; ue_mcs < max_mcs; ++ue_mcs) {
     for (const auto& pdsch_td_cfg :
          ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
-      const pdsch_config_params pdsch_cfg         = get_pdsch_cfg_params(ue_cc, pdsch_td_cfg, dci_type);
-      const double              estimated_bitrate = ue_cc.get_estimated_dl_brate_kbps(pdsch_cfg, ue_mcs, nof_prbs);
+      const pdsch_config_params pdsch_cfg      = get_pdsch_cfg_params(ue_cc, pdsch_td_cfg, dci_type);
+      const double              estimated_rate = ue_cc.get_estimated_dl_rate(pdsch_cfg, ue_mcs, nof_prbs);
       // NOTE: In case of 64QAM MCS table MCS 17 has lower spectral density than MCS 16 but the estimated bitrate will
       // remain equal hence its required to use the check greater than or equal below.
-      ASSERT_GE(estimated_bitrate, current_bitrate);
-      current_bitrate = estimated_bitrate;
+      ASSERT_GE(estimated_rate, current_rate);
+      current_rate = estimated_rate;
     }
   }
 }
 
-TEST_F(ue_cell_tester, when_ul_nof_prb_allocated_increases_estimated_ul_bit_rate_increases)
+TEST_F(ue_cell_tester, when_ul_nof_prb_allocated_increases_estimated_ul_rate_increases)
 {
   ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, {}};
 
-  double current_bitrate = 0;
+  double current_rate = 0;
 
   // We keep MCS constant for this test.
   const sch_mcs_index ue_mcs = 15;
@@ -155,22 +155,22 @@ TEST_F(ue_cell_tester, when_ul_nof_prb_allocated_increases_estimated_ul_bit_rate
   for (unsigned nof_prbs = 0; nof_prbs < MAX_NOF_PRBS; ++nof_prbs) {
     for (const auto& pusch_td_cfg :
          ue_cc.cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list) {
-      const pusch_config_params pusch_cfg         = get_pusch_cfg_params(ue_cc, pusch_td_cfg, dci_type);
-      const double              estimated_bitrate = ue_cc.get_estimated_ul_brate_kbps(pusch_cfg, ue_mcs, nof_prbs);
-      ASSERT_GE(estimated_bitrate, current_bitrate);
-      current_bitrate = estimated_bitrate;
+      const pusch_config_params pusch_cfg      = get_pusch_cfg_params(ue_cc, pusch_td_cfg, dci_type);
+      const double              estimated_rate = ue_cc.get_estimated_ul_rate(pusch_cfg, ue_mcs, nof_prbs);
+      ASSERT_GE(estimated_rate, current_rate);
+      current_rate = estimated_rate;
     }
   }
 }
 
-TEST_F(ue_cell_tester, when_mcs_increases_estimated_ul_bit_rate_increases)
+TEST_F(ue_cell_tester, when_mcs_increases_estimated_ul_rate_increases)
 {
   // Maximum MCS value for 64QAM MCS table.
   const sch_mcs_index max_mcs = 28;
 
   ue_cell ue_cc{to_du_ue_index(0), to_rnti(0x4601), ue_cc_cfg, {}};
 
-  double current_bitrate = 0;
+  double current_rate = 0;
 
   // We keep nof. PRBs allocated constant for this test.
   const unsigned nof_prbs = 20;
@@ -180,12 +180,12 @@ TEST_F(ue_cell_tester, when_mcs_increases_estimated_ul_bit_rate_increases)
   for (sch_mcs_index ue_mcs = 1; ue_mcs < max_mcs; ++ue_mcs) {
     for (const auto& pusch_td_cfg :
          ue_cc.cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list) {
-      const pusch_config_params pusch_cfg         = get_pusch_cfg_params(ue_cc, pusch_td_cfg, dci_type);
-      const double              estimated_bitrate = ue_cc.get_estimated_ul_brate_kbps(pusch_cfg, ue_mcs, nof_prbs);
+      const pusch_config_params pusch_cfg      = get_pusch_cfg_params(ue_cc, pusch_td_cfg, dci_type);
+      const double              estimated_rate = ue_cc.get_estimated_ul_rate(pusch_cfg, ue_mcs, nof_prbs);
       // NOTE: In case of 64QAM MCS table MCS 17 has lower spectral density than MCS 16 but the estimated bitrate will
       // remain equal hence its required to use the check greater than or equal below.
-      ASSERT_GE(estimated_bitrate, current_bitrate);
-      current_bitrate = estimated_bitrate;
+      ASSERT_GE(estimated_rate, current_rate);
+      current_rate = estimated_rate;
     }
   }
 }

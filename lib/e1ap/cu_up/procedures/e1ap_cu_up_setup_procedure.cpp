@@ -23,7 +23,7 @@
 #include "e1ap_cu_up_setup_procedure.h"
 #include "../e1ap_cu_up_asn1_helpers.h"
 #include "srsran/e1ap/common/e1ap_message.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;

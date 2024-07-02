@@ -46,6 +46,7 @@ public:
   bool handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override;
 
   // rrc_du_ue_repository
+  byte_buffer       get_rrc_reject() override;
   rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) override;
   void              release_ues() override;
 
@@ -77,7 +78,7 @@ private:
   // RRC-internal user database indexed by ue_index
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
   // Cell database to store cell information from the DU
-  std::map<nr_cell_id_t, rrc_cell_info> cell_info_db;
+  std::map<nr_cell_identity, rrc_cell_info> cell_info_db;
 };
 
 } // namespace srs_cu_cp

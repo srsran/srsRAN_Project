@@ -53,8 +53,9 @@ namespace srsran {
 /// can optionally be accompanied with the corresponding PDCP sequence number (SN)
 /// so that RLC AM can notify the PDCP of ACKs, and PDCP can notify RLC AM/UM to discard PDCP PDUs
 struct rlc_sdu {
-  byte_buffer                           buf = {};
-  std::optional<uint32_t>               pdcp_sn;
+  byte_buffer                           buf     = {};    ///< SDU buffer
+  bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
+  std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
   std::chrono::system_clock::time_point time_of_arrival;
   rlc_sdu() = default;
   rlc_sdu(byte_buffer buf_, std::optional<uint32_t> pdcp_sn_) : buf(std::move(buf_)), pdcp_sn(pdcp_sn_) {}
@@ -75,7 +76,8 @@ public:
 
   /// \brief Interface for higher layers to pass SDUs into RLC
   /// \param sdu_buf SDU to be handled
-  virtual void handle_sdu(byte_buffer sdu_buf) = 0;
+  /// \param is_retx Determines wheter the SDU is a PDCP retransmission or not
+  virtual void handle_sdu(byte_buffer sdu_buf, bool is_retx) = 0;
 
   /// \brief Interface for higher layers to discard SDUs from RLC queue
   /// \param pdcp_sn PDCP sequence number (SN) of the SDU that is to be discarded
@@ -83,11 +85,13 @@ public:
 };
 
 /// This interface represents the data upper layer that the TX RLC bearer must notify on transmission and/or delivery of
-/// SDUs it can stop its discard timer.
+/// (new or ReTx) SDUs so it can stop its discard timer.
 ///
 /// The following events shall be notified:
-/// - on transmission of an SDU, i.e. pop from SDU queue
-/// - on successful delivery of an SDU (only RLC AM)
+/// - on transmission of a new SDU, i.e. pop from SDU queue with is_retx == false.
+/// - on successful delivery of a new SDU with is_retx == false (only RLC AM).
+/// - on transmission of a ReTx SDU, i.e. pop from SDU queue with is_retx == true (only RLC AM).
+/// - on successful delivery of a ReTx SDU with is_retx == true (only RLC AM).
 class rlc_tx_upper_layer_data_notifier
 {
 public:
@@ -95,13 +99,27 @@ public:
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was transmitted to the
   /// lower layers.
+  ///
   /// \param max_tx_pdcp_sn Highest transmitted PDCP PDU sequence number.
   virtual void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) = 0;
 
   /// \brief Informs upper layer about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
   /// delivered in sequence towards the UE.
+  ///
   /// \param max_deliv_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
   virtual void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) = 0;
+
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the retransmitted PDCP PDU that was
+  /// transmitted to the lower layers.
+  ///
+  /// \param max_retx_pdcp_sn Highest retransmitted PDCP PDU sequence number.
+  virtual void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) = 0;
+
+  /// \brief Informs upper layer about the highest PDCP PDU sequence number of the retransmitted PDCP PDU that was
+  /// successfully delivered in sequence towards the UE.
+  ///
+  /// \param max_deliv_retx_pdcp_sn Highest in a sequence delivered PDCP PDU sequence number.
+  virtual void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) = 0;
 };
 
 /// This interface represents the control upper layer that the

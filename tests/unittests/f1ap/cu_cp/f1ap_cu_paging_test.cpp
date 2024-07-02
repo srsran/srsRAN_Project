@@ -72,9 +72,9 @@ protected:
     if (paging_msg->paging_cell_list.size() != 1) {
       return false;
     }
-    auto&        paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
-    nr_cell_id_t nci              = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-    if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != nci) {
+    auto&            paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
+    nr_cell_identity nci              = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+    if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != nci.value()) {
       test_logger.error("NR CGI NCI mismatch {} != {}}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), nci);
       return false;
     }

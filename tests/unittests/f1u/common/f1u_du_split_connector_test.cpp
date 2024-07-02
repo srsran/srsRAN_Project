@@ -60,7 +60,7 @@ struct dummy_f1u_du_gateway_bearer_rx_notifier final : srsran::srs_du::f1u_du_ga
       }
     }
     if (msg_queue.empty()) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     nru_dl_message pdu = std::move(msg_queue.front());
     msg_queue.pop();
@@ -271,7 +271,7 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
 
   // Blocking waiting for RX
   expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_FALSE(rx_sdu.is_error());
+  ASSERT_TRUE(rx_sdu.has_value());
 
   expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
   ASSERT_TRUE(exp_buf.has_value());
@@ -359,7 +359,7 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
 
   // Blocking waiting for RX
   expected<nru_dl_message> rx_sdu1 = du_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_FALSE(rx_sdu1.is_error());
+  ASSERT_TRUE(rx_sdu1.has_value());
 
   expected<byte_buffer> exp_buf1 = make_byte_buffer("abcd");
   ASSERT_TRUE(exp_buf1.has_value());
@@ -376,7 +376,7 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
 
   // Blocking waiting for RX
   expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_TRUE(rx_sdu.is_error());
+  ASSERT_FALSE(rx_sdu.has_value());
 }
 
 int main(int argc, char** argv)

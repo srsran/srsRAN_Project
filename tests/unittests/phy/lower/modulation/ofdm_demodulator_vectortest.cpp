@@ -27,7 +27,7 @@
 #include "srsran/support/test_utils.h"
 
 /// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 1e-4;
+static constexpr float ASSERT_MAX_ERROR = 5e-3;
 
 using namespace srsran;
 

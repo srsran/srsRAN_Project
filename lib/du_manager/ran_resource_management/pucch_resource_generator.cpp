@@ -331,7 +331,7 @@ error_type<std::string> srsran::srs_du::pucch_parameters_validator(unsigned     
 {
   // > If intraslot_freq_hopping is enabled, check if PUCCH Format 2 has more than symbol.
   if (f2_params.intraslot_freq_hopping and f2_params.nof_symbols == 1) {
-    return {"Intra-slot frequency hopping for PUCCH Format 2 requires 2 symbols"};
+    return make_unexpected("Intra-slot frequency hopping for PUCCH Format 2 requires 2 symbols");
   }
 
   // > Compute the number of RBs required for the PUCCH Format 1 and 2 resources.
@@ -354,7 +354,7 @@ error_type<std::string> srsran::srs_du::pucch_parameters_validator(unsigned     
                                   : f2_params.max_nof_rbs;
 
   if (f2_max_rbs > pucch_constants::FORMAT2_MAX_NPRB) {
-    return {"The number of PRBs for PUCCH Format 2 exceeds the limit of 16"};
+    return make_unexpected("The number of PRBs for PUCCH Format 2 exceeds the limit of 16");
   }
 
   const unsigned nof_f2_blocks = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP / f2_params.nof_symbols.to_uint();
@@ -369,7 +369,7 @@ error_type<std::string> srsran::srs_du::pucch_parameters_validator(unsigned     
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 60% of the BWP.
   const float max_allowed_prbs_usage = 0.6F;
   if (static_cast<float>(nof_f1_rbs + nof_f2_rbs) / static_cast<float>(bwp_size_rbs) >= max_allowed_prbs_usage) {
-    return {"With the given parameters, the number of PRBs for PUCCH exceeds the 60% of the BWP PRBs"};
+    return make_unexpected("With the given parameters, the number of PRBs for PUCCH exceeds the 60% of the BWP PRBs");
   }
 
   return {};
@@ -488,7 +488,7 @@ std::vector<pucch_resource> srsran::srs_du::generate_cell_pucch_res_list(unsigne
                                                                          unsigned        bwp_size_rbs)
 {
   auto outcome = pucch_parameters_validator(nof_res_f1, nof_res_f2, f1_params, f2_params, bwp_size_rbs);
-  if (outcome.is_error()) {
+  if (not outcome.has_value()) {
     srsran_assertion_failure("The cell list could not be generated due to: {}", outcome.error());
     return {};
   }

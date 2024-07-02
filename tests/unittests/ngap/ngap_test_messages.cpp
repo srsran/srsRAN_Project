@@ -29,7 +29,6 @@
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -75,7 +74,7 @@ ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
   ngap_ng_setup_request request_msg;
   request_msg.global_ran_node_id.gnb_id  = {411, 22};
-  request_msg.global_ran_node_id.plmn_id = "00101";
+  request_msg.global_ran_node_id.plmn_id = plmn_identity::test_value();
 
   request_msg.ran_node_name = "srsgnb01";
 
@@ -83,7 +82,7 @@ ngap_ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
   supported_ta_item.tac = 7;
 
   ngap_broadcast_plmn_item broadcast_plmn_item;
-  broadcast_plmn_item.plmn_id = "00101";
+  broadcast_plmn_item.plmn_id = plmn_identity::test_value();
 
   slice_support_item_t slice_support_item;
   slice_support_item.s_nssai.sst = 1;
@@ -164,11 +163,11 @@ cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index
   msg.ue_index                 = ue_index;
   bool ret                     = msg.nas_pdu.resize(nas_pdu_len);
   (void)ret;
-  msg.establishment_cause                = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
-  msg.user_location_info.nr_cgi.plmn_hex = "00f110";
-  msg.user_location_info.nr_cgi.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  msg.user_location_info.tai.plmn_id     = "00f110";
-  msg.user_location_info.tai.tac         = 7;
+  msg.establishment_cause               = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
+  msg.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  msg.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  msg.user_location_info.tai.plmn_id    = plmn_identity::test_value();
+  msg.user_location_info.tai.tac        = 7;
   return msg;
 }
 
@@ -200,10 +199,10 @@ cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_i
   ul_nas_transport.ue_index               = ue_index;
   bool ret                                = ul_nas_transport.nas_pdu.resize(nas_pdu_len);
   (void)ret;
-  ul_nas_transport.user_location_info.nr_cgi.plmn_hex = "00f110";
-  ul_nas_transport.user_location_info.nr_cgi.nci      = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  ul_nas_transport.user_location_info.tai.plmn_id     = "00f110";
-  ul_nas_transport.user_location_info.tai.tac         = 7;
+  ul_nas_transport.user_location_info.nr_cgi.plmn_id = plmn_identity::test_value();
+  ul_nas_transport.user_location_info.nr_cgi.nci     = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  ul_nas_transport.user_location_info.tai.plmn_id    = plmn_identity::test_value();
+  ul_nas_transport.user_location_info.tai.tac        = 7;
 
   return ul_nas_transport;
 }
@@ -223,7 +222,7 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
-  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0));
+  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(nr_cell_identity::create(gnb_id_t{411, 22}, 0).value().value());
   user_loc_info_nr.tai.plmn_id.from_string("00f110");
   user_loc_info_nr.tai.tac.from_number(7);
 
@@ -718,8 +717,8 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
   asn1::ngap::recommended_cell_item_s recommended_cell_item;
   auto&                               nr_cgi = recommended_cell_item.ngran_cgi.set_nr_cgi();
   nr_cgi.plmn_id.from_string("00f110");
-  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  nr_cgi.nr_cell_id.from_number(nci);
+  nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  nr_cgi.nr_cell_id.from_number(nci.value());
   recommended_cell_item.time_stayed_in_cell_present = true;
   recommended_cell_item.time_stayed_in_cell         = 5;
 
@@ -833,14 +832,14 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   // cgi
   auto& cgi = transparent_container.target_cell_id.set_nr_cgi();
   cgi.plmn_id.from_string("00f110");
-  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  cgi.nr_cell_id.from_number(nci);
+  nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  cgi.nr_cell_id.from_number(nci.value());
   // ue history info
   asn1::ngap::last_visited_cell_item_s cell_item;
   auto&                                cell       = cell_item.last_visited_cell_info.set_ngran_cell();
   auto&                                ngran_cell = cell.global_cell_id.set_nr_cgi();
   ngran_cell.plmn_id.from_string("00f110");
-  ngran_cell.nr_cell_id.from_number(nci);
+  ngran_cell.nr_cell_id.from_number(nci.value());
   cell.cell_type.cell_size    = asn1::ngap::cell_size_opts::options::small;
   cell.time_ue_stayed_in_cell = 0;
   transparent_container.ue_history_info.push_back(cell_item);
@@ -909,12 +908,12 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_
 ngap_handover_preparation_request srsran::srs_cu_cp::generate_handover_preparation_request(
     ue_index_t                                                ue_index,
     const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
-    gnb_id_t                                                  gnb_id,
-    nr_cell_id_t                                              nci)
+    nr_cell_identity                                          nci,
+    uint32_t                                                  gnb_id_bit_length)
 {
   ngap_handover_preparation_request request = {};
   request.ue_index                          = ue_index;
-  request.gnb_id                            = gnb_id;
+  request.gnb_id                            = nci.gnb_id(gnb_id_bit_length);
   request.nci                               = nci;
   // create a map of all PDU sessions and their associated QoS flows
   for (const auto& pdu_session : pdu_sessions) {

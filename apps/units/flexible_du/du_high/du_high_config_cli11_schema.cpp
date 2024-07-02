@@ -21,6 +21,7 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/ran/du_types.h"
@@ -36,26 +37,20 @@ static expected<Integer, std::string> parse_int(const std::string& value)
   try {
     return std::stoi(value);
   } catch (const std::invalid_argument& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   } catch (const std::out_of_range& e) {
-    return {e.what()};
+    return make_unexpected(e.what());
   }
 }
 
 static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
+  app_services::add_log_option(app, log_params.mac_level, "--mac_level", "MAC log level");
+  app_services::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
+  app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
+  app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
-  add_option(app, "--mac_level", log_params.mac_level, "MAC log level")->capture_default_str()->check(level_check);
-  add_option(app, "--rlc_level", log_params.rlc_level, "RLC log level")->capture_default_str()->check(level_check);
-  add_option(app, "--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
-  add_option(app, "--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
-  add_option(app, "--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
@@ -508,6 +503,38 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
              "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")
       ->capture_default_str()
       ->check(CLI::Range(-8, 15));
+}
+
+static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_scheduler_expert_config& expert_params)
+{
+  add_option(app,
+             "--pf_sched_fairness_coeff",
+             expert_params.pf_sched_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair policy scheduler")
+      ->capture_default_str();
+}
+
+static void configure_cli11_policy_scheduler_expert_args(CLI::App&                             app,
+                                                         du_high_unit_scheduler_expert_config& expert_params)
+{
+  static time_pf_scheduler_expert_config pf_sched_expert_cfg;
+  CLI::App*                              pf_sched_cfg_subcmd =
+      add_subcommand(app, "pf_sched", "Proportional Fair policy scheduler expert configuration")->configurable();
+  configure_cli11_pf_scheduler_expert_args(*pf_sched_cfg_subcmd, pf_sched_expert_cfg);
+  auto pf_sched_verify_callback = [&]() {
+    CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
+    if (pf_sched_sub_cmd->count() != 0) {
+      expert_params.policy_sched_expert_cfg = pf_sched_expert_cfg;
+    }
+  };
+  pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
+}
+
+static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
+{
+  CLI::App* policy_sched_cfg_subcmd =
+      add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
+  configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params);
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, du_high_unit_ul_common_config& ul_common_params)
@@ -1103,6 +1130,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   // CSI configuration.
   CLI::App* csi_subcmd = add_subcommand(app, "csi", "CSI-Meas parameters");
   configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
+
+  // Scheduler expert configuration.
+  CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
+  configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, du_high_unit_cell_config& cell_params)

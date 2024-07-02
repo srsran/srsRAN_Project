@@ -85,12 +85,14 @@ struct bench_params {
   units::bytes pdu_size{1500};
   /// \brief Logical cores used by the "du_cell" thread.
   std::vector<unsigned> du_cell_cores = {};
+  /// \brief Policy scheduler type.
+  policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
   fmt::print("Usage: {} [-R repetitions] [-U nof. ues] [-D Duplex mode] [-d DL bytes per slot] [-u UL BSR] [-r Max RBs "
-             "per UE DL grant] [-a CPU affinity] [-p F1-U PDU size]\n",
+             "per UE DL grant] [-a CPU affinity] [-p F1-U PDU size] [-P Policy scheduler type]\n",
              prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-U Nof. DU UEs for each simulation (e.g. \"1,5,10\" would run three benchmarks with 1, 5 and 10 UEs) "
@@ -105,7 +107,8 @@ static void usage(const char* prog, const bench_params& params)
              params.ul_bsr_bytes);
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
   fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
-  fmt::print("\t-p F1-U PDU size used [Default {}]", params.pdu_size);
+  fmt::print("\t-p F1-U PDU size used [Default {}]\n", params.pdu_size);
+  fmt::print("\t-P Policy scheduler the bechmark should use (\"time_rr\", \"time_pf\") [Default \"time_rr\"]\n");
   fmt::print("\t-h Show this message\n");
 }
 
@@ -124,7 +127,7 @@ static std::vector<Ret> tokenize(const std::string& s, Func&& func)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:p:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:U:D:d:u:r:a:p:P:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -169,6 +172,16 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'p':
         params.pdu_size = units::bytes{(unsigned)std::strtol(optarg, nullptr, 10)};
         break;
+      case 'P': {
+        if (std::string(optarg) == "time_pf") {
+          params.strategy_cfg = time_pf_scheduler_expert_config{};
+        } else if (std::string(optarg) == "time_rr") {
+          params.strategy_cfg = time_rr_scheduler_expert_config{};
+        } else {
+          usage(argv[0], params);
+          exit(0);
+        }
+      } break;
       case 'h':
       default:
         usage(argv[0], params);
@@ -203,6 +216,11 @@ static void print_args(const bench_params& params)
   fmt::print("- F1-U DL PDU size [bytes]: {}\n", params.pdu_size);
   fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
+  if (std::holds_alternative<time_pf_scheduler_expert_config>(params.strategy_cfg)) {
+    fmt::print("- Policys scheduler: time_pf\n");
+  } else {
+    fmt::print("- Policys scheduler: time_rr\n");
+  }
 }
 
 class dummy_metrics_handler : public scheduler_metrics_notifier
@@ -572,12 +590,13 @@ class du_high_bench
   static const unsigned DEFAULT_DL_PDU_SIZE = 1500;
 
 public:
-  du_high_bench(unsigned                          dl_buffer_state_bytes_,
-                unsigned                          ul_bsr_bytes_,
-                unsigned                          max_nof_rbs_per_dl_grant,
-                units::bytes                      f1u_pdu_size_,
-                span<unsigned>                    du_cell_cores,
-                const cell_config_builder_params& builder_params = {}) :
+  du_high_bench(unsigned                              dl_buffer_state_bytes_,
+                unsigned                              ul_bsr_bytes_,
+                unsigned                              max_nof_rbs_per_dl_grant,
+                units::bytes                          f1u_pdu_size_,
+                span<unsigned>                        du_cell_cores,
+                const policy_scheduler_expert_config& strategy_cfg,
+                const cell_config_builder_params&     builder_params = {}) :
     params(builder_params),
     f1u_dl_pdu_bytes_per_slot(dl_buffer_state_bytes_),
     f1u_pdu_size(f1u_pdu_size_),
@@ -608,6 +627,7 @@ public:
     cfg.timers       = &timers;
     cfg.cells        = {config_helpers::make_default_du_cell_config(params)};
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
+    cfg.sched_cfg.ue.strategy_cfg  = strategy_cfg;
     cfg.sched_cfg.ue.pdsch_nof_rbs = {1, max_nof_rbs_per_dl_grant};
     cfg.mac_cfg                    = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.qos                        = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
@@ -652,7 +672,8 @@ public:
 
   ~du_high_bench() { stop(); }
 
-  static rnti_t du_ue_index_to_rnti(du_ue_index_t ue_idx) { return to_rnti(0x4601 + ue_idx); }
+  static rnti_t        du_ue_index_to_rnti(du_ue_index_t ue_idx) { return to_rnti(0x4601 + ue_idx); }
+  static du_ue_index_t rnti_to_du_ue_index(rnti_t rnti) { return to_du_ue_index(static_cast<unsigned>(rnti) - 0x4601); }
 
   /// \brief Run a slot indication until completion.
   void run_slot()
@@ -816,7 +837,7 @@ public:
         // We perform a deep-copy of the byte buffer to better simulate a real deployment, where there is stress over
         // the byte buffer pool.
         auto pdu_copy = pdcp_pdu.deep_copy();
-        if (pdu_copy.is_error()) {
+        if (not pdu_copy.has_value()) {
           test_logger.warning("Byte buffer segment pool depleted");
           return;
         }
@@ -940,30 +961,33 @@ public:
         return;
       }
 
-      // Prepare MAC SDU for LCID 4.
-      static const lcid_t drb_lcid = uint_to_lcid(4);
-      mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
-      // Pack header and payload length.
-      // Subtract BSR length.
-      payload_len -= mac_header_size + bsr_mac_subpdu.length();
-      if (payload_len > 255) {
-        report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
-      } else {
-        report_fatal_error_if_not(rx_pdu.pdu.append(drb_lcid), "Failed to allocate PDU");
-        report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
-      }
-      static const uint8_t rlc_um_complete_pdu_header = 0x00;
-      report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
-      // Exclude RLC header from payload length.
-      report_fatal_error_if_not(rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1)),
-                                "Failed to allocate PDU");
-      // Append Long BSR bytes.
-      report_fatal_error_if_not(rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end()),
-                                "Failed to allocate PDU");
+      // Encode MAC SDU for LCID 4 only if UE Context Modification Response has arrived to CU and LCID 4 is configured.
+      if (sim_cu_cp.ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
+        // Prepare MAC SDU for LCID 4.
+        static const lcid_t drb_lcid = uint_to_lcid(4);
+        mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
+        // Pack header and payload length.
+        // Subtract BSR length.
+        payload_len -= mac_header_size + bsr_mac_subpdu.length();
+        if (payload_len > 255) {
+          report_fatal_error_if_not(rx_pdu.pdu.append(0x40 | drb_lcid), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append((payload_len & 0xff00) >> 8), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
+        } else {
+          report_fatal_error_if_not(rx_pdu.pdu.append(drb_lcid), "Failed to allocate PDU");
+          report_fatal_error_if_not(rx_pdu.pdu.append(payload_len & 0x00ff), "Failed to allocate PDU");
+        }
+        static const uint8_t rlc_um_complete_pdu_header = 0x00;
+        report_fatal_error_if_not(rx_pdu.pdu.append(rlc_um_complete_pdu_header), "Failed to allocate PDU");
+        // Exclude RLC header from payload length.
+        report_fatal_error_if_not(rx_pdu.pdu.append(mac_pdu.begin(), mac_pdu.begin() + (payload_len - 1)),
+                                  "Failed to allocate PDU");
+        // Append Long BSR bytes.
+        report_fatal_error_if_not(rx_pdu.pdu.append(bsr_mac_subpdu.begin(), bsr_mac_subpdu.end()),
+                                  "Failed to allocate PDU");
 
-      rx_ind.pdus.push_back(rx_pdu);
+        rx_ind.pdus.push_back(rx_pdu);
+      }
 
       // Remove PUCCH UCI if UCI mltplxd on PUSCH.
       if (pusch.uci.has_value()) {
@@ -1132,14 +1156,15 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
 }
 
 /// \brief Benchmark DU-high with DL and/or UL only traffic using an RLC UM bearer.
-void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
-                                 unsigned       nof_ues,
-                                 duplex_mode    dplx_mode,
-                                 unsigned       dl_buffer_state_bytes,
-                                 unsigned       ul_bsr_bytes,
-                                 unsigned       max_nof_rbs_per_dl_grant,
-                                 units::bytes   dl_pdu_size,
-                                 span<unsigned> du_cell_cores)
+void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
+                                 unsigned                              nof_ues,
+                                 duplex_mode                           dplx_mode,
+                                 unsigned                              dl_buffer_state_bytes,
+                                 unsigned                              ul_bsr_bytes,
+                                 unsigned                              max_nof_rbs_per_dl_grant,
+                                 units::bytes                          dl_pdu_size,
+                                 span<unsigned>                        du_cell_cores,
+                                 const policy_scheduler_expert_config& strategy_cfg)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
                                dl_buffer_state_bytes > 0 ? "DL" : "",
@@ -1152,6 +1177,7 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&   bm,
                       max_nof_rbs_per_dl_grant,
                       dl_pdu_size,
                       du_cell_cores,
+                      strategy_cfg,
                       generate_custom_cell_config_builder_params(dplx_mode)};
   for (unsigned ue_count = 0; ue_count < nof_ues; ++ue_count) {
     bench.add_ue(to_du_ue_index(ue_count));
@@ -1272,7 +1298,8 @@ int main(int argc, char** argv)
                                 params.ul_bsr_bytes,
                                 params.max_dl_rb_grant,
                                 params.pdu_size,
-                                params.du_cell_cores);
+                                params.du_cell_cores,
+                                params.strategy_cfg);
   }
 
   if (not tracing_filename.empty()) {

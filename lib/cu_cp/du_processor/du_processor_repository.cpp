@@ -126,8 +126,21 @@ du_index_t du_processor_repository::find_du(pci_t pci)
 {
   du_index_t index = du_index_t::invalid;
   for (const auto& du : du_db) {
-    if (du.second.processor->has_cell(pci))
+    if (du.second.processor->has_cell(pci)) {
       return du.first;
+    }
+  }
+
+  return index;
+}
+
+du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
+{
+  du_index_t index = du_index_t::invalid;
+  for (const auto& du : du_db) {
+    if (du.second.processor->has_cell(cgi)) {
+      return du.first;
+    }
   }
 
   return index;
@@ -146,17 +159,6 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   for (auto& du : du_db) {
     du.second.processor->get_paging_handler().handle_paging_message(msg);
   }
-}
-
-ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
-{
-  for (auto& du : du_db) {
-    if (du.second.processor->has_cell(cgi)) {
-      return du.second.processor->get_ngap_interface().allocate_new_ue_index();
-    }
-  }
-  logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
-  return ue_index_t::invalid;
 }
 
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const

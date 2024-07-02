@@ -36,4 +36,4 @@ set(SOURCES
 add_library(srslog STATIC ${SOURCES})
 target_link_libraries(srslog fmt ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS srslog EXPORT srsran_export)
+add_to_exported_libs(srslog)

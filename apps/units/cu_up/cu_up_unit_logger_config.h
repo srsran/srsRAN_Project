@@ -22,17 +22,17 @@
 
 #pragma once
 
-#include <string>
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
 /// Configuration of logging functionalities.
 struct cu_up_unit_logger_config {
-  std::string cu_level   = "warning";
-  std::string gtpu_level = "warning";
-  std::string pdcp_level = "warning";
-  std::string f1u_level  = "warning";
-  std::string sdap_level = "warning";
+  srslog::basic_levels cu_level   = srslog::basic_levels::warning;
+  srslog::basic_levels gtpu_level = srslog::basic_levels::warning;
+  srslog::basic_levels pdcp_level = srslog::basic_levels::warning;
+  srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
+  srslog::basic_levels sdap_level = srslog::basic_levels::warning;
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
 };

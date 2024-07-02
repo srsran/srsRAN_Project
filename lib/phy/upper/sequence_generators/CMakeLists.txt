@@ -35,5 +35,4 @@ set(SOURCES
 add_library(srsran_sequence_generators STATIC ${SOURCES})
 target_link_libraries(srsran_sequence_generators srsran_support srsvec)
 
-install(TARGETS srsran_sequence_generators
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_sequence_generators)

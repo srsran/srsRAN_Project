@@ -171,10 +171,10 @@ public:
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available GNB-CU-F1AP-UE-ID.
-  gnb_cu_ue_f1ap_id_t next_gnb_cu_ue_f1ap_id()
+  gnb_cu_ue_f1ap_id_t allocate_gnb_cu_ue_f1ap_id()
   {
     // return invalid when no cu ue f1ap id is available
-    if (ue_index_to_ue_f1ap_id.size() == MAX_NOF_UES_PER_DU) {
+    if (ue_index_to_ue_f1ap_id.size() == MAX_NOF_CU_F1AP_UES) {
       return gnb_cu_ue_f1ap_id_t::invalid;
     }
 
@@ -189,8 +189,7 @@ public:
     // Find holes in the allocated IDs by iterating over all ids starting with the next_cu_ue_f1ap_id to find the
     // available id
     while (true) {
-      // Only iterate over ue_index_to_ue_f1ap_id (size=MAX_NOF_UES_PER_DU)
-      // to avoid iterating over all possible values of gnb_cu_ue_f1ap_id_t (size=2^32-1)
+      // Iterate over ue_index_to_ue_f1ap_id
       auto it = std::find_if(ue_index_to_ue_f1ap_id.begin(), ue_index_to_ue_f1ap_id.end(), [this](auto& u) {
         return u.second == next_cu_ue_f1ap_id;
       });

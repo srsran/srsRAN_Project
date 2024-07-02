@@ -36,10 +36,10 @@ public:
 
   void connect_mobility_manager(mobility_manager_measurement_handler& handler_) { handler = &handler_; }
 
-  void on_neighbor_better_than_spcell(ue_index_t   ue_index,
-                                      gnb_id_t     neighbor_gnb_id,
-                                      nr_cell_id_t neighbor_nci,
-                                      pci_t        neighbor_pci) override
+  void on_neighbor_better_than_spcell(ue_index_t       ue_index,
+                                      gnb_id_t         neighbor_gnb_id,
+                                      nr_cell_identity neighbor_nci,
+                                      pci_t            neighbor_pci) override
   {
     srsran_assert(handler != nullptr, "Mobility manager handler must not be nullptr");
     handler->handle_neighbor_better_than_spcell(ue_index, neighbor_gnb_id, neighbor_nci, neighbor_pci);

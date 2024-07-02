@@ -87,7 +87,7 @@ target_link_libraries(srsran_channel_processors
         srsran_ssb_processor
         srsran_uci_decoder)
 
-install(TARGETS srsran_channel_processors
+add_to_exported_libs(srsran_channel_processors
         srsran_pbch_encoder
         srsran_pbch_modulator
         srsran_pdcch_encoder
@@ -102,5 +102,4 @@ install(TARGETS srsran_channel_processors
         srsran_pucch_processor
         srsran_pusch_processor
         srsran_ssb_processor
-        srsran_uci_decoder
-        EXPORT srsran_export)
+        srsran_uci_decoder)

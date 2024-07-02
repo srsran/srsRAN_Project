@@ -324,7 +324,7 @@ protected:
       cvar_empty.notify_one();
       return {};
     }
-    return std::move(t);
+    return make_unexpected(std::move(t));
   }
 
   template <typename It, typename BlockingMode>

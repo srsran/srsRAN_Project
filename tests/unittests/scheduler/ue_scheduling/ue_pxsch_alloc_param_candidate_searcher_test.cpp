@@ -79,7 +79,7 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
   span<const search_space_configuration> ss_list = ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces;
 
   ue_pdsch_alloc_param_candidate_searcher dl_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), slot_point{0, 0});
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), slot_point{0, 0}, {});
   ASSERT_TRUE(not dl_searcher.is_empty());
   for (const auto& candidate : dl_searcher) {
     bool ss_present_in_ue_ded_cfg =
@@ -89,7 +89,7 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
     ASSERT_TRUE(ss_present_in_ue_ded_cfg);
   }
   ue_pusch_alloc_param_candidate_searcher ul_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), slot_point{0, 0});
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), slot_point{0, 0}, {});
   ASSERT_TRUE(not dl_searcher.is_empty());
   for (const auto& candidate : ul_searcher) {
     bool ss_present_in_ue_ded_cfg =

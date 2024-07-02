@@ -22,7 +22,6 @@
 
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/detail/byte_buffer_segment_pool.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -52,7 +51,7 @@ class byte_buffer_chain_test : public testing::Test
 TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
 {
   auto buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& chain = buffer.value();
   ASSERT_TRUE(chain.empty());
   ASSERT_EQ(chain.length(), 0U);
@@ -79,7 +78,7 @@ TEST_F(byte_buffer_chain_test, empty_container_in_valid_state)
 TEST_F(byte_buffer_chain_test, append_byte_buffer)
 {
   auto buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& buf = buffer.value();
 
   byte_buffer other_buffer  = byte_buffer::create({1, 2, 3, 4, 5}).value();
@@ -120,7 +119,7 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 {
   std::vector<uint8_t> vec    = {1, 2, 3};
   auto                 buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& buf  = buffer.value();
   byte_buffer        buf2 = byte_buffer::create(vec).value();
 
@@ -167,7 +166,7 @@ TEST_F(byte_buffer_chain_test, prepend_buffer)
 TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
 {
   auto buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& buf = buffer.value();
 
   byte_buffer header_bytes = byte_buffer::create({1, 2, 3}).value();
@@ -201,7 +200,7 @@ TEST_F(byte_buffer_chain_test, prepend_header_and_append_payload)
 TEST_F(byte_buffer_chain_test, payload_lifetime)
 {
   auto buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& buf = buffer.value();
 
   std::vector<uint8_t> all_bytes;
@@ -232,7 +231,7 @@ TEST_F(byte_buffer_chain_test, slice_chain_formatter)
   ASSERT_TRUE(pdu2.append(bytes));
 
   auto buffer = byte_buffer_chain::create();
-  ASSERT_FALSE(buffer.is_error());
+  ASSERT_TRUE(buffer.has_value());
   byte_buffer_chain& chain = buffer.value();
   ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu), 3, 2}));
   ASSERT_TRUE(chain.append(byte_buffer_slice{std::move(pdu2), 0, 2}));

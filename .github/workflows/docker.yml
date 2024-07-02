@@ -1,0 +1,119 @@
+name: Docker Builder
+on:
+  push:
+    branches:
+      - main
+      - test
+  release:
+    types: [published]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # --> split72
+          # AMD AVX2
+          - SUFFIX: release_avx2
+            SPLIT: "split72"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+            ARCH: x86-64-v3
+            TAG: amd64-avx2
+            PLATFORM: amd64
+            LIB: dpdk
+            LIB_VERSION: "23.11"
+          - SUFFIX: release_with_debug_avx2
+            SPLIT: "split72"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+            ARCH: x86-64-v3
+            TAG: amd64-avx2
+            PLATFORM: amd64
+            LIB: dpdk
+            LIB_VERSION: "23.11"
+          # AMD AVX512
+          - SUFFIX: release_avx512
+            SPLIT: "split72"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+            ARCH: x86-64-v4
+            TAG: amd64-avx2-avx512
+            PLATFORM: amd64
+            LIB: dpdk
+            LIB_VERSION: "23.11"
+          - SUFFIX: release_with_debug_avx512
+            SPLIT: "split72"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+            ARCH: x86-64-v4
+            TAG: amd64-avx2-avx512
+            PLATFORM: amd64
+            LIB: dpdk
+            LIB_VERSION: "23.11"
+          # --> split8
+          # AMD AVX2
+          - SUFFIX: release_avx2
+            SPLIT: "split8"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
+            ARCH: x86-64-v3
+            TAG: amd64-avx2
+            PLATFORM: amd64
+            LIB: uhd
+            LIB_VERSION: "4.6.0.0"
+          - SUFFIX: release_with_debug_avx2
+            SPLIT: "split8"
+            EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+            ARCH: x86-64-v3
+            TAG: amd64-avx2
+            PLATFORM: amd64
+            LIB: uhd
+            LIB_VERSION: "4.6.0.0"
+    env:
+      NAME: srsran_${{ matrix.SPLIT }}_${{ matrix.SUFFIX }}
+    environment: dockerhub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Determine tags based on branch
+        id: tags
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          DATE_TAG="${GITHUB_SHA:0:10}-$(date +'%Y-%m-%d')"
+          RELEASE_NAME="${{ github.event.release.name }}"
+
+          if [ -n "$RELEASE_NAME" ]; then
+            tags="${{ env.NAME }}:${DATE_TAG},${{ env.NAME }}:${RELEASE_NAME}"
+          else
+            if [ "$BRANCH_NAME" == "main" ]; then
+              tags="${{ env.NAME }}:${DATE_TAG},${{ env.NAME }}:latest"
+            elif [ "$BRANCH_NAME" == "test" ]; then
+              tags="${{ env.NAME }}:${DATE_TAG},${{ env.NAME }}:next"
+            fi
+          fi
+          echo "tags=$tags" >> $GITHUB_OUTPUT
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          logout: true
+          ecr: false
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          file: ./docker/Dockerfile
+          platforms: ${{ matrix.PLATFORM }}
+          build-args: |
+            NAME="srsran_${SPLIT}_${SUFFIX}"
+            LIB=${{ matrix.LIB }}
+            LIB_VERSION=${{ matrix.LIB_VERSION }}
+            ARCH=${{ matrix.ARCH }}

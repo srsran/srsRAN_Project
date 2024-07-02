@@ -45,15 +45,12 @@ public:
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
 
-  /// \brief Allocate a new UE index.
-  virtual ue_index_t allocate_new_ue_index() = 0;
-
   /// \brief Request to create a new UE RRC context.
   ///
   /// This method should be called when a C-RNTI and PCell are assigned to a UE.
   /// \param req Request to setup a new UE RRC context.
   /// \return Response to whether the request was successful or failed.
-  virtual ue_rrc_context_creation_response
+  virtual ue_rrc_context_creation_outcome
   handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
 
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
@@ -143,6 +140,10 @@ public:
   /// \return Returns true on success, false otherwise.
   virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
 
+  /// \brief Notify RRC DU about a required RRCReject.
+  /// \return Returns a RRC Container containing the RRCReject.
+  virtual byte_buffer on_rrc_reject_required() = 0;
+
   /// \brief Notify RRC DU to create a UE.
   /// \param[in] msg The UE creation message.
   /// \return Returns a handle to the created UE.
@@ -230,16 +231,6 @@ public:
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
 };
 
-/// Handler for an NGAP entity to communicate with the DU processor
-class du_processor_ngap_interface
-{
-public:
-  virtual ~du_processor_ngap_interface() = default;
-
-  /// \brief Allocate a new UE index.
-  virtual ue_index_t allocate_new_ue_index() = 0;
-};
-
 /// Interface to notify the F1AP about control messages.
 class du_processor_f1ap_control_notifier
 {
@@ -311,9 +302,6 @@ public:
 
   /// \brief Handles a Paging message notification.
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-
-  /// \brief Handles UE index allocation request for N2 handover at target gNB
-  virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 };
 
 /// Methods to get statistics of the DU processor.
@@ -333,7 +321,6 @@ public:
   virtual ~du_processor() = default;
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
-  virtual du_processor_ngap_interface&     get_ngap_interface()     = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;
   virtual du_processor_statistics_handler& get_statistics_handler() = 0;
   virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;

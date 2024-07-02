@@ -51,7 +51,7 @@ bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&
 
   TRUE_OR_RETURN(to_rnti(rrcmsg->c_rnti) == rnti);
 
-  if (nci.has_value() and cgi_from_asn1(rrcmsg->nr_cgi) != nci) {
+  if (nci.has_value() and cgi_from_asn1(rrcmsg->nr_cgi).value() != nci) {
     return false;
   }
 

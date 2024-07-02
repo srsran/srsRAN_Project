@@ -38,5 +38,4 @@ endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 add_library(srsran_channel_precoder STATIC ${channel_precoder_sources})
 
-install(TARGETS srsran_channel_precoder
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_channel_precoder)

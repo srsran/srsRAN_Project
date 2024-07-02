@@ -37,5 +37,4 @@ endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 add_library(srsran_channel_modulation STATIC ${SOURCES})
 target_link_libraries(srsran_channel_modulation srsran_support log_likelihood_ratio)
 
-install(TARGETS srsran_channel_modulation
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_channel_modulation)

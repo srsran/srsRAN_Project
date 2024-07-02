@@ -133,11 +133,11 @@ private:
   bool when_executing_the_validation(T pdu, std::function<fapi_error(T& pdu)> validator) override
   {
     fapi_error error = validator(pdu);
-    if (error.is_error()) {
+    if (not error.has_value()) {
       base::report = error.error();
     }
 
-    return !error.is_error();
+    return error.has_value();
   };
 
   void check_message_params(bool result, message_type_id msg_type_id) const

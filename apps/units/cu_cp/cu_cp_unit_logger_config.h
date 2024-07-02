@@ -22,18 +22,18 @@
 
 #pragma once
 
-#include <string>
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
 /// Configuration of logging functionalities.
 struct cu_cp_unit_logger_config {
-  std::string cu_level   = "warning";
-  std::string f1ap_level = "warning";
-  std::string pdcp_level = "warning";
-  std::string rrc_level  = "warning";
-  std::string ngap_level = "warning";
-  std::string sec_level  = "warning";
+  srslog::basic_levels cu_level   = srslog::basic_levels::warning;
+  srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
+  srslog::basic_levels pdcp_level = srslog::basic_levels::warning;
+  srslog::basic_levels rrc_level  = srslog::basic_levels::warning;
+  srslog::basic_levels ngap_level = srslog::basic_levels::warning;
+  srslog::basic_levels sec_level  = srslog::basic_levels::warning;
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.

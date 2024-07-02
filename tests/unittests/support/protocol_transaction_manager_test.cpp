@@ -189,7 +189,7 @@ TEST_F(protocol_transaction_test,
 
   // Test Section.
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get().is_error());
+  ASSERT_FALSE(t.get().has_value());
   ASSERT_EQ(t.get().error(), protocol_transaction_failure::timeout);
 }
 
@@ -215,6 +215,6 @@ TEST_F(
     tick();
   }
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get().is_error());
+  ASSERT_FALSE(t.get().has_value());
   ASSERT_EQ(t.get().error(), protocol_transaction_failure::timeout);
 }

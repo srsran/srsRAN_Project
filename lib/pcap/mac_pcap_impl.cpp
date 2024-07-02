@@ -50,7 +50,7 @@ void mac_pcap_impl::close()
 void mac_pcap_impl::push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu)
 {
   auto pdu_buffer = byte_buffer::create(pdu);
-  if (pdu_buffer.is_error()) {
+  if (not pdu_buffer.has_value()) {
     return;
   }
   push_pdu(context, std::move(pdu_buffer.value()));

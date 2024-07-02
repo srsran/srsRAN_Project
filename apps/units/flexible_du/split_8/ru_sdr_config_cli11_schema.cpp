@@ -21,6 +21,7 @@
  */
 
 #include "ru_sdr_config_cli11_schema.h"
+#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/units/flexible_du/support/cli11_cpu_affinities_parser_helper.h"
 #include "ru_sdr_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -137,18 +138,8 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& confi
 
 static void configure_cli11_log_args(CLI::App& app, ru_sdr_unit_logger_config& log_params)
 {
-  auto level_check = [](const std::string& value) -> std::string {
-    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-      return {};
-    }
-    return "Log level value not supported. Accepted values [info,debug,warning,error]";
-  };
-
-  add_option(app, "--radio_level", log_params.radio_level, "Radio log level")
-      ->capture_default_str()
-      ->check(level_check);
-
-  add_option(app, "--phy_level", log_params.phy_level, "PHY log level")->capture_default_str()->check(level_check);
+  app_services::add_log_option(app, log_params.radio_level, "--radio_level", "Radio log level");
+  app_services::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
 }
 
 static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_affinities_cell_config& config)

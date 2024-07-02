@@ -23,6 +23,12 @@
 #include "demodulation_mapper_intervals.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VBMI__) &&               \
+    (!defined(__GNUC__) || (__GNUC__ > 9))
+#define HAVE_AVX512
+#include "avx512_helpers.h"
+#endif
+
 #ifdef __AVX2__
 #include "avx2_helpers.h"
 #endif // __AVX2__
@@ -154,6 +160,56 @@ const std::array<float, NOF_INTERVALS_67> SLOPE_67          = {4 * M_SQRT1_170,
 const std::array<float, NOF_INTERVALS_67> INTERCEPT_67 =
     {28.0F / 85, -20.0F / 85, 12.0F / 85, -4.0F / 85, -4.0F / 85, 12.0F / 85, -20.0F / 85, 28.0F / 85};
 
+#ifdef HAVE_AVX512
+static void demod_QAM256_avx512(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+{
+  __m512i rcp_noise_idx = _mm512_setr_epi32(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7);
+
+  // Load symbols.
+  __m512 symbols = _mm512_loadu_ps(reinterpret_cast<const float*>(symbol));
+
+  // Load noise. 8 values only.
+  __m256 noise = _mm256_loadu_ps(noise_var);
+
+  // Take the reciprocal of the noise variance.
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
+  __m256 rcp_noise = mm512::safe_div(_mm256_set1_ps(1), noise);
+
+  // Repeat noise values for real and imaginary parts and put the results in an AVX register.
+  __m512 rcp_noise_ = _mm512_zextps256_ps512(rcp_noise);
+  rcp_noise_        = _mm512_permutexvar_ps(rcp_noise_idx, rcp_noise_);
+
+  // Calculate l_value for bits 0 and 1.
+  __m512 l_value_01 =
+      mm512::interval_function(symbols, rcp_noise_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+
+  // Calculate l_value for bits 2 and 3.
+  __m512 l_value_23 =
+      mm512::interval_function(symbols, rcp_noise_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+
+  // Calculate l_value for bits 4 and 5.
+  __m512 l_value_45 =
+      mm512::interval_function(symbols, rcp_noise_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+
+  // Calculate l_value for bits 6 and 7.
+  __m512 l_value_67 =
+      mm512::interval_function(symbols, rcp_noise_, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
+
+  // Store result.
+  __m512i llr_i8 = mm512::quantize_ps(l_value_01, l_value_23, l_value_45, l_value_67, RANGE_LIMIT_FLOAT);
+
+  // Recolocate LLR within the 512-bit register.
+  uint8_t idx_[64]  = {0x00, 0x01, 0x04, 0x05, 0x08, 0x09, 0x0c, 0x0d, 0x02, 0x03, 0x06, 0x07, 0x0a, 0x0b, 0x0e, 0x0f,
+                       0x10, 0x11, 0x14, 0x15, 0x18, 0x19, 0x1c, 0x1d, 0x12, 0x13, 0x16, 0x17, 0x1a, 0x1b, 0x1e, 0x1f,
+                       0x20, 0x21, 0x24, 0x25, 0x28, 0x29, 0x2c, 0x2d, 0x22, 0x23, 0x26, 0x27, 0x2a, 0x2b, 0x2e, 0x2f,
+                       0x30, 0x31, 0x34, 0x35, 0x38, 0x39, 0x3c, 0x3d, 0x32, 0x33, 0x36, 0x37, 0x3a, 0x3b, 0x3e, 0x3f};
+  __m512i idx       = _mm512_loadu_si512(idx_);
+  __m512i reordered = _mm512_permutexvar_epi8(idx, llr_i8);
+
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(llr), reordered);
+}
+#endif // HAVE_AVX512
+
 #ifdef __AVX2__
 static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
@@ -163,8 +219,8 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
   // Load noise. 4 values only.
   __m128 noise = _mm_loadu_ps(noise_var);
 
-  // Make noise reciprocal.
-  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  // Take the reciprocal of the noise variance.
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
   __m128 mask      = _mm_cmp_ps(noise, _mm_set1_ps(0), _CMP_GT_OQ);
   __m128 rcp_noise = _mm_div_ps(_mm_set1_ps(1), noise);
   rcp_noise        = _mm_blendv_ps(_mm_set1_ps(0), rcp_noise, mask);
@@ -216,7 +272,7 @@ static void demod_QAM256_neon(log_likelihood_ratio* llr, const cf_t* symbol, con
   // Load noise.
   float32x4_t noise_0 = vld1q_f32(noise_var);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
 
   // Repeat noise values for real and imaginary parts.
@@ -307,6 +363,17 @@ void srsran::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
   const float*          noise_it     = noise_vars.begin();
   log_likelihood_ratio* llr_it       = llrs.begin();
   std::size_t           symbol_index = 0;
+
+#ifdef HAVE_AVX512
+  // For AVX512, it generates 64 LLRs simultaneously. The input is read in batches of 8 symbols.
+  for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
+    demod_QAM256_avx512(llr_it, symbols_it, noise_it);
+
+    llr_it += 64;
+    symbols_it += 8;
+    noise_it += 8;
+  }
+#endif // HAVE_AVX512
 
 #ifdef __AVX2__
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 4 symbols.

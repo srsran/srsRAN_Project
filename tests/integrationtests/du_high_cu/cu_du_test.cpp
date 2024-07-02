@@ -66,7 +66,7 @@ protected:
     cu_cfg.n2_gw                           = &*amf;
     cu_cfg.timers                          = &timers;
     cu_cfg.statistics_report_period        = std::chrono::seconds(1);
-    cu_cfg.ue_config.max_nof_supported_ues = cu_cfg.max_nof_dus * srsran::srs_cu_cp::MAX_NOF_UES_PER_DU;
+    cu_cfg.ue_config.max_nof_supported_ues = cu_cfg.max_nof_ues;
     cu_cfg.rrc_config.gnb_id               = {411, 22};
 
     // create CU-CP.
@@ -99,6 +99,12 @@ protected:
 
     // start CU and DU
     du_obj->start();
+  }
+
+  ~cu_du_test() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
 public:

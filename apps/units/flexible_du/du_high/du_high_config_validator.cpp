@@ -452,21 +452,21 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
 
   auto code =
       prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), band_helper::get_duplex_mode(band));
-  if (code.is_error()) {
+  if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;
   }
 
   code = prach_helper::zero_correlation_zone_is_valid(
       config.zero_correlation_zone, config.prach_config_index.value(), band_helper::get_duplex_mode(band));
-  if (code.is_error()) {
+  if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;
   }
 
   code = prach_helper::nof_ssb_per_ro_and_nof_cb_preambles_per_ssb_is_valid(config.nof_ssb_per_ro,
                                                                             config.nof_cb_preambles_per_ssb);
-  if (code.is_error()) {
+  if (not code.has_value()) {
     fmt::print("{}", code.error());
     return false;
   }
@@ -602,7 +602,7 @@ static bool validate_dl_arfcn_and_band(const du_high_unit_base_cell_config& conf
   if (config.band.has_value()) {
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
         *config.band, config.dl_arfcn, config.common_scs, config.channel_bw_mhz);
-    if (ret.is_error()) {
+    if (not ret.has_value()) {
       fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, band, ret.error());
       return false;
     }

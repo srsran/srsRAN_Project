@@ -65,7 +65,7 @@ protected:
   {
     if (gtpu_pcap.is_write_enabled()) {
       auto buf_copy = buf.deep_copy();
-      if (buf_copy.is_error()) {
+      if (not buf_copy.has_value()) {
         logger.log_warning("Unable to deep copy buffer for PCAP writer");
       } else {
         gtpu_pcap.push_pdu(std::move(buf_copy.value()));

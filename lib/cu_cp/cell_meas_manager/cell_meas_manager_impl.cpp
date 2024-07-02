@@ -41,7 +41,7 @@ cell_meas_manager::cell_meas_manager(const cell_meas_manager_cfg&         cfg_,
 }
 
 std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t                  ue_index,
-                                                                      nr_cell_id_t                serving_nci,
+                                                                      nr_cell_identity            serving_nci,
                                                                       std::optional<rrc_meas_cfg> current_meas_config)
 {
   std::optional<rrc_meas_cfg> meas_cfg;
@@ -139,7 +139,7 @@ std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t
   return meas_cfg;
 }
 
-std::optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t nci)
+std::optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_identity nci)
 {
   std::optional<cell_meas_config> cell_cfg;
   if (cfg.cells.find(nci) != cfg.cells.end()) {
@@ -148,7 +148,7 @@ std::optional<cell_meas_config> cell_meas_manager::get_cell_config(nr_cell_id_t 
   return cell_cfg;
 }
 
-bool cell_meas_manager::update_cell_config(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg)
+bool cell_meas_manager::update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg)
 {
   // Store old config to revert if new config is invalid.
   cell_meas_manager_cfg tmp_cfg = cfg;
@@ -279,7 +279,8 @@ void cell_meas_manager::generate_measurement_objects_for_serving_cells()
   log_meas_objects(logger, ssb_freq_to_meas_object);
 }
 
-void cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const serving_cell_meas_config& serving_cell_cfg)
+void cell_meas_manager::update_measurement_object(nr_cell_identity                nci,
+                                                  const serving_cell_meas_config& serving_cell_cfg)
 {
   srsran_assert(is_complete(serving_cell_cfg), "Incomplete measurement object update for nci={:#x}", nci);
 
@@ -289,7 +290,7 @@ void cell_meas_manager::update_measurement_object(nr_cell_id_t nci, const servin
   if (ssb_freq_to_ncis.find(ssb_freq) != ssb_freq_to_ncis.end()) {
     ssb_freq_to_ncis.at(ssb_freq).push_back(nci);
   } else {
-    ssb_freq_to_ncis.emplace(ssb_freq, std::vector<nr_cell_id_t>{nci});
+    ssb_freq_to_ncis.emplace(ssb_freq, std::vector<nr_cell_identity>{nci});
   }
 
   if (ssb_freq_to_meas_object.find(ssb_freq) != ssb_freq_to_meas_object.end()) {

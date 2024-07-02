@@ -53,12 +53,12 @@ public:
     }
 
     expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
-    if (port_id.is_error()) {
+    if (not port_id.has_value()) {
       fmt::print("Invalid port ID.\n");
       return;
     }
     expected<double, std::string> gain_dB = app_services::parse_double(args.back());
-    if (gain_dB.is_error()) {
+    if (not gain_dB.has_value()) {
       fmt::print("Invalid gain value.\n");
       return;
     }
@@ -95,12 +95,12 @@ public:
     }
 
     expected<unsigned, std::string> port_id = app_services::parse_int<unsigned>(args.front());
-    if (port_id.is_error()) {
+    if (not port_id.has_value()) {
       fmt::print("Invalid port ID.\n");
       return;
     }
     expected<double, std::string> gain_dB = app_services::parse_double(args.back());
-    if (gain_dB.is_error()) {
+    if (not gain_dB.has_value()) {
       fmt::print("Invalid gain value.\n");
       return;
     }
@@ -188,14 +188,14 @@ public:
     }
 
     // Convert to enum and check if it is valid.
-    srslog::basic_levels level = srslog::str_to_basic_level(level_str);
-    if (level_str != basic_level_to_string(level)) {
+    auto level = srslog::str_to_basic_level(level_str);
+    if (!level.has_value()) {
       fmt::print("Invalid {} log level. Valid levels are: none, error, warning, info and debug\n", args.back());
       return;
     }
 
     srslog::basic_logger& channel = srslog::fetch_basic_logger(channel_str);
-    channel.set_level(level);
+    channel.set_level(level.value());
   }
 };
 

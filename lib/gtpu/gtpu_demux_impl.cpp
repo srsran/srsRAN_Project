@@ -89,7 +89,7 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const s
 {
   if (gtpu_pcap.is_write_enabled()) {
     auto pdu_copy = pdu.deep_copy();
-    if (pdu_copy.is_error()) {
+    if (not pdu_copy.has_value()) {
       logger.warning("Unable to deep copy PDU for PCAP writer");
     } else {
       gtpu_pcap.push_pdu(std::move(pdu_copy.value()));

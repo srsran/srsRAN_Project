@@ -37,7 +37,7 @@ struct du_ue_resource_update_response {
   std::vector<drb_id_t>          failed_drbs;
   std::vector<serv_cell_index_t> failed_scells;
 
-  bool release_required() const { return procedure_error.is_error(); }
+  bool release_required() const { return not procedure_error.has_value(); }
 };
 
 /// \brief This class manages the PHY (e.g. RB and symbols used for PUCCH), MAC (e.g. LCIDs) and RLC resources used

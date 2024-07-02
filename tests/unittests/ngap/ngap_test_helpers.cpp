@@ -41,7 +41,7 @@ ngap_test::ngap_test()
 
   cfg.gnb_id        = {411, 22};
   cfg.ran_node_name = "srsgnb01";
-  cfg.plmn          = "00101";
+  cfg.plmn          = plmn_identity::test_value();
   cfg.tac           = 7;
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
@@ -65,10 +65,10 @@ ngap_test::~ngap_test()
 ue_index_t ngap_test::create_ue(rnti_t rnti)
 {
   // Create UE in UE manager
-  ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
-  auto*      ue       = ue_mng.set_ue_du_context(ue_index, int_to_gnb_du_id(0), MIN_PCI, rnti);
-  if (ue == nullptr) {
-    test_logger.error("Failed to create UE with pci={} and rnti={}", MIN_PCI, rnti_t::MIN_CRNTI);
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min, int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
+  if (ue_index == ue_index_t::invalid) {
+    test_logger.error(
+        "Failed to create UE with pci={} rnti={} pcell_index={}", MIN_PCI, rnti_t::MIN_CRNTI, du_cell_index_t::min);
     return ue_index_t::invalid;
   }
 
@@ -92,10 +92,10 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
 ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
 {
   // Create UE in UE manager
-  ue_index_t ue_index = ue_mng.add_ue(uint_to_du_index(0));
-  auto*      ue       = ue_mng.set_ue_du_context(ue_index, int_to_gnb_du_id(0), MIN_PCI, rnti);
-  if (ue == nullptr) {
-    test_logger.error("Failed to create UE with pci={} and rnti={}", MIN_PCI, rnti_t::MIN_CRNTI);
+  ue_index_t ue_index = ue_mng.add_ue(du_index_t::min, int_to_gnb_du_id(0), MIN_PCI, rnti, du_cell_index_t::min);
+  if (ue_index == ue_index_t::invalid) {
+    test_logger.error(
+        "Failed to create UE with pci={} rnti={} pcell_index={}", MIN_PCI, rnti_t::MIN_CRNTI, du_cell_index_t::min);
     return ue_index_t::invalid;
   }
 

@@ -4,12 +4,12 @@ cu_cp:
   mobility:
     # List of all cells known to the CU-CP, their configs (if not provided over F1) and their respective neighbor cells.
     cells:
-      - nr_cell_id: 0x66C000 # For the default gnb_id=411 (gnb_id_bit_length=22), NR cell IDs start with 0x66C000 and increment for each cell of the DU.
-        periodic_report_cfg_id: 1 # This will configure a periodical report config for the serving cell.
-        ncells: # List of nr_cell_ids that are a neighbor of this serving cell.
+      - nr_cell_id: 0x66C000          # For the default gnb_id=411 (gnb_id_bit_length=22), NR cell IDs start with 0x66C000 and increment for each cell of the DU.
+        periodic_report_cfg_id: 1     # This will configure a periodical report config for the serving cell.
+        ncells:                       # List of nr_cell_ids that are a neighbor of this serving cell.
           - nr_cell_id: 0x20
             report_configs: [ 2 ]
-      - nr_cell_id: 0x20 # This cell is not managed by this CU-CP
+      - nr_cell_id: 0x20              # This cell is not managed by this CU-CP
         ncells:
             - nr_cell_id: 0x66C000
               report_configs: [ 2 ]

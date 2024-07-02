@@ -57,6 +57,8 @@ public:
     transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
   }
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override {}
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -174,7 +176,7 @@ protected:
       }
 
       // write SDU into upper end
-      rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+      rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
     }
     buffer_state = rlc1_tx_lower->get_buffer_state();
     EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
@@ -349,7 +351,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i + 13, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -418,7 +420,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -503,7 +505,7 @@ TEST_P(rlc_um_test, sdu_discard)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
 
   tester1.bsr_count = 0; // reset
@@ -604,7 +606,7 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, (pdcp_sn_start + i) % pdcp_sn_mod, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move, keep copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
 
   tester1.bsr_count = 0; // reset
@@ -700,7 +702,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -785,7 +787,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -906,7 +908,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i));
+    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i), false);
     pcell_worker.run_pending_tasks();
 
     // check buffer state
@@ -969,7 +971,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i));
+    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i), false);
     pcell_worker.run_pending_tasks();
 
     // check buffer state
@@ -1041,7 +1043,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));
@@ -1124,7 +1126,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
 
     // write SDU into upper end
-    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value()); // no std::move - keep local copy for later comparison
+    rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), num_sdus * (sdu_size + 1));

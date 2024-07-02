@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
+// This file was generated using the following MATLAB class on 27-06-2024 (seed 0):
 //   + "srsNZPCSIRSGeneratorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"

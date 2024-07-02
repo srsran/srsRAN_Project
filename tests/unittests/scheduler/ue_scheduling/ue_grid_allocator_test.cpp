@@ -142,7 +142,7 @@ TEST_F(ue_grid_allocator_tester,
                        .h_id                  = to_harq_id(0),
                        .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant).status, alloc_status::success);
   ASSERT_TRUE(crb_lims.contains(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1()));
 }
 
@@ -165,7 +165,7 @@ TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
                              .h_id                  = to_harq_id(0),
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant).status, alloc_status::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
             srsran::pdsch_mcs_table::qam256);
 }
@@ -186,7 +186,7 @@ TEST_F(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per
        .user = &u1, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
 
   // Successfully allocates RBs corresponding to the grant.
-  ASSERT_EQ(alloc.allocate_dl_grant(grant1), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant1).status, alloc_status::success);
   ASSERT_GE(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().tb_size_bytes, sched_bytes);
 
   // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
@@ -197,7 +197,7 @@ TEST_F(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per
       .user = &u2, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
 
   // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(alloc.allocate_dl_grant(grant2), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant2).status, alloc_status::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().length(), (total_crbs - crbs_allocated));
 }
 
@@ -224,7 +224,7 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
   // Successfully allocates RBs corresponding to the grant.
-  ASSERT_EQ(alloc.allocate_ul_grant(grant1), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_ul_grant(grant1).status, alloc_status::success);
   unsigned k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
                     ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
                     .k2;
@@ -238,7 +238,7 @@ TEST_F(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_
                               .max_nof_rbs           = max_nof_rbs_to_schedule};
 
   // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(alloc.allocate_ul_grant(grant2), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_ul_grant(grant2).status, alloc_status::success);
   k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
            ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
            .k2;
@@ -260,7 +260,7 @@ TEST_F(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_
                              .h_id                  = to_harq_id(0),
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant).status, alloc_status::success);
 
   // Second PDSCH grant for the UE.
   const ue_pdsch_grant grant2{.user                  = &u,
@@ -269,7 +269,7 @@ TEST_F(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   // Second PDSCH grant should not be allocated.
-  ASSERT_NE(alloc.allocate_dl_grant(grant2), alloc_outcome::success);
+  ASSERT_NE(alloc.allocate_dl_grant(grant2).status, alloc_status::success);
 }
 
 TEST_F(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_ue)
@@ -287,7 +287,7 @@ TEST_F(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_
                              .h_id                  = to_harq_id(0),
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_ul_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_ul_grant(grant).status, alloc_status::success);
 
   // Second PUSCH grant for the UE.
   const ue_pusch_grant grant2{.user                  = &u,
@@ -296,7 +296,7 @@ TEST_F(ue_grid_allocator_tester, no_two_puschs_are_allocated_in_same_slot_for_a_
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   // Second PUSCH grant should not be allocated.
-  ASSERT_NE(alloc.allocate_ul_grant(grant2), alloc_outcome::success);
+  ASSERT_NE(alloc.allocate_ul_grant(grant2).status, alloc_status::success);
 }
 
 TEST_F(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_increasing_order_of_time)
@@ -316,7 +316,7 @@ TEST_F(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
                              .h_id                  = to_harq_id(0),
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_ul_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_ul_grant(grant).status, alloc_status::success);
   unsigned k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
                     ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
                     .k2;
@@ -329,7 +329,7 @@ TEST_F(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   const auto outcome = alloc.allocate_ul_grant(grant2);
-  if (outcome == srsran::alloc_outcome::success) {
+  if (outcome.status == alloc_status::success) {
     k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
              ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
              .k2;
@@ -344,7 +344,7 @@ TEST_F(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = to_harq_id(2),
                               .recommended_nof_bytes = nof_bytes_to_schedule};
-  ASSERT_EQ(alloc.allocate_ul_grant(grant3), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_ul_grant(grant3).status, alloc_status::success);
   k2 = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common
            ->pusch_td_alloc_list[res_grid[0].result.dl.ul_pdcchs.back().dci.c_rnti_f0_1.time_resource]
            .k2;
@@ -369,7 +369,7 @@ TEST_F(ue_grid_allocator_tester,
                              .h_id                  = to_harq_id(0),
                              .recommended_nof_bytes = nof_bytes_to_schedule};
 
-  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant).status, alloc_status::success);
   const search_space_info* ss_info =
       u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
   unsigned k1 =
@@ -384,7 +384,7 @@ TEST_F(ue_grid_allocator_tester,
                               .recommended_nof_bytes = nof_bytes_to_schedule};
 
   const auto outcome = alloc.allocate_dl_grant(grant2);
-  if (outcome == srsran::alloc_outcome::success) {
+  if (outcome.status == srsran::alloc_status::success) {
     ss_info = u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
     k1      = ss_info->get_k1_candidates()
              [*res_grid[0].result.dl.dl_pdcchs.back().dci.c_rnti_f1_1.pdsch_harq_fb_timing_indicator];
@@ -399,7 +399,7 @@ TEST_F(ue_grid_allocator_tester,
                               .cell_index            = to_du_cell_index(0),
                               .h_id                  = to_harq_id(2),
                               .recommended_nof_bytes = nof_bytes_to_schedule};
-  ASSERT_EQ(alloc.allocate_dl_grant(grant3), alloc_outcome::success);
+  ASSERT_EQ(alloc.allocate_dl_grant(grant3).status, alloc_status::success);
   ss_info = u.get_pcell().cfg().find_search_space(res_grid[0].result.dl.dl_pdcchs.back().ctx.context.ss_id);
   k1 =
       ss_info

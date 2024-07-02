@@ -37,7 +37,7 @@ using namespace srsran;
 
 #define CHECK_TRUE(cond, ...)                                                                                          \
   if (not(cond)) {                                                                                                     \
-    return {fmt::format(__VA_ARGS__)};                                                                                 \
+    return make_unexpected(fmt::format(__VA_ARGS__));                                                                  \
   }
 
 #define CHECK_COMPARE_(val, expected_val, comparison, ...)                                                             \

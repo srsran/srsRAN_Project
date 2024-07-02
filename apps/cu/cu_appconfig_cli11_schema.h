@@ -28,7 +28,7 @@ namespace srsran {
 
 struct cu_appconfig;
 
-/// Configures the given CLI11 application with the gNB application configuration schema.
-void configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_parsed_cfg);
+/// Configures the given CLI11 application with the CU application configuration schema.
+void configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg);
 
 } // namespace srsran

@@ -109,11 +109,11 @@ static unsigned                pending_count = 0;
 static unsigned                finish_count  = 0;
 
 #ifdef HWACC_PDSCH_ENABLED
-static bool        dedicated_queue = true;
-static bool        cb_mode         = false;
-static bool        std_out_sink    = true;
-static std::string hal_log_level   = "error";
-static std::string eal_arguments   = "";
+static bool                 dedicated_queue = true;
+static bool                 cb_mode         = false;
+static bool                 std_out_sink    = true;
+static srslog::basic_levels hal_log_level   = srslog::basic_levels::error;
+static std::string          eal_arguments   = "";
 #endif // HWACC_PDSCH_ENABLED
 
 // Test profile structure, initialized with default profile values.
@@ -385,9 +385,11 @@ static int parse_args(int argc, char** argv)
       case 'y':
         std_out_sink = false;
         break;
-      case 'z':
-        hal_log_level = std::string(optarg);
+      case 'z': {
+        auto level    = srslog::str_to_basic_level(std::string(optarg));
+        hal_log_level = level.has_value() ? level.value() : srslog::basic_levels::error;
         break;
+      }
 #endif // HWACC_PDSCH_ENABLED
       case 'h':
       default:
@@ -503,7 +505,7 @@ static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelera
 #ifdef HWACC_PDSCH_ENABLED
   // Intefacing to the bbdev-based hardware-accelerator.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("HWACC", false);
-  logger.set_level(srslog::str_to_basic_level(hal_log_level));
+  logger.set_level(hal_log_level);
   dpdk::bbdev_acc_configuration bbdev_config;
   bbdev_config.id                                    = 0;
   bbdev_config.nof_ldpc_enc_lcores                   = nof_threads;
@@ -619,6 +621,12 @@ static pdsch_processor_factory& get_processor_factory()
                                                                 dmrs_pdsch_gen_factory);
   }
 
+  // Create synchronous PDSCH processor pool if the processor is synchronous.
+  if (pdsch_proc_factory) {
+    // Only valid for generic and lite.
+    pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
+  }
+
   // Create concurrent PDSCH processor.
   // Note that currently hardware-acceleration is limited to "generic" processor types.
   if ((pdsch_processor_type.find("concurrent") != std::string::npos) && ldpc_encoder_type != "acc100") {
@@ -640,11 +648,11 @@ static pdsch_processor_factory& get_processor_factory()
                                                                       dmrs_pdsch_gen_factory,
                                                                       *executor,
                                                                       nof_pdsch_processor_concurrent_threads);
-  }
-  TESTASSERT(pdsch_proc_factory);
 
-  // Create PDSCH processor pool.
-  pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads, true);
+    // Create asynchronous PDSCH processor pool.
+    pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory), nof_threads);
+    TESTASSERT(pdsch_proc_factory);
+  }
   TESTASSERT(pdsch_proc_factory);
 
   return *pdsch_proc_factory;
@@ -750,7 +758,7 @@ int main(int argc, char** argv)
     srslog::set_default_sink(*log_sink);
     srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("EAL", false);
-    logger.set_level(srslog::str_to_basic_level(hal_log_level));
+    logger.set_level(hal_log_level);
     dpdk_interface = dpdk::create_dpdk_eal(eal_arguments, logger);
     TESTASSERT(dpdk_interface, "Failed to open DPDK EAL with arguments.");
   }

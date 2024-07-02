@@ -218,8 +218,8 @@ ngap_message generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t 
 ngap_handover_preparation_request
 generate_handover_preparation_request(ue_index_t                                                ue_index,
                                       const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions,
-                                      gnb_id_t                                                  gnb_id = {1, 22},
-                                      nr_cell_id_t                                              nci    = 1);
+                                      nr_cell_identity nci               = nr_cell_identity::create({1, 22}, 1).value(),
+                                      uint32_t         gnb_id_bit_length = 22);
 
 } // namespace srs_cu_cp
 } // namespace srsran

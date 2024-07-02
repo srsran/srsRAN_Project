@@ -25,6 +25,13 @@
 
 using namespace srsran;
 
+// test trivially_destructible
+static_assert(std::is_trivially_destructible_v<expected<int, int>>, "expected should be trivially destructible");
+static_assert(not std::is_trivially_destructible_v<expected<int, moveonly_test_object>>,
+              "expected should not be trivially destructible");
+static_assert(not std::is_trivially_destructible_v<expected<moveonly_test_object, int>>,
+              "expected should not be trivially destructible");
+
 void test_expected_trivial()
 {
   expected<int> exp;
@@ -36,7 +43,7 @@ void test_expected_trivial()
   TESTASSERT(exp.value() == 5);
   TESTASSERT(exp);
 
-  exp.set_error(default_error_t{});
+  exp = make_unexpected(default_error_t{});
   TESTASSERT(not exp.has_value());
   TESTASSERT(not exp);
 
@@ -45,7 +52,7 @@ void test_expected_trivial()
   TESTASSERT(exp);
   TESTASSERT(exp.value() == 2);
 
-  exp.set_error();
+  exp = make_unexpected(default_error_t{});
   TESTASSERT(not exp);
 
   exp = 3;
@@ -58,7 +65,7 @@ void test_expected_trivial()
   }
   TESTASSERT(exp and exp.value() == 3);
 
-  exp.set_error();
+  exp = make_unexpected(default_error_t{});
   {
     expected<int> exp2{exp};
     TESTASSERT(not exp2);
@@ -120,7 +127,7 @@ void test_expected_struct()
     TESTASSERT(exp and exp.value().val == 0);
   }
 
-  exp.set_error(2);
+  exp = make_unexpected(2);
   TESTASSERT(not exp and exp.error() == 2);
 }
 

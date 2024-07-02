@@ -169,6 +169,12 @@ public:
     return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
   }
 
+  byte_buffer on_rrc_reject_required() override
+  {
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
+    return rrc_du_handler->get_rrc_reject();
+  }
+
   rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");

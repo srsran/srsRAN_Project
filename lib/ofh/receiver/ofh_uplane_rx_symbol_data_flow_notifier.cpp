@@ -31,7 +31,7 @@ void uplane_rx_symbol_data_flow_notifier::notify_received_symbol(slot_point slot
   expected<uplink_context::uplink_context_resource_grid_info> context =
       ul_context_repo->get(slot, symbol).try_getting_complete_resource_grid();
 
-  if (context.is_error()) {
+  if (not context.has_value()) {
     return;
   }
 

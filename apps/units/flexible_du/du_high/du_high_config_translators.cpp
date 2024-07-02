@@ -289,8 +289,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     du_cell_config& out_cell = out_cfg.back();
 
     // Set the rest of the parameters.
-    out_cell.nr_cgi.plmn      = base_cell.plmn;
-    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, cell_id);
+    out_cell.nr_cgi.plmn_id   = plmn_identity::parse(base_cell.plmn).value();
+    out_cell.nr_cgi.nci       = nr_cell_identity::create(config.gnb_id, cell_id).value();
     out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = param.search_space0_index;
 
@@ -785,9 +785,10 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   const du_high_unit_base_cell_config& cell = config.cells_cfg.front().cell;
 
   // UE parameters.
-  const du_high_unit_pdsch_config& pdsch = cell.pdsch_cfg;
-  const du_high_unit_pusch_config& pusch = cell.pusch_cfg;
-  out_cfg.ue.dl_mcs                      = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
+  const du_high_unit_pdsch_config&            pdsch                = cell.pdsch_cfg;
+  const du_high_unit_pusch_config&            pusch                = cell.pusch_cfg;
+  const du_high_unit_scheduler_expert_config& app_sched_expert_cfg = cell.sched_expert_cfg;
+  out_cfg.ue.dl_mcs                                                = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   out_cfg.ue.pdsch_rv_sequence.assign(pdsch.rv_sequence.begin(), pdsch.rv_sequence.end());
   out_cfg.ue.dl_harq_la_cqi_drop_threshold     = pdsch.harq_la_cqi_drop_threshold;
   out_cfg.ue.dl_harq_la_ri_drop_threshold      = pdsch.harq_la_ri_drop_threshold;
@@ -811,6 +812,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits       = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pusch_crb_limits       = {pusch.start_rb, pusch.end_rb};
+  if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
+    out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
+  }
 
   // PUCCH and scheduler expert parameters.
   out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;

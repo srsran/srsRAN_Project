@@ -114,7 +114,7 @@ struct ru_ofh_unit_cell_config {
 
 /// RU OFH logging functionalities.
 struct ru_ofh_unit_logger_config {
-  std::string ofh_level = "warning";
+  srslog::basic_levels ofh_level = srslog::basic_levels::warning;
 };
 
 /// CPU affinities configuration for the cell.

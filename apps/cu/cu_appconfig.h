@@ -23,27 +23,11 @@
 #pragma once
 
 #include "apps/gnb/gnb_appconfig.h"
+#include "apps/services/logger/logger_appconfig.h"
 #include <string>
 
 namespace srsran {
 namespace srs_cu {
-
-/// Configuration of logging functionalities.
-struct log_appconfig {
-  /// Path to log file or "stdout" to print to console.
-  std::string filename = "/tmp/cu.log";
-  /// Default log level for all layers.
-  std::string all_level = "warning";
-  /// Generic log level assigned to library components without layer-specific level.
-  std::string lib_level     = "warning";
-  std::string e2ap_level    = "warning";
-  std::string config_level  = "none";
-  std::string metrics_level = "none";
-  /// Maximum number of bytes to write when dumping hex arrays.
-  int hex_max_size = 0;
-  /// Set to a valid file path to enable tracing and write the trace to the file.
-  std::string tracing_filename;
-};
 
 /// NR-U configuration
 struct cu_nru_appconfig {
@@ -54,14 +38,18 @@ struct cu_nru_appconfig {
 /// F1AP configuration
 struct cu_f1ap_appconfig {
   /// F1-C bind address
-  std::string bind_address = "127.0.10.1";
+  std::string bind_addr = "127.0.10.1";
 };
+
 } // namespace srs_cu
 
 /// Monolithic gnb application configuration.
 struct cu_appconfig {
-  /// Logging configuration.
-  srs_cu::log_appconfig log_cfg;
+  /// Default constructor to update the log filename.
+  cu_appconfig() { log_cfg.filename = "/tmp/cu.log"; }
+
+  /// Loggers configuration.
+  logger_appconfig log_cfg;
 
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;

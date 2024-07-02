@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 18-04-2024 (seed 0):
+// This file was generated using the following MATLAB class on 27-06-2024 (seed 0):
 //   + "srsChEqualizerUnittest.m"
 
 #include "srsran/adt/complex.h"

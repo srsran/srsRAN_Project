@@ -47,11 +47,6 @@ std::optional<uint16_t> cu_up_wrapper::get_n3_bind_port()
   return cu_up->get_n3_bind_port();
 }
 
-gtpu_demux_rx_upper_layer_interface& cu_up_wrapper::get_ngu_pdu_handler()
-{
-  return cu_up->get_ngu_pdu_handler();
-}
-
 e1ap_message_handler& cu_up_wrapper::get_e1ap_message_handler()
 {
   return cu_up->get_e1ap_message_handler();
@@ -83,8 +78,16 @@ cu_up_wrapper::handle_bearer_context_setup_request(const srs_cu_up::e1ap_bearer_
   return cu_up->handle_bearer_context_setup_request(msg);
 }
 
-srs_cu_up::e1ap_bearer_context_modification_response cu_up_wrapper::handle_bearer_context_modification_request(
+// TODO remove from public interface
+async_task<srs_cu_up::e1ap_bearer_context_modification_response>
+cu_up_wrapper::handle_bearer_context_modification_request(
     const srs_cu_up::e1ap_bearer_context_modification_request& msg)
 {
   return cu_up->handle_bearer_context_modification_request(msg);
+}
+
+// TODO remove from public interface
+void cu_up_wrapper::schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task)
+{
+  cu_up->schedule_ue_async_task(ue_index, std::move(task));
 }

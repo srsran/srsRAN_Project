@@ -127,7 +127,7 @@ expected<byte_buffer> byte_buffer::deep_copy() const
   byte_buffer buf;
   for (node_t* seg = ctrl_blk_ptr->segments.head; seg != nullptr; seg = seg->next) {
     if (not buf.append(span<uint8_t>{seg->data(), seg->length()})) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
   }
   return buf;
@@ -585,7 +585,7 @@ expected<byte_buffer> srsran::make_byte_buffer(const std::string& hex_str)
 {
   if (hex_str.size() % 2 != 0) {
     // Failed to parse hex string.
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
   byte_buffer ret{byte_buffer::fallback_allocation_tag{}};
@@ -593,12 +593,12 @@ expected<byte_buffer> srsran::make_byte_buffer(const std::string& hex_str)
     uint8_t val;
     if (std::sscanf(hex_str.data() + i, "%02hhX", &val) <= 0) {
       // Failed to parse Hex digit.
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
     bool success = ret.append(val);
     if (not success) {
       // Note: This shouldn't generally happen as we use a fallback allocator.
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
   }
   return ret;

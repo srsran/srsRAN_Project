@@ -24,6 +24,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/radio/radio_constants.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -133,7 +134,7 @@ struct radio {
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
   /// Logging level. Leave empty for default.
-  std::string log_level;
+  srslog::basic_levels log_level;
 };
 
 /// Converts a string into a clock source. No error or invalid type is returned if the string is not valid.

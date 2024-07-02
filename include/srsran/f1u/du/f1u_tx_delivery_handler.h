@@ -59,6 +59,32 @@ public:
   ///
   /// \param highest_pdcp_sn The highest delivered PDCP sequence number
   virtual void handle_delivery_notification(uint32_t highest_pdcp_sn) = 0;
+
+  /// \brief Handles a retransmit notification from lower layers (i.e. from RLC AM).
+  ///
+  /// Notification must be performed in ascending order of PDCP sequence numbers. It is the responsibility of the
+  /// calling function (i.e. the RLC) to prevent out-of-order notifications.
+  ///
+  /// This function is quick and shall be called directly from pcell_executor to avoid excessive transitions across
+  /// executors.
+  ///
+  /// Safe execution from: pcell_executor
+  ///
+  /// \param highest_pdcp_sn The highest retransmitted PDCP sequence number
+  virtual void handle_retransmit_notification(uint32_t highest_pdcp_sn) = 0;
+
+  /// \brief Handles a delivery retransmitted notification from lower layers (i.e. from RLC AM).
+  ///
+  /// Notification must be performed in ascending order of PDCP sequence numbers. It is the responsibility of the
+  /// calling function (i.e. the RLC) to prevent out-of-order notifications.
+  ///
+  /// This function is quick and shall be called directly from pcell_executor to avoid excessive transitions across
+  /// executors.
+  ///
+  /// Safe execution from: pcell_executor
+  ///
+  /// \param highest_pdcp_sn The highest delivered retransmitted PDCP sequence number
+  virtual void handle_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) = 0;
 };
 
 } // namespace srs_du

@@ -32,7 +32,7 @@ namespace srs_cu_cp {
 /// \brief Generate dummy Supported PLMNs Item.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy Supported PLMNs Item.
-asn1::e1ap::supported_plmns_item_s generate_supported_plmns_item(unsigned nrcell_id);
+asn1::e1ap::supported_plmns_item_s generate_supported_plmns_item(nr_cell_identity nrcell_id);
 
 /// \brief Generate a dummy CU-CP E1 Setup Request base to extend.
 /// \return The CU-CP E1 Setup Request base.

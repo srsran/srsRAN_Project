@@ -99,6 +99,7 @@ def test_zmq_reestablishment_sequentially(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
+        log_ip_level="debug",
         warning_as_errors=True,
     ):
         # Launch pings
@@ -168,6 +169,7 @@ def test_zmq_reestablishment_sequentially_full_rate(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
+        log_ip_level="",
         warning_as_errors=True,
     ):
         # Launch iperf for all UEs
@@ -234,6 +236,7 @@ def test_zmq_reestablishment_parallel(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
+        log_ip_level="debug",
         warning_as_errors=True,
     ) as ue_attach_info_dict:
 
@@ -301,6 +304,7 @@ def test_zmq_reestablishment_parallel_full_rate(
         time_alignment_calibration=0,
         always_download_artifacts=True,
         noise_spd=noise_spd,
+        log_ip_level="",
         warning_as_errors=True,
     ) as ue_attach_info_dict:
 
@@ -341,6 +345,7 @@ def _iterator_over_attached_ues(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     noise_spd: int,
+    log_ip_level: str,
     warning_as_errors: bool = True,
 ) -> Generator[Tuple[Dict[UEStub, UEAttachedInfo], Dict[UEStub, UEAttachedInfo]], None, None]:
 
@@ -359,6 +364,7 @@ def _iterator_over_attached_ues(
         time_alignment_calibration=time_alignment_calibration,
         always_download_artifacts=always_download_artifacts,
         noise_spd=noise_spd,
+        log_ip_level=log_ip_level,
         warning_as_errors=warning_as_errors,
     ) as ue_attach_info_dict:
 
@@ -396,6 +402,7 @@ def _test_reestablishments(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     noise_spd: int,
+    log_ip_level: str,
     warning_as_errors: bool = True,
 ) -> Generator[Dict[UEStub, UEAttachedInfo], None, None]:
 
@@ -412,6 +419,7 @@ def _test_reestablishments(
         time_alignment_calibration=time_alignment_calibration,
         noise_spd=noise_spd,
         enable_qos_reestablishment=True,
+        log_ip_level=log_ip_level,
     )
 
     configure_artifacts(

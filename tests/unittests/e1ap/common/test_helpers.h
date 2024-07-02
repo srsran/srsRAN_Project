@@ -32,6 +32,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/gateways/network_gateway.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
 
@@ -64,7 +65,7 @@ private:
 class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_up_notifier
 {
 public:
-  dummy_e1ap_cu_up_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_e1ap_cu_up_notifier() : logger(srslog::fetch_basic_logger("TEST")), task_loop(1024) {}
 
   srs_cu_up::e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
@@ -102,7 +103,7 @@ public:
     return response;
   }
 
-  srs_cu_up::e1ap_bearer_context_modification_response on_bearer_context_modification_request_received(
+  async_task<srs_cu_up::e1ap_bearer_context_modification_response> on_bearer_context_modification_request_received(
       const srs_cu_up::e1ap_bearer_context_modification_request& msg) override
   {
     logger.info("Received BearerContextModificationRequest");
@@ -153,15 +154,22 @@ public:
     response.ue_index                                             = ue_index;
     response.success                                              = true;
 
-    return response;
+    return launch_async(
+        [response](coro_context<async_task<srs_cu_up::e1ap_bearer_context_modification_response>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_RETURN(response);
+        });
   }
 
   void on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override
   {
     logger.info("Received BearerContextReleaseCommand");
     last_bearer_context_release_command = msg;
+  }
 
-    return;
+  void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index_, async_task<void> task) override
+  {
+    task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
   }
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
@@ -173,6 +181,8 @@ public:
 private:
   srslog::basic_logger& logger;
   srs_cu_up::ue_index_t ue_index = srs_cu_up::MIN_UE_INDEX;
+
+  fifo_async_task_scheduler task_loop;
 };
 
 /// Reusable class implementing the notifier interface.

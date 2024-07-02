@@ -243,14 +243,14 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
   bearer_context_setup_request.security_info.security_algorithm.ciphering_algo                 = sec_info.cipher_algo;
   bearer_context_setup_request.security_info.security_algorithm.integrity_protection_algorithm = sec_info.integ_algo;
   auto k_enc_buffer = byte_buffer::create(sec_info.k_enc);
-  if (k_enc_buffer.is_error()) {
+  if (not k_enc_buffer.has_value()) {
     logger.warning("Unable to allocate byte_buffer");
     return false;
   }
   bearer_context_setup_request.security_info.up_security_key.encryption_key = std::move(k_enc_buffer.value());
   if (sec_info.k_int.has_value()) {
     auto k_int_buffer = byte_buffer::create(sec_info.k_int.value());
-    if (k_int_buffer.is_error()) {
+    if (not k_int_buffer.has_value()) {
       logger.warning("Unable to allocate byte_buffer");
       return false;
     }
@@ -259,7 +259,7 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
   }
 
   bearer_context_setup_request.ue_dl_aggregate_maximum_bit_rate = request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
-  bearer_context_setup_request.serving_plmn = request.source_to_target_transparent_container.target_cell_id.plmn;
+  bearer_context_setup_request.serving_plmn = request.source_to_target_transparent_container.target_cell_id.plmn_id;
   bearer_context_setup_request.activity_notif_level = "ue"; // TODO: Remove hardcoded value
   if (bearer_context_setup_request.activity_notif_level == "ue") {
     bearer_context_setup_request.ue_inactivity_timer = ue_mng.get_ue_config().inactivity_timer;

@@ -24,8 +24,7 @@
 #include "asn1_rrc_config_helpers.h"
 #include "srsran/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "srsran/asn1/rrc_nr/meas_timing_cfg.h"
-#include "srsran/ran/bcd_helpers.h"
-#include "srsran/ran/nr_cgi_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -300,18 +299,17 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
 
   sib1.cell_access_related_info.plmn_id_info_list.resize(1);
   sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);
-  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list[0];
-  plmn.mcc_present = true;
-  plmn.mcc[0]      = du_cfg.nr_cgi.plmn[0] - '0';
-  plmn.mcc[1]      = du_cfg.nr_cgi.plmn[1] - '0';
-  plmn.mcc[2]      = du_cfg.nr_cgi.plmn[2] - '0';
-  plmn.mnc.resize(du_cfg.nr_cgi.plmn.size() == 5 ? 2 : 3);
-  for (unsigned i = 3; i < du_cfg.nr_cgi.plmn.size(); ++i) {
-    plmn.mnc[i - 3] = du_cfg.nr_cgi.plmn[i] - '0';
+  plmn_id_s& plmn               = sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list[0];
+  plmn.mcc_present              = true;
+  plmn.mcc                      = du_cfg.nr_cgi.plmn_id.mcc().to_bytes();
+  static_vector<uint8_t, 3> mnc = du_cfg.nr_cgi.plmn_id.mnc().to_bytes();
+  plmn.mnc.resize(mnc.size());
+  for (unsigned i = 0; i < mnc.size(); ++i) {
+    plmn.mnc[i] = mnc[i];
   }
   sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;
   sib1.cell_access_related_info.plmn_id_info_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci.value());
   sib1.cell_access_related_info.plmn_id_info_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 

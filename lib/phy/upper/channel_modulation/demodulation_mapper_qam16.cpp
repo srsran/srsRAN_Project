@@ -51,7 +51,7 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   // Load noise.
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   __m256 rcp_noise_0 = mm256::safe_div(_mm256_set1_ps(1), noise_0);
 
   // Repeat noise values for real and imaginary parts.
@@ -132,7 +132,7 @@ static void demod_QAM16_neon(log_likelihood_ratio* llr, const cf_t* symbol, cons
   // Load noise.
   float32x4_t noise_0 = vld1q_f32(noise_var);
 
-  // Make noise reciprocal.
+  // Take the reciprocal of the noise variance.
   float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
 
   // Repeat noise values for real and imaginary parts.

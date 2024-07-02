@@ -35,9 +35,9 @@ private:
   std::mutex            mutex;
 
 public:
-  rx_symbol_handler_example(std::string log_level) : logger(srslog::fetch_basic_logger("RxSyHan"))
+  rx_symbol_handler_example(srslog::basic_levels log_level) : logger(srslog::fetch_basic_logger("RxSyHan"))
   {
-    logger.set_level(srslog::str_to_basic_level(log_level));
+    logger.set_level(log_level);
   }
 
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override

@@ -41,7 +41,7 @@ public:
   void on_protocol_failure() final {}
 
   /// PDCP TX lower layer data notifier
-  void on_new_pdu(byte_buffer pdu) final {}
+  void on_new_pdu(byte_buffer pdu, bool is_retx) final {}
   void on_discard_pdu(uint32_t pdcp_sn) final {}
 };
 
@@ -51,9 +51,9 @@ struct bench_params {
 };
 
 struct app_params {
-  int         algo         = -1;
-  std::string log_level    = "error";
-  std::string log_filename = "stdout";
+  int                  algo         = -1;
+  srslog::basic_levels log_level    = srslog::basic_levels::error;
+  std::string          log_filename = "stdout";
 };
 
 static void usage(const char* prog, const bench_params& params, const app_params& app)
@@ -81,9 +81,11 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
       case 't':
         params.print_timing_info = true;
         break;
-      case 'l':
-        app.log_level = std::string(optarg);
+      case 'l': {
+        auto value    = srslog::str_to_basic_level(std::string(optarg));
+        app.log_level = value.has_value() ? value.value() : srslog::basic_levels::none;
         break;
+      }
       case 'f':
         app.log_filename = std::string(optarg);
         break;
@@ -215,7 +217,7 @@ int main(int argc, char** argv)
     return -1;
   }
   srslog::set_default_sink(*log_sink);
-  srslog::fetch_basic_logger("PDCP").set_level(srslog::str_to_basic_level(app_params.log_level));
+  srslog::fetch_basic_logger("PDCP").set_level(app_params.log_level);
 
   if (app_params.algo != -1) {
     run_benchmark(params, app_params.algo);

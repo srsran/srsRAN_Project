@@ -86,12 +86,12 @@ private:
   static std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> create_hw_accelerator_pdsch_enc_factory()
   {
 #ifdef HWACC_PDSCH_ENABLED
-    // Hardcoded stdout and error logging.
+    //  Hardcoded stdout and error logging.
     srslog::sink* log_sink = srslog::create_stdout_sink();
     srslog::set_default_sink(*log_sink);
     srslog::init();
     srslog::basic_logger& logger = srslog::fetch_basic_logger("HAL", false);
-    logger.set_level(srslog::str_to_basic_level("error"));
+    logger.set_level(srslog::basic_levels::error);
 
     // Pointer to a dpdk-based hardware-accelerator interface.
     static std::unique_ptr<dpdk::dpdk_eal> dpdk_interface = nullptr;
@@ -334,8 +334,10 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   // Waits for the processor to finish.
   notifier_spy.wait_for_finished();
 
+  // Tolerance: max BF16 error times sqrt(2), since we are taking the modulus.
+  constexpr float tolerance = M_SQRT2f32 / 256.0;
   // Assert results.
-  grid.assert_entries(test_case.grid_expected.read());
+  grid.assert_entries(test_case.grid_expected.read(), tolerance);
 }
 
 // Creates test suite that combines all possible parameters.

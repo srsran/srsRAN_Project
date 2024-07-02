@@ -26,6 +26,7 @@
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
+#include "srsran/support/async/execute_on.h"
 #include <future>
 
 using namespace srsran;
@@ -211,6 +212,11 @@ void cu_up::disconnect()
   e1ap_cu_up_ev_notifier.disconnect();
 }
 
+void cu_up::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
+{
+  ue_mng->schedule_ue_async_task(ue_index, std::move(task));
+}
+
 void process_successful_pdu_resource_setup_mod_outcome(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                     pdu_session_resource_setup_list,
@@ -361,7 +367,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   return response;
 }
 
-e1ap_bearer_context_modification_response
+async_task<e1ap_bearer_context_modification_response>
 cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
@@ -369,59 +375,66 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     logger.error("Could not find UE context");
     return {};
   }
+  return execute_and_continue_on_blocking(
+      ue_ctxt->ue_exec_mapper->ctrl_executor(), *cfg.ctrl_executor, [this, ue_ctxt, msg]() {
+        return handle_bearer_context_modification_request_impl(*ue_ctxt, msg);
+      });
+}
 
-  ue_ctxt->get_logger().log_debug("Handling BearerContextModificationRequest");
-
+e1ap_bearer_context_modification_response
+cu_up::handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
+                                                       const e1ap_bearer_context_modification_request& msg)
+{
   e1ap_bearer_context_modification_response response = {};
-  response.ue_index                                  = ue_ctxt->get_index();
-  response.success                                   = true;
+  ue_ctxt.get_logger().log_debug("Handling BearerContextModificationRequest");
+
+  response.ue_index = ue_ctxt.get_index();
+  response.success  = true;
 
   bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
 
   if (msg.security_info.has_value()) {
     security::sec_as_config security_info;
     fill_sec_as_config(security_info, msg.security_info.value());
-    ue_ctxt->set_security_config(security_info);
+    ue_ctxt.set_security_config(security_info);
   }
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
-      ue_ctxt->get_logger().log_debug("Setup/Modification of {}", pdu_session_item.pdu_session_id);
-      pdu_session_setup_result session_result = ue_ctxt->setup_pdu_session(pdu_session_item);
+      ue_ctxt.get_logger().log_debug("Setup/Modification of {}", pdu_session_item.pdu_session_id);
+      pdu_session_setup_result session_result = ue_ctxt.setup_pdu_session(pdu_session_item);
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
       response.success &= session_result.success; // Update final result.
     }
 
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
-      ue_ctxt->get_logger().log_debug("Modifying {}", pdu_session_item.pdu_session_id);
+      ue_ctxt.get_logger().log_debug("Modifying {}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result session_result =
-          ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
+          ue_ctxt.modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
                                                            response.pdu_session_resource_failed_to_modify_list,
                                                            session_result,
                                                            logger);
-      ue_ctxt->get_logger().log_debug("Modification {}", session_result.success ? "successful" : "failed");
+      ue_ctxt.get_logger().log_debug("Modification {}", session_result.success ? "successful" : "failed");
 
       response.success &= session_result.success; // Update final result.
     }
 
     // Traverse list of PDU sessions to be removed.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
-      ue_ctxt->get_logger().log_info("Removing {}", pdu_session_item);
-      ue_ctxt->remove_pdu_session(pdu_session_item);
+      ue_ctxt.get_logger().log_info("Removing {}", pdu_session_item);
+      ue_ctxt.remove_pdu_session(pdu_session_item);
       // There is no IE to confirm successful removal.
     }
   } else {
-    ue_ctxt->get_logger().log_warning("Ignoring empty Bearer Context Modification Request");
+    ue_ctxt.get_logger().log_warning("Ignoring empty Bearer Context Modification Request");
   }
 
   // 3. Create response
-
   response.success = true;
-
   return response;
 }
 

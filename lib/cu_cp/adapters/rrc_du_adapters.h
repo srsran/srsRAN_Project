@@ -37,7 +37,7 @@ public:
     meas_config_handler = &meas_config_handler_;
   }
 
-  bool on_cell_config_update_request(nr_cell_id_t nci, const serving_cell_meas_config& serv_cell_cfg) override
+  bool on_cell_config_update_request(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg) override
   {
     srsran_assert(meas_config_handler != nullptr, "Measurement config handler must not be nullptr");
     return meas_config_handler->handle_cell_config_update_request(nci, serv_cell_cfg);

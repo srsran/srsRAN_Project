@@ -69,7 +69,7 @@ TEST_P(pdcp_tx_empty_pool_test, empty_pool)
     // Write first SDU
     for (uint32_t i = 0; i < n_sdus; i++) {
       auto sdu_buf = byte_buffer::create(sdu1);
-      if (sdu_buf.is_error()) {
+      if (not sdu_buf.has_value()) {
         pdcp_tx->handle_sdu({});
         break;
       }

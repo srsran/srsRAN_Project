@@ -136,7 +136,7 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
 
         if (bsr.buffer_size == 255) {
           srslog::fetch_basic_logger("MAC").warning("lcg={}: Discarding BSR. Cause: BSR=255 is invalid.", i);
-          return {default_error_t{}};
+          return make_unexpected(default_error_t{});
         }
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         // In the case of Long truncated BSR, some LCG buffer sizes may not be present. Assume BSR > 0 in that case.
@@ -146,7 +146,7 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
         srslog::fetch_basic_logger("MAC").error("Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
                                                 payload.length(),
                                                 lbsr.list.size());
-        return {default_error_t{}};
+        return make_unexpected(default_error_t{});
       }
       lbsr.list.push_back(bsr);
     } else if (format == bsr_format::LONG_TRUNC_BSR) {

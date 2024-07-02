@@ -77,8 +77,8 @@ void hw_accelerator_pdsch_enc_acc100_impl::hw_reserve_queue()
 
 void hw_accelerator_pdsch_enc_acc100_impl::hw_free_queue()
 {
-  // Verify that the hardware queue won't be requrired anymore.
-  if (!dedicated_queue || (dedicated_queue && queue_id > 0)) {
+  // Free the queue in case of non-dedicated use or upon object destruction.
+  if (!dedicated_queue) {
     bbdev_accelerator->free_queue(RTE_BBDEV_OP_LDPC_ENC, queue_id);
 
     // HAL logging.

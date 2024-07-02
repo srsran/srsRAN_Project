@@ -92,7 +92,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   // > Decode MAC UL PDU.
   decoded_mac_rx_pdu      ctx{sl_rx, cell_index, std::move(pdu), ue_index};
   error_type<std::string> ret = ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu);
-  if (ret.is_error()) {
+  if (not ret.has_value()) {
     logger.info("{}: Failed to decode MAC UL PDU. Cause: {}", create_prefix(ctx), ret.error());
     return false;
   }
@@ -239,7 +239,7 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       } else {
         bsr_ind.bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
         expected<long_bsr_report> lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
-        if (lbsr_report.is_error()) {
+        if (not lbsr_report.has_value()) {
           logger.warning("{}: Discarding BSR MAC CE. Cause: BSR is invalid", create_prefix(ctx, subpdu));
           return false;
         }

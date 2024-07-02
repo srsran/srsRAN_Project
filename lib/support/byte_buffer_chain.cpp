@@ -43,10 +43,10 @@ expected<byte_buffer_chain> byte_buffer_chain::create()
   auto* mem_block = detail::get_default_byte_buffer_segment_pool().allocate_node();
   if (mem_block == nullptr) {
     srslog::fetch_basic_logger("ALL").warning("POOL: Failed to allocate memory block for byte_buffer_chain");
-    return default_error_t{};
+    return make_unexpected(default_error_t{});
   }
 
-  return {mem_block};
+  return byte_buffer_chain{mem_block};
 }
 
 void byte_buffer_chain::block_deleter::operator()(void* p)

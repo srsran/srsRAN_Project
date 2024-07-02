@@ -85,7 +85,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   byte_buffer sdu;
   if (cfg.discard_timer.has_value() && is_am()) {
     auto sdu_copy = buf.deep_copy();
-    if (sdu_copy.is_error()) {
+    if (not sdu_copy.has_value()) {
       logger.log_error("Unable to deep copy SDU");
       upper_cn.on_protocol_failure();
       return;
@@ -109,7 +109,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Apply ciphering and integrity protection
   expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
-  if (exp_buf.is_error()) {
+  if (not exp_buf.has_value()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
     upper_cn.on_protocol_failure();
@@ -145,7 +145,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   // Write to lower layers
-  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf));
+  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
 
   // Increment TX_NEXT
   st.tx_next++;
@@ -206,25 +206,30 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   logger.log_info("Reestablished PDCP. st={}", st);
 }
 
-void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)
+void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx)
 {
-  logger.log_info(
-      buf.begin(), buf.end(), "TX PDU. type=data pdu_len={} sn={} count={}", buf.length(), SN(count), count);
+  logger.log_info(buf.begin(),
+                  buf.end(),
+                  "TX PDU. type=data pdu_len={} sn={} count={} is_retx={}",
+                  buf.length(),
+                  SN(count),
+                  count,
+                  is_retx);
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  lower_dn.on_new_pdu(std::move(buf), is_retx);
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
   logger.log_info(buf.begin(), buf.end(), "TX PDU. type=ctrl pdu_len={}", buf.length());
   metrics_add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf));
+  lower_dn.on_new_pdu(std::move(buf), /* is_retx = */ false);
 }
 
 void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 {
   auto status_buffer = byte_buffer::create(status.begin(), status.end());
-  if (status_buffer.is_error()) {
+  if (not status_buffer.has_value()) {
     logger.log_warning("Unable to allocate byte_buffer");
     return;
   }
@@ -297,7 +302,7 @@ expected<byte_buffer> pdcp_entity_tx::apply_ciphering_and_integrity_protection(b
   // Append MAC-I
   if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
     if (not buf.append(mac)) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
   }
 
@@ -427,7 +432,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
       // Pack header
       auto buf_copy = sdu_info.sdu.deep_copy();
-      if (buf_copy.is_error()) {
+      if (not buf_copy.has_value()) {
         logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
         upper_cn.on_protocol_failure();
         return;
@@ -446,7 +451,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
       // Perform integrity protection and ciphering
       expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), sdu_info.count);
-      if (exp_buf.is_error()) {
+      if (not exp_buf.has_value()) {
         logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
                          "notifying RRC. count={} {}",
                          sdu_info.count,
@@ -456,7 +461,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       byte_buffer protected_buf = std::move(exp_buf.value());
-      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf));
+      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf), /* is_retx = */ true);
     }
   }
 }
@@ -516,8 +521,40 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
-    logger.log_warning("Received PDU delivery notification on UM bearer. sn={}", notif_sn);
+    logger.log_error("Ignored unexpected PDU delivery notification in UM bearer. notif_sn={}", notif_sn);
   }
+}
+
+void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
+{
+  if (SRSRAN_UNLIKELY(is_srb())) {
+    logger.log_error("Ignored unexpected PDU retransmit notification in SRB. notif_sn={}", notif_sn);
+    return;
+  }
+  if (SRSRAN_UNLIKELY(is_um())) {
+    logger.log_error("Ignored unexpected PDU retransmit notification in UM bearer. notif_sn={}", notif_sn);
+    return;
+  }
+
+  // Nothing to do here
+  logger.log_debug("Ignored handling PDU retransmit notification for notif_sn={}", notif_sn);
+}
+
+void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
+{
+  if (SRSRAN_UNLIKELY(is_srb())) {
+    logger.log_error("Ignored unexpected PDU delivery retransmitted notification in SRB. notif_sn={}", notif_sn);
+    return;
+  }
+  if (SRSRAN_UNLIKELY(is_um())) {
+    logger.log_error("Ignored unexpected PDU delivery retransmitted notification in UM bearer. notif_sn={}", notif_sn);
+    return;
+  }
+
+  // TODO: Here we can stop discard timers of successfully retransmitted PDUs once they can be distinguished from
+  // origianls (e.g. if they are moved into a separate container upon retransmission).
+  // For now those retransmitted PDUs will be cleaned when handling delivery notification for following originals.
+  logger.log_debug("Ignored handling PDU delivery retransmitted notification for notif_sn={}", notif_sn);
 }
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)

@@ -39,8 +39,8 @@ namespace srs_cu_cp {
 /// Note that some optional values need to be provided by the DU upon F1Setup.
 
 struct serving_cell_meas_config {
-  nr_cell_id_t nci;    ///< The NR cell identifier.
-  gnb_id_t     gnb_id; ///< gNodeB identifier
+  nr_cell_identity nci;    ///< The NR cell identifier.
+  gnb_id_t         gnb_id; ///< gNodeB identifier
   /// If not set in config must be provided by config update after DU attach.
   std::optional<pci_t>              pci;       ///< Physical cell identifier.
   std::optional<nr_band>            band;      ///< NR band.
@@ -50,7 +50,7 @@ struct serving_cell_meas_config {
 };
 
 struct neighbor_cell_meas_config {
-  nr_cell_id_t                 nci;            ///< The NR cell identifier.
+  nr_cell_identity             nci;            ///< The NR cell identifier.
   std::vector<report_cfg_id_t> report_cfg_ids; ///< The configured report configs
 };
 
@@ -67,7 +67,7 @@ bool is_complete(const serving_cell_meas_config& cfg);
 
 /// \brief Cell manager configuration.
 struct cell_meas_manager_cfg {
-  std::map<nr_cell_id_t, cell_meas_config>     cells; // Measurement related configs for all known cells.
+  std::map<nr_cell_identity, cell_meas_config> cells; // Measurement related configs for all known cells.
   std::map<report_cfg_id_t, rrc_report_cfg_nr> report_config_ids;
 };
 

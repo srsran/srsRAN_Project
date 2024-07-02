@@ -95,7 +95,7 @@ const radio_configuration::radio radio_base_config = {base_clock_sources,
                                                       radio_configuration::transmission_mode::continuous,
                                                       0.0F,
                                                       "",
-                                                      "none"};
+                                                      srslog::basic_levels::none};
 
 struct test_case_t {
   std::function<radio_configuration::radio()> get_config;
@@ -241,12 +241,6 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
        return config;
      },
      "Only default OTW format is currently supported.\n"},
-    {[] {
-       radio_configuration::radio config = radio_base_config;
-       config.log_level                  = "some invalid log level";
-       return config;
-     },
-     "Log level some invalid log level does not correspond to an actual logger level.\n"},
     {[] {
        radio_configuration::radio config = radio_base_config;
        config.tx_mode                    = radio_configuration::transmission_mode::discontinuous;

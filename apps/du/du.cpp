@@ -120,25 +120,25 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const srs_du::log_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
+static void register_app_logs(const logger_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
-    logger.set_level(srslog::str_to_basic_level(log_cfg.lib_level));
+    logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
-  config_logger.set_level(srslog::str_to_basic_level(log_cfg.config_level));
+  config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(srslog::str_to_basic_level(log_cfg.metrics_level));
+  metrics_logger.set_level(log_cfg.metrics_level);
   metrics_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
-  e2ap_logger.set_level(srslog::str_to_basic_level(log_cfg.e2ap_level));
+  e2ap_logger.set_level(log_cfg.e2ap_level);
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Register units logs.

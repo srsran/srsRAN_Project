@@ -100,30 +100,6 @@ TEST_F(f1ap_cu_ue_context_test, when_ue_not_added_then_ue_doesnt_exist)
   ASSERT_FALSE(ue_ctxt_list.contains(ue_index));
 }
 
-TEST_F(f1ap_cu_ue_context_test, when_unsupported_number_of_ues_addeded_then_ue_not_added)
-{
-  // Reduce F1AP logger loglevel to warning to reduce console output
-  f1ap_logger.set_level(srslog::basic_levels::warning);
-
-  // Add maximum number of supported UEs
-  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; ++it) {
-    gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
-    ASSERT_NE(cu_ue_f1ap_id, gnb_cu_ue_f1ap_id_t::invalid);
-    ue_index_t ue_index = uint_to_ue_index(it);
-
-    ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
-
-    ASSERT_TRUE(ue_ctxt_list.contains(cu_ue_f1ap_id));
-    ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
-  }
-
-  // Reset F1AP logger loglevel
-  f1ap_logger.set_level(srslog::basic_levels::debug);
-
-  // Try to get another cu_ue_f1ap_id (should fail)
-  ASSERT_EQ(ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), gnb_cu_ue_f1ap_id_t::invalid);
-}
-
 TEST_F(f1ap_cu_ue_context_test, when_ue_exists_then_removal_succeeds)
 {
   ue_index_t          ue_index      = generate_random_ue_index();
@@ -141,7 +117,7 @@ TEST_F(f1ap_cu_ue_context_test, when_ue_exists_then_removal_succeeds)
 TEST_F(f1ap_cu_ue_context_test, when_ue_is_added_then_next_ue_id_is_increased)
 {
   ue_index_t          ue_index      = generate_random_ue_index();
-  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id();
 
   ASSERT_EQ((unsigned)cu_ue_f1ap_id, (unsigned)gnb_cu_ue_f1ap_id_t::min);
 
@@ -153,45 +129,5 @@ TEST_F(f1ap_cu_ue_context_test, when_ue_is_added_then_next_ue_id_is_increased)
   ASSERT_FALSE(ue_ctxt_list.contains(cu_ue_f1ap_id));
   ASSERT_FALSE(ue_ctxt_list.contains(ue_index));
 
-  ASSERT_EQ((unsigned)ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), (unsigned)gnb_cu_ue_f1ap_id_t::min + 1);
-}
-
-TEST_F(f1ap_cu_ue_context_test, when_next_ue_id_reaches_max_then_unused_values_are_reused)
-{
-  // Reduce F1AP logger loglevel to warning to reduce console output
-  f1ap_logger.set_level(srslog::basic_levels::warning);
-
-  // Add one less than the maximum number of supported UEs
-  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU - 1; ++it) {
-    gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
-    ASSERT_NE(cu_ue_f1ap_id, gnb_cu_ue_f1ap_id_t::invalid);
-    ue_index_t ue_index = uint_to_ue_index(it);
-
-    ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
-
-    ASSERT_TRUE(ue_ctxt_list.contains(cu_ue_f1ap_id));
-    ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
-  }
-
-  // Reset F1AP logger loglevel
-  f1ap_logger.set_level(srslog::basic_levels::debug);
-
-  // set next cu ue f1ap id to maximum value
-  ue_ctxt_list.set_next_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_t::max);
-  ASSERT_EQ((uint64_t)ue_ctxt_list.allocate_cu_ue_f1ap_id(), (uint64_t)gnb_cu_ue_f1ap_id_t::max);
-
-  // Add ue with max cu ue f1ap id to let next cu ue f1ap id overflow
-  ue_ctxt_list.add_ue(ue_index_t::max, gnb_cu_ue_f1ap_id_t::max);
-
-  ASSERT_TRUE(ue_ctxt_list.contains(gnb_cu_ue_f1ap_id_t::max));
-  ASSERT_TRUE(ue_ctxt_list.contains(ue_index_t::max));
-
-  // remove an ue from the context list
-  gnb_cu_ue_f1ap_id_t rem_ue_id = int_to_gnb_cu_ue_f1ap_id(19);
-  ASSERT_TRUE(ue_ctxt_list.contains(rem_ue_id));
-  ue_ctxt_list.remove_ue(ue_ctxt_list[rem_ue_id].ue_ids.ue_index);
-  ASSERT_FALSE(ue_ctxt_list.contains(rem_ue_id));
-
-  // Next available cu ue f1ap id should be the removed one
-  ASSERT_EQ((uint64_t)ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), (uint64_t)rem_ue_id);
+  ASSERT_EQ((unsigned)ue_ctxt_list.allocate_gnb_cu_ue_f1ap_id(), (unsigned)gnb_cu_ue_f1ap_id_t::min + 1);
 }

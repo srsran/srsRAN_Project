@@ -57,6 +57,8 @@ public:
   ue_context* find_ue(ue_index_t ue_index) override;
   size_t      get_nof_ues() const override { return ue_db.size(); };
 
+  void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task);
+
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.

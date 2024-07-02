@@ -73,7 +73,7 @@ public:
     }
 
     if (msg_queue.empty()) {
-      return default_error_t{};
+      return make_unexpected(default_error_t{});
     }
 
     nru_ul_message pdu = std::move(msg_queue.front());
@@ -314,11 +314,11 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_with_dl_teid_attached)
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu = cu_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_FALSE(rx_sdu.is_error());
+  ASSERT_TRUE(rx_sdu.has_value());
   ASSERT_TRUE(rx_sdu.value().t_pdu.has_value());
 
   expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
-  ASSERT_FALSE(exp_buf.is_error());
+  ASSERT_TRUE(exp_buf.has_value());
   ASSERT_EQ(rx_sdu.value().t_pdu->length(), exp_buf.value().length());
   ASSERT_EQ(rx_sdu.value().t_pdu.value(), exp_buf.value());
 }
@@ -344,11 +344,11 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_without_dl_teid_attached)
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu = cu_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_FALSE(rx_sdu.is_error());
+  ASSERT_TRUE(rx_sdu.has_value());
   ASSERT_TRUE(rx_sdu.value().t_pdu.has_value());
 
   expected<byte_buffer> exp_buf = make_byte_buffer("abcd");
-  ASSERT_FALSE(exp_buf.is_error());
+  ASSERT_TRUE(exp_buf.has_value());
   ASSERT_EQ(rx_sdu.value().t_pdu->length(), exp_buf.value().length());
   ASSERT_EQ(rx_sdu.value().t_pdu.value(), exp_buf.value());
 }
@@ -434,11 +434,11 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu1 = cu_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_FALSE(rx_sdu1.is_error());
+  ASSERT_TRUE(rx_sdu1.has_value());
   ASSERT_TRUE(rx_sdu1.value().t_pdu.has_value());
 
   expected<byte_buffer> exp_buf1 = make_byte_buffer("abcd");
-  ASSERT_FALSE(exp_buf1.is_error());
+  ASSERT_TRUE(exp_buf1.has_value());
   ASSERT_EQ(rx_sdu1.value().t_pdu->length(), exp_buf1.value().length());
   ASSERT_EQ(rx_sdu1.value().t_pdu.value(), exp_buf1.value());
 
@@ -452,7 +452,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
 
   // Blocking waiting for RX
   expected<nru_ul_message> rx_sdu2 = cu_rx.get_rx_pdu_blocking(ue_worker);
-  ASSERT_TRUE(rx_sdu2.is_error());
+  ASSERT_FALSE(rx_sdu2.has_value());
 }
 
 int main(int argc, char** argv)

@@ -30,8 +30,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 14
-      limits: 14
+      requests: 12
+      limits: 12
     memory:
       requests: "20G"
       limits: "20G"
@@ -45,9 +45,9 @@
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
-    - local_path: ../../build/apps/gnb/gnb
-      remote_path: /usr/local/bin
-      is_executable: true
+    - local_path: ${GNB_BINARY_PATH}
+      remote_path: ${GNB_REMOTE_PATH}
+      is_executable: ${GNB_IS_EXECUTABLE}
 
 - name: open5gs
   type: 5gc

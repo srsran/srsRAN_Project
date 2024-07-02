@@ -136,7 +136,7 @@ bool e2_subscription_manager_impl::action_supported(const ric_action_to_be_setup
   }
 
   auto action_def_buf = action.ric_action_definition.deep_copy();
-  if (action_def_buf.is_error()) {
+  if (not action_def_buf.has_value()) {
     logger.warning("Failed to deep copy a byte_buffer");
     return false;
   }

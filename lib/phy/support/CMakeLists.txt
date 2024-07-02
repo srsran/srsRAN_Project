@@ -33,5 +33,4 @@ add_library(srsran_phy_support STATIC
         support_factories.cpp)
 target_link_libraries(srsran_phy_support srsvec srsran_instrumentation)
 
-install(TARGETS srsran_phy_support
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_phy_support)

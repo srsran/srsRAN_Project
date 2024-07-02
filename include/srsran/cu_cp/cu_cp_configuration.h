@@ -53,6 +53,8 @@ struct cu_cp_configuration {
   /// Maximum number of CU-UP connections that the CU-CP may accept.
   unsigned max_nof_cu_ups = 6;
   /// Maximum number of UEs that the CU-CP may accept.
+  unsigned max_nof_ues = 8192;
+
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;

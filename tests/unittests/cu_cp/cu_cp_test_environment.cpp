@@ -82,7 +82,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.ngap_config                     = config_helpers::make_default_ngap_config();
   cu_cp_cfg.max_nof_dus                     = params.max_nof_dus;
   cu_cp_cfg.max_nof_cu_ups                  = params.max_nof_cu_ups;
-  cu_cp_cfg.ue_config.max_nof_supported_ues = params.max_nof_dus * MAX_NOF_UES_PER_DU;
+  cu_cp_cfg.ue_config.max_nof_supported_ues = params.max_nof_ues;
   // > RRC config.
   cu_cp_cfg.rrc_config.gnb_id             = cu_cp_cfg.ngap_config.gnb_id;
   cu_cp_cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();

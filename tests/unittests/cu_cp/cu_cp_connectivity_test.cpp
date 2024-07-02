@@ -39,7 +39,7 @@ using namespace srs_cu_cp;
 class cu_cp_connectivity_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, create_mock_amf()}) {}
+  cu_cp_connectivity_test() : cu_cp_test_environment(cu_cp_test_env_params{8, 8, 8192, create_mock_amf()}) {}
 };
 
 //----------------------------------------------------------------------------------//
@@ -179,7 +179,8 @@ TEST_F(cu_cp_connectivity_test, when_a_du_with_non_matching_gnb_id_connects_then
 
   // DU sends F1 Setup Request.
   gnb_du_id_t  du_id    = int_to_gnb_du_id(0x55);
-  f1ap_message f1ap_pdu = test_helpers::generate_f1_setup_request(du_id, 0x0); // the gnb-id does not match.
+  f1ap_message f1ap_pdu = test_helpers::generate_f1_setup_request(
+      du_id, nr_cell_identity::create(0x0).value()); // the gnb-id does not match.
   get_du(du_idx).push_ul_pdu(f1ap_pdu);
 
   // Ensure the F1 Setup Failure is received for the DU.

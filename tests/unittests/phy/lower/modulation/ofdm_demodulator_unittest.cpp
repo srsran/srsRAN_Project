@@ -30,7 +30,7 @@
 #include <random>
 
 /// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 1e-6;
+static constexpr float ASSERT_MAX_ERROR = 1.0F / 128.0F;
 
 using namespace srsran;
 

@@ -44,12 +44,6 @@ public:
     cu_cp_handler         = &cu_cp_handler_;
   }
 
-  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
-  {
-    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return du_repository_handler->handle_ue_index_allocation_request(cgi);
-  }
-
   void on_paging_message(cu_cp_paging_message& msg) override
   {
     srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
@@ -113,6 +107,12 @@ public:
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
     return cu_cp_handler->handle_new_handover_command(ue_index, std::move(command));
+  }
+
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_ue_index_allocation_request(cgi);
   }
 
   void on_n2_disconnection() override

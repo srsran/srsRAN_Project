@@ -82,7 +82,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   }
 
   auto pdu_copy = buf.deep_copy();
-  if (pdu_copy.is_error()) {
+  if (not pdu_copy.has_value()) {
     metrics_add_dropped_pdus(1);
     logger.log_error("Dropping PDU: Copy failed. pdu_len={}", buf.length());
     return;

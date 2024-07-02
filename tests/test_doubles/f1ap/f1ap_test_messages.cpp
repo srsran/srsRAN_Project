@@ -33,11 +33,11 @@ using namespace srsran;
 using namespace asn1::f1ap;
 
 gnb_du_served_cells_item_s
-srsran::test_helpers::generate_served_cells_item(unsigned nrcell_id, pci_t nrpci, unsigned tac)
+srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac)
 {
   gnb_du_served_cells_item_s served_cells_item;
   served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
-  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
+  served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nci.value());
   served_cells_item.served_cell_info.nr_pci              = nrpci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(tac);
@@ -69,7 +69,7 @@ srsran::test_helpers::generate_served_cells_item(unsigned nrcell_id, pci_t nrpci
 }
 
 f1ap_message
-srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci, unsigned tac)
+srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, nr_cell_identity nci, pci_t pci, unsigned tac)
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -84,8 +84,7 @@ srsran::test_helpers::generate_f1_setup_request(gnb_du_id_t gnb_du_id, unsigned 
   setup_req->gnb_du_served_cells_list_present = true;
   setup_req->gnb_du_served_cells_list.resize(1);
   setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() =
-      generate_served_cells_item(nrcell_id, pci, tac);
+  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() = generate_served_cells_item(nci, pci, tac);
 
   return msg;
 }
@@ -229,8 +228,8 @@ f1ap_message srsran::test_helpers::create_init_ul_rrc_message_transfer(gnb_du_ue
   init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id          = (unsigned)du_ue_id;
 
-  nr_cell_id_t nci = config_helpers::make_nr_cell_identity(gnb_id_t{411, 22}, 0);
-  init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci);
+  nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
+  init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci.value());
   init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
   init_ul_rrc->c_rnti = to_value(crnti);
 

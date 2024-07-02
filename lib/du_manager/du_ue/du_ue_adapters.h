@@ -48,7 +48,7 @@ public:
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
 
-    rlc_tx->handle_sdu(std::move(pdu));
+    rlc_tx->handle_sdu(std::move(pdu), /* is_retx = */ false);
   }
 
 private:
@@ -66,10 +66,10 @@ public:
   /// \brief Stop forwarding SDUs to the RLC layer.
   void disconnect();
 
-  void on_new_sdu(byte_buffer sdu) override
+  void on_new_sdu(byte_buffer sdu, bool is_retx) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(std::move(sdu));
+    rlc_tx->handle_sdu(std::move(sdu), is_retx);
   }
 
   void on_discard_sdu(uint32_t pdcp_sn) override { rlc_tx->discard_sdu(pdcp_sn); }
@@ -153,6 +153,17 @@ public:
     b->handle_delivery_notification(max_deliv_pdcp_sn);
   }
 
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override
+  {
+    srsran_assertion_failure("Unexpected call of on_retransmitted_sdu on SRB. max_retx_pdcp_sn={}", max_retx_pdcp_sn);
+  }
+
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override
+  {
+    srsran_assertion_failure("Unexpected call of on_delivered_retransmitted_sdu on SRB. max_deliv_retx_pdcp_sn={}",
+                             max_deliv_retx_pdcp_sn);
+  }
+
 private:
   /// An atomic pointer to the handler. This pointer may be changed by \c disconnect from UE thread while the cell
   /// thread still uses this to notify F1 of transmitted/delivered PDCP SNs.
@@ -179,6 +190,20 @@ public:
     f1u_tx_delivery_handler* h = handler.load(std::memory_order_relaxed);
     srsran_assert(h != nullptr, "RLC to F1-U TX data notifier is disconnected");
     h->handle_delivery_notification(max_deliv_pdcp_sn);
+  }
+
+  void on_retransmitted_sdu(uint32_t max_retx_pdcp_sn) override
+  {
+    f1u_tx_delivery_handler* h = handler.load(std::memory_order_relaxed);
+    srsran_assert(h != nullptr, "RLC to F1-U TX data notifier is disconnected");
+    h->handle_retransmit_notification(max_retx_pdcp_sn);
+  }
+
+  void on_delivered_retransmitted_sdu(uint32_t max_deliv_retx_pdcp_sn) override
+  {
+    f1u_tx_delivery_handler* h = handler.load(std::memory_order_relaxed);
+    srsran_assert(h != nullptr, "RLC to F1-U TX data notifier is disconnected");
+    h->handle_delivery_retransmitted_notification(max_deliv_retx_pdcp_sn);
   }
 
 private:

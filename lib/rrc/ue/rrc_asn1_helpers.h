@@ -75,7 +75,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::rrc_nr::ul_dcch_msg_s& m
     default:
       break;
   }
-  return {default_error_t{}};
+  return make_unexpected(default_error_t{});
 }
 
 /// \brief Fills ASN.1 RRC Setup struct.

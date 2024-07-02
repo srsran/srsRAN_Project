@@ -46,7 +46,7 @@ protected:
   void test_amf_connection();
 
   void test_e1ap_attach();
-  void test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, unsigned nrcell_id, pci_t pci);
+  void test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, nr_cell_identity nrcell_id, pci_t pci);
 
   void attach_ue(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id, rnti_t crnti, du_index_t du_index);
   void authenticate_ue(amf_ue_id_t         amf_ue_id,

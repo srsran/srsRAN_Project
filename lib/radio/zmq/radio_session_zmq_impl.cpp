@@ -48,7 +48,7 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
   bool allow_log_level_debug = (config.args.find("verbose") != std::string::npos);
 
   // ZMQ logging in debug is extremely verbose. The following lines avoid debug level unless set to paranoid.
-  srslog::basic_levels log_level = srslog::str_to_basic_level(config.log_level);
+  srslog::basic_levels log_level = config.log_level;
   if (!allow_log_level_debug && (log_level >= srslog::basic_levels::debug)) {
     log_level = srslog::basic_levels::info;
   }

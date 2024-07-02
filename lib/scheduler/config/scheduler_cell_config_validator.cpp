@@ -37,12 +37,12 @@ using namespace config_validators;
 
 #define VERIFY(cond, ...)                                                                                              \
   if (not(cond)) {                                                                                                     \
-    return error_type<std::string>(fmt::format(__VA_ARGS__));                                                          \
+    return make_unexpected(fmt::format(__VA_ARGS__));                                                                  \
   }
 #define HANDLE_CODE(cond)                                                                                              \
   {                                                                                                                    \
     auto ret = cond;                                                                                                   \
-    if (ret.is_error()) {                                                                                              \
+    if (not ret.has_value()) {                                                                                         \
       return ret;                                                                                                      \
     }                                                                                                                  \
   }
@@ -82,7 +82,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
 
   // Check PRACH config index.
   auto code = prach_helper::prach_config_index_is_valid(rach_cfg_cmn.rach_cfg_generic.prach_config_index, dplx_mode);
-  if (code.is_error()) {
+  if (not code.has_value()) {
     return code;
   }
 
@@ -98,13 +98,14 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
     auto ret = prach_helper::prach_fits_in_tdd_pattern(
         pusch_scs, rach_cfg_cmn.rach_cfg_generic.prach_config_index, *msg.tdd_ul_dl_cfg_common);
-    if (ret.is_error()) {
+    if (not ret.has_value()) {
       std::string s = fmt::format("PRACH configuration index {} not supported with current TDD pattern.",
                                   rach_cfg_cmn.rach_cfg_generic.prach_config_index);
       if (ret.error().empty()) {
-        return s + fmt::format(" Cause: PRACH configuration is not valid");
+        return make_unexpected(s + fmt::format(" Cause: PRACH configuration is not valid"));
       } else {
-        return s + fmt::format(" Cause: Slot indexes used for PRACH {} fall outside TDD UL slots", ret.error());
+        return make_unexpected(
+            s + fmt::format(" Cause: Slot indexes used for PRACH {} fall outside TDD UL slots", ret.error()));
       }
     }
   }
@@ -113,7 +114,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   code = prach_helper::zero_correlation_zone_is_valid(rach_cfg_cmn.rach_cfg_generic.zero_correlation_zone_config,
                                                       rach_cfg_cmn.rach_cfg_generic.prach_config_index,
                                                       dplx_mode);
-  if (code.is_error()) {
+  if (not code.has_value()) {
     return code;
   }
 

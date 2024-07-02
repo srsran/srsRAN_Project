@@ -84,7 +84,7 @@ namespace {
 /// User-defined test parameters.
 struct test_parameters {
   bool                     silent                              = false;
-  std::string              log_level                           = "info";
+  srslog::basic_levels     log_level                           = srslog::basic_levels::info;
   std::string              log_filename                        = "stdout";
   bool                     is_prach_control_plane_enabled      = true;
   bool                     is_downlink_broadcast_enabled       = false;
@@ -251,9 +251,11 @@ static void parse_args(int argc, char** argv)
       case 's':
         test_params.silent = (!test_params.silent);
         break;
-      case 'v':
-        test_params.log_level = std::string(optarg);
+      case 'v': {
+        auto value            = srslog::str_to_basic_level(std::string(optarg));
+        test_params.log_level = value.has_value() ? value.value() : srslog::basic_levels::none;
         break;
+      }
       case 'f':
         test_params.log_filename = std::string(optarg);
         break;
@@ -1096,7 +1098,7 @@ int main(int argc, char** argv)
   srslog::init();
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("OFH_TEST", false);
-  logger.set_level(srslog::str_to_basic_level(test_params.log_level));
+  logger.set_level(test_params.log_level);
 
   unsigned nof_prb = get_max_Nprb(bs_channel_bandwidth_to_MHz(test_params.bw), test_params.scs, frequency_range::FR1);
 

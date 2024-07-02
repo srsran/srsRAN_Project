@@ -28,7 +28,7 @@ namespace srsran {
 
 namespace mm256 {
 
-/// \brief Absolute values.
+/// \brief Computes absolute values.
 /// \param[in] value Input single-precision AVX register.
 /// \return A single-precision AVX register with the absolute value.
 inline __m256 abs_ps(__m256 value)
@@ -37,7 +37,7 @@ inline __m256 abs_ps(__m256 value)
   return _mm256_and_ps(value, mask);
 }
 
-/// \brief Copy sign from a single-precision AVX register.
+/// \brief Copies sign from a single-precision AVX register.
 /// \param[in] value0 Single-precision AVX register.
 /// \param[in] value1 Single-precision AVX register.
 /// \return A single-precision AVX register with the magnitudes of \c value0 and the signs of \c value1.
@@ -52,7 +52,7 @@ inline __m256 copysign_ps(__m256 value0, __m256 value1)
 
 /// \brief Clips the values of a single-precision AVX register.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
@@ -68,7 +68,7 @@ inline __m256 clip_ps(__m256 value, __m256 range_ceil, __m256 range_floor)
 
 /// \brief Clips the values of an AVX register carrying eight signed 32-bit integers.
 ///
-/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
 ///
 /// \param[in] value       Input values.
@@ -82,11 +82,11 @@ inline __m256i clip_epi32(__m256i value, __m256i range_ceil, __m256i range_floor
   return value;
 }
 
-/// \brief Ensures that 32-bit integers are bounded, otherwise set them to zero.
+/// \brief Ensures that 32-bit integers in an AVX register are bounded, otherwise set them to zero.
 ///
 /// \param[in] value      Integers to be tested.
-/// \param[in] bound_up   Upper bound.
-/// \param[in] bound_low  Lower bound.
+/// \param[in] bound_up   Upper bounds.
+/// \param[in] bound_low  Lower bounds.
 /// \return The input integers with zeros in place of the out-of-bound values.
 inline __m256i check_bounds_epi32(__m256i value, __m256i bound_up, __m256i bound_low)
 {
@@ -102,13 +102,15 @@ inline __m256i check_bounds_epi32(__m256i value, __m256i bound_up, __m256i bound
   return value;
 }
 
-/// \brief Clips and quantizes four single-precision AVX registers, continuous log-likelihood ratio to the discrete
-/// representation of type \c log_likelihood_ratio in a single AVX register.
+/// \brief Clips and quantizes four single-precision AVX registers.
 ///
-/// \param[in] value_0      Single-precision AVX register with the first eight continuous log-likelihood ratio.
-/// \param[in] value_1      Single-precision AVX register with the second eight continuous log-likelihood ratio.
-/// \param[in] value_2      Single-precision AVX register with the third eight continuous log-likelihood ratio.
-/// \param[in] value_3      Single-precision AVX register with the fourth eight continuous log-likelihood ratio.
+/// Each AVX register contains eight 32-bit single-precission log-likelihood ratios. These are converted into a
+/// 8-bit discrete representation of type \c log_likelihood_ratio in a single AVX register.
+///
+/// \param[in] value_0      Single-precision AVX register with the first eight log-likelihood ratios.
+/// \param[in] value_1      Single-precision AVX register with the second eight log-likelihood ratios.
+/// \param[in] value_2      Single-precision AVX register with the third eight log-likelihood ratios.
+/// \param[in] value_3      Single-precision AVX register with the fourth eight log-likelihood ratios.
 /// \param[in] range_limit  The input value mapped to \ref log_likelihood_ratio::max().
 /// \return A quantized representation of the input values as \c log_likelihood_ratio quantity.
 /// \note The quantization in the range <tt>(-range_limit, range_limit)</tt> is [mid-tread
@@ -165,11 +167,11 @@ inline __m256i quantize_ps(__m256 value_0, __m256 value_1, __m256 value_2, __m25
   return _mm256_packs_epi16(llr_i16_0_, llr_i16_1_);
 }
 
-/// \brief Helper function to calculate an interval index from single-precision AVX register values.
+/// \brief Computes an interval index from single-precision AVX register values.
 /// \param[in] value          Input AVX register.
 /// \param[in] interval_width Interval width.
 /// \param[in] nof_intervals  Number of intervals.
-/// \return An AVX register carrying eight signed 32-bit integers with the corresponding interval indexes.
+/// \return An AVX register carrying eight signed 32-bit integers with the corresponding interval indices.
 inline __m256i compute_interval_idx(__m256 value, float interval_width, int nof_intervals)
 {
   // Scale.
@@ -191,40 +193,41 @@ inline __m256i compute_interval_idx(__m256 value, float interval_width, int nof_
   return idx;
 }
 
-/// \brief Get values from a look-up table.
+/// \brief Gets values from a look-up table.
 /// \param[in] table   Look-up table containing eight single-precision values.
-/// \param[in] indexes AVX register containing eight indexes.
-/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
-inline __m256 look_up_table(const std::array<float, 8>& table, __m256i indexes)
+/// \param[in] indices AVX register containing eight indices.
+/// \return A single-precision AVX register containing the eight values corresponding to the given indices.
+inline __m256 look_up_table(const std::array<float, 8>& table, __m256i indices)
 {
-  return _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes);
+  return _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indices);
 }
 
-/// \brief Get values from a look-up table.
+/// \brief Gets values from a look-up table.
 /// \param[in] table   Look-up table containing sixteen single-precision values.
-/// \param[in] indexes AVX register containing eight indexes.
-/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
-inline __m256 look_up_table(const std::array<float, 16>& table, __m256i indexes)
+/// \param[in] indices AVX register containing eight indices.
+/// \return A single-precision AVX register containing the eight values corresponding to the given indices.
+inline __m256 look_up_table(const std::array<float, 16>& table, __m256i indices)
 {
   // Get lower part of the table.
-  __m256 lower = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes);
+  __m256 lower = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indices);
 
   // Get upper part of the table.
-  __m256 upper = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data() + 8), indexes);
+  __m256 upper = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data() + 8), indices);
 
   // Generate mask. Set to true if the MSB of the index is greater than zero.
-  __m256i mask = _mm256_cmpgt_epi32(indexes, _mm256_set1_epi32(0b111));
+  __m256i mask = _mm256_cmpgt_epi32(indices, _mm256_set1_epi32(0b111));
 
   // Select upper or lower value.
   return _mm256_blendv_ps(lower, upper, (__m256)mask);
 }
 
-/// \brief Applies an interval function to a series of values.
+/// \brief Applies a piecewise defined function (provided by look-up tables) to a series of values.
 /// \tparam Table             Look-up table type. All tables mut be of the same type.
 /// \param[in] value          Single-precision AVX register with eight input values.
-/// \param[in] rcp_noise      Single-precision AVX register with the reciprocal noise corresponding to the values.
+/// \param[in] rcp_noise      Single-precision AVX register with the reciprocal of the noise variance corresponding to
+///                           the values.
 /// \param[in] nof_intervals  Number of intervals.
-/// \param[in] interval_width Interval width to quantify the interval indexes.
+/// \param[in] interval_width Interval width to quantify the interval indices.
 /// \param[in] slopes         Table with the slope of each interval.
 /// \param[in] intercepts     Table with the interception points of each interval.
 /// \return A single-precision AVX register containing the results of the interval function.
@@ -256,15 +259,15 @@ inline __m256 interval_function(__m256       value,
 inline __m256 safe_div(__m256 dividend, __m256 divisor)
 {
   static const __m256 all_zero = _mm256_setzero_ps();
-  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
 #if defined(__AVX512F__) && defined(__AVX512VL__)
   __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_GT_OQ);
   return _mm256_maskz_div_ps(mask, dividend, divisor);
-#else
+#else  // defined(__AVX512F__) && defined(__AVX512VL__)
   __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_GT_OQ);
   __m256 result = _mm256_div_ps(dividend, divisor);
   return _mm256_blendv_ps(all_zero, result, mask);
-#endif
+#endif // defined(__AVX512F__) && defined(__AVX512VL__)
 }
 
 } // namespace mm256

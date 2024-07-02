@@ -147,17 +147,19 @@ e2e request and config validation:
       echo "srsGNB sources+build size is" $(du -hs .)
     # Remove any existing retina resource for this group
     - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
-    # Add extra secret env variables to the .env file
+    # Add extra config env variables to the .env file
     - |
       echo "" >> .gitlab/ci/e2e/.env
-      cat $RETINA_SECRET_ENV >> .gitlab/ci/e2e/.env
+      cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
+
+      echo -e "\nGNB_BINARY_PATH=../../" >> .gitlab/ci/e2e/.env
+      echo -e "\nGNB_REMOTE_PATH=$CI_PROJECT_DIR" >> .gitlab/ci/e2e/.env
+      echo -e "\nis_executable=false" >> .gitlab/ci/e2e/.env
+
     # Set username for retina
     - |
       cd tests/e2e
       export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
-    # Change sharing gnb file for complete src + build (With gnb) folder
-    - |
-      sed -i "s|- local_path: ../../build/apps/gnb/gnb|- local_path: ../../|; s|remote_path: /usr/local/bin|remote_path: $CI_PROJECT_DIR|; s|is_executable: true|is_executable: false|" ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Run Retina
     - |
       E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
@@ -282,6 +284,33 @@ amari 4UE deb:
     - *txrx-lib
     - *retina-needs
 
+amari 8UE:
+  extends: .zmq
+  variables:
+    MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS:
+          ["reestablishment and sequentially", "handover and sequentially"]
+
+amari 8UE beta:
+  extends: amari 8UE
+  parallel:
+    matrix:
+      - KEYWORDS:
+          [
+            "reestablishment and not sequentially",
+            "handover and not sequentially",
+          ]
+  allow_failure: true
+
 amari 32UE:
   extends: .zmq
   variables:
@@ -304,13 +333,6 @@ amari 32UE:
             "iperf and tcp and band:3",
             "iperf and tcp and not band:3",
           ]
-
-amari 8UE beta:
-  extends: amari 32UE
-  parallel:
-    matrix:
-      - KEYWORDS: ["reestablishment", "handover"]
-  allow_failure: true
 
 amari 32UE asan:
   extends: .zmq

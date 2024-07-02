@@ -130,10 +130,6 @@ add_executable(srs_bandwidth_configuration_test srs/srs_bandwidth_configuration_
 target_link_libraries(srs_bandwidth_configuration_test srsran_ran srslog gtest gtest_main)
 add_test(srs_bandwidth_configuration_test srs_bandwidth_configuration_test)
 
-add_executable(bcd_helpers_test bcd_helpers_test.cpp)
-target_link_libraries(bcd_helpers_test srsran_support gtest gtest_main)
-gtest_discover_tests(bcd_helpers_test)
-
-add_executable(nr_cgi_helpers_test nr_cgi_helpers_test.cpp)
-target_link_libraries(nr_cgi_helpers_test srsran_support gtest gtest_main)
-gtest_discover_tests(nr_cgi_helpers_test)
+add_executable(cell_identity_test cell_identity_test.cpp)
+target_link_libraries(cell_identity_test srsran_support gtest gtest_main)
+add_test(cell_identity_test cell_identity_test)

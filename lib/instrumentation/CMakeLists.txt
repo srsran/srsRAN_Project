@@ -25,5 +25,4 @@ add_library(srsran_instrumentation
         traces/ofh_traces.cpp)
 target_link_libraries(srsran_instrumentation srsran_support)
 
-install(TARGETS srsran_instrumentation
-        EXPORT srsran_export)
+add_to_exported_libs(srsran_instrumentation)

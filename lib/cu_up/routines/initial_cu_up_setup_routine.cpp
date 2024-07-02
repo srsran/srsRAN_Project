@@ -22,7 +22,7 @@
 
 #include "initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
-#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helper.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
