@@ -381,6 +381,15 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
     ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 
+    // check that the UE Context Modification Request contains the UE capabilities
+    ASSERT_TRUE(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_mod_request()->cu_to_du_rrc_info_present);
+    ASSERT_NE(f1c_gw.last_tx_pdus(0)
+                  .back()
+                  .pdu.init_msg()
+                  .value.ue_context_mod_request()
+                  ->cu_to_du_rrc_info.ue_cap_rat_container_list.size(),
+              0U);
+
     // Inject Bearer Context Modification Response
     e1ap_message bearer_context_mod_resp =
         generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);

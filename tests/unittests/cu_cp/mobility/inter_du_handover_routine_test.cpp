@@ -9,6 +9,7 @@
  */
 
 #include "mobility_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -247,6 +248,17 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
 
   // Start handover by injecting measurement report
   inject_rrc_meas_report();
+
+  // check that the UE Context Setup Request contains the UE capabilities
+  ASSERT_EQ(f1c_gw.last_tx_pdus(1).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1c_gw.last_tx_pdus(1).back().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
+  ASSERT_NE(f1c_gw.last_tx_pdus(1)
+                .back()
+                .pdu.init_msg()
+                .value.ue_context_setup_request()
+                ->cu_to_du_rrc_info.ue_cap_rat_container_list.size(),
+            0U);
 
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();
