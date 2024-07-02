@@ -106,9 +106,10 @@ public:
   void set_security_config(const security::sec_as_config& security_info) { cfg.security_info = security_info; }
 
   // pdu_session_manager_ctrl
-  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
+  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                             bool                                      test_mode = false) override
   {
-    return pdu_session_manager.setup_pdu_session(session);
+    return pdu_session_manager.setup_pdu_session(session, test_mode);
   }
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override

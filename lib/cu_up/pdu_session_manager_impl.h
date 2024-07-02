@@ -51,7 +51,8 @@ public:
                            task_executor&                                   crypto_exec_,
                            dlt_pcap&                                        gtpu_pcap_);
 
-  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
+  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                                    bool                                      test_mode = false) override;
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override;
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;

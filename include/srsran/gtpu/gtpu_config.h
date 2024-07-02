@@ -28,6 +28,7 @@ struct gtpu_tunnel_ngu_config {
     gtpu_teid_t               local_teid;
     std::chrono::milliseconds t_reordering              = {};
     bool                      warn_expired_t_reordering = false;
+    bool                      test_mode                 = false;
   } rx;
   struct gtpu_tunnel_ngu_tx_config {
     gtpu_teid_t peer_teid;

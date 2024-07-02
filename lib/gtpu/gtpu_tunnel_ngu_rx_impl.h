@@ -49,7 +49,7 @@ public:
                           gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config cfg,
                           gtpu_tunnel_ngu_rx_lower_layer_notifier&          rx_lower_,
                           timer_factory                                     ue_dl_timer_factory_) :
-    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}, cfg.test_mode),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
@@ -60,8 +60,10 @@ public:
       reordering_timer = ue_dl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info(
-        "GTPU NGU Rx configured. local_teid={} t_reodering={}", config.local_teid, config.t_reordering.count());
+    logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={}, test_mode={}",
+                    config.local_teid,
+                    config.t_reordering.count(),
+                    config.test_mode);
   }
   ~gtpu_tunnel_ngu_rx_impl() override = default;
 
@@ -85,6 +87,14 @@ protected:
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
     if (stopped) {
+      return;
+    }
+
+    if (pdu.test_mode) {
+      gtpu_rx_sdu_info rx_sdu_info;
+      rx_sdu_info.sdu         = std::move(pdu.buf);
+      rx_sdu_info.qos_flow_id = qos_flow_id_t{0x01}; // QoS Flow ID for test DRB.
+      deliver_sdu(rx_sdu_info);
       return;
     }
 

@@ -65,7 +65,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 {
 }
 
-pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
+pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                                                     bool test_mode)
 {
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
@@ -122,6 +123,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
+  msg.cfg.rx.test_mode                 = test_mode;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
