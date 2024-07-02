@@ -185,6 +185,13 @@ private:
                                                                  ue_grants                    ue_current_grants,
                                                                  const ue_cell_configuration& ue_cell_cfg);
 
+  // Update the grants data for the case in which multiplexing is not needed.
+  pucch_grant_list update_grants_no_multiplexing(slot_point                   sl_tx,
+                                                 rnti_t                       crnti,
+                                                 pucch_grant_list             candidate_grants,
+                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 ue_grants                    ue_current_grants);
+
   // Execute the multiplexing algorithm as defined in TS 38.213, Section 9.2.5.
   pucch_grant_list multiplex_resources(slot_point                   sl_tx,
                                        rnti_t                       crnti,

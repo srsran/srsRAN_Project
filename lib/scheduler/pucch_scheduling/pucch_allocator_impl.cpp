@@ -1284,6 +1284,52 @@ void pucch_allocator_impl::remove_unsed_pucch_res(slot_point                   s
   }
 }
 
+std::optional<unsigned>
+pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                   pucch_uci_bits                new_bits,
+                                                   ue_grants&                    current_grants,
+                                                   const ue_cell_configuration&  ue_cell_cfg,
+                                                   bool                          preserve_res_indicator)
+{
+  // NOTE: In this function, the \c candidate_grants report the data about the grants BEFORE the multiplexing is
+  // applied. Each grant contains only one UCI type (HARQ grant contains HARQ bits, SR grant contains SR bits and so
+  // on); on the contrary, \c grants_to_tx contains the grants AFTER the multiplexing; this means that 1 grant can
+  // contain more than 1 UCI bit type.
+
+  slot_point sl_ack = pucch_slot_alloc.slot;
+
+  // Find the grants/resources needed for the UCI bits to be reported, assuming the resources are not multiplexed.
+  std::optional<pucch_grant_list> candidate_grants =
+      get_pucch_res_pre_multiplexing(sl_ack, new_bits, current_grants, ue_cell_cfg);
+  if (not candidate_grants.has_value()) {
+    return std::nullopt;
+  }
+
+  // As per TS 38.213, Section 9.2.1, we can infer that, when the HARQ-ACK bit count changes from 1 to 2, or when it
+  // changes from 3 to more than 3, the PUCCH resource for the HARQ-ACK is the same as the previous one; this means
+  // that the multiplexing would yield the same result as in the last UE's allocation; in this case, we skip the
+  // multiplexing. Refer to paragraph "If the UE transmits O_UCI UCI information bits, that include HARQ-ACK
+  // information bits, the UE determines a PUCCH resource set to be ...".
+  const pucch_uci_bits current_uci_bits = current_grants.pucch_grants.get_uci_bits();
+  const bool           is_multiplexing_needed =
+      not((current_uci_bits.harq_ack_nof_bits == 1 and new_bits.harq_ack_nof_bits == 2) or
+          (current_uci_bits.harq_ack_nof_bits == 3 and new_bits.harq_ack_nof_bits > 3));
+
+  pucch_grant_list grants_to_tx =
+      is_multiplexing_needed
+          ? multiplex_resources(
+                sl_ack, current_grants.rnti, candidate_grants.value(), ue_cell_cfg, preserve_res_indicator)
+          : update_grants_no_multiplexing(
+                sl_ack, current_grants.rnti, candidate_grants.value(), ue_cell_cfg, current_grants);
+
+  if (grants_to_tx.is_emtpy()) {
+    return std::nullopt;
+  }
+
+  // Allocate the grants.
+  return allocate_grants(pucch_slot_alloc, current_grants, current_grants.rnti, grants_to_tx, ue_cell_cfg);
+}
+
 std::optional<pucch_allocator_impl::pucch_grant_list>
 pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
                                                      pucch_uci_bits               new_bits,
@@ -1405,6 +1451,158 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
   // TODO: handle the failure case, in which the resources that had been reserved are not used and need to be released.
 
   return candidate_resources;
+}
+
+pucch_allocator_impl::pucch_grant_list
+pucch_allocator_impl::update_grants_no_multiplexing(slot_point                   sl_tx,
+                                                    rnti_t                       crnti,
+                                                    pucch_grant_list             candidate_grants,
+                                                    const ue_cell_configuration& ue_cell_cfg,
+                                                    ue_grants                    ue_current_grants)
+{
+  pucch_grant_list grants_to_tx;
+
+  srsran_assert(candidate_grants.harq_resource.has_value(), "PUCCH HARQ-ACK resource must be present");
+  pucch_grant harq_grant = candidate_grants.harq_resource.value();
+
+  // If the PUCCH is from PUCCH resource set 1 and the total UCI bits exceeds the PUCCH payload, we abort the
+  // allocation.
+  if (harq_grant.harq_id.pucch_set_idx != pucch_res_set_idx::set_0 and
+      candidate_grants.get_uci_bits().get_total_bits() >
+          ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().get_max_payload(
+              harq_grant.get_format())) {
+    logger.debug(
+        "rnti={}: PUCCH allocation (HARQ-ACK) for slot={} skipped. Cause: UCI bits exceed PUCCH payload", crnti, sl_tx);
+    return grants_to_tx;
+  }
+
+  // In the case, the only elements that might have changed since the last allocation are the UCI bits and (possibly)
+  // the pointers to PUCCH resources.
+  srsran_assert(ue_current_grants.pucch_grants.harq_resource.has_value(),
+                "PUCCH HARQ resource must be present in the current allocation list");
+  grants_to_tx = ue_current_grants.pucch_grants;
+
+  // Update the grants with the new UCI bits and PUCCH resource configurations (this is to prevent the pointers have
+  // changed since the last allocation).
+  // NOTE: no need to update the CSI grant, because: (i) if the CSI grant exists, then it doesn't carry the HARQ-ACK
+  // bits (they are in the HARQ-ACK grangt); (ii) if it doesn't exist, then it's trivial.
+  grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits = harq_grant.bits.harq_ack_nof_bits;
+  grants_to_tx.harq_resource.value().pucch_res_cfg          = harq_grant.pucch_res_cfg;
+  if (ue_current_grants.pucch_grants.sr_resource.has_value()) {
+    srsran_assert(candidate_grants.sr_resource.has_value(), "PUCCH SR resource must be present");
+    grants_to_tx.sr_resource.value().pucch_res_cfg          = candidate_grants.sr_resource->pucch_res_cfg;
+    grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits = harq_grant.bits.harq_ack_nof_bits;
+  }
+
+  return grants_to_tx;
+}
+
+pucch_allocator_impl::pucch_grant_list
+pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
+                                          rnti_t                       crnti,
+                                          pucch_grant_list             candidate_grants,
+                                          const ue_cell_configuration& ue_cell_cfg,
+                                          bool                         preserve_res_indicator)
+{
+  // This function implements the multiplexing pseudo-code for PUCCH resources defined in Section 9.2.5, TS 38.213.
+  // Refer to paragraph starting as "Set Q to the set of resources for transmission of corresponding PUCCHs in a single
+  // slot without repetitions where".
+  pucch_grant_list mplexed_grants;
+
+  std::vector<pucch_grant> resource_set_q;
+
+  // Build the resource set Q. Refer to Section 9.2.5, TS 38.213.
+  if (candidate_grants.harq_resource.has_value()) {
+    resource_set_q.emplace_back(candidate_grants.harq_resource.value());
+  }
+  if (candidate_grants.sr_resource.has_value()) {
+    resource_set_q.emplace_back(candidate_grants.sr_resource.value());
+  }
+  if (candidate_grants.csi_resource.has_value()) {
+    resource_set_q.emplace_back(candidate_grants.csi_resource.value());
+  }
+
+  // Sort the resources in the set based on the number of symbols.
+  auto sort_res_set_q = [&resource_set_q]() {
+    std::sort(resource_set_q.begin(), resource_set_q.end(), [](const pucch_grant& lhs_res, const pucch_grant& rhs_res) {
+      return lhs_res.get_symbols().start() < rhs_res.get_symbols().start() or
+             (lhs_res.get_symbols().start() == rhs_res.get_symbols().start() and
+              lhs_res.get_symbols().length() > rhs_res.get_symbols().length());
+    });
+  };
+
+  sort_res_set_q();
+
+  // This is the implementation of the pseudo-code for multiplexing the resources provided in Section 9.2.5, TS 38.213.
+  unsigned o_cnt = 0;
+  unsigned j_cnt = 0;
+  while (j_cnt < resource_set_q.size()) {
+    if (j_cnt < resource_set_q.size() - 1 and
+        resource_set_q[j_cnt - o_cnt].get_symbols().overlaps(resource_set_q[j_cnt + 1].get_symbols())) {
+      ++j_cnt;
+      ++o_cnt;
+    } else {
+      if (o_cnt > 0U) {
+        // Merge the overlapping resources.
+        std::optional<pucch_grant> new_res =
+            merge_pucch_resources(span<const pucch_grant>(&resource_set_q[j_cnt - o_cnt], o_cnt + 1),
+                                  sl_tx,
+                                  crnti,
+                                  ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
+                                  preserve_res_indicator);
+        if (not new_res.has_value()) {
+          return {};
+        }
+        // Remove the old resources that got merged from the set.
+        // TODO: check if, by using a different data structure, we can achive the deletion more efficiently.
+        resource_set_q.erase(resource_set_q.begin() + j_cnt - o_cnt, resource_set_q.begin() + j_cnt + 1);
+
+        // Add the new resource (resulting from the previous merge) to the set.
+        resource_set_q.push_back(new_res.value());
+
+        // Sort the resources in the set based on the first symbol position and number of symbols.
+        sort_res_set_q();
+
+        // Reset the counter and start from the beginning.
+        j_cnt = 0;
+        o_cnt = 0;
+      } else {
+        ++j_cnt;
+      }
+    }
+  }
+
+  // The PUCCH resource multiplexing algorithm above is specified from the UE's perspective. In the GNB, we need to add
+  // an extra resource Format 1 if slot there is a SR opportunity and HARQ bits to be reported with PUCCH Format 1.
+  if (resource_set_q.size() == 1 and resource_set_q.front().get_format() == pucch_format::FORMAT_1 and
+      resource_set_q.front().bits.harq_ack_nof_bits != 0 and
+      resource_set_q.front().bits.sr_bits != sr_nof_bits::no_sr) {
+    const pucch_resource* sr_res = resource_manager.reserve_sr_res_available(
+        sl_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+    resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::SR);
+    if (sr_res == nullptr) {
+      logger.error("This is not expected");
+    }
+    pucch_uci_bits bits = {.harq_ack_nof_bits  = resource_set_q.front().bits.harq_ack_nof_bits,
+                           .sr_bits            = resource_set_q.front().bits.sr_bits,
+                           .csi_part1_nof_bits = 0};
+    resource_set_q.emplace_back(pucch_grant{.type = pucch_grant_type::sr, .bits = bits, .pucch_res_cfg = sr_res});
+  }
+
+  // Build the final list of PUCCH resources that need to be transmitted.
+  for (const auto& mplex_res : resource_set_q) {
+    if (mplex_res.type == pucch_grant_type::harq_ack) {
+      mplexed_grants.harq_resource.emplace(mplex_res);
+      ++mplexed_grants.nof_grants;
+    } else if (mplex_res.type == pucch_grant_type::sr) {
+      mplexed_grants.sr_resource.emplace(mplex_res);
+      ++mplexed_grants.nof_grants;
+    } else if (mplex_res.type == pucch_grant_type::csi) {
+      mplexed_grants.csi_resource.emplace(mplex_res);
+      ++mplexed_grants.nof_grants;
+    }
+  }
+  return mplexed_grants;
 }
 
 std::optional<pucch_allocator_impl::pucch_grant>
@@ -1633,145 +1831,6 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
   return std::nullopt;
 }
 
-pucch_allocator_impl::pucch_grant_list
-pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
-                                          rnti_t                       crnti,
-                                          pucch_grant_list             candidate_grants,
-                                          const ue_cell_configuration& ue_cell_cfg,
-                                          bool                         preserve_res_indicator)
-{
-  // This function implements the multiplexing pseudo-code for PUCCH resources defined in Section 9.2.5, TS 38.213.
-  // Refer to paragraph starting as "Set Q to the set of resources for transmission of corresponding PUCCHs in a single
-  // slot without repetitions where".
-  pucch_grant_list mplexed_grants;
-
-  std::vector<pucch_grant> resource_set_q;
-
-  // Build the resource set Q. Refer to Section 9.2.5, TS 38.213.
-  if (candidate_grants.harq_resource.has_value()) {
-    resource_set_q.emplace_back(candidate_grants.harq_resource.value());
-  }
-  if (candidate_grants.sr_resource.has_value()) {
-    resource_set_q.emplace_back(candidate_grants.sr_resource.value());
-  }
-  if (candidate_grants.csi_resource.has_value()) {
-    resource_set_q.emplace_back(candidate_grants.csi_resource.value());
-  }
-
-  // Sort the resources in the set based on the number of symbols.
-  auto sort_res_set_q = [&resource_set_q]() {
-    std::sort(resource_set_q.begin(), resource_set_q.end(), [](const pucch_grant& lhs_res, const pucch_grant& rhs_res) {
-      return lhs_res.get_symbols().start() < rhs_res.get_symbols().start() or
-             (lhs_res.get_symbols().start() == rhs_res.get_symbols().start() and
-              lhs_res.get_symbols().length() > rhs_res.get_symbols().length());
-    });
-  };
-
-  sort_res_set_q();
-
-  // This is the implementation of the pseudo-code for multiplexing the resources provided in Section 9.2.5, TS 38.213.
-  unsigned o_cnt = 0;
-  unsigned j_cnt = 0;
-  while (j_cnt < resource_set_q.size()) {
-    if (j_cnt < resource_set_q.size() - 1 and
-        resource_set_q[j_cnt - o_cnt].get_symbols().overlaps(resource_set_q[j_cnt + 1].get_symbols())) {
-      ++j_cnt;
-      ++o_cnt;
-    } else {
-      if (o_cnt > 0U) {
-        // Merge the overlapping resources.
-        std::optional<pucch_grant> new_res =
-            merge_pucch_resources(span<const pucch_grant>(&resource_set_q[j_cnt - o_cnt], o_cnt + 1),
-                                  sl_tx,
-                                  crnti,
-                                  ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
-                                  preserve_res_indicator);
-        if (not new_res.has_value()) {
-          return {};
-        }
-        // Remove the old resources that got merged from the set.
-        // TODO: check if, by using a different data structure, we can achive the deletion more efficiently.
-        resource_set_q.erase(resource_set_q.begin() + j_cnt - o_cnt, resource_set_q.begin() + j_cnt + 1);
-
-        // Add the new resource (resulting from the previous merge) to the set.
-        resource_set_q.push_back(new_res.value());
-
-        // Sort the resources in the set based on the first symbol position and number of symbols.
-        sort_res_set_q();
-
-        // Reset the counter and start from the beginning.
-        j_cnt = 0;
-        o_cnt = 0;
-      } else {
-        ++j_cnt;
-      }
-    }
-  }
-
-  // The PUCCH resource multiplexing algorithm above is specified from the UE's perspective. In the GNB, we need to add
-  // an extra resource Format 1 if slot there is a SR opportunity and HARQ bits to be reported with PUCCH Format 1.
-  if (resource_set_q.size() == 1 and resource_set_q.front().get_format() == pucch_format::FORMAT_1 and
-      resource_set_q.front().bits.harq_ack_nof_bits != 0 and
-      resource_set_q.front().bits.sr_bits != sr_nof_bits::no_sr) {
-    const pucch_resource* sr_res = resource_manager.reserve_sr_res_available(
-        sl_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::SR);
-    if (sr_res == nullptr) {
-      logger.error("This is not expected");
-    }
-    pucch_uci_bits bits = {.harq_ack_nof_bits  = resource_set_q.front().bits.harq_ack_nof_bits,
-                           .sr_bits            = resource_set_q.front().bits.sr_bits,
-                           .csi_part1_nof_bits = 0};
-    resource_set_q.emplace_back(pucch_grant{.type = pucch_grant_type::sr, .bits = bits, .pucch_res_cfg = sr_res});
-  }
-
-  // Build the final list of PUCCH resources that need to be transmitted.
-  for (const auto& mplex_res : resource_set_q) {
-    if (mplex_res.type == pucch_grant_type::harq_ack) {
-      mplexed_grants.harq_resource.emplace(mplex_res);
-      ++mplexed_grants.nof_grants;
-    } else if (mplex_res.type == pucch_grant_type::sr) {
-      mplexed_grants.sr_resource.emplace(mplex_res);
-      ++mplexed_grants.nof_grants;
-    } else if (mplex_res.type == pucch_grant_type::csi) {
-      mplexed_grants.csi_resource.emplace(mplex_res);
-      ++mplexed_grants.nof_grants;
-    }
-  }
-  return mplexed_grants;
-}
-
-std::optional<unsigned>
-pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                   pucch_uci_bits                new_bits,
-                                                   ue_grants&                    current_grants,
-                                                   const ue_cell_configuration&  ue_cell_cfg,
-                                                   bool                          preserve_res_indicator)
-{
-  slot_point sl_ack = pucch_slot_alloc.slot;
-
-  // Find the resources needed for the UCI bits to be reported, assuming the resources are not multiplexed.
-  std::optional<pucch_grant_list> candidate_resources =
-      get_pucch_res_pre_multiplexing(sl_ack, new_bits, current_grants, ue_cell_cfg);
-  if (not candidate_resources.has_value()) {
-    return std::nullopt;
-  }
-
-  // TODO: Implement optimization step to avoid the multiplexing process if the UCI bits results in the same PUCCH
-  // grants as the previous allocation.
-
-  // Multiplex the resources.
-  pucch_grant_list multiplexed_grants = multiplex_resources(
-      sl_ack, current_grants.rnti, candidate_resources.value(), ue_cell_cfg, preserve_res_indicator);
-
-  if (multiplexed_grants.is_emtpy()) {
-    return std::nullopt;
-  }
-
-  // Allocate the grants.
-  return allocate_grants(pucch_slot_alloc, current_grants, current_grants.rnti, multiplexed_grants, ue_cell_cfg);
-}
-
 std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource_allocator& pucch_slot_alloc,
                                                               ue_grants&                    existing_pucchs,
                                                               rnti_t                        crnti,
@@ -1808,8 +1867,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
         existing_pdus.csi_pdu->resources.prbs,
         existing_pdus.csi_pdu->resources.symbols,
         existing_pdus.csi_pdu->format_2.harq_ack_nof_bits,
-        existing_pdus.csi_pdu->format_2.sr_bits,
-        existing_pdus.csi_pdu->format_2.csi_part1_bits);
+        grants_to_tx.csi_resource.value().bits.sr_bits,
+        grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits);
     existing_pdus.update_csi_pdu_bits(grants_to_tx.csi_resource.value().bits.csi_part1_nof_bits,
                                       grants_to_tx.csi_resource.value().bits.sr_bits);
     csi_grant_alloc_completed = true;
@@ -1826,8 +1885,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                 existing_pdus.sr_pdu->resources.symbols,
                 existing_pdus.sr_pdu->format_1.initial_cyclic_shift,
                 existing_pdus.sr_pdu->format_1.time_domain_occ,
-                existing_pdus.sr_pdu->format_1.harq_ack_nof_bits,
-                existing_pdus.sr_pdu->format_1.sr_bits);
+                grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
+                grants_to_tx.harq_resource.value().bits.sr_bits);
     existing_pdus.update_sr_pdu_bits(grants_to_tx.sr_resource.value().bits.sr_bits,
                                      grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits);
     sr_grant_alloc_completed = true;
@@ -1848,8 +1907,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                   existing_pdus.harq_pdu->resources.symbols,
                   existing_pdus.harq_pdu->format_1.initial_cyclic_shift,
                   existing_pdus.harq_pdu->format_1.time_domain_occ,
-                  existing_pdus.harq_pdu->format_1.harq_ack_nof_bits,
-                  existing_pdus.harq_pdu->format_1.sr_bits);
+                  grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
+                  grants_to_tx.harq_resource.value().bits.sr_bits);
     } else {
       logger.info("rnti={}: PUCCH PDU allocated on F2 HARQ resource (updated): slot={}, prbs={}, sym={}, h_bits={}, "
                   "sr_bits={}, cs_bits={}",
@@ -1857,9 +1916,9 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                   pucch_slot_alloc.slot,
                   existing_pdus.harq_pdu->resources.prbs,
                   existing_pdus.harq_pdu->resources.symbols,
-                  existing_pdus.harq_pdu->format_2.harq_ack_nof_bits,
-                  existing_pdus.harq_pdu->format_2.sr_bits,
-                  existing_pdus.harq_pdu->format_2.csi_part1_bits);
+                  grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
+                  grants_to_tx.harq_resource.value().bits.sr_bits,
+                  grants_to_tx.harq_resource.value().bits.csi_part1_nof_bits);
     }
     existing_pdus.update_harq_pdu_bits(grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
                                        grants_to_tx.harq_resource.value().bits.sr_bits,
