@@ -90,6 +90,10 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   /// > Connect E1AP to CU-UP manager
   e1ap_cu_up_mng_adapter.connect_cu_up_manager(*cu_up_mng);
 
+  logger.info("enabling test mode...");
+  cu_up_mng->enable_test_mode();
+  logger.info("test mode enabled");
+
   // Start statistics report timer
   if (cfg.statistics_report_period.count() > 0) {
     statistics_report_timer = cfg.timers->create_unique_timer(*cfg.ctrl_executor);

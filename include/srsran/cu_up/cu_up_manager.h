@@ -61,7 +61,8 @@ class cu_up_manager : public cu_up_manager_e1ap_connection_notifier, public cu_u
 public:
   ~cu_up_manager() override = default;
 
-  virtual size_t get_nof_ues() = 0;
+  virtual void   enable_test_mode() = 0;
+  virtual size_t get_nof_ues()      = 0;
 };
 
 } // namespace srsran::srs_cu_up

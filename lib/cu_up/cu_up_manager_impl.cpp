@@ -180,6 +180,73 @@ void cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer
   ue_mng->remove_ue(msg.ue_index);
 }
 
+void cu_up_manager_impl::enable_test_mode()
+{
+  // Convert to common type
+  e1ap_bearer_context_setup_request bearer_context_setup = {};
+
+  /*
+  struct e1ap_bearer_context_setup_request {
+    e1ap_security_info                                                      security_info;
+    uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
+    std::string                                                             serving_plmn;
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
+    std::optional<uint64_t>                                                 ue_dl_maximum_integrity_protected_data_rate;
+    activity_notification_level_t                                           activity_notif_level;
+    std::optional<std::chrono::seconds>                                     ue_inactivity_timer;
+    std::optional<std::string>                                              bearer_context_status_change;
+    std::optional<ran_ue_id_t>                                              ran_ue_id;
+    std::optional<uint64_t>                                                 gnb_du_id;
+  };
+
+  struct e1ap_pdu_session_res_to_setup_item {
+    pdu_session_id_t                                           pdu_session_id = pdu_session_id_t::invalid;
+    std::string                                                pdu_session_type;
+    s_nssai_t                                                  snssai;
+    up_transport_layer_info                                    ng_ul_up_tnl_info;
+    security_indication_t                                      security_ind;
+    slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
+
+    std::optional<uint64_t>                          pdu_session_res_dl_ambr;
+    std::optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
+    std::optional<std::chrono::seconds>              pdu_session_inactivity_timer;
+    std::optional<up_transport_layer_info>           existing_allocated_ng_dl_up_tnl_info;
+    std::optional<uint16_t>                          network_instance;
+  };
+  */
+  bearer_context_setup.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea2;
+  bearer_context_setup.security_info.security_algorithm.integrity_protection_algorithm =
+      srsran::security::integrity_algorithm::nia2;
+  bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600); // disable inactivity timer
+
+  /// Setup test PDU session
+  pdu_session_id_t                   psi{1};
+  e1ap_pdu_session_res_to_setup_item pdu_session          = {};
+  pdu_session.pdu_session_id                              = psi;
+  pdu_session.ng_ul_up_tnl_info.tp_address                = transport_layer_address::create_from_string("127.0.5.2");
+  pdu_session.ng_ul_up_tnl_info.gtp_teid                  = int_to_gtpu_teid(0x02);
+  pdu_session.security_ind.integrity_protection_ind       = integrity_protection_indication_t::required;
+  pdu_session.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::required;
+
+  /// Setup test DRB
+  e1ap_drb_to_setup_item_ng_ran drb_to_setup = {};
+  drb_to_setup.drb_id                        = uint_to_drb_id(1);
+
+  // sdap config
+  drb_to_setup.sdap_cfg.default_drb = true;
+
+  // pdcp config
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
+  drb_to_setup.pdcp_cfg.rlc_mod         = pdcp_rlc_mode::um;
+
+  pdu_session.drb_to_setup_list_ng_ran.emplace(drb_to_setup.drb_id, drb_to_setup);
+  bearer_context_setup.pdu_session_res_to_setup_list.emplace(psi, pdu_session);
+
+  // Setup bearer
+  handle_bearer_context_setup_request(bearer_context_setup);
+}
+
 /// Helper functions
 void process_successful_pdu_resource_modification_outcome(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& pdu_session_resource_modified_list,
