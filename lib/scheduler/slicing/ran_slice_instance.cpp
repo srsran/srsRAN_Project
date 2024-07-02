@@ -25,26 +25,40 @@ void ran_slice_instance::slot_indication()
   pusch_rb_count = 0;
 }
 
-void ran_slice_instance::add_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
+void ran_slice_instance::rem_ue(du_ue_index_t ue_idx, lcid_t lcid)
 {
-  if (not bearers.contains(ue_idx)) {
-    bearers.emplace(ue_idx, MAX_NOF_RB_LCIDS);
-  }
-  bearers[ue_idx].set(lcid);
-}
-
-void ran_slice_instance::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
-{
-  if (not bearers.contains(ue_idx)) {
+  if (lcid < MAX_NOF_RB_LCIDS) {
+    if (bearers.contains(ue_idx)) {
+      bearers[ue_idx].reset(lcid);
+      if (bearers[ue_idx].none()) {
+        bearers.erase(ue_idx);
+        if (ues.contains(ue_idx)) {
+          ues.erase(ue_idx);
+        }
+      }
+    }
     return;
   }
-  bearers[ue_idx].reset(lcid);
-  if (bearers[ue_idx].none()) {
+  if (bearers.contains(ue_idx)) {
     bearers.erase(ue_idx);
+  }
+  if (ues.contains(ue_idx)) {
+    ues.erase(ue_idx);
   }
 }
 
-void ran_slice_instance::rem_ue(du_ue_index_t ue_idx)
+const slice_ue_repository& ran_slice_instance::get_ues()
 {
-  bearers.erase(ue_idx);
+  return ues;
+}
+
+void ran_slice_instance::add_ue(const ue* u, lcid_t lcid)
+{
+  if (not ues.contains(u->ue_index)) {
+    ues.emplace(u->ue_index, u);
+  }
+  if (not bearers.contains(u->ue_index)) {
+    bearers.emplace(u->ue_index, MAX_NOF_RB_LCIDS);
+  }
+  bearers[u->ue_index].set(lcid);
 }

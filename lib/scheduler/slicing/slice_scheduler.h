@@ -25,7 +25,7 @@ class slice_scheduler
   constexpr static priority_type skip_prio = 0;
 
 public:
-  slice_scheduler(const cell_configuration& cell_cfg_);
+  slice_scheduler(const cell_configuration& cell_cfg_, const ue_repository& ues_);
 
   /// Reset the state of the slices.
   void slot_indication();
@@ -106,6 +106,8 @@ private:
 
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
+
+  const ue_repository& ues;
 
   std::vector<ran_slice_sched_context> slices;
 
