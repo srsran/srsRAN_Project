@@ -30,7 +30,7 @@ public:
 
   // See interface for the documentation.
   virtual void
-  compress(span<compressed_prb> output, span<const cf_t> input, const ru_compression_params& params) override;
+  compress(span<compressed_prb> output, span<const cbf16_t> input, const ru_compression_params& params) override;
 
   // See interface for the documentation.
   virtual void
@@ -87,7 +87,7 @@ protected:
   /// \param[out] out      Quantized samples.
   /// \param[in] in        Span of input float samples.
   /// \param[in] bit_width Number of significant bits used by the quantized samples.
-  void quantize_input(span<int16_t> out, span<const float> in);
+  void quantize_input(span<int16_t> out, span<const bf16_t> in);
 
 private:
   srslog::basic_logger& logger;

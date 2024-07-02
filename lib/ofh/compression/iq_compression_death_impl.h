@@ -24,7 +24,7 @@ class iq_compression_death_impl : public iq_compressor, public iq_decompressor
 public:
   // See interface for documentation.
   void compress(span<compressed_prb>         compressed_prbs,
-                span<const cf_t>             iq_data,
+                span<const cbf16_t>          iq_data,
                 const ru_compression_params& params) override;
 
   // See interface for documentation.

@@ -17,7 +17,7 @@ using namespace srsran;
 using namespace ofh;
 
 void iq_compression_bfp_avx2::compress(span<compressed_prb>         output,
-                                       span<const cf_t>             input,
+                                       span<const cbf16_t>          input,
                                        const ru_compression_params& params)
 {
   // Use generic implementation if AVX2 utils don't support requested bit width.
@@ -32,16 +32,16 @@ void iq_compression_bfp_avx2::compress(span<compressed_prb>         output,
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
-  // Performs conversion of input complex float values to signed 16bit integers.
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
+  // Performs conversion of input complex float values to signed 16-bit integers.
   quantize_input(input_quantized_span, float_samples_span);
 
   // Compression algorithm implemented according to O-RAN.WG4.CUS Annex A.1.2.
   unsigned sample_idx = 0;
   unsigned rb         = 0;
 
-  // One AVX2 register stores 8 16bit IQ pairs. We can process 2 PRBs at a time by using 3 AVX2 registers.
+  // One AVX2 register stores 8 16-bit IQ pairs. We can process 2 PRBs at a time by using 3 AVX2 registers.
   for (size_t rb_index_end = (output.size() / 2) * 2; rb != rb_index_end; rb += 2) {
     span<compressed_prb> c_prbs = output.subspan(rb, 2);
 

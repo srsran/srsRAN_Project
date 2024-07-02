@@ -17,13 +17,13 @@
 using namespace srsran;
 using namespace ofh;
 
-void iq_compression_none_avx2::compress(span<srsran::ofh::compressed_prb>         output,
-                                        span<const srsran::cf_t>                  input,
-                                        const srsran::ofh::ru_compression_params& params)
+void iq_compression_none_avx2::compress(span<compressed_prb>         output,
+                                        span<const cbf16_t>          input,
+                                        const ru_compression_params& params)
 {
   // Number of quantized samples per resource block.
   static constexpr size_t NOF_SAMPLES_PER_PRB = 2 * NOF_SUBCARRIERS_PER_RB;
-  // AVX2 register size in a number of 16bit words.
+  // AVX2 register size in a number of 16-bit words.
   static constexpr size_t AVX2_REG_SIZE = 16;
 
   // Quantizer object.
@@ -38,15 +38,15 @@ void iq_compression_none_avx2::compress(span<srsran::ofh::compressed_prb>       
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), float_samples_span.size());
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
   q.to_fixed_point(input_quantized_span, float_samples_span, iq_scaling);
 
   log_post_quantization_rms(input_quantized_span);
 
   unsigned sample_idx = 0;
   unsigned rb         = 0;
-  // One AVX2 register stores 8 16bit IQ pairs. We can process 2 PRBs at a time by using 3 AVX2 registers.
+  // One AVX2 register stores 8 16-bit IQ pairs. We can process 2 PRBs at a time by using 3 AVX2 registers.
   for (size_t rb_index_end = (output.size() / 2) * 2; rb != rb_index_end; rb += 2) {
     span<compressed_prb> c_prbs = output.subspan(rb, 2);
 

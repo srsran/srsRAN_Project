@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace ofh;
 
-void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const float> in)
+void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const bf16_t> in)
 {
   srsran_assert(in.size() == out.size(), "Input and output spans must have the same size");
 
@@ -63,15 +63,15 @@ void iq_compression_bfp_impl::compress_prb_generic(compressed_prb&     c_prb,
 }
 
 void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
-                                       span<const cf_t>             input,
+                                       span<const cbf16_t>          input,
                                        const ru_compression_params& params)
 {
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
-  // Performs conversion of input complex float values to signed 16bit integers.
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
+  // Performs conversion of input brain float values to signed 16-bit integers.
   quantize_input(input_quantized_span, float_samples_span);
 
   unsigned sample_idx = 0;

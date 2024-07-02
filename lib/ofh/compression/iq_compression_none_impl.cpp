@@ -18,20 +18,20 @@ using namespace srsran;
 using namespace ofh;
 
 void iq_compression_none_impl::compress(span<compressed_prb>         output,
-                                        span<const cf_t>             input,
+                                        span<const cbf16_t>          input,
                                         const ru_compression_params& params)
 {
   // Quantizer object.
   quantizer q(params.data_width);
 
-  // Determine a scaling factor to scale input IQ data to the range [-1: +1) and convert it to int16_t below.
-  span<const float> float_samples(reinterpret_cast<const float*>(input.data()), input.size() * 2);
+  span<const bf16_t> float_samples(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2);
 
   unsigned in_sample_idx = 0;
   for (compressed_prb& c_prb : output) {
     // Auxiliary buffer used for float to int16_t conversion.
     std::array<int16_t, NOF_SUBCARRIERS_PER_RB * 2> conv_buffer;
 
+    // Scale input IQ data to the range [-1: +1) and convert it to int16_t.
     q.to_fixed_point(conv_buffer, float_samples.subspan(in_sample_idx, NOF_SUBCARRIERS_PER_RB * 2), iq_scaling);
 
     compressed_prb_packer packer(c_prb);

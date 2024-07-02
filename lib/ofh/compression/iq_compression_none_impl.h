@@ -29,7 +29,7 @@ public:
 
   // See interface for the documentation.
   virtual void
-  compress(span<compressed_prb> output, span<const cf_t> input, const ru_compression_params& params) override;
+  compress(span<compressed_prb> output, span<const cbf16_t> input, const ru_compression_params& params) override;
 
   // See interface for the documentation.
   virtual void

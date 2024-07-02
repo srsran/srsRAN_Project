@@ -27,7 +27,7 @@ public:
 
   // See interface for documentation.
   void compress(span<compressed_prb>         compressed_prbs,
-                span<const cf_t>             iq_data,
+                span<const cbf16_t>          iq_data,
                 const ru_compression_params& params) override;
 
 private:

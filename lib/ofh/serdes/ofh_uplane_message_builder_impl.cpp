@@ -96,7 +96,7 @@ static void build_section1_header(network_order_binary_serializer& serializer, c
 }
 
 void uplane_message_builder_impl::serialize_iq_data(network_order_binary_serializer& serializer,
-                                                    span<const cf_t>                 iq_data,
+                                                    span<const cbf16_t>              iq_data,
                                                     unsigned                         nof_prbs,
                                                     const ru_compression_params&     compr_params)
 {
@@ -133,7 +133,7 @@ void uplane_message_builder_impl::serialize_iq_data(network_order_binary_seriali
 }
 
 unsigned uplane_message_builder_impl::build_message(span<uint8_t>                buffer,
-                                                    span<const cf_t>             iq_data,
+                                                    span<const cbf16_t>          iq_data,
                                                     const uplane_message_params& params)
 {
   srsran_assert(params.sect_type == section_type::type_1, "Unsupported section type");
