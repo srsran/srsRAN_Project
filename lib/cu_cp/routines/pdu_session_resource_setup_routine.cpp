@@ -144,6 +144,9 @@ void pdu_session_resource_setup_routine::operator()(
   {
     // prepare UE Context Modification Request and call F1
     ue_context_mod_request.ue_index = setup_msg.ue_index;
+    ue_context_mod_request.cu_to_du_rrc_info.emplace();
+    ue_context_mod_request.cu_to_du_rrc_info.value().ue_cap_rat_container_list =
+        rrc_ue_notifier.get_packed_ue_capabilities();
 
     // DRB setup have already added above.
     CORO_AWAIT_VALUE(ue_context_modification_response,

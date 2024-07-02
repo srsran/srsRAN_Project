@@ -513,6 +513,7 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   transfer_context.srbs                      = get_srbs();
   transfer_context.up_ctx                    = cu_cp_notifier.on_up_context_required();
   transfer_context.handover_preparation_info = get_packed_handover_preparation_message();
+  transfer_context.ue_cap_rat_container_list = get_packed_ue_capabilities();
 
   return transfer_context;
 }

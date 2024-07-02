@@ -28,6 +28,7 @@ struct rrc_ue_transfer_context {
   up_context                            up_ctx;
   static_vector<srb_id_t, MAX_NOF_SRBS> srbs; // List of active SRBs (TODO: add PDCP config).
   byte_buffer                           handover_preparation_info;
+  byte_buffer                           ue_cap_rat_container_list;
   bool                                  is_inter_cu_handover = false;
 };
 
