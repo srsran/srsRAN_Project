@@ -362,7 +362,7 @@ static alloc_result alloc_ul_ue(const ue&                    u,
     for (const ul_harq_process* h_ul : harq_candidates) {
       ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes = u.pending_ul_newtx_bytes();
+        grant.recommended_nof_bytes = pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
