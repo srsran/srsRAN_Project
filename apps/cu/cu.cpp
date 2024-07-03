@@ -128,11 +128,17 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
                               const cu_up_unit_logger_config& cu_up_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"CU", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
+
+  auto& app_logger = srslog::fetch_basic_logger("CU", false);
+  app_logger.set_level(srslog::basic_levels::info);
+  app_services::application_message_banners::log_build_info(app_logger);
+  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
@@ -236,9 +242,6 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(cu_cfg.buffer_pool_config.nof_segments, cu_cfg.buffer_pool_config.segment_size);
-
-  // Log build info
-  cu_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
   // Log CPU architecture.
   // TODO
