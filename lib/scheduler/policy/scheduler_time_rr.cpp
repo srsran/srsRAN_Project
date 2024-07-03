@@ -268,8 +268,8 @@ static alloc_result alloc_dl_ue(const ue&                         u,
     if (not u.has_pending_dl_newtx_bytes()) {
       return {alloc_status::skip_ue};
     }
-    if (ue_with_srb_data_only and not u.has_pending_dl_newtx_bytes(LCID_SRB1) and
-        not u.has_pending_dl_newtx_bytes(LCID_SRB2)) {
+    if (ue_with_srb_data_only and not u.has_pending_dl_newtx_bytes(LCID_SRB0) and
+        not u.has_pending_dl_newtx_bytes(LCID_SRB1) and not u.has_pending_dl_newtx_bytes(LCID_SRB2)) {
       return {alloc_status::skip_ue};
     }
   }
@@ -319,12 +319,22 @@ static alloc_result alloc_ul_ue(const ue&                    u,
                                 ue_pusch_allocator&          pusch_alloc,
                                 bool                         is_retx,
                                 bool                         schedule_sr_only,
+                                bool                         ue_with_srb_data_only,
                                 srslog::basic_logger&        logger,
                                 std::optional<unsigned>      ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
+  // LCG ID 0 is used for SRBs.
+  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
+  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
+
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
+      return {alloc_status::skip_ue};
+    }
+    // Fetch pending bytes of SRBs.
+    pending_newtx_bytes = u.pending_ul_newtx_bytes(srb_lcg_id);
+    if (ue_with_srb_data_only and pending_newtx_bytes == 0) {
       return {alloc_status::skip_ue};
     }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
@@ -415,13 +425,13 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // First schedule UL data re-transmissions.
   auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, logger);
+    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, false, logger);
   };
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
 
   // Then, schedule all pending SR.
   auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger);
+    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, false, logger);
   };
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
 
@@ -429,8 +439,14 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    // Second, schedule UEs with SRB data.
+    auto srb_newtx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+      return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, true, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+    };
+    next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, srb_newtx_ue_function);
+
     auto data_tx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
-      return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
+      return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
     };
     next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
   }
