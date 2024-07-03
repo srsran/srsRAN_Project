@@ -2312,7 +2312,6 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 #ifdef __ARM_NEON
   const uint32x4_t bias = vdupq_n_u32(0x7fff);
   const uint32x4_t one  = vdupq_n_u32(0x1);
-  const uint32x4_t mask = vdupq_n_u32(0xffff0000);
 
   uint32x4_t a_i32 = vreinterpretq_u32_f32(a);
   uint32x4_t b_i32 = vreinterpretq_u32_f32(b);
@@ -2322,15 +2321,15 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 
   // Remove the 16 least significant bits of the fractional part.
   uint16x8_t tmp_a_1  = vreinterpretq_u16_u32(vshrq_n_u32(a_i32, 16));
-  uint16x8_t tmp_a_2  = vextq_s16(tmp_a_1, tmp_a_1, 3);
-  uint16x8_t a_packed = vorrq_u16(tmp_a_1, tmp_a_2);
+  uint16x8_t tmp_a_2  = vextq_u16(tmp_a_1, tmp_a_1, 1);
+  uint32x4_t a_packed = vreinterpretq_u32_u16(vorrq_u16(tmp_a_1, tmp_a_2));
 
   // Remove the 16 least significant bits of the fractional part.
   uint16x8_t tmp_b_1  = vreinterpretq_u16_u32(vshrq_n_u32(b_i32, 16));
-  uint16x8_t tmp_b_2  = vextq_s16(tmp_b_1, tmp_b_1, 3);
-  uint16x8_t b_packed = vorrq_u16(tmp_b_1, tmp_b_2);
+  uint16x8_t tmp_b_2  = vextq_u16(tmp_b_1, tmp_b_1, 1);
+  uint32x4_t b_packed = vreinterpretq_u32_u16(vorrq_u16(tmp_b_1, tmp_b_2));
 
-  ret                   = vuzpq_u32(vreinterpretq_u32_u16(a_packed), vreinterpretq_u32_u16(b_packed)).val[0];
+  ret                   = vreinterpretq_s16_u32(vuzpq_u32(a_packed, b_packed).val[0]);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -2394,7 +2393,7 @@ static inline simd_s_t srsran_simd_convert_2f_interleaved_bf16(simd_f_t a, simd_
   a_i32 = vaddq_u32(a_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_i32, 16), one)));
   b_i32 = vaddq_u32(b_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_i32, 16), one)));
 
-  return vorrq_u32(vandq_u32(b_i32, vdupq_n_u32(0xffff0000)), vshrq_n_u32(a_i32, 16));
+  return vreinterpretq_s16_u32(vorrq_u32(vandq_u32(b_i32, vdupq_n_u32(0xffff0000)), vshrq_n_u32(a_i32, 16)));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -2459,7 +2458,7 @@ inline void srsran_simd_bf16_storeu(bf16_t* ptr, simd_f_t a, simd_f_t b)
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), bf16_vec);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), bf16_vec);
+  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), vreinterpretq_u32_s16(bf16_vec));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -2469,7 +2468,9 @@ inline void srsran_simd_bf16_storeu(bf16_t* ptr, simd_f_t a, simd_f_t b)
 #ifdef SRSRAN_SIMD_CF_SIZE
 inline void srsran_simd_cbf16_storeu(cbf16_t* ptr, simd_cf_t simdreg)
 {
-  simd_s_t packed_iq_bf16 = srsran_simd_convert_2f_interleaved_bf16(simdreg.re, simdreg.im);
+  simd_s_t packed_iq_bf16 =
+      srsran_simd_convert_2f_interleaved_bf16(srsran_simd_cf_re(simdreg), srsran_simd_cf_im(simdreg));
+
 #ifdef __AVX512F__
   _mm512_storeu_si512(reinterpret_cast<__m512i*>(ptr), packed_iq_bf16);
 #else /* __AVX512F__ */
@@ -2480,7 +2481,7 @@ inline void srsran_simd_cbf16_storeu(cbf16_t* ptr, simd_cf_t simdreg)
   _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), packed_iq_bf16);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), packed_iq_bf16);
+  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), vreinterpretq_u32_s16(packed_iq_bf16));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
