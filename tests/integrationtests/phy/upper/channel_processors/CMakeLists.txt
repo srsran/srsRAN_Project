@@ -19,10 +19,8 @@ target_link_libraries(pxsch_bler_test
         srsran_channel_precoder
         srslog
         srsvec
-        gtest
-        gtest_main
 )
-gtest_discover_tests(pxsch_bler_test)
+add_test(pxsch_bler_test pxsch_bler_test -R 10)
 
 add_executable(pxsch_chain_test pxsch_chain_test.cpp)
 target_link_libraries(pxsch_chain_test

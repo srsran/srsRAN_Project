@@ -25,9 +25,9 @@ namespace srsran {
 
 /// \brief Implements a frequency domain channel emulator.
 ///
-/// This channel emulator works in frequency domain. It applies a fading channel model without doppler dispersion. The
-/// fading profile is selected upon creation and the tap coefficients are randomly generated in a uncorrelated fashion
-/// upon every call to run().
+/// This channel emulator works in the frequency domain. It applies a fading channel model without doppler dispersion.
+/// The fading profile is selected upon creation and the tap coefficients are randomly generated in a uncorrelated
+/// fashion upon every call to run().
 ///
 /// The fading channel run() is not thread safe. It deterministically selects the tap coefficients. However, the noise
 /// addition is performed asynchronously, which can lead to different results across executions.
@@ -38,16 +38,21 @@ class channel_emulator
 public:
   /// \brief Creates a channel emulator.
   ///
-  /// \param[in] channel         Channel fading profile. The valid profiles are TDLA, TDLB and TDLC.
-  /// \param[in] sinr_dB         Signal-to-Interference-plus-Noise Ratio.
-  /// \param[in] nof_rx_ports    Number of receive ports.
-  /// \param[in] nof_subc        Number of the resource grid subcarriers.
-  /// \param[in] nof_symbols     Number of OFDM symbols per slot.
-  /// \param[in] max_nof_threads Maximum number of threads used by the asynchronous executor.
-  /// \param[in] scs             Resource grid subcarrier spacing.
-  /// \param[in] executor_       Asynchronous task execution.
-  channel_emulator(std::string        channel,
+  /// \param[in] delay_profile               Delay profile - The valid profiles are TDLA, TDLB, TDLC, and single-tap.
+  /// \param[in] fading_distribution         Fading distribution - The valid distributions are rayleigh and
+  ///                                        uniform-phase.
+  /// \param[in] sinr_dB                     Signal-to-Interference-plus-Noise Ratio.
+  /// \param[in] nof_corrupted_re_per_symbol Number of corrupted RE per OFDM symbol. Set to zero for no corrupted RE.
+  /// \param[in] nof_rx_ports                Number of receive ports.
+  /// \param[in] nof_subc                    Number of resource grid subcarriers.
+  /// \param[in] nof_symbols                 Number of OFDM symbols per slot.
+  /// \param[in] max_nof_threads             Maximum number of threads used by the asynchronous executor.
+  /// \param[in] scs                         Resource grid subcarrier spacing.
+  /// \param[in] executor_                   Asynchronous task execution.
+  channel_emulator(std::string        delay_profile,
+                   std::string        fading_distribution,
                    float              sinr_dB,
+                   unsigned           nof_corrupted_re_per_symbol,
                    unsigned           nof_rx_ports,
                    unsigned           nof_subc,
                    unsigned           nof_symbols,
@@ -66,9 +71,11 @@ private:
   class concurrent_channel_emulator
   {
   public:
-    concurrent_channel_emulator(float sinr_dB, unsigned nof_subc) :
+    concurrent_channel_emulator(float sinr_dB, unsigned nof_corrupted_re_, unsigned nof_subc) :
       rgen(seed++),
       dist_awgn(cf_t(), convert_dB_to_amplitude(-sinr_dB)),
+      dist_corrupted_re(0, nof_subc - 1),
+      nof_corrupted_re(nof_corrupted_re_),
       temp_ofdm_symbol(nof_subc),
       temp_awgn(nof_subc)
     {
@@ -93,18 +100,29 @@ private:
     std::mt19937 rgen;
     /// Additive white gaussian noise distribution.
     complex_normal_distribution<cf_t> dist_awgn;
+    /// Distribution for simulating corrupted RE.
+    std::uniform_int_distribution<unsigned> dist_corrupted_re;
+    /// Number of corrupted RE per OFDM symbol.
+    unsigned nof_corrupted_re;
     /// Temporary OFDM frequency domain symbol.
     std::vector<cf_t> temp_ofdm_symbol;
     /// Temporary generated noise for adding to an OFDM symbol.
     std::vector<cf_t> temp_awgn;
   };
 
+  enum {
+    invalid_distribution,
+    rayleigh,
+    uniform_phase,
+  } fading_distribution = invalid_distribution;
   /// Number of OFDM symbols per slot.
   unsigned nof_ofdm_symbols;
   /// Random generator for taps phase and power.
   std::mt19937 rgen;
   /// Random distribution for uncorrelated tap weights.
-  complex_normal_distribution<cf_t> dist_taps;
+  complex_normal_distribution<cf_t> dist_rayleigh;
+  /// Uniform real distribution for phase.
+  std::uniform_real_distribution<float> dist_uniform_phase = std::uniform_real_distribution<float>(-M_PI, M_PI);
   /// Temporary channel sum.
   dynamic_tensor<2, cf_t> freq_domain_channel;
   /// Temporary channel.
