@@ -104,6 +104,9 @@ class ngap_rrc_ue_control_notifier
 public:
   virtual ~ngap_rrc_ue_control_notifier() = default;
 
+  /// \brief Get packed packed UE radio access capability info for UE radio capability info indication.
+  virtual byte_buffer on_ue_radio_access_cap_info_required() = 0;
+
   /// \brief Get packed handover preparation message for inter-gNB handover.
   virtual byte_buffer on_handover_preparation_message_required() = 0;
 };

@@ -387,7 +387,11 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
   // start routine
   ue->schedule_async_task(
-      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg, ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
+      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg,
+                                                           ue->get_rrc_ue_pdu_notifier(),
+                                                           ue->get_rrc_ue_control_notifier(),
+                                                           get_ngap_ue_radio_cap_management_handler(),
+                                                           ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
