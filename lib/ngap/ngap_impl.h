@@ -19,6 +19,7 @@
 #include "srsran/ngap/gateways/n2_connection_client.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
+#include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -44,18 +45,20 @@ public:
   bool                             handle_amf_tnl_connection_request() override;
   async_task<void>                 handle_amf_disconnection_request() override;
   async_task<ngap_ng_setup_result> handle_ng_setup_request(const ngap_ng_setup_request& request) override;
+  async_task<void>                 handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
 
-  async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) override;
-
+  // ngap_nas_message_handler
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
-
   void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
+
+  // ngap_ue_radio_capability_management_handler
+  void handle_ue_radio_capability_info_indication(const ngap_ue_radio_capability_info_indication& msg) override;
 
   // ngap message handler functions
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
-  // ngap control message handler functions
+  // ngap_control_message_handler
   async_task<bool> handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
@@ -69,14 +72,15 @@ public:
   // ngap_ue_context_removal_handler
   void remove_ue_context(ue_index_t ue_index) override;
 
-  ngap_message_handler&            get_ngap_message_handler() override { return *this; }
-  ngap_event_handler&              get_ngap_event_handler() override { return *this; }
-  ngap_connection_manager&         get_ngap_connection_manager() override { return *this; }
-  ngap_nas_message_handler&        get_ngap_nas_message_handler() override { return *this; }
-  ngap_control_message_handler&    get_ngap_control_message_handler() override { return *this; }
-  ngap_ue_control_manager&         get_ngap_ue_control_manager() override { return *this; }
-  ngap_statistics_handler&         get_ngap_statistics_handler() override { return *this; }
-  ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() override { return *this; }
+  ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
+  ngap_event_handler&                          get_ngap_event_handler() override { return *this; }
+  ngap_connection_manager&                     get_ngap_connection_manager() override { return *this; }
+  ngap_nas_message_handler&                    get_ngap_nas_message_handler() override { return *this; }
+  ngap_ue_radio_capability_management_handler& get_ngap_ue_radio_cap_management_handler() override { return *this; }
+  ngap_control_message_handler&                get_ngap_control_message_handler() override { return *this; }
+  ngap_ue_control_manager&                     get_ngap_ue_control_manager() override { return *this; }
+  ngap_statistics_handler&                     get_ngap_statistics_handler() override { return *this; }
+  ngap_ue_context_removal_handler&             get_ngap_ue_context_removal_handler() override { return *this; }
 
 private:
   class tx_pdu_notifier_with_logging final : public ngap_message_notifier
