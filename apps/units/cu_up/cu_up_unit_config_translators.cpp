@@ -30,6 +30,9 @@ srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const cu_up_unit_co
   out_cfg.net_cfg.n3_ext_addr       = config.upf_cfg.n3_ext_addr;
   out_cfg.net_cfg.n3_bind_interface = config.upf_cfg.n3_bind_interface;
   out_cfg.net_cfg.n3_rx_max_mmsg    = config.upf_cfg.udp_rx_max_msgs;
+
+  out_cfg.test_mode_cfg.enabled           = config.test_mode_cfg.enabled;
+  out_cfg.test_mode_cfg.integrity_enabled = config.test_mode_cfg.integrity_enabled;
   return out_cfg;
 }
 

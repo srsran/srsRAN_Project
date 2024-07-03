@@ -125,9 +125,11 @@ void cu_up::start()
           // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
           CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg));
 
-          logger.info("enabling test mode...");
-          CORO_AWAIT(cu_up_mng->enable_test_mode());
-          logger.info("test mode enabled");
+          if (cfg.test_mode_cfg.enabled) {
+            logger.info("enabling test mode...");
+            CORO_AWAIT(cu_up_mng->enable_test_mode());
+            logger.info("test mode enabled");
+          }
 
           // Signal start() caller thread that the operation is complete.
           p.set_value();

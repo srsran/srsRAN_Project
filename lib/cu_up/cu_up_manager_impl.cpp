@@ -114,7 +114,6 @@ e1ap_bearer_context_modification_response
 cu_up_manager_impl::handle_bearer_context_modification_request_impl(ue_context& ue_ctxt,
                                                                     const e1ap_bearer_context_modification_request& msg)
 {
-  fmt::print("asdfasdfadsasdfadsf\n");
   ue_ctxt.get_logger().log_debug("Handling BearerContextModificationRequest");
 
   e1ap_bearer_context_modification_response response = {};
@@ -186,10 +185,10 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   // Convert to common type
   e1ap_bearer_context_setup_request bearer_context_setup = {};
 
-  bearer_context_setup.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea2;
+  bearer_context_setup.security_info.security_algorithm.ciphering_algo =
+      static_cast<srsran::security::ciphering_algorithm>(cfg.test_mode_cfg.nea_algo);
   bearer_context_setup.security_info.security_algorithm.integrity_protection_algorithm =
-      srsran::security::integrity_algorithm::nia2;
-  bearer_context_setup.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea2;
+      static_cast<srsran::security::integrity_algorithm>(cfg.test_mode_cfg.nia_algo);
   bearer_context_setup.security_info.up_security_key.encryption_key =
       make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
   bearer_context_setup.security_info.up_security_key.integrity_protection_key =
@@ -202,8 +201,12 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   pdu_session.pdu_session_id                              = psi;
   pdu_session.ng_ul_up_tnl_info.tp_address                = transport_layer_address::create_from_string("127.0.5.2");
   pdu_session.ng_ul_up_tnl_info.gtp_teid                  = int_to_gtpu_teid(0x02);
-  pdu_session.security_ind.integrity_protection_ind       = integrity_protection_indication_t::required;
-  pdu_session.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::required;
+  pdu_session.security_ind.integrity_protection_ind       = cfg.test_mode_cfg.integrity_enabled
+                                                                ? integrity_protection_indication_t::required
+                                                                : integrity_protection_indication_t::not_needed;
+  pdu_session.security_ind.confidentiality_protection_ind = cfg.test_mode_cfg.ciphering_enabled
+                                                                ? confidentiality_protection_indication_t::required
+                                                                : confidentiality_protection_indication_t::not_needed;
 
   /// Setup test DRB
   e1ap_drb_to_setup_item_ng_ran drb_to_setup = {};
