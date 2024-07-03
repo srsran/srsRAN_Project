@@ -40,6 +40,12 @@ protected:
 
   bool was_dl_nas_transport_dropped(const test_ue& ue) const { return ue.rrc_ue_dl_nas_handler.last_nas_pdu.empty(); }
 
+  bool was_ue_radio_capability_info_indication_sent() const
+  {
+    return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_radio_cap_info_ind;
+  }
+
   bool was_ul_nas_transport_forwarded() const
   {
     return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
@@ -123,6 +129,29 @@ TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dro
 
   // Check that Error Indication has been sent to AMF
   ASSERT_TRUE(was_error_indication_sent());
+}
+
+/// Test DL NAS transport handling
+TEST_F(ngap_nas_message_routine_test,
+       when_dl_nas_transport_contains_ue_cap_info_request_then_ue_radio_cap_info_indication_is_sent)
+{
+  // Test preamble
+  ue_index_t ue_index = this->start_procedure();
+
+  auto& ue     = test_ues.at(ue_index);
+  ue.amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+
+  // Inject DL NAS transport message from AMF
+  ngap_message dl_nas_transport =
+      generate_downlink_nas_transport_message_with_ue_cap_info_request(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(dl_nas_transport);
+
+  // Check that RRC notifier was called
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
+
+  // Check that UE Radio Capability Info Indication was sent to AMF
+  ASSERT_TRUE(was_ue_radio_capability_info_indication_sent());
 }
 
 /// Test UL NAS transport handling

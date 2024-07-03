@@ -181,6 +181,19 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   return dl_nas_transport;
 }
 
+ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message_with_ue_cap_info_request(amf_ue_id_t amf_ue_id,
+                                                                                                 ran_ue_id_t ran_ue_id,
+                                                                                                 byte_buffer nas_pdu)
+{
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id, std::move(nas_pdu));
+
+  auto& dl_nas_transport_msg                        = dl_nas_transport.pdu.init_msg().value.dl_nas_transport();
+  dl_nas_transport_msg->ue_cap_info_request_present = true;
+  dl_nas_transport_msg->ue_cap_info_request         = ue_cap_info_request_opts::options::requested;
+
+  return dl_nas_transport;
+}
+
 cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
   cu_cp_ul_nas_transport ul_nas_transport = {};
