@@ -191,9 +191,9 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
       srsran::security::integrity_algorithm::nia2;
   bearer_context_setup.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea2;
   bearer_context_setup.security_info.up_security_key.encryption_key =
-      make_byte_buffer("16171819202122232425262728293031").value();
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
   bearer_context_setup.security_info.up_security_key.integrity_protection_key =
-      make_byte_buffer("16171819202122232425262728293031").value();
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
   bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600);
 
   /// Setup test PDU session

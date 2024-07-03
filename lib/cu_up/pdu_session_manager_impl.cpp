@@ -259,6 +259,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.rb_id                                = drb_to_setup.drb_id;
   pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg, new_session.security_ind);
   pdcp_msg.config.custom                        = qos_cfg.at(five_qi).pdcp_custom_cfg;
+  pdcp_msg.config.custom.metrics_period         = std::chrono::milliseconds(1000);
   pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
   pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
