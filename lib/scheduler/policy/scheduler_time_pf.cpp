@@ -163,17 +163,20 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository&
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 {
-  dl_retx_h            = nullptr;
-  dl_newtx_h           = nullptr;
-  dl_prio              = 0;
-  const ue_cell* ue_cc = u.find_cell(cell_index);
+  dl_retx_h                      = nullptr;
+  dl_newtx_h                     = nullptr;
+  dl_prio                        = 0;
+  has_dl_newtx_srb_pending_bytes = false;
+  const ue_cell* ue_cc           = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
     return;
   }
 
   // Calculate DL priority.
-  dl_retx_h  = ue_cc->harqs.find_pending_dl_retx();
-  dl_newtx_h = ue_cc->harqs.find_empty_dl_harq();
+  dl_retx_h                      = ue_cc->harqs.find_pending_dl_retx();
+  dl_newtx_h                     = ue_cc->harqs.find_empty_dl_harq();
+  has_dl_newtx_srb_pending_bytes = u.has_pending_dl_newtx_bytes(LCID_SRB0) or u.has_pending_dl_newtx_bytes(LCID_SRB1) or
+                                   u.has_pending_dl_newtx_bytes(LCID_SRB2);
   if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
     // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -226,19 +229,25 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_grid_view& res_grid)
 {
-  ul_retx_h            = nullptr;
-  ul_newtx_h           = nullptr;
-  ul_prio              = 0;
-  sr_ind_received      = false;
-  const ue_cell* ue_cc = u.find_cell(cell_index);
+  // LCG ID 0 is used for SRBs.
+  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
+  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
+
+  ul_retx_h                      = nullptr;
+  ul_newtx_h                     = nullptr;
+  ul_prio                        = 0;
+  sr_ind_received                = false;
+  has_ul_newtx_srb_pending_bytes = false;
+  const ue_cell* ue_cc           = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
     return;
   }
 
   // Calculate UL priority.
-  ul_retx_h       = ue_cc->harqs.find_pending_ul_retx();
-  ul_newtx_h      = ue_cc->harqs.find_empty_ul_harq();
-  sr_ind_received = u.has_pending_sr();
+  ul_retx_h                      = ue_cc->harqs.find_pending_ul_retx();
+  ul_newtx_h                     = ue_cc->harqs.find_empty_ul_harq();
+  sr_ind_received                = u.has_pending_sr();
+  has_ul_newtx_srb_pending_bytes = u.pending_ul_newtx_bytes(srb_lcg_id) > 0;
   if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -323,7 +332,23 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
 {
   const bool is_lhs_retx = lhs->dl_retx_h != nullptr;
   const bool is_rhs_retx = rhs->dl_retx_h != nullptr;
-  return (not is_lhs_retx and is_rhs_retx) or (is_lhs_retx == is_rhs_retx and lhs->dl_prio < rhs->dl_prio);
+  if (not is_lhs_retx and is_rhs_retx) {
+    return true;
+  }
+  if (is_lhs_retx == is_rhs_retx) {
+    if (not is_lhs_retx) {
+      // NewTx and SRB pending bytes.
+      if (not lhs->has_dl_newtx_srb_pending_bytes and rhs->has_dl_newtx_srb_pending_bytes) {
+        return true;
+      }
+      if (not rhs->has_dl_newtx_srb_pending_bytes and lhs->has_dl_newtx_srb_pending_bytes) {
+        return false;
+      }
+    }
+    // All other cases compare priorities.
+    return lhs->dl_prio < rhs->dl_prio;
+  }
+  return false;
 }
 
 bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
@@ -336,9 +361,25 @@ bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::
   }
   if (is_lhs_retx == is_rhs_retx) {
     if (not is_lhs_retx) {
-      // NewTx and SR indication received for one of the UEs.
+      // NewTx.
+
+      // SR indication received for one of the UEs. UEs with SR has higher priority than UEs with SRB/DRB newTx bytes.
       if (not lhs->sr_ind_received and rhs->sr_ind_received) {
         return true;
+      }
+      if (not rhs->sr_ind_received and lhs->sr_ind_received) {
+        return false;
+      }
+      if (lhs->sr_ind_received) {
+        return lhs->ul_prio < rhs->ul_prio;
+      }
+
+      // SRB pending bytes.
+      if (not lhs->has_ul_newtx_srb_pending_bytes and rhs->has_ul_newtx_srb_pending_bytes) {
+        return true;
+      }
+      if (not rhs->has_ul_newtx_srb_pending_bytes and lhs->has_ul_newtx_srb_pending_bytes) {
+        return false;
       }
     }
     // All other cases compare priorities.
