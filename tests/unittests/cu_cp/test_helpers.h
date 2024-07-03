@@ -557,7 +557,7 @@ public:
     });
   }
 
-  byte_buffer get_packed_ue_capabilities() override
+  byte_buffer get_packed_ue_capability_rat_container_list() override
   {
     logger.info("Received a new request to get packed UE capabilities");
     return byte_buffer{};

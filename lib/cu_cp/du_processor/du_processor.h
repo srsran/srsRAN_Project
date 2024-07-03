@@ -151,9 +151,9 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
-  /// \brief Request the packed UE Capabilities.
-  /// \returns The packed UE capabilities.
-  virtual byte_buffer get_packed_ue_capabilities() = 0;
+  /// \brief Get the packed UE Capability RAT Container List.
+  /// \returns The packed UE Capability RAT Container List.
+  virtual byte_buffer get_packed_ue_capability_rat_container_list() = 0;
 
   /// \brief Request the RRC Handover Reconfiguration Context.
   /// \returns The RRC Handover Reconfiguration Context.

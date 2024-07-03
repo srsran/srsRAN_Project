@@ -203,9 +203,9 @@ public:
   /// \returns True if the RRC Security Mode Command Complete was received, false otherwise.
   virtual async_task<bool> handle_security_mode_command_complete_expected(uint8_t transaction_id) = 0;
 
-  /// \brief Get the packed UE capabilities.
-  /// \returns The packed UE capabilities.
-  virtual byte_buffer get_packed_ue_capabilities() = 0;
+  /// \brief Get the packed UE Capability RAT Container List.
+  /// \returns The packed UE Capability RAT Container List.
+  virtual byte_buffer get_packed_ue_capability_rat_container_list() = 0;
 
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
