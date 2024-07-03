@@ -355,6 +355,16 @@ byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list()
   return pdu.copy();
 }
 
+byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info()
+{
+  asn1::rrc_nr::ue_radio_access_cap_info_s      ue_radio_access_cap_info;
+  asn1::rrc_nr::ue_radio_access_cap_info_ies_s& ue_radio_access_cap_info_ies =
+      ue_radio_access_cap_info.crit_exts.set_c1().set_ue_radio_access_cap_info();
+  ue_radio_access_cap_info_ies.ue_radio_access_cap_info = get_packed_ue_capability_rat_container_list();
+
+  return pack_into_pdu(ue_radio_access_cap_info, "UE Radio Access Cap Info");
+}
+
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(

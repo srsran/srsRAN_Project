@@ -256,6 +256,17 @@ public:
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
+/// Handler to get the UE radio access capability info to the NGAP.
+class rrc_ue_radio_access_capability_handler
+{
+public:
+  virtual ~rrc_ue_radio_access_capability_handler() = default;
+
+  /// \brief Get the packed UE Radio Access Cap Info.
+  /// \returns The packed UE Radio Access Cap Info.
+  virtual byte_buffer get_packed_ue_radio_access_cap_info() = 0;
+};
+
 /// Handler to get the handover preparation context to the NGAP.
 class rrc_ue_handover_preparation_handler
 {
@@ -394,6 +405,7 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_dl_nas_message_handler,
                          public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
+                         public rrc_ue_radio_access_capability_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
@@ -405,14 +417,15 @@ public:
   rrc_ue_interface()          = default;
   virtual ~rrc_ue_interface() = default;
 
-  virtual rrc_ue_controller&                   get_controller()                          = 0;
-  virtual rrc_ul_ccch_pdu_handler&             get_ul_ccch_pdu_handler()                 = 0;
-  virtual rrc_ul_dcch_pdu_handler&             get_ul_dcch_pdu_handler()                 = 0;
-  virtual rrc_dl_nas_message_handler&          get_rrc_dl_nas_message_handler()          = 0;
-  virtual rrc_ue_srb_handler&                  get_rrc_ue_srb_handler()                  = 0;
-  virtual rrc_ue_control_message_handler&      get_rrc_ue_control_message_handler()      = 0;
-  virtual rrc_ue_context_handler&              get_rrc_ue_context_handler()              = 0;
-  virtual rrc_ue_handover_preparation_handler& get_rrc_ue_handover_preparation_handler() = 0;
+  virtual rrc_ue_controller&                      get_controller()                             = 0;
+  virtual rrc_ul_ccch_pdu_handler&                get_ul_ccch_pdu_handler()                    = 0;
+  virtual rrc_ul_dcch_pdu_handler&                get_ul_dcch_pdu_handler()                    = 0;
+  virtual rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler()             = 0;
+  virtual rrc_ue_srb_handler&                     get_rrc_ue_srb_handler()                     = 0;
+  virtual rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler()         = 0;
+  virtual rrc_ue_radio_access_capability_handler& get_rrc_ue_radio_access_capability_handler() = 0;
+  virtual rrc_ue_context_handler&                 get_rrc_ue_context_handler()                 = 0;
+  virtual rrc_ue_handover_preparation_handler&    get_rrc_ue_handover_preparation_handler()    = 0;
 };
 
 } // namespace srs_cu_cp
