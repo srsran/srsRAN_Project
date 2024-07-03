@@ -21,6 +21,7 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
+#include "srsran/security/security_engine.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
@@ -92,8 +93,6 @@ public:
       logger.log_error("Invalid DRB config, discard_timer is not configured");
     }
 
-    direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
-                                                                 : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);
 
     // TODO: implement usage of crypto_executor
@@ -152,56 +151,9 @@ public:
   /*
    * Security configuration
    */
-  void configure_security(security::sec_128_as_config sec_cfg_) final
-  {
-    srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
-                      (is_drb() && sec_cfg_.domain == security::sec_domain::up),
-                  "Invalid sec_domain={} for {} in {}",
-                  sec_cfg.domain,
-                  rb_type,
-                  rb_id);
-    // The 'NULL' integrity protection algorithm (nia0) is used only for SRBs and for the UE in limited service mode,
-    // see TS 33.501 [11] and when used for SRBs, integrity protection is disabled for DRBs. In case the ′NULL'
-    // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
-    // Ref: TS 38.331 Sec. 5.3.1.2
-    if ((sec_cfg_.integ_algo == security::integrity_algorithm::nia0) &&
-        (is_drb() || (is_srb() && sec_cfg_.cipher_algo != security::ciphering_algorithm::nea0))) {
-      logger.log_error(
-          "Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
-          is_srb(),
-          sec_cfg_.integ_algo,
-          sec_cfg_.cipher_algo);
-    }
-
-    sec_cfg = sec_cfg_;
-    logger.log_info(
-        "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
-    if (sec_cfg.k_128_int.has_value()) {
-      logger.log_info("128 K_int: {}", sec_cfg.k_128_int.value());
-    }
-    logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
-  };
-
-  void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
-  {
-    if (integrity_enabled_ == security::integrity_enabled::on) {
-      if (!sec_cfg.k_128_int.has_value()) {
-        logger.log_error("Cannot enable integrity protection: Integrity key is not configured.");
-        return;
-      }
-      if (!sec_cfg.integ_algo.has_value()) {
-        logger.log_error("Cannot enable integrity protection: Integrity algorithm is not configured.");
-        return;
-      }
-    }
-    integrity_enabled = integrity_enabled_;
-    logger.log_info("Set integrity_enabled={}", integrity_enabled);
-  }
-  void set_ciphering(security::ciphering_enabled ciphering_enabled_) final
-  {
-    ciphering_enabled = ciphering_enabled_;
-    logger.log_info("Set ciphering_enabled={}", ciphering_enabled);
-  }
+  void configure_security(security::sec_128_as_config sec_cfg,
+                          security::integrity_enabled integrity_enabled_,
+                          security::ciphering_enabled ciphering_enabled_) final;
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
   void send_status_report();
@@ -227,10 +179,10 @@ private:
   task_executor& ue_dl_executor;
   task_executor& crypto_executor;
 
-  pdcp_tx_state                st        = {};
-  security::security_direction direction = security::security_direction::downlink;
+  pdcp_tx_state st = {};
 
-  security::sec_128_as_config sec_cfg           = {};
+  std::unique_ptr<security::security_engine> sec_engine;
+
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
 
@@ -239,8 +191,6 @@ private:
 
   /// Apply ciphering and integrity protection to the payload
   expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer sdu_plus_header, uint32_t count);
-  void                  integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
-  void                  cipher_encrypt(byte_buffer_view& buf, uint32_t count);
 
   uint32_t notification_count_estimation(uint32_t notification_sn);
 

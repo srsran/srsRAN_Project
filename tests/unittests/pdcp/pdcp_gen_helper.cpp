@@ -150,9 +150,7 @@ int main(int argc, char** argv)
       0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker}, worker, worker);
   pdcp_tx_state st = {args.count, args.count};
   pdcp_tx->set_state(st);
-  pdcp_tx->configure_security(sec_cfg);
-  pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
-  pdcp_tx->set_ciphering(security::ciphering_enabled::on);
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
   // Write SDU
   byte_buffer sdu = byte_buffer::create(sdu1).value();

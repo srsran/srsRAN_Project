@@ -19,13 +19,23 @@ using namespace security;
 
 security_engine_generic::security_engine_generic(security::sec_128_as_config sec_cfg,
                                                  uint8_t                     bearer_id,
-                                                 security_direction          direction)
+                                                 security_direction          direction,
+                                                 security::integrity_enabled integrity_enabled,
+                                                 security::ciphering_enabled ciphering_enabled)
 {
-  if (sec_cfg.integ_algo.has_value() && sec_cfg.k_128_int.has_value()) {
-    integ_eng = std::make_unique<integrity_engine_generic>(
-        sec_cfg.k_128_int.value(), bearer_id, direction, sec_cfg.integ_algo.value());
+  if (integrity_enabled == security::integrity_enabled::on) {
+    if (sec_cfg.integ_algo.has_value() && sec_cfg.k_128_int.has_value()) {
+      integ_eng = std::make_unique<integrity_engine_generic>(
+          sec_cfg.k_128_int.value(), bearer_id, direction, sec_cfg.integ_algo.value());
+    } else {
+      srsran_assertion_failure(
+          "Cannot enable integrity protection. algo={} key={}", sec_cfg.integ_algo, sec_cfg.k_128_int);
+    }
   }
-  cipher_eng = std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+  if (ciphering_enabled == security::ciphering_enabled::on) {
+    cipher_eng =
+        std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+  }
 }
 
 security_result security_engine_generic::encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count)
@@ -40,8 +50,10 @@ security_result security_engine_generic::encrypt_and_protect_integrity(byte_buff
     }
   }
 
-  // apply ciphering
-  result = cipher_eng->apply_ciphering(std::move(result.buf.value()), offset, result.count);
+  // apply ciphering if activated
+  if (cipher_eng != nullptr) {
+    result = cipher_eng->apply_ciphering(std::move(result.buf.value()), offset, result.count);
+  }
 
   return result;
 }

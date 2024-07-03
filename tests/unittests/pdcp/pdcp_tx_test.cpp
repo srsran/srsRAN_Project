@@ -68,9 +68,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
-    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
-    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     // Write SDU
     byte_buffer sdu = byte_buffer::create(sdu1).value();
@@ -113,9 +111,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
-    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
-    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     uint32_t sdu_queue_size = 4096;
     uint32_t window_size    = pdcp_window_size(sn_size);
@@ -177,7 +173,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     // Write first SDU
     {
@@ -224,7 +220,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   auto test_discard_timer_stop = [this](pdcp_tx_state st) {
     // Set state of PDCP entiy
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     constexpr uint32_t nof_sdus = 5;
 
@@ -302,9 +298,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
-    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
-    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     uint32_t sdu_queue_size = 4096;
     uint32_t window_size    = pdcp_window_size(sn_size);
@@ -399,7 +393,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
     // Write first SDU
     for (uint32_t i = 0; i < n_sdus; i++) {
@@ -426,6 +420,8 @@ TEST_P(pdcp_tx_test, count_wraparound)
 TEST_P(pdcp_tx_test_short_rlc_queue, discard_on_full_rlc_sdu_queue)
 {
   init(GetParam());
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
   byte_buffer sdu = byte_buffer::create(sdu1).value();
 
   // Fill the RLC SDU queue
