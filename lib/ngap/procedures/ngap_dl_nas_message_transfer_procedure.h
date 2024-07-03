@@ -12,6 +12,7 @@
 
 #include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_nas.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -20,9 +21,9 @@ namespace srs_cu_cp {
 class ngap_dl_nas_message_transfer_procedure
 {
 public:
-  ngap_dl_nas_message_transfer_procedure(byte_buffer               nas_pdu_,
-                                         ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_,
-                                         ngap_ue_logger&           logger_);
+  ngap_dl_nas_message_transfer_procedure(const ngap_dl_nas_transport_message& msg_,
+                                         ngap_rrc_ue_pdu_notifier&            rrc_ue_pdu_notifier_,
+                                         ngap_ue_logger&                      logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -32,10 +33,9 @@ private:
   // results senders
   void send_pdu_to_rrc_ue();
 
-  byte_buffer               nas_pdu;
-  const ngap_ue_ids         ue_ids;
-  ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier;
-  ngap_ue_logger&           logger;
+  ngap_dl_nas_transport_message msg;
+  ngap_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier;
+  ngap_ue_logger&               logger;
 };
 
 } // namespace srs_cu_cp

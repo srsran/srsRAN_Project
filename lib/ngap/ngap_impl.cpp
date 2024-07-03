@@ -382,9 +382,12 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
+  ngap_dl_nas_transport_message dl_nas_msg;
+  fill_ngap_dl_nas_transport_message(dl_nas_msg, ue->get_ue_index(), msg);
+
   // start routine
-  ue->schedule_async_task(launch_async<ngap_dl_nas_message_transfer_procedure>(
-      msg->nas_pdu.copy(), ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
+  ue->schedule_async_task(
+      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg, ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
