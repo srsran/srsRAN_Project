@@ -419,10 +419,13 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_allocation_over_sr)
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   // Verify that the UCI bits grants are correct.
-  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[0].format_1.sr_bits);
-  ASSERT_EQ(1, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[1].format_1.sr_bits);
+  pucch_expected_f1_sr.format_1.harq_ack_nof_bits = 1;
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f1_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f1_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
 }
 
 TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits)
@@ -447,6 +450,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits_over_sr)
   add_sr_grant();
   add_harq_grant();
   pucch_expected_f1_harq.format_1.harq_ack_nof_bits      = 2;
+  pucch_expected_f1_sr.format_1.harq_ack_nof_bits        = 2;
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
@@ -455,11 +459,13 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits_over_sr)
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
-  const unsigned EXPECTED_HARQ_BITS = 2;
-  ASSERT_EQ(EXPECTED_HARQ_BITS, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[0].format_1.sr_bits);
-  ASSERT_EQ(EXPECTED_HARQ_BITS, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[1].format_1.sr_bits);
+  // Verify that the UCI bits grants are correct.
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f1_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f1_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
 }
 
 ///////  Test HARQ-ACK allocation on ded. resources - Format 1  - Multi UEs ///////
@@ -715,7 +721,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_common_plus_ded_resource_without
 TEST_F(test_pucch_allocator_ded_resources, test_common_plus_ded_resource_with_existing_f1_sr)
 {
   pucch_expected_f1_harq.format_1.harq_ack_nof_bits = 1U;
-  pucch_expected_f1_harq.format_1.sr_bits           = sr_nof_bits::one;
+  pucch_expected_f1_harq.format_1.sr_bits           = sr_nof_bits::no_sr;
 
   pucch_expected_f1_sr.format_1.harq_ack_nof_bits = 1U;
   pucch_expected_f1_sr.format_1.sr_bits           = sr_nof_bits::one;

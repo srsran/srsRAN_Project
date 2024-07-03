@@ -1597,10 +1597,13 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
     if (sr_res == nullptr) {
       logger.error("This is not expected");
     }
+    // For Format 1, the grant with SR bit is the one with the SR-dedicated resource; in the HARQ-ACK grant we only
+    // report the HARQ bits.
     pucch_uci_bits bits = {.harq_ack_nof_bits  = resource_set_q.front().bits.harq_ack_nof_bits,
                            .sr_bits            = resource_set_q.front().bits.sr_bits,
                            .csi_part1_nof_bits = 0};
     resource_set_q.emplace_back(pucch_grant{.type = pucch_grant_type::sr, .bits = bits, .pucch_res_cfg = sr_res});
+    resource_set_q.front().bits.sr_bits = sr_nof_bits::no_sr;
   }
 
   // Build the final list of PUCCH resources that need to be transmitted.
@@ -1646,8 +1649,11 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
 
       // When merging SR and HARQ, no matter the format, the resource to be used is the one from HARQ-ACK.
       pucch_grant new_resource{.type = pucch_grant_type::harq_ack};
-      // For the case of HARQ-ACK with Format 0 or Format 1, the HARQ-ACK resource only has HARQ-ACK bits.
+      // For the case of HARQ-ACK with Format 0 or Format 1, the pre-multiplexing HARQ-ACK grant only has HARQ-ACK bits.
       // NOTE: This rule is defined in Section 9.2.5.1, TS 38.213.
+      // For Format 1, in the GNB we need to consider there can be either a resource with positive SR or a resource with
+      // negative SR; in this algorithm we assume the positive SR; we'll add the resource for negative SR later on (the
+      // algorithm specified in Section 9.2.5 would not work with both resources).
       if (r_harq.get_format() == pucch_format::FORMAT_0 or r_harq.get_format() == pucch_format::FORMAT_1) {
         srsran_assert(r_sr.get_format() == r_harq.get_format(), "The two resources must have the same format");
         // TODO: Multiplexing of SR + HARQ on F0 needs to be checked, as the TS is not clear about it.
@@ -1899,8 +1905,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                 existing_pdus.sr_pdu->resources.symbols,
                 existing_pdus.sr_pdu->format_1.initial_cyclic_shift,
                 existing_pdus.sr_pdu->format_1.time_domain_occ,
-                grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
-                grants_to_tx.harq_resource.value().bits.sr_bits);
+                grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits,
+                grants_to_tx.sr_resource.value().bits.sr_bits);
     existing_pdus.update_sr_pdu_bits(grants_to_tx.sr_resource.value().bits.sr_bits,
                                      grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits);
     sr_grant_alloc_completed = true;

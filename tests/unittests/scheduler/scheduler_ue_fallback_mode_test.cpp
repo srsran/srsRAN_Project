@@ -234,14 +234,12 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
           if (pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0 and
               not pucch.resources.second_hop_prbs.empty()) {
             pucch_res_ptrs.f1_common_ptr = &pucch;
-          } else if (pucch.format_1.sr_bits == sr_nof_bits::one and pucch.format_1.harq_ack_nof_bits > 0) {
-            // We cannot tell whether it's a f1_ded_sr_ptr or f1_ded_ptr yet only from the bits and format. But this is
-            // not important for the test. We only need to know that both pointers are set.
-            if (pucch_res_ptrs.f1_ded_ptr == nullptr and pucch_res_ptrs.f1_ded_sr_ptr == nullptr) {
-              pucch_res_ptrs.f1_ded_ptr = &pucch;
-            } else if (pucch_res_ptrs.f1_ded_ptr != nullptr and pucch_res_ptrs.f1_ded_sr_ptr == nullptr) {
-              pucch_res_ptrs.f1_ded_sr_ptr = &pucch;
-            }
+          } else if (pucch.format_1.sr_bits == sr_nof_bits::one and pucch.format_1.harq_ack_nof_bits > 0 and
+                     pucch.resources.second_hop_prbs.empty()) {
+            pucch_res_ptrs.f1_ded_sr_ptr = &pucch;
+          } else if (pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0 and
+                     pucch.resources.second_hop_prbs.empty()) {
+            pucch_res_ptrs.f1_ded_ptr = &pucch;
           }
         }
         if (pucch_res_ptrs.f1_common_ptr != nullptr and pucch_res_ptrs.f1_ded_ptr != nullptr and
