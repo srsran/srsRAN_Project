@@ -383,6 +383,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
   return routine_mng.start_initial_context_setup_routine(
       request,
       *rrc_ue,
+      ngap_entity->get_ngap_ue_radio_cap_management_handler(),
       ue->get_security_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
       get_cu_cp_ngap_handler());

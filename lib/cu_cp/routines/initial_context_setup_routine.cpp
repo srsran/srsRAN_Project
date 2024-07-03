@@ -18,14 +18,17 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-initial_context_setup_routine::initial_context_setup_routine(const ngap_init_context_setup_request& request_,
-                                                             rrc_ue_interface&                      rrc_ue_,
-                                                             ue_security_manager&                   security_mng_,
-                                                             f1ap_ue_context_manager&               f1ap_ue_ctxt_mng_,
-                                                             cu_cp_ngap_handler&   pdu_session_setup_handler_,
-                                                             srslog::basic_logger& logger_) :
+initial_context_setup_routine::initial_context_setup_routine(
+    const ngap_init_context_setup_request&       request_,
+    rrc_ue_interface&                            rrc_ue_,
+    ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler_,
+    ue_security_manager&                         security_mng_,
+    f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng_,
+    cu_cp_ngap_handler&                          pdu_session_setup_handler_,
+    srslog::basic_logger&                        logger_) :
   request(request_),
   rrc_ue(rrc_ue_),
+  ngap_ue_radio_cap_handler(ngap_ue_radio_cap_handler_),
   security_mng(security_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   pdu_session_setup_handler(pdu_session_setup_handler_),
@@ -155,6 +158,9 @@ void initial_context_setup_routine::operator()(
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue.handle_rrc_reconfiguration_request(rrc_reconfig_args));
   }
 
+  // Schedule transmission of UE Radio Capability Info Indication
+  send_ue_radio_capability_info_indication();
+
   logger.info("ue={}: \"{}\" finished successfully", request.ue_index, name());
   CORO_RETURN(resp_msg);
 }
@@ -181,4 +187,12 @@ void initial_context_setup_routine::handle_nas_pdu(byte_buffer nas_pdu)
 {
   logger.debug("ue={}: Forwarding NAS PDU to RRC", request.ue_index);
   rrc_ue.handle_dl_nas_transport_message(std::move(nas_pdu));
+}
+
+void initial_context_setup_routine::send_ue_radio_capability_info_indication()
+{
+  ue_radio_cap_info_indication.ue_index                  = request.ue_index;
+  ue_radio_cap_info_indication.ue_cap_rat_container_list = rrc_ue.get_packed_ue_radio_access_cap_info();
+
+  ngap_ue_radio_cap_handler.handle_ue_radio_capability_info_indication(ue_radio_cap_info_indication);
 }

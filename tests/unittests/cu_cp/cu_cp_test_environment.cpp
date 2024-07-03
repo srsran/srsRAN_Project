@@ -432,6 +432,12 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   report_fatal_error_if_not(result, "Failed to receive Initial Context Setup Response");
   report_fatal_error_if_not(test_helpers::is_valid_initial_context_setup_response(ngap_pdu), "Invalid init ctxt setup");
 
+  // Wait for UE Radio Capability Info Indication.
+  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive UE Radio Capability Info Indication");
+  report_fatal_error_if_not(test_helpers::is_valid_ue_radio_capability_info_indication(ngap_pdu),
+                            "Invalid UE Radio Capability Info Indication");
+
   return true;
 }
 

@@ -31,11 +31,12 @@ public:
   bool schedule_async_task(async_task<void> task) override;
 
   async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
-  start_initial_context_setup_routine(const ngap_init_context_setup_request& request,
-                                      rrc_ue_interface&                      rrc_ue,
-                                      ue_security_manager&                   security_mng,
-                                      f1ap_ue_context_manager&               f1ap_ue_ctxt_mng,
-                                      cu_cp_ngap_handler&                    pdu_session_setup_handler);
+  start_initial_context_setup_routine(const ngap_init_context_setup_request&       request,
+                                      rrc_ue_interface&                            rrc_ue,
+                                      ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler,
+                                      ue_security_manager&                         security_mng,
+                                      f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng,
+                                      cu_cp_ngap_handler&                          pdu_session_setup_handler);
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   start_pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg,
