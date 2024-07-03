@@ -292,6 +292,16 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 {
   using successful_types                         = asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts;
   std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
+
+  if (cu_ue_id.has_value()) {
+    if (not ue_ctxt_list.contains(*cu_ue_id)) {
+      logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     *cu_ue_id,
+                     outcome.value.type().to_string());
+      return;
+    }
+  }
+
   switch (outcome.value.type().value) {
     case successful_types::bearer_context_setup_resp: {
       ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
@@ -322,6 +332,16 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 {
   using unsuccessful_types                       = asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts;
   std::optional<gnb_cu_cp_ue_e1ap_id_t> cu_ue_id = get_gnb_cu_cp_ue_e1ap_id(outcome);
+
+  if (cu_ue_id.has_value()) {
+    if (not ue_ctxt_list.contains(*cu_ue_id)) {
+      logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
+                     *cu_ue_id,
+                     outcome.value.type().to_string());
+      return;
+    }
+  }
+
   switch (outcome.value.type().value) {
     case unsuccessful_types::bearer_context_setup_fail: {
       ue_ctxt_list[*cu_ue_id].bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
