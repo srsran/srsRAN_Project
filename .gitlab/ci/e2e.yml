@@ -374,7 +374,7 @@ amari 4 cudu:
     TESTBED: zmq_cudu
     MARKERS: "smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
-    E2E_LOG_LEVEL: "warning"
+    E2E_LOG_LEVEL: "info"
   allow_failure: true
   needs:
     - job: "basic relwithdeb"
