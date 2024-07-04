@@ -12,6 +12,7 @@
 
 #include "security_engine_generic.h"
 #include "ciphering_engine_generic.h"
+#include "ciphering_engine_nea2.h"
 #include "integrity_engine_generic.h"
 
 using namespace srsran;
@@ -33,8 +34,12 @@ security_engine_generic::security_engine_generic(security::sec_128_as_config sec
     }
   }
   if (ciphering_enabled == security::ciphering_enabled::on) {
-    cipher_eng =
-        std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+    if (sec_cfg.cipher_algo == ciphering_algorithm::nea2) {
+      cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);
+    } else {
+      cipher_eng =
+          std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+    }
   }
 }
 

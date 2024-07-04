@@ -18,7 +18,7 @@
 namespace srsran {
 namespace security {
 
-enum class security_error { buffer_failure, integrity_failure };
+enum class security_error { buffer_failure, integrity_failure, ciphering_failure };
 
 struct security_result {
   expected<byte_buffer, security_error> buf;
