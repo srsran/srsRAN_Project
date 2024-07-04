@@ -277,11 +277,8 @@ grafana server image latest:
       changes:
         <<: *srs_container_changes
       variables:
-        MODE: build
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
-      variables:
-        MODE: publish
   variables:
     KUBERNETES_CPU_REQUEST: 6
     KUBERNETES_CPU_LIMIT: 6
@@ -290,13 +287,13 @@ grafana server image latest:
     REGISTRY_URI: $GITLAB_REGISTRY_URI
     CONTEXT: ${CI_PROJECT_DIR}
     DOCKERFILE: docker
-    VERSION: latest
-    OVERWRITE: "true"
+    MODE: build
   tags:
     - ${TAG}
   before_script:
     - |
-      export NAME="srsran_${SPLIT}_${SUFFIX}"
+      export NAME="srsran-project"
+      export VERSION="${SPLIT}_${SUFFIX}"
       export BUILD_ARGS="LIB=${LIB};LIB_VERSION=${LIB_VERSION};ARCH=${ARCH};NUM_CORES=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
   needs:
     - job: gnb docker compose
