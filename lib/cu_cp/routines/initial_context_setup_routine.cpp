@@ -76,6 +76,16 @@ void initial_context_setup_routine::operator()(
     }
   }
 
+  // Await Security Mode Command Complete from RRC UE
+  {
+    CORO_AWAIT_VALUE(security_mode_command_result,
+                     rrc_ue.handle_security_mode_command_complete_expected(rrc_smc_ctxt.transaction_id));
+    if (!security_mode_command_result) {
+      handle_failure();
+      CORO_EARLY_RETURN(make_unexpected(fail_msg));
+    }
+  }
+
   // Start UE Capability Enquiry Procedure
   {
     /// TODO: Move UE Capability Enquiry Procedure here

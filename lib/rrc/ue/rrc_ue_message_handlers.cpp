@@ -150,7 +150,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_setup_complete().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
-      handle_security_mode_complete(ul_dcch_msg.msg.c1().security_mode_complete());
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::ue_cap_info:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
@@ -307,6 +307,34 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
   log_rrc_message(logger, Tx, smc_ctxt.rrc_ue_security_mode_command_pdu, dl_dcch_msg, "DCCH DL");
 
   return smc_ctxt;
+}
+
+async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uint8_t transaction_id)
+{
+  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
+  const std::chrono::milliseconds timeout_ms{1000};
+
+  return launch_async(
+      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        logger.log_debug("Awaiting RRC Security Mode Command Complete (timeout={}ms)", timeout_ms.count());
+        // create new transaction for RRC Security Mode Command procedure
+        transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
+
+        CORO_AWAIT(transaction);
+
+        bool procedure_result = false;
+        if (transaction.has_response()) {
+          logger.log_debug("Received RRC Security Mode Command Complete");
+          procedure_result = true;
+          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
+        } else {
+          logger.log_debug("Did not receive RRC Security Mode Command Complete. Cause: timeout");
+        }
+
+        CORO_RETURN(procedure_result);
+      });
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
