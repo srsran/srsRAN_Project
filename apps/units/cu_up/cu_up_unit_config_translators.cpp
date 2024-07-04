@@ -41,8 +41,10 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (cu_up_config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_cu_up_qos_config_list(
-        cu_up_config.warn_on_drop, timer_duration(cu_up_config.metrics.pdcp.report_period));
+    out_cfg =
+        config_helpers::make_default_cu_up_qos_config_list(cu_up_config.warn_on_drop,
+                                                           timer_duration(cu_up_config.metrics.pdcp.report_period),
+                                                           cu_up_config.test_mode_cfg.enabled);
     return out_cfg;
   }
 

@@ -19,7 +19,7 @@ namespace config_helpers {
 
 /// Generates default QoS configuration used by gNB CU-UP.
 inline std::map<five_qi_t, srs_cu_up::cu_up_qos_config>
-make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_period)
+make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_period, bool test_mode)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_list = {};
   {
@@ -28,6 +28,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
 
     qos_list[uint_to_five_qi(1)] = cfg;
   }
@@ -37,6 +38,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
 
     qos_list[uint_to_five_qi(2)] = cfg;
   }
@@ -46,6 +48,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
 
     qos_list[uint_to_five_qi(5)] = cfg;
   }
@@ -55,6 +58,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
 
     cfg.f1u_cfg.warn_on_drop = warn_on_drop;
 
@@ -66,6 +70,7 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
     cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
     cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
+    cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
 
     cfg.f1u_cfg.warn_on_drop = warn_on_drop;
 
