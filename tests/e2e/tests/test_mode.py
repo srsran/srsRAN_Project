@@ -96,7 +96,6 @@ def test_ue(
                 "templates": {
                     "cu": str(Path(__file__).joinpath("../test_mode/config_ue.yml").resolve()),
                     "du": tmp_file.name,
-                    "ru": tmp_file.name,
                 },
             },
         }

@@ -585,9 +585,6 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
     return false;
   }
 
-  const unsigned f1_pucch_res_set_id = 0;
-  const unsigned f2_pucch_res_set_id = 1;
-
   // PUCCH resource ID corresponding to \c pucch-ResourceId, as part of \c PUCCH-Resource, in \c PUCCH-Config,
   // TS 38.331. By default, we index the PUCCH resource ID for ASN1 message from 0 to pucch_res_list.size() - 1.
   unsigned ue_pucch_res_id = 0;
@@ -595,12 +592,14 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
   pucch_config& pucch_cfg = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
   // Clears current PUCCH resource list and PUCCH resource list set 0 and 1.
   pucch_cfg.pucch_res_list.clear();
-  pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_id_list.clear();
-  pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.clear();
+  pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)].pucch_res_id_list.clear();
+  pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.clear();
 
   // Ensure the PUCCH resource sets ID are 0 and 1.
-  pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_set_id = f1_pucch_res_set_id;
-  pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_set_id = f2_pucch_res_set_id;
+  pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)].pucch_res_set_id =
+      pucch_res_set_idx::set_0;
+  pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_set_id =
+      pucch_res_set_idx::set_1;
 
   // Add F1 for HARQ.
   const unsigned f1_idx_offset = (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f1_res_harq.to_uint();
@@ -615,7 +614,7 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
-    pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_id_list.emplace_back(
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)].pucch_res_id_list.emplace_back(
         pucch_res_id_t{cell_res.res_id.cell_res_id, ue_pucch_res_id});
 
     // Increment the PUCCH resource ID for ASN1 message.
@@ -647,7 +646,7 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=1.
-    pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.emplace_back(
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
         pucch_res_id_t{cell_res.res_id.cell_res_id, ue_pucch_res_id});
     // Increment the PUCCH resource ID for ASN1 message.
     ++ue_pucch_res_id;

@@ -494,6 +494,15 @@ struct prach_occasion_info {
 
 /// Info about PUCCH used resource.
 struct pucch_info {
+  /// This information only is used by the scheduler and not passed to the PHY.
+  struct context {
+    /// Identifier of the PUCCH PDU within the list of PUCCH PDUs for a given slot. The ID is only meaningful for a
+    /// given UE; i.e., different UEs can reuse the same ID, but a UE cannot reuse the same ID for different PDUs.
+    unsigned id = MAX_PUCCH_PDUS_PER_SLOT;
+    /// Determines whether the PUCCH PDU uses common resources.
+    bool is_common = false;
+  };
+
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
@@ -508,6 +517,8 @@ struct pucch_info {
   };
   /// In case the PUCCH will contain CSI bits, this struct contains information how those bits are to be decoded.
   std::optional<csi_report_configuration> csi_rep_cfg;
+
+  context pdu_context;
 };
 
 struct ul_sched_result {

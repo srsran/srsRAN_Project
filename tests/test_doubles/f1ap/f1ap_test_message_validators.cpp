@@ -67,9 +67,13 @@ bool srsran::test_helpers::is_valid_dl_rrc_message_transfer(const f1ap_message& 
   return true;
 }
 
-const byte_buffer& srsran::test_helpers::get_rrc_container(const f1ap_message& dl_rrc_msg_transfer)
+const byte_buffer& srsran::test_helpers::get_rrc_container(const f1ap_message& msg)
 {
-  return dl_rrc_msg_transfer.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container;
+  if (msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_SETUP) {
+    return msg.pdu.init_msg().value.ue_context_setup_request()->rrc_container;
+  }
+
+  return msg.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container;
 }
 
 bool srsran::test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg)
@@ -108,6 +112,15 @@ bool srsran::test_helpers::is_ul_rrc_msg_transfer_valid(const f1ap_message& msg,
   if (rrcmsg->srb_id != srb_id_to_uint(srb_id) or rrcmsg->rrc_container.empty()) {
     return false;
   }
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_ue_context_setup_request(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  TRUE_OR_RETURN(is_packable(msg));
+
   return true;
 }
 

@@ -1,0 +1,26 @@
+# Low latency configuration section.
+
+# This is a supplementary configuration file to achieve the low latency. This config will overwrite the `cell_cfg` and
+# `expert_phy` options in the base configuration to achieve low latency. This config can be run with the following
+# command when running the gNB:
+#   sudo ./gnb -c gnb_rf_b200_tdd_n78_20mhz.yml -c low_latency.yml
+
+cell_cfg:
+  pusch:
+    min_k2: 2
+  tdd_ul_dl_cfg:
+    dl_ul_tx_period: 4
+    nof_dl_slots: 2
+    nof_dl_symbols: 10
+    nof_ul_slots: 1
+    nof_ul_symbols: 0
+  pucch:
+    sr_period_ms: 2
+    min_k1: 2
+  mac_cell_group:
+    bsr_cfg:
+      periodic_bsr_timer: 1
+
+expert_phy:
+  max_request_headroom_slots: 0
+  max_proc_delay: 1

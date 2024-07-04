@@ -35,10 +35,7 @@ class ngap_initial_context_setup_procedure
 public:
   ngap_initial_context_setup_procedure(const ngap_init_context_setup_request& request_,
                                        const ngap_ue_ids&                     ue_ids_,
-                                       ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
-                                       ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
                                        ngap_cu_cp_notifier&                   cu_cp_notifier_,
-                                       ngap_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
                                        ngap_message_notifier&                 amf_notifier_,
                                        ngap_ue_logger&                        logger_);
 
@@ -57,21 +54,12 @@ private:
 
   ngap_init_context_setup_request request;
   const ngap_ue_ids&              ue_ids;
-  ngap_rrc_ue_control_notifier&   rrc_ue_ctrl_notifier;
-  ngap_rrc_ue_pdu_notifier&       rrc_ue_pdu_notifier;
   ngap_cu_cp_notifier&            cu_cp_notifier;
-  ngap_cu_cp_ue_notifier&         cu_cp_ue_notifier;
   ngap_message_notifier&          amf_notifier;
   ngap_ue_logger&                 logger;
 
-  cu_cp_pdu_session_resource_setup_response pdu_session_response;
-
-  // (sub-)routine results
-  ngap_init_context_setup_failure  fail_msg;
-  cu_cp_ue_context_release_command rel_cmd;
-  ngap_init_context_setup_response resp_msg;
-
-  bool success = false;
+  // routine result
+  expected<ngap_init_context_setup_response, ngap_init_context_setup_failure> init_ctxt_setup_routine_outcome;
 };
 
 } // namespace srs_cu_cp

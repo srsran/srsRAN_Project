@@ -81,6 +81,7 @@
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
+#include "srsran/support/cli11_utils.h"
 
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -249,6 +250,8 @@ int main(int argc, char** argv)
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
+    // Refesh defaults in case some parameters may have changed after the autoderivation process.
+    refresh_defaults(app);
     config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));

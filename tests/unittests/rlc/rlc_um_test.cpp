@@ -348,7 +348,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i + 13, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i + 13, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -417,7 +417,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -502,7 +502,7 @@ TEST_P(rlc_um_test, sdu_discard)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -603,7 +603,8 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, (pdcp_sn_start + i) % pdcp_sn_mod, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(
+        config.tx.pdcp_sn_len, /* is_srb = */ false, (pdcp_sn_start + i) % pdcp_sn_mod, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -699,7 +700,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -784,7 +785,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -908,7 +909,8 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i), false);
+    rlc1_tx_upper->handle_sdu(
+        test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i), false);
     pcell_worker.run_pending_tasks();
 
     // check buffer state
@@ -939,7 +941,8 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
       while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
         byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
         EXPECT_EQ(sdu_size, rx_sdu.length());
-        EXPECT_TRUE(rx_sdu == test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i));
+        EXPECT_TRUE(rx_sdu ==
+                    test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i));
         tester2.sdu_queue.pop();
         rx_sdu_idx++;
       }
@@ -971,7 +974,8 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   uint32_t rx_sdu_idx = 0;
   for (uint32_t i = 0; i < num_sdus; i++) {
     // create and write SDU into upper end
-    rlc1_tx_upper->handle_sdu(test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i), false);
+    rlc1_tx_upper->handle_sdu(
+        test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i), false);
     pcell_worker.run_pending_tasks();
 
     // check buffer state
@@ -1007,7 +1011,8 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
       while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
         byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
         EXPECT_EQ(sdu_size, rx_sdu.length());
-        EXPECT_TRUE(rx_sdu == test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i));
+        EXPECT_TRUE(rx_sdu ==
+                    test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i));
         tester2.sdu_queue.pop();
         rx_sdu_idx++;
       }
@@ -1040,7 +1045,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
@@ -1123,7 +1128,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   // Push SDUs into RLC1
   byte_buffer sdu_bufs[num_sdus];
   for (uint32_t i = 0; i < num_sdus; i++) {
-    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, i, sdu_size, i);
+    sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison

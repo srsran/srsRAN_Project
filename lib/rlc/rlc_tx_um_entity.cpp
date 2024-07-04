@@ -67,7 +67,7 @@ void rlc_tx_um_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
   sdu_.time_of_arrival = std::chrono::high_resolution_clock::now();
 
   sdu_.buf     = std::move(sdu_buf);
-  sdu_.pdcp_sn = get_pdcp_sn(sdu_.buf, cfg.pdcp_sn_len, logger.get_basic_logger());
+  sdu_.pdcp_sn = get_pdcp_sn(sdu_.buf, cfg.pdcp_sn_len, /* is_srb = */ false, logger.get_basic_logger());
 
   // Sanity check for PDCP ReTx in RLC UM
   if (SRSRAN_UNLIKELY(is_retx)) {

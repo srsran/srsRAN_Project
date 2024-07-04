@@ -75,6 +75,13 @@ public:
     return cu_cp_handler->handle_handover_request(ue_index, sec_ctxt);
   }
 
+  async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
+  on_new_initial_context_setup_request(ngap_init_context_setup_request& request) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    return cu_cp_handler->handle_new_initial_context_setup_request(request);
+  }
+
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
@@ -184,25 +191,17 @@ class ngap_rrc_ue_adapter : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_
 public:
   ngap_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_dl_nas_message_handler&           rrc_ue_msg_handler_,
-                      rrc_ue_init_security_context_handler& rrc_ue_security_handler_,
-                      rrc_ue_handover_preparation_handler&  rrc_ue_ho_prep_handler_)
+  void connect_rrc_ue(rrc_dl_nas_message_handler&          rrc_ue_msg_handler_,
+                      rrc_ue_handover_preparation_handler& rrc_ue_ho_prep_handler_)
   {
-    rrc_ue_msg_handler      = &rrc_ue_msg_handler_;
-    rrc_ue_security_handler = &rrc_ue_security_handler_;
-    rrc_ue_ho_prep_handler  = &rrc_ue_ho_prep_handler_;
+    rrc_ue_msg_handler     = &rrc_ue_msg_handler_;
+    rrc_ue_ho_prep_handler = &rrc_ue_ho_prep_handler_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
     srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
     rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
-  }
-
-  async_task<bool> on_new_security_context() override
-  {
-    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
-    return rrc_ue_security_handler->handle_init_security_context();
   }
 
   byte_buffer on_handover_preparation_message_required() override
@@ -212,9 +211,8 @@ public:
   }
 
 private:
-  rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
-  rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
-  rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
+  rrc_dl_nas_message_handler*          rrc_ue_msg_handler     = nullptr;
+  rrc_ue_handover_preparation_handler* rrc_ue_ho_prep_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

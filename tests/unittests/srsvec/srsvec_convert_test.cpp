@@ -211,6 +211,74 @@ TEST_P(SrsvecConvertFixture, SrsvecConvertTestComplexComplex16Special)
   }
 }
 
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestFloatFloat16Random)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  srsvec::aligned_vec<float> in(size);
+  std::generate(in.begin(), in.end(), [&dist]() { return dist(rgen); });
+
+  // Convert from single precision to brain float.
+  srsvec::aligned_vec<bf16_t> data_bf16(size);
+  srsvec::convert(data_bf16, in);
+
+  // Assert conversion to BF16.
+  for (size_t i = 0; i != size; ++i) {
+    ASSERT_EQ(data_bf16[i], to_bf16(in[i]));
+  }
+
+  // Convert back to single precision float.
+  srsvec::aligned_vec<float> out(size);
+  srsvec::convert(out, data_bf16);
+
+  // Assert conversion from BF16.
+  for (size_t i = 0; i != size; ++i) {
+    float tolerance = std::abs(in[i]) / 256.0F;
+    ASSERT_LT(std::abs(in[i] - out[i]), tolerance);
+  }
+}
+
+TEST_P(SrsvecConvertFixture, SrsvecConvertTestInt16Float16Random)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  float int16_scale = (1 << 15) - 1;
+
+  srsvec::aligned_vec<float> in(size);
+  std::generate(in.begin(), in.end(), [&dist]() { return dist(rgen); });
+
+  // Convert from single precision to int16.
+  srsvec::aligned_vec<int16_t> in_int16(size);
+  srsvec::convert(in, int16_scale, in_int16);
+
+  // Convert from int16 to brain float.
+  srsvec::aligned_vec<bf16_t> data_bf16(size);
+  srsvec::convert(data_bf16, in_int16, int16_scale);
+
+  // Assert conversion to BF16.
+  for (size_t i = 0; i != size; ++i) {
+    ASSERT_EQ(data_bf16[i], to_bf16(in_int16[i], int16_scale));
+  }
+
+  // Convert from brain float back to int16.
+  srsvec::aligned_vec<int16_t> out_int16(size);
+  srsvec::convert(out_int16, data_bf16, int16_scale);
+
+  // Assert conversion from BF16.
+  for (size_t i = 0; i != size; ++i) {
+    ASSERT_EQ(out_int16[i], to_int16(data_bf16[i], int16_scale));
+  }
+
+  // Convert int16 to float and compare with original data.
+  srsvec::aligned_vec<float> out(size);
+  srsvec::convert(out_int16, int16_scale, out);
+
+  for (size_t i = 0; i != size; ++i) {
+    float tolerance = std::abs(in[i]) / 256.0F + 1 / int16_scale;
+    ASSERT_LT(std::abs(in[i] - out[i]), tolerance);
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(SrsvecConvertTest, SrsvecConvertFixture, ::testing::Values(1, 5, 7, 19, 23, 257, 1234));
 
 } // namespace

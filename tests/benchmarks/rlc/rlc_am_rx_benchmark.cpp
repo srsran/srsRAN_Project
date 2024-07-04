@@ -157,7 +157,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   std::vector<byte_buffer> pdus;
   rlc_tx = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,
                                               du_ue_index_t::MIN_DU_UE_INDEX,
-                                              srb_id_t::srb0,
+                                              drb_id_t::drb1,
                                               config,
                                               *tester,
                                               *tester,
@@ -177,7 +177,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   int num_pdus  = 0;
   int pdu_size  = params.pdu_size;
   for (int i = 0; i < num_sdus; i++) {
-    byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, num_bytes, i);
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, num_bytes, i);
     rlc_tx->handle_sdu(std::move(sdu), false);
     while (rlc_tx->get_buffer_state() > 0) {
       std::vector<uint8_t> pdu_buf;
@@ -240,7 +240,7 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
   // Create RLC AM RX entity
   std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
                                                                                 du_ue_index_t::MIN_DU_UE_INDEX,
-                                                                                srb_id_t::srb0,
+                                                                                drb_id_t::drb1,
                                                                                 config,
                                                                                 *tester,
                                                                                 timer_factory{timers, ue_worker},

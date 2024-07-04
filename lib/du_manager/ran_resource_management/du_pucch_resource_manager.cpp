@@ -300,6 +300,18 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         .report_slot_offset = csi_res_offset.value().second;
   }
 
+  // Update the PUCCH max payload.
+  // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
+  // of the payload).
+  constexpr static unsigned pucch_f1_max_harq_payload = 2U;
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
+      pucch_format::FORMAT_1)]                        = pucch_f1_max_harq_payload;
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
+      pucch_format::FORMAT_2)] =
+      get_pucch_format2_max_payload(user_defined_pucch_cfg.f2_params.max_nof_rbs,
+                                    user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
+                                    to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate));
+
   ++cells[0].ue_idx;
   return true;
 }

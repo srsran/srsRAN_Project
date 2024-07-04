@@ -240,7 +240,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
 
-    // Handle UE Context Modification Response
+    // Handle RRC Reconfiguration Response
     if (!handle_procedure_response(response_msg, setup_msg, rrc_reconfig_result, logger)) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));

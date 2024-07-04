@@ -27,6 +27,7 @@
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_rx.h"
 #include "srsran/sdap/sdap.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran::srs_cu_up {
 

@@ -201,8 +201,8 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
-  byte_buffer                         test_payload =
-      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, 0, test_rgen::uniform_int<unsigned>(3, 100));
+  byte_buffer                         test_payload     = test_helpers::create_pdcp_pdu(
+      pdcp_sn_size::size12bits, /* is_srb = */ true, 0, test_rgen::uniform_int<unsigned>(3, 100), 0);
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {}));
@@ -234,8 +234,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1u_bearers_are_connected)
 {
   const static std::array<uint8_t, 2> dummy_rlc_header = {0x80, 0x0};
-  byte_buffer                         test_payload =
-      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, 0, test_rgen::uniform_int<unsigned>(3, 100));
+  byte_buffer                         test_payload     = test_helpers::create_pdcp_pdu(
+      pdcp_sn_size::size12bits, /* is_srb = */ false, 0, test_rgen::uniform_int<unsigned>(3, 100), 0);
 
   // Run UE Configuration Procedure to completion.
   configure_ue(create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {drb_id_t::drb1}));

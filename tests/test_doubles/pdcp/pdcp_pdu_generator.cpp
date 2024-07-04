@@ -31,9 +31,16 @@
 
 using namespace srsran;
 
-byte_buffer
-srsran::test_helpers::create_pdcp_pdu(pdcp_sn_size pdcp_sn_len, uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte)
+byte_buffer srsran::test_helpers::create_pdcp_pdu(pdcp_sn_size pdcp_sn_len,
+                                                  bool         is_srb,
+                                                  uint32_t     pdcp_sn,
+                                                  uint32_t     sdu_size,
+                                                  uint8_t      first_byte)
 {
+  if (is_srb && pdcp_sn_len != pdcp_sn_size::size12bits) {
+    report_error("Cannot create SRB PDU: Invalid pdcp_sn_len={}", pdcp_sn_len);
+  }
+
   uint32_t pdcp_hdr_len = 0;
   switch (pdcp_sn_len) {
     case pdcp_sn_size::size12bits:
@@ -56,8 +63,8 @@ srsran::test_helpers::create_pdcp_pdu(pdcp_sn_size pdcp_sn_len, uint32_t pdcp_sn
   bit_encoder encoder{sdu_buf};
   bool        write_ok;
 
-  // D/C field
-  write_ok = encoder.pack(1, 1);
+  // D/C field (or R for SRBs)
+  write_ok = encoder.pack(is_srb ? 0 : 1, 1);
 
   switch (pdcp_sn_len) {
     case pdcp_sn_size::size12bits:

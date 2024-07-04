@@ -42,11 +42,13 @@ bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                      
 
 bool is_valid_dl_rrc_message_transfer(const f1ap_message& msg);
 
-const byte_buffer& get_rrc_container(const f1ap_message& dl_rrc_msg_transfer);
+const byte_buffer& get_rrc_container(const f1ap_message& msg);
 
 bool is_valid_dl_rrc_message_transfer_with_msg4(const f1ap_message& msg);
 
 bool is_ul_rrc_msg_transfer_valid(const f1ap_message& msg, srb_id_t srb_id);
+
+bool is_valid_ue_context_setup_request(const f1ap_message& msg);
 
 bool is_ue_context_setup_response_valid(const f1ap_message& msg);
 

@@ -29,6 +29,7 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
@@ -538,14 +539,14 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH Resource Set ID 0. This is for PUCCH Format 1 only (Format 0 not yet supported), used for HARQ-ACK only.
   auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_0.pucch_res_set_id = 0;
+  pucch_res_set_0.pucch_res_set_id = pucch_res_set_idx::set_0;
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{0, 0});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{1, 1});
   pucch_res_set_0.pucch_res_id_list.emplace_back(pucch_res_id_t{2, 2});
 
   // PUCCH Resource Set ID 1. This is for PUCCH Format 2 only and used for HARQ-ACK + optionally SR and/or CSI.
   auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set_1.pucch_res_set_id = 1;
+  pucch_res_set_1.pucch_res_set_id = pucch_res_set_idx::set_1;
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{3, 3});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{4, 4});
   pucch_res_set_1.pucch_res_id_list.emplace_back(pucch_res_id_t{5, 5});
@@ -656,6 +657,15 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     // TDD
     pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(*params.tdd_ul_dl_cfg_common, params.min_k1);
   }
+
+  // Compute the max UCI payload per format.
+  // As per TS 38.231, Section 9.2.1, with PUCCH Format 1, we can have up to 2 HARQ-ACK bits (SR doesn't count as part
+  // of the payload).
+  constexpr static unsigned pucch_f1_max_harq_payload                        = 2U;
+  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_1)] = pucch_f1_max_harq_payload;
+  const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
+  pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
+      res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());

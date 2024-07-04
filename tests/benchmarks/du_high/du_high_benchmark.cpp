@@ -43,6 +43,7 @@
 #include "lib/du_high/du_high_impl.h"
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -587,7 +588,8 @@ private:
 /// \brief TestBench for the DU-high.
 class du_high_bench
 {
-  static const unsigned DEFAULT_DL_PDU_SIZE = 1500;
+  static constexpr unsigned DEFAULT_DL_PDU_SIZE = 1500;
+  static constexpr unsigned PDCP_MAX_HDR_LEN    = 3;
 
 public:
   du_high_bench(unsigned                              dl_buffer_state_bytes_,
@@ -649,9 +651,10 @@ public:
 
     du_hi = std::make_unique<du_high_impl>(cfg);
 
-    // Create PDCP PDU.
-    report_fatal_error_if_not(pdcp_pdu.append(test_rgen::random_vector<uint8_t>(f1u_pdu_size.value())),
-                              "Unable to allocate PDU");
+    // Create PDCP PDU Payload.
+    report_fatal_error_if_not(
+        pdcp_pdu_payload.append(test_rgen::random_vector<uint8_t>(f1u_pdu_size.value() - PDCP_MAX_HDR_LEN)),
+        "Unable to allocate PDU");
     // Create MAC PDU.
     report_fatal_error_if_not(mac_pdu.append(test_rgen::random_vector<uint8_t>(
                                   buff_size_field_to_bytes(lbsr_buff_sz, srsran::bsr_format::LONG_BSR))),
@@ -825,7 +828,8 @@ public:
     while (not workers.dl_exec.defer([this]() {
       static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
       const unsigned nof_dl_pdus_per_slot = divide_ceil(f1u_dl_pdu_bytes_per_slot, this->f1u_pdu_size.value());
-      const unsigned last_dl_pdu_size     = f1u_dl_pdu_bytes_per_slot % this->f1u_pdu_size.value();
+      const unsigned last_dl_pdu_size =
+          std::max(PDCP_MAX_HDR_LEN, f1u_dl_pdu_bytes_per_slot % this->f1u_pdu_size.value());
 
       // Forward DL buffer occupancy updates to all bearers in a Round-robin fashion.
       for (unsigned i = 0; i != nof_dl_pdus_per_slot; ++i) {
@@ -836,20 +840,26 @@ public:
         pdcp_sn_list[bearer_idx] = (pdcp_sn_list[bearer_idx] + 1) % (1U << 18U);
         // We perform a deep-copy of the byte buffer to better simulate a real deployment, where there is stress over
         // the byte buffer pool.
-        auto pdu_copy = pdcp_pdu.deep_copy();
-        if (not pdu_copy.has_value()) {
-          test_logger.warning("Byte buffer segment pool depleted");
+        byte_buffer pdcp_pdu = test_helpers::create_pdcp_pdu(
+            pdcp_sn_size::size12bits, /* is_srb = */ false, pdcp_sn_list[bearer_idx], PDCP_MAX_HDR_LEN, 0);
+        auto payload_copy = pdcp_pdu_payload.deep_copy();
+        if (not payload_copy.has_value()) {
+          test_logger.warning("Failed to copy payload for PDCP PDU. Byte buffer segment pool depleted");
+          return;
+        }
+        if (not pdcp_pdu.append(std::move(payload_copy.value()))) {
+          test_logger.warning("Failed to append payload to PDCP PDU. Byte buffer segment pool depleted");
           return;
         }
         if (i == nof_dl_pdus_per_slot - 1 and last_dl_pdu_size != 0) {
           // If it is last DL PDU.
-          if (!pdu_copy.value().resize(last_dl_pdu_size)) {
+          if (!pdcp_pdu.resize(last_dl_pdu_size)) {
             test_logger.warning("Unable to resize PDU to {} bytes", last_dl_pdu_size);
             return;
           }
         }
-        f1u_dl_total_bytes.fetch_add(pdu_copy.value().length(), std::memory_order_relaxed);
-        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdu_copy.value())});
+        f1u_dl_total_bytes.fetch_add(pdcp_pdu.length(), std::memory_order_relaxed);
+        du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdcp_pdu)});
       }
     })) {
       // keep trying to push new PDUs.
@@ -1091,7 +1101,7 @@ public:
   /// Queue of MAC CRC indication message to be sent in their expected receive slot.
   std::deque<mac_crc_indication_message> pending_crc;
 
-  byte_buffer pdcp_pdu;
+  byte_buffer pdcp_pdu_payload;
   byte_buffer mac_pdu;
 
   // - 8-bit R/LCID MAC subheader.

@@ -257,6 +257,47 @@ inline void srsran_simd_f_storeu(float* ptr, simd_f_t simdreg)
 #endif /* __AVX512F__ */
 }
 
+// Interleaves values from two input vectors and stores the resulting vectors in memory.
+inline void srsran_simd_f_storeu_interleaved(float* ptr, simd_f_t a, simd_f_t b)
+{
+#ifdef __AVX512F__
+  __m512 s1 = _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x00, 0x10, 0x01, 0x11, 0x02, 0x12, 0x03, 0x13, 0x04, 0x14, 0x05, 0x15, 0x06, 0x16, 0x07, 0x17),
+      b);
+  __m512 s2 = _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
+      b);
+  _mm512_storeu_ps(reinterpret_cast<float*>(ptr), s1);
+  _mm512_storeu_ps(reinterpret_cast<float*>(ptr + 16), s2);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  // Permute for AVX registers (reorders data across 128-bit registers).
+  const __m256i idx   = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+  __m256        tmp_a = _mm256_permutevar8x32_ps(a, idx);
+  __m256        tmp_b = _mm256_permutevar8x32_ps(b, idx);
+
+  __m256 out1 = _mm256_permute_ps(tmp_a, 0b11011000);
+  __m256 out2 = _mm256_permute_ps(tmp_b, 0b11011000);
+  _mm256_storeu_ps(reinterpret_cast<float*>(ptr), _mm256_unpacklo_ps(out1, out2));
+  _mm256_storeu_ps(reinterpret_cast<float*>(ptr + 8), _mm256_unpackhi_ps(out1, out2));
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_unpacklo_ps(a, b));
+  _mm_storeu_ps(reinterpret_cast<float*>(ptr + 4), _mm_unpackhi_ps(a, b));
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
+  float32x4x2_t ab_combined;
+  ab_combined.val[0] = a;
+  ab_combined.val[1] = b;
+  vst2q_f32(reinterpret_cast<float*>(ptr), ab_combined);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
 inline simd_f_t srsran_simd_f_set1(float x)
 {
 #ifdef __AVX512F__
@@ -885,123 +926,6 @@ inline void srsran_simd_cf_storeu(float* re, float* im, simd_cf_t simdreg)
 #ifdef __ARM_NEON
   vst1q_f32(re, simdreg.val[0]);
   vst1q_f32(im, simdreg.val[1]);
-#endif /* __ARM_NEON */
-#endif /* __SSE4_1__ */
-#endif /* __AVX2__ */
-#endif /* __AVX512F__ */
-}
-
-inline simd_cf_t srsran_simd_cbf16_loadu(const cbf16_t* ptr)
-{
-  simd_cf_t ret;
-#ifdef __AVX512F__
-  __m512i temp = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(ptr));
-
-  __m512i temp_re = _mm512_slli_epi32(temp, 16);
-  ret.re          = _mm512_castsi512_ps(temp_re);
-
-  __m512i temp_im = _mm512_and_si512(temp, _mm512_set1_epi32(0xffff0000));
-  ret.im          = _mm512_castsi512_ps(temp_im);
-#else /* __AVX512F__ */
-#ifdef __AVX2__
-  __m256i temp = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(ptr));
-
-  __m256i temp_re = _mm256_slli_epi32(temp, 16);
-  ret.re          = _mm256_castsi256_ps(temp_re);
-
-  __m256i temp_im = _mm256_and_si256(temp, _mm256_set1_epi32(0xffff0000));
-  ret.im          = _mm256_castsi256_ps(temp_im);
-#else /* __AVX2__ */
-#ifdef __SSE4_1__
-  __m128i temp = _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
-
-  __m128i temp_re = _mm_slli_epi32(temp, 16);
-  ret.re          = _mm_castsi128_ps(temp_re);
-
-  __m128i temp_im = _mm_and_si128(temp, _mm_set1_epi32(0xffff0000));
-  ret.im          = _mm_castsi128_ps(temp_im);
-#else /* __ARM_NEON */
-#ifdef __ARM_NEON
-  uint32x4_t temp    = vld1q_u32(reinterpret_cast<uint32_t const*>(ptr));
-  uint32x4_t temp_re = vshlq_n_u32(temp, 16);
-  ret.val[0]         = vreinterpretq_f32_u32(temp_re);
-
-  uint32x4_t temp_im = vandq_u32(temp, vdupq_n_u32(0xffff0000));
-  ret.val[1]         = vreinterpretq_f32_u32(temp_im);
-#endif /* __ARM_NEON */
-#endif /* __SSE4_1__ */
-#endif /* __AVX2__ */
-#endif /* __AVX512F__ */
-  return ret;
-}
-
-inline void srsran_simd_cbf16_storeu(cbf16_t* ptr, simd_cf_t simdreg)
-{
-#ifdef __AVX512F__
-  __m512i bias = _mm512_set1_epi32(0x7fff);
-  __m512i one  = _mm512_set1_epi32(0x1);
-
-  __m512i temp_re = _mm512_castps_si512(simdreg.re);
-  __m512i temp_im = _mm512_castps_si512(simdreg.im);
-
-  // Round to nearest even.
-  temp_re = _mm512_add_epi32(temp_re, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(temp_re, 16), one)));
-  temp_im = _mm512_add_epi32(temp_im, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(temp_im, 16), one)));
-
-  // Pack both parts in 32-bit registers.
-  __m512i temp =
-      _mm512_or_si512(_mm512_and_si512(temp_im, _mm512_set1_epi32(0xffff0000)), _mm512_srli_epi32(temp_re, 16));
-
-  _mm512_storeu_si512(reinterpret_cast<__m512i*>(ptr), temp);
-#else /* __AVX512F__ */
-#ifdef __AVX2__
-  __m256i bias    = _mm256_set1_epi32(0x7fff);
-  __m256i one     = _mm256_set1_epi32(0x1);
-
-  __m256i temp_re = _mm256_castps_si256(simdreg.re);
-  __m256i temp_im = _mm256_castps_si256(simdreg.im);
-
-  // Round to nearest even.
-  temp_re = _mm256_add_epi32(temp_re, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(temp_re, 16), one)));
-  temp_im = _mm256_add_epi32(temp_im, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(temp_im, 16), one)));
-
-  // Pack both parts in 32-bit registers.
-  __m256i temp =
-      _mm256_or_si256(_mm256_and_si256(temp_im, _mm256_set1_epi32(0xffff0000)), _mm256_srli_epi32(temp_re, 16));
-
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), temp);
-#else /* __AVX512F__ */
-#ifdef __SSE4_1__
-  __m128i bias    = _mm_set1_epi32(0x7fff);
-  __m128i one     = _mm_set1_epi32(0x1);
-
-  __m128i temp_re = _mm_castps_si128(simdreg.re);
-  __m128i temp_im = _mm_castps_si128(simdreg.im);
-
-  // Round to nearest even.
-  temp_re = _mm_add_epi32(temp_re, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(temp_re, 16), one)));
-  temp_im = _mm_add_epi32(temp_im, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(temp_im, 16), one)));
-
-  // Pack both parts in 32-bit registers.
-  __m128i temp =
-      _mm_or_si128(_mm_and_si128(_mm_and_si128(temp_im, _mm_set1_epi32(0xffff0000)), _mm_set1_epi32(0xffff0000)),
-                   _mm_srli_epi32(temp_re, 16));
-
-  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), temp);
-#else /* __ARM_NEON */
-#ifdef __ARM_NEON
-  uint32x4_t bias    = vdupq_n_u32(0x7fff);
-  uint32x4_t one     = vdupq_n_u32(0x1);
-
-  uint32x4_t temp_re = vreinterpretq_u32_f32(simdreg.val[0]);
-  uint32x4_t temp_im = vreinterpretq_u32_f32(simdreg.val[1]);
-
-  temp_re = vaddq_u32(temp_re, vaddq_u32(bias, vandq_u32(vshrq_n_u32(temp_re, 16), one)));
-  temp_im = vaddq_u32(temp_im, vaddq_u32(bias, vandq_u32(vshrq_n_u32(temp_im, 16), one)));
-
-  uint32x4_t temp = vorrq_u32(vandq_u32(temp_im, vdupq_n_u32(0xffff0000)), vshrq_n_u32(temp_re, 16));
-
-  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), temp);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -2178,6 +2102,404 @@ inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
 #endif /* __AVX2__ */
 #endif /* __AVX512F__ */
 }
+
+// Converts 2 vectors of single-precision floats to a vector of int16_t, given that input vectors contain values of the
+// interleaved data read from memory.
+inline simd_s_t srsran_simd_convert_2f_interleaved_s(simd_f_t a, simd_f_t b)
+{
+#ifdef __AVX512F__
+  __m512  aa = _mm512_unpacklo_ps(a, b);
+  __m512  bb = _mm512_unpackhi_ps(a, b);
+  __m512i ai = _mm512_cvt_roundps_epi32(aa, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+  __m512i bi = _mm512_cvt_roundps_epi32(bb, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+  return _mm512_packs_epi32(ai, bi);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  __m256  aa = _mm256_round_ps(_mm256_unpacklo_ps(a, b), _MM_FROUND_NINT);
+  __m256  bb = _mm256_round_ps(_mm256_unpackhi_ps(a, b), _MM_FROUND_NINT);
+  __m256i ai = _mm256_cvtps_epi32(aa);
+  __m256i bi = _mm256_cvtps_epi32(bb);
+  return _mm256_packs_epi32(ai, bi);
+#else
+#ifdef __SSE4_1__
+  __m128  aa = _mm_round_ps(_mm_unpacklo_ps(a, b), _MM_FROUND_NINT);
+  __m128  bb = _mm_round_ps(_mm_unpackhi_ps(a, b), _MM_FROUND_NINT);
+  __m128i ai = _mm_cvtps_epi32(aa);
+  __m128i bi = _mm_cvtps_epi32(bb);
+  return _mm_packs_epi32(ai, bi);
+#else
+#ifdef __ARM_NEON
+  int32x4_t   ai                 = vcvtnq_s32_f32(a);
+  int32x4_t   bi                 = vcvtnq_s32_f32(b);
+  int16x4x2_t ab_s16_interleaved = vzip_s16(vqmovn_s32(ai), vqmovn_s32(bi));
+  return (simd_s_t)vcombine_s16(ab_s16_interleaved.val[0], ab_s16_interleaved.val[1]);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+#ifdef __AVX512F__
+inline simd_s_t srsran_simd_convert_1f_bf16(simd_f_t a)
+{
+  simd_s_t ret;
+
+  const __m512i  bias      = _mm512_set1_epi32(0x7fff);
+  const __m512i  one       = _mm512_set1_epi32(0x1);
+  const __m512i  mask      = _mm512_set1_epi32(0xffff0000);
+  const uint16_t zero_mask = 0x00ff;
+
+  __m512i a_i32 = _mm512_castps_si512(a);
+
+  // Round to nearest even.
+  a_i32 = _mm512_add_epi32(a_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(a_i32, 16), one)));
+
+  // Input:            a0 xx | a1 xx | a2 xx | a3 xx | a4 xx | a5 xx | a6 xx | a7 xx | ... | a15 xx |
+  // Transformations:
+  //_mm512_srli_epi32  00 a0 | 00 a1 | 00 a2 | 00 a3 | 00 a4 | 00 a5 | 00 a6 | 00 a7 | ... | 00 a15 |
+  //_mm512_and_si512   a0 00 | a1 00 | a2 00 | a3 00 | a4 00 | a5 00 | a6 00 | a7 00 | ... | a15 00 |
+  // _mm512_maskz_permutex2var_epi32
+  //                   a1 00 | a2 00 | a3 00 | a4 00 | a5 00 | a6 00 | a7 00 | a8 00 | a9 00 | a10 00 |  ...  | a0 00 |
+  //_mm512_or_si512    a1 a0 | a2 a1 | a3 a2 | a4 a3 | a5 a4 | a6 a5 | a7 a6 | a8 a7 | a9 a8 | a10 a9 | a11 a10 | ... |
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m512i tmp_a_lsb    = _mm512_srli_epi32(a_i32, 16);
+  __m512i tmp_a_masked = _mm512_and_si512(a_i32, mask);
+
+  __m512i tmp_a_msb = _mm512_maskz_permutex2var_epi32(
+      0x7fff,
+      tmp_a_masked,
+      _mm512_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0),
+      tmp_a_masked);
+  __m512i a_packed = _mm512_or_si512(tmp_a_lsb, tmp_a_msb);
+
+  // Pack results into an output vector.
+  ret = _mm512_maskz_permutex2var_epi32(
+      zero_mask,
+      a_packed,
+      _mm512_setr_epi32(0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe),
+      a_packed);
+
+  return ret;
+}
+#endif // __AVX512F__
+
+static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
+{
+  simd_s_t ret;
+#ifdef __AVX512F__
+  const __m512i bias = _mm512_set1_epi32(0x7fff);
+  const __m512i one  = _mm512_set1_epi32(0x1);
+
+  __m512i a_i32 = _mm512_castps_si512(a);
+  __m512i b_i32 = _mm512_castps_si512(b);
+
+  // Round to nearest even.
+  a_i32 = _mm512_add_epi32(a_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm512_add_epi32(b_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(b_i32, 16), one)));
+
+#ifdef __AVX512BW__
+  // Use 16 MSBs of each 32-bit input register and pack them in one resulting vector.
+  ret = _mm512_permutex2var_epi16(a_i32,
+                                  _mm512_setr_epi32(0x030001,
+                                                    0x070005,
+                                                    0x0b0009,
+                                                    0x0f000d,
+                                                    0x130011,
+                                                    0x170015,
+                                                    0x1b0019,
+                                                    0x1f001d,
+                                                    0x230021,
+                                                    0x270025,
+                                                    0x2b0029,
+                                                    0x2f002d,
+                                                    0x330031,
+                                                    0x370035,
+                                                    0x3b0039,
+                                                    0x3f003d),
+                                  b_i32);
+#else // __AVX512BW__
+  const __m512i mask = _mm512_set1_epi32(0xffff0000);
+  // Input:            a0 xx | a1 xx | a2 xx | a3 xx | a4 xx | a5 xx | a6 xx | a7 xx | ... | a15 xx |
+  // Transformations:
+  //_mm512_srli_epi32  00 a0 | 00 a1 | 00 a2 | 00 a3 | 00 a4 | 00 a5 | 00 a6 | 00 a7 | ... | 00 a15 |
+  //_mm512_and_si512   a0 00 | a1 00 | a2 00 | a3 00 | a4 00 | a5 00 | a6 00 | a7 00 | ... | a15 00 |
+  // _mm512_maskz_permutex2var_epi32
+  //                   a1 00 | a2 00 | a3 00 | a4 00 | a5 00 | a6 00 | a7 00 | a8 00 | a9 00 | a10 00 |  ...  | a0 00 |
+  //_mm512_or_si512    a1 a0 | a2 a1 | a3 a2 | a4 a3 | a5 a4 | a6 a5 | a7 a6 | a8 a7 | a9 a8 | a10 a9 | a11 a10 | ... |
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m512i tmp_a_lsb    = _mm512_srli_epi32(a_i32, 16);
+  __m512i tmp_a_masked = _mm512_and_si512(a_i32, mask);
+
+  __m512i tmp_a_msb = _mm512_maskz_permutex2var_epi32(
+      0x7fff,
+      tmp_a_masked,
+      _mm512_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0),
+      tmp_a_masked);
+  __m512i a_packed = _mm512_or_si512(tmp_a_lsb, tmp_a_msb);
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m512i tmp_b_lsb    = _mm512_srli_epi32(b_i32, 16);
+  __m512i tmp_b_masked = _mm512_and_si512(b_i32, mask);
+
+  __m512i tmp_b_msb = _mm512_maskz_permutex2var_epi32(
+      0x7fff,
+      tmp_b_masked,
+      _mm512_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0),
+      tmp_b_masked);
+  __m512i b_packed = _mm512_or_si512(tmp_b_lsb, tmp_b_msb);
+
+  // Pack results into an output vector.
+  ret = _mm512_permutex2var_epi32(
+      a_packed,
+      _mm512_setr_epi32(0x0, 0x2, 0x4, 0x6, 0x8, 0xa, 0xc, 0xe, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
+      b_packed);
+#endif
+
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  const __m256i bias = _mm256_set1_epi32(0x7fff);
+  const __m256i one  = _mm256_set1_epi32(0x1);
+  const __m256i mask = _mm256_set1_epi32(0xffff0000);
+
+  __m256i a_i32 = _mm256_castps_si256(a);
+  __m256i b_i32 = _mm256_castps_si256(b);
+
+  // Round to nearest even.
+  a_i32 = _mm256_add_epi32(a_i32, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm256_add_epi32(b_i32, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(b_i32, 16), one)));
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m256i tmp_a_lsb    = _mm256_srli_epi32(a_i32, 16);
+  __m256i tmp_a_masked = _mm256_and_si256(a_i32, mask);
+
+  __m256i tmp_a_msb =
+      _mm256_permutevar8x32_epi32(tmp_a_masked, _mm256_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x0));
+  __m256i a_packed = _mm256_or_si256(tmp_a_lsb, tmp_a_msb);
+  a_packed         = _mm256_permutevar8x32_epi32(a_packed, _mm256_setr_epi32(0x0, 0x2, 0x4, 0x6, 0x1, 0x3, 0x5, 0x7));
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m256i tmp_b_lsb    = _mm256_srli_epi32(b_i32, 16);
+  __m256i tmp_b_masked = _mm256_and_si256(b_i32, mask);
+
+  __m256i tmp_b_msb =
+      _mm256_permutevar8x32_epi32(tmp_b_masked, _mm256_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x0));
+  __m256i b_packed = _mm256_or_si256(tmp_b_lsb, tmp_b_msb);
+  b_packed         = _mm256_permutevar8x32_epi32(b_packed, _mm256_setr_epi32(0x1, 0x3, 0x5, 0x7, 0x0, 0x2, 0x4, 0x6));
+
+  // Pack results into an output vector.
+  ret                = _mm256_blend_epi32(a_packed, b_packed, 0b11110000);
+
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  const __m128i bias = _mm_set1_epi32(0x7fff);
+  const __m128i one  = _mm_set1_epi32(0x1);
+  const __m128i mask = _mm_set1_epi32(0xffff0000);
+
+  __m128i a_i32 = _mm_castps_si128(a);
+  __m128i b_i32 = _mm_castps_si128(b);
+
+  // Round to nearest even.
+  a_i32 = _mm_add_epi32(a_i32, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm_add_epi32(b_i32, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(b_i32, 16), one)));
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m128i tmp_a_lsb    = _mm_srli_epi32(a_i32, 16);
+  __m128i tmp_a_masked = _mm_and_si128(a_i32, mask);
+  __m128i tmp_a_msb    = _mm_shuffle_epi32(tmp_a_masked, 0b00111001);
+  __m128i a_packed     = _mm_or_si128(tmp_a_lsb, tmp_a_msb);
+  a_packed             = _mm_shuffle_epi32(a_packed, 0b11001000);
+
+  // Remove the 16 least significant bits of the fractional part.
+  __m128i tmp_b_lsb    = _mm_srli_epi32(b_i32, 16);
+  __m128i tmp_b_masked = _mm_and_si128(b_i32, mask);
+  __m128i tmp_b_msb    = _mm_shuffle_epi32(tmp_b_masked, 0b00111001);
+  __m128i b_packed     = _mm_or_si128(tmp_b_lsb, tmp_b_msb);
+  b_packed             = _mm_shuffle_epi32(b_packed, 0b10001100);
+
+  // Pack results into an output vector.
+  ret                = _mm_blend_epi16(a_packed, b_packed, 0xf0);
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
+  const uint32x4_t bias = vdupq_n_u32(0x7fff);
+  const uint32x4_t one  = vdupq_n_u32(0x1);
+
+  uint32x4_t a_i32 = vreinterpretq_u32_f32(a);
+  uint32x4_t b_i32 = vreinterpretq_u32_f32(b);
+
+  a_i32 = vaddq_u32(a_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_i32, 16), one)));
+  b_i32 = vaddq_u32(b_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_i32, 16), one)));
+
+  // Remove the 16 least significant bits of the fractional part.
+  uint16x8_t tmp_a_1  = vreinterpretq_u16_u32(vshrq_n_u32(a_i32, 16));
+  uint16x8_t tmp_a_2  = vextq_u16(tmp_a_1, tmp_a_1, 1);
+  uint32x4_t a_packed = vreinterpretq_u32_u16(vorrq_u16(tmp_a_1, tmp_a_2));
+
+  // Remove the 16 least significant bits of the fractional part.
+  uint16x8_t tmp_b_1  = vreinterpretq_u16_u32(vshrq_n_u32(b_i32, 16));
+  uint16x8_t tmp_b_2  = vextq_u16(tmp_b_1, tmp_b_1, 1);
+  uint32x4_t b_packed = vreinterpretq_u32_u16(vorrq_u16(tmp_b_1, tmp_b_2));
+
+  ret                   = vreinterpretq_s16_u32(vuzpq_u32(a_packed, b_packed).val[0]);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+  return ret;
+}
+
+// Converts 2 vectors of single-precision floats to a vector of bf16_t, given that input vectors contain values of the
+// interleaved data read from memory.
+static inline simd_s_t srsran_simd_convert_2f_interleaved_bf16(simd_f_t a, simd_f_t b)
+{
+#ifdef __AVX512F__
+  const __m512i bias = _mm512_set1_epi32(0x7fff);
+  const __m512i one  = _mm512_set1_epi32(0x1);
+
+  __m512i a_i32 = _mm512_castps_si512(a);
+  __m512i b_i32 = _mm512_castps_si512(b);
+
+  // Round to nearest even.
+  a_i32 = _mm512_add_epi32(a_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm512_add_epi32(b_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(b_i32, 16), one)));
+
+  // Pack both parts in 32-bit registers.
+  return _mm512_or_si512(_mm512_and_si512(b_i32, _mm512_set1_epi32(0xffff0000)), _mm512_srli_epi32(a_i32, 16));
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  const __m256i bias = _mm256_set1_epi32(0x7fff);
+  const __m256i one  = _mm256_set1_epi32(0x1);
+
+  __m256i a_i32 = _mm256_castps_si256(a);
+  __m256i b_i32 = _mm256_castps_si256(b);
+
+  // Round to nearest even.
+  a_i32 = _mm256_add_epi32(a_i32, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm256_add_epi32(b_i32, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(b_i32, 16), one)));
+
+  // Pack both parts in 32-bit registers.
+  return _mm256_or_si256(_mm256_and_si256(b_i32, _mm256_set1_epi32(0xffff0000)), _mm256_srli_epi32(a_i32, 16));
+#else /* __AVX512F__ */
+#ifdef __SSE4_1__
+  const __m128i bias = _mm_set1_epi32(0x7fff);
+  const __m128i one  = _mm_set1_epi32(0x1);
+
+  __m128i a_i32 = _mm_castps_si128(a);
+  __m128i b_i32 = _mm_castps_si128(b);
+
+  // Round to nearest even.
+  a_i32 = _mm_add_epi32(a_i32, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(a_i32, 16), one)));
+  b_i32 = _mm_add_epi32(b_i32, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(b_i32, 16), one)));
+
+  // Pack both parts in 32-bit registers.
+  return _mm_or_si128(_mm_and_si128(b_i32, _mm_set1_epi32(0xffff0000)), _mm_srli_epi32(a_i32, 16));
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
+  const uint32x4_t bias = vdupq_n_u32(0x7fff);
+  const uint32x4_t one  = vdupq_n_u32(0x1);
+
+  uint32x4_t a_i32 = vreinterpretq_u32_f32(a);
+  uint32x4_t b_i32 = vreinterpretq_u32_f32(b);
+
+  a_i32 = vaddq_u32(a_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_i32, 16), one)));
+  b_i32 = vaddq_u32(b_i32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_i32, 16), one)));
+
+  return vreinterpretq_s16_u32(vorrq_u32(vandq_u32(b_i32, vdupq_n_u32(0xffff0000)), vshrq_n_u32(a_i32, 16)));
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+inline void srsran_simd_bf16_loadu(simd_f_t& even, simd_f_t& odd, const bf16_t* ptr)
+{
+#ifdef __AVX512F__
+  // Load 32 16-bit brain float values.
+  __m512i temp = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(ptr));
+  // Unpack brain floats from 32-bit registers.
+  __m512i temp_even = _mm512_slli_epi32(temp, 16);
+  __m512i temp_odd  = _mm512_and_si512(temp, _mm512_set1_epi32(0xffff0000));
+  // Cast them to single-precision floating point numbers (doesn't generate any instruction).
+  even = _mm512_castsi512_ps(temp_even);
+  odd  = _mm512_castsi512_ps(temp_odd);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  __m256i temp = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(ptr));
+  even         = _mm256_castsi256_ps(_mm256_slli_epi32(temp, 16));
+  odd          = _mm256_castsi256_ps(_mm256_and_si256(temp, _mm256_set1_epi32(0xffff0000)));
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  __m128i temp = _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
+  even         = _mm_castsi128_ps(_mm_slli_epi32(temp, 16));
+  odd          = _mm_castsi128_ps(_mm_and_si128(temp, _mm_set1_epi32(0xffff0000)));
+#else /* __ARM_NEON */
+#ifdef __ARM_NEON
+  uint32x4_t temp = vld1q_u32(reinterpret_cast<uint32_t const*>(ptr));
+  even            = vreinterpretq_f32_u32(vshlq_n_u32(temp, 16));
+  odd             = vreinterpretq_f32_u32(vandq_u32(temp, vdupq_n_u32(0xffff0000)));
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+#ifdef SRSRAN_SIMD_CF_SIZE
+inline simd_cf_t srsran_simd_cbf16_loadu(const cbf16_t* ptr)
+{
+  simd_cf_t ret;
+#ifdef __ARM_NEON
+  srsran_simd_bf16_loadu(ret.val[0], ret.val[1], reinterpret_cast<const bf16_t*>(ptr));
+#else // __ARM_NEON
+  srsran_simd_bf16_loadu(ret.re, ret.im, reinterpret_cast<const bf16_t*>(ptr));
+#endif
+  return ret;
+}
+#endif // SRSRAN_SIMD_CF_SIZE
+
+inline void srsran_simd_bf16_storeu(bf16_t* ptr, simd_f_t a, simd_f_t b)
+{
+  simd_s_t bf16_vec = srsran_simd_convert_2f_bf16(a, b);
+#ifdef __AVX512F__
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(ptr), bf16_vec);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), bf16_vec);
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), bf16_vec);
+#else /* __SSE4_1__ */
+#ifdef __ARM_NEON
+  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), vreinterpretq_u32_s16(bf16_vec));
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+#ifdef SRSRAN_SIMD_CF_SIZE
+inline void srsran_simd_cbf16_storeu(cbf16_t* ptr, simd_cf_t simdreg)
+{
+  simd_s_t packed_iq_bf16 =
+      srsran_simd_convert_2f_interleaved_bf16(srsran_simd_cf_re(simdreg), srsran_simd_cf_im(simdreg));
+
+#ifdef __AVX512F__
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(ptr), packed_iq_bf16);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), packed_iq_bf16);
+#else /* __AVX2__ */
+#ifdef __SSE4_1__
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), packed_iq_bf16);
+#else /* __SSE4_1__ */
+#ifdef __ARM_NEON
+  vst1q_u32(reinterpret_cast<uint32_t*>(ptr), vreinterpretq_u32_s16(packed_iq_bf16));
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+#endif // SRSRAN_SIMD_CF_SIZE
 
 #endif /* SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_C16_SIZE */
 

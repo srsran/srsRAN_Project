@@ -384,6 +384,22 @@ bool cu_cp_impl::handle_handover_request(ue_index_t ue_index, security::security
   return ue->get_security_manager().init_security_context(sec_ctxt);
 }
 
+async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
+cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_setup_request& request)
+{
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find UE", request.ue_index);
+  rrc_ue_interface* rrc_ue = rrc_du_adapters.at(ue->get_du_index()).find_rrc_ue(request.ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
+
+  return routine_mng.start_initial_context_setup_routine(
+      request,
+      *rrc_ue,
+      ue->get_security_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      get_cu_cp_ngap_handler());
+}
+
 async_task<cu_cp_pdu_session_resource_setup_response>
 cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request)
 {
@@ -627,7 +643,6 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 {
   // Connect RRC UE to NGAP to RRC UE adapter
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_dl_nas_message_handler(),
-                                                          rrc_ue.get_rrc_ue_init_security_context_handler(),
                                                           rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Connect cu-cp to rrc ue adapters

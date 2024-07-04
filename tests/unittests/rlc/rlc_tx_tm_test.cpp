@@ -118,7 +118,8 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
   // write SDU into upper end
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison
@@ -151,7 +152,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write another SDU into upper end
   count++;
-  sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison
   pcell_worker.run_pending_tasks();
@@ -171,7 +172,8 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write another SDU into upper end
   count++;
-  byte_buffer sdu_buf2 = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf2 =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
   // write SDU into upper end
   rlc->handle_sdu(sdu_buf2.deep_copy().value(), false); // keep local copy for later comparison
@@ -210,7 +212,8 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
   // write SDU into upper end
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison
@@ -247,7 +250,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
 
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
-  byte_buffer sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, count, sdu_size, count);
+  byte_buffer sdu_buf =
+      test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
   // write SDU into upper end
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison

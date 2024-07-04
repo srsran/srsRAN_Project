@@ -102,6 +102,10 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
     preamble_info = get_prach_preamble_short_info(config.format, config.ra_scs, false);
   }
 
+  // Create range of preambles to detect.
+  interval<unsigned> preamble_indices(config.start_preamble_index,
+                                      config.start_preamble_index + config.nof_preamble_indices);
+
   // Get cyclic shift.
   unsigned N_cs = prach_cyclic_shifts_get(config.ra_scs, config.restricted_set, config.zero_correlation_zone);
   srsran_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Reserved cyclic shift.");
@@ -197,6 +201,14 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   srsvec::zero(idft_input);
 
   for (unsigned i_sequence = 0; i_sequence != nof_sequences; ++i_sequence) {
+    // Range of preambles to detect within this sequence.
+    interval<unsigned> sequence_preambles(i_sequence * nof_shifts, (i_sequence + 1) * nof_shifts);
+
+    // Skip sequence if it does not overlap with the preambles to detect.
+    if (!preamble_indices.overlaps(sequence_preambles)) {
+      continue;
+    }
+
     // Prepare root sequence configuration.
     prach_generator::configuration generator_config;
     generator_config.format                = config.format;
@@ -303,6 +315,14 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
     // Process global metric.
     for (unsigned i_window = 0; i_window != nof_shifts; ++i_window) {
+      // Calculate preamble index for the sequence and shift.
+      unsigned preamble_index = i_sequence * nof_shifts + i_window;
+
+      // Skip preamble if it is not contained within the preambles to detect.
+      if (!preamble_indices.contains(preamble_index)) {
+        continue;
+      }
+
       // Select metric global.
       span<float> metric_global            = span<float>(temp).first(win_width);
       span<float> window_metric_global_num = metric_global_num.get_view({i_window});
@@ -326,7 +346,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
       if ((delay < metric_global.size()) && (peak > threshold) &&
           (delay < static_cast<float>(max_delay_samples) * 0.8)) {
         prach_detection_result::preamble_indication& info = result.preambles.emplace_back();
-        info.preamble_index                               = i_sequence * nof_shifts + i_window;
+        info.preamble_index                               = preamble_index;
         info.time_advance =
             phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sample_rate_Hz));
         // Normalize the detection metric with respect to the threshold.

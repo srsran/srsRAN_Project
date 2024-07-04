@@ -383,6 +383,8 @@ public:
   {
     logger.info("Received a new bearer context release command");
 
+    last_release_command = cmd;
+
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -394,6 +396,8 @@ public:
     first_e1ap_request.reset();
     second_e1ap_request.reset();
   }
+
+  e1ap_bearer_context_release_command last_release_command;
 
   std::optional<std::variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>>
                                                           first_e1ap_request;

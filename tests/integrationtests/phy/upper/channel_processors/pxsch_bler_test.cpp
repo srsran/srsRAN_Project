@@ -48,14 +48,13 @@
 using namespace srsran;
 
 static constexpr subcarrier_spacing scs                         = subcarrier_spacing::kHz30;
-static constexpr pusch_mcs_table    mcs_table                   = pusch_mcs_table::qam256;
 static constexpr uint16_t           rnti                        = 0x1234;
 static constexpr unsigned           bwp_size_rb                 = 273;
 static constexpr unsigned           bwp_start_rb                = 0;
 static constexpr unsigned           nof_layers                  = 1;
 static constexpr unsigned           nof_ofdm_symbols            = 14;
 static const symbol_slot_mask       dmrs_symbol_mask            = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0};
-static constexpr unsigned           nof_ldpc_iterations         = 6;
+static constexpr unsigned           nof_ldpc_iterations         = 10;
 static constexpr dmrs_type          dmrs                        = dmrs_type::TYPE1;
 static constexpr unsigned           nof_cdm_groups_without_data = 2;
 static constexpr cyclic_prefix      cp                          = cyclic_prefix::NORMAL;
@@ -78,6 +77,8 @@ struct pxsch_bler_params {
   float sinr_dB;
   // Number of receive ports.
   unsigned nof_rx_ports;
+  // Modulation and code scheme table
+  pusch_mcs_table mcs_table;
   // Modulation and code scheme index.
   sch_mcs_index mcs_index;
   // Frequency allocation.
@@ -173,6 +174,7 @@ protected:
 
     // Extract test parameters.
     const std::string& channel    = GetParam().channel_delay_profile;
+    pusch_mcs_table    mcs_table  = GetParam().mcs_table;
     sch_mcs_index      mcs_index  = GetParam().mcs_index;
     prb_interval       rb_mapping = GetParam().freq_allocation;
 
@@ -445,15 +447,16 @@ TEST_P(PxschBlerTestFixture, Fading)
 }
 
 static const std::vector<pxsch_bler_params> test_cases = {
-    {"TDLA", 60.0, 1, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLA", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLA", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLB", 60.0, 1, 10, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLB", 60.0, 2, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLB", 60.0, 4, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLC", 60.0, 1, 8, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLC", 60.0, 2, 12, prb_interval{bwp_start_rb, bwp_size_rb}},
-    {"TDLC", 60.0, 4, 19, prb_interval{bwp_start_rb, bwp_size_rb}}};
+    {"Single-tap", 20.0, 2, pusch_mcs_table::qam64, 28, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLA", 60.0, 1, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLA", 60.0, 2, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLA", 60.0, 4, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 1, pusch_mcs_table::qam256, 10, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 2, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLB", 60.0, 4, pusch_mcs_table::qam256, 27, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 1, pusch_mcs_table::qam256, 8, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 2, pusch_mcs_table::qam256, 12, prb_interval{bwp_start_rb, bwp_size_rb}},
+    {"TDLC", 60.0, 4, pusch_mcs_table::qam256, 19, prb_interval{bwp_start_rb, bwp_size_rb}}};
 
 INSTANTIATE_TEST_SUITE_P(PxschBlertest, PxschBlerTestFixture, ::testing::ValuesIn(test_cases));
 

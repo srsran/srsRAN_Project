@@ -126,7 +126,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
   auto context = [&rlc, &tester, config, &timers, &pcell_worker, &ue_worker, &pcap]() {
     rlc = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,
                                              du_ue_index_t::MIN_DU_UE_INDEX,
-                                             srb_id_t::srb0,
+                                             drb_id_t::drb1,
                                              config,
                                              *tester,
                                              *tester,
@@ -141,7 +141,7 @@ void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params&
     rlc->set_status_provider(tester.get());
 
     for (int i = 0; i < 2048; i++) {
-      byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, i, 7, 0);
+      byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, 7, 0);
       rlc->handle_sdu(std::move(sdu), false);
       std::array<uint8_t, 100> pdu_buf;
       rlc->pull_pdu(pdu_buf);

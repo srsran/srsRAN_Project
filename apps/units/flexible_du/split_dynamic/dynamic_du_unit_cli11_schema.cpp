@@ -103,9 +103,12 @@ void srsran::configure_cli11_with_dynamic_du_unit_config_schema(CLI::App& app, d
 static void manage_ru(CLI::App& app, dynamic_du_unit_config& parsed_cfg)
 {
   // Manage the RU optionals
-  unsigned nof_ofh_entries   = app.get_subcommand("ru_ofh")->count_all();
-  unsigned nof_sdr_entries   = app.get_subcommand("ru_sdr")->count_all();
-  unsigned nof_dummy_entries = app.get_subcommand("ru_dummy")->count_all();
+  auto     ofh_subcmd        = app.get_subcommand("ru_ofh");
+  auto     sdr_subcmd        = app.get_subcommand("ru_sdr");
+  auto     dummy_subcmd      = app.get_subcommand("ru_dummy");
+  unsigned nof_ofh_entries   = ofh_subcmd->count_all();
+  unsigned nof_sdr_entries   = sdr_subcmd->count_all();
+  unsigned nof_dummy_entries = dummy_subcmd->count_all();
 
   // Count the number of RU types.
   unsigned nof_ru_types = (nof_ofh_entries != 0) ? 1 : 0;
@@ -119,15 +122,23 @@ static void manage_ru(CLI::App& app, dynamic_du_unit_config& parsed_cfg)
 
   if (nof_ofh_entries != 0) {
     parsed_cfg.ru_cfg = ofh_cfg;
+    sdr_subcmd->disabled();
+    dummy_subcmd->disabled();
+
     return;
   }
 
   if (nof_sdr_entries != 0) {
     parsed_cfg.ru_cfg = sdr_cfg;
+    ofh_subcmd->disabled();
+    dummy_subcmd->disabled();
+
     return;
   }
 
   parsed_cfg.ru_cfg = dummy_cfg;
+  sdr_subcmd->disabled();
+  ofh_subcmd->disabled();
 }
 
 void srsran::autoderive_dynamic_du_parameters_after_parsing(CLI::App& app, dynamic_du_unit_config& parsed_cfg)

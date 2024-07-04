@@ -190,6 +190,8 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::handle_procedure_resu
     // Create UE RRC context in CU-CP, if required.
     resp.success = create_ue_rrc_context(resp);
 
+    logger.debug("ue={} proc=\"{}\": finished successfully", request.ue_index, name());
+
     return resp;
   }
 

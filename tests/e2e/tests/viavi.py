@@ -346,7 +346,6 @@ def _test_viavi(
                 "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
                 "enable_qos_viavi": test_declaration.enable_qos_viavi,
             },
-            "templates": {"extra": str(Path(__file__).joinpath("../viavi/config.yml").resolve())},
         },
     }
     if metrics_server is not None:

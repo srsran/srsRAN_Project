@@ -123,7 +123,7 @@ public:
   void enqueue_random_number_of_rach_indications()
   {
     rach_indication_message rach_ind{to_du_cell_index(0), next_slot_rx(), {{0, 0, {}}}};
-    unsigned                nof_preambles = test_rgen::uniform_int<unsigned>(1, 10);
+    auto                    nof_preambles = test_rgen::uniform_int<unsigned>(1, 10);
     for (unsigned i = 0; i != nof_preambles; ++i) {
       rach_ind.occasions[0].preambles.push_back({i, to_rnti((uint16_t)rnti + 1 + i), phy_time_unit{}});
     }
@@ -185,12 +185,12 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
   ASSERT_TRUE(this->run_slot_until([this]() {
-    for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.begin(),
+                       this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.end(),
+                       [rnti = this->rnti](const pucch_info& pucch) {
+                         return pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1 and
+                                pucch.format_1.harq_ack_nof_bits > 0;
+                       });
   }));
 
   // Enqueue SRB1 data; with the UE in fallback mode, and after the MSG4 has been delivered, both common and dedicated
@@ -237,18 +237,23 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
           return true;
         }
       }
+      return false;
     }
     // Case of 3 PUCCH grants.
     else if (this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.size() == 3) {
       for (const auto& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
         if (pucch.crnti == rnti and pucch.format == pucch_format::FORMAT_1) {
-          if (pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
-            if (pucch.format_1.harq_ack_nof_bits > 0) {
-              pucch.resources.second_hop_prbs.empty() ? pucch_res_ptrs.f1_ded_ptr    = &pucch
-                                                      : pucch_res_ptrs.f1_common_ptr = &pucch;
+          if (pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0 and
+              not pucch.resources.second_hop_prbs.empty()) {
+            pucch_res_ptrs.f1_common_ptr = &pucch;
+          } else if (pucch.format_1.sr_bits == sr_nof_bits::one and pucch.format_1.harq_ack_nof_bits > 0) {
+            // We cannot tell whether it's a f1_ded_sr_ptr or f1_ded_ptr yet only from the bits and format. But this is
+            // not important for the test. We only need to know that both pointers are set.
+            if (pucch_res_ptrs.f1_ded_ptr == nullptr and pucch_res_ptrs.f1_ded_sr_ptr == nullptr) {
+              pucch_res_ptrs.f1_ded_ptr = &pucch;
+            } else if (pucch_res_ptrs.f1_ded_ptr != nullptr and pucch_res_ptrs.f1_ded_sr_ptr == nullptr) {
+              pucch_res_ptrs.f1_ded_sr_ptr = &pucch;
             }
-          } else {
-            pucch_res_ptrs.f1_ded_sr_ptr = &pucch;
           }
         }
         if (pucch_res_ptrs.f1_common_ptr != nullptr and pucch_res_ptrs.f1_ded_ptr != nullptr and
@@ -256,6 +261,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
           return true;
         }
       }
+      return false;
     }
 
     return false;

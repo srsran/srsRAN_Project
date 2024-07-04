@@ -340,8 +340,10 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
 static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)
 {
   // Clean the HAL optional.
-  if (app.get_subcommand("hal")->count_all() == 0) {
+  if (auto subcmd = app.get_subcommand("hal"); subcmd->count_all() == 0) {
     hal_config.reset();
+    // As HAL configuration is optional, disable the command when it is not present in the configuration.
+    subcmd->disabled();
   }
 }
 

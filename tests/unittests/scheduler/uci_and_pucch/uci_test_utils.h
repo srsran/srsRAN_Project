@@ -67,8 +67,14 @@ pucch_info build_pucch_info(const bwp_configuration* bwp_cfg,
                             unsigned                 harq_ack_nof_bits,
                             uint8_t                  time_domain_occ);
 
-// Verify if the PUCCH scheduler output (or PUCCH PDU) is correct.
-bool assess_ul_pucch_info(const pucch_info& expected, const pucch_info& test);
+bool pucch_info_match(const pucch_info& expected, const pucch_info& test);
+
+// Wrapper for std::find_if() to find a PUCCH PDU in a vector of PUCCH PDUs.
+template <typename F>
+bool find_pucch_pdu(const static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucch_pdus, const F& func)
+{
+  return std::find_if(pucch_pdus.begin(), pucch_pdus.end(), func) != pucch_pdus.end();
+}
 
 // Makes a default DCI for PUCCH test purposes but some given parameters.
 inline pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_configuration* coreset_cfg_)

@@ -31,6 +31,11 @@ e1ap_ue_context* e1ap_ue_context_list::add_ue(ue_index_t ue_index, gnb_cu_cp_ue_
   srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid, "Invalid cu_cp_ue_e1ap_id={}", cu_cp_ue_e1ap_id);
 
+  if (ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end()) {
+    logger.error("ue={}: UE already exists", ue_index);
+    return nullptr;
+  }
+
   auto ret = ues.emplace(std::piecewise_construct,
                          std::forward_as_tuple(cu_cp_ue_e1ap_id),
                          std::forward_as_tuple(ue_index, cu_cp_ue_e1ap_id, timers));

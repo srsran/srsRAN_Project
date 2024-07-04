@@ -24,6 +24,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/support/async/async_task.h"
@@ -114,9 +115,6 @@ class ngap_rrc_ue_control_notifier
 public:
   virtual ~ngap_rrc_ue_control_notifier() = default;
 
-  /// \brief Notify about the reception of new security context.
-  virtual async_task<bool> on_new_security_context() = 0;
-
   /// \brief Get packed handover preparation message for inter-gNB handover.
   virtual byte_buffer on_handover_preparation_message_required() = 0;
 };
@@ -170,6 +168,12 @@ public:
   /// \param[in] sec_ctxt The received security context.
   /// \return True if the security context was successfully initialized, false otherwise.
   virtual bool on_handover_request_received(ue_index_t ue_index, security::security_context sec_ctxt) = 0;
+
+  /// \brief Notify about the reception of a new Initial Context Setup Request.
+  /// \param[in] request The received Initial Context Setup Request.
+  /// \returns The Initial Context Setup Response or the Initial Context Setup Failure.
+  virtual async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
+  on_new_initial_context_setup_request(ngap_init_context_setup_request& request) = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   /// \param[in] request The received PDU Session Resource Setup Request.
