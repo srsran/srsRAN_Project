@@ -39,6 +39,7 @@ def configure_test_parameters(
     enable_qos_reestablishment: bool = False,
     num_cells: int = 1,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
+    enable_security_mode: bool = False,
 ):
     """
     Configure test parameters
@@ -71,6 +72,7 @@ def configure_test_parameters(
                 "enable_channel_noise": noise_spd != 0,
                 "enable_qos_reestablishment": enable_qos_reestablishment,
                 "num_cells": num_cells,
+                "enable_security_mode": enable_security_mode,
             },
         },
     }
