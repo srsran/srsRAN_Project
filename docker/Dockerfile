@@ -44,20 +44,20 @@ ARG NUM_CORES
 # Compile UHD/DPDK
 RUN /src/docker/scripts/build_${LIB}.sh ${LIB_VERSION} ${ARCH} ${NUM_CORES}
 
-# Compile srsRAN Project
+# Compile srsRAN Project and install it in the OS
 ARG EXTRA_CMAKE_ARGS=""
 RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     LIB_UPPER=$(echo $LIB | tr '[:lower:]' '[:upper:]') && \
     export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
     /src/docker/scripts/builder.sh \
-    -m -j${NUM_CORES} \
-    -DBUILD_TESTS=False \
+    -m "-j${NUM_CORES} install" \
+    -DBUILD_TESTS=True \
     -DENABLE_${LIB_UPPER}=On \
     -DCMAKE_CXX_FLAGS="-march=${ARCH}" \
     ${EXTRA_CMAKE_ARGS} /src
 
-# Install in the OS filesystem to later copy into the next stage
-RUN cd /src/build && make install
+# Copy extra binaries
+RUN cp /src/build/tests/integrationtests/ofh/ru_emulator /usr/local/bin/ru_emulator
 
 ################
 # Stage 2: Run #
