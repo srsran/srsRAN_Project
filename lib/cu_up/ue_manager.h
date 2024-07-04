@@ -26,6 +26,7 @@ class ue_manager : public ue_manager_ctrl
 public:
   explicit ue_manager(network_interface_config&                   net_config_,
                       n3_interface_config&                        n3_config_,
+                      cu_up_test_mode_config                      test_mode_config,
                       e1ap_control_message_handler&               e1ap_,
                       timer_manager&                              timers_,
                       f1u_cu_up_gateway&                          f1u_gw_,
@@ -54,6 +55,7 @@ private:
 
   network_interface_config&                   net_config;
   n3_interface_config&                        n3_config;
+  cu_up_test_mode_config                      test_mode_config;
   e1ap_control_message_handler&               e1ap;
   f1u_cu_up_gateway&                          f1u_gw;
   gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier;

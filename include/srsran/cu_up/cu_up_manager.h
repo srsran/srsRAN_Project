@@ -37,7 +37,7 @@ public:
   /// \param[in] msg The original bearer setup request.
   /// \return Returns message containing the index of the created UE and all response/failure message.
   virtual e1ap_bearer_context_setup_response
-  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg, bool test_mode = false) = 0;
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) = 0;
 
   /// \brief Create a new UE context and handle bearer modification request.
   /// \param[in] msg The original bearer modification request.

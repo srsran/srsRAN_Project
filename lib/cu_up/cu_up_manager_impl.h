@@ -31,8 +31,8 @@ public:
                               gtpu_teid_pool&               f1u_teid_allocator);
   ~cu_up_manager_impl() override = default;
 
-  e1ap_bearer_context_setup_response handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg,
-                                                                         bool test_mode = false) override;
+  e1ap_bearer_context_setup_response
+  handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;

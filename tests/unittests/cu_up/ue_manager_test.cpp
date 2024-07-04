@@ -41,6 +41,7 @@ protected:
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,
                                           n3_config,
+                                          cu_up_test_mode_config{},
                                           *e1ap,
                                           timers,
                                           *f1u_gw,

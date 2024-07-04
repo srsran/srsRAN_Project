@@ -42,6 +42,7 @@ public:
              e1ap_control_message_handler&               e1ap_,
              network_interface_config&                   net_config_,
              n3_interface_config&                        n3_config_,
+             const cu_up_test_mode_config&               test_mode_config_,
              std::unique_ptr<ue_executor_mapper>         ue_exec_mapper_,
              timer_factory                               ue_dl_timer_factory_,
              timer_factory                               ue_ul_timer_factory_,
@@ -63,6 +64,7 @@ public:
                         cfg.security_info,
                         net_config_,
                         n3_config_,
+                        test_mode_config_,
                         logger,
                         ue_inactivity_timer,
                         ue_dl_timer_factory_,
@@ -106,10 +108,9 @@ public:
   void set_security_config(const security::sec_as_config& security_info) { cfg.security_info = security_info; }
 
   // pdu_session_manager_ctrl
-  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
-                                             bool                                      test_mode = false) override
+  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
   {
-    return pdu_session_manager.setup_pdu_session(session, test_mode);
+    return pdu_session_manager.setup_pdu_session(session);
   }
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override

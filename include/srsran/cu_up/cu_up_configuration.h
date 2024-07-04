@@ -65,7 +65,7 @@ struct e1ap_config_params {
   e1ap_connection_manager* e1ap_conn_mng  = nullptr;
 };
 
-struct cu_up_test_mode_config_params {
+struct cu_up_test_mode_config {
   bool     enabled           = false;
   bool     integrity_enabled = true;
   bool     ciphering_enabled = true;
@@ -87,9 +87,9 @@ struct cu_up_configuration {
 
   std::map<five_qi_t, cu_up_qos_config> qos; // 5QI as key
 
-  network_interface_config      net_cfg;
-  n3_interface_config           n3_cfg;
-  cu_up_test_mode_config_params test_mode_cfg;
+  network_interface_config net_cfg;
+  n3_interface_config      n3_cfg;
+  cu_up_test_mode_config   test_mode_cfg;
 
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";

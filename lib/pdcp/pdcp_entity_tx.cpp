@@ -135,8 +135,13 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   // Write to lower layers
   write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
 
+  // Automatically trigger delivery notifications when using test mode
+  if (cfg.custom.test_mode) {
+    handle_transmit_notification(SN(st.tx_next));
+  }
+
   // Increment TX_NEXT
-  handle_transmit_notification(SN(st.tx_next++));
+  st.tx_next++;
   up_tracer << trace_event{"pdcp_tx_pdu", tx_tp};
 }
 

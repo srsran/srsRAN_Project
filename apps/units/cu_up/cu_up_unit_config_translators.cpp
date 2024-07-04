@@ -55,6 +55,7 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
     out_pdcp_custom.tx.warn_on_drop     = cu_up_config.warn_on_drop;
     out_pdcp_custom.tx.rlc_sdu_queue    = qos.rlc_sdu_queue;
+    out_pdcp_custom.tx.test_mode        = cu_up_config.test_mode_cfg.enabled;
     out_pdcp_custom.metrics_period      = timer_duration(cu_up_config.metrics.pdcp.report_period);
 
     // Convert F1-U config

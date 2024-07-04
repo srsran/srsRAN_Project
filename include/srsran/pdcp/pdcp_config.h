@@ -122,6 +122,7 @@ struct pdcp_custom_config_base {
 struct pdcp_custom_config_tx : public pdcp_custom_config_base {
   uint16_t rlc_sdu_queue = 4096;
   bool     warn_on_drop  = false;
+  bool     test_mode     = false;
 };
 
 struct pdcp_custom_config_rx : public pdcp_custom_config_base {

@@ -59,12 +59,11 @@ class pdu_session_manager_ctrl
 public:
   virtual ~pdu_session_manager_ctrl() = default;
 
-  virtual pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
-                                                            bool                                      test_mode = false)           = 0;
+  virtual pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) = 0;
   virtual pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
-                                                             bool new_tnl_info_required)      = 0;
-  virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id) = 0;
-  virtual size_t                          get_nof_pdu_sessions()                              = 0;
+                                                             bool new_tnl_info_required)                       = 0;
+  virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id)                  = 0;
+  virtual size_t                          get_nof_pdu_sessions()                                               = 0;
 };
 
 } // namespace srs_cu_up

@@ -35,6 +35,7 @@ public:
                            const security::sec_as_config&                   security_info_,
                            network_interface_config&                        net_config_,
                            n3_interface_config&                             n3_config_,
+                           const cu_up_test_mode_config&                    test_mode_config_,
                            cu_up_ue_logger&                                 logger_,
                            unique_timer&                                    ue_inactivity_timer_,
                            timer_factory                                    ue_dl_timer_factory_,
@@ -51,8 +52,7 @@ public:
                            task_executor&                                   crypto_exec_,
                            dlt_pcap&                                        gtpu_pcap_);
 
-  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
-                                                    bool                                      test_mode = false) override;
+  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override;
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
@@ -78,6 +78,7 @@ private:
   const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
   n3_interface_config&                                     n3_config;
+  cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            ue_dl_timer_factory;

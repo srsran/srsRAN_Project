@@ -27,6 +27,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const security::sec_as_config&                   security_info_,
                                                    network_interface_config&                        net_config_,
                                                    n3_interface_config&                             n3_config_,
+                                                   const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
                                                    unique_timer&                               ue_inactivity_timer_,
                                                    timer_factory                               ue_dl_timer_factory_,
@@ -47,6 +48,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   security_info(security_info_),
   net_config(net_config_),
   n3_config(n3_config_),
+  test_mode_config(test_mode_config_),
   logger(logger_),
   ue_inactivity_timer(ue_inactivity_timer_),
   ue_dl_timer_factory(ue_dl_timer_factory_),
@@ -65,8 +67,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 {
 }
 
-pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
-                                                                     bool test_mode)
+pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
 {
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
@@ -123,7 +124,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
-  msg.cfg.rx.test_mode                 = test_mode;
+  msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
@@ -259,7 +260,6 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.rb_id                                = drb_to_setup.drb_id;
   pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg, new_session.security_ind);
   pdcp_msg.config.custom                        = qos_cfg.at(five_qi).pdcp_custom_cfg;
-  pdcp_msg.config.custom.metrics_period         = std::chrono::milliseconds(1000);
   pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
   pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;

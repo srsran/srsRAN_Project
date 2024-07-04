@@ -38,6 +38,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration&    config_,
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
                                         cfg.n3_cfg,
+                                        cfg.test_mode_cfg,
                                         e1ap,
                                         *cfg.timers,
                                         *cfg.f1u_gateway,
@@ -56,7 +57,7 @@ void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<
 }
 
 e1ap_bearer_context_setup_response
-cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg, bool test_mode)
+cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
 {
   e1ap_bearer_context_setup_response response = {};
   response.ue_index                           = INVALID_UE_INDEX;
@@ -77,7 +78,7 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
 
   // 2. Handle bearer context setup request
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
-    pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session, test_mode);
+    pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
     if (result.success) {
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
     } else {
@@ -231,7 +232,7 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   bearer_context_setup.pdu_session_res_to_setup_list.emplace(psi, pdu_session);
 
   // Setup bearer
-  e1ap_bearer_context_setup_response setup_resp = handle_bearer_context_setup_request(bearer_context_setup, true);
+  e1ap_bearer_context_setup_response setup_resp = handle_bearer_context_setup_request(bearer_context_setup);
 
   // Modifiy bearer
   e1ap_bearer_context_modification_request bearer_modify = {};
@@ -252,7 +253,6 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   bearer_mod_item.pdu_session_res_to_modify_list.emplace(pdu_session_to_mod.pdu_session_id, pdu_session_to_mod);
   bearer_modify.ng_ran_bearer_context_mod_request = bearer_mod_item;
 
-  logger.warning("modifying context!");
   return handle_bearer_context_modification_request(bearer_modify);
 }
 
