@@ -83,10 +83,16 @@ static void fill_cu_up_rlc_qos_section(YAML::Node node, const cu_up_unit_qos_con
   }
 }
 
+static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_config& config)
+{
+  node["backoff_timer"] = config.t_notify;
+}
+
 static void fill_cu_up_qos_entry(YAML::Node node, const cu_up_unit_qos_config& config)
 {
   node["five_qi"] = five_qi_to_uint(config.five_qi);
   fill_cu_up_rlc_qos_section(node["rlc"], config);
+  fill_cu_up_f1_qos_section(node["f1u_cu_up"], config.f1u_cu_up);
 }
 
 static YAML::Node get_last_entry(YAML::Node node)
