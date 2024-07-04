@@ -181,8 +181,7 @@ protected:
     ue_mng.find_ue(allocated_ue_index)->get_security_manager().init_security_context(init_sec_ctx);
 
     // Configure PDCP entity security on SRB1
-    rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier = *rrc_ue;
-    rrc_ue_notifier.on_new_as_security_context();
+    rrc_ue->on_new_as_security_context();
   }
 
   void enable_security()

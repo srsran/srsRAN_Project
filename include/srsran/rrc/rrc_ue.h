@@ -120,10 +120,6 @@ public:
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
-
-  /// \brief Setup AS security in the UE. This includes configuring
-  /// the PDCP entity security on SRB1 with the new AS keys.
-  virtual void on_new_as_security_context() = 0;
 };
 
 /// Interface used by the RRC reestablishment procedure to
