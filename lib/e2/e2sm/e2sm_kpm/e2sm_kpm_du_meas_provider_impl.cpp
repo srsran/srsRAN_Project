@@ -445,8 +445,11 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
                                                   const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
                                                   std::vector<asn1::e2sm::meas_record_item_c>& items)
 {
-  bool                 meas_collected = false;
-  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+  bool meas_collected = false;
+  if (last_ue_metrics.size() == 0) {
+    return meas_collected;
+  }
+  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.AirIfDelayUl supports only NO_LABEL label.");
