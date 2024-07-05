@@ -405,7 +405,7 @@ class dummy_rrc_ue_radio_access_capability_handler : public rrc_ue_radio_access_
 public:
   dummy_rrc_ue_radio_access_capability_handler() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  byte_buffer get_packed_ue_radio_access_cap_info() override { return make_byte_buffer("deadbeef").value(); }
+  byte_buffer get_packed_ue_radio_access_cap_info() const override { return make_byte_buffer("deadbeef").value(); }
 
 private:
   srslog::basic_logger& logger;

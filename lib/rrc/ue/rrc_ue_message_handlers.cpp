@@ -337,7 +337,7 @@ async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uin
       });
 }
 
-byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list()
+byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list() const
 {
   byte_buffer pdu{};
 
@@ -355,7 +355,7 @@ byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list()
   return pdu.copy();
 }
 
-byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info()
+byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info() const
 {
   asn1::rrc_nr::ue_radio_access_cap_info_s      ue_radio_access_cap_info;
   asn1::rrc_nr::ue_radio_access_cap_info_ies_s& ue_radio_access_cap_info_ies =

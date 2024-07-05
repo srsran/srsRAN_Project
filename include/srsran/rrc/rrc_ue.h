@@ -205,7 +205,7 @@ public:
 
   /// \brief Get the packed UE Capability RAT Container List.
   /// \returns The packed UE Capability RAT Container List.
-  virtual byte_buffer get_packed_ue_capability_rat_container_list() = 0;
+  virtual byte_buffer get_packed_ue_capability_rat_container_list() const = 0;
 
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
@@ -264,7 +264,7 @@ public:
 
   /// \brief Get the packed UE Radio Access Cap Info.
   /// \returns The packed UE Radio Access Cap Info.
-  virtual byte_buffer get_packed_ue_radio_access_cap_info() = 0;
+  virtual byte_buffer get_packed_ue_radio_access_cap_info() const = 0;
 };
 
 /// Handler to get the handover preparation context to the NGAP.
