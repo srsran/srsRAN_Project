@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -69,6 +70,23 @@ public:
   virtual rlc_rx_metrics get_and_reset_metrics() = 0;
   virtual void           reset_metrics()         = 0;
 };
+
+inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rlc_rx_metrics& m)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer,
+                 "period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps "
+                 "ctrl_pdus={}, ctrl_rate={}kbps",
+                 metrics_period.count(),
+                 m.num_sdus,
+                 (double)m.num_sdu_bytes * 8 / (double)metrics_period.count(),
+                 m.num_pdus,
+                 (double)m.num_pdu_bytes * 8 / (double)metrics_period.count(),
+                 m.mode_specific.am.num_ctrl_pdus,
+                 (double)m.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+  return to_c_str(buffer);
+}
+
 } // namespace srsran
 
 namespace fmt {
