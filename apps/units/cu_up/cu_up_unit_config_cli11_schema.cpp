@@ -90,14 +90,14 @@ static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_p
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
   add_option(app, "--n3_bind_addr", upf_params.n3_bind_addr, "Local IP address to bind for N3 interface")
-      ->check(CLI::ValidIPV4);
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--n3_bind_interface", upf_params.n3_bind_interface, "Network device to bind for N3 interface")
       ->capture_default_str();
   add_option(app,
              "--n3_ext_addr",
              upf_params.n3_ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
-      ->check(CLI::ValidIPV4);
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
 }
@@ -127,6 +127,11 @@ static void configure_cli11_rlc_args(CLI::App& app, cu_up_unit_qos_config& qos_p
   configure_cli11_rlc_am_args(*rlc_am_subcmd, qos_params.rlc_sdu_queue);
 }
 
+static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
+{
+  app.add_option("--backoff_timer", f1u_cu_up_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
+}
+
 static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_params)
 {
   add_option(app, "--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
@@ -134,6 +139,9 @@ static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_p
   // RLC section.
   CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
   configure_cli11_rlc_args(*rlc_subcmd, qos_params);
+
+  CLI::App* f1u_cu_up_subcmd = app.add_subcommand("f1u_cu_up", "F1-U parameters at CU_UP side");
+  configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
 }
 
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)

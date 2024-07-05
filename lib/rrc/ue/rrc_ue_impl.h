@@ -74,6 +74,7 @@ public:
 
   // rrc_ue_control_message_handler
   rrc_ue_security_mode_command_context get_security_mode_command_context() override;
+  async_task<bool>                     handle_security_mode_command_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;

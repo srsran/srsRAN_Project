@@ -115,7 +115,7 @@ private:
                                                    const resource_grid_reader&                   grid);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
-  unsigned enqueue_section_type_1_message_symbol(span<const cf_t>             iq_symbol_data,
+  unsigned enqueue_section_type_1_message_symbol(span<const cbf16_t>          iq_symbol_data,
                                                  const uplane_message_params& params,
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);

@@ -39,7 +39,7 @@ static inline __m512i loadu_epi16_avx512(const void* mem_address)
 /// \brief Compresses samples of a single resource block using AVX512 intrinsics.
 ///
 /// \param[out] compressed_prb Compressed PRB (stores compressed packed values).
-/// \param[in] uncompr_samples Pointer to an array of uncompressed 16bit samples.
+/// \param[in] uncompr_samples Pointer to an array of uncompressed 16-bit samples.
 /// \param[in] exponent        Exponent used in BFP compression.
 /// \param[in] data_width      Bit width of resulting compressed samples.
 static void
@@ -58,7 +58,7 @@ compress_prb_avx512(compressed_prb& c_prb, const int16_t* uncompr_samples, uint8
 }
 
 void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
-                                         span<const cf_t>             input,
+                                         span<const cbf16_t>          input,
                                          const ru_compression_params& params)
 {
   // Use generic implementation if AVX512 utils don't support requested bit width.
@@ -67,22 +67,22 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
     return;
   }
 
-  // AVX512 register size in a number of 16bit words.
+  // AVX512 register size in a number of 16-bit words.
   static constexpr size_t AVX512_REG_SIZE = 32;
 
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
-  // Performs conversion of input complex float values to signed 16bit integers.
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
+  // Performs conversion of input brain float values to signed 16-bit integers.
   quantize_input(input_quantized_span, float_samples_span);
 
   // Compression algorithm implemented according to Annex A.1.2 in O-RAN.WG4.CUS.
   unsigned sample_idx = 0;
   unsigned rb         = 0;
 
-  // With 3 AVX512 registers we can process 4 PRBs at a time (48 16bit IQ pairs).
+  // With 3 AVX512 registers we can process 4 PRBs at a time (48 16-bit IQ pairs).
   for (size_t rb_index_end = (output.size() / 4) * 4; rb != rb_index_end; rb += 4) {
     // Load input.
     __m512i r0_epi16 = loadu_epi16_avx512(&input_quantized[sample_idx]);

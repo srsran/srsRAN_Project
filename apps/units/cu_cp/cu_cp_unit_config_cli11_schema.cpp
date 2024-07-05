@@ -414,7 +414,7 @@ static void configure_cli11_amf_args(CLI::App& app, cu_cp_unit_amf_config& amf_p
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
   add_option(app, "--n2_bind_addr", amf_params.n2_bind_addr, "Local IP address to bind for N2 interface")
-      ->check(CLI::ValidIPV4);
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
   add_option(app, "--n2_bind_interface", amf_params.n2_bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
   add_option(app, "--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");

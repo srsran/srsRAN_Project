@@ -700,6 +700,8 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
           pusch_params.dc_offset = dc_offset_t::undetermined;
         } else if (value == "outside") {
           pusch_params.dc_offset = dc_offset_t::outside;
+        } else if (value == "center") {
+          pusch_params.dc_offset = dc_offset_t::center;
         } else {
           pusch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
         }
@@ -710,7 +712,7 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       "unknown.")
       ->capture_default_str()
       ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
-              CLI::IsMember({"outside", "undetermined"}));
+              CLI::IsMember({"outside", "undetermined", "center"}));
   add_option(app,
              "--olla_snr_inc_step",
              pusch_params.olla_snr_inc,

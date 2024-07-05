@@ -53,6 +53,8 @@
 
 // Include ThreadSanitizer (TSAN) options if thread sanitization is enabled.
 // This include is not unused - it helps prevent false alarms from the thread sanitizer.
+#include "du_appconfig_yaml_writer.h"
+
 #include "srsran/support/tsan_options.h"
 
 #include <atomic>
@@ -66,6 +68,7 @@
 #include "apps/units/flexible_du/du_high/pcap_factory.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_cli11_schema.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_validator.h"
+#include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_config_yaml_writer.h"
 #include "apps/units/flexible_du/split_dynamic/dynamic_du_unit_logger_registrator.h"
 
 #ifdef DPDK_FOUND
@@ -123,11 +126,17 @@ static void initialize_log(const std::string& filename)
 static void register_app_logs(const logger_appconfig& log_cfg, const dynamic_du_unit_config& du_loggers)
 {
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
   }
+
+  auto& app_logger = srslog::fetch_basic_logger("GNB", false);
+  app_logger.set_level(srslog::basic_levels::info);
+  app_services::application_message_banners::log_build_info(app_logger);
+  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
@@ -200,7 +209,10 @@ int main(int argc, char** argv)
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
-    config_logger.debug("Input configuration (all values): \n{}", app.config_to_str(true, false));
+    YAML::Node node;
+    fill_du_appconfig_in_yaml_schema(node, du_cfg);
+    fill_dynamic_du_unit_config_in_yaml_schema(node, du_unit_cfg);
+    config_logger.debug("Input configuration (all values): \n{}", YAML::Dump(node));
   } else {
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
@@ -229,9 +241,6 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(du_cfg.buffer_pool_config.nof_segments, du_cfg.buffer_pool_config.segment_size);
-
-  // Log build info
-  du_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
   // Log CPU architecture.
   cpu_architecture_info::get().print_cpu_info(du_logger);

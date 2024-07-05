@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <string>
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

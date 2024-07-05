@@ -30,9 +30,9 @@
 using namespace srsran;
 using namespace ofh;
 
-void iq_compression_none_avx512::compress(span<srsran::ofh::compressed_prb>         output,
-                                          span<const srsran::cf_t>                  input,
-                                          const srsran::ofh::ru_compression_params& params)
+void iq_compression_none_avx512::compress(span<compressed_prb>         output,
+                                          span<const cbf16_t>          input,
+                                          const ru_compression_params& params)
 {
   // Number of quantized samples per resource block.
   static constexpr size_t NOF_SAMPLES_PER_PRB = 2 * NOF_SUBCARRIERS_PER_RB;
@@ -49,18 +49,11 @@ void iq_compression_none_avx512::compress(span<srsran::ofh::compressed_prb>     
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), input.size() * 2U);
   q.to_fixed_point(input_quantized_span, float_samples_span, iq_scaling);
 
-  if (SRSRAN_UNLIKELY(logger.debug.enabled() && !input_quantized_span.empty())) {
-    // Calculate and print RMS of quantized samples.
-    float sum_squares = srsvec::dot_prod(input_quantized_span, input_quantized_span, 0);
-    float rms         = std::sqrt(sum_squares / input_quantized_span.size());
-    if (std::isnormal(rms)) {
-      logger.debug("Quantized IQ samples RMS value of '{}'", rms);
-    }
-  }
+  log_post_quantization_rms(input_quantized_span);
 
   unsigned        sample_idx = 0;
   unsigned        rb         = 0;

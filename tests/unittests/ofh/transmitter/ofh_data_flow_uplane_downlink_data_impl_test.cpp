@@ -40,7 +40,7 @@ namespace {
 class ofh_uplane_packet_builder_spy : public uplane_message_builder
 {
   static_vector<uplane_message_params, MAX_NSYMB_PER_SLOT> uplane_msg_params;
-  std::vector<std::vector<cf_t>>                           iq_data;
+  std::vector<std::vector<cbf16_t>>                        iq_data;
 
 public:
   ofh_uplane_packet_builder_spy()
@@ -53,7 +53,7 @@ public:
 
   units::bytes get_header_size(const ru_compression_params& params) const override { return units::bytes(8); }
 
-  unsigned build_message(span<uint8_t> buffer, span<const cf_t> grid, const uplane_message_params& params) override
+  unsigned build_message(span<uint8_t> buffer, span<const cbf16_t> grid, const uplane_message_params& params) override
   {
     std::copy(grid.begin(), grid.end(), iq_data[params.symbol_id].begin() + params.start_prb * NOF_SUBCARRIERS_PER_RB);
     uplane_msg_params.push_back(params);
@@ -68,7 +68,7 @@ public:
   span<const uplane_message_params> get_uplane_params() const { return uplane_msg_params; }
 
   /// Returns a pointer to the resource grid reader processed by this builder.
-  span<const cf_t> get_iq_data(unsigned symbol) const { return iq_data[symbol]; }
+  span<const cbf16_t> get_iq_data(unsigned symbol) const { return iq_data[symbol]; }
 };
 
 } // namespace
@@ -139,7 +139,7 @@ protected:
   void initialize_grid_reader()
   {
     for (uint8_t symbol = 0; symbol != nof_symbols; ++symbol) {
-      for (uint16_t k = 0, e = ru_nof_prbs * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+      for (uint16_t k = 0, e = du_nof_prbs * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
         rg_reader_spy.write(
             resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
       }
@@ -205,10 +205,10 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
     ASSERT_EQ(param.compression_params.type, compr_params.type);
 
     // Check the symbols.
-    std::vector<cf_t> iq_symbols(param.nof_prb * NOF_SUBCARRIERS_PER_RB, 0);
+    std::vector<cbf16_t> iq_symbols(param.nof_prb * NOF_SUBCARRIERS_PER_RB, 0);
     rg_reader_spy.get(iq_symbols, 0, symbol_id, param.start_prb * NOF_SUBCARRIERS_PER_RB);
 
-    ASSERT_EQ(span<const cf_t>(iq_symbols),
+    ASSERT_EQ(span<const cbf16_t>(iq_symbols),
               uplane_builder->get_iq_data(symbol_id).subspan(param.start_prb * NOF_SUBCARRIERS_PER_RB,
                                                              param.nof_prb * NOF_SUBCARRIERS_PER_RB));
 

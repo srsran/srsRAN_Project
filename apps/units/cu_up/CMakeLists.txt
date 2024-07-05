@@ -24,6 +24,7 @@ set(SOURCES
         cu_up_unit_config_cli11_schema.cpp
         cu_up_unit_config_translators.cpp
         cu_up_unit_config_validator.cpp
+        cu_up_unit_config_yaml_writer.cpp
         cu_up_wrapper.cpp)
 
 add_library(srsran_cu_up_app_unit STATIC ${SOURCES})

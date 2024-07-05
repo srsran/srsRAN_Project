@@ -220,6 +220,9 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     } else {
       logger.log_info("RX SDU. sn={} sdu_len={}", header.sn, sdu.value().length());
       metrics.metrics_add_sdus(1, sdu.value().length());
+      auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() -
+                                                                          sdu_info.time_of_arrival);
+      metrics.metrics_add_sdu_latency(latency.count() / 1000);
       upper_dn.on_new_sdu(std::move(sdu.value()));
     }
     // Release all buffers of sdu_data; keep "fully_received == true" for correct construction of status report
@@ -340,7 +343,11 @@ bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   logger.log_debug("RX SDU. payload_len={} {}", payload.length(), header);
 
   // Add new SN to RX window if no segments have been received yet
-  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : ([&]() -> rlc_rx_am_sdu_info& {
+    rlc_rx_am_sdu_info& sdu = rx_window->add_sn(header.sn);
+    sdu.time_of_arrival     = std::chrono::steady_clock::now();
+    return sdu;
+  })();
 
   // Store the full SDU and flag it as complete.
   rx_sdu.sdu_data       = std::move(payload);
@@ -360,7 +367,11 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   logger.log_debug("RX SDU segment. payload_len={} {}", payload.length(), header);
 
   // Add new SN to RX window if no segments have been received yet
-  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : rx_window->add_sn(header.sn);
+  rlc_rx_am_sdu_info& rx_sdu = rx_window->has_sn(header.sn) ? (*rx_window)[header.sn] : ([&]() -> rlc_rx_am_sdu_info& {
+    rlc_rx_am_sdu_info& sdu = rx_window->add_sn(header.sn);
+    sdu.time_of_arrival     = std::chrono::steady_clock::now();
+    return sdu;
+  })();
 
   // Create SDU segment, to be stored later
   rlc_rx_am_sdu_segment segment = {};

@@ -24,7 +24,7 @@
 #include "../../../../lib/ofh/serdes/ofh_uplane_message_builder_static_compression_impl.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/srsvec/zero.h"
+#include "srsran/srsvec/conversion.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -127,7 +127,10 @@ TEST(ofh_uplane_packet_builder_static_impl_test, non_compressed_packet_should_pa
 
     // Prepare output buffer and build packet.
     std::vector<uint8_t> result_packet(test_case.packet.size(), 0);
-    builder.build_message(result_packet, test_case.iq_data, test_case.params);
+    std::vector<cbf16_t> iq_data_cbf16(test_case.iq_data.size());
+    srsvec::convert(iq_data_cbf16, test_case.iq_data);
+
+    builder.build_message(result_packet, iq_data_cbf16, test_case.params);
 
     // First make sure basic header matches the expected one.
     units::bytes header_size = get_iq_data_offset_static_config();
@@ -136,10 +139,13 @@ TEST(ofh_uplane_packet_builder_static_impl_test, non_compressed_packet_should_pa
         << "Wrong header in the generated U-Plane packet";
 
     // Compare IQ data with an error tolerance in LSB bits, that can be introduced due to quantization.
+    //
+    // Due to initial float -> bf16 'to nearest even' rounding we may have numbers where 8 MSBs are increased by 1 and
+    // LSBs just wrap around. To get correct difference below we convert each byte to signed type.
     ASSERT_TRUE(std::equal(result_packet.begin() + header_size.value(),
                            result_packet.end(),
                            test_case.packet.begin() + header_size.value(),
-                           [](uint8_t a, uint8_t b) { return std::abs(a - b) <= 2; }))
+                           [](uint8_t a, uint8_t b) { return std::abs(int8_t(a) - int8_t(b)) <= 2; }))
         << "Wrong IQ data in the generated U-Plane packet.";
   }
 }

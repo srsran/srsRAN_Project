@@ -71,9 +71,9 @@ static inline void shift_right_x3vector_s16(int16x8x3_t src, int16x8x3_t& dst, u
   }
 }
 
-void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>         output,
-                                       span<const srsran::cf_t>                  input,
-                                       const srsran::ofh::ru_compression_params& params)
+void iq_compression_bfp_neon::compress(span<compressed_prb>         output,
+                                       span<const cbf16_t>          input,
+                                       const ru_compression_params& params)
 {
   // Use generic implementation if NEON utils don't support requested bit width.
   if (!neon::iq_width_packing_supported(params.data_width)) {
@@ -84,17 +84,17 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
 
-  // Performs conversion of input complex float values to signed 16bit integers.
+  // Performs conversion of input brain float values to signed 16-bit integers.
   quantize_input(input_quantized_span, float_samples_span);
 
   // Compression algorithm implemented according to Annex A.1.2 in O-RAN.WG4.CUS.
   unsigned sample_idx = 0;
   unsigned rb         = 0;
 
-  // One NEON register can store 8 16bit samples. A PRB is comprised of 24 16bit IQ samples, thus we need three NEON
+  // One NEON register can store 8 16-bit samples. A PRB is comprised of 24 16-bit IQ samples, thus we need three NEON
   // registers to process one PRB.
   //
   // The loop below processes four resource blocks at a time.

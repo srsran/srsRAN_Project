@@ -315,11 +315,11 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
 void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
-
+  int slot_delay = last_sl - crc_ind.sl_rx;
   for (unsigned i = 0, e = crc_ind.crcs.size(); i != e; ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
         crc_ind.crcs[i].ue_index,
-        [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
+        [this, slot_delay, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
           const int tbs = ue_cc.handle_crc_pdu(sl_rx, crc);
           if (tbs < 0) {
             return;
@@ -337,6 +337,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
+          metrics_handler.handle_ul_delay(crc.ue_index, slot_delay);
         },
         "CRC",
         true);

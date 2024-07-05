@@ -132,10 +132,6 @@ public:
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
-
-  /// \brief Setup AS security in the UE. This includes configuring
-  /// the PDCP entity security on SRB1 with the new AS keys.
-  virtual void on_new_as_security_context() = 0;
 };
 
 /// Interface used by the RRC reestablishment procedure to
@@ -213,6 +209,11 @@ public:
   /// \brief Get the packed Security Mode Command.
   /// \returns The Security Mode Command context.
   virtual rrc_ue_security_mode_command_context get_security_mode_command_context() = 0;
+
+  /// \brief Await a RRC Security Mode Command Complete for a handover.
+  /// \param[in] transaction_id The transaction ID of the RRC Security Mode Command Complete.
+  /// \returns True if the RRC Security Mode Command Complete was received, false otherwise.
+  virtual async_task<bool> handle_security_mode_command_complete_expected(uint8_t transaction_id) = 0;
 
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.

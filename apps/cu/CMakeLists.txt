@@ -22,6 +22,7 @@ add_executable(srscu
     cu.cpp
 	cu_appconfig_cli11_schema.cpp
 	cu_appconfig_validator.cpp
+	cu_appconfig_yaml_writer.cpp
 	cu_worker_manager.cpp
 )
 

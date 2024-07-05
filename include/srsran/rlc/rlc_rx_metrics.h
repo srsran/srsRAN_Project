@@ -51,6 +51,7 @@ struct rlc_rx_metrics {
   size_t   num_pdu_bytes;      ///< Number of PDU bytes
   uint32_t num_lost_pdus;      ///< Number of dropped PDUs (reassembly timeout expiry or out of rx window)
   uint32_t num_malformed_pdus; ///< Number of malformed PDUs
+  uint32_t sdu_latency_us;     ///< total SDU latency (in us)>
 
   /// RLC mode of the entity
   rlc_mode mode;

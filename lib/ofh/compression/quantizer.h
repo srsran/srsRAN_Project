@@ -39,7 +39,7 @@ public:
   {
   }
 
-  /// \brief Quantizes a floating point value into 16bit integer.
+  /// \brief Quantizes a floating point value into 16-bit integer.
   ///
   /// \param[in] value A floating point value.
   /// \return Resultant quantized value.
@@ -50,6 +50,16 @@ public:
       clipped = std::copysign(1.0, value);
     }
     return static_cast<int16_t>(std::round(clipped * gain));
+  }
+
+  /// \brief Quantizes a brain float value into a 16-bit integer.
+  ///
+  /// \param[in] value A brain float value.
+  /// \return Resultant quantized value.
+  int16_t to_fixed_point(bf16_t value) const
+  {
+    float input_value = srsran::to_float(value);
+    return to_fixed_point(input_value);
   }
 
   /// \brief Quantizes a sequence of floating point values into 16bit integers.
@@ -65,16 +75,29 @@ public:
     srsvec::convert(x, scale, z);
   }
 
+  /// \brief Quantizes a sequence of brain float values into 16-bit integers.
+  ///
+  /// \param[out] z       Resultant quantized values.
+  /// \param[in] x        Sequence of brain float values.
+  /// \param[in] in_scale Scaling factor applied to the input prior conversion.
+  ///
+  /// \remark \c z and \c x must have the same size.
+  void to_fixed_point(span<int16_t> z, span<const bf16_t> x, float in_scale) const
+  {
+    float scale = gain * in_scale;
+    srsvec::convert(z, x, scale);
+  }
+
   /// \brief Converts fixed point value to floating point.
   ///
-  /// \param[in] p 16bit integer value.
+  /// \param[in] p 16-bit integer value.
   /// \return Resultant floating point value.
   float to_float(int p) const { return (p / gain); }
 
   /// \brief Converts a sequence of fixed point values to complex floating point values.
   ///
   /// \param[out] z       Resultant complex floating point values.
-  /// \param[in] x        Sequence of 16bit integer values.
+  /// \param[in] x        Sequence of 16-bit integer values.
   /// \param[in] in_scale Scaling factor (expected to be bigger or equal to 1) applied to the input prior conversion.
   ///
   /// \remark The size of \c x must be twice the size of \c z as \x is comprised by the quantized pairs of real and

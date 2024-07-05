@@ -49,6 +49,13 @@ public:
   {
     fmt::print("\n--== srsRAN {} (commit {}) ==--\n\n", app_name, get_build_hash());
   }
+
+  /// Logs in the given logger application build parameters.
+  static void log_build_info(srslog::basic_logger& logger)
+  {
+    // Log build info
+    logger.info("Built in {} mode using {})", get_build_mode(), get_build_info());
+  }
 };
 
 } // namespace app_services

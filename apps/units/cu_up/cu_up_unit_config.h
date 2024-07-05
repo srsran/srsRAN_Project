@@ -46,11 +46,17 @@ struct cu_up_unit_upf_config {
   bool        no_core           = false;
 };
 
+/// F1-U configuration at CU_UP side
+struct cu_cp_unit_f1u_config {
+  int32_t t_notify; ///< Maximum backoff time for discard notifications from CU_UP to DU (ms)
+};
+
 /// QoS configuration.
 struct cu_up_unit_qos_config {
-  five_qi_t   five_qi       = uint_to_five_qi(9);
-  std::string mode          = "am";
-  unsigned    rlc_sdu_queue = 4096;
+  five_qi_t             five_qi       = uint_to_five_qi(9);
+  std::string           mode          = "am";
+  unsigned              rlc_sdu_queue = 4096;
+  cu_cp_unit_f1u_config f1u_cu_up;
 };
 
 /// CU-UP application unit configuration.

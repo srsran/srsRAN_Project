@@ -48,7 +48,7 @@ public:
   /// \param[in]  iq_data IQ samples to be compressed.
   /// \param[in]  params  Compression parameters.
   virtual void
-  compress(span<compressed_prb> compressed_prbs, span<const cf_t> iq_data, const ru_compression_params& params) = 0;
+  compress(span<compressed_prb> compressed_prbs, span<const cbf16_t> iq_data, const ru_compression_params& params) = 0;
 };
 
 } // namespace ofh

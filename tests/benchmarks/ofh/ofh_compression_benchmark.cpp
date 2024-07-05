@@ -198,7 +198,7 @@ int main(int argc, char** argv)
     std::string meas_descr_compression   = common_meas_name + " compression";
     std::string meas_descr_decompression = common_meas_name + " decompression";
 
-    std::vector<std::vector<cf_t>>                test_data(nof_ports);
+    std::vector<std::vector<cbf16_t>>             test_data(nof_ports);
     std::vector<std::vector<cf_t>>                decompressed_data(nof_ports);
     std::vector<std::vector<ofh::compressed_prb>> compressed_data(nof_ports);
     for (unsigned i = 0; i != nof_ports; ++i) {
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
 
     // Generate input random data.
     for (unsigned i = 0; i != nof_ports; ++i) {
-      std::generate(test_data[i].begin(), test_data[i].end(), [&]() { return cf_t{dist(rgen), dist(rgen)}; });
+      std::generate(test_data[i].begin(), test_data[i].end(), [&]() { return cbf16_t{dist(rgen), dist(rgen)}; });
     }
 
     // Measure performance.

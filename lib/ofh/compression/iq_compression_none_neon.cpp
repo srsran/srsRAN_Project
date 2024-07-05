@@ -30,7 +30,7 @@ using namespace srsran;
 using namespace ofh;
 
 void iq_compression_none_neon::compress(span<srsran::ofh::compressed_prb>         output,
-                                        span<const srsran::cf_t>                  input,
+                                        span<const srsran::cbf16_t>               input,
                                         const srsran::ofh::ru_compression_params& params)
 {
   // Number of quantized samples per resource block.
@@ -48,15 +48,15 @@ void iq_compression_none_neon::compress(span<srsran::ofh::compressed_prb>       
   // Auxiliary arrays used for float to fixed point conversion of the input data.
   std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
-  span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
-  span<int16_t>     input_quantized_span(input_quantized.data(), float_samples_span.size());
+  span<const bf16_t> float_samples_span(reinterpret_cast<const bf16_t*>(input.data()), input.size() * 2U);
+  span<int16_t>      input_quantized_span(input_quantized.data(), float_samples_span.size());
   q.to_fixed_point(input_quantized_span, float_samples_span, iq_scaling);
 
   log_post_quantization_rms(input_quantized_span);
 
   unsigned sample_idx = 0;
   unsigned rb         = 0;
-  // One NEON register can store 8 16bit samples. A PRB comprises 24 16bit IQ samples, thus we need three NEON
+  // One NEON register can store 8 16-bit samples. A PRB comprises 24 16-bit IQ samples, thus we need three NEON
   // registers to process one PRB.
   //
   // The loop below processes four resource blocks at a time.

@@ -359,6 +359,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
                      *cu_ue_id,
                      outcome.value.type().to_string());
+      return;
     }
   }
 
@@ -385,6 +386,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
       logger.warning("cu_ue={}: Discarding received \"{}\". Cause: UE was not found.",
                      *cu_ue_id,
                      outcome.value.type().to_string());
+      return;
     }
   }
 

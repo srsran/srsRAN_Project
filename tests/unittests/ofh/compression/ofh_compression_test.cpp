@@ -81,12 +81,26 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
   std::vector<int16_t> test_compr_data  = test_case.compressed_IQs.read();
   std::vector<uint8_t> test_compr_param = test_case.compressed_params.read();
 
+  std::vector<cbf16_t> test_data_cbf16(test_data.size());
+  std::vector<cf_t>    test_data_cf(test_data.size());
+  srsvec::convert(test_data_cbf16, test_data);
+
+  // Calculate error introduced by single-precision float to brain float conversion.
+  srsvec::convert(test_data_cf, test_data_cbf16);
+  std::vector<float> f_bf16_error;
+  for (unsigned i = 0, e = test_data.size(); i != e; ++i) {
+    float re_err = std::abs(std::real(test_data[i]) - std::real(test_data_cf[i]));
+    float im_err = std::abs(std::imag(test_data[i]) - std::imag(test_data_cf[i]));
+    f_bf16_error.push_back(re_err);
+    f_bf16_error.push_back(im_err);
+  }
+
   // Prepare vectors to store compression/decompression results.
   std::vector<compressed_prb> compressed_data(nof_prb);
   std::vector<cf_t>           decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress input test data.
-  compressor->compress(compressed_data, test_data, params);
+  compressor->compress(compressed_data, test_data_cbf16, params);
 
   // Verify compressed IQs.
   for (unsigned j = 0; j != nof_prb; ++j) {
@@ -99,7 +113,10 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
       int16_t sample = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
       read_pos += params.data_width;
 
-      ASSERT_TRUE(std::abs(sample - test_compr_data[j * NOF_SUBCARRIERS_PER_RB * 2 + i]) <= 1)
+      uint16_t err_tolerance =
+          1 + std::ceil(f_bf16_error[j * NOF_SUBCARRIERS_PER_RB * 2 + i] * iq_scaling * (1 << (params.data_width - 1)));
+
+      ASSERT_TRUE(std::abs(sample - test_compr_data[j * NOF_SUBCARRIERS_PER_RB * 2 + i]) <= err_tolerance)
           << fmt::format("Compressed samples mismatch at position {}", j * NOF_SUBCARRIERS_PER_RB * 2 + i);
     }
   }
@@ -107,8 +124,9 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
   // Decompress back.
   decompressor->decompress(decompressed_data, compressed_data, params);
 
-  // Check resulting samples versus the original ones.
-  float resolution = 2.0F / (1 << (params.data_width - 1));
+  // Check resulting samples versus the original ones considering also a precision loss caused by initial
+  // single-precision float to brain float conversion.
+  float resolution = 2.0F / (1 << (params.data_width - 1)) + 1 / 256.0F / 2;
   ASSERT_TRUE(std::equal(test_data.begin(),
                          test_data.end(),
                          decompressed_data.begin(),
@@ -128,11 +146,14 @@ TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
   std::vector<cf_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
   std::fill(test_data.begin(), test_data.end(), 0);
 
+  std::vector<cbf16_t> test_data_cbf16(test_data.size());
+  srsvec::convert(test_data_cbf16, test_data);
+
   std::vector<compressed_prb> compressed_data(nof_prb);
   std::vector<cf_t>           decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress it.
-  compressor->compress(compressed_data, test_data, params);
+  compressor->compress(compressed_data, test_data_cbf16, params);
   // Decompress back.
   decompressor->decompress(decompressed_data, compressed_data, params);
 
@@ -162,7 +183,9 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
   std::vector<compressed_prb>    compressed_data(4);
 
   // Compress it.
-  compressor->compress(compressed_data, test_data, params);
+  std::vector<cbf16_t> test_data_cbf16(test_data.size());
+  srsvec::convert(test_data_cbf16, test_data);
+  compressor->compress(compressed_data, test_data_cbf16, params);
 
   for (unsigned j = 0; j != 4; ++j) {
     // Parameter should match.
