@@ -19,7 +19,8 @@ namespace srsran {
 class generic_dft_N
 {
 public:
-  virtual ~generic_dft_N()                          = default;
+  virtual ~generic_dft_N() = default;
+  /// Computes the N-point of \c in and writes the result in \c out.
   virtual void run(cf_t* out, const cf_t* in) const = 0;
 };
 
