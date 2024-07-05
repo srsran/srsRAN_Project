@@ -312,7 +312,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
   return smc_ctxt;
 }
 
-async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uint8_t transaction_id)
+async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
   // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
   const std::chrono::milliseconds timeout_ms{1000};
@@ -321,7 +321,7 @@ async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uin
       [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
-        logger.log_debug("Awaiting RRC Security Mode Command Complete (timeout={}ms)", timeout_ms.count());
+        logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
         // create new transaction for RRC Security Mode Command procedure
         transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 

@@ -198,10 +198,10 @@ public:
   /// \returns The Security Mode Command context.
   virtual rrc_ue_security_mode_command_context get_security_mode_command_context() = 0;
 
-  /// \brief Await a RRC Security Mode Command Complete for a handover.
-  /// \param[in] transaction_id The transaction ID of the RRC Security Mode Command Complete.
-  /// \returns True if the RRC Security Mode Command Complete was received, false otherwise.
-  virtual async_task<bool> handle_security_mode_command_complete_expected(uint8_t transaction_id) = 0;
+  /// \brief Await a RRC Security Mode Complete.
+  /// \param[in] transaction_id The transaction ID of the RRC Security Mode Complete.
+  /// \returns True if the RRC Security Mode Complete was received, false otherwise.
+  virtual async_task<bool> handle_security_mode_complete_expected(uint8_t transaction_id) = 0;
 
   /// \brief Get the packed UE Capability RAT Container List.
   /// \returns The packed UE Capability RAT Container List.
