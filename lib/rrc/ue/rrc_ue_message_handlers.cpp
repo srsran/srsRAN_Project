@@ -152,6 +152,9 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
       break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_fail().rrc_transaction_id);
+      break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::ue_cap_info:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
@@ -324,16 +327,22 @@ async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uin
 
         CORO_AWAIT(transaction);
 
-        bool procedure_result = false;
-        if (transaction.has_response()) {
-          logger.log_debug("Received RRC Security Mode Command Complete");
-          procedure_result = true;
-          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
-        } else {
-          logger.log_debug("Did not receive RRC Security Mode Command Complete. Cause: timeout");
+        if (!transaction.has_response()) {
+          logger.log_debug("Did not receive RRC Security Mode Complete. Cause: timeout");
+          CORO_EARLY_RETURN(false);
         }
 
-        CORO_RETURN(procedure_result);
+        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail) {
+          logger.log_warning("Received RRC Security Mode Failure");
+          CORO_EARLY_RETURN(false);
+        }
+
+        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
+          logger.log_debug("Received RRC Security Mode Complete");
+          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
+        }
+
+        CORO_RETURN(true);
       });
 }
 
