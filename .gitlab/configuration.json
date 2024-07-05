@@ -130,6 +130,30 @@
             ],
             "code_owner_approval_required": false,
             "name": "agpl_main"
+        },
+        {
+            "allow_force_push": false,
+            "allowed_to_merge": [
+                {
+                    "id": 120427278,
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "allowed_to_push": [
+                {
+                    "id": 133149184,
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null,
+                    "deploy_key_id": null
+                }
+            ],
+            "code_owner_approval_required": false,
+            "name": "dev_*"
         }
     ],
     "protectedtags": [
@@ -137,8 +161,9 @@
             "name": "*",
             "create_access_levels": [
                 {
-                    "access_level": 40,
-                    "access_level_description": "Maintainers",
+                    "id": 8850508,
+                    "access_level": 30,
+                    "access_level_description": "Developers + Maintainers",
                     "group_id": null,
                     "user_id": null,
                     "deploy_key_id": null
