@@ -101,7 +101,8 @@ private:
 
   void push_metrics()
   {
-    rlc_metrics m = get_metrics();
+    rlc_metrics m    = get_metrics();
+    m.metrics_period = metrics_period;
     if (rlc_metrics_notif) {
       rlc_metrics_notif->report_metrics(m);
     }
