@@ -44,7 +44,7 @@ struct rlc_rx_um_sdu_info {
   /// Buffer for set of SDU segments.
   segment_set_t segments;
   /// Time of arrival of the first segment of the SDU.
-  std::chrono::system_clock::time_point time_of_arrival;
+  std::chrono::steady_clock::time_point time_of_arrival;
 };
 
 /// \brief Rx state variables
