@@ -278,6 +278,15 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
 
   // Allocate PUCCH HARQ-ACK grant depending on whether there existing PUCCH grants.
   if (existing_grant_it != ue_pucchs.end()) {
+    // Multiplexing of multiple HARQ-ACK bits in a PUCCH common grant is not allowed.
+    if (existing_grant_it->has_common_pucch) {
+      logger.debug(
+          "rnti={}: PUCCH HARQ-ACK for slot={} not allocated. Cause: The UE has a PUCCH common grant at the same slot",
+          crnti,
+          sl_ack);
+      return std::nullopt;
+    }
+
     pucch_uci_bits new_bits = existing_grant_it->pucch_grants.get_uci_bits();
     ++new_bits.harq_ack_nof_bits;
 
@@ -1045,6 +1054,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
 
     if (not pucch_res_ind.has_value()) {
       resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
+      existing_grants.pucch_grants.harq_resource.reset();
       continue;
     }
 
