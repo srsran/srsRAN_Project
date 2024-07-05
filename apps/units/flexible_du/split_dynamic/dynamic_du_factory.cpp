@@ -119,7 +119,8 @@ du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
   const fapi_unit_config&    fapi_cfg = dyn_du_cfg.fapi_cfg;
 
   // Configure the application unit metrics for the DU high.
-  configure_du_high_metrics(du_hi, metrics_stdout, metrics_json, metrics_logger, e2_metric_connectors, metrics_hub);
+  configure_du_high_metrics(
+      du_hi, metrics_stdout, metrics_logger, metrics_json, rlc_json_metrics, e2_metric_connectors, metrics_hub);
 
   auto du_cells = generate_du_cell_config(du_hi);
 
@@ -159,10 +160,8 @@ du_unit srsran::create_du(const dynamic_du_unit_config&  dyn_du_cfg,
                                 timer_mng,
                                 mac_p,
                                 rlc_p,
-                                metrics_logger,
                                 e2_client_handler,
                                 e2_metric_connectors,
-                                rlc_json_metrics,
                                 metrics_hub);
 
     // FAPI configuration.

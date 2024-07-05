@@ -22,8 +22,9 @@ using namespace srsran;
 
 void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
                                        metrics_plotter_stdout&      metrics_stdout,
-                                       metrics_plotter_json&        metrics_json,
                                        metrics_log_helper&          metrics_logger,
+                                       metrics_plotter_json&        metrics_json,
+                                       rlc_metrics_notifier&        rlc_json_metrics,
                                        e2_metric_connector_manager& e2_metric_connectors,
                                        metrics_hub&                 metrics_hub)
 {
@@ -78,7 +79,7 @@ void srsran::configure_du_high_metrics(const du_high_unit_config&   du_high_unit
 
       if (du_high_unit_cfg.metrics.rlc.json_enabled) {
         // Connect JSON metrics plotter to RLC metric source.
-        // rlc_source->add_subscriber(rlc_json_metrics);
+        rlc_source->add_subscriber(rlc_json_metrics);
       }
       if (metrics_logger.is_enabled()) {
         rlc_source->add_subscriber(metrics_logger);
@@ -102,10 +103,8 @@ void srsran::fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                          timer_manager&                 timer_mng,
                                          mac_pcap&                      mac_p,
                                          rlc_pcap&                      rlc_p,
-                                         metrics_log_helper&            metrics_logger,
                                          e2_connection_client&          e2_client_handler,
                                          e2_metric_connector_manager&   e2_metric_connectors,
-                                         rlc_metrics_notifier&          rlc_json_metrics,
                                          metrics_hub&                   metrics_hub)
 {
   // DU-high configuration.
