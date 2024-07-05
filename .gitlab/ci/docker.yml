@@ -288,6 +288,7 @@ grafana server image latest:
     CONTEXT: ${CI_PROJECT_DIR}
     DOCKERFILE: docker
     MODE: build
+  timeout: 2 hours
   tags:
     - ${TAG}
   before_script:

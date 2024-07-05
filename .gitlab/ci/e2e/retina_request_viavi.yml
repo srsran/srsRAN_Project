@@ -47,7 +47,7 @@
       requests: "500Mi"
     ephemeral-storage:
       requests: "1G"
-  taints: ["retina"]
+  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
   environment:
     - URL: ${RETINA_METRICS_SERVER_URL}
     - ORG: ${RETINA_METRICS_SERVER_ORG}
