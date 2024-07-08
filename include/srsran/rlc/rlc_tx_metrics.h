@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/engineering_notation.h"
 #include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
@@ -81,11 +82,11 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer,
-                 "period={}ms num_sdus={} sdu_rate={}kbps, dropped_sdus={} discarded_sdus={} "
+                 "period={}ms num_sdus={} sdu_rate={}bps, dropped_sdus={} discarded_sdus={} "
                  "num_pdus_no_segm={} pdu_rate_no_segm={}kbps",
                  metrics_period.count(),
-                 m.num_sdus,
-                 (double)m.num_sdu_bytes * 8 / (double)metrics_period.count(),
+                 scaled_fmt_integer(m.num_sdus, /*right_align=*/false),
+                 float_to_eng_string((float)m.num_sdu_bytes * 8 * 1000 / (metrics_period.count()), 1, false),
                  m.num_dropped_sdus,
                  m.num_discarded_sdus,
                  m.num_pdus_no_segmentation,
