@@ -156,6 +156,12 @@ void initial_context_setup_routine::operator()(
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue.handle_rrc_reconfiguration_request(rrc_reconfig_args));
+    // Handle RRC Reconfiguration result
+    if (not rrc_reconfig_result) {
+      logger.warning("ue={}: \"{}\" RRC Reconfiguration failed", request.ue_index, name());
+      handle_failure();
+      CORO_EARLY_RETURN(make_unexpected(fail_msg));
+    }
   }
 
   // Schedule transmission of UE Radio Capability Info Indication
