@@ -529,7 +529,7 @@ def test_zmq(
         always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=1,
-        gnb_post_cmd="log --hex_max_size=32 cu_cp --inactivity_timer=600",
+        gnb_post_cmd=("log --hex_max_size=32 cu_cp --inactivity_timer=600", ""),
     )
 
 
@@ -614,7 +614,7 @@ def _iperf(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     bitrate_threshold: float = 0,  # bitrate != 0
-    gnb_post_cmd: str = "",
+    gnb_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
     prach_config_index=-1,

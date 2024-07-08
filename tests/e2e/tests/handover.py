@@ -210,7 +210,7 @@ def _handover_multi_ues(
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_post_cmd="log --mac_level=debug --cu_level=debug")
+    start_network(ue_array, gnb, fivegc, gnb_post_cmd=("log --cu_level=debug", "log --mac_level=debug"))
 
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 

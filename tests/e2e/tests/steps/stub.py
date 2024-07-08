@@ -57,8 +57,8 @@ def start_and_attach(
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
-    gnb_pre_cmd: str = "",
-    gnb_post_cmd: str = "",
+    gnb_pre_cmd: Tuple[str, ...] = tuple(),
+    gnb_post_cmd: Tuple[str, ...] = tuple(),
     attach_timeout: int = ATTACH_TIMEOUT,
     plmn: Optional[PLMN] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
@@ -102,8 +102,8 @@ def start_network(
     fivegc: FiveGCStub,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
-    gnb_pre_cmd: str = "",
-    gnb_post_cmd: str = "",
+    gnb_pre_cmd: Tuple[str, ...] = tuple(),
+    gnb_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
 ):
     """
