@@ -114,8 +114,11 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&        
 }
 
 /// \brief Fetches list of DL HARQ candidates to schedule.
-static static_vector<const dl_harq_process*, MAX_NOF_HARQS>
-get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_retx, srslog::basic_logger& logger)
+static static_vector<const dl_harq_process*, MAX_NOF_HARQS> get_ue_dl_harq_candidates(const ue&       ue_ref,
+                                                                                      ue_cell_index_t cell_index,
+                                                                                      bool            is_retx,
+                                                                                      bool ue_with_srb_data_only,
+                                                                                      srslog::basic_logger& logger)
 {
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
 
@@ -127,7 +130,10 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
     // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
     for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
       const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-      if (h.has_pending_retx() and not h.last_alloc_params().is_fallback) {
+      if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
+          (not ue_with_srb_data_only or
+           (h.last_alloc_params().tb[0]->contains_srb_data or
+            (h.last_alloc_params().tb[1].has_value() and h.last_alloc_params().tb[1]->contains_srb_data)))) {
         dl_harq_candidates.push_back(&h);
       }
     }
@@ -289,7 +295,8 @@ static alloc_result alloc_dl_ue(const ue&                         u,
     }
 
     // Get DL HARQ candidates.
-    const auto harq_candidates = get_ue_dl_harq_candidates(u, to_ue_cell_index(i), is_retx, logger);
+    const auto harq_candidates =
+        get_ue_dl_harq_candidates(u, to_ue_cell_index(i), is_retx, ue_with_srb_data_only, logger);
     if (harq_candidates.empty()) {
       // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available HARQs).
       continue;
@@ -299,8 +306,9 @@ static alloc_result alloc_dl_ue(const ue&                         u,
     for (const dl_harq_process* h_dl : harq_candidates) {
       ue_pdsch_grant grant{&u, ue_cc.cell_index, h_dl->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes = u.pending_dl_newtx_bytes();
-        grant.max_nof_rbs           = dl_new_tx_max_nof_rbs_per_ue_per_slot;
+        grant.recommended_nof_bytes =
+            ue_with_srb_data_only ? u.pending_dl_srb_newtx_bytes() : u.pending_dl_newtx_bytes();
+        grant.max_nof_rbs = dl_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
       // If the allocation failed due to invalid parameters, we continue iteration.
@@ -357,7 +365,7 @@ static alloc_result alloc_ul_ue(const ue&                    u,
     for (const ul_harq_process* h_ul : harq_candidates) {
       ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes = pending_newtx_bytes;
+        grant.recommended_nof_bytes = ue_with_srb_data_only ? u.pending_ul_srb_newtx_bytes() : pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
@@ -384,28 +392,36 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
                                  const ue_repository&         ues)
 {
-  // First schedule re-transmissions.
-  auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, false, logger, expert_cfg);
+  // First, schedule UEs with SRB data re-transmissions.
+  auto srb_retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, true, logger, expert_cfg);
   };
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_retx_ue_function);
 
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
-    // Second, schedule UEs with SRB data.
+    // Second, schedule UEs with SRB data new transmission.
     auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(
           u, res_grid, pdsch_alloc, false, true, logger, expert_cfg, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };
     next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_newtx_ue_function);
+  }
 
-    // Then, schedule new transmissions.
-    auto tx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+  // Third, schedule UEs with DRB re-transmissions.
+  auto drb_retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, false, logger, expert_cfg);
+  };
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, drb_retx_ue_function);
+
+  if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
+    // Then, schedule UEs with DRB new transmissions.
+    auto drb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_dl_ue(
           u, res_grid, pdsch_alloc, false, false, logger, expert_cfg, dl_new_tx_max_nof_rbs_per_ue_per_slot);
     };
-    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
+    next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, drb_newtx_ue_function);
   }
 }
 
@@ -418,28 +434,30 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
     return;
   }
 
-  // First schedule UL data re-transmissions.
-  auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, false, logger);
-  };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
-
-  // Then, schedule all pending SR.
+  // First, schedule UEs with pending SR.
   auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, false, logger);
   };
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
 
-  // Finally, schedule UL data new transmissions.
   const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
       compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
-    // Second, schedule UEs with SRB data.
+    // Second, schedule UEs with SRB data new transmissions.
     auto srb_newtx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, true, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
     };
     next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, srb_newtx_ue_function);
+  }
 
+  // Third, schedule UEs with re-transmissions.
+  auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, false, logger);
+  };
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
+
+  // Then, schedule UEs with new transmissions.
+  if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     auto data_tx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
       return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
     };
