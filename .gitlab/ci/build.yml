@@ -333,7 +333,7 @@ variables:
         mv /tmp/srscu ${CI_PROJECT_DIR}/build/apps/cu/srscu
         mv /tmp/srsdu ${CI_PROJECT_DIR}/build/apps/du/srsdu
       fi
-  timeout: 4h
+  timeout: 6h
   artifacts: &build_artifacts
     when: always
     reports:
