@@ -155,7 +155,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    if (csi_offset_colliding_with_sr(candidate_sr_offset, offset_candidate)) {
+    if (csi_offset_collides_with_sr(candidate_sr_offset, offset_candidate)) {
       weight += csi_rs_period;
     }
 
@@ -369,7 +369,7 @@ std::set<unsigned> du_pucch_resource_manager::compute_sr_csi_pucch_offsets(unsig
   return sr_csi_offsets;
 }
 
-bool du_pucch_resource_manager::csi_offset_colliding_with_sr(unsigned sr_offset, unsigned csi_offset) const
+bool du_pucch_resource_manager::csi_offset_collides_with_sr(unsigned sr_offset, unsigned csi_offset) const
 {
   for (unsigned csi_off = csi_offset; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
     for (unsigned sr_off = sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {

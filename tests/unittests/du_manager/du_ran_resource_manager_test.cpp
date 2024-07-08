@@ -583,7 +583,7 @@ protected:
                           default_ue_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type),
                   "CSI report configuration is required for this unittest;");
     lcm_csi_sr_period =
-        lcm(sr_periodicity_to_slot(GetParam().sr_period), csi_report_periodicity_to_uint(GetParam().csi_period));
+        std::lcm(sr_periodicity_to_slot(GetParam().sr_period), csi_report_periodicity_to_uint(GetParam().csi_period));
     pucch_cnts.resize(lcm_csi_sr_period, 0);
   }
 
