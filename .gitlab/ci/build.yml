@@ -134,6 +134,16 @@ variables:
   before_script:
     - !reference [.fetch_src_cache, script]
     - |
+      # Print build parameters
+      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
+      echo "OS=${OS}"
+      echo "COMPILER=${COMPILER}"
+      echo "TEST_MODE=${TEST_MODE}"
+      echo "BUILD_ARGS=${BUILD_ARGS}"
+      echo "MAKE_ARGS=${MAKE_ARGS}"
+      echo "UHD_VERSION=${UHD_VERSION}"
+      echo "DPDK_VERSION=${DPDK_VERSION}"
+    - |
       build_srsgnb() {
         start_time=$(date +%s)
         if [ -e "/usr/local/bin/ram_reporter.py" ]; then

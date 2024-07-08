@@ -139,6 +139,15 @@ e2e request and config validation:
     reports:
       junit: tests/e2e/out.xml
   script:
+    - |
+      # Print E2E parameters
+      echo "TESTBED=${TESTBED}"
+      echo "MARKERS=${MARKERS}"
+      echo "KEYWORDS=${KEYWORDS}"
+      echo "PYTEST_ARGS=${PYTEST_ARGS}"
+      echo "RETINA_PARAM_ARGS=${RETINA_PARAM_ARGS}"
+      echo "RETINA_LAUNCHER_ARGS=${RETINA_LAUNCHER_ARGS}"
+      echo "E2E_LOG_LEVEL=${E2E_LOG_LEVEL}"
     # Clean LFS files
     - |
       while read -r line; do
@@ -153,7 +162,7 @@ e2e request and config validation:
       cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
     # Modify request to shared the complete folder with the gnb container
     - |
-      yq -i '.[] | select(.type == "gnb") | .shared_files += [{"local_path": "../../", "remote_path": env(CI_PROJECT_DIR), "is_executable": false}]' ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
+      yq -i '(.[] | select(.type == "gnb") | .shared_files) += [{"local_path": "../../", "remote_path": env(CI_PROJECT_DIR), "is_executable": false}]' ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Set username for retina
     - |
       cd tests/e2e
