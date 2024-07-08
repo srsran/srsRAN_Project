@@ -119,7 +119,8 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository&
 
   if (ctxt.dl_newtx_h != nullptr) {
     grant.h_id                  = ctxt.dl_newtx_h->id;
-    grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_dl_newtx_bytes();
+    grant.recommended_nof_bytes = ctxt.has_dl_newtx_srb_pending_bytes ? ues[ctxt.ue_index].pending_dl_srb_newtx_bytes()
+                                                                      : ues[ctxt.ue_index].pending_dl_newtx_bytes();
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
       ctxt.dl_newtx_h = nullptr;
@@ -148,7 +149,8 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository&
 
   if (ctxt.ul_newtx_h != nullptr) {
     grant.h_id                  = ctxt.ul_newtx_h->id;
-    grant.recommended_nof_bytes = ues[ctxt.ue_index].pending_ul_newtx_bytes();
+    grant.recommended_nof_bytes = ctxt.has_ul_newtx_srb_pending_bytes ? ues[ctxt.ue_index].pending_ul_srb_newtx_bytes()
+                                                                      : ues[ctxt.ue_index].pending_ul_newtx_bytes();
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
       ctxt.ul_newtx_h = nullptr;
@@ -172,8 +174,20 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
     return;
   }
 
+  // Find DL HARQ with transport block containing SRB data to retransmit.
+  const dl_harq_process* srb_retx_h = nullptr;
+  for (unsigned i = 0; i != ue_cc->harqs.nof_dl_harqs(); ++i) {
+    const dl_harq_process& h = ue_cc->harqs.dl_harq(i);
+    if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
+        (h.last_alloc_params().tb[0]->contains_srb_data or
+         (h.last_alloc_params().tb[1].has_value() and h.last_alloc_params().tb[1]->contains_srb_data))) {
+      srb_retx_h = &h;
+      break;
+    }
+  }
+
   // Calculate DL priority.
-  dl_retx_h                      = ue_cc->harqs.find_pending_dl_retx();
+  dl_retx_h                      = srb_retx_h != nullptr ? srb_retx_h : ue_cc->harqs.find_pending_dl_retx();
   dl_newtx_h                     = ue_cc->harqs.find_empty_dl_harq();
   has_dl_newtx_srb_pending_bytes = u.has_pending_dl_srb_newtx_bytes();
   if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
@@ -327,23 +341,40 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
 {
   const bool is_lhs_retx = lhs->dl_retx_h != nullptr;
   const bool is_rhs_retx = rhs->dl_retx_h != nullptr;
-  if (not is_lhs_retx and is_rhs_retx) {
-    return true;
+  const bool is_lhs_srb_retx =
+      lhs->dl_retx_h != nullptr and (lhs->dl_retx_h->last_alloc_params().tb[0]->contains_srb_data or
+                                     (lhs->dl_retx_h->last_alloc_params().tb[1].has_value() and
+                                      lhs->dl_retx_h->last_alloc_params().tb[1]->contains_srb_data));
+  const bool is_rhs_srb_retx =
+      rhs->dl_retx_h != nullptr and (rhs->dl_retx_h->last_alloc_params().tb[0]->contains_srb_data or
+                                     (rhs->dl_retx_h->last_alloc_params().tb[1].has_value() and
+                                      rhs->dl_retx_h->last_alloc_params().tb[1]->contains_srb_data));
+
+  // First, prioritize UEs with SRB data re-transmissions.
+  // SRB HARQ retransmission in one UE and not in other UE.
+  if (is_lhs_srb_retx != is_rhs_srb_retx) {
+    return not is_lhs_srb_retx and is_rhs_srb_retx;
   }
-  if (is_lhs_retx == is_rhs_retx) {
-    if (not is_lhs_retx) {
-      // NewTx and SRB pending bytes.
-      if (not lhs->has_dl_newtx_srb_pending_bytes and rhs->has_dl_newtx_srb_pending_bytes) {
-        return true;
-      }
-      if (not rhs->has_dl_newtx_srb_pending_bytes and lhs->has_dl_newtx_srb_pending_bytes) {
-        return false;
-      }
-    }
-    // All other cases compare priorities.
+  // SRB HARQ retransmission in both UEs.
+  if (is_lhs_srb_retx) {
     return lhs->dl_prio < rhs->dl_prio;
   }
-  return false;
+  // Second, prioritize UEs with SRB data new transmission.
+  // SRB HARQ newTx in one UE and not in other UE.
+  if (lhs->has_dl_newtx_srb_pending_bytes != rhs->has_dl_newtx_srb_pending_bytes) {
+    return not lhs->has_dl_newtx_srb_pending_bytes and rhs->has_dl_newtx_srb_pending_bytes;
+  }
+  // SRB HARQ newTx in both UEs.
+  if (lhs->has_dl_newtx_srb_pending_bytes) {
+    return lhs->dl_prio < rhs->dl_prio;
+  }
+  // Third, prioritize UEs with DRB re-transmissions.
+  // ReTx in one UE and not in other UE.
+  if (is_lhs_retx != is_rhs_retx) {
+    return not is_lhs_retx and is_rhs_retx;
+  }
+  // All other cases compare priorities.
+  return lhs->dl_prio < rhs->dl_prio;
 }
 
 bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
@@ -351,34 +382,29 @@ bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::
 {
   const bool is_lhs_retx = lhs->ul_retx_h != nullptr;
   const bool is_rhs_retx = rhs->ul_retx_h != nullptr;
-  if (not is_lhs_retx and is_rhs_retx) {
-    return true;
+  // First, prioritize UEs with pending SR.
+  // SR indication in one UE and not in other UE.
+  if (lhs->sr_ind_received != rhs->sr_ind_received) {
+    return not lhs->sr_ind_received and rhs->sr_ind_received;
   }
-  if (is_lhs_retx == is_rhs_retx) {
-    if (not is_lhs_retx) {
-      // NewTx.
-
-      // SR indication received for one of the UEs. UEs with SR has higher priority than UEs with SRB/DRB newTx bytes.
-      if (not lhs->sr_ind_received and rhs->sr_ind_received) {
-        return true;
-      }
-      if (not rhs->sr_ind_received and lhs->sr_ind_received) {
-        return false;
-      }
-      if (lhs->sr_ind_received) {
-        return lhs->ul_prio < rhs->ul_prio;
-      }
-
-      // SRB pending bytes.
-      if (not lhs->has_ul_newtx_srb_pending_bytes and rhs->has_ul_newtx_srb_pending_bytes) {
-        return true;
-      }
-      if (not rhs->has_ul_newtx_srb_pending_bytes and lhs->has_ul_newtx_srb_pending_bytes) {
-        return false;
-      }
-    }
-    // All other cases compare priorities.
+  // SR indication for both UEs.
+  if (lhs->sr_ind_received) {
     return lhs->ul_prio < rhs->ul_prio;
   }
-  return false;
+  // Second, prioritize UEs with SRB data new transmissions.
+  // SRB data newTx in one UE and not in other UE.
+  if (lhs->has_ul_newtx_srb_pending_bytes != rhs->has_ul_newtx_srb_pending_bytes) {
+    return not lhs->has_ul_newtx_srb_pending_bytes and rhs->has_ul_newtx_srb_pending_bytes;
+  }
+  // SRB data newTx in both UEs.
+  if (lhs->has_ul_newtx_srb_pending_bytes) {
+    return lhs->ul_prio < rhs->ul_prio;
+  }
+  // Third, prioritize UEs with re-transmissions.
+  // ReTx in one UE and not in other UE.
+  if (is_lhs_retx != is_rhs_retx) {
+    return not is_lhs_retx and is_rhs_retx;
+  }
+  // All other cases compare priorities.
+  return lhs->ul_prio < rhs->ul_prio;
 }
