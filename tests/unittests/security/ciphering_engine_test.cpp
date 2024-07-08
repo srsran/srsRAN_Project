@@ -96,8 +96,10 @@ bool trim_tail_to_bitlength(byte_buffer_view buf, uint32_t bitlength)
     return false;
   }
   uint32_t padding = bitlength % 8;
-  uint8_t  mask    = 0xff << (8 - padding);
-  buf[buf.length() - 1] &= mask;
+  if (padding > 0) {
+    uint8_t mask = 0xff << (8 - padding);
+    buf[buf.length() - 1] &= mask;
+  }
   return true;
 }
 
