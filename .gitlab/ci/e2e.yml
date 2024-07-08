@@ -151,11 +151,9 @@ e2e request and config validation:
     - |
       echo "" >> .gitlab/ci/e2e/.env
       cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
-
-      echo -e "\nGNB_BINARY_PATH=../../" >> .gitlab/ci/e2e/.env
-      echo -e "\nGNB_REMOTE_PATH=$CI_PROJECT_DIR" >> .gitlab/ci/e2e/.env
-      echo -e "\nis_executable=false" >> .gitlab/ci/e2e/.env
-
+    # Modify request to shared the complete folder with the gnb container
+    - |
+      yq -i '.[] | select(.type == "gnb") | .shared_files += [{"local_path": "../../", "remote_path": env(CI_PROJECT_DIR), "is_executable": false}]' ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Set username for retina
     - |
       cd tests/e2e
