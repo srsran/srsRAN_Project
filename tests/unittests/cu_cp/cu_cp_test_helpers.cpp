@@ -278,11 +278,6 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
                        "03c000000100200409028098a8660c")
           .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
-
-  // Inject RRC Reconfiguration Complete
-  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00050e00a18bc2b3").value());
-  f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 }
 
 void cu_cp_test::test_amf_connection()
@@ -405,7 +400,7 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
 
     // Inject RRC Reconfiguration Complete
     f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00080800e6847bbd").value());
+        cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value());
     f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
     // check that the PDU Session Resource Setup Response was sent to the AMF
@@ -455,7 +450,7 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t                    du_i
 
   // Inject Registration Complete
   f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00063a053f015362c51680bf002180ce7cfdcb").value());
+      cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00053a053f015362c51680bf00218086b09a5b").value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 
   // Inject PDU Session Establishment Request
@@ -463,8 +458,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t                    du_i
       cu_ue_id,
       du_ue_id,
       srb_id_t::srb1,
-      make_byte_buffer("00073a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
-                       "00000800001800005000006000006800008800900c092838339b939b0b837000260dc05")
+      make_byte_buffer("00063a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
+                       "00000800001800005000006000006800008800900c092838339b939b0b83700e03a21bb")
           .value());
   f1c_gw.get_du(du_index).on_new_message(ul_rrc_msg_transfer);
 

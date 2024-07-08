@@ -34,6 +34,13 @@ bool srsran::test_helpers::is_valid_initial_context_setup_response(const srs_cu_
   return true;
 }
 
+bool srsran::test_helpers::is_valid_initial_context_setup_failure(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::unsuccessful_outcome);
+  TRUE_OR_RETURN(msg.pdu.unsuccessful_outcome().proc_code == ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_ue_context_release_request(const srs_cu_cp::ngap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);
