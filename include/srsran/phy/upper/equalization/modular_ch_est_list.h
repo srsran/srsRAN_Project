@@ -20,9 +20,12 @@ class modular_ch_est_list : public channel_equalizer::ch_est_list
 {
 public:
   /// \brief Creates a list of channel estimates from a maximum number of receive ports and layers.
-  /// \param[in] max_nof_rx_ports Maximum number of receive ports.
-  /// \param[in] max_nof_layers   Maximum number of layers.
-  modular_ch_est_list(unsigned max_nof_rx_ports, unsigned max_nof_layers) : data({max_nof_rx_ports, max_nof_layers}) {}
+  /// \param[in] max_nof_rx_ports_ Maximum number of receive ports.
+  /// \param[in] max_nof_layers_   Maximum number of layers.
+  modular_ch_est_list(unsigned max_nof_rx_ports_, unsigned max_nof_layers_) :
+    max_nof_rx_ports(max_nof_rx_ports_), max_nof_layers(max_nof_layers_), data({max_nof_rx_ports, max_nof_layers})
+  {
+  }
 
   /// \brief Sets the contents of a channel.
   ///
@@ -44,14 +47,14 @@ public:
   /// \remark An assertion is triggered if the number of layers exceeds the maximum number of layers.
   void resize(unsigned nof_re_, unsigned nof_rx_ports, unsigned nof_layers)
   {
-    srsran_assert(nof_rx_ports <= data.get_dimensions_size()[0],
+    srsran_assert(nof_rx_ports <= max_nof_rx_ports,
                   "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
                   nof_rx_ports,
-                  data.get_dimensions_size()[0]);
-    srsran_assert(nof_layers <= data.get_dimensions_size()[1],
+                  max_nof_rx_ports);
+    srsran_assert(nof_layers <= max_nof_layers,
                   "The number of layers (i.e., {}) exceeds the maximum number of layers (i.e., {}).",
                   nof_rx_ports,
-                  data.get_dimensions_size()[1]);
+                  max_nof_layers);
     nof_re = nof_re_;
     data.resize({nof_rx_ports, nof_layers});
 
@@ -89,6 +92,10 @@ private:
 
   /// Number of resource elements.
   unsigned nof_re = 0;
+  /// Maximum number of receive ports.
+  unsigned max_nof_rx_ports;
+  /// Maximum number of layers.
+  unsigned max_nof_layers;
   /// Data storage as a tensor of views for each channel.
   dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), span<const cbf16_t>, ch_dims> data;
 };
