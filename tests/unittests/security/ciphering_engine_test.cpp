@@ -12,6 +12,7 @@
 #include "lib/security/ciphering_engine_nea2.h"
 #include "nea1_test_set.h"
 #include "nea2_test_set.h"
+#include "nea3_test_set.h"
 #include "srsran/security/ciphering_engine.h"
 #include "srsran/security/security.h"
 #include "srsran/srslog/srslog.h"
@@ -52,6 +53,10 @@ class fxt_nea1 : public fxt_base
 
 /// Fixture class for ciphering engine tests with NEA2
 class fxt_nea2 : public fxt_base
+{};
+
+/// Fixture class for ciphering engine tests with NEA3
+class fxt_nea3 : public fxt_base
 {};
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
@@ -158,6 +163,27 @@ TEST_P(fxt_nea2, ciphering_engine_generic_nea2)
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
+TEST_P(fxt_nea3, ciphering_engine_generic_nea3)
+{
+  nea_test_set param = GetParam();
+
+  // Pack hex strings into srsran types
+  sec_128_key key        = make_sec_128_key(param.key_cstr);
+  auto        dir        = static_cast<security_direction>(param.direction);
+  byte_buffer plaintext  = make_byte_buffer(param.plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
+
+  // Create ciphering engine
+  std::unique_ptr<ciphering_engine> nea =
+      std::make_unique<ciphering_engine_generic>(key, param.bearer, dir, ciphering_algorithm::nea3);
+
+  // Apply ciphering and compare results
+  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
+  ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
+  EXPECT_EQ(result.buf.value(), ciphertext);
+}
+
 //////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each test set //
 //////////////////////////////////////////////////////////
@@ -176,6 +202,11 @@ INSTANTIATE_TEST_SUITE_P(nea1,
 INSTANTIATE_TEST_SUITE_P(nea2,
                          fxt_nea2,
                          ::testing::ValuesIn(nea2_test_set.begin(), nea2_test_set.end()),
+                         test_param_info_to_string);
+
+INSTANTIATE_TEST_SUITE_P(nea3,
+                         fxt_nea3,
+                         ::testing::ValuesIn(nea3_test_set.begin(), nea3_test_set.end()),
                          test_param_info_to_string);
 
 int main(int argc, char** argv)
