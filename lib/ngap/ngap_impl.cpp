@@ -275,7 +275,7 @@ void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
   ue_radio_cap_info_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   ue_radio_cap_info_ind_msg->ue_radio_cap   = msg.ue_cap_rat_container_list.copy();
 
-  ue_ctxt.logger.log_info("Sending UE Radio Capability Info Indication");
+  ue_ctxt.logger.log_info("Scheduling UE Radio Capability Info Indication");
 
   // Schedule transmission of UE Radio Capability Info Indication to AMF
   ue->schedule_async_task(launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
