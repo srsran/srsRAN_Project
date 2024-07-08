@@ -74,24 +74,35 @@ int arrcmp(uint8_t const* const a, uint8_t const* const b, uint32_t len)
   return 0;
 }
 
+bool trim_tail_to_bitlength(byte_buffer_view buf, uint32_t bitlength)
+{
+  if ((bitlength + 7) / 8 != buf.length()) {
+    return false;
+  }
+  uint32_t padding = bitlength % 8;
+  uint8_t  mask    = 0xff << (8 - padding);
+  buf[buf.length() - 1] &= mask;
+  return true;
+}
+
 /// 128-NEA2 Test Set 1
 /// Ref: TS 33.501 Sec. D.4.4, TS 33.401 Sec. C.1 128-EEA2
 TEST_F(ciphering_engine_test, security_nea2_testset1)
 {
   // Testdata in plain format
-  const char* key_cstr  = "d3c5d592327fb11c4035c6680af8c6d1";
-  uint32_t    count     = 0x398a59b4;
-  uint8_t     bearer    = 0x15;
-  uint8_t     direction = 1;
-  // uint32_t    length          = 253;
+  const char* key_cstr        = "d3c5d592327fb11c4035c6680af8c6d1";
+  uint32_t    count           = 0x398a59b4;
+  uint8_t     bearer          = 0x15;
+  uint8_t     direction       = 1;
+  uint32_t    length          = 253;
   const char* plaintext_cstr  = "981ba6824c1bfb1ab485472029b71d808ce33e2cc3c0b5fc1f3de8a6dc66b1f0";
   const char* ciphertext_cstr = "e9fed8a63d155304d71df20bf3e82214b20ed7dad2f233dc3c22d7bdeeed8e78";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -99,6 +110,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset1)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
@@ -111,7 +123,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset2)
   uint32_t    count     = 0xc675a64b;
   uint8_t     bearer    = 0x0c;
   uint8_t     direction = 1;
-  // uint32_t    length    = 798;
+  uint32_t    length    = 798;
   const char* plaintext_cstr =
       "7ec61272743bf1614726446a6c38ced166f6ca76eb5430044286346cef130f92922b03450d3a9975e5bd2ea0eb55ad8e1b199e3ec4316020"
       "e9a1b285e762795359b7bdfd39bef4b2484583d5afe082aee638bf5fd5a606193901a08f4ab41aab9b134880";
@@ -120,10 +132,10 @@ TEST_F(ciphering_engine_test, security_nea2_testset2)
       "4cd97b870976503c0943f2cb5ae8f052c7b7d392239587b8956086bcab18836042e2e6ce42432a17105c53d0";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -131,6 +143,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset2)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
@@ -139,19 +152,19 @@ TEST_F(ciphering_engine_test, security_nea2_testset2)
 TEST_F(ciphering_engine_test, security_nea2_testset3)
 {
   // Testdata in plain format
-  const char* key_cstr  = "0a8b6bd8d9b08b08d64e32d1817777fb";
-  uint32_t    count     = 0x544d49cd;
-  uint8_t     bearer    = 0x04;
-  uint8_t     direction = 0;
-  // uint32_t    length          = 310;
+  const char* key_cstr        = "0a8b6bd8d9b08b08d64e32d1817777fb";
+  uint32_t    count           = 0x544d49cd;
+  uint8_t     bearer          = 0x04;
+  uint8_t     direction       = 0;
+  uint32_t    length          = 310;
   const char* plaintext_cstr  = "fd40a41d370a1f65745095687d47ba1d36d2349e23f644392c8ea9c49d40c13271aff264d0f248";
   const char* ciphertext_cstr = "75750d37b4bba2a4dedb34235bd68c6645acdaaca48138a3b0c471e2a7041a576423d2927287f0";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -159,6 +172,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset3)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
@@ -167,11 +181,11 @@ TEST_F(ciphering_engine_test, security_nea2_testset3)
 TEST_F(ciphering_engine_test, security_nea2_testset4)
 {
   // Testdata in plain format
-  const char* key_cstr  = "aa1f95aea533bcb32eb63bf52d8f831a";
-  uint32_t    count     = 0x72d8c671;
-  uint8_t     bearer    = 0x10;
-  uint8_t     direction = 1;
-  // uint32_t    length         = 1022;
+  const char* key_cstr       = "aa1f95aea533bcb32eb63bf52d8f831a";
+  uint32_t    count          = 0x72d8c671;
+  uint8_t     bearer         = 0x10;
+  uint8_t     direction      = 1;
+  uint32_t    length         = 1022;
   const char* plaintext_cstr = "fb1b96c5c8badfb2e8e8edfde78e57f2ad81e74103fc430a534dcc37afcec70e1517bb06f27219dae49022d"
                                "dc47a068de4c9496a951a6b09edbdc864c7adbd740ac50c022f3082bafd22d78197c5d508b977bca13f32e6"
                                "52e74ba728576077ce628c535e87dc6077ba07d29068590c8cb5f1088e082cfa0ec961302d69cf3d44";
@@ -180,10 +194,10 @@ TEST_F(ciphering_engine_test, security_nea2_testset4)
                                 "3f2f8f8e0592a9879201be7ff9777a162ab810feb324ba74c4c156e04d39097209653ac33e5a5f2d8864";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -191,6 +205,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset4)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
@@ -203,7 +218,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset5)
   uint32_t    count     = 0xc675a64b;
   uint8_t     bearer    = 0x0c;
   uint8_t     direction = 1;
-  // uint32_t    length    = 1245;
+  uint32_t    length    = 1245;
   const char* plaintext_cstr =
       "8daa17b1ae050529c6827f28c0ef6a1242e93f8b314fb18a77f790ae049fedd612267fecaefc450174d76d9f9aa7755a30cd90a9a5874bf4"
       "8eaf70eea3a62a250a8b6bd8d9b08b08d64e32d1817777fb544d49cd49720e219dbf8bbed33904e1fd40a41d370a1f65745095687d47ba1d"
@@ -214,10 +229,10 @@ TEST_F(ciphering_engine_test, security_nea2_testset5)
       "f1fc0ec684ddb21349747622e209295d27ff3f95623371d49b147c0af486171f22cd04b1cbeb2658223e6938";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -225,6 +240,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset5)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
@@ -237,7 +253,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset6)
   uint32_t    count     = 0xaca4f50f;
   uint8_t     bearer    = 0x0b;
   uint8_t     direction = 0;
-  // uint32_t    length    = 3861;
+  uint32_t    length    = 3861;
   const char* plaintext_cstr =
       "40981ba6824c1bfb4286b299783daf442c099f7ab0f58d5c8e46b104f08f01b41ab485472029b71d36bd1a3d90dc3a41b46d51672ac4c966"
       "3a2be063da4bc8d2808ce33e2cccbfc634e1b259060876a0fbb5a437ebcc8d31c19e4454318745e3fa16bb11adae248879fe52db2543e53c"
@@ -260,10 +276,10 @@ TEST_F(ciphering_engine_test, security_nea2_testset6)
       "c41b863da9e142e90020cfd074d6927b7ab3b6725d1a6f3f98b9c9daa8982aff067828";
 
   // Pack hex strings into srsran types
-  sec_128_key        key        = make_sec_128_key(key_cstr);
-  security_direction dir        = static_cast<security_direction>(direction);
-  byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr).value();
-  byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr).value();
+  sec_128_key key        = make_sec_128_key(key_cstr);
+  auto        dir        = static_cast<security_direction>(direction);
+  byte_buffer plaintext  = make_byte_buffer(plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(ciphertext_cstr).value();
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, bearer, dir);
@@ -271,6 +287,7 @@ TEST_F(ciphering_engine_test, security_nea2_testset6)
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, count);
   ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), length));
   EXPECT_EQ(result.buf.value(), ciphertext);
 }
 
