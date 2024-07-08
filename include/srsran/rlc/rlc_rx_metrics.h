@@ -75,15 +75,26 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer,
-                 "period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps "
-                 "ctrl_pdus={}, ctrl_rate={}kbps",
+                 "period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps",
                  metrics_period.count(),
                  m.num_sdus,
                  (double)m.num_sdu_bytes * 8 / (double)metrics_period.count(),
                  m.num_pdus,
-                 (double)m.num_pdu_bytes * 8 / (double)metrics_period.count(),
-                 m.mode_specific.am.num_ctrl_pdus,
-                 (double)m.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+                 (double)m.num_pdu_bytes * 8 / (double)metrics_period.count());
+  if (m.mode == rlc_mode::tm) {
+    // No TM specific metrics for RX
+  } else if ((m.mode == rlc_mode::um_bidir || m.mode == rlc_mode::um_unidir_ul)) {
+    // Format UM specific metrics for RX
+    fmt::format_to(buffer,
+                   " ctrl_pdus={}, ctrl_rate={}kbps",
+                   m.mode_specific.um.num_sdu_segments,
+                   (double)m.mode_specific.um.num_sdu_segments * 8 / (double)metrics_period.count());
+  } else if (m.mode == rlc_mode::am) {
+    fmt::format_to(buffer,
+                   " ctrl_pdus={}, ctrl_rate={}kbps",
+                   m.mode_specific.am.num_ctrl_pdus,
+                   (double)m.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+  }
   return to_c_str(buffer);
 }
 
