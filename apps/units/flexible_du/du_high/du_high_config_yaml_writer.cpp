@@ -408,9 +408,9 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 
   node["p0_nominal"]                   = config.p0_nominal;
   node["sr_period_ms"]                 = config.sr_period_msec;
-  node["f1_nof_ue_res_harq"]           = config.nof_ue_pucch_f1_res_harq;
-  node["f1_nof_cell_res_sr"]           = config.nof_cell_sr_resources;
-  node["f1_nof_symbols"]               = config.f1_nof_symbols;
+  node["f0_or_f1_nof_ue_res_harq"]     = config.nof_ue_pucch_f0_or_f1_res_harq;
+  node["f0_or_f1_nof_cell_res_sr"]     = config.nof_cell_sr_resources;
+  node["f0_intraslot_freq_hop"]        = config.f0_intraslot_freq_hopping;
   node["f1_enable_occ"]                = config.f1_enable_occ;
   node["f1_nof_cyclic_shifts"]         = config.nof_cyclic_shift;
   node["f1_intraslot_freq_hop"]        = config.f1_intraslot_freq_hopping;

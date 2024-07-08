@@ -77,12 +77,12 @@ public:
     sch(create_scheduler(scheduler_config{expert_cfg, cfg_notif, metric_notif})),
     next_sl_tx(builder_params.scs_common, 0)
   {
-    du_cell_cfgs                                       = {config_helpers::make_default_du_cell_config(builder_params)};
-    du_cell_cfgs[0].pucch_cfg.f2_params.max_code_rate  = max_pucch_code_rate::dot_35;
-    du_cell_cfgs[0].pucch_cfg.nof_csi_resources        = 4;
-    du_cell_cfgs[0].pucch_cfg.nof_sr_resources         = 2;
-    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f1_res_harq = 3;
-    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_res_harq = 6;
+    du_cell_cfgs                                      = {config_helpers::make_default_du_cell_config(builder_params)};
+    du_cell_cfgs[0].pucch_cfg.f2_params.max_code_rate = max_pucch_code_rate::dot_35;
+    du_cell_cfgs[0].pucch_cfg.nof_csi_resources       = 4;
+    du_cell_cfgs[0].pucch_cfg.nof_sr_resources        = 2;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 3;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_res_harq   = 6;
 
     sched_cell_configuration_request_message cell_cfg_msg =
         test_helpers::make_default_sched_cell_configuration_request(builder_params);

@@ -760,19 +760,21 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
   add_option(app,
              "--f1_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f1_res_harq,
-             "Number of PUCCH F1 resources available per UE for HARQ")
+             pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
+             "Number of PUCCH F0/F1 resources available per UE for HARQ")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
-             "--f1_nof_cell_res_sr",
+             "--f0_or_f1_nof_cell_res_sr",
              pucch_params.nof_cell_sr_resources,
              "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 50));
-  add_option(app, "--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
-      ->capture_default_str()
-      ->check(CLI::Range(4, 14));
+  add_option(app,
+             "--f0_intraslot_freq_hop",
+             pucch_params.f0_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F0")
+      ->capture_default_str();
   add_option(app, "--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1")->capture_default_str();
   add_option(app,
              "--f1_nof_cyclic_shifts",

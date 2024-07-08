@@ -705,9 +705,9 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   const pucch_builder_params& pucch_cfg = cell_cfg.pucch_cfg;
-  HANDLE_ERROR(srs_du::pucch_parameters_validator(pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint(),
+  HANDLE_ERROR(srs_du::pucch_parameters_validator(pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint(),
                                                   pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint(),
-                                                  pucch_cfg.f1_params,
+                                                  pucch_cfg.f0_or_f1_params,
                                                   pucch_cfg.f2_params,
                                                   cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length()));
   HANDLE_ERROR(config_validators::validate_csi_meas_cfg(cell_cfg.ue_ded_serv_cell_cfg, cell_cfg.tdd_ul_dl_cfg_common));

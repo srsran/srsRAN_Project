@@ -110,7 +110,7 @@ protected:
     const du_cell_config& du_cfg                = cell_cfg_list[0];
     const unsigned        nof_sr_f1_res_per_ue  = 1U;
     const unsigned        nof_csi_f2_res_per_ue = 1U;
-    bool pucch_checker = pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+    bool pucch_checker = pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
                                                                 du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() +
                                                                 nof_sr_f1_res_per_ue + nof_csi_f2_res_per_ue;
 
@@ -118,14 +118,14 @@ protected:
     // UE can have different values within this range.
     pucch_checker = pucch_checker and
                     pucch_cfg.sr_res_list.front().pucch_res_id.cell_res_id >=
-                        du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() and
+                        du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() and
                     pucch_cfg.sr_res_list.front().pucch_res_id.cell_res_id <
-                        du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() + du_cfg.pucch_cfg.nof_sr_resources;
+                        du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() + du_cfg.pucch_cfg.nof_sr_resources;
 
     // We always put the CSI PUCCH resource is always at the end of the list.
     if (csi_pucch_res.has_value()) {
       pucch_checker =
-          pucch_checker and csi_pucch_res.value() >= du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+          pucch_checker and csi_pucch_res.value() >= du_cfg.pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() +
                                                          du_cfg.pucch_cfg.nof_sr_resources +
                                                          du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
     }
@@ -304,13 +304,14 @@ static du_cell_config make_custom_du_cell_config(const pucch_cfg_builder_params&
 {
   du_cell_config du_cfg                     = config_helpers::make_default_du_cell_config();
   auto&          pucch_params               = du_cfg.pucch_cfg;
-  pucch_params.nof_ue_pucch_f1_res_harq     = pucch_params_.nof_res_f1_harq;
+  pucch_params.nof_ue_pucch_f0_or_f1_res_harq = pucch_params_.nof_res_f1_harq;
   pucch_params.nof_ue_pucch_f2_res_harq     = pucch_params_.nof_res_f2_harq;
   pucch_params.nof_sr_resources             = pucch_params_.nof_res_sr;
   pucch_params.nof_csi_resources            = pucch_params_.nof_res_csi;
   pucch_params.nof_cell_harq_pucch_res_sets = pucch_params_.nof_harq_cfg;
-  pucch_params.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
-  pucch_params.f1_params.occ_supported      = true;
+  auto& f1_params                           = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
+  f1_params.nof_cyc_shifts                  = srsran::nof_cyclic_shifts::six;
+  f1_params.occ_supported                   = true;
 
   return du_cfg;
 }
@@ -342,9 +343,9 @@ protected:
   {
     const unsigned pucch_res_set_id            = format == pucch_format::FORMAT_1 ? 0U : 1U;
     const auto&    pucch_res_set               = pucch_cfg.pucch_res_set[pucch_res_set_id].pucch_res_id_list;
-    const unsigned expected_pucch_res_set_size = format == pucch_format::FORMAT_1
-                                                     ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint()
-                                                     : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
+    const unsigned expected_pucch_res_set_size =
+        format == pucch_format::FORMAT_1 ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint()
+                                         : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
     if (expected_pucch_res_set_size != pucch_res_set.size()) {
       return {};
     }
@@ -364,7 +365,7 @@ protected:
   interval<unsigned, true> get_expected_pucch_res_id_interval(unsigned ue_idx, pucch_format format) const
   {
     const unsigned expected_nof_pucch_res = format == pucch_format::FORMAT_1
-                                                ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint()
+                                                ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint()
                                                 : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
 
     if (expected_nof_pucch_res == 0) {
@@ -375,7 +376,7 @@ protected:
     const unsigned f2_res_idx_offset =
         format == pucch_format::FORMAT_1
             ? 0U
-            : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() * nof_harq_cfgs +
+            : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * nof_harq_cfgs +
                   cell_cfg_list[0].pucch_cfg.nof_sr_resources;
     return {f2_res_idx_offset + (ue_idx % nof_harq_cfgs) * expected_nof_pucch_res,
             f2_res_idx_offset + (ue_idx % nof_harq_cfgs) * expected_nof_pucch_res + expected_nof_pucch_res - 1};
@@ -551,12 +552,13 @@ static du_cell_config
 make_custom_du_cell_config_for_pucch_cnt(const pucch_cnt_builder_params& pucch_params_,
                                          const srsran::config_helpers::cell_config_builder_params_extended& params = {})
 {
-  du_cell_config du_cfg                 = config_helpers::make_default_du_cell_config(params);
-  auto&          pucch_params           = du_cfg.pucch_cfg;
-  pucch_params.nof_sr_resources         = pucch_params_.nof_res_sr;
-  pucch_params.nof_csi_resources        = pucch_params_.nof_res_csi;
-  pucch_params.f1_params.nof_cyc_shifts = srsran::nof_cyclic_shifts::six;
-  pucch_params.f1_params.occ_supported  = true;
+  du_cell_config du_cfg          = config_helpers::make_default_du_cell_config(params);
+  auto&          pucch_params    = du_cfg.pucch_cfg;
+  pucch_params.nof_sr_resources  = pucch_params_.nof_res_sr;
+  pucch_params.nof_csi_resources = pucch_params_.nof_res_csi;
+  auto& f1_params                = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
+  f1_params.nof_cyc_shifts       = srsran::nof_cyclic_shifts::six;
+  f1_params.occ_supported        = true;
 
   du_cfg.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = pucch_params_.sr_period;
   if (du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {

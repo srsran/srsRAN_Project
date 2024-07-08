@@ -356,7 +356,7 @@ static std::vector<pucch_grant> compute_f2_res(unsigned nof_res_f2, pucch_f2_par
 error_type<std::string>
 srsran::srs_du::pucch_parameters_validator(unsigned                                       nof_res_f0_f1,
                                            unsigned                                       nof_res_f2,
-                                           std::variant<pucch_f0_params, pucch_f1_params> f0_f1_params,
+                                           std::variant<pucch_f1_params, pucch_f0_params> f0_f1_params,
                                            pucch_f2_params                                f2_params,
                                            unsigned                                       bwp_size_rbs)
 {
@@ -555,7 +555,7 @@ merge_f0_f1_f2_resource_lists(const std::vector<pucch_grant>& pucch_f0_f1_resour
 std::vector<pucch_resource>
 srsran::srs_du::generate_cell_pucch_res_list(unsigned                                       nof_res_f0_f1,
                                              unsigned                                       nof_res_f2,
-                                             std::variant<pucch_f0_params, pucch_f1_params> f0_f1_params,
+                                             std::variant<pucch_f1_params, pucch_f0_params> f0_f1_params,
                                              pucch_f2_params                                f2_params,
                                              unsigned                                       bwp_size_rbs)
 {

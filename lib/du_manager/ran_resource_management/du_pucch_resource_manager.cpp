@@ -46,13 +46,13 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
                                                      unsigned                   max_pucch_grants_per_slot_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   default_pucch_res_list(
-      srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+      srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_sr_resources,
                                            cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
-                                           cell_cfg_list_[0].pucch_cfg.f1_params,
+                                           cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
                                            cell_cfg_list_[0].pucch_cfg.f2_params,
                                            cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
   default_pucch_cfg(
@@ -261,7 +261,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                   cells[0].ue_idx,
                                   sr_res_offset.value().first,
                                   csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
-                                  user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq,
+                                  user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
                                   user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq,
                                   user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets,
                                   user_defined_pucch_cfg.nof_sr_resources,
@@ -386,7 +386,7 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+  return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets;
 }
 
@@ -394,7 +394,7 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
                           user_defined_pucch_cfg.nof_sr_resources +
                           user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
