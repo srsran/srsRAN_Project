@@ -127,7 +127,7 @@ get_ue_dl_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
     // Create list of DL HARQ processes with pending retx, sorted from oldest to newest.
     for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
       const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
-      if (h.has_pending_retx()) {
+      if (h.has_pending_retx() and not h.last_alloc_params().is_fallback) {
         dl_harq_candidates.push_back(&h);
       }
     }

@@ -195,6 +195,8 @@ void dl_harq_process::new_tx(slot_point pdsch_slot,
   prev_tx_params.nof_layers  = nof_layers;
   prev_tx_params.is_fallback = is_fallback_;
   prev_tx_params.tb[0].emplace();
+  // NOTE: Correct value will be set when \c save_alloc_params is called.
+  prev_tx_params.tb[0]->contains_srb_data = false;
   prev_tx_params.tb[1].reset();
   pucch_ack_to_receive = 0;
   chosen_ack           = mac_harq_ack_report_status::dtx;
@@ -225,6 +227,8 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
     if (tb_tx_req[i] == tb_tx_request::newtx) {
       base_type::new_tx_tb_common(i, max_harq_nof_retxs, harq_bit_idx);
       prev_tx_params.tb[i].emplace();
+      // NOTE: Correct value will be set when \c save_alloc_params is called.
+      prev_tx_params.tb[i]->contains_srb_data = false;
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
       base_type::new_retx_tb_common(i, harq_bit_idx);
     } else {
@@ -272,7 +276,9 @@ dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, std::
   return status_update::no_update;
 }
 
-void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch)
+void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx,
+                                        const pdsch_information&     pdsch,
+                                        bool                         contains_srb_data)
 {
   unsigned tb_idx = empty(0) ? 1 : 0;
   for (const pdsch_codeword& cw : pdsch.codewords) {
@@ -280,8 +286,9 @@ void dl_harq_process::save_alloc_params(const dl_harq_sched_context& ctx, const 
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     if (tb(tb_idx).nof_retxs == 0) {
-      prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
-      prev_tx_params.tb[tb_idx]->olla_mcs  = ctx.olla_mcs;
+      prev_tx_params.tb[tb_idx]->tbs_bytes         = cw.tb_size_bytes;
+      prev_tx_params.tb[tb_idx]->olla_mcs          = ctx.olla_mcs;
+      prev_tx_params.tb[tb_idx]->contains_srb_data = contains_srb_data;
     } else {
       srsran_assert(ctx.dci_cfg_type == prev_tx_params.dci_cfg_type,
                     "DCI format and RNTI type cannot change during DL HARQ retxs");

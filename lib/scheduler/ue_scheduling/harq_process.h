@@ -271,6 +271,8 @@ public:
       pdsch_mcs_table mcs_table;
       sch_mcs_index   mcs;
       unsigned        tbs_bytes;
+      /// Flag indicating whether the TB contains data from SRB or not.
+      bool contains_srb_data;
       /// \brief MCS originally suggested by the OLLA. It might differ from the actual MCS used.
       std::optional<sch_mcs_index> olla_mcs;
     };
@@ -340,7 +342,8 @@ public:
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
-  void save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch);
+  void
+  save_alloc_params(const dl_harq_sched_context& ctx, const pdsch_information& pdsch, bool contains_srb_data = false);
 
   void increment_pucch_counter();
 
