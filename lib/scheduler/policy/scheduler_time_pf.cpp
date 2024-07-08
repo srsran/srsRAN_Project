@@ -175,8 +175,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
   // Calculate DL priority.
   dl_retx_h                      = ue_cc->harqs.find_pending_dl_retx();
   dl_newtx_h                     = ue_cc->harqs.find_empty_dl_harq();
-  has_dl_newtx_srb_pending_bytes = u.has_pending_dl_newtx_bytes(LCID_SRB0) or u.has_pending_dl_newtx_bytes(LCID_SRB1) or
-                                   u.has_pending_dl_newtx_bytes(LCID_SRB2);
+  has_dl_newtx_srb_pending_bytes = u.has_pending_dl_srb_newtx_bytes();
   if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
     // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -229,10 +228,6 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_grid_view& res_grid)
 {
-  // LCG ID 0 is used for SRBs.
-  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
-  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
-
   ul_retx_h                      = nullptr;
   ul_newtx_h                     = nullptr;
   ul_prio                        = 0;
@@ -247,7 +242,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_
   ul_retx_h                      = ue_cc->harqs.find_pending_ul_retx();
   ul_newtx_h                     = ue_cc->harqs.find_empty_ul_harq();
   sr_ind_received                = u.has_pending_sr();
-  has_ul_newtx_srb_pending_bytes = u.pending_ul_newtx_bytes(srb_lcg_id) > 0;
+  has_ul_newtx_srb_pending_bytes = u.pending_ul_srb_newtx_bytes() > 0;
   if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.

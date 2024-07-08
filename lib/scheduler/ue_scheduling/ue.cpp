@@ -127,30 +127,17 @@ unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
   return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
 }
 
-unsigned ue::pending_ul_newtx_bytes(lcg_id_t lcg_id) const
+unsigned ue::pending_dl_srb_newtx_bytes() const
 {
-  if (lcg_id == LCG_ID_INVALID) {
-    return 0;
-  }
+  return dl_lc_ch_mgr.pending_bytes(LCID_SRB1) + dl_lc_ch_mgr.pending_bytes(LCID_SRB2);
+}
 
-  unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes(lcg_id);
-  // Subtract the bytes already allocated in UL HARQs.
-  for (const ue_cell* ue_cc : ue_cells) {
-    if (pending_bytes == 0) {
-      break;
-    }
-    unsigned harq_bytes = 0;
-    for (unsigned i = 0; i != ue_cc->harqs.nof_ul_harqs(); ++i) {
-      const ul_harq_process& h_ul = ue_cc->harqs.ul_harq(i);
-      if (not h_ul.empty()) {
-        harq_bytes += h_ul.last_tx_params().tbs_bytes;
-      }
-    }
-    harq_bytes += ue_cc->harqs.ntn_get_tbs_pending_crcs();
-    pending_bytes -= std::min(pending_bytes, harq_bytes);
-  }
-
-  return pending_bytes;
+unsigned ue::pending_ul_srb_newtx_bytes() const
+{
+  // LCG ID 0 is used for SRBs.
+  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
+  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
+  return ul_lc_ch_mgr.pending_bytes(srb_lcg_id);
 }
 
 unsigned ue::pending_ul_newtx_bytes() const

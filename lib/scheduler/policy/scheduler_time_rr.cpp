@@ -268,8 +268,7 @@ static alloc_result alloc_dl_ue(const ue&                         u,
     if (not u.has_pending_dl_newtx_bytes()) {
       return {alloc_status::skip_ue};
     }
-    if (ue_with_srb_data_only and not u.has_pending_dl_newtx_bytes(LCID_SRB0) and
-        not u.has_pending_dl_newtx_bytes(LCID_SRB1) and not u.has_pending_dl_newtx_bytes(LCID_SRB2)) {
+    if (ue_with_srb_data_only and not u.has_pending_dl_srb_newtx_bytes()) {
       return {alloc_status::skip_ue};
     }
   }
@@ -323,17 +322,13 @@ static alloc_result alloc_ul_ue(const ue&                    u,
                                 srslog::basic_logger&        logger,
                                 std::optional<unsigned>      ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
-  // LCG ID 0 is used for SRBs.
-  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
-  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
-
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
       return {alloc_status::skip_ue};
     }
     // Fetch pending bytes of SRBs.
-    pending_newtx_bytes = u.pending_ul_newtx_bytes(srb_lcg_id);
+    pending_newtx_bytes = u.pending_ul_srb_newtx_bytes();
     if (ue_with_srb_data_only and pending_newtx_bytes == 0) {
       return {alloc_status::skip_ue};
     }

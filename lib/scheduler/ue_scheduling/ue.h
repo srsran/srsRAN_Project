@@ -116,6 +116,14 @@ public:
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
   bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
 
+  /// \brief Checks if there are DL pending bytes in SRBs that are yet to be allocated in a DL HARQ.
+  /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
+  /// \remark Excludes SRB0 pending bytes.
+  bool has_pending_dl_srb_newtx_bytes() const
+  {
+    return dl_lc_ch_mgr.has_pending_bytes(LCID_SRB1) or dl_lc_ch_mgr.has_pending_bytes(LCID_SRB2);
+  }
+
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
 
@@ -135,15 +143,21 @@ public:
   /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
   unsigned pending_dl_newtx_bytes(lcid_t lcid = lcid_t::INVALID_LCID) const;
 
+  /// \brief Computes the number of DL pending bytes in SRBs that are not already allocated in a DL
+  /// HARQ. The value is used to derive the required transport block size for an DL grant.
+  /// \return The number of DL pending bytes in SRBs that are not already allocated in a DL HARQ.
+  /// \remark Excludes SRB0 pending bytes.
+  unsigned pending_dl_srb_newtx_bytes() const;
+
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
   unsigned pending_ul_newtx_bytes() const;
 
-  /// \brief Computes the number of UL pending bytes of a LCG ID that are not already allocated in a UL HARQ. The value
-  /// is used to derive the required transport block size for an UL grant.
-  /// param[in] lcg_id Logical Channel Group ID.
-  /// \return The number of UL pending bytes of a LCG ID that are not already allocated in a DL HARQ.
-  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const;
+  /// \brief Computes the number of UL pending bytes in SRBs. The value is used to derive the required transport block
+  /// size for an UL grant.
+  /// \return The number of UL pending bytes in SRBs.
+  /// \remark The returned UL pending bytes does not exclude already allocated bytes in UL HARQ(s).
+  unsigned pending_ul_srb_newtx_bytes() const;
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
