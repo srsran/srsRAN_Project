@@ -69,20 +69,21 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
                                             ru));
   }
 
-  create_low_prio_executors(expert_appcfg,
-                            cu_cp_pcap_cfg,
-                            cu_up_pcap_cfg,
-                            du_cfg.du_high_cfg.config.pcaps,
-                            du_cfg.du_high_cfg.config.cells_cfg.size(),
-                            gtpu_queue_size);
-  associate_low_prio_executors();
-
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
   if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
     const auto& sdr_cfg     = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg);
     is_blocking_mode_active = sdr_cfg.device_driver == "zmq";
   }
+
+  create_low_prio_executors(expert_appcfg,
+                            cu_cp_pcap_cfg,
+                            cu_up_pcap_cfg,
+                            du_cfg.du_high_cfg.config.pcaps,
+                            du_cfg.du_high_cfg.config.cells_cfg.size(),
+                            gtpu_queue_size,
+                            not is_blocking_mode_active);
+  associate_low_prio_executors();
 
   create_du_executors(is_blocking_mode_active, nof_cells, du_cfg.du_low_cfg, du_cfg.fapi_cfg);
   create_ru_executors(du_cfg.ru_cfg, du_cfg.du_high_cfg.config);
@@ -311,7 +312,8 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
                                                const cu_up_unit_pcap_config&     cu_up_pcaps,
                                                const du_high_unit_pcap_config&   du_pcaps,
                                                unsigned                          nof_cells,
-                                               unsigned                          gtpu_queue_size)
+                                               unsigned                          gtpu_queue_size,
+                                               bool                              rt_mode)
 {
   using namespace execution_config_helper;
   // TODO: split executor creation and association to workers
@@ -321,7 +323,7 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   // Used for PCAP writing.
   non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
-  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
+  non_rt_pool.executors.push_back({"high_prio_exec", task_priority::max, {}, std::nullopt, not rt_mode});
   // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
   non_rt_pool.executors.push_back({"cu_up_strand",
                                    task_priority::max - 1,
