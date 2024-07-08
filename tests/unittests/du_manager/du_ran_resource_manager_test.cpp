@@ -10,7 +10,7 @@
 
 #include "lib/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/support/math/gcd.h"
+#include "srsran/support/math/lcm.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

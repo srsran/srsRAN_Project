@@ -15,7 +15,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 #include "../support/pusch/pusch_resource_allocation.h"
-#include "srsran/support/math/gcd.h"
+#include "srsran/support/math/lcm.h"
 #include <algorithm>
 
 using namespace srsran;
@@ -514,7 +514,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
       ss_periods.push_back(ss->cfg->get_monitoring_slot_periodicity());
     }
     max_slot_periodicity = lcm<unsigned>(ss_periods);
-    max_slot_periodicity = lcm(max_slot_periodicity, slots_per_frame);
+    max_slot_periodicity = std::lcm(max_slot_periodicity, slots_per_frame);
   }
 
   frame_pdcch_candidate_list candidates;
