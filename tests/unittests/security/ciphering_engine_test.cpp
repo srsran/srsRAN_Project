@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/security/ciphering_engine_generic.h"
 #include "lib/security/ciphering_engine_nea2.h"
 #include "nea2_test_set.h"
 #include "srsran/security/ciphering_engine.h"
@@ -98,6 +99,27 @@ TEST_P(ciphering_engine_test, ciphering_engine_nea2)
 
   // Create ciphering engine
   std::unique_ptr<ciphering_engine> nea = std::make_unique<ciphering_engine_nea2>(key, param.bearer, dir);
+
+  // Apply ciphering and compare results
+  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
+  ASSERT_TRUE(result.buf.has_value());
+  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
+  EXPECT_EQ(result.buf.value(), ciphertext);
+}
+
+TEST_P(ciphering_engine_test, ciphering_engine_generic_nea2)
+{
+  nea_test_set param = GetParam();
+
+  // Pack hex strings into srsran types
+  sec_128_key key        = make_sec_128_key(param.key_cstr);
+  auto        dir        = static_cast<security_direction>(param.direction);
+  byte_buffer plaintext  = make_byte_buffer(param.plaintext_cstr).value();
+  byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
+
+  // Create ciphering engine
+  std::unique_ptr<ciphering_engine> nea =
+      std::make_unique<ciphering_engine_generic>(key, param.bearer, dir, ciphering_algorithm::nea2);
 
   // Apply ciphering and compare results
   security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
