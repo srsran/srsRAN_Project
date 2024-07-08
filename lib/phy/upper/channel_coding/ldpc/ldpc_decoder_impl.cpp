@@ -148,8 +148,15 @@ void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
   soft_bits_view = soft_bits_view.last(soft_bits_view.size() - 2 * node_size_byte);
   for (unsigned i_node = 2 * node_size_byte, max_node = nof_full_nodes * node_size_byte; i_node != max_node;
        i_node += node_size_byte) {
-    srsvec::copy(soft_bits_view.first(lifting_size), llr_view.first(lifting_size));
+    // Copy input LLR in the soft bits.
+    clamp(soft_bits_view.first(lifting_size), llr_view.first(lifting_size), soft_bits_clamp_low, soft_bits_clamp_high);
+
+    // Advance input LLR.
     llr_view = llr_view.last(llr_view.size() - lifting_size);
+
+    // Zero node tail soft bits.
+    srsvec::zero(soft_bits_view.subspan(lifting_size, node_size_byte - lifting_size));
+
     // Recall that soft bits may have zero padding in SIMD implementations (i.e., when node_size_byte != lifting_size).
     soft_bits_view = soft_bits_view.last(soft_bits_view.size() - node_size_byte);
   }
@@ -157,7 +164,10 @@ void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
   // The length of llrs may not be an exact multiple of the lifting size.
   unsigned tail_positions = llr_view.size();
   if (tail_positions != 0) {
+    // Copy last LLRs.
     srsvec::copy(soft_bits_view.first(tail_positions), llr_view);
+    // Zero the remaining soft bits.
+    srsvec::zero(soft_bits_view.subspan(tail_positions, node_size_byte - lifting_size));
   }
 }
 

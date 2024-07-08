@@ -12,10 +12,18 @@
 /// \brief Unit test for the log-likelihood ratio type.
 ///
 /// Tests all the operators and functions defined for the type.
+#include "../../srslog/testing_helpers.h"
+
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/support/srsran_test.h"
+#include <random>
 
 using namespace srsran;
+
+bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_ratio> rhs)
+{
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
 
 int main()
 {
@@ -72,4 +80,24 @@ int main()
   fmt::memory_buffer buf;
   fmt::format_to(buf, "{}", log_likelihood_ratio(1));
   TESTASSERT_EQ(to_string(buf), "1");
+
+  log_likelihood_ratio                   low  = -32;
+  log_likelihood_ratio                   high = 32;
+  std::mt19937                           rgen;
+  std::uniform_int_distribution<int8_t>  llr_clamp_dist(log_likelihood_ratio::min().to_int(),
+                                                       log_likelihood_ratio::max().to_int());
+  std::array<log_likelihood_ratio, 1234> clamp_in_data;
+  std::array<log_likelihood_ratio, 1234> clamp_expected_data;
+  std::array<log_likelihood_ratio, 1234> clamp_out_data;
+  std::generate(
+      clamp_in_data.begin(), clamp_in_data.end(), [&llr_clamp_dist, &rgen]() { return llr_clamp_dist(rgen); });
+  std::transform(clamp_in_data.begin(),
+                 clamp_in_data.end(),
+                 clamp_expected_data.begin(),
+                 [low, high](log_likelihood_ratio value) { return std::clamp(value, low, high); });
+  clamp(clamp_out_data, clamp_in_data, low, high);
+  TESTASSERT_EQ(span<const log_likelihood_ratio>(clamp_expected_data),
+                span<const log_likelihood_ratio>(clamp_out_data));
+
+  return 0;
 }
