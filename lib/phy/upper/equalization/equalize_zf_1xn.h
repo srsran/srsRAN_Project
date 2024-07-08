@@ -45,11 +45,12 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
   std::array<span<const cbf16_t>, MAX_PORTS> port_symbols;
   std::array<span<const cbf16_t>, MAX_PORTS> port_ests;
 
-#if defined(__AVX2__) || defined(__ARM_NEON)
   for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
     port_symbols[i_port] = ch_symbols.get_slice(i_port);
     port_ests[i_port]    = ch_estimates.get_channel(i_port, 0);
   }
+
+#if defined(__AVX2__) || defined(__ARM_NEON)
 
   // Create registers with zero and infinity values.
   simd_cf_t cf_zero  = srsran_simd_cf_zero();
