@@ -415,7 +415,7 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
                        task_worker_queue_size,
                        {{"phy_exec"}},
                        affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
-                       os_thread_realtime_priority::max());
+                       os_thread_realtime_priority::no_realtime());
 
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
       upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));
