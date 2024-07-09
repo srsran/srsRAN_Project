@@ -122,9 +122,9 @@ protected:
                                             .nof_ue_pucch_f2_res_harq       = 8,
                                             .nof_sr_resources               = 8,
                                             .nof_csi_resources              = 8};
-    auto& f1_params          = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
-    f1_params.nof_cyc_shifts = srsran::nof_cyclic_shifts::twelve;
-    f1_params.occ_supported  = true;
+    auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts       = srsran::nof_cyclic_shifts::twelve;
+    f1_params.occ_supported        = true;
     pucch_cfg_builder.setup(bench->cell_cfg, pucch_basic_params);
   }
 

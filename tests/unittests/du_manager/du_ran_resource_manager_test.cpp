@@ -302,16 +302,16 @@ using namespace du_test_multiple_pucch_cfg;
 
 static du_cell_config make_custom_du_cell_config(const pucch_cfg_builder_params& pucch_params_)
 {
-  du_cell_config du_cfg                     = config_helpers::make_default_du_cell_config();
-  auto&          pucch_params               = du_cfg.pucch_cfg;
+  du_cell_config du_cfg                       = config_helpers::make_default_du_cell_config();
+  auto&          pucch_params                 = du_cfg.pucch_cfg;
   pucch_params.nof_ue_pucch_f0_or_f1_res_harq = pucch_params_.nof_res_f1_harq;
-  pucch_params.nof_ue_pucch_f2_res_harq     = pucch_params_.nof_res_f2_harq;
-  pucch_params.nof_sr_resources             = pucch_params_.nof_res_sr;
-  pucch_params.nof_csi_resources            = pucch_params_.nof_res_csi;
-  pucch_params.nof_cell_harq_pucch_res_sets = pucch_params_.nof_harq_cfg;
-  auto& f1_params                           = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
-  f1_params.nof_cyc_shifts                  = srsran::nof_cyclic_shifts::six;
-  f1_params.occ_supported                   = true;
+  pucch_params.nof_ue_pucch_f2_res_harq       = pucch_params_.nof_res_f2_harq;
+  pucch_params.nof_sr_resources               = pucch_params_.nof_res_sr;
+  pucch_params.nof_csi_resources              = pucch_params_.nof_res_csi;
+  pucch_params.nof_cell_harq_pucch_res_sets   = pucch_params_.nof_harq_cfg;
+  auto& f1_params                             = std::get<pucch_f1_params>(pucch_params.f0_or_f1_params);
+  f1_params.nof_cyc_shifts                    = srsran::nof_cyclic_shifts::six;
+  f1_params.occ_supported                     = true;
 
   return du_cfg;
 }
@@ -341,8 +341,8 @@ protected:
   // HARQ from the UE's PUCCH-Config.
   interval<unsigned, true> get_pucch_res_id_interval(const pucch_config& pucch_cfg, pucch_format format) const
   {
-    const unsigned pucch_res_set_id            = format == pucch_format::FORMAT_1 ? 0U : 1U;
-    const auto&    pucch_res_set               = pucch_cfg.pucch_res_set[pucch_res_set_id].pucch_res_id_list;
+    const unsigned pucch_res_set_id = format == pucch_format::FORMAT_1 ? 0U : 1U;
+    const auto&    pucch_res_set    = pucch_cfg.pucch_res_set[pucch_res_set_id].pucch_res_id_list;
     const unsigned expected_pucch_res_set_size =
         format == pucch_format::FORMAT_1 ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint()
                                          : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
