@@ -855,6 +855,74 @@ TEST_F(test_pucch_allocator_ded_resources, test_common_plus_ded_with_csi_res_fai
   ASSERT_EQ(7, slot_grid.result.ul.pucchs.size());
 }
 
+TEST_F(test_pucch_allocator_ded_resources, ded_resource_allocation_when_common_resource_is_present_is_not_allowed)
+{
+  // NOTE: this allocation should be done with the function alloc_common_and_ded_harq_res(), which handles this special
+  // case.
+  t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+
+  std::optional<unsigned> pucch_res_ind = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_FALSE(pucch_res_ind.has_value());
+}
+
+TEST_F(test_pucch_allocator_ded_resources, if_ded_common_alloc_fails_no_harq_grants_should_be_kept_in_the_scheduler)
+{
+  // This test recreates an edge-case scenario where the allocation of common + dedicated resources could fail if the
+  // scheduler didn't clean the HARQ grant after the resource multiplexing fails.
+  // The conditions to recreate this scenario are:
+  // - Occupy all PUCCH resources from PUCCH res. set 1.
+  // - We need to force the multiplexing for UE under test; for this, we add a CSI grant. For this peculiar case, we
+  // need the allocation to fail in the multiplexing process, and not because of lack of available PUCCH resource
+  // indicators from PUCCH set 0.
+  // - It is important that we only occupy the PUCCH resources PUCCH res. set 1 with a PUCCH resource indicator that
+  // also exists in PUCCH res. set 0; if this is not the case, the PUCCH allocator fails because of lack of available
+  // PUCCH resource indicators from PUCCH set 0.
+  //
+  // 1) At this point, we call the allocator to allocate common + dedicated resources for the UE under test. The
+  // allocation should fail because all PUCCH resources PUCCH res. set 1 are occupied (failure during multiplexing).
+  // 2) We release the PUCCH resource for one of the UE occupying PUCCH res. set 1. This frees one of the PUCCH res.
+  // indicator from PUCCH res. set 1.
+  // 3) We repeat the allocation of common + dedicated resources for the UE under test; this time we expect a success;
+  // if the allocator didn't clean the HARQ grants, the allocation would fail because it finds a dedicated HARQ grant
+  // for the UE (which is not allowed the allocation of common + dedicated resources).
+
+  add_ue_with_format2_harq_grant();
+  add_ue_with_format2_harq_grant();
+  add_ue_with_format2_harq_grant();
+
+  const unsigned csi_part1_bits = 4;
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                                     t_bench.get_main_ue().crnti,
+                                                     t_bench.get_main_ue().get_pcell().cfg(),
+                                                     csi_part1_bits);
+
+  std::optional<unsigned> pucch_res_ind =
+      t_bench.pucch_alloc.alloc_common_and_ded_harq_res(t_bench.res_grid,
+                                                        t_bench.get_main_ue().crnti,
+                                                        t_bench.get_main_ue().get_pcell().cfg(),
+                                                        t_bench.k0,
+                                                        t_bench.k1,
+                                                        t_bench.dci_info);
+
+  ASSERT_FALSE(pucch_res_ind.has_value());
+
+  t_bench.pucch_alloc.remove_ue_uci_from_pucch(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                               t_bench.get_ue(t_bench.last_allocated_ue_idx).crnti,
+                                               t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg());
+
+  pucch_res_ind = t_bench.pucch_alloc.alloc_common_and_ded_harq_res(t_bench.res_grid,
+                                                                    t_bench.get_main_ue().crnti,
+                                                                    t_bench.get_main_ue().get_pcell().cfg(),
+                                                                    t_bench.k0,
+                                                                    t_bench.k1,
+                                                                    t_bench.dci_info);
+
+  ASSERT_TRUE(pucch_res_ind.has_value());
+}
+
 ///////   Test PUCCH Format 2 PRB configuration.    ///////
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
