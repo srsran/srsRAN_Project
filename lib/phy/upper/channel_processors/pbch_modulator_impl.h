@@ -16,6 +16,7 @@
 
 namespace srsran {
 
+/// PBCH modulator implementation.
 class pbch_modulator_impl : public pbch_modulator
 {
 private:

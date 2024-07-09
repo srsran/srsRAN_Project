@@ -42,10 +42,9 @@ public:
   ///
   /// Sets up the internal components, namely LDPC segmenter, all the CRC calculators and the hardware accelerator.
   ///
+  /// \param[in] c           Structure with pointers to three CRC calculator objects, with generator polynomials of type
+  ///                        \c CRC16, \c CRC24A and \c CRC24B.
   /// \param[in] seg         Unique pointer to an LDPC segmenter.
-  /// \param[in] crcs        Structure with pointers to three CRC calculator objects, with generator polynomials of type
-  /// \c
-  ///                        CRC16, \c CRC24A and \c CRC24B.
   /// \param[in] hw          Unique pointer to a hardware-accelerator.
   pdsch_encoder_hw_impl(sch_crc&                                       c,
                         std::unique_ptr<ldpc_segmenter_tx>             seg,

@@ -31,11 +31,10 @@ public:
   using pdsch_dmrs_generator_pool = concurrent_thread_local_object_pool<dmrs_pdsch_processor>;
 
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
-  /// \param[in] segmenter_         LDPC transmitter segmenter.
-  /// \param[in] cb_processor_pool_ Codeblock processor pool.
-  /// \param[in] scrambler_         Scrambling pseudo-random generator.
-  /// \param[in] dmrs_              DM-RS for PDSCH generator.
-  /// \param[in] executor_          Asynchronous task executor.
+  /// \param[in] cb_processor_pool_    Codeblock processor pool.
+  /// \param[in] scrambler_            Scrambling pseudo-random generator.
+  /// \param[in] dmrs_generator_pool_  DM-RS for PDSCH generator.
+  /// \param[in] executor_             Asynchronous task executor.
   pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool>  cb_processor_pool_,
                                   std::unique_ptr<pseudo_random_generator>   scrambler_,
                                   std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool_,

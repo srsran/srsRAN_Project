@@ -81,7 +81,7 @@ private:
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
 
-  /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
+  /// Processes a new codeblock and writes the new data in \ref temp_codeblock_symbols.
   void new_codeblock();
 };
 

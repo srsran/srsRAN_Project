@@ -28,10 +28,12 @@
 
 namespace srsran {
 
-// Maximum accepted transport block size.
+/// Maximum accepted transport block size.
 static constexpr unsigned MAX_TBS = 1277992;
 
-// Number of bits in the long CRC. A CRC of this length is used either for TB CRCs, when the TB is longer than
+/// \brief Number of bits in the long CRC.
+///
+/// A CRC of this length is used either for TB CRCs, when the TB is longer than
 // MAX_BITS_CRC16, or as a codeblock CRC, when the TB consists of multiple codeblocks.
 static constexpr unsigned LONG_CRC_LENGTH = 24;
 
@@ -150,7 +152,7 @@ private:
   ///
   /// \param[in,out] cb_crcs  Set of CRC flags.
   /// \param[in,out] decoder  Hardware decoder used to process the codeblocks.
-  /// \param[in]     cb_index Index of the CB (within the TB).
+  /// \param[in]     cb_id    Index of the CB (within the TB).
   /// \param[in]     crc_type Type of the CB CRC.
   /// \param[in]     data     Decoded data.
   /// \return Results of the decoding operation (CRC and number of LDPC decoder iterations).
@@ -167,7 +169,6 @@ private:
 
   /// \brief Sets the segmentation and decoding parameters required by the hardware-accelerated PUSCH decoder function.
   /// \param[in,out] decoder          Selected hardware decoder to configure.
-  /// \param[in]     cfg              PUSCH configuration parameters.
   /// \param[in]     nof_segments     Number of segments in the transport block.
   /// \param[in]     rm_length        Length of the rate-matched codeblock in bits.
   /// \param[in]     lifting_size     Length of the circular buffer in bits, as described in TS38.212 Section 5.4.2.1.
