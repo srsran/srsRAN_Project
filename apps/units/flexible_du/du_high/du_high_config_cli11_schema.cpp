@@ -806,9 +806,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
       ->check(CLI::Range(0, 50));
-  add_option(app, "--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 2));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));

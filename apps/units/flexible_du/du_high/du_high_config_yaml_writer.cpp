@@ -417,7 +417,6 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   node["nof_cell_harq_pucch_res_sets"] = config.nof_cell_harq_pucch_sets;
   node["f2_nof_ue_res_harq"]           = config.nof_ue_pucch_f2_res_harq;
   node["f2_nof_cell_res_csi"]          = config.nof_cell_csi_resources;
-  node["f2_nof_symbols"]               = config.f2_nof_symbols;
   node["f2_max_nof_rbs"]               = config.f2_max_nof_rbs;
   node["f2_max_code_rate"]             = to_string(config.max_code_rate);
   node["f2_intraslot_freq_hop"]        = config.f2_intraslot_freq_hopping;

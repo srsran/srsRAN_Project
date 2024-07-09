@@ -521,7 +521,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
       f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
       f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
-    du_pucch_cfg.f2_params.nof_symbols            = user_pucch_cfg.f2_nof_symbols;
     du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
     du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;

@@ -243,9 +243,6 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
 
-  /// PUCCH F2 resource parameters.
-  /// Number of symbols for PUCCH Format 2. Values {1, 2}.
-  unsigned f2_nof_symbols = 2;
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
   /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
