@@ -134,7 +134,7 @@ unsigned ue::pending_dl_srb_newtx_bytes() const
 
 unsigned ue::pending_ul_srb_newtx_bytes() const
 {
-  // LCG ID 0 is used for SRBs.
+  // LCG ID 0 is used by default for SRBs as per TS 38.331, clause 9.2.1.
   // NOTE: Ensure SRB LCG ID matches the one sent to UE.
   const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
   return ul_lc_ch_mgr.pending_bytes(srb_lcg_id);
