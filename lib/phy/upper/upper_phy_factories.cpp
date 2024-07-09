@@ -783,15 +783,15 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     // asynchronous pool of processors and no more pools are necessary.
     if (!std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
       pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), config.nof_concurrent_threads);
-      report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDSCH processor pool factory.");
+      report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor pool factory.");
     }
 
     ssb_proc_factory = create_ssb_processor_pool_factory(std::move(ssb_proc_factory), config.nof_concurrent_threads);
-    report_fatal_error_if_not(pdcch_proc_factory, "Invalid SSB processor pool factory.");
+    report_fatal_error_if_not(ssb_proc_factory, "Invalid SSB processor pool factory.");
 
     nzp_csi_rs_factory =
         create_nzp_csi_rs_generator_pool_factory(std::move(nzp_csi_rs_factory), config.nof_concurrent_threads);
-    report_fatal_error_if_not(pdcch_proc_factory, "Invalid NZP-CSI-RS generator pool factory.");
+    report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator pool factory.");
   }
 
   return std::make_shared<downlink_processor_single_executor_factory>(
