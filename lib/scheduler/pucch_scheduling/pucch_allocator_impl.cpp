@@ -635,9 +635,10 @@ existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                c
       pucch.pdu_context.id = MAX_PUCCH_PDUS_PER_SLOT;
 
       if (pucch.format == srsran::pucch_format::FORMAT_0) {
-        // With Format 0, when there are both HARQ bits and SR bits, we only use the HARQ-ACK resource; the only
-        // case when the SR PUCCH F0 is used is when there are only SR bits.
-        if (pucch.format_0.sr_bits != sr_nof_bits::one and pucch.format_0.harq_ack_nof_bits == 0U) {
+        // With Format 0, when there are both HARQ bits and SR bits in the same PDU (this means that the PUCCH HARQ
+        // reource and SR resource have overlapping symbols), we only use the HARQ-ACK resource; the only case when the
+        // SR PUCCH F0 is used is when there are only SR bits.
+        if (pucch.format_0.sr_bits != sr_nof_bits::no_sr and pucch.format_0.harq_ack_nof_bits == 0U) {
           sr_pdu = &pucch;
           ++pdus_cnt;
         } else if (pucch.format_0.harq_ack_nof_bits != 0U and pucch.format_0.harq_ack_nof_bits <= 2U) {
@@ -1579,7 +1580,9 @@ pucch_allocator_impl::update_grants_no_multiplexing(slot_point                  
   if (ue_current_grants.pucch_grants.sr_resource.has_value()) {
     srsran_assert(candidate_grants.sr_resource.has_value(), "PUCCH SR resource must be present");
     grants_to_tx.sr_resource.value().set_res_config(*candidate_grants.sr_resource->pucch_res_cfg);
-    grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits = harq_grant.bits.harq_ack_nof_bits;
+    // For Format 0, if the SR and HARQ resources are separate, the SR resuorce doesn't carry the HARQ-ACK bits.
+    grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits =
+        grants_to_tx.sr_resource.value().format == pucch_format::FORMAT_0 ? 0U : harq_grant.bits.harq_ack_nof_bits;
   }
 
   return grants_to_tx;
@@ -1960,17 +1963,28 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
   // If there was a SR grant, re-use the previous one and update UCI bits with HARQ bits.
   else if (grants_to_tx.sr_resource.has_value() and existing_pucchs.pucch_grants.sr_resource.has_value() and
            existing_pdus.sr_pdu != nullptr) {
-    // NOTE: the validator is responsible for checking that the is no mix of PUCCH Format 0 and Format 1.
-    logger.debug("rnti={}: PUCCH PDU allocated on SR resource (updated): slot={} prbs={} sym={} cs={} occ={} "
-                 "h_bits={} sr_bits={}",
-                 crnti,
-                 pucch_slot_alloc.slot,
-                 existing_pdus.sr_pdu->resources.prbs,
-                 existing_pdus.sr_pdu->resources.symbols,
-                 existing_pdus.sr_pdu->format_1.initial_cyclic_shift,
-                 existing_pdus.sr_pdu->format_1.time_domain_occ,
-                 grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits,
-                 grants_to_tx.sr_resource.value().bits.sr_bits);
+    if (grants_to_tx.sr_resource.value().format == pucch_format::FORMAT_0) {
+      logger.debug("rnti={}: PUCCH PDU allocated on SR FO resource (updated): slot={} prbs={} sym={} "
+                   "h_bits={} sr_bits={}",
+                   crnti,
+                   pucch_slot_alloc.slot,
+                   existing_pdus.sr_pdu->resources.prbs,
+                   existing_pdus.sr_pdu->resources.symbols,
+                   grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits,
+                   grants_to_tx.sr_resource.value().bits.sr_bits);
+    } else {
+      logger.debug("rnti={}: PUCCH PDU allocated on SR F1 resource (updated): slot={} prbs={} sym={} cs={} occ={} "
+                   "h_bits={} sr_bits={}",
+                   crnti,
+                   pucch_slot_alloc.slot,
+                   existing_pdus.sr_pdu->resources.prbs,
+                   existing_pdus.sr_pdu->resources.symbols,
+                   existing_pdus.sr_pdu->format_1.initial_cyclic_shift,
+                   existing_pdus.sr_pdu->format_1.time_domain_occ,
+                   grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits,
+                   grants_to_tx.sr_resource.value().bits.sr_bits);
+    }
+
     existing_pdus.update_sr_pdu_bits(grants_to_tx.sr_resource.value().bits.sr_bits,
                                      grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits);
     sr_grant_alloc_completed = true;
@@ -1981,7 +1995,17 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
       grants_to_tx.harq_resource.value().format == existing_pucchs.pucch_grants.harq_resource.value().format and
       existing_pdus.harq_pdu != nullptr) {
     // Update bits;
-    if (grants_to_tx.harq_resource.value().format == pucch_format::FORMAT_1) {
+    if (grants_to_tx.harq_resource.value().format == pucch_format::FORMAT_0) {
+      logger.debug("rnti={}: PUCCH PDU allocated on F0 HARQ resource (updated): slot={} p_ind={} prbs={} sym={} "
+                   "h_bits={} sr_bits={}",
+                   crnti,
+                   pucch_slot_alloc.slot,
+                   grants_to_tx.harq_resource.value().harq_id.pucch_res_ind,
+                   existing_pdus.harq_pdu->resources.prbs,
+                   existing_pdus.harq_pdu->resources.symbols,
+                   grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits,
+                   grants_to_tx.harq_resource.value().bits.sr_bits);
+    } else if (grants_to_tx.harq_resource.value().format == pucch_format::FORMAT_1) {
       logger.debug("rnti={}: PUCCH PDU allocated on F1 HARQ resource (updated): slot={} p_ind={} prbs={} sym={} cs={} "
                    "occ={} h_bits={} sr_bits={}",
                    crnti,
@@ -2095,7 +2119,17 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                grants_to_tx.harq_resource.value().bits.sr_bits,
                                grants_to_tx.harq_resource.value().bits.csi_part1_nof_bits);
     }
-    if (grant->format == pucch_format::FORMAT_1) {
+    if (grant->format == pucch_format::FORMAT_0) {
+      logger.debug("rnti={}: PUCCH PDU allocated on F0 HARQ resource: slot={} p_ind={} prbs={} sym={} "
+                   "h_bits={} sr_bits={}",
+                   crnti,
+                   pucch_slot_alloc.slot,
+                   grants_to_tx.harq_resource.value().harq_id.pucch_res_ind,
+                   grant->resources.prbs,
+                   grant->resources.symbols,
+                   grant->format_0.harq_ack_nof_bits,
+                   grant->format_0.sr_bits);
+    } else if (grant->format == pucch_format::FORMAT_1) {
       logger.debug("rnti={}: PUCCH PDU allocated on F1 HARQ resource: slot={} p_ind={} prbs={} sym={} cs={} occ={} "
                    "h_bits={} sr_bits={}",
                    crnti,

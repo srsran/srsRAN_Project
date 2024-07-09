@@ -125,6 +125,7 @@ test_bench::test_bench(const test_bench_params& params,
   max_pucchs_per_slot{max_pucchs_per_slot_},
   max_ul_grants_per_slot{max_ul_grants_per_slot_},
   pucch_f2_more_prbs{params.pucch_f2_more_prbs},
+  use_format_0(params.use_format_0),
   pucch_alloc{cell_cfg, max_pucchs_per_slot, max_ul_grants_per_slot},
   uci_alloc(pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
@@ -190,6 +191,15 @@ test_bench::test_bench(const test_bench_params& params,
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
+  if (use_format_0) {
+    pucch_builder_params pucch_params{};
+    pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
+    pucch_builder.setup(
+        cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
+    srsran_assert(pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
+                  "UE PUCCH configuration couldn't be built");
+  }
+
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
   ues.add_ue(
       std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
@@ -223,6 +233,10 @@ void test_bench::add_ue()
   ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(test_helpers::make_test_ue_uplink_config(cfg_params));
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
+
+  srsran_assert(not use_format_0 or
+                    pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
+                "UE PUCCH configuration couldn't be built");
 
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
   ues.add_ue(

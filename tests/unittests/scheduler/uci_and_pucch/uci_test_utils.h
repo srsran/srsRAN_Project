@@ -13,6 +13,7 @@
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
+#include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -96,6 +97,7 @@ struct test_bench_params {
   bool                   is_tdd             = false;
   bool                   pucch_f2_more_prbs = false;
   bool                   cfg_for_mimo_4x4   = false;
+  bool                   use_format_0       = false;
 };
 
 // Test bench with all that is needed for the PUCCH.
@@ -133,16 +135,18 @@ public:
   du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
   ue_repository           ues;
   bool                    pucch_f2_more_prbs;
+  const bool              use_format_0;
 
   // last_allocated_rnti keeps track of the last RNTI allocated.
-  rnti_t                last_allocated_rnti;
-  du_ue_index_t         last_allocated_ue_idx;
-  pucch_allocator_impl  pucch_alloc;
-  uci_allocator_impl    uci_alloc;
-  uci_scheduler_impl    uci_sched;
-  slot_point            sl_tx;
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  rnti_t                        last_allocated_rnti;
+  du_ue_index_t                 last_allocated_ue_idx;
+  pucch_allocator_impl          pucch_alloc;
+  uci_allocator_impl            uci_alloc;
+  uci_scheduler_impl            uci_sched;
+  slot_point                    sl_tx;
+  pucch_res_builder_test_helper pucch_builder;
+  srslog::basic_logger&         mac_logger  = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 } // namespace srsran
