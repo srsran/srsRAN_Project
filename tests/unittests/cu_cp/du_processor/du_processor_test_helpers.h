@@ -40,6 +40,7 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
+  ngap_configuration      ngap_cfg;
   rrc_cfg_t               rrc_cfg;
   timer_manager           timers;
   manual_task_worker      ctrl_worker{128};

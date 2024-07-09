@@ -94,19 +94,12 @@ private:
                      byte_buffer                            du_to_cu_rrc_container,
                      std::optional<rrc_ue_transfer_context> rrc_context);
 
-  // NGAP senders
-  /// \brief Request UE context release over NGAP.
-  /// \param[in] ue_index The UE.
-  /// \param[in] cause The cause of the failure.
-  void send_ngap_ue_context_release_request(ue_index_t ue_index, ngap_cause_t cause);
-
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 
   du_processor_cu_cp_notifier&         cu_cp_notifier;
   f1ap_message_notifier&               f1ap_pdu_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
-  rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
   ue_manager&                          ue_mng;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;

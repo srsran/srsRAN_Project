@@ -195,13 +195,13 @@ struct cu_cp_nr_mode_info {
 };
 
 struct cu_cp_served_cell_info {
-  nr_cell_global_id_t      nr_cgi;
-  pci_t                    nr_pci;
-  std::optional<uint32_t>  five_gs_tac;
-  std::optional<uint32_t>  cfg_eps_tac;
-  std::vector<std::string> served_plmns;
-  cu_cp_nr_mode_info       nr_mode_info;
-  byte_buffer              meas_timing_cfg;
+  nr_cell_global_id_t        nr_cgi;
+  pci_t                      nr_pci;
+  std::optional<uint32_t>    five_gs_tac;
+  std::optional<uint32_t>    cfg_eps_tac;
+  std::vector<plmn_identity> served_plmns;
+  cu_cp_nr_mode_info         nr_mode_info;
+  byte_buffer                meas_timing_cfg;
 
   cu_cp_served_cell_info() = default;
   cu_cp_served_cell_info(const cu_cp_served_cell_info& other) :
@@ -573,14 +573,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::ue_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::ue_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -593,14 +592,13 @@ struct formatter<srsran::srs_cu_cp::ue_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::du_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::du_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -613,14 +611,13 @@ struct formatter<srsran::srs_cu_cp::du_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::cu_up_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -633,14 +630,13 @@ struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
