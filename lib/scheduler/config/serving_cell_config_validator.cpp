@@ -265,7 +265,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 
     // If SR and CSI are reported within the same slot, 1 SR bit can be multiplexed with CSI within the same PUCCH
     // resource.
-    unsigned sr_bits_mplexed_with_csi = csi_sr_collision ? 0U : 1U;
+    unsigned sr_bits_mplexed_with_csi = csi_sr_collision ? 1U : 0U;
     // In the PUCCH resource for CSI, there are no HARQ-ACK bits being reported; therefore we only need to check where
     // the CSI + SR bits fit into the max payload.
     const unsigned uci_bits_pucch_resource = csi_report_size + sr_bits_mplexed_with_csi;
