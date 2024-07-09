@@ -758,10 +758,9 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
       return false;
     }
 
-    if (cell.cell.local_cell_id.has_value() and
-        not nr_cell_identity::create(gnb_id, cell.cell.local_cell_id.value()).has_value()) {
-      fmt::print(
-          "Invalid local cell ID {}, for a gNB Id of {} bits\n", cell.cell.local_cell_id.value(), gnb_id.bit_length);
+    if (cell.cell.sector_id.has_value() and
+        not nr_cell_identity::create(gnb_id, cell.cell.sector_id.value()).has_value()) {
+      fmt::print("Invalid Sector ID {}, for a gNB Id of {} bits\n", cell.cell.sector_id.value(), gnb_id.bit_length);
       return false;
     }
   }
@@ -780,11 +779,11 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
                      cell1.cell.dl_arfcn,
                      cell1.cell.pci);
         }
-        if (cell1.cell.local_cell_id.has_value() and cell1.cell.local_cell_id == cell2.cell.local_cell_id and
+        if (cell1.cell.sector_id.has_value() and cell1.cell.sector_id == cell2.cell.sector_id and
             cell1.cell.plmn == cell2.cell.plmn) {
           fmt::print("Error: two cells with the same PLMN (i.e., {}) and cell ID (i.e., {})\n",
                      cell1.cell.plmn,
-                     cell1.cell.local_cell_id);
+                     cell1.cell.sector_id);
           return false;
         }
 

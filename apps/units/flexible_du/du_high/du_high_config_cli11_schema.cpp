@@ -1024,10 +1024,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
   add_option(app,
-             "--local_cell_id",
-             cell_params.local_cell_id,
-             "Local cell ID (4-14 bits). This value is concatenated with the gNB Id to form the NR Cell Identity "
-             "(NCI). If not specified, a unique value is automatically derived")
+             "--sector_id",
+             cell_params.sector_id,
+             "Sector ID (4-14 bits). This value is concatenated with the gNB Id to form the NR Cell Identity "
+             "(NCI). If not specified, a unique value for the DU is automatically derived")
       ->capture_default_str()
       ->check(CLI::Range(0U, (1U << 14) - 1U));
   add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();

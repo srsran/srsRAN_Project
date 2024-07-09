@@ -21,7 +21,7 @@ namespace srsran {
 
 /// \brief 36-bit identifying an NR Cell Id as specified in subclause 9.3.1.7 of 3GPP TS 38.413.
 /// \remark The leftmost (22-32) bits of the NR Cell Identity correspond to the gNB ID and remaining (4-14) bits for
-/// local Cell ID.
+/// Sector ID.
 class nr_cell_identity
 {
   constexpr nr_cell_identity(uint64_t val_) : val(val_) {}
@@ -40,17 +40,17 @@ public:
     return nr_cell_identity{val};
   }
 
-  static expected<nr_cell_identity> create(gnb_id_t gnb_id, uint16_t local_cell_id)
+  static expected<nr_cell_identity> create(gnb_id_t gnb_id, uint16_t sector_id)
   {
     if (gnb_id.bit_length < 22 or gnb_id.bit_length > 32) {
       // invalid bit length.
       return make_unexpected(default_error_t{});
     }
-    if (local_cell_id >= (1U << (36U - gnb_id.bit_length))) {
-      // invalid local cell id.
+    if (sector_id >= (1U << (36U - gnb_id.bit_length))) {
+      // invalid sector id.
       return make_unexpected(default_error_t{});
     }
-    return nr_cell_identity{(uint64_t)gnb_id.id << (36U - gnb_id.bit_length) | local_cell_id};
+    return nr_cell_identity{(uint64_t)gnb_id.id << (36U - gnb_id.bit_length) | sector_id};
   }
 
   static expected<nr_cell_identity> parse_hex(const std::string& hex_str)
@@ -69,11 +69,11 @@ public:
 
   uint64_t value() const { return val; }
 
-  /// Extract local cell ID from NR Cell Identity.
-  uint16_t local_cell_id(unsigned nof_local_cell_id_bits) const
+  /// Extract Sector ID from NR Cell Identity.
+  uint16_t sector_id(unsigned nof_sector_id_bits) const
   {
-    srsran_assert(nof_local_cell_id_bits >= 4 and nof_local_cell_id_bits <= 14, "Invalid number of local cell id bits");
-    return val & ((1U << nof_local_cell_id_bits) - 1U);
+    srsran_assert(nof_sector_id_bits >= 4 and nof_sector_id_bits <= 14, "Invalid number of Sector Id bits");
+    return val & ((1U << nof_sector_id_bits) - 1U);
   }
 
   /// Extract gNB-DU ID from NR Cell Identity.

@@ -406,15 +406,15 @@ TEST_F(nci_test, nci_creation_from_valid_string_succeeds)
   ASSERT_EQ(fmt::format("{:x}", nci), "123456789");
 }
 
-TEST_F(nci_test, nci_to_local_cell_id)
+TEST_F(nci_test, nci_to_sector_id)
 {
   auto ret = nr_cell_identity::create(0x19b01);
   ASSERT_TRUE(ret.has_value());
   nr_cell_identity nci = ret.value();
-  ASSERT_EQ(nci.local_cell_id(4), 0x01);
-  ASSERT_EQ(nci.local_cell_id(8), 0x01);
-  ASSERT_EQ(nci.local_cell_id(12), 0xb01);
-  ASSERT_EQ(nci.local_cell_id(14), 0x1b01);
+  ASSERT_EQ(nci.sector_id(4), 0x01);
+  ASSERT_EQ(nci.sector_id(8), 0x01);
+  ASSERT_EQ(nci.sector_id(12), 0xb01);
+  ASSERT_EQ(nci.sector_id(14), 0x1b01);
 }
 
 TEST_F(nci_test, nci_to_gnb_id)
@@ -430,19 +430,19 @@ TEST_F(nci_test, nci_to_gnb_id)
   ASSERT_EQ(nci.gnb_id(32), gnb_id);
 }
 
-TEST_F(nci_test, invalid_gnb_id_and_local_cell_id_to_nci_fails)
+TEST_F(nci_test, invalid_gnb_id_and_sector_id_to_nci_fails)
 {
   gnb_id_t gnb_id{0x19, 24};
   auto     ret = nr_cell_identity::create(gnb_id, 0x1b01);
   ASSERT_FALSE(ret.has_value());
 }
 
-TEST_F(nci_test, valid_gnb_id_and_local_cell_id_to_nci_succeeds)
+TEST_F(nci_test, valid_gnb_id_and_sector_id_to_nci_succeeds)
 {
   gnb_id_t gnb_id{0x19, 24};
   auto     ret = nr_cell_identity::create(gnb_id, 0xb01);
   ASSERT_TRUE(ret.has_value());
   nr_cell_identity nci = ret.value();
   ASSERT_EQ(nci.gnb_id(24), gnb_id);
-  ASSERT_EQ(nci.local_cell_id(12), 0xb01);
+  ASSERT_EQ(nci.sector_id(12), 0xb01);
 }
