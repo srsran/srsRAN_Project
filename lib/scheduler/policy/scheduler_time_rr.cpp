@@ -195,7 +195,7 @@ get_ue_ul_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
               [](const ul_harq_process* lhs, const ul_harq_process* rhs) { return lhs->slot_ack() < rhs->slot_ack(); });
   } else if (ue_cc.is_active()) {
     // If there are no pending new Tx bytes, return.
-    if (not(ue_ref.pending_ul_newtx_bytes() > 0)) {
+    if (ue_ref.pending_ul_newtx_bytes() == 0) {
       return ul_harq_candidates;
     }
 
@@ -253,7 +253,7 @@ du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_u
       // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
       // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
       // can only use the RBs that were left from the previous UE allocations.
-      next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
+      next_ue_index = to_du_ue_index(static_cast<unsigned>(u.ue_index) + 1U);
       first_alloc   = false;
     }
   }
@@ -330,14 +330,15 @@ static alloc_result alloc_ul_ue(const ue&                    u,
                                 srslog::basic_logger&        logger,
                                 std::optional<unsigned>      ul_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
-  unsigned pending_newtx_bytes = 0;
+  unsigned pending_newtx_bytes     = 0;
+  unsigned pending_srb_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
       return {alloc_status::skip_ue};
     }
     // Fetch pending bytes of SRBs.
-    pending_newtx_bytes = u.pending_ul_srb_newtx_bytes();
-    if (ue_with_srb_data_only and pending_newtx_bytes == 0) {
+    pending_srb_newtx_bytes = u.pending_ul_srb_newtx_bytes();
+    if (ue_with_srb_data_only and pending_srb_newtx_bytes == 0) {
       return {alloc_status::skip_ue};
     }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
@@ -365,7 +366,7 @@ static alloc_result alloc_ul_ue(const ue&                    u,
     for (const ul_harq_process* h_ul : harq_candidates) {
       ue_pusch_grant grant{&u, ue_cc.cell_index, h_ul->id};
       if (not is_retx) {
-        grant.recommended_nof_bytes = ue_with_srb_data_only ? u.pending_ul_srb_newtx_bytes() : pending_newtx_bytes;
+        grant.recommended_nof_bytes = ue_with_srb_data_only ? pending_srb_newtx_bytes : pending_newtx_bytes;
         grant.max_nof_rbs           = ul_new_tx_max_nof_rbs_per_ue_per_slot;
       }
       const alloc_result result = pusch_alloc.allocate_ul_grant(grant);
