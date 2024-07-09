@@ -420,6 +420,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
     }
     out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
+    out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
+        base_cell.pucch_cfg.pucch_resource_common;
 
     // Common PDCCH config.
     search_space_configuration& ss1_cfg = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back();
