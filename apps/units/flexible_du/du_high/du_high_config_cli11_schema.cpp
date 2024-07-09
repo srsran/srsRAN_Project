@@ -1023,6 +1023,13 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
+  add_option(app,
+             "--local_cell_id",
+             cell_params.local_cell_id,
+             "Local cell ID (4-14 bits). This value is concatenated with the gNB Id to form the NR Cell Identity "
+             "(NCI). If not specified, a unique value is automatically derived")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (1U << 14) - 1U));
   add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   add_option_function<std::string>(

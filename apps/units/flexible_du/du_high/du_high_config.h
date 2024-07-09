@@ -486,6 +486,8 @@ struct du_high_unit_prach_config {
 struct du_high_unit_base_cell_config {
   /// Physical cell identifier.
   pci_t pci = 1;
+  /// Local Cell Id (4-14 bits) that gets concatenated with gNB-Id to form the NR Cell Identity (NCI).
+  std::optional<unsigned> local_cell_id;
   /// Downlink arfcn.
   unsigned dl_arfcn = 536020;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
