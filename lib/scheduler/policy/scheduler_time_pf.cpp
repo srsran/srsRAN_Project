@@ -119,7 +119,7 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository&
 
   if (ctxt.dl_newtx_h != nullptr) {
     grant.h_id                  = ctxt.dl_newtx_h->id;
-    grant.recommended_nof_bytes = ctxt.has_dl_newtx_srb_pending_bytes ? ues[ctxt.ue_index].pending_dl_srb_newtx_bytes()
+    grant.recommended_nof_bytes = ctxt.dl_newtx_srb_pending_bytes > 0 ? ctxt.dl_newtx_srb_pending_bytes
                                                                       : ues[ctxt.ue_index].pending_dl_newtx_bytes();
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
@@ -149,7 +149,7 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository&
 
   if (ctxt.ul_newtx_h != nullptr) {
     grant.h_id                  = ctxt.ul_newtx_h->id;
-    grant.recommended_nof_bytes = ctxt.has_ul_newtx_srb_pending_bytes ? ues[ctxt.ue_index].pending_ul_srb_newtx_bytes()
+    grant.recommended_nof_bytes = ctxt.ul_newtx_srb_pending_bytes > 0 ? ctxt.ul_newtx_srb_pending_bytes
                                                                       : ues[ctxt.ue_index].pending_ul_newtx_bytes();
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
@@ -165,11 +165,11 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository&
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 {
-  dl_retx_h                      = nullptr;
-  dl_newtx_h                     = nullptr;
-  dl_prio                        = 0;
-  has_dl_newtx_srb_pending_bytes = false;
-  const ue_cell* ue_cc           = u.find_cell(cell_index);
+  dl_retx_h                  = nullptr;
+  dl_newtx_h                 = nullptr;
+  dl_prio                    = 0;
+  dl_newtx_srb_pending_bytes = 0;
+  const ue_cell* ue_cc       = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
     return;
   }
@@ -187,9 +187,9 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
   }
 
   // Calculate DL priority.
-  dl_retx_h                      = srb_retx_h != nullptr ? srb_retx_h : ue_cc->harqs.find_pending_dl_retx();
-  dl_newtx_h                     = ue_cc->harqs.find_empty_dl_harq();
-  has_dl_newtx_srb_pending_bytes = u.has_pending_dl_srb_newtx_bytes();
+  dl_retx_h                  = srb_retx_h != nullptr ? srb_retx_h : ue_cc->harqs.find_pending_dl_retx();
+  dl_newtx_h                 = ue_cc->harqs.find_empty_dl_harq();
+  dl_newtx_srb_pending_bytes = u.pending_dl_srb_newtx_bytes();
   if (dl_retx_h != nullptr or (dl_newtx_h != nullptr and u.has_pending_dl_newtx_bytes())) {
     // NOTE: It does not matter whether it's a reTx or newTx since DL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -242,21 +242,21 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const ue& u, const ue_resource_grid_view& res_grid)
 {
-  ul_retx_h                      = nullptr;
-  ul_newtx_h                     = nullptr;
-  ul_prio                        = 0;
-  sr_ind_received                = false;
-  has_ul_newtx_srb_pending_bytes = false;
-  const ue_cell* ue_cc           = u.find_cell(cell_index);
+  ul_retx_h                  = nullptr;
+  ul_newtx_h                 = nullptr;
+  ul_prio                    = 0;
+  sr_ind_received            = false;
+  ul_newtx_srb_pending_bytes = 0;
+  const ue_cell* ue_cc       = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
     return;
   }
 
   // Calculate UL priority.
-  ul_retx_h                      = ue_cc->harqs.find_pending_ul_retx();
-  ul_newtx_h                     = ue_cc->harqs.find_empty_ul_harq();
-  sr_ind_received                = u.has_pending_sr();
-  has_ul_newtx_srb_pending_bytes = u.pending_ul_srb_newtx_bytes() > 0;
+  ul_retx_h                  = ue_cc->harqs.find_pending_ul_retx();
+  ul_newtx_h                 = ue_cc->harqs.find_empty_ul_harq();
+  sr_ind_received            = u.has_pending_sr();
+  ul_newtx_srb_pending_bytes = u.pending_ul_srb_newtx_bytes();
   if (ul_retx_h != nullptr or (ul_newtx_h != nullptr and u.pending_ul_newtx_bytes() > 0)) {
     // NOTE: It does not matter whether it's a reTx or newTx since UL priority is computed based on estimated
     // instantaneous achievable rate to the average throughput of the user.
@@ -353,7 +353,7 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
   // First, prioritize UEs with SRB data re-transmissions.
   // SRB HARQ retransmission in one UE and not in other UE.
   if (is_lhs_srb_retx != is_rhs_srb_retx) {
-    return not is_lhs_srb_retx and is_rhs_srb_retx;
+    return is_rhs_srb_retx;
   }
   // SRB HARQ retransmission in both UEs.
   if (is_lhs_srb_retx) {
@@ -361,17 +361,19 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
   }
   // Second, prioritize UEs with SRB data new transmission.
   // SRB HARQ newTx in one UE and not in other UE.
-  if (lhs->has_dl_newtx_srb_pending_bytes != rhs->has_dl_newtx_srb_pending_bytes) {
-    return not lhs->has_dl_newtx_srb_pending_bytes and rhs->has_dl_newtx_srb_pending_bytes;
+  const bool lhs_has_dl_newtx_srb_pending_bytes = lhs->dl_newtx_srb_pending_bytes > 0;
+  const bool rhs_has_dl_newtx_srb_pending_bytes = rhs->dl_newtx_srb_pending_bytes > 0;
+  if (lhs_has_dl_newtx_srb_pending_bytes != rhs_has_dl_newtx_srb_pending_bytes) {
+    return rhs_has_dl_newtx_srb_pending_bytes;
   }
   // SRB HARQ newTx in both UEs.
-  if (lhs->has_dl_newtx_srb_pending_bytes) {
+  if (lhs_has_dl_newtx_srb_pending_bytes) {
     return lhs->dl_prio < rhs->dl_prio;
   }
   // Third, prioritize UEs with DRB re-transmissions.
   // ReTx in one UE and not in other UE.
   if (is_lhs_retx != is_rhs_retx) {
-    return not is_lhs_retx and is_rhs_retx;
+    return is_rhs_retx;
   }
   // All other cases compare priorities.
   return lhs->dl_prio < rhs->dl_prio;
@@ -385,7 +387,7 @@ bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::
   // First, prioritize UEs with pending SR.
   // SR indication in one UE and not in other UE.
   if (lhs->sr_ind_received != rhs->sr_ind_received) {
-    return not lhs->sr_ind_received and rhs->sr_ind_received;
+    return rhs->sr_ind_received;
   }
   // SR indication for both UEs.
   if (lhs->sr_ind_received) {
@@ -393,17 +395,19 @@ bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::
   }
   // Second, prioritize UEs with SRB data new transmissions.
   // SRB data newTx in one UE and not in other UE.
-  if (lhs->has_ul_newtx_srb_pending_bytes != rhs->has_ul_newtx_srb_pending_bytes) {
-    return not lhs->has_ul_newtx_srb_pending_bytes and rhs->has_ul_newtx_srb_pending_bytes;
+  const bool lhs_has_ul_newtx_srb_pending_bytes = lhs->ul_newtx_srb_pending_bytes > 0;
+  const bool rhs_has_ul_newtx_srb_pending_bytes = rhs->ul_newtx_srb_pending_bytes > 0;
+  if (lhs_has_ul_newtx_srb_pending_bytes != rhs_has_ul_newtx_srb_pending_bytes) {
+    return rhs_has_ul_newtx_srb_pending_bytes;
   }
   // SRB data newTx in both UEs.
-  if (lhs->has_ul_newtx_srb_pending_bytes) {
+  if (lhs_has_ul_newtx_srb_pending_bytes) {
     return lhs->ul_prio < rhs->ul_prio;
   }
   // Third, prioritize UEs with re-transmissions.
   // ReTx in one UE and not in other UE.
   if (is_lhs_retx != is_rhs_retx) {
-    return not is_lhs_retx and is_rhs_retx;
+    return is_rhs_retx;
   }
   // All other cases compare priorities.
   return lhs->ul_prio < rhs->ul_prio;
