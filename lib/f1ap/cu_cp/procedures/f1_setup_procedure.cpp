@@ -174,7 +174,7 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   // Message content validation.
   auto msgerr = validate_f1_setup_request(request);
   if (not msgerr.has_value()) {
-    logger.info("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
+    logger.warning("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
     pdu_notifier.on_new_message(create_f1_setup_reject(request, msgerr.error().first));
     return;
   }
