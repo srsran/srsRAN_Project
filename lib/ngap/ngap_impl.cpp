@@ -642,6 +642,14 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   msg.ue_index = ue_ctxt.ue_ids.ue_index;
   fill_cu_cp_ue_context_release_command(msg, cmd);
 
+  // When release cause is of type nas-normal-release or nas-deregister, then no RRC release is required
+  if (cmd->cause.type() == asn1::ngap::cause_c::types_opts::nas) {
+    if (cmd->cause.nas().value == cause_nas_opts::normal_release or
+        cmd->cause.nas().value == cause_nas_opts::deregister) {
+      msg.requires_rrc_release = false;
+    }
+  }
+
   // start routine
   ue->schedule_async_task(launch_async<ngap_ue_context_release_procedure>(
       msg, ue_ctxt.ue_ids, stored_error_indications, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
