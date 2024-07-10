@@ -510,4 +510,12 @@ void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App&                
 
     unit_cfg.tacs = tacs.empty() ? auto_generate_tacs() : std::move(tacs);
   }
+
+  for (auto& cell : unit_cfg.mobility_config.cells) {
+    // Set gNB ID bit length of the neighbor cell to be equal to the current unit gNB ID bit length, if not explicitly
+    // set.
+    if (not cell.gnb_id_bit_length.has_value()) {
+      cell.gnb_id_bit_length = unit_cfg.gnb_id.bit_length;
+    }
+  }
 }
