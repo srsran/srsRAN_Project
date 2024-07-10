@@ -18,26 +18,22 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
-#include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/executors/task_worker_pool.h"
-#include "fmt/ostream.h"
 #include <condition_variable>
 #include <getopt.h>
 #include <mutex>
 #include <random>
 #include <thread>
-#include <tuple>
 
 using namespace srsran;
 
 static constexpr subcarrier_spacing scs                              = subcarrier_spacing::kHz30;
 static constexpr uint16_t           rnti                             = 0x1234;
-static constexpr unsigned           bwp_size_rb                      = 273;
 static constexpr unsigned           bwp_start_rb                     = 0;
 static constexpr unsigned           nof_layers                       = 1;
 static constexpr unsigned           nof_ofdm_symbols                 = 14;
@@ -59,9 +55,9 @@ static std::string                  channel_fading_distribution      = "uniform-
 static float                        sinr_dB                          = 60.0F;
 static unsigned                     nof_corrupted_re_per_ofdm_symbol = 0;
 static unsigned                     nof_rx_ports                     = 2;
+static unsigned                     bwp_size_rb                      = 273;
 static pusch_mcs_table              mcs_table                        = pusch_mcs_table::qam64;
 static sch_mcs_index                mcs_index                        = 20;
-static prb_interval                 freq_allocation                  = {bwp_start_rb, bwp_size_rb};
 static bool                         enable_dc_position               = false;
 
 namespace {
@@ -176,6 +172,9 @@ private:
 
     // Compute modulation and code scheme.
     sch_mcs_description mcs_descr = pusch_mcs_get_config(mcs_table, mcs_index, false);
+
+    // Frequency allocation equal to bandwidth part.
+    static prb_interval freq_allocation = {bwp_start_rb, bwp_size_rb};
 
     // Calculate transport block size.
     tbs_calculator_configuration tbs_config = {};
@@ -414,27 +413,25 @@ private:
     double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
 
     // Print results.
-    if (show_stats) {
-      fmt::print("Iterations={{{:<2} {:<2} {:<3.1f}}}; "
-                 "BLER={:.10f}/{:.10f}; "
-                 "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
-                 "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-                 "TA={{{:.2f} {:.2f} {:.2f}}}us;\n",
-                 min_iterations,
-                 max_iterations,
-                 mean_iterations,
-                 crc_bler,
-                 data_bler,
-                 sinr_stats.get_min(),
-                 sinr_stats.get_max(),
-                 sinr_stats.get_mean(),
-                 evm_stats.get_min(),
-                 evm_stats.get_max(),
-                 evm_stats.get_mean(),
-                 ta_stats_us.get_min(),
-                 ta_stats_us.get_max(),
-                 ta_stats_us.get_mean());
-    }
+    fmt::print("Iterations={{{:<2} {:<2} {:<3.1f}}}; "
+               "BLER={:.10f}/{:.10f}; "
+               "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
+               "EVM={{{:.3f} {:.3f} {:.3f}}}; "
+               "TA={{{:.2f} {:.2f} {:.2f}}}us;\n",
+               min_iterations,
+               max_iterations,
+               mean_iterations,
+               crc_bler,
+               data_bler,
+               sinr_stats.get_min(),
+               sinr_stats.get_max(),
+               sinr_stats.get_mean(),
+               evm_stats.get_min(),
+               evm_stats.get_max(),
+               evm_stats.get_mean(),
+               ta_stats_us.get_min(),
+               ta_stats_us.get_max(),
+               ta_stats_us.get_mean());
   }
 
   unsigned nof_codeblocks;
@@ -468,6 +465,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-S SINR. [Default {}]\n", sinr_dB);
   fmt::print("\t-N Number of corrupted RE per OFDM symbol. [Default {}]\n", nof_corrupted_re_per_ofdm_symbol);
   fmt::print("\t-P Number of receive ports. [Default {}]\n", nof_rx_ports);
+  fmt::print("\t-B Number of allocated PRBs (same as BWP size). [Default {}]\n", bwp_size_rb);
   fmt::print("\t-M MCS table. [Default {}]\n", mcs_table);
   fmt::print("\t-m MCS index. [Default {}]\n", mcs_index);
   fmt::print("\t-R Number of slots to process. [Default {}]\n", nof_repetitions);
@@ -478,7 +476,7 @@ static void usage(std::string_view prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "C:F:S:N:P:R:M:m:Dvh")) != -1) {
+  while ((opt = getopt(argc, argv, "C:F:S:N:P:R:B:M:m:Dvh")) != -1) {
     switch (opt) {
       case 'C':
         if (optarg != nullptr) {
@@ -501,6 +499,9 @@ static void parse_args(int argc, char** argv)
         break;
       case 'P':
         nof_rx_ports = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'B':
+        bwp_size_rb = std::strtol(optarg, nullptr, 10);
         break;
       case 'M':
         if (optarg != nullptr) {
