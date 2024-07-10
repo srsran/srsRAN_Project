@@ -243,7 +243,8 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
   }));
 }
 
-void ngap_impl::handle_ue_radio_capability_info_indication(const ngap_ue_radio_capability_info_indication& msg)
+void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
+    const ngap_ue_radio_capability_info_indication& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping UE Radio Capability Info Indication. UE context does not exist", msg.ue_index);

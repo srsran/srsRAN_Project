@@ -242,7 +242,8 @@ public:
 
   /// \brief Initiates the UE Radio Capability Info Indication procedure as per TS 38.413 section 8.14.1.
   /// \param[in] msg The ue radio capability info indication to transmit.
-  virtual void handle_ue_radio_capability_info_indication(const ngap_ue_radio_capability_info_indication& msg) = 0;
+  virtual void
+  handle_tx_ue_radio_capability_info_indication_required(const ngap_ue_radio_capability_info_indication& msg) = 0;
 };
 
 class ngap_control_message_handler

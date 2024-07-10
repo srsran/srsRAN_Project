@@ -60,6 +60,6 @@ void ngap_dl_nas_message_transfer_procedure::send_ue_radio_capability_info_indic
   ue_radio_cap_info_indication.ue_cap_rat_container_list = rrc_ue_ctrl_notifier.on_ue_radio_access_cap_info_required();
   // Only transmit UE Radio Capability Info Indication if UE Capabilities are available
   if (!ue_radio_cap_info_indication.ue_cap_rat_container_list.empty()) {
-    ngap_handler.handle_ue_radio_capability_info_indication(ue_radio_cap_info_indication);
+    ngap_handler.handle_tx_ue_radio_capability_info_indication_required(ue_radio_cap_info_indication);
   }
 }

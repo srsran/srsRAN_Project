@@ -194,5 +194,5 @@ void initial_context_setup_routine::send_ue_radio_capability_info_indication()
   ue_radio_cap_info_indication.ue_index                  = request.ue_index;
   ue_radio_cap_info_indication.ue_cap_rat_container_list = rrc_ue.get_packed_ue_radio_access_cap_info();
 
-  ngap_ue_radio_cap_handler.handle_ue_radio_capability_info_indication(ue_radio_cap_info_indication);
+  ngap_ue_radio_cap_handler.handle_tx_ue_radio_capability_info_indication_required(ue_radio_cap_info_indication);
 }

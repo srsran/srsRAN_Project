@@ -52,7 +52,8 @@ public:
   void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
 
   // ngap_ue_radio_capability_management_handler
-  void handle_ue_radio_capability_info_indication(const ngap_ue_radio_capability_info_indication& msg) override;
+  void
+  handle_tx_ue_radio_capability_info_indication_required(const ngap_ue_radio_capability_info_indication& msg) override;
 
   // ngap message handler functions
   void handle_message(const ngap_message& msg) override;
