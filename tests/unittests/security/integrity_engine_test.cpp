@@ -125,6 +125,7 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
   logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
   logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
   EXPECT_EQ(result.buf.value(), prot_buf);
+  EXPECT_EQ(result.count, param.count_i);
 }
 
 TEST_P(fxt_nia2, integrity_engine_generic_nia2)
@@ -149,6 +150,7 @@ TEST_P(fxt_nia2, integrity_engine_generic_nia2)
   logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
   logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
   EXPECT_EQ(result.buf.value(), prot_buf);
+  EXPECT_EQ(result.count, param.count_i);
 }
 
 TEST_P(fxt_nia3, integrity_engine_generic_nia3)
@@ -173,6 +175,7 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
   logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
   logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
   EXPECT_EQ(result.buf.value(), prot_buf);
+  EXPECT_EQ(result.count, param.count_i);
 }
 
 //////////////////////////////////////////////////////////
