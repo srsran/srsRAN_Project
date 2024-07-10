@@ -55,7 +55,7 @@ protected:
         generate_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0),
                                          int_to_gnb_du_ue_f1ap_id(0),
                                          srb_id_t::srb1,
-                                         make_byte_buffer("000900410004015f741fe0804bf183fc980605b7").value());
+                                         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value());
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
     f1c_gw.get_du(source_du_index).on_new_message(ul_rrc_msg);
   }

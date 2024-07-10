@@ -60,7 +60,6 @@ private:
   bool                                      ue_capability_transfer_result = false; // to query the UE capabilities
   cu_cp_pdu_session_resource_setup_response pdu_session_setup_response;
   bool                                      security_mode_command_result = false;
-  bool                                      rrc_reconfig_result          = false; // the final UE reconfiguration
   ngap_init_context_setup_failure           fail_msg;
   ngap_init_context_setup_response          resp_msg;
 };

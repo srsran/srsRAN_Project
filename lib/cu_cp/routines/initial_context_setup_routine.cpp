@@ -134,33 +134,10 @@ void initial_context_setup_routine::operator()(
     if (request.nas_pdu.has_value()) {
       handle_nas_pdu(request.nas_pdu.value().copy());
     }
-
   } else {
-    // prepare RRC Reconfiguration and call RRC UE notifier
-    if (!fill_rrc_reconfig_args(rrc_reconfig_args,
-                                ue_context_setup_request.srbs_to_be_setup_list,
-                                {} /* No DRB to setup */,
-                                {} /* No extra DRB to be removed */,
-                                ue_context_setup_response.du_to_cu_rrc_info,
-                                request.nas_pdu.has_value() ? std::vector<byte_buffer>{request.nas_pdu.value().copy()}
-                                                            : std::vector<byte_buffer>{},
-                                rrc_ue.generate_meas_config(std::nullopt),
-                                false /* No SRBs to reestablish */,
-                                false /* No DRBs to reestablish */,
-                                false /* No keys to update */,
-                                {} /* No SIB1 */,
-                                logger)) {
-      logger.warning("ue={}: \"{}\" Failed to fill RRCReconfiguration", request.ue_index, name());
-      handle_failure();
-      CORO_EARLY_RETURN(make_unexpected(fail_msg));
-    }
-
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue.handle_rrc_reconfiguration_request(rrc_reconfig_args));
-    // Handle RRC Reconfiguration result
-    if (not rrc_reconfig_result) {
-      logger.warning("ue={}: \"{}\" RRC Reconfiguration failed", request.ue_index, name());
-      handle_failure();
-      CORO_EARLY_RETURN(make_unexpected(fail_msg));
+    // Handle NAS PDUs from Initial Context Setup Request
+    if (request.nas_pdu.has_value()) {
+      handle_nas_pdu(request.nas_pdu.value().copy());
     }
   }
 

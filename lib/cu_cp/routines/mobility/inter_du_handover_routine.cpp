@@ -133,7 +133,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   // Inform CU-UP about new DL tunnels.
   {
-    // get securtiy context of target UE
+    // get security context of target UE
     if (!target_ue->get_security_manager().is_security_context_initialized()) {
       logger.warning(
           "ue={}: \"{}\" failed. Cause: Security context not initialized", target_ue->get_ue_index(), name());
