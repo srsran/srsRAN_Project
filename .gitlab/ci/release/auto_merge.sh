@@ -95,7 +95,8 @@ remove_lfs_files() {
     while read -r line; do
         git rm --cached "$line"
     done < <(git lfs ls-files | sed -r 's/^.{13}//')
-    echo "" > .gitattributes
+    git lfs untrack "*test_data.tar.gz"
+    git lfs untrack "*.png"
 }
 
 main() {

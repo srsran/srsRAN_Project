@@ -78,6 +78,7 @@ update private branch:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
     - git lfs install
     - git lfs uninstall || true
+    # Extra LFS filters for OS (like Ubuntu) where 'git lfs uninstall' has no effect
     - git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
     - git config --global filter.lfs.process "git-lfs filter-process --skip"
     - git config --global user.name "${CODEBOT_USERNAME}"
