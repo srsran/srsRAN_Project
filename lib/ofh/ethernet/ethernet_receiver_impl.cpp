@@ -52,7 +52,7 @@ receiver_impl::receiver_impl(const std::string&    interface,
   }
 
   if (interface.size() > (IFNAMSIZ - 1)) {
-    report_error("The Ethernet receiver interface name '{}' exceeds the maximum allowed length");
+    report_error("The Ethernet receiver interface name '{}' exceeds the maximum allowed length", interface);
   }
 
   if (is_promiscuous_mode_enabled) {
