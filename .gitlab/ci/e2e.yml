@@ -375,19 +375,39 @@ amari 32UE memcheck:
     - *txrx-lib
     - *retina-needs
 
-amari 4 cudu:
+cudu amari 8UE:
   extends: .zmq
   variables:
     TESTBED: zmq_cudu
-    MARKERS: "smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
+    MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   allow_failure: true
   needs:
     - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS: ["reestablishment and sequentially"]
+
+cudu amari 32UE:
+  extends: .zmq
+  variables:
+    TESTBED: zmq_cudu
+    MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  allow_failure: true
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
 
 ################################################################################
 # TEST MODE
