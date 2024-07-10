@@ -389,6 +389,129 @@ TEST_F(test_pucch_resource_manager, test_allocation_specific_f2)
               res_manager.reserve_set_1_res_by_res_indicator(sl_tx, to_rnti(0x4603), res_indicator, pucch_cfg));
 }
 
+TEST_F(test_pucch_resource_manager, cancel_last_ue_res_reservations_when_nothing_was_reserved_should_not_assert)
+{
+  res_manager.reset_latest_reserved_res_tracker();
+
+  // Only expects that it doesn't assert.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+}
+
+TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_specific_resources)
+{
+  res_manager.reset_latest_reserved_res_tracker();
+
+  auto alloc = res_manager.reserve_next_set_0_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::HARQ_SET_0);
+
+  // Try to allocate a new UE using the PUCCH resource indicator assigned to UE 0x4601; it should fail.
+  ASSERT_EQ(
+      nullptr,
+      res_manager.reserve_set_0_res_by_res_indicator(sl_tx, to_rnti(0x4602), alloc.pucch_res_indicator, pucch_cfg));
+
+  // Release the resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  // Try to allocate the new UE again, now it should succeed.
+  ASSERT_NE(
+      nullptr,
+      res_manager.reserve_set_0_res_by_res_indicator(sl_tx, to_rnti(0x4602), alloc.pucch_res_indicator, pucch_cfg));
+
+  alloc = res_manager.reserve_next_set_1_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::HARQ_SET_1);
+
+  // Try to allocate a new UE using the PUCCH resource indicator assigned to UE 0x4601; it should fail.
+  ASSERT_EQ(
+      nullptr,
+      res_manager.reserve_set_1_res_by_res_indicator(sl_tx, to_rnti(0x4602), alloc.pucch_res_indicator, pucch_cfg));
+
+  // Release the resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  // Try to allocate the new UE again, now it should succeed.
+  ASSERT_NE(
+      nullptr,
+      res_manager.reserve_set_1_res_by_res_indicator(sl_tx, to_rnti(0x4602), alloc.pucch_res_indicator, pucch_cfg));
+}
+
+TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_harq_resources_different_sets)
+{
+  res_manager.reset_latest_reserved_res_tracker();
+
+  auto alloc = res_manager.reserve_next_set_0_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::HARQ_SET_0);
+
+  // Don't set this reservation in the tracker, as we want to preserve it.
+  alloc = res_manager.reserve_next_set_1_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  // Try to allocate a new UE using the PUCCH resource indicator assigned to UE 0x4601; it should fail.
+  ASSERT_EQ(
+      nullptr,
+      res_manager.reserve_set_0_res_by_res_indicator(sl_tx, to_rnti(0x4602), alloc.pucch_res_indicator, pucch_cfg));
+
+  // Release the resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  // Release the tracked resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  // Try to allocate the new UE again, it should succeed.
+  ASSERT_NE(nullptr, res_manager.reserve_set_0_res_by_res_indicator(sl_tx, to_rnti(0x4602), 0U, pucch_cfg));
+}
+
+TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_harq_and_csi)
+{
+  res_manager.reset_latest_reserved_res_tracker();
+
+  auto alloc = res_manager.reserve_next_set_1_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  // Don't set this reservation in the tracker, as we want to preserve this resource.
+  res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::CSI);
+
+  auto* csi_resource = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  ASSERT_NE(nullptr, csi_resource);
+
+  auto* csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
+  ASSERT_EQ(nullptr, csi_resource_1);
+
+  // Release the tracked resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
+  ASSERT_NE(nullptr, csi_resource_1);
+}
+
+TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_harq_and_sr)
+{
+  res_manager.reset_latest_reserved_res_tracker();
+
+  // Don't set this reservation in the tracker, as we want to preserve this resource.
+  auto alloc = res_manager.reserve_next_set_0_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_EQ(0U, alloc.pucch_res_indicator);
+
+  auto* sr_resource = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  ASSERT_NE(nullptr, sr_resource);
+
+  res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::SR);
+
+  auto* sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+  ASSERT_EQ(nullptr, sr_resource_1);
+
+  // Release the tracked resources of the first UE.
+  res_manager.cancel_last_ue_res_reservations(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+  ASSERT_NE(nullptr, sr_resource_1);
+}
+
 ////////////    Test the PUCCH resource manager: UEs with different configs     ////////////
 
 class test_pucch_res_manager_multiple_cfg : public test_pucch_resource_manager

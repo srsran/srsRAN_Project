@@ -319,8 +319,14 @@ void pucch_resource_manager::cancel_last_ue_res_reservations(slot_point         
                                                              rnti_t                       crnti,
                                                              const ue_cell_configuration& ue_cell_cfg)
 {
+  if (last_ue_allocations.rnti == rnti_t::INVALID_RNTI) {
+    return;
+  }
+
   if (crnti != last_ue_allocations.rnti) {
-    srsran_assertion_failure("Trying to cancel a UE allocation that was not the last one");
+    srsran_assertion_failure("rnti={}: cancelling PUCCH resource reservations of another UE (rnti={}) is not allowed",
+                             crnti,
+                             last_ue_allocations.rnti);
     return;
   }
 
