@@ -10,6 +10,8 @@
 
 #include "pdu_rx_handler.h"
 #include "srsran/instrumentation/traces/up_traces.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 
