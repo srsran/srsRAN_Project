@@ -142,6 +142,7 @@ TEST_P(fxt_nea1, ciphering_engine_generic_nea1)
   ASSERT_TRUE(result.buf.has_value());
   ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
   EXPECT_EQ(result.buf.value(), ciphertext);
+  EXPECT_EQ(result.count, param.count);
 }
 
 TEST_P(fxt_nea2, ciphering_engine_generic_nea2)
@@ -163,6 +164,7 @@ TEST_P(fxt_nea2, ciphering_engine_generic_nea2)
   ASSERT_TRUE(result.buf.has_value());
   ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
   EXPECT_EQ(result.buf.value(), ciphertext);
+  EXPECT_EQ(result.count, param.count);
 }
 
 TEST_P(fxt_nea3, ciphering_engine_generic_nea3)
@@ -184,6 +186,7 @@ TEST_P(fxt_nea3, ciphering_engine_generic_nea3)
   ASSERT_TRUE(result.buf.has_value());
   ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
   EXPECT_EQ(result.buf.value(), ciphertext);
+  EXPECT_EQ(result.count, param.count);
 }
 
 //////////////////////////////////////////////////////////
