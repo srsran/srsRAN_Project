@@ -757,15 +757,17 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       });
   add_option(app,
              "--pucch_resource_common",
-             pucch_params.nof_cell_sr_resources,
+             pucch_params.pucch_resource_common,
              "Index of PUCCH resource set for the common configuration")
       ->capture_default_str()
-      ->check(CLI::Range(1, 15));
+      ->check(CLI::Range(0, 15));
   add_option(app, "--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
       ->capture_default_str()
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
+  add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
+      ->capture_default_str();
   add_option(app,
-             "--f1_nof_ue_res_harq",
+             "--f0_or_f1_nof_ue_res_harq",
              pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
              "Number of PUCCH F0/F1 resources available per UE for HARQ")
       ->capture_default_str()

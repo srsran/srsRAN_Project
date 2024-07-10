@@ -218,7 +218,8 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   VERIFY(pucch_cfg.pucch_res_list.end() != pucch_res_sr,
          "PUCCH cell res. id={} for SR could not be found in PUCCH resource list",
          pucch_cfg.sr_res_list.front().pucch_res_id.cell_res_id);
-  VERIFY(pucch_res_sr->format == pucch_format::FORMAT_1, "PUCCH resource used for SR is expected to be Format 1");
+  VERIFY(pucch_res_sr->format == pucch_format::FORMAT_0 or pucch_res_sr->format == pucch_format::FORMAT_1,
+         "PUCCH resource used for SR is expected to be Format 1");
 
   // Verify that the PUCCH setting used for CSI report have been configured properly.
   if (ue_cell_cfg.csi_meas_cfg.has_value()) {
