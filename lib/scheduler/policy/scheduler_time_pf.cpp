@@ -179,8 +179,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const ue& u)
   for (unsigned i = 0; i != ue_cc->harqs.nof_dl_harqs(); ++i) {
     const dl_harq_process& h = ue_cc->harqs.dl_harq(i);
     if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
-        (h.last_alloc_params().tb[0]->contains_srb_data or
-         (h.last_alloc_params().tb[1].has_value() and h.last_alloc_params().tb[1]->contains_srb_data))) {
+        h.last_alloc_params().tb[0]->contains_srb_data) {
       srb_retx_h = &h;
       break;
     }

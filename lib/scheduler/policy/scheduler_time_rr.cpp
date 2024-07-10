@@ -131,9 +131,7 @@ static static_vector<const dl_harq_process*, MAX_NOF_HARQS> get_ue_dl_harq_candi
     for (unsigned i = 0; i != ue_cc.harqs.nof_dl_harqs(); ++i) {
       const dl_harq_process& h = ue_cc.harqs.dl_harq(i);
       if (h.has_pending_retx() and not h.last_alloc_params().is_fallback and
-          (not ue_with_srb_data_only or
-           (h.last_alloc_params().tb[0]->contains_srb_data or
-            (h.last_alloc_params().tb[1].has_value() and h.last_alloc_params().tb[1]->contains_srb_data)))) {
+          (not ue_with_srb_data_only or (h.last_alloc_params().tb[0]->contains_srb_data))) {
         dl_harq_candidates.push_back(&h);
       }
     }
