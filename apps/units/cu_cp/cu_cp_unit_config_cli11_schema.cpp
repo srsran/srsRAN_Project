@@ -94,7 +94,11 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
 
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
-  add_option(app, "--gnb_id_bit_length", config.gnb_id_bit_length, "gNodeB identifier bit length")
+  add_option(app,
+             "--gnb_id_bit_length",
+             config.gnb_id_bit_length,
+             "gNodeB identifier bit length. If not set, it will be automatically set to be equal to the gNodeB Id of "
+             "the CU-CP")
       ->check(CLI::Range(22, 32));
   add_option(app, "--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   add_option(app, "--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");

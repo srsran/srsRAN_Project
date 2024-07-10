@@ -25,7 +25,7 @@ namespace srs_cu_cp {
 struct meas_context_t {
   meas_obj_id_t    meas_obj_id   = meas_obj_id_t::invalid;
   report_cfg_id_t  report_cfg_id = report_cfg_id_t::invalid;
-  gnb_id_t         gnb_id;
+  unsigned         gnb_id_bit_length;
   nr_cell_identity nci;
   pci_t            pci;
 };

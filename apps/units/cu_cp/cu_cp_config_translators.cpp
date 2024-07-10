@@ -230,10 +230,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
           srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
     }
 
-    meas_cfg_item.serving_cell_cfg.gnb_id    = nci.gnb_id(app_cfg_item.gnb_id_bit_length.value());
-    meas_cfg_item.serving_cell_cfg.pci       = app_cfg_item.pci;
-    meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
-    meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
+    meas_cfg_item.serving_cell_cfg.gnb_id_bit_length = app_cfg_item.gnb_id_bit_length.value();
+    meas_cfg_item.serving_cell_cfg.pci               = app_cfg_item.pci;
+    meas_cfg_item.serving_cell_cfg.band              = app_cfg_item.band;
+    meas_cfg_item.serving_cell_cfg.ssb_arfcn         = app_cfg_item.ssb_arfcn;
     if (app_cfg_item.ssb_scs.has_value()) {
       meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
           to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));

@@ -94,31 +94,31 @@ cu_cp_test::cu_cp_test()
   nr_cell_identity nci3    = nr_cell_identity::create(gnb_id2, 0).value();
 
   cell_meas_config cell_cfg_1;
-  cell_cfg_1.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
-  cell_cfg_1.serving_cell_cfg.gnb_id = gnb_id1;
-  cell_cfg_1.serving_cell_cfg.nci    = nci1;
+  cell_cfg_1.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+  cell_cfg_1.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
+  cell_cfg_1.serving_cell_cfg.nci               = nci1;
   cell_cfg_1.ncells.push_back({nci2, {uint_to_report_cfg_id(2)}});
   // Add external cell (for inter CU handover tests)
   cell_cfg_1.ncells.push_back({nci3, {uint_to_report_cfg_id(2)}});
   cfg.mobility_config.meas_manager_config.cells.emplace(nci1, cell_cfg_1);
 
   cell_meas_config cell_cfg_2;
-  cell_cfg_2.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
-  cell_cfg_2.serving_cell_cfg.gnb_id = gnb_id1;
-  cell_cfg_2.serving_cell_cfg.nci    = nci2;
+  cell_cfg_2.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+  cell_cfg_2.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
+  cell_cfg_2.serving_cell_cfg.nci               = nci2;
   cell_cfg_2.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
   cfg.mobility_config.meas_manager_config.cells.emplace(nci2, cell_cfg_2);
 
   // Add an external cell
   cell_meas_config cell_cfg_3;
-  cell_cfg_3.periodic_report_cfg_id     = uint_to_report_cfg_id(1);
-  cell_cfg_3.serving_cell_cfg.gnb_id    = gnb_id2;
-  cell_cfg_3.serving_cell_cfg.nci       = nci3;
-  cell_cfg_3.serving_cell_cfg.pci       = 3;
-  cell_cfg_3.serving_cell_cfg.ssb_arfcn = 632628;
-  cell_cfg_3.serving_cell_cfg.band      = nr_band::n78;
-  cell_cfg_3.serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz15;
-  cell_cfg_3.serving_cell_cfg.ssb_mtc   = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
+  cell_cfg_3.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+  cell_cfg_3.serving_cell_cfg.gnb_id_bit_length = gnb_id2.bit_length;
+  cell_cfg_3.serving_cell_cfg.nci               = nci3;
+  cell_cfg_3.serving_cell_cfg.pci               = 3;
+  cell_cfg_3.serving_cell_cfg.ssb_arfcn         = 632628;
+  cell_cfg_3.serving_cell_cfg.band              = nr_band::n78;
+  cell_cfg_3.serving_cell_cfg.ssb_scs           = subcarrier_spacing::kHz15;
+  cell_cfg_3.serving_cell_cfg.ssb_mtc           = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
 
   cell_cfg_3.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
   cfg.mobility_config.meas_manager_config.cells.emplace(nci3, cell_cfg_3);

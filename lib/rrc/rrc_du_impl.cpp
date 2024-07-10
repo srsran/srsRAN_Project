@@ -72,10 +72,10 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
 
     // fill cell meas config
     serving_cell_meas_config meas_cfg;
-    meas_cfg.nci    = served_cell.served_cell_info.nr_cgi.nci;
-    meas_cfg.gnb_id = cfg.gnb_id;
-    meas_cfg.pci    = served_cell.served_cell_info.nr_pci;
-    meas_cfg.band   = cell_info.band;
+    meas_cfg.nci               = served_cell.served_cell_info.nr_cgi.nci;
+    meas_cfg.gnb_id_bit_length = cfg.gnb_id.bit_length;
+    meas_cfg.pci               = served_cell.served_cell_info.nr_pci;
+    meas_cfg.band              = cell_info.band;
     // TODO: which meas timing to use here?
     meas_cfg.ssb_mtc   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_meas_timing_cfg;
     meas_cfg.ssb_arfcn = cell_info.meas_timings.begin()->freq_and_timing.value().carrier_freq;

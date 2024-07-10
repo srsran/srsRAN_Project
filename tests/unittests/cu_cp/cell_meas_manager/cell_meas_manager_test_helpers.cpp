@@ -45,10 +45,10 @@ void cell_meas_manager_test::create_default_manager()
   nr_cell_identity nci2 = nr_cell_identity::create(gnb_id, 1).value();
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.gnb_id = gnb_id;
-  cell_cfg.serving_cell_cfg.nci    = nci1;
-  cell_cfg.serving_cell_cfg.pci    = 1;
-  cell_cfg.periodic_report_cfg_id  = uint_to_report_cfg_id(1);
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length = gnb_id.bit_length;
+  cell_cfg.serving_cell_cfg.nci               = nci1;
+  cell_cfg.serving_cell_cfg.pci               = 1;
+  cell_cfg.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
 
   neighbor_cell_meas_config ncell_meas_cfg;
   ncell_meas_cfg.nci = nci2;
@@ -143,9 +143,9 @@ void cell_meas_manager_test::create_manager_with_incomplete_cells_and_periodic_r
   nr_cell_identity nci2 = nr_cell_identity::create(gnb_id, 1).value();
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.gnb_id = gnb_id;
-  cell_cfg.serving_cell_cfg.nci    = nci1;
-  cell_cfg.serving_cell_cfg.pci    = 1;
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length = gnb_id.bit_length;
+  cell_cfg.serving_cell_cfg.nci               = nci1;
+  cell_cfg.serving_cell_cfg.pci               = 1;
 
   neighbor_cell_meas_config ncell_meas_cfg;
   ncell_meas_cfg.nci = nci2;
@@ -214,9 +214,10 @@ void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
   cell_meas_manager_cfg cfg;
 
   // Add serving cell
+  gnb_id_t         gnb_id{411, 32};
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.gnb_id = gnb_id_t{411, 32};
-  cell_cfg.serving_cell_cfg.nci    = nr_cell_identity::create(cell_cfg.serving_cell_cfg.gnb_id, 0).value();
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length = gnb_id.bit_length;
+  cell_cfg.serving_cell_cfg.nci               = nr_cell_identity::create(gnb_id, 0).value();
 
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;

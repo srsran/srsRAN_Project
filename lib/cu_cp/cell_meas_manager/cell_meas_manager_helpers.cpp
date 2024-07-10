@@ -190,7 +190,7 @@ void srsran::srs_cu_cp::generate_report_config(const cell_meas_manager_cfg&  cfg
   ue_meas_context.meas_id_to_meas_context.emplace(meas_id_to_add_mod.meas_id,
                                                   meas_context_t{meas_id_to_add_mod.meas_obj_id,
                                                                  meas_id_to_add_mod.report_cfg_id,
-                                                                 serving_cell_cfg.gnb_id,
+                                                                 serving_cell_cfg.gnb_id_bit_length,
                                                                  serving_cell_cfg.nci,
                                                                  serving_cell_cfg.pci.value()});
 }
