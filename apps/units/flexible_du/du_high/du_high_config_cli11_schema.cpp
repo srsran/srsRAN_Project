@@ -1651,7 +1651,17 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
 
 static void derive_auto_params(du_high_unit_config& config)
 {
+  unsigned next_sector_id = 0;
   for (auto& cell : config.cells_cfg) {
+    if (not cell.cell.sector_id.has_value()) {
+      // Auto-derive sector ID if not defined.
+      cell.cell.sector_id = next_sector_id;
+      next_sector_id++;
+    } else {
+      // If sector ID defined for this cell, recompute the next sector ID.
+      next_sector_id = std::max(next_sector_id, cell.cell.sector_id.value() + 1);
+    }
+
     derive_cell_auto_params(cell.cell);
   }
 }
