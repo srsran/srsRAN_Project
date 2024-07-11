@@ -70,7 +70,7 @@ void metrics_plotter_stdout::report_metrics(const scheduler_cell_metrics& metric
     } else {
       fmt::print(" {:>3}%", 0);
     }
-    fmt::print(" {}", scaled_fmt_integer(ue.dl_bs, /*align_right=*/true));
+    fmt::print(" {}", scaled_fmt_integer(ue.dl_bs, true));
 
     fmt::print(" |");
 
@@ -105,7 +105,7 @@ void metrics_plotter_stdout::report_metrics(const scheduler_cell_metrics& metric
     } else {
       fmt::print(" {:>3}%", 0);
     }
-    fmt::print(" {}", scaled_fmt_integer(ue.bsr, /*align_right=*/true));
+    fmt::print(" {}", scaled_fmt_integer(ue.bsr, true));
     if (ue.last_ta.has_value()) {
       fmt::print(" {}", float_to_eng_string(ue.last_ta->to_seconds<float>(), 0, true));
     } else {

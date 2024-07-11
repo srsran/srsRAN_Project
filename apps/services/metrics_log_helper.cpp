@@ -61,7 +61,7 @@ void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
     } else {
       fmt::format_to(buffer, " dl_error_rate={}%", 0);
     }
-    fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, /*right_align=*/false));
+    fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       fmt::format_to(buffer, " pusch_snr_db={:.1f}", std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
@@ -94,7 +94,7 @@ void metrics_log_helper::report_metrics(const scheduler_cell_metrics& metrics)
     } else {
       fmt::format_to(buffer, " ul_error_rate={}%", 0);
     }
-    fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, /*right_align=*/false));
+    fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     if (ue.last_ta.has_value()) {
       fmt::format_to(buffer, " last_ta={}s", float_to_eng_string(ue.last_ta->to_seconds<float>(), 0, false));
     } else {
