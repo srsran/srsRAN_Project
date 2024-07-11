@@ -44,15 +44,14 @@ ngap_configuration create_ngap_cfg(const cu_cp_configuration& cfg)
   ngap_cfg.ran_node_name             = cfg.node.ran_node_name;
   ngap_cfg.plmn                      = cfg.node.plmn;
   ngap_cfg.tac                       = cfg.node.tac;
-  ngap_cfg.slice_configurations      = cfg.slice_configurations;
-  ngap_cfg.pdu_session_setup_timeout = cfg.ue_config.pdu_session_setup_timeout;
+  ngap_cfg.pdu_session_setup_timeout = cfg.ue.pdu_session_setup_timeout;
   return ngap_cfg;
 }
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(cfg),
-  cell_meas_mng(cfg.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
+  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_ev_notifier, ue_mng),
   routine_mng(ue_mng, cfg.security.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
@@ -96,7 +95,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                                   *cfg.services.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
 
-  mobility_mng = create_mobility_manager(cfg.mobility_config.mobility_manager_config,
+  mobility_mng = create_mobility_manager(cfg.mobility.mobility_manager_config,
                                          mobility_manager_ev_notifier,
                                          ngap_entity->get_ngap_control_message_handler(),
                                          du_db,
@@ -105,7 +104,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   // Start statistics report timer
   statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
-  statistics_report_timer.set(cfg.statistics_report_period,
+  statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }
@@ -714,7 +713,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                nof_cu_cp_ues);
 
   // Restart timer
-  statistics_report_timer.set(cfg.statistics_report_period,
+  statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }

@@ -12,6 +12,7 @@
 #include "du_processor_config.h"
 #include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/rrc/rrc_config.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include <thread>
 
@@ -21,19 +22,6 @@ using namespace srs_cu_cp;
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
   cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, cfg.cu_cp.node.plmn)
 {
-}
-
-static rrc_cfg_t create_rrc_cfg(const cu_cp_configuration& cu_cp_cfg)
-{
-  rrc_cfg_t rrc_cfg;
-  rrc_cfg.gnb_id                         = cu_cp_cfg.node.gnb_id;
-  rrc_cfg.srb2_cfg                       = cu_cp_cfg.bearers.srb2_cfg;
-  rrc_cfg.drb_config                     = cu_cp_cfg.bearers.drb_config;
-  rrc_cfg.int_algo_pref_list             = cu_cp_cfg.security.int_algo_pref_list;
-  rrc_cfg.enc_algo_pref_list             = cu_cp_cfg.security.enc_algo_pref_list;
-  rrc_cfg.force_reestablishment_fallback = cu_cp_cfg.rrc.force_reestablishment_fallback;
-  rrc_cfg.rrc_procedure_timeout_ms       = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
-  return rrc_cfg;
 }
 
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
@@ -51,15 +39,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_du_handler, cfg.ue_removal_handler, cfg.ue_context_handler);
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
-  // TODO: use real config
-  du_processor_config_t du_cfg       = {};
-  du_cfg.du_index                    = du_index;
-  du_cfg.rrc_cfg                     = create_rrc_cfg(cfg.cu_cp);
-  du_cfg.default_security_indication = cfg.cu_cp.security.default_security_indication;
-  du_cfg.du_setup_notif              = &cfg.du_conn_notif;
-  du_cfg.f1ap_cfg                    = cfg.cu_cp.f1ap_config;
-  du_cfg.du_cfg_hdlr                 = du_cfg_mng.create_du_handler();
-
+  du_processor_config_t du_cfg     = {du_index, cfg.cu_cp, logger, &cfg.du_conn_notif, du_cfg_mng.create_du_handler()};
   std::unique_ptr<du_processor> du = create_du_processor(std::move(du_cfg),
                                                          du_ctxt.du_to_cu_cp_notifier,
                                                          *du_ctxt.f1ap_tx_pdu_notifier,
@@ -67,9 +47,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                          cfg.ue_ngap_ctrl_notifier,
                                                          cfg.meas_config_notifier,
                                                          cfg.common_task_sched,
-                                                         cfg.ue_mng,
-                                                         *cfg.cu_cp.services.timers,
-                                                         *cfg.cu_cp.services.cu_cp_executor);
+                                                         cfg.ue_mng);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
   du_ctxt.processor = std::move(du);

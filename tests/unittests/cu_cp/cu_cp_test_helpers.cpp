@@ -55,7 +55,7 @@ cu_cp_test::cu_cp_test()
   cfg.services.n2_gw          = &n2_gw;
   cfg.services.timers         = &timers;
   // mobility config
-  cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
+  cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = true;
   // Generate NCIs.
   gnb_id_t         gnb_id1 = cfg.node.gnb_id;
   nr_cell_identity nci1    = nr_cell_identity::create(gnb_id1, 0).value();
@@ -70,14 +70,14 @@ cu_cp_test::cu_cp_test()
   cell_cfg_1.ncells.push_back({nci2, {uint_to_report_cfg_id(2)}});
   // Add external cell (for inter CU handover tests)
   cell_cfg_1.ncells.push_back({nci3, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(nci1, cell_cfg_1);
+  cfg.mobility.meas_manager_config.cells.emplace(nci1, cell_cfg_1);
 
   cell_meas_config cell_cfg_2;
   cell_cfg_2.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
   cell_cfg_2.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
   cell_cfg_2.serving_cell_cfg.nci               = nci2;
   cell_cfg_2.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(nci2, cell_cfg_2);
+  cfg.mobility.meas_manager_config.cells.emplace(nci2, cell_cfg_2);
 
   // Add an external cell
   cell_meas_config cell_cfg_3;
@@ -91,7 +91,7 @@ cu_cp_test::cu_cp_test()
   cell_cfg_3.serving_cell_cfg.ssb_mtc           = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
 
   cell_cfg_3.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
-  cfg.mobility_config.meas_manager_config.cells.emplace(nci3, cell_cfg_3);
+  cfg.mobility.meas_manager_config.cells.emplace(nci3, cell_cfg_3);
 
   // Add periodic event
   rrc_report_cfg_nr periodic_report_cfg;
@@ -106,7 +106,7 @@ cu_cp_test::cu_cp_test()
   periodical_cfg.max_report_cells       = 4;
 
   periodic_report_cfg.periodical = periodical_cfg;
-  cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
+  cfg.mobility.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
 
   rrc_report_cfg_nr a3_report_cfg;
   auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
@@ -131,7 +131,7 @@ cu_cp_test::cu_cp_test()
   event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
   a3_report_cfg.event_triggered = event_trigger_cfg;
-  cfg.mobility_config.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
+  cfg.mobility.meas_manager_config.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
   // create CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));

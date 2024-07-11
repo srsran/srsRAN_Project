@@ -26,10 +26,6 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = plmn_identity::test_value();
   cfg.tac           = 7;
-  s_nssai_t slice_cfg;
-  slice_cfg.sst                 = 1;
-  cfg.pdu_session_setup_timeout = std::chrono::seconds{2};
-  cfg.slice_configurations.push_back(slice_cfg);
 
   return cfg;
 }

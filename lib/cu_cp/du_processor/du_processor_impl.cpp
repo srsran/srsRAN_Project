@@ -19,6 +19,19 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+static rrc_cfg_t create_rrc_config(const cu_cp_configuration& cu_cp_cfg)
+{
+  rrc_cfg_t rrc_cfg;
+  rrc_cfg.gnb_id                         = cu_cp_cfg.node.gnb_id;
+  rrc_cfg.force_reestablishment_fallback = cu_cp_cfg.rrc.force_reestablishment_fallback;
+  rrc_cfg.rrc_procedure_timeout_ms       = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
+  rrc_cfg.int_algo_pref_list             = cu_cp_cfg.security.int_algo_pref_list;
+  rrc_cfg.enc_algo_pref_list             = cu_cp_cfg.security.enc_algo_pref_list;
+  rrc_cfg.srb2_cfg                       = cu_cp_cfg.bearers.srb2_cfg;
+  rrc_cfg.drb_config                     = cu_cp_cfg.bearers.drb_config;
+  return rrc_cfg;
+}
+
 du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
@@ -26,9 +39,7 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                      common_task_scheduler&              common_task_sched_,
-                                     ue_manager&                         ue_mng_,
-                                     timer_manager&                      timers_,
-                                     task_executor&                      ctrl_exec_) :
+                                     ue_manager&                         ue_mng_) :
   cfg(std::move(du_processor_config_)),
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
@@ -37,15 +48,19 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   f1ap_ev_notifier(common_task_sched_, *this)
 {
   // create f1ap
-  f1ap = create_f1ap(cfg.f1ap_cfg, f1ap_pdu_notifier, f1ap_ev_notifier, timers_, ctrl_exec_);
+  f1ap = create_f1ap(cfg.cu_cp_cfg.f1ap,
+                     f1ap_pdu_notifier,
+                     f1ap_ev_notifier,
+                     *cfg.cu_cp_cfg.services.timers,
+                     *cfg.cu_cp_cfg.services.cu_cp_executor);
 
   f1ap_ev_notifier.connect_du_processor(get_f1ap_interface());
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(
-      cfg.rrc_cfg, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier);
-  rrc = create_rrc_du(rrc_creation_msg);
+  rrc_du_creation_message du_creation_req{
+      create_rrc_config(cfg.cu_cp_cfg), rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier};
+  rrc = create_rrc_du(du_creation_req);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 
   cu_cp_notifier.on_du_processor_created(cfg.du_index,
@@ -96,8 +111,8 @@ du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_reques
 
   // Prepare DU response with accepted setup.
   auto& accepted              = res.result.emplace<du_setup_result::accepted>();
-  accepted.gnb_cu_name        = cfg.name;
-  accepted.gnb_cu_rrc_version = cfg.rrc_version;
+  accepted.gnb_cu_name        = cfg.cu_cp_cfg.node.ran_node_name;
+  accepted.gnb_cu_rrc_version = cfg.cu_cp_cfg.rrc.rrc_version;
 
   // Accept all cells
   accepted.cells_to_be_activ_list.resize(request.gnb_du_served_cells_list.size());

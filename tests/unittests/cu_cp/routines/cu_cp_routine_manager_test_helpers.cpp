@@ -37,10 +37,10 @@ static srsran::security::sec_as_config init_security_config()
 
 cu_cp_routine_manager_test::cu_cp_routine_manager_test() :
   security_cfg(init_security_config()), cu_cp_cfg([this]() {
-    cu_cp_configuration cucfg        = config_helpers::make_default_cu_cp_config();
-    cucfg.services.timers            = &timers;
-    cucfg.services.cu_cp_executor    = &ctrl_worker;
-    cucfg.ue_config.inactivity_timer = std::chrono::seconds{10};
+    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+    cucfg.services.timers         = &timers;
+    cucfg.services.cu_cp_executor = &ctrl_worker;
+    cucfg.ue.inactivity_timer     = std::chrono::seconds{10};
     pdcp_config pdcp_cfg{
         pdcp_rb_type::drb, pdcp_rlc_mode::am, {}, {}, {pdcp_sn_size::size12bits}, {pdcp_sn_size::size12bits}};
     cucfg.bearers.drb_config = {{uint_to_five_qi(9), {pdcp_cfg}}, {uint_to_five_qi(7), {pdcp_cfg}}};

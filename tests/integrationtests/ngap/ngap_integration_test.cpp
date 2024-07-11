@@ -118,8 +118,7 @@ protected:
     cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
     cfg.plmn                      = cu_cp_cfg.node.plmn;
     cfg.tac                       = cu_cp_cfg.node.tac;
-    cfg.slice_configurations      = cu_cp_cfg.slice_configurations;
-    cfg.pdu_session_setup_timeout = cu_cp_cfg.ue_config.pdu_session_setup_timeout;
+    cfg.pdu_session_setup_timeout = cu_cp_cfg.ue.pdu_session_setup_timeout;
   }
 
   void SetUp() override
@@ -154,7 +153,8 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-ngap_ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
+ngap_ng_setup_request generate_ng_setup_request(const ngap_configuration&     ngap_cfg,
+                                                const std::vector<s_nssai_t>& slices)
 {
   ngap_ng_setup_request request_msg = {};
 
@@ -172,7 +172,7 @@ ngap_ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
   ngap_broadcast_plmn_item broadcast_plmn_item;
   broadcast_plmn_item.plmn_id = ngap_cfg.plmn;
 
-  for (const auto& slice_config : ngap_cfg.slice_configurations) {
+  for (const auto& slice_config : slices) {
     slice_support_item_t slice_support_item;
     slice_support_item.s_nssai.sst = slice_config.sst;
     if (slice_config.sd.has_value()) {
@@ -196,8 +196,7 @@ ngap_ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
 TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngap_configuration    ngap_cfg    = srsran::config_helpers::make_default_ngap_config();
-  ngap_ng_setup_request request_msg = generate_ng_setup_request(ngap_cfg);
+  ngap_ng_setup_request request_msg = generate_ng_setup_request(cfg, cu_cp_cfg.node.supported_slices);
 
   test_logger.info("Launching NG setup procedure...");
   async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(request_msg);

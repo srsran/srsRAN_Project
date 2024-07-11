@@ -50,7 +50,7 @@ ngap_ng_setup_request amf_connection_setup_routine::fill_ng_setup_request()
   ngap_broadcast_plmn_item broadcast_plmn_item;
   broadcast_plmn_item.plmn_id = cu_cp_cfg.node.plmn;
 
-  for (const auto& slice_config : cu_cp_cfg.slice_configurations) {
+  for (const auto& slice_config : cu_cp_cfg.node.supported_slices) {
     slice_support_item_t slice_support_item;
     slice_support_item.s_nssai.sst = slice_config.sst;
     if (slice_config.sd.has_value()) {

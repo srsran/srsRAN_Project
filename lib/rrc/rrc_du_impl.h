@@ -56,7 +56,7 @@ public:
 
 private:
   // helpers
-  const rrc_cfg_t& cfg;
+  const rrc_cfg_t cfg;
 
   rrc_ue_nas_notifier&                nas_notifier;         // PDU notifier to the NGAP
   rrc_ue_control_notifier&            ngap_ctrl_notifier;   // Control notifier to the NGAP

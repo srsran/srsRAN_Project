@@ -149,7 +149,7 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
   // Slices
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
-  cfg.slice_configurations.push_back(slice_cfg);
+  cfg.node.supported_slices.push_back(slice_cfg);
   // DRBs
   cfg.bearers.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
   // Security.
@@ -183,7 +183,7 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
     return false;
   }
 
-  if (!is_valid_configuration(config.mobility_config)) {
+  if (!is_valid_configuration(config.mobility)) {
     fmt::print("Invalid mobility configuration.\n");
     return false;
   }

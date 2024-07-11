@@ -47,21 +47,19 @@ du_processor_test::du_processor_test() :
   srslog::init();
 
   // create and start DU processor
-  du_processor_config_t du_cfg = {};
-  du_cfg.du_index              = uint_to_du_index(0);
-  du_cfg.du_setup_notif        = &du_conn_notifier;
-  du_cfg.du_cfg_hdlr           = du_cfg_mgr.create_du_handler();
-
-  du_processor_obj = create_du_processor(std::move(du_cfg),
+  du_processor_config_t du_cfg = {uint_to_du_index(0),
+                                  cu_cp_cfg,
+                                  srslog::fetch_basic_logger("CU-CP"),
+                                  &du_conn_notifier,
+                                  du_cfg_mgr.create_du_handler()};
+  du_processor_obj             = create_du_processor(std::move(du_cfg),
                                          cu_cp_notifier,
                                          f1ap_pdu_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_du_cu_cp_notifier,
                                          *common_task_sched,
-                                         ue_mng,
-                                         timers,
-                                         ctrl_worker);
+                                         ue_mng);
 }
 
 du_processor_test::~du_processor_test()

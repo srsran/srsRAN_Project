@@ -112,7 +112,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 
   // tick timers
   // Status: NGAP does not receive new PDU Session Resource Setup Request until pdu_session_setup_timer has ended.
-  for (unsigned msec_elapsed = 0; msec_elapsed < cu_cp_cfg.ue_config.pdu_session_setup_timeout.count() * 1000;
+  for (unsigned msec_elapsed = 0; msec_elapsed < cu_cp_cfg.ue.pdu_session_setup_timeout.count() * 1000;
        ++msec_elapsed) {
     this->tick();
   }

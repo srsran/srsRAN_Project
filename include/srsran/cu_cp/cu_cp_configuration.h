@@ -22,6 +22,17 @@ namespace srs_cu_cp {
 
 class n2_connection_client;
 
+/// Parameters of the CU-CP that will reported to the 5G core.
+struct ran_node_configuration {
+  /// The gNodeB identifier.
+  gnb_id_t      gnb_id{411, 22};
+  std::string   ran_node_name = "srsgnb01";
+  plmn_identity plmn          = plmn_identity::test_value();
+  unsigned      tac           = 7;
+  /// Supported Slices by the RAN node.
+  std::vector<s_nssai_t> supported_slices;
+};
+
 struct mobility_configuration {
   cell_meas_manager_cfg meas_manager_config;
   mobility_manager_cfg  mobility_manager_config;
@@ -29,13 +40,6 @@ struct mobility_configuration {
 
 /// Configuration passed to CU-CP.
 struct cu_cp_configuration {
-  struct node_params {
-    /// The gNodeB identifier.
-    gnb_id_t      gnb_id{411, 22};
-    std::string   ran_node_name = "srsgnb01";
-    plmn_identity plmn          = plmn_identity::test_value();
-    unsigned      tac           = 7;
-  };
   struct admission_params {
     /// Maximum number of DU connections that the CU-CP may accept.
     unsigned max_nof_dus = 6;
@@ -55,6 +59,8 @@ struct cu_cp_configuration {
     bool force_reestablishment_fallback = false;
     /// Timeout for RRC procedures.
     std::chrono::milliseconds rrc_procedure_timeout_ms{360};
+    /// Version of the RRC.
+    unsigned rrc_version = 2;
   };
   struct security_params {
     /// Integrity protection algorithms preference list
@@ -70,20 +76,31 @@ struct cu_cp_configuration {
     /// Configuration for available 5QI.
     std::map<five_qi_t, cu_cp_qos_config> drb_config;
   };
+  struct metrics_params {
+    /// CU-CP statistics report period.
+    std::chrono::seconds statistics_report_period{1};
+  };
 
-  node_params            node;
-  admission_params       admission;
-  service_params         services;
-  rrc_params             rrc;
-  security_params        security;
-  bearer_params          bearers;
-  ue_configuration       ue_config;
-  mobility_configuration mobility_config;
-  f1ap_configuration     f1ap_config;
-  /// Slice configurations.
-  std::vector<s_nssai_t> slice_configurations;
-  /// CU-CP statistics report period.
-  std::chrono::seconds statistics_report_period{1};
+  /// NG-RAN node parameters.
+  ran_node_configuration node;
+  /// Parameters to determine the admission of new CU-UP, DU and UE connections.
+  admission_params admission;
+  /// RRC layer-specific parameters.
+  rrc_params rrc;
+  /// F1AP layer-specific parameters.
+  f1ap_configuration f1ap;
+  /// UE Security-specific parameters.
+  security_params security;
+  /// SRB and DRB configuration of created UEs.
+  bearer_params bearers;
+  /// UE-specific parameters.
+  ue_configuration ue;
+  /// Parameters related with the mobility of UEs.
+  mobility_configuration mobility;
+  /// Parameters related with CU-CP metrics.
+  metrics_params metrics;
+  /// Timers, executors, and other services used by the CU-CP.
+  service_params services;
 };
 
 } // namespace srs_cu_cp

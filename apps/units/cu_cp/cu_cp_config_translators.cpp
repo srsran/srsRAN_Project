@@ -184,17 +184,16 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 
   srsran_assert(!cu_cfg.plmns.empty(), "PLMN list is empty");
   srsran_assert(!cu_cfg.tacs.empty(), "PLMN list is empty");
-  out_cfg.node.gnb_id        = cu_cfg.gnb_id;
-  out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
-  out_cfg.node.plmn          = plmn_identity::parse(cu_cfg.plmns.front()).value();
-  out_cfg.node.tac           = cu_cfg.tacs.front();
+  out_cfg.node.gnb_id           = cu_cfg.gnb_id;
+  out_cfg.node.ran_node_name    = cu_cfg.ran_node_name;
+  out_cfg.node.plmn             = plmn_identity::parse(cu_cfg.plmns.front()).value();
+  out_cfg.node.tac              = cu_cfg.tacs.front();
+  out_cfg.node.supported_slices = cu_cfg.slice_cfg;
 
   out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};
 
   out_cfg.bearers.drb_config = generate_cu_cp_qos_config(cu_cfg);
-
-  out_cfg.slice_configurations = cu_cfg.slice_cfg;
 
   out_cfg.security.int_algo_pref_list = generate_preferred_integrity_algorithms_list(cu_cfg);
   out_cfg.security.enc_algo_pref_list = generate_preferred_ciphering_algorithms_list(cu_cfg);
@@ -208,16 +207,16 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
                  cu_cfg.security_config.confidentiality_protection);
   }
 
-  out_cfg.ue_config.inactivity_timer          = std::chrono::seconds{cu_cfg.inactivity_timer};
-  out_cfg.ue_config.pdu_session_setup_timeout = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
-  out_cfg.statistics_report_period            = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
+  out_cfg.ue.inactivity_timer              = std::chrono::seconds{cu_cfg.inactivity_timer};
+  out_cfg.ue.pdu_session_setup_timeout     = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
+  out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 
-  out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
+  out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =
       cu_cfg.mobility_config.trigger_handover_from_measurements;
 
   // F1AP-CU config.
-  out_cfg.f1ap_config.ue_context_setup_timeout = std::chrono::milliseconds{cu_cfg.f1ap_config.ue_context_setup_timeout};
-  out_cfg.f1ap_config.json_log_enabled         = cu_cfg.loggers.f1ap_json_enabled;
+  out_cfg.f1ap.ue_context_setup_timeout = std::chrono::milliseconds{cu_cfg.f1ap_config.ue_context_setup_timeout};
+  out_cfg.f1ap.json_log_enabled         = cu_cfg.loggers.f1ap_json_enabled;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
@@ -255,7 +254,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
     }
 
     // Store config.
-    out_cfg.mobility_config.meas_manager_config.cells[meas_cfg_item.serving_cell_cfg.nci] = meas_cfg_item;
+    out_cfg.mobility.meas_manager_config.cells[meas_cfg_item.serving_cell_cfg.nci] = meas_cfg_item;
   }
 
   // Convert report config.
@@ -337,7 +336,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
     }
 
     // Store config.
-    out_cfg.mobility_config.meas_manager_config
+    out_cfg.mobility.meas_manager_config
         .report_config_ids[srs_cu_cp::uint_to_report_cfg_id(report_cfg_item.report_cfg_id)] = report_cfg;
   }
 
