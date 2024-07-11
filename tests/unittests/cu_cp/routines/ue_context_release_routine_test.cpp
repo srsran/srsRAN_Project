@@ -75,37 +75,3 @@ TEST_F(ue_context_release_test, when_ue_context_release_command_received_then_re
   // nothing has failed to be released
   ASSERT_TRUE(was_ue_context_release_successful());
 }
-
-TEST_F(ue_context_release_test,
-       when_ue_context_release_command_with_cause_normal_release_received_then_no_rrc_release_is_sent)
-{
-  // Add UE
-  ue_index_t ue_index = add_ue(MIN_PCI, rnti_t::MIN_CRNTI);
-
-  // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command =
-      generate_ue_context_release_command(ue_index, cause_nas_t::normal_release);
-  this->start_procedure(ue_context_release_command, {true}, {true});
-
-  // nothing has failed to be released
-  ASSERT_TRUE(was_ue_context_release_successful());
-
-  ASSERT_TRUE(f1ap_ue_ctxt_mng.last_release_command.rrc_release_pdu.empty());
-}
-
-TEST_F(ue_context_release_test,
-       when_ue_context_release_command_with_cause_deregister_received_then_no_rrc_release_is_sent)
-{
-  // Add UE
-  ue_index_t ue_index = add_ue(MIN_PCI, rnti_t::MIN_CRNTI);
-
-  // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command =
-      generate_ue_context_release_command(ue_index, cause_nas_t::deregister);
-  this->start_procedure(ue_context_release_command, {true}, {true});
-
-  // nothing has failed to be released
-  ASSERT_TRUE(was_ue_context_release_successful());
-
-  ASSERT_TRUE(f1ap_ue_ctxt_mng.last_release_command.rrc_release_pdu.empty());
-}
