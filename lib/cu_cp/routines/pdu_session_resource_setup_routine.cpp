@@ -194,6 +194,10 @@ void pdu_session_resource_setup_routine::operator()(
     {
       // get NAS PDUs as received by AMF
       std::vector<byte_buffer> nas_pdus;
+      if (!setup_msg.nas_pdu.empty()) {
+        nas_pdus.push_back(setup_msg.nas_pdu);
+      }
+
       for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
         if (!pdu_session.pdu_session_nas_pdu.empty()) {
           nas_pdus.push_back(pdu_session.pdu_session_nas_pdu);
