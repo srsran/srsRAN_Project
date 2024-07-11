@@ -22,6 +22,7 @@ class null_sink_f1c_bearer : public f1c_bearer
 public:
   void             handle_pdu(byte_buffer pdu) override {}
   async_task<void> handle_pdu_and_await_delivery(byte_buffer pdu) override { return launch_no_op_task(); }
+  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override { return launch_no_op_task(); }
   void             handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void             handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
   void             handle_sdu(byte_buffer_chain sdu) override {}

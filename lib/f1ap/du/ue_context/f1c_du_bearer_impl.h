@@ -43,15 +43,11 @@ public:
   {
     // TODO
   }
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
-  {
-    // TODO
-  }
-
-  void handle_pdu(byte_buffer pdu) override;
-
+  void             handle_pdu(byte_buffer pdu) override;
   async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
+  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override;
 
 private:
   f1ap_ue_context&          ue_ctxt;
@@ -80,21 +76,19 @@ public:
   /// \param[in] sdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
   void handle_sdu(byte_buffer_chain sdu) override;
 
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
-  {
-    // TODO
-  }
-
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
-  void handle_pdu(byte_buffer sdu) override;
-
+  void             handle_pdu(byte_buffer sdu) override;
   async_task<void> handle_pdu_and_await_delivery(byte_buffer sdu) override;
+  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override;
 
 private:
-  static constexpr size_t MAX_CONCURRENT_DELIVERY_EVENTS = 4;
+  static constexpr size_t MAX_CONCURRENT_PDU_EVENTS = 4;
 
-  manual_event_flag& wait_for_delivery_notification(uint32_t pdcp_sn);
+  async_task<void>   handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery);
+  manual_event_flag& wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery);
+  void               handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery);
 
   f1ap_ue_context&       ue_ctxt;
   srb_id_t               srb_id;
@@ -105,8 +99,10 @@ private:
   task_executor&         ue_exec;
   srslog::basic_logger&  logger;
 
-  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_DELIVERY_EVENTS> pending_delivery_event_pool;
-  std::optional<uint32_t>                                                       last_pdcp_sn_delivered;
+  std::optional<uint32_t>                                                  last_pdcp_sn_transmitted;
+  std::optional<uint32_t>                                                  last_pdcp_sn_delivered;
+  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_delivery_event_pool;
+  std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_transmission_event_pool;
 };
 
 } // namespace srs_du
