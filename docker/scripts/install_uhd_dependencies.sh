@@ -38,7 +38,7 @@ main() {
                 cpufrequtils inetutils-tools libboost-all-dev libncurses5-dev libusb-1.0-0 libusb-1.0-0-dev \
                 libusb-dev python3-dev python3-requests &&
                 apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
-            /usr/local/bin/uhd_images_downloader
+            uhd_images_downloader
         fi
     else
         echo "OS $ID not supported"

@@ -54,6 +54,7 @@ RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     -DBUILD_TESTS=True \
     -DENABLE_${LIB_UPPER}=On \
     -DCMAKE_CXX_FLAGS="-march=${ARCH}" \
+    -DCMAKE_INSTALL_PREFIX=/opt/srs \
     ${EXTRA_CMAKE_ARGS} /src
 
 # Copy extra binaries
@@ -69,12 +70,14 @@ ARG LIB
 ARG LIB_VERSION
 
 # Copy srsRAN binaries and libraries installed in previous stage
-COPY --from=builder /opt/${LIB}/${LIB_VERSION} /usr/local
-COPY --from=builder /usr/local /usr/local
+COPY --from=builder /opt/${LIB}/${LIB_VERSION} /opt/${LIB}/${LIB_VERSION}
+COPY --from=builder /opt/srs /usr/local
 
 # Copy the install dependencies scripts
 ADD docker/scripts/install_${LIB}_dependencies.sh /usr/local/etc/install_lib_dependencies.sh
 ADD docker/scripts/install_dependencies.sh /usr/local/etc/install_srsran_dependencies.sh
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/${LIB}/${LIB_VERSION}/lib/:/opt/${LIB}/${LIB_VERSION}/lib/x86_64-linux-gnu/:/opt/${LIB}/${LIB_VERSION}/lib/aarch64-linux-gnu/
+ENV PATH=$PATH:/opt/${LIB}/${LIB_VERSION}/bin/
 
 # Install srsran and lib runtime dependencies
 RUN /usr/local/etc/install_srsran_dependencies.sh run && \

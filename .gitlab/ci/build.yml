@@ -206,7 +206,7 @@ variables:
 
         if [ -n "${DPDK_VERSION}" ]; then
           BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
         fi
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
