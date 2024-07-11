@@ -116,24 +116,17 @@ void initial_context_setup_routine::operator()(
       request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl = 0;
     }
 
+    // Handle NAS PDUs from Initial Context Setup Request
+    if (request.nas_pdu.has_value()) {
+      request.pdu_session_res_setup_list_cxt_req.value().nas_pdu = request.nas_pdu.value().copy();
+    }
+
     CORO_AWAIT_VALUE(pdu_session_setup_response,
                      pdu_session_setup_handler.handle_new_pdu_session_resource_setup_request(
                          request.pdu_session_res_setup_list_cxt_req.value()));
 
     resp_msg.pdu_session_res_setup_response_items  = pdu_session_setup_response.pdu_session_res_setup_response_items;
     resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_setup_response.pdu_session_res_failed_to_setup_items;
-
-    // Handle NAS PDUs from PDU Session Resource Setup List Context Request
-    for (auto& session : request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-      if (!session.pdu_session_nas_pdu.empty()) {
-        handle_nas_pdu(session.pdu_session_nas_pdu.copy());
-      }
-    }
-
-    // Handle NAS PDUs from Initial Context Setup Request
-    if (request.nas_pdu.has_value()) {
-      handle_nas_pdu(request.nas_pdu.value().copy());
-    }
   } else {
     // Handle NAS PDUs from Initial Context Setup Request
     if (request.nas_pdu.has_value()) {
