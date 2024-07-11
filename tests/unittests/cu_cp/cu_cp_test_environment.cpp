@@ -386,10 +386,12 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   report_fatal_error_if_not(result, "Failed to receive Security Mode Command");
   report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu),
                             "Invalid UE Context Setup Request");
-  const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
-  report_fatal_error_if_not(
-      test_helpers::is_valid_rrc_security_mode_command(test_helpers::extract_dl_dcch_msg(rrc_container)),
-      "Invalid Security Mode command");
+  {
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_security_mode_command(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        "Invalid Security Mode command");
+  }
 
   // Inject UE Context Setup Response
   f1ap_message ue_ctxt_setup_response = generate_ue_context_setup_response(ue_ctx.cu_ue_id.value(), du_ue_id);
@@ -405,6 +407,12 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   report_fatal_error_if_not(result, "Failed to receive DL RRC Message, containing RRC UE Capability Enquiry");
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
+  {
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_ue_capability_enquiry(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        "Invalid UE Capability Enquiry");
+  }
 
   // Inject UL RRC Message Transfer (containing UE Capability Info)
   get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
@@ -520,6 +528,12 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
   report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
+  {
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        "Invalid RRC Reconfiguration");
+  }
 
   // Inject RRC Reconfiguration Complete and wait for PDU Session Resource Setup Response to be sent to AMF.
   get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(

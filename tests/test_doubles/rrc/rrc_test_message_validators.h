@@ -28,5 +28,13 @@ bool is_valid_rrc_reestablishment(const byte_buffer& dl_dcch_msg);
 bool is_valid_rrc_security_mode_command(const asn1::rrc_nr::dl_dcch_msg_s& msg);
 bool is_valid_rrc_security_mode_command(const byte_buffer& dl_dcch_msg);
 
+/// \brief Check if DL-DCCH message is a valid RRC UE Capability Enquiry message.
+bool is_valid_rrc_ue_capability_enquiry(const asn1::rrc_nr::dl_dcch_msg_s& msg);
+bool is_valid_rrc_ue_capability_enquiry(const byte_buffer& dl_dcch_msg);
+
+/// \brief Check if DL-DCCH message is a valid RRC Reconfiguration message.
+bool is_valid_rrc_reconfiguration(const asn1::rrc_nr::dl_dcch_msg_s& msg);
+bool is_valid_rrc_reconfiguration(const byte_buffer& dl_dcch_msg);
+
 } // namespace test_helpers
 } // namespace srsran

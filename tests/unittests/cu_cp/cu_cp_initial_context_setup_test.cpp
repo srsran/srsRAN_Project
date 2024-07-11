@@ -13,7 +13,6 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
-#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -82,7 +81,7 @@ public:
     const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
     report_fatal_error_if_not(
         test_helpers::is_valid_rrc_security_mode_command(test_helpers::extract_dl_dcch_msg(rrc_container)),
-        "Invalid Security Mode command");
+        "Invalid Security Mode Command");
 
     // Inject UE Context Setup Response
     f1ap_message ue_ctxt_setup_response = generate_ue_context_setup_response(ue_ctx->cu_ue_id.value(), du_ue_id);
@@ -98,9 +97,13 @@ public:
 
     // Wait for UE Capability Enquiry
     bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-    report_fatal_error_if_not(result, "Failed to receive DL RRC Message, containing RRC UE Capability Enquiry");
+    report_fatal_error_if_not(result, "Failed to receive UE Capability Enquiry");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                               "Invalid DL RRC Message Transfer");
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_ue_capability_enquiry(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        "Invalid UE Capability Enquiry");
   }
 
   void send_ue_capability_info_and_await_registration_accept_and_initial_context_setup_response()
@@ -169,6 +172,12 @@ public:
     report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
     report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                               "Invalid DL RRC Message Transfer");
+
+    // Make sure RRC Reconfiguration contains NAS PDU
+    const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
+    report_fatal_error_if_not(
+        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        "Invalid RRC Reconfiguration");
   }
 
   void send_rrc_reconfiguration_complete_and_await_initial_context_setup_response()
