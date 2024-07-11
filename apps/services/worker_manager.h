@@ -100,6 +100,7 @@ private:
   task_execution_manager exec_mng;
 
   os_sched_affinity_manager low_prio_affinity_mng;
+  os_sched_affinity_bitmask ru_timing_mask;
 
   /// CPU affinity bitmask manager per cell.
   std::vector<os_sched_affinity_manager> affinity_mng;
