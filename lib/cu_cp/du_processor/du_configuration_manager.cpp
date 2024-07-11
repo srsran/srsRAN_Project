@@ -9,8 +9,6 @@
  */
 
 #include "du_configuration_manager.h"
-#include "srsran/ngap/ngap_configuration.h"
-#include "srsran/rrc/rrc_config.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -75,8 +73,8 @@ private:
   du_configuration_manager& parent;
 };
 
-du_configuration_manager::du_configuration_manager(const ngap_configuration& ngap_cfg_, const rrc_cfg_t& rrc_cfg_) :
-  ngap_cfg(ngap_cfg_), rrc_cfg(rrc_cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
+du_configuration_manager::du_configuration_manager(const gnb_id_t& gnb_id_, const plmn_identity& plmn_id_) :
+  gnb_id(gnb_id_), plmn_id(plmn_id_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -211,14 +209,14 @@ du_configuration_manager::validate_new_du_config(const du_setup_request& req) co
       return ret;
     }
 
-    if (served_cell.served_cell_info.nr_cgi.plmn_id != ngap_cfg.plmn) {
+    if (served_cell.served_cell_info.nr_cgi.plmn_id != plmn_id) {
       return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
                                                        "Served Cell CGI PLMN is not supported by the CU-CP"});
     }
 
     if (std::none_of(served_cell.served_cell_info.served_plmns.begin(),
                      served_cell.served_cell_info.served_plmns.end(),
-                     [this](const plmn_identity& plmn) { return plmn == ngap_cfg.plmn; })) {
+                     [this](const plmn_identity& plmn) { return plmn == plmn_id; })) {
       return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
                                                        "None of the served cell PLMNs is available in the CU-CP"});
     }
@@ -259,12 +257,14 @@ du_configuration_manager::validate_cell_config_request(const cu_cp_du_served_cel
   }
 
   // Ensure NCIs match the gNB-Id.
-  if (cell_req.served_cell_info.nr_cgi.nci.gnb_id(rrc_cfg.gnb_id.bit_length) != rrc_cfg.gnb_id) {
-    return make_unexpected(
-        du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
-                                  fmt::format("NCI {:#x} of the served Cell does not match gNB-Id {:#x}",
-                                              cell_req.served_cell_info.nr_cgi.nci,
-                                              rrc_cfg.gnb_id.id)});
+  gnb_id_t served_gnb_id = cell_req.served_cell_info.nr_cgi.nci.gnb_id(gnb_id.bit_length);
+  if (served_gnb_id != gnb_id) {
+    return make_unexpected(du_setup_result::rejected{
+        cause_protocol_t::msg_not_compatible_with_receiver_state,
+        fmt::format("NCI {:#x} of the served Cell does not match this gNB-Id ({:#x} != {:#x})",
+                    cell_req.served_cell_info.nr_cgi.nci,
+                    gnb_id.id,
+                    served_gnb_id.id)});
   }
 
   return {};

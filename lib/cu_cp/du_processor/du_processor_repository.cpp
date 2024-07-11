@@ -19,7 +19,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.ngap_config, cfg.cu_cp.rrc_config)
+  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.ngap_config.gnb_id, cfg.cu_cp.ngap_config.plmn)
 {
 }
 

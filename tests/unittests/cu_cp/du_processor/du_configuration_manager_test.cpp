@@ -16,13 +16,6 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-static rrc_cfg_t create_basic_rrc_config()
-{
-  rrc_cfg_t cfg{};
-  cfg.gnb_id = {411, 22};
-  return cfg;
-}
-
 static ngap_configuration create_basic_ngap_config()
 {
   ngap_configuration cfg{};
@@ -59,9 +52,8 @@ static du_setup_request create_basic_du_setup_request(unsigned du_counter = 0)
 class du_configuration_manager_test : public ::testing::Test
 {
 public:
-  du_configuration_manager_test() : du_cfg_mng(ngap_cfg, rrc_cfg) {}
+  du_configuration_manager_test() : du_cfg_mng(ngap_cfg.gnb_id, ngap_cfg.plmn) {}
 
-  rrc_cfg_t                rrc_cfg  = create_basic_rrc_config();
   ngap_configuration       ngap_cfg = create_basic_ngap_config();
   du_configuration_manager du_cfg_mng;
 };

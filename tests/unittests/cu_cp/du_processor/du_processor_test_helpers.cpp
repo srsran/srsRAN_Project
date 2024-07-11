@@ -35,7 +35,7 @@ du_processor_test::du_processor_test() :
   ngap_cfg{gnb_id_t{411, 22}, "srsgnb"},
   rrc_cfg{gnb_id_t{411, 22}},
   common_task_sched(std::make_unique<dummy_task_sched>()),
-  du_cfg_mgr{ngap_cfg, rrc_cfg}
+  du_cfg_mgr{ngap_cfg.gnb_id, ngap_cfg.plmn}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
