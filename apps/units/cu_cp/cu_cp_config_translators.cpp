@@ -178,40 +178,39 @@ static srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned off
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_config& cu_cfg)
 {
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
-  out_cfg.max_nof_dus                    = cu_cfg.max_nof_dus;
-  out_cfg.max_nof_cu_ups                 = cu_cfg.max_nof_cu_ups;
-  out_cfg.max_nof_ues                    = cu_cfg.max_nof_ues;
-
-  out_cfg.ngap_config.gnb_id               = cu_cfg.gnb_id;
-  out_cfg.ngap_config.ran_node_name        = cu_cfg.ran_node_name;
-  out_cfg.ngap_config.slice_configurations = cu_cfg.slice_cfg;
+  out_cfg.admission.max_nof_dus          = cu_cfg.max_nof_dus;
+  out_cfg.admission.max_nof_cu_ups       = cu_cfg.max_nof_cu_ups;
+  out_cfg.admission.max_nof_ues          = cu_cfg.max_nof_ues;
 
   srsran_assert(!cu_cfg.plmns.empty(), "PLMN list is empty");
   srsran_assert(!cu_cfg.tacs.empty(), "PLMN list is empty");
-  out_cfg.ngap_config.plmn = plmn_identity::parse(cu_cfg.plmns.front()).value();
-  out_cfg.ngap_config.tac  = cu_cfg.tacs.front();
+  out_cfg.node.gnb_id        = cu_cfg.gnb_id;
+  out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
+  out_cfg.node.plmn          = plmn_identity::parse(cu_cfg.plmns.front()).value();
+  out_cfg.node.tac           = cu_cfg.tacs.front();
 
-  out_cfg.rrc_config.gnb_id                         = cu_cfg.gnb_id;
-  out_cfg.rrc_config.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
-  out_cfg.rrc_config.rrc_procedure_timeout_ms       = cu_cfg.rrc_config.rrc_procedure_timeout_ms;
-  out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(cu_cfg);
-  out_cfg.rrc_config.enc_algo_pref_list             = generate_preferred_ciphering_algorithms_list(cu_cfg);
-  out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(cu_cfg);
+  out_cfg.rrc.force_reestablishment_fallback = cu_cfg.rrc_config.force_reestablishment_fallback;
+  out_cfg.rrc.rrc_procedure_timeout_ms       = std::chrono::milliseconds{cu_cfg.rrc_config.rrc_procedure_timeout_ms};
 
-  if (!from_string(out_cfg.default_security_indication.integrity_protection_ind,
+  out_cfg.bearers.drb_config = generate_cu_cp_qos_config(cu_cfg);
+
+  out_cfg.slice_configurations = cu_cfg.slice_cfg;
+
+  out_cfg.security.int_algo_pref_list = generate_preferred_integrity_algorithms_list(cu_cfg);
+  out_cfg.security.enc_algo_pref_list = generate_preferred_ciphering_algorithms_list(cu_cfg);
+  if (!from_string(out_cfg.security.default_security_indication.integrity_protection_ind,
                    cu_cfg.security_config.integrity_protection)) {
     report_error("Invalid value for integrity_protection={}\n", cu_cfg.security_config.integrity_protection);
   }
-  if (!from_string(out_cfg.default_security_indication.confidentiality_protection_ind,
+  if (!from_string(out_cfg.security.default_security_indication.confidentiality_protection_ind,
                    cu_cfg.security_config.confidentiality_protection)) {
     report_error("Invalid value for confidentiality_protection={}\n",
                  cu_cfg.security_config.confidentiality_protection);
   }
 
-  out_cfg.ue_config.inactivity_timer            = std::chrono::seconds{cu_cfg.inactivity_timer};
-  out_cfg.ue_config.max_nof_supported_ues       = cu_cfg.max_nof_ues;
-  out_cfg.ngap_config.pdu_session_setup_timeout = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
-  out_cfg.statistics_report_period              = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
+  out_cfg.ue_config.inactivity_timer          = std::chrono::seconds{cu_cfg.inactivity_timer};
+  out_cfg.ue_config.pdu_session_setup_timeout = std::chrono::seconds{cu_cfg.pdu_session_setup_timeout};
+  out_cfg.statistics_report_period            = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
 
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
       cu_cfg.mobility_config.trigger_handover_from_measurements;

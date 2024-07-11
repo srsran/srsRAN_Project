@@ -9,20 +9,32 @@
  */
 
 #include "e1ap_cu_cp_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-e1ap_cu_cp_test::e1ap_cu_cp_test()
+e1ap_cu_cp_test::e1ap_cu_cp_test() :
+  cu_cp_cfg([this]() {
+    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+    cucfg.services.timers         = &timers;
+    cucfg.services.cu_cp_executor = &ctrl_worker;
+    cucfg.admission.max_nof_ues   = 1024 * 4;
+    return cucfg;
+  }())
 {
   test_logger.set_level(srslog::basic_levels::debug);
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1ap(
-      e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, timers, ctrl_worker, max_nof_supported_ues);
+  e1ap = create_e1ap(e1ap_pdu_notifier,
+                     cu_up_processor_notifier,
+                     cu_cp_notifier,
+                     timers,
+                     ctrl_worker,
+                     cu_cp_cfg.admission.max_nof_ues);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()

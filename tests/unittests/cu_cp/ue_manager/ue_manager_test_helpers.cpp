@@ -9,6 +9,7 @@
  */
 
 #include "ue_manager_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
 #include <memory>
@@ -16,7 +17,15 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_manager_test::ue_manager_test() : ue_mng(ue_config, up_config, sec_config, timers, cu_worker)
+ue_manager_test::ue_manager_test() :
+  cu_cp_cfg([this]() {
+    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+    cucfg.services.timers         = &timers;
+    cucfg.services.cu_cp_executor = &cu_worker;
+    cucfg.admission.max_nof_dus   = 6;
+    cucfg.admission.max_nof_ues   = cucfg.admission.max_nof_dus * ues_per_du;
+    return cucfg;
+  }())
 {
   test_logger.set_level(srslog::basic_levels::debug);
   ue_mng_logger.set_level(srslog::basic_levels::debug);

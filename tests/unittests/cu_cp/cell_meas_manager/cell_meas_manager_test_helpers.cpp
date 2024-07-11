@@ -10,11 +10,18 @@
 
 #include "cell_meas_manager_test_helpers.h"
 #include "lib/cu_cp/cell_meas_manager/cell_meas_manager_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cell_meas_manager_test::cell_meas_manager_test()
+cell_meas_manager_test::cell_meas_manager_test() :
+  cu_cp_cfg([this]() {
+    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+    cucfg.services.timers         = &timers;
+    cucfg.services.cu_cp_executor = &ctrl_worker;
+    return cucfg;
+  }())
 {
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   test_logger.set_level(srslog::basic_levels::debug);

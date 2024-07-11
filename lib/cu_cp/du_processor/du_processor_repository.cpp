@@ -19,15 +19,28 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.ngap_config.gnb_id, cfg.cu_cp.ngap_config.plmn)
+  cfg(cfg_), logger(cfg.logger), du_cfg_mng(cfg.cu_cp.node.gnb_id, cfg.cu_cp.node.plmn)
 {
+}
+
+static rrc_cfg_t create_rrc_cfg(const cu_cp_configuration& cu_cp_cfg)
+{
+  rrc_cfg_t rrc_cfg;
+  rrc_cfg.gnb_id                         = cu_cp_cfg.node.gnb_id;
+  rrc_cfg.srb2_cfg                       = cu_cp_cfg.bearers.srb2_cfg;
+  rrc_cfg.drb_config                     = cu_cp_cfg.bearers.drb_config;
+  rrc_cfg.int_algo_pref_list             = cu_cp_cfg.security.int_algo_pref_list;
+  rrc_cfg.enc_algo_pref_list             = cu_cp_cfg.security.enc_algo_pref_list;
+  rrc_cfg.force_reestablishment_fallback = cu_cp_cfg.rrc.force_reestablishment_fallback;
+  rrc_cfg.rrc_procedure_timeout_ms       = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
+  return rrc_cfg;
 }
 
 du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
-    logger.warning("DU connection failed - maximum number of DUs connected ({})", cfg.cu_cp.max_nof_dus);
+    logger.warning("DU connection failed - maximum number of DUs connected ({})", cfg.cu_cp.admission.max_nof_dus);
     return du_index_t::invalid;
   }
 
@@ -41,8 +54,8 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   // TODO: use real config
   du_processor_config_t du_cfg       = {};
   du_cfg.du_index                    = du_index;
-  du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
-  du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
+  du_cfg.rrc_cfg                     = create_rrc_cfg(cfg.cu_cp);
+  du_cfg.default_security_indication = cfg.cu_cp.security.default_security_indication;
   du_cfg.du_setup_notif              = &cfg.du_conn_notif;
   du_cfg.f1ap_cfg                    = cfg.cu_cp.f1ap_config;
   du_cfg.du_cfg_hdlr                 = du_cfg_mng.create_du_handler();
@@ -55,8 +68,8 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                          cfg.meas_config_notifier,
                                                          cfg.common_task_sched,
                                                          cfg.ue_mng,
-                                                         *cfg.cu_cp.timers,
-                                                         *cfg.cu_cp.cu_cp_executor);
+                                                         *cfg.cu_cp.services.timers,
+                                                         *cfg.cu_cp.services.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
   du_ctxt.processor = std::move(du);
@@ -94,7 +107,8 @@ async_task<void> du_processor_repository::remove_du(du_index_t du_index)
 
 du_index_t du_processor_repository::get_next_du_index()
 {
-  for (unsigned du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < cfg.cu_cp.max_nof_dus; du_idx_int++) {
+  for (unsigned du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < cfg.cu_cp.admission.max_nof_dus;
+       du_idx_int++) {
     du_index_t du_idx = uint_to_du_index(du_idx_int);
     if (du_db.find(du_idx) == du_db.end()) {
       return du_idx;

@@ -52,7 +52,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   if (!transaction.has_response()) {
     if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
-      logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
+      logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
       rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
     } else {
       logger.log_warning("\"{}\" cancelled", name());

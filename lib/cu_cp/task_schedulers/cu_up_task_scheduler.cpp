@@ -15,7 +15,7 @@ using namespace srs_cu_cp;
 
 cu_up_task_scheduler::cu_up_task_scheduler(timer_manager&        timers_,
                                            task_executor&        exec_,
-                                           uint16_t              max_nof_cu_ups,
+                                           unsigned              max_nof_cu_ups,
                                            srslog::basic_logger& logger_) :
   timers(timers_), exec(exec_), logger(logger_)
 {

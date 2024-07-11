@@ -17,6 +17,7 @@
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
@@ -65,6 +66,17 @@ static security::security_context generate_security_context(ue_security_manager&
 class rrc_ue_test_helper
 {
 protected:
+  rrc_ue_test_helper() :
+    cu_cp_cfg([this]() {
+      cu_cp_configuration cucfg          = config_helpers::make_default_cu_cp_config();
+      cucfg.services.timers              = &timers;
+      cucfg.services.cu_cp_executor      = &ctrl_worker;
+      cucfg.rrc.rrc_procedure_timeout_ms = std::chrono::milliseconds{160};
+      return cucfg;
+    }())
+  {
+  }
+
   void init()
   {
     // add UE to UE manager
@@ -94,7 +106,7 @@ protected:
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.offset = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
-    ue_cfg.rrc_procedure_timeout_ms = rrc_procedure_timeout_ms;
+    ue_cfg.rrc_procedure_timeout_ms = cu_cp_cfg.rrc.rrc_procedure_timeout_ms;
     rrc_ue                          = std::make_unique<rrc_ue_impl>(*rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
@@ -272,7 +284,7 @@ protected:
 
   void tick_timer()
   {
-    for (unsigned i = 0; i < rrc_procedure_timeout_ms; ++i) {
+    for (unsigned i = 0; i < cu_cp_cfg.rrc.rrc_procedure_timeout_ms.count(); ++i) {
       task_sched_handle.tick_timer();
       ctrl_worker.run_pending_tasks();
     }
@@ -410,30 +422,19 @@ protected:
   }
 
   ue_index_t allocated_ue_index;
-  rrc_cfg_t  cfg{}; // empty config
-
-  security_manager_config sec_config{{security::integrity_algorithm::nia2,
-                                      security::integrity_algorithm::nia1,
-                                      security::integrity_algorithm::nia3,
-                                      security::integrity_algorithm::nia0},
-                                     {security::ciphering_algorithm::nea0,
-                                      security::ciphering_algorithm::nea2,
-                                      security::ciphering_algorithm::nea1,
-                                      security::ciphering_algorithm::nea3}};
 
   timer_manager               timers;
   manual_task_worker          ctrl_worker{64};
   dummy_rrc_f1ap_pdu_notifier rrc_ue_f1ap_notifier;
   dummy_rrc_ue_ngap_adapter   rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter  rrc_ue_cu_cp_notifier;
+  cu_cp_configuration         cu_cp_cfg;
 
-  ue_manager ue_mng{{}, {}, sec_config, timers, ctrl_worker};
+  ue_manager ue_mng{cu_cp_cfg};
 
   std::unique_ptr<rrc_ue_interface> rrc_ue;
   srslog::basic_logger&             logger = srslog::fetch_basic_logger("TEST", false);
   dummy_ue_task_scheduler           task_sched_handle{timers, ctrl_worker};
-
-  const unsigned rrc_procedure_timeout_ms = 160;
 
   // UL-CCCH with RRC setup message
   std::array<uint8_t, 6> rrc_setup_pdu = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};

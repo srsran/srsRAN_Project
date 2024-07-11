@@ -15,6 +15,7 @@
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
@@ -47,15 +48,10 @@ protected:
     srslog::init();
 
     // create CU-CP config
-    srs_cu_cp::cu_cp_configuration cu_cfg;
-    cu_cfg.ngap_config.gnb_id              = {411, 22};
-    cu_cfg.ngap_config.tac                 = 7;
-    cu_cfg.cu_cp_executor                  = &workers.ctrl_exec;
-    cu_cfg.n2_gw                           = &*amf;
-    cu_cfg.timers                          = &timers;
-    cu_cfg.statistics_report_period        = std::chrono::seconds(1);
-    cu_cfg.ue_config.max_nof_supported_ues = cu_cfg.max_nof_ues;
-    cu_cfg.rrc_config.gnb_id               = {411, 22};
+    srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
+    cu_cfg.services.cu_cp_executor        = &workers.ctrl_exec;
+    cu_cfg.services.n2_gw                 = &*amf;
+    cu_cfg.services.timers                = &timers;
 
     // create CU-CP.
     cu_cp_obj = create_cu_cp(cu_cfg);

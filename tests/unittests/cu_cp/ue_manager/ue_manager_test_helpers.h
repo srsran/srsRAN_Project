@@ -32,15 +32,13 @@ protected:
   srslog::basic_logger& test_logger   = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& ue_mng_logger = srslog::fetch_basic_logger("CU-UEMNG");
 
-  unsigned max_nof_dus = 6;
-  unsigned ues_per_du  = 1024;
+  unsigned ues_per_du = 1024;
 
-  ue_configuration        ue_config{std::chrono::seconds{7200}, max_nof_dus* ues_per_du};
-  up_resource_manager_cfg up_config;
-  security_manager_config sec_config;
-  timer_manager           timers;
-  manual_task_worker      cu_worker{128};
-  ue_manager              ue_mng;
+  timer_manager       timers;
+  manual_task_worker  cu_worker{128};
+  cu_cp_configuration cu_cp_cfg;
+
+  ue_manager ue_mng{cu_cp_cfg};
 
   // DU processor to RRC UE adapters
   std::unordered_map<ue_index_t, dummy_du_processor_rrc_ue_control_message_notifier> rrc_ue_adapters;

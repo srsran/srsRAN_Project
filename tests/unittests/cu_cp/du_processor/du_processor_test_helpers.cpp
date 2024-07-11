@@ -13,6 +13,7 @@
 #include "lib/cu_cp/cu_cp_controller/common_task_scheduler.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include <memory>
 
 using namespace srsran;
@@ -32,10 +33,14 @@ private:
 } // namespace
 
 du_processor_test::du_processor_test() :
-  ngap_cfg{gnb_id_t{411, 22}, "srsgnb"},
-  rrc_cfg{gnb_id_t{411, 22}},
+  cu_cp_cfg([this]() {
+    cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+    cucfg.services.timers         = &timers;
+    cucfg.services.cu_cp_executor = &ctrl_worker;
+    return cucfg;
+  }()),
   common_task_sched(std::make_unique<dummy_task_sched>()),
-  du_cfg_mgr{ngap_cfg.gnb_id, ngap_cfg.plmn}
+  du_cfg_mgr{cu_cp_cfg.node.gnb_id, cu_cp_cfg.node.plmn}
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
@@ -75,7 +80,7 @@ void du_processor_test::attach_ue()
   // Generate ue_creation message
   ue_index_t                      ue_index = ue_index_t::min;
   ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(rrc_cfg.gnb_id, 0).value());
+      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(cu_cp_cfg.node.gnb_id, 0).value());
   // Pass message to DU processor
   du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
 }

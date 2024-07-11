@@ -65,7 +65,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     logger.log_debug("\"{}\" finished successfully", name());
     procedure_result = true;
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
     // Notify NGAP to request UE context release from AMF
     cu_cp_ue_notifier.schedule_async_task(cu_cp_notifier.on_ue_release_required(
         {context.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));

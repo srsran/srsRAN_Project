@@ -36,7 +36,6 @@ public:
   cu_cp_controller(const cu_cp_configuration&        config_,
                    cu_cp_routine_manager&            routine_manager_,
                    ue_manager&                       ue_mng_,
-                   const ngap_configuration&         ngap_cfg_,
                    ngap_connection_manager&          ngap_conn_mng_,
                    const cu_up_processor_repository& cu_ups_,
                    du_processor_repository&          dus_,

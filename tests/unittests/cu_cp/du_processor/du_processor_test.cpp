@@ -168,7 +168,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (unsigned it = 0; it < ue_mng.get_ue_config().max_nof_supported_ues; it++) {
+  for (unsigned it = 0; it < cu_cp_cfg.admission.max_nof_ues; it++) {
     // Generate ue_creation message
     rnti_t                          c_rnti = to_rnti(it + 1); // 0 is not a valid RNTI
     ue_rrc_context_creation_request req    = generate_ue_rrc_context_creation_request(
@@ -186,15 +186,15 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), cu_cp_cfg.admission.max_nof_ues);
 
   // Try to add additional UE
-  rnti_t                          c_rnti = to_rnti(ue_mng.get_ue_config().max_nof_supported_ues + 1);
+  rnti_t                          c_rnti = to_rnti(cu_cp_cfg.admission.max_nof_ues + 1);
   ue_rrc_context_creation_request req    = generate_ue_rrc_context_creation_request(
       ue_index_t::invalid, c_rnti, nr_cell_identity::create(gnb_id_t{411, 22}, 0).value());
   ue_rrc_context_creation_outcome outcome =
       du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
   ASSERT_TRUE(not outcome.has_value());
 
-  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), ue_mng.get_ue_config().max_nof_supported_ues);
+  ASSERT_EQ(du_processor_obj->get_statistics_handler().get_nof_ues(), cu_cp_cfg.admission.max_nof_ues);
 }

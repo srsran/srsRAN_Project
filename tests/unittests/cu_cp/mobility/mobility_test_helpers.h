@@ -34,21 +34,11 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  manual_task_worker      ctrl_worker{128};
-  timer_manager           timers;
-  ue_configuration        ue_config;
-  up_resource_manager_cfg up_config;
+  manual_task_worker  ctrl_worker{128};
+  timer_manager       timers;
+  cu_cp_configuration cu_cp_cfg;
 
-  security_manager_config sec_config{{security::integrity_algorithm::nia2,
-                                      security::integrity_algorithm::nia1,
-                                      security::integrity_algorithm::nia3,
-                                      security::integrity_algorithm::nia0},
-                                     {security::ciphering_algorithm::nea0,
-                                      security::ciphering_algorithm::nea2,
-                                      security::ciphering_algorithm::nea1,
-                                      security::ciphering_algorithm::nea3}};
-
-  ue_manager                                  ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
+  ue_manager                                  ue_mng{cu_cp_cfg};
   dummy_ngap_ue_context_removal_handler       ngap_ue_removal_handler;
   dummy_cu_cp_ue_context_manipulation_handler cu_cp_handler;
 };

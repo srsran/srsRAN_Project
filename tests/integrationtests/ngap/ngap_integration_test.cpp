@@ -10,9 +10,9 @@
 
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "lib/ngap/ngap_asn1_helpers.h"
-#include "lib/ngap/ngap_asn1_packer.h"
 #include "lib/ngap/ngap_error_indication_helper.h"
 #include "tests/unittests/ngap/test_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -106,18 +106,26 @@ private:
 class ngap_integration_test : public ::testing::Test
 {
 protected:
+  ngap_integration_test() :
+    cu_cp_cfg([this]() {
+      cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
+      cucfg.services.timers         = &timers;
+      cucfg.services.cu_cp_executor = &ctrl_worker;
+      return cucfg;
+    }())
+  {
+    cfg.gnb_id                    = cu_cp_cfg.node.gnb_id;
+    cfg.ran_node_name             = cu_cp_cfg.node.ran_node_name;
+    cfg.plmn                      = cu_cp_cfg.node.plmn;
+    cfg.tac                       = cu_cp_cfg.node.tac;
+    cfg.slice_configurations      = cu_cp_cfg.slice_configurations;
+    cfg.pdu_session_setup_timeout = cu_cp_cfg.ue_config.pdu_session_setup_timeout;
+  }
+
   void SetUp() override
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
-
-    cfg.gnb_id        = {411, 22};
-    cfg.ran_node_name = "srsgnb01";
-    cfg.plmn          = plmn_identity::test_value();
-    cfg.tac           = 7;
-    s_nssai_t slice_cfg;
-    slice_cfg.sst = 1;
-    cfg.slice_configurations.push_back(slice_cfg);
 
     sctp_network_connector_config nw_config;
     nw_config.dest_name         = "AMF";
@@ -132,12 +140,12 @@ protected:
     ngap = create_ngap(cfg, cu_cp_notifier, cu_cp_paging_notifier, *adapter, timers, ctrl_worker);
   }
 
-  ngap_configuration                    cfg;
-  ue_configuration                      ue_config;
-  up_resource_manager_cfg               up_config;
-  timer_manager                         timers;
-  manual_task_worker                    ctrl_worker{128};
-  ue_manager                            ue_mng{ue_config, up_config, {}, timers, ctrl_worker};
+  timer_manager       timers;
+  manual_task_worker  ctrl_worker{128};
+  cu_cp_configuration cu_cp_cfg;
+  ngap_configuration  cfg;
+
+  ue_manager                            ue_mng{cu_cp_cfg};
   dummy_ngap_cu_cp_notifier             cu_cp_notifier{ue_mng};
   dummy_ngap_cu_cp_paging_notifier      cu_cp_paging_notifier;
   std::unique_ptr<ngap_network_adapter> adapter;

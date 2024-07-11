@@ -249,7 +249,7 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_is_busy_with_a_procedure_then_ree
   ASSERT_FALSE(this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu)) << "UE Context Release Command sent to soon";
 
   // RRC Setup timeout for old UE.
-  std::chrono::milliseconds timeout{this->get_cu_cp_cfg().rrc_config.rrc_procedure_timeout_ms};
+  std::chrono::milliseconds timeout{this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms};
   for (unsigned i = 0; i != timeout.count(); ++i) {
     this->tick();
   }

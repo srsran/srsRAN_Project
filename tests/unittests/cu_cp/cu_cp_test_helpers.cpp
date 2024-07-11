@@ -50,47 +50,17 @@ cu_cp_test::cu_cp_test()
   srslog::init();
 
   // create CU-CP config
-  cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
-  cfg.cu_cp_executor      = &ctrl_worker;
-  cfg.n2_gw               = &n2_gw;
-  cfg.timers              = &timers;
-
-  // NGAP config
-  cfg.ngap_config.gnb_id        = {411, 22};
-  cfg.ngap_config.ran_node_name = "srsgnb01";
-  cfg.ngap_config.plmn          = plmn_identity::test_value();
-  cfg.ngap_config.tac           = 7;
-  s_nssai_t slice_cfg;
-  slice_cfg.sst = 1;
-  cfg.ngap_config.slice_configurations.push_back(slice_cfg);
-
-  // RRC config
-  cfg.rrc_config.gnb_id             = cfg.ngap_config.gnb_id;
-  cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
-  cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
-                                       security::integrity_algorithm::nia1,
-                                       security::integrity_algorithm::nia3,
-                                       security::integrity_algorithm::nia0};
-  cfg.rrc_config.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                       security::ciphering_algorithm::nea2,
-                                       security::ciphering_algorithm::nea1,
-                                       security::ciphering_algorithm::nea3};
-
-  // UE config
-  cfg.ue_config.inactivity_timer      = std::chrono::seconds{7200};
-  cfg.ue_config.max_nof_supported_ues = cfg.max_nof_ues;
-
-  // periodic statistic logging
-  cfg.statistics_report_period = std::chrono::seconds(1);
-
+  cu_cp_configuration cfg     = config_helpers::make_default_cu_cp_config();
+  cfg.services.cu_cp_executor = &ctrl_worker;
+  cfg.services.n2_gw          = &n2_gw;
+  cfg.services.timers         = &timers;
   // mobility config
   cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements = true;
-
   // Generate NCIs.
-  gnb_id_t         gnb_id1 = cfg.rrc_config.gnb_id;
-  nr_cell_identity nci1    = nr_cell_identity::create(cfg.rrc_config.gnb_id, 0).value();
-  nr_cell_identity nci2    = nr_cell_identity::create(cfg.rrc_config.gnb_id, 1).value();
-  gnb_id_t         gnb_id2 = {cfg.rrc_config.gnb_id.id + 1, cfg.rrc_config.gnb_id.bit_length};
+  gnb_id_t         gnb_id1 = cfg.node.gnb_id;
+  nr_cell_identity nci1    = nr_cell_identity::create(gnb_id1, 0).value();
+  nr_cell_identity nci2    = nr_cell_identity::create(gnb_id1, 1).value();
+  gnb_id_t         gnb_id2 = {cfg.node.gnb_id.id + 1, cfg.node.gnb_id.bit_length};
   nr_cell_identity nci3    = nr_cell_identity::create(gnb_id2, 0).value();
 
   cell_meas_config cell_cfg_1;

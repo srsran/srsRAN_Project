@@ -53,7 +53,10 @@ private:
 cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) :
   cfg(cfg_),
   logger(cfg.logger),
-  cu_up_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.cu_cp.max_nof_cu_ups, logger)
+  cu_up_task_sched(*cfg.cu_cp.services.timers,
+                   *cfg.cu_cp.services.cu_cp_executor,
+                   cfg.cu_cp.admission.max_nof_cu_ups,
+                   logger)
 {
 }
 
@@ -81,7 +84,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 {
   cu_up_index_t cu_up_index = allocate_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})", cfg.cu_cp.max_nof_cu_ups);
+    logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})",
+                   cfg.cu_cp.admission.max_nof_cu_ups);
     return cu_up_index_t::invalid;
   }
 
@@ -94,13 +98,13 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   // TODO: use real config
   cu_up_processor_config_t cu_up_cfg = {};
   cu_up_cfg.cu_up_index              = cu_up_index;
-  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.max_nof_ues;
+  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.admission.max_nof_ues;
 
   std::unique_ptr<cu_up_processor_impl_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
                                                                                  *cu_up_ctxt.e1ap_tx_pdu_notifier,
                                                                                  cfg.e1ap_ev_notifier,
                                                                                  cu_up_task_sched,
-                                                                                 *cfg.cu_cp.cu_cp_executor);
+                                                                                 *cfg.cu_cp.services.cu_cp_executor);
 
   srsran_assert(cu_up != nullptr, "Failed to create CU-UP processor");
   cu_up_ctxt.processor = std::move(cu_up);
@@ -110,7 +114,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 
 cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
 {
-  for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_index_int < cfg.cu_cp.max_nof_cu_ups;
+  for (unsigned cu_up_index_int = cu_up_index_to_uint(cu_up_index_t::min);
+       cu_up_index_int < cfg.cu_cp.admission.max_nof_cu_ups;
        cu_up_index_int++) {
     cu_up_index_t cu_up_index = uint_to_cu_up_index(cu_up_index_int);
     if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {

@@ -32,7 +32,7 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
+ngap_impl::ngap_impl(const ngap_configuration&          ngap_cfg_,
                      ngap_cu_cp_notifier&               cu_cp_notifier_,
                      ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
                      n2_connection_client&              n2_gateway,

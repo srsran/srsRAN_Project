@@ -14,9 +14,9 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-amf_connection_setup_routine::amf_connection_setup_routine(const ngap_configuration& ngap_config_,
-                                                           ngap_connection_manager&  ngap_conn_mng_) :
-  ngap_cfg(ngap_config_), ngap_conn_mng(ngap_conn_mng_)
+amf_connection_setup_routine::amf_connection_setup_routine(const cu_cp_configuration& cu_cp_cfg_,
+                                                           ngap_connection_manager&   ngap_conn_mng_) :
+  cu_cp_cfg(cu_cp_cfg_), ngap_conn_mng(ngap_conn_mng_)
 {
 }
 
@@ -39,18 +39,18 @@ ngap_ng_setup_request amf_connection_setup_routine::fill_ng_setup_request()
   ngap_ng_setup_request request;
 
   // fill global ran node id
-  request.global_ran_node_id.gnb_id  = ngap_cfg.gnb_id;
-  request.global_ran_node_id.plmn_id = ngap_cfg.plmn;
+  request.global_ran_node_id.gnb_id  = cu_cp_cfg.node.gnb_id;
+  request.global_ran_node_id.plmn_id = cu_cp_cfg.node.plmn;
   // fill ran node name
-  request.ran_node_name = ngap_cfg.ran_node_name;
+  request.ran_node_name = cu_cp_cfg.node.ran_node_name;
   // fill supported ta list
   // TODO: add support for more items
   ngap_supported_ta_item supported_ta_item;
 
   ngap_broadcast_plmn_item broadcast_plmn_item;
-  broadcast_plmn_item.plmn_id = ngap_cfg.plmn;
+  broadcast_plmn_item.plmn_id = cu_cp_cfg.node.plmn;
 
-  for (const auto& slice_config : ngap_cfg.slice_configurations) {
+  for (const auto& slice_config : cu_cp_cfg.slice_configurations) {
     slice_support_item_t slice_support_item;
     slice_support_item.s_nssai.sst = slice_config.sst;
     if (slice_config.sd.has_value()) {
@@ -60,7 +60,7 @@ ngap_ng_setup_request amf_connection_setup_routine::fill_ng_setup_request()
   }
 
   supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
-  supported_ta_item.tac = ngap_cfg.tac;
+  supported_ta_item.tac = cu_cp_cfg.node.tac;
 
   request.supported_ta_list.push_back(supported_ta_item);
 
