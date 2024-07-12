@@ -73,6 +73,11 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
   }
 }
 
+void f1c_srb0_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
+{
+  report_fatal_error("Transmission notifications do not exist for SRB0");
+}
+
 void f1c_srb0_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
   report_fatal_error("Delivery notifications do not exist for SRB0");
@@ -99,6 +104,8 @@ async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buff
 {
   // Forward task to lower layers.
   handle_pdu(std::move(pdu));
+
+  // For SRB0, there is no transmission notification.
   return launch_no_op_task();
 }
 

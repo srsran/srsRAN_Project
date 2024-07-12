@@ -39,10 +39,7 @@ public:
   /// transfer message.
   void handle_sdu(byte_buffer_chain sdu) override;
 
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
-  {
-    // TODO
-  }
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
 
   void             handle_pdu(byte_buffer pdu) override;
@@ -99,8 +96,10 @@ private:
   task_executor&         ue_exec;
   srslog::basic_logger&  logger;
 
-  std::optional<uint32_t>                                                  last_pdcp_sn_transmitted;
-  std::optional<uint32_t>                                                  last_pdcp_sn_delivered;
+  std::optional<uint32_t> last_pdcp_sn_transmitted;
+  std::optional<uint32_t> last_pdcp_sn_delivered;
+  // Pool of events for PDU transmission and delivery. Each entry is represented by the PDCP SN (negative if
+  // the pool element is negative) and the event flag to wait for.
   std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_delivery_event_pool;
   std::array<std::pair<int, manual_event_flag>, MAX_CONCURRENT_PDU_EVENTS> pending_transmission_event_pool;
 };
