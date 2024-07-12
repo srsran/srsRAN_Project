@@ -39,7 +39,8 @@ public:
   const rrc_ue_cfg_t                                       cfg;
   rrc_state                                                state = rrc_state::idle;
   std::optional<rrc_meas_cfg>                              meas_cfg;
-  std::optional<uint32_t>                                  five_g_tmsi;
+  std::optional<asn1::fixed_bitstring<39>>                 five_g_s_tmsi_part1;
+  std::optional<cu_cp_five_g_s_tmsi>                       five_g_s_tmsi;
   uint64_t                                                 setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts                   connection_cause;
   std::map<srb_id_t, ue_srb_context>                       srbs;

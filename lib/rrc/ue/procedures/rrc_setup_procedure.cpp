@@ -92,27 +92,39 @@ void rrc_setup_procedure::send_rrc_setup()
   rrc_ue.on_new_dl_ccch(dl_ccch_msg);
 }
 
-void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete)
+void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg)
 {
   cu_cp_initial_ue_message init_ue_msg = {};
 
+  const auto& rrc_setup_complete = rrc_setup_complete_msg.crit_exts.rrc_setup_complete();
+
   init_ue_msg.ue_index                       = context.ue_index;
-  init_ue_msg.nas_pdu                        = rrc_setup_complete.crit_exts.rrc_setup_complete().ded_nas_msg.copy();
+  init_ue_msg.nas_pdu                        = rrc_setup_complete.ded_nas_msg.copy();
   init_ue_msg.establishment_cause            = static_cast<establishment_cause_t>(context.connection_cause.value);
   init_ue_msg.user_location_info.nr_cgi      = context.cell.cgi;
   init_ue_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
   init_ue_msg.user_location_info.tai.tac     = context.cell.tac;
 
-  cu_cp_five_g_s_tmsi five_g_s_tmsi;
-  if (context.five_g_tmsi.has_value()) {
-    five_g_s_tmsi.five_g_tmsi = context.five_g_tmsi.value();
-    // amf_pointer and amf_set_id will be set by NGAP
-    init_ue_msg.five_g_s_tmsi = five_g_s_tmsi;
+  if (rrc_setup_complete.ng_5_g_s_tmsi_value_present) {
+    if (rrc_setup_complete.ng_5_g_s_tmsi_value.type() ==
+        asn1::rrc_nr::rrc_setup_complete_ies_s::ng_5_g_s_tmsi_value_c_::types_opts::options::ng_5_g_s_tmsi) {
+      context.five_g_s_tmsi = asn1_to_five_g_s_tmsi(rrc_setup_complete.ng_5_g_s_tmsi_value.ng_5_g_s_tmsi());
+    } else {
+      if (!context.five_g_s_tmsi_part1.has_value()) {
+        logger.log_warning("5G-S-TMSI part 1 is missing");
+      } else {
+        context.five_g_s_tmsi = asn1_to_five_g_s_tmsi(context.five_g_s_tmsi_part1.value(),
+                                                      rrc_setup_complete.ng_5_g_s_tmsi_value.ng_5_g_s_tmsi_part2());
+      }
+    }
   }
 
-  if (rrc_setup_complete.crit_exts.rrc_setup_complete().registered_amf_present) {
-    cu_cp_amf_identifier_t amf_id =
-        asn1_to_amf_identifier(rrc_setup_complete.crit_exts.rrc_setup_complete().registered_amf.amf_id);
+  if (context.five_g_s_tmsi.has_value()) {
+    init_ue_msg.five_g_s_tmsi = context.five_g_s_tmsi.value();
+  }
+
+  if (rrc_setup_complete.registered_amf_present) {
+    cu_cp_amf_identifier_t amf_id = asn1_to_amf_identifier(rrc_setup_complete.registered_amf.amf_id);
 
     init_ue_msg.amf_set_id = amf_id.amf_set_id;
     // TODO: Handle PLMN ID
