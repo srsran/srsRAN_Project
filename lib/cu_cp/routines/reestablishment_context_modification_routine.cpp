@@ -22,6 +22,8 @@ reestablishment_context_modification_routine::reestablishment_context_modificati
     e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng_,
     du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_,
+    cu_cp_rrc_ue_interface&                       cu_cp_notifier_,
+    ue_task_scheduler&                            ue_task_sched_,
     up_resource_manager&                          up_resource_mng_,
     srslog::basic_logger&                         logger_) :
   ue_index(ue_index_),
@@ -29,6 +31,8 @@ reestablishment_context_modification_routine::reestablishment_context_modificati
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   rrc_ue_notifier(rrc_ue_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
+  ue_task_sched(ue_task_sched_),
   up_resource_mng(up_resource_mng_),
   logger(logger_)
 {
@@ -136,6 +140,9 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle RRC Reconfiguration result.
     if (not rrc_reconfig_result) {
       logger.warning("ue={}: \"{}\" RRC reconfiguration failed", ue_index, name());
+      // Notify NGAP to request UE context release from AMF
+      ue_task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
+          {ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason}));
       CORO_EARLY_RETURN(false);
     }
   }

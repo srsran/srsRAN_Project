@@ -370,8 +370,7 @@ byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info() const
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(
-      context, msg, *this, cu_cp_notifier, cu_cp_ue_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
 rrc_ue_handover_reconfiguration_context

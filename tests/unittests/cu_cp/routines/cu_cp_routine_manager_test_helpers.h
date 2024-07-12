@@ -44,7 +44,7 @@ protected:
   ue_manager                                         ue_mng{cu_cp_cfg};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   dummy_du_processor_rrc_ue_srb_control_notifier     rrc_ue_srb_ctrl_notifier;
-  dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;
+  dummy_cu_cp_rrc_ue_interface                       cu_cp_notifier;
   dummy_cu_cp_ue_removal_handler                     ue_removal_handler{&ue_mng};
   std::unique_ptr<cu_cp_routine_manager>             routine_mng;
 };

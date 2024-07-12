@@ -40,6 +40,8 @@ protected:
                                                               e1ap_bearer_ctxt_mng,
                                                               f1ap_ue_ctxt_mng,
                                                               rrc_ue_ctrl_notifier,
+                                                              cu_cp_notifier,
+                                                              ue_mng.find_ue(msg.ue_index)->get_task_sched(),
                                                               ue_mng.find_ue(msg.ue_index)->get_up_resource_manager());
     t_launcher.emplace(t);
   }

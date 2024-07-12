@@ -695,5 +695,68 @@ private:
   timer_manager&            timer_db;
   task_executor&            exec;
 };
+
+class dummy_cu_cp_rrc_ue_interface : public cu_cp_rrc_ue_interface
+{
+public:
+  void add_ue_context(rrc_ue_reestablishment_context_response context) { reest_context = context; }
+
+  bool next_ue_setup_response = true;
+
+  rrc_ue_reestablishment_context_response
+  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  {
+    logger.info("ue={} old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
+
+    return reest_context;
+  }
+
+  async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Received Reestablishment Context Modification Required");
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  void handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Received RRC Reestablishment failure notification", request.ue_index);
+  }
+
+  void handle_rrc_reestablishment_complete(ue_index_t old_ue_index) override
+  {
+    logger.info("ue={}: Received RRC Reestablishment complete notification", old_ue_index);
+  }
+
+  async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    logger.info("ue={}: Requested a UE context transfer from old_ue={}", ue_index, old_ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override
+  {
+    logger.info("ue={}: Requested a UE release", request.ue_index);
+    last_cu_cp_ue_context_release_request = request;
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
+
+private:
+  rrc_ue_reestablishment_context_response reest_context = {};
+  srslog::basic_logger&                   logger        = srslog::fetch_basic_logger("TEST");
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
