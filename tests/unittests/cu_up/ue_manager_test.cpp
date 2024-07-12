@@ -41,7 +41,7 @@ protected:
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,
                                           n3_config,
-                                          cu_up_test_mode_config{},
+                                          test_mode_config,
                                           *e1ap,
                                           timers,
                                           *f1u_gw,
@@ -74,6 +74,7 @@ protected:
   std::unique_ptr<ue_manager_ctrl>                            ue_mng;
   network_interface_config                                    net_config;
   n3_interface_config                                         n3_config;
+  cu_up_test_mode_config                                      test_mode_config{};
   srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST", false);
   manual_task_worker                                          worker{64};
 };

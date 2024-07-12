@@ -60,7 +60,7 @@ public:
       reordering_timer = ue_dl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={}, test_mode={}",
+    logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={} test_mode={}",
                     config.local_teid,
                     config.t_reordering.count(),
                     config.test_mode);

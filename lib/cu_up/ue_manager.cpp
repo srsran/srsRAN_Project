@@ -15,7 +15,7 @@ using namespace srs_cu_up;
 
 ue_manager::ue_manager(network_interface_config&                   net_config_,
                        n3_interface_config&                        n3_config_,
-                       cu_up_test_mode_config                      test_mode_config_,
+                       cu_up_test_mode_config&                     test_mode_config_,
                        e1ap_control_message_handler&               e1ap_,
                        timer_manager&                              timers_,
                        f1u_cu_up_gateway&                          f1u_gw_,
