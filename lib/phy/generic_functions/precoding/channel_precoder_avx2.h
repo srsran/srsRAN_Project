@@ -27,7 +27,7 @@ public:
                             span<const cf_t>          port_weights) const override;
 
   // See interface for documentation.
-  void apply_layer_map_and_precoding(re_buffer_writer<>&            output,
+  void apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
                                      span<const ci8_t>              input,
                                      const precoding_weight_matrix& precoding) const override;
 };

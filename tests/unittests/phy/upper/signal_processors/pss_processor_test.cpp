@@ -94,7 +94,7 @@ int main()
     pss_args.ssb_first_subcarrier    = dist_ssb_first_subcarrier(rgen);
     pss_args.ssb_first_symbol        = dist_ssb_first_symbol(rgen);
     pss_args.amplitude               = 1.0F;
-    pss_args.ports                   = {dist_port(rgen)};
+    pss_args.ports.emplace_back(dist_port(rgen));
 
     test_case(*pss, pss_args);
   }

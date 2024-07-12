@@ -37,7 +37,7 @@ public:
   /// \param[in] mask    Bitset denoting the subcarriers to be written (if \c true), starting from \c k_init.
   /// \param[in] symbols Symbols to be written into the resource grid.
   /// \return A view to the unused entries of \c symbols.
-  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c mask shall be equal to or lower than the resource grid number of subcarriers.
   /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
   /// \c mask.
   virtual span<const cf_t> put(unsigned                            port,
@@ -45,6 +45,24 @@ public:
                                unsigned                            k_init,
                                const bounded_bitset<NRE * MAX_RB>& mask,
                                span<const cf_t>                    symbols) = 0;
+
+  /// \brief Puts a number of resource elements in the resource grid at the given port and symbol using a bounded bitset
+  /// to indicate which subcarriers are allocated and which are not.
+  ///
+  /// \param[in] port    Port index.
+  /// \param[in] l       Symbol index.
+  /// \param[in] k_init  Initial subcarrier index.
+  /// \param[in] mask    Bitset denoting the subcarriers to be written (if \c true), starting from \c k_init.
+  /// \param[in] symbols Symbols to be written into the resource grid.
+  /// \return A view to the unused entries of \c symbols.
+  /// \note The number of elements of \c mask shall be equal to or lower than the resource grid number of subcarriers.
+  /// \note The number of elements of \c symbols shall be equal to or greater than the number of true elements in
+  /// \c mask.
+  virtual span<const cbf16_t> put(unsigned                            port,
+                                  unsigned                            l,
+                                  unsigned                            k_init,
+                                  const bounded_bitset<NRE * MAX_RB>& mask,
+                                  span<const cbf16_t>                 symbols) = 0;
 
   /// \brief Puts a consecutive number of resource elements for the given \c port and symbol \c l, starting at \c
   /// k_init.
@@ -68,6 +86,13 @@ public:
   /// \note The RE positions given \c k_init, the number of elements in \c symbols and the \c stride shall be within the
   /// resource grid number of subcarriers.
   virtual void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) = 0;
+
+  /// \brief Gets a read-write view of an OFDM symbol for a given port.
+  ///
+  /// \param[in] port Port index.
+  /// \param[in] l    OFDM symbol index.
+  /// \return Resource grid view.
+  virtual span<cbf16_t> get_view(unsigned port, unsigned l) = 0;
 };
 
 } // namespace srsran

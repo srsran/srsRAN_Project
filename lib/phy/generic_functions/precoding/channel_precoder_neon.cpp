@@ -162,6 +162,27 @@ static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci32_to_cf(out3, in_ci32_3);
 }
 
+inline uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
+{
+  const uint32x4_t bias = vdupq_n_u32(0x7fff);
+  const uint32x4_t one  = vdupq_n_u32(0x1);
+
+  // Reinterpret the 32-bit single-precision input as unsigned 32-bit integer.
+  uint32x4_t a_u32 = vreinterpretq_u32_f32(in.val[0]);
+  uint32x4_t b_u32 = vreinterpretq_u32_f32(in.val[1]);
+
+  // Round to nearest even.
+  a_u32 = vaddq_u32(a_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_u32, 16), one)));
+  b_u32 = vaddq_u32(b_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_u32, 16), one)));
+
+  // Remove the 16 least significant bits of the fractional part.
+  a_u32 = vshrq_n_u32(a_u32, 16);
+  b_u32 = vandq_u32(b_u32, vdupq_n_u32(0xffff0000));
+
+  // Combine real and imaginary parts.
+  return vreinterpretq_u16_u32(vorrq_u32(a_u32, b_u32));
+}
+
 // Applies layer mapping for two layers and converts the symbols to cf_t.
 static inline void layer2_map_and_ci8_to_cf(simd_cf_interleaved& out0_l0,
                                             simd_cf_interleaved& out0_l1,
@@ -239,7 +260,7 @@ static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
 }
 
 template <unsigned NofPorts>
-void template_apply_layer_map_and_precoding(re_buffer_writer<>&            output,
+void template_apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
                                             span<const ci8_t>              input,
                                             const precoding_weight_matrix& precoding)
 {
@@ -258,7 +279,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
   simd_cf_t weights[precoding_constants::MAX_NOF_PORTS][precoding_constants::MAX_NOF_LAYERS];
 
   // Views to store the precoded symbols.
-  span<cf_t> outputs[precoding_constants::MAX_NOF_PORTS];
+  span<cbf16_t> outputs[precoding_constants::MAX_NOF_PORTS];
 
   // Convert weight matrix to SIMD types, and select output data views.
   for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
@@ -289,10 +310,10 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
         simd_cf_interleaved result3 = infp_3 * weights[i_port][0];
 
         // Store.
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re]), result0);
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re + NEON_CF_SIZE]), result1);
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re + (2 * NEON_CF_SIZE)]), result2);
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re + (3 * NEON_CF_SIZE)]), result3);
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (0 * NEON_CF_SIZE)]), cf_to_cbf16(result0));
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (1 * NEON_CF_SIZE)]), cf_to_cbf16(result1));
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (2 * NEON_CF_SIZE)]), cf_to_cbf16(result2));
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (3 * NEON_CF_SIZE)]), cf_to_cbf16(result3));
       }
     }
   }
@@ -314,8 +335,8 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
         simd_cf_interleaved result1 = infp1_l0 * weights[i_port][0] + infp1_l1 * weights[i_port][1];
 
         // Store.
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re]), result0);
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re + NEON_CF_SIZE]), result1);
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (0 * NEON_CF_SIZE)]), cf_to_cbf16(result0));
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re + (1 * NEON_CF_SIZE)]), cf_to_cbf16(result1));
       }
     }
   }
@@ -341,7 +362,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
         result                     = add_mul(result, infp_2, weights[i_port][2]);
 
         // Store.
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re]), result);
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re]), cf_to_cbf16(result));
       }
     }
   }
@@ -365,7 +386,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
         result                     = add_mul(result, infp_3, weights[i_port][3]);
 
         // Store.
-        vst2q_f32(reinterpret_cast<float*>(&outputs[i_port][i_re]), result);
+        vst1q_u16(reinterpret_cast<uint16_t*>(&outputs[i_port][i_re]), cf_to_cbf16(result));
       }
     }
   }
@@ -374,7 +395,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
   for (; i_re != nof_re; ++i_re) {
     for (unsigned i_port = 0; i_port != NofPorts; ++i_port) {
       span<const cf_t> port_weights = precoding.get_port_coefficients(i_port);
-      span<cf_t>       port_re      = output.get_slice(i_port);
+      span<cbf16_t>    port_re      = output.get_slice(i_port);
 
       cf_t sum = to_cf(input[nof_layers * i_re]) * port_weights[0];
       for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {
@@ -386,7 +407,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer<>&            outpu
 }
 
 template <>
-void template_apply_layer_map_and_precoding<1>(re_buffer_writer<>&            output,
+void template_apply_layer_map_and_precoding<1>(re_buffer_writer<cbf16_t>&     output,
                                                span<const ci8_t>              input,
                                                const precoding_weight_matrix& precoding)
 {
@@ -402,7 +423,7 @@ void template_apply_layer_map_and_precoding<1>(re_buffer_writer<>&            ou
   cf_t      weight_cft = precoding.get_coefficient(0, 0);
   weight_neon.set1(weight_cft);
 
-  span<cf_t> out = output.get_slice(0);
+  span<cbf16_t> out = output.get_slice(0);
 
   unsigned i_re = 0;
 
@@ -422,10 +443,10 @@ void template_apply_layer_map_and_precoding<1>(re_buffer_writer<>&            ou
     simd_cf_interleaved result3 = infp_3 * weight_neon;
 
     // Store.
-    vst2q_f32(reinterpret_cast<float*>(&out[i_re]), result0);
-    vst2q_f32(reinterpret_cast<float*>(&out[i_re + NEON_CF_SIZE]), result1);
-    vst2q_f32(reinterpret_cast<float*>(&out[i_re + (2 * NEON_CF_SIZE)]), result2);
-    vst2q_f32(reinterpret_cast<float*>(&out[i_re + (3 * NEON_CF_SIZE)]), result3);
+    vst1q_u16(reinterpret_cast<uint16_t*>(&out[i_re + (0 * NEON_CF_SIZE)]), cf_to_cbf16(result0));
+    vst1q_u16(reinterpret_cast<uint16_t*>(&out[i_re + (1 * NEON_CF_SIZE)]), cf_to_cbf16(result1));
+    vst1q_u16(reinterpret_cast<uint16_t*>(&out[i_re + (2 * NEON_CF_SIZE)]), cf_to_cbf16(result2));
+    vst1q_u16(reinterpret_cast<uint16_t*>(&out[i_re + (3 * NEON_CF_SIZE)]), cf_to_cbf16(result3));
   }
 
   // Process remaining symbols.
@@ -434,7 +455,7 @@ void template_apply_layer_map_and_precoding<1>(re_buffer_writer<>&            ou
   }
 }
 
-void channel_precoder_neon::apply_layer_map_and_precoding(re_buffer_writer<>&            output,
+void channel_precoder_neon::apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
                                                           span<const ci8_t>              input,
                                                           const precoding_weight_matrix& precoding) const
 {

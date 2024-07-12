@@ -40,10 +40,20 @@ public:
                        span<const cf_t>                    symbols) override;
 
   // See interface for documentation.
+  span<const cbf16_t> put(unsigned                            port,
+                          unsigned                            l,
+                          unsigned                            k_init,
+                          const bounded_bitset<NRE * MAX_RB>& mask,
+                          span<const cbf16_t>                 symbols) override;
+
+  // See interface for documentation.
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override;
 
   // See interface for documentation.
   void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override;
+
+  // See interface for documentation.
+  span<cbf16_t> get_view(unsigned port, unsigned l) override;
 
   /// Helper function to mark port as not empty.
   inline void clear_empty(unsigned i_port) { empty &= ~(1U << i_port); }

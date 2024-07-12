@@ -20,6 +20,7 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/fill.h"
+#include "srsran/srsvec/zero.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/file_vector.h"
 #include "srsran/support/srsran_assert.h"
@@ -49,18 +50,9 @@ public:
   };
 
   /// Constructs a resource spy.
-  resource_grid_writer_spy(unsigned    max_ports_ = 0,
-                           unsigned    max_symb_  = 0,
-                           unsigned    max_prb_   = 0,
-                           std::string log_level  = "none") :
-    max_ports(max_ports_),
-    max_symb(max_symb_),
-    max_prb(max_prb_),
-    logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
+  resource_grid_writer_spy(unsigned max_ports_, unsigned max_symb_, unsigned max_prb_) :
+    max_ports(max_ports_), max_symb(max_symb_), max_prb(max_prb_), data({max_prb * NRE, max_symb, max_ports})
   {
-    srslog::init();
-    auto value = srslog::str_to_basic_level(log_level);
-    logger.set_level(value.has_value() ? value.value() : srslog::basic_levels::none);
   }
 
   // See interface for documentation.
@@ -72,13 +64,13 @@ public:
   // See interface for documentation.
   unsigned get_nof_symbols() const override { return max_symb; }
 
+  // See interface for documentation.
   span<const cf_t> put(unsigned                            port,
                        unsigned                            l,
                        unsigned                            k_init,
                        const bounded_bitset<NRE * MAX_RB>& mask,
                        span<const cf_t>                    symbols) override
   {
-    std::unique_lock<std::mutex> lock(entries_mutex);
     ++count;
     unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
@@ -100,9 +92,35 @@ public:
   }
 
   // See interface for documentation.
+  span<const cbf16_t> put(unsigned                            port,
+                          unsigned                            l,
+                          unsigned                            k_init,
+                          const bounded_bitset<NRE * MAX_RB>& mask,
+                          span<const cbf16_t>                 symbols) override
+  {
+    ++count;
+    unsigned i_symb = 0;
+    for (unsigned k = 0; k != mask.size(); ++k) {
+      // Skip if subcarrier is not active.
+      if (!mask.test(k)) {
+        continue;
+      }
+
+      // Skip Symbol if the symbol is 0.
+      if (symbols[i_symb] != cbf16_t()) {
+        put(port, l, k + k_init, to_cf(symbols[i_symb]));
+      }
+
+      ++i_symb;
+    }
+
+    // Consume buffer.
+    return symbols.last(symbols.size() - i_symb);
+  }
+
+  // See interface for documentation.
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
-    std::unique_lock<std::mutex> lock(entries_mutex);
     ++count;
     for (unsigned i = 0; i != symbols.size(); ++i) {
       put(port, l, k_init + i, symbols[i]);
@@ -111,13 +129,18 @@ public:
 
   void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
   {
-    std::unique_lock<std::mutex> lock(entries_mutex);
     ++count;
     for (unsigned i_symb = 0; i_symb != symbols.size(); ++i_symb) {
       if ((symbols[i_symb].real() != 0) || (symbols[i_symb].imag() != 0)) {
         put(port, l, k_init + (i_symb * stride), symbols[i_symb]);
       }
     }
+  }
+
+  span<cbf16_t> get_view(unsigned port, unsigned l) override
+  {
+    ++count;
+    return data.get_view({l, port});
   }
 
   /// \brief Asserts that the mapped resource elements match with a list of expected entries.
@@ -129,22 +152,7 @@ public:
   /// \note The test is terminated in case of mismatch.
   void assert_entries(span<const expected_entry_t> expected_entries) const
   {
-    // Make sure the number of elements match.
-    TESTASSERT_EQ(expected_entries.size(), entries.size());
-
-    // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
-    for (const auto& entry : expected_entries) {
-      entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
-      TESTASSERT(entries.count(key),
-                 "No resource element was written for port={}, symbol={} and subcarrier={}.",
-                 entry.port,
-                 entry.symbol,
-                 entry.subcarrier);
-
-      cf_t  value = to_cf(entries.at(key));
-      float err   = std::abs(entry.value - value);
-      TESTASSERT(err < ASSERT_MAX_ERROR, "Mismatched value {} but expected {}", value, entry.value);
-    }
+    assert_entries(expected_entries, ASSERT_MAX_ERROR);
   }
 
   /// \brief Asserts that the mapped resource elements match with a list of expected entries.
@@ -157,19 +165,33 @@ public:
   /// \note The test is terminated in case of mismatch.
   void assert_entries(span<const expected_entry_t> expected_entries, float max_error) const
   {
+    // Count the number of writen RE.
+    unsigned re_count = std::count_if(
+        data.get_data().begin(), data.get_data().end(), [](cbf16_t value) { return (value != cbf16_t()); });
+
     // Make sure the number of elements match.
-    TESTASSERT_EQ(expected_entries.size(), entries.size());
+    TESTASSERT_EQ(expected_entries.size(), re_count);
 
     // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {
-      entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
-      TESTASSERT(entries.count(key),
+      // Extract resource element value in CBF16.
+      const cbf16_t& value_cbf16 = data[{entry.subcarrier, entry.symbol, entry.port}];
+
+      // If the entry is zero, not a number or infinite, the value in the position of the grid shall be zero.
+      if (!std::isnormal(entry.value.real()) && !std::isnormal(entry.value.real())) {
+        TESTASSERT(value_cbf16 == cbf16_t());
+        continue;
+      }
+
+      // Verify the value is not the default.
+      TESTASSERT(value_cbf16 != cbf16_t(),
                  "No resource element was written for port={}, symbol={} and subcarrier={}.",
                  entry.port,
                  entry.symbol,
                  entry.subcarrier);
 
-      cf_t  value = to_cf(entries.at(key));
+      // Convert value to cf and compare with the expected value.
+      cf_t  value = to_cf(value_cbf16);
       float err   = std::abs(entry.value - value);
       TESTASSERT(err < max_error, "Mismatched value {} but expected {}", value, entry.value);
     }
@@ -181,37 +203,23 @@ public:
   /// Clears any possible state.
   void reset()
   {
-    entries.clear();
+    srsvec::zero(data.get_data());
     count = 0;
   }
 
 private:
-  /// \brief Defines the resource grid indexing key as the tuple of the port, symbol and subcarrier indexes.
-  using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
-
   /// Defines the maximum allowed error when asserting the resource grid.
   static constexpr float ASSERT_MAX_ERROR = 1e-6;
-
-  /// Stores the resource grid written entries.
-  std::map<entry_key_t, cbf16_t> entries;
-
-  /// Protects concurrent write to entries.
-  std::mutex entries_mutex;
-
   /// Counts the number of times a \c put method is called.
   unsigned count = 0;
-
   /// Maximum number of ports.
   unsigned max_ports;
-
   /// Maximum number of OFDM symbols.
   unsigned max_symb;
-
   /// Maximum number of RB.
   unsigned max_prb;
-
-  /// Stores logger.
-  srslog::basic_logger& logger;
+  /// Data storage.
+  dynamic_tensor<3, cbf16_t> data;
 
   /// \brief This method writes a resource element in the allocation given by the port, symbol and subcarrier indexes.
   ///
@@ -222,31 +230,23 @@ private:
   /// \note The test is terminated in case of resource element overwrite.
   void put(uint8_t port, uint8_t symbol, uint16_t subcarrier, cf_t value)
   {
-    // Generate key.
-    entry_key_t key{port, symbol, subcarrier};
-
     // Ensure the port, symbol and subcarrier indexes are in range.
     TESTASSERT(port < max_ports, "Port index {} exceeded maximum {}.", port, max_ports);
     TESTASSERT(symbol < max_symb, "Symbol index {} exceeded maximum {}.", symbol, max_symb);
     TESTASSERT(subcarrier < max_prb * NRE, "Subcarrier index {} exceeded maximum {}.", subcarrier, max_prb * NRE);
 
+    // Select reference to the resource element.
+    cbf16_t& value_cbf16 = data[{subcarrier, symbol, port}];
+
     // Ensure the resource element does not exist.
-    TESTASSERT(entries.count(key) == 0,
+    TESTASSERT(value_cbf16 == 0,
                "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.",
                port,
                symbol,
                subcarrier);
 
-    // Debug trace.
-    logger.debug("[put] port={:>2}; symbol={:>2}; subcarrier={:>4}; value={}; count={};",
-                 port,
-                 symbol,
-                 subcarrier,
-                 value,
-                 entries.size() + 1);
-
     // Write element.
-    entries.emplace(key, to_cbf16(value));
+    value_cbf16 = to_cbf16(value);
   }
 };
 

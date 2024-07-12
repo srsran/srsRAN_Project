@@ -285,7 +285,8 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                                     unsigned                       re_skip)
 {
   // Temporary intermediate buffer for storing precoded symbols.
-  precoding_buffer_type precoding_buffer;
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t> precoding_buffer_copy;
+  modular_re_buffer_writer<MAX_PORTS, cbf16_t>                                precoding_buffer_view;
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
@@ -400,14 +401,28 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
           span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
           // Prepare buffers.
-          precoding_buffer.resize(nof_antennas, nof_re_block);
+          bool                                              is_contiguous    = block_mask.is_contiguous();
+          std::reference_wrapper<re_buffer_writer<cbf16_t>> precoding_buffer = precoding_buffer_view;
+          if (SRSRAN_LIKELY(is_contiguous)) {
+            precoding_buffer_view.resize(nof_antennas, nof_re_block);
+            int i_subc_begin = block_mask.find_lowest();
+            for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
+              precoding_buffer_view.set_slice(
+                  i_port, writer.get_view(i_port, i_symbol).subspan(i_subc + subc_offset + i_subc_begin, nof_re_block));
+            }
+          } else {
+            precoding_buffer_copy.resize(nof_antennas, nof_re_block);
+            precoding_buffer = precoding_buffer_copy;
+          }
 
           // Layer map and precoding.
           precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);
 
-          // Map for each port.
-          for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
-            writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get_slice(i_port));
+          // Map for each port it the allocation is not contiguous.
+          if (!is_contiguous) {
+            for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
+              writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get().get_slice(i_port));
+            }
           }
 
           // Early return  if the buffer is empty.

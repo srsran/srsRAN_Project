@@ -35,7 +35,7 @@ void channel_precoder_generic::apply_precoding_port(span<cf_t>                po
   }
 }
 
-void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer<>&            output,
+void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
                                                              span<const ci8_t>              input,
                                                              const precoding_weight_matrix& precoding) const
 {
@@ -46,7 +46,7 @@ void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer<>&
   for (unsigned i_re = 0; i_re != nof_re; ++i_re) {
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       span<const cf_t> port_weights = precoding.get_port_coefficients(i_port);
-      span<cf_t>       port_re      = output.get_slice(i_port);
+      span<cbf16_t>    port_re      = output.get_slice(i_port);
 
       cf_t sum = to_cf(input[nof_layers * i_re]) * port_weights[0];
       for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {

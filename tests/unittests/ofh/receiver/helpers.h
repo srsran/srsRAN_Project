@@ -81,6 +81,17 @@ public:
     return {};
   }
 
+  span<const cbf16_t> put(unsigned                                               port,
+                          unsigned                                               l,
+                          unsigned                                               k_init,
+                          const bounded_bitset<NOF_SUBCARRIERS_PER_RB * MAX_RB>& mask,
+                          span<const cbf16_t>                                    symbols) override
+  {
+    grid_written = true;
+    nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
+    return {};
+  }
+
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
     grid_written = true;
@@ -91,6 +102,12 @@ public:
   {
     grid_written = true;
     nof_prbs_written += divide_ceil(symbols.size() * stride, NOF_SUBCARRIERS_PER_RB);
+  }
+
+  span<cbf16_t> get_view(unsigned port, unsigned l) override
+  {
+    grid_written = true;
+    return {};
   }
 
   /// Returns true if the gris has been written, otherise false.
