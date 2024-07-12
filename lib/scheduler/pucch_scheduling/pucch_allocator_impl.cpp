@@ -1820,7 +1820,8 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
         new_resource = r_harq;
       }
       // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
-      // the PUCCH resource from set idx 0. NOTE: This sub-case is used by the PUCCH common and dedicated allocator.
+      // the PUCCH resource from set idx 0.
+      // NOTE: This sub-case is used by the PUCCH common and dedicated allocator.
       else if (preserve_res_indicator) {
         const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
             slot_harq, crnti, r_harq.harq_id.pucch_res_ind, pucch_cfg);

@@ -1489,7 +1489,7 @@ public:
   test_pucch_allocator_format_0() :
     pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .use_format_0 = true})
   {
-    // Set expected grant for PUCCH Format 1 SR.
+    // Set expected grant for PUCCH Format 0 SR.
     pucch_expected_f0_sr.format  = pucch_format::FORMAT_0;
     pucch_expected_f0_sr.crnti   = to_rnti(0x4601);
     pucch_expected_f0_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
@@ -1505,7 +1505,7 @@ public:
     pucch_expected_f0_sr.format_0.group_hopping = pucch_group_hopping::NEITHER;
     pucch_expected_f0_sr.format_0.n_id_hopping  = t_bench.cell_cfg.pci;
 
-    // Set expected grant for PUCCH Format 1 HARQ.
+    // Set expected grant for PUCCH Format 0 HARQ.
     pucch_expected_f0_harq.format  = srsran::pucch_format::FORMAT_0;
     pucch_expected_f0_harq.crnti   = to_rnti(0x4601);
     pucch_expected_f0_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
@@ -1518,7 +1518,6 @@ public:
     pucch_expected_f0_harq.format_0.sr_bits              = sr_nof_bits::no_sr;
     pucch_expected_f0_harq.format_0.harq_ack_nof_bits    = 1;
 
-    // Set expected grant for PUCCH Format 1.
     pucch_expected_f0_harq.format_0.group_hopping = pucch_group_hopping::NEITHER;
     pucch_expected_f0_harq.format_0.n_id_hopping  = t_bench.cell_cfg.pci;
 
