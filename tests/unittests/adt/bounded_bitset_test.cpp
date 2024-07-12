@@ -543,6 +543,14 @@ TEST(bounded_bitset_test, bitset_integer_conversion_with_template_arg)
   ASSERT_EQ(std_mask.to_ulong(), 0b1000);
 }
 
+TEST(bounded_bitset_test, bitset_integer_conversion_with_large_integer)
+{
+  bounded_bitset<48> mask(48);
+  mask.from_uint64(278099133963U);
+
+  ASSERT_EQ(mask.to_uint64(), 278099133963U);
+}
+
 TEST(bounded_bitset_test, one_word_bitset_format)
 {
   bounded_bitset<25> bitset(23);
