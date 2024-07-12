@@ -110,7 +110,7 @@ e2e request and config validation:
 
 .e2e-run:
   resource_group: e2e-${GROUP}
-  timeout: 6h
+  timeout: 2h
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
@@ -382,7 +382,6 @@ cudu amari 8UE:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  allow_failure: true
   needs:
     - job: "basic relwithdeb"
       artifacts: true
@@ -399,7 +398,6 @@ cudu amari 32UE:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  allow_failure: true
   needs:
     - job: "basic relwithdeb"
       artifacts: true
