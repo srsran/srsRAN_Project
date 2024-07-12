@@ -85,7 +85,7 @@ public:
   /// \param[in] symbols Symbols to be written into the resource grid.
   /// \note The RE positions given \c k_init, the number of elements in \c symbols and the \c stride shall be within the
   /// resource grid number of subcarriers.
-  virtual void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) = 0;
+  virtual void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) = 0;
 
   /// \brief Gets a read-write view of an OFDM symbol for a given port.
   ///

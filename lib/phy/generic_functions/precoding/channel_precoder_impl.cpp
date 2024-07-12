@@ -12,7 +12,7 @@
 
 using namespace srsran;
 
-void channel_precoder_impl::apply_precoding(re_buffer_writer<>&            output,
+void channel_precoder_impl::apply_precoding(re_buffer_writer<cbf16_t>&     output,
                                             const re_buffer_reader<>&      input,
                                             const precoding_weight_matrix& precoding) const
 {
@@ -46,7 +46,7 @@ void channel_precoder_impl::apply_precoding(re_buffer_writer<>&            outpu
 
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
     // View of the output RE for a single antenna port.
-    span<cf_t> port_re_view = output.get_slice(i_port);
+    span<cbf16_t> port_re_view = output.get_slice(i_port);
 
     // View of the precoding weights applicable to a single antenna port, i.e., the coefficients applied to each
     // layer for the antenna port.

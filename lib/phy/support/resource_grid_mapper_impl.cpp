@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-using precoding_buffer_type = static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB>;
+using precoding_buffer_type = static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB, cbf16_t>;
 
 // Resource element allocation patterns within a resource block for PDSCH DM-RS type 1.
 static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
@@ -46,7 +46,6 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
   static constexpr unsigned re_stride       = 2;
   static constexpr unsigned nof_dmrs_re_prb = NRE / re_stride;
 
-  unsigned nof_layers          = precoding.get_nof_layers();
   unsigned nof_precoding_ports = precoding.get_nof_ports();
 
   // PRG size in number of RB.
@@ -78,19 +77,6 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
       continue;
     }
 
-    // Bypass precoding if it has no effect on the signal.
-    if ((nof_layers == 1) && (nof_precoding_ports == 1) && (precoding.get_nof_prg() == 1) &&
-        (precoding.get_coefficient(0, 0, 0) == 1.0F)) {
-      // View over the input RE belonging to the current symbol.
-      re_buffer_reader_view input_re_symbol(input, i_re_buffer, nof_re_symbol);
-
-      // Map directly to the grid.
-      span<const cf_t> port_data = input_re_symbol.get_slice(0);
-      writer.put(0, i_symbol, first_subcarrier, re_stride, port_data);
-      i_re_buffer += nof_re_symbol;
-      continue;
-    }
-
     // Counter for the number of precoded REs for the current symbol.
     unsigned i_precoding_buffer = 0;
     // First PRG in the allocation pattern.
@@ -109,8 +95,8 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
       unsigned nof_re_prg = (prg_prb_end - prg_prb_start) * nof_dmrs_re_prb;
 
       // Views of the input and precoder buffers for the REs belonging to the current PRG.
-      re_buffer_reader_view input_re_prg(input, i_re_buffer, nof_re_prg);
-      re_buffer_writer_view output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
+      re_buffer_reader_view          input_re_prg(input, i_re_buffer, nof_re_prg);
+      re_buffer_writer_view<cbf16_t> output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
 
       // Apply precoding.
       precoder.apply_precoding(output_re_prg, input_re_prg, prg_weights);
@@ -128,7 +114,7 @@ static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
 
     for (unsigned i_tx_port = 0; i_tx_port != nof_precoding_ports; ++i_tx_port) {
       // Map the precoded REs to each port for the current symbol.
-      span<const cf_t> port_data = precoding_buffer.get_slice(i_tx_port);
+      span<const cbf16_t> port_data = precoding_buffer.get_slice(i_tx_port);
       writer.put(i_tx_port, i_symbol, first_subcarrier, re_stride, port_data);
     }
   }
@@ -243,8 +229,8 @@ void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
       unsigned nof_re_prg = prg_re_mask.count();
 
       // Views of the input and precoder buffers for the REs belonging to the current PRG.
-      re_buffer_reader_view input_re_prg(input, i_re_buffer, nof_re_prg);
-      re_buffer_writer_view output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
+      re_buffer_reader_view          input_re_prg(input, i_re_buffer, nof_re_prg);
+      re_buffer_writer_view<cbf16_t> output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
 
       // Apply precoding.
       precoder->apply_precoding(output_re_prg, input_re_prg, prg_weights);
@@ -265,8 +251,8 @@ void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
 
     for (unsigned i_tx_port = 0; i_tx_port != nof_precoding_ports; ++i_tx_port) {
       // Map the precoded REs to each port for the current symbol.
-      span<const cf_t> port_data = precoding_buffer.get_slice(i_tx_port);
-      span<const cf_t> unmapped  = writer.put(i_tx_port, i_symbol, 0, symbol_re_mask, port_data);
+      span<const cbf16_t> port_data = precoding_buffer.get_slice(i_tx_port);
+      span<const cbf16_t> unmapped  = writer.put(i_tx_port, i_symbol, 0, symbol_re_mask, port_data);
       srsran_assert(unmapped.empty(), "Not all REs have been mapped to the grid.");
     }
   }

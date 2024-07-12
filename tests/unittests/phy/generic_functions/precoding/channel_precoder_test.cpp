@@ -32,19 +32,10 @@ using MultiplePRGParams = std::tuple<
 
 namespace srsran {
 
-static float ASSERT_MAX_ERROR = 1e-4;
-
 static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
 {
   fmt::print(os, "{}", data);
   return os;
-}
-
-static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
-{
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
-    return (std::abs(lhs_val - rhs_val) < ASSERT_MAX_ERROR);
-  });
 }
 
 static bool operator==(span<const cf_t> lhs, span<const cbf16_t> rhs)
@@ -232,8 +223,8 @@ TEST_P(PrecodingFixture, RandomWeightsCft)
   unsigned nof_re = nof_rb * NRE;
 
   // Buffer to hold the precoded RE.
-  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer(nof_ports,
-                                                                                                           nof_re);
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT, cbf16_t> precoding_buffer(
+      nof_ports, nof_re);
   for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
     // Generate random RE arranged by layers.
     const re_buffer_reader<>& input_data = generate_random_data(nof_layers, nof_re);
@@ -249,7 +240,7 @@ TEST_P(PrecodingFixture, RandomWeightsCft)
 
     // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cbf16_t>(precoding_buffer.get_slice(i_port)));
     }
   }
 }

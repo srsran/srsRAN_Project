@@ -127,13 +127,11 @@ public:
     }
   }
 
-  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
+  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) override
   {
     ++count;
     for (unsigned i_symb = 0; i_symb != symbols.size(); ++i_symb) {
-      if ((symbols[i_symb].real() != 0) || (symbols[i_symb].imag() != 0)) {
-        put(port, l, k_init + (i_symb * stride), symbols[i_symb]);
-      }
+      data[{k_init + i_symb * stride, l, port}] = symbols[i_symb];
     }
   }
 

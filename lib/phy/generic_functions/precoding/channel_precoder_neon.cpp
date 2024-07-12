@@ -62,9 +62,30 @@ simd_cf_interleaved add_mul(const simd_cf_interleaved& sum, const simd_cf_interl
   return ret;
 }
 
+inline uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
+{
+  const uint32x4_t bias = vdupq_n_u32(0x7fff);
+  const uint32x4_t one  = vdupq_n_u32(0x1);
+
+  // Reinterpret the 32-bit single-precision input as unsigned 32-bit integer.
+  uint32x4_t a_u32 = vreinterpretq_u32_f32(in.val[0]);
+  uint32x4_t b_u32 = vreinterpretq_u32_f32(in.val[1]);
+
+  // Round to nearest even.
+  a_u32 = vaddq_u32(a_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_u32, 16), one)));
+  b_u32 = vaddq_u32(b_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_u32, 16), one)));
+
+  // Remove the 16 least significant bits of the fractional part.
+  a_u32 = vshrq_n_u32(a_u32, 16);
+  b_u32 = vandq_u32(b_u32, vdupq_n_u32(0xffff0000));
+
+  // Combine real and imaginary parts.
+  return vreinterpretq_u16_u32(vorrq_u32(a_u32, b_u32));
+}
+
 } // namespace
 
-void channel_precoder_neon::apply_precoding_port(span<cf_t>                port_re,
+void channel_precoder_neon::apply_precoding_port(span<cbf16_t>             port_re,
                                                  const re_buffer_reader<>& input_re,
                                                  span<const cf_t>          port_weights) const
 {
@@ -103,15 +124,17 @@ void channel_precoder_neon::apply_precoding_port(span<cf_t>                port_
     }
 
     // Store.
-    vst2q_f32(reinterpret_cast<float*>(&port_re[i_re]), re_out);
+    vst1q_u16(reinterpret_cast<uint16_t*>(&port_re[i_re]), cf_to_cbf16(re_out));
   }
 
   for (; i_re != nof_re; ++i_re) {
-    port_re[i_re] = layer_re_view_list[0][i_re] * port_weights[0];
+    cf_t sum = layer_re_view_list[0][i_re] * port_weights[0];
 
     for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {
-      port_re[i_re] += layer_re_view_list[i_layer][i_re] * port_weights[i_layer];
+      sum += layer_re_view_list[i_layer][i_re] * port_weights[i_layer];
     }
+
+    port_re[i_re] = sum;
   }
 }
 
@@ -160,27 +183,6 @@ static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci32_to_cf(out1, in_ci32_1);
   from_ci32_to_cf(out2, in_ci32_2);
   from_ci32_to_cf(out3, in_ci32_3);
-}
-
-inline uint16x8_t cf_to_cbf16(simd_cf_interleaved in)
-{
-  const uint32x4_t bias = vdupq_n_u32(0x7fff);
-  const uint32x4_t one  = vdupq_n_u32(0x1);
-
-  // Reinterpret the 32-bit single-precision input as unsigned 32-bit integer.
-  uint32x4_t a_u32 = vreinterpretq_u32_f32(in.val[0]);
-  uint32x4_t b_u32 = vreinterpretq_u32_f32(in.val[1]);
-
-  // Round to nearest even.
-  a_u32 = vaddq_u32(a_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(a_u32, 16), one)));
-  b_u32 = vaddq_u32(b_u32, vaddq_u32(bias, vandq_u32(vshrq_n_u32(b_u32, 16), one)));
-
-  // Remove the 16 least significant bits of the fractional part.
-  a_u32 = vshrq_n_u32(a_u32, 16);
-  b_u32 = vandq_u32(b_u32, vdupq_n_u32(0xffff0000));
-
-  // Combine real and imaginary parts.
-  return vreinterpretq_u16_u32(vorrq_u32(a_u32, b_u32));
 }
 
 // Applies layer mapping for two layers and converts the symbols to cf_t.
