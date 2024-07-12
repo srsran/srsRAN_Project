@@ -267,7 +267,7 @@ void cu_cp_test::test_e1ap_attach()
 
   // Pass E1SetupRequest to the CU-CP
   e1ap_message e1setup_msg = generate_valid_cu_up_e1_setup_request();
-  cu_cp_obj->get_e1_handler().get_cu_up(uint_to_cu_up_index(0)).get_message_handler().handle_message(e1setup_msg);
+  e1ap_gw.get_cu_up(0).on_new_message(e1setup_msg);
 }
 
 void cu_cp_test::test_du_attach(du_index_t du_index, gnb_du_id_t gnb_du_id, nr_cell_identity nrcell_id, pci_t pci)
@@ -314,10 +314,7 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
       // Inject Bearer Context Setup Response
       e1ap_message bearer_context_setup_resp =
           generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      cu_cp_obj->get_e1_handler()
-          .get_cu_up(uint_to_cu_up_index(0))
-          .get_message_handler()
-          .handle_message(bearer_context_setup_resp);
+      e1ap_gw.get_cu_up(0).on_new_message(bearer_context_setup_resp);
     } else {
       // check that the Bearer Context Modification was sent to the CU-UP
       ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
@@ -326,10 +323,7 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
       // Inject Bearer Context Modification Response
       e1ap_message bearer_context_mod_resp =
           generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      cu_cp_obj->get_e1_handler()
-          .get_cu_up(uint_to_cu_up_index(0))
-          .get_message_handler()
-          .handle_message(bearer_context_mod_resp);
+      e1ap_gw.get_cu_up(0).on_new_message(bearer_context_mod_resp);
     }
 
     // check that the UE Context Modification Request was sent to the DU
@@ -358,10 +352,7 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
     // Inject Bearer Context Modification Response
     e1ap_message bearer_context_mod_resp =
         generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-    cu_cp_obj->get_e1_handler()
-        .get_cu_up(uint_to_cu_up_index(0))
-        .get_message_handler()
-        .handle_message(bearer_context_mod_resp);
+    e1ap_gw.get_cu_up(0).on_new_message(bearer_context_mod_resp);
 
     // check that the RRC Reconfiguration was sent to the DU
     ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);

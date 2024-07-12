@@ -104,10 +104,7 @@ protected:
   {
     e1ap_message bearer_context_modification_fail =
         generate_bearer_context_modification_failure(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_e1_handler()
-        .get_cu_up(uint_to_cu_up_index(0))
-        .get_message_handler()
-        .handle_message(bearer_context_modification_fail);
+    e1ap_gw.get_cu_up(0).on_new_message(bearer_context_modification_fail);
   }
 
   /// \brief Inject Bearer Context Modification Response.
@@ -115,10 +112,7 @@ protected:
   {
     e1ap_message bearer_context_modification_resp =
         generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_e1_handler()
-        .get_cu_up(uint_to_cu_up_index(0))
-        .get_message_handler()
-        .handle_message(bearer_context_modification_resp);
+    e1ap_gw.get_cu_up(0).on_new_message(bearer_context_modification_resp);
   }
 
   /// \brief Inject Bearer Context Release Complete.
@@ -126,10 +120,7 @@ protected:
   {
     e1ap_message bearer_context_release_complete =
         generate_bearer_context_release_complete(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-    cu_cp_obj->get_e1_handler()
-        .get_cu_up(uint_to_cu_up_index(0))
-        .get_message_handler()
-        .handle_message(bearer_context_release_complete);
+    e1ap_gw.get_cu_up(0).on_new_message(bearer_context_release_complete);
   }
 
   /// \brief Inject UE Context Modification Response.

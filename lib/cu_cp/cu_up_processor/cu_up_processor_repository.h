@@ -27,19 +27,22 @@ struct cu_up_repository_config {
   srslog::basic_logger&      logger;
 };
 
-class cu_up_processor_repository : public cu_cp_e1_handler
+class cu_up_processor_repository
 {
 public:
   explicit cu_up_processor_repository(cu_up_repository_config cfg_);
 
-  // CU-UP interface
-  std::unique_ptr<e1ap_message_notifier>
-       handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) override;
-  void handle_cu_up_remove_request(cu_up_index_t cu_up_index) override;
+  /// \brief Adds a CU-UP processor object to the CU-CP.
+  /// \return The CU-UP index of the added CU-UP processor object.
+  cu_up_index_t add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier);
+
+  /// \brief Removes the specified CU-UP processor object from the CU-CP.
+  /// \param[in] cu_up_index The index of the CU-UP processor to delete.
+  async_task<void> remove_cu_up(cu_up_index_t cu_up_index);
 
   size_t get_nof_cu_ups() const { return cu_up_db.size(); }
 
-  cu_up_e1_handler& get_cu_up(cu_up_index_t cu_up_index) override;
+  cu_up_e1_handler& get_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
@@ -57,14 +60,6 @@ private:
 
     e1ap_message_handler& get_message_handler() override;
   };
-
-  /// \brief Adds a CU-UP processor object to the CU-CP.
-  /// \return The CU-UP index of the added CU-UP processor object.
-  cu_up_index_t add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier);
-
-  /// \brief Removes the specified CU-UP processor object from the CU-CP.
-  /// \param[in] cu_up_index The index of the CU-UP processor to delete.
-  void remove_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Get the next available index from the CU-UP processor database.
   /// \return The CU-UP index.

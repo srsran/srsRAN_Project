@@ -17,21 +17,21 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_controller::cu_cp_controller(const cu_cp_configuration&        config_,
-                                   cu_cp_routine_manager&            routine_manager_,
-                                   ue_manager&                       ue_mng_,
-                                   ngap_connection_manager&          ngap_conn_mng_,
-                                   const cu_up_processor_repository& cu_ups_,
-                                   du_processor_repository&          dus_,
-                                   task_executor&                    ctrl_exec_) :
+cu_cp_controller::cu_cp_controller(const cu_cp_configuration&  config_,
+                                   cu_cp_routine_manager&      routine_manager_,
+                                   ue_manager&                 ue_mng_,
+                                   ngap_connection_manager&    ngap_conn_mng_,
+                                   cu_up_processor_repository& cu_ups_,
+                                   du_processor_repository&    dus_,
+                                   task_executor&              ctrl_exec_) :
   cfg(config_),
   ue_mng(ue_mng_),
-  cu_ups(cu_ups_),
   routine_mng(routine_manager_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
   amf_mng(routine_manager_, cfg, ngap_conn_mng_),
-  du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, routine_manager_)
+  du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, routine_manager_),
+  cu_up_mng(cfg.admission.max_nof_cu_ups, cu_ups_, ctrl_exec, routine_manager_)
 {
   (void)ue_mng;
 }
@@ -48,6 +48,9 @@ void cu_cp_controller::stop()
 
   // Stop and delete DU connections.
   du_mng.stop();
+
+  // Stop and delete CU-UP connections.
+  cu_up_mng.stop();
 
   // Stop AMF connection.
   while (not ctrl_exec.defer([this]() { stop_impl(); })) {
@@ -98,7 +101,7 @@ bool cu_cp_controller::request_ue_setup() const
     return false;
   }
 
-  if (cu_ups.get_nof_cu_ups() == 0) {
+  if (cu_up_mng.nof_cu_ups() == 0) {
     return false;
   }
 

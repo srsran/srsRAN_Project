@@ -91,20 +91,6 @@ public:
     return std::make_unique<rx_pdu_notifier>("CU-CP", cu_rx_pdus, std::move(eof_signal));
   }
 
-  void handle_cu_up_remove_request(srs_cu_cp::cu_up_index_t cu_up_index) override {}
-
-  srs_cu_cp::cu_up_e1_handler& get_cu_up(srs_cu_cp::cu_up_index_t cu_up_index) override
-  {
-    class dummy_cu_up_e1_handler : public srs_cu_cp::cu_up_e1_handler, public e1ap_message_handler
-    {
-    public:
-      e1ap_message_handler& get_message_handler() override { return *this; }
-      void                  handle_message(const e1ap_message& msg) override {}
-    };
-    static dummy_cu_up_e1_handler dummy;
-    return dummy;
-  }
-
   std::unique_ptr<io_broker>          broker;
   dummy_dlt_pcap                      pcap;
   std::unique_ptr<e1_local_connector> connector;
