@@ -323,7 +323,7 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   // Used for PCAP writing.
   non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
-  non_rt_pool.executors.push_back({"high_prio_exec", task_priority::max, {}, std::nullopt, not rt_mode});
+  non_rt_pool.executors.push_back({"high_prio_exec", task_priority::max});
   // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
   non_rt_pool.executors.push_back({"cu_up_strand",
                                    task_priority::max - 1,
@@ -337,9 +337,11 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, cu_cp_pcaps, cu_up_pcaps, du_pcaps);
 
-  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
-  // support two priority levels, the highest being for timer management.
-  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane).
+  // This strand will support two priority levels, the highest being for timer management.
+  // Note: In case of non-RT operation, we make the timer_exec synchronous. This will have the effect of stopping
+  // the lower layers from running faster than this strand.
+  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size, not rt_mode},
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
 

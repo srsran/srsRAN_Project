@@ -38,6 +38,8 @@ struct strand {
     concurrent_queue_policy policy;
     /// \brief Size of the queue used.
     unsigned size;
+    /// \brief Whether the caller blocks waiting for task to complete.
+    bool synchronous = false;
   };
   /// Queues of different priorities. The lower the index, the higher the priority.
   std::vector<executor> queues;
