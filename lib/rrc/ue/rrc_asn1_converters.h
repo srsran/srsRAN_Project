@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -234,6 +235,35 @@ integrity_prot_algorithm_to_rrc_asn1(const security::integrity_algorithm& integr
   }
 
   return asn1_integrity_prot_algo;
+}
+
+inline cu_cp_five_g_s_tmsi number_to_five_g_s_tmsi(uint64_t five_g_s_tmsi_value)
+{
+  cu_cp_five_g_s_tmsi five_g_s_tmsi;
+
+  // As per TS 23.003 section 2.11 and section 2.10.1
+  five_g_s_tmsi.amf_set_id  = five_g_s_tmsi_value >> 38U;
+  five_g_s_tmsi.amf_pointer = (five_g_s_tmsi_value - ((five_g_s_tmsi_value >> 38U) << 38U)) >> 32U;
+  five_g_s_tmsi.five_g_tmsi = (five_g_s_tmsi_value << 32U) >> 32U;
+
+  return five_g_s_tmsi;
+}
+
+inline cu_cp_five_g_s_tmsi asn1_to_five_g_s_tmsi(const asn1::fixed_bitstring<48>& asn1_five_g_s_tmsi)
+{
+  bounded_bitset<48> five_g_s_tmsi(48);
+  five_g_s_tmsi.from_uint64(asn1_five_g_s_tmsi.to_number());
+
+  return number_to_five_g_s_tmsi(five_g_s_tmsi.to_uint64());
+}
+
+inline cu_cp_five_g_s_tmsi asn1_to_five_g_s_tmsi(const asn1::fixed_bitstring<39>& asn1_five_g_s_tmsi_part1,
+                                                 const asn1::fixed_bitstring<9>&  asn1_five_g_s_tmsi_part2)
+{
+  bounded_bitset<48> five_g_s_tmsi(48);
+  five_g_s_tmsi.from_uint64((asn1_five_g_s_tmsi_part2.to_number() << 39) + asn1_five_g_s_tmsi_part1.to_number());
+
+  return number_to_five_g_s_tmsi(five_g_s_tmsi.to_uint64());
 }
 
 inline cu_cp_amf_identifier_t asn1_to_amf_identifier(const asn1::fixed_bitstring<24>& asn1_amf_id)
