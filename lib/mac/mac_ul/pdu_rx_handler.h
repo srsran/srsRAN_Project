@@ -33,6 +33,7 @@
 #include "srsran/pcap/mac_pcap.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

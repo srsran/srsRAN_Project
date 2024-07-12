@@ -23,12 +23,12 @@
 #pragma once
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
 struct re_pattern;
-class re_buffer_reader;
 class re_pattern_list;
 class precoding_configuration;
 
@@ -101,7 +101,7 @@ public:
   /// \param[in] pattern    Data allocation pattern in the resource grid.
   /// \param[in] precoding  Precoding configuration.
   virtual void
-  map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) = 0;
+  map(const re_buffer_reader<cf_t>& input, const re_pattern& pattern, const precoding_configuration& precoding) = 0;
 
   /// \brief Maps complex symbols onto the resource grid.
   /// \param[in] buffer     Buffer containing the complex symbols to map.

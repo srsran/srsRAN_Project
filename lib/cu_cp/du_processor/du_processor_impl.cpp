@@ -35,7 +35,7 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
-                                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
+                                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier,
                                      rrc_du_measurement_config_notifier& rrc_du_cu_cp_notifier,
                                      common_task_scheduler&              common_task_sched_,
                                      ue_manager&                         ue_mng_,
@@ -45,7 +45,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   cu_cp_notifier(cu_cp_notifier_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
-  rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   ue_mng(ue_mng_),
   f1ap_ev_notifier(common_task_sched_, *this)
 {
@@ -331,30 +330,6 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
   }
 
   f1ap_paging_notifier.on_paging_message(msg);
-}
-
-void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index, ngap_cause_t cause)
-{
-  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
-
-  cu_cp_ue_context_release_request req;
-  req.ue_index = ue_index;
-  req.cause    = cause;
-
-  // Add PDU Session IDs
-  auto& up_resource_manager            = ue->get_up_resource_manager();
-  req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
-
-  logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, cause);
-
-  // Schedule on UE task scheduler
-  ue->get_task_sched().schedule_async_task(launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-    // Notify NGAP to request a release from the AMF
-    CORO_AWAIT(cu_cp_notifier.on_ue_release_required(req));
-    CORO_RETURN();
-  }));
 }
 
 bool du_processor_impl::has_cell(pci_t pci)

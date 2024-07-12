@@ -199,13 +199,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::ue_event_prefix> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
+
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::ue_event_prefix& ue_prefix, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     using namespace srsran;
     auto ret = format_to(ctx.out(), "{:<4}", ue_prefix.direction);

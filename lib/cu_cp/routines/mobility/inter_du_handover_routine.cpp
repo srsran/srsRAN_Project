@@ -145,7 +145,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   // Inform CU-UP about new DL tunnels.
   {
-    // get securtiy context of target UE
+    // get security context of target UE
     if (!target_ue->get_security_manager().is_security_context_initialized()) {
       logger.warning(
           "ue={}: \"{}\" failed. Cause: Security context not initialized", target_ue->get_ue_index(), name());
@@ -269,6 +269,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
     return false;
   }
   setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info = std::move(buffer_copy.value());
+  setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list    = transfer_context.ue_cap_rat_container_list.copy();
 
   for (const auto& srb_id : srbs) {
     f1ap_srbs_to_be_setup_mod_item srb_item;

@@ -22,42 +22,15 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
-#include <numeric>
+#include "srsran/cu_cp/cu_cp_types.h"
 
 namespace srsran {
+namespace srs_cu_cp {
 
-/// Calculates the greatest common divisor (GCD) of two integers.
-template <typename Integer>
-Integer gcd(Integer a, Integer b)
-{
-  while (true) {
-    if (a == 0) {
-      return b;
-    }
-    b %= a;
-    if (b == 0) {
-      return a;
-    }
-    a %= b;
-  }
-}
+struct ngap_ue_radio_capability_info_indication {
+  ue_index_t  ue_index = ue_index_t::invalid;
+  byte_buffer ue_cap_rat_container_list;
+};
 
-/// Calculates the least common multiplier (LCM) of two integers.
-template <typename Integer>
-Integer lcm(Integer a, Integer b)
-{
-  Integer temp = gcd(a, b);
-
-  return temp != 0 ? (a / temp * b) : 0;
-}
-
-/// Calculates the least common multiplier (LCM) for a range of integers.
-template <typename Integer>
-Integer lcm(span<const Integer> values)
-{
-  return std::accumulate(
-      values.begin(), values.end(), Integer(1), [](Integer a, Integer b) { return lcm<Integer>(a, b); });
-}
-
+} // namespace srs_cu_cp
 } // namespace srsran

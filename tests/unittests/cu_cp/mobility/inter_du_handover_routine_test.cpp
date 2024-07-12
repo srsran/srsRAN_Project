@@ -21,6 +21,7 @@
  */
 
 #include "mobility_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -70,7 +71,7 @@ protected:
         generate_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0),
                                          int_to_gnb_du_ue_f1ap_id(0),
                                          srb_id_t::srb1,
-                                         make_byte_buffer("000900410004015f741fe0804bf183fc980605b7").value());
+                                         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value());
     test_logger.info("Injecting UL RRC message (RRC Measurement Report)");
     f1c_gw.get_du(source_du_index).on_new_message(ul_rrc_msg);
   }
@@ -157,7 +158,7 @@ protected:
     f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(int_to_gnb_cu_ue_f1ap_id(0),
                                                                        int_to_gnb_du_ue_f1ap_id(0),
                                                                        srb_id_t::srb1,
-                                                                       make_byte_buffer("80000a00ddc7574a").value());
+                                                                       make_byte_buffer("8000080035c41efd").value());
     f1c_gw.get_du(target_du_index).on_new_message(rrc_recfg_complete);
   }
 
@@ -259,6 +260,17 @@ TEST_F(inter_du_handover_routine_test, when_ho_succeeds_then_source_ue_is_remove
 
   // Start handover by injecting measurement report
   inject_rrc_meas_report();
+
+  // check that the UE Context Setup Request contains the UE capabilities
+  ASSERT_EQ(f1c_gw.last_tx_pdus(1).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1c_gw.last_tx_pdus(1).back().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
+  ASSERT_NE(f1c_gw.last_tx_pdus(1)
+                .back()
+                .pdu.init_msg()
+                .value.ue_context_setup_request()
+                ->cu_to_du_rrc_info.ue_cap_rat_container_list.size(),
+            0U);
 
   // Inject UE Context Setup Response
   inject_ue_context_setup_response();

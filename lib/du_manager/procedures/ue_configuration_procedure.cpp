@@ -21,7 +21,6 @@
  */
 
 #include "ue_configuration_procedure.h"
-#include "../../ran/gnb_format.h"
 #include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"

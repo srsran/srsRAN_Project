@@ -116,6 +116,11 @@ cu_cp_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
 ngap_message
 generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id, byte_buffer nas_pdu = {});
 
+/// \brief Generate a dummy DL NAS Transport Message with UE Cap Info Request.
+ngap_message generate_downlink_nas_transport_message_with_ue_cap_info_request(amf_ue_id_t amf_ue_id,
+                                                                              ran_ue_id_t ran_ue_id,
+                                                                              byte_buffer nas_pdu = {});
+
 /// \brief Generate a dummy UL NAS Transport Message.
 cu_cp_ul_nas_transport generate_ul_nas_transport_message(ue_index_t ue_index);
 

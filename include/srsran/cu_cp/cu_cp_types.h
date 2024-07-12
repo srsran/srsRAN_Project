@@ -207,13 +207,13 @@ struct cu_cp_nr_mode_info {
 };
 
 struct cu_cp_served_cell_info {
-  nr_cell_global_id_t      nr_cgi;
-  pci_t                    nr_pci;
-  std::optional<uint32_t>  five_gs_tac;
-  std::optional<uint32_t>  cfg_eps_tac;
-  std::vector<std::string> served_plmns;
-  cu_cp_nr_mode_info       nr_mode_info;
-  byte_buffer              meas_timing_cfg;
+  nr_cell_global_id_t        nr_cgi;
+  pci_t                      nr_pci;
+  std::optional<uint32_t>    five_gs_tac;
+  std::optional<uint32_t>    cfg_eps_tac;
+  std::vector<plmn_identity> served_plmns;
+  cu_cp_nr_mode_info         nr_mode_info;
+  byte_buffer                meas_timing_cfg;
 
   cu_cp_served_cell_info() = default;
   cu_cp_served_cell_info(const cu_cp_served_cell_info& other) :
@@ -309,6 +309,7 @@ struct cu_cp_pdu_session_resource_setup_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
   plmn_identity                                                         serving_plmn = plmn_identity::test_value();
+  byte_buffer                                                           nas_pdu; ///< optional NAS PDU
 };
 
 enum class cu_cp_qos_flow_map_ind { ul = 0, dl };
@@ -585,14 +586,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::ue_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::ue_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -605,14 +605,13 @@ struct formatter<srsran::srs_cu_cp::ue_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::du_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::du_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -625,14 +624,13 @@ struct formatter<srsran::srs_cu_cp::du_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::cu_up_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -645,14 +643,13 @@ struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
 template <>
 struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
       return format_to(ctx.out(), "invalid");

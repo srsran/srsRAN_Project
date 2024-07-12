@@ -81,20 +81,21 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
                                             ru));
   }
 
-  create_low_prio_executors(expert_appcfg,
-                            cu_cp_pcap_cfg,
-                            cu_up_pcap_cfg,
-                            du_cfg.du_high_cfg.config.pcaps,
-                            du_cfg.du_high_cfg.config.cells_cfg.size(),
-                            gtpu_queue_size);
-  associate_low_prio_executors();
-
   // Determine whether the gnb app is running in realtime or in simulated environment.
   bool is_blocking_mode_active = false;
   if (std::holds_alternative<ru_sdr_unit_config>(du_cfg.ru_cfg)) {
     const auto& sdr_cfg     = std::get<ru_sdr_unit_config>(du_cfg.ru_cfg);
     is_blocking_mode_active = sdr_cfg.device_driver == "zmq";
   }
+
+  create_low_prio_executors(expert_appcfg,
+                            cu_cp_pcap_cfg,
+                            cu_up_pcap_cfg,
+                            du_cfg.du_high_cfg.config.pcaps,
+                            du_cfg.du_high_cfg.config.cells_cfg.size(),
+                            gtpu_queue_size,
+                            not is_blocking_mode_active);
+  associate_low_prio_executors();
 
   create_du_executors(is_blocking_mode_active, nof_cells, du_cfg.du_low_cfg, du_cfg.fapi_cfg);
   create_ru_executors(du_cfg.ru_cfg, du_cfg.du_high_cfg.config);
@@ -323,7 +324,8 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
                                                const cu_up_unit_pcap_config&     cu_up_pcaps,
                                                const du_high_unit_pcap_config&   du_pcaps,
                                                unsigned                          nof_cells,
-                                               unsigned                          gtpu_queue_size)
+                                               unsigned                          gtpu_queue_size,
+                                               bool                              rt_mode)
 {
   using namespace execution_config_helper;
   // TODO: split executor creation and association to workers
@@ -333,7 +335,7 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   // Used for PCAP writing.
   non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
-  non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
+  non_rt_pool.executors.push_back({"high_prio_exec", task_priority::max});
   // Used to serialize all CU-UP tasks, while CU-UP does not support multithreading.
   non_rt_pool.executors.push_back({"cu_up_strand",
                                    task_priority::max - 1,
@@ -347,9 +349,11 @@ void worker_manager::create_low_prio_executors(const expert_execution_appconfig&
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, cu_cp_pcaps, cu_up_pcaps, du_pcaps);
 
-  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane). This strand will
-  // support two priority levels, the highest being for timer management.
-  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+  // Configuration of strand for the control plane handling (CU-CP and DU-high control plane).
+  // This strand will support two priority levels, the highest being for timer management.
+  // Note: In case of non-RT operation, we make the timer_exec synchronous. This will have the effect of stopping
+  // the lower layers from running faster than this strand.
+  strand cp_strand{{{"timer_exec", concurrent_queue_policy::lockfree_spsc, task_worker_queue_size, not rt_mode},
                     {"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cp_strand);
 
@@ -427,7 +431,7 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
                        task_worker_queue_size,
                        {{"phy_exec"}},
                        affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::l1_dl),
-                       os_thread_realtime_priority::max());
+                       os_thread_realtime_priority::no_realtime());
 
     for (unsigned cell_id = 0, cell_end = nof_cells; cell_id != cell_end; ++cell_id) {
       upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));

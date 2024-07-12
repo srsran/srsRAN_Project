@@ -201,7 +201,7 @@ def test_zmq(
         time_alignment_calibration=0,
         ue_stop_timeout=1,
         enable_security_mode=ciphering,
-        post_command="cu_cp --inactivity_timer=600",
+        post_command=("cu_cp --inactivity_timer=600", ""),
     )
 
 
@@ -242,7 +242,10 @@ def test_zmq_valgrind(
             time_alignment_calibration=0,
             log_search=False,
             always_download_artifacts=True,
-            pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
+            pre_command=(
+                "valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
+                "valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
+            ),
             gnb_stop_timeout=gnb_stop_timeout,
         )
     stop(
@@ -354,8 +357,8 @@ def _ping(
     always_download_artifacts: bool = False,
     ping_count: int = 10,
     reattach_count: int = 0,
-    pre_command: str = "",
-    post_command: str = "",
+    pre_command: Tuple[str, ...] = tuple(),
+    post_command: Tuple[str, ...] = tuple(),
     gnb_stop_timeout: int = 0,
     ue_stop_timeout: int = 0,
     plmn: Optional[PLMN] = None,

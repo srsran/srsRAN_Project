@@ -189,6 +189,10 @@ protected:
   std::array<log_likelihood_ratio, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits;
 
 private:
+  /// Soft bits clamp lower bound.
+  static constexpr log_likelihood_ratio soft_bits_clamp_low = -32;
+  /// Soft bits clamp higher bound.
+  static constexpr log_likelihood_ratio soft_bits_clamp_high = 32;
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
   const ldpc_graph_impl* current_graph = nullptr;
   /// Total number of base graph variable nodes in the current graph.

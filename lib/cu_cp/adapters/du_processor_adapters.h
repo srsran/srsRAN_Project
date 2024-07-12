@@ -99,14 +99,6 @@ public:
 
   void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
 
-  async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
-                              std::optional<rrc_ue_transfer_context> rrc_context) override
-  {
-    srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_context_setup_request(request, rrc_context);
-  }
-
   async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
@@ -215,6 +207,12 @@ public:
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
+  }
+
+  byte_buffer get_packed_ue_capability_rat_container_list() override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_packed_ue_capability_rat_container_list();
   }
 
   rrc_ue_handover_reconfiguration_context

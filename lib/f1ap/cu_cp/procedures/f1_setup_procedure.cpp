@@ -69,32 +69,23 @@ du_setup_request srsran::srs_cu_cp::create_du_setup_request(const asn1::f1ap::f1
       cu_cp_du_served_cells_item served_cell;
 
       // served cell info
-      // NR CGI
       served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi).value();
-
-      // NR PCI
       served_cell.served_cell_info.nr_pci = asn1_served_cell.served_cell_info.nr_pci;
-
-      // 5GS TAC
       if (asn1_served_cell.served_cell_info.five_gs_tac_present) {
         served_cell.served_cell_info.five_gs_tac = asn1_served_cell.served_cell_info.five_gs_tac.to_number();
       }
-
-      // cfg EPS TAC
       if (asn1_served_cell.served_cell_info.cfg_eps_tac_present) {
         served_cell.served_cell_info.cfg_eps_tac = asn1_served_cell.served_cell_info.cfg_eps_tac.to_number();
       }
-
-      // served PLMNs
       for (const auto& asn1_plmn : asn1_served_cell.served_cell_info.served_plmns) {
-        served_cell.served_cell_info.served_plmns.push_back(asn1_plmn.plmn_id.to_string());
+        auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
+        // Note: If the ASN.1 PLMN ID is not valid, it is not considered in the response back to the DU.
+        if (result.has_value()) {
+          served_cell.served_cell_info.served_plmns.push_back(result.value());
+        }
       }
-
-      // NR mode info
       served_cell.served_cell_info.nr_mode_info =
           f1ap_asn1_to_nr_mode_info(asn1_served_cell.served_cell_info.nr_mode_info);
-
-      // meas timing cfg
       served_cell.served_cell_info.meas_timing_cfg = asn1_served_cell.served_cell_info.meas_timing_cfg.copy();
 
       // GNB DU sys info
@@ -186,7 +177,7 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   // Message content validation.
   auto msgerr = validate_f1_setup_request(request);
   if (not msgerr.has_value()) {
-    logger.info("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
+    logger.warning("Rejecting F1 Setup Request. Cause: {}", msgerr.error().second);
     pdu_notifier.on_new_message(create_f1_setup_reject(request, msgerr.error().first));
     return;
   }
@@ -204,7 +195,7 @@ void srsran::srs_cu_cp::handle_f1_setup_procedure(const asn1::f1ap::f1_setup_req
   if (not request_outcome.is_accepted()) {
     // Failed to setup DU case.
     auto& fail_resp = std::get<du_setup_result::rejected>(request_outcome.result);
-    logger.info("Rejecting F1 Setup Request. Cause: {}", fail_resp.cause_str);
+    logger.warning("Rejecting F1 Setup Request. Cause: {}", fail_resp.cause_str);
     f1ap_msg = create_f1_setup_reject(request, cause_to_asn1(fail_resp.cause));
   } else {
     // DU has been accepted.

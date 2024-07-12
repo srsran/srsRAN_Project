@@ -326,6 +326,22 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_ul_retx_first_than_ue
   ASSERT_EQ(this->res_grid[0].result.ul.puschs[0].context.ue_index, ue_with_retx);
 }
 
+TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_ul_srb_newtx_first_than_ues_with_ul_drb_newtx)
+{
+  const lcg_id_t drb_lcg_id = uint_to_lcg_id(2);
+  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
+  ue&            u1 = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {LCID_MIN_DRB}, drb_lcg_id));
+  ue&            u2 = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {LCID_SRB1}, srb_lcg_id));
+
+  notify_ul_bsr(u1.ue_index, drb_lcg_id, 1000);
+  notify_ul_bsr(u2.ue_index, srb_lcg_id, 1000);
+
+  bool pusch_scheduled = run_until([this]() { return not this->res_grid[0].result.ul.puschs.empty(); });
+  ASSERT_TRUE(pusch_scheduled);
+  // UE2 with SRB newTx data is scheduled first.
+  ASSERT_EQ(this->res_grid[0].result.ul.puschs[0].context.ue_index, u2.ue_index);
+}
+
 TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ues_with_newtx)
 {
   const lcg_id_t lcg_id = uint_to_lcg_id(2);
@@ -373,6 +389,22 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ue
   pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
   ASSERT_TRUE(pdsch_scheduled);
   ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, ue_with_retx);
+}
+
+TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_srb_newtx_first_than_ues_with_dl_drb_newtx)
+{
+  const lcg_id_t drb_lcg_id = uint_to_lcg_id(2);
+  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
+  ue&            u1 = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {LCID_MIN_DRB}, drb_lcg_id));
+  ue&            u2 = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {LCID_SRB1}, srb_lcg_id));
+
+  push_dl_bs(u1.ue_index, LCID_MIN_DRB, 1000);
+  push_dl_bs(u2.ue_index, LCID_SRB1, 1000);
+
+  bool pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
+  ASSERT_TRUE(pdsch_scheduled);
+  // UE2 with SRB newTx data is scheduled first.
+  ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, u2.ue_index);
 }
 
 class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,

@@ -77,6 +77,7 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   test_ue& new_test_ue = test_ues.at(ue_index);
 
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(new_test_ue.rrc_ue_dl_nas_handler,
+                                                          new_test_ue.rrc_ue_radio_access_cap_handler,
                                                           new_test_ue.rrc_ue_ho_prep_handler);
 
   // generate and inject valid initial ue message
@@ -104,6 +105,7 @@ ue_index_t ngap_test::create_ue_without_init_ue_message(rnti_t rnti)
   test_ue& new_test_ue = test_ues.at(ue_index);
 
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(new_test_ue.rrc_ue_dl_nas_handler,
+                                                          new_test_ue.rrc_ue_radio_access_cap_handler,
                                                           new_test_ue.rrc_ue_ho_prep_handler);
 
   return ue_index;

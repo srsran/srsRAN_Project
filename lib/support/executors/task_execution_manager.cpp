@@ -208,8 +208,12 @@ protected:
 
         // Create executors that own the strand through reference counting.
         for (unsigned i = 0; i != strand_cfg.queues.size(); ++i) {
-          enqueue_priority prio = detail::queue_index_to_enqueue_priority(i, strand_cfg.queues.size());
-          execs.emplace_back(strand_cfg.queues[i].name, make_priority_task_executor_ptr(prio, shared_strand));
+          enqueue_priority prio      = detail::queue_index_to_enqueue_priority(i, strand_cfg.queues.size());
+          auto             prio_exec = make_priority_task_executor_ptr(prio, shared_strand);
+          if (strand_cfg.queues[i].synchronous) {
+            prio_exec = make_sync_executor(std::move(prio_exec));
+          }
+          execs.emplace_back(strand_cfg.queues[i].name, std::move(prio_exec));
         }
       } else {
         // Single priority level case.
@@ -217,6 +221,9 @@ protected:
         qparams.policy  = strand_cfg.queues[0].policy;
         qparams.size    = strand_cfg.queues[0].size;
         auto strand_ptr = make_task_strand_ptr(exec_type{basic_exec}, qparams);
+        if (strand_cfg.queues[0].synchronous) {
+          strand_ptr = make_sync_executor(std::move(strand_ptr));
+        }
 
         // Strand becomes the executor.
         execs.emplace_back(strand_cfg.queues[0].name, std::move(strand_ptr));

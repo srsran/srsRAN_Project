@@ -9,7 +9,7 @@
 cell_cfg:
   pucch:
     sr_period_ms: 20   # This can be set either 20 or 40 ms.
-    f1_nof_cell_res_sr: 15
+    f0_or_f1_nof_cell_res_sr: 15
     f2_nof_cell_res_csi: 15
   csi:
     csi_rs_period: 40  # This can be set either 20 or 40 ms.

@@ -507,6 +507,11 @@ public:
   {
     logger.info("Received a new UE context release command");
 
+    last_release_command.ue_index        = msg.ue_index;
+    last_release_command.cause           = msg.cause;
+    last_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+    last_release_command.srb_id          = msg.srb_id;
+
     return launch_async([msg](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(msg.ue_index);
@@ -516,6 +521,8 @@ public:
   bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) override { return true; }
 
   const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
+
+  f1ap_ue_context_release_command last_release_command;
 
 private:
   void make_partial_copy(f1ap_ue_context_modification_request&       target,
@@ -560,6 +567,12 @@ public:
       CORO_BEGIN(ctx);
       CORO_RETURN(rrc_reconfiguration_outcome);
     });
+  }
+
+  byte_buffer get_packed_ue_capability_rat_container_list() override
+  {
+    logger.info("Received a new request to get packed UE capabilities");
+    return byte_buffer{};
   }
 
   rrc_ue_handover_reconfiguration_context

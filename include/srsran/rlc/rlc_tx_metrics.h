@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/engineering_notation.h"
+#include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -87,6 +89,50 @@ public:
   virtual rlc_tx_metrics get_and_reset_metrics() = 0;
   virtual void           reset_metrics()         = 0;
 };
+
+inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rlc_tx_metrics& m)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(
+      buffer,
+      "num_sdus={} sdu_rate={}bps dropped_sdus={} discarded_sdus={} "
+      "num_pdus_no_segm={} pdu_rate_no_segm={}bps",
+      scaled_fmt_integer(m.num_sdus, false),
+      float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / (metrics_period.count()), 1, false),
+      scaled_fmt_integer(m.num_dropped_sdus, false),
+      scaled_fmt_integer(m.num_discarded_sdus, false),
+      scaled_fmt_integer(m.num_pdus_no_segmentation, false),
+      float_to_eng_string(
+          static_cast<float>(m.num_pdu_bytes_no_segmentation) * 8 * 1000 / metrics_period.count(), 1, false));
+
+  if (m.mode == rlc_mode::tm) {
+    // No TM specific metrics for RX
+  } else if ((m.mode == rlc_mode::um_bidir || m.mode == rlc_mode::um_unidir_dl)) {
+    fmt::format_to(buffer,
+                   " num_pdus_with_segm={} pdu_with_segm_rate={}bps",
+                   m.mode_specific.um.num_pdus_with_segmentation,
+                   static_cast<float>(m.mode_specific.um.num_pdu_bytes_with_segmentation) * 8 / metrics_period.count());
+  } else if (m.mode == rlc_mode::am) {
+    fmt::format_to(
+        buffer,
+        " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
+        "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps",
+        scaled_fmt_integer(m.mode_specific.am.num_pdus_with_segmentation, false),
+        float_to_eng_string(static_cast<float>(m.mode_specific.am.num_pdu_bytes_with_segmentation) * 8 * 1000 /
+                                metrics_period.count(),
+                            1,
+                            false),
+        scaled_fmt_integer(m.mode_specific.am.num_retx_pdus, false),
+        float_to_eng_string(
+            static_cast<float>(m.mode_specific.am.num_retx_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+        scaled_fmt_integer(m.mode_specific.am.num_ctrl_pdus, false),
+        float_to_eng_string(static_cast<float>(m.mode_specific.am.num_ctrl_pdu_bytes) * 8 * 1000 /
+                                (double)metrics_period.count(),
+                            1,
+                            false));
+  }
+  return to_c_str(buffer);
+}
 } // namespace srsran
 
 namespace fmt {

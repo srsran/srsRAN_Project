@@ -49,9 +49,9 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
       sequence, *prg, M_SQRT1_2 * config.amplitude, config.reference_point_k_rb, NOF_DMRS_PER_RB, config.rb_mask);
 }
 
-void dmrs_pdcch_processor_impl::mapping(resource_grid_mapper&   mapper,
-                                        const re_buffer_reader& d_pdcch,
-                                        const config_t&         config)
+void dmrs_pdcch_processor_impl::mapping(resource_grid_mapper&     mapper,
+                                        const re_buffer_reader<>& d_pdcch,
+                                        const config_t&           config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {false, true, false, false, false, true, false, false, false, true, false, false};

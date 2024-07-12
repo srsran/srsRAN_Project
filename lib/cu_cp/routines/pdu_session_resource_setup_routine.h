@@ -85,7 +85,6 @@ private:
   srslog::basic_logger&                         logger;
 
   // (sub-)routine requests
-  rrc_ue_capability_transfer_request       ue_capability_transfer_request;
   e1ap_bearer_context_setup_request        bearer_context_setup_request;
   f1ap_ue_context_modification_request     ue_context_mod_request;
   e1ap_bearer_context_modification_request bearer_context_modification_request;
@@ -93,7 +92,6 @@ private:
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_setup_response response_msg;
-  bool                                      ue_capability_transfer_result = false; // to query the UE capabilities
   e1ap_bearer_context_setup_response        bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
   f1ap_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response

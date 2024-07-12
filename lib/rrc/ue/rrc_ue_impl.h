@@ -56,14 +56,15 @@ public:
   void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
-  rrc_ue_controller&                   get_controller() override { return *this; }
-  rrc_ul_ccch_pdu_handler&             get_ul_ccch_pdu_handler() override { return *this; }
-  rrc_ul_dcch_pdu_handler&             get_ul_dcch_pdu_handler() override { return *this; }
-  rrc_dl_nas_message_handler&          get_rrc_dl_nas_message_handler() override { return *this; }
-  rrc_ue_srb_handler&                  get_rrc_ue_srb_handler() override { return *this; }
-  rrc_ue_control_message_handler&      get_rrc_ue_control_message_handler() override { return *this; }
-  rrc_ue_context_handler&              get_rrc_ue_context_handler() override { return *this; }
-  rrc_ue_handover_preparation_handler& get_rrc_ue_handover_preparation_handler() override { return *this; }
+  rrc_ue_controller&                      get_controller() override { return *this; }
+  rrc_ul_ccch_pdu_handler&                get_ul_ccch_pdu_handler() override { return *this; }
+  rrc_ul_dcch_pdu_handler&                get_ul_dcch_pdu_handler() override { return *this; }
+  rrc_dl_nas_message_handler&             get_rrc_dl_nas_message_handler() override { return *this; }
+  rrc_ue_srb_handler&                     get_rrc_ue_srb_handler() override { return *this; }
+  rrc_ue_control_message_handler&         get_rrc_ue_control_message_handler() override { return *this; }
+  rrc_ue_radio_access_capability_handler& get_rrc_ue_radio_access_capability_handler() override { return *this; }
+  rrc_ue_context_handler&                 get_rrc_ue_context_handler() override { return *this; }
+  rrc_ue_handover_preparation_handler&    get_rrc_ue_handover_preparation_handler() override { return *this; }
 
   // rrc_ue_srb_handler
   void                                  create_srb(const srb_creation_message& msg) override;
@@ -74,13 +75,15 @@ public:
 
   // rrc_ue_control_message_handler
   rrc_ue_security_mode_command_context get_security_mode_command_context() override;
-  async_task<bool>                     handle_security_mode_command_complete_expected(uint8_t transaction_id) override;
+  async_task<bool>                     handle_security_mode_complete_expected(uint8_t transaction_id) override;
+  byte_buffer                          get_packed_ue_capability_rat_container_list() const override;
+  byte_buffer                          get_packed_ue_radio_access_cap_info() const override;
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
   async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
-  rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_msg) override;
+  rrc_ue_release_context      get_rrc_ue_release_context(bool requires_rrc_message) override;
   rrc_ue_transfer_context     get_transfer_context() override;
   std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config) override;
   byte_buffer                 get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,

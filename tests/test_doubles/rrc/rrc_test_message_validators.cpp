@@ -79,3 +79,39 @@ bool srsran::test_helpers::is_valid_rrc_security_mode_command(const byte_buffer&
   TRUE_OR_RETURN(dcch.unpack(bref) == asn1::SRSASN_SUCCESS);
   return is_valid_rrc_security_mode_command(dcch);
 }
+
+bool srsran::test_helpers::is_valid_rrc_ue_capability_enquiry(const asn1::rrc_nr::dl_dcch_msg_s& msg)
+{
+  TRUE_OR_RETURN(msg.msg.type().value == asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1);
+  TRUE_OR_RETURN(msg.msg.c1().type().value == asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::ue_cap_enquiry);
+  TRUE_OR_RETURN(msg.msg.c1().ue_cap_enquiry().crit_exts.type().value ==
+                 asn1::rrc_nr::ue_cap_enquiry_s::crit_exts_c_::types_opts::ue_cap_enquiry);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_rrc_ue_capability_enquiry(const byte_buffer& dl_dcch_msg)
+{
+  asn1::cbit_ref              bref{dl_dcch_msg};
+  asn1::rrc_nr::dl_dcch_msg_s dcch;
+  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::SRSASN_SUCCESS);
+  return is_valid_rrc_ue_capability_enquiry(dcch);
+}
+
+bool srsran::test_helpers::is_valid_rrc_reconfiguration(const asn1::rrc_nr::dl_dcch_msg_s& msg)
+{
+  TRUE_OR_RETURN(msg.msg.type().value == asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1);
+  TRUE_OR_RETURN(msg.msg.c1().type().value == asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg);
+  TRUE_OR_RETURN(msg.msg.c1().rrc_recfg().crit_exts.type().value ==
+                 asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types_opts::rrc_recfg);
+  TRUE_OR_RETURN(msg.msg.c1().rrc_recfg().crit_exts.rrc_recfg().non_crit_ext_present);
+  TRUE_OR_RETURN(msg.msg.c1().rrc_recfg().crit_exts.rrc_recfg().non_crit_ext.ded_nas_msg_list.size() != 0);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_rrc_reconfiguration(const byte_buffer& dl_dcch_msg)
+{
+  asn1::cbit_ref              bref{dl_dcch_msg};
+  asn1::rrc_nr::dl_dcch_msg_s dcch;
+  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::SRSASN_SUCCESS);
+  return is_valid_rrc_reconfiguration(dcch);
+}

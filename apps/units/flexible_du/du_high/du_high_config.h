@@ -221,10 +221,12 @@ struct du_high_unit_pucch_config {
   int p0_nominal = -90;
 
   /// \c PUCCH-Config parameters.
-  /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_ue_pucch_f1_res_harq = 8;
+  /// Number of PUCCH Format 0/1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
+  unsigned nof_ue_pucch_f0_or_f1_res_harq = 8;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f2_res_harq = 6;
+  /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
+  bool use_format_0 = false;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of
@@ -240,19 +242,19 @@ struct du_high_unit_pucch_config {
   /// these are the only ones supported. Values: {1, 2, 2.5, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320}.
   float sr_period_msec = 20.0F;
 
+  /// PUCCH F0 resource parameter.
+  /// Set true for PUCCH Format 0 intra-slot frequency hopping.
+  bool f0_intraslot_freq_hopping = false;
+
   /// PUCCH F1 resource parameters.
-  /// Number of symbols for PUCCH Format 1. Values {4, 14}.
-  unsigned f1_nof_symbols = 14;
-  bool     f1_enable_occ  = true;
+  /// \brief Enable Orthogonal Cover Code for PUCCH Format 1.
+  bool f1_enable_occ = true;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
   unsigned nof_cyclic_shift = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
 
-  /// PUCCH F2 resource parameters.
-  /// Number of symbols for PUCCH Format 2. Values {1, 2}.
-  unsigned f2_nof_symbols = 2;
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
   /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
@@ -498,6 +500,8 @@ struct du_high_unit_prach_config {
 struct du_high_unit_base_cell_config {
   /// Physical cell identifier.
   pci_t pci = 1;
+  /// Sector Id (4-14 bits) that gets concatenated with gNB-Id to form the NR Cell Identity (NCI).
+  std::optional<unsigned> sector_id;
   /// Downlink arfcn.
   unsigned dl_arfcn = 536020;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.

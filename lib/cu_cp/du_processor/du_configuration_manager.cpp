@@ -21,6 +21,7 @@
  */
 
 #include "du_configuration_manager.h"
+#include "srsran/ngap/ngap_configuration.h"
 #include "srsran/rrc/rrc_config.h"
 
 using namespace srsran;
@@ -86,8 +87,8 @@ private:
   du_configuration_manager& parent;
 };
 
-du_configuration_manager::du_configuration_manager(const rrc_cfg_t& rrc_cfg_) :
-  rrc_cfg(rrc_cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
+du_configuration_manager::du_configuration_manager(const ngap_configuration& ngap_cfg_, const rrc_cfg_t& rrc_cfg_) :
+  ngap_cfg(ngap_cfg_), rrc_cfg(rrc_cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
 }
 
@@ -201,7 +202,7 @@ void du_configuration_manager::rem_du(gnb_du_id_t du_id)
 {
   auto it = dus.find(du_id);
   if (it == dus.end()) {
-    logger.warning("du_id={}: Failed to remove DU. Cause: DU not found", du_id);
+    logger.warning("du={}: Failed to remove DU. Cause: DU not found", du_id);
     return;
   }
   dus.erase(it);
@@ -210,24 +211,44 @@ void du_configuration_manager::rem_du(gnb_du_id_t du_id)
 error_type<du_setup_result::rejected>
 du_configuration_manager::validate_new_du_config(const du_setup_request& req) const
 {
+  if (req.gnb_du_served_cells_list.size() > MAX_NOF_DU_CELLS) {
+    return make_unexpected(
+        du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Too many served cells"});
+  }
+
+  // Validate served cell configurations provided in the configuration request.
+  for (const auto& served_cell : req.gnb_du_served_cells_list) {
+    auto ret = validate_cell_config_request(served_cell);
+    if (not ret.has_value()) {
+      return ret;
+    }
+
+    if (served_cell.served_cell_info.nr_cgi.plmn_id != ngap_cfg.plmn) {
+      return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
+                                                       "Served Cell CGI PLMN is not supported by the CU-CP"});
+    }
+
+    if (std::none_of(served_cell.served_cell_info.served_plmns.begin(),
+                     served_cell.served_cell_info.served_plmns.end(),
+                     [this](const plmn_identity& plmn) { return plmn == ngap_cfg.plmn; })) {
+      return make_unexpected(du_setup_result::rejected{f1ap_cause_radio_network_t::plmn_not_served_by_the_gnb_cu,
+                                                       "None of the served cell PLMNs is available in the CU-CP"});
+    }
+  }
+
   // Ensure the DU config does not collide with other DUs.
   for (const auto& [du_id, du_cfg] : dus) {
     if (du_cfg.id == req.gnb_du_id) {
       return make_unexpected(
           du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Duplicate DU ID"});
     }
-  }
-
-  if (req.gnb_du_served_cells_list.size() > MAX_NOF_DU_CELLS) {
-    return make_unexpected(
-        du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state, "Too many served cells"});
-  }
-
-  // Validate served cell configurations.
-  for (const auto& served_cell : req.gnb_du_served_cells_list) {
-    auto ret = validate_cell_config_request(served_cell);
-    if (not ret.has_value()) {
-      return ret;
+    for (const auto& cell : du_cfg.served_cells) {
+      for (const auto& new_cell : req.gnb_du_served_cells_list) {
+        if (cell.cgi == new_cell.served_cell_info.nr_cgi) {
+          return make_unexpected(du_setup_result::rejected{cause_protocol_t::msg_not_compatible_with_receiver_state,
+                                                           "Duplicate served cell CGI"});
+        }
+      }
     }
   }
 

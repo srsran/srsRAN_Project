@@ -139,6 +139,15 @@ e2e request and config validation:
     reports:
       junit: tests/e2e/out.xml
   script:
+    - |
+      # Print E2E parameters
+      echo "TESTBED=${TESTBED}"
+      echo "MARKERS=${MARKERS}"
+      echo "KEYWORDS=${KEYWORDS}"
+      echo "PYTEST_ARGS=${PYTEST_ARGS}"
+      echo "RETINA_PARAM_ARGS=${RETINA_PARAM_ARGS}"
+      echo "RETINA_LAUNCHER_ARGS=${RETINA_LAUNCHER_ARGS}"
+      echo "E2E_LOG_LEVEL=${E2E_LOG_LEVEL}"
     # Clean LFS files
     - |
       while read -r line; do
@@ -151,11 +160,9 @@ e2e request and config validation:
     - |
       echo "" >> .gitlab/ci/e2e/.env
       cat $RETINA_CONFIG_ENV >> .gitlab/ci/e2e/.env
-
-      echo -e "\nGNB_BINARY_PATH=../../" >> .gitlab/ci/e2e/.env
-      echo -e "\nGNB_REMOTE_PATH=$CI_PROJECT_DIR" >> .gitlab/ci/e2e/.env
-      echo -e "\nis_executable=false" >> .gitlab/ci/e2e/.env
-
+    # Modify request to shared the complete folder with the gnb container
+    - |
+      yq -i '(.[] | select(.type == "gnb") | .shared_files) += [{"local_path": "../../", "remote_path": env(CI_PROJECT_DIR), "is_executable": false}]' ${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
     # Set username for retina
     - |
       cd tests/e2e
@@ -368,19 +375,39 @@ amari 32UE memcheck:
     - *txrx-lib
     - *retina-needs
 
-amari 4 cudu:
+cudu amari 8UE:
   extends: .zmq
   variables:
     TESTBED: zmq_cudu
-    MARKERS: "smoke"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
+    MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   allow_failure: true
   needs:
     - job: "basic relwithdeb"
       artifacts: true
     - *txrx-lib
     - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS: ["reestablishment and sequentially"]
+
+cudu amari 32UE:
+  extends: .zmq
+  variables:
+    TESTBED: zmq_cudu
+    MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  allow_failure: true
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+  parallel:
+    matrix:
+      - KEYWORDS: ["ping", "iperf and tcp and not band:3 and bandwidth:50"]
 
 ################################################################################
 # TEST MODE

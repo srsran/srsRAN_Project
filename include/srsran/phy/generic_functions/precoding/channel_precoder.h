@@ -46,8 +46,8 @@ public:
   /// of RE per layer of the input buffer.
   /// \remark An assertion is triggered if the precoding matrix dimensions do not match the number of layers of the
   /// input buffer and the number of antenna ports of the output buffer.
-  virtual void apply_precoding(re_buffer_writer&              output,
-                               const re_buffer_reader&        input,
+  virtual void apply_precoding(re_buffer_writer<>&            output,
+                               const re_buffer_reader<>&      input,
                                const precoding_weight_matrix& precoding) const = 0;
 
   /// \brief Maps the input symbols into layers and applies a set of precoding weights.
@@ -58,7 +58,7 @@ public:
   /// of RE per layer of the input buffer.
   /// \remark An assertion is triggered if the precoding matrix dimensions are not consistent with input buffer size and
   /// the number of antenna ports of the output buffer.
-  virtual void apply_layer_map_and_precoding(re_buffer_writer&              output,
+  virtual void apply_layer_map_and_precoding(re_buffer_writer<>&            output,
                                              span<const ci8_t>              input,
                                              const precoding_weight_matrix& precoding) const = 0;
 };

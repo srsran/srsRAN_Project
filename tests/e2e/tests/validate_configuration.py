@@ -137,7 +137,7 @@ def run_config(
             fivegc_definition=fivegc_def,
             start_info=StartInfo(
                 timeout=timeout,
-                post_commands=(f"log --filename stdout {extra_config}"),
+                post_commands=(f"log --filename stdout {extra_config}",),
             ),
         )
     )

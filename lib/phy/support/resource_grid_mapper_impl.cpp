@@ -46,7 +46,7 @@ static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
 // from the RE allocation pattern.
 static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
                                       precoding_buffer_type&         precoding_buffer,
-                                      const re_buffer_reader&        input,
+                                      const re_buffer_reader<>&      input,
                                       const re_pattern&              pattern,
                                       const precoding_configuration& precoding,
                                       const channel_precoder&        precoder)
@@ -162,7 +162,7 @@ resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                   
                 static_cast<unsigned>(max_nof_subcarriers));
 }
 
-void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
+void resource_grid_mapper_impl::map(const re_buffer_reader<>&      input,
                                     const re_pattern&              pattern,
                                     const precoding_configuration& precoding)
 {

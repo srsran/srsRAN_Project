@@ -303,6 +303,24 @@ V log_likelihood_ratio::dot_prod(const T& x, const U& y, V init)
       });
 }
 
+/// \brief Clamps the input values between a lower and higher bound.
+///
+/// The equivalent code is:
+/// \code
+/// std::transform(in.begin(), in.end(), out.begin(), [low, high](auto llr){
+///   return std::clamp(llr, low, high);
+/// });
+/// \endcode
+///
+/// \param[out] out  Resultant values.
+/// \param[in]  in   Input values to clamp.
+/// \param[in]  low  Lower bound to clamp to.
+/// \param[in]  high Higher bound to clamp to.
+void clamp(span<log_likelihood_ratio>       out,
+           span<const log_likelihood_ratio> in,
+           log_likelihood_ratio             low,
+           log_likelihood_ratio             high);
+
 /// \brief Squared Euclidean norm of a sequence of LLRs.
 ///
 /// Computes the squared Euclidean norm (sum of the squares of the elements) of the input sequence of LLRs.

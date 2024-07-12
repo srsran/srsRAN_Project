@@ -73,6 +73,10 @@ private:
     const dl_harq_process* dl_newtx_h = nullptr;
     const ul_harq_process* ul_retx_h  = nullptr;
     const ul_harq_process* ul_newtx_h = nullptr;
+    /// Number of pending newTx bytes in SRBs in DL to be scheduled.
+    unsigned dl_newtx_srb_pending_bytes = 0;
+    /// Number of pending newTx bytes in SRBs in UL to be scheduled.
+    unsigned ul_newtx_srb_pending_bytes = 0;
     /// Flag indicating whether SR indication from the UE is received or not.
     bool sr_ind_received = false;
 

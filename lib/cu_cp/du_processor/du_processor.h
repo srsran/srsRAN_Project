@@ -83,11 +83,6 @@ class du_processor_f1ap_ue_context_notifier
 public:
   virtual ~du_processor_f1ap_ue_context_notifier() = default;
 
-  /// Notify F1AP to establish the UE context.
-  virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
-                              std::optional<rrc_ue_transfer_context> rrc_context) = 0;
-
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.
   /// \return Returns the index of the released UE.
@@ -168,6 +163,10 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Get the packed UE Capability RAT Container List.
+  /// \returns The packed UE Capability RAT Container List.
+  virtual byte_buffer get_packed_ue_capability_rat_container_list() = 0;
+
   /// \brief Request the RRC Handover Reconfiguration Context.
   /// \returns The RRC Handover Reconfiguration Context.
   virtual rrc_ue_handover_reconfiguration_context
@@ -191,6 +190,7 @@ public:
   /// \return The measurement config, if present.
   virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
 
+  /// \brief Request the packed Handover Preparation Message.
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
 
   /// \brief Notify about the reception of a new Handover Command PDU.

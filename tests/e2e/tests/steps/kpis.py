@@ -22,7 +22,6 @@
 KPI related logic
 """
 
-from contextlib import suppress
 from dataclasses import dataclass, fields
 from typing import Optional, Sequence
 
@@ -70,34 +69,21 @@ def get_kpis(
     # GNB
     gnb_metrics: Metrics = gnb.GetMetrics(Empty())
 
-    ul_nof_ok_aggregate = 0
-    dl_nof_ok_aggregate = 0
-    ul_nof_ko_aggregate = 0
-    dl_nof_ko_aggregate = 0
+    kpis.ul_brate_aggregate = gnb_metrics.total.ul_bitrate
+    kpis.ul_brate_min = gnb_metrics.total.ul_bitrate_min
+    kpis.ul_brate_max = gnb_metrics.total.ul_bitrate_max
 
-    for ue_info in gnb_metrics.ue_array:
-        kpis.ul_brate_aggregate += ue_info.ul_bitrate
-        kpis.dl_brate_aggregate += ue_info.dl_bitrate
+    kpis.dl_brate_aggregate = gnb_metrics.total.dl_bitrate
+    kpis.dl_brate_min = gnb_metrics.total.dl_bitrate_min
+    kpis.dl_brate_max = gnb_metrics.total.dl_bitrate_max
 
-        with suppress(TypeError):
-            kpis.ul_brate_min = min(*filter(lambda value: value != 0, (kpis.ul_brate_min, ue_info.ul_bitrate_min)))
-        with suppress(TypeError):
-            kpis.dl_brate_min = min(*filter(lambda value: value != 0, (kpis.dl_brate_min, ue_info.dl_bitrate_min)))
+    kpis.nof_ko_aggregate = gnb_metrics.total.dl_nof_ko + gnb_metrics.total.ul_nof_ko
 
-        kpis.ul_brate_max = max(ue_info.ul_bitrate_max, kpis.ul_brate_max)
-        kpis.dl_brate_max = max(ue_info.dl_bitrate_max, kpis.dl_brate_max)
+    total_ul_ko_ok = gnb_metrics.total.ul_nof_ok + gnb_metrics.total.ul_nof_ko
+    total_dl_ko_ok = gnb_metrics.total.dl_nof_ok + gnb_metrics.total.dl_nof_ko
 
-        ul_nof_ok_aggregate += ue_info.ul_nof_ok
-        dl_nof_ok_aggregate += ue_info.dl_nof_ok
-        ul_nof_ko_aggregate += ue_info.ul_nof_ko
-        dl_nof_ko_aggregate += ue_info.dl_nof_ko
-        kpis.nof_ko_aggregate += ue_info.ul_nof_ko + ue_info.dl_nof_ko
-
-    tota_ul_ko_ok = ul_nof_ok_aggregate + ul_nof_ko_aggregate
-    total_dl_ko_ok = dl_nof_ok_aggregate + dl_nof_ko_aggregate
-
-    kpis.ul_bler_aggregate = 0 if not tota_ul_ko_ok else ul_nof_ko_aggregate / tota_ul_ko_ok
-    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else dl_nof_ko_aggregate / total_dl_ko_ok
+    kpis.ul_bler_aggregate = 0 if not total_ul_ko_ok else gnb_metrics.total.ul_nof_ko / total_ul_ko_ok
+    kpis.dl_bler_aggregate = 0 if not total_dl_ko_ok else gnb_metrics.total.dl_nof_ko / total_dl_ko_ok
 
     # UE
     for ue in ue_array:

@@ -22,6 +22,7 @@
 
 #include "du_high_config_validator.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/nr_cell_identity.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/rlc/rlc_config.h"
@@ -757,7 +758,7 @@ static bool validate_cell_unit_config(const du_high_unit_cell_config& config)
 }
 
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
-static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config)
+static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id)
 {
   unsigned tac = config[0].cell.tac;
   for (const auto& cell : config) {
@@ -766,6 +767,12 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
     }
     if (cell.cell.tac != tac) {
       fmt::print("The TAC must be the same for all cells\n");
+      return false;
+    }
+
+    if (cell.cell.sector_id.has_value() and
+        not nr_cell_identity::create(gnb_id, cell.cell.sector_id.value()).has_value()) {
+      fmt::print("Invalid Sector ID {}, for a gNB Id of {} bits\n", cell.cell.sector_id.value(), gnb_id.bit_length);
       return false;
     }
   }
@@ -783,6 +790,13 @@ static bool validate_cells_unit_config(span<const du_high_unit_cell_config> conf
           fmt::print("Warning: two cells with the same DL ARFCN (i.e., {}) have the same PCI (i.e., {}).\n",
                      cell1.cell.dl_arfcn,
                      cell1.cell.pci);
+        }
+        if (cell1.cell.sector_id.has_value() and cell1.cell.sector_id == cell2.cell.sector_id and
+            cell1.cell.plmn == cell2.cell.plmn) {
+          fmt::print("Error: two cells with the same PLMN (i.e., {}) and cell ID (i.e., {})\n",
+                     cell1.cell.plmn,
+                     cell1.cell.sector_id);
+          return false;
         }
 
         // Two cells on the same frequency should not share the same PRACH root sequence index.
@@ -1049,7 +1063,7 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_cells_unit_config(config.cells_cfg)) {
+  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
     return false;
   }
 

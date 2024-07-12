@@ -101,9 +101,9 @@ void initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_respons
     std::string cause;
     switch (resp.result) {
       case f1_setup_response_message::result_code::f1_setup_failure:
-        cause = "CU-CP responded with F1 Setup Failure";
+        cause = "CU-CP responded with \"F1 Setup Failure\"";
         if (resp.f1_setup_failure_cause != "unspecified") {
-          cause += fmt::format(" with cause {}", resp.f1_setup_failure_cause);
+          cause += fmt::format(" with F1AP cause \"{}\"", resp.f1_setup_failure_cause);
         }
         break;
       case f1_setup_response_message::result_code::invalid_response:

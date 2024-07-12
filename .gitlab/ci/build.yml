@@ -134,6 +134,16 @@ variables:
   before_script:
     - !reference [.fetch_src_cache, script]
     - |
+      # Print build parameters
+      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
+      echo "OS=${OS}"
+      echo "COMPILER=${COMPILER}"
+      echo "TEST_MODE=${TEST_MODE}"
+      echo "BUILD_ARGS=${BUILD_ARGS}"
+      echo "MAKE_ARGS=${MAKE_ARGS}"
+      echo "UHD_VERSION=${UHD_VERSION}"
+      echo "DPDK_VERSION=${DPDK_VERSION}"
+    - |
       build_srsgnb() {
         start_time=$(date +%s)
         if [ -e "/usr/local/bin/ram_reporter.py" ]; then
@@ -196,7 +206,7 @@ variables:
 
         if [ -n "${DPDK_VERSION}" ]; then
           BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+          export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
         fi
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
@@ -333,7 +343,7 @@ variables:
         mv /tmp/srscu ${CI_PROJECT_DIR}/build/apps/cu/srscu
         mv /tmp/srsdu ${CI_PROJECT_DIR}/build/apps/du/srsdu
       fi
-  timeout: 4h
+  timeout: 6h
   artifacts: &build_artifacts
     when: always
     reports:

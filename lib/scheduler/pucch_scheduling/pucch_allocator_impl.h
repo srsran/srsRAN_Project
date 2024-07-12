@@ -112,22 +112,19 @@ private:
 
   /// \brief Defines a PUCCH grant (and its relevant information) currently allocated to a given UE.
   /// It is used internally to keep track of the UEs' allocations of the PUCCH grants with dedicated resources.
-  class pucch_grant
-  {
-  public:
+  struct pucch_grant {
     pucch_grant_type type;
+    pucch_format     format = pucch_format::NOF_FORMATS;
     // Only relevant for HARQ-ACK resources.
-    harq_res_id    harq_id;
-    pucch_uci_bits bits;
+    harq_res_id       harq_id;
+    pucch_uci_bits    bits;
+    ofdm_symbol_range symbols = {NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 1};
     // NOTE: The pointer to the PUCCH resource configuration can only be used within the same slot; this is to prevent
     // the possibility that the re-configurations can null the pointer before an allocation and the next.
     const pucch_resource* pucch_res_cfg = nullptr;
 
-    [[nodiscard]] pucch_format get_format() const
-    {
-      return pucch_res_cfg != nullptr ? pucch_res_cfg->format : pucch_format::NOF_FORMATS;
-    }
-    [[nodiscard]] ofdm_symbol_range get_symbols() const;
+    // Set format and symbols given the configuration.
+    void set_res_config(const pucch_resource& res_cfg);
   };
 
   /// \brief List of possible PUCCH grants that allocated to a UE, at a given slot.
@@ -137,10 +134,10 @@ private:
     std::optional<pucch_grant> harq_resource;
     std::optional<pucch_grant> sr_resource;
     std::optional<pucch_grant> csi_resource;
-    unsigned                   nof_grants = 0;
 
     [[nodiscard]] pucch_uci_bits get_uci_bits() const;
     [[nodiscard]] bool           is_emtpy() const;
+    [[nodiscard]] unsigned       get_nof_grants() const;
   };
 
   /// Keeps track of the PUCCH grants (common + dedicated) for a given UE.

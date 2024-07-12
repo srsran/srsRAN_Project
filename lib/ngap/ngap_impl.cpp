@@ -255,6 +255,48 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
   }));
 }
 
+void ngap_impl::handle_tx_ue_radio_capability_info_indication_required(
+    const ngap_ue_radio_capability_info_indication& msg)
+{
+  if (!ue_ctxt_list.contains(msg.ue_index)) {
+    logger.warning("ue={}: Dropping UE Radio Capability Info Indication. UE context does not exist", msg.ue_index);
+    return;
+  }
+
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
+
+  auto* ue = ue_ctxt.get_cu_cp_ue();
+  srsran_assert(ue != nullptr,
+                "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
+                ue_ctxt.ue_ids.ue_index,
+                ue_ctxt.ue_ids.ran_ue_id,
+                ue_ctxt.ue_ids.amf_ue_id);
+
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_RADIO_CAP_INFO_IND);
+  auto& ue_radio_cap_info_ind_msg = ngap_msg.pdu.init_msg().value.ue_radio_cap_info_ind();
+
+  ue_radio_cap_info_ind_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+
+  amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
+  if (amf_ue_id == amf_ue_id_t::invalid) {
+    logger.warning("ue={}: Dropping UE Radio Capability Info message. UE does not have an AMF UE ID", msg.ue_index);
+    return;
+  }
+  ue_radio_cap_info_ind_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ue_radio_cap_info_ind_msg->ue_radio_cap   = msg.ue_cap_rat_container_list.copy();
+
+  ue_ctxt.logger.log_info("Scheduling UE Radio Capability Info Indication");
+
+  // Schedule transmission of UE Radio Capability Info Indication to AMF
+  ue->schedule_async_task(launch_async([this, ngap_msg](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    tx_pdu_notifier->on_new_message(ngap_msg);
+    CORO_RETURN();
+  }));
+}
+
 void ngap_impl::handle_message(const ngap_message& msg)
 {
   // Run NGAP protocols in Control executor.
@@ -353,9 +395,16 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
+  ngap_dl_nas_transport_message dl_nas_msg;
+  fill_ngap_dl_nas_transport_message(dl_nas_msg, ue->get_ue_index(), msg);
+
   // start routine
-  ue->schedule_async_task(launch_async<ngap_dl_nas_message_transfer_procedure>(
-      msg->nas_pdu.copy(), ue->get_rrc_ue_pdu_notifier(), ue_ctxt.logger));
+  ue->schedule_async_task(
+      launch_async<ngap_dl_nas_message_transfer_procedure>(dl_nas_msg,
+                                                           ue->get_rrc_ue_pdu_notifier(),
+                                                           ue->get_rrc_ue_control_notifier(),
+                                                           get_ngap_ue_radio_cap_management_handler(),
+                                                           ue_ctxt.logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
@@ -477,7 +526,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   // start routine
   ue->schedule_async_task(launch_async<ngap_pdu_session_resource_setup_procedure>(
-      msg, request, ue_ctxt.ue_ids, ue->get_rrc_ue_pdu_notifier(), cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
+      msg, request, ue_ctxt.ue_ids, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)

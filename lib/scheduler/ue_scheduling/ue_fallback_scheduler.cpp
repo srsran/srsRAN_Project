@@ -1254,7 +1254,7 @@ unsigned ue_fallback_scheduler::fill_dl_srb_grant(ue&                        u,
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
-  h_dl.save_alloc_params(dl_harq_sched_context{pdcch.dci.type}, msg.pdsch_cfg);
+  h_dl.save_alloc_params(dl_harq_sched_context{pdcch.dci.type}, msg.pdsch_cfg, true);
 
   return srb1_bytes_allocated;
 }

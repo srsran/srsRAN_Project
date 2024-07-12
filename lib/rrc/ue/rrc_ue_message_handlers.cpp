@@ -164,6 +164,9 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
       break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_fail().rrc_transaction_id);
+      break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::ue_cap_info:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
@@ -321,7 +324,7 @@ rrc_ue_security_mode_command_context rrc_ue_impl::get_security_mode_command_cont
   return smc_ctxt;
 }
 
-async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uint8_t transaction_id)
+async_task<bool> rrc_ue_impl::handle_security_mode_complete_expected(uint8_t transaction_id)
 {
   // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
   const std::chrono::milliseconds timeout_ms{1000};
@@ -330,29 +333,63 @@ async_task<bool> rrc_ue_impl::handle_security_mode_command_complete_expected(uin
       [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
-        logger.log_debug("Awaiting RRC Security Mode Command Complete (timeout={}ms)", timeout_ms.count());
+        logger.log_debug("Awaiting RRC Security Mode Complete (timeout={}ms)", timeout_ms.count());
         // create new transaction for RRC Security Mode Command procedure
         transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 
         CORO_AWAIT(transaction);
 
-        bool procedure_result = false;
-        if (transaction.has_response()) {
-          logger.log_debug("Received RRC Security Mode Command Complete");
-          procedure_result = true;
-          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
-        } else {
-          logger.log_debug("Did not receive RRC Security Mode Command Complete. Cause: timeout");
+        if (!transaction.has_response()) {
+          logger.log_debug("Did not receive RRC Security Mode Complete. Cause: timeout");
+          CORO_EARLY_RETURN(false);
         }
 
-        CORO_RETURN(procedure_result);
+        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_fail) {
+          logger.log_warning("Received RRC Security Mode Failure");
+          CORO_EARLY_RETURN(false);
+        }
+
+        if (transaction.response().msg.c1().type() == ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete) {
+          logger.log_debug("Received RRC Security Mode Complete");
+          handle_security_mode_complete(transaction.response().msg.c1().security_mode_complete());
+        }
+
+        CORO_RETURN(true);
       });
+}
+
+byte_buffer rrc_ue_impl::get_packed_ue_capability_rat_container_list() const
+{
+  byte_buffer pdu{};
+
+  if (context.capabilities_list.has_value()) {
+    asn1::bit_ref bref{pdu};
+
+    if (pack_dyn_seq_of(bref, context.capabilities_list.value(), 0, 8) != asn1::SRSASN_SUCCESS) {
+      logger.log_error("Error packing UE Capability RAT Container List");
+      return byte_buffer{};
+    }
+  } else {
+    logger.log_debug("No UE capabilites available");
+  }
+
+  return pdu.copy();
+}
+
+byte_buffer rrc_ue_impl::get_packed_ue_radio_access_cap_info() const
+{
+  asn1::rrc_nr::ue_radio_access_cap_info_s      ue_radio_access_cap_info;
+  asn1::rrc_nr::ue_radio_access_cap_info_ies_s& ue_radio_access_cap_info_ies =
+      ue_radio_access_cap_info.crit_exts.set_c1().set_ue_radio_access_cap_info();
+  ue_radio_access_cap_info_ies.ue_radio_access_cap_info = get_packed_ue_capability_rat_container_list();
+
+  return pack_into_pdu(ue_radio_access_cap_info, "UE Radio Access Cap Info");
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(
-      context, msg, *this, cu_cp_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
+      context, msg, *this, cu_cp_notifier, cu_cp_ue_notifier, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
 rrc_ue_handover_reconfiguration_context
@@ -460,26 +497,26 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context(bool requires_rrc
       if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
         logger.log_error("Can't create RRCRelease PDU. RX {} is not set up", srb_id_t::srb1);
         return release_context;
-      } else {
-        dl_dcch_msg_s dl_dcch_msg;
-        dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
-
-        // pack DL CCCH msg
-        pdcp_tx_result pdcp_packing_result =
-            context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
-        if (!pdcp_packing_result.is_successful()) {
-          logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
-                          pdcp_packing_result.get_failure_cause());
-          on_ue_release_required(pdcp_packing_result.get_failure_cause());
-          return release_context;
-        }
-
-        release_context.rrc_release_pdu = pdcp_packing_result.pop_pdu();
-        release_context.srb_id          = srb_id_t::srb1;
-
-        // Log Tx message
-        log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
       }
+
+      dl_dcch_msg_s dl_dcch_msg;
+      dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+      // pack DL CCCH msg
+      pdcp_tx_result pdcp_packing_result =
+          context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg, "RRCRelease"));
+      if (!pdcp_packing_result.is_successful()) {
+        logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
+                        pdcp_packing_result.get_failure_cause());
+        on_ue_release_required(pdcp_packing_result.get_failure_cause());
+        return release_context;
+      }
+
+      release_context.rrc_release_pdu = pdcp_packing_result.pop_pdu();
+      release_context.srb_id          = srb_id_t::srb1;
+
+      // Log Tx message
+      log_rrc_message(logger, Tx, release_context.rrc_release_pdu, dl_dcch_msg, "DCCH DL");
     }
 
     // Log Tx message
@@ -507,6 +544,8 @@ rrc_ue_transfer_context rrc_ue_impl::get_transfer_context()
   transfer_context.srbs                      = get_srbs();
   transfer_context.up_ctx                    = cu_cp_notifier.on_up_context_required();
   transfer_context.handover_preparation_info = get_packed_handover_preparation_message();
+  transfer_context.ue_cap_rat_container_list = get_packed_ue_capability_rat_container_list();
+
   return transfer_context;
 }
 

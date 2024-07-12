@@ -31,6 +31,7 @@
 #ifndef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #endif // __clang__
 
 #include <immintrin.h>

@@ -638,16 +638,17 @@ public:
     cfg.sched_ue_metrics_notifier  = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
-    cfg.cells[0].pucch_cfg.nof_sr_resources             = 30;
-    cfg.cells[0].pucch_cfg.nof_csi_resources            = 30;
-    cfg.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq     = 8;
-    cfg.cells[0].pucch_cfg.nof_ue_pucch_f1_res_harq     = 8;
-    cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets = 4;
-    cfg.cells[0].pucch_cfg.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
-    cfg.cells[0].pucch_cfg.f1_params.occ_supported      = true;
-    cfg.sched_cfg.ue.max_pucchs_per_slot                = 61;
-    cfg.sched_cfg.ue.max_puschs_per_slot                = 61;
-    cfg.sched_cfg.ue.max_ul_grants_per_slot             = 64;
+    cfg.cells[0].pucch_cfg.nof_sr_resources               = 30;
+    cfg.cells[0].pucch_cfg.nof_csi_resources              = 30;
+    cfg.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq       = 8;
+    cfg.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
+    cfg.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
+    auto& f1_params                         = cfg.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts                = srsran::nof_cyclic_shifts::six;
+    f1_params.occ_supported                 = true;
+    cfg.sched_cfg.ue.max_pucchs_per_slot    = 61;
+    cfg.sched_cfg.ue.max_puschs_per_slot    = 61;
+    cfg.sched_cfg.ue.max_ul_grants_per_slot = 64;
 
     du_hi = std::make_unique<du_high_impl>(cfg);
 

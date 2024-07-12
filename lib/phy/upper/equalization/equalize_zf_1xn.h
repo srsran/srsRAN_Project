@@ -26,6 +26,7 @@
 #pragma once
 
 #include "../../../srsvec/simd.h"
+#include "srsran/phy/constants.h"
 #include "srsran/srsvec/fill.h"
 #include "srsran/srsvec/zero.h"
 
@@ -42,25 +43,26 @@ namespace srsran {
 template <unsigned RX_PORTS>
 void equalize_zf_1xn(span<cf_t>                            symbols_out,
                      span<float>                           nvars_out,
-                     const channel_equalizer::re_list&     ch_symbols,
+                     const re_buffer_reader<cbf16_t>&      ch_symbols,
                      const channel_equalizer::ch_est_list& ch_estimates,
                      span<const float>                     noise_var_est,
                      float                                 tx_scaling)
 {
   // Number of RE to process.
-  unsigned nof_re = ch_symbols.get_dimension_size(channel_equalizer::re_list::dims::re);
+  unsigned nof_re = ch_symbols.get_nof_re();
 
   unsigned i_re = 0;
 
-#if defined(__AVX2__) || defined(__ARM_NEON)
   // Views over the input data.
   std::array<span<const cbf16_t>, MAX_PORTS> port_symbols;
   std::array<span<const cbf16_t>, MAX_PORTS> port_ests;
 
   for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
-    port_symbols[i_port] = ch_symbols.get_view({i_port});
-    port_ests[i_port]    = ch_estimates.get_view({i_port, 0});
+    port_symbols[i_port] = ch_symbols.get_slice(i_port);
+    port_ests[i_port]    = ch_estimates.get_channel(i_port, 0);
   }
+
+#if defined(__AVX2__) || defined(__ARM_NEON)
 
   // Create registers with zero and infinity values.
   simd_cf_t cf_zero  = srsran_simd_cf_zero();
@@ -140,8 +142,8 @@ void equalize_zf_1xn(span<cf_t>                            symbols_out,
 
     for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
       // Get the input RE and channel estimate coefficient.
-      cf_t re_in  = to_cf(ch_symbols[{i_re, i_port}]);
-      cf_t ch_est = to_cf(ch_estimates[{i_re, i_port}]);
+      cf_t re_in  = to_cf(port_symbols[i_port][i_re]);
+      cf_t ch_est = to_cf(port_ests[i_port][i_re]);
 
       // Compute the channel square norm.
       float ch_est_norm = std::norm(ch_est);

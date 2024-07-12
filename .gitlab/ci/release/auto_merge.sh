@@ -95,6 +95,8 @@ remove_lfs_files() {
     while read -r line; do
         git rm --cached "$line"
     done < <(git lfs ls-files | sed -r 's/^.{13}//')
+    git lfs untrack "*test_data.tar.gz"
+    git lfs untrack "*.png"
 }
 
 main() {
@@ -107,7 +109,6 @@ main() {
 
     local source_branch=$1
     local target_branch=$2
-    local mode="${3:-push}"
 
     # Checkout target branch
     git fetch -q origin "$target_branch"
@@ -131,13 +132,7 @@ main() {
         git commit --no-edit
     fi
     remove_lfs_files
-    "$(dirname "$0")/update_headers.sh"
     git commit -a --amend --no-edit
-
-    # Push
-    if [ "$mode" = "push" ]; then
-        git push origin "$target_branch"
-    fi
 }
 
 main "$@"

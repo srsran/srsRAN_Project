@@ -22,17 +22,17 @@
 
 #pragma once
 
-#include "../ue_context/ngap_ue_logger.h"
-#include "srsran/ngap/ngap.h"
+#include "srsran/adt/span.h"
+#include <numeric>
 
 namespace srsran {
-namespace srs_cu_cp {
 
-inline void handle_nas_pdu(ngap_ue_logger& logger, byte_buffer nas_pdu, ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier)
+/// Calculates the least common multiplier (LCM) for a range of integers.
+template <typename Integer>
+Integer lcm(span<const Integer> values)
 {
-  logger.log_debug("Forwarding NAS PDU to RRC");
-  rrc_ue_pdu_notifier.on_new_pdu(std::move(nas_pdu));
+  return std::accumulate(
+      values.begin(), values.end(), Integer(1), [](Integer a, Integer b) { return std::lcm<Integer>(a, b); });
 }
 
-} // namespace srs_cu_cp
 } // namespace srsran

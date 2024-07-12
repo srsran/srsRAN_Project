@@ -19,37 +19,94 @@ stages:
   - public
   - release
 
-.update agpl main:
+.my-rules:
+  script:
+    - &on_public_push $CI_COMMIT_TAG =~ /^\d{4}\.\d{2}\.\d{2}$/
+    - &on_public_release $CI_COMMIT_TAG =~ /^\d{2}\.\d{2}$/
+    - &on_custom_push $CI_COMMIT_TAG =~ /^\w+_\d{4}\.\d{2}\.\d{2}$/
+
+################################################################################
+# Load variables
+################################################################################
+load release variables:
+  stage: .pre
+  image: ubuntu:24.04
+  rules:
+    - if: *on_public_push
+    - if: *on_public_release
+    - if: *on_custom_push
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+      if [[ $CI_COMMIT_TAG =~ ^([a-zA-Z0-9_]+)_([0-9]{4})\.([0-9]{2})\.([0-9]{2})$ ]]; then
+        KEY="${BASH_REMATCH[1]}"
+        echo "PRIVATE_BRANCH=dev_$KEY" >> repo.env      
+        echo "PUBLIC_NAME=srsRAN $KEY" >> repo.env
+        echo "PUBLIC_REPO=softwareradiosystems/srsRAN_$KEY" >> repo.env
+        echo "HEADERS=" >> repo.env
+        echo "PUBLIC_BRANCH=main" >> repo.env
+      else
+        echo "PRIVATE_BRANCH=agpl_main" >> repo.env
+        echo "PUBLIC_NAME=srsRAN Project" >> repo.env
+        echo "PUBLIC_REPO=srsran/srsRAN_Project" >> repo.env
+        echo "HEADERS=true" >> repo.env
+      fi
+    - cat repo.env
+  artifacts:
+    reports:
+      dotenv: repo.env
+
+################################################################################
+# Update private branches
+################################################################################
+
+update private branch:
   stage: private
   interruptible: false
   variables:
     GIT_STRATEGY: none
-    BRANCH: agpl_main
-    MODE: ""
-  image: ubuntu:22.04
+    PRIVATE_BRANCH: ""
+    HEADERS: ""
+    MODE: "push"
+  image: ubuntu:24.04
+  rules:
+    - if: *on_public_push
+    - if: *on_public_release
+    - if: *on_custom_push
   before_script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
+    - git lfs install
+    - git lfs uninstall || true
+    # Extra LFS filters for OS (like Ubuntu) where 'git lfs uninstall' has no effect
+    - git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
+    - git config --global filter.lfs.process "git-lfs filter-process --skip"
     - git config --global user.name "${CODEBOT_USERNAME}"
     - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
   script:
     - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
     - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
-    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH} ${MODE}
-
-update agpl main:
-  extends: .update agpl main
-  rules:
-    - if: $ON_TAG
-      variables:
-        MODE: "push"
+    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${PRIVATE_BRANCH}
+    - |
+      if [ "$HEADERS" = "true" ]; then
+        .gitlab/ci/release/update_headers.sh
+        git commit -a --amend --no-edit
+      fi
+    - |
+      if [ "$MODE" = "push" ]; then
+        git push origin "${PRIVATE_BRANCH}"
+      fi
+  needs: &release-var-needs
+    - job: "load release variables"
+      artifacts: true
 
 generate testvector tar gz:
   stage: private
   rules:
-    - if: $ON_TAG
+    - if: *on_public_release
   interruptible: false
-  image: ubuntu:22.04
+  image: ubuntu:24.04
   script:
     - find . -name "*.tar.gz" -exec tar -rvf phy_testvectors.tar.gz {} \;
   artifacts:
@@ -61,10 +118,11 @@ coverity-agpl:
   extends: .coverity_base
   stage: private
   rules:
-    - if: $ON_TAG
+    - if: *on_public_push
+    - if: *on_public_release
   variables:
     GIT_STRATEGY: none
-    PRIVATE_BRANCH: agpl_main
+    PRIVATE_BRANCH: ""
   before_script:
     - export PROJECT_NAME="srsRAN_5G_agpl"
     - export DESCRIPTION="srsRAN Project AGPL build"
@@ -75,9 +133,14 @@ coverity-agpl:
     - git clone --depth 1 --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
   needs:
-    - job: update agpl main
+    - *release-var-needs
+    - job: update private branch
       optional: false
       artifacts: false
+
+################################################################################
+# Publish
+################################################################################
 
 .publish:
   stage: public
@@ -85,69 +148,98 @@ coverity-agpl:
   image: alpine:3.16.0 # sh entrypoint
   variables:
     GIT_STRATEGY: none
-    PRIVATE_BRANCH: agpl_main
-    PUBLIC_REPO: srsran/srsRAN_Project
+    PRIVATE_BRANCH: ""
+    PUBLIC_REPO: ""
     PUBLIC_BRANCH: ""
   before_script:
-    - apk add git
+    - apk add git git-lfs
+    - git lfs install
+    - git lfs uninstall || true
+    - git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
+    - git config --global filter.lfs.process "git-lfs filter-process --skip"
   script:
     # Download private repo and add public as origin
     - git clone --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
     - git remote add github_public https://${PUBLIC_TOKEN}@github.com/${PUBLIC_REPO}.git
-    # Push code to github main
+    # Push code to public repo
     - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
 
-publish branch test:
+publish test:
   extends: .publish
   rules:
-    - if: $ON_TAG
-      when: manual
-      allow_failure: false
+    - if: *on_public_push
+    - if: *on_public_release
+  when: manual
+  allow_failure: false
   variables:
     PUBLIC_BRANCH: test
   needs:
-    - job: update agpl main
+    - *release-var-needs
+    - job: update private branch
       optional: false
       artifacts: false
 
 publish main:
   extends: .publish
   rules:
-    - if: $ON_TAG
-      when: manual
-      allow_failure: false
+    - if: *on_public_push
+    - if: *on_public_release
+  when: manual
+  allow_failure: false
   variables:
     PUBLIC_BRANCH: main
   needs:
-    - job: publish branch test
+    - *release-var-needs
+    - job: publish test
       optional: false
       artifacts: false
 
-notify main published:
+publish public:
+  extends: .publish
+  rules:
+    - if: *on_custom_push
+  needs:
+    - *release-var-needs
+    - job: update private branch
+      optional: false
+      artifacts: true
+
+notify branch published:
   extends: .notifier
   stage: public
   rules:
-    - if: $ON_TAG
+    - if: *on_public_push
+    - if: *on_public_release
+    - if: *on_custom_push
   needs:
+    - *release-var-needs
     - job: publish main
-      optional: false
-      artifacts: false
+      optional: true
+      artifacts: true
+    - job: publish public
+      optional: true
+      artifacts: true
   variables:
-    CI_DESCRIPTION: "Public GitHub Updated"
-    MSG: "main branch has been updated."
+    CI_DESCRIPTION: "$PUBLIC_REPO GitHub Updated"
+    MSG: "$PUBLIC_BRANCH branch has been updated."
     SLACK_CHANNEL: $SLACK_CHANNEL_OK
     LEVEL: "ok"
+
+################################################################################
+# Release
+################################################################################
 
 release public:
   stage: release
   rules:
-    - if: $ON_TAG
-      when: manual
-      allow_failure: false
+    - if: *on_public_release
+  when: manual
+  allow_failure: false
   interruptible: false
   image: alpine:3.16.0 # sh entrypoint
   needs:
+    - *release-var-needs
     - job: publish main
       optional: false
       artifacts: false
@@ -157,9 +249,9 @@ release public:
   variables:
     GIT_STRATEGY: none
     ARTIFACT: phy_testvectors.tar.gz
-    PUBLIC_NAME: srsRAN Project
-    PUBLIC_REPO: srsran/srsRAN_Project
-    PUBLIC_BRANCH: main
+    PUBLIC_NAME: ""
+    PUBLIC_REPO: ""
+    PUBLIC_BRANCH: ""
   before_script:
     - apk add git curl jq
   script:
@@ -204,8 +296,9 @@ notify release published:
   extends: .notifier
   stage: release
   rules:
-    - if: $ON_TAG
+    - if: *on_public_release
   needs:
+    - *release-var-needs
     - job: release public
       optional: false
       artifacts: false

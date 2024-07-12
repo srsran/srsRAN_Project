@@ -52,14 +52,16 @@ bool cu_cp_routine_manager::schedule_async_task(async_task<void> task)
 }
 
 async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>
-cu_cp_routine_manager::start_initial_context_setup_routine(const ngap_init_context_setup_request& request,
-                                                           rrc_ue_interface&                      rrc_ue,
-                                                           ue_security_manager&                   security_mng,
-                                                           f1ap_ue_context_manager&               f1ap_ue_ctxt_mng,
-                                                           cu_cp_ngap_handler& pdu_session_setup_handler)
+cu_cp_routine_manager::start_initial_context_setup_routine(
+    const ngap_init_context_setup_request&       request,
+    rrc_ue_interface&                            rrc_ue,
+    ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler,
+    ue_security_manager&                         security_mng,
+    f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng,
+    cu_cp_ngap_handler&                          pdu_session_setup_handler)
 {
   return launch_async<initial_context_setup_routine>(
-      request, rrc_ue, security_mng, f1ap_ue_ctxt_mng, pdu_session_setup_handler, logger);
+      request, rrc_ue, ngap_ue_radio_cap_handler, security_mng, f1ap_ue_ctxt_mng, pdu_session_setup_handler, logger);
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response> cu_cp_routine_manager::start_pdu_session_resource_setup_routine(

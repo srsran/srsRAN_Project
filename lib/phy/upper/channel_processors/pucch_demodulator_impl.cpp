@@ -52,8 +52,8 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
                 pucch_constants::FORMAT2_MAX_NSYMB);
 
   // Resize data and channel estimation buffers.
-  ch_re.resize({nof_re_port, nof_rx_ports});
-  ch_estimates.resize({nof_re_port, nof_rx_ports, SINGLE_TX_LAYER});
+  ch_re.resize(nof_rx_ports, nof_re_port);
+  ch_estimates.resize(nof_re_port, nof_rx_ports, SINGLE_TX_LAYER);
 
   // Resize equalized data and post equalization noise variance buffers.
   eq_re.resize(nof_re_port);
@@ -118,10 +118,10 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
 
   for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
     // Get a view of the data RE destination buffer for a single Rx port.
-    span<cbf16_t> re_port_buffer = ch_re.get_view({i_port});
+    span<cbf16_t> re_port_buffer = ch_re.get_slice(i_port);
 
     // Get a view of the channel estimates destination buffer for a single Rx port and Tx layer.
-    span<cbf16_t> ests_port_buffer = ch_estimates.get_view({i_port, 0});
+    span<cbf16_t> ests_port_buffer = ch_estimates.get_channel(i_port, 0);
 
     for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
          i_symbol != i_symbol_end;

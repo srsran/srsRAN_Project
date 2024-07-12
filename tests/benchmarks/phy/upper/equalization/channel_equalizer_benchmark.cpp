@@ -20,17 +20,18 @@
  *
  */
 
+#include "srsran/phy/constants.h"
+#include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
 
 using namespace srsran;
-
-// Equalizer data dimensions.
-using re_dims = channel_equalizer::re_list::dims;
-using ch_dims = channel_equalizer::ch_est_list::dims;
 
 // Random generator.
 static std::mt19937 rgen(0);
@@ -123,24 +124,22 @@ int main(int argc, char** argv)
     unsigned nof_subcarriers  = nof_prb * NRE;
 
     // Create input and output data tensors.
-    dynamic_tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cbf16_t, re_dims> rx_symbols(
-        {nof_subcarriers * nof_ofdm_symbols, nof_rx_ports});
-    std::vector<cf_t>  eq_symbols(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
-    std::vector<float> eq_noise_vars(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
+    dynamic_re_buffer<cbf16_t> rx_symbols(nof_rx_ports, nof_subcarriers * nof_ofdm_symbols);
+    std::vector<cf_t>          eq_symbols(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
+    std::vector<float>         eq_noise_vars(nof_subcarriers * nof_ofdm_symbols * nof_tx_layers);
 
     // Create channel estimates tensor.
-    dynamic_tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cbf16_t, ch_dims> channel_ests(
-        {nof_subcarriers * nof_ofdm_symbols, nof_rx_ports, nof_tx_layers});
+    dynamic_ch_est_list channel_ests(nof_subcarriers * nof_ofdm_symbols, nof_rx_ports, nof_tx_layers);
 
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
       // Generate Rx symbols.
-      span<cbf16_t> symbols = rx_symbols.get_view<>({i_rx_port});
+      span<cbf16_t> symbols = rx_symbols.get_slice(i_rx_port);
       std::generate(
           symbols.begin(), symbols.end(), [&symbol_dist]() { return cf_t(symbol_dist(rgen), symbol_dist(rgen)); });
 
       for (unsigned i_tx_layer = 0; i_tx_layer != nof_tx_layers; ++i_tx_layer) {
         // Generate estimates.
-        span<cbf16_t> ests = channel_ests.get_view<>({i_rx_port, i_tx_layer});
+        span<cbf16_t> ests = channel_ests.get_channel(i_rx_port, i_tx_layer);
         std::generate(ests.begin(), ests.end(), [&ch_mag_dist, &ch_phase_dist]() {
           return std::polar(ch_mag_dist(rgen), ch_phase_dist(rgen));
         });

@@ -76,9 +76,9 @@ simd_cf_interleaved add_mul(const simd_cf_interleaved& sum, const simd_cf_interl
 
 } // namespace
 
-void channel_precoder_neon::apply_precoding_port(span<cf_t>              port_re,
-                                                 const re_buffer_reader& input_re,
-                                                 span<const cf_t>        port_weights) const
+void channel_precoder_neon::apply_precoding_port(span<cf_t>                port_re,
+                                                 const re_buffer_reader<>& input_re,
+                                                 span<const cf_t>          port_weights) const
 {
   unsigned nof_re     = input_re.get_nof_re();
   unsigned nof_layers = input_re.get_nof_slices();
@@ -251,7 +251,7 @@ static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out_l0,
 }
 
 template <unsigned NofPorts>
-void template_apply_layer_map_and_precoding(re_buffer_writer&              output,
+void template_apply_layer_map_and_precoding(re_buffer_writer<>&            output,
                                             span<const ci8_t>              input,
                                             const precoding_weight_matrix& precoding)
 {
@@ -398,7 +398,7 @@ void template_apply_layer_map_and_precoding(re_buffer_writer&              outpu
 }
 
 template <>
-void template_apply_layer_map_and_precoding<1>(re_buffer_writer&              output,
+void template_apply_layer_map_and_precoding<1>(re_buffer_writer<>&            output,
                                                span<const ci8_t>              input,
                                                const precoding_weight_matrix& precoding)
 {
@@ -446,7 +446,7 @@ void template_apply_layer_map_and_precoding<1>(re_buffer_writer&              ou
   }
 }
 
-void channel_precoder_neon::apply_layer_map_and_precoding(re_buffer_writer&              output,
+void channel_precoder_neon::apply_layer_map_and_precoding(re_buffer_writer<>&            output,
                                                           span<const ci8_t>              input,
                                                           const precoding_weight_matrix& precoding) const
 {

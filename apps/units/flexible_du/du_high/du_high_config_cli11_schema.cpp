@@ -772,19 +772,21 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
   add_option(app,
              "--f1_nof_ue_res_harq",
-             pucch_params.nof_ue_pucch_f1_res_harq,
-             "Number of PUCCH F1 resources available per UE for HARQ")
+             pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
+             "Number of PUCCH F0/F1 resources available per UE for HARQ")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
-             "--f1_nof_cell_res_sr",
+             "--f0_or_f1_nof_cell_res_sr",
              pucch_params.nof_cell_sr_resources,
              "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 50));
-  add_option(app, "--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
-      ->capture_default_str()
-      ->check(CLI::Range(4, 14));
+  add_option(app,
+             "--f0_intraslot_freq_hop",
+             pucch_params.f0_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F0")
+      ->capture_default_str();
   add_option(app, "--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1")->capture_default_str();
   add_option(app,
              "--f1_nof_cyclic_shifts",
@@ -816,9 +818,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
       ->check(CLI::Range(0, 50));
-  add_option(app, "--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 2));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
@@ -1035,6 +1034,13 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
+  add_option(app,
+             "--sector_id",
+             cell_params.sector_id,
+             "Sector ID (4-14 bits). This value is concatenated with the gNB Id to form the NR Cell Identity "
+             "(NCI). If not specified, a unique value for the DU is automatically derived")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (1U << 14) - 1U));
   add_option(app, "--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   add_option_function<std::string>(
@@ -1657,7 +1663,17 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
 
 static void derive_auto_params(du_high_unit_config& config)
 {
+  unsigned next_sector_id = 0;
   for (auto& cell : config.cells_cfg) {
+    if (not cell.cell.sector_id.has_value()) {
+      // Auto-derive sector ID if not defined.
+      cell.cell.sector_id = next_sector_id;
+      next_sector_id++;
+    } else {
+      // If sector ID defined for this cell, recompute the next sector ID.
+      next_sector_id = std::max(next_sector_id, cell.cell.sector_id.value() + 1);
+    }
+
     derive_cell_auto_params(cell.cell);
   }
 }

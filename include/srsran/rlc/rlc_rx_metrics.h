@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/rlc/rlc_config.h"
+#include "srsran/support/engineering_notation.h"
+#include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -81,6 +83,42 @@ public:
   virtual rlc_rx_metrics get_and_reset_metrics() = 0;
   virtual void           reset_metrics()         = 0;
 };
+
+inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rlc_rx_metrics& m)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer,
+                 "num_sdus={} sdu_rate={}bps num_pdus={} pdu_rate={}bps",
+                 scaled_fmt_integer(m.num_sdus, false),
+                 float_to_eng_string(static_cast<float>(m.num_sdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+                 scaled_fmt_integer(m.num_pdus, false),
+                 (double)m.num_pdu_bytes * 8 / (double)metrics_period.count());
+
+  // No TM specific metrics for RX
+  if ((m.mode == rlc_mode::um_bidir || m.mode == rlc_mode::um_unidir_ul)) {
+    // Format UM specific metrics for RX
+    fmt::format_to(buffer,
+                   " num_sdu_segments={} sdu_segmments_rate={}bps",
+                   scaled_fmt_integer(m.mode_specific.um.num_sdu_segments, false),
+                   float_to_eng_string(static_cast<float>(m.mode_specific.um.num_sdu_segment_bytes) * 8 * 1000 /
+                                           metrics_period.count(),
+                                       1,
+                                       false));
+  } else if (m.mode == rlc_mode::am) {
+    fmt::format_to(
+        buffer,
+        " num_sdu_segments={} sdu_segmments_rate={}bps",
+        " ctrl_pdus={} ctrl_rate={}bps",
+        scaled_fmt_integer(m.mode_specific.am.num_sdu_segments, false),
+        float_to_eng_string(
+            static_cast<float>(m.mode_specific.am.num_sdu_segment_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+        scaled_fmt_integer(m.mode_specific.am.num_ctrl_pdus, false),
+        float_to_eng_string(
+            static_cast<float>(m.mode_specific.am.num_ctrl_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false));
+  }
+  return to_c_str(buffer);
+}
+
 } // namespace srsran
 
 namespace fmt {

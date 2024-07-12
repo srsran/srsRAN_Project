@@ -75,7 +75,7 @@ private:
   /// \param[out] mapper          Resource grid mapper interface.
   /// \param[in] d_pdcch          PDCCH resource elements to map in the resource grid.
   /// \param[in] config           PDCCH modulator parameters.
-  void mapping(resource_grid_mapper& mapper, const re_buffer_reader& d_pdcch, const config_t& config);
+  void mapping(resource_grid_mapper& mapper, const re_buffer_reader<>& d_pdcch, const config_t& config);
 
 public:
   explicit dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))

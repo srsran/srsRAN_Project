@@ -395,6 +395,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
   return routine_mng.start_initial_context_setup_routine(
       request,
       *rrc_ue,
+      ngap_entity->get_ngap_ue_radio_cap_management_handler(),
       ue->get_security_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
       get_cu_cp_ngap_handler());
@@ -643,6 +644,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
 {
   // Connect RRC UE to NGAP to RRC UE adapter
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_dl_nas_message_handler(),
+                                                          rrc_ue.get_rrc_ue_radio_access_capability_handler(),
                                                           rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Connect cu-cp to rrc ue adapters

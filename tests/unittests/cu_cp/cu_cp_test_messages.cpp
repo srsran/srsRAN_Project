@@ -31,11 +31,12 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
+cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t   ue_index,
+                                                                                        ngap_cause_t cause)
 {
   cu_cp_ue_context_release_command ue_context_release_command = {};
   ue_context_release_command.ue_index                         = ue_index;
-  ue_context_release_command.cause                            = ngap_cause_radio_network_t::unspecified;
+  ue_context_release_command.cause                            = cause;
   return ue_context_release_command;
 }
 

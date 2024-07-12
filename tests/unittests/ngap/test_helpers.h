@@ -134,6 +134,8 @@ public:
     logger.info("Received a NAS PDU");
   }
 
+  byte_buffer on_ue_radio_access_cap_info_required() override { return make_byte_buffer("deadbeef").value(); }
+
   byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
@@ -407,6 +409,17 @@ public:
 
 private:
   ue_index_t            ue_index = ue_index_t::invalid;
+  srslog::basic_logger& logger;
+};
+
+class dummy_rrc_ue_radio_access_capability_handler : public rrc_ue_radio_access_capability_handler
+{
+public:
+  dummy_rrc_ue_radio_access_capability_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  byte_buffer get_packed_ue_radio_access_cap_info() const override { return make_byte_buffer("deadbeef").value(); }
+
+private:
   srslog::basic_logger& logger;
 };
 

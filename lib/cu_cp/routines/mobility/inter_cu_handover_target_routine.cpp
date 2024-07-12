@@ -122,6 +122,7 @@ void inter_cu_handover_target_routine::operator()(
     ue_context_setup_request.cu_to_du_rrc_info.ie_exts.emplace();
     ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info =
         request.source_to_target_transparent_container.rrc_container.copy();
+    ue_context_setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list = rrc_context.ue_cap_rat_container_list.copy();
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,

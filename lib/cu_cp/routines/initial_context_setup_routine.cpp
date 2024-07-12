@@ -30,14 +30,17 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-initial_context_setup_routine::initial_context_setup_routine(const ngap_init_context_setup_request& request_,
-                                                             rrc_ue_interface&                      rrc_ue_,
-                                                             ue_security_manager&                   security_mng_,
-                                                             f1ap_ue_context_manager&               f1ap_ue_ctxt_mng_,
-                                                             cu_cp_ngap_handler&   pdu_session_setup_handler_,
-                                                             srslog::basic_logger& logger_) :
+initial_context_setup_routine::initial_context_setup_routine(
+    const ngap_init_context_setup_request&       request_,
+    rrc_ue_interface&                            rrc_ue_,
+    ngap_ue_radio_capability_management_handler& ngap_ue_radio_cap_handler_,
+    ue_security_manager&                         security_mng_,
+    f1ap_ue_context_manager&                     f1ap_ue_ctxt_mng_,
+    cu_cp_ngap_handler&                          pdu_session_setup_handler_,
+    srslog::basic_logger&                        logger_) :
   request(request_),
   rrc_ue(rrc_ue_),
+  ngap_ue_radio_cap_handler(ngap_ue_radio_cap_handler_),
   security_mng(security_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
   pdu_session_setup_handler(pdu_session_setup_handler_),
@@ -88,10 +91,10 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Await Security Mode Command Complete from RRC UE
+  // Await Security Mode Complete from RRC UE
   {
     CORO_AWAIT_VALUE(security_mode_command_result,
-                     rrc_ue.handle_security_mode_command_complete_expected(rrc_smc_ctxt.transaction_id));
+                     rrc_ue.handle_security_mode_complete_expected(rrc_smc_ctxt.transaction_id));
     if (!security_mode_command_result) {
       handle_failure();
       CORO_EARLY_RETURN(make_unexpected(fail_msg));
@@ -100,7 +103,15 @@ void initial_context_setup_routine::operator()(
 
   // Start UE Capability Enquiry Procedure
   {
-    /// TODO: Move UE Capability Enquiry Procedure here
+    CORO_AWAIT_VALUE(ue_capability_transfer_result,
+                     rrc_ue.handle_rrc_ue_capability_transfer_request(ue_capability_transfer_request));
+
+    // Handle UE Capability Transfer result
+    if (not ue_capability_transfer_result) {
+      logger.warning("ue={}: \"{}\" UE capability transfer failed", request.ue_index, name());
+      handle_failure();
+      CORO_EARLY_RETURN(make_unexpected(fail_msg));
+    }
   }
 
   // Handle optional IEs
@@ -117,46 +128,26 @@ void initial_context_setup_routine::operator()(
       request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl = 0;
     }
 
+    // Handle NAS PDUs from Initial Context Setup Request
+    if (request.nas_pdu.has_value()) {
+      request.pdu_session_res_setup_list_cxt_req.value().nas_pdu = request.nas_pdu.value().copy();
+    }
+
     CORO_AWAIT_VALUE(pdu_session_setup_response,
                      pdu_session_setup_handler.handle_new_pdu_session_resource_setup_request(
                          request.pdu_session_res_setup_list_cxt_req.value()));
 
     resp_msg.pdu_session_res_setup_response_items  = pdu_session_setup_response.pdu_session_res_setup_response_items;
     resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_setup_response.pdu_session_res_failed_to_setup_items;
-
-    // Handle NAS PDUs from PDU Session Resource Setup List Context Request
-    for (auto& session : request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
-      if (!session.pdu_session_nas_pdu.empty()) {
-        handle_nas_pdu(session.pdu_session_nas_pdu.copy());
-      }
-    }
-
+  } else {
     // Handle NAS PDUs from Initial Context Setup Request
     if (request.nas_pdu.has_value()) {
       handle_nas_pdu(request.nas_pdu.value().copy());
     }
-
-  } else {
-    // prepare RRC Reconfiguration and call RRC UE notifier
-    if (!fill_rrc_reconfig_args(rrc_reconfig_args,
-                                ue_context_setup_request.srbs_to_be_setup_list,
-                                {} /* No DRB to setup */,
-                                {} /* No extra DRB to be removed */,
-                                ue_context_setup_response.du_to_cu_rrc_info,
-                                request.nas_pdu.has_value() ? std::vector<byte_buffer>{request.nas_pdu.value().copy()}
-                                                            : std::vector<byte_buffer>{},
-                                rrc_ue.generate_meas_config(std::nullopt),
-                                false /* No SRBs to reestablish */,
-                                false /* No DRBs to reestablish */,
-                                false /* No keys to update */,
-                                {} /* No SIB1 */,
-                                logger)) {
-      logger.warning("ue={}: \"{}\" Failed to fill RRCReconfiguration", request.ue_index, name());
-      CORO_EARLY_RETURN(make_unexpected(fail_msg));
-    }
-
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue.handle_rrc_reconfiguration_request(rrc_reconfig_args));
   }
+
+  // Schedule transmission of UE Radio Capability Info Indication
+  send_ue_radio_capability_info_indication();
 
   logger.info("ue={}: \"{}\" finished successfully", request.ue_index, name());
   CORO_RETURN(resp_msg);
@@ -184,4 +175,12 @@ void initial_context_setup_routine::handle_nas_pdu(byte_buffer nas_pdu)
 {
   logger.debug("ue={}: Forwarding NAS PDU to RRC", request.ue_index);
   rrc_ue.handle_dl_nas_transport_message(std::move(nas_pdu));
+}
+
+void initial_context_setup_routine::send_ue_radio_capability_info_indication()
+{
+  ue_radio_cap_info_indication.ue_index                  = request.ue_index;
+  ue_radio_cap_info_indication.ue_cap_rat_container_list = rrc_ue.get_packed_ue_radio_access_cap_info();
+
+  ngap_ue_radio_cap_handler.handle_tx_ue_radio_capability_info_indication_required(ue_radio_cap_info_indication);
 }

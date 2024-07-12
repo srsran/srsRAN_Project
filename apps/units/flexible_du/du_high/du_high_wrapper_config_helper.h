@@ -47,8 +47,9 @@ struct du_high_wrapper_dependencies;
 /// Set up sources for the DU high metrics.
 void configure_du_high_metrics(const du_high_unit_config&   du_high_unit_cfg,
                                metrics_plotter_stdout&      metrics_stdout,
-                               metrics_plotter_json&        metrics_json,
                                metrics_log_helper&          metrics_logger,
+                               metrics_plotter_json&        metrics_json,
+                               rlc_metrics_notifier&        rlc_metrics_json,
                                e2_metric_connector_manager& e2_metric_connectors,
                                metrics_hub&                 metrics_hub);
 
@@ -62,10 +63,8 @@ void fill_du_high_wrapper_config(du_high_wrapper_config&        out_cfg,
                                  timer_manager&                 timer_mng,
                                  mac_pcap&                      mac_p,
                                  rlc_pcap&                      rlc_p,
-                                 metrics_log_helper&            metrics_logger,
                                  e2_connection_client&          e2_client_handler,
                                  e2_metric_connector_manager&   e2_metric_connectors,
-                                 rlc_metrics_notifier&          rlc_json_metrics,
                                  metrics_hub&                   metrics_hub);
 
 } // namespace srsran

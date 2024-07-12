@@ -56,7 +56,7 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
   }
 }
 
-void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_reader& d_pdcch, const config_t& config)
+void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_reader<>& d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {true, false, true, true, true, false, true, true, true, false, true, true};

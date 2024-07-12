@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_estimation.h"
-#include "srsran/phy/upper/re_measurement.h"
+#include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
+#include "srsran/phy/support/re_buffer.h"
 
 namespace srsran {
 
@@ -36,37 +37,26 @@ namespace srsran {
 /// by TS38.211 Section 6.3.1.3.
 class channel_equalizer
 {
-private:
-  /// Dimensions, i.e., number of coordinates, spanned by each indexing level of the Resource Element data.
-  enum class re_dims : unsigned {
-    /// Resource Element.
-    re = 0,
-    /// Set of all REs corresponding to a single receive port or a single transmit layer.
-    slice = 1,
-    /// Total number of dimensions.
-    nof_dims = 2
-  };
-
-  /// Dimensions, i.e. number of coordinates, spanned by each indexing level of the channel estimation data.
-  enum class ch_dims : unsigned {
-    /// Channel coefficient for a single Resource Element and a single Tx&ndash;Rx channel path.
-    re = 0,
-    /// Set of all channel coefficients corresponding to a single Tx&ndash;Rx channel path.
-    rx_port = 1,
-    /// Set of all channel coefficients corresponding to all Tx&ndash;Rx paths for a single Tx layer.
-    tx_layer = 2,
-    /// Total number of dimensions.
-    nof_dims = 3
-  };
-
 public:
-  /// \brief Container for input and output Resource Elements.
-  /// \remark Dimension indexing given by \ref channel_equalizer::re_dims.
-  using re_list = tensor<std::underlying_type_t<re_dims>(re_dims::nof_dims), cbf16_t, re_dims>;
+  /// \brief Interface for the list of channel estimates.
+  class ch_est_list
+  {
+  public:
+    /// Default destructor.
+    virtual ~ch_est_list() = default;
 
-  /// \brief Container for the channel estimates.
-  /// \remark Dimension indexing given by \ref channel_equalizer::ch_dims.
-  using ch_est_list = tensor<std::underlying_type_t<ch_dims>(ch_dims::nof_dims), cbf16_t, ch_dims>;
+    /// Gets a read-only channel given a receive port and layer indices.
+    virtual span<const cbf16_t> get_channel(unsigned i_rx_port, unsigned i_layer) const = 0;
+
+    /// Gets the number of resource elements.
+    virtual unsigned get_nof_re() const = 0;
+
+    /// Gets the number of receive ports.
+    virtual unsigned get_nof_rx_ports() const = 0;
+
+    /// Gets the number of transmit layers.
+    virtual unsigned get_nof_tx_layers() const = 0;
+  };
 
   /// Default destructor.
   virtual ~channel_equalizer() = default;
@@ -93,12 +83,12 @@ public:
   /// \warning If the \c noise_var_estimates noise variances have ill-formed values (zero, negative, infinity or NaN),
   /// the corresponding equalized modulation REs and equalized noise variances will be set to zero and infinity,
   /// respectively.
-  virtual void equalize(span<cf_t>         eq_symbols,
-                        span<float>        eq_noise_vars,
-                        const re_list&     ch_symbols,
-                        const ch_est_list& ch_estimates,
-                        span<const float>  noise_var_estimates,
-                        float              tx_scaling) = 0;
+  virtual void equalize(span<cf_t>                       eq_symbols,
+                        span<float>                      eq_noise_vars,
+                        const re_buffer_reader<cbf16_t>& ch_symbols,
+                        const ch_est_list&               ch_estimates,
+                        span<const float>                noise_var_estimates,
+                        float                            tx_scaling) = 0;
 };
 
 } // namespace srsran

@@ -218,17 +218,14 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
         continue;
       }
 
-      // Resize equalizer input buffers.
-      ch_re.resize({nof_re_port, nof_rx_ports});
-      ch_estimates.resize({nof_re_port, nof_rx_ports, config.nof_tx_layers});
-
       // Resize equalizer output buffers.
       span<cf_t>  eq_re         = span<cf_t>(temp_eq_re).first(nof_re_port * config.nof_tx_layers);
       span<float> eq_noise_vars = span<float>(temp_eq_noise_vars).first(nof_re_port * config.nof_tx_layers);
 
       // Extract the data symbols and channel estimates from the resource grid.
-      get_ch_data_re(ch_re, grid, i_symbol, i_subc, block_re_mask, config.rx_ports);
-      get_ch_data_estimates(ch_estimates, estimates, i_symbol, i_subc, block_re_mask, config.rx_ports);
+      const re_buffer_reader<cbf16_t>& ch_re = get_ch_data_re(grid, i_symbol, i_subc, block_re_mask, config.rx_ports);
+      const channel_equalizer::ch_est_list& ch_estimates =
+          get_ch_data_estimates(estimates, i_symbol, i_subc, config.nof_tx_layers, block_re_mask, config.rx_ports);
 
       // Increment subcarrier count.
       i_subc += nof_block_subc;

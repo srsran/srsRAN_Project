@@ -126,9 +126,10 @@ def test_ue(
                 fivegc_definition=fivegc_def,
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=f"cell_cfg --nof_antennas_dl {nof_ant} --nof_antennas_ul {nof_ant}"
-                    + " "
-                    + extra_config,
+                    post_commands=(
+                        "",
+                        f"cell_cfg --nof_antennas_dl {nof_ant} --nof_antennas_ul {nof_ant}" + " " + extra_config,
+                    ),
                 ),
             )
         )
@@ -240,7 +241,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands="amf --no_core 1",
+                    post_commands=("amf --no_core 1",),
                 ),
             )
         )

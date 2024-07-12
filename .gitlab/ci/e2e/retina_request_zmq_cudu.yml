@@ -51,9 +51,6 @@
   resources:
     - type: zmq
   shared_files:
-    - local_path: ${GNB_BINARY_PATH}
-      remote_path: ${GNB_REMOTE_PATH}
-      is_executable: ${GNB_IS_EXECUTABLE}
     - local_path: ../../build/apps/cu/srscu
       remote_path: /usr/local/bin/srscu
       is_executable: true

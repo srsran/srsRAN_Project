@@ -27,6 +27,7 @@
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
+#include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -114,6 +115,9 @@ class ngap_rrc_ue_control_notifier
 {
 public:
   virtual ~ngap_rrc_ue_control_notifier() = default;
+
+  /// \brief Get packed packed UE radio access capability info for UE radio capability info indication.
+  virtual byte_buffer on_ue_radio_access_cap_info_required() = 0;
 
   /// \brief Get packed handover preparation message for inter-gNB handover.
   virtual byte_buffer on_handover_preparation_message_required() = 0;
@@ -242,6 +246,18 @@ public:
   virtual void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) = 0;
 };
 
+/// Handle NGAP UE Radio Capability Management Messages as per TS 38.413 section 8.14.
+class ngap_ue_radio_capability_management_handler
+{
+public:
+  virtual ~ngap_ue_radio_capability_management_handler() = default;
+
+  /// \brief Initiates the UE Radio Capability Info Indication procedure as per TS 38.413 section 8.14.1.
+  /// \param[in] msg The ue radio capability info indication to transmit.
+  virtual void
+  handle_tx_ue_radio_capability_info_indication_required(const ngap_ue_radio_capability_info_indication& msg) = 0;
+};
+
 class ngap_control_message_handler
 {
 public:
@@ -294,6 +310,7 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_event_handler,
                        public ngap_connection_manager,
                        public ngap_nas_message_handler,
+                       public ngap_ue_radio_capability_management_handler,
                        public ngap_control_message_handler,
                        public ngap_ue_control_manager,
                        public ngap_statistics_handler,
@@ -302,14 +319,15 @@ class ngap_interface : public ngap_message_handler,
 public:
   virtual ~ngap_interface() = default;
 
-  virtual ngap_message_handler&            get_ngap_message_handler()            = 0;
-  virtual ngap_event_handler&              get_ngap_event_handler()              = 0;
-  virtual ngap_connection_manager&         get_ngap_connection_manager()         = 0;
-  virtual ngap_nas_message_handler&        get_ngap_nas_message_handler()        = 0;
-  virtual ngap_control_message_handler&    get_ngap_control_message_handler()    = 0;
-  virtual ngap_ue_control_manager&         get_ngap_ue_control_manager()         = 0;
-  virtual ngap_statistics_handler&         get_ngap_statistics_handler()         = 0;
-  virtual ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() = 0;
+  virtual ngap_message_handler&                        get_ngap_message_handler()                 = 0;
+  virtual ngap_event_handler&                          get_ngap_event_handler()                   = 0;
+  virtual ngap_connection_manager&                     get_ngap_connection_manager()              = 0;
+  virtual ngap_nas_message_handler&                    get_ngap_nas_message_handler()             = 0;
+  virtual ngap_ue_radio_capability_management_handler& get_ngap_ue_radio_cap_management_handler() = 0;
+  virtual ngap_control_message_handler&                get_ngap_control_message_handler()         = 0;
+  virtual ngap_ue_control_manager&                     get_ngap_ue_control_manager()              = 0;
+  virtual ngap_statistics_handler&                     get_ngap_statistics_handler()              = 0;
+  virtual ngap_ue_context_removal_handler&             get_ngap_ue_context_removal_handler()      = 0;
 };
 
 } // namespace srs_cu_cp

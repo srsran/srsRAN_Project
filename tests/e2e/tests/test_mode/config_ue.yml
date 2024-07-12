@@ -45,7 +45,7 @@ cell_cfg:
     prach_frequency_start: 12
   pucch:
     sr_period_ms: 10
-    f1_nof_cell_res_sr: 30
+    f0_or_f1_nof_cell_res_sr: 30
     min_k1: 2
   csi:
     csi_rs_period: 40

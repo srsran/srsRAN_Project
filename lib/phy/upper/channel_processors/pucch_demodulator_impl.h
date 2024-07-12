@@ -29,6 +29,7 @@
 #include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 
@@ -42,7 +43,10 @@ public:
   pucch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
                          std::unique_ptr<demodulation_mapper>     demapper_,
                          std::unique_ptr<pseudo_random_generator> descrambler_) :
-    equalizer(std::move(equalizer_)), demapper(std::move(demapper_)), descrambler(std::move(descrambler_))
+    equalizer(std::move(equalizer_)),
+    demapper(std::move(demapper_)),
+    descrambler(std::move(descrambler_)),
+    ch_estimates(pucch_constants::MAX_NOF_RE, MAX_PORTS, 1)
   {
     srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
     srsran_assert(demapper, "Invalid pointer to demodulation_mapper object.");
@@ -92,11 +96,7 @@ private:
 
   /// \brief Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and receive port.
-  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
-                cbf16_t,
-                pucch_constants::MAX_NOF_RE * MAX_PORTS,
-                channel_equalizer::re_list::dims>
-      ch_re;
+  static_re_buffer<MAX_PORTS, pucch_constants::MAX_NOF_RE, cbf16_t> ch_re;
 
   /// \brief Buffer used to store channel modulation resource elements at the equalizer output.
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
@@ -109,12 +109,7 @@ private:
   /// \brief Buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
   /// \remark The channel estimation coefficients are arranged in three dimensions, i.e., resource element, receive port
   /// and transmit layer.
-  static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
-                    channel_equalizer::ch_est_list::dims::nof_dims),
-                cbf16_t,
-                pucch_constants::MAX_NOF_RE * MAX_PORTS,
-                channel_equalizer::ch_est_list::dims>
-      ch_estimates;
+  dynamic_ch_est_list ch_estimates;
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;

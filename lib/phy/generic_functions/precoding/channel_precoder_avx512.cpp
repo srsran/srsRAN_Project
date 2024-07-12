@@ -215,9 +215,9 @@ static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci8_to_cf(out0, out1, out2, out3, tmp);
 }
 
-void channel_precoder_avx512::apply_precoding_port(span<cf_t>              port_re,
-                                                   const re_buffer_reader& input_re,
-                                                   span<const cf_t>        port_weights) const
+void channel_precoder_avx512::apply_precoding_port(span<cf_t>                port_re,
+                                                   const re_buffer_reader<>& input_re,
+                                                   span<const cf_t>          port_weights) const
 {
   unsigned nof_re     = input_re.get_nof_re();
   unsigned nof_layers = input_re.get_nof_slices();
@@ -266,7 +266,7 @@ void channel_precoder_avx512::apply_precoding_port(span<cf_t>              port_
   }
 }
 
-void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer&              output,
+void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer<>&            output,
                                                             span<const ci8_t>              input,
                                                             const precoding_weight_matrix& precoding) const
 {

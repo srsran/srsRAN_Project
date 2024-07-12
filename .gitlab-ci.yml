@@ -36,6 +36,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "20"
     file: .gitlab/ci-shared/tools/test_reporter.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "20"
+    file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
@@ -281,6 +284,7 @@ clangsa:
   tags:
     - ${AMD64_TAG}
   interruptible: false
+  timeout: 2 hours
   script:
     - |
       mkdir -p build
@@ -457,13 +461,28 @@ pages:
 # Release dryrun
 ################################################################################
 update agpl main dryrun:
-  extends: .update agpl main
+  extends: update private branch
   stage: .post
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: always
-      variables:
-        MODE: "dryrun"
+  variables:
+    PRIVATE_BRANCH: agpl_main
+    HEADERS: "true"
+    MODE: "dryrun"
+  needs: []
+
+create-tags:
+  extends: .create-tag
+  stage: .post
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: always
+  script:
+    - |
+      for name in $TAG_NAME_ARRAY; do
+        create_tag "${name}_$(date -u +"%Y.%m.%d")"
+      done
   needs: []
 
 ################################################################################

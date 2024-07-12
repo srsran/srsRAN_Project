@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

@@ -41,7 +41,8 @@ public:
   ~resource_grid_mapper_impl() = default;
 
   // See interface for documentation.
-  void map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) override;
+  void
+  map(const re_buffer_reader<>& input, const re_pattern& pattern, const precoding_configuration& precoding) override;
 
   // See interface for documentation.
   void map(symbol_buffer&                 buffer,

@@ -37,6 +37,7 @@ struct rlc_metrics {
   rlc_tx_metrics tx;
   rlc_rx_metrics rx;
   unsigned       counter;
+  timer_duration metrics_period;
 };
 
 /// \brief Notifier interface used to report RLC metrics.

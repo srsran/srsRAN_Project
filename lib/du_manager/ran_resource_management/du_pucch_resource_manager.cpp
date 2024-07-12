@@ -25,7 +25,7 @@
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/scheduler_pucch_format.h"
-#include "srsran/support/math/gcd.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace srs_du;
@@ -58,13 +58,13 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
                                                      unsigned                   max_pucch_grants_per_slot_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   default_pucch_res_list(
-      srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+      srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_sr_resources,
                                            cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
-                                           cell_cfg_list_[0].pucch_cfg.f1_params,
+                                           cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
                                            cell_cfg_list_[0].pucch_cfg.f2_params,
                                            cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
   default_pucch_cfg(
@@ -96,7 +96,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   }
   // As the SR and CSI period might not be one a multiple of each other, we compute the Least Common Multiple (LCM) of
   // the two periods.
-  lcm_csi_sr_period = lcm(sr_period_slots, csi_period_slots);
+  lcm_csi_sr_period = std::lcm(sr_period_slots, csi_period_slots);
 
   // Setup RAN resources per cell.
   for (auto& cell : cells) {
@@ -160,18 +160,6 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
   const unsigned             csi_rs_period = csi_resource_periodicity_to_uint(*csi_res.csi_res_period);
   const unsigned             csi_rs_offset = *csi_res.csi_res_offset;
 
-  const auto csi_offset_colliding_with_sr = [&](unsigned offset_candidate) -> bool {
-    for (unsigned csi_off = offset_candidate; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
-      for (unsigned sr_off = candidate_sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
-        if (csi_off == sr_off) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
   const auto weight_function = [&](unsigned offset_candidate) -> unsigned {
     // This weight formula prioritizes offsets equal or after the \c csi_rs_slot_offset +
     // MINIMUM_CSI_RS_REPORT_DISTANCE.
@@ -179,7 +167,7 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    if (csi_offset_colliding_with_sr(offset_candidate)) {
+    if (csi_offset_collides_with_sr(candidate_sr_offset, offset_candidate)) {
       weight += csi_rs_period;
     }
 
@@ -241,7 +229,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
       }
     }
 
-    // If the PUCCH is exceeded, proceed with the next SR resource/offset pair.
+    // If the PUCCH count is exceeded, proceed with the next SR resource/offset pair.
     if (not pucch_cnt_exceeded) {
       if (not default_csi_report_cfg.has_value()) {
         sr_res_offset = *sr_res_offset_it;
@@ -285,7 +273,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                   cells[0].ue_idx,
                                   sr_res_offset.value().first,
                                   csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
-                                  user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq,
+                                  user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
                                   user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq,
                                   user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets,
                                   user_defined_pucch_cfg.nof_sr_resources,
@@ -393,11 +381,24 @@ std::set<unsigned> du_pucch_resource_manager::compute_sr_csi_pucch_offsets(unsig
   return sr_csi_offsets;
 }
 
+bool du_pucch_resource_manager::csi_offset_collides_with_sr(unsigned sr_offset, unsigned csi_offset) const
+{
+  for (unsigned csi_off = csi_offset; csi_off < lcm_csi_sr_period; csi_off += csi_period_slots) {
+    for (unsigned sr_off = sr_offset; sr_off < lcm_csi_sr_period; sr_off += sr_period_slots) {
+      if (csi_off == sr_off) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx) const
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+  return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets;
 }
 
@@ -405,7 +406,7 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
                           user_defined_pucch_cfg.nof_sr_resources +
                           user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *

@@ -78,11 +78,11 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
 
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   const std::vector<pucch_resource>& res_list = srs_du::generate_cell_pucch_res_list(
-      user_params.nof_ue_pucch_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+      user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
       user_params.nof_ue_pucch_f2_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_csi_resources,
-      user_params.f1_params,
+      user_params.f0_or_f1_params,
       user_params.f2_params,
       bwp_size);
 
