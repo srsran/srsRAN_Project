@@ -177,7 +177,7 @@ private:
                                                        pucch_uci_bits                new_bits,
                                                        ue_grants&                    current_grants,
                                                        const ue_cell_configuration&  ue_cell_cfg,
-                                                       bool                          preserve_res_indicator = false);
+                                                       std::optional<uint8_t>        preserve_res_indicator);
 
   // Computes which resources are expected to be sent, depending on the UCI bits to be sent, before any multiplexing.
   std::optional<pucch_grant_list> get_pucch_res_pre_multiplexing(slot_point                   sl_tx,
@@ -190,14 +190,14 @@ private:
                                        rnti_t                       crnti,
                                        pucch_grant_list             candidate_grants,
                                        const ue_cell_configuration& ue_cell_cfg,
-                                       bool                         preserve_res_indicator = false);
+                                       std::optional<uint8_t>       preserve_res_indicator);
 
   // Applies the multiplexing rules depending on the PUCCH resource format, as per TS 38.213, Section 9.2.5.1/2.
   std::optional<pucch_grant> merge_pucch_resources(span<const pucch_grant> resources_to_merge,
                                                    slot_point              slot_harq,
                                                    rnti_t                  crnti,
                                                    const pucch_config&     pucch_cfg,
-                                                   bool                    preserve_res_indicator = false);
+                                                   std::optional<uint8_t>  preserve_res_indicator);
 
   // Allocate the PUCCH PDUs in the scheduler output, depending on the new PUCCH grants to be transmitted, and depending
   // on the PUCCH PDUs currently allocated.

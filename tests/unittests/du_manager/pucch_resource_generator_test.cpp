@@ -587,6 +587,15 @@ protected:
                               .intraslot_freq_hopping = false}),
     serv_cell_cfg(test_helpers::create_default_sched_ue_creation_request().cfg.cells->front().serv_cell_cfg)
   {
+    if (GetParam().nof_res_f0_harq != 0) {
+      auto& pucch_res_list = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->pucch_res_list;
+      for (auto& res : pucch_res_list) {
+        if (res.format == srsran::pucch_format::FORMAT_1) {
+          res.format = srsran::pucch_format::FORMAT_0;
+          res.format_params.emplace<pucch_format_0_cfg>();
+        }
+      }
+    }
   }
 
   bool verify_nof_res_and_idx(unsigned harq_cfg_idx, unsigned sr_idx, unsigned csi_idx) const
@@ -613,7 +622,7 @@ protected:
     test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f0_f1_res_harq_per_ue;
     test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq_per_ue;
 
-    // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
+    // Helper to retrive a given PUCCH resource given its ID from the PUCCH resource list.
     auto get_pucch_resource_with_id = [&pucch_cfg](pucch_res_id_t res_id) {
       return std::find_if(pucch_cfg.pucch_res_list.begin(),
                           pucch_cfg.pucch_res_list.end(),
@@ -622,27 +631,36 @@ protected:
 
     // Check the PUCCH resources indexing in PUCCH resource Set 0.
     for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
+      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
+      auto* res_it = get_pucch_resource_with_id(res_idx);
+
+      // The checks on the PUCCH resource indices are only valid for configurations that doesn't have Format 0.
       const bool pucch_cell_res_id_test = res_idx.cell_res_id >= nof_f0_f1_res_harq_per_ue * harq_cfg_idx and
                                           res_idx.cell_res_id < nof_f0_f1_res_harq_per_ue * (harq_cfg_idx + 1);
-      // The PUCCH resource ID for the ASN1 message for PUCCH F1 resources is expected to be from 0 to
-      // nof_f0_f1_res_harq_per_ue for all UEs.
+      // The PUCCH resource ID for the ASN1 message for PUCCH
+      // F1 resources is expected to be from 0 to nof_f0_f1_res_harq_per_ue for all UEs.
       const bool pucch_ue_res_id_test = res_idx.ue_res_id < nof_f0_f1_res_harq_per_ue;
       const bool pucch_ue_cell_res_id_test =
           res_idx.cell_res_id - nof_f0_f1_res_harq_per_ue * harq_cfg_idx == res_idx.ue_res_id;
-      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
-      auto* res_it = get_pucch_resource_with_id(res_idx);
-      test_result  = test_result and pucch_cell_res_id_test and pucch_ue_res_id_test and pucch_ue_cell_res_id_test and
-                    res_it != pucch_cfg.pucch_res_list.end();
+
+      test_result = has_f0_res ? res_it != pucch_cfg.pucch_res_list.end()
+                               : test_result and pucch_cell_res_id_test and pucch_ue_res_id_test and
+                                     pucch_ue_cell_res_id_test and res_it != pucch_cfg.pucch_res_list.end();
     }
     // Check the PUCCH resources indexing in PUCCH resource Set 1.
     for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
+      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
+      auto* res_it = get_pucch_resource_with_id(res_idx);
+
+      // The checks on the PUCCH resource indices are only valid for configurations that doesn't have Format 0.
       const bool pucch_cell_res_id_test =
           res_idx.cell_res_id >= nof_f0_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
                                      nof_f2_res_harq_per_ue * harq_cfg_idx and
           res_idx.cell_res_id < nof_f0_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
                                     nof_f2_res_harq_per_ue * (harq_cfg_idx + 1);
-      // The PUCCH resource ID for the ASN1 message for PUCCH F2 resources is expected to be from
-      // (nof_f0_f1_res_harq_per_ue + 1) to (nof_f0_f1_res_harq_per_ue + 1 + nof_f2_res_harq_per_ue) for all UEs.
+      // The PUCCH resource ID for the ASN1 message for PUCCH
+      // F2 resources is expected to be from (nof_f0_f1_res_harq_per_ue + 1) to (nof_f0_f1_res_harq_per_ue + 1 +
+      // nof_f2_res_harq_per_ue) for all UEs.
       const bool pucch_ue_res_id_test = res_idx.ue_res_id >= nof_f0_f1_res_harq_per_ue + 1 and
                                         res_idx.ue_res_id < nof_f0_f1_res_harq_per_ue + 1 + nof_f2_res_harq_per_ue;
       // Check if the PUCCH cell resourece ID is set correspondingly to the PUCCH UE resource ID.
@@ -650,10 +668,10 @@ protected:
           res_idx.cell_res_id - (nof_f0_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
                                  nof_f2_res_harq_per_ue * harq_cfg_idx) ==
           res_idx.ue_res_id - (nof_f0_f1_res_harq_per_ue + 1);
-      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
-      auto* res_it = get_pucch_resource_with_id(res_idx);
-      test_result  = test_result and pucch_cell_res_id_test and pucch_ue_res_id_test and pucch_ue_cell_res_id_test and
-                    res_it != pucch_cfg.pucch_res_list.end();
+
+      test_result = has_f0_res ? res_it != pucch_cfg.pucch_res_list.end()
+                               : test_result and pucch_cell_res_id_test and pucch_ue_res_id_test and
+                                     pucch_ue_cell_res_id_test and res_it != pucch_cfg.pucch_res_list.end();
     }
 
     // Check the format correctness.
@@ -675,8 +693,9 @@ protected:
     const bool sr_ue_res_id_test = sr_pucch_res_id.ue_res_id == nof_f0_f1_res_harq_per_ue;
     test_result                  = test_result and sr_cell_res_id_test and sr_ue_res_id_test;
     // Check the PUCCH resouce for SR present in the list.
-    auto* res_it = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
-    test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
+    const auto* res_it           = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
+    test_result                  = test_result and res_it != pucch_cfg.pucch_res_list.end();
+    const auto& sr_pucch_res_cfg = *res_it;
 
     // Check SR and related PUCCH resource.
     srsran_assert(serv_cell_cfg.csi_meas_cfg.has_value(), "CSI meas config is expected to be present");
@@ -702,8 +721,25 @@ protected:
     const bool csi_ue_res_id_test = csi_res_id.ue_res_id == nof_f0_f1_res_harq_per_ue + 1 + nof_f2_res_harq_per_ue;
     test_result                   = test_result and csi_cell_res_id_test and csi_ue_res_id_test;
     // Check the PUCCH resouce for SR present in the list.
-    res_it      = get_pucch_resource_with_id(csi_res_id);
-    test_result = test_result and res_it != pucch_cfg.pucch_res_list.end();
+    res_it                        = get_pucch_resource_with_id(csi_res_id);
+    test_result                   = test_result and res_it != pucch_cfg.pucch_res_list.end();
+    const auto& csi_pucch_res_cfg = *res_it;
+
+    if (has_f0_res) {
+      srsran_assert(sr_pucch_res_cfg.format == pucch_format::FORMAT_0 and
+                        std::holds_alternative<pucch_format_0_cfg>(sr_pucch_res_cfg.format_params),
+                    "SR PUCCH resource must be of Format 0 if any of the PUCCH resources from set 0 has Format 0.");
+      srsran_assert(csi_pucch_res_cfg.format == pucch_format::FORMAT_2 and
+                        std::holds_alternative<pucch_format_2_3_cfg>(csi_pucch_res_cfg.format_params),
+                    "CSI PUCCH resource must be of Format 2");
+      const auto&       sr_pucch_cfg  = std::get<pucch_format_0_cfg>(sr_pucch_res_cfg.format_params);
+      const auto&       csi_pucch_cfg = std::get<pucch_format_2_3_cfg>(csi_pucch_res_cfg.format_params);
+      ofdm_symbol_range sr_symbols{sr_pucch_cfg.starting_sym_idx,
+                                   sr_pucch_cfg.starting_sym_idx + sr_pucch_cfg.nof_symbols};
+      ofdm_symbol_range csi_symbols{csi_pucch_cfg.starting_sym_idx,
+                                    csi_pucch_cfg.starting_sym_idx + csi_pucch_cfg.nof_symbols};
+      test_result = test_result and sr_symbols.overlaps(csi_symbols);
+    }
 
     return test_result;
   }
@@ -777,7 +813,7 @@ INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
                                            pucch_cfg_builder_params{ 3,     0,     6,     1,    2,   1 },
                                            pucch_cfg_builder_params{ 7,     0,     3,     1,    1,   1 },
                                            pucch_cfg_builder_params{ 8,     0,     8,     1,    4,   1 },
-                                           pucch_cfg_builder_params{ 1,     0,     1,     1,    1,   1 },
+                                           pucch_cfg_builder_params{ 2,     0,     2,     1,    1,   1 },
                                            pucch_cfg_builder_params{ 7,     0,     7,     1,    3,   1 },
                                            pucch_cfg_builder_params{ 8,     0,     8,     4,    4,   4 },
                                            pucch_cfg_builder_params{ 5,     0,     2,    10,    2,   7 },

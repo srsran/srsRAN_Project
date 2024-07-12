@@ -148,10 +148,6 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
                         [res_id](const pucch_resource& res) { return res.res_id.cell_res_id == res_id; });
   };
 
-  // NOTE: No need to check this for Format 0, as this struct doesn't exist for F0.
-  VERIFY(pucch_cfg.format_1_common_param.has_value(), "Missing PUCCH-format1 parameters in PUCCH-Config");
-  VERIFY(pucch_cfg.format_2_common_param.has_value(), "Missing PUCCH-format2 parameters in PUCCH-Config");
-
   // Verify that the PUCCH resources IDs of each PUCCH resource set point at a corresponding item in the PUCCH reource
   // list.
   VERIFY(pucch_cfg.pucch_res_set.size() >= 2, "At least 2 PUCCH resource sets need to be configured in PUCCH-Config");
@@ -204,6 +200,12 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   }
   VERIFY(not(has_format_0 and has_format_1),
          "Only PUCCH Format 0 or Format 1 can be configured in a UE configuration, not both.");
+
+  // NOTE: No need to check this for Format 0, as this struct doesn't exist for F0.
+  if (has_format_1) {
+    VERIFY(pucch_cfg.format_1_common_param.has_value(), "Missing PUCCH-format1 parameters in PUCCH-Config");
+  }
+  VERIFY(pucch_cfg.format_2_common_param.has_value(), "Missing PUCCH-format2 parameters in PUCCH-Config");
 
   // Check PUCCH Formats for each PUCCH Resource Set.
   for (auto res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
