@@ -9,6 +9,7 @@
  */
 
 #include "cu_appconfig_cli11_schema.h"
+#include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "cu_appconfig.h"
 #include "srsran/support/cli11_utils.h"
@@ -31,18 +32,13 @@ static void configure_cli11_nru_args(CLI::App& app, srs_cu::cu_nru_appconfig& nr
   add_option(app, "--udp_max_rx_msgs", nru_cfg.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
 }
 
-static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
-{
-  app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
-      ->capture_default_str();
-  app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
-      ->capture_default_str();
-}
-
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
 {
   // Logging section.
   configure_cli11_with_logger_appconfig_schema(app, cu_cfg.log_cfg);
+
+  // Buffer pool section.
+  configure_cli11_with_buffer_pool_appconfig_schema(app, cu_cfg.buffer_pool_config);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();
@@ -53,8 +49,4 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
   CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
   CLI::App* nru_subcmd   = add_subcommand(*cu_up_subcmd, "nru", "NR-U parameters")->configurable();
   configure_cli11_nru_args(*nru_subcmd, cu_cfg.nru_cfg);
-
-  // Buffer pool section.
-  CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
-  configure_cli11_buffer_pool_args(*buffer_pool_subcmd, cu_cfg.buffer_pool_config);
 }

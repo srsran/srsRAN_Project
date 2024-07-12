@@ -10,10 +10,9 @@
 
 #pragma once
 
+#include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/support/executors/unique_thread.h"
 #include <string>
@@ -52,11 +51,6 @@ struct metrics_appconfig {
   uint16_t    port                     = 55555;
   bool        autostart_stdout_metrics = false;
   unsigned    stdout_metrics_period    = 1000; // Statistics report period in milliseconds
-};
-
-struct buffer_pool_appconfig {
-  std::size_t nof_segments = 1048576;
-  std::size_t segment_size = byte_buffer_segment_pool_default_segment_size();
 };
 
 /// CPU affinities configuration for the gNB app.

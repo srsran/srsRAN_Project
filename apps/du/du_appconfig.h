@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../gnb/gnb_appconfig.h" // TODO: Remove
+#include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/os_sched_affinity_manager.h"
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/support/executors/unique_thread.h"
 #include <optional>
 

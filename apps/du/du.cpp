@@ -49,6 +49,7 @@
 
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
+#include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics_plotter_json.h"
 #include "apps/services/metrics_plotter_stdout.h"
@@ -228,7 +229,7 @@ int main(int argc, char** argv)
 #endif
 
   // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(du_cfg.buffer_pool_config.nof_segments, du_cfg.buffer_pool_config.segment_size);
+  app_services::buffer_pool_manager buffer_pool_service(du_cfg.buffer_pool_config);
 
   // Log CPU architecture.
   cpu_architecture_info::get().print_cpu_info(du_logger);
