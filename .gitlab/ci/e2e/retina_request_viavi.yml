@@ -23,7 +23,7 @@
     ephemeral-storage:
       requests: "20G"
       limits: "20G"
-  taints: ["ci-amd64-avx512-onprem"]
+  taints: ["purpose=ci-amd64-avx512-onprem"]
   resources:
     - type: emulator
       model: viavi
