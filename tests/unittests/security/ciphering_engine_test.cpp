@@ -22,7 +22,7 @@ using namespace srsran;
 using namespace srsran::security;
 
 /// Fixture class for ciphering engine tests
-class fxt_base : public testing::TestWithParam<nea_test_set>
+class fxt_nea_base : public testing::TestWithParam<nea_test_set>
 {
 protected:
   void SetUp() override
@@ -48,15 +48,15 @@ protected:
 };
 
 /// Fixture class for ciphering engine tests with NEA1
-class fxt_nea1 : public fxt_base
+class fxt_nea1 : public fxt_nea_base
 {};
 
 /// Fixture class for ciphering engine tests with NEA2
-class fxt_nea2 : public fxt_base
+class fxt_nea2 : public fxt_nea_base
 {};
 
 /// Fixture class for ciphering engine tests with NEA3
-class fxt_nea3 : public fxt_base
+class fxt_nea3 : public fxt_nea_base
 {};
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.

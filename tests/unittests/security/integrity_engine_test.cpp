@@ -21,7 +21,7 @@ using namespace srsran;
 using namespace srsran::security;
 
 /// Fixture class for integrity engine tests
-class fxt_base : public testing::TestWithParam<nia_test_set>
+class fxt_nia_base : public testing::TestWithParam<nia_test_set>
 {
 protected:
   void SetUp() override
@@ -48,15 +48,15 @@ protected:
 };
 
 /// Fixture class for integrity engine tests with NIA1
-class fxt_nia1 : public fxt_base
+class fxt_nia1 : public fxt_nia_base
 {};
 
 /// Fixture class for integrity engine tests with NIA2
-class fxt_nia2 : public fxt_base
+class fxt_nia2 : public fxt_nia_base
 {};
 
 /// Fixture class for integrity engine tests with NIA3
-class fxt_nia3 : public fxt_base
+class fxt_nia3 : public fxt_nia_base
 {};
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
