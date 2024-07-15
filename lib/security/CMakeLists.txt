@@ -11,6 +11,7 @@ set(SOURCES
   ciphering_engine_generic.cpp
   ciphering_engine_nea1.cpp
   ciphering_engine_nea2.cpp
+  ciphering_engine_nea3.cpp
   integrity_engine_generic.cpp
   security.cpp
   security_engine_impl.cpp

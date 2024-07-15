@@ -14,6 +14,7 @@
 #include "ciphering_engine_generic.h"
 #include "ciphering_engine_nea1.h"
 #include "ciphering_engine_nea2.h"
+#include "ciphering_engine_nea3.h"
 #include "integrity_engine_generic.h"
 
 using namespace srsran;
@@ -42,9 +43,12 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
       case ciphering_algorithm::nea2:
         cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);
         break;
+      case ciphering_algorithm::nea3:
+        cipher_eng = std::make_unique<ciphering_engine_nea3>(sec_cfg.k_128_enc, bearer_id, direction);
+        break;
       default:
-        cipher_eng =
-            std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+        // no cipher_eng for NEA0
+        break;
     }
   }
 }
