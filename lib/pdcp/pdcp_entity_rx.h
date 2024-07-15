@@ -91,7 +91,7 @@ public:
   /*
    * Security configuration
    */
-  void configure_security(security::sec_128_as_config sec_cfg_) final
+  void configure_security(security::sec_128_as_config sec_cfg_) override
   {
     srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
                       (is_drb() && sec_cfg_.domain == security::sec_domain::up),
@@ -121,7 +121,7 @@ public:
     logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
   }
 
-  void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
+  void set_integrity_protection(security::integrity_enabled integrity_enabled_) override
   {
     if (integrity_enabled_ == security::integrity_enabled::on) {
       if (!sec_cfg.k_128_int.has_value()) {
@@ -136,7 +136,7 @@ public:
     integrity_enabled = integrity_enabled_;
     logger.log_info("Set integrity_enabled={}", integrity_enabled);
   }
-  void set_ciphering(security::ciphering_enabled ciphering_enabled_) final
+  void set_ciphering(security::ciphering_enabled ciphering_enabled_) override
   {
     ciphering_enabled = ciphering_enabled_;
     logger.log_info("Set ciphering_enabled={}", ciphering_enabled);

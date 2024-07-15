@@ -109,7 +109,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer sdu) final;
+  void handle_sdu(byte_buffer sdu) override;
 
   void handle_transmit_notification(uint32_t notif_sn) override;
   void handle_delivery_notification(uint32_t notif_sn) override;
@@ -124,7 +124,7 @@ public:
   void handle_status_report(byte_buffer_chain status);
 
   // Status handler interface
-  void on_status_report(byte_buffer_chain status) final { handle_status_report(std::move(status)); }
+  void on_status_report(byte_buffer_chain status) override { handle_status_report(std::move(status)); }
 
   /*
    * Header helpers
@@ -153,7 +153,7 @@ public:
    */
   void configure_security(security::sec_128_as_config sec_cfg,
                           security::integrity_enabled integrity_enabled_,
-                          security::ciphering_enabled ciphering_enabled_) final;
+                          security::ciphering_enabled ciphering_enabled_) override;
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
   void send_status_report();
