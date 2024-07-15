@@ -65,9 +65,6 @@ void initial_context_setup_routine::operator()(
     ue_context_setup_request.sp_cell_id    = rrc_smc_ctxt.sp_cell_id;
     ue_context_setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
     ue_context_setup_request.rrc_container = rrc_smc_ctxt.rrc_ue_security_mode_command_pdu.copy();
-    // Setup SRB2
-    ue_context_setup_request.srbs_to_be_setup_list.emplace(srb_id_t::srb2,
-                                                           f1ap_srbs_to_be_setup_mod_item{srb_id_t::srb2});
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,
