@@ -26,9 +26,9 @@ TEST(rrc_asn1_helpers_test, test_five_g_s_tmsi_converter_for_valid_five_g_s_tmsi
 
   srs_cu_cp::cu_cp_five_g_s_tmsi five_g_s_tmsi = asn1_to_five_g_s_tmsi(asn1_five_g_s_tmsi);
 
-  ASSERT_EQ(1U, five_g_s_tmsi.amf_set_id);
-  ASSERT_EQ(0U, five_g_s_tmsi.amf_pointer);
-  ASSERT_EQ(3221227019U, five_g_s_tmsi.five_g_tmsi);
+  ASSERT_EQ(1U, five_g_s_tmsi.get_amf_set_id());
+  ASSERT_EQ(0U, five_g_s_tmsi.get_amf_pointer());
+  ASSERT_EQ(3221227019U, five_g_s_tmsi.get_five_g_tmsi());
 }
 
 /// Test five-g-s-tmsi conversion with concatenation
@@ -44,9 +44,9 @@ TEST(rrc_asn1_helpers_test, test_five_g_s_tmsi_concatenation_for_valid_five_g_s_
   srs_cu_cp::cu_cp_five_g_s_tmsi five_g_s_tmsi =
       asn1_to_five_g_s_tmsi(asn1_five_g_s_tmsi_part1, asn1_five_g_s_tmsi_part_2);
 
-  ASSERT_EQ(1U, five_g_s_tmsi.amf_set_id);
-  ASSERT_EQ(0U, five_g_s_tmsi.amf_pointer);
-  ASSERT_EQ(3221227019U, five_g_s_tmsi.five_g_tmsi);
+  ASSERT_EQ(1U, five_g_s_tmsi.get_amf_set_id());
+  ASSERT_EQ(0U, five_g_s_tmsi.get_amf_pointer());
+  ASSERT_EQ(3221227019U, five_g_s_tmsi.get_five_g_tmsi());
 }
 
 /// Test amf-identifier decoding

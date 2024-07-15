@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
@@ -131,9 +132,25 @@ struct cu_cp_amf_identifier_t {
 };
 
 struct cu_cp_five_g_s_tmsi {
-  uint16_t amf_set_id;
-  uint8_t  amf_pointer;
-  uint32_t five_g_tmsi;
+  uint16_t get_amf_set_id() const
+  {
+    srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
+    return five_g_s_tmsi.value().to_uint64() >> 38U;
+  };
+
+  uint8_t get_amf_pointer() const
+  {
+    srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
+    return (five_g_s_tmsi.value().to_uint64() & 0x3f00000000) >> 32U;
+  };
+
+  uint32_t get_five_g_tmsi() const
+  {
+    srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
+    return (five_g_s_tmsi.value().to_uint64() & 0xffffffff);
+  };
+
+  std::optional<bounded_bitset<48>> five_g_s_tmsi;
 };
 
 struct cu_cp_initial_ue_message {

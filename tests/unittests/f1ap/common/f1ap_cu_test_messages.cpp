@@ -446,9 +446,9 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   cu_cp_paging_message paging_msg;
 
   // add ue paging id
-  paging_msg.ue_paging_id.amf_set_id  = 1;
-  paging_msg.ue_paging_id.amf_pointer = 0;
-  paging_msg.ue_paging_id.five_g_tmsi = 4211117727;
+  bounded_bitset<48> five_g_s_tmsi(48);
+  five_g_s_tmsi.from_uint64(((uint64_t)1U << 38U) + ((uint64_t)0U << 32U) + 4211117727);
+  paging_msg.ue_paging_id = cu_cp_five_g_s_tmsi{five_g_s_tmsi};
 
   // add paging drx
   paging_msg.paging_drx = 64;

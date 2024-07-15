@@ -561,8 +561,8 @@ f1ap_rrc_recfg_complete_ind_to_asn1(const f1ap_rrc_recfg_complete_ind& rrc_recfg
 inline uint64_t five_g_s_tmsi_struct_to_number(const cu_cp_five_g_s_tmsi& five_g_s_tmsi)
 {
   // 5G-S-TMSI is a 48 bit string consisting of <aMFSetId (10 bit)><aMFPointer (6 bit)><5G-TMSI (32 bit)>
-  return ((uint64_t)five_g_s_tmsi.amf_set_id << 38) + ((uint64_t)five_g_s_tmsi.amf_pointer << 32) +
-         five_g_s_tmsi.five_g_tmsi;
+  return ((uint64_t)five_g_s_tmsi.get_amf_set_id() << 38) + ((uint64_t)five_g_s_tmsi.get_amf_pointer() << 32) +
+         five_g_s_tmsi.get_five_g_tmsi();
 }
 
 /// \brief Convert F1AP ASN.1 to \c cu_cp_tx_bw.

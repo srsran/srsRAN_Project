@@ -836,5 +836,22 @@ inline bool target_to_source_transport_container_to_asn1(
   return true;
 }
 
+/// \brief Convert NGAP ASN.1 to \c cu_cp_five_g_s_tmsi.
+/// \param[in] asn1_ue_id The ASN.1 type ue paging ID.
+/// \return The common type cu_cp_five_g_s_tmsi.
+inline cu_cp_five_g_s_tmsi ngap_asn1_to_ue_paging_id(const asn1::ngap::ue_paging_id_c& asn1_ue_id)
+{
+  srsran_assert(asn1_ue_id.type() == asn1::ngap::ue_paging_id_c::types_opts::five_g_s_tmsi,
+                "Invalid UE paging ID type");
+
+  bounded_bitset<48> five_g_s_tmsi(48);
+
+  five_g_s_tmsi.from_uint64(((uint64_t)asn1_ue_id.five_g_s_tmsi().amf_set_id.to_number() << 38U) +
+                            ((uint64_t)asn1_ue_id.five_g_s_tmsi().amf_pointer.to_number() << 32U) +
+                            asn1_ue_id.five_g_s_tmsi().five_g_tmsi.to_number());
+
+  return cu_cp_five_g_s_tmsi{five_g_s_tmsi};
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

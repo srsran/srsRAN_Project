@@ -20,17 +20,19 @@ protected:
   bool was_minimal_conversion_successful() const
   {
     // check ue paging id
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.amf_set_id != 1) {
-      test_logger.error("AMF Set ID mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.amf_set_id, 1);
-      return false;
-    }
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.amf_pointer != 0) {
-      test_logger.error("AMF Pointer mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.amf_pointer, 0);
-      return false;
-    }
-    if (cu_cp_paging_notifier.last_msg.ue_paging_id.five_g_tmsi != 4211117727) {
+    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_set_id() != 1) {
       test_logger.error(
-          "FiveG TMSI mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.five_g_tmsi, 4211117727);
+          "AMF Set ID mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_set_id(), 1);
+      return false;
+    }
+    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_pointer() != 0) {
+      test_logger.error(
+          "AMF Pointer mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_amf_pointer(), 0);
+      return false;
+    }
+    if (cu_cp_paging_notifier.last_msg.ue_paging_id.get_five_g_tmsi() != 4211117727) {
+      test_logger.error(
+          "FiveG TMSI mismatch {} != {}", cu_cp_paging_notifier.last_msg.ue_paging_id.get_five_g_tmsi(), 4211117727);
       return false;
     }
 

@@ -202,9 +202,9 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
   if (msg.five_g_s_tmsi.has_value()) {
     // TS 23.003 - 5G-S-TMSI contains AMF Set ID, AMF Pointer and 5G TMSI.
     asn1_msg->five_g_s_tmsi_present = true;
-    asn1_msg->five_g_s_tmsi.amf_set_id.from_number(msg.five_g_s_tmsi.value().amf_set_id);
-    asn1_msg->five_g_s_tmsi.amf_pointer.from_number(msg.five_g_s_tmsi.value().amf_pointer);
-    asn1_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
+    asn1_msg->five_g_s_tmsi.amf_set_id.from_number(msg.five_g_s_tmsi.value().get_amf_set_id());
+    asn1_msg->five_g_s_tmsi.amf_pointer.from_number(msg.five_g_s_tmsi.value().get_amf_pointer());
+    asn1_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().get_five_g_tmsi());
   }
 
   if (msg.amf_set_id.has_value()) {
@@ -854,9 +854,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::ngap::paging_s& asn1_paging)
 {
   // add ue paging id
-  paging.ue_paging_id.amf_set_id  = asn1_paging->ue_paging_id.five_g_s_tmsi().amf_set_id.to_number();
-  paging.ue_paging_id.amf_pointer = asn1_paging->ue_paging_id.five_g_s_tmsi().amf_pointer.to_number();
-  paging.ue_paging_id.five_g_tmsi = asn1_paging->ue_paging_id.five_g_s_tmsi().five_g_tmsi.to_number();
+  paging.ue_paging_id = ngap_asn1_to_ue_paging_id(asn1_paging->ue_paging_id);
 
   // add paging drx
   if (asn1_paging->paging_drx_present) {
