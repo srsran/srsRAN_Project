@@ -10,7 +10,7 @@
  *
  */
 
-#include "security_engine_generic.h"
+#include "security_engine_impl.h"
 #include "ciphering_engine_generic.h"
 #include "ciphering_engine_nea2.h"
 #include "integrity_engine_generic.h"
@@ -18,11 +18,11 @@
 using namespace srsran;
 using namespace security;
 
-security_engine_generic::security_engine_generic(security::sec_128_as_config sec_cfg,
-                                                 uint8_t                     bearer_id,
-                                                 security_direction          direction,
-                                                 security::integrity_enabled integrity_enabled,
-                                                 security::ciphering_enabled ciphering_enabled)
+security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
+                                           uint8_t                     bearer_id,
+                                           security_direction          direction,
+                                           security::integrity_enabled integrity_enabled,
+                                           security::ciphering_enabled ciphering_enabled)
 {
   if (integrity_enabled == security::integrity_enabled::on) {
     if (sec_cfg.integ_algo.has_value() && sec_cfg.k_128_int.has_value()) {
@@ -43,7 +43,7 @@ security_engine_generic::security_engine_generic(security::sec_128_as_config sec
   }
 }
 
-security_result security_engine_generic::encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count)
+security_result security_engine_impl::encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count)
 {
   security_result result{.buf = std::move(buf), .count = count};
 
@@ -63,7 +63,7 @@ security_result security_engine_generic::encrypt_and_protect_integrity(byte_buff
   return result;
 }
 
-security_result security_engine_generic::decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count)
+security_result security_engine_impl::decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count)
 {
   security_result result;
   return result;

@@ -20,15 +20,15 @@
 namespace srsran {
 namespace security {
 
-class security_engine_generic : public security_engine
+class security_engine_impl final : public security_engine
 {
 public:
-  security_engine_generic(sec_128_as_config  sec_cfg,
-                          uint8_t            bearer_id,
-                          security_direction direction,
-                          integrity_enabled  integrity_enabled,
-                          ciphering_enabled  ciphering_enabled);
-  ~security_engine_generic() = default;
+  security_engine_impl(sec_128_as_config  sec_cfg,
+                       uint8_t            bearer_id,
+                       security_direction direction,
+                       integrity_enabled  integrity_enabled,
+                       ciphering_enabled  ciphering_enabled);
+  ~security_engine_impl() = default;
 
   security_result encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count) override;
   security_result decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count) override;

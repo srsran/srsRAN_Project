@@ -9,7 +9,7 @@
  */
 
 #include "pdcp_entity_tx.h"
-#include "../security/security_engine_generic.h"
+#include "../security/security_engine_impl.h"
 #include "../support/sdu_window_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
@@ -358,7 +358,7 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
 
   auto direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                     : security::security_direction::downlink;
-  sec_engine     = std::make_unique<security::security_engine_generic>(
+  sec_engine     = std::make_unique<security::security_engine_impl>(
       sec_cfg, bearer_id, direction, integrity_enabled, ciphering_enabled);
 
   logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
