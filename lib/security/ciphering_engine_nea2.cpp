@@ -15,10 +15,10 @@
 using namespace srsran;
 using namespace security;
 
-ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key k_128_int, uint8_t bearer_id_, security_direction direction_) :
+ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key k_128_enc, uint8_t bearer_id_, security_direction direction_) :
   bearer_id(bearer_id_), direction(direction_)
 {
-  int ret = aes_setkey_enc(&ctx, k_128_int.data(), 128);
+  int ret = aes_setkey_enc(&ctx, k_128_enc.data(), 128);
   if (ret != 0) {
     srsran_assertion_failure("Failure in aes_setkey_enc");
     return;

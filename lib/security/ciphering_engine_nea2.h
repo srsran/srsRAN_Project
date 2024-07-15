@@ -22,7 +22,7 @@ namespace security {
 class ciphering_engine_nea2 final : public ciphering_engine
 {
 public:
-  ciphering_engine_nea2(sec_128_key k_128_int, uint8_t bearer_id_, security_direction direction_);
+  ciphering_engine_nea2(sec_128_key k_128_enc, uint8_t bearer_id_, security_direction direction_);
   virtual ~ciphering_engine_nea2() = default;
 
   security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) override;
