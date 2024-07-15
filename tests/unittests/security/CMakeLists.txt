@@ -12,7 +12,7 @@ add_executable(security_test security_test.cpp)
 target_link_libraries(security_test srsran_security srsran_support srslog gtest gtest_main)
 gtest_discover_tests(security_test)
 
-add_executable(integrity_engine_test integrity_engine_test)
+add_executable(integrity_engine_test integrity_engine_test.cpp)
 target_include_directories(integrity_engine_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(integrity_engine_test srsran_security srsran_support srslog gtest gtest_main)
 gtest_discover_tests(integrity_engine_test)
