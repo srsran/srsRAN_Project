@@ -25,13 +25,20 @@ struct security_result {
   uint32_t                              count;
 };
 
-class security_engine
+class security_engine_tx
 {
 public:
-  virtual ~security_engine() = default;
+  virtual ~security_engine_tx() = default;
 
   virtual security_result encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count) = 0;
-  virtual security_result decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count)  = 0;
+};
+
+class security_engine_rx
+{
+public:
+  virtual ~security_engine_rx() = default;
+
+  virtual security_result decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count) = 0;
 };
 
 } // namespace security

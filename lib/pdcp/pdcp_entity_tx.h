@@ -181,7 +181,7 @@ private:
 
   pdcp_tx_state st = {};
 
-  std::unique_ptr<security::security_engine> sec_engine;
+  std::unique_ptr<security::security_engine_tx> sec_engine;
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;

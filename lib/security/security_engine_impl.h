@@ -20,7 +20,7 @@
 namespace srsran {
 namespace security {
 
-class security_engine_impl final : public security_engine
+class security_engine_impl final : public security_engine_tx, public security_engine_rx
 {
 public:
   security_engine_impl(sec_128_as_config  sec_cfg,
