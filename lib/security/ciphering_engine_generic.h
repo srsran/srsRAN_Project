@@ -18,7 +18,7 @@
 namespace srsran {
 namespace security {
 
-class ciphering_engine_generic : public ciphering_engine
+class ciphering_engine_generic final : public ciphering_engine
 {
 public:
   ciphering_engine_generic(sec_128_key         k_128_int_,
@@ -27,7 +27,7 @@ public:
                            ciphering_algorithm cipher_algo_);
   virtual ~ciphering_engine_generic() = default;
 
-  security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) final;
+  security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) override;
 
 private:
   sec_128_key         k_128_enc;

@@ -18,7 +18,7 @@
 namespace srsran {
 namespace security {
 
-class integrity_engine_generic : public integrity_engine
+class integrity_engine_generic final : public integrity_engine
 {
 public:
   integrity_engine_generic(sec_128_key         k_128_int_,
@@ -27,8 +27,8 @@ public:
                            integrity_algorithm integ_algo_);
   ~integrity_engine_generic() = default;
 
-  security_result protect_integrity(byte_buffer buf, uint32_t count) final;
-  security_result verify_integrity(byte_buffer buf, uint32_t count) final;
+  security_result protect_integrity(byte_buffer buf, uint32_t count) override;
+  security_result verify_integrity(byte_buffer buf, uint32_t count) override;
 
 private:
   sec_128_key         k_128_int;
