@@ -11,6 +11,7 @@
 #include "rrc_setup_procedure.h"
 #include "../rrc_asn1_helpers.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
+#include <variant>
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -110,10 +111,10 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
         asn1::rrc_nr::rrc_setup_complete_ies_s::ng_5_g_s_tmsi_value_c_::types_opts::options::ng_5_g_s_tmsi) {
       context.five_g_s_tmsi = asn1_to_five_g_s_tmsi(rrc_setup_complete.ng_5_g_s_tmsi_value.ng_5_g_s_tmsi());
     } else {
-      if (!context.five_g_s_tmsi_part1.has_value()) {
+      if (!std::holds_alternative<asn1::fixed_bitstring<39>>(context.setup_ue_id)) {
         logger.log_warning("5G-S-TMSI part 1 is missing");
       } else {
-        context.five_g_s_tmsi = asn1_to_five_g_s_tmsi(context.five_g_s_tmsi_part1.value(),
+        context.five_g_s_tmsi = asn1_to_five_g_s_tmsi(std::get<asn1::fixed_bitstring<39>>(context.setup_ue_id),
                                                       rrc_setup_complete.ng_5_g_s_tmsi_value.ng_5_g_s_tmsi_part2());
       }
     }

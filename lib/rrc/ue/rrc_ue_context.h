@@ -33,18 +33,18 @@ public:
                    const rrc_ue_cfg_t&                    cfg_,
                    std::optional<rrc_ue_transfer_context> rrc_context_);
 
-  const ue_index_t                                         ue_index; // UE index assigned by the DU processor
-  const rnti_t                                             c_rnti;   // current C-RNTI
-  const rrc_cell_context                                   cell;     // current cell
-  const rrc_ue_cfg_t                                       cfg;
-  rrc_state                                                state = rrc_state::idle;
-  std::optional<rrc_meas_cfg>                              meas_cfg;
-  std::optional<asn1::fixed_bitstring<39>>                 five_g_s_tmsi_part1;
-  std::optional<cu_cp_five_g_s_tmsi>                       five_g_s_tmsi;
-  uint64_t                                                 setup_ue_id;
-  asn1::rrc_nr::establishment_cause_opts                   connection_cause;
-  std::map<srb_id_t, ue_srb_context>                       srbs;
-  std::optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
+  const ue_index_t                   ue_index; // UE index assigned by the DU processor
+  const rnti_t                       c_rnti;   // current C-RNTI
+  const rrc_cell_context             cell;     // current cell
+  const rrc_ue_cfg_t                 cfg;
+  rrc_state                          state = rrc_state::idle;
+  std::optional<rrc_meas_cfg>        meas_cfg;
+  std::optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
+  std::variant<uint64_t, asn1::fixed_bitstring<39>>
+                                           setup_ue_id; ///< this is either a random value or the 5G-S-TMSI-PART1
+  asn1::rrc_nr::establishment_cause_opts   connection_cause;
+  std::map<srb_id_t, ue_srb_context>       srbs;
+  std::optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
   std::optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
   std::optional<rrc_ue_transfer_context> transfer_context; // Context of old UE when created through mobility.
   bool                                   reestablishment_ongoing = false;
