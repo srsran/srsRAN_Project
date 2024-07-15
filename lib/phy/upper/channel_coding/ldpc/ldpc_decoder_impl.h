@@ -178,9 +178,9 @@ protected:
 
 private:
   /// Soft bits clamp lower bound.
-  static constexpr log_likelihood_ratio soft_bits_clamp_low = -32;
+  static constexpr log_likelihood_ratio soft_bits_clamp_low = -64;
   /// Soft bits clamp higher bound.
-  static constexpr log_likelihood_ratio soft_bits_clamp_high = 32;
+  static constexpr log_likelihood_ratio soft_bits_clamp_high = 64;
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
   const ldpc_graph_impl* current_graph = nullptr;
   /// Total number of base graph variable nodes in the current graph.
