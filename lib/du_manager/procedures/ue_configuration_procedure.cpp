@@ -38,8 +38,9 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   if (request.drbs_to_setup.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
       request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
-    proc_logger.log_proc_failure("No SCells, DRBs or SRBs to setup or release");
-    CORO_EARLY_RETURN(make_ue_config_failure());
+    // No SCells, DRBs or SRBs to setup or release so nothing to do.
+    proc_logger.log_proc_completed();
+    CORO_EARLY_RETURN(make_empty_ue_config_response());
   }
 
   prev_cell_group = ue->resources.value();
@@ -338,5 +339,20 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_failu
 {
   f1ap_ue_context_update_response resp;
   resp.result = false;
+  return resp;
+}
+
+f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config_response()
+{
+  f1ap_ue_context_update_response resp;
+  resp.result = true;
+  // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
+  asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
+  // Pack cellGroupConfig.
+  {
+    asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
+    asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
+    srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
+  }
   return resp;
 }
