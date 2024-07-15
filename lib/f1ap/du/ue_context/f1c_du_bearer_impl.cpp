@@ -126,8 +126,11 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
   // Mark all event entries as free.
-  for (unsigned i = 0; i != pending_delivery_event_pool.size(); ++i) {
-    pending_delivery_event_pool[i].first = -1;
+  for (auto& event : pending_delivery_event_pool) {
+    event.first = -1;
+  }
+  for (auto& event : pending_transmission_event_pool) {
+    event.first = -1;
   }
 }
 
