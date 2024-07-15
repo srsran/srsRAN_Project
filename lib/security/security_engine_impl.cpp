@@ -12,6 +12,7 @@
 
 #include "security_engine_impl.h"
 #include "ciphering_engine_generic.h"
+#include "ciphering_engine_nea1.h"
 #include "ciphering_engine_nea2.h"
 #include "integrity_engine_generic.h"
 
@@ -34,11 +35,16 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
     }
   }
   if (ciphering_enabled == security::ciphering_enabled::on) {
-    if (sec_cfg.cipher_algo == ciphering_algorithm::nea2) {
-      cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);
-    } else {
-      cipher_eng =
-          std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
+    switch (sec_cfg.cipher_algo) {
+      case ciphering_algorithm::nea1:
+        cipher_eng = std::make_unique<ciphering_engine_nea1>(sec_cfg.k_128_enc, bearer_id, direction);
+        break;
+      case ciphering_algorithm::nea2:
+        cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);
+        break;
+      default:
+        cipher_eng =
+            std::make_unique<ciphering_engine_generic>(sec_cfg.k_128_enc, bearer_id, direction, sec_cfg.cipher_algo);
     }
   }
 }
