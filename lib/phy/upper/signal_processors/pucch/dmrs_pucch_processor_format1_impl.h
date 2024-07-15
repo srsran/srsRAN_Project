@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "pucch_helper.h"
 #include "pucch_orthogonal_sequence.h"
+#include "srsran/phy/upper/pucch_helper.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"

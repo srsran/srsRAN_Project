@@ -13,13 +13,13 @@
 
 #pragma once
 
-#include "../signal_processors/pucch/pucch_helper.h"
 #include "pucch_detector_format0.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
 #include "srsran/phy/upper/equalization/dynamic_ch_est_list.h"
+#include "srsran/phy/upper/pucch_helper.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 

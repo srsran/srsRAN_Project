@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../signal_processors/pucch/pucch_helper.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
+#include "srsran/phy/upper/pucch_helper.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 

@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pucch_processor_format1_impl.h"
-#include "pucch_helper.h"
+#include "srsran/phy/upper/pucch_helper.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/sc_prod.h"
 
