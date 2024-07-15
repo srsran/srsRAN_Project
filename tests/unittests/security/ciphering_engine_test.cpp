@@ -8,7 +8,6 @@
  *
  */
 
-#include "lib/security/ciphering_engine_generic.h"
 #include "lib/security/ciphering_engine_nea1.h"
 #include "lib/security/ciphering_engine_nea2.h"
 #include "lib/security/ciphering_engine_nea3.h"
@@ -163,72 +162,6 @@ TEST_P(fxt_nea3, ciphering_engine_nea3)
   ASSERT_TRUE(result.buf.has_value());
   ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
   EXPECT_EQ(result.buf.value(), ciphertext);
-}
-
-TEST_P(fxt_nea1, ciphering_engine_generic_nea1)
-{
-  nea_test_set param = GetParam();
-
-  // Pack hex strings into srsran types
-  sec_128_key key        = make_sec_128_key(param.key_cstr);
-  auto        dir        = static_cast<security_direction>(param.direction);
-  byte_buffer plaintext  = make_byte_buffer(param.plaintext_cstr).value();
-  byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
-
-  // Create ciphering engine
-  std::unique_ptr<ciphering_engine> nea =
-      std::make_unique<ciphering_engine_generic>(key, param.bearer, dir, ciphering_algorithm::nea1);
-
-  // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
-  EXPECT_EQ(result.count, param.count);
-}
-
-TEST_P(fxt_nea2, ciphering_engine_generic_nea2)
-{
-  nea_test_set param = GetParam();
-
-  // Pack hex strings into srsran types
-  sec_128_key key        = make_sec_128_key(param.key_cstr);
-  auto        dir        = static_cast<security_direction>(param.direction);
-  byte_buffer plaintext  = make_byte_buffer(param.plaintext_cstr).value();
-  byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
-
-  // Create ciphering engine
-  std::unique_ptr<ciphering_engine> nea =
-      std::make_unique<ciphering_engine_generic>(key, param.bearer, dir, ciphering_algorithm::nea2);
-
-  // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
-  EXPECT_EQ(result.count, param.count);
-}
-
-TEST_P(fxt_nea3, ciphering_engine_generic_nea3)
-{
-  nea_test_set param = GetParam();
-
-  // Pack hex strings into srsran types
-  sec_128_key key        = make_sec_128_key(param.key_cstr);
-  auto        dir        = static_cast<security_direction>(param.direction);
-  byte_buffer plaintext  = make_byte_buffer(param.plaintext_cstr).value();
-  byte_buffer ciphertext = make_byte_buffer(param.ciphertext_cstr).value();
-
-  // Create ciphering engine
-  std::unique_ptr<ciphering_engine> nea =
-      std::make_unique<ciphering_engine_generic>(key, param.bearer, dir, ciphering_algorithm::nea3);
-
-  // Apply ciphering and compare results
-  security_result result = nea->apply_ciphering(plaintext.deep_copy().value(), 0, param.count);
-  ASSERT_TRUE(result.buf.has_value());
-  ASSERT_TRUE(trim_tail_to_bitlength(result.buf.value(), param.length));
-  EXPECT_EQ(result.buf.value(), ciphertext);
-  EXPECT_EQ(result.count, param.count);
 }
 
 //////////////////////////////////////////////////////////
