@@ -17,11 +17,6 @@
 namespace srsran {
 namespace security {
 
-struct ciphering_result {
-  expected<byte_buffer> buf;
-  uint32_t              count;
-};
-
 class ciphering_engine
 {
 public:
