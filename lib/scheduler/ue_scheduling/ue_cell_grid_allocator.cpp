@@ -483,7 +483,7 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
 
     h_dl.save_alloc_params(pdsch_sched_ctx, msg.pdsch_cfg, contains_srb_data);
 
-    return {alloc_status::success, h_dl.last_alloc_params().tb[0]->tbs_bytes};
+    return {alloc_status::success, h_dl.last_alloc_params().tb[0]->tbs_bytes, crbs.length()};
   }
 
   // No candidates for PDSCH allocation.
@@ -981,7 +981,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
     // In case there is a SR pending. Reset it.
     u.reset_sr_indication();
 
-    return {alloc_status::success, h_ul.last_tx_params().tbs_bytes};
+    return {alloc_status::success, h_ul.last_tx_params().tbs_bytes, crbs.length()};
   }
 
   // No candidates for PUSCH allocation.
