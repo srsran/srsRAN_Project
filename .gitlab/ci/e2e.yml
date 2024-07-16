@@ -110,7 +110,7 @@ e2e request and config validation:
 
 .e2e-run:
   resource_group: e2e-${GROUP}
-  timeout: 2h
+  timeout: 3 hours
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
