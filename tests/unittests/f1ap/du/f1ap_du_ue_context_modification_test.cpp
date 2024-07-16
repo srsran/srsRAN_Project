@@ -25,7 +25,9 @@ protected:
     // Test Preamble.
     run_f1_setup_procedure();
     run_f1ap_ue_create(test_ue_index);
-    run_ue_context_setup_procedure(test_ue_index, generate_ue_context_setup_request({}));
+    f1ap_message msg =
+        test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {});
+    run_ue_context_setup_procedure(test_ue_index, msg);
   }
 
   void start_procedure(const std::initializer_list<drb_id_t>& drbs, byte_buffer rrc_container = {})

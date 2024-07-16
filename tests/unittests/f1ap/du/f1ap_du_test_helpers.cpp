@@ -15,6 +15,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 
@@ -368,6 +369,10 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   for (const auto& created_srb : f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added) {
     ue.f1c_bearers[srb_id_to_uint(created_srb.srb_id)].bearer = created_srb.bearer;
   }
+
+  // Report transmission notification back to F1AP.
+  std::optional<uint32_t> pdcp_sn = get_pdcp_sn(f1ap_req->rrc_container, pdcp_sn_size::size12bits, true, test_logger);
+  ue.f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(pdcp_sn.value());
 }
 
 f1ap_ue_configuration_response f1ap_du_test::update_f1ap_ue_config(du_ue_index_t                   ue_index,

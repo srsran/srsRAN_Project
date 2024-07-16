@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -145,7 +146,9 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_co
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_become_active)
 {
   du_creates_f1_logical_connection();
-  run_ue_context_setup_procedure(test_ue->ue_index, generate_ue_context_setup_request({drb_id_t::drb1}));
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
+  run_ue_context_setup_procedure(test_ue->ue_index, msg);
 
   // UL data through created SRB2 reaches F1-C.
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
