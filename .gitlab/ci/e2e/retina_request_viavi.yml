@@ -21,8 +21,8 @@
       requests: 4Gi
       limits: 4Gi
     ephemeral-storage:
-      requests: "20G"
-      limits: "20G"
+      requests: "50G"
+      limits: "50G"
   taints: ["purpose=ci-amd64-avx512-onprem"]
   resources:
     - type: emulator
