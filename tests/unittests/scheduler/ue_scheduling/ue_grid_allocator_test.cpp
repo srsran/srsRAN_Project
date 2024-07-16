@@ -317,6 +317,30 @@ TEST_P(ue_grid_allocator_tester, allocates_pusch_restricted_to_recommended_max_n
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), grant1.max_nof_rbs);
 }
 
+TEST_P(ue_grid_allocator_tester, does_not_allocate_pusch_with_all_remaining_rbs_if_its_a_sr_indication)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  ue& u1                   = add_ue(ue_creation_req);
+  // Trigger a SR indication.
+  u1.handle_sr_indication();
+
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = u1.pending_ul_newtx_bytes()};
+
+  const crb_interval cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
+                                  cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_ul_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  // Successfully allocates PUSCH corresponding to the grant.
+  ASSERT_LT(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), cell_crbs.length());
+}
+
 TEST_P(ue_grid_allocator_tester, no_two_pdschs_are_allocated_in_same_slot_for_a_ue)
 {
   static const unsigned nof_bytes_to_schedule = 400U;
