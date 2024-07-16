@@ -132,6 +132,20 @@ struct cu_cp_amf_identifier_t {
 };
 
 struct cu_cp_five_g_s_tmsi {
+  cu_cp_five_g_s_tmsi() = default;
+
+  cu_cp_five_g_s_tmsi(const bounded_bitset<48>& five_g_s_tmsi_) : five_g_s_tmsi(five_g_s_tmsi_)
+  {
+    srsran_assert(five_g_s_tmsi_.size() == 48, "Invalid size for 5G-S-TMSI ({})", five_g_s_tmsi_.size());
+  }
+
+  cu_cp_five_g_s_tmsi(uint64_t amf_set_id, uint64_t amf_pointer, uint64_t five_g_tmsi)
+  {
+    five_g_s_tmsi.emplace();
+    five_g_s_tmsi->resize(48);
+    five_g_s_tmsi->from_uint64((amf_set_id << 38U) + (amf_pointer << 32U) + five_g_tmsi);
+  }
+
   uint16_t get_amf_set_id() const
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
@@ -152,6 +166,7 @@ struct cu_cp_five_g_s_tmsi {
 
   uint64_t to_number() const { return five_g_s_tmsi->to_uint64(); }
 
+private:
   std::optional<bounded_bitset<48>> five_g_s_tmsi;
 };
 

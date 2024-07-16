@@ -844,13 +844,9 @@ inline cu_cp_five_g_s_tmsi ngap_asn1_to_ue_paging_id(const asn1::ngap::ue_paging
   srsran_assert(asn1_ue_id.type() == asn1::ngap::ue_paging_id_c::types_opts::five_g_s_tmsi,
                 "Invalid UE paging ID type");
 
-  bounded_bitset<48> five_g_s_tmsi(48);
-
-  five_g_s_tmsi.from_uint64(((uint64_t)asn1_ue_id.five_g_s_tmsi().amf_set_id.to_number() << 38U) +
-                            ((uint64_t)asn1_ue_id.five_g_s_tmsi().amf_pointer.to_number() << 32U) +
-                            asn1_ue_id.five_g_s_tmsi().five_g_tmsi.to_number());
-
-  return cu_cp_five_g_s_tmsi{five_g_s_tmsi};
+  return cu_cp_five_g_s_tmsi{asn1_ue_id.five_g_s_tmsi().amf_set_id.to_number(),
+                             asn1_ue_id.five_g_s_tmsi().amf_pointer.to_number(),
+                             asn1_ue_id.five_g_s_tmsi().five_g_tmsi.to_number()};
 }
 
 } // namespace srs_cu_cp
