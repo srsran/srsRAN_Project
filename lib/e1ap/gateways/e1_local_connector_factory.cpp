@@ -66,7 +66,7 @@ public:
   {
     report_fatal_error_if_not(cu_cp_e1_mng != nullptr, "CU-CP has not been attached to E1 gateway.");
 
-    // Decorate DU RX notifier with pcap writing.
+    // Decorate CU-UP RX notifier with pcap writing.
     if (pcap_writer.is_write_enabled()) {
       cu_up_notifier = std::make_unique<e1ap_pdu_pcap_notifier>(
           std::move(cu_up_notifier), pcap_writer, srslog::fetch_basic_logger("CU-UP-E1"));
@@ -89,7 +89,7 @@ private:
   srs_cu_cp::cu_cp_e1_handler* cu_cp_e1_mng = nullptr;
 };
 
-/// Implementation of a CU-UP and CU-CP E1 SCTP-based gateway for the case that the DU and CU-CP are co-located.
+/// Implementation of a CU-UP and CU-CP E1 SCTP-based gateway for the case that the CU-UP and CU-CP are co-located.
 ///
 /// Note: This class should only be used for testing purposes.
 class e1_sctp_connector_impl final : public e1_local_connector
@@ -103,8 +103,8 @@ public:
     sctp.ppid         = E1AP_PPID;
     sctp.bind_address = "127.0.0.1";
     // Use any bind port available.
-    sctp.bind_port = 0;
-    server         = create_e1_gateway_server(e1_cu_sctp_gateway_config{sctp, broker, pcap_writer});
+    sctp.bind_port = cfg.bind_port;
+    server         = create_e1_gateway_server(e1_cu_cp_sctp_gateway_config{sctp, broker, pcap_writer});
   }
 
   void attach_cu_cp(srs_cu_cp::cu_cp_e1_handler& cu_e1_handler_) override
@@ -119,7 +119,7 @@ public:
     sctp_client.connect_port    = server->get_listen_port().value();
     sctp_client.ppid            = E1AP_PPID;
     // Note: We only need to save the PCAPs in one side of the connection.
-    client = create_e1_gateway_client(e1_du_sctp_gateway_config{sctp_client, broker, *null_pcap_writer});
+    client = create_e1_gateway_client(e1_cu_up_sctp_gateway_config{sctp_client, broker, *null_pcap_writer});
   }
 
   std::optional<uint16_t> get_listen_port() const override { return server->get_listen_port(); }

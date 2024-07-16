@@ -35,6 +35,8 @@ struct e1_local_sctp_connector_config {
   dlt_pcap& pcap;
   /// IO broker to handle the SCTP Rx data and notifications.
   io_broker& broker;
+  /// Port to bind the SCTP socket.
+  int bind_port = 0;
 };
 
 /// Creates an E1 local connector using an SCTP socket as channel.

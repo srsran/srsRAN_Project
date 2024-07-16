@@ -18,7 +18,8 @@ namespace srsran {
 class dlt_pcap;
 class io_broker;
 
-struct e1_du_sctp_gateway_config {
+/// Configuration of an SCTP-based E1 Gateway in the CU-UP.
+struct e1_cu_up_sctp_gateway_config {
   /// SCTP configuration.
   sctp_network_connector_config sctp;
   /// IO broker responsible for handling SCTP Rx data and notifications.
@@ -28,6 +29,6 @@ struct e1_du_sctp_gateway_config {
 };
 
 /// \brief Create an E1 gateway connector that the CU-UP can use to connect to the CU-CP.
-std::unique_ptr<srs_cu_up::e1_connection_client> create_e1_gateway_client(const e1_du_sctp_gateway_config& params);
+std::unique_ptr<srs_cu_up::e1_connection_client> create_e1_gateway_client(const e1_cu_up_sctp_gateway_config& params);
 
 } // namespace srsran

@@ -24,10 +24,10 @@ namespace {
 class sctp_to_e1_pdu_notifier final : public sctp_association_sdu_notifier
 {
 public:
-  sctp_to_e1_pdu_notifier(std::unique_ptr<e1ap_message_notifier> du_rx_pdu_notifier_,
+  sctp_to_e1_pdu_notifier(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier_,
                           dlt_pcap&                              pcap_writer_,
                           srslog::basic_logger&                  logger_) :
-    du_rx_pdu_notifier(std::move(du_rx_pdu_notifier_)), pcap_writer(pcap_writer_), logger(logger_)
+    cu_up_rx_pdu_notifier(std::move(cu_up_rx_pdu_notifier_)), pcap_writer(pcap_writer_), logger(logger_)
   {
   }
 
@@ -47,13 +47,13 @@ public:
     }
 
     // Forward unpacked Rx PDU to the CU-UP.
-    du_rx_pdu_notifier->on_new_message(msg);
+    cu_up_rx_pdu_notifier->on_new_message(msg);
 
     return true;
   }
 
 private:
-  std::unique_ptr<e1ap_message_notifier> du_rx_pdu_notifier;
+  std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier;
   dlt_pcap&                              pcap_writer;
   srslog::basic_logger&                  logger;
 };
@@ -98,7 +98,7 @@ private:
 class e1_sctp_gateway_client final : public srs_cu_up::e1_connection_client
 {
 public:
-  e1_sctp_gateway_client(const e1_du_sctp_gateway_config& params) :
+  e1_sctp_gateway_client(const e1_cu_up_sctp_gateway_config& params) :
     pcap_writer(params.pcap), broker(params.broker), sctp_params(params.sctp)
   {
     // Create SCTP network adapter.
@@ -152,7 +152,7 @@ private:
 } // namespace
 
 std::unique_ptr<srs_cu_up::e1_connection_client>
-srsran::create_e1_gateway_client(const e1_du_sctp_gateway_config& params)
+srsran::create_e1_gateway_client(const e1_cu_up_sctp_gateway_config& params)
 {
   return std::make_unique<e1_sctp_gateway_client>(params);
 }

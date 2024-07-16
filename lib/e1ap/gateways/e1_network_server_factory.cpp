@@ -98,7 +98,7 @@ private:
 class e1_sctp_server final : public srs_cu_cp::e1_connection_server, public sctp_network_association_factory
 {
 public:
-  e1_sctp_server(const e1_cu_sctp_gateway_config& params_) : params(params_)
+  e1_sctp_server(const e1_cu_cp_sctp_gateway_config& params_) : params(params_)
   {
     // Create SCTP server.
     sctp_server = create_sctp_network_server(sctp_network_server_config{params.sctp, params.broker, *this});
@@ -138,16 +138,17 @@ public:
   }
 
 private:
-  const e1_cu_sctp_gateway_config params;
-  srslog::basic_logger&           logger        = srslog::fetch_basic_logger("CU-CP-E1");
-  srs_cu_cp::cu_cp_e1_handler*    cu_e1_handler = nullptr;
+  const e1_cu_cp_sctp_gateway_config params;
+  srslog::basic_logger&              logger        = srslog::fetch_basic_logger("CU-CP-E1");
+  srs_cu_cp::cu_cp_e1_handler*       cu_e1_handler = nullptr;
 
   std::unique_ptr<sctp_network_server> sctp_server;
 };
 
 } // namespace
 
-std::unique_ptr<srs_cu_cp::e1_connection_server> srsran::create_e1_gateway_server(const e1_cu_sctp_gateway_config& cfg)
+std::unique_ptr<srs_cu_cp::e1_connection_server>
+srsran::create_e1_gateway_server(const e1_cu_cp_sctp_gateway_config& cfg)
 {
   return std::make_unique<e1_sctp_server>(cfg);
 }

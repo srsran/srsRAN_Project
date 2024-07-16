@@ -88,10 +88,12 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
 
     // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.
     // TODO
+
+    // Remove CU-UP
     removed_cu_up_db.insert(std::make_pair(cu_up_index, std::move(cu_up_db.at(cu_up_index))));
     cu_up_db.erase(cu_up_index);
 
-    // Remove DU
+    // Remove CU-UP
     logger.info("Removed CU-UP {}", cu_up_index);
 
     CORO_RETURN();
