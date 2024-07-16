@@ -28,6 +28,38 @@ HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
 
 
+@mark.zmq
+@mark.smoke
+def test_smoke(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_4: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+):
+    """
+    Smoke ZMQ Attach / Detach
+    """
+    _attach_and_detach_multi_ues(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_4,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=41,
+        common_scs=30,
+        bandwidth=50,
+        sample_rate=None,
+        iperf_duration=30,
+        bitrate=HIGH_BITRATE,
+        protocol=IPerfProto.UDP,
+        direction=IPerfDir.BIDIRECTIONAL,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+    )
+
+
 @mark.parametrize(
     "direction",
     (

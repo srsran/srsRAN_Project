@@ -369,6 +369,7 @@ amari 4UE asan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
+    KEYWORDS: "iperf"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic asan"
@@ -380,6 +381,7 @@ amari 4UE tsan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
+    KEYWORDS: "iperf"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic tsan"

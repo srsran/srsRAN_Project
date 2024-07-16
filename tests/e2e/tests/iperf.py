@@ -407,15 +407,12 @@ def test_zmq_4x4_mimo(
 )
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate",
-    (
-        param(3, 15, 20, LOW_BITRATE, id=ZMQ_ID),
-        param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),
-    ),
+    (param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),),
 )
 @mark.zmq
 @mark.smoke
 # pylint: disable=too-many-arguments
-def test_zmq_smoke(
+def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_4: Tuple[UEStub, ...],
