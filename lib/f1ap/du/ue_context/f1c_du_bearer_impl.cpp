@@ -212,7 +212,10 @@ void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp
 
 void f1c_other_srb_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
-  handle_notification(highest_pdcp_sn, false);
+  if (not ue_exec.defer([this, highest_pdcp_sn]() { handle_notification(highest_pdcp_sn, false); })) {
+    logger.warning("Discarded delivery notification for SRB{} because the task executor queue is full.",
+                   srb_id_to_uint(srb_id));
+  }
 }
 
 async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery)
