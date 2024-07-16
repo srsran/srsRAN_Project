@@ -150,6 +150,8 @@ struct cu_cp_five_g_s_tmsi {
     return (five_g_s_tmsi.value().to_uint64() & 0xffffffff);
   };
 
+  uint64_t to_number() const { return five_g_s_tmsi->to_uint64(); }
+
   std::optional<bounded_bitset<48>> five_g_s_tmsi;
 };
 
