@@ -87,7 +87,8 @@ protected:
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
 {
   du_creates_f1_logical_connection();
-  start_procedure(generate_ue_context_setup_request({drb_id_t::drb1}));
+  start_procedure(test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1}));
 
   // DU manager receives UE Context Update Request.
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
@@ -105,7 +106,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notif
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_responds_back_with_ue_context_setup_response)
 {
   du_creates_f1_logical_connection();
-  auto msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   start_procedure(msg);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
@@ -135,7 +137,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_container_is_sent_dl_via_srb1)
 {
   du_creates_f1_logical_connection();
-  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   start_procedure(msg);
 
   // F1AP sends RRC Container present in UE CONTEXT SETUP REQUEST via SRB1.
@@ -165,7 +168,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_is_created)
 {
-  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
 
   start_procedure(msg);
@@ -176,7 +180,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_is_updated)
 {
-  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
 
   start_procedure(msg);
@@ -194,7 +199,8 @@ TEST_F(
     f1ap_du_ue_context_setup_test,
     when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_setup_response_is_sent_to_cu_cp_with_crnti_ie)
 {
-  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
 
   start_procedure(msg);

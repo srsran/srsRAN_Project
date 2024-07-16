@@ -133,9 +133,6 @@ f1_setup_request_message generate_f1_setup_request_message();
 /// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
 asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid);
 
-/// \brief Generate an F1AP UE Context Setup Request message with specified list of DRBs.
-f1ap_message generate_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
-
 /// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
 asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
 
