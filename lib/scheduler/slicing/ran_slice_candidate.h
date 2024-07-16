@@ -27,7 +27,6 @@ public:
 
   ran_slice_id_t                               id() const { return inst->id; }
   [[nodiscard]] const slice_rrm_policy_config& cfg() const { return inst->cfg; }
-  scheduler_policy&                            policy() { return *inst->policy; }
 
   bool is_candidate(du_ue_index_t ue_idx) const { return inst->contains(ue_idx); }
   bool is_candidate(du_ue_index_t ue_idx, lcid_t lcid) const { return inst->contains(ue_idx, lcid); }

@@ -43,11 +43,13 @@ public:
 
   size_t                         nof_slices() const { return slices.size(); }
   const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].inst.cfg; }
+  scheduler_policy&              get_policy(ran_slice_id_t id) { return *slices[id.value()].policy; }
 
 private:
   /// Class responsible for tracking the scheduling context of each RAN slice instance.
   struct ran_slice_sched_context {
-    ran_slice_instance inst;
+    ran_slice_instance                inst;
+    std::unique_ptr<scheduler_policy> policy;
     // Counter tracking the last time this slice was scheduled as a candidate.
     slot_count_type last_dl_slot = 0;
     slot_count_type last_ul_slot = 0;

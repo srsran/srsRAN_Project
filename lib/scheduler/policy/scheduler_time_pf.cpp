@@ -19,11 +19,12 @@ scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cf
 
 void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues)
+                                 dl_ran_slice_candidate&      slice_candidate)
 {
   // Clear the existing contents of the queue.
   dl_queue.clear();
 
+  const slice_ue_repository& ues = slice_candidate.get_slice_ues();
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
     if (not ues.contains(it->ue_index)) {
@@ -44,10 +45,11 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
-  while (not dl_queue.empty()) {
+  unsigned     rem_rbs      = slice_candidate.remaining_rbs();
+  while (not dl_queue.empty() and rem_rbs > 0) {
     ue_ctxt& ue = *dl_queue.top();
     if (alloc_result.status != alloc_status::skip_slot) {
-      alloc_result = try_dl_alloc(ue, ues, pdsch_alloc);
+      alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
     }
     ue.save_dl_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
@@ -56,16 +58,18 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
       dl_queue.push(&ue);
     }
     dl_queue.pop();
+    rem_rbs = slice_candidate.remaining_rbs();
   }
 }
 
 void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues)
+                                 ul_ran_slice_candidate&      slice_candidate)
 {
   // Clear the existing contents of the queue.
   ul_queue.clear();
 
+  const slice_ue_repository& ues = slice_candidate.get_slice_ues();
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
     if (not ues.contains(it->ue_index)) {
@@ -86,10 +90,11 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   alloc_result alloc_result = {alloc_status::invalid_params};
-  while (not ul_queue.empty()) {
+  unsigned     rem_rbs      = slice_candidate.remaining_rbs();
+  while (not ul_queue.empty() and rem_rbs > 0) {
     ue_ctxt& ue = *ul_queue.top();
     if (alloc_result.status != alloc_status::skip_slot) {
-      alloc_result = try_ul_alloc(ue, ues, pusch_alloc);
+      alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
     }
     ue.save_ul_alloc(alloc_result.alloc_bytes);
     // Re-add the UE to the queue if scheduling of re-transmission fails so that scheduling of retransmission are
@@ -98,13 +103,17 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
       ul_queue.push(&ue);
     }
     ul_queue.pop();
+    rem_rbs = slice_candidate.remaining_rbs();
   }
 }
 
-alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pdsch_allocator& pdsch_alloc)
+alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
+                                             const slice_ue_repository& ues,
+                                             ue_pdsch_allocator&        pdsch_alloc,
+                                             unsigned                   max_rbs)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pdsch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
+  ue_pdsch_grant grant{ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.dl_retx_h != nullptr) {
     grant.h_id   = ctxt.dl_retx_h->id;
@@ -120,7 +129,8 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository&
   if (ctxt.dl_newtx_h != nullptr) {
     grant.h_id                  = ctxt.dl_newtx_h->id;
     grant.recommended_nof_bytes = ctxt.dl_newtx_srb_pending_bytes > 0 ? ctxt.dl_newtx_srb_pending_bytes
-                                                                      : ues[ctxt.ue_index].pending_dl_newtx_bytes();
+                                                                      : ues[ctxt.ue_index]->pending_dl_newtx_bytes();
+    grant.max_nof_rbs           = max_rbs;
     alloc_result                = pdsch_alloc.allocate_dl_grant(grant);
     if (alloc_result.status == alloc_status::success) {
       ctxt.dl_newtx_h = nullptr;
@@ -131,10 +141,13 @@ alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt& ctxt, const ue_repository&
   return {alloc_status::skip_ue};
 }
 
-alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository& ues, ue_pusch_allocator& pusch_alloc)
+alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
+                                             const slice_ue_repository& ues,
+                                             ue_pusch_allocator&        pusch_alloc,
+                                             unsigned                   max_rbs)
 {
   alloc_result   alloc_result = {alloc_status::invalid_params};
-  ue_pusch_grant grant{&ues[ctxt.ue_index], ctxt.cell_index};
+  ue_pusch_grant grant{ues[ctxt.ue_index], ctxt.cell_index};
   // Prioritize reTx over newTx.
   if (ctxt.ul_retx_h != nullptr) {
     grant.h_id   = ctxt.ul_retx_h->id;
@@ -150,7 +163,8 @@ alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt& ctxt, const ue_repository&
   if (ctxt.ul_newtx_h != nullptr) {
     grant.h_id                  = ctxt.ul_newtx_h->id;
     grant.recommended_nof_bytes = ctxt.ul_newtx_srb_pending_bytes > 0 ? ctxt.ul_newtx_srb_pending_bytes
-                                                                      : ues[ctxt.ue_index].pending_ul_newtx_bytes();
+                                                                      : ues[ctxt.ue_index]->pending_ul_newtx_bytes();
+    grant.max_nof_rbs           = max_rbs;
     alloc_result                = pusch_alloc.allocate_ul_grant(grant);
     if (alloc_result.status == alloc_status::success) {
       ctxt.ul_newtx_h = nullptr;
