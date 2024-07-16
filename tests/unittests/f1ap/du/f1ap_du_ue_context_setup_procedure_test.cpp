@@ -79,6 +79,18 @@ protected:
     }
 
     f1ap->handle_message(msg);
+
+    if (not ue_ctx_setup.gnb_du_ue_f1ap_id_present) {
+      report_fatal_error_if_not(this->f1ap_du_cfg_handler.last_ue_creation_response.has_value(),
+                                "UE should have been created");
+      test_ue->f1c_bearers[srb_id_to_uint(srb_id_t::srb1)].bearer =
+          this->f1ap_du_cfg_handler.last_ue_creation_response.value().f1c_bearers_added[0];
+    }
+  }
+
+  void on_rrc_container_transmitted(uint32_t highest_pdcp_sn)
+  {
+    this->test_ue->f1c_bearers[LCID_SRB1].bearer->handle_transmit_notification(highest_pdcp_sn);
   }
 
   ue_test_context* test_ue = nullptr;
@@ -109,6 +121,10 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   f1ap_message msg = test_helpers::create_ue_context_setup_request(
       gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
   start_procedure(msg);
+
+  // Lower layers handle RRC container.
+  this->f1c_gw.last_tx_f1ap_pdu = {};
+  on_rrc_container_transmitted(1);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
@@ -168,9 +184,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_is_created)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
-      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
-  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+  f1ap_message msg =
+      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1});
 
   start_procedure(msg);
 
@@ -180,9 +195,8 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_is_updated)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
-      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
-  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+  f1ap_message msg =
+      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1});
 
   start_procedure(msg);
 
@@ -199,11 +213,11 @@ TEST_F(
     f1ap_du_ue_context_setup_test,
     when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_setup_response_is_sent_to_cu_cp_with_crnti_ie)
 {
-  f1ap_message msg = test_helpers::create_ue_context_setup_request(
-      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {drb_id_t::drb1});
-  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+  f1ap_message msg =
+      test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1});
 
   start_procedure(msg);
+  on_rrc_container_transmitted(1);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
