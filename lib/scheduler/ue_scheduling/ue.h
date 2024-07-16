@@ -77,6 +77,9 @@ public:
   /// \brief Number of cells configured for the UE.
   unsigned nof_cells() const { return ue_cells.size(); }
 
+  /// \brief Returns dedicated configuration for the UE.
+  const ue_configuration* ue_cfg_dedicated() const { return ue_ded_cfg; }
+
   bool is_ca_enabled() const { return ue_cells.size() > 1; }
 
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
