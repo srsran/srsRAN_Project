@@ -25,8 +25,11 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_message.h"
-#include "srsran/ran/bcd_helper.h"
+#include "srsran/pdcp/pdcp_sn_util.h"
+#include "srsran/support/async/async_no_op_task.h"
+#include "srsran/support/async/execute_on.h"
 
+using namespace srsran;
 using namespace srsran::srs_du;
 
 f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
@@ -82,12 +85,40 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
   }
 }
 
+void f1c_srb0_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
+{
+  report_fatal_error("Transmission notifications do not exist for SRB0");
+}
+
+void f1c_srb0_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
+{
+  report_fatal_error("Delivery notifications do not exist for SRB0");
+}
+
 void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
 {
   // Change to UE execution context before forwarding the SDU to lower layers.
   if (not ue_exec.execute([this, sdu = std::move(pdu)]() mutable { sdu_notifier.on_new_sdu(std::move(sdu)); })) {
     logger.error("Rx {} PDU: Discarding SRB0 Rx PDU. Cause: The task executor queue is full.", ue_ctxt);
   }
+}
+
+async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_delivery(byte_buffer sdu)
+{
+  // Forward task to lower layers.
+  handle_pdu(std::move(sdu));
+
+  // For SRB0, there is no delivery notification.
+  return launch_no_op_task();
+}
+
+async_task<void> f1c_srb0_du_bearer::handle_pdu_and_await_transmission(byte_buffer pdu)
+{
+  // Forward task to lower layers.
+  handle_pdu(std::move(pdu));
+
+  // For SRB0, there is no transmission notification.
+  return launch_no_op_task();
 }
 
 f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_,
@@ -106,6 +137,10 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
   ue_exec(ue_exec_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
+  // Mark all event entries as free.
+  for (unsigned i = 0; i != pending_delivery_event_pool.size(); ++i) {
+    pending_delivery_event_pool[i].first = -1;
+  }
 }
 
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
@@ -167,4 +202,125 @@ void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer pdu)
                  ue_ctxt,
                  srb_id_to_uint(srb_id));
   }
+}
+
+async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await_transmission(byte_buffer pdu)
+{
+  return handle_pdu_and_await(std::move(pdu), true);
+}
+
+async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await_delivery(byte_buffer pdu)
+{
+  return handle_pdu_and_await(std::move(pdu), false);
+}
+
+void f1c_other_srb_du_bearer::handle_transmit_notification(uint32_t highest_pdcp_sn)
+{
+  handle_notification(highest_pdcp_sn, true);
+}
+
+void f1c_other_srb_du_bearer::handle_delivery_notification(uint32_t highest_pdcp_sn)
+{
+  handle_notification(highest_pdcp_sn, false);
+}
+
+async_task<void> f1c_other_srb_du_bearer::handle_pdu_and_await(byte_buffer pdu, bool tx_or_delivery)
+{
+  // Extract PDCP SN.
+  std::optional<uint32_t> pdcp_sn = get_pdcp_sn(pdu, pdcp_sn_size::size12bits, true, logger);
+
+  // Check if PDCP SN extraction was successful.
+  if (not pdcp_sn) {
+    // If not, forward PDU to lower layers anyway. An RLF may be triggered.
+    handle_pdu(std::move(pdu));
+
+    // Return right-away, instead of waiting for notification.
+    logger.warning("Rx PDU {}: Ignoring SRB{} Rx PDU {} notification. Cause: Failed to extract PDCP SN.",
+                   ue_ctxt,
+                   srb_id_to_uint(srb_id),
+                   tx_or_delivery ? "Tx" : "delivery");
+    return launch_no_op_task();
+  }
+
+  return launch_async([this, pdcp_sn = pdcp_sn.value(), tx_or_delivery, sdu = std::move(pdu)](
+                          coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT(execute_on_blocking(ue_exec));
+
+    // Forward SDU to lower layers.
+    sdu_notifier.on_new_sdu(std::move(sdu));
+
+    // Await SDU delivery.
+    CORO_AWAIT(wait_for_notification(pdcp_sn, tx_or_delivery));
+
+    // Return back to control executor.
+    CORO_AWAIT(execute_on_blocking(ctrl_exec));
+
+    CORO_RETURN();
+  });
+}
+
+void f1c_other_srb_du_bearer::handle_notification(uint32_t highest_pdcp_sn, bool tx_or_delivery)
+{
+  std::optional<uint32_t>& last_sn    = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
+  auto&                    event_pool = tx_or_delivery ? pending_transmission_event_pool : pending_delivery_event_pool;
+
+  // Register the highest PDCP SN.
+  last_sn = highest_pdcp_sn;
+
+  // Trigger awaiters of delivery notifications.
+  for (auto& awaiter : event_pool) {
+    if (awaiter.first >= 0 and static_cast<uint32_t>(awaiter.first) <= highest_pdcp_sn) {
+      // Free up the event entry.
+      awaiter.first = -1;
+
+      // Trigger awaiter.
+      awaiter.second.set();
+    }
+  }
+}
+
+/// Create an always ready event.
+manual_event_flag& always_ready_flag()
+{
+  static manual_event_flag& flag = []() -> manual_event_flag& {
+    static manual_event_flag event_flag;
+    event_flag.set();
+    return event_flag;
+  }();
+  return flag;
+}
+
+manual_event_flag& f1c_other_srb_du_bearer::wait_for_notification(uint32_t pdcp_sn, bool tx_or_delivery)
+{
+  std::optional<uint32_t>& last_sn    = tx_or_delivery ? last_pdcp_sn_transmitted : last_pdcp_sn_delivered;
+  auto&                    event_pool = tx_or_delivery ? pending_transmission_event_pool : pending_delivery_event_pool;
+
+  // Check if the PDU has been already delivered.
+  if (last_sn.has_value() and last_sn.value() >= pdcp_sn) {
+    // SN already notified.
+    return always_ready_flag();
+  }
+
+  // Allocate a notification event awaitable.
+  size_t idx = 0;
+  for (; idx != event_pool.size(); ++idx) {
+    if (event_pool[idx].first < 0) {
+      // This event entry is free.
+      break;
+    }
+  }
+  if (idx == event_pool.size()) {
+    logger.warning("Rx PDU {}: Ignoring SRB{} Rx PDU {} notification. Cause: Failed to allocate notification handler.",
+                   ue_ctxt,
+                   srb_id_to_uint(srb_id),
+                   tx_or_delivery ? "Tx" : "delivery");
+    return always_ready_flag();
+  }
+
+  // Allocation successful. Return awaitable event.
+  event_pool[idx].first = pdcp_sn;
+  event_pool[idx].second.reset();
+  return event_pool[idx].second;
 }

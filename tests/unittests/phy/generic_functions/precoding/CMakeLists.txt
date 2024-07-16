@@ -27,6 +27,7 @@ target_link_libraries(
         srsran_channel_precoder
         srsran_ran
         srslog
+        srsvec
         gtest
         gtest_main)
 

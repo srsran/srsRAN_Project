@@ -52,6 +52,7 @@ private:
   async_task<mac_ue_reconfiguration_response> update_mac_mux_and_demux();
 
   f1ap_ue_context_update_response make_ue_config_response();
+  f1ap_ue_context_update_response make_empty_ue_config_response();
   f1ap_ue_context_update_response make_ue_config_failure();
 
   const f1ap_ue_context_update_request request;

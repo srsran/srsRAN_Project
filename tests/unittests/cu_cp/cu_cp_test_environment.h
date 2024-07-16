@@ -27,8 +27,6 @@
 #include "test_doubles/mock_du.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/ngap/ngap_configuration.h"
-#include "srsran/ngap/ngap_configuration_helpers.h"
 #include <unordered_map>
 
 namespace srsran {

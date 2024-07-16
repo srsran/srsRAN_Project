@@ -50,6 +50,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_configuration&    config_,
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
                                         cfg.n3_cfg,
+                                        cfg.test_mode_cfg,
                                         e1ap,
                                         *cfg.timers,
                                         *cfg.f1u_gateway,
@@ -190,6 +191,81 @@ void cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer
   ue_ctxt->get_logger().log_debug("Received E1 Bearer Context Release Command");
 
   ue_mng->remove_ue(msg.ue_index);
+}
+
+async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable_test_mode()
+{
+  // Convert to common type
+  e1ap_bearer_context_setup_request bearer_context_setup = {};
+
+  bearer_context_setup.security_info.security_algorithm.ciphering_algo =
+      static_cast<srsran::security::ciphering_algorithm>(cfg.test_mode_cfg.nea_algo);
+  bearer_context_setup.security_info.security_algorithm.integrity_protection_algorithm =
+      static_cast<srsran::security::integrity_algorithm>(cfg.test_mode_cfg.nia_algo);
+  bearer_context_setup.security_info.up_security_key.encryption_key =
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
+  bearer_context_setup.security_info.up_security_key.integrity_protection_key =
+      make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
+  bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600);
+
+  /// Setup test PDU session
+  pdu_session_id_t                   psi{1};
+  e1ap_pdu_session_res_to_setup_item pdu_session          = {};
+  pdu_session.pdu_session_id                              = psi;
+  pdu_session.ng_ul_up_tnl_info.tp_address                = transport_layer_address::create_from_string("127.0.5.2");
+  pdu_session.ng_ul_up_tnl_info.gtp_teid                  = int_to_gtpu_teid(0x02);
+  pdu_session.security_ind.integrity_protection_ind       = cfg.test_mode_cfg.integrity_enabled
+                                                                ? integrity_protection_indication_t::required
+                                                                : integrity_protection_indication_t::not_needed;
+  pdu_session.security_ind.confidentiality_protection_ind = cfg.test_mode_cfg.ciphering_enabled
+                                                                ? confidentiality_protection_indication_t::required
+                                                                : confidentiality_protection_indication_t::not_needed;
+
+  /// Setup test DRB
+  e1ap_drb_to_setup_item_ng_ran drb_to_setup = {};
+  drb_to_setup.drb_id                        = uint_to_drb_id(1);
+
+  // sdap config
+  drb_to_setup.sdap_cfg.default_drb = true;
+
+  // pdcp config
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
+  drb_to_setup.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::um;
+  drb_to_setup.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
+  drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms200;
+
+  e1ap_qos_flow_qos_param_item qos_item                              = {};
+  qos_item.qos_flow_id                                               = uint_to_qos_flow_id(0x01);
+  qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = {uint_to_five_qi(9), {}, {}, {}};
+
+  drb_to_setup.qos_flow_info_to_be_setup.emplace(qos_item.qos_flow_id, qos_item);
+  pdu_session.drb_to_setup_list_ng_ran.emplace(drb_to_setup.drb_id, drb_to_setup);
+  bearer_context_setup.pdu_session_res_to_setup_list.emplace(psi, pdu_session);
+
+  // Setup bearer
+  e1ap_bearer_context_setup_response setup_resp = handle_bearer_context_setup_request(bearer_context_setup);
+
+  // Modifiy bearer
+  e1ap_bearer_context_modification_request bearer_modify = {};
+  bearer_modify.ue_index                                 = setup_resp.ue_index;
+
+  e1ap_ng_ran_bearer_context_mod_request bearer_mod_item = {};
+
+  e1ap_pdu_session_res_to_modify_item pdu_session_to_mod = {};
+  pdu_session_to_mod.pdu_session_id = setup_resp.pdu_session_resource_setup_list.begin()->pdu_session_id;
+
+  e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
+  drb_to_mod.dl_up_params.resize(1);
+  drb_to_mod.drb_id = setup_resp.pdu_session_resource_setup_list.begin()->drb_setup_list_ng_ran.begin()->drb_id;
+  drb_to_mod.dl_up_params[0].up_tnl_info.tp_address = transport_layer_address::create_from_string("127.0.10.2");
+  drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid   = int_to_gtpu_teid(0x02);
+
+  pdu_session_to_mod.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
+  bearer_mod_item.pdu_session_res_to_modify_list.emplace(pdu_session_to_mod.pdu_session_id, pdu_session_to_mod);
+  bearer_modify.ng_ran_bearer_context_mod_request = bearer_mod_item;
+
+  return handle_bearer_context_modification_request(bearer_modify);
 }
 
 /// Helper functions

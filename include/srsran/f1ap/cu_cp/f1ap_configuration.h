@@ -30,7 +30,7 @@ namespace srs_cu_cp {
 /// Configuration for F1AP CU-CP.
 struct f1ap_configuration {
   /// Timeout for UE context setup procedure (Implementation-defined).
-  std::chrono::milliseconds ue_context_setup_timeout = std::chrono::milliseconds(1000);
+  std::chrono::milliseconds ue_context_setup_timeout{1000};
   /// Whether to enable JSON logging of F1AP Tx and Rx messages.
   bool json_log_enabled = false;
 };

@@ -47,6 +47,7 @@ public:
                            const security::sec_as_config&                   security_info_,
                            network_interface_config&                        net_config_,
                            n3_interface_config&                             n3_config_,
+                           const cu_up_test_mode_config&                    test_mode_config_,
                            cu_up_ue_logger&                                 logger_,
                            unique_timer&                                    ue_inactivity_timer_,
                            timer_factory                                    ue_dl_timer_factory_,
@@ -89,6 +90,7 @@ private:
   const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
   n3_interface_config&                                     n3_config;
+  cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            ue_dl_timer_factory;

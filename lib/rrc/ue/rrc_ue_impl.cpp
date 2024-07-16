@@ -54,7 +54,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
   event_mng(std::make_unique<rrc_ue_event_manager>(cu_cp_ue_notifier.get_timer_factory()))
 {
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
-  srsran_assert(context.cfg.rrc_procedure_timeout_ms > 0, "RRC procedure timeout cannot be zero.");
+  srsran_assert(context.cfg.rrc_procedure_timeout_ms.count() > 0, "RRC procedure timeout cannot be zero.");
 
   // Update security context and keys
   if (rrc_context.has_value()) {

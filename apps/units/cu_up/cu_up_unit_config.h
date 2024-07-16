@@ -59,6 +59,14 @@ struct cu_up_unit_qos_config {
   cu_cp_unit_f1u_config f1u_cu_up;
 };
 
+struct cu_up_unit_test_mode_config {
+  bool     enabled           = false;
+  bool     integrity_enabled = true;
+  bool     ciphering_enabled = true;
+  uint16_t nea_algo          = 2;
+  uint16_t nia_algo          = 2;
+};
+
 /// CU-UP application unit configuration.
 struct cu_up_unit_config {
   unsigned gtpu_queue_size          = 2048;
@@ -74,6 +82,8 @@ struct cu_up_unit_config {
   cu_up_unit_pcap_config pcap_cfg;
   /// QoS configuration.
   std::vector<cu_up_unit_qos_config> qos_cfg;
+  /// Test mode.
+  cu_up_unit_test_mode_config test_mode_cfg;
 };
 
 } // namespace srsran

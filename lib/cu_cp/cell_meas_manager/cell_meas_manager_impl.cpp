@@ -221,8 +221,10 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
     if (serv_cell.meas_result_best_neigh_cell.has_value()) {
       // Report this cell.
       if (serv_cell.meas_result_best_neigh_cell.value().pci.has_value()) {
-        mobility_mng_notifier.on_neighbor_better_than_spcell(
-            ue_index, meas_ctxt.gnb_id, meas_ctxt.nci, serv_cell.meas_result_best_neigh_cell.value().pci.value());
+        mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index,
+                                                             meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length),
+                                                             meas_ctxt.nci,
+                                                             serv_cell.meas_result_best_neigh_cell.value().pci.value());
         return;
       }
     }
@@ -261,7 +263,7 @@ void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_r
                     max_rsrp,
                     serv_cell_rsrp.value());
         mobility_mng_notifier.on_neighbor_better_than_spcell(
-            ue_index, meas_ctxt.gnb_id, meas_ctxt.nci, strongest_neighbor.value());
+            ue_index, meas_ctxt.nci.gnb_id(meas_ctxt.gnb_id_bit_length), meas_ctxt.nci, strongest_neighbor.value());
         return;
       }
     }

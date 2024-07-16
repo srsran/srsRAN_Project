@@ -106,7 +106,11 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_unit_cell_config_ite
 
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
-  add_option(app, "--gnb_id_bit_length", config.gnb_id_bit_length, "gNodeB identifier bit length")
+  add_option(app,
+             "--gnb_id_bit_length",
+             config.gnb_id_bit_length,
+             "gNodeB identifier bit length. If not set, it will be automatically set to be equal to the gNodeB Id of "
+             "the CU-CP")
       ->check(CLI::Range(22, 32));
   add_option(app, "--pci", config.pci, "Physical Cell Id")->check(CLI::Range(0, 1007));
   add_option(app, "--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
@@ -521,5 +525,13 @@ void srsran::autoderive_cu_cp_parameters_after_parsing(CLI::App&                
     srsran_assert(unit_cfg.tacs.empty(), "TAC list is not empty");
 
     unit_cfg.tacs = tacs.empty() ? auto_generate_tacs() : std::move(tacs);
+  }
+
+  for (auto& cell : unit_cfg.mobility_config.cells) {
+    // Set gNB ID bit length of the neighbor cell to be equal to the current unit gNB ID bit length, if not explicitly
+    // set.
+    if (not cell.gnb_id_bit_length.has_value()) {
+      cell.gnb_id_bit_length = unit_cfg.gnb_id.bit_length;
+    }
   }
 }

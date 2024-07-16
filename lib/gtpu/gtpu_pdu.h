@@ -244,6 +244,8 @@ struct gtpu_dissected_pdu {
   gtpu_header hdr;
   /// Total header length (including all extension headers); marks the start of the T-PDU.
   size_t hdr_len = 0;
+  /// Indicator for implementation classes whether this is a test PDU or not.
+  bool test_mode = false;
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);

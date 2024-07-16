@@ -85,7 +85,7 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     }
     procedure_result = context.capabilities.has_value();
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms.count());
   }
 
   logger.log_debug("\"{}\" finalized", name());

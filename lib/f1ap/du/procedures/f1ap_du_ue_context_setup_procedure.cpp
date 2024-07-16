@@ -100,8 +100,11 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     CORO_EARLY_RETURN();
   }
 
-  // Send RRC container to lower layers.
-  send_rrc_container();
+  // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
+  // RRC message to the UE via SRB1.
+  if (msg->rrc_container_present and not msg->rrc_container.empty()) {
+    CORO_AWAIT(ue->bearers.find_srb(srb_id_t::srb1)->handle_pdu_and_await_transmission(msg->rrc_container.copy()));
+  }
 
   // Respond back to CU-CP with success.
   send_ue_context_setup_response();
@@ -145,15 +148,6 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
   }
 
   return ue->du_handler.request_ue_context_update(du_request);
-}
-
-void f1ap_du_ue_context_setup_procedure::send_rrc_container()
-{
-  // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
-  // RRC message to the UE via SRB1.
-  if (msg->rrc_container_present and not msg->rrc_container.empty()) {
-    ue->bearers.find_srb(srb_id_t::srb1)->handle_pdu(msg->rrc_container.copy());
-  }
 }
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()

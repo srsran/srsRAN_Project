@@ -122,7 +122,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     logger.log_warning("\"{}\" for old_ue={} timed out after {}ms",
                        name(),
                        old_ue_reest_context.ue_index,
-                       context.cfg.rrc_procedure_timeout_ms);
+                       context.cfg.rrc_procedure_timeout_ms.count());
     logger.log_debug("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
   }
 

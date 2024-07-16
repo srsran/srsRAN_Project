@@ -35,7 +35,7 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
 {
   cell_meas_config cell_cfg;
   cell_cfg.serving_cell_cfg.nci                 = nr_cell_identity::create(0x19b0).value();
-  cell_cfg.serving_cell_cfg.gnb_id              = cell_cfg.serving_cell_cfg.nci.gnb_id(32);
+  cell_cfg.serving_cell_cfg.gnb_id_bit_length   = 32;
   cell_cfg.serving_cell_cfg.pci                 = 1;
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
@@ -105,7 +105,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
 
   // update config for cell 3
   auto& cell_cfg_val                                = cell_cfg.value();
-  cell_cfg_val.serving_cell_cfg.gnb_id              = gnb_id_t{411, 32};
+  cell_cfg_val.serving_cell_cfg.gnb_id_bit_length   = 32;
   cell_cfg_val.serving_cell_cfg.nci                 = nr_cell_identity::create(0x19b3).value();
   cell_cfg_val.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg_val.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
@@ -196,7 +196,7 @@ TEST_F(cell_meas_manager_test, when_only_event_based_reports_configured_then_mea
   ASSERT_FALSE(manager->get_measurement_config(ue_index, target_nci).has_value());
 
   serving_cell_meas_config serving_cell_cfg;
-  serving_cell_cfg.gnb_id              = gnb_id_t{411, 32};
+  serving_cell_cfg.gnb_id_bit_length   = 32;
   serving_cell_cfg.nci                 = initial_nci;
   serving_cell_cfg.pci                 = 1;
   serving_cell_cfg.band.emplace()      = nr_band::n78;
@@ -248,12 +248,12 @@ TEST_F(cell_meas_manager_test, when_invalid_cell_config_update_received_then_con
   ASSERT_FALSE(manager->get_measurement_config(ue_index, target_nci).has_value());
 
   serving_cell_meas_config serving_cell_cfg;
-  serving_cell_cfg.gnb_id    = gnb_id_t{411, 32};
-  serving_cell_cfg.nci       = initial_nci;
-  serving_cell_cfg.pci       = 1;
-  serving_cell_cfg.band      = nr_band::n78;
-  serving_cell_cfg.ssb_arfcn = 632628;
-  serving_cell_cfg.ssb_scs   = subcarrier_spacing::kHz30;
+  serving_cell_cfg.gnb_id_bit_length = 32;
+  serving_cell_cfg.nci               = initial_nci;
+  serving_cell_cfg.pci               = 1;
+  serving_cell_cfg.band              = nr_band::n78;
+  serving_cell_cfg.ssb_arfcn         = 632628;
+  serving_cell_cfg.ssb_scs           = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                = 1;

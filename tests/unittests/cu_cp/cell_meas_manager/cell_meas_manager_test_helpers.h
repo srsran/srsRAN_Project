@@ -64,10 +64,9 @@ protected:
   dummy_mobility_manager             mobility_manager;
   manual_task_worker                 ctrl_worker{128};
   timer_manager                      timers;
-  ue_configuration                   ue_config;
-  up_resource_manager_cfg            up_config;
-  security_manager_config            sec_config;
-  ue_manager                         ue_mng{ue_config, up_config, sec_config, timers, ctrl_worker};
+  cu_cp_configuration                cu_cp_cfg;
+
+  ue_manager ue_mng{cu_cp_cfg};
 };
 
 } // namespace srs_cu_cp

@@ -144,6 +144,19 @@ static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_p
   configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
 }
 
+static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_config& test_mode_params)
+{
+  add_option(app, "--enable", test_mode_params.enabled, "Enable or disable CU-UP test mode");
+  add_option(app, "--integrity_enable", test_mode_params.integrity_enabled, "Enable or disable PDCP integrity testing");
+  add_option(app, "--ciphering_enable", test_mode_params.ciphering_enabled, "Enable or disable PDCP ciphering testing");
+  add_option(app, "--nea_algo", test_mode_params.nea_algo, "NEA algo to use for testing. Valid values {0, 1, 2, 3}.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
+  add_option(app, "--nia_algo", test_mode_params.nea_algo, "NIA algo to use for testing. Valid values {1, 2, 3}.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 3));
+}
+
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
 {
   // CU-UP section.
@@ -182,4 +195,8 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // Test mode section.
+  CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
+  configure_cli11_test_mode_args(*test_mode_subcmd, unit_cfg.test_mode_cfg);
 }

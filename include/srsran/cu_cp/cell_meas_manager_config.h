@@ -39,8 +39,8 @@ namespace srs_cu_cp {
 /// Note that some optional values need to be provided by the DU upon F1Setup.
 
 struct serving_cell_meas_config {
-  nr_cell_identity nci;    ///< The NR cell identifier.
-  gnb_id_t         gnb_id; ///< gNodeB identifier
+  nr_cell_identity nci;               ///< The NR cell identifier.
+  unsigned         gnb_id_bit_length; ///< gNodeB identifier bit length.
   /// If not set in config must be provided by config update after DU attach.
   std::optional<pci_t>              pci;       ///< Physical cell identifier.
   std::optional<nr_band>            band;      ///< NR band.
@@ -90,14 +90,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
   auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {
@@ -110,7 +109,7 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
         "nci={:#x} complete={} gnb_id={} pci={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
         cfg.serving_cell_cfg.nci,
         is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
-        cfg.serving_cell_cfg.gnb_id.id,
+        cfg.serving_cell_cfg.nci.gnb_id(cfg.serving_cell_cfg.gnb_id_bit_length).id,
         cfg.serving_cell_cfg.pci.has_value() ? to_string(cfg.serving_cell_cfg.pci.value()) : "?",
         cfg.serving_cell_cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.serving_cell_cfg.band.value())) : "?",
         cfg.serving_cell_cfg.ssb_arfcn.has_value() ? to_string(cfg.serving_cell_cfg.ssb_arfcn.value()) : "?",

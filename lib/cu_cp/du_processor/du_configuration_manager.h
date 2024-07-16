@@ -29,14 +29,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct rrc_cfg_t;
-struct ngap_configuration;
-
 /// Validator and repository of configurations for DUs handled by the CU-CP.
 class du_configuration_manager
 {
 public:
-  du_configuration_manager(const ngap_configuration& ngap_cfg_, const rrc_cfg_t& rrc_cfg_);
+  du_configuration_manager(const gnb_id_t& gnb_id, const plmn_identity& plmn_id);
 
   /// Create a new DU configuration handler.
   std::unique_ptr<du_configuration_handler> create_du_handler();
@@ -57,9 +54,9 @@ private:
   validation_result validate_du_config_update(const du_config_update_request& req) const;
   validation_result validate_cell_config_request(const cu_cp_du_served_cells_item& served_cell) const;
 
-  const ngap_configuration& ngap_cfg;
-  const rrc_cfg_t&          rrc_cfg;
-  srslog::basic_logger&     logger;
+  const gnb_id_t        gnb_id;
+  const plmn_identity   plmn_id;
+  srslog::basic_logger& logger;
 
   std::unordered_map<gnb_du_id_t, du_configuration_context> dus;
 };

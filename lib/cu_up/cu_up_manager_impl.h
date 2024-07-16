@@ -67,6 +67,8 @@ private:
   handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
                                                   const e1ap_bearer_context_modification_request& msg);
 
+  async_task<e1ap_bearer_context_modification_response> enable_test_mode() override;
+
   cu_up_configuration cfg;
 
   // logger

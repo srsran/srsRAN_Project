@@ -53,6 +53,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
   demux_msg.cfg.warn_on_drop            = cfg.n3_cfg.warn_on_drop;
+  demux_msg.cfg.test_mode               = true;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
@@ -135,6 +136,12 @@ void cu_up::start()
 
           // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
           CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg));
+
+          if (cfg.test_mode_cfg.enabled) {
+            logger.info("enabling test mode...");
+            CORO_AWAIT(cu_up_mng->enable_test_mode());
+            logger.info("test mode enabled");
+          }
 
           // Signal start() caller thread that the operation is complete.
           p.set_value();

@@ -21,28 +21,10 @@
  */
 
 #include "lib/cu_cp/du_processor/du_configuration_manager.h"
-#include "srsran/ngap/ngap_configuration.h"
-#include "srsran/rrc/rrc_config.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
-
-static rrc_cfg_t create_basic_rrc_config()
-{
-  rrc_cfg_t cfg{};
-  cfg.gnb_id = {411, 22};
-  return cfg;
-}
-
-static ngap_configuration create_basic_ngap_config()
-{
-  ngap_configuration cfg{};
-  cfg.gnb_id = {411, 22};
-  cfg.plmn   = plmn_identity::test_value();
-  cfg.tac    = 7;
-  return cfg;
-}
 
 static cu_cp_served_cell_info create_basic_served_cell_info(unsigned du_counter)
 {
@@ -71,10 +53,10 @@ static du_setup_request create_basic_du_setup_request(unsigned du_counter = 0)
 class du_configuration_manager_test : public ::testing::Test
 {
 public:
-  du_configuration_manager_test() : du_cfg_mng(ngap_cfg, rrc_cfg) {}
+  du_configuration_manager_test() : du_cfg_mng(gnb_id, plmn) {}
 
-  rrc_cfg_t                rrc_cfg  = create_basic_rrc_config();
-  ngap_configuration       ngap_cfg = create_basic_ngap_config();
+  gnb_id_t                 gnb_id{411, 22};
+  plmn_identity            plmn = plmn_identity::test_value();
   du_configuration_manager du_cfg_mng;
 };
 

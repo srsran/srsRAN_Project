@@ -67,9 +67,7 @@ static YAML::Node build_cu_cp_mobility_cells_section(const cu_cp_unit_cell_confi
   if (config.band) {
     node["band"] = static_cast<unsigned>(config.band.value());
   }
-  if (config.gnb_id_bit_length) {
-    node["gnb_id_bit_length"] = config.gnb_id_bit_length.value();
-  }
+  node["gnb_id_bit_length"] = config.gnb_id_bit_length.value();
   if (config.pci) {
     node["pci"] = config.pci.value();
   }

@@ -40,31 +40,20 @@ protected:
   cu_cp_routine_manager_test();
   ~cu_cp_routine_manager_test() override;
 
-  void init_security_config();
-
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  ue_configuration                ue_config{std::chrono::seconds{10}};
   srsran::security::sec_as_config security_cfg;
-  security_indication_t           default_security_indication = {};
 
-  pdcp_config pdcp_cfg{pdcp_rb_type::drb,
-                       pdcp_rlc_mode::am,
-                       {},
-                       {},
-                       {pdcp_sn_size::size12bits},
-                       {pdcp_sn_size::size12bits}};
+  timer_manager       timers;
+  manual_task_worker  ctrl_worker{128};
+  cu_cp_configuration cu_cp_cfg;
 
-  up_resource_manager_cfg up_config{{{uint_to_five_qi(9), {pdcp_cfg}}, {uint_to_five_qi(7), {pdcp_cfg}}}};
-
-  timer_manager                                      timers;
-  manual_task_worker                                 ctrl_worker{128};
   dummy_e1ap_bearer_context_manager                  e1ap_bearer_ctxt_mng;
   dummy_f1ap_ue_context_manager                      f1ap_ue_ctxt_mng;
   dummy_ngap_control_message_handler                 ngap_control_handler;
   dummy_ue_task_scheduler                            ue_task_sched{timers, ctrl_worker};
-  ue_manager                                         ue_mng{ue_config, up_config, {}, timers, ctrl_worker};
+  ue_manager                                         ue_mng{cu_cp_cfg};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   dummy_du_processor_rrc_ue_srb_control_notifier     rrc_ue_srb_ctrl_notifier;
   dummy_ngap_ue_context_removal_handler              ngap_ue_removal_handler;

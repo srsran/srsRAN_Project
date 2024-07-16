@@ -66,6 +66,7 @@ protected:
                                                                  security_info,
                                                                  net_config,
                                                                  n3_config,
+                                                                 cu_up_test_mode_config{},
                                                                  logger,
                                                                  ue_inactivity_timer,
                                                                  timers_factory,

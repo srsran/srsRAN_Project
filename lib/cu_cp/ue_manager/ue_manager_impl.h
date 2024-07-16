@@ -41,11 +41,7 @@ namespace srs_cu_cp {
 class ue_manager : public ue_metrics_handler
 {
 public:
-  explicit ue_manager(const ue_configuration&        ue_config_,
-                      const up_resource_manager_cfg& up_config_,
-                      const security_manager_config& sec_config_,
-                      timer_manager&                 timers,
-                      task_executor&                 cu_cp_exec);
+  explicit ue_manager(const cu_cp_configuration& cu_cp_cfg);
 
   /// Stop UE activity.
   void stop();
@@ -61,7 +57,7 @@ public:
 
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
-  ue_configuration get_ue_config() { return ue_config; }
+  const ue_configuration& get_ue_config() const { return ue_config; }
 
   /// \brief Get the number of UEs.
   /// \return Number of UEs.
@@ -177,6 +173,7 @@ private:
   const ue_configuration        ue_config;
   const up_resource_manager_cfg up_config;
   const security_manager_config sec_config;
+  const unsigned                max_nof_ues;
 
   // Manager of UE task schedulers.
   ue_task_scheduler_manager ue_task_scheds;

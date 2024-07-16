@@ -58,7 +58,7 @@ public:
   /// of RE per layer of the input buffer.
   /// \remark An assertion is triggered if the precoding matrix dimensions are not consistent with input buffer size and
   /// the number of antenna ports of the output buffer.
-  virtual void apply_layer_map_and_precoding(re_buffer_writer<>&            output,
+  virtual void apply_layer_map_and_precoding(re_buffer_writer<cbf16_t>&     output,
                                              span<const ci8_t>              input,
                                              const precoding_weight_matrix& precoding) const = 0;
 };

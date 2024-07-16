@@ -94,10 +94,15 @@ public:
 
 private:
   struct ue_sim_context {
-    rnti_t                             rnti = rnti_t::INVALID_RNTI;
-    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id;
-    std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id;
-    du_cell_index_t                    pcell_index;
+    struct srb_context {
+      uint32_t next_pdcp_sn = 0;
+    };
+
+    rnti_t                                rnti = rnti_t::INVALID_RNTI;
+    std::optional<gnb_du_ue_f1ap_id_t>    du_ue_id;
+    std::optional<gnb_cu_ue_f1ap_id_t>    cu_ue_id;
+    du_cell_index_t                       pcell_index;
+    std::array<srb_context, MAX_NOF_SRBS> srbs;
   };
 
   std::unordered_map<rnti_t, ue_sim_context> ues;

@@ -31,7 +31,7 @@ namespace srsran {
 namespace detail {
 
 /// Base class implementation with functionality that is common to event_signal<R> and event_signal_flag.
-/// Awaiters for the event are stored in a linked list, where each awaiter is stored in the embedded
+/// Awaiters for the event are stored in a linked list of awaiters, where each awaiter is stored in the embedded
 /// memory buffer of the coroutine frame.
 class signal_event_common
 {
@@ -56,7 +56,7 @@ public:
   signal_event_common()                                             = default;
   signal_event_common(const signal_event_common& event_)            = delete;
   signal_event_common& operator=(const signal_event_common& event_) = delete;
-  ~signal_event_common() {}
+  ~signal_event_common()                                            = default;
 
 protected:
   /// Linked list of awaiters.

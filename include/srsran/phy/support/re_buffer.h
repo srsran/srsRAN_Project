@@ -302,7 +302,6 @@ public:
   /// \param[in] nof_slices Number of slices.
   /// \param[in] nof_re     Number of resource elements.
   /// \remark An assertion is triggered if the number of slices exceeds \ref max_nof_slices.
-  /// \remark An assertion is triggered if the number of resource elements exceeds \ref max_nof_re.
   void resize(unsigned nof_slices_, unsigned nof_re_)
   {
     nof_slices = nof_slices_;
@@ -354,6 +353,73 @@ private:
 
   /// Internal data storage.
   std::vector<span<const T>> data;
+};
+
+/// \brief Implements a modular resource element buffer writer.
+///
+/// In this implementation, each slice is a view to an external block of contiguous REs that must be loaded with the
+/// \ref set_slice method.
+///
+/// \tparam T Resource element type.
+template <unsigned MaxNofSlices, typename T = cf_t>
+class modular_re_buffer_writer : public re_buffer_writer<T>
+{
+public:
+  /// \brief Resizes the buffer view to a desired number of RE and slices.
+  /// \param[in] nof_slices Number of slices.
+  /// \param[in] nof_re     Number of resource elements.
+  /// \remark An assertion is triggered if the number of slices exceeds \ref max_nof_slices.
+  void resize(unsigned nof_slices_, unsigned nof_re_)
+  {
+    nof_slices = nof_slices_;
+    nof_re     = nof_re_;
+    srsran_assert(nof_slices <= data.size(),
+                  "The number of slices (i.e., {}) exceeds the maximum (i.e., {}).",
+                  nof_slices,
+                  data.size());
+
+    // Empty all slices.
+    std::fill_n(data.begin(), nof_slices, span<T>());
+  }
+
+  /// \brief Sets the view for a given slice.
+  /// \param[in] i_slice Slice identifier.
+  /// \param[in] view    Slice view.
+  /// \remark An assertion is triggered if the view size is not equal to the number of resource elements.
+  void set_slice(unsigned i_slice, span<T> view)
+  {
+    srsran_assert(view.size() == nof_re,
+                  "The view size (i.e., {}) must be equal to the number of resource elements (i.e., {}).",
+                  view.size(),
+                  nof_re);
+    data[i_slice] = view;
+  }
+
+  // See interface for documentation.
+  unsigned get_nof_slices() const override { return nof_slices; }
+
+  // See interface for documentation.
+  unsigned get_nof_re() const override { return nof_re; }
+
+  // See interface for documentation.
+  span<T> get_slice(unsigned i_slice) override
+  {
+    srsran_assert(i_slice < nof_slices,
+                  "The slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
+                  i_slice,
+                  nof_slices);
+    srsran_assert(!data[i_slice].empty(), "Data for slice {} is empty.", i_slice);
+    return data[i_slice];
+  }
+
+private:
+  /// Current number of slices.
+  unsigned nof_slices;
+  /// Current number of resource elements.
+  unsigned nof_re;
+
+  /// Internal data storage.
+  std::array<span<T>, MaxNofSlices> data;
 };
 
 } // namespace srsran

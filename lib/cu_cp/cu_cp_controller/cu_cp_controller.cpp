@@ -32,7 +32,6 @@ using namespace srs_cu_cp;
 cu_cp_controller::cu_cp_controller(const cu_cp_configuration&        config_,
                                    cu_cp_routine_manager&            routine_manager_,
                                    ue_manager&                       ue_mng_,
-                                   const ngap_configuration&         ngap_cfg_,
                                    ngap_connection_manager&          ngap_conn_mng_,
                                    const cu_up_processor_repository& cu_ups_,
                                    du_processor_repository&          dus_,
@@ -43,8 +42,8 @@ cu_cp_controller::cu_cp_controller(const cu_cp_configuration&        config_,
   routine_mng(routine_manager_),
   ctrl_exec(ctrl_exec_),
   logger(srslog::fetch_basic_logger("CU-CP")),
-  amf_mng(routine_manager_, ngap_cfg_, ngap_conn_mng_),
-  du_mng(cfg.max_nof_dus, dus_, ctrl_exec, routine_manager_)
+  amf_mng(routine_manager_, cfg, ngap_conn_mng_),
+  du_mng(cfg.admission.max_nof_dus, dus_, ctrl_exec, routine_manager_)
 {
   (void)ue_mng;
 }

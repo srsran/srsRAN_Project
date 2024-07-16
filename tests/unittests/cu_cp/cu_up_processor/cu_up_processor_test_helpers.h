@@ -47,14 +47,15 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  timer_manager                                   timers;
-  dummy_e1ap_message_notifier                     e1ap_notifier;
-  manual_task_worker                              ctrl_worker{128};
-  ue_manager                                      ue_mng{{}, {}, {}, timers, ctrl_worker};
+  timer_manager               timers;
+  dummy_e1ap_message_notifier e1ap_notifier;
+  manual_task_worker          ctrl_worker{128};
+  cu_cp_configuration         cu_cp_cfg;
+
+  ue_manager                                      ue_mng{cu_cp_cfg};
   dummy_e1ap_cu_cp_notifier                       cu_cp_notifier{ue_mng};
   std::unique_ptr<cu_up_processor_impl_interface> cu_up_processor_obj;
-  uint16_t                                        max_nof_cu_ups = 4;
-  cu_up_task_scheduler                            task_sched{timers, ctrl_worker, max_nof_cu_ups, test_logger};
+  cu_up_task_scheduler task_sched{timers, ctrl_worker, cu_cp_cfg.admission.max_nof_cu_ups, test_logger};
 };
 
 } // namespace srs_cu_cp

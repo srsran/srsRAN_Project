@@ -60,10 +60,12 @@ bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
 
 void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr)
 {
-  uint32_t read_teid = 0;
-  if (!gtpu_read_teid(read_teid, pdu, logger)) {
-    logger.error("Failed to read TEID from GTP-U PDU. pdu_len={}", pdu.length());
-    return;
+  uint32_t read_teid = 0x01; // default to test DRB
+  if (!cfg.test_mode) {
+    if (!gtpu_read_teid(read_teid, pdu, logger)) {
+      logger.error("Failed to read TEID from GTP-U PDU. pdu_len={}", pdu.length());
+      return;
+    }
   }
   gtpu_teid_t teid{read_teid};
 

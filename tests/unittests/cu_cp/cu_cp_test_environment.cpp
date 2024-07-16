@@ -76,25 +76,23 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   srslog::init();
 
   // create CU-CP config
-  cu_cp_cfg                                 = config_helpers::make_default_cu_cp_config();
-  cu_cp_cfg.cu_cp_executor                  = cu_cp_workers->exec.get();
-  cu_cp_cfg.n2_gw                           = &*amf_stub;
-  cu_cp_cfg.timers                          = &timers;
-  cu_cp_cfg.ngap_config                     = config_helpers::make_default_ngap_config();
-  cu_cp_cfg.max_nof_dus                     = params.max_nof_dus;
-  cu_cp_cfg.max_nof_cu_ups                  = params.max_nof_cu_ups;
-  cu_cp_cfg.ue_config.max_nof_supported_ues = params.max_nof_ues;
-  // > RRC config.
-  cu_cp_cfg.rrc_config.gnb_id             = cu_cp_cfg.ngap_config.gnb_id;
-  cu_cp_cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
-  cu_cp_cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
-                                             security::integrity_algorithm::nia1,
-                                             security::integrity_algorithm::nia3,
-                                             security::integrity_algorithm::nia0};
-  cu_cp_cfg.rrc_config.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                             security::ciphering_algorithm::nea2,
-                                             security::ciphering_algorithm::nea1,
-                                             security::ciphering_algorithm::nea3};
+  cu_cp_cfg                          = config_helpers::make_default_cu_cp_config();
+  cu_cp_cfg.services.cu_cp_executor  = cu_cp_workers->exec.get();
+  cu_cp_cfg.services.n2_gw           = &*amf_stub;
+  cu_cp_cfg.services.timers          = &timers;
+  cu_cp_cfg.admission.max_nof_dus    = params.max_nof_dus;
+  cu_cp_cfg.admission.max_nof_cu_ups = params.max_nof_cu_ups;
+  cu_cp_cfg.admission.max_nof_ues    = params.max_nof_ues;
+  cu_cp_cfg.bearers.drb_config       = config_helpers::make_default_cu_cp_qos_config_list();
+  // > security config.
+  cu_cp_cfg.security.int_algo_pref_list = {security::integrity_algorithm::nia2,
+                                           security::integrity_algorithm::nia1,
+                                           security::integrity_algorithm::nia3,
+                                           security::integrity_algorithm::nia0};
+  cu_cp_cfg.security.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                           security::ciphering_algorithm::nea2,
+                                           security::ciphering_algorithm::nea1,
+                                           security::ciphering_algorithm::nea3};
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);

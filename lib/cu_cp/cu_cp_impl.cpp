@@ -41,23 +41,30 @@ using namespace srs_cu_cp;
 
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
-  srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.n2_gw != nullptr, "Invalid N2 GW client handler");
-  srsran_assert(cfg.timers != nullptr, "Invalid timers");
+  srsran_assert(cfg.services.cu_cp_executor != nullptr, "Invalid CU-CP executor");
+  srsran_assert(cfg.services.n2_gw != nullptr, "Invalid N2 GW client handler");
+  srsran_assert(cfg.services.timers != nullptr, "Invalid timers");
 
-  report_error_if_not(cfg.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
-  report_error_if_not(cfg.max_nof_cu_ups <= MAX_NOF_CU_UPS, "Invalid max number of CU-UPs");
+  report_error_if_not(cfg.admission.max_nof_dus <= MAX_NOF_DUS, "Invalid max number of DUs");
+  report_error_if_not(cfg.admission.max_nof_cu_ups <= MAX_NOF_CU_UPS, "Invalid max number of CU-UPs");
+}
+
+ngap_configuration create_ngap_cfg(const cu_cp_configuration& cfg)
+{
+  ngap_configuration ngap_cfg;
+  ngap_cfg.gnb_id                    = cfg.node.gnb_id;
+  ngap_cfg.ran_node_name             = cfg.node.ran_node_name;
+  ngap_cfg.plmn                      = cfg.node.plmn;
+  ngap_cfg.tac                       = cfg.node.tac;
+  ngap_cfg.pdu_session_setup_timeout = cfg.ue.pdu_session_setup_timeout;
+  return ngap_cfg;
 }
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(config_.ue_config,
-         up_resource_manager_cfg{config_.rrc_config.drb_config},
-         security_manager_config{cfg.rrc_config.int_algo_pref_list, cfg.rrc_config.enc_algo_pref_list},
-         *cfg.timers,
-         *cfg.cu_cp_executor),
-  cell_meas_mng(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier, ue_mng),
-  routine_mng(ue_mng, cfg.default_security_indication, logger),
+  ue_mng(cfg),
+  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_ev_notifier, ue_mng),
+  routine_mng(ue_mng, cfg.security.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -70,7 +77,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              conn_notifier,
                              srslog::fetch_basic_logger("CU-CP")}),
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
-  metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.cu_cp_executor, *cfg.timers, ue_mng, du_db))
+  metrics_hdlr(
+      std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor, *cfg.services.timers, ue_mng, du_db))
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -81,22 +89,25 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
 
   // Create NGAP.
-  ngap_entity = create_ngap(
-      cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_cu_cp_ev_notifier, *cfg.n2_gw, *cfg.timers, *cfg.cu_cp_executor);
+  ngap_entity = create_ngap(create_ngap_cfg(cfg),
+                            ngap_cu_cp_ev_notifier,
+                            ngap_cu_cp_ev_notifier,
+                            *cfg.services.n2_gw,
+                            *cfg.services.timers,
+                            *cfg.services.cu_cp_executor);
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
   controller = std::make_unique<cu_cp_controller>(cfg,
                                                   routine_mng,
                                                   ue_mng,
-                                                  cfg.ngap_config,
                                                   ngap_entity->get_ngap_connection_manager(),
                                                   cu_up_db,
                                                   du_db,
-                                                  *cfg.cu_cp_executor);
+                                                  *cfg.services.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
 
-  mobility_mng = create_mobility_manager(cfg.mobility_config.mobility_manager_config,
+  mobility_mng = create_mobility_manager(cfg.mobility.mobility_manager_config,
                                          mobility_manager_ev_notifier,
                                          ngap_entity->get_ngap_control_message_handler(),
                                          du_db,
@@ -104,8 +115,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng);
 
   // Start statistics report timer
-  statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
-  statistics_report_timer.set(cfg.statistics_report_period,
+  statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
+  statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }
@@ -120,7 +131,7 @@ bool cu_cp_impl::start()
   std::promise<bool> p;
   std::future<bool>  fut = p.get_future();
 
-  if (not cfg.cu_cp_executor->execute([this, &p]() {
+  if (not cfg.services.cu_cp_executor->execute([this, &p]() {
         // start AMF connection procedure.
         controller->amf_connection_handler().connect_to_amf(&p);
       })) {
@@ -140,7 +151,7 @@ void cu_cp_impl::stop()
   logger.info("Stopping CU-CP...");
 
   // Shut down components from within CU-CP executor.
-  while (not cfg.cu_cp_executor->execute([this]() {
+  while (not cfg.services.cu_cp_executor->execute([this]() {
     // Stop statistics gathering.
     statistics_report_timer.stop();
   })) {
@@ -714,7 +725,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                nof_cu_cp_ues);
 
   // Restart timer
-  statistics_report_timer.set(cfg.statistics_report_period,
+  statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }

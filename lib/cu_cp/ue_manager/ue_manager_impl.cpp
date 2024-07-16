@@ -31,12 +31,12 @@ void cu_cp_ue::stop()
   task_sched.stop();
 }
 
-ue_manager::ue_manager(const ue_configuration&        ue_config_,
-                       const up_resource_manager_cfg& up_config_,
-                       const security_manager_config& sec_config_,
-                       timer_manager&                 timers,
-                       task_executor&                 cu_cp_exec) :
-  ue_config(ue_config_), up_config(up_config_), sec_config(sec_config_), ue_task_scheds(timers, cu_cp_exec, logger)
+ue_manager::ue_manager(const cu_cp_configuration& cu_cp_cfg) :
+  ue_config(cu_cp_cfg.ue),
+  up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config}),
+  sec_config(security_manager_config{cu_cp_cfg.security.int_algo_pref_list, cu_cp_cfg.security.enc_algo_pref_list}),
+  max_nof_ues(cu_cp_cfg.admission.max_nof_ues),
+  ue_task_scheds(*cu_cp_cfg.services.timers, *cu_cp_cfg.services.cu_cp_executor, logger)
 {
 }
 
@@ -76,9 +76,9 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
     return ue_index_t::invalid;
   }
 
-  if (ues.size() == ue_config.max_nof_supported_ues) {
+  if (ues.size() == max_nof_ues) {
     logger.warning("CU-CP UE creation Failed. Cause: Maximum number of UEs {} supported by the CU-CP has been reached",
-                   ue_config.max_nof_supported_ues);
+                   max_nof_ues);
     return ue_index_t::invalid;
   }
 
@@ -250,7 +250,7 @@ std::vector<metrics_report::ue_info> ue_manager::handle_ue_metrics_report_reques
 ue_index_t ue_manager::allocate_ue_index()
 {
   // return invalid when no UE index is available
-  if (ues.size() == ue_config.max_nof_supported_ues) {
+  if (ues.size() == max_nof_ues) {
     return ue_index_t::invalid;
   }
 

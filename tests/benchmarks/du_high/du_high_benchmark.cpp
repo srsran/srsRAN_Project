@@ -320,8 +320,9 @@ private:
             int_to_gnb_du_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
         gnb_cu_ue_f1ap_id_t cu_ue_id =
             int_to_gnb_cu_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(cu_ue_id, du_ue_id, {drb_id_t::drb1});
-        auto&        ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
+        f1ap_message uectxt_msg =
+            test_helpers::create_ue_context_setup_request(cu_ue_id, du_ue_id, 0, {drb_id_t::drb1});
+        auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
         // Do not send RRC container, otherwise we have to send an RLC ACK.
         ue_ctxt_setup.rrc_container_present = false;
         // Note: Use UM because AM requires status PDUs.

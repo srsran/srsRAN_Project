@@ -24,6 +24,7 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
+#include "srsran/support/async/async_no_op_task.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -31,10 +32,12 @@ using namespace srs_du;
 class null_sink_f1c_bearer : public f1c_bearer
 {
 public:
-  void handle_pdu(byte_buffer pdu) override {}
-  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_chain sdu) override {}
+  void             handle_pdu(byte_buffer pdu) override {}
+  async_task<void> handle_pdu_and_await_delivery(byte_buffer pdu) override { return launch_no_op_task(); }
+  async_task<void> handle_pdu_and_await_transmission(byte_buffer pdu) override { return launch_no_op_task(); }
+  void             handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
+  void             handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
+  void             handle_sdu(byte_buffer_chain sdu) override {}
 } null_f1c_bearer;
 
 /// \brief F1-U Bearer Sink. Used to discard events while in the process of destroying a UE bearer.

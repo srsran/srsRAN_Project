@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_test_messages.h"
+#include "../pdcp/pdcp_pdu_generator.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
@@ -31,6 +32,12 @@
 
 using namespace srsran;
 using namespace asn1::f1ap;
+
+static byte_buffer generate_rrc_container(uint32_t pdcp_sn, unsigned pdu_len)
+{
+  return test_helpers::create_pdcp_pdu(
+      pdcp_sn_size::size12bits, true, pdcp_sn, pdu_len, test_rgen::uniform_int<uint8_t>());
+}
 
 gnb_du_served_cells_item_s
 srsran::test_helpers::generate_served_cells_item(nr_cell_identity nci, pci_t nrpci, unsigned tac)
@@ -176,7 +183,8 @@ static drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid)
 
 f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1ap_id_t                cu_ue_id,
                                                                    std::optional<gnb_du_ue_f1ap_id_t> du_ue_id,
-                                                                   const std::vector<drb_id_t>&       drbs_to_setup)
+                                                                   uint32_t                     rrc_container_pdcp_sn,
+                                                                   const std::vector<drb_id_t>& drbs_to_setup)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -208,9 +216,9 @@ f1ap_message srsran::test_helpers::create_ue_context_setup_request(gnb_cu_ue_f1a
   }
 
   dl_msg->rrc_container_present = true;
-  report_error_if_not(
-      dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100))),
-      "Failed to allocate RRC containe");
+  bool success                  = dl_msg->rrc_container.append(
+      generate_rrc_container(rrc_container_pdcp_sn, test_rgen::uniform_int<unsigned>(3, 100)));
+  report_error_if_not(success, "Failed to allocate RRC container");
 
   return msg;
 }

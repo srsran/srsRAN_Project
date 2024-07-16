@@ -47,7 +47,7 @@ struct rrc_cfg_t {
   /// Force re-establishment fallback.
   bool force_reestablishment_fallback = false;
   /// Timeout for RRC procedures.
-  unsigned rrc_procedure_timeout_ms = 360;
+  std::chrono::milliseconds rrc_procedure_timeout_ms{360};
 };
 
 } // namespace srs_cu_cp

@@ -38,7 +38,7 @@
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
-  taints: ["manual-testing"]
+  taints: ["purpose=manual-testing"]
   resources:
     - type: sdr
       model: x300
@@ -52,7 +52,7 @@
 - name: open5gs
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  taints: ["retina"]
+  taints: ["purpose=retina"]
   requirements:
     arch: amd64
     cpu:
