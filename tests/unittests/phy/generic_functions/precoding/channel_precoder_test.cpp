@@ -40,12 +40,6 @@ static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
   return os;
 }
 
-static std::ostream& operator<<(std::ostream& os, span<const cbf16_t> data)
-{
-  fmt::print(os, "{}", data);
-  return os;
-}
-
 static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
 {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
