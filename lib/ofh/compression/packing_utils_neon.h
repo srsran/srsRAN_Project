@@ -11,7 +11,6 @@
 #pragma once
 
 #include "neon_helpers.h"
-#include "srsran/ofh/compression/compressed_prb.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -58,23 +57,26 @@ inline uint8x16_t pack_neon_register_9b_big_endian(int16x8_t reg)
 
 /// \brief Packs 16bit IQ values of the PRB using given bit width and big-endian format.
 ///
-/// \param[out] c_prb Compressed PRB object storing packed bytes.
-/// \param[in]  regs  NEON registers storing 16bit IQ samples of the PRB.
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in]  regs            NEON registers storing 16bit IQ samples of the PRB.
 ///
 /// \note Each of the input registers stores four unique REs.
-inline void pack_prb_9b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
+inline void pack_prb_9b_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs)
 {
   /// Number of bytes used by 1 packed PRB with IQ samples compressed to 9 bits.
   static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
   static constexpr unsigned bytes_per_half_reg = 8;
 
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_9BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
+
   // Pack input registers.
   uint8x16_t res_packed_bytes_0_u8 = pack_neon_register_9b_big_endian(regs.val[0]);
   uint8x16_t res_packed_bytes_1_u8 = pack_neon_register_9b_big_endian(regs.val[1]);
   uint8x16_t res_packed_bytes_2_u8 = pack_neon_register_9b_big_endian(regs.val[2]);
 
-  uint8_t* data = c_prb.get_byte_buffer().data();
+  uint8_t* data = comp_prb_buffer.data();
 
   // Store first 9 bytes of every register storing packed bytes.
   vst1_u64(reinterpret_cast<uint64_t*>(data), vreinterpret_u64_u8(vget_low_u8(res_packed_bytes_0_u8)));
@@ -87,21 +89,22 @@ inline void pack_prb_9b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
 
   vst1_u64(reinterpret_cast<uint64_t*>(data), vreinterpret_u64_u8(vget_low_u8(res_packed_bytes_2_u8)));
   vst1q_lane_u8(data + bytes_per_half_reg, res_packed_bytes_2_u8, bytes_per_half_reg);
-
-  c_prb.set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of the PRB using given bit width and big-endian format.
 ///
-/// \param[out] c_prb Compressed PRB object storing packed bytes.
-/// \param[in]  regs  NEON registers storing 16bit IQ samples of the PRB.
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in]  regs            NEON registers storing 16bit IQ samples of the PRB.
 ///
 /// \note Each of the input registers stores four unique REs.
-inline void pack_prb_16b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
+inline void pack_prb_16b_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs)
 {
   /// Number of bytes used by 1 packed PRB with IQ samples compressed to 16 bits.
   static constexpr unsigned BYTES_PER_PRB_16BIT_COMPRESSION = 48;
   static constexpr unsigned NEON_REG_SIZE_BYTES             = 16;
+
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_16BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
 
   static const uint8x16_t shuffle_mask_u8 = vcombine_u8(vcreate_u8(0x0607040502030001), vcreate_u8(0x0e0f0c0d0a0b0809));
 
@@ -110,25 +113,24 @@ inline void pack_prb_16b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
   regs_shuffled_s16.val[1] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[1]), shuffle_mask_u8);
   regs_shuffled_s16.val[2] = vqtbl1q_s8(vreinterpretq_s8_s16(regs.val[2]), shuffle_mask_u8);
 
-  int8_t* data = reinterpret_cast<int8_t*>(c_prb.get_byte_buffer().data());
+  int8_t* data = reinterpret_cast<int8_t*>(comp_prb_buffer.data());
   vst1q_s8(data, regs_shuffled_s16.val[0]);
   vst1q_s8(data + NEON_REG_SIZE_BYTES, regs_shuffled_s16.val[1]);
   vst1q_s8(data + NEON_REG_SIZE_BYTES * 2, regs_shuffled_s16.val[2]);
-  c_prb.set_stored_size(BYTES_PER_PRB_16BIT_COMPRESSION);
 }
 
 /// \brief Packs 16bit IQ values of a resource block using the specified width and big-endian format.
 ///
-/// \param[out] c_prb   Output PRB storing compressed packed bytes.
-/// \param[in]  reg     Vector of three NEON registers storing 16bit IQ pairs of the PRB.
-/// \param[in] iq_width Bit width of the resulting packed IQ samples.
-inline void pack_prb_big_endian(ofh::compressed_prb& c_prb, int16x8x3_t regs, unsigned iq_width)
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in]  reg             Vector of three NEON registers storing 16bit IQ pairs of the PRB.
+/// \param[in] iq_width         Bit width of the resulting packed IQ samples.
+inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs, unsigned iq_width)
 {
   if (iq_width == 9) {
-    return pack_prb_9b_big_endian(c_prb, regs);
+    return pack_prb_9b_big_endian(comp_prb_buffer, regs);
   }
   if (iq_width == 16) {
-    return pack_prb_16b_big_endian(c_prb, regs);
+    return pack_prb_16b_big_endian(comp_prb_buffer, regs);
   }
   report_fatal_error("Unsupported bit width");
 }

@@ -8,11 +8,13 @@
  *
  */
 
-#include "../../../../lib/ofh/compression/compressed_prb_unpacker.h"
+#include "../../../../lib/ofh/compression/packing_utils_generic.h"
 #include "../../../../lib/ofh/compression/quantizer.h"
 #include "ofh_compression_test_data.h"
 #include "srsran/ofh/compression/compression_factory.h"
+#include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/units.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -72,22 +74,29 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
   std::vector<cbf16_t> test_data_cbf16(test_data.size());
   srsvec::convert(test_data_cbf16, test_data);
 
+  unsigned prb_size = get_compressed_prb_size(params).value();
+
   // Prepare vectors to store compression/decompression results.
-  std::vector<compressed_prb> compressed_data(nof_prb);
-  std::vector<cbf16_t>        decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  std::vector<uint8_t> compressed_data(nof_prb * prb_size);
+  std::vector<cbf16_t> decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress input test data.
   compressor->compress(compressed_data, test_data_cbf16, params);
 
   // Verify compressed IQs.
   for (unsigned j = 0; j != nof_prb; ++j) {
-    // Parameter should match.
-    ASSERT_EQ(compressed_data[j].get_compression_param(), test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
+    unsigned prb_iq_data_offset = 0;
+    if (params.type == srsran::ofh::compression_type::BFP) {
+      // Parameter should match, it is serialized in the first byte.
+      ASSERT_EQ(compressed_data[j * prb_size], test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
+      prb_iq_data_offset = 1;
+    }
     // Data should match.
-    compressed_prb&         c_prb = compressed_data[j];
-    compressed_prb_unpacker unpacker(c_prb);
+    bit_buffer_reader buffer = bit_buffer_reader::from_bytes(
+        {&compressed_data[j * prb_size + prb_iq_data_offset], prb_size - prb_iq_data_offset});
+
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB * 2; ++i) {
-      int16_t sample = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
+      int16_t sample = q.sign_extend(unpack_bits(buffer, read_pos, params.data_width));
       read_pos += params.data_width;
 
       constexpr uint16_t err_tolerance = 1;
@@ -132,8 +141,10 @@ TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
   std::vector<cbf16_t> test_data_cbf16(test_data.size());
   srsvec::convert(test_data_cbf16, test_data);
 
-  std::vector<compressed_prb> compressed_data(nof_prb);
-  std::vector<cbf16_t>        decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  unsigned prb_size = get_compressed_prb_size(params).value();
+
+  std::vector<uint8_t> compressed_data(nof_prb * prb_size);
+  std::vector<cbf16_t> decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress it.
   compressor->compress(compressed_data, test_data_cbf16, params);
@@ -165,7 +176,8 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
 
   std::unique_ptr<iq_compressor> compressor = create_iq_compressor(compression_type::BFP, logger, 1.0, "generic");
   ru_compression_params          params     = {compression_type::BFP, 9};
-  std::vector<compressed_prb>    compressed_data(4);
+  unsigned                       prb_size   = get_compressed_prb_size(params).value();
+  std::vector<uint8_t>           compressed_data(4 * prb_size);
 
   // Compress it.
   std::vector<cbf16_t> test_data_cbf16(test_data.size());
@@ -174,14 +186,16 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
 
   for (unsigned j = 0; j != 4; ++j) {
     // Parameter should match.
-    ASSERT_EQ(compressed_data[j].get_compression_param(), test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
+    ASSERT_EQ(compressed_data[j * prb_size], test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
+
+    // Skip first byte storing the compression parameter.
+    bit_buffer_reader buffer = bit_buffer_reader::from_bytes({&compressed_data[j * prb_size + 1], prb_size - 1});
+
     // Data should match.
-    compressed_prb&         c_prb = compressed_data[j];
-    compressed_prb_unpacker unpacker(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-      int16_t re = q.sign_extend(unpacker.unpack(read_pos, 9));
+      int16_t re = q.sign_extend(unpack_bits(buffer, read_pos, 9));
       read_pos += params.data_width;
-      int16_t im = q.sign_extend(unpacker.unpack(read_pos, 9));
+      int16_t im = q.sign_extend(unpack_bits(buffer, read_pos, 9));
       read_pos += params.data_width;
 
       ASSERT_TRUE(std::abs(re - std::real(test_compressed_prbs[j][i])) <= 1)

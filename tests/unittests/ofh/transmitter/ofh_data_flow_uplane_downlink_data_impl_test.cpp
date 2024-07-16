@@ -16,6 +16,7 @@
 #include "srsran/adt/interval.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/ran/resource_block.h"
 #include <gtest/gtest.h>
 #include <vector>
 

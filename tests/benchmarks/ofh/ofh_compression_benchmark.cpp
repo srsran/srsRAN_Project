@@ -9,8 +9,10 @@
  */
 
 #include "srsran/ofh/compression/compression_factory.h"
+#include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/benchmark_utils.h"
@@ -186,13 +188,15 @@ int main(int argc, char** argv)
     std::string meas_descr_compression   = common_meas_name + " compression";
     std::string meas_descr_decompression = common_meas_name + " decompression";
 
-    std::vector<std::vector<cbf16_t>>             test_data(nof_ports);
-    std::vector<std::vector<cbf16_t>>             decompressed_data(nof_ports);
-    std::vector<std::vector<ofh::compressed_prb>> compressed_data(nof_ports);
+    std::vector<std::vector<cbf16_t>> test_data(nof_ports);
+    std::vector<std::vector<cbf16_t>> decompressed_data(nof_ports);
+    std::vector<std::vector<uint8_t>> compressed_data(nof_ports);
+
+    unsigned comp_prb_size = ofh::get_compressed_prb_size(params).value();
     for (unsigned i = 0; i != nof_ports; ++i) {
       test_data[i].resize(nof_prbs * NOF_SUBCARRIERS_PER_RB);
       decompressed_data[i].resize(nof_prbs * NOF_SUBCARRIERS_PER_RB);
-      compressed_data[i].resize(nof_prbs);
+      compressed_data[i].resize(nof_prbs * comp_prb_size);
     }
 
     // Generate input random data.

@@ -13,6 +13,7 @@
 #include "scoped_frame_buffer.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/srsvec/conversion.h"
 #include <thread>
 
