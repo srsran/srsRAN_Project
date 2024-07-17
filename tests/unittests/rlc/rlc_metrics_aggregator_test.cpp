@@ -40,7 +40,14 @@ protected:
   srslog::basic_logger&                   logger = srslog::fetch_basic_logger("TEST", false);
 };
 
-TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation) {}
+TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation)
+{
+  rlc_tx_metrics_atomic_higher hi_m;
+  rlc_tx_metrics_atomic_lower  low_m;
+
+  hi_m.num_sdus                  = 10;
+  low_m.num_pdus_no_segmentation = 10;
+}
 
 int main(int argc, char** argv)
 {
