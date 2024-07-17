@@ -41,9 +41,6 @@ public:
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
 
-  /// \brief Retrieve F1AP handler for the respective DU.
-  virtual f1ap_cu& get_f1ap_handler() = 0;
-
   /// \brief Handle the loss of some transaction information for some UEs.
   /// \return Asynchronous task that is completed when the event is fully handled.
   virtual async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) = 0;
@@ -291,6 +288,9 @@ class du_processor : public du_processor_cell_info_interface
 {
 public:
   virtual ~du_processor() = default;
+
+  /// \brief Retrieve F1AP handler for the respective DU.
+  virtual f1ap_cu& get_f1ap_handler() = 0;
 
   virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
   virtual du_processor_paging_handler&     get_paging_handler()     = 0;

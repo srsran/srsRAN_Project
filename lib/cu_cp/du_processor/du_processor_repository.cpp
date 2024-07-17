@@ -70,7 +70,7 @@ async_task<void> du_processor_repository::remove_du(du_index_t du_index)
     }
 
     // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
-    CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_interface().get_f1ap_handler().stop());
+    CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_handler().stop());
 
     // Notify the CU-CP about the removal of the DU processor.
     cfg.cu_cp_du_handler.handle_du_processor_removal(du_index);
@@ -154,7 +154,7 @@ size_t du_processor_repository::get_nof_f1ap_ues()
 {
   size_t nof_ues = 0;
   for (auto& du : du_db) {
-    nof_ues += du.second.processor->get_f1ap_interface().get_f1ap_handler().get_nof_ues();
+    nof_ues += du.second.processor->get_f1ap_handler().get_nof_ues();
   }
   return nof_ues;
 }
