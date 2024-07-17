@@ -32,6 +32,47 @@ static rrc_cfg_t create_rrc_config(const cu_cp_configuration& cu_cp_cfg)
   return rrc_cfg;
 }
 
+class du_processor_impl::f1ap_du_processor_adapter : public f1ap_du_processor_notifier
+{
+public:
+  f1ap_du_processor_adapter(du_processor_impl& parent_, common_task_scheduler& common_task_sched_) :
+    parent(parent_), common_task_sched(&common_task_sched_)
+  {
+  }
+
+  du_setup_result on_new_du_setup_request(const du_setup_request& msg) override
+  {
+    return parent.handle_du_setup_request(msg);
+  }
+
+  ue_rrc_context_creation_outcome
+  on_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override
+  {
+    return parent.handle_ue_rrc_context_creation_request(req);
+  }
+
+  void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
+  {
+    parent.handle_du_initiated_ue_context_release_request(req);
+  }
+
+  bool schedule_async_task(async_task<void> task) override
+  {
+    return common_task_sched->schedule_async_task(std::move(task));
+  }
+
+  async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return parent.cu_cp_notifier.on_transaction_info_loss(ev);
+  }
+
+private:
+  du_processor_impl&     parent;
+  common_task_scheduler* common_task_sched = nullptr;
+};
+
+// du_processor_impl
+
 du_processor_impl::du_processor_impl(du_processor_config_t               du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_message_notifier&              f1ap_pdu_notifier_,
@@ -45,16 +86,14 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
   f1ap_pdu_notifier(f1ap_pdu_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   ue_mng(ue_mng_),
-  f1ap_ev_notifier(common_task_sched_, *this)
+  f1ap_ev_notifier(std::make_unique<f1ap_du_processor_adapter>(*this, common_task_sched_))
 {
   // create f1ap
   f1ap = create_f1ap(cfg.cu_cp_cfg.f1ap,
                      f1ap_pdu_notifier,
-                     f1ap_ev_notifier,
+                     *f1ap_ev_notifier,
                      *cfg.cu_cp_cfg.services.timers,
                      *cfg.cu_cp_cfg.services.cu_cp_executor);
-
-  f1ap_ev_notifier.connect_du_processor(get_f1ap_interface());
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
@@ -246,11 +285,6 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
             {request.ue_index, ue->get_up_resource_manager().get_pdu_sessions(), f1ap_to_ngap_cause(request.cause)}));
         CORO_RETURN();
       }));
-}
-
-async_task<void> du_processor_impl::handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request)
-{
-  return cu_cp_notifier.on_transaction_info_loss(request);
 }
 
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)

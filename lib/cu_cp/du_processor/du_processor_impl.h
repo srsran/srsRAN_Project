@@ -28,7 +28,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 class du_processor_impl : public du_processor,
-                          public du_setup_handler,
                           public du_metrics_handler,
                           public du_processor_f1ap_interface,
                           public du_processor_paging_handler,
@@ -53,11 +52,14 @@ public:
   size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(cfg.du_index); };
 
   // du_processor_f1ap_interface
-  du_setup_result handle_du_setup_request(const du_setup_request& req) override;
+
+  /// \brief Request to create a new UE RRC context.
+  ///
+  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
+  /// \param req Request to setup a new UE RRC context.
+  /// \return Response to whether the request was successful or failed.
   ue_rrc_context_creation_outcome
-       handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
-  void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
-  async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
+  handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
 
   // du_processor_mobility_manager_interface
   std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
@@ -80,6 +82,14 @@ public:
   du_metrics_handler&                    get_metrics_handler() override { return *this; }
 
 private:
+  class f1ap_du_processor_adapter;
+
+  du_setup_result handle_du_setup_request(const du_setup_request& req);
+
+  /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
+  /// \param[in] req The F1AP UE Context Release Request.
+  void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request);
+
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
   bool create_rrc_ue(cu_cp_ue&                              ue,
@@ -99,7 +109,7 @@ private:
   du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
 
   // F1AP to DU processor adapter
-  f1ap_du_processor_adapter f1ap_ev_notifier;
+  std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
 
   std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
 

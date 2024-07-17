@@ -36,14 +36,6 @@ public:
   /// \return Response to whether the request was successful or failed.
   virtual ue_rrc_context_creation_outcome
   handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
-
-  /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
-  /// \param[in] req The F1AP UE Context Release Request.
-  virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
-
-  /// \brief Handle the loss of some transaction information for some UEs.
-  /// \return Asynchronous task that is completed when the event is fully handled.
-  virtual async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) = 0;
 };
 
 /// Interface to notify UE context management procedures.
