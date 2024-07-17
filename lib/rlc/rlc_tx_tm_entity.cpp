@@ -28,7 +28,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
-  metrics.metrics_set_mode(rlc_mode::tm);
+  metrics_low.metrics_set_mode(rlc_mode::tm);
   logger.log_info("RLC TM created. {}", cfg);
 }
 
@@ -47,11 +47,11 @@ void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
   size_t sdu_len = sdu_.buf.length();
   if (sdu_queue.write(sdu_)) {
     logger.log_info(sdu_.buf.begin(), sdu_.buf.end(), "TX SDU. sdu_len={} {}", sdu_len, sdu_queue.get_state());
-    metrics.metrics_add_sdus(1, sdu_len);
+    metrics_high.metrics_add_sdus(1, sdu_len);
     handle_changed_buffer_state();
   } else {
     logger.log_info("Dropped SDU. sdu_len={} {}", sdu_len, sdu_queue.get_state());
-    metrics.metrics_add_lost_sdus(1);
+    metrics_high.metrics_add_lost_sdus(1);
   }
 }
 
@@ -59,7 +59,7 @@ void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn)
 {
   logger.log_warning("Ignoring invalid attempt to discard SDU in TM. pdcp_sn={}", pdcp_sn);
-  metrics.metrics_add_discard_failure(1);
+  metrics_high.metrics_add_discard_failure(1);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
@@ -81,7 +81,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   size_t sdu_len = sdu.buf.length();
   if (sdu_len > grant_len) {
     logger.log_info("SDU exeeds provided space. front_len={} grant_len={}", sdu_len, grant_len);
-    metrics.metrics_add_small_alloc(1);
+    metrics_low.metrics_add_small_alloc(1);
     return 0;
   }
 
@@ -102,7 +102,7 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   sdu.buf.clear();
 
   // Update metrics
-  metrics.metrics_add_pdus_no_segmentation(1, sdu_len);
+  metrics_low.metrics_add_pdus_no_segmentation(1, sdu_len);
 
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_len));

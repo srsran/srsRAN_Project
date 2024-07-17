@@ -35,7 +35,8 @@ protected:
                 bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_) :
     logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
-    metrics(metrics_enabled),
+    metrics_high(metrics_enabled),
+    metrics_low(metrics_enabled),
     rb_id(rb_id_),
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
@@ -45,7 +46,8 @@ protected:
   }
 
   rlc_bearer_logger                    logger;
-  rlc_tx_metrics_container             metrics;
+  rlc_tx_metrics_high_container        metrics_high;
+  rlc_tx_metrics_low_container         metrics_low;
   rb_id_t                              rb_id;
   rlc_tx_upper_layer_data_notifier&    upper_dn;
   rlc_tx_upper_layer_control_notifier& upper_cn;
@@ -63,8 +65,15 @@ public:
   /// Note: This function shall only be called from ue_executor.
   virtual void stop() = 0;
 
-  rlc_tx_metrics get_metrics() { return metrics.get_metrics(); }
-  void           reset_metrics() { return metrics.reset_metrics(); }
+  rlc_tx_metrics get_metrics()
+  {
+    return {};
+    /*return metrics.get_metrics();*/
+  }
+  void reset_metrics()
+  {
+    // return metrics.reset_metrics();
+  }
 };
 
 } // namespace srsran

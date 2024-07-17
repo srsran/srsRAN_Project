@@ -35,7 +35,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
   pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id_, config)
 {
-  metrics.metrics_set_mode(rlc_mode::um_bidir);
+  metrics_low.metrics_set_mode(rlc_mode::um_bidir);
 
   // check PDCP SN length
   srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
@@ -70,11 +70,11 @@ void rlc_tx_um_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
                     sdu_.buf.length(),
                     sdu_.pdcp_sn,
                     sdu_queue.get_state());
-    metrics.metrics_add_sdus(1, sdu_length);
+    metrics_high.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
     logger.log_info("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu_.pdcp_sn, sdu_queue.get_state());
-    metrics.metrics_add_lost_sdus(1);
+    metrics_high.metrics_add_lost_sdus(1);
   }
 }
 
@@ -83,11 +83,11 @@ void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
 {
   if (sdu_queue.try_discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
-    metrics.metrics_add_discard(1);
+    metrics_high.metrics_add_discard(1);
     handle_changed_buffer_state();
   } else {
     logger.log_info("Could not discard SDU. pdcp_sn={}", pdcp_sn);
-    metrics.metrics_add_discard_failure(1);
+    metrics_high.metrics_add_discard_failure(1);
   }
 }
 
@@ -174,8 +174,8 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     next_so      = 0;
     auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
                                                                         sdu.time_of_arrival);
-    metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
-    metrics.metrics_add_pulled_sdus(1);
+    metrics_high.metrics_add_sdu_latency_us(latency.count() / 1000);
+    metrics_high.metrics_add_pulled_sdus(1);
   } else {
     // advance SO offset
     next_so += payload_len;
@@ -188,9 +188,9 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 
   // Update metrics
   if (header.si == rlc_si_field::full_sdu) {
-    metrics.metrics_add_pdus_no_segmentation(1, pdu_size);
+    metrics_low.metrics_add_pdus_no_segmentation(1, pdu_size);
   } else {
-    metrics.metrics_add_pdus_with_segmentation_um(1, pdu_size);
+    metrics_low.metrics_add_pdus_with_segmentation_um(1, pdu_size);
   }
 
   // Log state

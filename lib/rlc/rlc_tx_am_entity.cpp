@@ -47,7 +47,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   ue_executor(ue_executor_),
   pcap_context(ue_index, rb_id_, config)
 {
-  metrics.metrics_set_mode(rlc_mode::am);
+  metrics_low.metrics_set_mode(rlc_mode::am);
 
   // check PDCP SN length
   srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
@@ -94,7 +94,7 @@ void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
                     sdu.pdcp_sn,
                     sdu.is_retx,
                     sdu_queue.get_state());
-    metrics.metrics_add_sdus(1, sdu_length);
+    metrics_high.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
     logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} is_retx={} {}",
@@ -102,7 +102,7 @@ void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
                        sdu.pdcp_sn,
                        sdu.is_retx,
                        sdu_queue.get_state());
-    metrics.metrics_add_lost_sdus(1);
+    metrics_high.metrics_add_lost_sdus(1);
   }
 }
 
@@ -111,11 +111,11 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 {
   if (sdu_queue.try_discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
-    metrics.metrics_add_discard(1);
+    metrics_high.metrics_add_discard(1);
     handle_changed_buffer_state();
   } else {
     logger.log_info("Could not discard SDU. pdcp_sn={}", pdcp_sn);
-    metrics.metrics_add_discard_failure(1);
+    metrics_high.metrics_add_discard_failure(1);
   }
 }
 
@@ -151,7 +151,7 @@ size_t rlc_tx_am_entity::pull_pdu(span<uint8_t> rlc_pdu_buf)
     logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX status PDU. pdu_len={} grant_len={}", pdu_len, grant_len);
 
     // Update metrics
-    metrics.metrics_add_ctrl_pdus(1, pdu_len);
+    metrics_low.metrics_add_ctrl_pdus(1, pdu_len);
 
     // Log state
     log_state(srslog::basic_levels::debug);
@@ -268,12 +268,12 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   // Update TX Next
   auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
                                                                       sdu_info.time_of_arrival);
-  metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
-  metrics.metrics_add_pulled_sdus(1);
+  metrics_high.metrics_add_sdu_latency_us(latency.count() / 1000);
+  metrics_high.metrics_add_pulled_sdus(1);
   st.tx_next = (st.tx_next + 1) % mod;
 
   // Update metrics
-  metrics.metrics_add_pdus_no_segmentation(1, pdu_len);
+  metrics_low.metrics_add_pdus_no_segmentation(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -337,7 +337,7 @@ size_t rlc_tx_am_entity::build_first_sdu_segment(span<uint8_t> rlc_pdu_buf, rlc_
   sdu_info.next_so += segment_payload_len;
 
   // Update metrics
-  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
+  metrics_low.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -430,13 +430,13 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
   if (si == rlc_si_field::last_segment) {
     auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
                                                                         sdu_info.time_of_arrival);
-    metrics.metrics_add_sdu_latency_us(latency.count() / 1000);
-    metrics.metrics_add_pulled_sdus(1);
+    metrics_high.metrics_add_sdu_latency_us(latency.count() / 1000);
+    metrics_high.metrics_add_pulled_sdus(1);
     st.tx_next = (st.tx_next + 1) % mod;
   }
 
   // Update metrics
-  metrics.metrics_add_pdus_with_segmentation_am(1, pdu_len);
+  metrics_low.metrics_add_pdus_with_segmentation_am(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -572,7 +572,7 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
                   sdu_info.retx_count);
 
   // Update metrics
-  metrics.metrics_add_retx_pdus(1, pdu_len);
+  metrics_low.metrics_add_retx_pdus(1, pdu_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
