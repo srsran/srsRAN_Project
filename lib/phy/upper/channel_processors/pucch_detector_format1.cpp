@@ -9,10 +9,11 @@
  */
 
 /// \file
-/// \brief PUCCH detector definition for Formats 0 and 1.
+/// \brief PUCCH detector definition for Format 1.
 
-#include "pucch_detector_impl.h"
+#include "pucch_detector_format1.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/upper/channel_processors/pucch_detector.h"
 #include "srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/mean.h"
@@ -76,16 +77,10 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
   return (std::norm(detected_symbol) / eq_noise_var);
 }
 
-std::pair<pucch_uci_message, channel_state_information>
-pucch_detector_impl::detect(const srsran::resource_grid_reader&                  grid,
-                            const srsran::pucch_detector::format0_configuration& config)
-{
-  return detector_format0->detect(grid, config);
-}
-
-pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resource_grid_reader&  grid,
-                                                                   const channel_estimate&      estimates,
-                                                                   const format1_configuration& config)
+pucch_detector::pucch_detection_result
+pucch_detector_format1::detect(const resource_grid_reader&                  grid,
+                               const channel_estimate&                      estimates,
+                               const pucch_detector::format1_configuration& config)
 {
   validate_config(config);
 
@@ -127,11 +122,11 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // by this detector and on the used PUCCH resource.
   // This format doesn't support CSI reports.
   pucch_uci_message::configuration pucch_uci_message_config;
-  pucch_uci_message_config.nof_sr        = 0;
-  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
-  pucch_uci_message_config.nof_csi_part1 = 0;
-  pucch_uci_message_config.nof_csi_part2 = 0;
-  pucch_detection_result output          = {pucch_uci_message(pucch_uci_message_config), 0};
+  pucch_uci_message_config.nof_sr               = 0;
+  pucch_uci_message_config.nof_harq_ack         = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1        = 0;
+  pucch_uci_message_config.nof_csi_part2        = 0;
+  pucch_detector::pucch_detection_result output = {pucch_uci_message(pucch_uci_message_config), 0};
 
   // Select view of the payload.
   span<uint8_t> bits = output.uci_message.get_harq_ack_bits();
@@ -176,12 +171,12 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   return output;
 }
 
-void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&              grid,
-                                                     const channel_estimate&                  estimates,
-                                                     unsigned                                 first_symbol,
-                                                     unsigned                                 first_prb,
-                                                     std::optional<unsigned>                  second_prb,
-                                                     const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
+void pucch_detector_format1::extract_data_and_estimates(const resource_grid_reader&              grid,
+                                                        const channel_estimate&                  estimates,
+                                                        unsigned                                 first_symbol,
+                                                        unsigned                                 first_prb,
+                                                        std::optional<unsigned>                  second_prb,
+                                                        const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
 {
   for (uint8_t port : antenna_ports) {
     unsigned      i_symbol       = 0;
@@ -235,7 +230,7 @@ static void compute_alpha_indices(span<unsigned>       indices,
   }
 }
 
-void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& config)
+void pucch_detector_format1::marginalize_w_and_r_out(const pucch_detector::format1_configuration& config)
 {
   unsigned time_domain_occ = config.time_domain_occ;
 

@@ -50,7 +50,7 @@ add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)
 
 add_library(srsran_pucch_detector STATIC
         pucch_detector_format0.cpp
-        pucch_detector_impl.cpp)
+        pucch_detector_format1.cpp)
 
 add_library(srsran_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsran_ssb_processor srsran_sequence_generators srsran_signal_processors)
