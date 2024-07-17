@@ -154,7 +154,7 @@ size_t du_processor_repository::get_nof_f1ap_ues()
 {
   size_t nof_ues = 0;
   for (auto& du : du_db) {
-    nof_ues += du.second.processor->get_f1ap_interface().get_f1ap_statistics_handler().get_nof_ues();
+    nof_ues += du.second.processor->get_f1ap_interface().get_f1ap_handler().get_nof_ues();
   }
   return nof_ues;
 }

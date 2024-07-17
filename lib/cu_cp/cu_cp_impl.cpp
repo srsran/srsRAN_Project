@@ -233,7 +233,7 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
       ue_index,
       ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
@@ -398,7 +398,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
       *rrc_ue,
       ngap_entity->get_ngap_ue_radio_cap_management_handler(),
       ue->get_security_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       get_cu_cp_ngap_handler());
 }
 
@@ -415,7 +415,7 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
       request,
       ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
@@ -434,7 +434,7 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_sessi
   return routine_mng.start_pdu_session_resource_modification_routine(
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
@@ -453,7 +453,7 @@ cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_sess
   return routine_mng.start_pdu_session_resource_release_routine(
       command,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
@@ -474,7 +474,7 @@ cu_cp_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_com
   return routine_mng.start_ue_context_release_routine(
       command,
       e1ap_bearer_ctxt_mng,
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       get_cu_cp_ue_removal_handler());
 }
 
@@ -490,7 +490,7 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
   return routine_mng.start_inter_cu_handover_target_routine(
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_interface().get_f1ap_handler(),
       get_cu_cp_ue_removal_handler());
 }
 
@@ -524,7 +524,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
     CORO_AWAIT_VALUE(ue_context_mod_response,
                      du_db.get_du_processor(ue_mng.find_du_ue(ue_index)->get_du_index())
                          .get_f1ap_interface()
-                         .get_f1ap_ue_context_manager()
+                         .get_f1ap_handler()
                          .handle_ue_context_modification_request(ue_context_mod_request));
 
     CORO_RETURN(ue_context_mod_response.success);
@@ -578,8 +578,8 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
       request,
       std::move(sib1),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(source_du_index).get_f1ap_interface().get_f1ap_ue_context_manager(),
-      du_db.get_du_processor(target_du_index).get_f1ap_interface().get_f1ap_ue_context_manager(),
+      du_db.get_du_processor(source_du_index).get_f1ap_interface().get_f1ap_handler(),
+      du_db.get_du_processor(target_du_index).get_f1ap_interface().get_f1ap_handler(),
       *this,
       get_cu_cp_ue_removal_handler(),
       *this);
@@ -603,14 +603,13 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
     e1ap_removal_handler = &cu_up_db.find_cu_up_processor(cu_up_index)->get_e1ap_bearer_context_removal_handler();
   }
 
-  return launch_async<ue_removal_routine>(
-      ue_index,
-      rrc_du_adapters.at(du_index),
-      e1ap_removal_handler,
-      du_db.get_du_processor(du_index).get_f1ap_interface().get_f1ap_ue_context_removal_handler(),
-      ngap_entity->get_ngap_ue_context_removal_handler(),
-      ue_mng,
-      logger);
+  return launch_async<ue_removal_routine>(ue_index,
+                                          rrc_du_adapters.at(du_index),
+                                          e1ap_removal_handler,
+                                          du_db.get_du_processor(du_index).get_f1ap_interface().get_f1ap_handler(),
+                                          ngap_entity->get_ngap_ue_context_removal_handler(),
+                                          ue_mng,
+                                          logger);
 }
 
 void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)

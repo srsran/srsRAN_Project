@@ -29,10 +29,6 @@ class du_processor_f1ap_interface
 public:
   virtual ~du_processor_f1ap_interface() = default;
 
-  /// \brief Get the DU index.
-  /// \return The DU index.
-  virtual du_index_t get_du_index() = 0;
-
   /// \brief Request to create a new UE RRC context.
   ///
   /// This method should be called when a C-RNTI and PCell are assigned to a UE.
@@ -48,21 +44,9 @@ public:
   /// \brief Retrieve F1AP handler for the respective DU.
   virtual f1ap_cu& get_f1ap_handler() = 0;
 
-  /// \brief Get the F1AP UE context management handler interface of the DU processor object.
-  /// \return The F1AP UE context management handler interface of the DU processor object.
-  virtual f1ap_ue_context_manager& get_f1ap_ue_context_manager() = 0;
-
-  /// \brief Get the F1AP UE context removal handler interface of the DU processor object.
-  /// \return The F1AP UE context removal handler interface of the DU processor object.
-  virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
-
   /// \brief Handle the loss of some transaction information for some UEs.
   /// \return Asynchronous task that is completed when the event is fully handled.
   virtual async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) = 0;
-
-  /// \brief Get the F1AP statistics handler interface of the DU processor object.
-  /// \return The F1AP statistics handler interface of the DU processor object.
-  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
 };
 
 /// Interface to notify UE context management procedures.
