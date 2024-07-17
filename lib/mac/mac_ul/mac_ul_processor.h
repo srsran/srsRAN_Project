@@ -46,6 +46,8 @@ public:
 
   bool flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override;
 
+  void handle_ue_config_applied(du_ue_index_t ue_index) override;
+
   /// Handles FAPI Rx_Data.Indication.
   /// The PDUs contained in the Rx_Data.Indication are dispatched to different executors, depending on their RNTI.
   void handle_rx_data_indication(mac_rx_data_indication msg) override;

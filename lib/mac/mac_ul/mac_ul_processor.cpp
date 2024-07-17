@@ -69,6 +69,14 @@ bool mac_ul_processor::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccc
   return true;
 }
 
+void mac_ul_processor::handle_ue_config_applied(du_ue_index_t ue_index)
+{
+  if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute(
+          [this, ue_index]() { ue_manager.handle_ue_config_applied(ue_index); })) {
+    logger.warning("ue={}: Unable to forward UE config applied to upper layers. Cause: task queue is full.", ue_index);
+  }
+}
+
 void mac_ul_processor::handle_rx_data_indication(mac_rx_data_indication msg)
 {
   for (mac_rx_pdu& pdu : msg.pdus) {

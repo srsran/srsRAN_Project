@@ -32,6 +32,9 @@ void f1ap_du_ue_context_modification_procedure::operator()(coro_context<async_ta
   create_du_request(req);
   CORO_AWAIT_VALUE(du_response, ue.du_handler.request_ue_context_update(du_request));
 
+  // Set that the UE has a pending RRC configuration.
+  ue.context.rrc_state = f1ap_ue_context::ue_rrc_state::config_pending;
+
   // "If the UE CONTEXT MODIFICATION REQUEST message contains the RRC-Container IE, the gNB-DU shall send the
   // corresponding RRC message to the UE."
   if (du_response.result and req->rrc_container_present) {
