@@ -9,10 +9,11 @@
  */
 
 #include "srsran/support/io/sctp_socket.h"
+#include "srsran/adt/optional.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
-#include "srsran/support/format_utils.h"
 #include "srsran/support/io/sockets.h"
+#include "srsran/support/srsran_assert.h"
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
@@ -31,10 +32,7 @@ bool sctp_subscribe_to_events(const unique_fd& fd)
   events.sctp_shutdown_event         = 1;
   events.sctp_association_event      = 1;
 
-  if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events)) != 0) {
-    return false;
-  }
-  return true;
+  return ::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events)) == 0;
 }
 
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
@@ -143,10 +141,7 @@ bool sctp_set_nodelay(const unique_fd& fd, std::optional<bool> nodelay)
   }
 
   int optval = nodelay.value() ? 1 : 0;
-  if (::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) != 0) {
-    return false;
-  }
-  return true;
+  return ::setsockopt(fd.value(), IPPROTO_SCTP, SCTP_NODELAY, &optval, sizeof(optval)) == 0;
 }
 
 } // namespace
@@ -299,6 +294,7 @@ bool sctp_socket::set_non_blocking()
 
 bool sctp_socket::set_sockopts(const sctp_socket_params& params)
 {
+  logger.debug("Setting socket options. params=[{}]", params);
   if (not sctp_subscribe_to_events(sock_fd)) {
     logger.error(
         "{}: SCTP failed to be created. Cause: Subscribing to SCTP events failed: {}", if_name, strerror(errno));

@@ -75,3 +75,34 @@ private:
 };
 
 } // namespace srsran
+
+namespace fmt {
+template <>
+struct formatter<srsran::sctp_socket_params> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx)
+  {
+    return format_to(ctx.out(),
+                     "if_name={} ai_family={} ai_socktype={} reuse_addr={} non_blockin_mode={} rx_timeout={} "
+                     "rto_initial={} rto_min={} rto_max={} init_max_attempts={} max_init_timeo={} no_delay={}",
+                     cfg.if_name,
+                     cfg.ai_family,
+                     cfg.ai_socktype,
+                     cfg.reuse_addr,
+                     cfg.non_blocking_mode,
+                     cfg.rx_timeout.count(),
+                     cfg.rto_initial,
+                     cfg.rto_min,
+                     cfg.rto_max,
+                     cfg.init_max_attempts,
+                     cfg.max_init_timeo,
+                     cfg.nodelay);
+  }
+};
+} // namespace fmt
