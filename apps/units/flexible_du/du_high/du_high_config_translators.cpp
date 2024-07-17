@@ -508,19 +508,23 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
     pucch_builder_params&            du_pucch_cfg   = out_cell.pucch_cfg;
     const du_high_unit_pucch_config& user_pucch_cfg = base_cell.pucch_cfg;
-    du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq     = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-    du_pucch_cfg.nof_ue_pucch_f2_res_harq           = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = user_pucch_cfg.nof_cell_csi_resources;
     if (user_pucch_cfg.use_format_0) {
-      auto& f0_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
-      f0_params.intraslot_freq_hopping = user_pucch_cfg.f0_intraslot_freq_hopping;
+      auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
+      // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
+      // allocator when the DU create the UE configuration.
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
+      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
+      f0_params.intraslot_freq_hopping            = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
-      auto& f1_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-      f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
-      f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
-      f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
+      auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+      f1_params.occ_supported                     = user_pucch_cfg.f1_enable_occ;
+      f1_params.nof_cyc_shifts                    = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
+      f1_params.intraslot_freq_hopping            = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
     du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
     du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;

@@ -213,12 +213,13 @@ struct du_high_unit_pucch_config {
   unsigned pucch_resource_common = 11;
 
   /// \c PUCCH-Config parameters.
-  /// Number of PUCCH resources per UE for HARQ-ACK reporting. Values {1,...,8}.
+  /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
+  bool use_format_0 = false;
+  /// Number of PUCCH resources per UE for HARQ-ACK reporting.
+  /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.
   unsigned nof_ue_pucch_res_harq_per_set = 8;
-  /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
-  bool use_format_0 = false;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of
