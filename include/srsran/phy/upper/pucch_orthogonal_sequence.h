@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
@@ -59,6 +60,8 @@ private:
 
   /// Table with the actual sequences \e w.
   w_array orthogonal_sequence;
+  /// Table with the conjugated sequences \e w.
+  w_array orthogonal_sequence_conj;
 
 public:
   /// Constructor: builds the sequences \e w from the coefficients in \ref pucch_format1_phi.
@@ -69,6 +72,7 @@ public:
         for (unsigned i_term = 0; i_term != pucch_constants::FORMAT1_N_MAX; ++i_term) {
           auto rho                                    = static_cast<float>(pucch_format1_phi[n_pucch][i_seq][i_term]);
           orthogonal_sequence[n_pucch][i_seq][i_term] = std::polar(1.0F, TWOPI * rho / static_cast<float>(n_pucch + 1));
+          orthogonal_sequence_conj[n_pucch][i_seq][i_term] = std::conj(orthogonal_sequence[n_pucch][i_seq][i_term]);
         }
       }
     }
@@ -85,11 +89,32 @@ public:
   /// \warning An assertion is thrown if the indices do not match the limits above.
   cf_t get_sequence_value(unsigned n_pucch, unsigned i, unsigned m) const
   {
-    srsran_assert(n_pucch >= 1 && n_pucch <= pucch_constants::FORMAT1_N_MAX, "Invalid n_pucch");
-    srsran_assert(i < pucch_constants::FORMAT1_N_MAX, "Invalid i");
-    srsran_assert(m < pucch_constants::FORMAT1_N_MAX, "Invalid m");
+    srsran_assert(n_pucch >= 1 && n_pucch <= pucch_constants::FORMAT1_N_MAX,
+                  "Invalid n_pucch {}: valid values from 1 to {}.",
+                  n_pucch,
+                  pucch_constants::FORMAT1_N_MAX);
+    srsran_assert(i < n_pucch, "Invalid sequence index i = {}, valid values from 0 to {}.", i, n_pucch - 1);
+    srsran_assert(m < n_pucch, "Invalid value index m = {}, valid values from 0 to {}.", m, n_pucch - 1);
 
     return orthogonal_sequence[n_pucch - 1][i][m];
+  }
+
+  /// \brief Gets an entire PUCCH Format 1 conjugated orthogonal sequence.
+  ///
+  /// \param[in] n_pucch   Length of the PUCCH Format 1 sequence
+  ///                      \f$N_{\text{SF},m'}^{\text{PUCCH},1} \in \{1, \dots, 7\}\f$.
+  /// \param[in] i         Sequence index \f$i \in \{0, \dots, N_{\text{SF},m'}^{\text{PUCCH},1} - 1\}\f$.
+  /// \returns The requested conjugated sequence.
+  /// \warning An assertion is thrown if the inputs do not match the limits above.
+  span<const cf_t> get_sequence_conj(unsigned n_pucch, unsigned i) const
+  {
+    srsran_assert(n_pucch >= 1 && n_pucch <= pucch_constants::FORMAT1_N_MAX,
+                  "Invalid n_pucch {}: valid values from 1 to {}.",
+                  n_pucch,
+                  pucch_constants::FORMAT1_N_MAX);
+    srsran_assert(i < n_pucch, "Invalid sequence index i = {}, valid values from 0 to {}.", i, n_pucch - 1);
+
+    return span<const cf_t>(orthogonal_sequence_conj[n_pucch - 1][i]).first(n_pucch);
   }
 };
 

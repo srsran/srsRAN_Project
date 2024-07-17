@@ -34,9 +34,6 @@ public:
   /// The allocated resources are at most one PRB over all OFDM symbols.
   static constexpr unsigned MAX_ALLOCATED_RE_F1 = NRE * MAX_NSYMB_PER_SLOT;
 
-  /// Maximum number of OFDM symbols allocated for PUCCH Format 1 data.
-  static constexpr unsigned MAX_N_DATA_SYMBOLS = 7;
-
   /// \brief Constructor: provides access to a collection of low-PAPR sequences and a pseudorandom sequence generator.
   /// \param[in] low_papr_         Collection of low-PAPR sequences.
   /// \param[in] pseudo_random_    Pseudo-random sequence generator.
