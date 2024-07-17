@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "pucch_orthogonal_sequence.h"
 #include "srsran/phy/upper/pucch_helper.h"
 #include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pucch_processor.h"
@@ -46,8 +45,6 @@ private:
 
   /// Buffer for DM-RS symbols.
   dmrs_symbol_list temp_symbols;
-  /// Pre-generated orthogonal cover code.
-  const pucch_orthogonal_sequence occ;
 
   /// Holds DM-RS sequence generation parameters used in TS38.211 Section 6.4.1.3.1.1.
   struct sequence_generation_config {
