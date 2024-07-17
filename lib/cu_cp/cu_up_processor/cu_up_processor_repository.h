@@ -42,7 +42,7 @@ public:
 
   size_t get_nof_cu_ups() const { return cu_up_db.size(); }
 
-  cu_up_e1_handler& get_cu_up(cu_up_index_t cu_up_index);
+  cu_up_processor_e1ap_interface& get_cu_up(cu_up_index_t cu_up_index);
 
   /// \brief Find a CU-UP object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
@@ -52,13 +52,11 @@ public:
   size_t get_nof_e1ap_ues();
 
 private:
-  struct cu_up_context final : public cu_up_e1_handler {
+  struct cu_up_context {
     std::unique_ptr<cu_up_processor_impl_interface> processor;
 
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
-
-    e1ap_message_handler& get_message_handler() override;
   };
 
   /// \brief Get the next available index from the CU-UP processor database.

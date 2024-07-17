@@ -100,11 +100,11 @@ async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_in
   });
 }
 
-cu_up_e1_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
+cu_up_processor_e1ap_interface& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
-  return cu_up_db.at(cu_up_index);
+  return *cu_up_db.at(cu_up_index).processor;
 }
 
 cu_up_processor_impl_interface* cu_up_processor_repository::find_cu_up_processor(cu_up_index_t cu_up_index)
@@ -123,9 +123,4 @@ size_t cu_up_processor_repository::get_nof_e1ap_ues()
     nof_ues += cu_up.second.processor->get_e1ap_statistics_handler().get_nof_ues();
   }
   return nof_ues;
-}
-
-e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_message_handler()
-{
-  return processor->get_e1ap_message_handler();
 }
