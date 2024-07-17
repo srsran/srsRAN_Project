@@ -599,12 +599,13 @@ srsran::srs_du::generate_cell_pucch_res_list(unsigned                           
   return res_list;
 }
 
-static unsigned cell_res_list_validator(const std::vector<pucch_resource>&                  res_list,
-                                        bounded_integer<unsigned, 1, max_ue_f0_f1_res_harq> nof_ue_pucch_f0_f1_res_harq,
-                                        bounded_integer<unsigned, 1, max_ue_f2_res_harq>    nof_ue_pucch_f2_res_harq,
-                                        unsigned                                            nof_harq_pucch_cfgs,
-                                        unsigned                                            nof_cell_pucch_f1_res_sr,
-                                        unsigned                                            nof_cell_pucch_f2_res_csi)
+static unsigned
+cell_res_list_and_params_validator(const std::vector<pucch_resource>&                  res_list,
+                                   bounded_integer<unsigned, 1, max_ue_f0_f1_res_harq> nof_ue_pucch_f0_f1_res_harq,
+                                   bounded_integer<unsigned, 1, max_ue_f2_res_harq>    nof_ue_pucch_f2_res_harq,
+                                   unsigned                                            nof_harq_pucch_cfgs,
+                                   unsigned                                            nof_cell_pucch_f1_res_sr,
+                                   unsigned                                            nof_cell_pucch_f2_res_csi)
 {
   const unsigned FAILURE_CASE = 0U;
 
@@ -621,6 +622,19 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
   const auto contain_format_0 = std::find_if(res_list.begin(), res_list.end(), [](const pucch_resource& res) {
                                   return res.format == pucch_format::FORMAT_0;
                                 }) != res_list.end();
+
+  if (contain_format_0) {
+    if (nof_ue_pucch_f0_f1_res_harq.to_uint() > 6U) {
+      srsran_assertion_failure("With Format 0, nof_ue_pucch_f0_f1_res_harq cannot be greater than 6, as 2 "
+                               "resources in set 0 are reserved.");
+      return FAILURE_CASE;
+    }
+    if (nof_ue_pucch_f2_res_harq.to_uint() > 6U) {
+      srsran_assertion_failure("With Format 0, nof_ue_pucch_f2_res_harq cannot be greater than 6, as 2 "
+                               "resources in set 1 are reserved.");
+      return FAILURE_CASE;
+    }
+  }
 
   const unsigned tot_nof_f0_res = count_resources(pucch_format::FORMAT_0);
   const unsigned tot_nof_f1_res = count_resources(pucch_format::FORMAT_1);
@@ -639,16 +653,9 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
     return FAILURE_CASE;
   }
 
-  if (contain_format_0) {
-    if (tot_nof_f0_f1_res < 3 or tot_nof_f2_res < 2) {
-      srsran_assertion_failure("The cell PUCCH resource list must contain at least 3 F0/F1 and 2 F2 PUCCH resources.");
-      return FAILURE_CASE;
-    }
-  } else {
-    if (tot_nof_f0_f1_res < 2 or tot_nof_f2_res < 2) {
-      srsran_assertion_failure("The cell PUCCH resource list must contain at least 2 F0/F1 and 2 F2 PUCCH resources.");
-      return FAILURE_CASE;
-    }
+  if (tot_nof_f0_f1_res < 2 or tot_nof_f2_res < 2) {
+    srsran_assertion_failure("The cell PUCCH resource list must contain at least 2 F0/F1 and 2 F2 PUCCH resources.");
+    return FAILURE_CASE;
   }
 
   if (nof_ue_pucch_f0_f1_res_harq.to_uint() > tot_nof_f0_f1_res - nof_cell_pucch_f1_res_sr or
@@ -687,12 +694,12 @@ bool srsran::srs_du::ue_pucch_config_builder(
     unsigned                                            nof_cell_pucch_f0_f1_res_sr,
     unsigned                                            nof_cell_pucch_f2_res_csi)
 {
-  const unsigned tot_nof_cell_f0_f1_res = cell_res_list_validator(res_list,
-                                                                  nof_ue_pucch_f0_f1_res_harq,
-                                                                  nof_ue_pucch_f2_res_harq,
-                                                                  nof_harq_pucch_sets,
-                                                                  nof_cell_pucch_f0_f1_res_sr,
-                                                                  nof_cell_pucch_f2_res_csi);
+  const unsigned tot_nof_cell_f0_f1_res = cell_res_list_and_params_validator(res_list,
+                                                                             nof_ue_pucch_f0_f1_res_harq,
+                                                                             nof_ue_pucch_f2_res_harq,
+                                                                             nof_harq_pucch_sets,
+                                                                             nof_cell_pucch_f0_f1_res_sr,
+                                                                             nof_cell_pucch_f2_res_csi);
 
   if (tot_nof_cell_f0_f1_res == 0U) {
     return false;
@@ -716,6 +723,8 @@ bool srsran::srs_du::ue_pucch_config_builder(
 
   // Add F1 for HARQ.
   const unsigned f0_f1_idx_offset = (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f0_f1_res_harq.to_uint();
+  const bool     is_format_0      = res_list[f0_f1_idx_offset].format == pucch_format::FORMAT_0;
+
   for (unsigned ue_f1_cnt = 0; ue_f1_cnt < nof_ue_pucch_f0_f1_res_harq.to_uint(); ++ue_f1_cnt) {
     const auto& cell_res = res_list[ue_f1_cnt + f0_f1_idx_offset];
 
@@ -734,8 +743,22 @@ bool srsran::srs_du::ue_pucch_config_builder(
     ++ue_pucch_res_id;
   }
 
+  const unsigned f0_res_on_csi_prbs_syms_idx = nof_ue_pucch_f0_f1_res_harq.to_uint();
+  if (is_format_0 and serv_cell_cfg.csi_meas_cfg.has_value()) {
+    // Add PUCCH resource to pucch_res_list.
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{
+        .res_id = {std::numeric_limits<unsigned>::max(), ue_pucch_res_id}, .format = pucch_format::FORMAT_0});
+
+    // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)].pucch_res_id_list.emplace_back(
+        pucch_res_id_t{std::numeric_limits<unsigned>::max(), ue_pucch_res_id});
+
+    // Increment the PUCCH resource ID for ASN1 message.
+    ++ue_pucch_res_id;
+  }
+
   // Add SR resource.
-  const unsigned sr_res_idx             = nof_ue_pucch_f0_f1_res_harq.to_uint() * nof_harq_pucch_sets + (du_sr_res_idx);
+  const unsigned sr_res_idx             = nof_ue_pucch_f0_f1_res_harq.to_uint() * nof_harq_pucch_sets + du_sr_res_idx;
   const auto&    sr_cell_res            = res_list[sr_res_idx];
   const unsigned ue_pucch_res_id_for_sr = ue_pucch_res_id;
   pucch_cfg.pucch_res_list.emplace_back(
@@ -748,19 +771,17 @@ bool srsran::srs_du::ue_pucch_config_builder(
   // Increment the PUCCH resource ID for ASN1 message.
   ++ue_pucch_res_id;
 
-  // For Format 0, copy maps the last resource of the set 0 to the SR resource.
-  const bool is_format_0 = res_list[f0_f1_idx_offset].format == pucch_format::FORMAT_0;
+  // For Format 0, map the last resource of the set 0 to the SR resource.
   if (is_format_0) {
-    const unsigned last_harq_res_set_0_idx = nof_ue_pucch_f0_f1_res_harq.to_uint() - 1U;
-    auto&          last_harq_res_set_0     = pucch_cfg.pucch_res_list[last_harq_res_set_0_idx];
+    auto& last_harq_res_set_0              = pucch_cfg.pucch_res_list.back();
     last_harq_res_set_0.res_id.cell_res_id = sr_cell_res.res_id.cell_res_id;
     last_harq_res_set_0.res_id.ue_res_id   = ue_pucch_res_id_for_sr;
     last_harq_res_set_0.starting_prb       = sr_cell_res.starting_prb;
     last_harq_res_set_0.second_hop_prb     = sr_cell_res.second_hop_prb;
     last_harq_res_set_0.format             = sr_cell_res.format;
     last_harq_res_set_0.format_params      = sr_cell_res.format_params;
-    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)]
-        .pucch_res_id_list[last_harq_res_set_0_idx] = {sr_cell_res.res_id.cell_res_id, ue_pucch_res_id_for_sr};
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)].pucch_res_id_list.emplace_back(
+        pucch_res_id_t{sr_cell_res.res_id.cell_res_id, ue_pucch_res_id_for_sr});
   }
 
   // Add F2 for HARQ.
@@ -781,10 +802,31 @@ bool srsran::srs_du::ue_pucch_config_builder(
     ++ue_pucch_res_id;
   }
 
+  const unsigned f2_res_on_sr_prbs_syms_idx = ue_pucch_res_id;
+  if (is_format_0) {
+    // Add PUCCH resource to pucch_res_list.
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{
+        .res_id = {std::numeric_limits<unsigned>::max(), ue_pucch_res_id}, .format = pucch_format::FORMAT_2});
+
+    // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
+        pucch_res_id_t{std::numeric_limits<unsigned>::max(), ue_pucch_res_id});
+
+    // Increment the PUCCH resource ID for ASN1 message.
+    ++ue_pucch_res_id;
+
+    auto& f2_harq_on_sr_resources          = pucch_cfg.pucch_res_list[f2_res_on_sr_prbs_syms_idx];
+    f2_harq_on_sr_resources.starting_prb   = sr_cell_res.starting_prb;
+    f2_harq_on_sr_resources.second_hop_prb = sr_cell_res.second_hop_prb;
+    const auto& sr_params_cfg              = std::get<pucch_format_0_cfg>(sr_cell_res.format_params);
+    f2_harq_on_sr_resources.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{
+        .nof_prbs = 1U, .nof_symbols = sr_params_cfg.nof_symbols, .starting_sym_idx = sr_params_cfg.starting_sym_idx});
+  }
+
   if (serv_cell_cfg.csi_meas_cfg.has_value()) {
     // Add CSI resource.
     const unsigned csi_res_idx =
-        tot_nof_cell_f0_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_sets + (du_csi_res_idx);
+        tot_nof_cell_f0_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_sets + du_csi_res_idx;
     const auto&    csi_cell_res            = res_list[csi_res_idx];
     const unsigned ue_pucch_res_id_for_csi = ue_pucch_res_id;
     pucch_cfg.pucch_res_list.emplace_back(
@@ -793,6 +835,7 @@ bool srsran::srs_du::ue_pucch_config_builder(
                        .second_hop_prb = csi_cell_res.second_hop_prb,
                        .format         = csi_cell_res.format,
                        .format_params  = csi_cell_res.format_params});
+    const auto& csi_params_cfg = std::get<pucch_format_2_3_cfg>(csi_cell_res.format_params);
     std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
         .pucch_csi_res_list.front()
@@ -801,18 +844,23 @@ bool srsran::srs_du::ue_pucch_config_builder(
     ++ue_pucch_res_id;
 
     if (is_format_0) {
-      const unsigned last_harq_res_set_1_idx =
-          nof_ue_pucch_f0_f1_res_harq.to_uint() + 1U + nof_ue_pucch_f2_res_harq.to_uint() - 1U;
-      auto& last_harq_res_set_1              = pucch_cfg.pucch_res_list[last_harq_res_set_1_idx];
+      auto& last_harq_res_set_1              = pucch_cfg.pucch_res_list.back();
       last_harq_res_set_1.res_id.cell_res_id = csi_cell_res.res_id.cell_res_id;
       last_harq_res_set_1.res_id.ue_res_id   = ue_pucch_res_id_for_csi;
       last_harq_res_set_1.starting_prb       = csi_cell_res.starting_prb;
       last_harq_res_set_1.second_hop_prb     = csi_cell_res.second_hop_prb;
       last_harq_res_set_1.format             = csi_cell_res.format;
       last_harq_res_set_1.format_params      = csi_cell_res.format_params;
-      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
-          .pucch_res_id_list[nof_ue_pucch_f2_res_harq.to_uint() - 1U] = {csi_cell_res.res_id.cell_res_id,
-                                                                         ue_pucch_res_id_for_csi};
+      pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
+          pucch_res_id_t{csi_cell_res.res_id.cell_res_id, ue_pucch_res_id_for_csi});
+
+      auto& f0_harq_on_csi_resources          = pucch_cfg.pucch_res_list[f0_res_on_csi_prbs_syms_idx];
+      f0_harq_on_csi_resources.starting_prb   = csi_cell_res.starting_prb;
+      f0_harq_on_csi_resources.second_hop_prb = csi_cell_res.second_hop_prb;
+      f0_harq_on_csi_resources.format_params.emplace<pucch_format_0_cfg>(
+          pucch_format_0_cfg{.initial_cyclic_shift = 0U,
+                             .nof_symbols          = csi_params_cfg.nof_symbols,
+                             .starting_sym_idx     = csi_params_cfg.starting_sym_idx});
     }
   }
 
