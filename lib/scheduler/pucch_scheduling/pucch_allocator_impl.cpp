@@ -1811,10 +1811,9 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
       if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
         new_resource = r_harq;
       }
-      // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
-      // the PUCCH resource from set idx 0.
-      // NOTE: This sub-case is used by the PUCCH common and dedicated allocator.
-      else if (preserve_res_indicator) {
+      // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for the
+      // PUCCH resource from set idx 0.
+      else {
         const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
             slot_harq, crnti, r_harq.harq_id.pucch_res_ind, pucch_cfg);
         resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
@@ -1824,18 +1823,6 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
         new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
         new_resource.harq_id.pucch_res_ind = r_harq.harq_id.pucch_res_ind;
         new_resource.set_res_config(*pucch_res);
-      }
-      // Get a new HARQ resource (from PUCCH resource set idx 1) from the resource manager.
-      else {
-        pucch_harq_resource_alloc_record res_alloc =
-            resource_manager.reserve_next_set_1_harq_res_available(slot_harq, crnti, pucch_cfg);
-        resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
-        if (res_alloc.pucch_res == nullptr) {
-          return std::nullopt;
-        }
-        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
-        new_resource.harq_id.pucch_res_ind = res_alloc.pucch_res_indicator;
-        new_resource.set_res_config(*res_alloc.pucch_res);
       }
 
       new_resource.bits.harq_ack_nof_bits  = r_harq.bits.harq_ack_nof_bits;
@@ -1886,15 +1873,15 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
     if (r_harq_ptr->format != pucch_format::FORMAT_0 and r_harq_ptr->format != pucch_format::FORMAT_1) {
       new_resource = *r_harq_ptr;
     } else {
-      pucch_harq_resource_alloc_record res_alloc =
-          resource_manager.reserve_next_set_1_harq_res_available(slot_harq, crnti, pucch_cfg);
+      const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
+          slot_harq, crnti, r_harq_ptr->harq_id.pucch_res_ind, pucch_cfg);
       resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
-      if (res_alloc.pucch_res == nullptr) {
+      if (pucch_res == nullptr) {
         return std::nullopt;
       }
       new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
-      new_resource.harq_id.pucch_res_ind = res_alloc.pucch_res_indicator;
-      new_resource.set_res_config(*res_alloc.pucch_res);
+      new_resource.harq_id.pucch_res_ind = r_harq_ptr->harq_id.pucch_res_ind;
+      new_resource.set_res_config(*pucch_res);
     }
     new_resource.bits.harq_ack_nof_bits  = r_harq_ptr->bits.harq_ack_nof_bits;
     new_resource.bits.sr_bits            = r_sr_ptr->bits.sr_bits;
