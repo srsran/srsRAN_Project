@@ -33,7 +33,10 @@ protected:
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
                 bool                                 metrics_enabled,
-                rlc_pcap&                            pcap_) :
+                rlc_pcap&                            pcap_,
+                task_executor&                       pcell_executor_,
+                task_executor&                       ue_executor_,
+                timer_manager&                       timers) :
     logger("RLC", {gnb_du_id, ue_index, rb_id_, "DL"}),
     metrics_high(metrics_enabled),
     metrics_low(metrics_enabled),
@@ -41,7 +44,11 @@ protected:
     upper_dn(upper_dn_),
     upper_cn(upper_cn_),
     lower_dn(lower_dn_),
-    pcap(pcap_)
+    pcap(pcap_),
+    pcell_executor{pcell_executor_},
+    ue_executor{ue_executor_},
+    pcell_timer_factory{timers, pcell_executor},
+    ue_timer_factory{timers, ue_executor}
   {
   }
 
@@ -53,6 +60,10 @@ protected:
   rlc_tx_upper_layer_control_notifier& upper_cn;
   rlc_tx_lower_layer_notifier&         lower_dn;
   rlc_pcap&                            pcap;
+  task_executor&                       pcell_executor;
+  task_executor&                       ue_executor;
+  timer_factory                        pcell_timer_factory;
+  timer_factory                        ue_timer_factory;
 
 public:
   /// \brief Stops all internal timers.

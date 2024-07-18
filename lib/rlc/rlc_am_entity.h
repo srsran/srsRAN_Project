@@ -29,10 +29,10 @@ public:
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
-                timer_manager&                       timers,
+                rlc_pcap&                            pcap,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
-                rlc_pcap&                            pcap) :
+                timer_manager&                       timers) :
     rlc_base_entity(gnb_du_id_,
                     ue_index_,
                     rb_id_,
@@ -48,11 +48,11 @@ public:
                                                                                  tx_upper_dn,
                                                                                  tx_upper_cn,
                                                                                  tx_lower_dn,
-                                                                                 timer_factory{timers, pcell_executor},
+                                                                                 metrics_period.count() != 0,
+                                                                                 pcap,
                                                                                  pcell_executor,
                                                                                  ue_executor,
-                                                                                 metrics_period.count() != 0,
-                                                                                 pcap);
+                                                                                 timers);
     std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(gnb_du_id_,
                                                                                  ue_index_,
                                                                                  rb_id_,

@@ -133,11 +133,11 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   timer_factory                        timers,
+                   bool                                 metrics_enabled_,
+                   rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,
                    task_executor&                       ue_executor_,
-                   bool                                 metrics_enabled_,
-                   rlc_pcap&                            pcap_);
+                   timer_manager&                       timers);
 
   void stop() final
   {

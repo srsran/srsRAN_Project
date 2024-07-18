@@ -56,8 +56,6 @@ private:
   const uint32_t head_len_first;
   const uint32_t head_len_not_first;
 
-  task_executor& pcell_executor;
-
   pcap_rlc_pdu_context pcap_context;
 
   // Storage for previous buffer state
@@ -77,12 +75,14 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_,
                    bool                                 metrics_enabled,
-                   rlc_pcap&                            pcap_);
+                   rlc_pcap&                            pcap_,
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_,
+                   timer_manager&                       timers);
 
-  void stop() final{
-      // There are no timers to be stopped here.
+  void stop() final {
+    // There are no timers to be stopped here.
   };
 
   // Interfaces for higher layers

@@ -29,10 +29,10 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
-                                             *msg.timers,
+                                             *msg.pcap_writer,
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
-                                             *msg.pcap_writer);
+                                             *msg.timers);
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
@@ -46,10 +46,10 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
-                                             *msg.timers,
+                                             *msg.pcap_writer,
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
-                                             *msg.pcap_writer);
+                                             *msg.timers);
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.gnb_du_id,
                                              msg.ue_index,
@@ -61,10 +61,10 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
-                                             *msg.timers,
+                                             *msg.pcap_writer,
                                              *msg.pcell_executor,
                                              *msg.ue_executor,
-                                             *msg.pcap_writer);
+                                             *msg.timers);
     default:
       srsran_terminate("RLC mode not supported.");
   }

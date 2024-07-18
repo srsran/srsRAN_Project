@@ -118,11 +118,11 @@ protected:
                                              *tester,
                                              *tester,
                                              *tester,
-                                             timer_factory{timers, pcell_worker},
+                                             true,
+                                             pcap,
                                              pcell_worker,
                                              ue_worker,
-                                             true,
-                                             pcap);
+                                             timers);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());

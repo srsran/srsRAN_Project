@@ -25,8 +25,6 @@ private:
   rlc_sdu_queue_lockfree sdu_queue;
   rlc_sdu                sdu;
 
-  task_executor& pcell_executor;
-
   pcap_rlc_pdu_context pcap_context;
 
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
@@ -43,12 +41,14 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       pcell_executor_,
                    bool                                 metrics_enabled_,
-                   rlc_pcap&                            pcap_);
+                   rlc_pcap&                            pcap_,
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_,
+                   timer_manager&                       timers);
 
-  void stop() final{
-      // There are no timers to be stopped here.
+  void stop() final {
+    // There are no timers to be stopped here.
   };
 
   // Interfaces for higher layers

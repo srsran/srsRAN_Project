@@ -150,11 +150,11 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               *tester,
                                               *tester,
                                               *tester,
-                                              timer_factory{timers, pcell_worker},
+                                              false,
+                                              pcap,
                                               pcell_worker,
                                               ue_worker,
-                                              false,
-                                              pcap);
+                                              timers);
 
   // Bind AM Rx/Tx interconnect
   rlc_tx->set_status_provider(tester.get());

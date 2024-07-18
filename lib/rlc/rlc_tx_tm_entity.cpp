@@ -19,13 +19,24 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                                   task_executor&                       pcell_executor_,
                                    bool                                 metrics_enabled_,
-                                   rlc_pcap&                            pcap_) :
-  rlc_tx_entity(du_id, ue_index, rb_id_, upper_dn_, upper_cn_, lower_dn_, metrics_enabled_, pcap_),
+                                   rlc_pcap&                            pcap_,
+                                   task_executor&                       pcell_executor_,
+                                   task_executor&                       ue_executor_,
+                                   timer_manager&                       timers) :
+  rlc_tx_entity(du_id,
+                ue_index,
+                rb_id_,
+                upper_dn_,
+                upper_cn_,
+                lower_dn_,
+                metrics_enabled_,
+                pcap_,
+                pcell_executor_,
+                ue_executor_,
+                timers),
   cfg(config),
   sdu_queue(cfg.queue_size, logger),
-  pcell_executor(pcell_executor_),
   pcap_context(ue_index, rb_id_, /* is_uplink */ false)
 {
   metrics_low.metrics_set_mode(rlc_mode::tm);

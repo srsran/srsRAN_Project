@@ -97,10 +97,10 @@ protected:
                                            tester1,
                                            tester1,
                                            tester1,
-                                           timers,
+                                           pcap1,
                                            pcell_worker,
                                            ue_worker,
-                                           pcap1);
+                                           timers);
     rlc2 = std::make_unique<rlc_um_entity>(gnb_du_id_t::min,
                                            du_ue_index_t::MIN_DU_UE_INDEX,
                                            srb_id_t::srb0,
@@ -111,10 +111,10 @@ protected:
                                            tester2,
                                            tester2,
                                            tester2,
-                                           timers,
+                                           pcap2,
                                            pcell_worker,
                                            ue_worker,
-                                           pcap2);
+                                           timers);
 
     // Bind interfaces
     rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();
