@@ -1659,6 +1659,15 @@ public:
                                 .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)]
                                 .pucch_res_id_list.size() -
                             1U),
+    pucch_res_idx_f0_for_csi(t_bench.get_main_ue()
+                                 .get_pcell()
+                                 .cfg()
+                                 .cfg_dedicated()
+                                 .ul_config.value()
+                                 .init_ul_bwp.pucch_cfg.value()
+                                 .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)]
+                                 .pucch_res_id_list.size() -
+                             2U),
     pucch_res_idx_f2_for_sr(t_bench.get_main_ue()
                                 .get_pcell()
                                 .cfg()
@@ -1667,7 +1676,7 @@ public:
                                 .init_ul_bwp.pucch_cfg.value()
                                 .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
                                 .pucch_res_id_list.size() -
-                            2U),
+                            1U),
     pucch_res_idx_f2_for_csi(t_bench.get_main_ue()
                                  .get_pcell()
                                  .cfg()
@@ -1676,7 +1685,7 @@ public:
                                  .init_ul_bwp.pucch_cfg.value()
                                  .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
                                  .pucch_res_id_list.size() -
-                             1U)
+                             2U)
   {
     // Set expected grant for PUCCH Format 0 SR.
     pucch_expected_f0_sr.format  = pucch_format::FORMAT_0;
@@ -1738,7 +1747,7 @@ public:
     pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_csi.resources.prbs            = prb_interval{1, 2};
     pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{0, 2};
+    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
 
     pucch_expected_csi.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
     pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
@@ -1753,6 +1762,7 @@ protected:
   pucch_info     pucch_expected_f2;
   pucch_info     pucch_expected_csi;
   const unsigned pucch_res_idx_f0_for_sr;
+  const unsigned pucch_res_idx_f0_for_csi;
   const unsigned pucch_res_idx_f2_for_sr;
   const unsigned pucch_res_idx_f2_for_csi;
 };

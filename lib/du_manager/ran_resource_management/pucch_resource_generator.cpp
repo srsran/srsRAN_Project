@@ -802,27 +802,6 @@ bool srsran::srs_du::ue_pucch_config_builder(
     ++ue_pucch_res_id;
   }
 
-  const unsigned f2_res_on_sr_prbs_syms_idx = ue_pucch_res_id;
-  if (is_format_0) {
-    // Add PUCCH resource to pucch_res_list.
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{
-        .res_id = {std::numeric_limits<unsigned>::max(), ue_pucch_res_id}, .format = pucch_format::FORMAT_2});
-
-    // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
-    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
-        pucch_res_id_t{std::numeric_limits<unsigned>::max(), ue_pucch_res_id});
-
-    // Increment the PUCCH resource ID for ASN1 message.
-    ++ue_pucch_res_id;
-
-    auto& f2_harq_on_sr_resources          = pucch_cfg.pucch_res_list[f2_res_on_sr_prbs_syms_idx];
-    f2_harq_on_sr_resources.starting_prb   = sr_cell_res.starting_prb;
-    f2_harq_on_sr_resources.second_hop_prb = sr_cell_res.second_hop_prb;
-    const auto& sr_params_cfg              = std::get<pucch_format_0_cfg>(sr_cell_res.format_params);
-    f2_harq_on_sr_resources.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{
-        .nof_prbs = 1U, .nof_symbols = sr_params_cfg.nof_symbols, .starting_sym_idx = sr_params_cfg.starting_sym_idx});
-  }
-
   if (serv_cell_cfg.csi_meas_cfg.has_value()) {
     // Add CSI resource.
     const unsigned csi_res_idx =
@@ -844,13 +823,13 @@ bool srsran::srs_du::ue_pucch_config_builder(
     ++ue_pucch_res_id;
 
     if (is_format_0) {
-      auto& last_harq_res_set_1              = pucch_cfg.pucch_res_list.back();
-      last_harq_res_set_1.res_id.cell_res_id = csi_cell_res.res_id.cell_res_id;
-      last_harq_res_set_1.res_id.ue_res_id   = ue_pucch_res_id_for_csi;
-      last_harq_res_set_1.starting_prb       = csi_cell_res.starting_prb;
-      last_harq_res_set_1.second_hop_prb     = csi_cell_res.second_hop_prb;
-      last_harq_res_set_1.format             = csi_cell_res.format;
-      last_harq_res_set_1.format_params      = csi_cell_res.format_params;
+      auto& harq_set_1_res_for_csi              = pucch_cfg.pucch_res_list.back();
+      harq_set_1_res_for_csi.res_id.cell_res_id = csi_cell_res.res_id.cell_res_id;
+      harq_set_1_res_for_csi.res_id.ue_res_id   = ue_pucch_res_id_for_csi;
+      harq_set_1_res_for_csi.starting_prb       = csi_cell_res.starting_prb;
+      harq_set_1_res_for_csi.second_hop_prb     = csi_cell_res.second_hop_prb;
+      harq_set_1_res_for_csi.format             = csi_cell_res.format;
+      harq_set_1_res_for_csi.format_params      = csi_cell_res.format_params;
       pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
           pucch_res_id_t{csi_cell_res.res_id.cell_res_id, ue_pucch_res_id_for_csi});
 
@@ -862,6 +841,27 @@ bool srsran::srs_du::ue_pucch_config_builder(
                              .nof_symbols          = csi_params_cfg.nof_symbols,
                              .starting_sym_idx     = csi_params_cfg.starting_sym_idx});
     }
+  }
+
+  const unsigned f2_res_on_sr_prbs_syms_idx = ue_pucch_res_id;
+  if (is_format_0) {
+    // Add PUCCH resource to pucch_res_list.
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{
+        .res_id = {std::numeric_limits<unsigned>::max(), ue_pucch_res_id}, .format = pucch_format::FORMAT_2});
+
+    // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
+    pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.emplace_back(
+        pucch_res_id_t{std::numeric_limits<unsigned>::max(), ue_pucch_res_id});
+
+    // Increment the PUCCH resource ID for ASN1 message.
+    ++ue_pucch_res_id;
+
+    auto& f2_harq_on_sr_resources          = pucch_cfg.pucch_res_list[f2_res_on_sr_prbs_syms_idx];
+    f2_harq_on_sr_resources.starting_prb   = sr_cell_res.starting_prb;
+    f2_harq_on_sr_resources.second_hop_prb = sr_cell_res.second_hop_prb;
+    const auto& sr_params_cfg              = std::get<pucch_format_0_cfg>(sr_cell_res.format_params);
+    f2_harq_on_sr_resources.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{
+        .nof_prbs = 1U, .nof_symbols = sr_params_cfg.nof_symbols, .starting_sym_idx = sr_params_cfg.starting_sym_idx});
   }
 
   return true;

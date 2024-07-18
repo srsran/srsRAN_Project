@@ -1444,14 +1444,14 @@ static unsigned get_pucch_resource_ind_f0_sr_csi(pucch_uci_bits bits, const pucc
 
   // This if for bits.harq_ack_nof_bits > 2U.
 
-  // At position (PUCCH resource set 1 size - 2U) the resource is of Format 2, but set on the same PRBs/symbols as the
+  // At position (PUCCH resource set 1 size - 1U) the resource is of Format 2, but set on the same PRBs/symbols as the
   // SR resource.
   if (bits.sr_bits != sr_nof_bits::no_sr) {
-    return pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.size() - 2U;
+    return pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.size() - 1U;
   }
   // NOTE: Either CSI or SR bits are non-zero, but not both.
-  // At position (PUCCH resource set 1 size - 1U) the resource coincides with the CSI resource.
-  return pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.size() - 1U;
+  // At position (PUCCH resource set 1 size - 2U) the resource coincides with the CSI resource.
+  return pucch_cfg.pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)].pucch_res_id_list.size() - 2U;
 }
 
 std::optional<pucch_allocator_impl::pucch_grant_list>
@@ -1946,9 +1946,12 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
       if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
         new_resource = r_harq;
       }
-      // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for the
-      // PUCCH resource from set idx 0.
+      // NOTE: In this case, the PUCCH resource before merging is from PUCCH resource set 0.
       else {
+        // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
+        // the PUCCH resource from set idx 0.
+        // NOTE: If preserve_res_indicator has a value, then the function was called by the PUCCH common and dedicated
+        // allocator.
         const unsigned pucch_res_indicator =
             preserve_res_indicator.has_value() ? preserve_res_indicator.value() : r_harq.harq_id.pucch_res_ind;
         const pucch_resource* pucch_res =
@@ -2008,7 +2011,12 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
 
     if (r_harq->format != pucch_format::FORMAT_0 and r_harq->format != pucch_format::FORMAT_1) {
       new_resource = *r_harq;
-    } else {
+    }
+    // NOTE: In this case, the PUCCH resource before merging is from PUCCH resource set 0.
+    else {
+      // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
+      // the PUCCH resource from set idx 0.
+
       const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
           slot_harq, crnti, r_harq->harq_id.pucch_res_ind, pucch_cfg);
       resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
