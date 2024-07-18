@@ -23,21 +23,6 @@ namespace srs_cu_cp {
 /// Forward declared messages.
 struct rrc_ue_creation_message;
 
-/// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface
-{
-public:
-  virtual ~du_processor_f1ap_interface() = default;
-
-  /// \brief Request to create a new UE RRC context.
-  ///
-  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
-  /// \param req Request to setup a new UE RRC context.
-  /// \return Response to whether the request was successful or failed.
-  virtual ue_rrc_context_creation_outcome
-  handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) = 0;
-};
-
 /// Interface to notify UE context management procedures.
 class du_processor_f1ap_ue_context_notifier
 {
@@ -192,17 +177,6 @@ public:
   virtual byte_buffer get_packed_sib1(nr_cell_global_id_t cgi) = 0;
 };
 
-/// Interface to notify the F1AP about control messages.
-class du_processor_f1ap_control_notifier
-{
-public:
-  virtual ~du_processor_f1ap_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<f1ap_ue_context_modification_response>
-  on_new_pdu_session_resource_setup_request(f1ap_ue_context_modification_request& msg) = 0;
-};
-
 /// Methods used by DU processor to notify about DU specific events.
 class du_processor_cu_cp_notifier
 {
@@ -265,17 +239,6 @@ public:
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
-/// Methods to get statistics of the DU processor.
-class du_processor_statistics_handler
-{
-public:
-  virtual ~du_processor_statistics_handler() = default;
-
-  /// \brief Returns the number of connected UEs at the DU processor
-  /// \return The number of connected UEs.
-  virtual size_t get_nof_ues() const = 0;
-};
-
 class du_processor : public du_processor_cell_info_interface
 {
 public:
@@ -284,10 +247,8 @@ public:
   /// \brief Retrieve F1AP handler for the respective DU.
   virtual f1ap_cu& get_f1ap_handler() = 0;
 
-  virtual du_processor_f1ap_interface&     get_f1ap_interface()     = 0;
-  virtual du_processor_paging_handler&     get_paging_handler()     = 0;
-  virtual du_processor_statistics_handler& get_statistics_handler() = 0;
-  virtual du_processor_mobility_handler&   get_mobility_handler()   = 0;
+  virtual du_processor_paging_handler&   get_paging_handler()   = 0;
+  virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
   /// \brief Get the F1AP message handler interface of the DU processor object.
   /// \return The F1AP message handler interface of the DU processor object.

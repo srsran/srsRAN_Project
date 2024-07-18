@@ -29,9 +29,7 @@ namespace srs_cu_cp {
 
 class du_processor_impl : public du_processor,
                           public du_metrics_handler,
-                          public du_processor_f1ap_interface,
                           public du_processor_paging_handler,
-                          public du_processor_statistics_handler,
                           public du_processor_mobility_handler
 {
 public:
@@ -49,17 +47,7 @@ public:
 
   f1ap_cu& get_f1ap_handler() override { return *f1ap; };
 
-  size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(cfg.du_index); };
-
-  // du_processor_f1ap_interface
-
-  /// \brief Request to create a new UE RRC context.
-  ///
-  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
-  /// \param req Request to setup a new UE RRC context.
-  /// \return Response to whether the request was successful or failed.
-  ue_rrc_context_creation_outcome
-  handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
+  size_t get_nof_ues() const { return ue_mng.get_nof_du_ues(cfg.du_index); };
 
   // du_processor_mobility_manager_interface
   std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
@@ -74,15 +62,20 @@ public:
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
   du_processor_paging_handler&           get_paging_handler() override { return *this; }
-  du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
   du_metrics_handler&                    get_metrics_handler() override { return *this; }
 
 private:
   class f1ap_du_processor_adapter;
+
+  /// \brief Request to create a new UE RRC context.
+  ///
+  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
+  /// \param req Request to setup a new UE RRC context.
+  /// \return Response to whether the request was successful or failed.
+  ue_rrc_context_creation_outcome handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req);
 
   du_setup_result handle_du_setup_request(const du_setup_request& req);
 
