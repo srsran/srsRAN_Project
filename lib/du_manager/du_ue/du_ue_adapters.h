@@ -241,10 +241,9 @@ public:
 
   void disconnect()
   {
-    lcid_t prev_lcid = lcid.exchange(INVALID_LCID);
-    if (prev_lcid != INVALID_LCID) {
+    if (connected.exchange(false, std::memory_order_relaxed)) {
       // Push an empty buffer state update to MAC, so the scheduler doesn't keep allocating grants for this bearer.
-      mac->handle_dl_buffer_state_update(mac_dl_buffer_state_indication_message{ue_index, prev_lcid, 0});
+      mac->handle_dl_buffer_state_update(mac_dl_buffer_state_indication_message{ue_index, lcid, 0});
     }
   }
 
@@ -253,18 +252,19 @@ public:
     srsran_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_buffer_state_indication_message bs{};
     bs.ue_index = ue_index;
-    bs.lcid     = lcid.load(std::memory_order_relaxed);
+    bs.lcid     = lcid;
     bs.bs       = bsr;
-    if (SRSRAN_UNLIKELY(bs.lcid == INVALID_LCID)) {
+    if (SRSRAN_UNLIKELY(not connected.load(std::memory_order_relaxed))) {
       // Discard.
-      return;
+      bs.bs = 0;
     }
     mac->handle_dl_buffer_state_update(bs);
   }
 
 private:
   du_ue_index_t                       ue_index = INVALID_DU_UE_INDEX;
-  std::atomic<lcid_t>                 lcid{INVALID_LCID};
+  std::atomic<bool>                   connected{true};
+  lcid_t                              lcid;
   mac_ue_control_information_handler* mac = nullptr;
 };
 

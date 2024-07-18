@@ -62,7 +62,7 @@ public:
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override;
 
   // See interface for documentation.
-  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override;
+  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) override;
 
   // See interface for documentation.
   span<cbf16_t> get_view(unsigned port, unsigned l) override;

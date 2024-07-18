@@ -34,7 +34,7 @@ class channel_precoder_avx2 : public channel_precoder_impl
 {
 public:
   // See interface for documentation.
-  void apply_precoding_port(span<cf_t>                port_re,
+  void apply_precoding_port(span<cbf16_t>             port_re,
                             const re_buffer_reader<>& input_re,
                             span<const cf_t>          port_weights) const override;
 

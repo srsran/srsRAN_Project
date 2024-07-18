@@ -29,6 +29,7 @@ set(SOURCES
       cu_cp_controller/cu_cp_controller.cpp
       cu_cp_controller/amf_connection_manager.cpp
       cu_cp_controller/du_connection_manager.cpp
+      cu_cp_controller/cu_up_connection_manager.cpp
       cu_up_processor/cu_up_processor_impl.cpp
       cu_up_processor/cu_up_processor_factory.cpp
       cu_up_processor/cu_up_processor_repository.cpp

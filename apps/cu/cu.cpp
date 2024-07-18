@@ -71,6 +71,7 @@
 
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
+#include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/units/cu_cp/cu_cp_unit_config_yaml_writer.h"
 #include "apps/units/cu_up/cu_up_unit_config_yaml_writer.h"
@@ -253,7 +254,7 @@ int main(int argc, char** argv)
   // TODO
 
   // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(cu_cfg.buffer_pool_config.nof_segments, cu_cfg.buffer_pool_config.segment_size);
+  app_services::buffer_pool_manager buffer_pool_service(cu_cfg.buffer_pool_config);
 
   // Log CPU architecture.
   // TODO

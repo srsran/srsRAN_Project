@@ -40,8 +40,6 @@ public:
   rrc_reconfiguration_procedure(rrc_ue_context_t&                            context_,
                                 const rrc_reconfiguration_procedure_request& args_,
                                 rrc_ue_reconfiguration_proc_notifier&        rrc_ue_notifier_,
-                                rrc_ue_context_update_notifier&              cu_cp_notifier_,
-                                rrc_ue_cu_cp_ue_notifier&                    cu_cp_ue_notifier_,
                                 rrc_ue_event_manager&                        event_mng_,
                                 rrc_ue_srb_handler&                          srb_notifier_,
                                 rrc_ue_logger&                               logger_);
@@ -57,11 +55,9 @@ private:
   rrc_ue_context_t&                           context;
   const rrc_reconfiguration_procedure_request args;
 
-  rrc_ue_reconfiguration_proc_notifier& rrc_ue;            // handler to the parent RRC UE object
-  rrc_ue_context_update_notifier&       cu_cp_notifier;    // to release the UE if the reconfiguration fails
-  rrc_ue_cu_cp_ue_notifier&             cu_cp_ue_notifier; // to schedule the UE release
-  rrc_ue_event_manager&                 event_mng;         // event manager for the RRC UE entity
-  rrc_ue_srb_handler&                   srb_notifier;      // For creating SRBs
+  rrc_ue_reconfiguration_proc_notifier& rrc_ue;       // handler to the parent RRC UE object
+  rrc_ue_event_manager&                 event_mng;    // event manager for the RRC UE entity
+  rrc_ue_srb_handler&                   srb_notifier; // For creating SRBs
   rrc_ue_logger&                        logger;
 
   rrc_transaction               transaction;

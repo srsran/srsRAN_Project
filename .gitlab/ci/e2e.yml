@@ -110,7 +110,7 @@ e2e request and config validation:
 
 .e2e-run:
   resource_group: e2e-${GROUP}
-  timeout: 2h
+  timeout: 3 hours
   image:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
@@ -178,11 +178,32 @@ e2e request and config validation:
       find . -iname "test_metrics.csv" -exec \
         influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
         --bucket ci --file {} \;
+    # Artifact size
+    - echo -e "\e[0Ksection_start:`date +%s`:e2e_folder_section[collapsed=true]\r\e[0KLog folder's tree"
+    - |
+      print_tree() {
+        local dir="$1"
+        local prefix="$2"
+
+        # List directories first
+        find "$dir" -mindepth 1 -maxdepth 1 -type d | while read -r subdir; do
+          local size=$(du -sh "$subdir" | awk '{print $1}')
+          echo "${prefix}├── $(basename "$subdir") [$size]"
+          print_tree "$subdir" "$prefix│   "
+        done
+
+        # List files afterwards
+        find "$dir" -mindepth 1 -maxdepth 1 -type f | while read -r file; do
+          local size=$(du -sh "$file" | awk '{print $1}')
+          echo "${prefix}├── $(basename "$file") [$size]"
+        done
+      }
+      print_tree "tests/e2e/log/" ""
+    - echo -e "\e[0Ksection_end:`date +%s`:e2e_folder_section\r\e[0K"
     - |
       echo "*******************************************************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/tests/e2e/log//report.html"
       echo "*******************************************************************************************************************************"
-    - du -hs tests/e2e/log/
   needs:
     - *retina-needs
 

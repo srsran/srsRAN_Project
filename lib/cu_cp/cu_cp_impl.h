@@ -123,7 +123,7 @@ public:
 
   // cu_cp public interface
   cu_cp_f1c_handler&                     get_f1c_handler() override { return controller->get_f1c_handler(); }
-  cu_cp_e1_handler&                      get_e1_handler() override { return cu_up_db; }
+  cu_cp_e1_handler&                      get_e1_handler() override { return controller->get_e1_handler(); }
   cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_handler&                      get_ng_handler() override { return *this; }
   cu_cp_ngap_handler&                    get_cu_cp_ngap_handler() override { return *this; }

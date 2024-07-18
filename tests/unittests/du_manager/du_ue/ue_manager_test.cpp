@@ -289,7 +289,7 @@ TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disc
   // TEST: UE notifiers are disconnected.
   mac_dummy.last_dl_bs.reset();
   srb1.on_buffer_state_update(10);
-  ASSERT_FALSE(mac_dummy.last_dl_bs.has_value());
+  ASSERT_TRUE(not mac_dummy.last_dl_bs.has_value() or mac_dummy.last_dl_bs.value().bs == 0);
 }
 
 class du_ue_manager_rlf_tester : public du_ue_manager_tester

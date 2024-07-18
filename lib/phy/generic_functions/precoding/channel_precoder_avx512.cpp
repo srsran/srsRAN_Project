@@ -49,6 +49,27 @@ struct simd_cf_t {
 // Type to hold a set of complex numbers using an AVX512 register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = __m512;
 
+inline __m256i ps_to_cbf16(simd_cf_interleaved in)
+{
+#if __AVX512BF16__
+  return (__m256i)_mm512_cvtneps_pbh(in);
+#else  // __AVX512BF16__
+  const __m512i bias = _mm512_set1_epi32(0x7fff);
+  const __m512i one  = _mm512_set1_epi32(0x1);
+
+  __m512i a_i32 = _mm512_castps_si512(in);
+
+  // Round to nearest even.
+  a_i32 = _mm512_add_epi32(a_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(a_i32, 16), one)));
+
+  // Shift right 16 bits.
+  a_i32 = _mm512_srli_epi32(a_i32, 16);
+
+  // Pack both parts in 32-bit registers.
+  return _mm512_cvtepi32_epi16(a_i32);
+#endif // __AVX512BF16__
+}
+
 } // namespace
 
 // Multiplication operator for the precoding weights.
@@ -215,28 +236,7 @@ static inline void layer4_map_and_ci8_to_cf(simd_cf_interleaved& out0,
   from_ci8_to_cf(out0, out1, out2, out3, tmp);
 }
 
-inline __m256i ps_to_cbf16(simd_cf_interleaved in)
-{
-#if __AVX512BF16__
-  return (__m256i)_mm512_cvtneps_pbh(in);
-#else  // __AVX512BF16__
-  const __m512i bias = _mm512_set1_epi32(0x7fff);
-  const __m512i one  = _mm512_set1_epi32(0x1);
-
-  __m512i a_i32 = _mm512_castps_si512(in);
-
-  // Round to nearest even.
-  a_i32 = _mm512_add_epi32(a_i32, _mm512_add_epi32(bias, _mm512_and_si512(_mm512_srli_epi32(a_i32, 16), one)));
-
-  // Shift right 16 bits.
-  a_i32 = _mm512_srli_epi32(a_i32, 16);
-
-  // Pack both parts in 32-bit registers.
-  return _mm512_cvtepi32_epi16(a_i32);
-#endif // __AVX512BF16__
-}
-
-void channel_precoder_avx512::apply_precoding_port(span<cf_t>                port_re,
+void channel_precoder_avx512::apply_precoding_port(span<cbf16_t>             port_re,
                                                    const re_buffer_reader<>& input_re,
                                                    span<const cf_t>          port_weights) const
 {
@@ -275,15 +275,15 @@ void channel_precoder_avx512::apply_precoding_port(span<cf_t>                por
     }
 
     // Store.
-    _mm512_storeu_ps(reinterpret_cast<float*>(&port_re[i_re]), re_out);
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(&port_re[i_re]), ps_to_cbf16(re_out));
   }
 
   for (; i_re != nof_re; ++i_re) {
-    port_re[i_re] = layer_re_view_list[0][i_re] * port_weights[0];
-
+    cf_t sum = layer_re_view_list[0][i_re] * port_weights[0];
     for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {
-      port_re[i_re] += layer_re_view_list[i_layer][i_re] * port_weights[i_layer];
+      sum += layer_re_view_list[i_layer][i_re] * port_weights[i_layer];
     }
+    port_re[i_re] = sum;
   }
 }
 

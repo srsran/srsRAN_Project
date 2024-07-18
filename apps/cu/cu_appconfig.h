@@ -23,6 +23,7 @@
 #pragma once
 
 #include "apps/gnb/gnb_appconfig.h"
+#include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include <string>
 

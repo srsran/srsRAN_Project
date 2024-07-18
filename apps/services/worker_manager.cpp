@@ -261,7 +261,8 @@ void worker_manager::create_du_executors(bool                      is_blocking_m
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
     const std::string cell_id_str = std::to_string(cell_id);
 
-    slot_workers[cell_id].executors.emplace_back("cell_exec#" + cell_id_str, task_priority::max - 1);
+    slot_workers[cell_id].executors.push_back(
+        {"cell_exec#" + cell_id_str, task_priority::max - 1, {}, std::nullopt, is_blocking_mode_active});
     slot_workers[cell_id].executors.push_back(
         {"slot_exec#" + cell_id_str, task_priority::max, {}, std::nullopt, is_blocking_mode_active});
 

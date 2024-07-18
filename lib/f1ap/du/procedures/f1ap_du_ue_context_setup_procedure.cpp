@@ -26,6 +26,7 @@
 #include "proc_logger.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/support/async/async_no_op_task.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -103,13 +104,23 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   // > If the UE CONTEXT SETUP REQUEST message contains the RRC-Container IE, the gNB-DU shall send the corresponding
   // RRC message to the UE via SRB1.
   if (msg->rrc_container_present and not msg->rrc_container.empty()) {
-    CORO_AWAIT(ue->bearers.find_srb(srb_id_t::srb1)->handle_pdu_and_await_transmission(msg->rrc_container.copy()));
+    CORO_AWAIT(handle_rrc_container());
   }
 
   // Respond back to CU-CP with success.
   send_ue_context_setup_response();
 
   CORO_RETURN();
+}
+
+async_task<void> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
+{
+  f1c_bearer* srb1 = ue->bearers.find_srb(srb_id_t::srb1);
+  if (srb1 != nullptr) {
+    return srb1->handle_pdu_and_await_transmission(msg->rrc_container.copy());
+  }
+  logger.error("{}: Failed to find SRB1 bearer to send RRC container.", f1ap_log_prefix{ue->context, name()});
+  return launch_no_op_task();
 }
 
 async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::request_du_ue_config()

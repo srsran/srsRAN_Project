@@ -21,8 +21,10 @@
  */
 
 #include "du_appconfig_cli11_schema.h"
+#include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "du_appconfig.h"
+#include "srsran/adt/interval.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
@@ -77,14 +79,6 @@ static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
       ->capture_default_str();
   add_option(app, "--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module")->capture_default_str();
   add_option(app, "--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module")->capture_default_str();
-}
-
-static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
-{
-  app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
-      ->capture_default_str();
-  app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
-      ->capture_default_str();
 }
 
 static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
@@ -268,6 +262,9 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, du_cfg.log_cfg);
 
+  // Buffer pool section.
+  configure_cli11_with_buffer_pool_appconfig_schema(app, du_cfg.buffer_pool_config);
+
   // F1-C section.
   CLI::App* f1ap_subcmd = app.add_subcommand("f1ap", "F1AP interface configuration")->configurable();
   configure_cli11_f1ap_args(*f1ap_subcmd, du_cfg.f1ap_cfg);
@@ -283,10 +280,6 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // E2 section.
   CLI::App* e2_subcmd = add_subcommand(app, "e2", "E2 parameters")->configurable();
   configure_cli11_e2_args(*e2_subcmd, du_cfg.e2_cfg);
-
-  // Buffer pool section.
-  CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
-  configure_cli11_buffer_pool_args(*buffer_pool_subcmd, du_cfg.buffer_pool_config);
 
   // Expert section.
   CLI::App* expert_subcmd = app.add_subcommand("expert_execution", "Expert execution configuration")->configurable();

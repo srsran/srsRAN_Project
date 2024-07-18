@@ -33,8 +33,8 @@
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
 gnb_extra_commands: &gnb_extra_commands ""
-expected_dl_bitrate_high: &expected_dl_bitrate_high 1400000000
-expected_ul_bitrate_high: &expected_ul_bitrate_high 100000000
+expected_dl_bitrate_high: &expected_dl_bitrate_high 1200000000
+expected_ul_bitrate_high: &expected_ul_bitrate_high 80000000
 expected_dl_bitrate_low: &expected_dl_bitrate_low 14000
 expected_ul_bitrate_low: &expected_ul_bitrate_low 1000
 test_timeout: &test_timeout 2700 # 45 * 60

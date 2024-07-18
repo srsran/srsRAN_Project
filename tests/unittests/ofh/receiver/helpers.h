@@ -110,7 +110,7 @@ public:
     nof_prbs_written += symbols.size() / NOF_SUBCARRIERS_PER_RB;
   }
 
-  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
+  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) override
   {
     grid_written = true;
     nof_prbs_written += divide_ceil(symbols.size() * stride, NOF_SUBCARRIERS_PER_RB);

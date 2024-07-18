@@ -22,7 +22,7 @@
 
 #include "dmrs_pbch_processor_impl.h"
 #include "srsran/phy/support/resource_grid_writer.h"
-#include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 
@@ -60,8 +60,12 @@ void dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
 
   // For each port...
   for (unsigned port : args.ports) {
+    // Convert symbols to complex BF16.
+    std::array<cbf16_t, NOF_RE> symbols_cbf16;
+    srsvec::convert(symbols_cbf16, r);
+
     // Create view with the symbols.
-    span<const cf_t> symbols = r;
+    span<const cbf16_t> symbols = symbols_cbf16;
 
     // Put sequence in symbol 1 (0 + v , 4 + v , 8 + v ,..., 236 + v).
     grid.put(port, l0 + 1, k0 + v, stride, symbols.first(nof_dmrs_full_symbol));

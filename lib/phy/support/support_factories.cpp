@@ -145,7 +145,7 @@ class channel_precoder_dummy : public channel_precoder
 {
 public:
   // See interface for documentation.
-  void apply_precoding(re_buffer_writer<>&            output,
+  void apply_precoding(re_buffer_writer<cbf16_t>&     output,
                        const re_buffer_reader<>&      input,
                        const precoding_weight_matrix& precoding) const override
   {

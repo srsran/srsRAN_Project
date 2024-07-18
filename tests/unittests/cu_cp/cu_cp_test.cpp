@@ -519,10 +519,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject E1AP Bearer Context Setup Response
   e1ap_message bearer_ctxt_setup_resp =
       generate_bearer_context_setup_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-  cu_cp_obj->get_e1_handler()
-      .get_cu_up(uint_to_cu_up_index(0))
-      .get_message_handler()
-      .handle_message(bearer_ctxt_setup_resp);
+  e1ap_gw.get_cu_up(0).on_new_message(bearer_ctxt_setup_resp);
 
   // Check that the UE Context Setup Request Message was sent to the DU
   ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
@@ -544,10 +541,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   // Inject E1AP Bearer Context Modification Response
   e1ap_message bearer_ctxt_mod_resp =
       generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
-  cu_cp_obj->get_e1_handler()
-      .get_cu_up(uint_to_cu_up_index(0))
-      .get_message_handler()
-      .handle_message(bearer_ctxt_mod_resp);
+  e1ap_gw.get_cu_up(0).on_new_message(bearer_ctxt_mod_resp);
 
   // Check that the Handover Request Ack was sent to the AMF
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);

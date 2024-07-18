@@ -29,39 +29,6 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-namespace {
-
-class e1ap_rx_pdu_notifier final : public e1ap_message_notifier
-{
-public:
-  e1ap_rx_pdu_notifier(cu_cp_e1_handler& parent_, cu_up_index_t cu_up_index_) :
-    parent(&parent_),
-    cu_up_index(cu_up_index_),
-    cached_msg_handler(parent->get_cu_up(cu_up_index).get_message_handler())
-  {
-  }
-  e1ap_rx_pdu_notifier(const e1ap_rx_pdu_notifier&)            = delete;
-  e1ap_rx_pdu_notifier(e1ap_rx_pdu_notifier&&)                 = delete;
-  e1ap_rx_pdu_notifier& operator=(const e1ap_rx_pdu_notifier&) = delete;
-  e1ap_rx_pdu_notifier& operator=(e1ap_rx_pdu_notifier&&)      = delete;
-
-  ~e1ap_rx_pdu_notifier()
-  {
-    if (parent != nullptr) {
-      parent->handle_cu_up_remove_request(cu_up_index);
-    }
-  }
-
-  void on_new_message(const e1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
-
-private:
-  cu_cp_e1_handler*     parent;
-  cu_up_index_t         cu_up_index;
-  e1ap_message_handler& cached_msg_handler;
-};
-
-} // namespace
-
 cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config cfg_) :
   cfg(cfg_),
   logger(cfg.logger),
@@ -70,26 +37,6 @@ cu_up_processor_repository::cu_up_processor_repository(cu_up_repository_config c
                    cfg.cu_cp.admission.max_nof_cu_ups,
                    logger)
 {
-}
-
-std::unique_ptr<e1ap_message_notifier>
-cu_up_processor_repository::handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
-{
-  cu_up_index_t cu_up_index = add_cu_up(std::move(e1ap_tx_pdu_notifier));
-  if (cu_up_index == cu_up_index_t::invalid) {
-    logger.warning("Rejecting new CU-UP connection. Cause: Failed to create a new CU-UP");
-    return nullptr;
-  }
-
-  logger.info("Added CU-UP {}", cu_up_index);
-
-  return std::make_unique<e1ap_rx_pdu_notifier>(*this, cu_up_index);
-}
-
-void cu_up_processor_repository::handle_cu_up_remove_request(cu_up_index_t cu_up_index)
-{
-  logger.debug("Removing CU-UP {}...", cu_up_index);
-  remove_cu_up(cu_up_index);
 }
 
 cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier)
@@ -137,33 +84,32 @@ cu_up_index_t cu_up_processor_repository::allocate_cu_up_index()
   return cu_up_index_t::invalid;
 }
 
-void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
+async_task<void> cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
 {
-  // Note: The caller of this function can be a CU-UP procedure. Thus, we have to wait for the procedure to finish
-  // before safely removing the DU. This is achieved via a scheduled async task
-
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  logger.debug("Scheduling cu_up_index={} deletion", cu_up_index);
+  logger.debug("Removing CU-UP {}...", cu_up_index);
 
-  // Schedule CU-UP removal task
-  cu_up_task_sched.handle_cu_up_async_task(
-      cu_up_index, launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        auto du_it = cu_up_db.find(cu_up_index);
-        if (du_it == cu_up_db.end()) {
-          logger.warning("Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
-          CORO_EARLY_RETURN();
-        }
+  return launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-        // Remove DU
-        // TODO
-        removed_cu_up_db.insert(std::make_pair(cu_up_index, std::move(cu_up_db.at(cu_up_index))));
-        cu_up_db.erase(cu_up_index);
+    // Remove CU-UP
+    if (cu_up_db.find(cu_up_index) == cu_up_db.end()) {
+      logger.warning("Remove CU-UP called for non-existent cu_up_index={}", cu_up_index);
+      return;
+    }
 
-        logger.info("Removed CU-UP {}", cu_up_index);
+    // Stop CU-UP activity, eliminating pending transactions for the CU-UP and respective UEs.
+    // TODO
 
-        CORO_RETURN();
-      }));
+    // Remove CU-UP
+    removed_cu_up_db.insert(std::make_pair(cu_up_index, std::move(cu_up_db.at(cu_up_index))));
+    cu_up_db.erase(cu_up_index);
+
+    // Remove CU-UP
+    logger.info("Removed CU-UP {}", cu_up_index);
+
+    CORO_RETURN();
+  });
 }
 
 cu_up_e1_handler& cu_up_processor_repository::get_cu_up(cu_up_index_t cu_up_index)

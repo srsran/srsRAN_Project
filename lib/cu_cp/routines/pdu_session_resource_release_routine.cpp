@@ -31,16 +31,16 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd_,
     e1ap_bearer_context_manager&                      e1ap_bearer_ctxt_mng_,
     f1ap_ue_context_manager&                          f1ap_ue_ctxt_mng_,
-    ngap_control_message_handler&                     ngap_handler_,
     du_processor_rrc_ue_control_message_notifier&     rrc_ue_notifier_,
+    cu_cp_rrc_ue_interface&                           cu_cp_notifier_,
     ue_task_scheduler&                                task_sched_,
     up_resource_manager&                              up_resource_mng_,
     srslog::basic_logger&                             logger_) :
   release_cmd(release_cmd_),
   e1ap_bearer_ctxt_mng(e1ap_bearer_ctxt_mng_),
   f1ap_ue_ctxt_mng(f1ap_ue_ctxt_mng_),
-  ngap_handler(ngap_handler_),
   rrc_ue_notifier(rrc_ue_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   task_sched(task_sched_),
   up_resource_mng(up_resource_mng_),
   logger(logger_)
@@ -190,13 +190,8 @@ pdu_session_resource_release_routine::handle_pdu_session_resource_release_respon
     logger.info("ue={}: \"{}\" failed", release_cmd.ue_index, name());
 
     // Trigger UE context release request.
-    cu_cp_ue_context_release_request req{release_cmd.ue_index};
-    req.cause = ngap_cause_radio_network_t::radio_conn_with_ue_lost;
-    task_sched.schedule_async_task(launch_async([ngap_notif = &ngap_handler, req](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_AWAIT(ngap_notif->handle_ue_context_release_request(req));
-      CORO_RETURN();
-    }));
+    task_sched.schedule_async_task(cu_cp_notifier.handle_ue_context_release(
+        {release_cmd.ue_index, {}, ngap_cause_radio_network_t::radio_conn_with_ue_lost}));
   }
 
   return response_msg;

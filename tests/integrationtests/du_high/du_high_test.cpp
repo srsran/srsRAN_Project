@@ -170,12 +170,19 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   this->test_logger.info("STATUS: RRC Release started being scheduled...");
 
   // Ensure that DRBs stop being scheduled at this point, even if it takes a while for the UE release to complete.
+  unsigned drb_data_count = 0;
   while (cu_notifier.last_f1ap_msgs.empty()) {
     run_slot();
     const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
     if (pdsch != nullptr) {
-      // PDSCH scheduled. Ensure it was for SRB1 (DRB1 might fill the rest of the TB though).
-      ASSERT_NE(find_ue_pdsch_with_lcid(rnti, LCID_SRB1, phy.cells[0].last_dl_res.value().dl_res->ue_grants), nullptr);
+      // PDSCH scheduled. Ensure it was for SRB1.
+      // Note: There might be at most one single DRB1 PDSCH that smuggles in after the RRC Release due to race
+      // conditions.
+      auto* drb_pdsch = find_ue_pdsch_with_lcid(rnti, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+      if (drb_pdsch != nullptr) {
+        drb_data_count++;
+        ASSERT_LT(drb_data_count, 2) << "More than 1 PDSCH grant for DRB data was scheduled after RRC Release";
+      }
     }
   }
 }

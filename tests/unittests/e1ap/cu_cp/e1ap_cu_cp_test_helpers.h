@@ -95,6 +95,8 @@ public:
     cu_up_tx_notifiers.erase(cu_up_tx_notifiers.begin() + connection_idx);
   }
 
+  e1ap_message_notifier& get_cu_up(size_t connection_idx) { return *cu_up_tx_notifiers.at(connection_idx); }
+
   span<const e1ap_message> last_rx_pdus(size_t connection_idx) const
   {
     return local_e1ap_gw.get_last_cu_cp_rx_pdus(connection_idx);

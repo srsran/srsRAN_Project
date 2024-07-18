@@ -22,8 +22,10 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
+#include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/support/async/async_task.h"
 
@@ -39,6 +41,8 @@ public:
                                             e1ap_bearer_context_manager&                     e1ap_bearer_ctxt_mng_,
                                             f1ap_ue_context_manager&                         f1ap_ue_ctxt_mng_,
                                             du_processor_rrc_ue_control_message_notifier&    rrc_ue_notifier_,
+                                            cu_cp_rrc_ue_interface&                          cu_cp_notifier_,
+                                            ue_task_scheduler&                               ue_task_sched_,
                                             up_resource_manager&                             up_resource_mng_,
                                             srslog::basic_logger&                            logger_);
 
@@ -60,6 +64,8 @@ private:
   e1ap_bearer_context_manager&                  e1ap_bearer_ctxt_mng; // to trigger bearer context setup at CU-UP
   f1ap_ue_context_manager&                      f1ap_ue_ctxt_mng;     // to trigger UE context modification at DU
   du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;      // to trigger RRC Reconfiguration at UE
+  cu_cp_rrc_ue_interface&                       cu_cp_notifier;       // to trigger UE release at CU-CP
+  ue_task_scheduler&                            ue_task_sched;        // to schedule UE release request
   up_resource_manager&                          up_resource_mng;      // to get RRC DRB config
   srslog::basic_logger&                         logger;
 

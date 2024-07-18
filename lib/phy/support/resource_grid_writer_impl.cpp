@@ -145,11 +145,11 @@ void resource_grid_writer_impl::put(unsigned port, unsigned l, unsigned k_init, 
   clear_empty(port);
 }
 
-void resource_grid_writer_impl::put(unsigned         port,
-                                    unsigned         l,
-                                    unsigned         k_init,
-                                    unsigned         stride,
-                                    span<const cf_t> symbols)
+void resource_grid_writer_impl::put(unsigned            port,
+                                    unsigned            l,
+                                    unsigned            k_init,
+                                    unsigned            stride,
+                                    span<const cbf16_t> symbols)
 {
   unsigned nof_symbols = symbols.size();
   srsran_assert(

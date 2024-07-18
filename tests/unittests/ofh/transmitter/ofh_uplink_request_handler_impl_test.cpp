@@ -127,8 +127,8 @@ class resource_grid_dummy : public resource_grid
       return {};
     }
 
-    void          put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-    void          put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override {}
+    void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
+    void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cbf16_t> symbols) override {}
     span<cbf16_t> get_view(unsigned port, unsigned l) override { return {}; }
   };
 

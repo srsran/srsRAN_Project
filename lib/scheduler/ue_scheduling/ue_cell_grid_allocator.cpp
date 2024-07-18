@@ -704,7 +704,7 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
     if (not is_retx) {
       // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If
       // so, allocate remaining RBs to the current UE only if it's a new Tx.
-      if (pusch_pdu_rem_space == 1) {
+      if (pusch_pdu_rem_space == 1 and not u.has_pending_sr()) {
         mcs_prbs.n_prbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0).length();
       }
       // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as

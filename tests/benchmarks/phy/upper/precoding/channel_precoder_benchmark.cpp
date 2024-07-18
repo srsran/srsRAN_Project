@@ -108,8 +108,7 @@ int main(int argc, char** argv)
 
     // Create input and output RE buffers.
     dynamic_re_buffer          input_re(nof_layers, nof_re);
-    dynamic_re_buffer          precoded_re(nof_ports, nof_re);
-    dynamic_re_buffer<cbf16_t> precoded_re_cbf16(nof_ports, nof_re);
+    dynamic_re_buffer<cbf16_t> precoded_re(nof_ports, nof_re);
     std::vector<ci8_t>         input_symbols(nof_layers * nof_re);
 
     precoding_weight_matrix weights(nof_layers, nof_ports);
@@ -141,8 +140,8 @@ int main(int argc, char** argv)
       precoder->apply_precoding(precoded_re, input_re, weights);
     });
 
-    perf_meas_ci8.new_measure(meas_descr, nof_re, [&precoded_re_cbf16, &input_symbols, &weights, &precoder]() {
-      precoder->apply_layer_map_and_precoding(precoded_re_cbf16, input_symbols, weights);
+    perf_meas_ci8.new_measure(meas_descr, nof_re, [&precoded_re, &input_symbols, &weights, &precoder]() {
+      precoder->apply_layer_map_and_precoding(precoded_re, input_symbols, weights);
     });
   }
 
