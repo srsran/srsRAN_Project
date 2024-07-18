@@ -28,13 +28,9 @@ using namespace srsran;
 class ue_grid_allocator_tester : public ::testing::TestWithParam<duplex_mode>
 {
 protected:
-  ue_grid_allocator_tester() :
-    expert_cfg([this]() {
-      auto ue_expert_cfg                   = sched_cfg.ue;
-      ue_expert_cfg.max_ul_grants_per_slot = 2;
-      ue_expert_cfg.max_pucchs_per_slot    = 2;
-      return ue_expert_cfg;
-    }()),
+  ue_grid_allocator_tester(
+      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config()) :
+    sched_cfg(sched_cfg_),
     cell_cfg(*[this]() {
       cfg_builder_params.dl_arfcn = GetParam() == duplex_mode::FDD ? 530000 : 520002;
       cfg_builder_params.scs_common =
@@ -106,7 +102,7 @@ protected:
     return ues[ue_creation_req.ue_index];
   }
 
-  scheduler_expert_config                 sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  scheduler_expert_config                 sched_cfg;
   scheduler_ue_expert_config              expert_cfg{sched_cfg.ue};
   sched_cfg_dummy_notifier                mac_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
@@ -188,47 +184,6 @@ TEST_P(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
             srsran::pdsch_mcs_table::qam256);
 }
 
-TEST_P(ue_grid_allocator_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per_slot_is_reached)
-{
-  sched_ue_creation_request_message ue_creation_req =
-      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  const ue& u1             = add_ue(ue_creation_req);
-  ue_creation_req.ue_index = to_du_ue_index(1);
-  ue_creation_req.crnti    = to_rnti(0x4602);
-  const ue& u2             = add_ue(ue_creation_req);
-
-  static const unsigned sched_bytes = 20U;
-  const ue_pdsch_grant  grant1{
-       .user = &u1, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
-
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
-  const unsigned       total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
-  const ue_pdsch_grant grant2{
-      .user = &u2, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
-
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_dl_grant(grant1).status == alloc_status::success and
-           alloc.allocate_dl_grant(grant2).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() {
-    return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
-           find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
-  }));
-  // Successfully allocates PDSCH corresponding to the grant.
-  ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.codewords.back().tb_size_bytes,
-            sched_bytes);
-
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
-  const unsigned crbs_allocated =
-      find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length();
-
-  // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
-            (total_crbs - crbs_allocated));
-}
-
 TEST_P(ue_grid_allocator_tester, allocates_pdsch_restricted_to_recommended_max_nof_rbs)
 {
   sched_ue_creation_request_message ue_creation_req =
@@ -251,47 +206,6 @@ TEST_P(ue_grid_allocator_tester, allocates_pdsch_restricted_to_recommended_max_n
   // Successfully allocates PDSCH corresponding to the grant.
   ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
             grant1.max_nof_rbs);
-}
-
-TEST_P(ue_grid_allocator_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_per_slot_is_reached)
-{
-  sched_ue_creation_request_message ue_creation_req =
-      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  const ue& u1             = add_ue(ue_creation_req);
-  ue_creation_req.ue_index = to_du_ue_index(1);
-  ue_creation_req.crnti    = to_rnti(0x4602);
-  const ue& u2             = add_ue(ue_creation_req);
-
-  const unsigned recommended_nof_bytes_to_schedule = 200U;
-
-  const crb_interval   cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
-                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
-  const ue_pusch_grant grant1{.user                  = &u1,
-                              .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
-                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
-  const ue_pusch_grant grant2{.user                  = &u2,
-                              .cell_index            = to_du_cell_index(0),
-                              .h_id                  = to_harq_id(0),
-                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
-
-  ASSERT_TRUE(run_until([&]() {
-    return alloc.allocate_ul_grant(grant1).status == alloc_status::success and
-           alloc.allocate_ul_grant(grant2).status == alloc_status::success;
-  }));
-  ASSERT_TRUE(run_until([&]() {
-    return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr and find_ue_pusch(u2.crnti, res_grid[0].result.ul);
-  }));
-  // Successfully allocates PUSCH corresponding to the grant.
-  ASSERT_GE(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.tb_size_bytes, grant1.recommended_nof_bytes);
-
-  const unsigned remaining_crbs =
-      cell_crbs.length() - find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length();
-
-  // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(find_ue_pusch(u2.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), remaining_crbs);
 }
 
 TEST_P(ue_grid_allocator_tester, allocates_pusch_restricted_to_recommended_max_nof_rbs)
@@ -580,6 +494,304 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
                         nof_slot_until_pusch_is_allocated_threshold));
 }
 
+class ue_grid_allocator_remaining_rbs_alloc_tester : public ue_grid_allocator_tester
+{
+public:
+  ue_grid_allocator_remaining_rbs_alloc_tester() :
+    ue_grid_allocator_tester(([]() {
+      scheduler_expert_config sched_cfg_   = config_helpers::make_default_scheduler_expert_config();
+      sched_cfg_.ue.max_ul_grants_per_slot = 2;
+      sched_cfg_.ue.max_pucchs_per_slot    = 2;
+      return sched_cfg_;
+    }()))
+  {
+  }
+};
+
+TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per_slot_is_reached)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+  ue_creation_req.ue_index = to_du_ue_index(1);
+  ue_creation_req.crnti    = to_rnti(0x4602);
+  const ue& u2             = add_ue(ue_creation_req);
+
+  static const unsigned sched_bytes = 20U;
+  const ue_pdsch_grant  grant1{
+       .user = &u1, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
+
+  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
+  const unsigned       total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+  const ue_pdsch_grant grant2{
+      .user = &u2, .cell_index = to_du_cell_index(0), .h_id = to_harq_id(0), .recommended_nof_bytes = sched_bytes};
+
+  ASSERT_TRUE(run_until([&]() {
+    return alloc.allocate_dl_grant(grant1).status == alloc_status::success and
+           alloc.allocate_dl_grant(grant2).status == alloc_status::success;
+  }));
+  ASSERT_TRUE(run_until([&]() {
+    return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
+           find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
+  }));
+  // Successfully allocates PDSCH corresponding to the grant.
+  ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.codewords.back().tb_size_bytes,
+            sched_bytes);
+
+  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for allocation.
+  const unsigned crbs_allocated =
+      find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length();
+
+  // Allocates all remaining RBs to UE2.
+  ASSERT_EQ(find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
+            (total_crbs - crbs_allocated));
+}
+
+TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_per_slot_is_reached)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+  ue_creation_req.ue_index = to_du_ue_index(1);
+  ue_creation_req.crnti    = to_rnti(0x4602);
+  const ue& u2             = add_ue(ue_creation_req);
+
+  const unsigned recommended_nof_bytes_to_schedule = 200U;
+
+  const crb_interval   cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
+                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
+  const ue_pusch_grant grant2{.user                  = &u2,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() {
+    return alloc.allocate_ul_grant(grant1).status == alloc_status::success and
+           alloc.allocate_ul_grant(grant2).status == alloc_status::success;
+  }));
+  ASSERT_TRUE(run_until([&]() {
+    return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr and find_ue_pusch(u2.crnti, res_grid[0].result.ul);
+  }));
+  // Successfully allocates PUSCH corresponding to the grant.
+  ASSERT_GE(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.tb_size_bytes, grant1.recommended_nof_bytes);
+
+  const unsigned remaining_crbs =
+      cell_crbs.length() - find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length();
+
+  // Allocates all remaining RBs to UE2.
+  ASSERT_EQ(find_ue_pusch(u2.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), remaining_crbs);
+}
+
+class ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester : public ue_grid_allocator_tester
+{
+public:
+  ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester() :
+    ue_grid_allocator_tester(([]() {
+      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config();
+      sched_cfg_.ue.pdsch_nof_rbs        = {20, 40};
+      sched_cfg_.ue.pusch_nof_rbs        = {20, 40};
+      return sched_cfg_;
+    }()))
+  {
+  }
+};
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
+       allocates_pdsch_with_expert_cfg_min_nof_rbs_even_if_rbs_required_to_schedule_is_low)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is low enough such that < 20 RBs (configured in constructor) are required to schedule.
+  static const unsigned sched_bytes             = 20U;
+  const unsigned        max_nof_rbs_to_schedule = 10U;
+
+  const ue_pdsch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = sched_bytes,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_dl_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  // Successfully allocates PDSCH.
+  ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
+            std::max(expert_cfg.pdsch_nof_rbs.start(), max_nof_rbs_to_schedule));
+}
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
+       allocates_pdsch_with_expert_cfg_max_nof_rbs_even_if_rbs_required_to_schedule_is_high)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is high enough such that > 40 RBs (configured in constructor) are required to schedule.
+  static const unsigned sched_bytes             = 20000U;
+  const unsigned        max_nof_rbs_to_schedule = 273U;
+
+  const ue_pdsch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = sched_bytes,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_dl_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  // Successfully allocates PDSCH.
+  ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
+            std::min(expert_cfg.pdsch_nof_rbs.stop(), max_nof_rbs_to_schedule));
+}
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
+       allocates_pusch_with_expert_cfg_min_nof_rbs_even_if_rbs_required_to_schedule_is_low)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is low enough such that < 20 RBs (configured in constructor) are required to schedule.
+  const unsigned recommended_nof_bytes_to_schedule = 20U;
+  const unsigned max_nof_rbs_to_schedule           = 10U;
+
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_ul_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  // Successfully allocates PUSCH.
+  ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(),
+            std::max(expert_cfg.pdsch_nof_rbs.start(), max_nof_rbs_to_schedule));
+}
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
+       allocates_pusch_with_expert_cfg_max_nof_rbs_even_if_rbs_required_to_schedule_is_high)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is high enough such that > 40 RBs (configured in constructor) are required to schedule.
+  const unsigned recommended_nof_bytes_to_schedule = 200000U;
+  const unsigned max_nof_rbs_to_schedule           = 273U;
+
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_ul_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  // Successfully allocates PUSCH.
+  ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(),
+            std::min(expert_cfg.pdsch_nof_rbs.stop(), max_nof_rbs_to_schedule));
+}
+
+class ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester : public ue_grid_allocator_tester
+{
+public:
+  ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester() :
+    ue_grid_allocator_tester(([]() {
+      scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config();
+      sched_cfg_.ue.pdsch_crb_limits     = {20, 40};
+      sched_cfg_.ue.pusch_crb_limits     = {20, 40};
+      return sched_cfg_;
+    }()))
+  {
+    // Assume SS#2 is USS configured with DCI format 1_1/0_1 and is the only SS used for UE PDSCH/PUSCH scheduling.
+    const prb_interval pdsch_prbs =
+        crb_to_prb(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs, sched_cfg.ue.pdsch_crb_limits);
+    pdsch_vrb_limits = vrb_interval{pdsch_prbs.start(), pdsch_prbs.stop()};
+    pusch_vrb_limits = rb_helper::crb_to_vrb_ul_non_interleaved(
+        sched_cfg.ue.pusch_crb_limits, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
+  }
+
+protected:
+  vrb_interval pdsch_vrb_limits;
+  vrb_interval pusch_vrb_limits;
+};
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pdsch_within_expert_cfg_pdsch_rb_limits)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is high enough such that > 20 RBs (configured in constructor) are required to schedule.
+  static const unsigned sched_bytes             = 20000U;
+  const unsigned        max_nof_rbs_to_schedule = 273U;
+
+  const ue_pdsch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = sched_bytes,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_dl_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+  // Successfully allocates PDSCH within RB limits.
+  ASSERT_EQ(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1(), pdsch_vrb_limits);
+}
+
+TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pdsch_within_expert_cfg_pusch_rb_limits)
+{
+  sched_ue_creation_request_message ue_creation_req =
+      test_helpers::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  const ue& u1             = add_ue(ue_creation_req);
+
+  // Ensure the buffer status is high enough such that > 20 RBs (configured in constructor) are required to schedule.
+  const unsigned recommended_nof_bytes_to_schedule = 200000U;
+  const unsigned max_nof_rbs_to_schedule           = 273U;
+
+  const ue_pusch_grant grant1{.user                  = &u1,
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = to_harq_id(0),
+                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule,
+                              .max_nof_rbs           = max_nof_rbs_to_schedule};
+
+  ASSERT_TRUE(run_until([&]() { return alloc.allocate_ul_grant(grant1).status == alloc_status::success; }));
+  ASSERT_TRUE(run_until([&]() { return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr; }));
+  // Successfully allocates PUSCH within RB limits.
+  ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1(), pusch_vrb_limits);
+}
+
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_tester,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_remaining_rbs_alloc_tester,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
