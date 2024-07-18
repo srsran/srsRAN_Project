@@ -21,7 +21,8 @@ using namespace srsran;
 class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
                              public rlc_tx_upper_layer_control_notifier,
                              public rlc_tx_lower_layer_notifier,
-                             public rlc_rx_am_status_provider
+                             public rlc_rx_am_status_provider,
+                             public rlc_metrics_notifier
 {
 public:
   std::list<uint32_t> highest_transmitted_pdcp_sn_list;
@@ -78,6 +79,9 @@ public:
   rlc_am_status_pdu& get_status_pdu() override { return status; }
   uint32_t           get_status_pdu_length() override { return status.get_packed_size(); }
   bool               status_report_required() override { return status_required; }
+
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 /// Fixture class for RLC AM Tx tests
@@ -118,6 +122,7 @@ protected:
                                              *tester,
                                              *tester,
                                              *tester,
+                                             tester.get(),
                                              true,
                                              pcap,
                                              pcell_worker,

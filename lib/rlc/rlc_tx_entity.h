@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
+#include "rlc_metrics_aggregator.h"
 #include "rlc_tx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/rlc/rlc_tx.h"
@@ -32,6 +33,7 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
+                rlc_metrics_notifier*                rlc_metrics_notifier_,
                 bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_,
                 task_executor&                       pcell_executor_,
@@ -48,7 +50,8 @@ protected:
     pcell_executor{pcell_executor_},
     ue_executor{ue_executor_},
     pcell_timer_factory{timers, pcell_executor},
-    ue_timer_factory{timers, ue_executor}
+    ue_timer_factory{timers, ue_executor},
+    metrics_agg(rlc_metrics_notifier_)
   {
   }
 
@@ -64,6 +67,9 @@ protected:
   task_executor&                       ue_executor;
   timer_factory                        pcell_timer_factory;
   timer_factory                        ue_timer_factory;
+
+private:
+  rlc_metrics_aggregator metrics_agg;
 
 public:
   /// \brief Stops all internal timers.

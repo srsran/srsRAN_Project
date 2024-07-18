@@ -21,7 +21,8 @@ using namespace srsran;
 class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
                              public rlc_tx_upper_layer_control_notifier,
                              public rlc_tx_lower_layer_notifier,
-                             public rlc_rx_am_status_provider
+                             public rlc_rx_am_status_provider,
+                             public rlc_metrics_notifier
 {
 public:
   rlc_am_sn_size    sn_size;
@@ -50,6 +51,9 @@ public:
   rlc_am_status_pdu& get_status_pdu() override { return status; }
   uint32_t           get_status_pdu_length() override { return status.get_packed_size(); }
   bool               status_report_required() override { return status_required; }
+
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
@@ -150,6 +154,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               *tester,
                                               *tester,
                                               *tester,
+                                              tester.get(),
                                               false,
                                               pcap,
                                               pcell_worker,

@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_tm_entity.h"
+#include "srsran/rlc/rlc_metrics.h"
 
 using namespace srsran;
 
@@ -19,6 +20,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
+                                   rlc_metrics_notifier*                metrics_notifier_,
                                    bool                                 metrics_enabled_,
                                    rlc_pcap&                            pcap_,
                                    task_executor&                       pcell_executor_,
@@ -30,6 +32,7 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(gnb_du_id_t                          du_id,
                 upper_dn_,
                 upper_cn_,
                 lower_dn_,
+                metrics_notifier_,
                 metrics_enabled_,
                 pcap_,
                 pcell_executor_,

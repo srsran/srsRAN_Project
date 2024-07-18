@@ -75,6 +75,7 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
+                   rlc_metrics_notifier*                metrics_notifier_,
                    bool                                 metrics_enabled,
                    rlc_pcap&                            pcap_,
                    task_executor&                       pcell_executor_,

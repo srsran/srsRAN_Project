@@ -47,6 +47,7 @@ public:
                                             tx_upper_dn,
                                             tx_upper_cn,
                                             tx_lower_dn,
+                                            rlc_metrics_notifier_,
                                             metrics_period.count() != 0,
                                             pcap,
                                             pcell_executor,

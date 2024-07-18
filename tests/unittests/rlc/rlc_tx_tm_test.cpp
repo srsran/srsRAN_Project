@@ -21,7 +21,8 @@ using namespace srsran;
 /// Mocking class of the surrounding layers invoked by the RLC TM Tx entity.
 class rlc_tx_tm_test_frame : public rlc_tx_upper_layer_data_notifier,
                              public rlc_tx_upper_layer_control_notifier,
-                             public rlc_tx_lower_layer_notifier
+                             public rlc_tx_lower_layer_notifier,
+                             public rlc_metrics_notifier
 {
 public:
   std::queue<byte_buffer_slice> sdu_queue;
@@ -45,6 +46,9 @@ public:
     this->bsr = bsr_;
     this->bsr_count++;
   }
+
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 /// Fixture class for RLC TM Tx tests
@@ -74,6 +78,7 @@ protected:
                                              *tester,
                                              *tester,
                                              *tester,
+                                             tester.get(),
                                              true,
                                              pcap,
                                              pcell_worker,
