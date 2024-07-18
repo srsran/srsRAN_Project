@@ -767,7 +767,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
-             "--f0_or_f1_nof_ue_res_harq",
+             "--f1_nof_ue_res_harq",
              pucch_params.nof_ue_pucch_f0_or_f1_res_harq,
              "Number of PUCCH F0/F1 resources available per UE for HARQ")
       ->capture_default_str()

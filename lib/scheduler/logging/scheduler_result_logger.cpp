@@ -252,7 +252,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     if (pucch.format == pucch_format::FORMAT_0) {
       const unsigned nof_harq_bits = pucch.format_0.harq_ack_nof_bits;
       const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_0.sr_bits);
-      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format=0 prb={}", pucch.crnti, pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
         fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
       }
@@ -260,7 +260,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
     } else if (pucch.format == pucch_format::FORMAT_1) {
       const unsigned nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
       const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      fmt::format_to(fmtbuf, "\n- PUCCH: c-rnti={} format=1 prb={}", pucch.crnti, pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
         fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
       }
