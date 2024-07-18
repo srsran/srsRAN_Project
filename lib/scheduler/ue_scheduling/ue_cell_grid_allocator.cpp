@@ -222,6 +222,9 @@ alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gra
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
       }
+      // Re-apply nof. PDSCH RBs to allocate limits.
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.stop());
     }
 
     if (mcs_prbs.n_prbs == 0) {
@@ -718,6 +721,9 @@ alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gra
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
       }
+      // Re-apply nof. PUSCH RBs to allocate limits.
+      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
+      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.stop());
     }
 
     // NOTE: This should never happen, but it's safe not to proceed if we get n_prbs == 0.
