@@ -51,8 +51,19 @@ protected:
     ue_executor{ue_executor_},
     pcell_timer_factory{timers, pcell_executor},
     ue_timer_factory{timers, ue_executor},
+    high_metrics_timer(pcell_timer_factory.create_timer()),
+    low_metrics_timer(ue_timer_factory.create_timer()),
     metrics_agg(rlc_metrics_notifier_)
   {
+    if (metrics_enabled) {
+      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
+        metrics_agg.push_tx_high_metrics(metrics_high.get_hi_metrics());
+      });
+      high_metrics_timer.run();
+      low_metrics_timer.set(std::chrono::milliseconds(1000),
+                            [this](timer_id_t tid) { metrics_agg.push_tx_low_metrics(metrics_low.get_low_metrics()); });
+      low_metrics_timer.run();
+    }
   }
 
   rlc_bearer_logger                    logger;
@@ -67,6 +78,9 @@ protected:
   task_executor&                       ue_executor;
   timer_factory                        pcell_timer_factory;
   timer_factory                        ue_timer_factory;
+
+  unique_timer high_metrics_timer;
+  unique_timer low_metrics_timer;
 
 private:
   rlc_metrics_aggregator metrics_agg;
