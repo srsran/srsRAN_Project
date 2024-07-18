@@ -718,6 +718,37 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_4bits_over_sr_and_csi
   ASSERT_FALSE(test_pucch_res_indicator.has_value());
 }
 
+TEST_F(test_pucch_allocator_ded_resources, when_converting_harq_f1_to_f2_during_mplexing_csi_preserve_res_indicator)
+{
+  // This makes PUCCH resource indicator 0 busy for PUCCH resource set 0.
+  add_ue_with_harq_grant();
+  add_csi_grant();
+
+  // At the end of the PUCCH allocation with Format 2, we expect the same PUCCH as for PUCCH format 1.
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  // PUCCH resource indicator 0 is used by the first UE that got allocated.
+  ASSERT_EQ(1U, test_pucch_res_indicator.value());
+}
+
+TEST_F(test_pucch_allocator_ded_resources, when_converting_harq_f1_to_f2_during_mplexing_sr_csi_preserve_res_indicator)
+{
+  // This makes PUCCH resource indicator 0 busy for PUCCH resource set 0.
+  add_ue_with_harq_grant();
+  add_sr_grant();
+  add_csi_grant();
+
+  // At the end of the PUCCH allocation with Format 2, we expect the same PUCCH as for PUCCH format 1.
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  // PUCCH resource indicator 0 is used by the first UE that got allocated.
+  ASSERT_EQ(1U, test_pucch_res_indicator.value());
+}
+
 ///////   Test allocation of common + dedicated resources.    ///////
 
 TEST_F(test_pucch_allocator_ded_resources, test_common_plus_ded_resource_without_existing_grants)
