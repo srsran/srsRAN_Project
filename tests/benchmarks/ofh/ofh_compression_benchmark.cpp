@@ -187,7 +187,7 @@ int main(int argc, char** argv)
     std::string meas_descr_decompression = common_meas_name + " decompression";
 
     std::vector<std::vector<cbf16_t>>             test_data(nof_ports);
-    std::vector<std::vector<cf_t>>                decompressed_data(nof_ports);
+    std::vector<std::vector<cbf16_t>>             decompressed_data(nof_ports);
     std::vector<std::vector<ofh::compressed_prb>> compressed_data(nof_ports);
     for (unsigned i = 0; i != nof_ports; ++i) {
       test_data[i].resize(nof_prbs * NOF_SUBCARRIERS_PER_RB);

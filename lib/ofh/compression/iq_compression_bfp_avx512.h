@@ -29,7 +29,7 @@ public:
   void compress(span<compressed_prb> output, span<const cbf16_t> input, const ru_compression_params& params) override;
 
   // See interface for the documentation.
-  void decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
+  void decompress(span<cbf16_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
 };
 
 } // namespace ofh

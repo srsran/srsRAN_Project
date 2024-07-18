@@ -81,7 +81,7 @@ void iq_compression_bfp_avx2::compress(span<compressed_prb>         output,
   }
 }
 
-void iq_compression_bfp_avx2::decompress(span<cf_t>                   output,
+void iq_compression_bfp_avx2::decompress(span<cbf16_t>                output,
                                          span<const compressed_prb>   input,
                                          const ru_compression_params& params)
 {
@@ -106,11 +106,11 @@ void iq_compression_bfp_avx2::decompress(span<cf_t>                   output,
     // Unpack resource block.
     mm256::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 
-    span<cf_t>          output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
+    span<cbf16_t>       output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     span<const int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
 
     // Convert to complex samples.
-    q_out.to_float(output_span, unpacked_span, scaler);
+    q_out.to_brain_float(output_span, unpacked_span, scaler);
     out_idx += NOF_SUBCARRIERS_PER_RB;
   }
 }

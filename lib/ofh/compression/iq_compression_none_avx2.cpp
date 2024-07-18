@@ -73,9 +73,9 @@ void iq_compression_none_avx2::compress(span<compressed_prb>         output,
   }
 }
 
-void iq_compression_none_avx2::decompress(span<srsran::cf_t>                        output,
-                                          span<const srsran::ofh::compressed_prb>   input,
-                                          const srsran::ofh::ru_compression_params& params)
+void iq_compression_none_avx2::decompress(span<cbf16_t>                output,
+                                          span<const compressed_prb>   input,
+                                          const ru_compression_params& params)
 {
   // Use generic implementation if AVX2 utils don't support requested bit width.
   if (!mm256::iq_width_packing_supported(params.data_width)) {
@@ -95,11 +95,11 @@ void iq_compression_none_avx2::decompress(span<srsran::cf_t>                    
     // Unpack resource block.
     mm256::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 
-    span<cf_t>          output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
+    span<cbf16_t>       output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     span<const int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
 
     // Convert to complex samples.
-    q.to_float(output_span, unpacked_span, 1);
+    q.to_brain_float(output_span, unpacked_span, 1);
     out_idx += NOF_SUBCARRIERS_PER_RB;
   }
 }

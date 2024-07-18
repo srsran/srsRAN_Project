@@ -33,7 +33,7 @@ public:
 
   // See interface for the documentation.
   virtual void
-  decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
+  decompress(span<cbf16_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
 
 protected:
   /// \brief Prints to the log the root mean square (RMS) value of the given samples.

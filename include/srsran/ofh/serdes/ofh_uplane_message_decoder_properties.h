@@ -43,7 +43,7 @@ struct uplane_section_params {
   /// \note For simplicity, all the PRBs use the same compression parameters.
   std::optional<unsigned> ud_comp_param;
   /// IQ samples for the number of PRBs indicated by \c nof_prbs.
-  static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> iq_samples;
+  static_vector<cbf16_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> iq_samples;
 };
 
 /// Open Fronthaul User-Plane message decoder results.

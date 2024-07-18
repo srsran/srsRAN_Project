@@ -41,7 +41,7 @@ void iq_compression_none_impl::compress(span<compressed_prb>         output,
   }
 }
 
-void iq_compression_none_impl::decompress(span<cf_t>                   output,
+void iq_compression_none_impl::decompress(span<cbf16_t>                output,
                                           span<const compressed_prb>   input,
                                           const ru_compression_params& params)
 {

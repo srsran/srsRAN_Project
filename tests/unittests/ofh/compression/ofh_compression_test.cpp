@@ -85,7 +85,7 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
 
   // Prepare vectors to store compression/decompression results.
   std::vector<compressed_prb> compressed_data(nof_prb);
-  std::vector<cf_t>           decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  std::vector<cbf16_t>        decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress input test data.
   compressor->compress(compressed_data, test_data_cbf16, params);
@@ -114,14 +114,21 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
 
   // Check resulting samples versus the original ones considering also a precision loss caused by initial
   // single-precision float to brain float conversion.
-  float resolution = 2.0F / (1 << (params.data_width - 1)) + 1 / 256.0F / 2;
-  ASSERT_TRUE(std::equal(test_data.begin(),
-                         test_data.end(),
-                         decompressed_data.begin(),
+  float resolution = 2.0F / (1 << (params.data_width - 1)) + 1 / 256.0F;
+
+  std::vector<cf_t> decompressed_data_cf(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  srsvec::convert(decompressed_data_cf, decompressed_data);
+  for (auto& result : decompressed_data_cf) {
+    result = {std::real(result) / iq_scaling, std::imag(result) / iq_scaling};
+  }
+
+  ASSERT_TRUE(std::equal(test_data_cf.begin(),
+                         test_data_cf.end(),
+                         decompressed_data_cf.begin(),
                          [&](cf_t& test_value, cf_t& result) {
                            // Make sure the sign is the same and diff is minimal.
-                           return (std::abs(std::real(test_value) - std::real(result) / iq_scaling) <= resolution) &&
-                                  (std::abs(std::imag(test_value) - std::imag(result) / iq_scaling) <= resolution);
+                           return (std::abs(std::real(test_value) - std::real(result)) <= resolution) &&
+                                  (std::abs(std::imag(test_value) - std::imag(result)) <= resolution);
                          }))
       << "Decompressed data don't match the original ones";
 }
@@ -138,14 +145,16 @@ TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
   srsvec::convert(test_data_cbf16, test_data);
 
   std::vector<compressed_prb> compressed_data(nof_prb);
-  std::vector<cf_t>           decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  std::vector<cbf16_t>        decompressed_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
 
   // Compress it.
   compressor->compress(compressed_data, test_data_cbf16, params);
   // Decompress back.
   decompressor->decompress(decompressed_data, compressed_data, params);
 
-  ASSERT_EQ(test_data, decompressed_data);
+  std::vector<cf_t> decompressed_data_cf(nof_prb * NOF_SUBCARRIERS_PER_RB);
+  srsvec::convert(decompressed_data_cf, decompressed_data);
+  ASSERT_EQ(test_data, decompressed_data_cf);
 }
 
 // Verify BPSK modulated data are correctly processed.

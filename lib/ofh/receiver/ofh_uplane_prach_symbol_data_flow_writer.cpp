@@ -10,6 +10,7 @@
 
 #include "ofh_uplane_prach_symbol_data_flow_writer.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
+#include "srsran/srsvec/conversion.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -17,6 +18,8 @@ using namespace ofh;
 void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned                              eaxc,
                                                                  const uplane_message_decoder_results& results)
 {
+  std::array<cf_t, prach_constants::LONG_SEQUENCE_LENGTH> conv_buffer;
+
   slot_point slot = results.params.slot;
 
   prach_context prach_context = prach_context_repo->get(slot);
@@ -89,10 +92,12 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     unsigned iq_size_re = std::min(section_nof_re, prach_nof_res);
 
     // Grab the data.
-    span<const cf_t> prach_in_data = span<const cf_t>(section.iq_samples).subspan(iq_start_re, iq_size_re);
+    span<const cbf16_t> prach_in_data_cbf16 = span<const cbf16_t>(section.iq_samples).subspan(iq_start_re, iq_size_re);
+    span<cf_t>          prach_in_data_cf(conv_buffer.data(), prach_in_data_cbf16.size());
+    srsvec::convert(prach_in_data_cf, prach_in_data_cbf16);
 
     // Copy the data in the buffer.
-    prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
+    prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data_cf);
 
     logger.debug("Handling PRACH in slot '{}', symbol '{}' and port '{}'", slot, results.params.symbol_id, port);
   }

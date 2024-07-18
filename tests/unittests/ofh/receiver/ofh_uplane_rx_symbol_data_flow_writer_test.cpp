@@ -33,7 +33,7 @@ protected:
 
 public:
   ofh_uplane_rx_symbol_data_flow_writer_fixture() :
-    slot(0, 0, 1), grid(rg_writer), writer(eaxc, srslog::fetch_basic_logger("TEST"), repo)
+    slot(0, 0, 1), rg_writer(MAX_NOF_PRBS), grid(rg_writer), writer(eaxc, srslog::fetch_basic_logger("TEST"), repo)
   {
     results.params.slot      = slot;
     results.params.symbol_id = symbol_id;

@@ -30,13 +30,14 @@ public:
   /// \brief Decompress received compressed PRBs.
   ///
   /// Decompresses compressed PRBs from the input buffer according to received compression parameters and puts the
-  /// results into an array of floating point IQ samples.
+  /// results into an array of brain floating point IQ samples.
   ///
   /// \param[out] iq_data  Resulting IQ samples after decompression.
   /// \param[in]  compressed_prbs A span containing received compressed PRBs.
   /// \param[in]  params  Compression parameters.
-  virtual void
-  decompress(span<cf_t> iq_data, span<const compressed_prb> compressed_prbs, const ru_compression_params& params) = 0;
+  virtual void decompress(span<cbf16_t>                iq_data,
+                          span<const compressed_prb>   compressed_prbs,
+                          const ru_compression_params& params) = 0;
 };
 
 } // namespace ofh
