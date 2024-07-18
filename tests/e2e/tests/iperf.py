@@ -68,7 +68,7 @@ tdd_dl_tcp = defaultdict(
     {
         20: int(43e6),
         50: int(153e6),
-        90: int(124e6),  # TODO: update this value if lates are gone
+        90: int(124e6),
     },
 )
 

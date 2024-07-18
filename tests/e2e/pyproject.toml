@@ -69,7 +69,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [tool.pylint]
-disable = ["fixme", "no-name-in-module", "duplicate-code", "import-error"]
+disable = ["no-name-in-module", "duplicate-code", "import-error"]
 ignore-signatures = true
 max-line-length = 120
 
