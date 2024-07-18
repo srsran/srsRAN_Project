@@ -15,8 +15,12 @@ using namespace srsran;
 
 class mock_rlc_metrics_notifier : public rlc_metrics_notifier
 {
-  void report_metrics(const rlc_metrics& metrics) override {}
+  void report_metrics(const rlc_metrics& metrics) override { metrics_list.push_back(metrics); }
+
+public:
+  std::vector<rlc_metrics> metrics_list;
 };
+
 /// Fixture class for RLC metrics aggregator tests
 class rlc_metrics_aggregator_test : public ::testing::Test
 {
@@ -48,14 +52,43 @@ protected:
 
 TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation)
 {
-  rlc_tx_metrics_higher hi_m;
-  rlc_tx_metrics_lower  low_m;
+  // Check if pushing two metrics causes the metrics to be pushed.
+  {
+    rlc_tx_metrics_higher hi_m;
+    rlc_tx_metrics_lower  low_m;
 
-  hi_m.num_sdus                  = 10;
-  low_m.num_pdus_no_segmentation = 10;
+    hi_m.num_sdus                  = 10;
+    low_m.num_pdus_no_segmentation = 10;
 
-  metrics_agg->push_tx_high_metrics(hi_m);
-  metrics_agg->push_tx_low_metrics(low_m);
+    metrics_agg->push_tx_high_metrics(hi_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 0);
+
+    metrics_agg->push_tx_low_metrics(low_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 1);
+
+    // TODO check report
+  }
+
+  metrics_notif->metrics_list.clear();
+
+  // Same, but reversed order of pushing.
+  {
+    rlc_tx_metrics_higher hi_m;
+    rlc_tx_metrics_lower  low_m;
+
+    hi_m.num_sdus                  = 10;
+    hi_m.counter                   = 1;
+    low_m.num_pdus_no_segmentation = 10;
+    low_m.counter                  = 1;
+
+    metrics_agg->push_tx_low_metrics(low_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 0);
+
+    metrics_agg->push_tx_high_metrics(hi_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 1);
+
+    // TODO check report
+  }
 }
 
 int main(int argc, char** argv)

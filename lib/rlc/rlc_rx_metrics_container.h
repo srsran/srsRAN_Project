@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/rlc/rlc_rx_metrics.h"
-#include "srsran/srslog/srslog.h"
 #include <mutex>
 
 namespace srsran {

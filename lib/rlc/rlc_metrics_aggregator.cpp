@@ -14,8 +14,24 @@ using namespace srsran;
 rlc_metrics_aggregator::rlc_metrics_aggregator(rlc_metrics_notifier* rlc_metrics_notif_) :
   rlc_metrics_notif(rlc_metrics_notif_)
 {
+  m_lower.counter  = UINT32_MAX;
+  m_higher.counter = UINT32_MAX;
 }
 
-void rlc_metrics_aggregator::push_tx_low_metrics(rlc_tx_metrics_lower m_lower) {}
+void rlc_metrics_aggregator::push_tx_low_metrics(rlc_tx_metrics_lower m_lower_)
+{
+  m_lower = m_lower_;
+  if (m_lower.counter == m_higher.counter) {
+    rlc_metrics report = {};
+    rlc_metrics_notif->report_metrics(report);
+  }
+}
 
-void rlc_metrics_aggregator::push_tx_high_metrics(rlc_tx_metrics_higher m_higher) {}
+void rlc_metrics_aggregator::push_tx_high_metrics(rlc_tx_metrics_higher m_higher_)
+{
+  m_higher = m_higher_;
+  if (m_lower.counter == m_higher.counter) {
+    rlc_metrics report = {};
+    rlc_metrics_notif->report_metrics(report);
+  }
+}
