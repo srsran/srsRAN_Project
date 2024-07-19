@@ -105,8 +105,12 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
   std::shared_ptr<channel_modulation_factory> chan_mod_factory = create_channel_modulation_sw_factory();
   report_fatal_error_if_not(chan_mod_factory, "Failed to create factory.");
 
-  std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-      create_pusch_demodulator_factory_sw(eq_factory, chan_mod_factory, pseudo_random_gen_factory, true, true);
+  std::shared_ptr<transform_precoder_factory> precoding_factory =
+      create_dft_transform_precoder_factory(dft_proc_factory, MAX_RB);
+  report_fatal_error_if_not(precoding_factory, "Invalid transform precoding factory.");
+
+  std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
+      eq_factory, precoding_factory, chan_mod_factory, pseudo_random_gen_factory, MAX_RB, true, true);
   report_fatal_error_if_not(pusch_demod_factory, "Failed to create factory.");
 
   std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();

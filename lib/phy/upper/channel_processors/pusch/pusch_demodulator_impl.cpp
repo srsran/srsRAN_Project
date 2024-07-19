@@ -149,115 +149,110 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
   float                                          noise_var_accumulate = 0.0;
   float                                          evm_accumulate       = 0.0;
 
+  // Process each OFDM symbol.
   for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
        i_symbol != i_symbol_end;
        ++i_symbol) {
     // Select RE mask for the symbol.
     re_symbol_mask_type& symbol_re_mask = config.dmrs_symb_pos.test(i_symbol) ? re_mask_dmrs : re_mask;
 
+    // Count the number of active RE in the symbol.
+    unsigned nof_re_symbol = symbol_re_mask.count();
+
     // Skip symbol if it does not contain data.
-    if (symbol_re_mask.none()) {
+    if (nof_re_symbol == 0) {
       continue;
     }
 
-    // Process subcarriers in groups.
-    for (unsigned i_subc = symbol_re_mask.find_lowest(), i_subc_end = symbol_re_mask.find_highest() + 1;
-         i_subc != i_subc_end;) {
-      // Calculate the remainder number of subcarriers to process for the current OFDM symbol.
-      unsigned nof_block_subc = i_subc_end - i_subc;
+    // Resize equalizer output buffers.
+    span<cf_t>  eq_re         = span<cf_t>(temp_eq_re).first(nof_re_symbol * config.nof_tx_layers);
+    span<float> eq_noise_vars = span<float>(temp_eq_noise_vars).first(nof_re_symbol * config.nof_tx_layers);
 
-      // Limit number of RE to the maximum block size.
-      nof_block_subc = std::min(nof_block_subc, MAX_BLOCK_SIZE / nof_bits_per_re);
+    // Extract the data symbols and channel estimates from the resource grid.
+    const re_buffer_reader<cbf16_t>&      ch_re = get_ch_data_re(grid, i_symbol, symbol_re_mask, config.rx_ports);
+    const channel_equalizer::ch_est_list& ch_estimates =
+        get_ch_data_estimates(estimates, i_symbol, config.nof_tx_layers, symbol_re_mask, config.rx_ports);
+
+    // Extract the Rx port noise variances from the channel estimation.
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+    }
+
+    // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
+    equalizer->equalize(
+        eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
+
+    // Revert transform precoding for the entire OFDM symbol.
+    if (config.enable_transform_precoding) {
+      srsran_assert(config.nof_tx_layers == 1,
+                    "Transform precoding is only possible with one layer (i.e. {}).",
+                    config.nof_tx_layers);
+      precoder->deprecode_ofdm_symbol(eq_re, eq_re);
+    }
+
+    // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
+    if (compute_post_eq_sinr) {
+      noise_var_accumulate +=
+          std::accumulate(eq_noise_vars.begin(), eq_noise_vars.end(), 0.0F, [&sinr_softbit_count](float sum, float in) {
+            // Exclude outliers with infinite variance. This makes sure that handling of the DC carrier does not skew
+            // the SINR results.
+            if (std::isinf(in)) {
+              return sum;
+            }
+
+            ++sinr_softbit_count;
+            return sum + in;
+          });
+    }
+
+    // Counts the number of processed RE for the OFDM symbol.
+    unsigned count_re_symbol = 0;
+
+    // Process subcarriers in groups.
+    while (count_re_symbol != nof_re_symbol) {
+      // Calculate the remainder number of subcarriers to process for the current OFDM symbol.
+      unsigned remain_nof_subc = nof_re_symbol - count_re_symbol;
 
       // Get a view of the codeword buffer destination.
-      span<log_likelihood_ratio> codeword_block = codeword_buffer.get_next_block_view(nof_block_subc * nof_bits_per_re);
-
-      // If the codeword is empty, skip the rest of the symbol.
-      if (codeword_block.empty()) {
-        unsigned nof_remainder_re = symbol_re_mask.slice(i_subc, symbol_re_mask.size()).count();
-        srsran_assert(nof_remainder_re == 0, "There are {} remaining RE.", nof_remainder_re);
-        break;
-      }
+      span<log_likelihood_ratio> codeword = codeword_buffer.get_next_block_view(remain_nof_subc * nof_bits_per_re);
 
       // Limit block size if the codeword block is smaller.
-      srsran_assert(codeword_block.size() % nof_bits_per_re == 0,
+      srsran_assert(codeword.size() % nof_bits_per_re == 0,
                     "The codeword block size (i.e., {}) must be multiple of the number of bits per RE (i.e., {}).",
-                    codeword_block.size(),
+                    codeword.size(),
                     nof_bits_per_re);
 
-      // Extract mask for the block.
-      // First, get the mask of data REs in the current block of received symbols.
-      re_symbol_mask_type block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
-      // Next, get the number of subcarriers needed to carry the current codeword block.
-      unsigned nof_required_subc = static_cast<unsigned>(codeword_block.size()) / nof_bits_per_re;
-      // Ensure the number of data REs in the block of received symbols is not larger than the codeword block (expressed
-      // as a number of subcarriers).
-      while (block_re_mask.count() > nof_required_subc) {
-        --nof_block_subc;
-        block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
-      }
-
-      // Number of data Resource Elements in a slot for a single Rx port.
-      unsigned nof_re_port = static_cast<unsigned>(block_re_mask.count());
-
-      // Skip block if no data.
-      if (nof_re_port == 0) {
-        i_subc += nof_block_subc;
-        continue;
-      }
-
-      // Resize equalizer output buffers.
-      span<cf_t>  eq_re         = span<cf_t>(temp_eq_re).first(nof_re_port * config.nof_tx_layers);
-      span<float> eq_noise_vars = span<float>(temp_eq_noise_vars).first(nof_re_port * config.nof_tx_layers);
-
-      // Extract the data symbols and channel estimates from the resource grid.
-      const re_buffer_reader<cbf16_t>& ch_re = get_ch_data_re(grid, i_symbol, i_subc, block_re_mask, config.rx_ports);
-      const channel_equalizer::ch_est_list& ch_estimates =
-          get_ch_data_estimates(estimates, i_symbol, i_subc, config.nof_tx_layers, block_re_mask, config.rx_ports);
-
-      // Increment subcarrier count.
-      i_subc += nof_block_subc;
-
-      // Extract the Rx port noise variances from the channel estimation.
-      for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-        noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
-      }
-
-      // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
-      equalizer->equalize(
-          eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
-
-      // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
-      if (compute_post_eq_sinr) {
-        noise_var_accumulate += std::accumulate(
-            eq_noise_vars.begin(), eq_noise_vars.end(), 0.0F, [&sinr_softbit_count](float sum, float in) {
-              // Exclude outliers with infinite variance. This makes sure that handling of the DC carrier does not skew
-              // the SINR results.
-              if (std::isinf(in)) {
-                return sum;
-              }
-
-              ++sinr_softbit_count;
-              return sum + in;
-            });
-      }
-
-      // Get codeword buffer.
-      unsigned                   nof_block_softbits = nof_re_port * nof_bits_per_re;
-      span<log_likelihood_ratio> codeword           = codeword_block.first(nof_block_softbits);
+      // Select equalizer output.
+      unsigned          nof_block_softbits    = codeword.size();
+      unsigned          codeword_block_offset = count_re_symbol * config.nof_tx_layers;
+      unsigned          codeword_block_size   = nof_block_softbits / get_bits_per_symbol(config.modulation);
+      span<const cf_t>  eq_re_block           = eq_re.subspan(codeword_block_offset, codeword_block_size);
+      span<const float> eq_noise_vars_block   = eq_noise_vars.subspan(codeword_block_offset, codeword_block_size);
 
       // Build LLRs from channel symbols.
-      demapper->demodulate_soft(codeword, eq_re, eq_noise_vars, config.modulation);
+      demapper->demodulate_soft(codeword, eq_re_block, eq_noise_vars_block, config.modulation);
 
       // Calculate EVM only if it is available.
       if (evm_calc) {
-        unsigned nof_re_evm = eq_re.size();
-        evm_accumulate += static_cast<float>(nof_re_evm) * evm_calc->calculate(codeword, eq_re, config.modulation);
-        evm_symbol_count += nof_re_evm;
+        evm_accumulate +=
+            static_cast<float>(codeword_block_size) * evm_calc->calculate(codeword, eq_re_block, config.modulation);
+        evm_symbol_count += codeword_block_size;
       }
 
-      // Update and notify statistics.
-      if (i_subc == i_subc_end) {
+      // Generate scrambling sequence.
+      static_bit_buffer<pusch_constants::MAX_NOF_BITS_PER_OFDM_SYMBOL> scrambling_seq(nof_block_softbits);
+      descrambler->generate(scrambling_seq);
+
+      // Revert scrambling.
+      revert_scrambling(codeword, codeword, scrambling_seq);
+
+      // Increment the number of processed RE within the OFDM symbol.
+      count_re_symbol += nof_block_softbits / nof_bits_per_re;
+
+      // Update and notify statistics if it is the last processed block for the OFDM symbol. The provisional stats must
+      // be notified earlier than the new processed block to ensure the stats are available upon the notification of the
+      // results.
+      if (count_re_symbol == nof_re_symbol) {
         if ((sinr_softbit_count != 0) && (noise_var_accumulate > 0.0)) {
           float mean_noise_var = noise_var_accumulate / static_cast<float>(sinr_softbit_count);
           stats.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
@@ -269,13 +264,6 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
         }
         notifier.on_provisional_stats(stats);
       }
-
-      // Generate scrambling sequence.
-      static_bit_buffer<MAX_BLOCK_SIZE> scrambling_seq(nof_block_softbits);
-      descrambler->generate(scrambling_seq);
-
-      // Revert scrambling.
-      revert_scrambling(codeword, codeword, scrambling_seq);
 
       // Notify a new processed block.
       codeword_buffer.on_new_block(codeword, scrambling_seq);

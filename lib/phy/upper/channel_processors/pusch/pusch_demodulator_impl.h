@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsran/phy/generic_functions/transform_precoding/transform_precoder.h"
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
@@ -33,16 +34,22 @@ class pusch_demodulator_impl : public pusch_demodulator
 public:
   /// Constructor: sets up internal components and acquires their ownership.
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
+                         std::unique_ptr<transform_precoder>      precoder_,
                          std::unique_ptr<demodulation_mapper>     demapper_,
                          std::unique_ptr<evm_calculator>          evm_calc_,
                          std::unique_ptr<pseudo_random_generator> descrambler_,
+                         unsigned                                 max_nof_rb,
                          bool                                     compute_post_eq_sinr_) :
     equalizer(std::move(equalizer_)),
+    precoder(std::move(precoder_)),
     demapper(std::move(demapper_)),
     evm_calc(std::move(evm_calc_)),
     descrambler(std::move(descrambler_)),
+    ch_re_copy(MAX_PORTS, max_nof_rb * NRE),
     ch_re_view(pusch_constants::MAX_NOF_RX_PORTS),
-    ch_estimates_copy(MAX_BLOCK_SIZE, pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
+    temp_eq_re(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
+    temp_eq_noise_vars(max_nof_rb * NRE * pusch_constants::MAX_NOF_LAYERS),
+    ch_estimates_copy(max_nof_rb * NRE, pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
     ch_estimates_view(pusch_constants::MAX_NOF_RX_PORTS, pusch_constants::MAX_NOF_LAYERS),
     compute_post_eq_sinr(compute_post_eq_sinr_)
   {
@@ -58,8 +65,6 @@ public:
                   const configuration&        config) override;
 
 private:
-  /// Maximum processing block size in bits.
-  static constexpr unsigned MAX_BLOCK_SIZE = 4096;
   /// Data type for representing an RE mask within an OFDM symbol.
   using re_symbol_mask_type = bounded_bitset<MAX_RB * NRE>;
 
@@ -70,13 +75,11 @@ private:
   ///
   /// \param[in]  grid      Resource grid for the current slot.
   /// \param[in]  i_symbol  OFDM symbol index relative to the beginning of the slot.
-  /// \param[in]  init_subc Initial subcarrier index relative to Point A.
   /// \param[in]  re_mask   Resource element mask, it selects the RE elements to extract.
   /// \param[in]  rx_ports  Receive ports.
   /// \return A reference to the PUSCH channel data symbols.
   const re_buffer_reader<cbf16_t>& get_ch_data_re(const resource_grid_reader&              grid,
                                                   unsigned                                 i_symbol,
-                                                  unsigned                                 init_subc,
                                                   const re_symbol_mask_type&               re_mask,
                                                   const static_vector<uint8_t, MAX_PORTS>& rx_ports)
   {
@@ -97,7 +100,7 @@ private:
         span<const cbf16_t> ch_data_re = grid.get_view(i_port, i_symbol);
 
         // Set the view in the channel estimates.
-        ch_re_view.set_slice(i_port, ch_data_re.subspan(init_subc + begin, nof_re));
+        ch_re_view.set_slice(i_port, ch_data_re.subspan(begin, nof_re));
       }
       return ch_re_view;
     }
@@ -111,7 +114,7 @@ private:
       span<cbf16_t> re_port_buffer = ch_re_copy.get_slice(i_port);
 
       // Copy grid data resource elements into the buffer.
-      re_port_buffer = grid.get(re_port_buffer, rx_ports[i_port], i_symbol, init_subc, re_mask);
+      re_port_buffer = grid.get(re_port_buffer, rx_ports[i_port], i_symbol, 0, re_mask);
 
       // Verify buffer size.
       srsran_assert(
@@ -136,7 +139,6 @@ private:
   /// \return A reference to the PUSCH channel data estimates.
   const channel_equalizer::ch_est_list& get_ch_data_estimates(const channel_estimate&                  channel_estimate,
                                                               unsigned                                 i_symbol,
-                                                              unsigned                                 init_subc,
                                                               unsigned                                 nof_tx_layers,
                                                               const re_symbol_mask_type&               re_mask,
                                                               const static_vector<uint8_t, MAX_PORTS>& rx_ports)
@@ -159,7 +161,7 @@ private:
           span<const cbf16_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
           // Set the view in the channel estimates.
-          ch_estimates_view.set_channel(symbol_estimates.subspan(init_subc + begin, nof_re), i_port, i_layer);
+          ch_estimates_view.set_channel(symbol_estimates.subspan(begin, nof_re), i_port, i_layer);
         }
       }
 
@@ -179,7 +181,7 @@ private:
         span<const cbf16_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
         // Get view of the selected area of the grid.
-        symbol_estimates = symbol_estimates.subspan(init_subc, re_mask.size());
+        symbol_estimates = symbol_estimates.first(re_mask.size());
 
         // Skip DM-RS estimates.
         re_mask.for_each(0, re_mask.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_re) {
@@ -202,6 +204,8 @@ private:
 
   /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
   std::unique_ptr<channel_equalizer> equalizer;
+  /// Transform precoder.
+  std::unique_ptr<transform_precoder> precoder;
   /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
   std::unique_ptr<demodulation_mapper> demapper;
   /// EVM calculator. Optional, set to nullptr if not available.
@@ -209,13 +213,13 @@ private:
   /// Descrambler component.
   std::unique_ptr<pseudo_random_generator> descrambler;
   /// Copy buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
-  static_re_buffer<pusch_constants::MAX_NOF_RX_PORTS, MAX_BLOCK_SIZE, cbf16_t> ch_re_copy;
+  dynamic_re_buffer<cbf16_t> ch_re_copy;
   /// View buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
   modular_re_buffer_reader<cbf16_t> ch_re_view;
   /// Buffer used to store channel modulation resource elements at the equalizer output.
-  std::array<cf_t, MAX_BLOCK_SIZE> temp_eq_re;
+  std::vector<cf_t> temp_eq_re;
   /// Buffer used to transfer symbol noise variances at the equalizer output.
-  std::array<float, MAX_BLOCK_SIZE> temp_eq_noise_vars;
+  std::vector<float> temp_eq_noise_vars;
   /// Copy buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.
   dynamic_ch_est_list ch_estimates_copy;
   /// View buffer used to transfer channel estimation coefficients from the channel estimate to the equalizer.

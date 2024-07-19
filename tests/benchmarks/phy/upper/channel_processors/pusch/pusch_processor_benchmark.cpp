@@ -538,9 +538,13 @@ static pusch_processor_factory& get_pusch_processor_factory()
   std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_generic_factory();
   TESTASSERT(eq_factory);
 
+  std::shared_ptr<transform_precoder_factory> precoding_factory =
+      create_dft_transform_precoder_factory(dft_factory, MAX_RB);
+  TESTASSERT(precoding_factory);
+
   // Create PUSCH demodulator factory.
-  std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-      create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory, enable_evm);
+  std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
+      eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB, enable_evm);
   TESTASSERT(pusch_demod_factory);
 
   // Create PUSCH demultiplexer factory.

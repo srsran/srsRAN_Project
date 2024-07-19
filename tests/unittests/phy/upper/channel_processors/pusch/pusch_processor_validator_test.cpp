@@ -217,9 +217,13 @@ protected:
     std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_generic_factory();
     ASSERT_NE(eq_factory, nullptr);
 
+    std::shared_ptr<transform_precoder_factory> precoding_factory =
+        create_dft_transform_precoder_factory(dft_factory, MAX_RB);
+    ASSERT_NE(precoding_factory, nullptr);
+
     // Create PUSCH demodulator factory.
-    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory);
+    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
+        eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB);
     ASSERT_NE(pusch_demod_factory, nullptr);
 
     // Create PUSCH demultiplexer factory.

@@ -33,9 +33,6 @@ public:
                                      const configuration&  config) override;
 
 private:
-  static constexpr unsigned max_nof_bits_ofdm_symbol =
-      MAX_RB * NRE * pusch_constants::MAX_MODULATION_ORDER * pusch_constants::MAX_NOF_LAYERS;
-
   // See pusch_codeword_buffer for documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override;
 
@@ -104,9 +101,9 @@ private:
   /// Set of resource elements for CSI Part 2 transmission.
   re_set_type csi_part2_re_set;
   /// Demodulated soft bits buffer for an entire OFDM symbol.
-  std::array<log_likelihood_ratio, max_nof_bits_ofdm_symbol> temp_data_ofdm_symbol;
+  std::array<log_likelihood_ratio, pusch_constants::MAX_NOF_BITS_PER_OFDM_SYMBOL> temp_data_ofdm_symbol;
   /// Scrambling sequence for an entire OFDM symbol.
-  static_bit_buffer<max_nof_bits_ofdm_symbol> temp_scrambling_seq_ofdm_symbol;
+  static_bit_buffer<pusch_constants::MAX_NOF_BITS_PER_OFDM_SYMBOL> temp_scrambling_seq_ofdm_symbol;
 };
 
 } // namespace srsran

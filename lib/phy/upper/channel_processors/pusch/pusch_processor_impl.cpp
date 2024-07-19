@@ -279,6 +279,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
+  demod_config.enable_transform_precoding  = false;
   demod_config.rx_ports                    = pdu.rx_ports;
   dependencies.get_demodulator().demodulate(
       demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);

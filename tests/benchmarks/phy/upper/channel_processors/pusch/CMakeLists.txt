@@ -29,6 +29,7 @@ set(PUSCH_PROCESSOR_LIBRARIES srsran_phy_support
         srsran_channel_equalizer
         srsran_channel_precoder
         srsran_channel_processors
+        srsran_transform_precoding
         srslog
         srsvec)
 

@@ -248,9 +248,15 @@ private:
       return nullptr;
     }
 
+    std::shared_ptr<transform_precoder_factory> precoding_factory =
+        create_dft_transform_precoder_factory(dft_factory, MAX_NOF_PRBS);
+    if (!precoding_factory) {
+      return nullptr;
+    }
+
     // Create PUSCH demodulator factory.
-    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory, true, true);
+    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
+        eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_NOF_PRBS, true, true);
     if (!pusch_demod_factory) {
       return nullptr;
     }
