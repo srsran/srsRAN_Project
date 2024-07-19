@@ -56,7 +56,7 @@ BITRATE_THRESHOLD: float = 0.1
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue_4: Tuple[UEStub, ...],
+    ue_8: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
@@ -72,7 +72,7 @@ def test_zmq(
     _attach_and_detach_multi_ues(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue_array=ue_4,
+        ue_array=ue_8,
         gnb=gnb,
         fivegc=fivegc,
         band=band,
