@@ -21,16 +21,16 @@ namespace srsran {
 
 static float ASSERT_MAX_ERROR = 1e-3;
 
-static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+static std::ostream& operator<<(std::ostream& os, span<const cbf16_t> data)
 {
   fmt::print(os, "{}", data);
   return os;
 }
 
-static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
+static bool operator==(span<const cbf16_t> lhs, span<const cbf16_t> rhs)
 {
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
-    return (std::abs(lhs_val - rhs_val) <= ASSERT_MAX_ERROR);
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cbf16_t lhs_val, cbf16_t rhs_val) {
+    return (std::abs(to_cf(lhs_val) - to_cf(rhs_val)) <= ASSERT_MAX_ERROR);
   });
 }
 
@@ -116,8 +116,8 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
     for (unsigned i_td_occasion = 0; i_td_occasion != config.nof_td_occasions; ++i_td_occasion) {
       for (unsigned i_fd_occasion = 0; i_fd_occasion != config.nof_fd_occasions; ++i_fd_occasion) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-          ASSERT_EQ(span<const cf_t>(expected_buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)),
-                    span<const cf_t>(output->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)));
+          ASSERT_EQ(span<const cbf16_t>(expected_buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)),
+                    span<const cbf16_t>(output->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)));
         }
       }
     }

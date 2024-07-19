@@ -46,7 +46,7 @@ public:
 
 class prach_buffer_dummy : public prach_buffer
 {
-  std::array<cf_t, 1> buffer;
+  std::array<cbf16_t, 1> buffer;
 
 public:
   unsigned get_max_nof_ports() const override { return 0; }
@@ -59,12 +59,12 @@ public:
 
   unsigned get_sequence_length() const override { return 0; }
 
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     return buffer;
   }
 
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     return buffer;

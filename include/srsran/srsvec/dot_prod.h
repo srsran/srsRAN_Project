@@ -69,14 +69,13 @@ cf_t dot_prod(span<const cf_t> x, span<const cf_t> y);
 ///
 /// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.
 /// <tt>dot_prod(x, x) / x.size()</tt>.
-inline float average_power(span<const cf_t> x)
-{
-  if (x.empty()) {
-    return 0.0F;
-  }
+float average_power(span<const cf_t> x);
 
-  return std::real(srsvec::dot_prod(x, x)) / static_cast<float>(x.size());
-}
+/// \brief Estimates the average power of a complex span - linear scale.
+///
+/// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.
+/// <tt>dot_prod(x, x) / x.size()</tt>.
+float average_power(span<const cbf16_t> x);
 
 } // namespace srsvec
 } // namespace srsran

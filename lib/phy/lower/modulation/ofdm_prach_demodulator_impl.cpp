@@ -12,6 +12,7 @@
 #include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/conversion.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
@@ -164,7 +165,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                       prach_grid_size);
 
         // Select destination PRACH symbol in the buffer.
-        span<cf_t> prach_symbol = buffer.get_symbol(config.port, i_td_occasion, i_fd_occasion, i_symbol);
+        span<cbf16_t> prach_symbol = buffer.get_symbol(config.port, i_td_occasion, i_fd_occasion, i_symbol);
 
         // Create views of the lower and upper grid.
         span<const cf_t> lower_grid = dft_output.last(prach_grid_size / 2);
@@ -176,11 +177,11 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
           unsigned N = std::min(prach_grid_size / 2 - k_start, preamble_info.sequence_length);
 
           // Copy first N subcarriers of the sequence in the lower half grid.
-          srsvec::copy(prach_symbol.first(N), lower_grid.subspan(k_start, N));
+          srsvec::convert(prach_symbol.first(N), lower_grid.subspan(k_start, N));
 
           // Copy the remainder of the sequence in the upper half grid.
-          srsvec::copy(prach_symbol.last(preamble_info.sequence_length - N),
-                       upper_grid.first(preamble_info.sequence_length - N));
+          srsvec::convert(prach_symbol.last(preamble_info.sequence_length - N),
+                          upper_grid.first(preamble_info.sequence_length - N));
         } else {
           // Copy the sequence in the upper half grid.
           srsvec::copy(prach_symbol, upper_grid.subspan(k_start - prach_grid_size / 2, preamble_info.sequence_length));

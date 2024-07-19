@@ -19,6 +19,7 @@
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/srsvec/copy.h"
 #include <mutex>
 #include <numeric>
 #include <optional>
@@ -105,7 +106,7 @@ public:
   }
 
   /// Writes the given IQ buffer corresponding to the given symbol and port.
-  void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
+  void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
   {
     if (is_long_preamble(context_info.context.format)) {
       // Some RUs always set PRACH symbolId to 0 when long format is used ignoring the value indicated in C-Plane.
@@ -125,13 +126,13 @@ public:
     }
 
     // Update the buffer.
-    span<cf_t> prach_out_buffer = context_info.buffer->get_symbol(
+    span<cbf16_t> prach_out_buffer = context_info.buffer->get_symbol(
         port, context_info.context.nof_fd_occasions - 1, context_info.context.nof_td_occasions - 1, symbol);
 
     srsran_assert(prach_out_buffer.last(prach_out_buffer.size() - re_start).size() >= iq_buffer.size(),
                   "Invalid IQ data buffer size to copy as it does not fit into the PRACH buffer");
 
-    std::copy(iq_buffer.begin(), iq_buffer.end(), prach_out_buffer.begin() + re_start);
+    srsvec::copy(prach_out_buffer.subspan(re_start, iq_buffer.size()), iq_buffer);
 
     // Update statistics.
     buffer_stats[symbol].re_written[port].fill(re_start, re_start + iq_buffer.size());
@@ -225,7 +226,7 @@ public:
   }
 
   /// Function to write the uplink PRACH buffer.
-  void write_iq(slot_point slot, unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
+  void write_iq(slot_point slot, unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
   {
     std::lock_guard<std::mutex> lock(mutex);
     entry(slot).write_iq(port, symbol, re_start, iq_buffer);

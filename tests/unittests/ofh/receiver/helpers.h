@@ -22,9 +22,9 @@ namespace testing {
 /// PRACH buffer dummy implementation.
 class prach_buffer_dummy : public prach_buffer
 {
-  unsigned                 nof_symbols;
-  static_vector<cf_t, 839> buffer;
-  mutable bool             symbol_out_of_bounds;
+  unsigned                    nof_symbols;
+  static_vector<cbf16_t, 839> buffer;
+  mutable bool                symbol_out_of_bounds;
 
 public:
   prach_buffer_dummy(unsigned nof_symbols_, bool long_format = true) :
@@ -42,12 +42,12 @@ public:
 
   unsigned get_sequence_length() const override { return buffer.size(); }
 
-  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
   {
     return buffer;
   }
 
-  span<const cf_t>
+  span<const cbf16_t>
   get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
   {
     if (i_symbol >= nof_symbols) {

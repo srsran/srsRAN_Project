@@ -45,6 +45,26 @@ static void add_fff_simd(const float* x, const float* y, float* z, std::size_t l
   }
 }
 
+static void add_ccc_simd(const cf_t* x, const cbf16_t* y, cf_t* z, std::size_t len)
+{
+  std::size_t i = 0;
+
+#if SRSRAN_SIMD_F_SIZE
+  for (std::size_t i_end = (len / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
+    simd_cf_t a = srsran_simd_cfi_loadu(x + i);
+    simd_cf_t b = srsran_simd_cbf16_loadu(y + i);
+
+    simd_cf_t r = srsran_simd_cf_add(a, b);
+
+    srsran_simd_cfi_storeu(z + i, r);
+  }
+#endif
+
+  for (; i != len; ++i) {
+    z[i] = x[i] + to_cf(y[i]);
+  }
+}
+
 static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::size_t len)
 {
   std::size_t i = 0;
@@ -116,6 +136,14 @@ void srsran::srsvec::add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
                reinterpret_cast<const float*>(y.data()),
                reinterpret_cast<float*>(z.data()),
                2 * z.size());
+}
+
+void srsran::srsvec::add(span<const cf_t> x, span<const cbf16_t> y, span<cf_t> z)
+{
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
+
+  add_ccc_simd(x.data(), y.data(), z.data(), 2 * z.size());
 }
 
 void srsran::srsvec::add(span<const float> x, span<const float> y, span<float> z)
