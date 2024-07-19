@@ -558,6 +558,57 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_sr)
   }));
 }
 
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_1bit_over_csi)
+{
+  // With 1 HARQ-ACK bit, the F1 HARQ-ACK resource overlaps with the F2 resource for CSI, thus the 2 resource will be
+  // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 2).
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 1;
+  pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 HARQ and 1 SR.
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  const auto& pucch_pdus = slot_grid.result.ul.pucchs;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) { return pdu.csi_rep_cfg.has_value(); }));
+
+  ASSERT_TRUE(find_pucch_pdu(
+      pucch_pdus, [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+}
+
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits_over_csi)
+{
+  // With 2 HARQ-ACK bits, the F1 HARQ-ACK resource overlaps with the F2 resource for CSI, thus the 2 resource will be
+  // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 2).
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 2;
+  pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+  add_harq_grant();
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 HARQ and 1 SR.
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  const auto& pucch_pdus = slot_grid.result.ul.pucchs;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) { return pdu.csi_rep_cfg.has_value(); }));
+
+  ASSERT_TRUE(find_pucch_pdu(
+      pucch_pdus, [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+}
+
 TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_csi)
 {
   // We don't know a-priori whether CSI and HARQ will be multilplexed within the same resource; we need to consider both

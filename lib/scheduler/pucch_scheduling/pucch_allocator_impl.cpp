@@ -1400,6 +1400,7 @@ pucch_allocator_impl::multiplex_and_allocate_pucch(cell_slot_resource_allocator&
   // information bits, the UE determines a PUCCH resource set to be ...".
   const pucch_uci_bits current_uci_bits = current_grants.pucch_grants.get_uci_bits();
   const bool           is_multiplexing_needed =
+      new_bits.sr_bits != sr_nof_bits::no_sr or new_bits.csi_part1_nof_bits != 0U or
       not((current_uci_bits.harq_ack_nof_bits == 1U and new_bits.harq_ack_nof_bits == 2U) or
           (current_uci_bits.harq_ack_nof_bits == 3U and new_bits.harq_ack_nof_bits > 3U));
 
@@ -1573,17 +1574,8 @@ pucch_allocator_impl::update_grants_no_multiplexing(slot_point                  
 
   // Update the grants with the new UCI bits and PUCCH resource configurations (this is to prevent the pointers have
   // changed since the last allocation).
-  // NOTE: no need to update the CSI grant, because: (i) if the CSI grant exists, then it doesn't carry the HARQ-ACK
-  // bits (they are in the HARQ-ACK grangt); (ii) if it doesn't exist, then it's trivial.
   grants_to_tx.harq_resource.value().bits.harq_ack_nof_bits = harq_grant.bits.harq_ack_nof_bits;
   grants_to_tx.harq_resource.value().set_res_config(*harq_grant.pucch_res_cfg);
-  if (ue_current_grants.pucch_grants.sr_resource.has_value()) {
-    srsran_assert(candidate_grants.sr_resource.has_value(), "PUCCH SR resource must be present");
-    grants_to_tx.sr_resource.value().set_res_config(*candidate_grants.sr_resource->pucch_res_cfg);
-    // For Format 0, if the SR and HARQ resources are separate, the SR resuorce doesn't carry the HARQ-ACK bits.
-    grants_to_tx.sr_resource.value().bits.harq_ack_nof_bits =
-        grants_to_tx.sr_resource.value().format == pucch_format::FORMAT_0 ? 0U : harq_grant.bits.harq_ack_nof_bits;
-  }
 
   return grants_to_tx;
 }
