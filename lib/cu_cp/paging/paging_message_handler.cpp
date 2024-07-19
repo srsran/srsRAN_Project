@@ -33,44 +33,72 @@ void paging_message_handler::handle_paging_message(const cu_cp_paging_message& m
   }
 }
 
-bool paging_message_handler::handle_du_paging_message(du_index_t du_index, const cu_cp_paging_message& msg_before)
+static bool is_tac_in_list(span<const cu_cp_tai_list_for_paging_item> tai_list, unsigned tac)
 {
-  du_processor&                   du     = dus.get_du_processor(du_index);
-  const du_configuration_context& du_cfg = du.get_context();
+  return std::any_of(tai_list.begin(), tai_list.end(), [&tac](const auto& tai) { return tai.tai.tac == tac; });
+}
 
-  // Recommended cells will be added to the original paging message.
-  cu_cp_paging_message msg_expanded{msg_before};
-  if (not msg_expanded.assist_data_for_paging.has_value()) {
-    msg_expanded.assist_data_for_paging.emplace();
-  }
-  if (not msg_expanded.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
-    msg_expanded.assist_data_for_paging.value().assist_data_for_recommended_cells.emplace();
-  }
-  auto& recommended_cells = msg_expanded.assist_data_for_paging.value()
+/// Remove recommended cells that do not match any TAC in the TAI list or that do not belong to this DU.
+static void remove_non_applicable_recommended_cells(cu_cp_paging_message& msg, const du_configuration_context& du_cfg)
+{
+  auto& recommended_cells = msg.assist_data_for_paging.value()
                                 .assist_data_for_recommended_cells.value()
                                 .recommended_cells_for_paging.recommended_cell_list;
 
-  for (const auto& tai_list_item : msg_expanded.tai_list_for_paging) {
-    for (const du_cell_configuration& cell : du_cfg.served_cells) {
-      if (cell.tac != tai_list_item.tai.tac) {
-        // Only add cells with matching TAC.
-        continue;
-      }
-
-      // Check if cell already exists in the list of recommended.
-      for (auto& recommended_cell : recommended_cells) {
-        if (recommended_cell.ngran_cgi == cell.cgi) {
-          // NR CGI for TAC is already present. Continue with next cell.
-          continue;
-          break;
-        }
-      }
-
-      // Setup recommended cell item to add in case it doesn't exist
-      cu_cp_recommended_cell_item cell_item;
-      cell_item.ngran_cgi = cell.cgi;
-      recommended_cells.push_back(cell_item);
+  auto is_bad_recommended_cell = [&](const cu_cp_recommended_cell_item& recommended_cell) {
+    auto cell_it = std::find_if(du_cfg.served_cells.begin(),
+                                du_cfg.served_cells.end(),
+                                [&recommended_cell](const auto& c) { return recommended_cell.ngran_cgi == c.cgi; });
+    if (cell_it == du_cfg.served_cells.end()) {
+      // Recommended cell not found for this DU.
+      return true;
     }
+    return not is_tac_in_list(msg.tai_list_for_paging, cell_it->tac);
+  };
+
+  recommended_cells.erase(std::remove_if(recommended_cells.begin(), recommended_cells.end(), is_bad_recommended_cell),
+                          recommended_cells.end());
+}
+
+bool paging_message_handler::handle_du_paging_message(du_index_t du_index, const cu_cp_paging_message& msg_before)
+{
+  du_processor&                   du     = dus.get_du_processor(du_index);
+  const du_configuration_context* du_cfg = du.get_context();
+  if (du_cfg == nullptr) {
+    // DU has not completed F1 Setup.
+    return false;
+  }
+
+  // Recommended cells will be added to the original paging message.
+  cu_cp_paging_message msg_filtered{msg_before};
+  if (not msg_filtered.assist_data_for_paging.has_value()) {
+    msg_filtered.assist_data_for_paging.emplace();
+  }
+  if (not msg_filtered.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
+    msg_filtered.assist_data_for_paging.value().assist_data_for_recommended_cells.emplace();
+  }
+  auto& recommended_cells = msg_filtered.assist_data_for_paging.value()
+                                .assist_data_for_recommended_cells.value()
+                                .recommended_cells_for_paging.recommended_cell_list;
+
+  // Clear recommended cells not matching any TAC in the tai_list_for_paging or that do not belong to this DU.
+  remove_non_applicable_recommended_cells(msg_filtered, *du_cfg);
+
+  for (const du_cell_configuration& cell : du_cfg->served_cells) {
+    // Check if cell already exists in the list of recommended.
+    if (std::any_of(recommended_cells.begin(), recommended_cells.end(), [&cell](const auto& c) {
+          return c.ngran_cgi == cell.cgi;
+        })) {
+      continue;
+    }
+    if (not is_tac_in_list(msg_filtered.tai_list_for_paging, cell.tac)) {
+      continue;
+    }
+
+    // Setup recommended cell item to add in case it doesn't exist
+    cu_cp_recommended_cell_item cell_item;
+    cell_item.ngran_cgi = cell.cgi;
+    recommended_cells.push_back(cell_item);
   }
 
   if (recommended_cells.empty()) {
@@ -79,7 +107,7 @@ bool paging_message_handler::handle_du_paging_message(du_index_t du_index, const
   }
 
   // Forward message to F1AP of the respective DU.
-  du.get_f1ap_handler().get_f1ap_paging_manager().handle_paging(msg_expanded);
+  du.get_f1ap_handler().get_f1ap_paging_manager().handle_paging(msg_filtered);
 
   return true;
 }

@@ -71,7 +71,7 @@ public:
   virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 
   /// \brief Get DU configuration context.
-  virtual const du_configuration_context& get_context() const = 0;
+  virtual const du_configuration_context* get_context() const = 0;
 };
 
 /// Interface to notify RRC DU about UE management procedures.
