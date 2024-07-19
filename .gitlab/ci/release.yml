@@ -46,11 +46,14 @@ load release variables:
         echo "PUBLIC_REPO=softwareradiosystems/srsRAN_$KEY" >> repo.env
         echo "HEADERS=" >> repo.env
         echo "PUBLIC_BRANCH=main" >> repo.env
+        TOKEN_VAR_NAME="PUBLIC_${KEY}_TOKEN"
+        echo "PUBLIC_PUSH_TOKEN=${!TOKEN_VAR_NAME}" >> repo.env
       else
         echo "PRIVATE_BRANCH=agpl_main" >> repo.env
         echo "PUBLIC_NAME=srsRAN Project" >> repo.env
         echo "PUBLIC_REPO=srsran/srsRAN_Project" >> repo.env
         echo "HEADERS=true" >> repo.env
+        echo "PUBLIC_PUSH_TOKEN=$PUBLIC_TOKEN" >> repo.env
       fi
     - cat repo.env
   artifacts:
@@ -161,7 +164,7 @@ coverity-agpl:
     # Download private repo and add public as origin
     - git clone --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
-    - git remote add github_public https://${PUBLIC_TOKEN}@github.com/${PUBLIC_REPO}.git
+    - git remote add github_public https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
     # Push code to public repo
     - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
 
@@ -264,7 +267,7 @@ release public:
     - export PUBLIC_RELEASE_NOTES=${CI_COMMIT_TAG_MESSAGE}
 
     # Download public repo
-    - git clone --branch $PUBLIC_BRANCH https://${PUBLIC_TOKEN}@github.com/${PUBLIC_REPO}.git srsran
+    - git clone --branch $PUBLIC_BRANCH https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git srsran
     - cd srsran
 
     # Push tag
@@ -276,7 +279,7 @@ release public:
       RELEASE_ID=$(curl -L \
         -X POST \
         -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${PUBLIC_TOKEN}" \
+        -H "Authorization: Bearer ${PUBLIC_PUSH_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         https://api.github.com/repos/${PUBLIC_REPO}/releases \
         -d "{\"tag_name\":\"${PUBLIC_TAG}\",\"target_commitish\":\"${PUBLIC_BRANCH}\",\"name\":\"${PUBLIC_RELEASE_NAME}\",\"body\":\"${PUBLIC_RELEASE_NOTES}\",\"draft\":false,\"prerelease\":false,\"generate_release_notes\":false}" | jq '.id')
@@ -286,7 +289,7 @@ release public:
       curl -L \
         -X POST \
         -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${PUBLIC_TOKEN}" \
+        -H "Authorization: Bearer ${PUBLIC_PUSH_TOKEN}" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/octet-stream" \
         https://uploads.github.com/repos/${PUBLIC_REPO}/releases/${RELEASE_ID}/assets?name=${ARTIFACT} \
