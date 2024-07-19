@@ -30,6 +30,9 @@ public:
 private:
   rlc_metrics_notifier* rlc_metrics_notif;
 
+  uint32_t              du;
+  du_ue_index_t         ue;
+  rb_id_t               rb;
   rlc_tx_metrics_lower  m_lower;
   rlc_tx_metrics_higher m_higher;
 };

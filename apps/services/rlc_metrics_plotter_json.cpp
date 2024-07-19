@@ -90,11 +90,11 @@ void rlc_metrics_plotter_json::report_metrics(const rlc_metrics& drb)
 
   // TX metrics
   auto& tx_output = output.get<mset_drb_tx_container>();
-  tx_output.write<metric_tx_num_sdus>(drb.tx.num_sdus);
-  tx_output.write<metric_tx_num_sdu_bytes>(drb.tx.num_sdu_bytes);
-  tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.num_dropped_sdus);
-  tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.num_discarded_sdus);
-  tx_output.write<metric_tx_num_discard_failures>(drb.tx.num_discarded_sdus);
+  tx_output.write<metric_tx_num_sdus>(drb.tx.tx_high.num_sdus);
+  tx_output.write<metric_tx_num_sdu_bytes>(drb.tx.tx_high.num_sdu_bytes);
+  tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.tx_high.num_dropped_sdus);
+  tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.tx_high.num_discarded_sdus);
+  tx_output.write<metric_tx_num_discard_failures>(drb.tx.tx_high.num_discarded_sdus);
 
   // RX metrics
   auto& rx_output = output.get<mset_drb_rx_container>();

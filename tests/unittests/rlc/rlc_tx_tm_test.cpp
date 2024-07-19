@@ -224,8 +224,8 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 0);
-  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
+  EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 0);
+  EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 1);
 
   // read PDU from lower end
   std::vector<uint8_t> tx_pdu(sdu_size);
@@ -264,8 +264,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
 
   rlc_tx_metrics m = rlc->get_metrics();
-  ASSERT_EQ(m.mode, rlc_mode::tm);
-  ASSERT_EQ(m.mode_specific.tm.num_small_allocs, 1);
+  ASSERT_EQ(m.tx_low.mode, rlc_mode::tm);
+  ASSERT_EQ(m.tx_low.mode_specific.tm.num_small_allocs, 1);
 }
 
 int main(int argc, char** argv)
