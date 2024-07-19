@@ -22,6 +22,7 @@ add_custom_target(all_vector_tests)
 macro(ADD_TEST_VECTOR TARGET VECTOR_FILE TEST_ARGS)
     if (NOT (${VECTOR_FILE} STREQUAL none))
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE})
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
             add_custom_command(
                     TARGET ${TARGET}
                     POST_BUILD
