@@ -490,6 +490,7 @@ def test_zmq_smoke(
         "Attach timeout reached",
         "iperf did not achieve the expected data rate",
         "socket is already closed",
+        "failed to connect to all addresses",
     ],
 )
 # pylint: disable=too-many-arguments
