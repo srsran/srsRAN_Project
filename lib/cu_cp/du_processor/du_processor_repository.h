@@ -42,7 +42,7 @@ struct du_repository_config {
   srslog::basic_logger&                  logger;
 };
 
-class du_processor_repository : public du_repository_ngap_handler, public du_repository_metrics_handler
+class du_processor_repository : public du_repository_metrics_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
@@ -58,8 +58,6 @@ public:
   du_index_t find_du(const nr_cell_global_id_t& cgi);
 
   du_processor& get_du_processor(du_index_t du_index);
-
-  void handle_paging_message(cu_cp_paging_message& msg) override;
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 

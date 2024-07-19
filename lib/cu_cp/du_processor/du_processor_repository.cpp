@@ -133,14 +133,6 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
   return *du_db.at(du_index).processor;
 }
 
-void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
-{
-  // Forward paging message to all DU processors
-  for (auto& du : du_db) {
-    du.second.processor->get_paging_handler().handle_paging_message(msg);
-  }
-}
-
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;

@@ -27,10 +27,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor,
-                          public du_metrics_handler,
-                          public du_processor_paging_handler,
-                          public du_processor_mobility_handler
+class du_processor_impl : public du_processor, public du_metrics_handler, public du_processor_mobility_handler
 {
 public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
@@ -53,9 +50,6 @@ public:
   std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
   byte_buffer                        get_packed_sib1(nr_cell_global_id_t cgi) override;
 
-  // du_processor paging handler
-  void handle_paging_message(cu_cp_paging_message& msg) override;
-
   // du_processor_cell_info_interface
   bool                            has_cell(pci_t pci) override;
   bool                            has_cell(nr_cell_global_id_t cgi) override;
@@ -63,7 +57,6 @@ public:
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_paging_handler&           get_paging_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
   du_metrics_handler&                    get_metrics_handler() override { return *this; }
@@ -100,12 +93,9 @@ private:
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   ue_manager&                          ue_mng;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
-  du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
 
   // F1AP to DU processor adapter
   std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
-
-  std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
 
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;

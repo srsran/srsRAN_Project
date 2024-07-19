@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -24,6 +25,7 @@ class paging_message_handler
 public:
   paging_message_handler(du_processor_repository& dus_);
 
+  /// Handle Paging message sent by the core network and distribute across the served DU cells.
   void handle_paging_message(const cu_cp_paging_message& msg);
 
 private:

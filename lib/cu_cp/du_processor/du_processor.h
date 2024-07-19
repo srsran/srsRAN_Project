@@ -222,27 +222,6 @@ public:
   virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 
-/// DU processor Paging handler.
-class du_processor_paging_handler
-{
-public:
-  virtual ~du_processor_paging_handler() = default;
-
-  /// \brief Handles a Paging message.
-  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-};
-
-/// Interface for the NGAP to interface with the DU repository
-/// Useful for paging and handover
-class du_repository_ngap_handler
-{
-public:
-  virtual ~du_repository_ngap_handler() = default;
-
-  /// \brief Handles a Paging message notification.
-  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-};
-
 class du_processor : public du_processor_cell_info_interface
 {
 public:
@@ -251,7 +230,6 @@ public:
   /// \brief Retrieve F1AP handler for the respective DU.
   virtual f1ap_cu& get_f1ap_handler() = 0;
 
-  virtual du_processor_paging_handler&   get_paging_handler()   = 0;
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
   /// \brief Get the F1AP message handler interface of the DU processor object.
