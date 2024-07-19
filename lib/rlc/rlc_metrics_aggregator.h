@@ -19,15 +19,19 @@ class rlc_metrics_aggregator
 public:
   rlc_metrics_aggregator(rlc_metrics_notifier* rlc_metrics_notif_);
 
-  // \breif push metrics from the lower RLC executor to the agregator
+  // \brief push metrics from the lower RLC executor to the aggregator
   // This will be called will transfer the execution by pushing a copy to
   // ue executor
   void push_tx_low_metrics(rlc_tx_metrics_lower m_lower_);
-  // \breif push metrics from the high RLC executors to the agregator
+  // \brief push metrics from the high RLC executors to the aggregator
   // As these are called from the UE executor no execution transfer is required.
   void push_tx_high_metrics(rlc_tx_metrics_higher m_higher_);
 
 private:
+  // \brief build and push metrics report to the metrics notifier.
+  // Must be run from the UE executor.
+  void push_report();
+
   rlc_metrics_notifier* rlc_metrics_notif;
 
   uint32_t              du;
