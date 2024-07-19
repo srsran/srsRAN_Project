@@ -93,12 +93,12 @@ protected:
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
+  timer_manager                         timers;
   manual_task_worker                    pcell_worker{128};
   manual_task_worker                    ue_worker{128};
   std::unique_ptr<rlc_tx_tm_test_frame> tester;
   null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_tx_tm_entity>     rlc;
-  timer_manager                         timers;
 };
 
 TEST_F(rlc_tx_tm_test, create_new_entity)

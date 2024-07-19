@@ -48,9 +48,17 @@ public:
                    task_executor&                       ue_executor_,
                    timer_manager&                       timers);
 
-  void stop() final {
-    // There are no timers to be stopped here.
-  };
+  ~rlc_tx_tm_entity() override { stop(); }
+
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    if (not stopped) {
+      high_metrics_timer.stop();
+      low_metrics_timer.stop();
+      stopped = true;
+    }
+  }
 
   // Interfaces for higher layers
   void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
@@ -75,6 +83,8 @@ private:
   ///
   /// Safe execution from: pcell_executor
   void update_mac_buffer_state();
+
+  bool stopped = false;
 };
 
 } // namespace srsran
