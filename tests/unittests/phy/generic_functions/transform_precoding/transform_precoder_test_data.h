@@ -25,7 +25,7 @@ struct test_case_t {
 };
 
 static const std::vector<test_case_t> transform_precoder_test_data = {
-// clang-format off
+    // clang-format off
   {1, {"test_data/transform_precoder_test_input0.dat"}, {"test_data/transform_precoder_test_output0.dat"}},
   {2, {"test_data/transform_precoder_test_input1.dat"}, {"test_data/transform_precoder_test_output1.dat"}},
   {3, {"test_data/transform_precoder_test_input2.dat"}, {"test_data/transform_precoder_test_output2.dat"}},
@@ -79,8 +79,7 @@ static const std::vector<test_case_t> transform_precoder_test_data = {
   {250, {"test_data/transform_precoder_test_input50.dat"}, {"test_data/transform_precoder_test_output50.dat"}},
   {256, {"test_data/transform_precoder_test_input51.dat"}, {"test_data/transform_precoder_test_output51.dat"}},
   {270, {"test_data/transform_precoder_test_input52.dat"}, {"test_data/transform_precoder_test_output52.dat"}},
-// clang-format on
+    // clang-format on
 };
 
-} // srsran
-
+} // namespace srsran
