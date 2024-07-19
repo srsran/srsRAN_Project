@@ -196,8 +196,10 @@ test_bench::test_bench(const test_bench_params& params,
     pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
     pucch_builder.setup(
         cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
-    srsran_assert(pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
-                  "UE PUCCH configuration couldn't be built");
+    bool new_ue_added = pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg);
+    if (not new_ue_added) {
+      srsran_terminate("UE PUCCH configuration couldn't be built");
+    }
   }
 
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));

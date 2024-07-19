@@ -1665,6 +1665,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_sr)
 
   pucch_expected_f2.format_2.harq_ack_nof_bits = 3U;
   pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
   // Change PRBs and symbol, as for Format 0 we use a different set of resources:
   // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
   // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
@@ -1697,6 +1698,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_sr)
 
   pucch_expected_f2.format_2.harq_ack_nof_bits = 4U;
   pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
   // Change PRBs and symbol, as for Format 0 we use a different set of resources:
   // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
   // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
@@ -1735,6 +1737,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_over_csi)
   pucch_expected_csi.resources.prbs.set(1, 2);
   pucch_expected_csi.resources.symbols.set(12, 14);
   pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
   pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
@@ -1768,6 +1771,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits_over_csi)
   pucch_expected_csi.resources.prbs.set(1, 2);
   pucch_expected_csi.resources.symbols.set(12, 14);
   pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
   pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
@@ -1797,6 +1801,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_csi)
 
   pucch_expected_f2.format_2.harq_ack_nof_bits = 3U;
   pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
   // Change PRBs and symbol, as for Format 0 we use a different set of resources:
   // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
   // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
@@ -1806,6 +1811,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_csi)
   pucch_expected_csi.resources.prbs.set(1, 2);
   pucch_expected_csi.resources.symbols.set(12, 14);
   pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
   pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
@@ -1832,6 +1838,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_csi)
 
   pucch_expected_f2.format_2.harq_ack_nof_bits = 4U;
   pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
   // Change PRBs and symbol, as for Format 0 we use a different set of resources:
   // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
   // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
@@ -1841,6 +1848,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_csi)
   pucch_expected_csi.resources.prbs.set(1, 2);
   pucch_expected_csi.resources.symbols.set(12, 14);
   pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
   pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
