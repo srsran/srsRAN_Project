@@ -137,15 +137,15 @@ static void generate_2_ports_table(precoding_matrix_mapper_codebook_offset_confi
 
   offset = generate_identity_matrix(offset, repo_builder, nof_ports);
   mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset                           = generate_ssb(offset, nof_ports, repo_builder);
+  offset = generate_ssb(offset, nof_ports, repo_builder);
+  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
+  offset                           = generate_pdcch(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_omni_offset = offset;
   offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_2_ports_1_layer(offset, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_2_ports_2_layers(offset, repo_builder);
-  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
-  offset = generate_pdcch(offset, nof_ports, repo_builder);
   mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
   generate_csi_rs(offset, nof_ports, repo_builder);
 }
@@ -225,7 +225,9 @@ static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_confi
 
   offset = generate_identity_matrix(offset, repo_builder, nof_ports);
   mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset                           = generate_ssb(offset, nof_ports, repo_builder);
+  offset = generate_ssb(offset, nof_ports, repo_builder);
+  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
+  offset                           = generate_pdcch(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_omni_offset = offset;
   offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
@@ -236,8 +238,6 @@ static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_confi
   offset = generate_pdsch_4_ports_3_layers(offset, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_4_ports_4_layers(offset, repo_builder);
-  mapper_offsets.pdcch_codebook_offsets.push_back(offset);
-  offset = generate_pdcch(offset, nof_ports, repo_builder);
   mapper_offsets.csi_rs_codebook_offsets.push_back(offset);
   generate_csi_rs(offset, nof_ports, repo_builder);
 }
