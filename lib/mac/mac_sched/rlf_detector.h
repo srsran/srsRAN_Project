@@ -90,7 +90,7 @@ public:
       if (current_count == max_consecutive_kos[cell_index].max_consecutive_csi_dtx) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
-          logger.warning("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
+          logger.info("ue={}: RLF detected. Cause: {} consecutive undecoded CSIs", ue_index, current_count);
 
           // Notify upper layers.
           u.notifier->on_rlf_detected();
@@ -127,10 +127,10 @@ private:
       if (current_count == max_counter) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
-          logger.warning("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
-                         ue_index,
-                         current_count,
-                         is_dl ? "HARQ-ACK" : "CRC");
+          logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
+                      ue_index,
+                      current_count,
+                      is_dl ? "HARQ-ACK" : "CRC");
 
           // Notify upper layers.
           u.notifier->on_rlf_detected();
