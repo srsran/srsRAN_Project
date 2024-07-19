@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_configuration_handler.h"
 #include "du_metrics_handler.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -68,6 +69,9 @@ public:
 
   /// \brief Checks whether a cell with the specified NR cell global id is served by the DU.
   virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
+
+  /// \brief Get DU configuration context.
+  virtual const du_configuration_context& get_context() const = 0;
 };
 
 /// Interface to notify RRC DU about UE management procedures.

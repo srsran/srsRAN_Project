@@ -57,8 +57,9 @@ public:
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
   // du_processor_cell_info_interface
-  bool has_cell(pci_t pci) override;
-  bool has_cell(nr_cell_global_id_t cgi) override;
+  bool                            has_cell(pci_t pci) override;
+  bool                            has_cell(nr_cell_global_id_t cgi) override;
+  const du_configuration_context& get_context() const override { return cfg.du_cfg_hdlr->get_context(); }
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
