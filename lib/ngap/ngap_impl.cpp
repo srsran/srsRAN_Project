@@ -364,7 +364,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping DlNasTransportMessage. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 uint_to_amf_ue_id(msg->amf_ue_ngap_id)});
     return;
@@ -410,7 +410,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping InitialContextSetup. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
@@ -474,7 +474,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceSetupRequest. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
@@ -531,7 +531,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceModifyRequest. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 uint_to_amf_ue_id(request->amf_ue_ngap_id)});
     return;
@@ -593,7 +593,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping PduSessionResourceReleaseCommand. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 uint_to_amf_ue_id(command->amf_ue_ngap_id)});
     return;
@@ -660,7 +660,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   if (ue_ctxt.release_scheduled) {
     ue_ctxt.logger.log_info("Dropping UeContextReleaseCommand. UE is already scheduled for release");
     stored_error_indications.emplace(ue_ctxt.ue_ids.ue_index,
-                                     error_indication_request_t{ngap_cause_radio_network_t::unknown_local_ue_ngap_id,
+                                     error_indication_request_t{ngap_cause_radio_network_t::interaction_with_other_proc,
                                                                 ue_ctxt.ue_ids.ran_ue_id,
                                                                 amf_ue_id});
     return;
