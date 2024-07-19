@@ -84,7 +84,7 @@ void rlc_metrics_plotter_json::report_metrics(const rlc_metrics& drb)
   ctx.get<mlist_drbs>().emplace_back();
   auto& output = ctx.get<mlist_drbs>().back();
 
-  output.write<metric_du_id>(drb.du_index);
+  output.write<metric_du_id>(static_cast<uint32_t>(drb.du_index));
   output.write<metric_ue_id>(drb.ue_index);
   output.write<metric_drb_id>(static_cast<uint8_t>(drb.rb_id.get_drb_id()));
 

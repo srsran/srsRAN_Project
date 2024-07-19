@@ -10,14 +10,18 @@
 
 #pragma once
 
-#include "rlc_tx_metrics_container.h"
+#include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
 
 namespace srsran {
 class rlc_metrics_aggregator
 {
 public:
-  rlc_metrics_aggregator(rlc_metrics_notifier* rlc_metrics_notif_);
+  rlc_metrics_aggregator(gnb_du_id_t           du,
+                         du_ue_index_t         ue,
+                         rb_id_t               rb,
+                         rlc_metrics_notifier* rlc_metrics_notif_,
+                         task_executor&        ue_executor_);
 
   // \brief push metrics from the lower RLC executor to the aggregator
   // This will be called will transfer the execution by pushing a copy to
@@ -32,12 +36,17 @@ private:
   // Must be run from the UE executor.
   void push_report();
 
-  rlc_metrics_notifier* rlc_metrics_notif;
+  void push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_);
+  void push_tx_low_metrics_impl(rlc_tx_metrics_lower m_lower_);
 
-  uint32_t              du;
+  gnb_du_id_t           du;
   du_ue_index_t         ue;
   rb_id_t               rb;
   rlc_tx_metrics_lower  m_lower;
   rlc_tx_metrics_higher m_higher;
+
+  rlc_metrics_notifier* rlc_metrics_notif;
+
+  task_executor& ue_executor;
 };
 } // namespace srsran

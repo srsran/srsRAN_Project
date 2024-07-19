@@ -53,7 +53,7 @@ protected:
     ue_timer_factory{timers, ue_executor},
     high_metrics_timer(pcell_timer_factory.create_timer()),
     low_metrics_timer(ue_timer_factory.create_timer()),
-    metrics_agg(rlc_metrics_notifier_)
+    metrics_agg(gnb_du_id, ue_index, rb_id_, rlc_metrics_notifier_, ue_executor_)
   {
     if (metrics_enabled) {
       high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {

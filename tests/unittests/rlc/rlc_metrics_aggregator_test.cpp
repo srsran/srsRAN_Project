@@ -9,6 +9,7 @@
  */
 #include "lib/rlc/rlc_metrics_aggregator.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -37,7 +38,8 @@ protected:
 
     // Create mock metrics notifier and RLC AM TX entity
     metrics_notif = std::make_unique<mock_rlc_metrics_notifier>();
-    metrics_agg   = std::make_unique<rlc_metrics_aggregator>(metrics_notif.get());
+    metrics_agg   = std::make_unique<rlc_metrics_aggregator>(
+        gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, metrics_notif.get(), ue_worker);
   }
 
   void TearDown() override
@@ -48,6 +50,8 @@ protected:
   std::unique_ptr<rlc_metrics_aggregator>    metrics_agg;
   std::unique_ptr<mock_rlc_metrics_notifier> metrics_notif;
   srslog::basic_logger&                      logger = srslog::fetch_basic_logger("TEST", false);
+
+  manual_task_worker ue_worker{128};
 };
 
 TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation)
