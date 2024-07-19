@@ -15,6 +15,8 @@
 #include "ciphering_engine_nea2.h"
 #include "ciphering_engine_nea3.h"
 #include "integrity_engine_generic.h"
+#include "integrity_engine_nia2_cmac.h"
+#include "integrity_engine_nia2_non_cmac.h"
 
 using namespace srsran;
 using namespace security;
@@ -26,12 +28,20 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
                                            security::ciphering_enabled ciphering_enabled)
 {
   if (integrity_enabled == security::integrity_enabled::on) {
-    if (sec_cfg.integ_algo.has_value() && sec_cfg.k_128_int.has_value()) {
-      integ_eng = std::make_unique<integrity_engine_generic>(
-          sec_cfg.k_128_int.value(), bearer_id, direction, sec_cfg.integ_algo.value());
-    } else {
-      srsran_assertion_failure(
-          "Cannot enable integrity protection. algo={} key={}", sec_cfg.integ_algo, sec_cfg.k_128_int);
+    srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot enable integrity protection: No algorithm selected");
+    srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot enable integrity protection: No key");
+    switch (sec_cfg.integ_algo.value()) {
+      case integrity_algorithm::nia2:
+#ifdef MBEDTLS_CMAC_C
+        integ_eng = std::make_unique<integrity_engine_nia2_cmac>(sec_cfg.k_128_int.value(), bearer_id, direction);
+#else
+        integ_eng = std::make_unique<integrity_engine_nia2_non_cmac>(sec_cfg.k_128_int.value(), bearer_id, direction);
+#endif
+        break;
+      default:
+        integ_eng = std::make_unique<integrity_engine_generic>(
+            sec_cfg.k_128_int.value(), bearer_id, direction, sec_cfg.integ_algo.value());
+        break;
     }
   }
   if (ciphering_enabled == security::ciphering_enabled::on) {
