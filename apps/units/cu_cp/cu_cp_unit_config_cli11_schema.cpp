@@ -467,10 +467,10 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
 
   // Slicing section.
   auto slicing_lambda = [&unit_cfg](const std::vector<std::string>& values) {
-    // Prepare the radio bearers
+    // Prepare the slices.
     unit_cfg.slice_cfg.resize(values.size());
 
-    // Format every QoS setting.
+    // Format every slicing setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
       subapp.config_formatter(create_yaml_config_parser());
