@@ -223,7 +223,7 @@ protected:
 
     // Create PUSCH demodulator factory.
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-        eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB);
+        eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB, false, false);
     ASSERT_NE(pusch_demod_factory, nullptr);
 
     // Create PUSCH demultiplexer factory.

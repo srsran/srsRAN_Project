@@ -544,7 +544,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create PUSCH demodulator factory.
   std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-      eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB, enable_evm);
+      eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB, enable_evm, false);
   TESTASSERT(pusch_demod_factory);
 
   // Create PUSCH demultiplexer factory.

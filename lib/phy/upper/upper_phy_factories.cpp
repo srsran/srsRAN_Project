@@ -422,9 +422,14 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                         (config.log_level == srslog::basic_levels::debug);
 
   pusch_processor_factory_sw_configuration pusch_config;
-  pusch_config.estimator_factory   = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
-  pusch_config.demodulator_factory = create_pusch_demodulator_factory_sw(
-      equalizer_factory, precoding_factory, demodulation_factory, prg_factory, enable_evm, enable_eq_sinr);
+  pusch_config.estimator_factory          = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
+  pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(equalizer_factory,
+                                                                         precoding_factory,
+                                                                         demodulation_factory,
+                                                                         prg_factory,
+                                                                         config.ul_bw_rb,
+                                                                         enable_evm,
+                                                                         enable_eq_sinr);
   pusch_config.demux_factory              = create_ulsch_demultiplex_factory_sw();
   pusch_config.uci_dec_factory            = uci_dec_factory;
   pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
