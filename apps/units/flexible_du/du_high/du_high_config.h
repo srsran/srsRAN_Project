@@ -27,6 +27,7 @@
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -486,6 +487,22 @@ struct du_high_unit_prach_config {
   uint8_t nof_cb_preambles_per_ssb = 64;
 };
 
+/// Slice scheduling configuration for a cell.
+struct du_high_unit_cell_slice_sched_config {
+  /// Sets the minimum number of PRBs to be allocated to this group.
+  unsigned min_prb = 0;
+  /// Sets the maximum number of PRBs to be allocated to this group.
+  unsigned max_prb = MAX_NOF_PRBS;
+};
+
+/// Slice configuration for a cell.
+struct du_high_unit_cell_slice_config {
+  /// Slice identifier.
+  s_nssai_t s_nssai = s_nssai_t{1};
+  /// Slice scheduling configuration.
+  du_high_unit_cell_slice_sched_config sched_cfg;
+};
+
 /// Base cell configuration.
 struct du_high_unit_base_cell_config {
   /// Physical cell identifier.
@@ -540,6 +557,8 @@ struct du_high_unit_base_cell_config {
   du_high_unit_csi_config csi_cfg;
   /// Scheduler expert configuration.
   du_high_unit_scheduler_expert_config sched_expert_cfg;
+  /// Network slice configuration.
+  std::vector<du_high_unit_cell_slice_config> slice_cfg;
 };
 
 struct du_high_unit_test_mode_ue_config {

@@ -1027,6 +1027,31 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
       ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
 }
 
+static void configure_cli11_slicing_scheduling_args(CLI::App&                             app,
+                                                    du_high_unit_cell_slice_sched_config& slice_sched_params)
+{
+  add_option(app, "--min_prb", slice_sched_params.min_prb, "Minimum number of PRBs to be allocated to the slice")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  add_option(app, "--max_prb", slice_sched_params.max_prb, "Maximum number of PRBs to be allocated to the slice")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+}
+
+static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)
+{
+  add_option(app, "--sst", slice_params.s_nssai.sst, "Slice Service Type")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  add_option(app, "--sd", slice_params.s_nssai.sd, "Service Differentiator")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffffff));
+
+  // Scheduling configuration.
+  CLI::App* sched_cfg_subcmd = add_subcommand(app, "sched_cfg", "Slice scheduling configuration")->configurable();
+  configure_cli11_slicing_scheduling_args(*sched_cfg_subcmd, slice_params.sched_cfg);
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_cell_config& cell_params)
 {
   add_option(app, "--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -1180,6 +1205,23 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   // Scheduler expert configuration.
   CLI::App* sched_expert_subcmd = add_subcommand(app, "sched_expert_cfg", "Scheduler expert parameters");
   configure_cli11_scheduler_expert_args(*sched_expert_subcmd, cell_params.sched_expert_cfg);
+
+  // Slicing configuration.
+  auto slicing_lambda = [&cell_params](const std::vector<std::string>& values) {
+    // Prepare the slices and its configuration.
+    cell_params.slice_cfg.resize(values.size());
+
+    // Format every slicing setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("Slicing parameters", "Slicing config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_slicing_args(subapp, cell_params.slice_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(app, "--slicing", slicing_lambda, "Network slicing configuration");
 }
 
 static void configure_cli11_cells_args(CLI::App& app, du_high_unit_cell_config& cell_params)
