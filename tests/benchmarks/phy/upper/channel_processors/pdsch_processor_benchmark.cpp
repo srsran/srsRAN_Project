@@ -610,7 +610,7 @@ static pdsch_processor_factory& get_processor_factory()
   }
 
   // Create synchronous PDSCH processor pool if the processor is synchronous.
-  if (pdsch_proc_factory) {
+  if (pdsch_proc_factory && (nof_threads > 1)) {
     // Only valid for generic and lite.
     pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
   }
