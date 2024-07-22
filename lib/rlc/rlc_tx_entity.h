@@ -58,10 +58,14 @@ protected:
     if (metrics_enabled) {
       high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
         metrics_agg.push_tx_high_metrics(metrics_high.get_hi_metrics());
+        high_metrics_timer.run();
       });
+      low_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
+        metrics_agg.push_tx_low_metrics(metrics_low.get_low_metrics());
+        low_metrics_timer.run();
+      });
+
       high_metrics_timer.run();
-      low_metrics_timer.set(std::chrono::milliseconds(1000),
-                            [this](timer_id_t tid) { metrics_agg.push_tx_low_metrics(metrics_low.get_low_metrics()); });
       low_metrics_timer.run();
     }
   }
