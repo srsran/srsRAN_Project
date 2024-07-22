@@ -16,7 +16,6 @@
 #include "du_connection_manager.h"
 #include "node_connection_notifier.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_e1_handler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -36,7 +35,7 @@ class cu_cp_controller : public cu_cp_ue_admission_controller
 {
 public:
   cu_cp_controller(const cu_cp_configuration&  config_,
-                   cu_cp_routine_manager&      routine_manager_,
+                   common_task_scheduler&      common_task_sched_,
                    ue_manager&                 ue_mng_,
                    ngap_connection_manager&    ngap_conn_mng_,
                    cu_up_processor_repository& cu_ups_,
@@ -60,7 +59,7 @@ private:
 
   const cu_cp_configuration& cfg;
   ue_manager&                ue_mng;
-  cu_cp_routine_manager&     routine_mng;
+  common_task_scheduler&     common_task_sched;
   task_executor&             ctrl_exec;
   srslog::basic_logger&      logger;
 
