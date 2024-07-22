@@ -141,12 +141,16 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   manual_task_worker ue_worker{128};
 
   // Create RLC AM TX entity
-  std::unique_ptr<rlc_tx_am_entity> rlc_tx = nullptr;
+  std::unique_ptr<rlc_tx_am_entity>       rlc_tx      = nullptr;
+  std::unique_ptr<rlc_metrics_aggregator> metrics_agg = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
   logger.set_level(srslog::basic_levels::warning);
 
   null_rlc_pcap pcap;
+
+  metrics_agg =
+      std::make_unique<rlc_metrics_aggregator>(gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, tester.get(), ue_worker);
 
   // Make PDUs
   std::vector<byte_buffer> pdus;
@@ -157,7 +161,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
                                               *tester,
                                               *tester,
                                               *tester,
-                                              tester.get(),
+                                              *metrics_agg,
                                               false,
                                               pcap,
                                               pcell_worker,
@@ -233,13 +237,16 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
   config.t_status_prohibit = 0;
   config.t_reassembly      = 200;
 
+  auto metrics_agg =
+      std::make_unique<rlc_metrics_aggregator>(gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, tester.get(), ue_worker);
+
   // Create RLC AM RX entity
   std::unique_ptr<rlc_rx_am_entity> rlc_rx = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
                                                                                 du_ue_index_t::MIN_DU_UE_INDEX,
                                                                                 drb_id_t::drb1,
                                                                                 config,
                                                                                 *tester,
-                                                                                tester.get(),
+                                                                                *metrics_agg,
                                                                                 false,
                                                                                 pcap,
                                                                                 ue_worker,

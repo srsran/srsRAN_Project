@@ -121,6 +121,7 @@ void metrics_log_helper::report_metrics(const rlc_metrics& metrics)
   fmt::format_to(buffer, " du={}", metrics.du_index);
   fmt::format_to(buffer, " ue={}", metrics.ue_index);
   fmt::format_to(buffer, " rb={}", metrics.rb_id);
+  fmt::format_to(buffer, " mode={}", metrics.rx.mode);
   fmt::format_to(buffer, " TX=[{}]", format_rlc_tx_metrics(metrics.metrics_period, metrics.tx));
   fmt::format_to(buffer, " RX=[{}]  ", format_rlc_rx_metrics(metrics.metrics_period, metrics.rx));
   logger.debug("{}", to_c_str(buffer));

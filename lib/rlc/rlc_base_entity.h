@@ -32,12 +32,12 @@ public:
                   rb_id_t               rb_id_,
                   timer_duration        metrics_period_,
                   rlc_metrics_notifier* rlc_metrics_notifier_,
-                  timer_factory         timers) :
+                  task_executor&        ue_executor_) :
     logger("RLC", {gnb_du_id_, ue_index_, rb_id_, "DL/UL"}),
     ue_index(ue_index_),
     rb_id(rb_id_),
     metrics_period(metrics_period_),
-    metrics_timer(timers.create_timer())
+    metrics_agg(gnb_du_id_, ue_index, rb_id_, rlc_metrics_notifier_, ue_executor_)
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
   }
@@ -90,21 +90,10 @@ protected:
   std::unique_ptr<rlc_tx_entity> tx;
   std::unique_ptr<rlc_rx_entity> rx;
   timer_duration                 metrics_period;
+  rlc_metrics_aggregator         metrics_agg;
 
 private:
-  unique_timer          metrics_timer;
   rlc_metrics_notifier* rlc_metrics_notif;
-
-  void push_metrics()
-  {
-    rlc_metrics m    = get_metrics();
-    m.metrics_period = metrics_period;
-    if (rlc_metrics_notif) {
-      rlc_metrics_notif->report_metrics(m);
-    }
-    reset_metrics();
-    metrics_timer.run();
-  }
 };
 
 } // namespace srsran

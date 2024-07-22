@@ -89,13 +89,16 @@ protected:
     // Create test frame
     tester = std::make_unique<rlc_rx_am_test_frame>(config.sn_field_length);
 
+    metrics_agg =
+        std::make_unique<rlc_metrics_aggregator>(gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, tester.get(), ue_worker);
+
     // Create RLC AM RX entity
     rlc = std::make_unique<rlc_rx_am_entity>(gnb_du_id_t::min,
                                              du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
                                              config,
                                              *tester,
-                                             tester.get(),
+                                             *metrics_agg,
                                              true,
                                              pcap,
                                              ue_worker,
@@ -404,14 +407,15 @@ protected:
     ue_worker.run_pending_tasks();
   }
 
-  srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
-  rlc_rx_am_config                      config  = GetParam();
-  rlc_am_sn_size                        sn_size = config.sn_field_length;
-  timer_manager                         timers;
-  manual_task_worker                    ue_worker{128};
-  std::unique_ptr<rlc_rx_am_test_frame> tester;
-  null_rlc_pcap                         pcap;
-  std::unique_ptr<rlc_rx_am_entity>     rlc;
+  srslog::basic_logger&                   logger  = srslog::fetch_basic_logger("TEST", false);
+  rlc_rx_am_config                        config  = GetParam();
+  rlc_am_sn_size                          sn_size = config.sn_field_length;
+  timer_manager                           timers;
+  manual_task_worker                      ue_worker{128};
+  std::unique_ptr<rlc_rx_am_test_frame>   tester;
+  null_rlc_pcap                           pcap;
+  std::unique_ptr<rlc_rx_am_entity>       rlc;
+  std::unique_ptr<rlc_metrics_aggregator> metrics_agg;
 };
 
 class rlc_rx_am_test_with_limit : public rlc_rx_am_test

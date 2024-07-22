@@ -33,12 +33,7 @@ public:
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor,
                 timer_manager&                       timers) :
-    rlc_base_entity(gnb_du_id_,
-                    ue_index_,
-                    rb_id_,
-                    metrics_period_,
-                    rlc_metrics_notifier_,
-                    timer_factory{timers, ue_executor})
+    rlc_base_entity(gnb_du_id_, ue_index_, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor)
   {
     tx = std::make_unique<rlc_tx_tm_entity>(gnb_du_id_,
                                             ue_index_,
@@ -47,7 +42,7 @@ public:
                                             tx_upper_dn,
                                             tx_upper_cn,
                                             tx_lower_dn,
-                                            rlc_metrics_notifier_,
+                                            metrics_agg,
                                             metrics_period.count() != 0,
                                             pcap,
                                             pcell_executor,
@@ -58,7 +53,7 @@ public:
                                             rb_id_,
                                             config.rx,
                                             rx_upper_dn,
-                                            rlc_metrics_notifier_,
+                                            metrics_agg,
                                             metrics_period.count() != 0,
                                             pcap,
                                             ue_executor,

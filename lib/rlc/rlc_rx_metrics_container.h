@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/rlc/rlc_rx_metrics.h"
-#include <mutex>
 
 namespace srsran {
 
@@ -90,7 +89,7 @@ public:
     if (not enabled) {
       return {};
     }
-    return metrics;
+    return metrics.get();
   }
 
   rlc_rx_metrics get_and_reset_metrics()
@@ -99,7 +98,7 @@ public:
     if (not enabled) {
       return {};
     }
-    rlc_rx_metrics ret = metrics;
+    rlc_rx_metrics ret = metrics.get();
     metrics            = {};
     metrics.mode       = ret.mode;
     return ret;
@@ -111,9 +110,11 @@ public:
     if (not enabled) {
       return;
     }
-    rlc_mode tmp_mode = metrics.mode;
-    metrics           = {};
-    metrics.mode      = tmp_mode;
+    rlc_mode tmp_mode    = metrics.mode;
+    uint32_t tmp_counter = metrics.counter;
+    metrics              = {};
+    metrics.mode         = tmp_mode;
+    metrics.counter      = tmp_counter;
   }
 };
 } // namespace srsran

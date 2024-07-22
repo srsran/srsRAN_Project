@@ -33,7 +33,7 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_,
-                rlc_metrics_notifier*                rlc_metrics_notifier_,
+                rlc_metrics_aggregator&              metrics_agg_,
                 bool                                 metrics_enabled,
                 rlc_pcap&                            pcap_,
                 task_executor&                       pcell_executor_,
@@ -53,15 +53,15 @@ protected:
     ue_timer_factory{timers, ue_executor},
     high_metrics_timer(pcell_timer_factory.create_timer()),
     low_metrics_timer(ue_timer_factory.create_timer()),
-    metrics_agg(gnb_du_id, ue_index, rb_id_, rlc_metrics_notifier_, ue_executor_)
+    metrics_agg(metrics_agg_)
   {
     if (metrics_enabled) {
       high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_high_metrics(metrics_high.get_hi_metrics());
+        metrics_agg.push_tx_high_metrics(metrics_high.get_and_reset_metrics());
         high_metrics_timer.run();
       });
       low_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
-        metrics_agg.push_tx_low_metrics(metrics_low.get_low_metrics());
+        metrics_agg.push_tx_low_metrics(metrics_low.get_and_reset_metrics());
         low_metrics_timer.run();
       });
 
@@ -87,7 +87,7 @@ protected:
   unique_timer low_metrics_timer;
 
 private:
-  rlc_metrics_aggregator metrics_agg;
+  rlc_metrics_aggregator& metrics_agg;
 
 public:
   /// \brief Stops all internal timers.

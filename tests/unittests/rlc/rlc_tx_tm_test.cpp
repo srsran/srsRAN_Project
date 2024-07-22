@@ -70,6 +70,9 @@ protected:
     // Create test frame
     tester = std::make_unique<rlc_tx_tm_test_frame>();
 
+    metrics_agg =
+        std::make_unique<rlc_metrics_aggregator>(gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, tester.get(), ue_worker);
+
     // Create RLC TM TX entity
     rlc = std::make_unique<rlc_tx_tm_entity>(gnb_du_id_t::min,
                                              du_ue_index_t::MIN_DU_UE_INDEX,
@@ -78,7 +81,7 @@ protected:
                                              *tester,
                                              *tester,
                                              *tester,
-                                             tester.get(),
+                                             *metrics_agg,
                                              true,
                                              pcap,
                                              pcell_worker,
@@ -92,13 +95,14 @@ protected:
     srslog::flush();
   }
 
-  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                         timers;
-  manual_task_worker                    pcell_worker{128};
-  manual_task_worker                    ue_worker{128};
-  std::unique_ptr<rlc_tx_tm_test_frame> tester;
-  null_rlc_pcap                         pcap;
-  std::unique_ptr<rlc_tx_tm_entity>     rlc;
+  srslog::basic_logger&                   logger = srslog::fetch_basic_logger("TEST", false);
+  timer_manager                           timers;
+  manual_task_worker                      pcell_worker{128};
+  manual_task_worker                      ue_worker{128};
+  std::unique_ptr<rlc_tx_tm_test_frame>   tester;
+  null_rlc_pcap                           pcap;
+  std::unique_ptr<rlc_tx_tm_entity>       rlc;
+  std::unique_ptr<rlc_metrics_aggregator> metrics_agg;
 };
 
 TEST_F(rlc_tx_tm_test, create_new_entity)
