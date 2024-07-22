@@ -48,6 +48,11 @@ private:
   /// Defines Phi values for M_sc=24 Table 5.2.2.2-4 in TS 38.211.
   static const std::array<std::array<int, 24>, NOF_ZC_SEQ> phi_M_sc_24;
 
+  /// \brief Gets argument for the sequence \f$r^{(\alpha, \beta)}_{u,v}(n)\f$ for base sequences of length 30.
+  ///
+  /// \param[in] u Sequence group index {0, 29}.
+  span<const int> phi_M_sc_30(unsigned u);
+
   /// \brief Gets argument for the sequence \f$r^{(\alpha, \beta)}_{u,v}(n)\f$ for base sequences of length 36 or
   /// larger.
   ///

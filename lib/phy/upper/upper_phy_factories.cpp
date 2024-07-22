@@ -370,8 +370,15 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(ta_estimator_factory, "Invalid TA estimator factory.");
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory =
+  report_error_if_not(prg_factory, "Invalid pseudo-random sequence generator factory.");
+
+  std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory =
       create_port_channel_estimator_factory_sw(ta_estimator_factory);
+  report_error_if_not(prg_factory, "Invalid channel estimator factory.");
+
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  report_error_if_not(low_papr_sequence_gen_factory, "Invalid low-PAPR sequence generator factory.");
 
   std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
   report_error_if_not(equalizer_factory, "Invalid equalizer factory.");
@@ -422,7 +429,8 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                         (config.log_level == srslog::basic_levels::debug);
 
   pusch_processor_factory_sw_configuration pusch_config;
-  pusch_config.estimator_factory          = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
+  pusch_config.estimator_factory =
+      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory);
   pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(equalizer_factory,
                                                                          precoding_factory,
                                                                          demodulation_factory,

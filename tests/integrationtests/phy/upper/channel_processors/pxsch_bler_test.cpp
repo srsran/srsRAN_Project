@@ -263,28 +263,28 @@ private:
     std::iota(rx_ports.begin(), rx_ports.end(), 0U);
 
     // Prepare PUSCH processor configuration.
-    pusch_config.context                     = std::nullopt;
-    pusch_config.slot                        = slot_point(to_numerology_value(scs), 0);
-    pusch_config.rnti                        = rnti;
-    pusch_config.bwp_size_rb                 = bwp_size_rb;
-    pusch_config.bwp_start_rb                = bwp_start_rb;
-    pusch_config.cp                          = cp;
-    pusch_config.mcs_descr                   = mcs_descr;
-    pusch_config.codeword                    = {rv, ldpc_base_graph, true};
-    pusch_config.uci                         = {};
-    pusch_config.n_id                        = n_id;
-    pusch_config.nof_tx_layers               = nof_layers;
-    pusch_config.rx_ports                    = rx_ports;
-    pusch_config.dmrs_symbol_mask            = dmrs_symbol_mask;
-    pusch_config.dmrs                        = dmrs;
-    pusch_config.scrambling_id               = scrambling_id;
-    pusch_config.n_scid                      = n_scid;
-    pusch_config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-    pusch_config.freq_alloc                  = freq_alloc;
-    pusch_config.start_symbol_index          = 0;
-    pusch_config.nof_symbols                 = nof_ofdm_symbols;
-    pusch_config.tbs_lbrm                    = tbs_lbrm_default;
-    pusch_config.dc_position                 = {};
+    pusch_config.context            = std::nullopt;
+    pusch_config.slot               = slot_point(to_numerology_value(scs), 0);
+    pusch_config.rnti               = rnti;
+    pusch_config.bwp_size_rb        = bwp_size_rb;
+    pusch_config.bwp_start_rb       = bwp_start_rb;
+    pusch_config.cp                 = cp;
+    pusch_config.mcs_descr          = mcs_descr;
+    pusch_config.codeword           = {rv, ldpc_base_graph, true};
+    pusch_config.uci                = {};
+    pusch_config.n_id               = n_id;
+    pusch_config.nof_tx_layers      = nof_layers;
+    pusch_config.rx_ports           = rx_ports;
+    pusch_config.dmrs_symbol_mask   = dmrs_symbol_mask;
+    pusch_config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
+                                                                          .scrambling_id               = scrambling_id,
+                                                                          .n_scid                      = n_scid,
+                                                                          .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
+    pusch_config.freq_alloc         = freq_alloc;
+    pusch_config.start_symbol_index = 0;
+    pusch_config.nof_symbols        = nof_ofdm_symbols;
+    pusch_config.tbs_lbrm           = tbs_lbrm_default;
+    pusch_config.dc_position        = {};
 
     if (enable_dc_position) {
       pusch_config.dc_position = {bwp_size_rb * NRE / 2};

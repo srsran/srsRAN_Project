@@ -384,14 +384,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
           config.nof_tx_layers             = nof_layers;
           config.rx_ports.resize(profile.nof_rx_ports);
           std::iota(config.rx_ports.begin(), config.rx_ports.end(), 0);
-          config.dmrs_symbol_mask            = dmrs_symbol_mask;
-          config.dmrs                        = dmrs;
-          config.scrambling_id               = 0;
-          config.nof_cdm_groups_without_data = nof_cdm_groups_without_data;
-          config.freq_alloc                  = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
-          config.start_symbol_index          = 0;
-          config.nof_symbols                 = profile.nof_symbols;
-          config.tbs_lbrm                    = tbs_lbrm_default;
+          config.dmrs_symbol_mask   = dmrs_symbol_mask;
+          config.dmrs               = pusch_processor::dmrs_configuration{.dmrs                        = dmrs,
+                                                                          .scrambling_id               = 0,
+                                                                          .n_scid                      = false,
+                                                                          .nof_cdm_groups_without_data = nof_cdm_groups_without_data};
+          config.freq_alloc         = rb_allocation::make_type1(config.bwp_start_rb, nof_prb);
+          config.start_symbol_index = 0;
+          config.nof_symbols        = profile.nof_symbols;
+          config.tbs_lbrm           = tbs_lbrm_default;
 
           test_case_set.emplace_back(std::tuple<pusch_processor::pdu_t, unsigned>(config, tbs));
         }
@@ -503,6 +504,10 @@ static pusch_processor_factory& get_pusch_processor_factory()
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
 
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  TESTASSERT(low_papr_sequence_gen_factory);
+
   // Create demodulator mapper factory.
   std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
   TESTASSERT(chan_modulation_factory);
@@ -531,7 +536,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create DM-RS for PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(prg_factory, port_chan_estimator_factory);
+      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory);
   TESTASSERT(dmrs_pusch_chan_estimator_factory);
 
   // Create channel equalizer factory.

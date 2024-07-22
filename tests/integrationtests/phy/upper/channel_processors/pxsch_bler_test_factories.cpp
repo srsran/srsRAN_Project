@@ -86,6 +86,10 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
       create_pseudo_random_generator_sw_factory();
   report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create factory.");
 
+  std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+      create_low_papr_sequence_generator_sw_factory();
+  report_fatal_error_if_not(low_papr_sequence_gen_factory, "Failed to create factory.");
+
   std::shared_ptr<time_alignment_estimator_factory> ta_est_factory =
       create_time_alignment_estimator_dft_factory(dft_proc_factory);
   report_fatal_error_if_not(ta_est_factory, "Failed to create factory.");
@@ -94,8 +98,8 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
-  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory =
-      create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory, chan_estimator_factory);
+  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory = create_dmrs_pusch_estimator_factory_sw(
+      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_equalizer_factory> eq_factory =

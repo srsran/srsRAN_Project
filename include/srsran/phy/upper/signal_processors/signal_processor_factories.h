@@ -69,9 +69,10 @@ public:
   virtual std::unique_ptr<dmrs_pusch_estimator> create() = 0;
 };
 
-std::shared_ptr<dmrs_pusch_estimator_factory>
-create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                       std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory);
+std::shared_ptr<dmrs_pusch_estimator_factory> create_dmrs_pusch_estimator_factory_sw(
+    std::shared_ptr<pseudo_random_generator_factory>     prg_factory,
+    std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory,
+    std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory);
 
 class nzp_csi_rs_generator_factory
 {

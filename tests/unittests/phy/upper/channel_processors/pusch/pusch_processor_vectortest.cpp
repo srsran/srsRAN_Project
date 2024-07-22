@@ -195,6 +195,12 @@ private:
     if (!prg_factory) {
       return nullptr;
     }
+    // Create low-PAPR sequence generator.
+    std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
+        create_low_papr_sequence_generator_sw_factory();
+    if (!low_papr_sequence_gen_factory) {
+      return nullptr;
+    }
 
     // Create demodulator mapper factory.
     std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
@@ -237,7 +243,7 @@ private:
 
     // Create DM-RS for PUSCH channel estimator.
     std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-        create_dmrs_pusch_estimator_factory_sw(prg_factory, port_chan_estimator_factory);
+        create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory);
     if (!dmrs_pusch_chan_estimator_factory) {
       return nullptr;
     }
