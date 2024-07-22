@@ -231,8 +231,10 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
+  // Fetch the DU cell configuration of the primary cell UE is connected to.
+  const auto& cell_cfg = du_params.ran.cells[ue->pcell_index];
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);
+  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue, cell_cfg.nr_cgi.plmn_id);
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

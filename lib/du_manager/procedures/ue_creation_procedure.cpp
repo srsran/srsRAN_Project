@@ -201,8 +201,10 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   }
   mac_ue_create_msg.ul_ccch_msg = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
 
+  // Fetch the DU cell configuration of the primary cell UE is connected to.
+  const auto& cell_cfg = du_params.ran.cells[ue_ctx->pcell_index];
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
-  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
+  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx, cell_cfg.nr_cgi.plmn_id);
 
   // Request MAC to create new UE.
   return du_params.mac.ue_cfg.handle_ue_create_request(mac_ue_create_msg);

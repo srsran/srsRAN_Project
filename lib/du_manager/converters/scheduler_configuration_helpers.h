@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
@@ -26,7 +27,7 @@ sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_inde
                                                                     span<const units::bytes> si_payload_sizes);
 
 // Create scheduler UE Configuration Request based on DU UE configuration context.
-sched_ue_config_request create_scheduler_ue_config_request(const du_ue& u);
+sched_ue_config_request create_scheduler_ue_config_request(const du_ue& u, const plmn_identity& ue_plmn_id);
 
 } // namespace srs_du
 } // namespace srsran
