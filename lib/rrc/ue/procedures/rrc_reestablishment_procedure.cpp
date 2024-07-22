@@ -225,8 +225,8 @@ bool rrc_reestablishment_procedure::verify_security_context()
 void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
 {
   // store capabilities if available
-  if (old_ue_reest_context.capabilities.has_value()) {
-    context.capabilities = old_ue_reest_context.capabilities.value();
+  if (old_ue_reest_context.capabilities_list.has_value()) {
+    context.capabilities_list = old_ue_reest_context.capabilities_list.value();
   }
 
   // Transfer UP context from old UE

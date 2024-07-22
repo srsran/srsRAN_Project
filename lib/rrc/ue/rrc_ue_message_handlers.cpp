@@ -16,6 +16,7 @@
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg.h"
 #include "srsran/ran/lcid.h"
@@ -535,8 +536,8 @@ rrc_ue_reestablishment_context_response rrc_ue_impl::get_context()
   rrc_ue_reestablishment_context_response rrc_reest_context;
   rrc_reest_context.sec_context = cu_cp_ue_notifier.get_security_context();
 
-  if (context.capabilities.has_value()) {
-    rrc_reest_context.capabilities = context.capabilities.value();
+  if (context.capabilities_list.has_value()) {
+    rrc_reest_context.capabilities_list = context.capabilities_list.value();
   }
   rrc_reest_context.up_ctx = cu_cp_notifier.on_up_context_required();
 

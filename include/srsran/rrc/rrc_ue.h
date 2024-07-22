@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/ran/rnti.h"
@@ -316,12 +317,12 @@ public:
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
 struct rrc_ue_reestablishment_context_response {
-  ue_index_t                               ue_index = ue_index_t::invalid;
-  security::security_context               sec_context;
-  std::optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
-  up_context                               up_ctx;
-  bool                                     old_ue_fully_attached   = false;
-  bool                                     reestablishment_ongoing = false;
+  ue_index_t                                               ue_index = ue_index_t::invalid;
+  security::security_context                               sec_context;
+  std::optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
+  up_context                                               up_ctx;
+  bool                                                     old_ue_fully_attached   = false;
+  bool                                                     reestablishment_ongoing = false;
 };
 
 /// Interface to notify about UE context updates.
