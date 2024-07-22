@@ -98,12 +98,16 @@ public:
 
   rlc_tx_metrics get_metrics()
   {
-    return {};
-    /*return metrics.get_metrics();*/
+    rlc_tx_metrics m;
+    m.tx_high = metrics_high.get_hi_metrics();
+    m.tx_low  = metrics_low.get_low_metrics();
+    return m;
   }
-  void reset_metrics()
+
+  virtual void reset_metrics()
   {
-    // return metrics.reset_metrics();
+    // metrics_high.reset();
+    // metrics_low.reset();
   }
 };
 
