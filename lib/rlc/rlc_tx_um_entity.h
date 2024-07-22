@@ -82,9 +82,15 @@ public:
                    task_executor&                       ue_executor_,
                    timer_manager&                       timers);
 
-  void stop() final {
-    // There are no timers to be stopped here.
-  };
+  void stop() final
+  {
+    // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
+    if (not stopped) {
+      high_metrics_timer.stop();
+      low_metrics_timer.stop();
+      stopped = true;
+    }
+  }
 
   // Interfaces for higher layers
   void handle_sdu(byte_buffer sdu_buf, bool is_retx) override;
@@ -117,6 +123,8 @@ private:
   void update_mac_buffer_state();
 
   void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state. {} next_so={}", st, next_so); }
+
+  bool stopped = false;
 };
 
 } // namespace srsran

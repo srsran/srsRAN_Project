@@ -31,14 +31,6 @@ public:
     metrics_hi.num_sdu_bytes += num_sdu_bytes;
   }
 
-  void metrics_add_pulled_sdus(uint32_t num_sdus)
-  {
-    if (not enabled) {
-      return;
-    }
-    metrics_hi.num_of_pulled_sdus += num_sdus;
-  }
-
   void metrics_add_lost_sdus(uint32_t num_sdus)
   {
     if (not enabled) {
@@ -61,14 +53,6 @@ public:
       return;
     }
     metrics_hi.num_discard_failures += num_discard_failures;
-  }
-
-  void metrics_add_sdu_latency_us(uint32_t sdu_latency)
-  {
-    if (not enabled) {
-      return;
-    }
-    metrics_hi.sum_sdu_latency_us += sdu_latency;
   }
 
   // Metrics getters and setters
@@ -125,6 +109,22 @@ public:
     }
     metrics_lo.num_pdus_no_segmentation += num_pdus;
     metrics_lo.num_pdu_bytes_no_segmentation += num_pdu_bytes;
+  }
+
+  void metrics_add_pulled_sdus(uint32_t num_sdus)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.num_of_pulled_sdus += num_sdus;
+  }
+
+  void metrics_add_sdu_latency_us(uint32_t sdu_latency)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.sum_sdu_latency_us += sdu_latency;
   }
 
   // TM specific metrics

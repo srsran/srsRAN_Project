@@ -19,12 +19,10 @@ namespace srsran {
 
 struct rlc_tx_metrics_higher {
   uint32_t num_sdus;             ///< Number of SDUs
-  uint32_t num_of_pulled_sdus;   ///< Number of pulled SDUs
   size_t   num_sdu_bytes;        ///< Number of SDU bytes
   uint32_t num_dropped_sdus;     ///< Number of dropped SDUs (due to full queue)
   uint32_t num_discarded_sdus;   ///< Number of discarded SDUs (instructed from higher layer)
   uint32_t num_discard_failures; ///< Number of failed SDU discards (instructed from higher layer)
-  uint32_t sum_sdu_latency_us;   ///< total SDU latency (in us)>
 
   uint32_t counter = 0; ///< Counter of amount of times we collected metrics.
                         ///  Useful to aggregate high and low metrics.
@@ -39,12 +37,10 @@ struct rlc_tx_metrics_higher {
   void reset()
   {
     num_sdus             = {};
-    num_of_pulled_sdus   = {};
     num_sdu_bytes        = {};
     num_dropped_sdus     = {};
     num_discarded_sdus   = {};
     num_discard_failures = {};
-    sum_sdu_latency_us   = {};
     // do not reset counter
   }
 };
@@ -88,6 +84,8 @@ struct rlc_am_tx_metrics_lower {
 struct rlc_tx_metrics_lower {
   uint32_t num_pdus_no_segmentation;      ///< Number of transmitted PDUs without segmentation
   size_t   num_pdu_bytes_no_segmentation; ///< Number of transmitted PDU bytes without segmentation
+  uint32_t num_of_pulled_sdus;            ///< Number of pulled SDUs
+  uint32_t sum_sdu_latency_us;            ///< total SDU latency (in us)>
 
   /// RLC mode of the entity
   rlc_mode mode;
@@ -115,6 +113,8 @@ struct rlc_tx_metrics_lower {
   {
     num_pdus_no_segmentation      = {};
     num_pdu_bytes_no_segmentation = {};
+    num_of_pulled_sdus            = {};
+    sum_sdu_latency_us            = {};
 
     // reset mode-specific values
     switch (mode) {

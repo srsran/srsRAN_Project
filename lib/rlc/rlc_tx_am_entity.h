@@ -144,6 +144,8 @@ public:
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
     poll_retransmit_timer.stop();
+    high_metrics_timer.stop();
+    low_metrics_timer.stop();
   };
 
   // TX/RX interconnect
