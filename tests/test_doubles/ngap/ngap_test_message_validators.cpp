@@ -54,3 +54,31 @@ bool srsran::test_helpers::is_valid_ue_radio_capability_info_indication(const sr
   TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_UE_RADIO_CAP_INFO_IND);
   return true;
 }
+
+bool srsran::test_helpers::is_valid_ue_context_release_complete(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_pdu_session_resource_setup_response(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_pdu_session_resource_release_response(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_pdu_session_resource_modify_response(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_NGAP_ID_PDU_SESSION_RES_MODIFY);
+  return true;
+}

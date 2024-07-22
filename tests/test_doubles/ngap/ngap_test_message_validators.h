@@ -30,5 +30,13 @@ bool is_valid_ue_context_release_request(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_ue_radio_capability_info_indication(const srs_cu_cp::ngap_message& msg);
 
+bool is_valid_ue_context_release_complete(const srs_cu_cp::ngap_message& msg);
+
+bool is_valid_pdu_session_resource_setup_response(const srs_cu_cp::ngap_message& msg);
+
+bool is_valid_pdu_session_resource_release_response(const srs_cu_cp::ngap_message& msg);
+
+bool is_valid_pdu_session_resource_modify_response(const srs_cu_cp::ngap_message& msg);
+
 } // namespace test_helpers
 } // namespace srsran
