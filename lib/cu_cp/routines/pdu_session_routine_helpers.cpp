@@ -498,9 +498,13 @@ void srsran::srs_cu_cp::fill_drb_to_remove_list(std::vector<drb_id_t>&       e1a
 
 void srsran::srs_cu_cp::update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list,
+    up_config_update&                                                                 next_config)
 {
   for (const auto& e1ap_item : pdu_session_resource_failed_list) {
+    // Remove from next config
+    next_config.pdu_sessions_to_setup_list.erase(e1ap_item.pdu_session_id);
+
     // Add to list taking cause received from CU-UP.
     cu_cp_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = e1ap_item.pdu_session_id;

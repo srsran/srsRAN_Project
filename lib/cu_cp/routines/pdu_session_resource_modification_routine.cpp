@@ -257,7 +257,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
 
   // Traverse failed list
   update_failed_list(response_msg.pdu_session_res_failed_to_modify_list,
-                     bearer_context_modification_response.pdu_session_resource_failed_list);
+                     bearer_context_modification_response.pdu_session_resource_failed_list,
+                     next_config);
 
   return bearer_context_modification_response.success;
 }

@@ -101,7 +101,8 @@ bool update_setup_list(e1ap_bearer_context_modification_request&                
 
 void update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
-    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list);
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list,
+    up_config_update&                                                                 next_config);
 
 /// \brief Processes the result of a Bearer Context Modifcation Result's PDU session modify list.
 /// \param[out] ngap_response_list Reference to the final NGAP response
