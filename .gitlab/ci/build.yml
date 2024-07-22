@@ -116,7 +116,6 @@ variables:
     # TEST
     TEST_EXECUTION_TIMEOUT: 0
     # CI
-    SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_CPU_REQUEST: 6
     KUBERNETES_CPU_LIMIT: 6
     KUBERNETES_MEMORY_REQUEST: 12Gi
@@ -326,23 +325,22 @@ variables:
   script:
     - build_srsgnb
     - launch_tests
-  after_script:
+  timeout: 6h
+  cache:
+    - !reference [.fetch_src_cache, cache]
+
+.build_artifacts:
+  after_script: &build_after_script
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - |
-      if [ -z "${SAVE_ARTIFACTS}" ]; then
-        rm -Rf ${CI_PROJECT_DIR}/build
-        rm -Rf build_time_metrics.txt
-      else
-        mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
-        mv ${CI_PROJECT_DIR}/build/apps/cu/srscu /tmp/srscu
-        mv ${CI_PROJECT_DIR}/build/apps/du/srsdu /tmp/srsdu
-        cd build
-        make clean
-        mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
-        mv /tmp/srscu ${CI_PROJECT_DIR}/build/apps/cu/srscu
-        mv /tmp/srsdu ${CI_PROJECT_DIR}/build/apps/du/srsdu
-      fi
-  timeout: 6h
+      mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
+      mv ${CI_PROJECT_DIR}/build/apps/cu/srscu /tmp/srscu
+      mv ${CI_PROJECT_DIR}/build/apps/du/srsdu /tmp/srsdu
+      cd build
+      make clean
+      mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
+      mv /tmp/srscu ${CI_PROJECT_DIR}/build/apps/cu/srscu
+      mv /tmp/srsdu ${CI_PROJECT_DIR}/build/apps/du/srsdu
   artifacts: &build_artifacts
     when: always
     reports:
@@ -354,8 +352,6 @@ variables:
       - build/
       - build_time_metrics.txt
     expire_in: 10 minutes
-  cache:
-    - !reference [.fetch_src_cache, cache]
 
 # Basic builds (MR and update cache on Nightly)
 
@@ -504,8 +500,10 @@ smoke relwithdeb cached:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
-  variables:
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
@@ -638,8 +636,10 @@ smoke relwithdeb clean:
   extends: .smoke relwithdeb
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  variables:
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
 
 smoke tsan clean:
   extends: .smoke tsan
@@ -691,8 +691,6 @@ intermediate commits cached:
       when: never
     - if: $ON_MR
   timeout: 2 hour
-  variables:
-    SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
     - git fetch origin --depth=20 $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
@@ -706,6 +704,10 @@ intermediate commits cached:
         build_srsgnb
       done
     - launch_tests
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
@@ -726,7 +728,6 @@ valgrind changed tests:
     CLEAN_BUILD: "False"
     FINGERPRINT: "fingerprints.csv"
     TEST_EXECUTION_TIMEOUT: 20m
-    SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
@@ -780,8 +781,8 @@ smoke release update cache:
       start_in: 30 minutes
   retry: 2
   interruptible: false
-  variables:
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
@@ -1921,7 +1922,8 @@ basic relwithdeb:
   interruptible: false
   variables:
     TEST_MODE: none
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
@@ -1947,7 +1949,8 @@ basic tsan:
   interruptible: false
   variables:
     TEST_MODE: none
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
@@ -1960,9 +1963,10 @@ basic asan:
   interruptible: false
   variables:
     TEST_MODE: none
-    SAVE_ARTIFACTS: "True"
     BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3" -DEXIT_TIMEOUT=15
   tags: ["${AMD64_AVX2_TAG}"]
+  after_script:
+    - *build_after_script
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
@@ -1975,7 +1979,8 @@ basic memcheck:
   interruptible: false
   variables:
     TEST_MODE: none
-    SAVE_ARTIFACTS: "True"
+  after_script:
+    - *build_after_script
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
@@ -1999,8 +2004,9 @@ basic avx512 dpdk:
     BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v4"
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: MINIMAL
-    SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX512_TAG}"]
+  after_script:
+    - *build_after_script
   artifacts:
     <<: *build_artifacts
     expire_in: 3 day
@@ -2022,8 +2028,11 @@ custom build:
   variables:
     ENABLE_ZEROMQ: ""
     AUTO_DETECT_ISA: ""
-    SAVE_ARTIFACTS: "True"
   tags: ["${INFRASTRUCTURE_TAG}"]
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
