@@ -11,11 +11,11 @@
 #pragma once
 
 #include "ue_manager_interfaces.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/timers.h"
+#include <unordered_map>
 
 namespace srsran {
 
@@ -39,7 +39,7 @@ public:
                       dlt_pcap&                                   gtpu_pcap_,
                       srslog::basic_logger&                       logger_);
 
-  using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
+  using ue_db_t = std::unordered_map<ue_index_t, std::unique_ptr<ue_context>>;
   const ue_db_t& get_ues() const { return ue_db; }
 
   ue_context*      add_ue(const ue_context_cfg& cfg) override;

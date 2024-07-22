@@ -49,7 +49,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
-  return ue_db.contains(ue_index) ? ue_db[ue_index].get() : nullptr;
+  return ue_db.find(ue_index) != ue_db.end() ? ue_db[ue_index].get() : nullptr;
 }
 
 ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
@@ -101,7 +101,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
 async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
 {
   logger.debug("ue={}: Scheduling UE deletion", ue_index);
-  srsran_assert(ue_db.contains(ue_index), "Remove UE called for nonexistent ue_index={}", ue_index);
+  srsran_assert(ue_db.find(ue_index) != ue_db.end(), "Remove UE called for nonexistent ue_index={}", ue_index);
 
   // Move UE context out from ue_db and erase the slot (from CU-UP shared ctrl executor)
   std::unique_ptr<ue_context> ue_ctxt = std::move(ue_db[ue_index]);
@@ -121,7 +121,7 @@ ue_index_t ue_manager::get_next_ue_index()
 {
   // Search unallocated UE index
   for (int i = 0; i < MAX_NOF_UES; i++) {
-    if (not ue_db.contains(i)) {
+    if (ue_db.find(static_cast<ue_index_t>(i)) == ue_db.end()) {
       return int_to_ue_index(i);
       break;
     }
