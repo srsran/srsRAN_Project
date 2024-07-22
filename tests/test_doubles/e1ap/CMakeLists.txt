@@ -6,10 +6,6 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(rrc)
-add_subdirectory(e1ap)
-add_subdirectory(f1ap)
-add_subdirectory(ngap)
-add_subdirectory(scheduler)
-add_subdirectory(pdcp)
+add_library(e1ap_test_doubles e1ap_test_message_validators.cpp)
+set_target_properties(e1ap_test_doubles PROPERTIES UNITY_BUILD ON)
+target_link_libraries(e1ap_test_doubles srsran_support srslog e1ap_asn1)
