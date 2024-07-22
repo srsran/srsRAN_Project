@@ -11,6 +11,7 @@
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
 #include "srsran/cu_up/cu_up_types.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -50,6 +51,7 @@ protected:
                                           *gtpu_n3_allocator,
                                           *gtpu_f1u_allocator,
                                           *cu_up_exec_mapper,
+                                          worker,
                                           gtpu_pcap,
                                           test_logger);
   }
@@ -77,6 +79,9 @@ protected:
   cu_up_test_mode_config                                      test_mode_config{};
   srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST", false);
   manual_task_worker                                          worker{64};
+
+  async_task<void>                        t;
+  std::optional<lazy_task_launcher<void>> t_launcher;
 };
 
 /// UE object handling tests (creation/deletion)
@@ -113,7 +118,8 @@ TEST_F(ue_manager_test, when_ue_are_deleted_ue_db_is_empty)
 
   // delete all UE objects
   for (uint32_t i = 0; i < MAX_NOF_UES; i++) {
-    ue_mng->remove_ue(int_to_ue_index(i));
+    t = ue_mng->remove_ue(int_to_ue_index(i));
+    t_launcher.emplace(t);
   }
   ASSERT_EQ(ue_mng->get_nof_ues(), 0);
 }

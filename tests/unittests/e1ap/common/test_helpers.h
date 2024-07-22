@@ -149,10 +149,15 @@ public:
         });
   }
 
-  void on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override
+  async_task<void>
+  on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override
   {
     logger.info("Received BearerContextReleaseCommand");
     last_bearer_context_release_command = msg;
+    return launch_async([](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
   void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index_, async_task<void> task) override

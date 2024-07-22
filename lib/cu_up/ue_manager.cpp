@@ -9,6 +9,7 @@
  */
 
 #include "ue_manager.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -24,6 +25,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
                        gtpu_teid_pool&                             n3_teid_allocator_,
                        gtpu_teid_pool&                             f1u_teid_allocator_,
                        cu_up_executor_pool&                        exec_pool_,
+                       task_executor&                              ctrl_executor_,
                        dlt_pcap&                                   gtpu_pcap_,
                        srslog::basic_logger&                       logger_) :
   net_config(net_config_),
@@ -36,6 +38,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
   n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   exec_pool(exec_pool_),
+  ctrl_executor(ctrl_executor_),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
   logger(logger_),
@@ -95,26 +98,23 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   return ue_db[new_idx].get();
 }
 
-void ue_manager::remove_ue(ue_index_t ue_index)
+async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
 {
   logger.debug("ue={}: Scheduling UE deletion", ue_index);
   srsran_assert(ue_db.contains(ue_index), "Remove UE called for nonexistent ue_index={}", ue_index);
 
-  // TODO: remove lookup maps
+  // Move UE context out from ue_db and erase the slot (from CU-UP shared ctrl executor)
+  std::unique_ptr<ue_context> ue_ctxt = std::move(ue_db[ue_index]);
+  ue_db.erase(ue_index);
+  task_executor& ue_ctrl_executor = ue_ctxt->ue_exec_mapper->ctrl_executor();
 
-  task_sched.schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-
-    // Stop UE activity.
-    CORO_AWAIT(ue_db[ue_index]->stop());
-
-    // remove UE from database
-    ue_db.erase(ue_index);
-
-    logger.info("ue={}: UE removed", ue_index);
-
-    CORO_RETURN();
-  });
+  // Dispatch the stopping and deletion of the UE context to UE-specific ctrl executor
+  return execute_and_continue_on_blocking(
+      ue_ctrl_executor, ctrl_executor, [this, ue_index, ue_ctxt = std::move(ue_ctxt)]() mutable {
+        ue_ctxt->stop();
+        ue_ctxt.reset();
+        logger.info("ue={}: UE removed", ue_index);
+      });
 }
 
 ue_index_t ue_manager::get_next_ue_index()

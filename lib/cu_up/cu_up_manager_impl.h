@@ -37,7 +37,7 @@ public:
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
 
-  void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
+  async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
   void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override;
 

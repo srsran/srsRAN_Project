@@ -45,11 +45,14 @@ public:
     return cu_up_handler->handle_bearer_context_modification_request(msg);
   }
 
-  void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
+  async_task<void> on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
   {
     if (cu_up_handler == nullptr) {
       logger.warning("Could not handle context release command, no CU-UP handler present. ue={}", msg.ue_index);
-      return;
+      return launch_async([](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
     }
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }

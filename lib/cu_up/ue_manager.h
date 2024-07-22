@@ -35,16 +35,17 @@ public:
                       gtpu_teid_pool&                             n3_teid_allocator_,
                       gtpu_teid_pool&                             f1u_teid_allocator_,
                       cu_up_executor_pool&                        exec_pool_,
+                      task_executor&                              ctrl_executor_,
                       dlt_pcap&                                   gtpu_pcap_,
                       srslog::basic_logger&                       logger_);
 
   using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
 
-  ue_context* add_ue(const ue_context_cfg& cfg) override;
-  void        remove_ue(ue_index_t ue_index) override;
-  ue_context* find_ue(ue_index_t ue_index) override;
-  size_t      get_nof_ues() const override { return ue_db.size(); };
+  ue_context*      add_ue(const ue_context_cfg& cfg) override;
+  async_task<void> remove_ue(ue_index_t ue_index) override;
+  ue_context*      find_ue(ue_index_t ue_index) override;
+  size_t           get_nof_ues() const override { return ue_db.size(); };
 
   void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task);
 
@@ -63,6 +64,7 @@ private:
   gtpu_teid_pool&                             n3_teid_allocator;
   gtpu_teid_pool&                             f1u_teid_allocator;
   cu_up_executor_pool&                        exec_pool;
+  task_executor&                              ctrl_executor;
   dlt_pcap&                                   gtpu_pcap;
   timer_manager&                              timers;
   ue_db_t                                     ue_db;

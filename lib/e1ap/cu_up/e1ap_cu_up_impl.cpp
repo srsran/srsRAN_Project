@@ -11,6 +11,7 @@
 #include "e1ap_cu_up_impl.h"
 #include "../common/log_helpers.h"
 #include "cu_up/procedures/bearer_context_modification_procedure.h"
+#include "cu_up/procedures/bearer_context_release_procedure.h"
 #include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
@@ -256,38 +257,23 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)
 {
-  e1ap_bearer_context_release_command bearer_context_release_cmd = {};
-
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
+    // create failure message for early returns
+    e1ap_message e1ap_msg;
+    e1ap_msg.pdu.set_unsuccessful_outcome();
+    e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
+    // TODO fill other values
+
     logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
+    pdu_notifier->on_new_message(e1ap_msg);
     return;
   }
 
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
 
-  bearer_context_release_cmd.ue_index = ue_ctxt.ue_ids.ue_index;
-  bearer_context_release_cmd.cause    = asn1_to_cause(msg->cause);
-
-  // Forward message to CU-UP
-  cu_up_notifier.on_bearer_context_release_command_received(bearer_context_release_cmd);
-
-  // Remove UE context
-  ue_ctxt_list.remove_ue(ue_ctxt.ue_ids.ue_index);
-
-  e1ap_message e1ap_msg;
-  e1ap_msg.pdu.set_successful_outcome();
-  e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
-  e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id =
-      msg->gnb_cu_cp_ue_e1ap_id;
-  e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_up_ue_e1ap_id =
-      msg->gnb_cu_up_ue_e1ap_id;
-
-  // send response
-  logger.debug("ue={} cu_up_ue_e1ap_id={} cu_cp_ue_e1ap_id={}: Sending BearerContextReleaseComplete",
-               bearer_context_release_cmd.ue_index,
-               msg->gnb_cu_up_ue_e1ap_id,
-               msg->gnb_cu_cp_ue_e1ap_id);
-  pdu_notifier->on_new_message(e1ap_msg);
+  cu_up_notifier.on_schedule_ue_async_task(ue_ctxt.ue_ids.ue_index,
+                                           launch_async<bearer_context_release_procedure>(
+                                               ue_ctxt, msg, ue_ctxt_list, *pdu_notifier, cu_up_notifier, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
