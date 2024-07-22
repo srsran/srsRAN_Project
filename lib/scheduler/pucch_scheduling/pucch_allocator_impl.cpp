@@ -1849,43 +1849,42 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_allocator_impl::puc
   if (resources_to_merge.size() == 3) {
     // Apply F2 HARQ merging rule: all PUCCH resources will be multiplexed in a PUCCH resource from PUCCH res set 1.
     pucch_grant        new_resource{.type = pucch_grant_type::harq_ack};
-    const pucch_grant* r_harq_ptr = nullptr;
-    const pucch_grant* r_sr_ptr   = nullptr;
-    const pucch_grant* r_csi_ptr  = nullptr;
+    const pucch_grant* r_harq = nullptr;
+    const pucch_grant* r_sr   = nullptr;
+    const pucch_grant* r_csi  = nullptr;
     for (const auto& grant : resources_to_merge) {
       if (grant.type == pucch_grant_type::harq_ack) {
-        r_harq_ptr = &grant;
+        r_harq = &grant;
       } else if (grant.type == pucch_grant_type::sr) {
-        r_sr_ptr = &grant;
+        r_sr = &grant;
       } else if (grant.type == pucch_grant_type::csi) {
-        r_csi_ptr = &grant;
+        r_csi = &grant;
       }
     }
 
-    srsran_assert(r_harq_ptr != nullptr and r_sr_ptr != nullptr and r_csi_ptr != nullptr,
-                  "The three resources must be present");
-    if (r_sr_ptr->format == pucch_format::FORMAT_0) {
+    srsran_assert(r_harq != nullptr and r_sr != nullptr and r_csi != nullptr, "The three resources must be present");
+    if (r_sr->format == pucch_format::FORMAT_0) {
       srsran_assertion_failure("This case is not yet supported");
       // SR and CSI are not supported on the same slot if SR uses Format 0.
       return std::nullopt;
     }
 
-    if (r_harq_ptr->format != pucch_format::FORMAT_0 and r_harq_ptr->format != pucch_format::FORMAT_1) {
-      new_resource = *r_harq_ptr;
+    if (r_harq->format != pucch_format::FORMAT_0 and r_harq->format != pucch_format::FORMAT_1) {
+      new_resource = *r_harq;
     } else {
       const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
-          slot_harq, crnti, r_harq_ptr->harq_id.pucch_res_ind, pucch_cfg);
+          slot_harq, crnti, r_harq->harq_id.pucch_res_ind, pucch_cfg);
       resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
       if (pucch_res == nullptr) {
         return std::nullopt;
       }
       new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
-      new_resource.harq_id.pucch_res_ind = r_harq_ptr->harq_id.pucch_res_ind;
+      new_resource.harq_id.pucch_res_ind = r_harq->harq_id.pucch_res_ind;
       new_resource.set_res_config(*pucch_res);
     }
-    new_resource.bits.harq_ack_nof_bits  = r_harq_ptr->bits.harq_ack_nof_bits;
-    new_resource.bits.sr_bits            = r_sr_ptr->bits.sr_bits;
-    new_resource.bits.csi_part1_nof_bits = r_csi_ptr->bits.csi_part1_nof_bits;
+    new_resource.bits.harq_ack_nof_bits  = r_harq->bits.harq_ack_nof_bits;
+    new_resource.bits.sr_bits            = r_sr->bits.sr_bits;
+    new_resource.bits.csi_part1_nof_bits = r_csi->bits.csi_part1_nof_bits;
 
     // Check if the UCI payload fits in the PUCCH resource.
     if (new_resource.bits.get_total_bits() <= pucch_cfg.get_max_payload(new_resource.format)) {
