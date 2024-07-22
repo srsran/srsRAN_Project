@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_test_environment.h"
+#include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
@@ -28,6 +29,8 @@
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/security/integrity.h"
 #include "srsran/support/executors/task_worker.h"
 
 using namespace srsran;
@@ -81,6 +84,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea2,
                                            security::ciphering_algorithm::nea1,
                                            security::ciphering_algorithm::nea3};
+
+  cu_cp_cfg.f1ap.json_log_enabled = true;
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
@@ -442,28 +447,12 @@ bool cu_cp_test_environment::setup_ue_security(unsigned du_idx, gnb_du_ue_f1ap_i
   return true;
 }
 
-bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
-                                       gnb_du_ue_f1ap_id_t du_ue_id,
-                                       rnti_t              crnti,
-                                       amf_ue_id_t         amf_ue_id)
+bool cu_cp_test_environment::finish_ue_registration(unsigned du_idx, unsigned cu_up_idx, gnb_du_ue_f1ap_id_t du_ue_id)
 {
-  if (not connect_new_ue(du_idx, du_ue_id, crnti)) {
-    return false;
-  }
-  if (not authenticate_ue(du_idx, du_ue_id, amf_ue_id)) {
-    return false;
-  }
-  if (not setup_ue_security(du_idx, du_ue_id)) {
-    return false;
-  }
-  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
-
   ngap_message ngap_pdu;
   srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
-  f1ap_message f1ap_pdu;
-  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
-  e1ap_message e1ap_pdu;
-  srsran_assert(not this->get_cu_up(0).try_pop_rx_pdu(e1ap_pdu), "there are still E1AP messages to pop from CU-UP");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject Registration Complete and wait UL NAS message.
   get_du(du_idx).push_ul_pdu(
@@ -474,6 +463,20 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
   bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive Registration Complete");
 
+  return true;
+}
+
+bool cu_cp_test_environment::request_pdu_session_resource_setup(unsigned            du_idx,
+                                                                unsigned            cu_up_idx,
+                                                                gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
   // Inject PDU Session Establishment Request and wait UL NAS message.
   get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
       du_ue_id,
@@ -482,12 +485,12 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
       make_byte_buffer("00063a253f011ffa9203013f0033808018970080e0ffffc9d8bd8013404010880080000840830000000041830000000"
                        "00000800001800005000006000006800008800900c092838339b939b0b83700e03a21bb")
           .value()));
-  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+  bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive Registration Complete");
 
   // Inject Configuration Update Command
   ngap_message dl_nas_transport_msg = generate_downlink_nas_transport_message(
-      amf_ue_id,
+      ue_ctx.amf_ue_id.value(),
       ue_ctx.ran_ue_id.value(),
       make_byte_buffer("7e0205545bfc027e0054430f90004f00700065006e00350047005346004732800131235200490100").value());
   get_amf().push_tx_pdu(dl_nas_transport_msg);
@@ -496,53 +499,379 @@ bool cu_cp_test_environment::attach_ue(unsigned            du_idx,
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
 
-  // Inject PDU Session Resource Setup Request and wait for E1AP Bearer Context Setup Request.
-  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
-      amf_ue_id, ue_ctx.ran_ue_id.value(), uint_to_pdu_session_id(1));
+  return true;
+}
+
+bool cu_cp_test_environment::send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+    const ngap_message& pdu_session_resource_setup_request,
+    unsigned            du_idx,
+    unsigned            cu_up_idx,
+    gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  e1ap_message e1ap_pdu;
+  srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                "there are still E1AP messages to pop from CU-UP");
+
+  // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request
   get_amf().push_tx_pdu(pdu_session_resource_setup_request);
-  result = this->wait_for_e1ap_tx_pdu(0, e1ap_pdu);
-  report_fatal_error_if_not(result, "Failed to receive E1AP Bearer Context Setup Request");
+  bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive Bearer Context Setup Request");
+  report_fatal_error_if_not(test_helpers::is_valid_bearer_context_setup_request(e1ap_pdu),
+                            "Invalid Bearer Context Setup Request");
 
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_e1ap_id =
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+  ue_ctx.cu_cp_e1ap_id =
       int_to_gnb_cu_cp_ue_e1ap_id(e1ap_pdu.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id);
-  gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
 
-  // Inject Bearer Context Setup Response and wait for F1AP UE Context Modification Request.
-  get_cu_up(0).push_tx_pdu(generate_bearer_context_setup_response(cu_cp_e1ap_id, cu_up_e1ap_id));
-  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
-  report_fatal_error_if_not(result, "Failed to receive F1AP UE Context Modification Request");
+  return true;
+}
+
+bool cu_cp_test_environment::send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+    const ngap_message& pdu_session_resource_setup_request,
+    unsigned            cu_up_idx)
+{
+  e1ap_message e1ap_pdu;
+  srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                "there are still E1AP messages to pop from CU-UP");
+
+  // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request
+  get_amf().push_tx_pdu(pdu_session_resource_setup_request);
+  bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive Bearer Context Modification Request");
+  report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
+                            "Invalid Bearer Context Modification Request");
+
+  return true;
+}
+
+bool cu_cp_test_environment::send_bearer_context_setup_response_and_await_ue_context_modification_request(
+    unsigned               du_idx,
+    unsigned               cu_up_idx,
+    gnb_du_ue_f1ap_id_t    du_ue_id,
+    gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+    pdu_session_id_t       psi,
+    qos_flow_id_t          qfi)
+{
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx         = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+  ue_ctx.cu_up_e1ap_id = cu_up_e1ap_id;
+
+  // Inject Bearer Context Setup Response and wait for UE Context Modification Request
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(
+      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id_t::drb1, qfi}}}));
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
   report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
-                            "Invalid UE Context Modification");
+                            "Invalid UE Context Modification Request");
 
-  // Inject UE Context Modification Response and wait for Bearer Context Modification to be sent to CU-UP.
+  return true;
+}
+
+bool cu_cp_test_environment::send_bearer_context_modification_response_and_await_ue_context_modification_request(
+    unsigned            du_idx,
+    unsigned            cu_up_idx,
+    gnb_du_ue_f1ap_id_t du_ue_id,
+    pdu_session_id_t    psi,
+    drb_id_t            drb_id,
+    qos_flow_id_t       qfi)
+{
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
+  // Inject Bearer Context Modification Response and wait for UE Context Modification Request
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
+      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), {{psi, drb_test_params{drb_id, qfi}}}));
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                            "Invalid UE Context Modification Request");
+
+  return true;
+}
+
+bool cu_cp_test_environment::send_ue_context_modification_response_and_await_bearer_context_modification_request(
+    unsigned            du_idx,
+    unsigned            cu_up_idx,
+    gnb_du_ue_f1ap_id_t du_ue_id,
+    rnti_t              crnti)
+{
+  e1ap_message e1ap_pdu;
+  srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                "there are still E1AP messages to pop from CU-UP");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
+  // Inject UE Context Modification Response and wait for Bearer Context Modification Request
   get_du(du_idx).push_ul_pdu(
       test_helpers::generate_ue_context_modification_response(du_ue_id, ue_ctx.cu_ue_id.value(), crnti));
-  result = this->wait_for_e1ap_tx_pdu(0, e1ap_pdu);
-  report_fatal_error_if_not(result, "Failed to receive E1AP Bearer Context Modification");
+  bool result = this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive Bearer Context Modification Request");
+  report_fatal_error_if_not(test_helpers::is_valid_bearer_context_modification_request(e1ap_pdu),
+                            "Invalid Bearer Context Modification Request");
+
+  return true;
+}
+
+bool cu_cp_test_environment::send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+    unsigned                                           du_idx,
+    unsigned                                           cu_up_idx,
+    gnb_du_ue_f1ap_id_t                                du_ue_id,
+    const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add,
+    const std::map<pdu_session_id_t, drb_id_t>&        pdu_sessions_to_modify,
+    const std::optional<std::vector<srb_id_t>>&        expected_srbs_to_add_mod,
+    const std::optional<std::vector<drb_id_t>>&        expected_drbs_to_add_mod)
+{
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
 
   // Inject E1AP Bearer Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
-  get_cu_up(0).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
-  result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(
+      ue_ctx.cu_cp_e1ap_id.value(), ue_ctx.cu_up_e1ap_id.value(), pdu_sessions_to_add, pdu_sessions_to_modify));
+  bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   report_fatal_error_if_not(result, "Failed to receive F1AP DL RRC Message (containing RRC Reconfiguration)");
   report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
                             "Invalid DL RRC Message Transfer");
   {
     const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
     report_fatal_error_if_not(
-        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        test_helpers::is_valid_rrc_reconfiguration(
+            test_helpers::extract_dl_dcch_msg(rrc_container), true, expected_srbs_to_add_mod, expected_drbs_to_add_mod),
         "Invalid RRC Reconfiguration");
   }
 
-  // Inject RRC Reconfiguration Complete and wait for PDU Session Resource Setup Response to be sent to AMF.
+  return true;
+}
+
+bool cu_cp_test_environment::is_expected_pdu_session_resource_setup_response(
+    const ngap_message&                  ngap_pdu,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup)
+{
+  // Check failed PDU sessions
+  if (expected_pdu_sessions_failed_to_setup.empty() && ngap_pdu.pdu.successful_outcome()
+                                                           .value.pdu_session_res_setup_resp()
+                                                           ->pdu_session_res_failed_to_setup_list_su_res_present) {
+    return false;
+  }
+
+  if (!expected_pdu_sessions_failed_to_setup.empty() && !ngap_pdu.pdu.successful_outcome()
+                                                             .value.pdu_session_res_setup_resp()
+                                                             ->pdu_session_res_failed_to_setup_list_su_res_present) {
+    return false;
+  }
+
+  if (expected_pdu_sessions_failed_to_setup.size() != ngap_pdu.pdu.successful_outcome()
+                                                          .value.pdu_session_res_setup_resp()
+                                                          ->pdu_session_res_failed_to_setup_list_su_res.size()) {
+    return false;
+  }
+
+  for (const auto& asn1_failed_item : ngap_pdu.pdu.successful_outcome()
+                                          .value.pdu_session_res_setup_resp()
+                                          ->pdu_session_res_failed_to_setup_list_su_res) {
+    if (std::find(expected_pdu_sessions_failed_to_setup.begin(),
+                  expected_pdu_sessions_failed_to_setup.end(),
+                  uint_to_pdu_session_id(asn1_failed_item.pdu_session_id)) ==
+        expected_pdu_sessions_failed_to_setup.end()) {
+      return false;
+    }
+  }
+
+  // Check successful PDU sessions
+  if (expected_pdu_sessions_to_setup.empty() &&
+      ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res_present) {
+    return false;
+  }
+
+  if (!expected_pdu_sessions_to_setup.empty() && !ngap_pdu.pdu.successful_outcome()
+                                                      .value.pdu_session_res_setup_resp()
+                                                      ->pdu_session_res_setup_list_su_res_present) {
+    return false;
+  }
+
+  if (expected_pdu_sessions_to_setup.size() !=
+      ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res.size()) {
+    return false;
+  }
+
+  for (const auto& asn1_setup_item :
+       ngap_pdu.pdu.successful_outcome().value.pdu_session_res_setup_resp()->pdu_session_res_setup_list_su_res) {
+    if (std::find(expected_pdu_sessions_to_setup.begin(),
+                  expected_pdu_sessions_to_setup.end(),
+                  uint_to_pdu_session_id(asn1_setup_item.pdu_session_id)) == expected_pdu_sessions_to_setup.end()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+byte_buffer cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
+{
+  byte_buffer pdu_with_count = byte_buffer::create({0x00, count}).value();
+  if (!pdu_with_count.append(pack_ul_dcch_msg(create_rrc_reconfiguration_complete(transaction_id)))) {
+    return {};
+  }
+
+  security::sec_mac mac_exp   = {};
+  auto              k_128_int = std::array<uint8_t, 16>{
+                   0xf3, 0xd5, 0x99, 0x4a, 0x3b, 0x29, 0x06, 0xfb, 0x27, 0x00, 0x4a, 0x44, 0x90, 0x6c, 0x6b, 0xd1};
+  byte_buffer_view buf = pdu_with_count;
+
+  security::security_nia2(
+      mac_exp, k_128_int, count, srb_id_to_uint(srb_id_t::srb1) - 1, security::security_direction::uplink, buf);
+
+  if (!pdu_with_count.append(mac_exp)) {
+    return {};
+  }
+
+  return pdu_with_count;
+}
+
+bool cu_cp_test_environment::send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+    unsigned                             du_idx,
+    gnb_du_ue_f1ap_id_t                  du_ue_id,
+    byte_buffer                          rrc_reconfiguration_complete,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
+    const std::vector<pdu_session_id_t>& expected_pdu_sessions_failed_to_setup)
+{
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
+  // Inject UL RRC Message (containing RRC Reconfiguration Complete) and wait for PDU Session Resource Setup Response
   get_du(du_idx).push_ul_pdu(test_helpers::create_ul_rrc_message_transfer(
-      du_ue_id, ue_ctx.cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00070e00cc6fcda5").value()));
-  result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+      du_ue_id, ue_ctx.cu_ue_id.value(), srb_id_t::srb1, std::move(rrc_reconfiguration_complete)));
+  bool result = this->wait_for_ngap_tx_pdu(ngap_pdu);
   report_fatal_error_if_not(result, "Failed to receive PDU Session Resource Setup Response");
+  report_fatal_error_if_not(test_helpers::is_valid_pdu_session_resource_setup_response(ngap_pdu),
+                            "Invalid PDU Session Resource Setup Response");
+  report_fatal_error_if_not(is_expected_pdu_session_resource_setup_response(
+                                ngap_pdu, expected_pdu_sessions_to_setup, expected_pdu_sessions_failed_to_setup),
+                            "Unsuccessful PDU Session Resource Setup Response");
+
+  return true;
+}
+
+bool cu_cp_test_environment::setup_pdu_session(unsigned               du_idx,
+                                               unsigned               cu_up_idx,
+                                               gnb_du_ue_f1ap_id_t    du_ue_id,
+                                               rnti_t                 crnti,
+                                               gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                                               pdu_session_id_t       psi,
+                                               drb_id_t               drb_id,
+                                               qos_flow_id_t          qfi,
+                                               byte_buffer            rrc_reconfiguration_complete,
+                                               bool                   is_initial_session)
+{
+  ngap_message ngap_pdu;
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  f1ap_message f1ap_pdu;
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+  e1ap_message e1ap_pdu;
+  srsran_assert(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
+                "there are still E1AP messages to pop from CU-UP");
+
+  auto& ue_ctx = attached_ues.at(du_ue_id_to_ran_ue_id_map.at(du_idx).at(du_ue_id));
+
+  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+      ue_ctx.amf_ue_id.value(), ue_ctx.ran_ue_id.value(), {{psi, {{qfi, 9}}}});
+
+  if (is_initial_session) {
+    // Inject PDU Session Resource Setup Request and wait for Bearer Context Setup Request.
+    send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+        pdu_session_resource_setup_request, du_idx, cu_up_idx, du_ue_id);
+
+    // Inject Bearer Context Setup Response and wait for F1AP UE Context Modification Request.
+    if (not send_bearer_context_setup_response_and_await_ue_context_modification_request(
+            du_idx, cu_up_idx, du_ue_id, cu_up_e1ap_id, psi, qfi)) {
+      return false;
+    }
+  } else {
+    // Inject PDU Session Resource Setup Request and wait for Bearer Context Modification Request.
+    send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+        pdu_session_resource_setup_request, du_idx);
+
+    // Inject Bearer Context Modification Response and wait for F1AP UE Context Modification Request.
+    if (not send_bearer_context_modification_response_and_await_ue_context_modification_request(
+            du_idx, cu_up_idx, du_ue_id, psi, drb_id, qfi)) {
+      return false;
+    }
+  }
+
+  // Inject UE Context Modification Response and wait for Bearer Context Modification to be sent to CU-UP.
+  if (not send_ue_context_modification_response_and_await_bearer_context_modification_request(
+          du_idx, cu_up_idx, du_ue_id, crnti)) {
+    return false;
+  }
+
+  // Inject Bearer Context Modification Response and wait for DL RRC Message (containing RRC Reconfiguration)
+  if (not send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+          du_idx, cu_up_idx, du_ue_id, {}, {{psi, drb_id}})) {
+    return false;
+  }
+
+  // Inject RRC Reconfiguration Complete and wait for PDU Session Resource Setup Response to be sent to AMF.
+  if (not send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+          du_idx, du_ue_id, std::move(rrc_reconfiguration_complete), {psi}, {})) {
+    return false;
+  }
+  return true;
+
+  return true;
+}
+
+bool cu_cp_test_environment::attach_ue(unsigned               du_idx,
+                                       unsigned               cu_up_idx,
+                                       gnb_du_ue_f1ap_id_t    du_ue_id,
+                                       rnti_t                 crnti,
+                                       amf_ue_id_t            amf_ue_id,
+                                       gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id,
+                                       pdu_session_id_t       psi,
+                                       drb_id_t               drb_id,
+                                       qos_flow_id_t          qfi,
+                                       byte_buffer            rrc_reconfiguration_complete)
+{
+  if (not connect_new_ue(du_idx, du_ue_id, crnti)) {
+    return false;
+  }
+  if (not authenticate_ue(du_idx, du_ue_id, amf_ue_id)) {
+    return false;
+  }
+  if (not setup_ue_security(du_idx, du_ue_id)) {
+    return false;
+  }
+  if (not finish_ue_registration(du_idx, cu_up_idx, du_ue_id)) {
+    return false;
+  }
+  if (not request_pdu_session_resource_setup(du_idx, cu_up_idx, du_ue_id)) {
+    return false;
+  }
+  if (not setup_pdu_session(du_idx,
+                            cu_up_idx,
+                            du_ue_id,
+                            crnti,
+                            cu_up_e1ap_id,
+                            psi,
+                            drb_id,
+                            qfi,
+                            std::move(rrc_reconfiguration_complete),
+                            true)) {
+    return false;
+  }
 
   return true;
 }
 
 bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
+                                            unsigned            cu_up_idx,
                                             gnb_du_ue_f1ap_id_t new_du_ue_id,
                                             rnti_t              new_crnti,
                                             rnti_t              old_crnti,
@@ -626,7 +955,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
       int_to_gnb_cu_up_ue_e1ap_id(e1ap_pdu.pdu.init_msg().value.bearer_context_mod_request()->gnb_cu_up_ue_e1ap_id);
 
   // EVENT: Inject E1AP Bearer Context Modification Response
-  get_cu_up(0).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
 
   // STATUS: CU-CP sends F1AP UE Context Modification Request to DU.
   report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu), "F1AP UEContextModificationRequest NOT sent");
@@ -639,7 +968,7 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(0, e1ap_pdu), "E1AP BearerContextModificationRequest NOT sent");
 
   // EVENT: CU-UP sends E1AP Bearer Context Modification Response
-  get_cu_up(0).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
 
   // STATUS: CU-CP sends F1AP DL RRC Message Transfer (containing RRC Reconfiguration).
   report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu), "F1AP DL RRC Message NOT sent");

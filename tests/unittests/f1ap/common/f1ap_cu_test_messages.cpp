@@ -400,9 +400,12 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   return msg;
 }
 
-f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                          gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                          rnti_t              crnti)
+f1ap_message
+srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t          cu_ue_id,
+                                                             gnb_du_ue_f1ap_id_t          du_ue_id,
+                                                             rnti_t                       crnti,
+                                                             const std::vector<drb_id_t>& drbs_setup_mod_list,
+                                                             const std::vector<drb_id_t>& drbs_modified_list)
 {
   f1ap_message ue_context_modification_response = {};
 
@@ -410,15 +413,24 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu
   ue_context_modification_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
 
   auto& ue_context_mod_resp = ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
-  ue_context_mod_resp->gnb_cu_ue_f1ap_id           = (unsigned)cu_ue_id;
-  ue_context_mod_resp->gnb_du_ue_f1ap_id           = (unsigned)du_ue_id;
-  ue_context_mod_resp->c_rnti_present              = true;
-  ue_context_mod_resp->c_rnti                      = (unsigned)crnti;
-  ue_context_mod_resp->drbs_setup_mod_list_present = true;
+  ue_context_mod_resp->gnb_cu_ue_f1ap_id = (unsigned)cu_ue_id;
+  ue_context_mod_resp->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
+  ue_context_mod_resp->c_rnti_present    = true;
+  ue_context_mod_resp->c_rnti            = (unsigned)crnti;
 
-  ue_context_mod_resp->drbs_setup_mod_list.push_back({});
-  ue_context_mod_resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-  ue_context_mod_resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item().drb_id = 1;
+  ue_context_mod_resp->drbs_setup_mod_list_present = !drbs_setup_mod_list.empty();
+  for (const auto& drb : drbs_setup_mod_list) {
+    ue_context_mod_resp->drbs_setup_mod_list.push_back({});
+    ue_context_mod_resp->drbs_setup_mod_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    ue_context_mod_resp->drbs_setup_mod_list.back().value().drbs_setup_mod_item().drb_id = drb_id_to_uint(drb);
+  }
+
+  ue_context_mod_resp->drbs_modified_list_present = !drbs_modified_list.empty();
+  for (const auto& drb : drbs_modified_list) {
+    ue_context_mod_resp->drbs_modified_list.push_back({});
+    ue_context_mod_resp->drbs_modified_list.back().load_info_obj(ASN1_F1AP_ID_DRBS_MODIFIED_ITEM);
+    ue_context_mod_resp->drbs_modified_list.back().value().drbs_modified_item().drb_id = drb_id_to_uint(drb);
+  }
 
   return ue_context_modification_response;
 }

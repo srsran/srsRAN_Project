@@ -299,8 +299,8 @@ void cu_cp_test::add_pdu_sessions(std::vector<pdu_session_id_t> psis,
 
   for (const auto psi : psis) {
     // Inject PDU Session Resource Setup Request
-    ngap_message pdu_session_resource_setup_request =
-        generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, psi);
+    ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+        amf_ue_id, ran_ue_id, {{psi, {{uint_to_qos_flow_id(1), 9}}}});
     cu_cp_obj->get_ngap_message_handler().handle_message(pdu_session_resource_setup_request);
 
     if (initial_pdu_session) {

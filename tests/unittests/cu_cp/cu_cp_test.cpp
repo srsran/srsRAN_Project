@@ -397,8 +397,8 @@ TEST_F(cu_cp_test,
   ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
 
   // Inject PDU Session Resource Setup Request
-  cu_cp_obj->get_ngap_message_handler().handle_message(
-      generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
+  cu_cp_obj->get_ngap_message_handler().handle_message(generate_valid_pdu_session_resource_setup_request_message(
+      amf_ue_id, ran_ue_id, {{uint_to_pdu_session_id(1), {{uint_to_qos_flow_id(1), 9}}}}));
 
   // Inject F1AP UE Context Release Complete
   f1c_gw.get_du(uint_to_du_index(0))

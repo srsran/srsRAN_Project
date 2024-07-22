@@ -176,15 +176,21 @@ public:
     // Make sure RRC Reconfiguration contains NAS PDU
     const byte_buffer& rrc_container = test_helpers::get_rrc_container(f1ap_pdu);
     report_fatal_error_if_not(
-        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container)),
+        test_helpers::is_valid_rrc_reconfiguration(test_helpers::extract_dl_dcch_msg(rrc_container),
+                                                   true,
+                                                   std::vector<srb_id_t>{srb_id_t::srb2},
+                                                   std::vector<drb_id_t>{drb_id_t::drb1}),
         "Invalid RRC Reconfiguration");
   }
 
   void send_rrc_reconfiguration_complete_and_await_initial_context_setup_response()
   {
     // Inject UL RRC Message Transfer (containing RRC Reconfiguration Complete)
-    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
-        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00050e00a18bc2b3").value());
+    f1ap_message ul_rrc_msg_transfer =
+        generate_ul_rrc_message_transfer(ue_ctx->cu_ue_id.value(),
+                                         du_ue_id,
+                                         srb_id_t::srb1,
+                                         cu_cp_test_environment::generate_rrc_reconfiguration_complete_pdu(3, 5));
     get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for Initial Context Setup Response

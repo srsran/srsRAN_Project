@@ -128,8 +128,11 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   return request;
 }
 
-e1ap_message srsran::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
-                                                                       gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_setup_response(
+    gnb_cu_cp_ue_e1ap_id_t                             cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t                             cu_up_ue_e1ap_id,
+    const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add,
+    const std::vector<pdu_session_id_t>&               pdu_sessions_to_fail)
 {
   e1ap_message bearer_context_setup_response = {};
 
@@ -145,34 +148,49 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp
   auto& ng_ran_bearer_context_setup_resp =
       bearer_context_setup_resp->sys_bearer_context_setup_resp.ng_ran_bearer_context_setup_resp();
 
-  asn1::e1ap::pdu_session_res_setup_item_s pdu_session_res_setup_item = {};
-  pdu_session_res_setup_item.pdu_session_id                           = 1;
+  for (const auto& [psi, drb_params] : pdu_sessions_to_add) {
+    asn1::e1ap::pdu_session_res_setup_item_s pdu_session_res_setup_item = {};
+    pdu_session_res_setup_item.pdu_session_id                           = pdu_session_id_to_uint(psi);
 
-  pdu_session_res_setup_item.ng_dl_up_tnl_info.set_gtp_tunnel();
-  auto& gtp_tunnel = pdu_session_res_setup_item.ng_dl_up_tnl_info.gtp_tunnel();
-  gtp_tunnel.transport_layer_address.from_number(2887058953);
-  gtp_tunnel.gtp_teid.from_string("00000283");
+    pdu_session_res_setup_item.ng_dl_up_tnl_info.set_gtp_tunnel();
+    auto& gtp_tunnel = pdu_session_res_setup_item.ng_dl_up_tnl_info.gtp_tunnel();
+    gtp_tunnel.transport_layer_address.from_number(2887058953);
+    gtp_tunnel.gtp_teid.from_string("00000283");
 
-  asn1::e1ap::drb_setup_item_ng_ran_s drb_setup_item_ng_ran = {};
-  drb_setup_item_ng_ran.drb_id                              = 1;
+    asn1::e1ap::drb_setup_item_ng_ran_s drb_setup_item_ng_ran = {};
+    {
+      drb_setup_item_ng_ran.drb_id = drb_id_to_uint(drb_params.drb_id);
 
-  asn1::e1ap::up_params_item_s up_params_item = {};
-  up_params_item.up_tnl_info.set_gtp_tunnel();
-  auto& gtp_tunnel2 = up_params_item.up_tnl_info.gtp_tunnel();
-  gtp_tunnel2.transport_layer_address.from_number(2887058953);
-  gtp_tunnel2.gtp_teid.from_string("80000283");
-  up_params_item.cell_group_id = 0;
-  drb_setup_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
+      asn1::e1ap::up_params_item_s up_params_item = {};
+      {
+        up_params_item.up_tnl_info.set_gtp_tunnel();
+        auto& gtp_tunnel2 = up_params_item.up_tnl_info.gtp_tunnel();
+        gtp_tunnel2.transport_layer_address.from_number(2887058953);
+        gtp_tunnel2.gtp_teid.from_string("80000283");
+        up_params_item.cell_group_id = 0;
+      }
+      drb_setup_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
 
-  asn1::e1ap::qos_flow_item_s qo_s_flow_item = {};
-  qo_s_flow_item.qos_flow_id                 = 1;
-  drb_setup_item_ng_ran.flow_setup_list.push_back(qo_s_flow_item);
+      asn1::e1ap::qos_flow_item_s qo_s_flow_item = {};
+      {
+        qo_s_flow_item.qos_flow_id = qos_flow_id_to_uint(drb_params.qos_flow_id);
+      }
+      drb_setup_item_ng_ran.flow_setup_list.push_back(qo_s_flow_item);
+    }
+    pdu_session_res_setup_item.drb_setup_list_ng_ran.push_back(drb_setup_item_ng_ran);
 
-  pdu_session_res_setup_item.drb_setup_list_ng_ran.push_back(drb_setup_item_ng_ran);
+    ng_ran_bearer_context_setup_resp.pdu_session_res_setup_list.push_back(pdu_session_res_setup_item);
+  }
 
-  ng_ran_bearer_context_setup_resp.pdu_session_res_setup_list.push_back(pdu_session_res_setup_item);
+  ng_ran_bearer_context_setup_resp.pdu_session_res_failed_list_present = !pdu_sessions_to_fail.empty();
+  for (const auto& psi : pdu_sessions_to_fail) {
+    asn1::e1ap::pdu_session_res_failed_item_s pdu_session_res_failed_item = {};
+    pdu_session_res_failed_item.pdu_session_id                            = pdu_session_id_to_uint(psi);
+    pdu_session_res_failed_item.cause.set_radio_network();
+    pdu_session_res_failed_item.cause.radio_network() = asn1::e1ap::cause_radio_network_opts::options::unspecified;
 
-  ng_ran_bearer_context_setup_resp.pdu_session_res_failed_list_present = false;
+    ng_ran_bearer_context_setup_resp.pdu_session_res_failed_list.push_back(pdu_session_res_failed_item);
+  }
 
   return bearer_context_setup_response;
 }
@@ -204,8 +222,11 @@ srsran::srs_cu_cp::generate_bearer_context_modification_request(ue_index_t ue_in
   return request;
 }
 
-e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
-                                                                              gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(
+    gnb_cu_cp_ue_e1ap_id_t                             cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t                             cu_up_ue_e1ap_id,
+    const std::map<pdu_session_id_t, drb_test_params>& pdu_sessions_to_add,
+    const std::map<pdu_session_id_t, drb_id_t>&        pdu_sessions_to_modify)
 {
   e1ap_message bearer_context_modification_response = {};
 
@@ -221,19 +242,55 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(gn
 
   auto& ng_ran_bearer_context_mod_resp =
       bearer_context_mod_resp->sys_bearer_context_mod_resp.ng_ran_bearer_context_mod_resp();
-  ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list_present = true;
 
-  asn1::e1ap::pdu_session_res_modified_item_s pdu_session_res_modified_item = {};
-  asn1::e1ap::drb_modified_item_ng_ran_s      drb_modified_item_ng_ran;
-  drb_modified_item_ng_ran.drb_id             = 1;
-  asn1::e1ap::up_params_item_s up_params_item = {};
-  auto&                        gtp_tunnel     = up_params_item.up_tnl_info.set_gtp_tunnel();
-  gtp_tunnel.transport_layer_address.from_number(2887058953);
-  gtp_tunnel.gtp_teid.from_string("80000283");
-  up_params_item.cell_group_id = 0;
-  drb_modified_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
-  pdu_session_res_modified_item.drb_modified_list_ng_ran.push_back(drb_modified_item_ng_ran);
-  ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list.push_back(pdu_session_res_modified_item);
+  ng_ran_bearer_context_mod_resp.pdu_session_res_setup_mod_list_present = !pdu_sessions_to_add.empty();
+  for (const auto& [psi, drb_params] : pdu_sessions_to_add) {
+    asn1::e1ap::pdu_session_res_setup_mod_item_s pdu_session_res_setup_mod_item = {};
+    pdu_session_res_setup_mod_item.pdu_session_id                               = pdu_session_id_to_uint(psi);
+
+    auto& dl_gtp_tunnel = pdu_session_res_setup_mod_item.ng_dl_up_tnl_info.set_gtp_tunnel();
+    dl_gtp_tunnel.transport_layer_address.from_number(2887058953);
+    dl_gtp_tunnel.gtp_teid.from_string("80000283");
+
+    asn1::e1ap::drb_setup_mod_item_ng_ran_s drb_setup_mod_item_ng_ran;
+    {
+      drb_setup_mod_item_ng_ran.drb_id = drb_id_to_uint(drb_params.drb_id);
+
+      asn1::e1ap::up_params_item_s up_params_item = {};
+      {
+        auto& gtp_tunnel = up_params_item.up_tnl_info.set_gtp_tunnel();
+        gtp_tunnel.transport_layer_address.from_number(2887058953);
+        gtp_tunnel.gtp_teid.from_string("80000283");
+        up_params_item.cell_group_id = 0;
+      }
+      drb_setup_mod_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
+
+      asn1::e1ap::qos_flow_item_s flow_item = {};
+      {
+        flow_item.qos_flow_id = qos_flow_id_to_uint(drb_params.qos_flow_id);
+      }
+      drb_setup_mod_item_ng_ran.flow_setup_list.push_back(flow_item);
+    }
+    pdu_session_res_setup_mod_item.drb_setup_mod_list_ng_ran.push_back(drb_setup_mod_item_ng_ran);
+
+    ng_ran_bearer_context_mod_resp.pdu_session_res_setup_mod_list.push_back(pdu_session_res_setup_mod_item);
+  }
+
+  ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list_present = !pdu_sessions_to_modify.empty();
+  for (const auto& [psi, drb_id] : pdu_sessions_to_modify) {
+    asn1::e1ap::pdu_session_res_modified_item_s pdu_session_res_modified_item = {};
+    pdu_session_res_modified_item.pdu_session_id                              = pdu_session_id_to_uint(psi);
+    asn1::e1ap::drb_modified_item_ng_ran_s drb_modified_item_ng_ran;
+    drb_modified_item_ng_ran.drb_id             = drb_id_to_uint(drb_id);
+    asn1::e1ap::up_params_item_s up_params_item = {};
+    auto&                        gtp_tunnel     = up_params_item.up_tnl_info.set_gtp_tunnel();
+    gtp_tunnel.transport_layer_address.from_number(2887058953);
+    gtp_tunnel.gtp_teid.from_string("80000283");
+    up_params_item.cell_group_id = 0;
+    drb_modified_item_ng_ran.ul_up_transport_params.push_back(up_params_item);
+    pdu_session_res_modified_item.drb_modified_list_ng_ran.push_back(drb_modified_item_ng_ran);
+    ng_ran_bearer_context_mod_resp.pdu_session_res_modified_list.push_back(pdu_session_res_modified_item);
+  }
 
   return bearer_context_modification_response;
 }

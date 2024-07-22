@@ -131,9 +131,11 @@ public:
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
-  gnb_du_ue_f1ap_id_t old_du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              old_crnti    = to_rnti(0x4601);
-  pci_t               old_pci      = 0;
+  gnb_du_ue_f1ap_id_t    old_du_ue_id  = gnb_du_ue_f1ap_id_t::min;
+  rnti_t                 old_crnti     = to_rnti(0x4601);
+  pci_t                  old_pci       = 0;
+  amf_ue_id_t            amf_ue_id     = amf_ue_id_t::min;
+  gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
 };
 
 TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishment_fails)
@@ -189,13 +191,14 @@ TEST_F(cu_cp_reestablishment_test,
 {
   // Connect UE 0x4601.
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
-  EXPECT_TRUE(authenticate_ue(du_idx, old_du_ue_id, uint_to_amf_ue_id(0)));
+  EXPECT_TRUE(authenticate_ue(du_idx, old_du_ue_id, amf_ue_id));
   EXPECT_TRUE(setup_ue_security(du_idx, old_du_ue_id));
 
   // Run Reestablishment.
   gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
   rnti_t              new_crnti    = to_rnti(0x4602);
-  ASSERT_FALSE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+  ASSERT_FALSE(reestablish_ue(du_idx, cu_up_idx, new_du_ue_id, new_crnti, old_crnti, old_pci))
+      << "Reestablishment failed";
 
   // STATUS: Given that the old UE has an AMF-UE-ID, the CU-CP should request its release.
   ngap_message ngap_pdu;
@@ -212,12 +215,13 @@ TEST_F(cu_cp_reestablishment_test,
        when_old_ue_has_drb_then_reestablishment_succeeds_and_no_ngap_release_request_is_sent_for_old_ue)
 {
   // Attach UE 0x4601.
-  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+  EXPECT_TRUE(attach_ue(du_idx, cu_up_idx, old_du_ue_id, old_crnti, amf_ue_id, cu_up_e1ap_id));
 
   // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
   gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
   rnti_t              new_crnti    = to_rnti(0x4602);
-  ASSERT_TRUE(reestablish_ue(du_idx, new_du_ue_id, new_crnti, old_crnti, old_pci)) << "Reestablishment failed";
+  ASSERT_TRUE(reestablish_ue(du_idx, cu_up_idx, new_du_ue_id, new_crnti, old_crnti, old_pci))
+      << "Reestablishment failed";
 
   // old UE should not be removed at this stage.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
@@ -270,7 +274,7 @@ TEST_F(cu_cp_reestablishment_test,
        when_f1_removal_request_is_sent_before_reestablishment_completion_then_cu_cp_ue_is_removed)
 {
   // Attach UE 0x4601.
-  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+  EXPECT_TRUE(attach_ue(du_idx, cu_up_idx, old_du_ue_id, old_crnti, amf_ue_id, cu_up_e1ap_id));
 
   // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
   gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
@@ -294,7 +298,7 @@ TEST_F(cu_cp_reestablishment_test,
        when_reestablishment_request_for_same_ue_is_received_twice_then_second_reestablishment_fails)
 {
   // Attach UE 0x4601.
-  EXPECT_TRUE(attach_ue(du_idx, old_du_ue_id, old_crnti, uint_to_amf_ue_id(0)));
+  EXPECT_TRUE(attach_ue(du_idx, cu_up_idx, old_du_ue_id, old_crnti, amf_ue_id, cu_up_e1ap_id));
 
   // Send RRC Reestablishment Request and DU receives RRC Reestablishment.
   gnb_du_ue_f1ap_id_t du_ue_id2 = int_to_gnb_du_ue_f1ap_id(1);
@@ -305,5 +309,6 @@ TEST_F(cu_cp_reestablishment_test,
   // Run second Reestablishment. This should fail.
   auto du_ue_id3 = int_to_gnb_du_ue_f1ap_id(2);
   auto crnti3    = to_rnti(0x4603);
-  ASSERT_FALSE(reestablish_ue(du_idx, du_ue_id3, crnti3, old_crnti, old_pci)) << "Fallback should have occurred";
+  ASSERT_FALSE(reestablish_ue(du_idx, cu_up_idx, du_ue_id3, crnti3, old_crnti, old_pci))
+      << "Fallback should have occurred";
 }
