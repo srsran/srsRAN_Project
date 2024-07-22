@@ -893,6 +893,66 @@ manifest [rhel, 8]:
       - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
+# Fedora 39
+################################################################################
+image-build-publish [fedora, 39]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: fedora
+    OS_NAME: fedora
+    OS_VERSION: "39"
+    PLATFORM: amd64
+  needs:
+    - builder version
+  parallel:
+    matrix:
+      - PLATFORM: [amd64, arm64]
+
+alternative-tag [fedora, 39, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: fedora
+    OS_VERSION: "39"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - job: image-build-publish [fedora, 39]
+      parallel:
+        matrix:
+          - PLATFORM: amd64
+
+alternative-tag [fedora, 39, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: fedora
+    OS_VERSION: "39"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - job: image-build-publish [fedora, 39]
+      parallel:
+        matrix:
+          - PLATFORM: arm64
+
+manifest [fedora, 39]:
+  extends: .manifest
+  variables:
+    OS_NAME: fedora
+    OS_VERSION: "39"
+  needs:
+    - builder version
+    - job: alternative-tag [fedora, 39, amd64]
+      optional: false
+    - job: alternative-tag [fedora, 39, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
 # Archlinux
 ################################################################################
 image-build-publish [archlinux, latest, amd64]:
