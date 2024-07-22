@@ -1962,7 +1962,7 @@ basic asan:
   variables:
     TEST_MODE: none
     SAVE_ARTIFACTS: "True"
-    BUILD_ARGS: -DEXIT_TIMEOUT=15
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-march=x86-64-v3" -DEXIT_TIMEOUT=15
   tags: ["${AMD64_AVX2_TAG}"]
   artifacts:
     <<: *build_artifacts
