@@ -17,11 +17,18 @@
 
 namespace srsran {
 
-struct rlc_tm_rx_metrics {};
+struct rlc_tm_rx_metrics {
+  void reset() {}
+};
 
 struct rlc_um_rx_metrics {
   uint32_t num_sdu_segments;      ///< Number of SDU segments RX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments Bytes
+  void     reset()
+  {
+    num_sdu_segments      = {};
+    num_sdu_segment_bytes = {};
+  }
 };
 
 struct rlc_am_rx_metrics {
@@ -29,6 +36,13 @@ struct rlc_am_rx_metrics {
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
   uint32_t num_ctrl_pdus;         ///< Number of control PDUs
   uint32_t num_ctrl_pdu_bytes;    ///< Number of control PDUs bytes
+  void     reset()
+  {
+    num_sdu_segments      = {};
+    num_sdu_segment_bytes = {};
+    num_ctrl_pdus         = {};
+    num_ctrl_pdu_bytes    = {};
+  }
 };
 
 struct rlc_rx_metrics {
@@ -68,10 +82,32 @@ struct rlc_rx_metrics {
 
   void reset()
   {
-    uint32_t tmp_counter = counter;
-    *this                = {};
-    counter              = tmp_counter;
-    // do not reset counter
+    // SDU metrics
+    num_sdus           = {};
+    num_sdu_bytes      = {};
+    num_pdus           = {};
+    num_pdu_bytes      = {};
+    num_lost_pdus      = {};
+    num_malformed_pdus = {};
+    sdu_latency_us     = {};
+
+    // reset mode-specific values
+    switch (mode) {
+      case rlc_mode::tm:
+        mode_specific.tm.reset();
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+        mode_specific.um.reset();
+        break;
+      case rlc_mode::am:
+        mode_specific.am.reset();
+        break;
+      default:
+        // nothing to do here
+        break;
+    }
+    // do not reset mode or counter
   }
 };
 
