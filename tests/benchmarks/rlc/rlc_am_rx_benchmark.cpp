@@ -59,7 +59,8 @@ public:
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,
                              public rlc_tx_am_status_handler,
-                             public rlc_tx_am_status_notifier
+                             public rlc_tx_am_status_notifier,
+                             public rlc_metrics_notifier
 {
 public:
   rlc_rx_am_test_frame() {}
@@ -68,9 +69,11 @@ public:
   void on_new_sdu(byte_buffer_chain sdu) override {}
 
   // rlc_tx_am_status_handler interface
-  virtual void on_status_pdu(rlc_am_status_pdu status_) override {}
+  void on_status_pdu(rlc_am_status_pdu status_) override {}
   // rlc_tx_am_status_notifier interface
-  virtual void on_status_report_changed() override {}
+  void on_status_report_changed() override {}
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 struct bench_params {
@@ -236,10 +239,11 @@ void benchmark_rx_pdu(const bench_params& params, rx_order order)
                                                                                 drb_id_t::drb1,
                                                                                 config,
                                                                                 *tester,
-                                                                                timer_factory{timers, ue_worker},
-                                                                                ue_worker,
+                                                                                tester.get(),
                                                                                 false,
-                                                                                pcap);
+                                                                                pcap,
+                                                                                ue_worker,
+                                                                                timers);
 
   // Bind AM Rx/Tx interconnect
   rlc_rx->set_status_notifier(tester.get());

@@ -53,8 +53,16 @@ public:
                                             pcell_executor,
                                             ue_executor,
                                             timers);
-    rx = std::make_unique<rlc_rx_tm_entity>(
-        gnb_du_id_, ue_index_, rb_id_, config.rx, rx_upper_dn, metrics_period.count() != 0, pcap);
+    rx = std::make_unique<rlc_rx_tm_entity>(gnb_du_id_,
+                                            ue_index_,
+                                            rb_id_,
+                                            config.rx,
+                                            rx_upper_dn,
+                                            rlc_metrics_notifier_,
+                                            metrics_period.count() != 0,
+                                            pcap,
+                                            ue_executor,
+                                            timers);
   }
 };
 

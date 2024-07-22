@@ -42,7 +42,8 @@ rlc_rx_am_config cfg_18bit_status_limit = {/*sn_field_length=*/rlc_am_sn_size::s
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,
                              public rlc_tx_am_status_handler,
-                             public rlc_tx_am_status_notifier
+                             public rlc_tx_am_status_notifier,
+                             public rlc_metrics_notifier
 {
 public:
   std::queue<byte_buffer_chain> sdu_queue;
@@ -61,9 +62,11 @@ public:
   }
 
   // rlc_tx_am_status_handler interface
-  virtual void on_status_pdu(rlc_am_status_pdu status_) override { this->status = std::move(status_); }
+  void on_status_pdu(rlc_am_status_pdu status_) override { this->status = std::move(status_); }
   // rlc_tx_am_status_notifier interface
-  virtual void on_status_report_changed() override { this->status_trigger_counter++; }
+  void on_status_report_changed() override { this->status_trigger_counter++; }
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 /// Fixture class for RLC AM Rx tests.
@@ -92,10 +95,11 @@ protected:
                                              srb_id_t::srb0,
                                              config,
                                              *tester,
-                                             timer_factory{timers, ue_worker},
-                                             ue_worker,
+                                             tester.get(),
                                              true,
-                                             pcap);
+                                             pcap,
+                                             ue_worker,
+                                             timers);
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());

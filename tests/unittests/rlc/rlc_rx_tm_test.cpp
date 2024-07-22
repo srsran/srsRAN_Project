@@ -11,13 +11,14 @@
 #include "lib/rlc/rlc_rx_tm_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 
 using namespace srsran;
 
 /// Mocking class of the surrounding layers invoked by the RLC TM Rx entity.
-class rlc_rx_tm_test_frame : public rlc_rx_upper_layer_data_notifier
+class rlc_rx_tm_test_frame : public rlc_rx_upper_layer_data_notifier, public rlc_metrics_notifier
 {
 public:
   std::queue<byte_buffer_chain> sdu_queue;
@@ -29,6 +30,8 @@ public:
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
   }
+  // rlc_metrics_notifier
+  void report_metrics(const rlc_metrics& metrics) override {}
 };
 
 /// Fixture class for RLC TM Rx tests
@@ -56,8 +59,11 @@ protected:
                                              srb_id_t::srb0,
                                              make_default_srb0_rlc_config().tm.rx,
                                              *tester,
+                                             tester.get(),
                                              true,
-                                             pcap);
+                                             pcap,
+                                             ue_executor,
+                                             timers);
   }
 
   void TearDown() override
@@ -70,6 +76,8 @@ protected:
   std::unique_ptr<rlc_rx_tm_test_frame> tester;
   null_rlc_pcap                         pcap;
   std::unique_ptr<rlc_rx_tm_entity>     rlc;
+  manual_task_worker                    ue_executor{128};
+  timer_manager                         timers;
 };
 
 TEST_F(rlc_rx_am_test, create_new_entity)

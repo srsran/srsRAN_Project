@@ -18,16 +18,17 @@ rlc_rx_um_entity::rlc_rx_um_entity(gnb_du_id_t                       gnb_du_id,
                                    rb_id_t                           rb_id,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                                   timer_factory                     timers,
-                                   task_executor&                    ue_executor,
+                                   rlc_metrics_notifier*             metrics_notifier,
                                    bool                              metrics_enable,
-                                   rlc_pcap&                         pcap_) :
-  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_enable, pcap_),
+                                   rlc_pcap&                         pcap_,
+                                   task_executor&                    ue_executor,
+                                   timer_manager&                    timers) :
+  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_notifier, metrics_enable, pcap_, ue_executor, timers),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
   rx_window(create_rx_window(cfg.sn_field_length)),
-  reassembly_timer(timers.create_timer()),
+  reassembly_timer(ue_timer_factory.create_timer()),
   pcap_context(ue_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::um_bidir);

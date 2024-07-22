@@ -17,9 +17,12 @@ rlc_rx_tm_entity::rlc_rx_tm_entity(gnb_du_id_t                       gnb_du_id,
                                    rb_id_t                           rb_id,
                                    const rlc_rx_tm_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
+                                   rlc_metrics_notifier*             metrics_notifier_,
                                    bool                              metrics_enabled,
-                                   rlc_pcap&                         pcap_) :
-  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_enabled, pcap_),
+                                   rlc_pcap&                         pcap_,
+                                   task_executor&                    ue_executor,
+                                   timer_manager&                    timers) :
+  rlc_rx_entity(gnb_du_id, ue_index, rb_id, upper_dn_, metrics_notifier_, metrics_enabled, pcap_, ue_executor, timers),
   cfg(config),
   pcap_context(ue_index, rb_id, /* is_uplink */ true)
 {

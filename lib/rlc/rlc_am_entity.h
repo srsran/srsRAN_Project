@@ -59,10 +59,11 @@ public:
                                                                                  rb_id_,
                                                                                  config.rx,
                                                                                  rx_upper_dn,
-                                                                                 timer_factory{timers, ue_executor},
-                                                                                 ue_executor,
+                                                                                 rlc_metrics_notifier_,
                                                                                  metrics_period.count() != 0,
-                                                                                 pcap);
+                                                                                 pcap,
+                                                                                 ue_executor,
+                                                                                 timers);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

@@ -40,10 +40,6 @@ public:
     metrics_timer(timers.create_timer())
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
-    // if (metrics_period.count() != 0) {
-    //   metrics_timer.set(metrics_period, [this](timer_id_t /*tid*/) { push_metrics(); });
-    //   metrics_timer.run();
-    // }
   }
   ~rlc_base_entity() override                         = default;
   rlc_base_entity(const rlc_base_entity&)             = delete;

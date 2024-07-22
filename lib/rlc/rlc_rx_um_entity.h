@@ -13,6 +13,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/adt/expected.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
@@ -96,10 +97,11 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_factory                     timers,
-                   task_executor&                    ue_executor,
+                   rlc_metrics_notifier*             metrics_notifier_,
                    bool                              metrics_enabled_,
-                   rlc_pcap&                         pcap_);
+                   rlc_pcap&                         pcap_,
+                   task_executor&                    ue_executor,
+                   timer_manager&                    timers);
 
   void stop() final
   {
@@ -172,8 +174,8 @@ struct formatter<srsran::rlc_rx_um_sdu_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_um_sdu_info& info,
+              FormatContext&                    ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "has_gap={} fully_received={} nof_segments={}",

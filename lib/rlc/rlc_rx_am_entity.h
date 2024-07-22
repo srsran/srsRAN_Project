@@ -143,10 +143,11 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_factory                     timers,
-                   task_executor&                    ue_executor,
+                   rlc_metrics_notifier*             metrics_notifier_,
                    bool                              metrics_enabled,
-                   rlc_pcap&                         pcap_);
+                   rlc_pcap&                         pcap_,
+                   task_executor&                    ue_executor_,
+                   timer_manager&                    timers);
 
   void stop() final
   {
@@ -319,8 +320,8 @@ struct formatter<srsran::rlc_rx_am_sdu_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_am_sdu_info& info,
+              FormatContext&                    ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (std::holds_alternative<srsran::byte_buffer_slice>(info.sdu_data)) {
       // full SDU

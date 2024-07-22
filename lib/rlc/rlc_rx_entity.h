@@ -11,8 +11,10 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
+#include "rlc_metrics_aggregator.h"
 #include "rlc_rx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/rlc/rlc_rx.h"
 
 namespace srsran {
@@ -26,16 +28,38 @@ protected:
                 du_ue_index_t                     ue_index,
                 rb_id_t                           rb_id,
                 rlc_rx_upper_layer_data_notifier& upper_dn_,
-                bool                              metrics_enable,
-                rlc_pcap&                         pcap_) :
-    logger("RLC", {gnb_du_id, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), metrics(metrics_enable), pcap(pcap_)
+                rlc_metrics_notifier*             rlc_metrics_notifier_,
+                bool                              metrics_enabled,
+                rlc_pcap&                         pcap_,
+                task_executor&                    ue_executor_,
+                timer_manager&                    timers) :
+    logger("RLC", {gnb_du_id, ue_index, rb_id, "UL"}),
+    upper_dn(upper_dn_),
+    metrics(metrics_enabled),
+    pcap(pcap_),
+    ue_timer_factory{timers, ue_executor_},
+    high_metrics_timer(ue_timer_factory.create_timer()),
+    metrics_agg(gnb_du_id, ue_index, rb_id, rlc_metrics_notifier_, ue_executor_)
   {
+    if (metrics_enabled) {
+      high_metrics_timer.set(std::chrono::milliseconds(1000), [this](timer_id_t tid) {
+        metrics_agg.push_rx_high_metrics(metrics.get_metrics());
+        high_metrics_timer.run();
+      });
+      high_metrics_timer.run();
+    }
   }
 
   rlc_bearer_logger                 logger;
   rlc_rx_upper_layer_data_notifier& upper_dn;
   rlc_rx_metrics_container          metrics;
   rlc_pcap&                         pcap;
+  timer_factory                     ue_timer_factory;
+
+  unique_timer high_metrics_timer;
+
+private:
+  rlc_metrics_aggregator metrics_agg;
 
 public:
   /// \brief Stops all internal timers.
