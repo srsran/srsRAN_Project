@@ -101,6 +101,19 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     auto plmn_bytes                                    = cell_cfg.nr_cgi.plmn_id.to_bytes();
     f1ap_cell.served_cell_info.served_plmns[0].plmn_id = plmn_bytes;
 
+    // Fill slicing information.
+    f1ap_cell.served_cell_info.served_plmns[0].ie_exts_present                        = not cell_cfg.slices.empty();
+    f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list_present = not cell_cfg.slices.empty();
+    for (const s_nssai_t& s_nssai : cell_cfg.slices) {
+      slice_support_item_s slice{};
+      slice.snssai.sst.from_number(s_nssai.sst);
+      slice.snssai.sd_present = s_nssai.sd.has_value();
+      if (slice.snssai.sd_present) {
+        slice.snssai.sd.from_number(*s_nssai.sd);
+      }
+      f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list.push_back(slice);
+    }
+
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci         = cell_cfg.pci;
     f1ap_cell.served_cell_info.nr_cgi.plmn_id = plmn_bytes;
