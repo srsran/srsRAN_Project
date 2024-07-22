@@ -12,11 +12,18 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
+#include "routines/initial_context_setup_routine.h"
+#include "routines/mobility/inter_cu_handover_target_routine.h"
+#include "routines/mobility/inter_du_handover_routine.h"
+#include "routines/pdu_session_resource_modification_routine.h"
+#include "routines/pdu_session_resource_release_routine.h"
+#include "routines/pdu_session_resource_setup_routine.h"
+#include "routines/reestablishment_context_modification_routine.h"
 #include "routines/ue_amf_context_release_request_routine.h"
+#include "routines/ue_context_release_routine.h"
 #include "routines/ue_removal_routine.h"
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/rrc/rrc_du.h"
@@ -52,14 +59,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(cfg),
   cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_ev_notifier, ue_mng),
-  routine_mng(ue_mng, cfg.security.default_security_indication, logger),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
                              get_cu_cp_ue_context_handler(),
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
-                             routine_mng,
+                             common_task_sched,
                              ue_mng,
                              rrc_du_cu_cp_notifier,
                              conn_notifier,
@@ -88,7 +94,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                     ngap_entity->get_ngap_control_message_handler());
 
   controller = std::make_unique<cu_cp_controller>(cfg,
-                                                  routine_mng,
+                                                  common_task_sched,
                                                   ue_mng,
                                                   ngap_entity->get_ngap_connection_manager(),
                                                   cu_up_db,
@@ -230,7 +236,7 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return routine_mng.start_reestablishment_context_modification_routine(
+  return launch_async<reestablishment_context_modification_routine>(
       ue_index,
       ue->get_security_manager().get_up_as_config(),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
@@ -238,7 +244,8 @@ async_task<bool> cu_cp_impl::handle_rrc_reestablishment_context_modification_req
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
-      ue->get_up_resource_manager());
+      ue->get_up_resource_manager(),
+      logger);
 }
 
 void cu_cp_impl::handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request)
@@ -394,12 +401,13 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
   rrc_ue_interface* rrc_ue = rrc_du_adapters.at(ue->get_du_index()).find_rrc_ue(request.ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
 
-  return routine_mng.start_initial_context_setup_routine(request,
-                                                         *rrc_ue,
-                                                         ngap_entity->get_ngap_ue_radio_cap_management_handler(),
-                                                         ue->get_security_manager(),
-                                                         du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-                                                         get_cu_cp_ngap_handler());
+  return launch_async<initial_context_setup_routine>(request,
+                                                     *rrc_ue,
+                                                     ngap_entity->get_ngap_ue_radio_cap_management_handler(),
+                                                     ue->get_security_manager(),
+                                                     du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
+                                                     get_cu_cp_ngap_handler(),
+                                                     logger);
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>
@@ -411,15 +419,18 @@ cu_cp_impl::handle_new_pdu_session_resource_setup_request(cu_cp_pdu_session_reso
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return routine_mng.start_pdu_session_resource_setup_routine(
+  return launch_async<pdu_session_resource_setup_routine>(
       request,
+      ue_mng.get_ue_config(),
       ue->get_security_manager().get_up_as_config(),
+      cfg.security.default_security_indication,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
-      ue->get_up_resource_manager());
+      ue->get_up_resource_manager(),
+      logger);
 }
 
 async_task<cu_cp_pdu_session_resource_modify_response>
@@ -431,14 +442,15 @@ cu_cp_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_sessi
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return routine_mng.start_pdu_session_resource_modification_routine(
+  return launch_async<pdu_session_resource_modification_routine>(
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
-      ue->get_up_resource_manager());
+      ue->get_up_resource_manager(),
+      logger);
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>
@@ -450,14 +462,15 @@ cu_cp_impl::handle_new_pdu_session_resource_release_command(const cu_cp_pdu_sess
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return routine_mng.start_pdu_session_resource_release_routine(
+  return launch_async<pdu_session_resource_release_routine>(
       command,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
       ue->get_rrc_ue_notifier(),
       get_cu_cp_rrc_ue_interface(),
       ue->get_task_sched(),
-      ue->get_up_resource_manager());
+      ue->get_up_resource_manager(),
+      logger);
 }
 
 async_task<cu_cp_ue_context_release_complete>
@@ -471,10 +484,12 @@ cu_cp_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_com
     e1ap_bearer_ctxt_mng = &cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager();
   }
 
-  return routine_mng.start_ue_context_release_routine(command,
-                                                      e1ap_bearer_ctxt_mng,
-                                                      du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-                                                      get_cu_cp_ue_removal_handler());
+  return launch_async<ue_context_release_routine>(command,
+                                                  e1ap_bearer_ctxt_mng,
+                                                  du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
+                                                  get_cu_cp_ue_removal_handler(),
+                                                  ue_mng,
+                                                  logger);
 }
 
 async_task<ngap_handover_resource_allocation_response>
@@ -486,11 +501,14 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
                 "cu_up_index={}: could not find CU-UP",
                 uint_to_cu_up_index(0));
 
-  return routine_mng.start_inter_cu_handover_target_routine(
+  return launch_async<inter_cu_handover_target_routine>(
       request,
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
       du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
-      get_cu_cp_ue_removal_handler());
+      get_cu_cp_ue_removal_handler(),
+      ue_mng,
+      cfg.security.default_security_indication,
+      logger);
 }
 
 async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
@@ -572,7 +590,7 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
 
   byte_buffer sib1 = du_db.get_du_processor(target_du_index).get_mobility_handler().get_packed_sib1(request.cgi);
 
-  return routine_mng.start_inter_du_handover_routine(
+  return launch_async<inter_du_handover_routine>(
       request,
       std::move(sib1),
       cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->get_e1ap_bearer_context_manager(),
@@ -580,7 +598,9 @@ cu_cp_impl::handle_inter_du_handover_request(const cu_cp_inter_du_handover_reque
       du_db.get_du_processor(target_du_index).get_f1ap_handler(),
       *this,
       get_cu_cp_ue_removal_handler(),
-      *this);
+      *this,
+      ue_mng,
+      logger);
 }
 
 async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)

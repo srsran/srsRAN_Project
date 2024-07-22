@@ -22,8 +22,6 @@
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
-#include "paging/paging_message_handler.h"
-#include "routine_managers/cu_cp_routine_manager.h"
 #include "ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -33,6 +31,18 @@
 
 namespace srsran {
 namespace srs_cu_cp {
+
+class cu_cp_common_task_scheduler : public common_task_scheduler
+{
+public:
+  cu_cp_common_task_scheduler() : main_ctrl_loop(128) {}
+
+  bool schedule_async_task(async_task<void> task) override { return main_ctrl_loop.schedule(std::move(task)); }
+
+private:
+  // cu-cp task event loop
+  fifo_async_task_scheduler main_ctrl_loop;
+};
 
 class cu_cp_impl final : public cu_cp,
                          public cu_cp_impl_interface,
@@ -161,7 +171,7 @@ private:
 
   cell_meas_manager cell_meas_mng; // cell measurement manager
 
-  cu_cp_routine_manager routine_mng;
+  cu_cp_common_task_scheduler common_task_sched;
 
   // CU-CP to RRC DU adapters
   std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
