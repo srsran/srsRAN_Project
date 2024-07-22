@@ -55,6 +55,24 @@ struct rlc_rx_metrics {
     rlc_um_rx_metrics um;
     rlc_am_rx_metrics am;
   } mode_specific;
+
+  uint32_t counter = 0; ///< Counter of amount of times we collected metrics.
+                        ///  Useful to aggregate high and low metrics.
+
+  rlc_rx_metrics get()
+  {
+    rlc_rx_metrics ret = *this;
+    counter++;
+    return ret;
+  }
+
+  void reset()
+  {
+    uint32_t tmp_counter = counter;
+    *this                = {};
+    counter              = tmp_counter;
+    // do not reset counter
+  }
 };
 
 class rlc_rx_metrics_interface

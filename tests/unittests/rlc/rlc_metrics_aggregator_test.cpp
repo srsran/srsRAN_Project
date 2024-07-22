@@ -60,16 +60,20 @@ TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation)
   {
     rlc_tx_metrics_higher hi_m;
     rlc_tx_metrics_lower  low_m;
+    rlc_rx_metrics        rx_m;
 
     hi_m.num_sdus                  = 10;
     low_m.num_pdus_no_segmentation = 10;
+    rx_m.num_sdus                  = 20;
 
     metrics_agg->push_tx_high_metrics(hi_m);
     ASSERT_EQ(metrics_notif->metrics_list.size(), 0);
 
     metrics_agg->push_tx_low_metrics(low_m);
-    ASSERT_EQ(metrics_notif->metrics_list.size(), 1);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 0);
 
+    metrics_agg->push_rx_high_metrics(rx_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 1);
     // TODO check report
   }
 
@@ -79,11 +83,17 @@ TEST_F(rlc_metrics_aggregator_test, check_basic_aggregation)
   {
     rlc_tx_metrics_higher hi_m;
     rlc_tx_metrics_lower  low_m;
+    rlc_rx_metrics        rx_m;
 
     hi_m.num_sdus                  = 10;
     hi_m.counter                   = 1;
     low_m.num_pdus_no_segmentation = 10;
     low_m.counter                  = 1;
+    rx_m.num_sdus                  = 20;
+    rx_m.counter                   = 1;
+
+    metrics_agg->push_rx_high_metrics(rx_m);
+    ASSERT_EQ(metrics_notif->metrics_list.size(), 0);
 
     metrics_agg->push_tx_low_metrics(low_m);
     ASSERT_EQ(metrics_notif->metrics_list.size(), 0);

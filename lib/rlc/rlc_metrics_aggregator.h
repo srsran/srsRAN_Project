@@ -30,6 +30,9 @@ public:
   // \brief push metrics from the high RLC executors to the aggregator
   // As these are called from the UE executor no execution transfer is required.
   void push_tx_high_metrics(rlc_tx_metrics_higher m_higher_);
+  // \brief push metrics from the high RLC executors to the aggregator
+  // As these are called from the UE executor no execution transfer is required.
+  void push_rx_high_metrics(rlc_rx_metrics m_rx_high_);
 
 private:
   // \brief build and push metrics report to the metrics notifier.
@@ -38,12 +41,14 @@ private:
 
   void push_tx_high_metrics_impl(rlc_tx_metrics_higher m_higher_);
   void push_tx_low_metrics_impl(rlc_tx_metrics_lower m_lower_);
+  void push_rx_high_metrics_impl(rlc_rx_metrics m_rx_high_);
 
   gnb_du_id_t           du;
   du_ue_index_t         ue;
   rb_id_t               rb;
   rlc_tx_metrics_lower  m_lower;
   rlc_tx_metrics_higher m_higher;
+  rlc_rx_metrics        m_rx_high;
 
   rlc_metrics_notifier* rlc_metrics_notif;
 
