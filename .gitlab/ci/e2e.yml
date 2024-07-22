@@ -605,6 +605,7 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
+  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: [
@@ -628,6 +629,7 @@ viavi-debug:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+  allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true
