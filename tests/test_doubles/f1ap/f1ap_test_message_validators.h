@@ -44,5 +44,7 @@ bool is_valid_ue_context_modification_request(const f1ap_message& msg);
 
 bool is_valid_ue_context_release_command(const f1ap_message& msg);
 
+bool is_valid_paging(const f1ap_message& msg);
+
 } // namespace test_helpers
 } // namespace srsran
