@@ -17,6 +17,7 @@
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
@@ -54,7 +55,7 @@ public:
     EXPECT_NE(ue_ctx, nullptr);
   }
 
-  void send_initial_context_setup_request(bool with_pdu_sessions = false)
+  void send_initial_context_setup_request(bool with_pdu_sessions = false, bool with_ue_capabilities = false)
   {
     srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
     srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
@@ -67,6 +68,13 @@ public:
     } else {
       init_ctxt_setup_req =
           generate_valid_initial_context_setup_request_message(ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value());
+    }
+
+    if (with_ue_capabilities) {
+      init_ctxt_setup_req.pdu.init_msg().value.init_context_setup_request()->ue_radio_cap_present = true;
+      init_ctxt_setup_req.pdu.init_msg().value.init_context_setup_request()->ue_radio_cap.from_string(
+          "02c0856c18033a047465a025f800082a00241260e000307838031bff001300098a00d00000001c058d006007a071e439f0000240400e"
+          "03000000001001be00000000000002074000000000005038a12007000f00000004008010");
     }
 
     get_amf().push_tx_pdu(init_ctxt_setup_req);
@@ -119,6 +127,26 @@ public:
             "a071e439f0000240400e0300000000100186c0000700809df000000000000030368000800004b2ca000a07143c001c0"
             "03c000000100200409028098a8660c")
             .value()));
+
+    // Wait for DL RRC Message Transfer (containing NAS Registration Accept)
+    bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+    report_fatal_error_if_not(result, "Failed to receive DL RRC Message, containing NAS Registration Accept");
+    report_fatal_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu),
+                              "Invalid DL RRC Message Transfer");
+
+    // Wait for Initial Context Setup Response
+    result = this->wait_for_ngap_tx_pdu(ngap_pdu);
+    report_fatal_error_if_not(result, "Failed to receive Initial Context Setup Response");
+    report_fatal_error_if_not(test_helpers::is_valid_initial_context_setup_response(ngap_pdu),
+                              "Invalid init ctxt setup");
+  }
+
+  void send_security_mode_complete_and_await_registration_accept_and_initial_context_setup_response()
+  {
+    // Inject Security Mode Complete
+    f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+        ue_ctx->cu_ue_id.value(), du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff").value());
+    get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
 
     // Wait for DL RRC Message Transfer (containing NAS Registration Accept)
     bool result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
@@ -328,4 +356,17 @@ TEST_F(cu_cp_initial_context_setup_test,
 
   // Wait for UE Capability Info Indication
   await_ue_capability_info_indication();
+}
+
+TEST_F(cu_cp_initial_context_setup_test,
+       when_initial_context_setup_contains_ue_capabilities_then_initial_context_setup_succeeds)
+{
+  // Inject Initial Context Setup Request with UE capabilities
+  send_initial_context_setup_request(false, true);
+
+  // Wait for F1AP UE Context Setup Request (containing Security Mode Command) and inject UE Context Setup Response
+  send_ue_context_setup_request_and_await_response();
+
+  // Inject Security Mode Complete and await DL RRC Message (Registration Accept) and Initial Context Setup Response
+  send_security_mode_complete_and_await_registration_accept_and_initial_context_setup_response();
 }
