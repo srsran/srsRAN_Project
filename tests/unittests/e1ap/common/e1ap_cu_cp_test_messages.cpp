@@ -357,6 +357,72 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_
   return inactivity_notification;
 }
 
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_with_drb_level(
+    gnb_cu_cp_ue_e1ap_id_t       cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t       cu_up_ue_e1ap_id,
+    const std::vector<drb_id_t>& active_drbs,
+    const std::vector<drb_id_t>& inactive_drbs)
+{
+  e1ap_message e1ap_msg = {};
+
+  e1ap_msg.pdu.set_init_msg();
+  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& inactivity_notification                 = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  inactivity_notification->activity_info.set_drb_activity_list();
+  for (const auto& drb : active_drbs) {
+    asn1::e1ap::drb_activity_item_s drb_activity_item;
+    drb_activity_item.drb_id       = drb_id_to_uint(drb);
+    drb_activity_item.drb_activity = asn1::e1ap::drb_activity_opts::options::active;
+    inactivity_notification->activity_info.drb_activity_list().push_back(drb_activity_item);
+  }
+
+  for (const auto& drb : inactive_drbs) {
+    asn1::e1ap::drb_activity_item_s drb_activity_item;
+    drb_activity_item.drb_id       = drb_id_to_uint(drb);
+    drb_activity_item.drb_activity = asn1::e1ap::drb_activity_opts::options::not_active;
+    inactivity_notification->activity_info.drb_activity_list().push_back(drb_activity_item);
+  }
+
+  return e1ap_msg;
+}
+
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_with_pdu_session_level(
+    gnb_cu_cp_ue_e1ap_id_t               cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t               cu_up_ue_e1ap_id,
+    const std::vector<pdu_session_id_t>& active_pdu_sessions,
+    const std::vector<pdu_session_id_t>& inactive_pdu_sessions)
+{
+  e1ap_message e1ap_msg = {};
+
+  e1ap_msg.pdu.set_init_msg();
+  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& inactivity_notification                 = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  inactivity_notification->activity_info.set_pdu_session_res_activity_list();
+  for (const auto& pdu_session : active_pdu_sessions) {
+    asn1::e1ap::pdu_session_res_activity_item_s pdu_session_activity_item;
+    pdu_session_activity_item.pdu_session_id           = pdu_session_id_to_uint(pdu_session);
+    pdu_session_activity_item.pdu_session_res_activity = asn1::e1ap::pdu_session_res_activity_opts::options::active;
+    inactivity_notification->activity_info.set_pdu_session_res_activity_list().push_back(pdu_session_activity_item);
+  }
+
+  for (const auto& pdu_session : inactive_pdu_sessions) {
+    asn1::e1ap::pdu_session_res_activity_item_s pdu_session_activity_item;
+    pdu_session_activity_item.pdu_session_id           = pdu_session_id_to_uint(pdu_session);
+    pdu_session_activity_item.pdu_session_res_activity = asn1::e1ap::pdu_session_res_activity_opts::options::not_active;
+    inactivity_notification->activity_info.set_pdu_session_res_activity_list().push_back(pdu_session_activity_item);
+  }
+
+  return e1ap_msg;
+}
+
 e1ap_message
 srsran::srs_cu_cp::generate_invalid_bearer_context_inactivity_notification(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                            gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)

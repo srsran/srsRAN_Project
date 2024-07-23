@@ -22,69 +22,6 @@ using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* Inactivity Notification                                                          */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the handling of a ue level inactivity notification
-TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_release_request_is_sent)
-{
-  // Test preamble
-  du_index_t          du_index  = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
-  pci_t               pci       = 0;
-  rnti_t              crnti     = to_rnti(0x4601);
-  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  // Connect AMF, DU, CU-UP
-  test_preamble_all_connected(du_index, pci);
-  // Attach UE
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
-
-  cu_cp_inactivity_notification inactivity_notification;
-  inactivity_notification.ue_index    = uint_to_ue_index(0);
-  inactivity_notification.ue_inactive = true;
-
-  cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
-
-  // check that the UE Context Release Request was sent to the AMF
-  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
-            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ue_context_release_request()->cause.type(),
-            asn1::ngap::cause_c::types::radio_network);
-}
-
-/// Test the handling of an inactivity notification with unsupported activity level
-TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_release_request_is_not_sent)
-{
-  // Test preamble
-  du_index_t          du_index  = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti     = to_rnti(0x4601);
-  pci_t               pci       = 0;
-  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  // Connect AMF, DU, CU-UP
-  test_preamble_all_connected(du_index, pci);
-  // Attach UE
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti, amf_ue_id, ran_ue_id);
-
-  cu_cp_inactivity_notification inactivity_notification;
-  inactivity_notification.ue_index    = uint_to_ue_index(0);
-  inactivity_notification.ue_inactive = false;
-
-  cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
-
-  // check that the UE Context Release Request was not sent to the AMF
-  ASSERT_NE(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
-            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 /* AMF initiated PDU Session Release                                                */
 //////////////////////////////////////////////////////////////////////////////////////
 

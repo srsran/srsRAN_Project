@@ -102,6 +102,29 @@ e1ap_message generate_bearer_context_release_complete(gnb_cu_cp_ue_e1ap_id_t cu_
 e1ap_message generate_bearer_context_inactivity_notification_with_ue_level(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                            gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
+/// \brief Generate a dummy Bearer Context Inactivity Notification with DRB activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \param[in] active_drbs The active DRBs.
+/// \param[in] inactive_drbs The inactive DRBs.
+/// \return The Bearer Context Inactivity Notification.
+e1ap_message generate_bearer_context_inactivity_notification_with_drb_level(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                            gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id,
+                                                                            const std::vector<drb_id_t>& active_drbs,
+                                                                            const std::vector<drb_id_t>& inactive_drbs);
+
+/// \brief Generate a dummy Bearer Context Inactivity Notification with PDU session activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \param[in] active_pdu_sessions The active PDU sessions.
+/// \param[in] inactive_pdu_sessions The inactive PDU sessions.
+/// \return The Bearer Context Inactivity Notification.
+e1ap_message generate_bearer_context_inactivity_notification_with_pdu_session_level(
+    gnb_cu_cp_ue_e1ap_id_t               cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t               cu_up_ue_e1ap_id,
+    const std::vector<pdu_session_id_t>& active_pdu_sessions,
+    const std::vector<pdu_session_id_t>& inactive_pdu_sessions);
+
 /// \brief Generate an invalid dummy Bearer Context Inactivity Notification with UE activity level.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
 /// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
