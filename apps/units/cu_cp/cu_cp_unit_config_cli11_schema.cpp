@@ -220,8 +220,10 @@ static void configure_cli11_security_args(CLI::App& app, cu_cp_unit_security_con
 
 static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1ap_params)
 {
-  add_option(
-      app, "--ue_context_setup_timeout", f1ap_params.procedure_timeout, "UE context setup timeout in milliseconds")
+  add_option(app,
+             "--procedure_timeout",
+             f1ap_params.procedure_timeout,
+             "Time that the F1AP waits for a DU response in milliseconds")
       ->capture_default_str();
 }
 
