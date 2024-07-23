@@ -110,15 +110,24 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
   // Move UE context out from ue_db and erase the slot (from CU-UP shared ctrl executor)
   std::unique_ptr<ue_context> ue_ctxt = std::move(ue_db[ue_index]);
   ue_db.erase(ue_index);
-  task_executor& ue_ctrl_executor = ue_ctxt->ue_exec_mapper->ctrl_executor();
 
   // Dispatch the stopping and deletion of the UE context to UE-specific ctrl executor
-  return execute_and_continue_on_blocking(
-      ue_ctrl_executor, ctrl_executor, [this, ue_index, ue_ctxt = std::move(ue_ctxt)]() mutable {
-        ue_ctxt->stop();
-        ue_ctxt.reset();
-        logger.info("ue={}: UE removed", ue_index);
-      });
+  return launch_async([this, ue_ctxt = std::move(ue_ctxt), ue_index](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Dispatch execution context switch.
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor()));
+
+    // Stop and delete
+    CORO_AWAIT(ue_ctxt->stop());
+    ue_ctxt.reset();
+    logger.info("ue={}: UE removed", ue_index);
+
+    // Continuation in the original executor.
+    CORO_AWAIT(execute_on_blocking(ctrl_executor));
+
+    CORO_RETURN();
+  });
 }
 
 ue_index_t ue_manager::get_next_ue_index()
