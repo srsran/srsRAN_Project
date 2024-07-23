@@ -22,6 +22,7 @@
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -66,7 +67,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   srslog::fetch_basic_logger("SEC").set_hex_dump_max_size(32);
   srslog::init();
 
-  // create CU-CP config
+  // Create CU-CP config
   cu_cp_cfg                          = config_helpers::make_default_cu_cp_config();
   cu_cp_cfg.services.cu_cp_executor  = cu_cp_workers->exec.get();
   cu_cp_cfg.services.n2_gw           = &*amf_stub;
@@ -75,7 +76,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.admission.max_nof_cu_ups = params.max_nof_cu_ups;
   cu_cp_cfg.admission.max_nof_ues    = params.max_nof_ues;
   cu_cp_cfg.bearers.drb_config       = config_helpers::make_default_cu_cp_qos_config_list();
-  // > security config.
+  // > Security config.
   cu_cp_cfg.security.int_algo_pref_list = {security::integrity_algorithm::nia2,
                                            security::integrity_algorithm::nia1,
                                            security::integrity_algorithm::nia3,
@@ -86,6 +87,106 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea3};
 
   cu_cp_cfg.f1ap.json_log_enabled = true;
+
+  // > Mobility config
+  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = true;
+  {
+    // > Meas manager config
+    cell_meas_manager_cfg meas_mng_cfg;
+    {
+      // Generate NCIs.
+      gnb_id_t         gnb_id1 = cu_cp_cfg.node.gnb_id;
+      nr_cell_identity nci1    = nr_cell_identity::create(gnb_id1, 0).value();
+      nr_cell_identity nci2    = nr_cell_identity::create(gnb_id1, 1).value();
+      gnb_id_t         gnb_id2 = {cu_cp_cfg.node.gnb_id.id + 1, cu_cp_cfg.node.gnb_id.bit_length};
+      nr_cell_identity nci3    = nr_cell_identity::create(gnb_id2, 0).value();
+
+      // Cell 1
+      {
+        cell_meas_config cell_cfg_1;
+        cell_cfg_1.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+        cell_cfg_1.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
+        cell_cfg_1.serving_cell_cfg.nci               = nci1;
+        cell_cfg_1.ncells.push_back({nci2, {uint_to_report_cfg_id(2)}});
+        // Add external cell (for inter CU handover tests)
+        cell_cfg_1.ncells.push_back({nci3, {uint_to_report_cfg_id(2)}});
+
+        meas_mng_cfg.cells.emplace(nci1, cell_cfg_1);
+      }
+
+      // Cell 2
+      {
+        cell_meas_config cell_cfg_2;
+        cell_cfg_2.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+        cell_cfg_2.serving_cell_cfg.gnb_id_bit_length = gnb_id1.bit_length;
+        cell_cfg_2.serving_cell_cfg.nci               = nci2;
+        cell_cfg_2.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
+        meas_mng_cfg.cells.emplace(nci2, cell_cfg_2);
+      }
+
+      // Add an external cell
+      {
+        cell_meas_config cell_cfg_3;
+        cell_cfg_3.periodic_report_cfg_id             = uint_to_report_cfg_id(1);
+        cell_cfg_3.serving_cell_cfg.gnb_id_bit_length = gnb_id2.bit_length;
+        cell_cfg_3.serving_cell_cfg.nci               = nci3;
+        cell_cfg_3.serving_cell_cfg.pci               = 3;
+        cell_cfg_3.serving_cell_cfg.ssb_arfcn         = 632628;
+        cell_cfg_3.serving_cell_cfg.band              = nr_band::n78;
+        cell_cfg_3.serving_cell_cfg.ssb_scs           = subcarrier_spacing::kHz15;
+        cell_cfg_3.serving_cell_cfg.ssb_mtc = rrc_ssb_mtc{{rrc_periodicity_and_offset::periodicity_t::sf20, 0}, 5};
+
+        cell_cfg_3.ncells.push_back({nci1, {uint_to_report_cfg_id(2)}});
+        meas_mng_cfg.cells.emplace(nci3, cell_cfg_3);
+      }
+
+      // Add periodic event
+      {
+        rrc_report_cfg_nr periodic_report_cfg;
+        auto&             periodical_cfg = periodic_report_cfg.periodical.emplace();
+
+        periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+        periodical_cfg.report_interv          = 1024;
+        periodical_cfg.report_amount          = -1;
+        periodical_cfg.report_quant_cell.rsrp = true;
+        periodical_cfg.report_quant_cell.rsrq = true;
+        periodical_cfg.report_quant_cell.sinr = true;
+        periodical_cfg.max_report_cells       = 4;
+
+        periodic_report_cfg.periodical = periodical_cfg;
+        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
+      }
+
+      // Add event A3
+      {
+        rrc_report_cfg_nr a3_report_cfg;
+        auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
+        auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+
+        event_a3.a3_offset.rsrp.emplace() = 6;
+        event_a3.hysteresis               = 0;
+        event_a3.time_to_trigger          = 100;
+
+        event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+        event_trigger_cfg.report_interv          = 1024;
+        event_trigger_cfg.report_amount          = -1;
+        event_trigger_cfg.report_quant_cell.rsrp = true;
+        event_trigger_cfg.report_quant_cell.rsrq = true;
+        event_trigger_cfg.report_quant_cell.sinr = true;
+        event_trigger_cfg.max_report_cells       = 4;
+
+        rrc_meas_report_quant report_quant_rs_idxes;
+        report_quant_rs_idxes.rsrp              = true;
+        report_quant_rs_idxes.rsrq              = true;
+        report_quant_rs_idxes.sinr              = true;
+        event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
+
+        a3_report_cfg.event_triggered = event_trigger_cfg;
+        meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
+      }
+    }
+    cu_cp_cfg.mobility.meas_manager_config = meas_mng_cfg;
+  }
 
   // create CU-CP instance.
   cu_cp_inst = create_cu_cp(cu_cp_cfg);
@@ -210,9 +311,9 @@ bool cu_cp_test_environment::drop_du_connection(unsigned du_idx)
   return true;
 }
 
-bool cu_cp_test_environment::run_f1_setup(unsigned du_idx)
+bool cu_cp_test_environment::run_f1_setup(unsigned du_idx, gnb_du_id_t gnb_du_id, nr_cell_identity nci, pci_t pci)
 {
-  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request());
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request(gnb_du_id, nci, pci));
   f1ap_message f1ap_pdu;
   bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
   return result;

@@ -38,6 +38,8 @@ bool is_ul_rrc_msg_transfer_valid(const f1ap_message& msg, srb_id_t srb_id);
 
 bool is_valid_ue_context_setup_request(const f1ap_message& msg);
 
+bool is_valid_ue_context_setup_request_with_ue_capabilities(const f1ap_message& msg);
+
 bool is_ue_context_setup_response_valid(const f1ap_message& msg);
 
 bool is_valid_ue_context_modification_request(const f1ap_message& msg);

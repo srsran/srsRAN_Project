@@ -23,6 +23,9 @@ bool is_valid_bearer_context_setup_request(const e1ap_message& msg);
 /// \brief Check if an E1AP message is a valid Bearer Context Modification Request message.
 bool is_valid_bearer_context_modification_request(const e1ap_message& msg);
 
+/// \brief Check if an E1AP message is a valid Bearer Context Modification Request message.
+bool is_valid_bearer_context_modification_request_with_ue_security_info(const e1ap_message& msg);
+
 /// \brief Check if an E1AP message is a valid Bearer Context Release Command message.
 bool is_valid_bearer_context_release_command(const e1ap_message& msg);
 
