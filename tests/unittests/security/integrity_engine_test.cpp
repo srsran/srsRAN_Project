@@ -122,12 +122,14 @@ TEST_P(fxt_nia1, integrity_engine_generic_nia1)
       std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia1);
 
   // Apply integrity and compare results
-  security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-  ASSERT_TRUE(result.buf.has_value());
-  logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
-  logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-  EXPECT_EQ(result.buf.value(), prot_buf);
-  EXPECT_EQ(result.count, param.count_i);
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 #ifdef MBEDTLS_CMAC_C
@@ -147,12 +149,14 @@ TEST_P(fxt_nia2, integrity_engine_nia2_cmac)
   std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_cmac>(key, param.bearer, dir);
 
   // Apply integrity and compare results
-  security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-  ASSERT_TRUE(result.buf.has_value());
-  logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
-  logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-  EXPECT_EQ(result.buf.value(), prot_buf);
-  EXPECT_EQ(result.count, param.count_i);
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 #endif // MBEDTLS_CMAC_C
 
@@ -172,12 +176,14 @@ TEST_P(fxt_nia2, integrity_engine_nia2_non_cmac)
   std::unique_ptr<integrity_engine> nia = std::make_unique<integrity_engine_nia2_non_cmac>(key, param.bearer, dir);
 
   // Apply integrity and compare results
-  security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-  ASSERT_TRUE(result.buf.has_value());
-  logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
-  logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-  EXPECT_EQ(result.buf.value(), prot_buf);
-  EXPECT_EQ(result.count, param.count_i);
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 TEST_P(fxt_nia2, integrity_engine_generic_nia2)
@@ -197,12 +203,14 @@ TEST_P(fxt_nia2, integrity_engine_generic_nia2)
       std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia2);
 
   // Apply integrity and compare results
-  security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-  ASSERT_TRUE(result.buf.has_value());
-  logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
-  logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-  EXPECT_EQ(result.buf.value(), prot_buf);
-  EXPECT_EQ(result.count, param.count_i);
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 TEST_P(fxt_nia3, integrity_engine_generic_nia3)
@@ -222,12 +230,14 @@ TEST_P(fxt_nia3, integrity_engine_generic_nia3)
       std::make_unique<integrity_engine_generic>(key, param.bearer, dir, integrity_algorithm::nia3);
 
   // Apply integrity and compare results
-  security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
-  ASSERT_TRUE(result.buf.has_value());
-  logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
-  logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
-  EXPECT_EQ(result.buf.value(), prot_buf);
-  EXPECT_EQ(result.count, param.count_i);
+  for (unsigned i = 0; i < 2; i++) {
+    security_result result = nia->protect_integrity(message.deep_copy().value(), param.count_i);
+    ASSERT_TRUE(result.buf.has_value());
+    logger.info(result.buf.value().begin(), result.buf.value().end(), "result:");
+    logger.info(prot_buf.begin(), prot_buf.end(), "exp:");
+    EXPECT_EQ(result.buf.value(), prot_buf);
+    EXPECT_EQ(result.count, param.count_i);
+  }
 }
 
 //////////////////////////////////////////////////////////
