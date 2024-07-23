@@ -221,5 +221,8 @@ generate_handover_preparation_request(ue_index_t                                
                                       nr_cell_identity nci               = nr_cell_identity::create({1, 22}, 1).value(),
                                       uint32_t         gnb_id_bit_length = 22);
 
+/// \brief Generate a valid dummy Handover Cancel Acknowledgement message.
+ngap_message generate_handover_cancel_ack(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 } // namespace srs_cu_cp
 } // namespace srsran

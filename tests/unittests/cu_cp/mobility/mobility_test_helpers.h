@@ -10,20 +10,15 @@
 
 #pragma once
 
-#include "../cu_cp_test_helpers.h"
-#include "lib/cu_cp/du_processor/du_processor_config.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
-#include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
-#include "tests/unittests/rrc/test_helpers.h"
-#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Fixture class for CU-CP mobility tests
-class mobility_test : public cu_cp_test
+class mobility_test : public ::testing::Test
 {
 protected:
   mobility_test();
