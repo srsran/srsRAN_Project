@@ -13,6 +13,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -329,7 +330,7 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_
 
   // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
   send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
-      make_byte_buffer("00070e00cc6fcda5").value(), {psi}, {});
+      generate_rrc_reconfiguration_complete_pdu(3, 7), {psi}, {});
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_session_arrives_then_setup_fails)
@@ -365,7 +366,7 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_t
 
   // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
   send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
-      make_byte_buffer("00070e00cc6fcda5").value(), {psi}, {});
+      generate_rrc_reconfiguration_complete_pdu(3, 7), {psi}, {});
 }
 
 TEST_F(
@@ -441,7 +442,7 @@ TEST_F(cu_cp_pdu_session_resource_setup_test,
 
   // Inject RRC Reconfiguration Complete and await successful PDU Session Resource Setup Response
   send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
-      make_byte_buffer("00070e00cc6fcda5").value(), {psi}, {});
+      generate_rrc_reconfiguration_complete_pdu(3, 7), {psi}, {});
 }
 
 TEST_F(cu_cp_pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_bearer_setup_and_modification_succeed)
@@ -450,5 +451,5 @@ TEST_F(cu_cp_pdu_session_resource_setup_test, when_two_consecutive_setups_arrive
   setup_pdu_session(psi, drb_id_t::drb1, qfi);
 
   // Setup second PDU session
-  setup_pdu_session(psi2, drb_id_t::drb2, qfi2, make_byte_buffer("00080800e6847bbd").value(), false);
+  setup_pdu_session(psi2, drb_id_t::drb2, qfi2, generate_rrc_reconfiguration_complete_pdu(0, 8), false);
 }
