@@ -38,7 +38,7 @@ iq_decompressor_selector::iq_decompressor_selector(
   }
 }
 
-void iq_decompressor_selector::decompress(span<cf_t>                   iq_data,
+void iq_decompressor_selector::decompress(span<cbf16_t>                iq_data,
                                           span<const compressed_prb>   compressed_prbs,
                                           const ru_compression_params& params)
 {

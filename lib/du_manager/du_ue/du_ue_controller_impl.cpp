@@ -164,10 +164,10 @@ public:
     // The release timer is not running yet. We need to store the cause and start the timer.
     current_cause    = cause;
     auto timeout_val = get_release_timeout();
-    logger.info("ue={}: RLF detected with cause=\"{}\". Timer of {} msec to release UE started...",
-                ue_ctx.ue_index,
-                get_rlf_cause_str(cause),
-                timeout_val.count());
+    logger.warning("ue={}: RLF detected with cause=\"{}\". Timer of {} msec to release UE started...",
+                   ue_ctx.ue_index,
+                   get_rlf_cause_str(cause),
+                   timeout_val.count());
 
     // Start timer.
     release_timer.set(timeout_val, [this](timer_id_t tid) { trigger_ue_release(); });

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "amf_connection_manager.h"
+#include "cu_cp_ue_admission_controller.h"
 #include "cu_up_connection_manager.h"
 #include "du_connection_manager.h"
 #include "node_connection_notifier.h"
@@ -43,7 +44,7 @@ class ue_manager;
 /// - determining whether a new DU setup request should be accepted based on the status of other remote node
 /// connections;
 /// - determining whether new UEs should be accepted depending on the status of the CU-CP remote connections.
-class cu_cp_controller
+class cu_cp_controller : public cu_cp_ue_admission_controller
 {
 public:
   cu_cp_controller(const cu_cp_configuration&  config_,
@@ -61,7 +62,7 @@ public:
   bool handle_du_setup_request(du_index_t du_idx, const du_setup_request& req);
 
   /// \brief Determines whether the CU-CP should accept a new UE connection.
-  bool request_ue_setup() const;
+  bool request_ue_setup() const override;
 
   cu_cp_f1c_handler& get_f1c_handler() { return du_mng; }
   cu_cp_e1_handler&  get_e1_handler() { return cu_up_mng; }

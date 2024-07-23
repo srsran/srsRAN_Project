@@ -107,9 +107,9 @@ void iq_compression_none_neon::compress(span<srsran::ofh::compressed_prb>       
   }
 }
 
-void iq_compression_none_neon::decompress(span<srsran::cf_t>                        output,
-                                          span<const srsran::ofh::compressed_prb>   input,
-                                          const srsran::ofh::ru_compression_params& params)
+void iq_compression_none_neon::decompress(span<cbf16_t>                output,
+                                          span<const compressed_prb>   input,
+                                          const ru_compression_params& params)
 {
   // Use generic implementation if NEON utils don't support requested bit width.
   if (!neon::iq_width_packing_supported(params.data_width)) {
@@ -125,9 +125,9 @@ void iq_compression_none_neon::decompress(span<srsran::cf_t>                    
     std::array<int16_t, NOF_SUBCARRIERS_PER_RB * 2> unpacked_iq_data;
     neon::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 
-    span<cf_t> output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
+    span<cbf16_t> output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     // Convert to complex samples.
-    q_out.to_float(output_span, unpacked_iq_data, 1);
+    q_out.to_brain_float(output_span, unpacked_iq_data, 1);
     out_idx += NOF_SUBCARRIERS_PER_RB;
   }
 }

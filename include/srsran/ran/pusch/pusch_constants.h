@@ -63,6 +63,9 @@ inline constexpr units::bits get_max_codeword_size(unsigned nof_prb, unsigned no
   return units::bits{get_codeword_max_symbols(nof_prb, nof_layers) * pusch_constants::MAX_MODULATION_ORDER};
 }
 
+/// Maximum number of bits per OFDM symbol.
+constexpr unsigned MAX_NOF_BITS_PER_OFDM_SYMBOL = MAX_NOF_LAYERS * MAX_RB * NRE * pusch_constants::MAX_MODULATION_ORDER;
+
 /// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
 /// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.
 static constexpr unsigned MAX_NOF_DMRS_SYMBOLS = 4 * 2;

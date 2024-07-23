@@ -33,7 +33,7 @@ void iq_compression_death_impl::compress(span<compressed_prb>         compressed
   report_error("Compression type '{}' is not supported", to_string(params.type));
 }
 
-void iq_compression_death_impl::decompress(span<cf_t>                   iq_data,
+void iq_compression_death_impl::decompress(span<cbf16_t>                iq_data,
                                            span<const compressed_prb>   compressed_prbs,
                                            const ru_compression_params& params)
 {

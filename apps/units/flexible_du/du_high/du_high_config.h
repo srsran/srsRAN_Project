@@ -219,6 +219,8 @@ struct du_high_unit_pucch_config {
   /// \c PUCCH-ConfigCommon parameters.
   /// \c p0-nominal, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal = -90;
+  /// \c pucch-ResourceCommon, TS 38.331. Values: {0,...,15}. Defines the PUCCH resource set used common configuration.
+  unsigned pucch_resource_common = 11;
 
   /// \c PUCCH-Config parameters.
   /// Number of PUCCH Format 0/1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.

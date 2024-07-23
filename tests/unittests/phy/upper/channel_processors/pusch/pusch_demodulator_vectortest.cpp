@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
   fmt::print(os,
              "rnti={} rb_mask=[{}] modulation={} t_alloc={}:{} dmrs_pos=[{}] dmrs_type={} nof_cdm...data={} n_id={} "
-             "nof_tx_layers={} rx_ports={}",
+             "nof_tx_layers={} enable...precoding={} rx_ports=[{}]",
              test_case.context.config.rnti,
              test_case.context.config.rb_mask,
              to_string(test_case.context.config.modulation),
@@ -49,6 +49,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              test_case.context.config.nof_cdm_groups_without_data,
              test_case.context.config.n_id,
              test_case.context.config.nof_tx_layers,
+             test_case.context.config.enable_transform_precoding,
              span<const uint8_t>(test_case.context.config.rx_ports));
   return os;
 }
@@ -100,8 +101,15 @@ protected:
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_TRUE(prg_factory);
 
-    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, true, true);
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
+    ASSERT_TRUE(dft_factory);
+
+    std::shared_ptr<transform_precoder_factory> precoding_factory =
+        create_dft_transform_precoder_factory(dft_factory, MAX_RB);
+    ASSERT_TRUE(precoding_factory);
+
+    std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
+        equalizer_factory, precoding_factory, demod_factory, prg_factory, MAX_RB, true, true);
     ASSERT_TRUE(pusch_demod_factory);
 
     // Create actual PUSCH demodulator.

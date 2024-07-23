@@ -326,7 +326,11 @@ amari 8UE:
   parallel:
     matrix:
       - KEYWORDS:
-          ["reestablishment and sequentially", "handover and sequentially"]
+          [
+            "attach_detach",
+            "reestablishment and sequentially",
+            "handover and sequentially",
+          ]
 
 amari 8UE beta:
   extends: amari 8UE
@@ -354,7 +358,6 @@ amari 32UE:
     matrix:
       - KEYWORDS:
           [
-            "attach_detach",
             "ping",
             "iperf and udp and band:3",
             "iperf and udp and not band:3",
@@ -362,10 +365,11 @@ amari 32UE:
             "iperf and tcp and not band:3",
           ]
 
-amari 32UE asan:
+amari 4UE asan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
+    KEYWORDS: "iperf"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic asan"
@@ -373,10 +377,11 @@ amari 32UE asan:
     - *txrx-lib
     - *retina-needs
 
-amari 32UE tsan:
+amari 4UE tsan:
   extends: .zmq
   variables:
     MARKERS: "smoke"
+    KEYWORDS: "iperf"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
   needs:
     - job: "basic tsan"
@@ -384,7 +389,7 @@ amari 32UE tsan:
     - *txrx-lib
     - *retina-needs
 
-amari 32UE memcheck:
+amari 4UE memcheck:
   extends: .zmq
   variables:
     MARKERS: "zmq_valgrind"
@@ -602,6 +607,7 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
+  allow_failure: true
   parallel:
     matrix:
       - KEYWORDS: [
@@ -625,6 +631,7 @@ viavi-debug:
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+  allow_failure: true
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true

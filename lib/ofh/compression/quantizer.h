@@ -108,6 +108,20 @@ public:
     srsvec::convert(x, scale, z);
   }
 
+  /// \brief Converts a sequence of fixed point values to complex brain floating point values.
+  ///
+  /// \param[out] z       Resultant complex brain floating point values.
+  /// \param[in] x        Sequence of 16-bit integer values.
+  /// \param[in] in_scale Scaling factor (expected to be bigger or equal to 1) applied to the input prior conversion.
+  ///
+  /// \remark The size of \c x must be twice the size of \c z as \x is comprised by the quantized pairs of real and
+  /// imaginary parts of complex values.
+  void to_brain_float(span<cbf16_t> z, span<const int16_t> x, int16_t in_scale) const
+  {
+    float scale = gain / in_scale;
+    srsvec::convert(z, x, scale);
+  }
+
   /// Sign extends the input value.
   int16_t sign_extend(int16_t value) const
   {

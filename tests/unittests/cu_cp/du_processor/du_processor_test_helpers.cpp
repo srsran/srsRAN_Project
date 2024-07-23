@@ -42,6 +42,82 @@ private:
   fifo_async_task_scheduler task_sched{32};
 };
 
+struct dummy_cu_cp_ue_admission_controller : public cu_cp_ue_admission_controller {
+  bool request_ue_setup() const override { return true; }
+};
+
+struct dummy_cu_cp_measurement_handler : public cu_cp_measurement_handler {
+  std::optional<rrc_meas_cfg>
+  handle_measurement_config_request(ue_index_t                  ue_index,
+                                    nr_cell_identity            nci,
+                                    std::optional<rrc_meas_cfg> current_meas_config = {}) override
+  {
+    return std::nullopt;
+  };
+  void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
+};
+
+struct dummy_cu_cp_ue_removal_handler : public cu_cp_ue_removal_handler {
+  async_task<void> handle_ue_removal_request(ue_index_t ue_index) override { return launch_no_op_task(); }
+  void             handle_pending_ue_task_cancellation(ue_index_t ue_index) override {}
+};
+
+struct dummy_cu_cp_rrc_ue_interface : public cu_cp_rrc_ue_interface {
+  rrc_ue_reestablishment_context_response
+  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  {
+    return {};
+  }
+  async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    return launch_no_op_task(true);
+  }
+  void             handle_rrc_reestablishment_failure(const cu_cp_ue_context_release_request& request) override {}
+  void             handle_rrc_reestablishment_complete(ue_index_t old_ue_index) override {}
+  async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    return launch_no_op_task(true);
+  }
+  async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override
+  {
+    return launch_no_op_task();
+  }
+};
+
+struct dummy_cu_cp_du_event_handler : public cu_cp_du_event_handler {
+public:
+  dummy_cu_cp_du_event_handler(ue_manager& ue_mng_) : ue_mng(ue_mng_) {}
+
+  void handle_du_processor_creation(du_index_t                       du_index,
+                                    f1ap_ue_context_removal_handler& f1ap_handler,
+                                    f1ap_statistics_handler&         f1ap_statistic_handler,
+                                    rrc_ue_handler&                  rrc_handler,
+                                    rrc_du_statistics_handler&       rrc_statistic_handler) override
+  {
+  }
+  void handle_du_processor_removal(du_index_t du_index) override {}
+  void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
+  {
+    ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(rrc_ue_handler,
+                                                            ue_rem_handler,
+                                                            ue_admission_handler,
+                                                            ue_mng.find_ue(ue_index)->get_up_resource_manager(),
+                                                            meas_handler);
+  }
+  byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override { return {}; }
+  async_task<void> handle_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) override
+  {
+    return launch_no_op_task();
+  }
+
+private:
+  ue_manager&                         ue_mng;
+  dummy_cu_cp_ue_admission_controller ue_admission_handler;
+  dummy_cu_cp_measurement_handler     meas_handler;
+  dummy_cu_cp_ue_removal_handler      ue_rem_handler;
+  dummy_cu_cp_rrc_ue_interface        rrc_ue_handler;
+};
+
 } // namespace
 
 du_processor_test::du_processor_test() :
@@ -72,30 +148,13 @@ du_processor_test::du_processor_test() :
                                          rrc_du_cu_cp_notifier,
                                          *common_task_sched,
                                          ue_mng);
+
+  cu_cp_event_handler = std::make_unique<dummy_cu_cp_du_event_handler>(ue_mng);
+  cu_cp_notifier.attach_handler(&*cu_cp_event_handler, nullptr);
 }
 
 du_processor_test::~du_processor_test()
 {
   // flush logger after each test
   srslog::flush();
-}
-
-void du_processor_test::attach_ue()
-{
-  // Generate valid F1SetupRequest
-  f1ap_message f1_setup_req = test_helpers::generate_f1_setup_request();
-  // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().get_f1ap_handler().get_f1ap_message_handler().handle_message(f1_setup_req);
-
-  // Generate ue_creation message
-  ue_index_t                      ue_index = ue_index_t::min;
-  ue_rrc_context_creation_request req      = generate_ue_rrc_context_creation_request(
-      ue_index, rnti_t::MIN_CRNTI, nr_cell_identity::create(cu_cp_cfg.node.gnb_id, 0).value());
-  // Pass message to DU processor
-  du_processor_obj->get_f1ap_interface().handle_ue_rrc_context_creation_request(req);
-}
-
-void du_processor_test::receive_rrc_reconfig_complete()
-{
-  // inject RRC Reconfiguration complete into UE object
 }

@@ -668,10 +668,10 @@ public:
     std::unique_ptr<pucch_detector_format0> detector_format0 =
         std::make_unique<pucch_detector_format0>(prg_factory->create(), low_papr_factory->create(1, 0, alphas));
 
-    return std::make_unique<pucch_detector_impl>(low_papr_factory->create(1, 0, alphas),
-                                                 prg_factory->create(),
-                                                 eqzr_factory->create(),
-                                                 std::move(detector_format0));
+    std::unique_ptr<pucch_detector_format1> detector_format1 = std::make_unique<pucch_detector_format1>(
+        low_papr_factory->create(1, 0, alphas), prg_factory->create(), eqzr_factory->create());
+
+    return std::make_unique<pucch_detector_impl>(std::move(detector_format0), std::move(detector_format1));
   }
 };
 

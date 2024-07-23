@@ -33,6 +33,7 @@
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/srsvec/copy.h"
 #include <mutex>
 
 namespace srsran {
@@ -77,7 +78,7 @@ public:
   span<const bounded_bitset<MAX_NOF_PRBS * NRE>> get_re_written_mask() const { return re_written; }
 
   /// Writes the given RE IQ buffer into the port and start RE.
-  void write_grid(unsigned port, unsigned start_re, span<const cf_t> re_iq_buffer)
+  void write_grid(unsigned port, unsigned start_re, span<const cbf16_t> re_iq_buffer)
   {
     srsran_assert(grid.grid, "Invalid resource grid");
 
@@ -85,8 +86,8 @@ public:
     if (port >= grid.grid->get_writer().get_nof_ports()) {
       return;
     }
-
-    grid.grid->get_writer().put(port, symbol, start_re, re_iq_buffer);
+    span<cbf16_t> grid_view = grid.grid->get_writer().get_view(port, symbol).subspan(start_re, re_iq_buffer.size());
+    srsvec::copy(grid_view, re_iq_buffer);
     re_written[port].fill(start_re, start_re + re_iq_buffer.size());
   }
 
@@ -185,7 +186,7 @@ public:
   }
 
   /// Writes to the grid at the given slot, port, symbol and start resource element the given IQ buffer.
-  void write_grid(slot_point slot, unsigned port, unsigned symbol, unsigned start_re, span<const cf_t> re_iq_buffer)
+  void write_grid(slot_point slot, unsigned port, unsigned symbol, unsigned start_re, span<const cbf16_t> re_iq_buffer)
   {
     std::lock_guard<std::mutex> lock(mutex);
     entry(slot, symbol).write_grid(port, start_re, re_iq_buffer);

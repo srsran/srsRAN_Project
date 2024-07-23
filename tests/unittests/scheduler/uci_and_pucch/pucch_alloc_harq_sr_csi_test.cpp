@@ -30,79 +30,17 @@ const unsigned NOF_RBS = 52;
 
 ///////   Test allocation of dedicated PUCCH resources    ///////
 
-class test_pucch_allocator_ded_resources : public ::testing::Test
+class pucch_allocator_base_tester
 {
 public:
-  test_pucch_allocator_ded_resources(unsigned max_pucchs_per_slot_ = 32U, unsigned max_ul_grants_per_slot_ = 32U) :
-    t_bench(test_bench_params{.pucch_res_common = 11, .n_cces = 1}, max_pucchs_per_slot_, max_ul_grants_per_slot_)
-  {
-    // Set expected grant for PUCCH Format 1 SR.
-    pucch_expected_f1_sr.format  = pucch_format::FORMAT_1;
-    pucch_expected_f1_sr.crnti   = to_rnti(0x4601);
-    pucch_expected_f1_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-
-    pucch_expected_f1_sr.resources.prbs            = prb_interval{NOF_RBS - 3, NOF_RBS - 2};
-    pucch_expected_f1_sr.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f1_sr.resources.symbols         = ofdm_symbol_range{0, 14};
-
-    pucch_expected_f1_sr.format_1.initial_cyclic_shift = 0;
-    pucch_expected_f1_sr.format_1.sr_bits              = sr_nof_bits::one;
-    pucch_expected_f1_sr.format_1.harq_ack_nof_bits    = 0;
-    pucch_expected_f1_sr.format_1.time_domain_occ      = 0;
-
-    pucch_expected_f1_sr.format_1.group_hopping   = pucch_group_hopping::NEITHER;
-    pucch_expected_f1_sr.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
-    pucch_expected_f1_sr.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-
-    // Set expected grant for PUCCH Format 1 HARQ.
-    pucch_expected_f1_harq.format  = srsran::pucch_format::FORMAT_1;
-    pucch_expected_f1_harq.crnti   = to_rnti(0x4601);
-    pucch_expected_f1_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-
-    pucch_expected_f1_harq.resources.prbs            = prb_interval{NOF_RBS - 1, NOF_RBS};
-    pucch_expected_f1_harq.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f1_harq.resources.symbols         = ofdm_symbol_range{0, 14};
-
-    pucch_expected_f1_harq.format_1.initial_cyclic_shift = 0;
-    pucch_expected_f1_harq.format_1.sr_bits              = sr_nof_bits::no_sr;
-    pucch_expected_f1_harq.format_1.harq_ack_nof_bits    = 1;
-    pucch_expected_f1_harq.format_1.time_domain_occ      = 0;
-
-    // Set expected grant for PUCCH Format 1.
-    pucch_expected_f1_harq.format_1.group_hopping   = pucch_group_hopping::NEITHER;
-    pucch_expected_f1_harq.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
-    pucch_expected_f1_harq.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-
-    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_expected_f2.crnti                     = to_rnti(0x4601);
-    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
-    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
-
-    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
-
-    pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_expected_csi.crnti                     = to_rnti(0x4601);
-    pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
-    pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
-
-    pucch_expected_csi.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_expected_csi.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
-  };
+  pucch_allocator_base_tester(test_bench_params params_ = test_bench_params{.pucch_res_common = 11, .n_cces = 1},
+                              unsigned          max_pucchs_per_slot_    = 32U,
+                              unsigned          max_ul_grants_per_slot_ = 32U) :
+    t_bench(params_, max_pucchs_per_slot_, max_ul_grants_per_slot_){};
 
 protected:
   // Parameters that are passed by the routine to run the tests.
   test_bench     t_bench;
-  pucch_info     pucch_expected_f1_sr;
-  pucch_info     pucch_expected_f1_harq;
-  pucch_info     pucch_expected_f2;
-  pucch_info     pucch_expected_csi;
   const unsigned pucch_res_idx{0};
 
   void add_sr_grant()
@@ -192,10 +130,83 @@ protected:
   }
 };
 
-class test_pucch_f2_alloc_several_prbs : public ::testing::Test
+class test_pucch_allocator_ded_resources : public ::testing::Test, public pucch_allocator_base_tester
 {
 public:
-  test_pucch_f2_alloc_several_prbs() : t_bench(test_bench_params{.pucch_f2_more_prbs = true})
+  test_pucch_allocator_ded_resources() : pucch_allocator_base_tester()
+  {
+    // Set expected grant for PUCCH Format 1 SR.
+    pucch_expected_f1_sr.format  = pucch_format::FORMAT_1;
+    pucch_expected_f1_sr.crnti   = to_rnti(0x4601);
+    pucch_expected_f1_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected_f1_sr.resources.prbs            = prb_interval{NOF_RBS - 3, NOF_RBS - 2};
+    pucch_expected_f1_sr.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f1_sr.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected_f1_sr.format_1.initial_cyclic_shift = 0;
+    pucch_expected_f1_sr.format_1.sr_bits              = sr_nof_bits::one;
+    pucch_expected_f1_sr.format_1.harq_ack_nof_bits    = 0;
+    pucch_expected_f1_sr.format_1.time_domain_occ      = 0;
+
+    pucch_expected_f1_sr.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected_f1_sr.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected_f1_sr.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    // Set expected grant for PUCCH Format 1 HARQ.
+    pucch_expected_f1_harq.format  = srsran::pucch_format::FORMAT_1;
+    pucch_expected_f1_harq.crnti   = to_rnti(0x4601);
+    pucch_expected_f1_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected_f1_harq.resources.prbs            = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected_f1_harq.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f1_harq.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected_f1_harq.format_1.initial_cyclic_shift = 0;
+    pucch_expected_f1_harq.format_1.sr_bits              = sr_nof_bits::no_sr;
+    pucch_expected_f1_harq.format_1.harq_ack_nof_bits    = 1;
+    pucch_expected_f1_harq.format_1.time_domain_occ      = 0;
+
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected_f1_harq.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected_f1_harq.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected_f1_harq.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
+
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+
+    pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_csi.crnti                     = to_rnti(0x4601);
+    pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_csi.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_csi.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
+
+protected:
+  // Parameters that are passed by the routine to run the tests.
+  pucch_info pucch_expected_f1_sr;
+  pucch_info pucch_expected_f1_harq;
+  pucch_info pucch_expected_f2;
+  pucch_info pucch_expected_csi;
+};
+
+class test_pucch_f2_alloc_several_prbs : public ::testing::Test, public pucch_allocator_base_tester
+{
+public:
+  test_pucch_f2_alloc_several_prbs() : pucch_allocator_base_tester(test_bench_params{.pucch_f2_more_prbs = true})
   {
     // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
     pucch_expected_harq_only.format                    = srsran::pucch_format::FORMAT_2;
@@ -228,41 +239,9 @@ public:
 
 protected:
   // Parameters that are passed by the routine to run the tests.
-  test_bench t_bench;
   pucch_info pucch_expected_harq_only;
   pucch_info pucch_expected_harq_csi;
   pucch_info pucch_expected_csi_only;
-
-  void add_sr_grant()
-  {
-    t_bench.pucch_alloc.pucch_allocate_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                      t_bench.get_main_ue().crnti,
-                                                      t_bench.get_main_ue().get_pcell().cfg());
-  }
-
-  void add_harq_grant()
-  {
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-  }
-
-  std::optional<unsigned> add_format2_harq_grant()
-  {
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-    return t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-  }
-
-  void add_csi_grant(unsigned csi_part1_bits = 4)
-  {
-    t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                       t_bench.get_main_ue().crnti,
-                                                       t_bench.get_main_ue().get_pcell().cfg(),
-                                                       csi_part1_bits);
-  }
 };
 
 /////////////// Tests PUCCH allocator for SR.
@@ -591,6 +570,57 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_sr)
   }));
 }
 
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_1bit_over_csi)
+{
+  // With 1 HARQ-ACK bit, the F1 HARQ-ACK resource overlaps with the F2 resource for CSI, thus the 2 resource will be
+  // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 2).
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 1;
+  pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 HARQ and 1 SR.
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  const auto& pucch_pdus = slot_grid.result.ul.pucchs;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) { return pdu.csi_rep_cfg.has_value(); }));
+
+  ASSERT_TRUE(find_pucch_pdu(
+      pucch_pdus, [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+}
+
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits_over_csi)
+{
+  // With 2 HARQ-ACK bits, the F1 HARQ-ACK resource overlaps with the F2 resource for CSI, thus the 2 resource will be
+  // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 2).
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 2;
+  pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+  add_harq_grant();
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 HARQ and 1 SR.
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  const auto& pucch_pdus = slot_grid.result.ul.pucchs;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) { return pdu.csi_rep_cfg.has_value(); }));
+
+  ASSERT_TRUE(find_pucch_pdu(
+      pucch_pdus, [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+}
+
 TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_csi)
 {
   // We don't know a-priori whether CSI and HARQ will be multilplexed within the same resource; we need to consider both
@@ -698,6 +728,37 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_4bits_over_sr_and_csi
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   ASSERT_FALSE(test_pucch_res_indicator.has_value());
+}
+
+TEST_F(test_pucch_allocator_ded_resources, when_converting_harq_f1_to_f2_during_mplexing_csi_preserve_res_indicator)
+{
+  // This makes PUCCH resource indicator 0 busy for PUCCH resource set 0.
+  add_ue_with_harq_grant();
+  add_csi_grant();
+
+  // At the end of the PUCCH allocation with Format 2, we expect the same PUCCH as for PUCCH format 1.
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  // PUCCH resource indicator 0 is used by the first UE that got allocated.
+  ASSERT_EQ(1U, test_pucch_res_indicator.value());
+}
+
+TEST_F(test_pucch_allocator_ded_resources, when_converting_harq_f1_to_f2_during_mplexing_sr_csi_preserve_res_indicator)
+{
+  // This makes PUCCH resource indicator 0 busy for PUCCH resource set 0.
+  add_ue_with_harq_grant();
+  add_sr_grant();
+  add_csi_grant();
+
+  // At the end of the PUCCH allocation with Format 2, we expect the same PUCCH as for PUCCH format 1.
+  std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  // PUCCH resource indicator 0 is used by the first UE that got allocated.
+  ASSERT_EQ(1U, test_pucch_res_indicator.value());
 }
 
 ///////   Test allocation of common + dedicated resources.    ///////
@@ -1443,10 +1504,13 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
 
 ///////   Test UL grants reached and PUCCH fails.    ///////
 
-class test_pucch_allocator_ded_resources_reached_ul_grants : public test_pucch_allocator_ded_resources
+class test_pucch_allocator_ded_resources_reached_ul_grants : public ::testing::Test, public pucch_allocator_base_tester
 {
 public:
-  test_pucch_allocator_ded_resources_reached_ul_grants() : test_pucch_allocator_ded_resources(3U, 6U) {}
+  test_pucch_allocator_ded_resources_reached_ul_grants() :
+    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 11, .n_cces = 1}, 3U, 6U)
+  {
+  }
 };
 
 TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_max_pucch_allocation_reached)
@@ -1509,6 +1573,386 @@ TEST_F(test_pucch_allocator_ded_resources_reached_ul_grants, test_csi_max_ul_all
 
   add_csi_grant();
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+}
+
+///////   Test PUCCH Format 0.    ///////
+
+class test_pucch_allocator_format_0 : public ::testing::Test, public pucch_allocator_base_tester
+{
+public:
+  test_pucch_allocator_format_0() :
+    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .use_format_0 = true})
+  {
+    // Set expected grant for PUCCH Format 0 SR.
+    pucch_expected_f0_sr.format  = pucch_format::FORMAT_0;
+    pucch_expected_f0_sr.crnti   = to_rnti(0x4601);
+    pucch_expected_f0_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected_f0_sr.resources.prbs            = prb_interval{0, 1};
+    pucch_expected_f0_sr.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f0_sr.resources.symbols         = ofdm_symbol_range{6, 8};
+
+    pucch_expected_f0_sr.format_0.initial_cyclic_shift = 0;
+    pucch_expected_f0_sr.format_0.sr_bits              = sr_nof_bits::one;
+    pucch_expected_f0_sr.format_0.harq_ack_nof_bits    = 0;
+
+    pucch_expected_f0_sr.format_0.group_hopping = pucch_group_hopping::NEITHER;
+    pucch_expected_f0_sr.format_0.n_id_hopping  = t_bench.cell_cfg.pci;
+
+    // Set expected grant for PUCCH Format 0 HARQ.
+    pucch_expected_f0_harq.format  = srsran::pucch_format::FORMAT_0;
+    pucch_expected_f0_harq.crnti   = to_rnti(0x4601);
+    pucch_expected_f0_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected_f0_harq.resources.prbs            = prb_interval{0, 1};
+    pucch_expected_f0_harq.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f0_harq.resources.symbols         = ofdm_symbol_range{0, 2};
+
+    pucch_expected_f0_harq.format_0.initial_cyclic_shift = 0;
+    pucch_expected_f0_harq.format_0.sr_bits              = sr_nof_bits::no_sr;
+    pucch_expected_f0_harq.format_0.harq_ack_nof_bits    = 1;
+
+    pucch_expected_f0_harq.format_0.group_hopping = pucch_group_hopping::NEITHER;
+    pucch_expected_f0_harq.format_0.n_id_hopping  = t_bench.cell_cfg.pci;
+
+    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
+
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+
+    pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_csi.crnti                     = to_rnti(0x4601);
+    pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_csi.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_csi.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
+
+protected:
+  // Parameters that are passed by the routine to run the tests.
+  pucch_info pucch_expected_f0_sr;
+  pucch_info pucch_expected_f0_harq;
+  pucch_info pucch_expected_f2;
+  pucch_info pucch_expected_csi;
+};
+
+TEST_F(test_pucch_allocator_format_0, test_sr_allocation_only)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_only)
+{
+  auto&                         slot_grid                = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f0_harq.format_0.harq_ack_nof_bits = 2U;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_over_sr)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f0_harq.format_0.harq_ack_nof_bits = 1U;
+  pucch_expected_f0_harq.format_0.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f0_sr.format_0.harq_ack_nof_bits   = 0U;
+  pucch_expected_f0_sr.format_0.sr_bits             = srsran::sr_nof_bits::one;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits_over_sr)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f0_harq.format_0.harq_ack_nof_bits = 2U;
+  pucch_expected_f0_harq.format_0.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f0_sr.format_0.harq_ack_nof_bits   = 0U;
+  pucch_expected_f0_sr.format_0.sr_bits             = srsran::sr_nof_bits::one;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_sr)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 3U;
+  pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_f2.resources.prbs.set(1, 2);
+  pucch_expected_f2.resources.symbols.set(0, 2);
+  pucch_expected_f0_sr.format_0.harq_ack_nof_bits = 0U;
+  pucch_expected_f0_sr.format_0.sr_bits           = srsran::sr_nof_bits::one;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f2](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_sr)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  add_format2_harq_grant();
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 4U;
+  pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_f2.resources.prbs.set(1, 2);
+  pucch_expected_f2.resources.symbols.set(0, 2);
+  pucch_expected_f0_sr.format_0.harq_ack_nof_bits = 0U;
+  pucch_expected_f0_sr.format_0.sr_bits           = srsran::sr_nof_bits::one;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f2](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_sr](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_over_csi)
+{
+  const unsigned csi_part1_bits = 4;
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), csi_part1_bits);
+
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f0_harq.format_0.harq_ack_nof_bits = 1U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_csi.resources.prbs.set(1, 2);
+  pucch_expected_csi.resources.symbols.set(12, 14);
+  pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits_over_csi)
+{
+  const unsigned csi_part1_bits = 4;
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), csi_part1_bits);
+
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f0_harq.format_0.harq_ack_nof_bits = 2U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_csi.resources.prbs.set(1, 2);
+  pucch_expected_csi.resources.symbols.set(12, 14);
+  pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f0_harq](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_csi)
+{
+  const unsigned csi_part1_bits = 4;
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), csi_part1_bits);
+
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 3U;
+  pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_f2.resources.prbs.set(1, 2);
+  pucch_expected_f2.resources.symbols.set(0, 2);
+  pucch_expected_csi.resources.prbs.set(1, 2);
+  pucch_expected_csi.resources.symbols.set(12, 14);
+  pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f2](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+}
+
+TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_csi)
+{
+  const unsigned csi_part1_bits = 4;
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), csi_part1_bits);
+
+  add_format2_harq_grant();
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 4U;
+  pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0U;
+  // Change PRBs and symbol, as for Format 0 we use a different set of resources:
+  // - 4 PUCCH format 0 aligned on PRBs [0..1), 3 resources for HARQ with symbols [0..6), 1 for SR with symbols [6..8).
+  // - 6 PUCCH format 2 aligned on PRBs [1..2), 6 resources for HARQ with symbols [0..12), 1 for CSI with
+  // symbols [12..14).
+  pucch_expected_f2.resources.prbs.set(1, 2);
+  pucch_expected_f2.resources.symbols.set(0, 2);
+  pucch_expected_csi.resources.prbs.set(1, 2);
+  pucch_expected_csi.resources.symbols.set(12, 14);
+  pucch_expected_csi.format_2.harq_ack_nof_bits = 0U;
+  pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_csi.format_2.csi_part1_bits    = csi_part1_bits;
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_f2](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [&expected = pucch_expected_csi](const auto& pdu) {
+    return pucch_info_match(expected, pdu);
+  }));
 }
 
 int main(int argc, char** argv)

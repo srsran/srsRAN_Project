@@ -29,7 +29,6 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
                                      sched_configuration_notifier&     mac_notif,
                                      scheduler_metrics_handler&        metric_handler) :
   expert_cfg(expert_cfg_),
-  sched_strategy(create_scheduler_strategy(expert_cfg)),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   event_mng(ue_db, metric_handler),
   logger(srslog::fetch_basic_logger("SCHED"))
@@ -43,7 +42,8 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
   event_mng.add_cell(*params.cell_res_alloc,
                      cells[params.cell_index]->fallback_sched,
                      cells[params.cell_index]->uci_sched,
-                     *params.ev_logger);
+                     *params.ev_logger,
+                     cells[params.cell_index]->slice_sched);
   ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
 }
 
@@ -59,15 +59,31 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
     return;
   }
 
+  // Update slice context and compute slice priorities.
+  cells[cell_index]->slice_sched.slot_indication();
+
   // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
   // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
   // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
   // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
   // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
   if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[cell_index]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db);
+    auto dl_slice_candidate = cells[cell_index]->slice_sched.get_next_dl_candidate();
+    while (dl_slice_candidate.has_value()) {
+      auto&                           policy = cells[cell_index]->slice_sched.get_policy(dl_slice_candidate->id());
+      dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
+      policy.dl_sched(slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate);
+      dl_slice_candidate = cells[cell_index]->slice_sched.get_next_dl_candidate();
+    }
   }
-  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db);
+
+  auto ul_slice_candidate = cells[cell_index]->slice_sched.get_next_ul_candidate();
+  while (ul_slice_candidate.has_value()) {
+    auto&                           policy = cells[cell_index]->slice_sched.get_policy(ul_slice_candidate->id());
+    ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
+    policy.ul_sched(slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate);
+    ul_slice_candidate = cells[cell_index]->slice_sched.get_next_ul_candidate();
+  }
 }
 
 void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc)

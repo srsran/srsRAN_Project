@@ -61,6 +61,10 @@ worker_manager::worker_manager(const dynamic_du_unit_config&     du_cfg,
                                unsigned                          gtpu_queue_size) :
   low_prio_affinity_mng({expert_appcfg.affinities.low_priority_cpu_cfg})
 {
+  if (std::holds_alternative<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg)) {
+    ru_timing_mask = std::get<ru_ofh_unit_parsed_config>(du_cfg.ru_cfg).config.expert_execution_cfg.ru_timing_cpu;
+  }
+
   const unsigned nof_cells = du_cfg.du_high_cfg.config.expert_execution_cfg.cell_affinities.size();
   for (unsigned i = 0, e = nof_cells; i != e; ++i) {
     std::variant<ru_sdr_unit_cpu_affinities_cell_config,
@@ -553,7 +557,7 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
                                   {{exec_name}},
                                   std::chrono::microseconds{0},
                                   os_thread_realtime_priority::max() - 0,
-                                  affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru)};
+                                  ru_timing_mask};
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
     }
@@ -584,12 +588,13 @@ void worker_manager::create_ofh_executors(const ru_ofh_unit_expert_execution_con
 
       // The generic locking queue type is used here to avoid polling for new tasks and thus for saving CPU resources
       // with a price of higher latency (it is acceptable for UL tasks that have lower priority compared to DL).
-      const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
-                                    {{exec_name}},
-                                    std::nullopt,
-                                    os_thread_realtime_priority::max() - 6,
-                                    affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru)};
+      const single_worker ru_worker{
+          name,
+          {concurrent_queue_policy::locking_mpmc, task_worker_queue_size},
+          {{exec_name}},
+          std::nullopt,
+          os_thread_realtime_priority::max() - 6,
+          low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }

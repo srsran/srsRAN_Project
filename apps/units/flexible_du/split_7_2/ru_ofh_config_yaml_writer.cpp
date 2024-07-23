@@ -33,6 +33,11 @@ static void fill_ru_ofh_log_section(YAML::Node node, const ru_ofh_unit_logger_co
 static void fill_ru_ofh_expert_execution_section(YAML::Node node, const ru_ofh_unit_expert_execution_config& config)
 {
   {
+    YAML::Node affinities_node       = node["affinities"];
+    affinities_node["ru_timing_cpu"] = fmt::format("{:,}", span<const size_t>(config.ru_timing_cpu.get_cpu_ids()));
+  }
+
+  {
     YAML::Node threads_node               = node["threads"];
     YAML::Node ofh_node                   = threads_node["ofh"];
     ofh_node["enable_dl_parallelization"] = config.threads.is_downlink_parallelized;

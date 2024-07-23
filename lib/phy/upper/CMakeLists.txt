@@ -47,6 +47,7 @@ target_link_libraries(srsran_upper_phy
         srsran_uplink_processor
         srsran_phy_support
         srsran_generic_funcs
+        srsran_transform_precoding
         srsran_channel_equalizer)
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)

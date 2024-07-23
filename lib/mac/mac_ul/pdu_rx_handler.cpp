@@ -179,7 +179,8 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
 
   lcid_t lcid = (lcid_t)sdu.lcid().value();
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("{}: Discarding SDU. Cause: Non-existent LCID", create_prefix(ctx, sdu));
+    srslog::log_channel& log_ch = ue->rrc_config_pending ? logger.info : logger.warning;
+    log_ch("{}: Discarding SDU. Cause: Non-existent LCID", create_prefix(ctx, sdu));
     return false;
   }
 

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/hal/phy/upper/channel_processors/pusch/hw_accelerator_pusch_dec_factory.h"
+#include "srsran/phy/generic_functions/transform_precoding/transform_precoding_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
@@ -88,8 +89,10 @@ public:
 
 std::shared_ptr<pusch_demodulator_factory>
 create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+                                    std::shared_ptr<transform_precoder_factory>      precoder_factory,
                                     std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                     std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                    unsigned                                         max_nof_prb,
                                     bool                                             enable_evm          = false,
                                     bool                                             enable_post_eq_sinr = false);
 

@@ -21,8 +21,8 @@ jobs:
             PLATFORM: amd64
             LIB: ""
             LIB_VERSION: ""
-            DOCKERFILE: ./docker/grafana/Dockerfile
-            CONTEXT: ./docker/grafana
+            DOCKERFILE: ./docker/metrics_server/Dockerfile
+            CONTEXT: ./docker/metrics_server
           # --> grafana
           - TAGNAME: ""
             REPOSITORY: grafana
@@ -31,8 +31,8 @@ jobs:
             PLATFORM: amd64
             LIB: ""
             LIB_VERSION: ""
-            DOCKERFILE: ./docker/metrics_server/Dockerfile
-            CONTEXT: ./docker/metrics_server
+            DOCKERFILE: ./docker/grafana/Dockerfile
+            CONTEXT: ./docker/grafana
           # --> split72
           # AMD AVX2
           - TAGNAME: split72_release_avx2

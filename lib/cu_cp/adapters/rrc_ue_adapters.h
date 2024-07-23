@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../cu_cp_controller/cu_cp_controller.h"
+#include "../cu_cp_controller/cu_cp_ue_admission_controller.h"
 #include "../cu_cp_impl_interface.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "../up_resource_manager/up_resource_manager_impl.h"
@@ -182,11 +182,11 @@ class rrc_ue_cu_cp_adapter : public rrc_ue_context_update_notifier, public rrc_u
 public:
   rrc_ue_cu_cp_adapter(ue_index_t ue_index_) : ue_index(ue_index_) {}
 
-  void connect_cu_cp(cu_cp_rrc_ue_interface&    cu_cp_rrc_ue_,
-                     cu_cp_ue_removal_handler&  ue_removal_handler_,
-                     cu_cp_controller&          ctrl_,
-                     up_resource_manager&       up_mng_,
-                     cu_cp_measurement_handler& meas_handler_)
+  void connect_cu_cp(cu_cp_rrc_ue_interface&        cu_cp_rrc_ue_,
+                     cu_cp_ue_removal_handler&      ue_removal_handler_,
+                     cu_cp_ue_admission_controller& ctrl_,
+                     up_resource_manager&           up_mng_,
+                     cu_cp_measurement_handler&     meas_handler_)
   {
     cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_;
     ue_removal_handler   = &ue_removal_handler_;
@@ -269,12 +269,12 @@ public:
   }
 
 private:
-  cu_cp_rrc_ue_interface*    cu_cp_rrc_ue_handler = nullptr;
-  cu_cp_ue_removal_handler*  ue_removal_handler   = nullptr;
-  up_resource_manager*       up_mng               = nullptr;
-  cu_cp_controller*          controller           = nullptr;
-  cu_cp_measurement_handler* meas_handler         = nullptr;
-  ue_index_t                 ue_index;
+  cu_cp_rrc_ue_interface*        cu_cp_rrc_ue_handler = nullptr;
+  cu_cp_ue_removal_handler*      ue_removal_handler   = nullptr;
+  up_resource_manager*           up_mng               = nullptr;
+  cu_cp_ue_admission_controller* controller           = nullptr;
+  cu_cp_measurement_handler*     meas_handler         = nullptr;
+  ue_index_t                     ue_index;
 };
 
 } // namespace srs_cu_cp

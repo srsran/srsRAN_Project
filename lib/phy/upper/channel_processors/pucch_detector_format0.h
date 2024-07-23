@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// PUCCH Format 0 detector declaration.
+
 #pragma once
 
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
@@ -29,7 +32,7 @@
 
 namespace srsran {
 
-/// Implements a PUCCH Format 0 detector.
+/// PUCCH Format 0 detector.
 class pucch_detector_format0
 {
 public:
@@ -41,7 +44,7 @@ public:
     srsran_assert(low_papr, "");
   }
 
-  /// Detects PUCCH Format0 transmission. See \ref pucch_detector for more details.
+  /// Detects a PUCCH Format 0 transmission. See \ref pucch_detector for more details.
   std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader&                  grid,
                                                                  const pucch_detector::format0_configuration& config);
 

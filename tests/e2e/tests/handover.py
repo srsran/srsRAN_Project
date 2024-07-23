@@ -51,6 +51,33 @@ from .steps.stub import (
 )
 
 
+@mark.zmq
+@mark.smoke
+def test_smoke_sequentially(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_2: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+):
+    """
+    ZMQ Handover tests
+    """
+    _handover_sequentially(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_2,
+        fivegc=fivegc,
+        gnb=gnb,
+        metrics_summary=None,
+        band=41,
+        common_scs=30,
+        bandwidth=50,
+        noise_spd=0,
+        always_download_artifacts=False,
+    )
+
+
 @mark.parametrize(
     "band, common_scs, bandwidth, noise_spd",
     (
@@ -62,7 +89,7 @@ from .steps.stub import (
 )
 @mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "StatusCode.ABORTED"])
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments
 def test_zmq_handover_sequentially(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -78,10 +105,38 @@ def test_zmq_handover_sequentially(
     """
     ZMQ Handover tests
     """
-    with _handover_multi_ues(
+    _handover_sequentially(
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=ue_8,
+        fivegc=fivegc,
+        gnb=gnb,
+        metrics_summary=metrics_summary,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        noise_spd=noise_spd,
+    )
+
+
+# pylint: disable=too-many-arguments,too-many-locals
+def _handover_sequentially(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_array: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    metrics_summary: Optional[MetricsSummary],
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    noise_spd: int,
+    always_download_artifacts: bool = True,
+):
+    with _handover_multi_ues(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_array,
         gnb=gnb,
         fivegc=fivegc,
         metrics_summary=metrics_summary,
@@ -91,7 +146,7 @@ def test_zmq_handover_sequentially(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=True,
+        always_download_artifacts=always_download_artifacts,
         noise_spd=noise_spd,
         warning_as_errors=True,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
@@ -176,7 +231,7 @@ def _handover_multi_ues(
     ue_array: Sequence[UEStub],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    metrics_summary: MetricsSummary,
+    metrics_summary: Optional[MetricsSummary],
     band: int,
     common_scs: int,
     bandwidth: int,

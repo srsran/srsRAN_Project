@@ -34,6 +34,7 @@
 #include "cu_cp_impl_interface.h"
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
+#include "paging/paging_message_handler.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
@@ -203,6 +204,9 @@ private:
 
   // CU-UP connections being managed by the CU-CP.
   cu_up_processor_repository cu_up_db;
+
+  // Handler of paging messages.
+  paging_message_handler paging_handler;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   std::unique_ptr<cu_cp_controller> controller;

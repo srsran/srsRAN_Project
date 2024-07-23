@@ -23,13 +23,12 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "../policy/scheduler_policy.h"
+#include "../slicing/slice_scheduler.h"
 #include "../support/slot_event_list.h"
 #include "ue.h"
 #include "ue_fallback_scheduler.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/uci/uci_constants.h"
 
 namespace srsran {
 
@@ -51,7 +50,8 @@ public:
   void add_cell(cell_resource_allocator& cell_res_grid,
                 ue_fallback_scheduler&   fallback_sched,
                 uci_scheduler_impl&      uci_sched,
-                scheduler_event_logger&  ev_logger);
+                scheduler_event_logger&  ev_logger,
+                slice_scheduler&         slice_sched);
 
   /// UE Add/Mod/Remove interface.
   void handle_ue_creation(ue_config_update_event ev) override;
@@ -132,6 +132,9 @@ private:
 
     // Reference to the CSI and SR UCI scheduler.
     uci_scheduler_impl* uci_sched = nullptr;
+
+    // Reference to the slice scheduler.
+    slice_scheduler* slice_sched = nullptr;
 
     scheduler_event_logger* ev_logger = nullptr;
   };

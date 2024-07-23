@@ -29,6 +29,7 @@
 #include "cu_cp_ue_impl.h"
 #include "ue_metrics_handler.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/security_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
 #include <optional>

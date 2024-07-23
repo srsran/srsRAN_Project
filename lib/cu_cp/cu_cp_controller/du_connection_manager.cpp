@@ -44,7 +44,7 @@ public:
   void connect_du(du_index_t du_idx_)
   {
     du_idx      = du_idx_;
-    msg_handler = &parent.dus.get_du_processor(du_idx).get_f1ap_interface().get_f1ap_handler();
+    msg_handler = &parent.dus.get_du_processor(du_idx).get_f1ap_handler();
   }
 
   /// Determines whether a DU repository has been created for this connection.

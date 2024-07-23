@@ -63,6 +63,7 @@ public:
     ul_ccch_forwarded = true;
     return true;
   }
+  void handle_ue_config_applied(du_ue_index_t ue_index) override {}
 };
 
 class mac_cell_dummy_controller final : public mac_cell_controller

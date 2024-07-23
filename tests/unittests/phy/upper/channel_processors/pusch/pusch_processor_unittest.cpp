@@ -419,6 +419,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
   ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);
   ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
+  ASSERT_EQ(false, demodulator_entry.config.enable_transform_precoding);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(demodulator_entry.config.rx_ports));
 
   // Assert demux if UCI is multiplexed.

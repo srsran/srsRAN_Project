@@ -154,10 +154,12 @@ void ue_event_manager::handle_ue_creation(ue_config_update_event ev)
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
     ue_db.add_ue(std::move(u));
 
-    // Update UCI scheduler with new UE UCI resources.
     const auto& added_ue = ue_db[ueidx];
     for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {
+      // Update UCI scheduler with new UE UCI resources.
       du_cells[pcell_index].uci_sched->add_ue(added_ue.get_cell(to_ue_cell_index(i)).cfg());
+      // Add UE to a slice.
+      du_cells[pcell_index].slice_sched->add_ue(*added_ue.ue_cfg_dedicated());
     }
 
     // Log Event.
@@ -177,15 +179,19 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
     }
     auto& u = ue_db[ue_idx];
 
-    // Update UE UCI resources in UCI scheduler.
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
       auto& ue_cc = u.get_cell(to_ue_cell_index(i));
       if (not ev.next_config().contains(ue_cc.cell_index)) {
         // UE carrier is being removed.
+        // Update UE UCI resources in UCI scheduler.
         du_cells[ue_cc.cell_index].uci_sched->rem_ue(ue_cc.cfg());
+        // Schedule removal of UE in slice scheduler.
+        du_cells[ue_cc.cell_index].slice_sched->rem_ue(ue_idx);
       } else {
         // UE carrier is being reconfigured.
         du_cells[ue_cc.cell_index].uci_sched->reconf_ue(ev.next_config().ue_cell_cfg(ue_cc.cell_index), ue_cc.cfg());
+        // Reconfigure UE in slice scheduler.
+        du_cells[ue_cc.cell_index].slice_sched->reconf_ue(ev.next_config(), *u.ue_cfg_dedicated());
       }
     }
     for (unsigned i = 0, e = ev.next_config().nof_cells(); i != e; ++i) {
@@ -194,6 +200,8 @@ void ue_event_manager::handle_ue_reconfiguration(ue_config_update_event ev)
       if (ue_cc == nullptr) {
         // New UE carrier is being added.
         du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].uci_sched->add_ue(new_ue_cc_cfg);
+        // Add UE to a slice.
+        du_cells[new_ue_cc_cfg.cell_cfg_common.cell_index].slice_sched->add_ue(ev.next_config());
       }
     }
 
@@ -218,12 +226,14 @@ void ue_event_manager::handle_ue_deletion(ue_config_delete_event ev)
     const rnti_t    rnti      = u.crnti;
     du_cell_index_t pcell_idx = u.get_pcell().cell_index;
 
-    // Update UCI scheduling by removing existing UE UCI resources.
     for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      // Update UCI scheduling by removing existing UE UCI resources.
       du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].uci_sched->rem_ue(u.get_pcell().cfg());
+      // Schedule removal of UE from slice scheduler.
+      du_cells[u.get_cell(to_ue_cell_index(i)).cell_index].slice_sched->rem_ue(ue_idx);
     }
 
-    // Scheduler UE removal from repository.
+    // Schedule UE removal from repository.
     ue_db.schedule_ue_rem(std::move(ev));
 
     // Log UE removal event.
@@ -685,7 +695,8 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
                                 ue_fallback_scheduler&   fallback_sched,
                                 uci_scheduler_impl&      uci_sched,
-                                scheduler_event_logger&  ev_logger)
+                                scheduler_event_logger&  ev_logger,
+                                slice_scheduler&         slice_sched)
 {
   const du_cell_index_t cell_index = cell_res_grid.cell_index();
   srsran_assert(not cell_exists(cell_index), "Overwriting cell configurations not supported");
@@ -695,6 +706,7 @@ void ue_event_manager::add_cell(cell_resource_allocator& cell_res_grid,
   du_cells[cell_index].fallback_sched = &fallback_sched;
   du_cells[cell_index].uci_sched      = &uci_sched;
   du_cells[cell_index].ev_logger      = &ev_logger;
+  du_cells[cell_index].slice_sched    = &slice_sched;
 }
 
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const

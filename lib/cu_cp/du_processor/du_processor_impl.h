@@ -39,13 +39,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class du_processor_impl : public du_processor,
-                          public du_setup_handler,
-                          public du_metrics_handler,
-                          public du_processor_f1ap_interface,
-                          public du_processor_paging_handler,
-                          public du_processor_statistics_handler,
-                          public du_processor_mobility_handler
+class du_processor_impl : public du_processor, public du_metrics_handler, public du_processor_mobility_handler
 {
 public:
   du_processor_impl(du_processor_config_t               du_processor_config_,
@@ -60,42 +54,44 @@ public:
 
   // getter functions
 
-  du_index_t                       get_du_index() override { return cfg.du_index; }
-  f1ap_cu&                         get_f1ap_handler() override { return *f1ap; };
-  f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *f1ap; }
-  f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *f1ap; }
-  f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *f1ap; }
+  f1ap_cu& get_f1ap_handler() override { return *f1ap; };
 
-  size_t get_nof_ues() const override { return ue_mng.get_nof_du_ues(cfg.du_index); };
-
-  // du_processor_f1ap_interface
-  du_setup_result handle_du_setup_request(const du_setup_request& req) override;
-  ue_rrc_context_creation_outcome
-       handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req) override;
-  void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
-  async_task<void> handle_ue_transaction_info_loss(const f1_ue_transaction_info_loss_event& request) override;
+  size_t get_nof_ues() const { return ue_mng.get_nof_du_ues(cfg.du_index); };
 
   // du_processor_mobility_manager_interface
   std::optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
   byte_buffer                        get_packed_sib1(nr_cell_global_id_t cgi) override;
 
-  // du_processor paging handler
-  void handle_paging_message(cu_cp_paging_message& msg) override;
-
   // du_processor_cell_info_interface
-  bool has_cell(pci_t pci) override;
-  bool has_cell(nr_cell_global_id_t cgi) override;
+  bool                            has_cell(pci_t pci) override;
+  bool                            has_cell(nr_cell_global_id_t cgi) override;
+  const du_configuration_context* get_context() const override
+  {
+    return cfg.du_cfg_hdlr->has_context() ? &cfg.du_cfg_hdlr->get_context() : nullptr;
+  }
 
   metrics_report::du_info handle_du_metrics_report_request() const override;
 
-  du_processor_f1ap_interface&           get_f1ap_interface() override { return *this; }
-  du_processor_paging_handler&           get_paging_handler() override { return *this; }
-  du_processor_statistics_handler&       get_statistics_handler() override { return *this; }
   du_processor_mobility_handler&         get_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override { return f1ap_ue_context_notifier; }
   du_metrics_handler&                    get_metrics_handler() override { return *this; }
 
 private:
+  class f1ap_du_processor_adapter;
+
+  /// \brief Request to create a new UE RRC context.
+  ///
+  /// This method should be called when a C-RNTI and PCell are assigned to a UE.
+  /// \param req Request to setup a new UE RRC context.
+  /// \return Response to whether the request was successful or failed.
+  ue_rrc_context_creation_outcome handle_ue_rrc_context_creation_request(const ue_rrc_context_creation_request& req);
+
+  du_setup_result handle_du_setup_request(const du_setup_request& req);
+
+  /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
+  /// \param[in] req The F1AP UE Context Release Request.
+  void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request);
+
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
   bool create_rrc_ue(cu_cp_ue&                              ue,
@@ -112,12 +108,9 @@ private:
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   ue_manager&                          ue_mng;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
-  du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
 
   // F1AP to DU processor adapter
-  f1ap_du_processor_adapter f1ap_ev_notifier;
-
-  std::map<uint32_t, std::vector<nr_cell_global_id_t>> tac_to_nr_cgi;
+  std::unique_ptr<f1ap_du_processor_notifier> f1ap_ev_notifier;
 
   // F1AP to RRC UE adapters
   std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;

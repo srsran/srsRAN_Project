@@ -70,6 +70,8 @@ public:
     unsigned n_id;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
+    /// Set to true for enabling transform precoding.
+    bool enable_transform_precoding;
     /// Receive antenna port indices the PUSCH transmission is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
   };

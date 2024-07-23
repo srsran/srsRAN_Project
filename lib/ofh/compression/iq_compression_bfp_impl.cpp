@@ -95,7 +95,7 @@ void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
   }
 }
 
-void iq_compression_bfp_impl::decompress_prb_generic(span<cf_t>            output,
+void iq_compression_bfp_impl::decompress_prb_generic(span<cbf16_t>         output,
                                                      const compressed_prb& c_prb,
                                                      const quantizer&      q_in,
                                                      unsigned              data_width)
@@ -118,7 +118,7 @@ void iq_compression_bfp_impl::decompress_prb_generic(span<cf_t>            outpu
   }
 }
 
-void iq_compression_bfp_impl::decompress(span<cf_t>                   output,
+void iq_compression_bfp_impl::decompress(span<cbf16_t>                output,
                                          span<const compressed_prb>   input,
                                          const ru_compression_params& params)
 {
@@ -127,7 +127,7 @@ void iq_compression_bfp_impl::decompress(span<cf_t>                   output,
 
   unsigned out_idx = 0;
   for (const auto& c_prb : input) {
-    span<cf_t> out_rb_samples = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
+    span<cbf16_t> out_rb_samples = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     // Decompress resource block.
     decompress_prb_generic(out_rb_samples, c_prb, q_in, params.data_width);
     out_idx += NOF_SUBCARRIERS_PER_RB;

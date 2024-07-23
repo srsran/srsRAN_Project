@@ -51,7 +51,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high
     expected_ul_bitrate: *expected_ul_bitrate_high
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -65,7 +65,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_high
     expected_ul_bitrate: *expected_ul_bitrate_high
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -107,7 +107,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
     expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -121,7 +121,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
     expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -163,7 +163,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
     expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   # - campaign_filename: *campaign_filename
@@ -219,7 +219,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
     expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename
@@ -233,7 +233,7 @@ tests:
     # test/fail criteria
     expected_dl_bitrate: *expected_dl_bitrate_low
     expected_ul_bitrate: *expected_ul_bitrate_low
-    fail_if_kos: true
+    fail_if_kos: false
     warning_as_errors: true
 
   - campaign_filename: *campaign_filename

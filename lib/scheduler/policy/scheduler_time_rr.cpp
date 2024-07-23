@@ -44,13 +44,17 @@ static const std::vector<scheduler_alloc_limits> scheduler_alloc_limits_lookup =
 };
 
 /// \brief Computes maximum nof. RBs to allocate per UE per slot for newTx.
-/// \param[in] ue_db map of ues.
+/// \param[in] ues Map of UEs belonging to a slice.
 /// \param[in] is_dl Flag indicating whether the computation is DL or UL.
+/// \param[in] res_grid View of the resource grid.
+/// \param[in] expert_cfg Scheduler UE expert configuration.
+/// \param[in] slice_max_rbs Maximum nof. RBs to allocate to a slice.
 /// \return Maximum nof. RBs to allocate per UE per slot for newTx.
-static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&              ues,
+static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&        ues,
                                                     bool                              is_dl,
                                                     const ue_resource_grid_view&      res_grid,
-                                                    const scheduler_ue_expert_config& expert_cfg)
+                                                    const scheduler_ue_expert_config& expert_cfg,
+                                                    unsigned                          slice_max_rbs)
 {
   if (ues.empty()) {
     return 0;
@@ -123,7 +127,7 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const ue_repository&        
     return 0;
   }
 
-  return (bwp_crb_limits.length() / nof_ues_to_be_scheduled_per_slot);
+  return (std::min(bwp_crb_limits.length(), slice_max_rbs) / nof_ues_to_be_scheduled_per_slot);
 }
 
 /// \brief Fetches list of DL HARQ candidates to schedule.
@@ -235,12 +239,13 @@ get_ue_ul_harq_candidates(const ue& ue_ref, ue_cell_index_t cell_index, bool is_
 }
 
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
-/// \param[in] ue_db map of "slot_ue"
+/// \param[in] ue_db Map of UEs belonging to a slice.
 /// \param[in] next_ue_index UE index with the highest priority to be allocated.
 /// \param[in] alloc_ue callable with signature "bool(ue&)" that returns true if UE allocation was successful.
 /// \return Index of next UE to allocate.
 template <typename AllocUEFunc>
-du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
+du_ue_index_t
+round_robin_apply(const slice_ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
 {
   if (ue_db.empty()) {
     return next_ue_index;
@@ -282,10 +287,10 @@ static alloc_result alloc_dl_ue(const ue&                         u,
                                 std::optional<unsigned>           dl_new_tx_max_nof_rbs_per_ue_per_slot = {})
 {
   if (not is_retx) {
-    if (not u.has_pending_dl_newtx_bytes()) {
+    if (ue_with_srb_data_only and not u.has_pending_dl_srb_newtx_bytes()) {
       return {alloc_status::skip_ue};
     }
-    if (ue_with_srb_data_only and not u.has_pending_dl_srb_newtx_bytes()) {
+    if (not u.has_pending_dl_newtx_bytes()) {
       return {alloc_status::skip_ue};
     }
   }
@@ -402,8 +407,16 @@ scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cf
 
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues)
+                                 dl_ran_slice_candidate&      slice_candidate)
 {
+  const slice_ue_repository& ues     = slice_candidate.get_slice_ues();
+  const unsigned             max_rbs = slice_candidate.remaining_rbs();
+
+  if (ues.empty() or max_rbs == 0) {
+    // No UEs to be scheduled or if there are no RBs to be scheduled in slice.
+    return;
+  }
+
   // First, schedule UEs with SRB data re-transmissions.
   auto srb_retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, true, true, logger, expert_cfg);
@@ -411,7 +424,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, srb_retx_ue_function);
 
   const unsigned dl_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg);
+      compute_max_nof_rbs_per_ue_per_slot(ues, true, res_grid, expert_cfg, max_rbs);
   if (dl_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     // Second, schedule UEs with SRB data new transmission.
     auto srb_newtx_ue_function = [this, &res_grid, &pdsch_alloc, dl_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
@@ -439,21 +452,24 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues)
+                                 ul_ran_slice_candidate&      slice_candidate)
 {
-  if (ues.empty()) {
-    // No UEs to be scheduled.
+  const slice_ue_repository& ues     = slice_candidate.get_slice_ues();
+  const unsigned             max_rbs = slice_candidate.remaining_rbs();
+
+  if (ues.empty() or max_rbs == 0) {
+    // No UEs to be scheduled or if there are no RBs to be scheduled in slice.
     return;
   }
 
+  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
+      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg, max_rbs);
   // First, schedule UEs with pending SR.
-  auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, false, logger);
+  auto sr_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, false, logger, ul_new_tx_max_nof_rbs_per_ue_per_slot);
   };
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
 
-  const unsigned ul_new_tx_max_nof_rbs_per_ue_per_slot =
-      compute_max_nof_rbs_per_ue_per_slot(ues, false, res_grid, expert_cfg);
   if (ul_new_tx_max_nof_rbs_per_ue_per_slot > 0) {
     // Second, schedule UEs with SRB data new transmissions.
     auto srb_newtx_ue_function = [this, &res_grid, &pusch_alloc, ul_new_tx_max_nof_rbs_per_ue_per_slot](const ue& u) {

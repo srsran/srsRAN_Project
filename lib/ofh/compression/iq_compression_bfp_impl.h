@@ -46,7 +46,7 @@ public:
 
   // See interface for the documentation.
   virtual void
-  decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
+  decompress(span<cbf16_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
 
 protected:
   /// Number of quantized samples per resource block.
@@ -92,7 +92,7 @@ protected:
   /// \param[in]  q      Quantizer object.
   /// \param data_width  Bit width of compressed samples.
   static void
-  decompress_prb_generic(span<cf_t> output, const compressed_prb& c_prb, const quantizer& q, unsigned data_width);
+  decompress_prb_generic(span<cbf16_t> output, const compressed_prb& c_prb, const quantizer& q, unsigned data_width);
 
   /// Quantizes complex float samples using the specified bit width.
   ///

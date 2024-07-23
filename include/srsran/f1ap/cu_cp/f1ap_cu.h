@@ -162,7 +162,10 @@ public:
   /// section 8.3.2.
   virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
+  /// \brief Indicates that there was some loss of transaction information for some UEs.
+  ///
   /// Called when an F1 removal or F1 Reset is received, or when the DU disconnects.
+  /// \return Asynchronous task that handles the event
   virtual async_task<void> on_transaction_info_loss(const f1_ue_transaction_info_loss_event& ev) = 0;
 };
 

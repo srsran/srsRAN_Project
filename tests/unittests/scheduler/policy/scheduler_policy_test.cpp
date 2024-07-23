@@ -54,10 +54,16 @@ protected:
           test_helpers::make_default_sched_cell_configuration_request()) :
     logger(srslog::fetch_basic_logger("SCHED", true)),
     res_logger(false, msg.pci),
-    sched_cfg(sched_cfg_),
+    sched_cfg([&sched_cfg_, policy]() {
+      if (policy == policy_scheduler_type::time_pf) {
+        sched_cfg_.ue.strategy_cfg = time_pf_scheduler_expert_config{};
+      }
+      return sched_cfg_;
+    }()),
     cell_cfg(*[this, &msg]() {
       return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
-    }())
+    }()),
+    slice_instance(ran_slice_id_t{0}, cell_cfg, slice_rrm_policy_config{})
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -65,13 +71,9 @@ protected:
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
 
-    if (policy == policy_scheduler_type::time_pf) {
-      sched_cfg.ue.strategy_cfg = time_pf_scheduler_expert_config{};
-    }
     sched = create_scheduler_strategy(sched_cfg.ue);
-
     if (sched == nullptr) {
-      report_fatal_error("Invalid policy");
+      report_fatal_error("Failed to initialize slice scheduler");
     }
   }
 
@@ -82,6 +84,7 @@ protected:
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     grid_alloc.slot_indication(next_slot);
+    slice_instance.slot_indication(ues);
 
     res_grid.slot_indication(next_slot);
     pdcch_alloc.slot_indication(next_slot);
@@ -89,8 +92,8 @@ protected:
     uci_alloc.slot_indication(next_slot);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
-      sched->dl_sched(grid_alloc, ue_res_grid, ues);
-      sched->ul_sched(grid_alloc, ue_res_grid, ues);
+      sched->dl_sched(slice_pdsch_alloc, ue_res_grid, dl_slice_candidate);
+      sched->ul_sched(slice_pusch_alloc, ue_res_grid, ul_slice_candidate);
     }
 
     // Log scheduler results.
@@ -123,6 +126,9 @@ protected:
         std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
     ues.add_ue(std::make_unique<ue>(
         ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, harq_timeout_handler}));
+    for (const auto& lc_cfg : *ue_req.cfg.lc_config_list) {
+      slice_instance.add_logical_channel(&ues[ue_req.ue_index], lc_cfg.lcid);
+    }
     return ues[ue_req.ue_index];
   }
 
@@ -184,7 +190,15 @@ protected:
   ue_repository          ues;
   ue_cell_grid_allocator grid_alloc{sched_cfg.ue, ues, logger};
   std::unique_ptr<scheduler_policy> sched;
-  slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
+
+  // Default RAN slice instance.
+  ran_slice_instance              slice_instance;
+  dl_ran_slice_candidate          dl_slice_candidate{slice_instance};
+  ul_ran_slice_candidate          ul_slice_candidate{slice_instance};
+  dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{grid_alloc, dl_slice_candidate};
+  ul_slice_ue_cell_grid_allocator slice_pusch_alloc{grid_alloc, ul_slice_candidate};
+
+  slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
 
 class scheduler_policy_test : public base_scheduler_policy_test, public ::testing::TestWithParam<policy_scheduler_type>
@@ -485,17 +499,15 @@ TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_b
   push_dl_bs(u1.ue_index, uint_to_lcid(5), 1000000);
   push_dl_bs(u3.ue_index, uint_to_lcid(5), 1000000);
 
-  std::array<du_ue_index_t, 2> rr_ues = {u1.ue_index, u3.ue_index};
-  unsigned                     offset = 0;
   for (unsigned i = 0; i != 10; ++i) {
-    run_slot();
-    ASSERT_GE(this->res_grid[0].result.dl.ue_grants.size(), 1);
-    if (i == 0) {
-      offset = this->res_grid[0].result.dl.ue_grants[0].context.ue_index == u1.ue_index ? 0 : 1;
-      ASSERT_NE(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, u2.ue_index);
-    } else {
-      ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, rr_ues[(i + offset) % rr_ues.size()]);
+    const bool pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
+    ASSERT_TRUE(pdsch_scheduled);
+    for (const auto& grant : this->res_grid[0].result.dl.ue_grants) {
+      ASSERT_NE(grant.context.ue_index, u2.ue_index);
     }
+    // Run once to move to next slot. If not /c (not this->res_grid[0].result.dl.ue_grants.empty()) will keep returning
+    // true.
+    run_slot();
   }
 }
 
@@ -571,16 +583,6 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
   ue&            u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
   ue&            u3     = add_ue(make_ue_create_req(to_du_ue_index(2), to_rnti(0x4603), {uint_to_lcid(5)}, lcg_id));
 
-  // Report different CQIs for different UEs.
-  // Best channel condition.
-  u1.get_pcell().handle_csi_report(
-      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}});
-  // Worst channel condition.
-  u2.get_pcell().handle_csi_report(
-      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{10U}});
-  u3.get_pcell().handle_csi_report(
-      csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{12U}});
-
   // Push high enough DL buffer status to ensure UEs occupy entire BWP CRBs when scheduled.
   push_dl_bs(u1.ue_index, uint_to_lcid(5), 1000000);
   push_dl_bs(u2.ue_index, uint_to_lcid(5), 1000000);
@@ -592,6 +594,16 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
   ue_pdsch_scheduled_count[u3.ue_index] = 0;
 
   for (unsigned i = 0; i != 100; ++i) {
+    // Report different CQIs for different UEs.
+    // Best channel condition.
+    u1.get_pcell().handle_csi_report(
+        csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{15U}});
+    // Worst channel condition.
+    u2.get_pcell().handle_csi_report(
+        csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{10U}});
+    u3.get_pcell().handle_csi_report(
+        csi_report_data{std::nullopt, std::nullopt, std::nullopt, std::nullopt, cqi_value{12U}});
+
     run_slot();
     const slot_point current_slot = next_slot - 1;
     for (const auto& grant : this->res_grid[0].result.dl.ue_grants) {

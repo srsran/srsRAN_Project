@@ -42,6 +42,9 @@ public:
   const du_ue_index_t ue_index = MAX_NOF_DU_UES;
   const rnti_t        rnti     = rnti_t::INVALID_RNTI;
 
+  /// Flag to indicate that a UE RRC configuration is pending.
+  bool rrc_config_pending = false;
+
   /// List of UL PDU notification endpoints associated to UE's logical channels.
   slotted_vector<mac_sdu_rx_notifier*> ul_bearers;
 };
@@ -75,6 +78,8 @@ public:
     }
     return nullptr;
   }
+
+  void handle_ue_config_applied(du_ue_index_t ue_index);
 
 private:
   /// Arguments of UE manager.

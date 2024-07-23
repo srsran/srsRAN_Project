@@ -115,7 +115,8 @@ private:
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
-  std::map<uint16_t, rlc_metrics>                    ue_aggr_rlc_metrics;
+  std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
+  const size_t                                       max_rlc_metrics = 30;
   std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
 };
 

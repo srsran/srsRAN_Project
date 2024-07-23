@@ -137,6 +137,8 @@ struct ru_ofh_unit_expert_threads_config {
 
 /// Expert configuration.
 struct ru_ofh_unit_expert_execution_config {
+  /// RU timing thread.
+  os_sched_affinity_bitmask ru_timing_cpu;
   /// Expert thread configuration of the Open Fronthaul Radio Unit.
   ru_ofh_unit_expert_threads_config threads;
   /// CPU affinities per cell.

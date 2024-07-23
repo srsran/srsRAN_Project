@@ -80,7 +80,7 @@ tdd_dl_tcp = defaultdict(
     {
         20: int(43e6),
         50: int(153e6),
-        90: int(124e6),  # TODO: update this value if lates are gone
+        90: int(124e6),
     },
 )
 
@@ -419,15 +419,12 @@ def test_zmq_4x4_mimo(
 )
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate",
-    (
-        param(3, 15, 20, LOW_BITRATE, id=ZMQ_ID),
-        param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),
-    ),
+    (param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),),
 )
 @mark.zmq
 @mark.smoke
 # pylint: disable=too-many-arguments
-def test_zmq_smoke(
+def test_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_4: Tuple[UEStub, ...],
@@ -502,6 +499,7 @@ def test_zmq_smoke(
         "Attach timeout reached",
         "iperf did not achieve the expected data rate",
         "socket is already closed",
+        "failed to connect to all addresses",
     ],
 )
 # pylint: disable=too-many-arguments

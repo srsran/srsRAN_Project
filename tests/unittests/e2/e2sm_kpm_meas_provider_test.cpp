@@ -127,6 +127,7 @@ protected:
 rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
 {
   rlc_metrics rlc_metric;
+  rlc_metric.metrics_period        = std::chrono::milliseconds(1000);
   rlc_metric.ue_index              = static_cast<du_ue_index_t>(ue_idx);
   rlc_metric.rb_id                 = rb_id_t(drb_id_t(bearer_id));
   rlc_metric.rx.mode               = rlc_mode::am;
@@ -283,10 +284,10 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
       TESTASSERT_EQ(nof_records, meas_record.size());
       TESTASSERT_EQ(expected_drop_rate, meas_record[0].integer());
       if (nof_records >= 2) {
-        TESTASSERT_EQ(expected_dl_vol[ue_idx], meas_record[1].integer());
+        TESTASSERT_EQ((i + 1) * expected_dl_vol[ue_idx], meas_record[1].integer());
       }
       if (nof_records >= 3) {
-        TESTASSERT_EQ(expected_ul_vol[ue_idx], meas_record[2].integer());
+        TESTASSERT_EQ((i + 1) * expected_ul_vol[ue_idx], meas_record[2].integer());
       }
       if (nof_records >= 4) {
         TESTASSERT_EQ(expected_ul_success_rate, meas_record[3].integer());
@@ -387,8 +388,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
     auto& meas_record = ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[i].meas_record;
     TESTASSERT_EQ(nof_records, meas_record.size());
     TESTASSERT_EQ(expected_drop_rate, meas_record[0].integer());
-    TESTASSERT_EQ(expected_dl_vol, meas_record[1].integer());
-    TESTASSERT_EQ(expected_ul_vol, meas_record[2].integer());
+    TESTASSERT_EQ((i + 1) * expected_dl_vol, meas_record[1].integer());
+    TESTASSERT_EQ((i + 1) * expected_ul_vol, meas_record[2].integer());
   }
 
 #if PCAP_OUTPUT

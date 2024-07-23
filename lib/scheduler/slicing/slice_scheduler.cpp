@@ -26,8 +26,8 @@
 
 using namespace srsran;
 
-slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_) :
-  cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED"))
+slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, const ue_repository& ues_) :
+  cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED")), ues(ues_)
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default slice).
   slices.reserve(cell_cfg.rrm_policy_members.size() + 1);
@@ -36,12 +36,12 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_) :
   ran_slice_id_t id_count{0};
   // Default slice.
   slices.emplace_back(id_count, cell_cfg, slice_rrm_policy_config{});
-  slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
+  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   ++id_count;
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     slices.emplace_back(id_count, cell_cfg, rrm);
-    slices.back().inst.policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
+    slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
     ++id_count;
   }
 }
@@ -52,7 +52,7 @@ void slice_scheduler::slot_indication()
 
   // Update the context of each slice.
   for (auto& slice : slices) {
-    slice.inst.slot_indication();
+    slice.inst.slot_indication(ues);
   }
 
   // Recompute the priority queues.
@@ -69,7 +69,9 @@ void slice_scheduler::add_ue(const ue_configuration& ue_cfg)
 {
   for (const logical_channel_config& lc_cfg : ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.add_logical_channel(ue_cfg.ue_index, lc_cfg.lcid);
+    if (ues.contains(ue_cfg.ue_index)) {
+      sl_inst.add_logical_channel(&ues[ue_cfg.ue_index], lc_cfg.lcid);
+    }
   }
 }
 
@@ -84,14 +86,16 @@ void slice_scheduler::reconf_ue(const ue_configuration& next_ue_cfg, const ue_co
   // Add new bearers.
   for (const logical_channel_config& lc_cfg : next_ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(lc_cfg.rrm_policy);
-    sl_inst.add_logical_channel(prev_ue_cfg.ue_index, lc_cfg.lcid);
+    if (ues.contains(next_ue_cfg.ue_index)) {
+      sl_inst.add_logical_channel(&ues[next_ue_cfg.ue_index], lc_cfg.lcid);
+    }
   }
 }
 
 void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 {
   for (auto& slice : slices) {
-    slice.inst.rem_ue(ue_idx);
+    slice.inst.rem_logical_channel(ue_idx);
   }
 }
 

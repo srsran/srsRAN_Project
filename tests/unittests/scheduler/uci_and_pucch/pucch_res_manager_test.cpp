@@ -44,7 +44,7 @@ public:
   test_pucch_resource_manager() :
     cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
-    // config_helpers::create_default_initial_ue_serving_cell_config().
+    //       config_helpers::create_default_initial_ue_serving_cell_config().
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
     pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
     sl_tx(slot_point(0, 0))

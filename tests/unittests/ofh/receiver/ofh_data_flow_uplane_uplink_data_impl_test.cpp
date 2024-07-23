@@ -67,7 +67,7 @@ protected:
 
 public:
   data_flow_uplane_uplink_data_impl_fixture() :
-    slot(0, 0, 1), grid(rg_writer), data_flow(get_config(), get_dependencies())
+    slot(0, 0, 1), rg_writer(nof_prbs), grid(rg_writer), data_flow(get_config(), get_dependencies())
   {
     ul_cplane_context context;
     context.prb_start              = 0;

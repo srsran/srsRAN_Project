@@ -283,6 +283,14 @@ static void configure_cli11_ofh_threads_args(CLI::App& app, ru_ofh_unit_expert_t
 
 static void configure_cli11_expert_execution_args(CLI::App& app, ru_ofh_unit_expert_execution_config& config)
 {
+  // Affinity section.
+  CLI::App* affinities_subcmd = add_subcommand(app, "affinities", "gNB CPU affinities configuration")->configurable();
+  add_option_function<std::string>(
+      *affinities_subcmd,
+      "--ru_timing_cpu",
+      [&config](const std::string& value) { parse_affinity_mask(config.ru_timing_cpu, value, "ru_timing_cpu"); },
+      "CPU used for timing in the Radio Unit");
+
   // Threads section.
   CLI::App* threads_subcmd = add_subcommand(app, "threads", "Threads configuration")->configurable();
 

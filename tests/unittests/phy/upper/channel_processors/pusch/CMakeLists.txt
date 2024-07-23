@@ -30,6 +30,7 @@ target_link_libraries(pusch_processor_validator_test
         srsran_phy_support
         srslog
         srsran_upper_phy_support
+        srsran_transform_precoding
         gtest
         gtest_main)
 add_test(pusch_processor_validator_test pusch_processor_validator_test)
@@ -58,6 +59,7 @@ if (USE_PHY_TESTVECTORS)
             srsran_phy_support
             srslog
             srsran_upper_phy_support
+            srsran_transform_precoding
             gtest
             gtest_main)
     add_test_vector(pusch_demodulator_vectortest pusch_demodulator_test_data.tar.gz "")
@@ -68,6 +70,7 @@ if (USE_PHY_TESTVECTORS)
             srsran_phy_support
             srslog
             srsran_upper_phy_support
+            srsran_transform_precoding
             gtest
             gtest_main)
 

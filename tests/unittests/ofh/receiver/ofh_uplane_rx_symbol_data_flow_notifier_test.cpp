@@ -74,7 +74,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, completed_resource_grid_triggers_n
   unsigned                            sector = 0;
   resource_grid_spy                   grid(2, 14, 273);
 
-  static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
+  static_vector<cbf16_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
   repo->add({slot, sector}, grid, symbol_range);
   ASSERT_FALSE(repo->get(slot, symbol).empty());
 
@@ -103,7 +103,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_port_does_not_notify)
   unsigned                            sector = 0;
   resource_grid_spy                   grid(2, 14, 273);
 
-  static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
+  static_vector<cbf16_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc());
   repo->add({slot, sector}, grid, symbol_range);
 
   // Fill the grid.
@@ -126,7 +126,7 @@ TEST(ofh_data_flow_uplane_rx_symbol_notifier, uncompleted_prbs_does_not_notify)
   unsigned                            sector = 0;
   resource_grid_spy                   grid(1, 14, 273);
 
-  static_vector<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc() - 1);
+  static_vector<cbf16_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> samples(grid.get_writer().get_nof_subc() - 1);
   repo->add({slot, sector}, grid, symbol_range);
 
   // Fill the grid.

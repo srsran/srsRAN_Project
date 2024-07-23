@@ -80,6 +80,8 @@ void mac_controller::handle_ue_config_applied(du_ue_index_t ue_index)
 {
   srsran_assert(ue_db.contains(ue_index), "Invalid ue_index={}", ue_index);
 
+  ul_unit.handle_ue_config_applied(ue_index);
+
   sched_cfg.handle_ue_config_applied(ue_index);
 }
 

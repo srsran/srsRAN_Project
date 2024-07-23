@@ -24,6 +24,7 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../du_processor/du_processor.h"
+#include "../paging/paging_message_handler.h"
 #include "../ue_manager/cu_cp_ue_impl_interface.h"
 #include "srsran/cu_cp/ue_task_scheduler.h"
 #include "srsran/ngap/ngap.h"
@@ -38,16 +39,16 @@ class ngap_cu_cp_adapter : public ngap_cu_cp_du_repository_notifier, public ngap
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(du_repository_ngap_handler& du_repository_handler_, cu_cp_ngap_handler& cu_cp_handler_)
+  void connect_cu_cp(cu_cp_ngap_handler& cu_cp_handler_, paging_message_handler& paging_handler_)
   {
-    du_repository_handler = &du_repository_handler_;
-    cu_cp_handler         = &cu_cp_handler_;
+    cu_cp_handler  = &cu_cp_handler_;
+    paging_handler = &paging_handler_;
   }
 
   void on_paging_message(cu_cp_paging_message& msg) override
   {
-    srsran_assert(du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    du_repository_handler->handle_paging_message(msg);
+    srsran_assert(paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    paging_handler->handle_paging_message(msg);
   }
 
   async_task<ngap_handover_resource_allocation_response>
@@ -129,8 +130,8 @@ public:
   }
 
 private:
-  du_repository_ngap_handler* du_repository_handler = nullptr;
-  cu_cp_ngap_handler*         cu_cp_handler         = nullptr;
+  cu_cp_ngap_handler*     cu_cp_handler  = nullptr;
+  paging_message_handler* paging_handler = nullptr;
 };
 
 /// Adapter between NGAP and CU-CP UE

@@ -383,7 +383,7 @@ void srsran::srsvec::convert(span<cbf16_t> z, span<const int16_t> x, float scale
 {
   srsran_assert(x.size() == 2 * z.size(), "Invalid input or output span sizes");
 
-  convert_int16_to_bf16_simd(reinterpret_cast<bf16_t*>(z.data()), x.data(), scale, z.size());
+  convert_int16_to_bf16_simd(reinterpret_cast<bf16_t*>(z.data()), x.data(), scale, x.size());
 }
 
 void srsran::srsvec::convert(span<int16_t> z, span<const bf16_t> x, float scale)

@@ -22,20 +22,16 @@
 
 #pragma once
 
-#include "srsran/f1ap/cu_cp/du_setup_notifier.h"
-
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Class responsible for handling the setup of the DUs that connect to this CU-CP.
-class du_setup_handler
+class cu_cp_ue_admission_controller
 {
 public:
-  virtual ~du_setup_handler() = default;
+  virtual ~cu_cp_ue_admission_controller() = default;
 
-  /// \brief Determines whether a DU setup should be accepted by the CU-CP, given the state of the CU-CP and resources
-  /// available.
-  virtual du_setup_result handle_du_setup_request(const du_setup_request& req) = 0;
+  /// Determines whether the CU-CP is in a condition to accept new UEs.
+  virtual bool request_ue_setup() const = 0;
 };
 
 } // namespace srs_cu_cp

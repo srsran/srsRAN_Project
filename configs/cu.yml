@@ -7,6 +7,10 @@ cu_cp:
   f1ap:
     bind_addr: 127.0.10.1
 
+cu_up:
+  nru:
+    bind_addr: 127.0.10.1
+
 log:
   filename: /tmp/cu.log
   all_level: warning

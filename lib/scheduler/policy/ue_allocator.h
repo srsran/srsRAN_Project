@@ -67,6 +67,8 @@ struct alloc_result {
   alloc_status status;
   /// Nof. of bytes allocated if allocation was successful.
   unsigned alloc_bytes{0};
+  /// Nof. of resource blocks allocated if allocation was successful.
+  unsigned alloc_nof_rbs{0};
 };
 
 /// Allocator of PDSCH grants for UEs.

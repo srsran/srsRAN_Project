@@ -45,7 +45,7 @@ public:
   void connect_cu_up(cu_up_index_t cu_up_idx_)
   {
     cu_up_idx   = cu_up_idx_;
-    msg_handler = &parent.cu_ups.get_cu_up(cu_up_idx).get_message_handler();
+    msg_handler = &parent.cu_ups.get_cu_up(cu_up_idx).get_e1ap_message_handler();
   }
 
   /// Determines whether a CU-UP repository has been created for this connection.

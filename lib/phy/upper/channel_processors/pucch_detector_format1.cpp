@@ -21,138 +21,19 @@
  */
 
 /// \file
-/// \brief PUCCH detector definition for Formats 0 and 1.
+/// \brief PUCCH detector definition for Format 1.
 
-#include "pucch_detector_impl.h"
+#include "pucch_detector_format1.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-#include "srsran/srsvec/conversion.h"
+#include "srsran/phy/upper/channel_processors/pucch_detector.h"
+#include "srsran/phy/upper/pucch_orthogonal_sequence.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/mean.h"
 
 using namespace srsran;
 
-namespace {
-// Container for time-domain spreading sequences of length N.
-template <unsigned N>
-struct time_spreading_sequences {
-  using type = cf_t;
-  explicit time_spreading_sequences(const std::array<std::array<float, N>, N>& seed)
-  {
-    for (unsigned i_seq = 0; i_seq != N; ++i_seq) {
-      for (unsigned i_term = 0; i_term != N; ++i_term) {
-        sequences[i_seq][i_term] = std::polar(1.0F, -TWOPI * seed[i_seq][i_term] / static_cast<float>(N));
-      }
-    }
-  };
-
-  std::array<std::array<type, N>, N> sequences;
-};
-
-template <unsigned N>
-span<const cf_t> get_w_star(unsigned length, unsigned i);
-
-// Build and provide access to the time-domain spreading sequences of length 1.
-template <>
-span<const cf_t> get_w_star<1>(unsigned /*length*/, unsigned i)
-{
-  static constexpr std::array<cf_t, 1> w = {{{1.0F, 0.0F}}};
-  srsran_assert(i == 0, "Invalid sequence index {} for sequences of length {}.", i, 1);
-  return {w};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 2.
-template <>
-span<const cf_t> get_w_star<2>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 2;
-  static const time_spreading_sequences<N> w({{{0, 0}, {0, 1}}});
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 3.
-template <>
-span<const cf_t> get_w_star<3>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 3;
-  static const time_spreading_sequences<N> w({{{0, 0, 0}, {0, 1, 2}, {0, 2, 1}}});
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 4.
-template <>
-span<const cf_t> get_w_star<4>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 4;
-  static const time_spreading_sequences<N> w({{{0, 0, 0, 0}, {0, 2, 0, 2}, {0, 0, 2, 2}, {0, 2, 2, 0}}});
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 5.
-template <>
-span<const cf_t> get_w_star<5>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 5;
-  static const time_spreading_sequences<N> w(
-      {{{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}, {0, 2, 4, 1, 3}, {0, 3, 1, 4, 2}, {0, 4, 3, 2, 1}}});
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 6.
-template <>
-span<const cf_t> get_w_star<6>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 6;
-  static const time_spreading_sequences<N> w({{{0, 0, 0, 0, 0, 0},
-                                               {0, 1, 2, 3, 4, 5},
-                                               {0, 2, 4, 0, 2, 4},
-                                               {0, 3, 0, 3, 0, 3},
-                                               {0, 4, 2, 0, 4, 2},
-                                               {0, 5, 4, 3, 2, 1}}});
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-
-// Build and provide access to the time-domain spreading sequences of length 7.
-template <>
-span<const cf_t> get_w_star<7>(unsigned length, unsigned i)
-{
-  static constexpr unsigned                N = 7;
-  static const time_spreading_sequences<N> w({{{0, 0, 0, 0, 0, 0, 0},
-                                               {0, 1, 2, 3, 4, 5, 6},
-                                               {0, 2, 4, 6, 1, 3, 5},
-                                               {0, 3, 6, 2, 5, 1, 4},
-                                               {0, 4, 1, 5, 2, 6, 3},
-                                               {0, 5, 3, 1, 6, 4, 2},
-                                               {0, 6, 5, 4, 3, 2, 1}}});
-  if (length == 0) {
-    return {};
-  }
-  if (length != N) {
-    return get_w_star<N - 1>(length, i);
-  }
-  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
-  return {w.sequences[i]};
-}
-} // namespace
+// Pre-generated orthogonal cover code.
+static const pucch_orthogonal_sequence occ;
 
 static void validate_config(const pucch_detector::format1_configuration& config)
 {
@@ -208,16 +89,10 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
   return (std::norm(detected_symbol) / eq_noise_var);
 }
 
-std::pair<pucch_uci_message, channel_state_information>
-pucch_detector_impl::detect(const srsran::resource_grid_reader&                  grid,
-                            const srsran::pucch_detector::format0_configuration& config)
-{
-  return detector_format0->detect(grid, config);
-}
-
-pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resource_grid_reader&  grid,
-                                                                   const channel_estimate&      estimates,
-                                                                   const format1_configuration& config)
+pucch_detector::pucch_detection_result
+pucch_detector_format1::detect(const resource_grid_reader&                  grid,
+                               const channel_estimate&                      estimates,
+                               const pucch_detector::format1_configuration& config)
 {
   validate_config(config);
 
@@ -259,11 +134,11 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // by this detector and on the used PUCCH resource.
   // This format doesn't support CSI reports.
   pucch_uci_message::configuration pucch_uci_message_config;
-  pucch_uci_message_config.nof_sr        = 0;
-  pucch_uci_message_config.nof_harq_ack  = config.nof_harq_ack;
-  pucch_uci_message_config.nof_csi_part1 = 0;
-  pucch_uci_message_config.nof_csi_part2 = 0;
-  pucch_detection_result output          = {pucch_uci_message(pucch_uci_message_config), 0};
+  pucch_uci_message_config.nof_sr               = 0;
+  pucch_uci_message_config.nof_harq_ack         = config.nof_harq_ack;
+  pucch_uci_message_config.nof_csi_part1        = 0;
+  pucch_uci_message_config.nof_csi_part2        = 0;
+  pucch_detector::pucch_detection_result output = {pucch_uci_message(pucch_uci_message_config), 0};
 
   // Select view of the payload.
   span<uint8_t> bits = output.uci_message.get_harq_ack_bits();
@@ -308,12 +183,12 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   return output;
 }
 
-void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&              grid,
-                                                     const channel_estimate&                  estimates,
-                                                     unsigned                                 first_symbol,
-                                                     unsigned                                 first_prb,
-                                                     std::optional<unsigned>                  second_prb,
-                                                     const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
+void pucch_detector_format1::extract_data_and_estimates(const resource_grid_reader&              grid,
+                                                        const channel_estimate&                  estimates,
+                                                        unsigned                                 first_symbol,
+                                                        unsigned                                 first_prb,
+                                                        std::optional<unsigned>                  second_prb,
+                                                        const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
 {
   for (uint8_t port : antenna_ports) {
     unsigned      i_symbol       = 0;
@@ -367,7 +242,7 @@ static void compute_alpha_indices(span<unsigned>       indices,
   }
 }
 
-void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& config)
+void pucch_detector_format1::marginalize_w_and_r_out(const pucch_detector::format1_configuration& config)
 {
   unsigned time_domain_occ = config.time_domain_occ;
 
@@ -377,7 +252,7 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
   unsigned group_index     = config.n_id % 30;
   unsigned sequence_number = 0;
 
-  span<const cf_t> w_star = get_w_star<MAX_N_DATA_SYMBOLS>(nof_data_symbols_pre_hop, time_domain_occ);
+  span<const cf_t> w_star = occ.get_sequence_conj(nof_data_symbols_pre_hop, time_domain_occ);
 
   compute_alpha_indices(alpha_indices,
                         config.start_symbol_index,
@@ -398,13 +273,15 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
   }
 
   unsigned nof_data_symbols_post_hop = nof_data_symbols - nof_data_symbols_pre_hop;
-  w_star                             = get_w_star<MAX_N_DATA_SYMBOLS>(nof_data_symbols_post_hop, time_domain_occ);
+  if (nof_data_symbols_post_hop > 0) {
+    w_star = occ.get_sequence_conj(nof_data_symbols_post_hop, time_domain_occ);
 
-  for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_post_hop; ++i_symbol, offset += NRE) {
-    span<const cf_t> seq_r =
-        low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
-    for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+    for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_post_hop; ++i_symbol, offset += NRE) {
+      span<const cf_t> seq_r =
+          low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
+      for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
+        detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      }
     }
   }
 

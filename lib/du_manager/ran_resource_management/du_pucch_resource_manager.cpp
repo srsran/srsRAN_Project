@@ -48,7 +48,10 @@ static bool csi_offset_exceeds_grant_cnt(unsigned                     offset_can
 // Helper that updates the starting PUCCH config with user-defined parameters.
 static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const pucch_builder_params& user_params)
 {
-  pucch_config target_pucch_cfg                             = pucch_cfg;
+  pucch_config target_pucch_cfg = pucch_cfg;
+  if (not std::holds_alternative<pucch_f1_params>(user_params.f0_or_f1_params)) {
+    target_pucch_cfg.format_1_common_param.reset();
+  }
   target_pucch_cfg.format_2_common_param.value().max_c_rate = user_params.f2_params.max_code_rate;
 
   return target_pucch_cfg;

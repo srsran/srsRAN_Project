@@ -22,6 +22,7 @@
 
 #include "lib/scheduler/slicing/slice_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
@@ -56,6 +57,7 @@ protected:
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, harq_timeout_handler}));
     slice_sched.add_ue(*ue_cfg);
     return ue_cfg;
   }
@@ -64,7 +66,11 @@ protected:
   test_helpers::test_sched_config_manager test_cfg;
   const cell_configuration&               cell_cfg;
 
-  slice_scheduler slice_sched{cell_cfg};
+  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
+
+  ue_repository ues;
+
+  slice_scheduler slice_sched{cell_cfg, ues};
 };
 
 class default_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
