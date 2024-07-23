@@ -41,8 +41,7 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
   ctrl_executor(ctrl_executor_),
   gtpu_pcap(gtpu_pcap_),
   timers(timers_),
-  logger(logger_),
-  task_sched(MAX_NOF_UES)
+  logger(logger_)
 {
   // Initialize a ue task schedulers for all UE indexes.
   for (size_t i = 0; i < MAX_NOF_UES; ++i) {

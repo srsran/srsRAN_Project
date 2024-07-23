@@ -71,8 +71,6 @@ private:
   ue_db_t                                     ue_db;
   ue_task_schedulers_t                        ue_task_schedulers;
   srslog::basic_logger&                       logger;
-
-  fifo_async_task_scheduler task_sched;
 };
 
 } // namespace srs_cu_up
