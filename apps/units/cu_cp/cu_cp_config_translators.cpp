@@ -215,8 +215,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
       cu_cfg.mobility_config.trigger_handover_from_measurements;
 
   // F1AP-CU config.
-  out_cfg.f1ap.ue_context_setup_timeout = std::chrono::milliseconds{cu_cfg.f1ap_config.ue_context_setup_timeout};
-  out_cfg.f1ap.json_log_enabled         = cu_cfg.loggers.f1ap_json_enabled;
+  out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};
+  out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
 
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
