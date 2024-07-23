@@ -837,6 +837,9 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cmd: {
       ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
     } break;
+    case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cancel_ack: {
+      ev_mng.handover_cancel_outcome.set(outcome.value.ho_cancel_ack());
+    } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
   }
