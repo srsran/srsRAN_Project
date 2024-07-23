@@ -80,6 +80,10 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
 {
   size_t grant_len = mac_sdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
+  std::chrono::time_point<std::chrono::steady_clock> pull_begin;
+  if (metrics_high.is_enabled()) {
+    pull_begin = std::chrono::steady_clock::now();
+  }
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
@@ -114,11 +118,16 @@ size_t rlc_tx_tm_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   // Release SDU
   sdu.buf.clear();
 
-  // Update metrics
-  metrics_low.metrics_add_pdus_no_segmentation(1, sdu_len);
-
   // Push PDU into PCAP.
   pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_len));
+
+  // Update metrics
+  metrics_low.metrics_add_pdus_no_segmentation(1, sdu_len);
+  if (metrics_low.is_enabled()) {
+    std::chrono::time_point pull_end   = std::chrono::steady_clock::now();
+    auto                    pull_delta = std::chrono::duration_cast<std::chrono::nanoseconds>(pull_end - pull_begin);
+    metrics_low.metrics_add_pdu_latency_ns(pull_delta.count());
+  }
 
   return pdu_len;
 }

@@ -110,6 +110,11 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   uint32_t grant_len = mac_sdu_buf.size();
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
 
+  std::chrono::time_point<std::chrono::steady_clock> pull_begin;
+  if (metrics_low.is_enabled()) {
+    pull_begin = std::chrono::steady_clock::now();
+  }
+
   // Check available space -- we need at least the minimum header + 1 payload Byte
   if (grant_len <= head_len_full) {
     logger.log_debug("Cannot fit SDU into grant_len={}. head_len_full={}", grant_len, head_len_full);
@@ -184,11 +189,13 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
     sdu.buf.clear();
-    next_so      = 0;
-    auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
-                                                                        sdu.time_of_arrival);
-    metrics_low.metrics_add_sdu_latency_us(latency.count() / 1000);
-    metrics_low.metrics_add_pulled_sdus(1);
+    next_so = 0;
+    if (metrics_low.is_enabled()) {
+      auto sdu_latency = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::high_resolution_clock::now() - sdu.time_of_arrival);
+      metrics_low.metrics_add_sdu_latency_us(sdu_latency.count() / 1000);
+      metrics_low.metrics_add_pulled_sdus(1);
+    }
   } else {
     // advance SO offset
     next_so += payload_len;
@@ -199,17 +206,23 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     st.tx_next = (st.tx_next + 1) % mod;
   }
 
+  // Log state
+  log_state(srslog::basic_levels::debug);
+
+  // Write PCAP
+  pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_size));
+
   // Update metrics
   if (header.si == rlc_si_field::full_sdu) {
     metrics_low.metrics_add_pdus_no_segmentation(1, pdu_size);
   } else {
     metrics_low.metrics_add_pdus_with_segmentation_um(1, pdu_size);
   }
-
-  // Log state
-  log_state(srslog::basic_levels::debug);
-
-  pcap.push_pdu(pcap_context, mac_sdu_buf.subspan(0, pdu_size));
+  if (metrics_low.is_enabled()) {
+    auto pdu_latency =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - pull_begin);
+    metrics_low.metrics_add_pdu_latency_ns(pdu_latency.count());
+  }
 
   return pdu_size;
 }

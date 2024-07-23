@@ -22,6 +22,8 @@ class rlc_tx_metrics_high_container
 public:
   rlc_tx_metrics_high_container(bool enabled_) : enabled(enabled_) {}
 
+  bool is_enabled() const { return enabled; }
+
   void metrics_add_sdus(uint32_t num_sdus, size_t num_sdu_bytes)
   {
     if (not enabled) {
@@ -94,6 +96,8 @@ class rlc_tx_metrics_low_container
 public:
   rlc_tx_metrics_low_container(bool enabled_) : enabled(enabled_) {}
 
+  bool is_enabled() const { return enabled; }
+
   void metrics_set_mode(rlc_mode mode)
   {
     if (not enabled) {
@@ -125,6 +129,14 @@ public:
       return;
     }
     metrics_lo.sum_sdu_latency_us += sdu_latency;
+  }
+
+  void metrics_add_pdu_latency_ns(uint32_t pdu_latency)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics_lo.sum_pdu_latency_ns += pdu_latency;
   }
 
   // TM specific metrics
