@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rlc_bearer_logger.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/rlc/rlc_metrics.h"
 
@@ -20,6 +21,7 @@ public:
   rlc_metrics_aggregator(gnb_du_id_t           du,
                          du_ue_index_t         ue,
                          rb_id_t               rb,
+                         timer_duration        metrics_period_,
                          rlc_metrics_notifier* rlc_metrics_notif_,
                          task_executor&        ue_executor_);
 
@@ -49,9 +51,12 @@ private:
   rlc_tx_metrics_lower  m_lower;
   rlc_tx_metrics_higher m_higher;
   rlc_rx_metrics        m_rx_high;
+  timer_duration        metrics_period;
 
   rlc_metrics_notifier* rlc_metrics_notif;
 
   task_executor& ue_executor;
+
+  rlc_bearer_logger logger;
 };
 } // namespace srsran

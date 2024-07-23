@@ -14,9 +14,16 @@ using namespace srsran;
 rlc_metrics_aggregator::rlc_metrics_aggregator(gnb_du_id_t           du_,
                                                du_ue_index_t         ue_,
                                                rb_id_t               rb_,
+                                               timer_duration        metrics_period_,
                                                rlc_metrics_notifier* rlc_metrics_notif_,
                                                task_executor&        ue_executor_) :
-  du(du_), ue(ue_), rb(rb_), rlc_metrics_notif(rlc_metrics_notif_), ue_executor(ue_executor_)
+  du(du_),
+  ue(ue_),
+  rb(rb_),
+  metrics_period(metrics_period_),
+  rlc_metrics_notif(rlc_metrics_notif_),
+  ue_executor(ue_executor_),
+  logger("RLC", {du_, ue_, rb_, "DL/UL"})
 {
   m_lower.counter   = UINT32_MAX;
   m_higher.counter  = UINT32_MAX;
@@ -68,6 +75,6 @@ void rlc_metrics_aggregator::push_report()
       m_higher.counter != m_rx_high.counter) {
     return;
   }
-  rlc_metrics report = {du, ue, rb, {m_higher, m_lower}, m_rx_high, 0, std::chrono::milliseconds{1000}};
+  rlc_metrics report = {du, ue, rb, {m_higher, m_lower}, m_rx_high, 0, metrics_period};
   rlc_metrics_notif->report_metrics(report);
 }

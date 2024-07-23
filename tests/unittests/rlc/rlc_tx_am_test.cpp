@@ -114,8 +114,8 @@ protected:
     // Create test frame
     tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
-    metrics_agg =
-        std::make_unique<rlc_metrics_aggregator>(gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, tester.get(), ue_worker);
+    metrics_agg = std::make_unique<rlc_metrics_aggregator>(
+        gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, tester.get(), ue_worker);
 
     // Create RLC AM TX entity
     rlc = std::make_unique<rlc_tx_am_entity>(gnb_du_id_t::min,

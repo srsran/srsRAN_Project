@@ -37,7 +37,7 @@ public:
     ue_index(ue_index_),
     rb_id(rb_id_),
     metrics_period(metrics_period_),
-    metrics_agg(gnb_du_id_, ue_index, rb_id_, rlc_metrics_notifier_, ue_executor_)
+    metrics_agg(gnb_du_id_, ue_index, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor_)
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
   }

@@ -39,7 +39,7 @@ protected:
     // Create mock metrics notifier and RLC AM TX entity
     metrics_notif = std::make_unique<mock_rlc_metrics_notifier>();
     metrics_agg   = std::make_unique<rlc_metrics_aggregator>(
-        gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, metrics_notif.get(), ue_worker);
+        gnb_du_id_t{}, du_ue_index_t{}, rb_id_t{}, timer_duration{1000}, metrics_notif.get(), ue_worker);
   }
 
   void TearDown() override
