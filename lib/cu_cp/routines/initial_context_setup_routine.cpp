@@ -87,7 +87,9 @@ void initial_context_setup_routine::operator()(
   }
 
   // Start UE Capability Enquiry Procedure
-  {
+  if (request.ue_radio_cap.has_value()) {
+    ue_cap_store_result = rrc_ue.store_ue_capabilities(std::move(request.ue_radio_cap.value()));
+  } else {
     CORO_AWAIT_VALUE(ue_capability_transfer_result,
                      rrc_ue.handle_rrc_ue_capability_transfer_request(ue_capability_transfer_request));
 
@@ -132,7 +134,9 @@ void initial_context_setup_routine::operator()(
   }
 
   // Schedule transmission of UE Radio Capability Info Indication
-  send_ue_radio_capability_info_indication();
+  if (!ue_cap_store_result) {
+    send_ue_radio_capability_info_indication();
+  }
 
   logger.info("ue={}: \"{}\" finished successfully", request.ue_index, name());
   CORO_RETURN(resp_msg);

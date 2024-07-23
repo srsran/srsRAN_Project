@@ -224,6 +224,11 @@ public:
   /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
   virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
 
+  /// \brief Store UE capabilities received from the NGAP.
+  /// \param[in] ue_capabilities The UE capabilities.
+  /// \returns True if the UE capabilities were stored successfully, false otherwise.
+  virtual bool store_ue_capabilities(byte_buffer ue_capabilities) = 0;
+
   /// \brief Initiate the UE capability transfer procedure.
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 

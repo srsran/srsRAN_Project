@@ -442,6 +442,40 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
       });
 }
 
+bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
+{
+  // Unpack UE Capabilities
+  asn1::rrc_nr::ue_radio_access_cap_info_s ue_radio_access_cap_info;
+  asn1::cbit_ref                           bref({ue_capabilities.begin(), ue_capabilities.end()});
+
+  if (ue_radio_access_cap_info.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.log_error("Couldn't unpack UE Radio Access Capability Info RRC container");
+    return false;
+  }
+
+  asn1::rrc_nr::ue_cap_rat_container_list_l ue_cap_rat_container_list;
+  asn1::cbit_ref                            bref2(
+      {ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.begin(),
+                                  ue_radio_access_cap_info.crit_exts.c1().ue_radio_access_cap_info().ue_radio_access_cap_info.end()});
+  if (asn1::unpack_dyn_seq_of(ue_cap_rat_container_list, bref2, 0, 8) != asn1::SRSASN_SUCCESS) {
+    logger.log_error("Couldn't unpack UE Capability RAT Container List RRC container");
+    return false;
+  }
+
+  context.capabilities_list.emplace(ue_cap_rat_container_list);
+
+  if (logger.get_basic_logger().debug.enabled()) {
+    logger.log_debug("UE Capabilities:\n");
+    asn1::json_writer json_writer;
+    for (const auto& rat_container : ue_cap_rat_container_list) {
+      rat_container.to_json(json_writer);
+      logger.log_debug("{}\n", json_writer.to_string().c_str());
+    }
+  }
+
+  return true;
+}
+
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg)
 {
   //  Launch RRC UE capability transfer procedure

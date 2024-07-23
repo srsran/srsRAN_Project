@@ -56,6 +56,7 @@ private:
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
+  bool                                      ue_cap_store_result = false;
   f1ap_ue_context_setup_response            ue_context_setup_response;
   bool                                      ue_capability_transfer_result = false; // to query the UE capabilities
   cu_cp_pdu_session_resource_setup_response pdu_session_setup_response;
