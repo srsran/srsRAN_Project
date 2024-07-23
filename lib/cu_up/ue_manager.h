@@ -39,7 +39,8 @@ public:
                       dlt_pcap&                                   gtpu_pcap_,
                       srslog::basic_logger&                       logger_);
 
-  using ue_db_t = std::unordered_map<ue_index_t, std::unique_ptr<ue_context>>;
+  using ue_db_t              = std::unordered_map<ue_index_t, std::unique_ptr<ue_context>>;
+  using ue_task_schedulers_t = slotted_array<fifo_async_task_scheduler, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
 
   ue_context*      add_ue(const ue_context_cfg& cfg) override;
@@ -68,6 +69,7 @@ private:
   dlt_pcap&                                   gtpu_pcap;
   timer_manager&                              timers;
   ue_db_t                                     ue_db;
+  ue_task_schedulers_t                        ue_task_schedulers;
   srslog::basic_logger&                       logger;
 
   fifo_async_task_scheduler task_sched;

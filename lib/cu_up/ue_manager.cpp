@@ -44,6 +44,10 @@ ue_manager::ue_manager(network_interface_config&                   net_config_,
   logger(logger_),
   task_sched(MAX_NOF_UES)
 {
+  // Initialize a ue task schedulers for all UE indexes.
+  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
+    ue_task_schedulers.emplace(i, UE_TASK_QUEUE_SIZE);
+  }
 }
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
@@ -83,6 +87,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      n3_config,
                                                                      test_mode_config,
                                                                      std::move(ue_exec_mapper),
+                                                                     ue_task_schedulers[new_idx],
                                                                      ue_dl_timer_factory,
                                                                      ue_ul_timer_factory,
                                                                      ue_ctrl_timer_factory,
