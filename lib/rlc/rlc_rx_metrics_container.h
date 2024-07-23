@@ -99,8 +99,7 @@ public:
       return {};
     }
     rlc_rx_metrics ret = metrics.get();
-    metrics            = {};
-    metrics.mode       = ret.mode;
+    reset_metrics();
     return ret;
   }
 
