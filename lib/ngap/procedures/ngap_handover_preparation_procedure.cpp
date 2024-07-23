@@ -17,6 +17,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
+constexpr std::chrono::milliseconds ng_cancel_ack_timeout{5000};
+
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
     const ngap_context_t&                    context_,
@@ -63,7 +65,20 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   if (transaction_sink.timeout_expired()) {
     logger.log_warning("\"{}\" timed out after {}ms", name(), tng_reloc_prep_ms.count());
-    // TODO: Initialize Handover Cancellation procedure
+    // Initialize Handover Cancellation procedure
+    ho_cancel_transaction_sink.subscribe_to(ev_mng.handover_cancel_outcome, ng_cancel_ack_timeout);
+
+    send_handover_cancel();
+
+    CORO_AWAIT(ho_cancel_transaction_sink);
+
+    if (ho_cancel_transaction_sink.timeout_expired()) {
+      logger.log_warning("\"{}\" Handover Cancel timed out after {}ms", name(), ng_cancel_ack_timeout.count());
+    }
+    if (transaction_sink.successful()) {
+      logger.log_debug("\"{}\" Handover Cancel Ack received", name());
+    }
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
   if (transaction_sink.successful()) {
@@ -116,6 +131,22 @@ void ngap_handover_preparation_procedure::send_handover_required()
   fill_asn1_pdu_session_res_list(ho_required->pdu_session_res_list_ho_rqd);
   ho_required->source_to_target_transparent_container = fill_asn1_source_to_target_transparent_container();
 
+  amf_notifier.on_new_message(msg);
+}
+
+void ngap_handover_preparation_procedure::send_handover_cancel()
+{
+  ngap_message msg = {};
+  // set NGAP PDU contents
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_CANCEL);
+  ho_cancel_s& ho_cancel = msg.pdu.init_msg().value.ho_cancel();
+
+  ho_cancel->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  ho_cancel->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+
+  ho_cancel->cause.set_radio_network();
+  ho_cancel->cause.set_radio_network() = cause_radio_network_opts::ho_cancelled;
   amf_notifier.on_new_message(msg);
 }
 
@@ -187,7 +218,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
 
 byte_buffer ngap_handover_preparation_procedure::get_rrc_handover_command()
 {
-  auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
+  const auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
 
   asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s target_to_source_container;
   asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});

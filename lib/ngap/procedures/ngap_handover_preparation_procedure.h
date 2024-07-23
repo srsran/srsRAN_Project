@@ -13,6 +13,7 @@
 #include "../ngap_context.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -51,11 +52,13 @@ private:
   ngap_ue_source_handover_context ho_ue_context;
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
+  protocol_transaction_outcome_observer<asn1::ngap::ho_cancel_ack_s>                      ho_cancel_transaction_sink;
   byte_buffer rrc_ho_cmd_pdu       = byte_buffer{};
   bool        rrc_reconfig_success = false;
 
   void        get_required_handover_context();
   void        send_handover_required();
+  void        send_handover_cancel();
   byte_buffer get_rrc_handover_command();
 
   // ASN.1 helpers
