@@ -33,21 +33,21 @@ rlc_metrics_aggregator::rlc_metrics_aggregator(gnb_du_id_t           du_,
 void rlc_metrics_aggregator::push_tx_high_metrics(rlc_tx_metrics_higher m_higher_)
 {
   if (not ue_executor.execute([this, m_higher_]() { push_tx_high_metrics_impl(m_higher_); })) {
-    // TODO log error
+    logger.log_error("Could not push TX high metrics");
   }
 }
 
 void rlc_metrics_aggregator::push_tx_low_metrics(rlc_tx_metrics_lower m_lower_)
 {
   if (not ue_executor.execute([this, m_lower_]() { push_tx_low_metrics_impl(m_lower_); })) {
-    // TODO log error
+    logger.log_error("Could not push TX low metrics");
   }
 }
 
 void rlc_metrics_aggregator::push_rx_high_metrics(rlc_rx_metrics m_rx_high_)
 {
   if (not ue_executor.execute([this, m_rx_high_]() { push_rx_high_metrics_impl(m_rx_high_); })) {
-    // TODO log error
+    logger.log_error("Could not push RX high metrics");
   }
 }
 

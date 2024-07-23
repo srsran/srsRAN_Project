@@ -168,14 +168,13 @@ namespace fmt {
 template <>
 struct formatter<srsran::rlc_rx_um_sdu_info> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_sdu_info& info,
-              FormatContext&                    ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "has_gap={} fully_received={} nof_segments={}",
@@ -188,13 +187,13 @@ struct formatter<srsran::rlc_rx_um_sdu_info> {
 template <>
 struct formatter<srsran::rlc_rx_um_state> {
   template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  auto parse(ParseContext& ctx)
   {
     return ctx.begin();
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx)
   {
     return format_to(ctx.out(),
                      "rx_next_reassembly={} rx_timer_trigger={} rx_next_highest={}",
