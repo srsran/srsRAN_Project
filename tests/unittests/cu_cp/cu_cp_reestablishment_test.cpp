@@ -13,6 +13,11 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
+#include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
+#include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -90,7 +95,7 @@ public:
 
     // Check if the DL RRC Message with Msg4 is valid.
     report_error_if_not(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu), "invalid DL RRC message");
-    dl_rrc_msg_transfer_s& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
+    asn1::f1ap::dl_rrc_msg_transfer_s& dl_rrc_msg = f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer();
     report_error_if_not(int_to_gnb_du_ue_f1ap_id(dl_rrc_msg->gnb_du_ue_f1ap_id) == du_ue_id,
                         "invalid gNB-DU-UE-F1AP-ID");
     report_error_if_not(int_to_srb_id(dl_rrc_msg->srb_id) == srb_id_t::srb0, "invalid SRB-Id");

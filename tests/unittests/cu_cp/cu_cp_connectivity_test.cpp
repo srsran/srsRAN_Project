@@ -16,6 +16,8 @@
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg_ies.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
@@ -144,15 +146,15 @@ TEST_F(cu_cp_connectivity_test, when_dus_with_duplicate_du_ids_connect_then_f1_s
   // Ensure the F1 Setup Response is received and correct for first DU.
   f1ap_message f1ap_pdu;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
-  ASSERT_EQ(f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(f1ap_pdu.pdu.successful_outcome().value.type().value,
-            f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp);
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp);
 
   // Ensure the F1 Setup Failure is received for second DU.
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx2, f1ap_pdu, std::chrono::milliseconds{1000}));
-  ASSERT_EQ(f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome);
   ASSERT_EQ(f1ap_pdu.pdu.unsuccessful_outcome().value.type().value,
-            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
+            asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
 TEST_F(cu_cp_connectivity_test, when_a_du_with_non_matching_gnb_id_connects_then_f1_setup_is_rejected)
@@ -173,9 +175,9 @@ TEST_F(cu_cp_connectivity_test, when_a_du_with_non_matching_gnb_id_connects_then
 
   // Ensure the F1 Setup Failure is received for the DU.
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
-  ASSERT_EQ(f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome);
   ASSERT_EQ(f1ap_pdu.pdu.unsuccessful_outcome().value.type().value,
-            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
+            asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
 TEST_F(cu_cp_connectivity_test, when_max_nof_dus_connected_reached_then_cu_cp_rejects_new_du_connections)

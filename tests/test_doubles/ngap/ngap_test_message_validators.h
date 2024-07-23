@@ -41,6 +41,10 @@ bool is_valid_pdu_session_resource_modify_response(const srs_cu_cp::ngap_message
 
 bool is_valid_error_indication(const srs_cu_cp::ngap_message& msg);
 
+bool is_valid_handover_request_ack(const srs_cu_cp::ngap_message& msg);
+
+bool is_valid_handover_notify(const srs_cu_cp::ngap_message& msg);
+
 // Check if the NGAP PDU contains the expected PDU session setup response.
 bool is_expected_pdu_session_resource_setup_response(
     const srs_cu_cp::ngap_message&       ngap_pdu,

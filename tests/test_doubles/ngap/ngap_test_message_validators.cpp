@@ -91,6 +91,20 @@ bool srsran::test_helpers::is_valid_error_indication(const srs_cu_cp::ngap_messa
   return true;
 }
 
+bool srsran::test_helpers::is_valid_handover_request_ack(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_NGAP_ID_HO_RES_ALLOC);
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_handover_notify(const srs_cu_cp::ngap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_HO_NOTIF);
+  return true;
+}
+
 bool srsran::test_helpers::is_expected_pdu_session_resource_setup_response(
     const ngap_message&                  ngap_pdu,
     const std::vector<pdu_session_id_t>& expected_pdu_sessions_to_setup,
