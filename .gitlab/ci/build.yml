@@ -2033,6 +2033,7 @@ custom build:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
+    expire_in: 4 hours
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get

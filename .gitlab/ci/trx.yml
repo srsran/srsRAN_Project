@@ -78,7 +78,7 @@ build trx driver:
   artifacts: &trx_artifacts
     paths:
       - build_trx_srsran/libtrx_srsran.so
-    expire_in: 10 minutes
+    expire_in: 4 hours
 
 build amariue zmq driver:
   extends: build trx driver

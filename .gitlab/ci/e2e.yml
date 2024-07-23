@@ -20,6 +20,7 @@ variables:
       - "zmq_single_ue"
       - "zmq_4x4_mimo"
       - "zmq_srsue"
+      - "zmq_cudu"
       - "rf_b200"
       - "rf_hp"
       - "android_b200"
