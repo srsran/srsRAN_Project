@@ -58,8 +58,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
   CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(create_ue_context_release_complete(
-      transaction_sink.successful() ? transaction_sink.response() : asn1::f1ap::ue_context_release_complete_s{}));
+  CORO_RETURN(create_ue_context_release_complete());
 }
 
 void ue_context_release_procedure::send_ue_context_release_command()
@@ -74,17 +73,21 @@ void ue_context_release_procedure::send_ue_context_release_command()
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_rel_msg);
 }
 
-ue_index_t
-ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s& msg)
+ue_index_t ue_context_release_procedure::create_ue_context_release_complete()
 {
-  ue_index_t ret = ue_index_t::invalid;
-
-  if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id)) {
-    ret = ue_ctxt.ue_ids.ue_index;
-    logger.info("{}: Procedure finished successfully.", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
-  } else {
-    logger.warning("{}: Procedure failed.", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
+  if (transaction_sink.successful()) {
+    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(transaction_sink.response()->gnb_du_ue_f1ap_id);
+    if (du_ue_id != ue_ctxt.ue_ids.du_ue_f1ap_id) {
+      logger.error("{}: Procedure failed. Cause: gNB-DU-UE-F1AP-ID mismatch.",
+                   f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
+      return ue_index_t::invalid;
+    }
+    return ue_ctxt.ue_ids.ue_index;
   }
 
-  return ret;
+  logger.warning("{}: Procedure failed. Cause: {}",
+                 f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()},
+                 transaction_sink.timeout_expired() ? "Timeout" : "Transaction failed");
+
+  return ue_index_t::invalid;
 }

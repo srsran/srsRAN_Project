@@ -38,7 +38,7 @@ private:
   void send_ue_context_release_command();
 
   /// Creates procedure result to send back to procedure caller.
-  ue_index_t create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s& msg);
+  ue_index_t create_ue_context_release_complete();
 
   f1ap_ue_context&                     ue_ctxt;
   asn1::f1ap::ue_context_release_cmd_s command;
