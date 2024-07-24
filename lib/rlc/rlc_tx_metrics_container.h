@@ -137,6 +137,11 @@ public:
       return;
     }
     metrics_lo.sum_pdu_latency_ns += pdu_latency;
+
+    unsigned bin_idx = pdu_latency / (1000 * rlc_tx_metrics_lower::nof_usec_per_bin);
+
+    bin_idx = std::min(bin_idx, rlc_tx_metrics_lower::pdu_latency_hist_bins - 1);
+    metrics_lo.pdu_latency_hist_ns[bin_idx]++;
   }
 
   // TM specific metrics

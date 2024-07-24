@@ -88,6 +88,11 @@ struct rlc_tx_metrics_lower {
   uint32_t sum_sdu_latency_us;            ///< total SDU latency (in us)>
   uint32_t sum_pdu_latency_ns;            ///< total PDU latency (in ns)>
 
+  // Histogram of pull pdus
+  static constexpr unsigned                   pdu_latency_hist_bins = 8;
+  constexpr static unsigned                   nof_usec_per_bin      = 10;
+  std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist_ns;
+
   /// RLC mode of the entity
   rlc_mode mode;
 
@@ -117,6 +122,7 @@ struct rlc_tx_metrics_lower {
     num_of_pulled_sdus            = {};
     sum_sdu_latency_us            = {};
     sum_pdu_latency_ns            = {};
+    pdu_latency_hist_ns           = {};
 
     // reset mode-specific values
     switch (mode) {
@@ -206,6 +212,11 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                        1,
                        false));
   }
+  fmt::format_to(buffer, " pdu_latency_hist=[");
+  for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
+    fmt::format_to(buffer, " {}", float_to_eng_string(m.tx_low.pdu_latency_hist_ns[i], 1, false));
+  }
+  fmt::format_to(buffer, "] ");
   return to_c_str(buffer);
 }
 } // namespace srsran
