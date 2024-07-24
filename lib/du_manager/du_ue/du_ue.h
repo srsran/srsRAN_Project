@@ -21,8 +21,12 @@ namespace srs_du {
 
 /// \brief This class holds the context of an UE in the DU.
 struct du_ue_context {
-  du_ue_context(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_) :
-    ue_index(ue_index_), rnti(rnti_), f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)), pcell_index(pcell_index_)
+  du_ue_context(du_ue_index_t ue_index_, du_cell_index_t pcell_index_, rnti_t rnti_, nr_cell_global_id_t nr_cgi_) :
+    ue_index(ue_index_),
+    rnti(rnti_),
+    f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)),
+    pcell_index(pcell_index_),
+    nr_cgi(nr_cgi_)
   {
   }
 
@@ -30,6 +34,8 @@ struct du_ue_context {
   rnti_t              rnti = rnti_t::INVALID_RNTI;
   gnb_du_ue_f1ap_id_t f1ap_ue_id;
   du_cell_index_t     pcell_index;
+  /// \brief The NR Cell Global Identity of the UE's serving cell.
+  nr_cell_global_id_t nr_cgi;
 };
 
 /// The interface exposes the methods to interact with the state of a DU UE.

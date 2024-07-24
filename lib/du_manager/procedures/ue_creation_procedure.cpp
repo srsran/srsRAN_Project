@@ -98,8 +98,10 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
     return make_unexpected(ue_res.get_error());
   }
 
+  // Fetch the DU cell configuration of the primary cell UE is connected to.
+  const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
   // Create the DU UE context.
-  return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti), std::move(ue_res));
+  return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti, cell_cfg.nr_cgi), std::move(ue_res));
 }
 
 async_task<void> ue_creation_procedure::clear_ue()
@@ -201,10 +203,8 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   }
   mac_ue_create_msg.ul_ccch_msg = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
 
-  // Fetch the DU cell configuration of the primary cell UE is connected to.
-  const auto& cell_cfg = du_params.ran.cells[ue_ctx->pcell_index];
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
-  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx, cell_cfg.nr_cgi.plmn_id);
+  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
 
   // Request MAC to create new UE.
   return du_params.mac.ue_cfg.handle_ue_create_request(mac_ue_create_msg);

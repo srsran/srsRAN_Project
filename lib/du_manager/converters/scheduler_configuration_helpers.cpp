@@ -75,8 +75,7 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
   return sched_req;
 }
 
-sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const du_ue&         ue_ctx,
-                                                                           const plmn_identity& ue_plmn_id)
+sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const du_ue& ue_ctx)
 {
   sched_ue_config_request sched_cfg;
 
@@ -104,7 +103,7 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
     sched_lc_ch.lc_sr_delay_timer_applied = bearer.second->mac_cfg.lc_sr_delay_applied;
     sched_lc_ch.sr_id.emplace(bearer.second->mac_cfg.sr_id);
     sched_lc_ch.rrm_policy.s_nssai = bearer.second->s_nssai;
-    sched_lc_ch.rrm_policy.plmn_id = ue_plmn_id.to_string();
+    sched_lc_ch.rrm_policy.plmn_id = ue_ctx.nr_cgi.plmn_id.to_string();
 
     sched_cfg.drb_info_list.emplace_back(sched_drb_info{.lcid         = bearer.second->lcid,
                                                         .s_nssai      = bearer.second->s_nssai,
