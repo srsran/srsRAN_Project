@@ -489,10 +489,10 @@ struct du_high_unit_prach_config {
 
 /// Slice scheduling configuration for a cell.
 struct du_high_unit_cell_slice_sched_config {
-  /// Sets the minimum number of PRBs to be allocated to this group.
-  unsigned min_prb = 0;
-  /// Sets the maximum number of PRBs to be allocated to this group.
-  unsigned max_prb = MAX_NOF_PRBS;
+  /// Sets the minimum percentage of PRBs to be allocated to this group.
+  unsigned min_prb_policy_ratio = 0;
+  /// Sets the maximum percentage of PRBs to be allocated to this group.
+  unsigned max_prb_policy_ratio = 100;
 };
 
 /// Slice configuration for a cell.

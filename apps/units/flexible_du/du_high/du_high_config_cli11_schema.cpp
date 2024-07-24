@@ -1030,12 +1030,18 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
 static void configure_cli11_slicing_scheduling_args(CLI::App&                             app,
                                                     du_high_unit_cell_slice_sched_config& slice_sched_params)
 {
-  add_option(app, "--min_prb", slice_sched_params.min_prb, "Minimum number of PRBs to be allocated to the slice")
+  add_option(app,
+             "--min_prb_policy_ratio",
+             slice_sched_params.min_prb_policy_ratio,
+             "Minimum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
-      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
-  add_option(app, "--max_prb", slice_sched_params.max_prb, "Maximum number of PRBs to be allocated to the slice")
+      ->check(CLI::Range(0U, 100U));
+  add_option(app,
+             "--max_prb_policy_ratio",
+             slice_sched_params.max_prb_policy_ratio,
+             "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+      ->check(CLI::Range(1U, 100U));
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, du_high_unit_cell_slice_config& slice_params)

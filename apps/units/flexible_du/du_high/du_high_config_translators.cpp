@@ -604,7 +604,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const du_high_unit_c
     }
 
     // Slicing configuration.
-    out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(base_cell.plmn, base_cell.slice_cfg);
+    std::vector<std::string> cell_plmns{base_cell.plmn};
+    out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(cell_plmns, base_cell.slice_cfg, nof_crbs);
 
     logger.info(
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
@@ -671,16 +672,19 @@ static mac_lc_config generate_mac_lc_config(const du_high_unit_mac_lc_config& in
 }
 
 std::vector<slice_rrm_policy_config>
-srsran::generate_du_slicing_rrm_policy_config(const std::string&                         plmn,
-                                              span<const du_high_unit_cell_slice_config> slice_cfg)
+srsran::generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
+                                              span<const du_high_unit_cell_slice_config> slice_cfg,
+                                              unsigned                                   nof_cell_crbs)
 {
   std::vector<slice_rrm_policy_config> rrm_policy_cfgs;
-  for (const auto& cfg : slice_cfg) {
-    rrm_policy_cfgs.emplace_back();
-    rrm_policy_cfgs.back().rrc_member.s_nssai = cfg.s_nssai;
-    rrm_policy_cfgs.back().rrc_member.plmn_id = plmn;
-    rrm_policy_cfgs.back().min_prb            = cfg.sched_cfg.min_prb;
-    rrm_policy_cfgs.back().max_prb            = cfg.sched_cfg.max_prb;
+  for (const auto& plmn : plmns) {
+    for (const auto& cfg : slice_cfg) {
+      rrm_policy_cfgs.emplace_back();
+      rrm_policy_cfgs.back().rrc_member.s_nssai = cfg.s_nssai;
+      rrm_policy_cfgs.back().rrc_member.plmn_id = plmn;
+      rrm_policy_cfgs.back().min_prb            = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().max_prb            = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
+    }
   }
   return rrm_policy_cfgs;
 }
