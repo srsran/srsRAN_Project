@@ -22,6 +22,29 @@ integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key      
                                                                security_direction direction_) :
   k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_)
 {
+  std::array<uint8_t, 16> l;
+
+  // subkey L generation
+  aes_setkey_enc(&ctx, k_128_int.data(), 128);
+  aes_crypt_ecb(&ctx, aes_encrypt, zeros.data(), l.data());
+
+  // subkey K1 generation
+  for (uint32_t i = 0; i < 15; i++) {
+    k1[i] = (l[i] << 1) | ((l[i + 1] >> 7) & 0x01);
+  }
+  k1[15] = l[15] << 1;
+  if (l[0] & 0x80) {
+    k1[15] ^= 0x87;
+  }
+
+  // subkey K2 generation
+  for (uint32_t i = 0; i < 15; i++) {
+    k2[i] = (k1[i] << 1) | ((k1[i + 1] >> 7) & 0x01);
+  }
+  k2[15] = k1[15] << 1;
+  if (k1[0] & 0x80) {
+    k2[15] ^= 0x87;
+  }
 }
 
 security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer buf, uint32_t count)
@@ -31,19 +54,11 @@ security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer bu
 
   byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
 
-  uint32_t    len      = v.length();
-  uint32_t    len_bits = len * 8;
-  aes_context ctx;
-  uint32_t    i;
-  uint32_t    j;
-  uint32_t    n;
-  uint32_t    pad_bits;
-  uint8_t     const_zero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t     L[16];
-  uint8_t     K1[16];
-  uint8_t     K2[16];
-  uint8_t     T[16];
-  uint8_t     tmp[16];
+  uint32_t len      = v.length();
+  uint32_t len_bits = len * 8;
+
+  std::array<uint8_t, 16> tmp_mac;
+  std::array<uint8_t, 16> tmp;
 
   const uint32_t msg_len_block_8_with_padding = len + 8 + 16;
   srsran_assert(msg_len_block_8_with_padding <= sec_max_pdu_size,
@@ -52,71 +67,44 @@ security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer bu
                 msg_len_block_8_with_padding,
                 sec_max_pdu_size);
 
-  std::array<uint8_t, sec_max_pdu_size> M_buf;
-  span<uint8_t>                         M(M_buf.data(), msg_len_block_8_with_padding);
+  span<uint8_t> msg(msg_buf.data(), msg_len_block_8_with_padding);
 
-  // Subkey L generation
-  aes_setkey_enc(&ctx, k_128_int.data(), 128);
-  aes_crypt_ecb(&ctx, aes_encrypt, const_zero, L);
-
-  // Subkey K1 generation
-  for (i = 0; i < 15; i++) {
-    K1[i] = (L[i] << 1) | ((L[i + 1] >> 7) & 0x01);
-  }
-  K1[15] = L[15] << 1;
-  if (L[0] & 0x80) {
-    K1[15] ^= 0x87;
-  }
-
-  // Subkey K2 generation
-  for (i = 0; i < 15; i++) {
-    K2[i] = (K1[i] << 1) | ((K1[i + 1] >> 7) & 0x01);
-  }
-  K2[15] = K1[15] << 1;
-  if (K1[0] & 0x80) {
-    K2[15] ^= 0x87;
-  }
-
-  // Construct M
-  std::fill(M.begin(), M.end(), 0);
-  M[0] = (count >> 24) & 0xff;
-  M[1] = (count >> 16) & 0xff;
-  M[2] = (count >> 8) & 0xff;
-  M[3] = count & 0xff;
-  M[4] = (bearer_id << 3) | (to_number(direction) << 2);
-  for (i = 0; i < len; i++) {
-    M[8 + i] = v[i];
-  }
+  // construct msg from preample, PDU and padding
+  msg[0] = (count >> 24) & 0xff;
+  msg[1] = (count >> 16) & 0xff;
+  msg[2] = (count >> 8) & 0xff;
+  msg[3] = count & 0xff;
+  msg[4] = (bearer_id << 3) | (to_number(direction) << 2);
+  std::fill(msg.begin() + 5, msg.begin() + 8, 0);
+  std::copy(v.begin(), v.end(), msg.begin() + 8);
+  std::fill(msg.begin() + len + 8, msg.end(), 0);
 
   // MAC generation
-  n = (uint32_t)(ceilf((float)(len + 8) / (float)(16)));
-  for (i = 0; i < 16; i++) {
-    T[i] = 0;
-  }
-  for (i = 0; i < n - 1; i++) {
-    for (j = 0; j < 16; j++) {
-      tmp[j] = T[j] ^ M[i * 16 + j];
+  const uint32_t n = ceilf((float)(len + 8) / (float)(16));
+  std::fill(tmp_mac.begin(), tmp_mac.end(), 0);
+  for (uint32_t i = 0; i < (n - 1); i++) {
+    for (uint32_t j = 0; j < 16; j++) {
+      tmp[j] = tmp_mac[j] ^ msg[i * 16 + j];
     }
-    aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
+    aes_crypt_ecb(&ctx, aes_encrypt, tmp.data(), tmp_mac.data());
   }
-  pad_bits = ((len_bits) + 64) % 128;
+  uint32_t pad_bits = ((len_bits) + 64) % 128;
   if (pad_bits == 0) {
-    for (j = 0; j < 16; j++) {
-      tmp[j] = T[j] ^ K1[j] ^ M[i * 16 + j];
+    for (uint32_t j = 0; j < 16; j++) {
+      tmp[j] = tmp_mac[j] ^ k1[j] ^ msg[(n - 1) * 16 + j];
     }
-    aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
+    aes_crypt_ecb(&ctx, aes_encrypt, tmp.data(), tmp_mac.data());
   } else {
     pad_bits = (128 - pad_bits) - 1;
-    M[i * 16 + (15 - (pad_bits / 8))] |= 0x1 << (pad_bits % 8);
-    for (j = 0; j < 16; j++) {
-      tmp[j] = T[j] ^ K2[j] ^ M[i * 16 + j];
+    msg[(n - 1) * 16 + (15 - (pad_bits / 8))] |= 0x1 << (pad_bits % 8);
+    for (uint32_t j = 0; j < 16; j++) {
+      tmp[j] = tmp_mac[j] ^ k2[j] ^ msg[(n - 1) * 16 + j];
     }
-    aes_crypt_ecb(&ctx, aes_encrypt, tmp, T);
+    aes_crypt_ecb(&ctx, aes_encrypt, tmp.data(), tmp_mac.data());
   }
 
-  for (i = 0; i < 4; i++) {
-    mac[i] = T[i];
-  }
+  // copy first 4 bytes
+  std::copy(tmp_mac.begin(), tmp_mac.begin() + 4, mac.begin());
 
   if (not result.buf->append(mac)) {
     result.buf = make_unexpected(security_error::buffer_failure);

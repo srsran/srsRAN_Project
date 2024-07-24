@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "mbedtls/aes.h"
 #include "srsran/security/integrity_engine.h"
 #include "srsran/security/security.h"
 
@@ -31,6 +32,13 @@ private:
   sec_128_key        k_128_int;
   uint8_t            bearer_id;
   security_direction direction;
+
+  mbedtls_aes_context ctx;
+  uint8_t             k1[16];
+  uint8_t             k2[16];
+
+  std::array<uint8_t, sec_max_pdu_size>    msg_buf;
+  static constexpr std::array<uint8_t, 16> zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 };
 
 } // namespace security
