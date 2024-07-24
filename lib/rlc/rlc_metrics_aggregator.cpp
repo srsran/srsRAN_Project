@@ -71,8 +71,7 @@ void rlc_metrics_aggregator::push_rx_high_metrics_impl(rlc_rx_metrics m_rx_high_
 
 void rlc_metrics_aggregator::push_report()
 {
-  if (m_lower.counter != m_higher.counter || m_lower.counter != m_rx_high.counter ||
-      m_higher.counter != m_rx_high.counter) {
+  if (m_lower.counter != m_higher.counter || m_lower.counter != m_rx_high.counter) {
     return;
   }
   rlc_metrics report = {du, ue, rb, {m_higher, m_lower}, m_rx_high, 0, metrics_period};

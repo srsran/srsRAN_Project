@@ -107,12 +107,6 @@ public:
     m.tx_low  = metrics_low.get_low_metrics();
     return m;
   }
-
-  virtual void reset_metrics()
-  {
-    // metrics_high.reset();
-    // metrics_low.reset();
-  }
 };
 
 } // namespace srsran

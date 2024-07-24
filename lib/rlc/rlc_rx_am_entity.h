@@ -137,6 +137,8 @@ private:
 
   pcap_rlc_pdu_context pcap_context;
 
+  bool stopped = false;
+
 public:
   rlc_rx_am_entity(gnb_du_id_t                       gnb_du_id,
                    du_ue_index_t                     ue_index,
@@ -152,8 +154,11 @@ public:
   void stop() final
   {
     // Stop all timers. Any queued handlers of timers that just expired before this call are canceled automatically
-    status_prohibit_timer.stop();
-    reassembly_timer.stop();
+    if (not stopped) {
+      status_prohibit_timer.stop();
+      reassembly_timer.stop();
+      stopped = true;
+    }
   };
 
   // Rx/Tx interconnect

@@ -14,14 +14,13 @@
 #include "rlc_metrics_aggregator.h"
 #include "rlc_rx_metrics_container.h"
 #include "srsran/pcap/rlc_pcap.h"
-#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/rlc/rlc_rx.h"
 
 namespace srsran {
 
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
-class rlc_rx_entity : public rlc_rx_lower_layer_interface, public rlc_rx_metrics
+class rlc_rx_entity : public rlc_rx_lower_layer_interface
 {
 protected:
   rlc_rx_entity(gnb_du_id_t                       gnb_du_id,
@@ -73,7 +72,6 @@ public:
   virtual void stop() = 0;
 
   rlc_rx_metrics get_metrics() { return metrics.get_metrics(); }
-  void           reset_metrics() { return metrics.reset_metrics(); }
 };
 
 } // namespace srsran

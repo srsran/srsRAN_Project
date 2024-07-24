@@ -39,7 +39,6 @@ public:
     metrics_period(metrics_period_),
     metrics_agg(gnb_du_id_, ue_index, rb_id_, metrics_period_, rlc_metrics_notifier_, ue_executor_)
   {
-    rlc_metrics_notif = rlc_metrics_notifier_;
   }
   ~rlc_base_entity() override                         = default;
   rlc_base_entity(const rlc_base_entity&)             = delete;
@@ -77,12 +76,6 @@ public:
     return metrics;
   }
 
-  void reset_metrics()
-  {
-    tx->reset_metrics();
-    rx->reset_metrics();
-  }
-
 protected:
   rlc_bearer_logger              logger;
   du_ue_index_t                  ue_index;
@@ -91,9 +84,6 @@ protected:
   std::unique_ptr<rlc_rx_entity> rx;
   timer_duration                 metrics_period;
   rlc_metrics_aggregator         metrics_agg;
-
-private:
-  rlc_metrics_notifier* rlc_metrics_notif;
 };
 
 } // namespace srsran

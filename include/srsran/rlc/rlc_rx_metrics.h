@@ -151,8 +151,7 @@ inline std::string format_rlc_rx_metrics(timer_duration metrics_period, const rl
     fmt::format_to(
         buffer,
         " num_sdu_segments={} sdu_segmments_rate={}bps ctrl_pdus={} ctrl_rate={}bps",
-        // scaled_fmt_integer(m.mode_specific.am.num_sdu_segments, false),
-        m.mode_specific.am.num_sdu_segments,
+        scaled_fmt_integer(m.mode_specific.am.num_sdu_segments, false),
         float_to_eng_string(
             static_cast<float>(m.mode_specific.am.num_sdu_segment_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
         scaled_fmt_integer(m.mode_specific.am.num_ctrl_pdus, false),
