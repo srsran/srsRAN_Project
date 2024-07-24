@@ -54,7 +54,6 @@ option(ENABLE_DPDK           "Enable DPDK"                              OFF)
 option(ENABLE_LIBNUMA        "Enable LibNUMA"                           OFF)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"      OFF)
-option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              ON)
@@ -312,42 +311,13 @@ endif (ENABLE_DPDK)
 ########################################################################
 # Instruction Set Architecture setup
 ########################################################################
-if (AUTO_DETECT_ISA)
-    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-        set(GCC_ARCH armv8-a CACHE STRING "GCC compile for specific architecture.")
-        message(STATUS "Detected aarch64 processor")
-        set(HAVE_NEON True CACHE BOOL "NEON Instruction set is supported")
-    else (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-        set(GCC_ARCH native CACHE STRING "GCC compile for specific architecture.")
-    endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+set(ARCH "native" CACHE STRING "Compiler march flag. Default value is 'native'")
+set(TUNE "generic" CACHE STRING "Compiler mtune flag. Default value is 'generic'")
+message(STATUS "ARCH value is ${ARCH}")
+message(STATUS "TUNE value is ${TUNE}")
 
-    find_package(SSE)
-
-    # Add default architecture if enabled and available.
-    ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-march=${GCC_ARCH}" HAVE_MARCH)
-
-    if (HAVE_AVX2)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-    endif (HAVE_AVX2)
-    if (HAVE_AVX)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-    endif (HAVE_AVX)
-    if (HAVE_SSE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-    endif (HAVE_SSE)
-    if (HAVE_FMA)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
-    endif (HAVE_FMA)
-    if (HAVE_AVX512)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512f -mavx512cd -mavx512bw -mavx512dq")
-    endif (HAVE_AVX512)
-else (AUTO_DETECT_ISA)
-    unset(HAVE_SSE CACHE)
-    unset(HAVE_AVX CACHE)
-    unset(HAVE_AVX2 CACHE)
-    unset(HAVE_FMA CACHE)
-    unset(HAVE_AVX512 CACHE)
-endif (AUTO_DETECT_ISA)
+# Append march and mtune to the compilation flags.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${ARCH} -mtune=${TUNE}")
 
 ########################################################################
 # Compiler launcher setup
