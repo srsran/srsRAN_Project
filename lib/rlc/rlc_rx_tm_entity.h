@@ -42,8 +42,6 @@ private:
   const rlc_rx_tm_config cfg;
 
   pcap_rlc_pdu_context pcap_context;
-
-  rlc_metrics_notifier* metrics_notif;
 };
 
 } // namespace srsran
