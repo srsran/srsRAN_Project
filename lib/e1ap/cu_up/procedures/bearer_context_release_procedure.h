@@ -25,9 +25,8 @@ namespace srsran::srs_cu_up {
 class bearer_context_release_procedure
 {
 public:
-  bearer_context_release_procedure(const e1ap_ue_context&                          ue_ctxt_,
+  bearer_context_release_procedure(ue_index_t                                      ue_index,
                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
-                                   e1ap_ue_context_list&                           ue_ctxt_list_,
                                    e1ap_message_notifier&                          pdu_notifier_,
                                    e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
                                    srslog::basic_logger&                           logger_);
@@ -37,9 +36,8 @@ public:
   static const char* name() { return "E1AP CU-UP Bearer Context Release Procedure"; }
 
 private:
-  const e1ap_ue_context                          ue_ctxt;
+  ue_index_t                                     ue_index;
   const asn1::e1ap::bearer_context_release_cmd_s cmd;
-  e1ap_ue_context_list&                          ue_ctxt_list;
   e1ap_message_notifier&                         pdu_notifier;
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
   srslog::basic_logger&                          logger;

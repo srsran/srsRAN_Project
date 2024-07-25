@@ -269,11 +269,15 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
     return;
   }
 
-  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
+  e1ap_ue_context& ue_ctxt  = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
+  ue_index_t       ue_index = ue_ctxt.ue_ids.ue_index;
 
-  cu_up_notifier.on_schedule_ue_async_task(ue_ctxt.ue_ids.ue_index,
-                                           launch_async<bearer_context_release_procedure>(
-                                               ue_ctxt, msg, ue_ctxt_list, *pdu_notifier, cu_up_notifier, logger));
+  // Remove UE context at E1AP before switching to UE execution context to avoid concurrent access of ue_ctxt_list
+  ue_ctxt_list.remove_ue(ue_ctxt.ue_ids.ue_index);
+
+  // Handle the release procedure
+  cu_up_notifier.on_schedule_ue_async_task(
+      ue_index, launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
