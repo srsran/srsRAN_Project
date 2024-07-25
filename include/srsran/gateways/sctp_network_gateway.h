@@ -16,12 +16,12 @@
 
 namespace srsran {
 
-constexpr uint16_t NGAP_PPID  = 60; // NGAP PPID, see TS 38.412, section 7.
-constexpr uint16_t F1AP_PPID  = 62; // F1AP PPID, see TS 38.472, section 7.
-constexpr uint16_t E1AP_PPID  = 64; // E1AP PPID, see TS 37.482, section 7.
-constexpr uint16_t E2_CP_PPID = 70; // E2-CP PPID assigned by IANA
-constexpr uint16_t E2_UP_PPID = 71; // E2-UP PPID assigned by IANA
-constexpr uint16_t E2_DU_PPID = 72; // E2-DU PPID assigned by IANA
+constexpr uint16_t NGAP_PPID  = 60; ///< NGAP PPID, see TS 38.412, section 7.
+constexpr uint16_t F1AP_PPID  = 62; ///< F1AP PPID, see TS 38.472, section 7.
+constexpr uint16_t E1AP_PPID  = 64; ///< E1AP PPID, see TS 37.482, section 7.
+constexpr uint16_t E2_CP_PPID = 70; ///< E2-CP PPID assigned by IANA
+constexpr uint16_t E2_UP_PPID = 71; ///< E2-UP PPID assigned by IANA
+constexpr uint16_t E2_DU_PPID = 72; ///< E2-DU PPID assigned by IANA
 
 constexpr uint16_t F1AP_PORT = 38472; ///< F1AP port, see TS 38.472, section 7.
 
