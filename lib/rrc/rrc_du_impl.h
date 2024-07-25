@@ -21,7 +21,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Main RRC representation with the DU
-class rrc_du_impl : public rrc_du_interface
+class rrc_du_impl : public rrc_du
 {
 public:
   rrc_du_impl(const rrc_cfg_t&                    cfg_,

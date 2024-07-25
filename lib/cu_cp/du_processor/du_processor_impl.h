@@ -113,8 +113,8 @@ private:
   std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // Components
-  std::unique_ptr<f1ap_cu>          f1ap;
-  std::unique_ptr<rrc_du_interface> rrc;
+  std::unique_ptr<f1ap_cu> f1ap;
+  std::unique_ptr<rrc_du>  rrc;
 };
 
 } // namespace srs_cu_cp
