@@ -75,13 +75,22 @@ bool nru_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view contai
   // Report polling
   VERIFY_READ(decoder.unpack(dl_user_data.report_polling, 1));
 
-  // Spare (v15.2.0)
+  // Spare (v16.1.0)
   spare = {};
-  VERIFY_READ(decoder.unpack(spare, 6));
+  VERIFY_READ(decoder.unpack(spare, 3));
   if (spare != 0) {
     logger.error("Failed to unpack DL user data: Spare bits set in second octet. value={:#x}", spare);
     return false;
   }
+
+  // Request OutOfSeq Report
+  decoder.unpack(dl_user_data.request_out_of_seq_report, 1);
+
+  // Report Delivered
+  decoder.unpack(dl_user_data.report_delivered, 1);
+
+  // User data existence flag
+  decoder.unpack(dl_user_data.user_data_existence_flag, 1);
 
   // Assistance Info Report Polling Flag
   decoder.unpack(dl_user_data.assist_info_report_polling_flag, 1);
@@ -121,6 +130,11 @@ bool nru_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view contai
     }
   }
 
+  // DL report NR PDCP PDU SN
+  if (dl_user_data.report_delivered) {
+    VERIFY_READ(decoder.unpack(dl_user_data.dl_report_pdcp_sn, 24));
+  }
+
   return true;
 };
 
@@ -145,8 +159,17 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_dat
   // Report polling
   VERIFY_WRITE(encoder.pack(dl_user_data.report_polling, 1));
 
-  // Spare (v15.2.0)
-  VERIFY_WRITE(encoder.pack(0, 6));
+  // Spare (v16.1.0)
+  VERIFY_WRITE(encoder.pack(0, 3));
+
+  // Request OutOfSeq Report
+  VERIFY_WRITE(encoder.pack(dl_user_data.request_out_of_seq_report, 1));
+
+  // Report Delivered
+  VERIFY_WRITE(encoder.pack(dl_user_data.report_delivered, 1));
+
+  // User data existence flag
+  VERIFY_WRITE(encoder.pack(dl_user_data.user_data_existence_flag, 1));
 
   // Assistance Info Report Polling Flag
   VERIFY_WRITE(encoder.pack(dl_user_data.assist_info_report_polling_flag, 1));
@@ -172,6 +195,11 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_dat
       VERIFY_WRITE(encoder.pack(discard_block.pdcp_sn_start, 24));
       VERIFY_WRITE(encoder.pack(discard_block.block_size, 8));
     }
+  }
+
+  // DL report NR PDCP PDU SN
+  if (dl_user_data.report_delivered) {
+    VERIFY_WRITE(encoder.pack(dl_user_data.dl_report_pdcp_sn, 24));
   }
 
   // Add padding such that length is (n*4-2) octets, where n is a positive integer.

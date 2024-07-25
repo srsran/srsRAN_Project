@@ -53,7 +53,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_smallest)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -78,7 +78,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_dl_flush)
 {
   const uint8_t packed_vec[] = {
       0x02, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -108,7 +108,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_report_polling)
 {
   const uint8_t packed_vec[] = {
       0x01, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -130,11 +130,94 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_report_polling)
   EXPECT_EQ(out_buf, packed_buf);
 }
 
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_request_out_of_sequence_report)
+{
+  const uint8_t packed_vec[] = {
+      0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
+      0x10, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
+      0x11, // NR-U Sequence Number (upper byte)
+      0x22, // NR-U Sequence Number (mid byte)
+      0x33, // NR-U Sequence Number (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer      packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_user_data out_data;
+  EXPECT_TRUE(packer->unpack(out_data, packed_buf));
+  nru_dl_user_data exp_data{};
+  exp_data.nru_sn                    = 0x112233;
+  exp_data.request_out_of_seq_report = true;
+  EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_report_delivered)
+{
+  const uint8_t packed_vec[] = {
+      0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
+      0x08, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
+      0x11, // NR-U Sequence Number (upper byte)
+      0x22, // NR-U Sequence Number (mid byte)
+      0x33, // NR-U Sequence Number (lower byte)
+      0xee, // DL report NR PDCP PDU SN (upper byte)
+      0xdd, // DL report NR PDCP PDU SN (mid byte)
+      0xcc, // DL report NR PDCP PDU SN (lower byte)
+      // No further fields
+      0x00, // Padding
+      0x00, // Padding
+  };
+
+  byte_buffer      packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_user_data out_data;
+  EXPECT_TRUE(packer->unpack(out_data, packed_buf));
+  nru_dl_user_data exp_data{};
+  exp_data.nru_sn            = 0x112233;
+  exp_data.report_delivered  = true;
+  exp_data.dl_report_pdcp_sn = 0xeeddcc;
+  EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
+}
+
+TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_user_data_existence_flag)
+{
+  const uint8_t packed_vec[] = {
+      0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
+      0x04, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
+      0x11, // NR-U Sequence Number (upper byte)
+      0x22, // NR-U Sequence Number (mid byte)
+      0x33, // NR-U Sequence Number (lower byte)
+      // No further fields
+      0x00, // Padding
+  };
+
+  byte_buffer      packed_buf = byte_buffer::create(packed_vec).value();
+  nru_dl_user_data out_data;
+  EXPECT_TRUE(packer->unpack(out_data, packed_buf));
+  nru_dl_user_data exp_data{};
+  exp_data.nru_sn                   = 0x112233;
+  exp_data.user_data_existence_flag = true;
+  EXPECT_EQ(out_data, exp_data);
+
+  // Test packing
+  byte_buffer out_buf;
+  EXPECT_TRUE(packer->pack(out_buf, exp_data));
+  EXPECT_EQ(out_buf, packed_buf);
+}
+
 TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_assist_info_flag)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x02, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x02, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -160,7 +243,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_retransmission_flag)
 {
   const uint8_t packed_vec[] = {
       0x00, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x01, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x01, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -186,7 +269,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_discard_blocks)
 {
   const uint8_t packed_vec[] = {
       0x04, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -228,7 +311,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_invalid_pdu_type)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -245,7 +328,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_missing_padding)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -262,7 +345,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_excessive_padding)
 {
   const uint8_t packed_vec[] = {
       0xe0, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
@@ -280,7 +363,7 @@ TEST_F(nru_packing_test, unpack_nru_dl_user_data_with_too_large_nof_discard_bloc
 {
   const uint8_t packed_vec[] = {
       0x04, // 4PDU Type | Spare | DL Discard Blocks | DL Flush | Report polling
-      0x00, // 6Spare | Assist Info Rep Poll Flag | Retransmission flag
+      0x00, // 3Spare | Req OoS Rep | Rep Deliv | User Data Ex | Assist Info Rep Poll Flag | Retransmission flag
       0x11, // NR-U Sequence Number (upper byte)
       0x22, // NR-U Sequence Number (mid byte)
       0x33, // NR-U Sequence Number (lower byte)
