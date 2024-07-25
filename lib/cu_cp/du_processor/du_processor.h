@@ -230,6 +230,9 @@ public:
   /// \brief Retrieve F1AP handler for the respective DU.
   virtual f1ap_cu& get_f1ap_handler() = 0;
 
+  /// \brief Retrieve RRC DU handler for the respective DU.
+  virtual rrc_du& get_rrc_du_handler() = 0;
+
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
   /// \brief Get the F1AP message handler interface of the DU processor object.

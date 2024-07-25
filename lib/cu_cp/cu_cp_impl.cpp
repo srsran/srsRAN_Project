@@ -712,10 +712,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
   unsigned nof_f1ap_ues = du_db.get_nof_f1ap_ues();
 
   // Get number of RRC UEs
-  unsigned nof_rrc_ues = 0;
-  for (auto& rrc_du_adapter_pair : rrc_du_adapters) {
-    nof_rrc_ues += rrc_du_adapter_pair.second.get_nof_ues();
-  }
+  unsigned nof_rrc_ues = du_db.get_nof_rrc_ues();
 
   // Get number of NGAP UEs
   unsigned nof_ngap_ues = ngap_entity->get_ngap_statistics_handler().get_nof_ues();

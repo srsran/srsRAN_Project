@@ -63,6 +63,8 @@ public:
 
   size_t get_nof_f1ap_ues();
 
+  size_t get_nof_rrc_ues();
+
   /// \brief Adds a DU processor object to the CU-CP.
   /// \return The DU index of the added DU processor object.
   du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);

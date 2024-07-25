@@ -150,3 +150,12 @@ size_t du_processor_repository::get_nof_f1ap_ues()
   }
   return nof_ues;
 }
+
+size_t du_processor_repository::get_nof_rrc_ues()
+{
+  size_t nof_ues = 0;
+  for (auto& du : du_db) {
+    nof_ues += du.second.processor->get_rrc_du_handler().get_nof_ues();
+  }
+  return nof_ues;
+}
