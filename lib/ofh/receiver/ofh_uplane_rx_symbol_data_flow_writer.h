@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../support/uplink_context_repository.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ofh {

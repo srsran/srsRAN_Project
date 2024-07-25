@@ -12,15 +12,12 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
-#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/resource_block.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
 #include <mutex>
 
@@ -94,6 +91,9 @@ public:
     return {grid};
   }
 
+  /// Returns the context grid information.
+  const uplink_context_resource_grid_info& get_uplink_context_resource_grid_info() const { return grid; }
+
 private:
   /// Returns true when all the REs for the current symbol have been written.
   bool have_all_prbs_been_written() const
@@ -114,7 +114,6 @@ class uplink_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  srslog::basic_logger*                                       logger;
   std::vector<std::array<uplink_context, MAX_NSYMB_PER_SLOT>> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -140,35 +139,21 @@ class uplink_context_repository
   }
 
 public:
-  explicit uplink_context_repository(unsigned size_, srslog::basic_logger* logger_ = nullptr) :
-    logger(logger_), buffer(size_)
-  {
-  }
+  explicit uplink_context_repository(unsigned size_) : buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
   void add(const resource_grid_context& context, resource_grid& grid, const ofdm_symbol_range& symbol_range)
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    // For logging purposes, check every symbol of the grid looking for existing contexts.
-    if (logger) {
-      for (unsigned symbol_id = 0, symbol_end = grid.get_reader().get_nof_symbols(); symbol_id != symbol_end;
-           ++symbol_id) {
-        if (auto& symbol_info = entry(context.slot, symbol_id); !symbol_info.empty()) {
-          const resource_grid_context& previous_context = symbol_info.get_grid_context();
-          logger->warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
-                          previous_context.slot,
-                          symbol_id,
-                          previous_context.sector);
-
-          // Clear the stored context.
-          symbol_info = {};
-        }
-      }
-    }
-
     for (unsigned symbol_id = symbol_range.start(), symbol_end = symbol_range.stop(); symbol_id != symbol_end;
          ++symbol_id) {
+      // Sanity check. As the context are notified on reception window close, the context should always be empty.
+      srsran_assert(entry(context.slot, symbol_id).empty(),
+                    "Unnotified PRACH context for slot '{}', symbol '{}' and sector '{}'",
+                    entry(context.slot, symbol_id).get_grid_context().slot,
+                    symbol_id,
+                    entry(context.slot, symbol_id).get_grid_context().sector);
       entry(context.slot, symbol_id) = uplink_context(symbol_id, context, grid);
     }
   }
@@ -185,6 +170,45 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     return entry(slot, symbol);
+  }
+
+  /// \brief Tries to pop a complete resource grid for the given slot and symbol.
+  ///
+  /// A resource grid is considered completed when  all the PRBs for all the ports have been written.
+  expected<uplink_context::uplink_context_resource_grid_info> try_poping_complete_resource_grid_symbol(slot_point slot,
+                                                                                                       unsigned symbol)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    const auto result = entry(slot, symbol).try_getting_complete_resource_grid();
+
+    // Symbol is complete or exists. Clear the context.
+    if (result.has_value()) {
+      entry(slot, symbol) = {};
+    }
+
+    return result;
+  }
+
+  /// Pops a complete resource grid for the given slot and symbol.
+  expected<uplink_context::uplink_context_resource_grid_info> pop_complete_resource_grid_symbol(slot_point slot,
+                                                                                                unsigned   symbol)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    const auto& result = entry(slot, symbol);
+
+    // Symbol does not exists. Do nothing.
+    if (result.empty()) {
+      return make_unexpected(default_error_t{});
+    }
+
+    const auto info = result.get_uplink_context_resource_grid_info();
+
+    // Clear the symbol.
+    entry(slot, symbol) = {};
+
+    return {info};
   }
 
   /// Clears the repository entry for the given slot and symbol.

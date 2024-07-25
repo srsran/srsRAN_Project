@@ -1,0 +1,75 @@
+/*
+ *
+ * Copyright 2021-2024 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "../support/prach_context_repository.h"
+#include "../support/uplink_context_repository.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/timing/slot_symbol_point.h"
+#include "srsran/srslog/logger.h"
+
+namespace srsran {
+
+class task_executor;
+
+namespace ofh {
+
+/// Closed reception window handler configuration.
+struct closed_rx_window_handler_config {
+  /// Number of symbols that takes to decode an Open Fronthaul message. It delays closing the reception window.
+  unsigned nof_symbols_to_process_uplink = 0;
+  /// Open Fronthaul receive window parameters.
+  rx_window_timing_parameters rx_timing_params;
+  /// Warn unreceived Open Fronthaul messages.
+  bool warn_unreceived_ru_frames = true;
+};
+
+/// Closed reception window handler dependencies.
+struct closed_rx_window_handler_dependencies {
+  srslog::basic_logger*                      logger   = nullptr;
+  task_executor*                             executor = nullptr;
+  std::shared_ptr<prach_context_repository>  prach_repo;
+  std::shared_ptr<uplink_context_repository> uplink_repo;
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+};
+
+/// Open Fronthaul closed reception window handler.
+class closed_rx_window_handler : public ota_symbol_boundary_notifier
+{
+public:
+  closed_rx_window_handler(const closed_rx_window_handler_config& config,
+                           closed_rx_window_handler_dependencies  dependencies);
+
+  void on_new_symbol(slot_symbol_point slot_symbol) override;
+
+private:
+  void handle_uplink(slot_symbol_point slot_symbol);
+
+  void handle_prach(slot_symbol_point slot_symbol);
+
+private:
+  /// \brief Notification delay of the resource grid or PRACH buffer in symbol unit.
+  ///
+  /// This delay is calculated with the T4a_max parameter plus the number of symbols that takes to decode a received
+  /// Open Fronthaul message.
+  const unsigned                             notification_delay_in_symbols;
+  const bool                                 log_unreceived_messages;
+  srslog::basic_logger&                      logger;
+  task_executor&                             executor;
+  std::shared_ptr<prach_context_repository>  prach_repo;
+  std::shared_ptr<uplink_context_repository> uplink_repo;
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+};
+
+} // namespace ofh
+} // namespace srsran

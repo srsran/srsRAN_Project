@@ -32,8 +32,8 @@ static message_receiver_config get_message_receiver_configuration(const receiver
   return config;
 }
 
-static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& rx_dependencies,
-                                                                       rx_window_checker&           window_checker)
+static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies& rx_dependencies,
+                                                                       rx_window_checker&          window_checker)
 {
   message_receiver_dependencies dependencies;
 
@@ -54,13 +54,58 @@ static message_receiver_dependencies get_message_receiver_dependencies(receiver_
   return dependencies;
 }
 
+static closed_rx_window_handler_config get_closed_rx_window_handler_config(const receiver_config& config)
+{
+  closed_rx_window_handler_config out_config;
+  out_config.warn_unreceived_ru_frames = config.warn_unreceived_ru_frames;
+  out_config.rx_timing_params          = config.rx_timing_params;
+  // As it runs in the same executor, do not delay the reception window close.
+  out_config.nof_symbols_to_process_uplink = 0;
+
+  return out_config;
+}
+
+static closed_rx_window_handler_dependencies
+get_closed_rx_window_handler_dependencies(receiver_impl_dependencies& dependencies)
+{
+  closed_rx_window_handler_dependencies out_dependencies;
+  out_dependencies.executor   = dependencies.executor;
+  out_dependencies.logger     = dependencies.logger;
+  out_dependencies.prach_repo = std::move(dependencies.prach_repo);
+  srsran_assert(out_dependencies.prach_repo, "Invalid PRACH context repository");
+  out_dependencies.uplink_repo = std::move(dependencies.uplink_repo);
+  srsran_assert(out_dependencies.uplink_repo, "Invalid uplink context repository");
+  out_dependencies.notifier = std::move(dependencies.notifier);
+  srsran_assert(out_dependencies.notifier, "Invalid OFH U-Plane notifier");
+
+  return out_dependencies;
+}
+
+void ota_symbol_boundary_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+{
+  for (auto& handler : handlers) {
+    handler->on_new_symbol(symbol_point);
+  }
+}
+
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies) :
+  closed_window_handler(get_closed_rx_window_handler_config(config),
+                        get_closed_rx_window_handler_dependencies(dependencies)),
   window_checker(*dependencies.logger,
                  config.rx_timing_params,
                  std::chrono::duration<double, std::nano>(
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
+  symbol_boundary_dispatcher([](closed_rx_window_handler& handler, rx_window_checker& checker) {
+    std::vector<ota_symbol_boundary_notifier*> handlers;
+    if (!checker.disabled()) {
+      handlers.push_back(&checker);
+    }
+    handlers.push_back(&handler);
+
+    return handlers;
+  }(closed_window_handler, window_checker)),
   msg_receiver(get_message_receiver_configuration(config),
-               get_message_receiver_dependencies(std::move(dependencies), window_checker)),
+               get_message_receiver_dependencies(dependencies, window_checker)),
   rcv_task_dispatcher(msg_receiver, *dependencies.executor),
   ctrl(rcv_task_dispatcher)
 {
@@ -68,7 +113,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
 
 ota_symbol_boundary_notifier* receiver_impl::get_ota_symbol_boundary_notifier()
 {
-  return window_checker.disabled() ? nullptr : &window_checker;
+  return &symbol_boundary_dispatcher;
 }
 
 controller& receiver_impl::get_controller()

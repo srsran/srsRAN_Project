@@ -18,7 +18,6 @@
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/copy.h"
 #include <mutex>
 #include <numeric>
@@ -140,7 +139,7 @@ public:
 
   /// Tries to get a complete PRACH buffer. A PRACH buffer is considered completed when all the PRBs for all the ports
   /// have been written.
-  expected<prach_context_information> try_getting_complete_prach_buffer() const
+  expected<prach_context_information> try_getting_complete_prach_buffer()
   {
     if (!context_info.buffer) {
       return make_unexpected(default_error_t{});
@@ -154,6 +153,9 @@ public:
 
     return {context_info};
   }
+
+  /// Returns the information of this PRACH context.
+  const prach_context_information& get_context_information() const { return context_info; }
 
 private:
   /// PRACH context information
@@ -176,7 +178,6 @@ class prach_context_repository
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  srslog::basic_logger*      logger;
   std::vector<prach_context> buffer;
   //: TODO: make this lock free
   mutable std::mutex mutex;
@@ -198,10 +199,7 @@ class prach_context_repository
   }
 
 public:
-  explicit prach_context_repository(unsigned size_, srslog::basic_logger* logger_ = nullptr) :
-    logger(logger_), buffer(size_)
-  {
-  }
+  explicit prach_context_repository(unsigned size_) : buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
   void add(const prach_buffer_context& context,
@@ -213,14 +211,11 @@ public:
 
     slot_point current_slot = slot.value_or(context.slot);
 
-    if (logger) {
-      if (!entry(current_slot).empty()) {
-        const prach_buffer_context& previous_context = entry(current_slot).get_context();
-        logger->warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
-                        previous_context.slot,
-                        previous_context.sector);
-      }
-    }
+    // Sanity check. As the context are notified on reception window close, the context should always be empty.
+    srsran_assert(entry(current_slot).empty(),
+                  "Unnotified PRACH context for slot '{}' and sector '{}'",
+                  entry(current_slot).get_context().slot,
+                  entry(current_slot).get_context().sector);
 
     entry(current_slot) = prach_context(context, buffer_, start_symbol);
   }
@@ -237,6 +232,41 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     return entry(slot);
+  }
+
+  /// \brief Tries to pop a complete PRACH buffer from the repository.
+  ///
+  /// A PRACH buffer is considered completed when all the PRBs for all the ports have been written. If the pop was a
+  /// success, clears the entry of the repository for that slot.
+  expected<prach_context::prach_context_information> try_poping_complete_prach_buffer(slot_point slot)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    const auto result = entry(slot).try_getting_complete_prach_buffer();
+
+    // Clear the entry if the pop was a success.
+    if (result.has_value()) {
+      entry(slot) = {};
+    }
+
+    return result;
+  }
+
+  /// Pops a PRACH buffer from the repository.
+  expected<prach_context::prach_context_information> pop_prach_buffer(slot_point slot)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto& context = entry(slot);
+
+    if (context.empty()) {
+      return make_unexpected(default_error_t());
+    }
+
+    const auto result = context.get_context_information();
+    context           = {};
+
+    return result;
   }
 
   /// Clears the given slot entry.

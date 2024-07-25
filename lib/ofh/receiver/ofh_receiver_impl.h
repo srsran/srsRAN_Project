@@ -10,9 +10,8 @@
 
 #pragma once
 
-#include "../support/prach_context_repository.h"
 #include "../support/uplink_context_repository.h"
-#include "../support/uplink_cplane_context_repository.h"
+#include "ofh_closed_rx_window_handler.h"
 #include "ofh_message_receiver.h"
 #include "ofh_message_receiver_task_dispatcher.h"
 #include "ofh_receiver_controller.h"
@@ -44,6 +43,26 @@ struct receiver_impl_dependencies {
   std::unique_ptr<data_flow_uplane_uplink_prach> data_flow_prach;
   /// Sequence id checker.
   std::unique_ptr<sequence_id_checker> seq_id_checker;
+  /// PRACH context repository.
+  std::shared_ptr<prach_context_repository> prach_repo;
+  /// Uplink context repository.
+  std::shared_ptr<uplink_context_repository> uplink_repo;
+  /// User-Plane received symbol notifier.
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+};
+
+/// OTA symbol boundary dispatcher for the receiver.
+class ota_symbol_boundary_dispatcher : public ota_symbol_boundary_notifier
+{
+  std::vector<ota_symbol_boundary_notifier*> handlers;
+
+public:
+  ota_symbol_boundary_dispatcher(std::vector<ota_symbol_boundary_notifier*> handlers_) : handlers(std::move(handlers_))
+  {
+  }
+
+  // See interface for documentation
+  void on_new_symbol(slot_symbol_point symbol_point) override;
 };
 
 /// \brief Open Fronthaul receiver.
@@ -61,7 +80,9 @@ public:
   controller& get_controller() override;
 
 private:
+  closed_rx_window_handler             closed_window_handler;
   rx_window_checker                    window_checker;
+  ota_symbol_boundary_dispatcher       symbol_boundary_dispatcher;
   message_receiver_impl                msg_receiver;
   ofh_message_receiver_task_dispatcher rcv_task_dispatcher;
   receiver_controller                  ctrl;

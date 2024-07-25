@@ -8,9 +8,11 @@
  *
  */
 
+#include "../../../../lib/ofh/receiver/ofh_closed_rx_window_handler.h"
 #include "../../../../lib/ofh/receiver/ofh_message_receiver.h"
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
+#include "../../support/task_executor_test_doubles.h"
 #include "../compression/ofh_iq_decompressor_test_doubles.h"
 #include "srsran/ofh/ethernet/ethernet_unique_buffer.h"
 #include "srsran/ofh/ofh_factories.h"
@@ -21,6 +23,15 @@ using namespace ofh;
 using namespace srsran::ofh::testing;
 
 namespace {
+
+/// Dummy User-Plane received symbol notifier.
+class dummy_uplane_rx_symbol_notifier : public uplane_rx_symbol_notifier
+{
+public:
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, const resource_grid_reader& grid) override {}
+  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
+};
+
 /// Dummy Ethernet receive buffer.
 class dummy_eth_rx_buffer : public ether::rx_buffer
 {
@@ -124,6 +135,8 @@ protected:
                                                                    0xaefe};
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc = {0, 1};
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc       = {4, 5};
+  manual_task_worker_always_enqueue_tasks         executor;
+  closed_rx_window_handler                        closed_window_handler;
   rx_window_checker                               window_checker;
   ecpri::packet_parameters                        ecpri_params;
   data_flow_uplane_uplink_data_spy*               df_uplink;
@@ -134,7 +147,15 @@ protected:
 
 public:
   ofh_message_receiver_fixture() :
-    window_checker(srslog::fetch_basic_logger("TEST"), {}, {}), ul_handler(generate_config(), generate_dependencies())
+    executor(20),
+    closed_window_handler({},
+                          {&srslog::fetch_basic_logger("TEST"),
+                           &executor,
+                           std::make_shared<prach_context_repository>(20),
+                           std::make_shared<uplink_context_repository>(20),
+                           std::make_shared<dummy_uplane_rx_symbol_notifier>()}),
+    window_checker(srslog::fetch_basic_logger("TEST"), {}, {}),
+    ul_handler(generate_config(), generate_dependencies())
   {
     window_checker.on_new_symbol({{1, 0}, 0, 14});
   }

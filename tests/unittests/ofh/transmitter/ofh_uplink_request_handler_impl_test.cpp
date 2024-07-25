@@ -10,6 +10,7 @@
 
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_mapper.h"

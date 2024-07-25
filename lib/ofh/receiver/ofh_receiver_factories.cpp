@@ -105,8 +105,11 @@ resolve_receiver_dependencies(const receiver_config&                            
 {
   receiver_impl_dependencies dependencies;
 
-  dependencies.logger   = &logger;
-  dependencies.executor = &uplink_executor;
+  dependencies.logger      = &logger;
+  dependencies.executor    = &uplink_executor;
+  dependencies.prach_repo  = prach_context_repo;
+  dependencies.uplink_repo = ul_slot_context_repo;
+  dependencies.notifier    = notifier;
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
     dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);

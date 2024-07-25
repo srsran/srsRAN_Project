@@ -17,14 +17,11 @@ using namespace ofh;
 void uplane_rx_symbol_data_flow_notifier::notify_received_symbol(slot_point slot, unsigned symbol)
 {
   expected<uplink_context::uplink_context_resource_grid_info> context =
-      ul_context_repo->get(slot, symbol).try_getting_complete_resource_grid();
+      ul_context_repo->try_poping_complete_resource_grid_symbol(slot, symbol);
 
-  if (not context.has_value()) {
+  if (!context.has_value()) {
     return;
   }
-
-  // Clear the repository entry.
-  ul_context_repo->clear(slot, symbol);
 
   const auto               ctx_value            = context.value();
   uplane_rx_symbol_context notification_context = {ctx_value.context.slot, symbol, ctx_value.context.sector};
