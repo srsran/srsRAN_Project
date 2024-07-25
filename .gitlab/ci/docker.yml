@@ -310,34 +310,31 @@ srsran image split72:
     matrix:
       # AMD AVX2
       - SUFFIX: release_avx2
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
         ARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx2
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
         ARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       # AMD AVX512
       - SUFFIX: release_avx512
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
         ARCH: x86-64-v4
         TAG: amd64-avx2-avx512
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx512
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
         ARCH: x86-64-v4
         TAG: amd64-avx2-avx512
         PLATFORM: amd64
       # ARM
       - SUFFIX: release_arm
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
         ARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
       - SUFFIX: release_with_debug_arm
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
         ARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
@@ -351,23 +348,21 @@ srsran image split8:
     matrix:
       # AMD AVX2
       - SUFFIX: release_avx2
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
         ARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       - SUFFIX: release_with_debug_avx2
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
         ARCH: x86-64-v3
         TAG: amd64-avx2
         PLATFORM: amd64
       # ARM
       - SUFFIX: release_arm
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off
         ARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64
       - SUFFIX: release_with_debug_arm
-        EXTRA_CMAKE_ARGS: -DAUTO_DETECT_ISA=Off -DFORCE_DEBUG_INFO=On
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
         ARCH: armv8.2-a+crypto+fp16+dotprod
         TAG: arm64
         PLATFORM: arm64

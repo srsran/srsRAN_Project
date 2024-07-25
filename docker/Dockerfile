@@ -53,7 +53,7 @@ RUN if [ -z "$NUM_CORES" ]; then NUM_CORES=$(nproc); fi && \
     -m "-j${NUM_CORES} install" \
     -DBUILD_TESTS=True \
     -DENABLE_${LIB_UPPER}=On \
-    -DCMAKE_CXX_FLAGS="-march=${ARCH}" \
+    -DARCH=${ARCH} \
     -DCMAKE_INSTALL_PREFIX=/opt/srs \
     ${EXTRA_CMAKE_ARGS} /src
 
