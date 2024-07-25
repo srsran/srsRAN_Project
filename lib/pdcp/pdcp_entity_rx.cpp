@@ -197,48 +197,13 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  /*
-   * TS 38.323, section 5.8: Deciphering
-   *
-   * The data unit that is ciphered is the MAC-I and the
-   * data part of the PDCP Data PDU except the
-   * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
-   */
-  byte_buffer_view sdu_plus_mac = byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()};
-  if (ciphering_enabled == security::ciphering_enabled::on &&
-      sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
-    cipher_decrypt(sdu_plus_mac, rcvd_count);
+  // Apply deciphering and integrity check
+  expected<byte_buffer> exp_buf = apply_deciphering_and_integrity_check(std::move(pdu), rcvd_count);
+  if (!exp_buf.has_value()) {
+    logger.log_error("Failed deciphering and integrity check, dropping PDU and notifying RRC. count={}", rcvd_count);
+    return;
   }
-
-  /*
-   * Extract MAC-I:
-   * Always extract from SRBs, only extract from DRBs if integrity is enabled
-   */
-  security::sec_mac mac = {};
-  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-    extract_mac(pdu, mac);
-  }
-
-  /*
-   * TS 38.323, section 5.9: Integrity verification
-   *
-   * The data unit that is integrity protected is the PDU header
-   * and the data part of the PDU before ciphering.
-   */
-  if (integrity_enabled == security::integrity_enabled::on) {
-    bool is_valid = integrity_verify(pdu, rcvd_count, mac);
-    if (!is_valid) {
-      logger.log_warning(pdu.begin(), pdu.end(), "Integrity failed, dropping PDU.");
-      metrics_add_integrity_failed_pdus(1);
-      // TODO: Re-enable once the RRC supports notifications from the PDCP
-      // upper_cn.on_integrity_failure();
-      return; // Invalid packet, drop.
-    }
-    metrics_add_integrity_verified_pdus(1);
-    logger.log_debug(pdu.begin(), pdu.end(), "Integrity passed.");
-  }
-  // After checking the integrity, we can discard the header.
-  discard_data_header(pdu);
+  pdu = std::move(exp_buf.value());
 
   /*
    * Check valid rcvd_count:
@@ -431,8 +396,51 @@ std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> pdcp_entity_rx::create_rx_window(p
 }
 
 /*
- * Security helpers
+ * Deciphering and Integrity Protection Helpers
  */
+expected<byte_buffer> pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer pdu, uint32_t count)
+{
+  // TS 38.323, section 5.8: Deciphering
+  // The data unit that is ciphered is the MAC-I and the
+  // data part of the PDCP Data PDU except the
+  // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
+
+  byte_buffer_view sdu_plus_mac = byte_buffer_view{pdu.begin() + hdr_len_bytes, pdu.end()};
+  if (ciphering_enabled == security::ciphering_enabled::on &&
+      sec_cfg.cipher_algo != security::ciphering_algorithm::nea0) {
+    cipher_decrypt(sdu_plus_mac, count);
+  }
+
+  // Extract MAC-I:
+  // Always extract from SRBs, only extract from DRBs if integrity is enabled
+
+  security::sec_mac mac = {};
+  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
+    extract_mac(pdu, mac);
+  }
+
+  // TS 38.323, section 5.9: Integrity verification
+  // The data unit that is integrity protected is the PDU header
+  // and the data part of the PDU before ciphering.
+
+  if (integrity_enabled == security::integrity_enabled::on) {
+    bool is_valid = integrity_verify(pdu, count, mac);
+    if (!is_valid) {
+      logger.log_warning(pdu.begin(), pdu.end(), "Integrity failed, dropping PDU.");
+      metrics_add_integrity_failed_pdus(1);
+      // TODO: Re-enable once the RRC supports notifications from the PDCP
+      // upper_cn.on_integrity_failure();
+      return make_unexpected(default_error_t{}); // Invalid packet, drop.
+    }
+    metrics_add_integrity_verified_pdus(1);
+    logger.log_debug(pdu.begin(), pdu.end(), "Integrity passed.");
+  }
+  // After checking the integrity, we can discard the header.
+  discard_data_header(pdu);
+
+  return pdu;
+}
+
 bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
 {
   srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot verify integrity: Integrity key is not configured.");

@@ -183,8 +183,10 @@ private:
   void deliver_all_sdus();
   void discard_all_sdus();
 
-  bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
-  byte_buffer cipher_decrypt(byte_buffer_view& msg, uint32_t count);
+  /// Apply deciphering and integrity check to the PDU
+  expected<byte_buffer> apply_deciphering_and_integrity_check(byte_buffer pdu, uint32_t count);
+  bool                  integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
+  byte_buffer           cipher_decrypt(byte_buffer_view& msg, uint32_t count);
 
   /*
    * Notifiers and handlers
