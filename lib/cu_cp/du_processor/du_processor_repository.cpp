@@ -92,13 +92,6 @@ du_index_t du_processor_repository::get_next_du_index()
   return du_index_t::invalid;
 }
 
-du_processor& du_processor_repository::find_du(du_index_t du_index)
-{
-  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
-  return *du_db.at(du_index).processor;
-}
-
 du_index_t du_processor_repository::find_du(pci_t pci)
 {
   du_index_t index = du_index_t::invalid;
@@ -123,6 +116,14 @@ du_index_t du_processor_repository::find_du(const nr_cell_global_id_t& cgi)
   return index;
 }
 
+du_processor* du_processor_repository::find_du_processor(du_index_t du_index)
+{
+  if (du_db.find(du_index) == du_db.end()) {
+    return nullptr;
+  }
+  return du_db.at(du_index).processor.get();
+}
+
 du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
 {
   srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
@@ -133,7 +134,8 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;
-  for (auto& du : du_db) {
+  du_reports.reserve(du_db.size());
+  for (const auto& du : du_db) {
     du_reports.emplace_back(du.second.processor->get_metrics_handler().handle_du_metrics_report_request());
   }
   return du_reports;

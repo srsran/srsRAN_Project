@@ -57,6 +57,14 @@ public:
   /// \return The index of the DU serving the given CGI.
   du_index_t find_du(const nr_cell_global_id_t& cgi);
 
+  /// \brief Find a DU object.
+  /// \param[in] du_index The index of the DU processor object.
+  /// \return A pointer to the DU processor object, nullptr if the DU processor object is not found.
+  du_processor* find_du_processor(du_index_t du_index);
+
+  /// \brief Find a DU object.
+  /// \param[in] du_index The index of the DU processor object.
+  /// \return The DU processor object.
   du_processor& get_du_processor(du_index_t du_index);
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
@@ -72,7 +80,7 @@ public:
   /// \brief Launches task that removes the specified DU processor object from the CU-CP.
   /// \param[in] du_index The index of the DU processor to delete.
   /// \return asynchronous task for the DU processor removal.
-  async_task<void> remove_du(du_index_t du_idx);
+  async_task<void> remove_du(du_index_t du_index);
 
   /// Number of DUs managed by the CU-CP.
   size_t get_nof_dus() const { return du_db.size(); }
@@ -87,11 +95,6 @@ private:
     /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
     std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
   };
-
-  /// \brief Find a DU object.
-  /// \param[in] du_index The index of the DU processor object.
-  /// \return The DU processor object.
-  du_processor& find_du(du_index_t du_index);
 
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
