@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
@@ -108,15 +107,6 @@ public:
     srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
 
     return ues.at(ue_index).get_ngap_rrc_ue_adapter();
-  }
-
-  /// \brief Get the CU-CP to RRC UE adapter of the UE.
-  cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter(ue_index_t ue_index)
-  {
-    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-    srsran_assert(ues.find(ue_index) != ues.end(), "UE with ue_index={} does not exist", ue_index);
-
-    return ues.at(ue_index).get_cu_cp_rrc_ue_adapter();
   }
 
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter(ue_index_t ue_index)

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../adapters/cu_cp_adapters.h"
 #include "../adapters/ngap_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
@@ -131,9 +130,6 @@ public:
   /// \brief Get the NGAP to RRC UE adapter of the UE.
   ngap_rrc_ue_adapter& get_ngap_rrc_ue_adapter() { return ngap_rrc_ue_ev_notifier; }
 
-  /// \brief Get the CU-CP to RRC UE adapter of the UE.
-  cu_cp_rrc_ue_adapter& get_cu_cp_rrc_ue_adapter() { return cu_cp_rrc_ue_ev_notifier; }
-
   /// \brief Get the RRC to CU-CP adapter of the UE.
   rrc_ue_cu_cp_adapter& get_rrc_ue_cu_cp_adapter() { return rrc_ue_cu_cp_ev_notifier; }
 
@@ -158,7 +154,6 @@ private:
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
   // cu-cp ue context
-  cu_cp_rrc_ue_adapter         cu_cp_rrc_ue_ev_notifier;
   rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
   cell_meas_manager_ue_context meas_context;
 };

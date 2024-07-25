@@ -11,7 +11,6 @@
 #pragma once
 
 #include "adapters/cell_meas_manager_adapters.h"
-#include "adapters/cu_cp_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/mobility_manager_adapters.h"

@@ -206,21 +206,37 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
+  auto* const old_ue = ue_mng.find_du_ue(old_ue_index);
+
   // check if a DRB and SRB2 were setup
-  if (ue_mng.find_du_ue(old_ue_index)->get_up_resource_manager().get_drbs().empty()) {
-    logger.debug("ue={}: No DRB setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+  if (old_ue->get_up_resource_manager().get_drbs().empty()) {
+    logger.debug("ue={}: No DRB setup for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;
     return reest_context;
   }
-  auto srbs = ue_mng.find_du_ue(old_ue_index)->get_rrc_ue_srb_notifier().get_srbs();
+
+  auto srbs = old_ue->get_rrc_ue_srb_notifier().get_srbs();
   if (std::find(srbs.begin(), srbs.end(), srb_id_t::srb2) == srbs.end()) {
-    logger.debug("ue={}: SRB2 not setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+    logger.debug("ue={}: SRB2 not setup for this UE - rejecting RRC reestablishment", old_ue_index);
+    reest_context.ue_index = old_ue_index;
+    return reest_context;
+  }
+
+  if (du_db.find_du_processor(old_ue->get_du_index()) == nullptr) {
+    logger.debug("ue={}: DU processor not found for this UE - rejecting RRC reestablishment", old_ue_index);
+    reest_context.ue_index = old_ue_index;
+    return reest_context;
+  }
+
+  if (du_db.find_du_processor(old_ue->get_du_index())->get_rrc_du_handler().find_ue(old_ue_index) == nullptr) {
+    logger.debug("ue={}: RRC UE not found for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;
     return reest_context;
   }
 
   // Get RRC Reestablishment UE Context from old UE
-  reest_context                       = ue_mng.get_cu_cp_rrc_ue_adapter(old_ue_index).on_rrc_ue_context_transfer();
+  reest_context =
+      du_db.find_du_processor(old_ue->get_du_index())->get_rrc_du_handler().find_ue(old_ue_index)->get_context();
   reest_context.old_ue_fully_attached = true;
   reest_context.ue_index              = old_ue_index;
 
@@ -654,7 +670,6 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& r
                                                           rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Connect cu-cp to rrc ue adapters
-  ue_mng.get_cu_cp_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
                                                           get_cu_cp_ue_removal_handler(),
                                                           *controller,
