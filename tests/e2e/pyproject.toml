@@ -34,6 +34,7 @@ markers = [
   "rf_not_crash",
   "reattach",
   "test",
+  "zmq_2x2_mimo",
   "zmq_4x4_mimo",
   "zmq_srsue",
   "test_mode",
