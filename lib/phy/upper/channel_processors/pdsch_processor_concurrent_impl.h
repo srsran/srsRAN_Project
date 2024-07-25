@@ -117,8 +117,10 @@ private:
   static_vector<units::bits, MAX_NOF_SEGMENTS> cw_offset;
   /// Codeblock resource block offset.
   static_vector<unsigned, MAX_NOF_SEGMENTS> re_offset;
+  /// Codeblock counter.
+  std::atomic<unsigned> cb_counter;
   /// Pending code block batch counter.
-  std::atomic<unsigned> cb_batch_counter;
+  std::atomic<unsigned> cb_task_counter;
   /// Pending asynchronous task counter (DM-RS and CB processing).
   std::atomic<unsigned> async_task_counter;
 };

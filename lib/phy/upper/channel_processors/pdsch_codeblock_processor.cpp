@@ -20,6 +20,9 @@ pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const 
   // Initialize scrambling with the initial state.
   scrambler->init(config.c_init);
 
+  // Advance scrambling sequence to the specific codeword offset.
+  scrambler->advance(config.metadata.cb_specific.cw_offset);
+
   // Prepare codeblock data.
   units::bits nof_used_bits = 0_bits;
   cb_data.resize(config.cb_size.value());
