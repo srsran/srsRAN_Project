@@ -101,12 +101,6 @@ du_processor_impl::du_processor_impl(du_processor_config_t               du_proc
       create_rrc_config(cfg.cu_cp_cfg), rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_du_cu_cp_notifier};
   rrc = create_rrc_du(du_creation_req);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
-
-  cu_cp_notifier.on_du_processor_created(cfg.du_index,
-                                         f1ap->get_f1ap_ue_context_removal_handler(),
-                                         f1ap->get_f1ap_statistics_handler(),
-                                         rrc->get_rrc_ue_handler(),
-                                         rrc->get_rrc_du_statistics_handler());
 }
 
 du_setup_result du_processor_impl::handle_du_setup_request(const du_setup_request& request)

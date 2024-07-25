@@ -136,13 +136,6 @@ public:
 
 private:
   // Handling of DU events.
-  void handle_du_processor_creation(du_index_t                       du_index,
-                                    f1ap_ue_context_removal_handler& f1ap_handler,
-                                    f1ap_statistics_handler&         f1ap_statistic_handler,
-                                    rrc_ue_handler&                  rrc_handler,
-                                    rrc_du_statistics_handler&       rrc_statistic_handler) override;
-  void handle_du_processor_removal(du_index_t du_index) override;
-
   void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
 
   byte_buffer handle_target_cell_sib1_required(du_index_t du_index, nr_cell_global_id_t cgi) override;
@@ -172,9 +165,6 @@ private:
   cell_meas_manager cell_meas_mng; // cell measurement manager
 
   cu_cp_common_task_scheduler common_task_sched;
-
-  // CU-CP to RRC DU adapters
-  std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
 
   // DU repository to Node Manager adapter.
   du_processor_cu_cp_connection_adapter conn_notifier;

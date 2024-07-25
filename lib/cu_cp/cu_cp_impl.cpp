@@ -397,7 +397,7 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
 {
   cu_cp_ue* ue = ue_mng.find_du_ue(request.ue_index);
   srsran_assert(ue != nullptr, "ue={}: Could not find UE", request.ue_index);
-  rrc_ue_interface* rrc_ue = rrc_du_adapters.at(ue->get_du_index()).find_rrc_ue(request.ue_index);
+  rrc_ue_interface* rrc_ue = du_db.get_du_processor(ue->get_du_index()).get_rrc_du_handler().find_ue(request.ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", request.ue_index);
 
   return launch_async<initial_context_setup_routine>(request,
@@ -621,7 +621,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
   }
 
   return launch_async<ue_removal_routine>(ue_index,
-                                          rrc_du_adapters.at(du_index),
+                                          du_db.get_du_processor(du_index).get_rrc_du_handler(),
                                           e1ap_removal_handler,
                                           du_db.get_du_processor(du_index).get_f1ap_handler(),
                                           ngap_entity->get_ngap_ue_context_removal_handler(),
@@ -638,28 +638,13 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
   ue_mng.get_task_sched().clear_pending_tasks(ue_index);
 
   // Cancel running transactions for the RRC UE.
-  rrc_ue_interface* rrc_ue = rrc_du_adapters.at(du_index).find_rrc_ue(ue_index);
+  rrc_ue_interface* rrc_ue = du_db.get_du_processor(du_index).get_rrc_du_handler().find_ue(ue_index);
   if (rrc_ue != nullptr) {
     rrc_ue->get_controller().stop();
   }
 }
 
 // private
-
-void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,
-                                              f1ap_ue_context_removal_handler& f1ap_handler,
-                                              f1ap_statistics_handler&         f1ap_statistic_handler,
-                                              rrc_ue_handler&                  rrc_handler,
-                                              rrc_du_statistics_handler&       rrc_statistic_handler)
-{
-  rrc_du_adapters[du_index] = {};
-  rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
-}
-
-void cu_cp_impl::handle_du_processor_removal(du_index_t du_index)
-{
-  rrc_du_adapters.erase(du_index);
-}
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {

@@ -72,9 +72,6 @@ async_task<void> du_processor_repository::remove_du(du_index_t du_index)
     // Stop DU activity, eliminating pending transactions for the DU and respective UEs.
     CORO_AWAIT(du_db.find(du_index)->second.processor->get_f1ap_handler().stop());
 
-    // Notify the CU-CP about the removal of the DU processor.
-    cfg.cu_cp_du_handler.handle_du_processor_removal(du_index);
-
     // Remove DU
     du_db.erase(du_index);
     logger.info("Removed DU {}", du_index);

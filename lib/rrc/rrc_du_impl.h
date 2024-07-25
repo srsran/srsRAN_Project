@@ -41,7 +41,9 @@ public:
   // rrc_ue_handler
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
-    srsran_assert(ue_db.find(ue_index) != ue_db.end(), "UE not found");
+    if (ue_db.find(ue_index) == ue_db.end()) {
+      return nullptr;
+    }
     return ue_db.at(ue_index).get();
   }
   void remove_ue(ue_index_t ue_index) override;

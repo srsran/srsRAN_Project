@@ -187,18 +187,6 @@ class du_processor_cu_cp_notifier
 public:
   virtual ~du_processor_cu_cp_notifier() = default;
 
-  /// \brief Notifies about a successful F1AP and RRC creation.
-  /// \param[in] du_index The index of the DU the UE is connected to.
-  /// \param[in] f1ap_handler Handler to the F1AP to initiate the UE context removal.
-  /// \param[in] f1ap_statistic_handler Handler to the F1AP statistic interface.
-  /// \param[in] rrc_handler Handler to the RRC DU to initiate the RRC UE removal.
-  /// \param[in] rrc_statistic_handler Handler to the RRC DU statistic interface.
-  virtual void on_du_processor_created(du_index_t                       du_index,
-                                       f1ap_ue_context_removal_handler& f1ap_handler,
-                                       f1ap_statistics_handler&         f1ap_statistic_handler,
-                                       rrc_ue_handler&                  rrc_handler,
-                                       rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
-
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.

@@ -18,41 +18,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between CU-CP and RRC DU to request UE removal
-class cu_cp_rrc_du_adapter : public cu_cp_rrc_ue_notifier, public cu_cp_rrc_du_statistics_notifier
-{
-public:
-  cu_cp_rrc_du_adapter() = default;
-
-  void connect_rrc_du(rrc_ue_handler& rrc_ue_hndlr_, rrc_du_statistics_handler& rrc_du_statistic_handler_)
-  {
-    rrc_ue_hndlr             = &rrc_ue_hndlr_;
-    rrc_du_statistic_handler = &rrc_du_statistic_handler_;
-  }
-
-  rrc_ue_interface* find_rrc_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_hndlr->find_ue(ue_index);
-  }
-
-  void remove_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(rrc_ue_hndlr != nullptr, "RRC UE handler must not be nullptr");
-    rrc_ue_hndlr->remove_ue(ue_index);
-  }
-
-  size_t get_nof_ues() const override
-  {
-    srsran_assert(rrc_du_statistic_handler != nullptr, "RRC DU statistics handler must not be nullptr");
-    return rrc_du_statistic_handler->get_nof_ues();
-  }
-
-private:
-  rrc_ue_handler*            rrc_ue_hndlr             = nullptr;
-  rrc_du_statistics_handler* rrc_du_statistic_handler = nullptr;
-};
-
 /// Adapter between CU-CP and RRC UE, to transfer UE context e.g. for RRC Reestablishments
 class cu_cp_rrc_ue_adapter : public cu_cp_rrc_ue_context_transfer_notifier
 {

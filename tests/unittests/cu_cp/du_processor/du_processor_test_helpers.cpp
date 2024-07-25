@@ -76,14 +76,6 @@ struct dummy_cu_cp_du_event_handler : public cu_cp_du_event_handler {
 public:
   dummy_cu_cp_du_event_handler(ue_manager& ue_mng_) : ue_mng(ue_mng_) {}
 
-  void handle_du_processor_creation(du_index_t                       du_index,
-                                    f1ap_ue_context_removal_handler& f1ap_handler,
-                                    f1ap_statistics_handler&         f1ap_statistic_handler,
-                                    rrc_ue_handler&                  rrc_handler,
-                                    rrc_du_statistics_handler&       rrc_statistic_handler) override
-  {
-  }
-  void handle_du_processor_removal(du_index_t du_index) override {}
   void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(rrc_ue_handler,

@@ -45,22 +45,6 @@ public:
     ue_removal_handler = ue_removal_handler_;
   }
 
-  void on_du_processor_created(du_index_t                       du_index,
-                               f1ap_ue_context_removal_handler& f1ap_handler,
-                               f1ap_statistics_handler&         f1ap_statistic_handler,
-                               rrc_ue_handler&                  rrc_handler,
-                               rrc_du_statistics_handler&       rrc_statistic_handler) override
-  {
-    logger.info("du={}: Received a DU Processor creation notification", du_index);
-
-    if (cu_cp_handler != nullptr) {
-      cu_cp_handler->handle_du_processor_creation(
-          du_index, f1ap_handler, f1ap_statistic_handler, rrc_handler, rrc_statistic_handler);
-    } else {
-      rrc_removal_handler = &rrc_handler;
-    }
-  }
-
   void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     logger.info("ue={}: Received a RRC UE creation notification", ue_index);
