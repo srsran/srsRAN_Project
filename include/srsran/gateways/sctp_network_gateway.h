@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
+#include <optional>
 #include <sys/types.h>
 
 namespace srsran {
